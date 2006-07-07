@@ -305,9 +305,10 @@ The update is finished. Now our Working Copy looks like this:
 
 [[Image:Update_Tree2.png]]
 
-This is how a local tree is traversed and applied changes coming from a repository. Of course, this is only an example, 
-a scheme. Besides versioned properties files as well as directories receive some metadata - unmanaged (by a user) 
-properties used for version control. But the idea is correct. 
+This is how a local tree is traversed and applied changes coming from a repository. To a certain extent, this is only an 
+example, a scheme. Besides versioned properties files as well as directories receive some metadata - unmanaged (by a 
+user) properties used for version control. We don't show them in our ''demonstration'' code. Nevertheless the main idea 
+is correct. 
 
 <p>
 With a reporter ('''ISVNReporter''') and an editor ('''ISVNEditor''') you are not restricted by a Working Copy format.

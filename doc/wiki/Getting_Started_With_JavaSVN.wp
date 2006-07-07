@@ -53,7 +53,7 @@ method to create a new url representation (it will be encoded if necessary).
 Then you pass the url representation to the '''SVNRepositoryFactory''' to create a new '''SVNRepository''' driver. So, 
 this way you can bind your driver to any repository location you would like. 
 
-[[Image:SVNRepository_connection.png]]
+[[Image:SVNRepository_connection2.png]]
 
 The diagram above illustrates how different drivers are created for different repository paths: one for the repository 
 root (''svn://host/path_to_root''), one for a directory (''svn://host/path_to_root/dirA'') and one for a file 

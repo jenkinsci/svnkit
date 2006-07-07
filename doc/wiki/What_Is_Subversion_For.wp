@@ -43,7 +43,7 @@ Subversion can be used by:
 
 == What Is JavaSVN For? ==
 Generally applications have two ways of using Subversion programmatically:
-* Utilizing ready-to-use Subversion client programs (like a [http://svnbook.red-bean.com/nightly/en/svn.ref.html#svn.ref.svn Subversion native command line client]). Such applications have to make external calls (commands) to client programs.
+* Utilizing ready-to-use Subversion client programs (like a [http://svnbook.red-bean.com/nightly/en/svn.ref.html#svn.ref.svn native Subversion command line client]). Such applications have to make external calls (commands) to client programs.
 * Utilizing special client libraries. 
 
 According to this classification, '''JavaSVN''' is a pure [http://java.sun.com Java] Subversion client library.

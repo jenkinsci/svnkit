@@ -1,0 +1,1233 @@
+<html>
+<head>
+<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+<style type='text/css'>
+/*/*/ /*<![CDATA[*/
+@import "file://G:/materials/Programming/SVNWorkspace/wiki/wpsrc/main.css";
+#quickbar { position: absolute; left: 4px; }
+#article { margin-left: 4px; margin-top: 4px; margin-right: 4px; }
+a.new, #quickbar a.new { color: #CC2200; }
+
+/*]]>*/ /* */
+</style>
+</head>
+<body bgcolor='#FFFFFF' onload=''>
+<div id="content">
+<div id='article'>
+
+<p><a href="Replicating_An_Existing_Repository.html"><<</a> | <a href="Managing_repository_With_JavaSVN.html">List</a>
+<br />
+<br />
+</p>
+<a name="Managing_A_Working_Copy" id="Managing_A_Working_Copy"></a>
+<h2> Managing A Working Copy </h2><p>Finally we came to discussing the <b>JavaSVN</b> <span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/package-summary.html" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/package-summary.html">high-level API</a></span> - 
+the one for manipulating Working Copies. All Working Copy operations are logically organized in different <b>SVN*Client</b> 
+classes. At the same time there&#39;s <span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/SVNClientManager.html" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/SVNClientManager.html">SVNClientManager</a></span> 
+class which composes all <b>SVN*Client</b> classes and, thus, simplifies work on creating and keeping various client 
+classes:
+</p><p><img src="WC_Class_Diagram.png">
+</p><p>So, you may instantiate different <b>SVN*Client</b> classes separately or keep a single <b>SVNClientManager</b> for the 
+same purposes. In Fact, <b>SVNClientManager</b> instantiates each <b>SVN*Client</b> object at the first time you request 
+it, but not earlier.
+</p><p>
+</p><p>
+Methods of each <b>SVN*Client</b> class are similar to commands of the <span class="nobr"><a href="http://svnbook.red-bean.com/nightly/en/svn.ref.html#svn.ref.svn" class="external" title="http://svnbook.red-bean.com/nightly/en/svn.ref.html#svn.ref.svn">native Subversion command line client</a></span>.
+We will show several simple operations you can perform upon Working Copies using <b>JavaSVN</b>. We write a class 
+<i>WorkingCopy</i> which utilizes an <b>SVNClientManager</b> object:
+
+</p><div class="java"><pre>
+...
+
+<b><font color="#7F0055">public</font></b> <b><font color="#7F0055">class</font></b> WorkingCopy &#123;
+
+    <b><font color="#7F0055">private</font></b> <b><font color="#7F0055">static</font></b> SVNClientManager ourClientManager;
+    ...
+</pre></div><p>Then go several demonstration functions that will be used in the main program. The following one creates a new 
+directory immediately in a repository:
+
+</p><div class="java"><pre>
+    <b><font color="#7F0055">private</font></b> <b><font color="#7F0055">static</font></b> SVNCommitInfo makeDirectory(SVNURL url, String commitMessage) <b><font color="#7F0055">throws</font></b> SVNException &#123;
+        <b><font color="#7F0055">return</font></b> ourClientManager.getCommitClient().doMkDir(<b><font color="#7F0055">new</font></b> SVNURL&#91;&#93;&#123;url&#125;, commitMessage);
+    &#125;
+</pre></div><p>This one imports a local directory to a repository:
+
+</p><div class="java"><pre>
+    <b><font color="#7F0055">private</font></b> <b><font color="#7F0055">static</font></b> SVNCommitInfo importDirectory(File localPath, SVNURL dstURL, String commitMessage, <b><font color="#7F0055">boolean</font></b> isRecursive) <b><font color="#7F0055">throws</font></b> SVNException &#123;
+        <b><font color="#7F0055">return</font></b> ourClientManager.getCommitClient().doImport(localPath, dstURL, commitMessage, isRecursive);
+    &#125;
+</pre></div><p>This one recursively commits Working Copy modifications to a repository:
+
+</p><div class="java"><pre>
+    <b><font color="#7F0055">private</font></b> <b><font color="#7F0055">static</font></b> SVNCommitInfo commit(File wcPath, <b><font color="#7F0055">boolean</font></b> keepLocks, String commitMessage) <b><font color="#7F0055">throws</font></b> SVNException &#123;
+        <b><font color="#7F0055">return</font></b> ourClientManager.getCommitClient().doCommit(<b><font color="#7F0055">new</font></b> File&#91;&#93; &#123; wcPath &#125;, keepLocks, commitMessage, <b><font color="#7F0055">false</font></b>, <b><font color="#7F0055">true</font></b>);
+    &#125;
+</pre></div><p>This one checks out a Working Copy given a repository url:
+
+</p><div class="java"><pre>
+    <b><font color="#7F0055">private</font></b> <b><font color="#7F0055">static</font></b> <b><font color="#7F0055">long</font></b> checkout(SVNURL url, SVNRevision revision, File destPath, <b><font color="#7F0055">boolean</font></b> isRecursive) <b><font color="#7F0055">throws</font></b> SVNException &#123;
+
+        SVNUpdateClient updateClient = ourClientManager.getUpdateClient();
+        <font color="#3F7F5F">/&#42;
+         &#42; sets externals not to be ignored during the checkout
+         &#42;/</font>
+        updateClient.setIgnoreExternals(<b><font color="#7F0055">false</font></b>);
+        <font color="#3F7F5F">/&#42;
+         &#42; returns the number of the revision at which the working copy is 
+         &#42;/</font>
+        <b><font color="#7F0055">return</font></b> updateClient.doCheckout(url, destPath, revision, revision, isRecursive);
+    &#125;
+</pre></div><p>This one updates a Working Copy to a particular revision:
+
+</p><div class="java"><pre>
+    <b><font color="#7F0055">private</font></b> <b><font color="#7F0055">static</font></b> <b><font color="#7F0055">long</font></b> update(File wcPath, SVNRevision updateToRevision, <b><font color="#7F0055">boolean</font></b> isRecursive) <b><font color="#7F0055">throws</font></b> SVNException &#123;
+
+        SVNUpdateClient updateClient = ourClientManager.getUpdateClient();
+        <font color="#3F7F5F">/&#42;
+         &#42; sets externals not to be ignored during the update
+         &#42;/</font>
+        updateClient.setIgnoreExternals(<b><font color="#7F0055">false</font></b>);
+        <font color="#3F7F5F">/&#42;
+         &#42; returns the number of the revision wcPath was updated to
+         &#42;/</font>
+        <b><font color="#7F0055">return</font></b> updateClient.doUpdate(wcPath, updateToRevision, isRecursive);
+    &#125;
+</pre></div><p>This one switches a Working Copy to another url:
+
+</p><div class="java"><pre>
+    <b><font color="#7F0055">private</font></b> <b><font color="#7F0055">static</font></b> <b><font color="#7F0055">long</font></b> switchToURL(File wcPath, SVNURL url, SVNRevision updateToRevision, <b><font color="#7F0055">boolean</font></b> isRecursive) <b><font color="#7F0055">throws</font></b> SVNException &#123;
+        SVNUpdateClient updateClient = ourClientManager.getUpdateClient();
+        <font color="#3F7F5F">/&#42;
+         &#42; sets externals not to be ignored during the switch
+         &#42;/</font>
+        updateClient.setIgnoreExternals(<b><font color="#7F0055">false</font></b>);
+        <font color="#3F7F5F">/&#42;
+         &#42; returns the number of the revision wcPath was updated to
+         &#42;/</font>
+        <b><font color="#7F0055">return</font></b> updateClient.doSwitch(wcPath, url, updateToRevision, isRecursive);
+    &#125;
+</pre></div><p>This one recursively adds an existing local item under version control (schedules for addition):
+
+</p><div class="java"><pre>
+    <b><font color="#7F0055">private</font></b> <b><font color="#7F0055">static</font></b> <b><font color="#7F0055">void</font></b> addEntry(File wcPath) <b><font color="#7F0055">throws</font></b> SVNException &#123;
+        ourClientManager.getWCClient().doAdd(wcPath, <b><font color="#7F0055">false</font></b>, <b><font color="#7F0055">false</font></b>, <b><font color="#7F0055">false</font></b>, <b><font color="#7F0055">true</font></b>);
+    &#125;
+</pre></div><p>This one locks a versioned item:
+
+</p><div class="java"><pre>
+    <b><font color="#7F0055">private</font></b> <b><font color="#7F0055">static</font></b> <b><font color="#7F0055">void</font></b> lock(File wcPath, <b><font color="#7F0055">boolean</font></b> isStealLock, String lockComment) <b><font color="#7F0055">throws</font></b> SVNException &#123;
+        ourClientManager.getWCClient().doLock(<b><font color="#7F0055">new</font></b> File&#91;&#93; &#123; wcPath &#125;, isStealLock, lockComment);
+    &#125;
+</pre></div><p>This one deletes a versioned item from version control (schedules for deletion):
+
+</p><div class="java"><pre>
+    <b><font color="#7F0055">private</font></b> <b><font color="#7F0055">static</font></b> <b><font color="#7F0055">void</font></b> delete(File wcPath, <b><font color="#7F0055">boolean</font></b> force) <b><font color="#7F0055">throws</font></b> SVNException &#123;
+        ourClientManager.getWCClient().doDelete(wcPath, force, <b><font color="#7F0055">false</font></b>);
+    &#125;
+</pre></div><p>This function copies or moves one location to another one within the same repository:
+
+</p><div class="java"><pre>
+    <b><font color="#7F0055">private</font></b> <b><font color="#7F0055">static</font></b> SVNCommitInfo copy(SVNURL srcURL, SVNURL dstURL, <b><font color="#7F0055">boolean</font></b> isMove, String commitMessage) <b><font color="#7F0055">throws</font></b> SVNException &#123;
+        <b><font color="#7F0055">return</font></b> ourClientManager.getCopyClient().doCopy(srcURL,  SVNRevision.HEAD, dstURL, isMove, commitMessage);
+    &#125;
+</pre></div><p>We also need a function which will report us status (including remote status) of our Working Copy. The high-level API 
+introduces several types of handlers to procees information on the fly. For our purposes we need to implement two 
+handler interfaces so that we could perform status operations on our Working Copy: <span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/ISVNStatusHandler.html" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/ISVNStatusHandler.html">ISVNStatusHandler</a></span> 
+and <span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/ISVNEventHandler.html" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/ISVNEventHandler.html">ISVNEventHandler</a></span>. This handler 
+will receive status information about Working Copy items as a <span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/SVNStatusClient.html" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/SVNStatusClient.html">status client</a></span> 
+traverses the Working Copy tree:
+
+</p><div class="java"><pre>
+...
+<b><font color="#7F0055">public</font></b> <b><font color="#7F0055">class</font></b> StatusHandler <b><font color="#7F0055">implements</font></b> ISVNStatusHandler, ISVNEventHandler &#123;
+    <b><font color="#7F0055">private</font></b> <b><font color="#7F0055">boolean</font></b> myIsRemote;
+    
+    <b><font color="#7F0055">public</font></b> StatusHandler(<b><font color="#7F0055">boolean</font></b> isRemote) &#123;
+        myIsRemote = isRemote;
+    &#125;
+
+    <b><font color="#7F0055">public</font></b> <b><font color="#7F0055">void</font></b> handleStatus(SVNStatus status) &#123;
+        <font color="#3F7F5F">/&#42;
+         &#42; Gets  the  status  of  file/directory/symbolic link  text  contents. 
+         &#42; It is  SVNStatusType  who  contains  information on the state of  an 
+         &#42; item. 
+         &#42;/</font>
+        SVNStatusType contentsStatus = status.getContentsStatus();
+
+        String pathChangeType = <font color="#2A00FF">&#34; &#34;</font>;
+        
+        <b><font color="#7F0055">boolean</font></b> isAddedWithHistory = status.isCopied();
+        <b><font color="#7F0055">if</font></b> (contentsStatus == SVNStatusType.STATUS_MODIFIED) &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; The contents of the file have been Modified.
+             &#42;/</font>
+            pathChangeType = <font color="#2A00FF">&#34;M&#34;</font>;
+        &#125; <b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (contentsStatus == SVNStatusType.STATUS_CONFLICTED) &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; The item is in a state of Conflict.
+             &#42;/</font>
+            pathChangeType = <font color="#2A00FF">&#34;C&#34;</font>;
+        &#125; <b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (contentsStatus == SVNStatusType.STATUS_DELETED) &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; The item has been scheduled for Deletion from the repository.
+             &#42;/</font>
+            pathChangeType = <font color="#2A00FF">&#34;D&#34;</font>;
+        &#125; <b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (contentsStatus == SVNStatusType.STATUS_ADDED) &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; The item has been scheduled for Addition to the repository.
+             &#42;/</font>
+            pathChangeType = <font color="#2A00FF">&#34;A&#34;</font>;
+        &#125; <b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (contentsStatus == SVNStatusType.STATUS_UNVERSIONED) &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; The item is not  under  version control.
+             &#42;/</font>
+            pathChangeType = <font color="#2A00FF">&#34;?&#34;</font>;
+        &#125; <b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (contentsStatus == SVNStatusType.STATUS_EXTERNAL) &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; The item is unversioned, but is used by an eXternals definition.
+             &#42;/</font>
+            pathChangeType = <font color="#2A00FF">&#34;X&#34;</font>;
+        &#125; <b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (contentsStatus == SVNStatusType.STATUS_IGNORED) &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; The item is Ignored.
+             &#42;/</font>
+            pathChangeType = <font color="#2A00FF">&#34;I&#34;</font>;
+        &#125; <b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (contentsStatus == SVNStatusType.STATUS_MISSING || contentsStatus == SVNStatusType.STATUS_INCOMPLETE) &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; The file, directory or  symbolic  link  item  is  under  version 
+             &#42; control but is missing or somehow incomplete. 
+             &#42;/</font>
+            pathChangeType = <font color="#2A00FF">&#34;!&#34;</font>;
+        &#125; <b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (contentsStatus == SVNStatusType.STATUS_OBSTRUCTED) &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; The item is in  the  repository as one kind of object, 
+             &#42; but what&#39;s actually in the user&#39;s working 
+             &#42; copy is some other kind.
+             &#42;/</font>
+            pathChangeType = <font color="#2A00FF">&#34;~&#34;</font>;
+        &#125; <b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (contentsStatus == SVNStatusType.STATUS_REPLACED) &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; The item was  Replaced  in  the user&#39;s working copy; that is, 
+             &#42; the item was deleted,  and  a  new item with the same name 
+             &#42; was added (within  a  single  revision). 
+             &#42;/</font>
+            pathChangeType = <font color="#2A00FF">&#34;R&#34;</font>;
+        &#125; <b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (contentsStatus == SVNStatusType.STATUS_NONE || contentsStatus == SVNStatusType.STATUS_NORMAL) &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; The item was not modified (normal).
+             &#42;/</font>
+            pathChangeType = <font color="#2A00FF">&#34; &#34;</font>;
+        &#125;
+        
+        <font color="#3F7F5F">/&#42;
+         &#42; If SVNStatusClient.doStatus(..) is invoked with  remote = true  the 
+         &#42; following code finds out whether the current item has  been  changed 
+         &#42; in the repository   
+         &#42;/</font>
+        String remoteChangeType = <font color="#2A00FF">&#34; &#34;</font>;
+
+        <b><font color="#7F0055">if</font></b> (status.getRemotePropertiesStatus() != SVNStatusType.STATUS_NONE || status.getRemoteContentsStatus() != SVNStatusType.STATUS_NONE) &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; the local item is out of date
+             &#42;/</font>
+            remoteChangeType = <font color="#2A00FF">&#34;&#42;&#34;</font>;
+        &#125;
+
+        <font color="#3F7F5F">/&#42;
+         &#42; Now getting the status of properties of an item. SVNStatusType  also 
+         &#42; contains information on the properties state.
+         &#42;/</font>
+        SVNStatusType propertiesStatus = status.getPropertiesStatus();
+
+        <font color="#3F7F5F">/&#42;
+         &#42; Default &#45; properties are normal (unmodified).
+         &#42;/</font>
+        String propertiesChangeType = <font color="#2A00FF">&#34; &#34;</font>;
+        <b><font color="#7F0055">if</font></b> (propertiesStatus == SVNStatusType.STATUS_MODIFIED) &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; Properties were modified.
+             &#42;/</font>
+            propertiesChangeType = <font color="#2A00FF">&#34;M&#34;</font>;
+        &#125; <b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (propertiesStatus == SVNStatusType.STATUS_CONFLICTED) &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; Properties are in conflict with the repository.
+             &#42;/</font>
+            propertiesChangeType = <font color="#2A00FF">&#34;C&#34;</font>;
+        &#125;
+
+        <font color="#3F7F5F">/&#42;
+         &#42; Whether the item was locked in the .svn working area  (for  example, 
+         &#42; during a commit or maybe the previous operation was interrupted, in 
+         &#42; this case the lock needs to be cleaned up). 
+         &#42;/</font>
+        <b><font color="#7F0055">boolean</font></b> isLocked = status.isLocked();
+        <font color="#3F7F5F">/&#42;
+         &#42; Whether the item is switched to a different URL (branch).
+         &#42;/</font>
+        <b><font color="#7F0055">boolean</font></b> isSwitched = status.isSwitched();
+        <font color="#3F7F5F">/&#42;
+         &#42; If the item is a file it may be locked.
+         &#42;/</font>
+        SVNLock localLock = status.getLocalLock();
+        <font color="#3F7F5F">/&#42;
+         &#42; If  doStatus()  was  run  with  remote = true  and the item is a file, 
+         &#42; checks whether a remote lock presents.
+         &#42;/</font>
+        SVNLock remoteLock = status.getRemoteLock();
+        String lockLabel = <font color="#2A00FF">&#34; &#34;</font>;
+
+        <b><font color="#7F0055">if</font></b> (localLock != <b><font color="#7F0055">null</font></b>) &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; at first suppose the file is locKed
+             &#42;/</font>
+            lockLabel = <font color="#2A00FF">&#34;K&#34;</font>;
+            <b><font color="#7F0055">if</font></b> (remoteLock != <b><font color="#7F0055">null</font></b>) &#123;
+                <font color="#3F7F5F">/&#42;
+                 &#42; if the lock&#45;token of the local lock differs from  the  lock&#45;
+                 &#42; token of the remote lock &#45; the lock was sTolen!
+                 &#42;/</font>
+                <b><font color="#7F0055">if</font></b> (!remoteLock.getID().equals(localLock.getID())) &#123;
+                    lockLabel = <font color="#2A00FF">&#34;T&#34;</font>;
+                &#125;
+            &#125; <b><font color="#7F0055">else</font></b> &#123;
+                <b><font color="#7F0055">if</font></b>(myIsRemote)&#123;
+                    <font color="#3F7F5F">/&#42;
+                     &#42; the  local  lock presents but there&#39;s  no  lock  in  the
+                     &#42; repository &#45; the lock was Broken. This  is  true only if 
+                     &#42; doStatus() was invoked with remote=true.
+                     &#42;/</font>
+                    lockLabel = <font color="#2A00FF">&#34;B&#34;</font>;
+                &#125;
+            &#125;
+        &#125; <b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (remoteLock != <b><font color="#7F0055">null</font></b>) &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; the file is not locally locked but locked  in  the  repository &#45;
+             &#42; the lock token is in some Other working copy.
+             &#42;/</font>
+            lockLabel = <font color="#2A00FF">&#34;O&#34;</font>;
+        &#125;
+
+        <font color="#3F7F5F">/&#42;
+         &#42; Obtains the working revision number of the item.
+         &#42;/</font>
+        <b><font color="#7F0055">long</font></b> workingRevision = status.getRevision().getNumber();
+        <font color="#3F7F5F">/&#42;
+         &#42; Obtains the number of the revision when the item was last changed. 
+         &#42;/</font>
+        <b><font color="#7F0055">long</font></b> lastChangedRevision = status.getCommittedRevision().getNumber();
+        String offset = <font color="#2A00FF">&#34;                                &#34;</font>;
+        String&#91;&#93; offsets = <b><font color="#7F0055">new</font></b> String&#91;3&#93;;
+        offsets&#91;0&#93; = offset.substring(0, 6 &#45; String.valueOf(workingRevision).length());
+        offsets&#91;1&#93; = offset.substring(0, 6 &#45; String.valueOf(lastChangedRevision).length());
+        offsets&#91;2&#93; = offset.substring(0, offset.length() &#45; (status.getAuthor() != <b><font color="#7F0055">null</font></b> ? status.getAuthor().length() : 1));
+        <font color="#3F7F5F">/&#42;
+         &#42; status is shown in the manner of the native Subversion command  line
+         &#42; client&#39;s command &#34;svn status&#34;
+         &#42;/</font>
+        System.out.println(pathChangeType
+                + propertiesChangeType
+                + (isLocked ? <font color="#2A00FF">&#34;L&#34;</font> : <font color="#2A00FF">&#34; &#34;</font>)
+                + (isAddedWithHistory ? <font color="#2A00FF">&#34;+&#34;</font> : <font color="#2A00FF">&#34; &#34;</font>)
+                + (isSwitched ? <font color="#2A00FF">&#34;S&#34;</font> : <font color="#2A00FF">&#34; &#34;</font>)
+                + lockLabel
+                + <font color="#2A00FF">&#34;  &#34;</font>
+                + remoteChangeType
+                + <font color="#2A00FF">&#34;  &#34;</font>
+                + workingRevision
+                + offsets&#91;0&#93;
+                + (lastChangedRevision &#62;= 0 ? String.valueOf(lastChangedRevision) : <font color="#2A00FF">&#34;?&#34;</font>) + offsets&#91;1&#93;
+                + (status.getAuthor() != <b><font color="#7F0055">null</font></b> ? status.getAuthor() : <font color="#2A00FF">&#34;?&#34;</font>)
+                + offsets&#91;2&#93; + status.getFile().getPath());
+    &#125;
+    
+    <b><font color="#7F0055">public</font></b> <b><font color="#7F0055">void</font></b> handleEvent(SVNEvent event, <b><font color="#7F0055">double</font></b> progress) &#123;
+        SVNEventAction action = event.getAction();
+        <font color="#3F7F5F">/&#42;
+         &#42; Print out the revision against which the status was performed.  This 
+         &#42; event is dispatched when the SVNStatusClient.doStatus() was  invoked 
+         &#42; with the flag remote set to true &#45; that is for  a  local  status  it 
+         &#42; won&#39;t be dispatched.
+         &#42;/</font>
+        <b><font color="#7F0055">if</font></b>(action == SVNEventAction.STATUS_COMPLETED)&#123;
+            System.out.println(<font color="#2A00FF">&#34;Status against revision:  &#34;</font>+ event.getRevision());
+        &#125;
+    
+    &#125;
+
+    <b><font color="#7F0055">public</font></b> <b><font color="#7F0055">void</font></b> checkCancelled() <b><font color="#7F0055">throws</font></b> SVNCancelException &#123;
+    &#125;
+&#125;
+</pre></div><p>We use this handler in a status function:
+
+</p><div class="java"><pre>
+    <b><font color="#7F0055">private</font></b> <b><font color="#7F0055">static</font></b> <b><font color="#7F0055">void</font></b> showStatus(File wcPath, <b><font color="#7F0055">boolean</font></b> isRecursive, <b><font color="#7F0055">boolean</font></b> isRemote, <b><font color="#7F0055">boolean</font></b> isReportAll,
+                                   <b><font color="#7F0055">boolean</font></b> isIncludeIgnored, <b><font color="#7F0055">boolean</font></b> isCollectParentExternals) <b><font color="#7F0055">throws</font></b> SVNException &#123;
+
+        ourClientManager.getStatusClient().doStatus(wcPath, isRecursive, isRemote, isReportAll,
+                                                    isIncludeIgnored, isCollectParentExternals, 
+                                                    <b><font color="#7F0055">new</font></b> StatusHandler(isRemote));
+    &#125;
+</pre></div><p>For getting info on Working Copy items (like <code>svn info</code> command) we implement an 
+<span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/ISVNInfoHandler.html" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/ISVNInfoHandler.html">info handler</a></span>:
+
+</p><div class="java"><pre>
+...
+<b><font color="#7F0055">public</font></b> <b><font color="#7F0055">class</font></b> InfoHandler <b><font color="#7F0055">implements</font></b> ISVNInfoHandler &#123;
+    
+    <b><font color="#7F0055">public</font></b> <b><font color="#7F0055">void</font></b> handleInfo(SVNInfo info) &#123;
+        System.out.println(<font color="#2A00FF">&#34;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;INFO&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#34;</font>);
+        System.out.println(<font color="#2A00FF">&#34;Local Path: &#34;</font> + info.getFile().getPath());
+        System.out.println(<font color="#2A00FF">&#34;URL: &#34;</font> + info.getURL());
+
+        <b><font color="#7F0055">if</font></b> (info.isRemote() &#38;&#38; info.getRepositoryRootURL() != <b><font color="#7F0055">null</font></b>) &#123;
+            System.out.println(<font color="#2A00FF">&#34;Repository Root URL: &#34;</font> + info.getRepositoryRootURL());
+        &#125;
+
+        <b><font color="#7F0055">if</font></b>(info.getRepositoryUUID() != <b><font color="#7F0055">null</font></b>)&#123;
+            System.out.println(<font color="#2A00FF">&#34;Repository UUID: &#34;</font> + info.getRepositoryUUID());
+        &#125;
+
+        System.out.println(<font color="#2A00FF">&#34;Revision: &#34;</font> + info.getRevision().getNumber());
+        System.out.println(<font color="#2A00FF">&#34;Node Kind: &#34;</font> + info.getKind().toString());
+
+        <b><font color="#7F0055">if</font></b>(!info.isRemote())&#123;
+            System.out.println(<font color="#2A00FF">&#34;Schedule: &#34;</font> + (info.getSchedule() != <b><font color="#7F0055">null</font></b> ? info.getSchedule() : <font color="#2A00FF">&#34;normal&#34;</font>));
+        &#125;
+
+        System.out.println(<font color="#2A00FF">&#34;Last Changed Author: &#34;</font> + info.getAuthor());
+        System.out.println(<font color="#2A00FF">&#34;Last Changed Revision: &#34;</font> + info.getCommittedRevision().getNumber());
+        System.out.println(<font color="#2A00FF">&#34;Last Changed Date: &#34;</font> + info.getCommittedDate());
+
+        <b><font color="#7F0055">if</font></b> (info.getPropTime() != <b><font color="#7F0055">null</font></b>) &#123;
+            System.out.println(<font color="#2A00FF">&#34;Properties Last Updated: &#34;</font> + info.getPropTime());
+        &#125;
+
+        <b><font color="#7F0055">if</font></b> (info.getKind() == SVNNodeKind.FILE &#38;&#38; info.getChecksum() != <b><font color="#7F0055">null</font></b>) &#123;
+            <b><font color="#7F0055">if</font></b> (info.getTextTime() != <b><font color="#7F0055">null</font></b>) &#123;
+                System.out.println(<font color="#2A00FF">&#34;Text Last Updated: &#34;</font> + info.getTextTime());
+            &#125;
+            System.out.println(<font color="#2A00FF">&#34;Checksum: &#34;</font> + info.getChecksum());
+        &#125;
+
+        <b><font color="#7F0055">if</font></b> (info.getLock() != <b><font color="#7F0055">null</font></b>) &#123;
+            <b><font color="#7F0055">if</font></b> (info.getLock().getID() != <b><font color="#7F0055">null</font></b>) &#123;
+                System.out.println(<font color="#2A00FF">&#34;Lock Token: &#34;</font> + info.getLock().getID());
+            &#125;
+
+            System.out.println(<font color="#2A00FF">&#34;Lock Owner: &#34;</font> + info.getLock().getOwner());
+            System.out.println(<font color="#2A00FF">&#34;Lock Created: &#34;</font> + info.getLock().getCreationDate());
+
+            <b><font color="#7F0055">if</font></b> (info.getLock().getExpirationDate() != <b><font color="#7F0055">null</font></b>) &#123;
+                System.out.println(<font color="#2A00FF">&#34;Lock Expires: &#34;</font> + info.getLock().getExpirationDate());
+            &#125;
+
+            <b><font color="#7F0055">if</font></b> (info.getLock().getComment() != <b><font color="#7F0055">null</font></b>) &#123;
+                System.out.println(<font color="#2A00FF">&#34;Lock Comment: &#34;</font> + info.getLock().getComment());
+            &#125;
+        &#125;
+    &#125;
+&#125;
+</pre></div><p>Which we then use in our info function:
+
+</p><div class="java"><pre>
+    <b><font color="#7F0055">private</font></b> <b><font color="#7F0055">static</font></b> <b><font color="#7F0055">void</font></b> showInfo(File wcPath, SVNRevision revision, <b><font color="#7F0055">boolean</font></b> isRecursive) <b><font color="#7F0055">throws</font></b> SVNException &#123;
+        ourClientManager.getWCClient().doInfo(wcPath, revision, isRecursive, <b><font color="#7F0055">new</font></b> InfoHandler());
+    &#125;
+</pre></div><p>We also use several hooks (event handlers) to display progress information in a console while an operation is running. 
+We implement handlers for the following operations: update, commit, several local operations (add, delete, lock, etc.):
+
+</p><div class="java"><pre>
+...
+<b><font color="#7F0055">public</font></b> <b><font color="#7F0055">class</font></b> UpdateEventHandler <b><font color="#7F0055">implements</font></b> ISVNEventHandler &#123;
+
+    <b><font color="#7F0055">public</font></b> <b><font color="#7F0055">void</font></b> handleEvent(SVNEvent event, <b><font color="#7F0055">double</font></b> progress) &#123;
+        <font color="#3F7F5F">/&#42;
+         &#42; Gets the current action. An action is represented by SVNEventAction.
+         &#42; In case of an update an  action  can  be  determined  via  comparing 
+         &#42; SVNEvent.getAction() and SVNEventAction.UPDATE_&#45;like constants. 
+         &#42;/</font>
+        SVNEventAction action = event.getAction();
+        String pathChangeType = <font color="#2A00FF">&#34; &#34;</font>;
+        <b><font color="#7F0055">if</font></b> (action == SVNEventAction.UPDATE_ADD) &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; the item was added
+             &#42;/</font>
+            pathChangeType = <font color="#2A00FF">&#34;A&#34;</font>;
+        &#125; <b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (action == SVNEventAction.UPDATE_DELETE) &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; the item was deleted
+             &#42;/</font>
+            pathChangeType = <font color="#2A00FF">&#34;D&#34;</font>;
+        &#125; <b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (action == SVNEventAction.UPDATE_UPDATE) &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; Find out in details what  state the item is (after  having  been 
+             &#42; updated).
+             &#42; 
+             &#42; Gets  the  status  of  file/directory  item   contents.  It   is 
+             &#42; SVNStatusType  who contains information on the state of an item.
+             &#42;/</font>
+            SVNStatusType contentsStatus = event.getContentsStatus();
+            <b><font color="#7F0055">if</font></b> (contentsStatus == SVNStatusType.CHANGED) &#123;
+                <font color="#3F7F5F">/&#42;
+                 &#42; the  item  was  modified in the repository (got  the changes 
+                 &#42; from the repository
+                 &#42;/</font>
+                pathChangeType = <font color="#2A00FF">&#34;U&#34;</font>;
+            &#125;<b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (contentsStatus == SVNStatusType.CONFLICTED) &#123;
+                <font color="#3F7F5F">/&#42;
+                 &#42; The file item is in  a  state  of Conflict. That is, changes
+                 &#42; received from the repository during an update, overlap  with 
+                 &#42; local changes the user has in his working copy.
+                 &#42;/</font>
+                pathChangeType = <font color="#2A00FF">&#34;C&#34;</font>;
+            &#125; <b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (contentsStatus == SVNStatusType.MERGED) &#123;
+                <font color="#3F7F5F">/&#42;
+                 &#42; The file item was merGed (those  changes that came from  the 
+                 &#42; repository  did  not  overlap local changes and were  merged 
+                 &#42; into the file).
+                 &#42;/</font>
+                pathChangeType = <font color="#2A00FF">&#34;G&#34;</font>;
+            &#125;
+        &#125; <b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (action == SVNEventAction.UPDATE_EXTERNAL) &#123;
+            <font color="#3F7F5F">/&#42;for externals definitions&#42;/</font>
+            System.out.println(<font color="#2A00FF">&#34;Fetching external item into &#39;&#34;</font> + event.getFile().getAbsolutePath() + <font color="#2A00FF">&#34;&#39;&#34;</font>);
+            System.out.println(<font color="#2A00FF">&#34;External at revision &#34;</font> + event.getRevision());
+            <b><font color="#7F0055">return</font></b>;
+        &#125; <b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (action == SVNEventAction.UPDATE_COMPLETED) &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; Working copy update is completed. Prints out the revision.
+             &#42;/</font>
+            System.out.println(<font color="#2A00FF">&#34;At revision &#34;</font> + event.getRevision());
+            <b><font color="#7F0055">return</font></b>;
+        &#125; <b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (action == SVNEventAction.ADD)&#123;
+            System.out.println(<font color="#2A00FF">&#34;A     &#34;</font> + event.getPath());
+            <b><font color="#7F0055">return</font></b>;
+        &#125; <b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (action == SVNEventAction.DELETE)&#123;
+            System.out.println(<font color="#2A00FF">&#34;D     &#34;</font> + event.getPath());
+            <b><font color="#7F0055">return</font></b>;
+        &#125; <b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (action == SVNEventAction.LOCKED)&#123;
+            System.out.println(<font color="#2A00FF">&#34;L     &#34;</font> + event.getPath());
+            <b><font color="#7F0055">return</font></b>;
+        &#125; <b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (action == SVNEventAction.LOCK_FAILED)&#123;
+            System.out.println(<font color="#2A00FF">&#34;failed to lock    &#34;</font> + event.getPath());
+            <b><font color="#7F0055">return</font></b>;
+        &#125;
+
+        <font color="#3F7F5F">/&#42;
+         &#42; Status of properties of an item. SVNStatusType  also
+         &#42; contains information on the properties state.
+         &#42;/</font>
+        SVNStatusType propertiesStatus = event.getPropertiesStatus();
+        String propertiesChangeType = <font color="#2A00FF">&#34; &#34;</font>;
+        <b><font color="#7F0055">if</font></b> (propertiesStatus == SVNStatusType.CHANGED) &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; Properties were updated.
+             &#42;/</font>
+            propertiesChangeType = <font color="#2A00FF">&#34;U&#34;</font>;
+        &#125; <b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (propertiesStatus == SVNStatusType.CONFLICTED) &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; Properties are in conflict with the repository.
+             &#42;/</font>
+            propertiesChangeType = <font color="#2A00FF">&#34;C&#34;</font>;
+        &#125; <b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (propertiesStatus == SVNStatusType.MERGED) &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; Properties that came from the repository were  merged  with  the
+             &#42; local ones.
+             &#42;/</font>
+            propertiesChangeType = <font color="#2A00FF">&#34;G&#34;</font>;
+        &#125;
+
+        <font color="#3F7F5F">/&#42;
+         &#42; Gets the status of the lock.
+         &#42;/</font>
+        String lockLabel = <font color="#2A00FF">&#34; &#34;</font>;
+        SVNStatusType lockType = event.getLockStatus();
+        
+        <b><font color="#7F0055">if</font></b> (lockType == SVNStatusType.LOCK_UNLOCKED) &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; The lock is broken by someone.
+             &#42;/</font>
+            lockLabel = <font color="#2A00FF">&#34;B&#34;</font>;
+        &#125;
+        
+        System.out.println(pathChangeType + propertiesChangeType + lockLabel + <font color="#2A00FF">&#34;       &#34;</font> + event.getPath());
+    &#125;
+
+    <b><font color="#7F0055">public</font></b> <b><font color="#7F0055">void</font></b> checkCancelled() <b><font color="#7F0055">throws</font></b> SVNCancelException &#123;
+    &#125;
+&#125;
+
+...
+
+<b><font color="#7F0055">public</font></b> <b><font color="#7F0055">class</font></b> CommitEventHandler <b><font color="#7F0055">implements</font></b> ISVNEventHandler &#123;
+
+    <b><font color="#7F0055">public</font></b> <b><font color="#7F0055">void</font></b> handleEvent(SVNEvent event, <b><font color="#7F0055">double</font></b> progress) &#123;
+        SVNEventAction action = event.getAction();
+        <b><font color="#7F0055">if</font></b> (action == SVNEventAction.COMMIT_MODIFIED) &#123;
+            System.out.println(<font color="#2A00FF">&#34;Sending   &#34;</font> + event.getPath());
+        &#125; <b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (action == SVNEventAction.COMMIT_DELETED) &#123;
+            System.out.println(<font color="#2A00FF">&#34;Deleting   &#34;</font> + event.getPath());
+        &#125; <b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (action == SVNEventAction.COMMIT_REPLACED) &#123;
+            System.out.println(<font color="#2A00FF">&#34;Replacing   &#34;</font> + event.getPath());
+        &#125; <b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (action == SVNEventAction.COMMIT_DELTA_SENT) &#123;
+            System.out.println(<font color="#2A00FF">&#34;Transmitting file data....&#34;</font>);
+        &#125; <b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (action == SVNEventAction.COMMIT_ADDED) &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; Gets the MIME&#45;type of the item.
+             &#42;/</font>
+            String mimeType = event.getMimeType();
+            <b><font color="#7F0055">if</font></b> (SVNProperty.isBinaryMimeType(mimeType)) &#123;
+                <font color="#3F7F5F">/&#42;
+                 &#42; If the item is a binary file
+                 &#42;/</font>
+                System.out.println(<font color="#2A00FF">&#34;Adding  (bin)  &#34;</font> + event.getPath());
+            &#125; <b><font color="#7F0055">else</font></b> &#123;
+                System.out.println(<font color="#2A00FF">&#34;Adding         &#34;</font> + event.getPath());
+            &#125;
+        &#125;
+
+    &#125;
+    
+    <b><font color="#7F0055">public</font></b> <b><font color="#7F0055">void</font></b> checkCancelled() <b><font color="#7F0055">throws</font></b> SVNCancelException &#123;
+    &#125;
+&#125;
+
+...
+
+<b><font color="#7F0055">public</font></b> <b><font color="#7F0055">class</font></b> WCEventHandler <b><font color="#7F0055">implements</font></b> ISVNEventHandler &#123;
+
+    <b><font color="#7F0055">public</font></b> <b><font color="#7F0055">void</font></b> handleEvent(SVNEvent event, <b><font color="#7F0055">double</font></b> progress) &#123;
+        SVNEventAction action = event.getAction();
+
+        <b><font color="#7F0055">if</font></b> (action == SVNEventAction.ADD)&#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; The item is scheduled for addition.
+             &#42;/</font>
+            System.out.println(<font color="#2A00FF">&#34;A     &#34;</font> + event.getPath());
+            <b><font color="#7F0055">return</font></b>;
+        &#125;<b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (action == SVNEventAction.COPY)&#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; The  item  is  scheduled for addition  with history (copied,  in 
+             &#42; other words).
+             &#42;/</font>
+            System.out.println(<font color="#2A00FF">&#34;A  +  &#34;</font> + event.getPath());
+            <b><font color="#7F0055">return</font></b>;
+        &#125;<b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (action == SVNEventAction.DELETE)&#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; The item is scheduled for deletion. 
+             &#42;/</font>
+            System.out.println(<font color="#2A00FF">&#34;D     &#34;</font> + event.getPath());
+            <b><font color="#7F0055">return</font></b>;
+        &#125; <b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (action == SVNEventAction.LOCKED)&#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; The item is locked.
+             &#42;/</font>
+            System.out.println(<font color="#2A00FF">&#34;L     &#34;</font> + event.getPath());
+            <b><font color="#7F0055">return</font></b>;
+        &#125; <b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (action == SVNEventAction.LOCK_FAILED)&#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; Locking operation failed.
+             &#42;/</font>
+            System.out.println(<font color="#2A00FF">&#34;failed to lock    &#34;</font> + event.getPath());
+            <b><font color="#7F0055">return</font></b>;
+        &#125;
+    &#125;
+
+    <b><font color="#7F0055">public</font></b> <b><font color="#7F0055">void</font></b> checkCancelled() <b><font color="#7F0055">throws</font></b> SVNCancelException &#123;
+    &#125;
+&#125;
+</pre></div><p>There are also two auxiliary functions: one for handling errors
+
+</p><div class="java"><pre>
+    <b><font color="#7F0055">private</font></b> <b><font color="#7F0055">static</font></b> <b><font color="#7F0055">void</font></b> error(String message, Exception e)&#123;
+        System.err.println(message + (e != <b><font color="#7F0055">null</font></b> ? <font color="#2A00FF">&#34;: &#34;</font> + e.getMessage() : <font color="#2A00FF">&#34;&#34;</font>));
+        System.exit(1);
+    &#125;
+</pre></div><p>and one for creating some local dummy file/directory trees:
+
+</p><div class="java"><pre>
+    <b><font color="#7F0055">private</font></b> <b><font color="#7F0055">static</font></b> <b><font color="#7F0055">final</font></b> <b><font color="#7F0055">void</font></b> createLocalDir(File aNewDir, File&#91;&#93; localFiles, String&#91;&#93; fileContents)&#123;
+        <b><font color="#7F0055">if</font></b> (!aNewDir.mkdirs()) &#123;
+            error(<font color="#2A00FF">&#34;failed to create a new directory &#39;&#34;</font> + aNewDir.getAbsolutePath() + <font color="#2A00FF">&#34;&#39;.&#34;</font>, <b><font color="#7F0055">null</font></b>);
+        &#125;
+
+        <b><font color="#7F0055">for</font></b>(<b><font color="#7F0055">int</font></b> i=0; i &#60; localFiles.length; i++)&#123;
+	        File aNewFile = localFiles&#91;i&#93;;
+            <b><font color="#7F0055">try</font></b> &#123;
+	            <b><font color="#7F0055">if</font></b> (!aNewFile.createNewFile()) &#123;
+	                error(<font color="#2A00FF">&#34;failed to create a new file &#39;&#34;</font> + aNewFile.getAbsolutePath() + <font color="#2A00FF">&#34;&#39;.&#34;</font>, <b><font color="#7F0055">null</font></b>);
+	            &#125;
+	        &#125; <b><font color="#7F0055">catch</font></b> (IOException ioe) &#123;
+	            aNewFile.delete();
+	            error(<font color="#2A00FF">&#34;error while creating a new file &#39;&#34;</font> + aNewFile.getAbsolutePath() + <font color="#2A00FF">&#34;&#39;&#34;</font>, ioe);
+	        &#125;
+	
+	        String contents = <b><font color="#7F0055">null</font></b>;
+	        <b><font color="#7F0055">if</font></b>(i &#62; fileContents.length&#45;1)&#123;
+	            <b><font color="#7F0055">continue</font></b>;
+	        &#125;
+            contents = fileContents&#91;i&#93;;
+	        
+	        <font color="#3F7F5F">/&#42;
+	         &#42; writing a text into the file
+	         &#42;/</font>
+	        FileOutputStream fos = <b><font color="#7F0055">null</font></b>;
+	        <b><font color="#7F0055">try</font></b> &#123;
+	            fos = <b><font color="#7F0055">new</font></b> FileOutputStream(aNewFile);
+	            fos.write(contents.getBytes());
+	        &#125; <b><font color="#7F0055">catch</font></b> (FileNotFoundException fnfe) &#123;
+	            error(<font color="#2A00FF">&#34;the file &#39;&#34;</font> + aNewFile.getAbsolutePath() + <font color="#2A00FF">&#34;&#39; is not found&#34;</font>, fnfe);
+	        &#125; <b><font color="#7F0055">catch</font></b> (IOException ioe) &#123;
+	            error(<font color="#2A00FF">&#34;error while writing into the file &#39;&#34;</font> + aNewFile.getAbsolutePath() + <font color="#2A00FF">&#34;&#39;&#34;</font>, ioe);
+	        &#125; <b><font color="#7F0055">finally</font></b> &#123;
+	            <b><font color="#7F0055">if</font></b> (fos != <b><font color="#7F0055">null</font></b>) &#123;
+	                <b><font color="#7F0055">try</font></b> &#123;
+	                    fos.close();
+	                &#125; <b><font color="#7F0055">catch</font></b> (IOException ioe) &#123;
+	                    <font color="#3F7F5F">//
+</font>	                &#125;
+	            &#125;
+	        &#125;
+        &#125;
+    &#125;
+</pre></div><p>And now, step by step, we demonstrate using all these functions in a main program. Firts of all, we need some 
+initializations to be performed:
+
+</p><div class="java"><pre>
+...
+<b><font color="#7F0055">public</font></b> <b><font color="#7F0055">class</font></b> WorkingCopy &#123;
+
+    <b><font color="#7F0055">private</font></b> <b><font color="#7F0055">static</font></b> SVNClientManager ourClientManager;
+    <b><font color="#7F0055">private</font></b> <b><font color="#7F0055">static</font></b> ISVNEventHandler myCommitEventHandler;
+    <b><font color="#7F0055">private</font></b> <b><font color="#7F0055">static</font></b> ISVNEventHandler myUpdateEventHandler;
+    <b><font color="#7F0055">private</font></b> <b><font color="#7F0055">static</font></b> ISVNEventHandler myWCEventHandler;
+    
+    <b><font color="#7F0055">public</font></b> <b><font color="#7F0055">static</font></b> <b><font color="#7F0055">void</font></b> main(String&#91;&#93; args) <b><font color="#7F0055">throws</font></b> SVNException &#123;
+        FSRepositoryFactory.setup();
+
+        SVNURL repositoryURL = <b><font color="#7F0055">null</font></b>;
+        <b><font color="#7F0055">try</font></b> &#123;
+            repositoryURL = SVNURL.parseURIEncoded(<font color="#2A00FF">&#34;file://localhost/testRep&#34;</font>);
+        &#125; <b><font color="#7F0055">catch</font></b> (SVNException e) &#123;
+            <font color="#3F7F5F">//
+</font>        &#125;
+
+        String myWorkingCopyPath = <font color="#2A00FF">&#34;/MyWorkingCopy&#34;</font>;
+
+        String importDir = <font color="#2A00FF">&#34;/importDir&#34;</font>;
+        String importFile = importDir + <font color="#2A00FF">&#34;/importFile.txt&#34;</font>;
+        String importFileText = <font color="#2A00FF">&#34;This unversioned file is imported into a repository&#34;</font>;
+        
+        String newDir = <font color="#2A00FF">&#34;/newDir&#34;</font>;
+        String newFile = newDir + <font color="#2A00FF">&#34;/newFile.txt&#34;</font>;
+        String fileText = <font color="#2A00FF">&#34;This is a new file added to the working copy&#34;</font>;
+
+        <font color="#3F7F5F">/&#42;
+         &#42; That&#39;s where a new directory will be created
+         &#42;/</font>
+        SVNURL url = repositoryURL.appendPath(<font color="#2A00FF">&#34;MyRepos&#34;</font>, <b><font color="#7F0055">false</font></b>);
+        <font color="#3F7F5F">/&#42;
+         &#42; That&#39;s where &#39;/MyRepos&#39; will be copied to (branched)
+         &#42;/</font>
+        SVNURL copyURL = repositoryURL.appendPath(<font color="#2A00FF">&#34;MyReposCopy&#34;</font>, <b><font color="#7F0055">false</font></b>);
+
+        <font color="#3F7F5F">/&#42;
+         &#42; That&#39;s where a local directory will be imported into.
+         &#42; Note that it&#39;s not necessary that the &#39;/importDir&#39; directory must already
+         &#42; exist &#45; it will created if necessary. 
+         &#42;/</font>
+        SVNURL importToURL = url.appendPath(importDir, <b><font color="#7F0055">false</font></b>);
+              
+        <font color="#3F7F5F">/&#42;
+         &#42; Creating custom handlers that will process events
+         &#42;/</font>
+        myCommitEventHandler = <b><font color="#7F0055">new</font></b> CommitEventHandler();
+        
+        myUpdateEventHandler = <b><font color="#7F0055">new</font></b> UpdateEventHandler();
+        
+        myWCEventHandler = <b><font color="#7F0055">new</font></b> WCEventHandler();
+        
+        <font color="#3F7F5F">/&#42;
+         &#42; Creates a default run&#45;time configuration options driver. Default options 
+         &#42; created in this way use the Subversion run&#45;time configuration area (for 
+         &#42; instance, on a Windows platform it can be found in the &#39;%APPDATA%&#92;Subversion&#39; 
+         &#42; directory). 
+         &#42; 
+         &#42; readonly = true &#45; not to save  any configuration changes that can be done 
+         &#42; during the program run to a config file (config settings will only 
+         &#42; be read to initialize; to enable changes the readonly flag should be set
+         &#42; to false).
+         &#42; 
+         &#42; SVNWCUtil is a utility class that creates a default options driver.
+         &#42;/</font>
+        ISVNOptions options = SVNWCUtil.createDefaultOptions(<b><font color="#7F0055">true</font></b>);
+
+        ISVNAuthenticationManager authManager = SVNWCUtil.createDefaultAuthenticationManager();
+        
+        <font color="#3F7F5F">/&#42;
+         &#42; Creates an instance of SVNClientManager providing a default auth 
+         &#42; manager and an options driver
+         &#42;/</font>
+        ourClientManager = SVNClientManager.newInstance(options, authManager);
+        
+        <font color="#3F7F5F">/&#42;
+         &#42; Registers a commit event handler
+         &#42;/</font>
+        ourClientManager.getCommitClient().setEventHandler(myCommitEventHandler);
+        
+        <font color="#3F7F5F">/&#42;
+         &#42; Registers an update event handler
+         &#42;/</font>
+        ourClientManager.getUpdateClient().setEventHandler(myUpdateEventHandler);
+
+        <font color="#3F7F5F">/&#42;
+         &#42; Registers a WC event handler
+         &#42;/</font>
+        ourClientManager.getWCClient().setEventHandler(myWCEventHandler);
+        ...
+</pre></div><p>Then (listing main actions):<br />
+1.First we make a directory in our repository
+</p><p><img src="WC_Example1.png">
+</p><p>2. Then we import a local dummy directory into it
+</p><p><img src="WC_Example2.png">
+</p><p>3. Then we
+
+</p><ol><li>checkout <i>MyRepos</i>, 
+</li><li>locally add a new directory into the Working Copy and 
+</li><li>commit it to the repository
+</li></ol><p><img src="WC_Example3.png">
+</p><p>4. Then we copy <i>MyRepos</i> to a new location - <i>MyReposCopy</i>
+</p><p><img src="WC_Example4.png">
+</p><p>5. Then we 
+
+</p><ol><li>switch the Working Copy to <i>MyReposCopy</i>, 
+</li><li>locally delete <i>newDir</i> and 
+</li><li>commit it to the repository
+</li></ol><p><img src="WC_Example5.png">
+</p><p>The same steps (marked with numbers to the left) in code:
+
+</p><div class="java"><pre>
+
+        ...
+        <b><font color="#7F0055">long</font></b> committedRevision = &#45;1;
+        System.out.println(<font color="#2A00FF">&#34;Making a new directory at &#39;&#34;</font> + url + <font color="#2A00FF">&#34;&#39;...&#34;</font>);
+        <b><font color="#7F0055">try</font></b>&#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; creates a new version comtrolled directory in a repository and 
+             &#42; displays what revision the repository was committed to
+             &#42;/</font>
+1           committedRevision = makeDirectory(url, <font color="#2A00FF">&#34;making a new directory at &#39;&#34;</font> + url + <font color="#2A00FF">&#34;&#39;&#34;</font>).getNewRevision();
+        &#125;<b><font color="#7F0055">catch</font></b>(SVNException svne)&#123;
+            error(<font color="#2A00FF">&#34;error while making a new directory at &#39;&#34;</font> + url + <font color="#2A00FF">&#34;&#39;&#34;</font>, svne);
+        &#125;
+        System.out.println(<font color="#2A00FF">&#34;Committed to revision &#34;</font> + committedRevision);
+        System.out.println();
+
+        File anImportDir = <b><font color="#7F0055">new</font></b> File(importDir);
+        File anImportFile = <b><font color="#7F0055">new</font></b> File(anImportDir, SVNPathUtil.tail(importFile));
+        <font color="#3F7F5F">/&#42;
+         &#42; creates a new local directory &#45; &#39;./importDir&#39; and a new file &#45; 
+         &#42; &#39;./importDir/importFile.txt&#39; that will be imported into the repository
+         &#42; into the &#39;/MyRepos/importDir&#39; directory 
+         &#42;/</font>
+        createLocalDir(anImportDir, <b><font color="#7F0055">new</font></b> File&#91;&#93;&#123;anImportFile&#125;, <b><font color="#7F0055">new</font></b> String&#91;&#93;&#123;importFileText&#125;);
+        
+        System.out.println(<font color="#2A00FF">&#34;Importing a new directory into &#39;&#34;</font> + importToURL + <font color="#2A00FF">&#34;&#39;...&#34;</font>);
+        <b><font color="#7F0055">try</font></b>&#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; recursively imports an unversioned directory into a repository 
+             &#42; and displays what revision the repository was committed to
+             &#42;/</font>
+            <b><font color="#7F0055">boolean</font></b> isRecursive = <b><font color="#7F0055">true</font></b>;
+2           committedRevision = importDirectory(anImportDir, importToURL, <font color="#2A00FF">&#34;importing a new directory &#39;&#34;</font> + anImportDir.getAbsolutePath() + <font color="#2A00FF">&#34;&#39;&#34;</font>, isRecursive).getNewRevision();
+        &#125;<b><font color="#7F0055">catch</font></b>(SVNException svne)&#123;
+            error(<font color="#2A00FF">&#34;error while importing a new directory &#39;&#34;</font> + anImportDir.getAbsolutePath() + <font color="#2A00FF">&#34;&#39; into &#39;&#34;</font> + importToURL + <font color="#2A00FF">&#34;&#39;&#34;</font>, svne);
+        &#125;
+        System.out.println(<font color="#2A00FF">&#34;Committed to revision &#34;</font> + committedRevision);
+        System.out.println();
+        
+        
+        <font color="#3F7F5F">/&#42;
+         &#42; creates a local directory where the working copy will be checked out into
+         &#42;/</font>
+        File wcDir = <b><font color="#7F0055">new</font></b> File(myWorkingCopyPath);
+        <b><font color="#7F0055">if</font></b> (wcDir.exists()) &#123;
+            error(<font color="#2A00FF">&#34;the destination directory &#39;&#34;</font>
+                    + wcDir.getAbsolutePath() + <font color="#2A00FF">&#34;&#39; already exists!&#34;</font>, <b><font color="#7F0055">null</font></b>);
+        &#125;
+        wcDir.mkdirs();
+
+        System.out.println(<font color="#2A00FF">&#34;Checking out a working copy from &#39;&#34;</font> + url + <font color="#2A00FF">&#34;&#39;...&#34;</font>);
+        <b><font color="#7F0055">try</font></b> &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; recursively checks out a working copy from url into wcDir.
+             &#42; SVNRevision.HEAD means the latest revision to be checked out. 
+             &#42;/</font>
+3.1         checkout(url, SVNRevision.HEAD, wcDir, <b><font color="#7F0055">true</font></b>);
+        &#125; <b><font color="#7F0055">catch</font></b> (SVNException svne) &#123;
+            error(<font color="#2A00FF">&#34;error while checking out a working copy for the location &#39;&#34;</font>
+                            + url + <font color="#2A00FF">&#34;&#39;&#34;</font>, svne);
+        &#125;
+        System.out.println();
+        
+        <font color="#3F7F5F">/&#42;
+         &#42; recursively displays info for wcDir at the current working revision 
+         &#42; in the manner of &#39;svn info &#45;R&#39; command
+         &#42;/</font>
+        <b><font color="#7F0055">try</font></b> &#123;
+            showInfo(wcDir, SVNRevision.WORKING, <b><font color="#7F0055">true</font></b>);
+        &#125; <b><font color="#7F0055">catch</font></b> (SVNException svne) &#123;
+            error(<font color="#2A00FF">&#34;error while recursively getting info for the working copy at&#39;&#34;</font>
+                    + wcDir.getAbsolutePath() + <font color="#2A00FF">&#34;&#39;&#34;</font>, svne);
+        &#125;
+        System.out.println();
+
+        File aNewDir = <b><font color="#7F0055">new</font></b> File(wcDir, newDir);
+        File aNewFile = <b><font color="#7F0055">new</font></b> File(aNewDir, SVNPathUtil.tail(newFile));
+        <font color="#3F7F5F">/&#42;
+         &#42; creates a new local directory &#45; &#39;wcDir/newDir&#39; and a new file &#45; 
+         &#42; &#39;/MyWorkspace/newDir/newFile.txt&#39; 
+         &#42;/</font>
+        createLocalDir(aNewDir, <b><font color="#7F0055">new</font></b> File&#91;&#93;&#123;aNewFile&#125;, <b><font color="#7F0055">new</font></b> String&#91;&#93;&#123;fileText&#125;);
+        
+        System.out.println(<font color="#2A00FF">&#34;Recursively scheduling a new directory &#39;&#34;</font> + aNewDir.getAbsolutePath() + <font color="#2A00FF">&#34;&#39; for addition...&#34;</font>);
+        <b><font color="#7F0055">try</font></b> &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; recursively schedules aNewDir for addition
+             &#42;/</font>
+3.2         addEntry(aNewDir);
+        &#125; <b><font color="#7F0055">catch</font></b> (SVNException svne) &#123;
+            error(<font color="#2A00FF">&#34;error while recursively adding the directory &#39;&#34;</font>
+                    + aNewDir.getAbsolutePath() + <font color="#2A00FF">&#34;&#39;&#34;</font>, svne);
+        &#125;
+        System.out.println();
+
+        <b><font color="#7F0055">boolean</font></b> isRecursive = <b><font color="#7F0055">true</font></b>;
+        <b><font color="#7F0055">boolean</font></b> isRemote = <b><font color="#7F0055">true</font></b>;
+        <b><font color="#7F0055">boolean</font></b> isReportAll = <b><font color="#7F0055">false</font></b>;
+        <b><font color="#7F0055">boolean</font></b> isIncludeIgnored = <b><font color="#7F0055">true</font></b>;
+        <b><font color="#7F0055">boolean</font></b> isCollectParentExternals = <b><font color="#7F0055">false</font></b>;
+        System.out.println(<font color="#2A00FF">&#34;Status for &#39;&#34;</font> + wcDir.getAbsolutePath() + <font color="#2A00FF">&#34;&#39;:&#34;</font>);
+        <b><font color="#7F0055">try</font></b> &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; gets and shows status information for the WC directory.
+             &#42; status will be recursive on wcDir, will also cover the repository, 
+             &#42; won&#39;t cover unmodified entries, will disregard &#39;svn:ignore&#39; property 
+             &#42; ignores (if any), will ignore externals definitions.
+             &#42;/</font>
+            showStatus(wcDir, isRecursive, isRemote, isReportAll,
+                    isIncludeIgnored, isCollectParentExternals);
+        &#125; <b><font color="#7F0055">catch</font></b> (SVNException svne) &#123;
+            error(<font color="#2A00FF">&#34;error while recursively performing status for &#39;&#34;</font>
+                    + wcDir.getAbsolutePath() + <font color="#2A00FF">&#34;&#39;&#34;</font>, svne);
+        &#125;
+        System.out.println();
+
+        System.out.println(<font color="#2A00FF">&#34;Updating &#39;&#34;</font> + wcDir.getAbsolutePath() + <font color="#2A00FF">&#34;&#39;...&#34;</font>);
+        <b><font color="#7F0055">try</font></b> &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; recursively updates wcDir to the latest revision (SVNRevision.HEAD)
+             &#42;/</font>
+            update(wcDir, SVNRevision.HEAD, <b><font color="#7F0055">true</font></b>);
+        &#125; <b><font color="#7F0055">catch</font></b> (SVNException svne) &#123;
+            error(<font color="#2A00FF">&#34;error while recursively updating the working copy at &#39;&#34;</font>
+                    + wcDir.getAbsolutePath() + <font color="#2A00FF">&#34;&#39;&#34;</font>, svne);
+        &#125;
+        System.out.println(<font color="#2A00FF">&#34;&#34;</font>);
+        
+        System.out.println(<font color="#2A00FF">&#34;Committing changes for &#39;&#34;</font> + wcDir.getAbsolutePath() + <font color="#2A00FF">&#34;&#39;...&#34;</font>);
+        <b><font color="#7F0055">try</font></b> &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; commits changes in wcDir to the repository with not leaving items 
+             &#42; locked (if any) after the commit succeeds; this will add aNewDir &#38; 
+             &#42; aNewFile to the repository. 
+             &#42;/</font>
+3.3         committedRevision = commit(wcDir, <b><font color="#7F0055">false</font></b>, <font color="#2A00FF">&#34;&#39;/newDir&#39; with &#39;/newDir/newFile.txt&#39; were added&#34;</font>).getNewRevision();
+        &#125; <b><font color="#7F0055">catch</font></b> (SVNException svne) &#123;
+            error(<font color="#2A00FF">&#34;error while committing changes to the working copy at &#39;&#34;</font>
+                    + wcDir.getAbsolutePath()
+                    + <font color="#2A00FF">&#34;&#39;&#34;</font>, svne);
+        &#125;
+        System.out.println(<font color="#2A00FF">&#34;Committed to revision &#34;</font> + committedRevision);
+        System.out.println();
+
+        System.out
+                .println(<font color="#2A00FF">&#34;Locking (with stealing if the entry is already locked) &#39;&#34;</font>
+                        + aNewFile.getAbsolutePath() + <font color="#2A00FF">&#34;&#39;.&#34;</font>);
+        <b><font color="#7F0055">try</font></b> &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; locks aNewFile with stealing (if it has been already locked by someone
+             &#42; else), providing a lock comment
+             &#42;/</font>
+            lock(aNewFile, <b><font color="#7F0055">true</font></b>, <font color="#2A00FF">&#34;locking &#39;/newDir/newFile.txt&#39;&#34;</font>);
+        &#125; <b><font color="#7F0055">catch</font></b> (SVNException svne) &#123;
+            error(<font color="#2A00FF">&#34;error while locking the working copy file &#39;&#34;</font>
+                    + aNewFile.getAbsolutePath() + <font color="#2A00FF">&#34;&#39;&#34;</font>, svne);
+        &#125;
+        System.out.println();
+
+        System.out.println(<font color="#2A00FF">&#34;Status for &#39;&#34;</font> + wcDir.getAbsolutePath() + <font color="#2A00FF">&#34;&#39;:&#34;</font>);
+        <b><font color="#7F0055">try</font></b> &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; displays status once again to see the file is really locked
+             &#42;/</font>
+            showStatus(wcDir, isRecursive, isRemote, isReportAll,
+                    isIncludeIgnored, isCollectParentExternals);
+        &#125; <b><font color="#7F0055">catch</font></b> (SVNException svne) &#123;
+            error(<font color="#2A00FF">&#34;error while recursively performing status for &#39;&#34;</font>
+                    + wcDir.getAbsolutePath() + <font color="#2A00FF">&#34;&#39;&#34;</font>, svne);
+        &#125;
+        System.out.println();
+
+        System.out.println(<font color="#2A00FF">&#34;Copying &#39;&#34;</font> + url + <font color="#2A00FF">&#34;&#39; to &#39;&#34;</font> + copyURL + <font color="#2A00FF">&#34;&#39;...&#34;</font>);
+        <b><font color="#7F0055">try</font></b> &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; makes a branch of url at copyURL &#45; that is URL&#45;&#62;URL copying
+             &#42; with history
+             &#42;/</font>
+4           committedRevision = copy(url, copyURL, <b><font color="#7F0055">false</font></b>,
+                    <font color="#2A00FF">&#34;remotely copying &#39;&#34;</font> + url + <font color="#2A00FF">&#34;&#39; to &#39;&#34;</font> + copyURL + <font color="#2A00FF">&#34;&#39;&#34;</font>)
+                    .getNewRevision();
+        &#125; <b><font color="#7F0055">catch</font></b> (SVNException svne) &#123;
+            error(<font color="#2A00FF">&#34;error while copying &#39;&#34;</font> + url + <font color="#2A00FF">&#34;&#39; to &#39;&#34;</font>
+                    + copyURL + <font color="#2A00FF">&#34;&#39;&#34;</font>, svne);
+        &#125;
+       <font color="#3F7F5F">/&#42;
+        &#42; displays what revision the repository was committed to
+        &#42;/</font>
+        System.out.println(<font color="#2A00FF">&#34;Committed to revision &#34;</font> + committedRevision);
+        System.out.println();
+
+        System.out.println(<font color="#2A00FF">&#34;Switching &#39;&#34;</font> + wcDir.getAbsolutePath() + <font color="#2A00FF">&#34;&#39; to &#39;&#34;</font>
+                + copyURL + <font color="#2A00FF">&#34;&#39;...&#34;</font>);
+        <b><font color="#7F0055">try</font></b> &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; recursively switches wcDir to copyURL in the latest revision 
+             &#42; (SVNRevision.HEAD)
+             &#42;/</font>
+5.1         switchToURL(wcDir, copyURL, SVNRevision.HEAD, <b><font color="#7F0055">true</font></b>);
+        &#125; <b><font color="#7F0055">catch</font></b> (SVNException svne) &#123;
+            error(<font color="#2A00FF">&#34;error while switching &#39;&#34;</font>
+                    + wcDir.getAbsolutePath() + <font color="#2A00FF">&#34;&#39; to &#39;&#34;</font> + copyURL + <font color="#2A00FF">&#34;&#39;&#34;</font>, svne);
+        &#125;
+        System.out.println();
+
+        <font color="#3F7F5F">/&#42;
+         &#42; recursively displays info for the working copy once again to see
+         &#42; it was really switched to a new URL
+         &#42;/</font>
+        <b><font color="#7F0055">try</font></b> &#123;
+            showInfo(wcDir, SVNRevision.WORKING, <b><font color="#7F0055">true</font></b>);
+        &#125; <b><font color="#7F0055">catch</font></b> (SVNException svne) &#123;
+            error(<font color="#2A00FF">&#34;error while recursively getting info for the working copy at&#39;&#34;</font>
+                    + wcDir.getAbsolutePath() + <font color="#2A00FF">&#34;&#39;&#34;</font>, svne);
+        &#125;
+        System.out.println();
+
+        System.out.println(<font color="#2A00FF">&#34;Scheduling &#39;&#34;</font> + aNewDir.getAbsolutePath() + <font color="#2A00FF">&#34;&#39; for deletion ...&#34;</font>);
+        <b><font color="#7F0055">try</font></b> &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; schedules aNewDir for deletion (with forcing)
+             &#42;/</font>
+5.2         delete(aNewDir, <b><font color="#7F0055">true</font></b>);
+        &#125; <b><font color="#7F0055">catch</font></b> (SVNException svne) &#123;
+            error(<font color="#2A00FF">&#34;error while schediling &#39;&#34;</font>
+                    + wcDir.getAbsolutePath() + <font color="#2A00FF">&#34;&#39; for deletion&#34;</font>, svne);
+        &#125;
+        System.out.println();
+
+        System.out.println(<font color="#2A00FF">&#34;Status for &#39;&#34;</font> + wcDir.getAbsolutePath() + <font color="#2A00FF">&#34;&#39;:&#34;</font>);
+        <b><font color="#7F0055">try</font></b> &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; recursively displays status once more to see whether aNewDir
+             &#42; was really scheduled for deletion  
+             &#42;/</font>
+            showStatus(wcDir, isRecursive, isRemote, isReportAll,
+                    isIncludeIgnored, isCollectParentExternals);
+        &#125; <b><font color="#7F0055">catch</font></b> (SVNException svne) &#123;
+            error(<font color="#2A00FF">&#34;error while recursively performing status for &#39;&#34;</font>
+                    + wcDir.getAbsolutePath() + <font color="#2A00FF">&#34;&#39;&#34;</font>, svne);
+        &#125;
+        System.out.println();
+
+        System.out.println(<font color="#2A00FF">&#34;Committing changes for &#39;&#34;</font> + wcDir.getAbsolutePath() + <font color="#2A00FF">&#34;&#39;...&#34;</font>);
+        <b><font color="#7F0055">try</font></b> &#123;
+            <font color="#3F7F5F">/&#42;
+             &#42; lastly commits changes in wcDir to the repository; all items that
+             &#42; were locked by the user (if any) will be unlocked after the commit 
+             &#42; succeeds; this commit will remove aNewDir from the repository. 
+             &#42;/</font>
+5.3         committedRevision = commit(
+                    wcDir,
+                    <b><font color="#7F0055">false</font></b>,
+                    <font color="#2A00FF">&#34;deleting &#39;&#34;</font> + aNewDir.getAbsolutePath()
+                            + <font color="#2A00FF">&#34;&#39; from the filesystem as well as from the repository&#34;</font>).getNewRevision();
+        &#125; <b><font color="#7F0055">catch</font></b> (SVNException svne) &#123;
+            error(<font color="#2A00FF">&#34;error while committing changes to the working copy &#39;&#34;</font>
+                    + wcDir.getAbsolutePath()
+                    + <font color="#2A00FF">&#34;&#39;&#34;</font>, svne);
+        &#125;
+        System.out.println(<font color="#2A00FF">&#34;Committed to revision &#34;</font> + committedRevision);
+        System.exit(0);
+    &#125;
+</pre></div><p>And if the program runs successfully you&#39;ll see in your console the following output:
+</p><pre> Making a new directory at &#39;file:///G:/testRep/MyRepos&#39;...
+ Committed to revision 5
+
+ Importing a new directory into &#39;file:///G:/testRep/MyRepos/importDir&#39;...
+ Adding         importFile.txt
+ Committed to revision 6
+
+ Checking out a working copy from &#39;file:///G:/testRep/MyRepos&#39;...
+ A         importDir
+ AU        importDir/importFile.txt
+ At revision 6
+
+ -----------------INFO-----------------
+ Local Path: G:\MyWorkingCopy
+ URL: file:///G:/testRep/MyRepos
+ Repository UUID: bcf16199-7f9e-be47-a3e5-e4d194b5d0ae
+ Revision: 6
+ Node Kind: dir
+ Schedule: normal
+ Last Changed Author: userName
+ Last Changed Revision: 6
+ Last Changed Date: Fri Jul 07 16:19:37 NOVST 2006
+ -----------------INFO-----------------
+ Local Path: G:\MyWorkingCopy\importDir
+ URL: file:///G:/testRep/MyRepos/importDir
+ Repository UUID: bcf16199-7f9e-be47-a3e5-e4d194b5d0ae
+ Revision: 6
+ Node Kind: dir
+ Schedule: normal
+ Last Changed Author: userName
+ Last Changed Revision: 6
+ Last Changed Date: Fri Jul 07 16:19:37 NOVST 2006
+ -----------------INFO-----------------
+ Local Path: G:\MyWorkingCopy\importDir\importFile.txt
+ URL: file:///G:/testRep/MyRepos/importDir/importFile.txt
+ Repository UUID: bcf16199-7f9e-be47-a3e5-e4d194b5d0ae
+ Revision: 6
+ Node Kind: file
+ Schedule: normal
+ Last Changed Author: userName
+ Last Changed Revision: 6
+ Last Changed Date: Fri Jul 07 16:19:37 NOVST 2006
+ Properties Last Updated: Fri Jul 07 16:19:38 NOVST 2006
+ Text Last Updated: Fri Jul 07 16:19:37 NOVST 2006
+ Checksum: 75e9e68e21ae4453f318424738aef57e
+ 
+ Recursively scheduling a new directory &#39;G:\MyWorkingCopy\newDir&#39; for addition...
+ A     newDir
+ A     newDir/newFile.txt   
+ 
+ Status for &#39;G:\MyWorkingCopy&#39;:
+ A          0     ?    ?                               G:\MyWorkingCopy\newDir\newFile.txt
+ A          0     ?    ?                               G:\MyWorkingCopy\newDir
+ 
+ Updating &#39;G:\MyWorkingCopy&#39;...
+ At revision 6 
+ 
+ Committing changes for &#39;G:\MyWorkingCopy&#39;...
+ Adding         newDir
+ Adding         newDir/newFile.txt
+ Transmitting file data....
+ Committed to revision 7
+ 
+ Locking (with stealing if the entry is already locked) &#39;G:\MyWorkingCopy\newDir\newFile.txt&#39;.
+ L     newFile.txt
+ 
+ Status for &#39;G:\MyWorkingCopy&#39;:
+      K     7     7     userName                        G:\MyWorkingCopy\newDir\newFile.txt
+ 
+ Copying &#39;file:///G:/testRep/MyRepos&#39; to &#39;file:///G:/testRep/MyReposCopy&#39;...
+ Committed to revision 8
+ 
+ Switching &#39;G:\MyWorkingCopy&#39; to &#39;file:///G:/testRep/MyReposCopy&#39;...
+   B       newDir/newFile.txt
+ At revision 8
+ 
+ -----------------INFO-----------------
+ Local Path: G:\MyWorkingCopy
+ URL: file:///G:/testRep/MyReposCopy
+ Repository UUID: bcf16199-7f9e-be47-a3e5-e4d194b5d0ae
+ Revision: 8
+ Node Kind: dir
+ Schedule: normal
+ Last Changed Author: userName
+ Last Changed Revision: 8
+ Last Changed Date: Fri Jul 07 16:19:42 NOVST 2006
+ -----------------INFO-----------------
+ Local Path: G:\MyWorkingCopy\importDir
+ URL: file:///G:/testRep/MyReposCopy/importDir
+ Repository UUID: bcf16199-7f9e-be47-a3e5-e4d194b5d0ae
+ Revision: 8
+ Node Kind: dir
+ Schedule: normal
+ Last Changed Author: userName
+ Last Changed Revision: 6
+ Last Changed Date: Fri Jul 07 16:19:37 NOVST 2006
+ -----------------INFO-----------------
+ Local Path: G:\MyWorkingCopy\importDir\importFile.txt
+ URL: file:///G:/testRep/MyReposCopy/importDir/importFile.txt
+ Repository UUID: bcf16199-7f9e-be47-a3e5-e4d194b5d0ae
+ Revision: 8
+ Node Kind: file
+ Schedule: normal
+ Last Changed Author: userName
+ Last Changed Revision: 6
+ Last Changed Date: Fri Jul 07 16:19:37 NOVST 2006
+ Properties Last Updated: Fri Jul 07 16:19:38 NOVST 2006
+ Text Last Updated: Fri Jul 07 16:19:37 NOVST 2006
+ Checksum: 75e9e68e21ae4453f318424738aef57e
+ -----------------INFO-----------------
+ Local Path: G:\MyWorkingCopy\newDir
+ URL: file:///G:/testRep/MyReposCopy/newDir
+ Repository UUID: bcf16199-7f9e-be47-a3e5-e4d194b5d0ae
+ Revision: 8
+ Node Kind: dir
+ Schedule: normal
+ Last Changed Author: userName
+ Last Changed Revision: 7
+ Last Changed Date: Fri Jul 07 16:19:41 NOVST 2006
+ -----------------INFO-----------------
+ Local Path: G:\MyWorkingCopy\newDir\newFile.txt
+ URL: file:///G:/testRep/MyReposCopy/newDir/newFile.txt
+ Repository UUID: bcf16199-7f9e-be47-a3e5-e4d194b5d0ae
+ Revision: 8
+ Node Kind: file
+ Schedule: normal
+ Last Changed Author: userName
+ Last Changed Revision: 7
+ Last Changed Date: Fri Jul 07 16:19:41 NOVST 2006
+ Properties Last Updated: Fri Jul 07 16:19:40 NOVST 2006
+ Text Last Updated: Fri Jul 07 16:19:40 NOVST 2006
+ Checksum: 023b67e9660b2faabaf84b10ba32c6cf 
+ 
+ Scheduling &#39;G:\MyWorkingCopy\newDir&#39; for deletion ...
+ D     newDir/newFile.txt
+ D     newDir
+ 
+ Status for &#39;G:\MyWorkingCopy&#39;:
+ D          8     7     userName                        G:\MyWorkingCopy\newDir\newFile.txt
+ D          8     7     userName                        G:\MyWorkingCopy\newDir
+ 
+ Committing changes for &#39;G:\MyWorkingCopy&#39;...
+ Deleting   newDir
+ Committed to revisio</pre><hr/><p>Download the full sources of this example program:
+
+</p><ol><li><span class="nobr"><a href="http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples/wc/WorkingCopy.java" class="external" title="http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples/wc/WorkingCopy.java">WorkingCopy.java</a></span>
+</li><li><span class="nobr"><a href="http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples/wc/CommitEventHandler.java" class="external" title="http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples/wc/CommitEventHandler.java">CommitEventHandler.java</a></span>
+</li><li><span class="nobr"><a href="http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples/wc/InfoHandler.java" class="external" title="http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples/wc/InfoHandler.java">InfoHandler.java</a></span>
+</li><li><span class="nobr"><a href="http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples/wc/StatusHandler.java" class="external" title="http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples/wc/StatusHandler.java">StatusHandler.java</a></span>
+</li><li><span class="nobr"><a href="http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples/wc/UpdateEventHandler.java" class="external" title="http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples/wc/UpdateEventHandler.java">UpdateEventHandler.java</a></span>
+</li><li><span class="nobr"><a href="http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples/wc/WCEventHandler.java" class="external" title="http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples/wc/WCEventHandler.java">WCEventHandler.java</a></span>
+</li></ol><p><br />
+<br />
+<a href="Replicating_An_Existing_Repository.html"><<</a> | <a href="Managing_repository_With_JavaSVN.html">List</a>
+
+</p>   
+
+</div>
+</div>
+</body>
+</html>
