@@ -352,6 +352,7 @@ public class SVNCopyClient extends SVNBasicClient {
             }
             SVNErrorMessage nestedErr = e.getErrorMessage();
             SVNErrorMessage err = SVNErrorMessage.create(nestedErr.getErrorCode(), "Commit failed (details follow):");
+            err.setChildErrorMessage(nestedErr);
             SVNErrorManager.error(err, e);
         }
         if (result != null && result.getNewRevision() >= 0) { 
