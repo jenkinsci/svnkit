@@ -19,6 +19,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+
 
 /**
  * @version 1.0
@@ -85,10 +90,20 @@ public class SVNPathUtil {
         return true; 
     }
     
-    public static String concatToAbs(String f, String s) {
+    public static String concatToAbs(String f, String s) throws SVNException {
         f = f == null || "".equals(f) ? "/" : f;
         s = s == null ? "" : s;
         
+        if (!isCanonical(f)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_PATH_SYNTAX, "path component ''{0}'' is not canonical", f);
+            SVNErrorManager.error(err);
+        }
+
+        if (!isCanonical(s)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_PATH_SYNTAX, "path component ''{0}'' is not canonical", s);
+            SVNErrorManager.error(err);
+        }
+
         if("/".equals(f)){
             if(s.startsWith("/")){
                 return s;
@@ -96,6 +111,10 @@ public class SVNPathUtil {
             return "/" + s;
         }
         return append(f, s);
+    }
+    
+    public static boolean isCanonical(String path) {
+        return (path != null && !(path.length() == 1 && path.charAt(0) == '.') && (path.length() <= 1 || path.charAt(path.length() - 1) != '/'));
     }
     
     public static String removeTail(String path) {

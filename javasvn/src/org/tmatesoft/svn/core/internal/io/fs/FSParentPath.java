@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 /**
@@ -88,7 +89,7 @@ public class FSParentPath {
         myCopyInheritance = new FSCopyInheritance(FSCopyInheritance.COPY_ID_INHERIT_UNKNOWN, null);
     }
 
-    public String getAbsPath() {
+    public String getAbsPath() throws SVNException {
         String pathSoFar = "/";
         if (myParent != null) {
             pathSoFar = myParent.getAbsPath();
