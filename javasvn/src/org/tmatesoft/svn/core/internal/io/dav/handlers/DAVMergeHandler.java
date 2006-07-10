@@ -17,6 +17,8 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
@@ -100,6 +102,7 @@ public class DAVMergeHandler extends BasicDAVHandler {
     private Map myPathsMap;
 
     private static final DAVElement RESPONSE = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "response");
+    private static final DAVElement POST_COMMIT_ERROR = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "post-commit-err");
 
     private String myAuthor;
     private Date myCommitDate;
@@ -109,7 +112,8 @@ public class DAVMergeHandler extends BasicDAVHandler {
     private String myVersionPath;
     
     private DAVElement myResourceType;
-    private SVNCommitInfo myCommitInfo;    
+    private SVNCommitInfo myCommitInfo;
+    private SVNErrorMessage myPostCommitError;    
     
     public DAVMergeHandler(ISVNWorkspaceMediator mediator, Map pathsMap) {
         myMediator = mediator;
@@ -135,7 +139,9 @@ public class DAVMergeHandler extends BasicDAVHandler {
     }
 
     protected void endElement(DAVElement parent, DAVElement element,  StringBuffer cdata) throws SVNException {
-        if (element == DAVElement.HREF) {
+        if (element == POST_COMMIT_ERROR) {
+            myPostCommitError = SVNErrorMessage.create(SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED, cdata.toString(), SVNErrorMessage.TYPE_WARNING);
+        } else if (element == DAVElement.HREF) {
             if (parent == RESPONSE) {
                 myRepositoryPath = cdata.toString();
                 myRepositoryPath = SVNEncodingUtil.uriDecode(myRepositoryPath);
@@ -149,7 +155,7 @@ public class DAVMergeHandler extends BasicDAVHandler {
         } else if (element == RESPONSE) {
             // all resource info is collected, do something.
             if (myResourceType == DAVElement.BASELINE) {
-                myCommitInfo = new SVNCommitInfo(myRevision, myAuthor, myCommitDate);
+                myCommitInfo = new SVNCommitInfo(myRevision, myAuthor, myCommitDate, myPostCommitError);
             } else {
                 String reposPath = SVNEncodingUtil.uriEncode(myRepositoryPath);
                 String path = (String) myPathsMap.get(reposPath);

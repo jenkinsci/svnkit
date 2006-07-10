@@ -162,7 +162,7 @@ public class FSHooks {
     }
 
     public static void runPostCommitHook(File reposRootDir, long committedRevision) throws SVNException {
-        runCommitHook(reposRootDir, SVN_REPOS_HOOK_POST_COMMIT, String.valueOf(committedRevision), false);
+        runCommitHook(reposRootDir, SVN_REPOS_HOOK_POST_COMMIT, String.valueOf(committedRevision), true);
     }
 
     private static void runCommitHook(File reposRootDir, String hookName, String secondArg, boolean readErrorStream) throws SVNException {

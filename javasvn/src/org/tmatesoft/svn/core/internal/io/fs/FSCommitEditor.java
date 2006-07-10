@@ -11,37 +11,37 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
-import java.io.OutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.Iterator;
-import java.util.Stack;
-import java.io.File;
+import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Stack;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.io.ISVNEditor;
-import org.tmatesoft.svn.core.io.ISVNLockHandler;
-import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
-
+import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+ 
 /**
  * @version 1.0
  * @author TMate Software Ltd.
@@ -652,21 +652,20 @@ public class FSCommitEditor implements ISVNEditor {
         }
 
         long committedRev = -1;
+        SVNErrorMessage errorMessage = null;
+        committedRev = finalizeCommit();
         try {
-            committedRev = finalizeCommit();
+           FSHooks.runPostCommitHook(myFSFS.getRepositoryRoot(), committedRev);
         } catch (SVNException svne) {
-            // ignore post-commit hook failure
-            if (svne.getErrorMessage().getErrorCode() != SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED) {
-                throw svne;
-            }
+            errorMessage = SVNErrorMessage.create(SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED, svne.getErrorMessage().getFullMessage(), SVNErrorMessage.TYPE_WARNING);
         }
 
         Map revProps = myFSFS.getRevisionProperties(committedRev);
         String dateProp = (String) revProps.get(SVNRevisionProperty.DATE);
         String authorProp = (String) revProps.get(SVNRevisionProperty.AUTHOR);
         Date datestamp = dateProp != null ? SVNTimeUtil.parseDateString(dateProp) : null;
-        SVNCommitInfo info = new SVNCommitInfo(committedRev, authorProp, datestamp);
-
+        
+        SVNCommitInfo info = new SVNCommitInfo(committedRev, authorProp, datestamp, errorMessage);
         releaseLocks();
         myRepository.closeRepository();
         return info;
@@ -690,15 +689,7 @@ public class FSCommitEditor implements ISVNEditor {
 
     private long finalizeCommit() throws SVNException {
         FSHooks.runPreCommitHook(myFSFS.getRepositoryRoot(), myTxn.getTxnId());
-
-        long newRevision = commitTxn();
-
-        try {
-            FSHooks.runPostCommitHook(myFSFS.getRepositoryRoot(), newRevision);
-        } catch (SVNException svne) {
-            // ignore post-commit hook failure
-        }
-        return newRevision;
+        return commitTxn();
     }
 
     private long commitTxn() throws SVNException {

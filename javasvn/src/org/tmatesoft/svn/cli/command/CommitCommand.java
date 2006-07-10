@@ -46,6 +46,10 @@ public class CommitCommand extends SVNCommand {
             out.println();
             out.println("Committed revision " + result.getNewRevision() + ".");
         }
+        if (result.getErrorMessage() != null && result.getErrorMessage().getErrorCode() == SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED) {
+            out.println();
+            out.println(result.getErrorMessage());
+        }
     }
 
     private void checkEditorCommand() throws SVNException {

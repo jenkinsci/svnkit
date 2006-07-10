@@ -279,9 +279,10 @@ public class SVNErrorMessage implements Serializable {
      */
     public String toString() {
         StringBuffer line = new StringBuffer();
-        line.append("svn: ");
         if (getType() == TYPE_WARNING) {
-            line.append("warning: ");
+            line.append("Warning: ");
+        } else {
+            line.append("svn: ");
         }
         if ("".equals(myMessage)) {
             line.append(myErrorCode.toString());

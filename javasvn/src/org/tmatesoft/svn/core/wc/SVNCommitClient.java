@@ -574,7 +574,7 @@ public class SVNCommitClient extends SVNBasicClient {
     public SVNCommitInfo doCommit(SVNCommitPacket commitPacket, boolean keepLocks, String commitMessage) throws SVNException {
         SVNCommitInfo[] info = doCommit(new SVNCommitPacket[] {commitPacket}, keepLocks, commitMessage);
         if (info != null && info.length > 0) {
-            if (info[0].getErrorMessage() != null) {
+            if (info[0].getErrorMessage() != null && info[0].getErrorMessage().getErrorCode() != SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED) {
                 SVNErrorManager.error(info[0].getErrorMessage());
             }
             return info[0];
