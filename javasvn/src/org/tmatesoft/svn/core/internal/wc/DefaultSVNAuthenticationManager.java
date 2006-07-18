@@ -54,6 +54,10 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     private boolean myIsAuthenticationForced;
 
     public DefaultSVNAuthenticationManager(File configDirectory, boolean storeAuth, String userName, String password) {
+        this(configDirectory, storeAuth, userName, password, null, null);
+    }
+
+    public DefaultSVNAuthenticationManager(File configDirectory, boolean storeAuth, String userName, String password, File privateKey, String passphrase) {
         password = password == null ? "" : password;
 
         myIsStoreAuth = storeAuth;
@@ -63,7 +67,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         }   
         
         myProviders = new ISVNAuthenticationProvider[4];
-        myProviders[0] = createDefaultAuthenticationProvider(userName, password, myIsStoreAuth);
+        myProviders[0] = createDefaultAuthenticationProvider(userName, password, privateKey, passphrase, myIsStoreAuth);
         myProviders[1] = createRuntimeAuthenticationProvider();
         myProviders[2] = createCacheAuthenticationProvider(new File(myConfigDirectory, "auth"));
     }
@@ -282,8 +286,8 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         return null;
     }
     
-    protected ISVNAuthenticationProvider createDefaultAuthenticationProvider(String userName, String password, boolean allowSave) {
-        return new DumbAuthenticationProvider(userName, password, allowSave);
+    protected ISVNAuthenticationProvider createDefaultAuthenticationProvider(String userName, String password, File privateKey, String passphrase, boolean allowSave) {
+        return new DumbAuthenticationProvider(userName, password, privateKey, passphrase, allowSave);
     }
     protected ISVNAuthenticationProvider createRuntimeAuthenticationProvider() {
         return new CacheAuthenticationProvider();
@@ -313,10 +317,14 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         private String myUserName;
         private String myPassword;
         private boolean myIsStore;
+        private String myPassphrase;
+        private File myPrivateKey;
         
-        public DumbAuthenticationProvider(String userName, String password, boolean store) {
+        public DumbAuthenticationProvider(String userName, String password, File privateKey, String passphrase, boolean store) {
             myUserName = userName;
             myPassword = password;
+            myPrivateKey = privateKey;
+            myPassphrase = passphrase;
             myIsStore = store;
         }
         public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
@@ -325,6 +333,9 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                     SVNSSHAuthentication sshAuth = getDefaultSSHAuthentication();
                     if (myUserName == null || "".equals(myUserName.trim())) {
                         return sshAuth;
+                    }
+                    if (myPrivateKey != null) {
+                        return new SVNSSHAuthentication(myUserName, myPrivateKey, myPassphrase, sshAuth != null ? sshAuth.getPortNumber() : -1, myIsStore);
                     }
                     return new SVNSSHAuthentication(myUserName, myPassword, sshAuth != null ? sshAuth.getPortNumber() : -1, myIsStore);
                 } else if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {

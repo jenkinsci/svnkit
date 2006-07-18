@@ -44,15 +44,15 @@ public class EclipseSVNAuthenticationManager extends DefaultSVNAuthenticationMan
         }
     }
 
-    public EclipseSVNAuthenticationManager(File configDirectory, boolean storeAuth, String userName, String password) {
-        super(configDirectory, storeAuth, userName, password);
+    public EclipseSVNAuthenticationManager(File configDirectory, boolean storeAuth, String userName, String password, File keyFile, String passphrase) {
+        super(configDirectory, storeAuth, userName, password, keyFile, passphrase);
     }
 
     protected ISVNAuthenticationProvider createCacheAuthenticationProvider(File authDir) {
         return new KeyringAuthenticationProvider();
     }
 
-    protected ISVNAuthenticationProvider createDefaultAuthenticationProvider(String userName, String password, boolean allowSave) {
+    protected ISVNAuthenticationProvider createDefaultAuthenticationProvider(String userName, String password, File privateKey, String passphrase, boolean allowSave) {
         return new ISVNAuthenticationProvider() {
             public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
                 return null;

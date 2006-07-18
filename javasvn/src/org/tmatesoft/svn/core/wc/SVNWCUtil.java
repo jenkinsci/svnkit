@@ -145,13 +145,34 @@ public class SVNWCUtil {
      *                    and servers configuration driver interface
      */
     public static ISVNAuthenticationManager createDefaultAuthenticationManager(File configDir, String userName, String password, boolean storeAuth) {
+        return createDefaultAuthenticationManager(configDir, userName, password, null, null, storeAuth);
+    }
+    
+    /**
+     * Creates a default authentication manager that uses the provided
+     * configuration directory and user's credentials. The <code>storeAuth</code>
+     * parameter affects on using the auth storage.
+     *
+     *
+     * @param  configDir  a new location of the run-time configuration
+     *                    area
+     * @param  userName   a user's name
+     * @param  password   a user's password
+     * @param  keyFile    a private key file for SSH session
+     * @param  passPhrase a passphrase that goes with the key file.
+     * @param  storeAuth  if <span class="javakeyword">true</span> then
+     *                    the auth storage is enabled, otherwise disabled
+     * @return            a default implementation of the credentials
+     *                    and servers configuration driver interface
+     */
+    public static ISVNAuthenticationManager createDefaultAuthenticationManager(File configDir, String userName, String password, File privateKey, String passphrase, boolean storeAuth) {
         // check whether we are running inside Eclipse.
         if (isEclipse()) {
             // use reflection to allow compilation when there is no Eclipse.
             try {
                 Class managerClass = SVNWCUtil.class.getClassLoader().loadClass(ECLIPSE_AUTH_MANAGER_CLASSNAME);
                 if (managerClass != null) {
-                    Constructor method = managerClass.getConstructor(new Class[] {File.class, Boolean.TYPE, String.class, String.class});
+                    Constructor method = managerClass.getConstructor(new Class[] {File.class, Boolean.TYPE, String.class, String.class, File.class, String.class});
                     if (method != null) {
                         return (ISVNAuthenticationManager) method.newInstance(new Object[] {configDir, storeAuth ? Boolean.TRUE : Boolean.FALSE, userName, password});
                     }
@@ -159,9 +180,9 @@ public class SVNWCUtil {
             } catch (Throwable e) {
             } 
         }
-        return new DefaultSVNAuthenticationManager(configDir, storeAuth, userName, password);
+        return new DefaultSVNAuthenticationManager(configDir, storeAuth, userName, password, privateKey, passphrase);
     }
-    
+
     /**
      * Creates a default run-time configuration options driver that uses
      * the provided configuration directory.
