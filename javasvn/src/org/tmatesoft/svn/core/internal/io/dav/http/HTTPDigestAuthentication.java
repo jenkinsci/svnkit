@@ -18,7 +18,6 @@ import java.util.StringTokenizer;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 /**
@@ -35,14 +34,6 @@ class HTTPDigestAuthentication extends HTTPAuthentication {
 
     private String myCnonce;
     private String myQop;
-
-    public HTTPDigestAuthentication(SVNPasswordAuthentication credentials) {
-        super(credentials);
-    }
-
-    protected HTTPDigestAuthentication (String name, String password) {
-        super(name, password);
-    }
 
     protected HTTPDigestAuthentication () {
         super();

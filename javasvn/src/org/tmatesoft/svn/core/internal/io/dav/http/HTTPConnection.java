@@ -432,12 +432,11 @@ class HTTPConnection implements IHTTPConnection {
                     authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, realm, request.getErrorMessage(), httpAuth);
                     httpAuth = authManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm, myRepository.getLocation());
                 }
-                myChallengeCredentials.setCredentials((SVNPasswordAuthentication)httpAuth);
-                
                 if (httpAuth == null) {
                     err = SVNErrorMessage.create(SVNErrorCode.CANCELLED, "HTTP authorization cancelled");
                     break;
                 }
+                myChallengeCredentials.setCredentials((SVNPasswordAuthentication)httpAuth);
                 continue;
             } else if (status.getCode() == HttpURLConnection.HTTP_MOVED_PERM || status.getCode() == HttpURLConnection.HTTP_MOVED_TEMP) {
                 close();

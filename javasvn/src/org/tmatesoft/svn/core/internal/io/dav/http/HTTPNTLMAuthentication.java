@@ -28,7 +28,6 @@ import javax.crypto.spec.SecretKeySpec;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -121,20 +120,7 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
     private byte[] myNonce;
     private boolean myIsNegotiateLocalCall;
     
-    public HTTPNTLMAuthentication(SVNPasswordAuthentication credentials){
-        super(credentials);
-        myState = UNINITIATED;
-        myIsNegotiateLocalCall = false;
-    }
-    
-    protected HTTPNTLMAuthentication (String name, String password) {
-        super(name, password);
-        myState = UNINITIATED;
-        myIsNegotiateLocalCall = false;
-    }
-
     protected HTTPNTLMAuthentication () {
-        super();
         myState = UNINITIATED;
         myIsNegotiateLocalCall = false;
     }

@@ -26,7 +26,6 @@ class HTTPBasicAuthentication extends HTTPAuthentication {
     }
 
     protected HTTPBasicAuthentication () {
-        super();
     }
 
     public String authenticate() {
