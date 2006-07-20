@@ -949,7 +949,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             if (from.length() > repos.length()) {
                 String fromPath = from.substring(repos.length());
                 if (!to.endsWith(fromPath)) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_INVALID_RELOCATION, "Relocate can only change the repository part of URL");
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_INVALID_RELOCATION, "Relocate can only change the repository part of an URL");
                     SVNErrorManager.error(err);
                 }
                 from = repos;
