@@ -398,8 +398,8 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
             hostName = "";
         }
         
-        domain = domain.toUpperCase();
-        hostName = hostName.toUpperCase();
+//        domain = domain.toUpperCase();
+//        hostName = hostName.toUpperCase();
         
         byte[] protocol = HTTPAuthentication.getBytes(PROTOCOL_NAME, DEFAULT_CHARSET);
         byte[] domainBytes = HTTPAuthentication.getBytes(domain, DEFAULT_CHARSET);
@@ -702,7 +702,7 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
     }
 
     private byte[] hashPassword(String password) throws SVNException {
-        byte[] passw = password.toUpperCase().getBytes();
+        byte[] passw = password.getBytes();//.toUpperCase().getBytes();
         byte[] lmPw1 = new byte[7];
         byte[] lmPw2 = new byte[7];
 
