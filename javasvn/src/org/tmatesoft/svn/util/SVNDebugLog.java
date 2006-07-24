@@ -11,11 +11,7 @@
  */
 package org.tmatesoft.svn.util;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-
 import org.tmatesoft.svn.core.internal.util.DefaultSVNDebugLogger;
-
 
 /**
  * @version 1.0
@@ -29,37 +25,11 @@ public class SVNDebugLog {
         ourLogger = logger;
     }
     
-    private static ISVNDebugLogger getLogger() {
+    public static ISVNDebugLogger getLogger() {
         if (ourLogger == null) {
             ourLogger = new DefaultSVNDebugLogger();
         }
         return ourLogger;
-    }
-
-    public static InputStream createLogStream(InputStream is) {
-        if (getLogger() != null) {
-            return getLogger().createLogStream(is);
-        }
-        return is;
-    }
-
-    public static OutputStream createLogStream(OutputStream os) {
-        if (getLogger() != null) {
-            return getLogger().createLogStream(os);
-        }
-        return os;
-    }
-
-    public static void flushStream(Object stream) {
-        if (getLogger() != null) {
-            getLogger().flushStream(stream);
-        }
-    }
-
-    public static void log(String message, byte[] data) {
-        if (getLogger() != null) {
-            getLogger().log(message, data);
-        }
     }
 
     public static void logInfo(String message) {

@@ -23,7 +23,6 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 import ch.ethz.ssh2.StreamGobbler;
 
@@ -38,11 +37,8 @@ public class SVNTunnelConnector implements ISVNConnector {
     
     private String myTunnelSpec;
     private String myName;
-
     private OutputStream myOutputStream;
-
     private InputStream myInputStream;
-
     private Process myProcess;
     
     public SVNTunnelConnector(String name, String tunnelSpec) {
@@ -74,13 +70,13 @@ public class SVNTunnelConnector implements ISVNConnector {
         // 4. launch process.       
         try {
             myProcess = Runtime.getRuntime().exec(expandedTunnel);
-            myInputStream = SVNDebugLog.createLogStream(myProcess.getInputStream()); 
-            myOutputStream = SVNDebugLog.createLogStream(myProcess.getOutputStream()); 
+            myInputStream = repository.getDebugLogger().createLogStream(myProcess.getInputStream()); 
+            myOutputStream = repository.getDebugLogger().createLogStream(myProcess.getOutputStream()); 
             
             new StreamGobbler(myProcess.getErrorStream());
         } catch (IOException e) {
             try {
-                close();
+                close(repository);
             } catch (SVNException inner) {
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.EXTERNAL_PROGRAM, "Cannot create tunnel: ''{0}''", e.getMessage());            
@@ -100,14 +96,14 @@ public class SVNTunnelConnector implements ISVNConnector {
         return myInputStream != null;
     }
 
-    public void close() throws SVNException {
+    public void close(SVNRepositoryImpl repository) throws SVNException {
         if (myProcess != null) {
             if (myInputStream != null) {
-                SVNDebugLog.flushStream(myInputStream);
+                repository.getDebugLogger().flushStream(myInputStream);
                 SVNFileUtil.closeFile(myInputStream);
             }
             if (myOutputStream != null) {
-                SVNDebugLog.flushStream(myOutputStream);
+                repository.getDebugLogger().flushStream(myOutputStream);
                 SVNFileUtil.closeFile(myOutputStream);
             } 
             myProcess.destroy();

@@ -148,14 +148,14 @@ class HTTPConnection implements IHTTPConnection {
     }
     
     public void readHeader(HTTPRequest request) throws IOException {
-        InputStream is = SVNDebugLog.createLogStream(getInputStream());
+        InputStream is = myRepository.getDebugLogger().createLogStream(getInputStream());
         try {            
             HTTPStatus status = HTTPParser.parseStatus(is);
             HTTPHeader header = HTTPHeader.parseHeader(is);
             request.setStatus(status);
             request.setResponseHeader(header);
         } finally {
-            SVNDebugLog.flushStream(is);
+            myRepository.getDebugLogger().flushStream(is);
         }
     }
     
@@ -174,7 +174,7 @@ class HTTPConnection implements IHTTPConnection {
             getOutputStream().write(body, 0, body.length);
             getOutputStream().flush();
         } finally {
-            SVNDebugLog.flushStream(getOutputStream());
+            myRepository.getDebugLogger().flushStream(getOutputStream());
         }
     }
     
@@ -192,7 +192,7 @@ class HTTPConnection implements IHTTPConnection {
             }
             getOutputStream().flush();
         } finally {
-            SVNDebugLog.flushStream(getOutputStream());
+            myRepository.getDebugLogger().flushStream(getOutputStream());
         }
     }
     
@@ -543,7 +543,7 @@ class HTTPConnection implements IHTTPConnection {
             if (!willCloseConnection) {
                 SVNFileUtil.closeFile(stream);
             }
-            SVNDebugLog.flushStream(stream);
+            myRepository.getDebugLogger().flushStream(stream);
         }
         return null;
     }
@@ -642,7 +642,7 @@ class HTTPConnection implements IHTTPConnection {
                     xmlReader.setEntityResolver(NO_ENTITY_RESOLVER);
                 }
             }
-            SVNDebugLog.flushStream(is);
+            myRepository.getDebugLogger().flushStream(is);
         }
         return null;
     }
@@ -705,7 +705,7 @@ class HTTPConnection implements IHTTPConnection {
                 return null;
             }
             myOutputStream = new BufferedOutputStream(mySocket.getOutputStream(), 2048);
-            myOutputStream = SVNDebugLog.createLogStream(myOutputStream);
+            myOutputStream = myRepository.getDebugLogger().createLogStream(myOutputStream);
         }
         return myOutputStream;
     }
@@ -755,7 +755,7 @@ class HTTPConnection implements IHTTPConnection {
         if ("gzip".equals(readHeader.getFirstHeaderValue(HTTPHeader.CONTENT_ENCODING_HEADER))) {
             is = new GZIPInputStream(is);
         }
-        return SVNDebugLog.createLogStream(is);
+        return myRepository.getDebugLogger().createLogStream(is);
     }
 
     private static synchronized SAXParserFactory getSAXParserFactory() throws FactoryConfigurationError {

@@ -25,9 +25,9 @@ public interface ISVNConnector {
     
     public void open(SVNRepositoryImpl repository) throws SVNException;
     
-    public boolean isConnected(SVNRepositoryImpl repos) throws SVNException;
+    public boolean isConnected(SVNRepositoryImpl repository) throws SVNException;
 
-    public void close() throws SVNException;
+    public void close(SVNRepositoryImpl repository) throws SVNException;
     
     public OutputStream getOutputStream() throws IOException;
 

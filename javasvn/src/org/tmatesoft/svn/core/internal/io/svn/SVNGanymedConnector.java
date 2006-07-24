@@ -112,14 +112,14 @@ public class SVNGanymedConnector implements ISVNConnector {
                     continue;
                 }
                 SVNDebugLog.logInfo(e);
-                close();
+                close(repository);
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Cannot connect to ''{0}'': {1}", new Object[] {repository.getLocation().setPath("", false), e.getLocalizedMessage()});
                 SVNErrorManager.error(err, e);
             }
         }
     }
 
-    public void close() throws SVNException {
+    public void close(SVNRepositoryImpl repository) throws SVNException {
         SVNFileUtil.closeFile(myOutputStream);
         SVNFileUtil.closeFile(myInputStream);
         if (mySession != null) {

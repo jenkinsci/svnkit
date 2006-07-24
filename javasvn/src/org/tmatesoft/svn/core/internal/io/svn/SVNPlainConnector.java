@@ -47,7 +47,7 @@ public class SVNPlainConnector implements ISVNConnector {
         }
     }
 
-    public void close() throws SVNException {
+    public void close(SVNRepositoryImpl repository) throws SVNException {
         if (mySocket != null) {
             try {
                 mySocket.close();
