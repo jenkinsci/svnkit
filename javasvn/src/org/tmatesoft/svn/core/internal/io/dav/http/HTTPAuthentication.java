@@ -12,9 +12,14 @@
 package org.tmatesoft.svn.core.internal.io.dav.http;
 
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.StringTokenizer;
 import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -27,11 +32,13 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
  * @version 1.1
  * @author  TMate Software Ltd.
  */
-abstract class HTTPAuthentication {
+public abstract class HTTPAuthentication {
 
     private Map myChallengeParameters;
     private String myUserName;
     private String myPassword;
+    
+    private static final String AUTH_METHODS_PROPERTY = "javasvn.http.methods";
     
     protected HTTPAuthentication (SVNPasswordAuthentication credentials) {
         if (credentials != null) {
@@ -101,6 +108,9 @@ abstract class HTTPAuthentication {
 
         HTTPAuthentication auth = null;
         String authHeader = null;
+        // sort auth headers accordingly to priorities.
+        authHeaderValues = sortSchemes(authHeaderValues);
+        
         for (Iterator authSchemes = authHeaderValues.iterator(); authSchemes.hasNext();) {
             authHeader = (String)authSchemes.next();
             String source = authHeader.trim();
@@ -220,6 +230,50 @@ abstract class HTTPAuthentication {
             }
         }   
         return false;
+    }
+    
+    public static Collection sortSchemes(Collection authHeaders) {
+        String priorities = System.getProperty(AUTH_METHODS_PROPERTY);
+        if (priorities == null) {
+            return authHeaders;
+        }
+        final List schemes = new ArrayList();
+        for(StringTokenizer tokens = new StringTokenizer(priorities, " ,"); tokens.hasMoreTokens();) {
+            String scheme = tokens.nextToken();
+            if (!schemes.contains(scheme)) {
+                schemes.add(scheme);
+            }
+        }
+        List ordered = new ArrayList(authHeaders);
+        Collections.sort(ordered, new Comparator() {
+            public int compare(Object o1, Object o2) {
+                String header1 = (String) o1;
+                String header2 = (String) o2;
+                
+                String scheme1 = getSchemeName(header1);
+                String scheme2 = getSchemeName(header2);
+                
+                int index1 = schemes.indexOf(scheme1);
+                int index2 = schemes.indexOf(scheme2);
+
+                index1 = index1 < 0 ? Integer.MAX_VALUE : index1;
+                index2 = index2 < 0 ? Integer.MAX_VALUE : index2;
+                if (index1 == index2) {
+                    return 0;
+                }
+                return index1 > index2 ? 1 : -1;
+            }
+        });
+        return ordered;
+    }
+    
+    private static String getSchemeName(String header) {
+        String source = header.trim();
+        int index = source.indexOf(' ');
+        if (index <= 0) {
+            index = source.length();
+        }
+        return source.substring(0, index);
     }
     
     public abstract String getAuthenticationScheme();
