@@ -32,7 +32,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
  * @version 1.1
  * @author  TMate Software Ltd.
  */
-public abstract class HTTPAuthentication {
+abstract class HTTPAuthentication {
 
     private Map myChallengeParameters;
     private String myUserName;
@@ -232,7 +232,7 @@ public abstract class HTTPAuthentication {
         return false;
     }
     
-    public static Collection sortSchemes(Collection authHeaders) {
+    private static Collection sortSchemes(Collection authHeaders) {
         String priorities = System.getProperty(AUTH_METHODS_PROPERTY);
         if (priorities == null) {
             return authHeaders;
