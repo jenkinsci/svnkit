@@ -1,3 +1,8 @@
+= version 1.1.0.beta4
+
++ bug introduced in beta3 version fixed: 
+  Eclipse keyring credentials storage support was broken
+
 = version 1.1.0.beta3
 
 + Minor API improvements.
