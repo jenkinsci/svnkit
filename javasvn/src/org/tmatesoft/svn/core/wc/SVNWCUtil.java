@@ -174,7 +174,7 @@ public class SVNWCUtil {
                 if (managerClass != null) {
                     Constructor method = managerClass.getConstructor(new Class[] {File.class, Boolean.TYPE, String.class, String.class, File.class, String.class});
                     if (method != null) {
-                        return (ISVNAuthenticationManager) method.newInstance(new Object[] {configDir, storeAuth ? Boolean.TRUE : Boolean.FALSE, userName, password});
+                        return (ISVNAuthenticationManager) method.newInstance(new Object[] {configDir, storeAuth ? Boolean.TRUE : Boolean.FALSE, userName, password, privateKey, passphrase});
                     }
                 }
             } catch (Throwable e) {
