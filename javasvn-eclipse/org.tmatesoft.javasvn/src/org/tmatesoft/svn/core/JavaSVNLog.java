@@ -19,12 +19,12 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.osgi.framework.Bundle;
-import org.tmatesoft.svn.util.SVNDebugLoggerAdapter;
+import org.tmatesoft.svn.util.SVNDebugLogAdapter;
 
 /**
  * @author alex
  */
-public class JavaSVNLogger extends SVNDebugLoggerAdapter {
+public class JavaSVNLog extends SVNDebugLogAdapter {
 	
 	private static final String DEBUG_FINE = "/debug/fine";
 	private static final String DEBUG_INFO = "/debug/info";
@@ -37,7 +37,7 @@ public class JavaSVNLogger extends SVNDebugLoggerAdapter {
 	private ILog myLog;
 	private String myPluginID;
 
-	public JavaSVNLogger(Bundle bundle, boolean enabled) {		
+	public JavaSVNLog(Bundle bundle, boolean enabled) {		
 		myLog = Platform.getLog(bundle);
 		myPluginID = bundle.getSymbolicName();
 
@@ -65,25 +65,25 @@ public class JavaSVNLogger extends SVNDebugLoggerAdapter {
 		return new Status(severity, myPluginID, IStatus.OK, message == null ? "" : message, th);
 	}
 
-    public void logInfo(String message) {
+    public void info(String message) {
         if (isInfoEnabled()) {
             myLog.log(createStatus(IStatus.INFO, message, null));
         }
     }
 
-    public void logInfo(Throwable th) {
+    public void info(Throwable th) {
         if (isInfoEnabled()) {
             myLog.log(createStatus(IStatus.INFO, th != null ? th.getMessage() : "", th));
         }
     }
 
-    public void logError(String message) {
+    public void error(String message) {
         if (isErrorEnabled()) {
             myLog.log(createStatus(IStatus.ERROR, message, null));
         }
     }
 
-    public void logError(Throwable th) {
+    public void error(Throwable th) {
         if (isErrorEnabled()) {
             myLog.log(createStatus(IStatus.ERROR, th != null ? th.getMessage() : "", th));
         }
@@ -108,6 +108,4 @@ public class JavaSVNLogger extends SVNDebugLoggerAdapter {
         }
         return os;
     }
-    
-    
 }

@@ -198,7 +198,7 @@ class SVNConnection {
             checkConnection();
             return SVNReader.parse(getInputStream(), template, items);
         } finally {
-            myRepository.getDebugLogger().flushStream(myLoggingInputStream);
+            myRepository.getDebugLog().flushStream(myLoggingInputStream);
         }
     }
     
@@ -215,7 +215,7 @@ class SVNConnection {
             } catch (SVNException e) {
                 //
             }
-            myRepository.getDebugLogger().flushStream(getOutputStream());
+            myRepository.getDebugLog().flushStream(getOutputStream());
         }
     }
 
@@ -235,7 +235,7 @@ class SVNConnection {
     public OutputStream getOutputStream() throws SVNException {
         if (myOutputStream == null) {
             try {
-                myOutputStream = myRepository.getDebugLogger().createLogStream(myConnector.getOutputStream());
+                myOutputStream = myRepository.getDebugLog().createLogStream(myConnector.getOutputStream());
             } catch (IOException e) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getMessage()), e);
             }
@@ -246,7 +246,7 @@ class SVNConnection {
     public InputStream getInputStream() throws SVNException {
         if (myInputStream == null) {
             try {
-                myInputStream = myRepository.getDebugLogger().createLogStream(new BufferedInputStream(myConnector.getInputStream()));
+                myInputStream = myRepository.getDebugLog().createLogStream(new BufferedInputStream(myConnector.getInputStream()));
                 myLoggingInputStream = myInputStream;
                 myInputStream = new SVNRollbackInputStream(myInputStream, 1024);
             } catch (IOException e) {

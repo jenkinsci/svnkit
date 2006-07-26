@@ -16,32 +16,32 @@ import java.io.OutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.tmatesoft.svn.util.SVNDebugLoggerAdapter;
+import org.tmatesoft.svn.util.SVNDebugLogAdapter;
 
 
 /**
  * @version 1.0
  * @author  TMate Software Ltd.
  */
-public class DefaultSVNDebugLogger extends SVNDebugLoggerAdapter {
+public class DefaultSVNDebugLogger extends SVNDebugLogAdapter {
 
     private Logger myLogger;
 
-    public void logInfo(String message) {
+    public void info(String message) {
         getLogger().log(Level.FINE, message);
     }
 
-    public void logError(String message) {
+    public void error(String message) {
         getLogger().log(Level.SEVERE, message);
     }
 
-    public void logInfo(Throwable th) {
+    public void info(Throwable th) {
         if (getLogger().isLoggable(Level.FINE)) {
             getLogger().log(Level.FINE, th != null ? th.getMessage() : "", th);
         }
     }
 
-    public void logError(Throwable th) {
+    public void error(Throwable th) {
         if (getLogger().isLoggable(Level.SEVERE)) {
             getLogger().log(Level.SEVERE, th != null ? th.getMessage() : "", th);
         }

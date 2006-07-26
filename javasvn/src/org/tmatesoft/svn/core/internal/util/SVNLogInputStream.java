@@ -16,7 +16,7 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.tmatesoft.svn.util.ISVNDebugLogger;
+import org.tmatesoft.svn.util.ISVNDebugLog;
 
 
 /**
@@ -25,12 +25,12 @@ import org.tmatesoft.svn.util.ISVNDebugLogger;
  */
 public class SVNLogInputStream extends FilterInputStream {
 
-    private ISVNDebugLogger myLogger;
+    private ISVNDebugLog myLog;
     private ByteArrayOutputStream myBuffer;
 
-    public SVNLogInputStream(InputStream in, ISVNDebugLogger logger) {
+    public SVNLogInputStream(InputStream in, ISVNDebugLog log) {
         super(in);
-        myLogger = logger;
+        myLog = log;
         myBuffer = new ByteArrayOutputStream(2048);
     }
 
@@ -56,7 +56,7 @@ public class SVNLogInputStream extends FilterInputStream {
     }
     
     private void log(byte[] data, int off, int len) {
-        if (myLogger != null && len > 0 && off + len <= data.length && off < data.length) {
+        if (myLog != null && len > 0 && off + len <= data.length && off < data.length) {
             myBuffer.write(data, off, len);
             flushBuffer(false);
         }
@@ -66,8 +66,8 @@ public class SVNLogInputStream extends FilterInputStream {
         if (!force && myBuffer.size() < 1024) {
             return;
         }
-        if (myLogger != null && myBuffer.size() > 0) {
-            myLogger.log("READ", myBuffer.toByteArray());
+        if (myLog != null && myBuffer.size() > 0) {
+            myLog.log("READ", myBuffer.toByteArray());
         }
         myBuffer.reset();
     }

@@ -19,40 +19,32 @@ import org.tmatesoft.svn.core.internal.util.DefaultSVNDebugLogger;
  */
 public class SVNDebugLog {
     
-    private static ISVNDebugLogger ourLogger;
+    private static ISVNDebugLog ourDefaultLog;
 
-    public static void setLogger(ISVNDebugLogger logger) {
-        ourLogger = logger;
+    public static void setDefaultLog(ISVNDebugLog log) {
+        ourDefaultLog = log;
     }
     
-    public static ISVNDebugLogger getLogger() {
-        if (ourLogger == null) {
-            ourLogger = new DefaultSVNDebugLogger();
+    public static ISVNDebugLog getDefaultLog() {
+        if (ourDefaultLog == null) {
+            ourDefaultLog = new DefaultSVNDebugLogger();
         }
-        return ourLogger;
+        return ourDefaultLog;
     }
 
     public static void logInfo(String message) {
-        if (getLogger() != null) {
-            getLogger().logInfo(message);
-        }
+        getDefaultLog().info(message);
     }
 
     public static void logError(String message) {
-        if (getLogger() != null) {
-            getLogger().logError(message);
-        }
+        getDefaultLog().error(message);
     }
     
     public static void logInfo(Throwable th) {
-        if (getLogger() != null) {
-            getLogger().logInfo(th);
-        }
+        getDefaultLog().info(th);        
     }
 
     public static void logError(Throwable th) {
-        if (getLogger() != null) {
-            getLogger().logError(th);
-        }
+        getDefaultLog().error(th);
     }
 }

@@ -19,15 +19,15 @@ import java.io.OutputStream;
  * @version 1.0
  * @author  TMate Software Ltd.
  */
-public interface ISVNDebugLogger {
+public interface ISVNDebugLog {
     
-    public void logInfo(String message);
+    public void info(String message);
 
-    public void logError(String message);
+    public void error(String message);
     
-    public void logInfo(Throwable th);
+    public void info(Throwable th);
 
-    public void logError(Throwable th);
+    public void error(Throwable th);
     
     public void log(String message, byte[] data);
     

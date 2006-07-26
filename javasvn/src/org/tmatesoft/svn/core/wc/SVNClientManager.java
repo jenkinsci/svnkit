@@ -16,7 +16,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
-import org.tmatesoft.svn.util.ISVNDebugLogger;
+import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
@@ -122,7 +122,7 @@ public class SVNClientManager implements ISVNRepositoryPool {
     
     private ISVNEventHandler myEventHandler;
     private ISVNRepositoryPool myRepositoryPool;
-    private ISVNDebugLogger myDebugLogger;
+    private ISVNDebugLog myDebugLog;
 
     private SVNClientManager(ISVNOptions options, ISVNRepositoryPool repositoryPool) {
         myOptions = options;
@@ -238,7 +238,7 @@ public class SVNClientManager implements ISVNRepositoryPool {
         }
         SVNRepository repository = SVNRepositoryFactory.create(url);
         repository.setAuthenticationManager(SVNWCUtil.createDefaultAuthenticationManager());
-        repository.setDebugLogger(getDebugLogger());
+        repository.setDebugLog(getDebugLog());
         return repository;
     }
 
@@ -318,7 +318,7 @@ public class SVNClientManager implements ISVNRepositoryPool {
         if (myCommitClient == null) {
             myCommitClient = new SVNCommitClient(this, myOptions);
             myCommitClient.setEventHandler(myEventHandler);
-            myCommitClient.setDebugLogger(getDebugLogger());
+            myCommitClient.setDebugLog(getDebugLog());
         }
         return myCommitClient;
     }
@@ -339,7 +339,7 @@ public class SVNClientManager implements ISVNRepositoryPool {
         if (myCopyClient == null) {
             myCopyClient = new SVNCopyClient(this, myOptions);
             myCopyClient.setEventHandler(myEventHandler);
-            myCopyClient.setDebugLogger(getDebugLogger());
+            myCopyClient.setDebugLog(getDebugLog());
         }
         return myCopyClient;
     }
@@ -360,7 +360,7 @@ public class SVNClientManager implements ISVNRepositoryPool {
         if (myDiffClient == null) {
             myDiffClient = new SVNDiffClient(this, myOptions);
             myDiffClient.setEventHandler(myEventHandler);
-            myDiffClient.setDebugLogger(getDebugLogger());
+            myDiffClient.setDebugLog(getDebugLog());
         }
         return myDiffClient;
     }
@@ -381,7 +381,7 @@ public class SVNClientManager implements ISVNRepositoryPool {
         if (myLogClient == null) {
             myLogClient = new SVNLogClient(this, myOptions);
             myLogClient.setEventHandler(myEventHandler);
-            myLogClient.setDebugLogger(getDebugLogger());
+            myLogClient.setDebugLog(getDebugLog());
         }
         return myLogClient;
     }
@@ -402,7 +402,7 @@ public class SVNClientManager implements ISVNRepositoryPool {
         if (myMoveClient == null) {
             myMoveClient = new SVNMoveClient(this, myOptions);
             myMoveClient.setEventHandler(myEventHandler);
-            myMoveClient.setDebugLogger(getDebugLogger());
+            myMoveClient.setDebugLog(getDebugLog());
         }
         return myMoveClient;
     }
@@ -423,7 +423,7 @@ public class SVNClientManager implements ISVNRepositoryPool {
         if (myStatusClient == null) {
             myStatusClient = new SVNStatusClient(this, myOptions);
             myStatusClient.setEventHandler(myEventHandler);
-            myStatusClient.setDebugLogger(getDebugLogger());
+            myStatusClient.setDebugLog(getDebugLog());
         }
         return myStatusClient;
     }
@@ -444,7 +444,7 @@ public class SVNClientManager implements ISVNRepositoryPool {
         if (myUpdateClient == null) {
             myUpdateClient = new SVNUpdateClient(this, myOptions);
             myUpdateClient.setEventHandler(myEventHandler);
-            myUpdateClient.setDebugLogger(getDebugLogger());
+            myUpdateClient.setDebugLog(getDebugLog());
         }
         return myUpdateClient;
     }
@@ -465,43 +465,43 @@ public class SVNClientManager implements ISVNRepositoryPool {
         if (myWCClient == null) {
             myWCClient = new SVNWCClient(this, myOptions);
             myWCClient.setEventHandler(myEventHandler);
-            myWCClient.setDebugLogger(getDebugLogger());
+            myWCClient.setDebugLog(getDebugLog());
         }
         return myWCClient;
     }
     
-    public ISVNDebugLogger getDebugLogger() {
-        if (myDebugLogger == null) {
-            return SVNDebugLog.getLogger();
+    public ISVNDebugLog getDebugLog() {
+        if (myDebugLog == null) {
+            return SVNDebugLog.getDefaultLog();
         }
-        return myDebugLogger;
+        return myDebugLog;
     }
 
-    public void setDebugLogger(ISVNDebugLogger logger) {
-        myDebugLogger = logger;
+    public void setDebugLog(ISVNDebugLog log) {
+        myDebugLog = log;
         if (myCommitClient != null) {
-            myCommitClient.setDebugLogger(logger);
+            myCommitClient.setDebugLog(log);
         }
         if (myCopyClient != null) {
-            myCopyClient.setDebugLogger(logger);
+            myCopyClient.setDebugLog(log);
         }
         if (myDiffClient != null) {
-            myDiffClient.setDebugLogger(logger);
+            myDiffClient.setDebugLog(log);
         }
         if (myLogClient != null) {
-            myLogClient.setDebugLogger(logger);
+            myLogClient.setDebugLog(log);
         }
         if (myMoveClient != null) {
-            myMoveClient.setDebugLogger(logger);
+            myMoveClient.setDebugLog(log);
         }
         if (myStatusClient != null) {
-            myStatusClient.setDebugLogger(logger);
+            myStatusClient.setDebugLog(log);
         }
         if (myUpdateClient != null) {
-            myUpdateClient.setDebugLogger(logger);
+            myUpdateClient.setDebugLog(log);
         }
         if (myWCClient != null) {
-            myWCClient.setDebugLogger(logger);
+            myWCClient.setDebugLog(log);
         }        
     }
 }

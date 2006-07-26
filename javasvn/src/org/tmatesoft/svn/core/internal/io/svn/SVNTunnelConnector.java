@@ -70,8 +70,8 @@ public class SVNTunnelConnector implements ISVNConnector {
         // 4. launch process.       
         try {
             myProcess = Runtime.getRuntime().exec(expandedTunnel);
-            myInputStream = repository.getDebugLogger().createLogStream(myProcess.getInputStream()); 
-            myOutputStream = repository.getDebugLogger().createLogStream(myProcess.getOutputStream()); 
+            myInputStream = repository.getDebugLog().createLogStream(myProcess.getInputStream()); 
+            myOutputStream = repository.getDebugLog().createLogStream(myProcess.getOutputStream()); 
             
             new StreamGobbler(myProcess.getErrorStream());
         } catch (IOException e) {
@@ -99,11 +99,11 @@ public class SVNTunnelConnector implements ISVNConnector {
     public void close(SVNRepositoryImpl repository) throws SVNException {
         if (myProcess != null) {
             if (myInputStream != null) {
-                repository.getDebugLogger().flushStream(myInputStream);
+                repository.getDebugLog().flushStream(myInputStream);
                 SVNFileUtil.closeFile(myInputStream);
             }
             if (myOutputStream != null) {
-                repository.getDebugLogger().flushStream(myOutputStream);
+                repository.getDebugLog().flushStream(myOutputStream);
                 SVNFileUtil.closeFile(myOutputStream);
             } 
             myProcess.destroy();

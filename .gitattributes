@@ -148,7 +148,7 @@ javasvn/src/org/tmatesoft/svn/core/wc/xml/dtd/list.dtd -text
 javasvn/src/org/tmatesoft/svn/core/wc/xml/dtd/log.dtd -text
 javasvn/src/org/tmatesoft/svn/core/wc/xml/dtd/status.dtd -text
 javasvn/src/org/tmatesoft/svn/core/wc/xml/package.html -text
-javasvn/src/org/tmatesoft/svn/util/ISVNDebugLogger.java -text
+javasvn/src/org/tmatesoft/svn/util/ISVNDebugLog.java -text
 javasvn/src/org/tmatesoft/svn/util/SVNDebugLog.java -text
 www/.htaccess -text
 www/css/home.css -text

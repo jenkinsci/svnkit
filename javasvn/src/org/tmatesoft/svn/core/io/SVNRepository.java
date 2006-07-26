@@ -33,7 +33,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
-import org.tmatesoft.svn.util.ISVNDebugLogger;
+import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
@@ -134,7 +134,7 @@ public abstract class SVNRepository {
     private ISVNAuthenticationManager myAuthManager;
     private ISVNSession myOptions;
     private ISVNTunnelProvider myTunnelProvider;
-    private ISVNDebugLogger myDebugLogger;
+    private ISVNDebugLog myDebugLog;
 
     protected SVNRepository(SVNURL location, ISVNSession options) {
         myLocation = location;
@@ -1861,14 +1861,14 @@ public abstract class SVNRepository {
         return fullPath;
     }
     
-    public void setDebugLogger(ISVNDebugLogger logger) {
-        myDebugLogger = logger;
+    public void setDebugLog(ISVNDebugLog log) {
+        myDebugLog = log;
     }
     
-    public ISVNDebugLogger getDebugLogger() {
-        if (myDebugLogger == null) {
-            return SVNDebugLog.getLogger();
+    public ISVNDebugLog getDebugLog() {
+        if (myDebugLog == null) {
+            return SVNDebugLog.getDefaultLog();
         }
-        return myDebugLogger;
+        return myDebugLog;
     }
 }

@@ -29,7 +29,7 @@ public class JavaSVNPlugin extends Plugin {
 
     public void start(BundleContext context) throws Exception {
         super.start(context);
-        SVNDebugLog.setLogger(new JavaSVNLogger(getBundle(), isDebugging()));
+        SVNDebugLog.setDefaultLog(new JavaSVNLog(getBundle(), isDebugging()));
         
         DAVRepositoryFactory.setup();
         SVNRepositoryFactoryImpl.setup();
