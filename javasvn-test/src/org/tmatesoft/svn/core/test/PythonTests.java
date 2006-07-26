@@ -319,7 +319,7 @@ public class PythonTests {
 		    try {
 				String line;
 				while ((line = myInputStream.readLine()) != null) {
-					SVNDebugLog.logInfo(line);
+					SVNDebugLog.getDefaultLog().info(line);
                     PythonTestResult testResult = PythonTestResult.parse(line);
                     if (testResult != null) {
                         for (int i = 0; i < ourLoggers.length; i++) {

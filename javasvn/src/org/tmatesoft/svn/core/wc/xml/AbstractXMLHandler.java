@@ -12,6 +12,8 @@
 package org.tmatesoft.svn.core.wc.xml;
 
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.util.ISVNDebugLog;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
@@ -29,9 +31,15 @@ public abstract class AbstractXMLHandler {
     
     private AttributesImpl mySharedAttributes;
     private ContentHandler myHandler;
+    private ISVNDebugLog myLog;
     
-    protected AbstractXMLHandler(ContentHandler contentHandler) {
+    protected AbstractXMLHandler(ContentHandler contentHandler, ISVNDebugLog log) {
         myHandler = contentHandler;
+        myLog = log == null ? SVNDebugLog.getDefaultLog() : log;
+    }
+    
+    protected ISVNDebugLog getDebugLog() {
+        return myLog;
     }
     
     /**

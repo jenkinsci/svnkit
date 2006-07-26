@@ -25,7 +25,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.ISVNDebugLog;
 
 /**
  * @version 1.0
@@ -40,14 +40,16 @@ public class SVNMerger {
     private String myURL;
     private long myTargetRevision;
     private boolean myIsLeaveConflicts;
+    private ISVNDebugLog myLog;
 
-    public SVNMerger(SVNWCAccess wcAccess, String url, long rev, boolean force, boolean dryRun, boolean leaveConflicts) {
+    public SVNMerger(SVNWCAccess wcAccess, String url, long rev, boolean force, boolean dryRun, boolean leaveConflicts, ISVNDebugLog log) {
         myWCAccess = wcAccess;
         myIsDryRun = dryRun;
         myIsLeaveConflicts = leaveConflicts;
         myIsForce = force;
         myTargetRevision = rev;
         myURL = url;
+        myLog = log;
     }
 
     public boolean isDryRun() {
@@ -92,7 +94,7 @@ public class SVNMerger {
                         if (e instanceof SVNCancelException) {
                             throw e;
                         }
-                        SVNDebugLog.logInfo(e);
+                        myLog.info(e);
                         return SVNStatusType.OBSTRUCTED;
                     }
                 }

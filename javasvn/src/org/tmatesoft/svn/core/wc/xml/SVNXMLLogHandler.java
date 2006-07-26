@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
@@ -54,7 +55,11 @@ public class SVNXMLLogHandler extends AbstractXMLHandler implements ISVNLogEntry
      *                       an XML tree
      */
     public SVNXMLLogHandler(ContentHandler contentHandler) {
-        super(contentHandler);
+        this(contentHandler, null);
+    }
+
+    public SVNXMLLogHandler(ContentHandler contentHandler, ISVNDebugLog log) {
+        super(contentHandler, log);
     }
     /**
      * Returns the header name specific for a log handler.

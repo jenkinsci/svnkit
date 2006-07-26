@@ -51,7 +51,7 @@ class DAVKeyManager {
                 keyStore.load(is, passphrase);                    
             }
         } catch (Throwable th) {
-            SVNDebugLog.logInfo(th);
+            SVNDebugLog.getDefaultLog().info(th);
         } finally {
             if (is != null) {
                 try {
@@ -69,7 +69,7 @@ class DAVKeyManager {
                     ourKeyManagers = kmf.getKeyManagers();
                 }
             } catch (Throwable e) {
-                SVNDebugLog.logInfo(e);
+                SVNDebugLog.getDefaultLog().info(e);
             } 
         }
         return ourKeyManagers; 

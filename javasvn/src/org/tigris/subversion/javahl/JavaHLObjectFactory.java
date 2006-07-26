@@ -427,14 +427,14 @@ public class JavaHLObjectFactory {
                 );
     }
 
-    public static void throwException(SVNException e) throws ClientException {
+    public static void throwException(SVNException e, SVNClientImpl svnClient) throws ClientException {
         int code = 0;
         if (e.getErrorMessage() != null) {
             code = e.getErrorMessage().getErrorCode().getCode();
         }
         ClientException ec = new ClientException(e.getMessage(), "", code);
-        SVNDebugLog.logInfo(ec);
-        SVNDebugLog.logInfo(e);
+        svnClient.getClientManager().getDebugLog().info(ec);
+        svnClient.getClientManager().getDebugLog().info(e);
         throw ec;
     }
 }

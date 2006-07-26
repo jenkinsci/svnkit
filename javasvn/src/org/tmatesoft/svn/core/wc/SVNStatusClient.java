@@ -206,11 +206,11 @@ public class SVNStatusClient extends SVNBasicClient {
             } else {
                 SVNRepository locksRepos = createRepository(url, false);
     
-                SVNReporter reporter = new SVNReporter(wcAccess, false, recursive);
+                SVNReporter reporter = new SVNReporter(wcAccess, false, recursive, getDebugLog());
                 SVNStatusReporter statusReporter = new SVNStatusReporter(locksRepos, reporter, statusEditor);
                 String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
     
-                repos.status(-1, target, recursive, statusReporter, SVNCancellableEditor.newInstance(statusEditor, this));
+                repos.status(-1, target, recursive, statusReporter, SVNCancellableEditor.newInstance(statusEditor, this, getDebugLog()));
             }
         }
         // to report all when there is completely no changes

@@ -31,7 +31,6 @@ import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.xml.SVNXMLDirEntryHandler;
 import org.tmatesoft.svn.core.wc.xml.SVNXMLSerializer;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @author TMate Software Ltd.
@@ -100,7 +99,7 @@ public class LsCommand extends SVNCommand implements ISVNDirEntryHandler {
     }
 
     public void handleDirEntry(SVNDirEntry dirEntry) {
-        SVNDebugLog.logInfo("handling: " + dirEntry);
+        getClientManager().getDebugLog().info("handling: " + dirEntry);
         if (myIsVerbose) {
             StringBuffer verbose = new StringBuffer();
             verbose.append(SVNCommand.formatString(dirEntry.getRevision() + "", 7, false));

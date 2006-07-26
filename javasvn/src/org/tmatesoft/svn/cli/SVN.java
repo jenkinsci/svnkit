@@ -45,7 +45,7 @@ public class SVN {
             try {
                 commandLine = new SVNCommandLine(args);
             } catch (SVNException e) {
-                SVNDebugLog.logInfo(e);
+                SVNDebugLog.getDefaultLog().info(e);
                 System.err.println(e.getMessage());
                 System.exit(1);
             }
@@ -94,7 +94,7 @@ public class SVN {
                     command.run(System.out, System.err);
                 } catch (SVNException e) {
                     System.err.println(e.getMessage());
-                    SVNDebugLog.logInfo(e);
+                    SVNDebugLog.getDefaultLog().info(e);
                 } finally {
                     if (command.getClientManager() != null) {
                         command.getClientManager().shutdownConnections(true);
@@ -105,7 +105,7 @@ public class SVN {
                 System.exit(1);
             }
         } catch (Throwable th) {
-            SVNDebugLog.logInfo(th);
+            SVNDebugLog.getDefaultLog().info(th);
             System.exit(-1);
         }   
         System.exit(0);

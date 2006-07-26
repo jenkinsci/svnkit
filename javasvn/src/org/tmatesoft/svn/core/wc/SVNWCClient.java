@@ -51,7 +51,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * The <b>SVNWCClient</b> class combines a number of version control 
@@ -251,7 +250,7 @@ public class SVNWCClient extends SVNBasicClient {
                             dst.write(r);
                         }
                     } catch (IOException e) {
-                        SVNDebugLog.logInfo(e);
+                        getDebugLog().info(e);
                     } finally {
                         SVNFileUtil.closeFile(is);
                         if (delete) {

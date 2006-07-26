@@ -152,7 +152,7 @@ public class SVNFileUtil {
                     }
                     return;
                 }
-                SVNDebugLog.logInfo("file: retrying to rename file " + src + " to " + dst);
+                SVNDebugLog.getDefaultLog().info("file: retrying to rename file " + src + " to " + dst);
                 try {
                     Thread.sleep(100);
                 } catch (InterruptedException e) {
@@ -191,7 +191,7 @@ public class SVNFileUtil {
                 }
             }
         } catch (Throwable th) {
-            SVNDebugLog.logInfo(th);
+            SVNDebugLog.getDefaultLog().info(th);
             return false;
         }
         return true;
@@ -204,7 +204,7 @@ public class SVNFileUtil {
         try {
             execCommand(new String[] { "chmod", executable ? "ugo+x" : "ugo-x", file.getAbsolutePath() });
         } catch (Throwable th) {
-            SVNDebugLog.logInfo(th);
+            SVNDebugLog.getDefaultLog().info(th);
         }
     }
     
@@ -946,9 +946,9 @@ public class SVNFileUtil {
             }
             return result.toString().trim();
         } catch (IOException e) {
-            SVNDebugLog.logInfo(e);
+            SVNDebugLog.getDefaultLog().info(e);
         } catch (InterruptedException e) {
-            SVNDebugLog.logInfo(e);
+            SVNDebugLog.getDefaultLog().info(e);
         } finally {
             closeFile(is);
         }

@@ -1163,7 +1163,7 @@ public class SVNClientImpl implements SVNClientInterface {
         return mySVNEventListener;
     }
     
-    protected SVNClientManager getClientManager() {
+    public SVNClientManager getClientManager() {
         if (myClientManager == null) {
             updateClientManager();
             myClientManager = SVNClientManager.newInstance(myOptions, new DefaultSVNRepositoryPool(myAuthenticationManager, myOptions));
@@ -1204,8 +1204,8 @@ public class SVNClientImpl implements SVNClientInterface {
         return myMessageHandler;
     }
 
-    protected static void throwException(SVNException e) throws ClientException {
-        JavaHLObjectFactory.throwException(e);
+    protected void throwException(SVNException e) throws ClientException {
+        JavaHLObjectFactory.throwException(e, this);
     }
 
     protected static boolean isURL(String pathOrUrl){
@@ -1229,7 +1229,7 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public org.tigris.subversion.javahl.Version getVersion() {
-        return null;
+        return new JavaSVNVersion();
     }
     
     private class JavaSVNVersion extends org.tigris.subversion.javahl.Version {

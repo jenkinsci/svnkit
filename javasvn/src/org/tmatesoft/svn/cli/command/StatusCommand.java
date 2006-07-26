@@ -26,7 +26,6 @@ import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNStatusClient;
 import org.tmatesoft.svn.core.wc.xml.SVNXMLSerializer;
 import org.tmatesoft.svn.core.wc.xml.SVNXMLStatusHandler;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @author TMate Software Ltd.
@@ -80,7 +79,7 @@ public class StatusCommand extends SVNCommand {
               try {
                 rev = stClient.doStatus(file, recursive, showUpdates, reportAll, ignored, handler);
               } catch (SVNException e) {
-                  SVNDebugLog.logInfo(e);
+                  stClient.getDebugLog().info(e);
                   err.println(e.getMessage());
                   error = true;
               }

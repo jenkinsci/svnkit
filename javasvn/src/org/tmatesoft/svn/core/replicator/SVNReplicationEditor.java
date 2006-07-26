@@ -37,7 +37,7 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
-import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.ISVNDebugLog;
 
 /**
  * The <b>SVNReplicationEditor</b> is an editor implementation used by a 
@@ -67,6 +67,7 @@ public class SVNReplicationEditor implements ISVNEditor {
     private long myTargetRevision;
     private SVNCommitInfo myCommitInfo;
     private SVNRepository mySourceRepository;
+    private ISVNDebugLog myLog;
     
     /**
      * Creates a new replication editor.
@@ -88,6 +89,7 @@ public class SVNReplicationEditor implements ISVNEditor {
         myDirsStack = new Stack();
         myCopiedPaths = new HashMap();
         myChangedPaths = revision.getChangedPaths();
+        myLog = repository.getDebugLog();
 
         for(Iterator paths = myChangedPaths.keySet().iterator(); paths.hasNext();){
             String path = (String)paths.next();
@@ -110,7 +112,7 @@ public class SVNReplicationEditor implements ISVNEditor {
         EntryBaton baton = new EntryBaton("/");
         baton.myPropsAct = ACCEPT;
         myDirsStack.push(baton);
-        SVNDebugLog.logInfo("Opening Root");
+        myLog.info("Opening Root");
 
     }
 
@@ -126,18 +128,18 @@ public class SVNReplicationEditor implements ISVNEditor {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Expected that path ''{0}'' is deleted in revision {1,number,integer}", new Object[]{absPath, new Long(myPreviousRevision)});
             SVNErrorManager.error(err);
         }
-        SVNDebugLog.logInfo("Deleting entry '" + absPath + "'");
+        myLog.info("Deleting entry '" + absPath + "'");
         myCommitEditor.deleteEntry(path, myPreviousRevision);
     }
 
     public void absentDir(String path) throws SVNException {
         String absPath = getSourceRepository().getRepositoryPath(path);
-        SVNDebugLog.logInfo("Skipping dir '" + absPath + "'");
+        myLog.info("Skipping dir '" + absPath + "'");
     }
 
     public void absentFile(String path) throws SVNException {
         String absPath = getSourceRepository().getRepositoryPath(path);
-        SVNDebugLog.logInfo("Skipping file '" + absPath + "'");
+        myLog.info("Skipping file '" + absPath + "'");
     }
 
     public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
@@ -156,19 +158,19 @@ public class SVNReplicationEditor implements ISVNEditor {
                 myChangedPaths.remove(absPath);
             }
             myCommitEditor.addDir(path, changedPath.getCopyPath(), changedPath.getCopyRevision());
-            SVNDebugLog.logInfo("Adding dir '" + absPath + "'");
+            myLog.info("Adding dir '" + absPath + "'");
         } else if (changedPath != null && (changedPath.getType() == SVNLogEntryPath.TYPE_ADDED || changedPath.getType() == SVNLogEntryPath.TYPE_REPLACED)) {
             baton.myPropsAct = ACCEPT;
             myCommitEditor.addDir(path, null, -1);
-            SVNDebugLog.logInfo("Adding dir '" + absPath + "'");
+            myLog.info("Adding dir '" + absPath + "'");
         } else if (changedPath != null && changedPath.getType() == SVNLogEntryPath.TYPE_MODIFIED) {
             baton.myPropsAct = ACCEPT;
             myCommitEditor.openDir(path, myPreviousRevision);
-            SVNDebugLog.logInfo("Opening dir '" + absPath + "'");
+            myLog.info("Opening dir '" + absPath + "'");
         } else if (changedPath == null) {
             baton.myPropsAct = IGNORE;
             myCommitEditor.openDir(path, myPreviousRevision);
-            SVNDebugLog.logInfo("Opening dir '" + absPath + "'");
+            myLog.info("Opening dir '" + absPath + "'");
         } else {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Unknown bug in addDir()");
             SVNErrorManager.error(err);
@@ -180,7 +182,7 @@ public class SVNReplicationEditor implements ISVNEditor {
         baton.myPropsAct = ACCEPT;
         myDirsStack.push(baton);
         myCommitEditor.openDir(path, myPreviousRevision);
-        SVNDebugLog.logInfo("Opening dir '" + path + "'");
+        myLog.info("Opening dir '" + path + "'");
     }
 
     public void changeDirProperty(String name, String value) throws SVNException {
@@ -190,7 +192,7 @@ public class SVNReplicationEditor implements ISVNEditor {
         EntryBaton baton = (EntryBaton) myDirsStack.peek();
         if (baton.myPropsAct == ACCEPT) {
             myCommitEditor.changeDirProperty(name, value);
-            SVNDebugLog.logInfo("Changing dir property: " + name + "=" + value);
+            myLog.info("Changing dir property: " + name + "=" + value);
         } else if (baton.myPropsAct == DECIDE) {
             String propVal = (String)baton.myProps.get(name);
             if (propVal != null && propVal.equals(value)) {
@@ -199,7 +201,7 @@ public class SVNReplicationEditor implements ISVNEditor {
                  * do not reset them again.
                  */
                 baton.myPropsAct = IGNORE;
-                SVNDebugLog.logInfo("Ignoring copied dir property: " + name + "=" + value);
+                myLog.info("Ignoring copied dir property: " + name + "=" + value);
                 return;
             }
             /*
@@ -207,11 +209,11 @@ public class SVNReplicationEditor implements ISVNEditor {
              */
             baton.myPropsAct = ACCEPT;
             myCommitEditor.changeDirProperty(name, value);
-            SVNDebugLog.logInfo("Changing dir property: " + name + "=" + value);
+            myLog.info("Changing dir property: " + name + "=" + value);
 
         }
         // else ignore props of the dir being copied
-        SVNDebugLog.logInfo("Ignoring copied dir property: " + name + "=" + value);
+        myLog.info("Ignoring copied dir property: " + name + "=" + value);
     }
 
     public void closeDir() throws SVNException {
@@ -221,9 +223,9 @@ public class SVNReplicationEditor implements ISVNEditor {
         }
         myDirsStack.pop();
         if(myDirsStack.size() != 0){
-            SVNDebugLog.logInfo("Closing dir");
+            myLog.info("Closing dir");
         }else{
-            SVNDebugLog.logInfo("Closing Root");
+            myLog.info("Closing Root");
         }
         myCommitEditor.closeDir();
     }
@@ -247,7 +249,7 @@ public class SVNReplicationEditor implements ISVNEditor {
                 myChangedPaths.remove(absPath);
             }
             myCommitEditor.addFile(path, changedPath.getCopyPath(), changedPath.getCopyRevision());
-            SVNDebugLog.logInfo("Adding file '" + absPath + "'");
+            myLog.info("Adding file '" + absPath + "'");
         } else if (changedPath != null && (changedPath.getType() == SVNLogEntryPath.TYPE_ADDED || changedPath.getType() == SVNLogEntryPath.TYPE_REPLACED)) {
             baton.myPropsAct = ACCEPT;
             baton.myTextAct = ACCEPT;
@@ -256,7 +258,7 @@ public class SVNReplicationEditor implements ISVNEditor {
                 myChangedPaths.remove(absPath);
             }
             myCommitEditor.addFile(path, null, -1);
-            SVNDebugLog.logInfo("Adding file '" + absPath + "'");
+            myLog.info("Adding file '" + absPath + "'");
         } else if (changedPath != null && changedPath.getType() == SVNLogEntryPath.TYPE_MODIFIED) {
             baton.myPropsAct = DECIDE;
             baton.myTextAct = ACCEPT;
@@ -271,7 +273,7 @@ public class SVNReplicationEditor implements ISVNEditor {
             }
             baton.myProps = props;
             myCommitEditor.openFile(path, myPreviousRevision);
-            SVNDebugLog.logInfo("Opening file '" + absPath + "'");
+            myLog.info("Opening file '" + absPath + "'");
         } else if (changedPath == null) {
             baton.myPropsAct = IGNORE;
             baton.myTextAct = IGNORE;
@@ -359,7 +361,7 @@ public class SVNReplicationEditor implements ISVNEditor {
         EntryBaton baton = (EntryBaton) myPathsToFileBatons.get(path);
         if (baton.myPropsAct == ACCEPT) {
             myCommitEditor.changeFileProperty(path, name, value);
-            SVNDebugLog.logInfo("Changing file property: " + name + "=" + value);
+            myLog.info("Changing file property: " + name + "=" + value);
         } else if (baton.myPropsAct == DECIDE) {
             String propVal = (String)baton.myProps.get(name);
             if (propVal != null && propVal.equals(value)) {
@@ -368,7 +370,7 @@ public class SVNReplicationEditor implements ISVNEditor {
                  * do not reset them again.
                  */
                 baton.myPropsAct = IGNORE;
-                SVNDebugLog.logInfo("Ignoring file property: " + name + "=" + value);
+                myLog.info("Ignoring file property: " + name + "=" + value);
                 return;
             }
             /*
@@ -376,10 +378,10 @@ public class SVNReplicationEditor implements ISVNEditor {
              */
             baton.myPropsAct = ACCEPT;
             myCommitEditor.changeFileProperty(path, name, value);
-            SVNDebugLog.logInfo("Changing file property: " + name + "=" + value);
+            myLog.info("Changing file property: " + name + "=" + value);
         }
         // ignore props of the file being copied
-        SVNDebugLog.logInfo("Ignoring file property: " + name + "=" + value);
+        myLog.info("Ignoring file property: " + name + "=" + value);
     }
 
     public void closeFile(String path, String textChecksum) throws SVNException {
@@ -390,14 +392,14 @@ public class SVNReplicationEditor implements ISVNEditor {
     }
 
     public SVNCommitInfo closeEdit() throws SVNException {
-        SVNDebugLog.logInfo("Closing Edit");
+        myLog.info("Closing Edit");
         myCommitInfo = myCommitEditor.closeEdit();
         return myCommitInfo;
         
     }
 
     public void abortEdit() throws SVNException {
-        SVNDebugLog.logInfo("Aborting Edit");
+        myLog.info("Aborting Edit");
         myCommitEditor.abortEdit();
     }
     
@@ -439,7 +441,7 @@ public class SVNReplicationEditor implements ISVNEditor {
         for(int i = 0; i < pathsArray.length; i++) {
             String nextRelativePath = pathsArray[i];
             while(!"".equals(currentOpened) && nextRelativePath.indexOf(currentOpened) == -1){
-                SVNDebugLog.logInfo("Closing dir");
+                myLog.info("Closing dir");
                 myCommitEditor.closeDir();
                 currentOpened = SVNPathUtil.removeTail(currentOpened);
             }
@@ -456,17 +458,17 @@ public class SVNReplicationEditor implements ISVNEditor {
             for(j = 0; j < entries.length - 1; j++){
                 currentOpened = SVNPathUtil.append(currentOpened, entries[j]);
                 String absCurrentOpened = SVNPathUtil.append(dirPath, currentOpened);
-                SVNDebugLog.logInfo("Opening dir '" + absCurrentOpened + "'");
+                myLog.info("Opening dir '" + absCurrentOpened + "'");
                 myCommitEditor.openDir(SVNPathUtil.append(dirPath, currentOpened), myPreviousRevision);
             }
             String pathToDelete = SVNPathUtil.append(currentOpened, entries[j]);
             String absPathToDelete = SVNPathUtil.append(dirPath, pathToDelete);
-            SVNDebugLog.logInfo("Deleting entry '" + absPathToDelete + "'");
+            myLog.info("Deleting entry '" + absPathToDelete + "'");
             myCommitEditor.deleteEntry(absPathToDelete, myPreviousRevision);
             myChangedPaths.remove(absPathToDelete);
         }
         while(!"".equals(currentOpened)){
-            SVNDebugLog.logInfo("Closing dir");
+            myLog.info("Closing dir");
             myCommitEditor.closeDir();
             currentOpened = SVNPathUtil.removeTail(currentOpened);
         }

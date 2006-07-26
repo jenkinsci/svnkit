@@ -18,6 +18,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 
@@ -29,17 +30,19 @@ public class SVNCancellableEditor implements ISVNEditor {
 
     private ISVNEditor myDelegate;
     private ISVNEventHandler myCancel;
+    private ISVNDebugLog myLog;
     
-    public static ISVNEditor newInstance(ISVNEditor editor, ISVNEventHandler cancel) {
+    public static ISVNEditor newInstance(ISVNEditor editor, ISVNEventHandler cancel, ISVNDebugLog log) {
         if (cancel != null) {
-            return new SVNCancellableEditor(editor, cancel);
+            return new SVNCancellableEditor(editor, cancel, log);
         }
         return editor;
     }
     
-    private SVNCancellableEditor(ISVNEditor delegate, ISVNEventHandler cancel) {
+    private SVNCancellableEditor(ISVNEditor delegate, ISVNEventHandler cancel, ISVNDebugLog log) {
         myDelegate = delegate;
         myCancel = cancel;
+        myLog = log == null ? SVNDebugLog.getDefaultLog() : log;
     }
 
     public void targetRevision(long revision) throws SVNException {
@@ -49,98 +52,100 @@ public class SVNCancellableEditor implements ISVNEditor {
 
     public void openRoot(long revision) throws SVNException {
         myCancel.checkCancelled();
-        SVNDebugLog.logInfo("root");
+        myLog.info("root");
         myDelegate.openRoot(revision);
     }
 
     public void deleteEntry(String path, long revision) throws SVNException {
         myCancel.checkCancelled();
-        SVNDebugLog.logInfo("del " + path);
+        myLog.info("del " + path);
         myDelegate.deleteEntry(path, revision);
     }
 
     public void absentDir(String path) throws SVNException {
         myCancel.checkCancelled();
+        myLog.info("absent dir " + path);
         myDelegate.absentDir(path);
     }
 
     public void absentFile(String path) throws SVNException {
         myCancel.checkCancelled();
+        myLog.info("absent file " + path);
         myDelegate.absentFile(path);
     }
 
     public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         myCancel.checkCancelled();
-        SVNDebugLog.logInfo("add dir " + path);
+        myLog.info("add dir " + path);
         myDelegate.addDir(path, copyFromPath, copyFromRevision);
     }
 
     public void openDir(String path, long revision) throws SVNException {
         myCancel.checkCancelled();
-        SVNDebugLog.logInfo("open dir " + path);
+        myLog.info("open dir " + path);
         myDelegate.openDir(path, revision);
     }
 
     public void changeDirProperty(String name, String value) throws SVNException {
         myCancel.checkCancelled();
-        SVNDebugLog.logInfo("change dir prop " + name + " : " + value);
+        myLog.info("change dir prop " + name + " : " + value);
         myDelegate.changeDirProperty(name, value);
     }
 
     public void closeDir() throws SVNException {
         myCancel.checkCancelled();
-        SVNDebugLog.logInfo("close dir");
+        myLog.info("close dir");
         myDelegate.closeDir();
     }
 
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         myCancel.checkCancelled();
-        SVNDebugLog.logInfo("add file " + path);
+        myLog.info("add file " + path);
         myDelegate.addFile(path, copyFromPath, copyFromRevision);
     }
 
     public void openFile(String path, long revision) throws SVNException {
         myCancel.checkCancelled();
-        SVNDebugLog.logInfo("open file " + path);
+        myLog.info("open file " + path);
         myDelegate.openFile(path, revision);
     }
 
     public void applyTextDelta(String path, String baseChecksum) throws SVNException {
         myCancel.checkCancelled();
-        SVNDebugLog.logInfo("apply delta" + path);
+        myLog.info("apply delta" + path);
         myDelegate.applyTextDelta(path, baseChecksum);
     }
 
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
-        SVNDebugLog.logInfo("delta chunk" + path);
+        myLog.info("delta chunk" + path);
         return myDelegate.textDeltaChunk(path, diffWindow);
     }
 
     public void textDeltaEnd(String path) throws SVNException {
-        SVNDebugLog.logInfo("delta end " + path);
+        myLog.info("delta end " + path);
         myDelegate.textDeltaEnd(path);
     }
 
     public void changeFileProperty(String path, String name, String value) throws SVNException {
         myCancel.checkCancelled();
-        SVNDebugLog.logInfo("change file prop " + name + " = " + value);
+        myLog.info("change file prop " + name + " = " + value);
         myDelegate.changeFileProperty(path, name, value);
     }
 
     public void closeFile(String path, String textChecksum) throws SVNException {
         myCancel.checkCancelled();
-        SVNDebugLog.logInfo("close file " + path);
+        myLog.info("close file " + path);
         myDelegate.closeFile(path, textChecksum);
     }
 
     public SVNCommitInfo closeEdit() throws SVNException {
         myCancel.checkCancelled();
-        SVNDebugLog.logInfo("close edit");
+        myLog.info("close edit");
         return myDelegate.closeEdit();
     }
 
     public void abortEdit() throws SVNException {
-        SVNDebugLog.logInfo("abort edit");
+        myLog.info("abort edit");
         myDelegate.abortEdit();
     }
 

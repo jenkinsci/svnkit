@@ -23,7 +23,7 @@ import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
-import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
@@ -67,7 +67,11 @@ public class SVNXMLDirEntryHandler extends AbstractXMLHandler implements ISVNDir
      *                   an XML tree
      */
     public SVNXMLDirEntryHandler(ContentHandler saxHandler) {
-        super(saxHandler);
+        this(saxHandler, null);
+    }    
+
+    public SVNXMLDirEntryHandler(ContentHandler saxHandler, ISVNDebugLog log) {
+        super(saxHandler, log);
     }    
     
     /**
@@ -82,7 +86,7 @@ public class SVNXMLDirEntryHandler extends AbstractXMLHandler implements ISVNDir
             addAttribute(PATH_ATTR, path == null || path.length() == 9 ? "." : path);
             openTag(LIST_TAG);
         } catch (SAXException e) {
-            SVNDebugLog.logError(e);
+            getDebugLog().error(e);
         }
     }
 
@@ -103,7 +107,7 @@ public class SVNXMLDirEntryHandler extends AbstractXMLHandler implements ISVNDir
             myDirEntries = null;
             closeTag(LIST_TAG);
         } catch (SAXException e) {
-            SVNDebugLog.logError(e);
+            getDebugLog().error(e);
         }
     }
     

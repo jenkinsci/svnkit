@@ -34,7 +34,6 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.0
@@ -260,7 +259,7 @@ public class SVNMergeEditor implements ISVNEditor {
                                         myCurrentFile.myPropertyDiff,
                                         myCurrentFile.myEntryProps);
                     } catch (Throwable th) {
-                        SVNDebugLog.logInfo(th);
+                        myRepos.getDebugLog().info(th);
                     }
                 } else {
                     try {
@@ -270,7 +269,7 @@ public class SVNMergeEditor implements ISVNEditor {
                                 myCurrentFile.myBaseProperties,
                                 myCurrentFile.myPropertyDiff);
                     } catch (Throwable th) {
-                        SVNDebugLog.logInfo(th);
+                        myRepos.getDebugLog().info(th);
                     }
                 }
                 if (result != null) {

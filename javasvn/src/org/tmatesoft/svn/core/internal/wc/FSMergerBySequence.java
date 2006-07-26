@@ -286,11 +286,11 @@ class FSMergerBySequence {
 	}
 
     public static void dump(String name, QSequenceLineRAData data) throws IOException {
-        SVNDebugLog.logInfo("=== " + name + " ===");
+        SVNDebugLog.getDefaultLog().info("=== " + name + " ===");
         byte[] buffer = new byte[(int) data.length()];
         data.get(buffer, 0, data.length());
-        SVNDebugLog.logInfo(new String(buffer));
-        SVNDebugLog.logInfo("===");
+        SVNDebugLog.getDefaultLog().info(new String(buffer));
+        SVNDebugLog.getDefaultLog().info("===");
 
     }
 

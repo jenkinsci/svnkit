@@ -32,7 +32,6 @@ import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * The <b>SVNRepositoryReplicator</b> class provides an ability to 
@@ -183,7 +182,7 @@ public class SVNRepositoryReplicator implements ISVNEventHandler {
         }
         
         for(long i = fromRevision; i <= toRevision; i++) {
-            SVNDebugLog.logInfo("Replicating revision #" + i);
+            src.getDebugLog().info("Replicating revision #" + i);
             Map revisionProps = src.getRevisionProperties(i, null);
             String commitMessage = (String) revisionProps.get(SVNRevisionProperty.LOG);
             
@@ -208,7 +207,7 @@ public class SVNRepositoryReplicator implements ISVNEventHandler {
             fireReplicatingEvent(currentRevision[0]);
             
             commitMessage = commitMessage == null ? "" : commitMessage;
-            ISVNEditor commitEditor = SVNCancellableEditor.newInstance(dst.getCommitEditor(commitMessage, null), this);
+            ISVNEditor commitEditor = SVNCancellableEditor.newInstance(dst.getCommitEditor(commitMessage, null), this, src.getDebugLog());
 
             SVNReplicationEditor bridgeEditor = null;
             try {
@@ -220,7 +219,7 @@ public class SVNRepositoryReplicator implements ISVNEventHandler {
                         reporter.setPath("", null, previousRev, false);
                         reporter.finishReport();
                     }            
-                }, SVNCancellableEditor.newInstance(bridgeEditor, this));            
+                }, SVNCancellableEditor.newInstance(bridgeEditor, this, src.getDebugLog()));            
             } catch (SVNException svne) {
                 try {
                     bridgeEditor.abortEdit();

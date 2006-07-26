@@ -34,7 +34,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.0
@@ -92,7 +91,6 @@ public class SVNEntries {
                     if (line.charAt(line.length() - 1) == '>') {
                         String entryName = (String) entry.get(SVNProperty.NAME);
                         if (entryName == null) {
-                            SVNDebugLog.logInfo("svn: '" + myFile + "' file includes invalid entry with missing 'name' attribute");
                             myData.clear();
                             myEntries.clear();
                             return;

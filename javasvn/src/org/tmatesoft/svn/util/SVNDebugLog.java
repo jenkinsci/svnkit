@@ -31,20 +31,4 @@ public class SVNDebugLog {
         }
         return ourDefaultLog;
     }
-
-    public static void logInfo(String message) {
-        getDefaultLog().info(message);
-    }
-
-    public static void logError(String message) {
-        getDefaultLog().error(message);
-    }
-    
-    public static void logInfo(Throwable th) {
-        getDefaultLog().info(th);        
-    }
-
-    public static void logError(Throwable th) {
-        getDefaultLog().error(th);
-    }
 }

@@ -419,8 +419,8 @@ public class SVNDeltaCombiner {
     
     static void assertCondition(boolean condition, String message) {
         if (!condition) {
-            SVNDebugLog.logError(message);
-            SVNDebugLog.logError(new Exception(message));
+            SVNDebugLog.getDefaultLog().error(message);
+            SVNDebugLog.getDefaultLog().error(new Exception(message));
         }
     }
     

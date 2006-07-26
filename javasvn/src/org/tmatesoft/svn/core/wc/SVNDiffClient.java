@@ -478,11 +478,11 @@ public class SVNDiffClient extends SVNBasicClient {
         SVNDiffEditor editor = new SVNDiffEditor(wcAccess, getDiffGenerator(),
                 useAncestry, reverse /* reverse */,
                 revision2 == SVNRevision.BASE /* compare to base */, result);
-        SVNReporter reporter = new SVNReporter(wcAccess, false, recursive);
+        SVNReporter reporter = new SVNReporter(wcAccess, false, recursive, getDebugLog());
         long revNumber = getRevisionNumber(revision1, repository, null);
         
         long pegRevisionNumber = getRevisionNumber(revision2, repository, path2);
-        repository.diff(url1, revNumber, pegRevisionNumber, target, !useAncestry, recursive, reporter, SVNCancellableEditor.newInstance(editor, this));
+        repository.diff(url1, revNumber, pegRevisionNumber, target, !useAncestry, recursive, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
         
         wcAccess.close(false);
     }
@@ -517,12 +517,12 @@ public class SVNDiffClient extends SVNBasicClient {
         SVNRepository repository = createRepository(anchorURL, true);
         SVNDiffEditor editor = new SVNDiffEditor(wcAccess, getDiffGenerator(),
                 useAncestry, reverse /* reverse */, revision2 == SVNRevision.BASE /* compare to base */, result);
-        SVNReporter reporter = new SVNReporter(wcAccess, false, recursive);
+        SVNReporter reporter = new SVNReporter(wcAccess, false, recursive, getDebugLog());
         long revNumber = getRevisionNumber(revision1, repository, path1);
         
         // this should be rev2.
         long pegRevisionNumber = getRevisionNumber(revision2, repository, path2);
-        repository.diff(url1, revNumber, pegRevisionNumber, target, !useAncestry, recursive, reporter, SVNCancellableEditor.newInstance(editor, this));
+        repository.diff(url1, revNumber, pegRevisionNumber, target, !useAncestry, recursive, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
         
         wcAccess.close(false);
     }
@@ -602,7 +602,7 @@ public class SVNDiffClient extends SVNBasicClient {
                     reporter.finishReport();
                 }
             };
-            repository1.diff(url2, rev2, rev1, target1, !useAncestry, recursive, reporter, SVNCancellableEditor.newInstance(editor, this));
+            repository1.diff(url2, rev2, rev1, target1, !useAncestry, recursive, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
         } finally {
             if (tmpFile != null) {
                 SVNFileUtil.deleteAll(tmpFile, true, null);
@@ -1072,7 +1072,7 @@ public class SVNDiffClient extends SVNBasicClient {
         long rev2 = getRevisionNumber(revision2, repository1, path2);
         SVNRepository repository2 = createRepository(url1, false);
         
-        SVNMerger merger = new SVNMerger(wcAccess, url2.toString(), rev2, force, dryRun, isLeaveConflictsUnresolved());
+        SVNMerger merger = new SVNMerger(wcAccess, url2.toString(), rev2, force, dryRun, isLeaveConflictsUnresolved(), getDebugLog());
         SVNMergeEditor mergeEditor = new SVNMergeEditor(wcAccess, repository2, rev1, rev2, merger, this);
         
         repository1.diff(url2, rev2, rev1, null, !useAncestry, recursive,
@@ -1081,7 +1081,7 @@ public class SVNDiffClient extends SVNBasicClient {
                         reporter.setPath("", null, rev1, false);
                         reporter.finishReport();
                     }
-                }, SVNCancellableEditor.newInstance(mergeEditor, this));
+                }, SVNCancellableEditor.newInstance(mergeEditor, this, getDebugLog()));
         
     }
     
@@ -1123,7 +1123,7 @@ public class SVNDiffClient extends SVNBasicClient {
                     names.remove();
                 }
             }
-            SVNMerger merger = new SVNMerger(wcAccess, url2.toString(), rev2[0], force, dryRun, isLeaveConflictsUnresolved());
+            SVNMerger merger = new SVNMerger(wcAccess, url2.toString(), rev2[0], force, dryRun, isLeaveConflictsUnresolved(), getDebugLog());
             mergeResult = merger.fileChanged(name, f1, f2, rev1[0], rev2[0], mimeType1, mimeType2, props1, propsDiff);
         } finally {
             SVNFileUtil.deleteAll(f1, null);

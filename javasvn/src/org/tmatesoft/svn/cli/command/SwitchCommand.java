@@ -21,7 +21,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @author TMate Software Ltd.
@@ -48,7 +47,7 @@ public class SwitchCommand extends SVNCommand {
                 updater.doSwitch(new File(absolutePath).getAbsoluteFile(), switchURL, revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
             }
         } catch (Throwable th) {
-            SVNDebugLog.logInfo(th);
+            updater.getDebugLog().info(th);
             println(err, th.getMessage());
             println(err);
             System.exit(1);

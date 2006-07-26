@@ -19,6 +19,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
 import org.tmatesoft.svn.core.wc.SVNInfo;
+import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
@@ -63,7 +64,11 @@ public class SVNXMLInfoHandler extends AbstractXMLHandler implements ISVNInfoHan
     private File myTargetPath;
 
     public SVNXMLInfoHandler(ContentHandler contentHandler) {
-        super(contentHandler);
+        this(contentHandler, null);
+    }
+
+    public SVNXMLInfoHandler(ContentHandler contentHandler, ISVNDebugLog log) {
+        super(contentHandler, log);
     }
     
     public void setTargetPath(File path) {

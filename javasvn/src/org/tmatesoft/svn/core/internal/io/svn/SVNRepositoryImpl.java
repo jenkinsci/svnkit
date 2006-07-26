@@ -46,7 +46,6 @@ import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.0
@@ -653,7 +652,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             try {
                 authenticate();
             } catch (SVNException e) {                
-                SVNDebugLog.logInfo(e.getErrorMessage().getErrorCode() + "");
+                getDebugLog().info(e.getErrorMessage().getErrorCode() + "");
                 if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_SVN_UNKNOWN_CMD) {
                     closeConnection();
                     openConnection();
@@ -681,7 +680,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             read("x", buffer);
             read("[()]", buffer);
         } catch (SVNException e) {
-            SVNDebugLog.logInfo(e);
+            getDebugLog().info(e);
             handleUnsupportedCommand(e, "Server doesn't support the lock command");
         } finally {
             closeConnection();

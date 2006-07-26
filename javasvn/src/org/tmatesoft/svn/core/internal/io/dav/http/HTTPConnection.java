@@ -47,7 +47,6 @@ import org.tmatesoft.svn.core.internal.util.SVNSocketFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.util.SVNDebugLog;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -678,7 +677,7 @@ class HTTPConnection implements IHTTPConnection {
             mySocket = null;
             myOutputStream = null;
             myInputStream = null;
-            SVNDebugLog.logInfo("HTTP connection closed");
+            myRepository.getDebugLog().info("HTTP connection closed");
         }
     }
 

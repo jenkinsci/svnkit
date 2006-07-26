@@ -161,7 +161,7 @@ public abstract class SVNCommand {
                 return (SVNCommand) clazz.newInstance();
             }
         } catch (Throwable th) {
-            SVNDebugLog.logInfo(th);
+            SVNDebugLog.getDefaultLog().info(th);
             //
         }
         return null;
@@ -207,7 +207,7 @@ public abstract class SVNCommand {
 
     public static void println(PrintStream out, String line) {
         out.println(line);
-        SVNDebugLog.logInfo(line);
+        SVNDebugLog.getDefaultLog().info(line);
     }
 
     public static void print(PrintStream out, String line) {

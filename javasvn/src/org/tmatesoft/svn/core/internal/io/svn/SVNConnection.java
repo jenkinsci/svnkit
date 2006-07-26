@@ -25,7 +25,6 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.0
@@ -221,7 +220,7 @@ class SVNConnection {
 
     private void checkConnection() throws SVNException {
         if (!myIsReopening && !myConnector.isConnected(myRepository)) {
-            SVNDebugLog.logInfo(new Exception());
+            myRepository.getDebugLog().info(new Exception());
             myIsReopening = true;
             try {
                 close();

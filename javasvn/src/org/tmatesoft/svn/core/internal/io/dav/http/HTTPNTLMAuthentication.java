@@ -344,7 +344,7 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
             }
         }
         log.append('\n');
-        SVNDebugLog.logInfo(log.toString());
+        SVNDebugLog.getDefaultLog().info(log.toString());
     }
     
     private static int toInt(byte[] num){
@@ -696,7 +696,7 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
         log.append("Length: " + message.length());
         log.append('\n');
         log.append(sublog);
-        SVNDebugLog.logInfo(log.toString());
+        SVNDebugLog.getDefaultLog().info(log.toString());
 
         return "NTLM " + getResponse();
     }

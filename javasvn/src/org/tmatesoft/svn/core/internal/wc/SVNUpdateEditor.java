@@ -30,7 +30,7 @@ import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.ISVNDebugLog;
 
 /**
  * @version 1.0
@@ -52,8 +52,9 @@ public class SVNUpdateEditor implements ISVNEditor {
     private boolean myIsLeaveConflicts;
     
     private SVNDeltaProcessor myDeltaProcessor;
+    private ISVNDebugLog myLog;
 
-    public SVNUpdateEditor(SVNWCAccess wcAccess, String switchURL, boolean recursive, boolean leaveConflicts) throws SVNException {
+    public SVNUpdateEditor(SVNWCAccess wcAccess, String switchURL, boolean recursive, boolean leaveConflicts, ISVNDebugLog log) throws SVNException {
         myWCAccess = wcAccess;
         myIsRecursive = recursive;
         myTarget = wcAccess.getTargetName();
@@ -61,6 +62,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         myTargetRevision = -1;
         myIsLeaveConflicts = leaveConflicts;
         myDeltaProcessor = new SVNDeltaProcessor();
+        myLog = log;
 
         SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry("", true);
         myTargetURL = entry.getURL();
@@ -582,7 +584,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             if (child != null) {
                 bumpDirectory(child, childURL, rootURL);
             } else {
-                SVNDebugLog.logInfo("svn: Directory object is null in bump directories method");
+                myLog.info("svn: Directory object is null in bump directories method");
             }
         }
     }

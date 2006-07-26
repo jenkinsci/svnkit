@@ -22,7 +22,6 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @author TMate Software Ltd.
@@ -126,7 +125,7 @@ public class DiffCommand extends SVNCommand {
                             differ.doDiff(path1, rN, path2, rM, recursive, useAncestry, out);
                         }
                     } catch (SVNException e) {
-                        SVNDebugLog.logInfo(e);
+                        differ.getDebugLog().info(e);
                         error = true;
                         println(err, e.getMessage());
                     }

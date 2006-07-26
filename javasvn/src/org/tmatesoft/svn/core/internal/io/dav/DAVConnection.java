@@ -36,7 +36,6 @@ import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.util.SVNDebugLog;
 import org.xml.sax.helpers.DefaultHandler;
 
 
@@ -126,8 +125,8 @@ public class DAVConnection {
         try {
             status = doReport(path, DAVGetLocksHandler.generateGetLocksRequest(null), handler);
         } catch (SVNException e) {
-            SVNDebugLog.logInfo("error message: " + e.getErrorMessage());
-            SVNDebugLog.logInfo("error code: " + e.getErrorMessage().getErrorCode());
+            myRepository.getDebugLog().info("error message: " + e.getErrorMessage());
+            myRepository.getDebugLog().info("error code: " + e.getErrorMessage().getErrorCode());
             if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.UNSUPPORTED_FEATURE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "Server does not support locking features");
                 SVNErrorManager.error(err, e.getErrorMessage());

@@ -21,7 +21,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
@@ -70,7 +70,11 @@ public class SVNXMLStatusHandler extends AbstractXMLHandler implements ISVNStatu
      *                   an XML tree
      */
     public SVNXMLStatusHandler(ContentHandler saxHandler) {
-        super(saxHandler);
+        this(saxHandler, null);
+    }    
+
+    public SVNXMLStatusHandler(ContentHandler saxHandler, ISVNDebugLog log) {
+        super(saxHandler, log);
     }    
     
     /**
@@ -85,7 +89,7 @@ public class SVNXMLStatusHandler extends AbstractXMLHandler implements ISVNStatu
             addAttribute(PATH_ATTR, path.getPath());
             openTag(TARGET_TAG);
         } catch (SAXException e) {
-            SVNDebugLog.logError(e);
+            getDebugLog().error(e);
         }
     }
 
@@ -93,7 +97,7 @@ public class SVNXMLStatusHandler extends AbstractXMLHandler implements ISVNStatu
         try {
             sendToHandler(status);
         } catch (SAXException th) {
-            SVNDebugLog.logError(th);
+            getDebugLog().error(th);
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.XML_MALFORMED, th.getLocalizedMessage());
             SVNErrorManager.error(err, th);
         }
@@ -115,7 +119,7 @@ public class SVNXMLStatusHandler extends AbstractXMLHandler implements ISVNStatu
             }
             closeTag(TARGET_TAG);
         } catch (SAXException e) {
-            SVNDebugLog.logError(e);
+            getDebugLog().error(e);
         }
     }
     

@@ -48,7 +48,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * This class provides methods which allow to check out, update, switch and relocate a
@@ -138,17 +137,17 @@ public class SVNUpdateClient extends SVNBasicClient {
      */
     public long doUpdate(File file, SVNRevision revision, boolean recursive) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess(file);
-        final SVNReporter reporter = new SVNReporter(wcAccess, true, recursive);
+        final SVNReporter reporter = new SVNReporter(wcAccess, true, recursive, getDebugLog());
         try {
             wcAccess.open(true, recursive);
             SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry("", false);
             SVNURL url = entry.getSVNURL();
-            SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess, null, recursive, isLeaveConflictsUnresolved());
+            SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess, null, recursive, isLeaveConflictsUnresolved(), getDebugLog());
             SVNRepository repos = createRepository(url, true);
             
             String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
             long revNumber = getRevisionNumber(revision, repos, file);
-            repos.update(revNumber, target, recursive, reporter, SVNCancellableEditor.newInstance(editor, this));
+            repos.update(revNumber, target, recursive, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
 
             if (editor.getTargetRevision() >= 0) {
                 if (recursive && !isIgnoreExternals()) {
@@ -188,7 +187,7 @@ public class SVNUpdateClient extends SVNBasicClient {
 
     public long doSwitch(File file, SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess(file);
-        final SVNReporter reporter = new SVNReporter(wcAccess, true, recursive);
+        final SVNReporter reporter = new SVNReporter(wcAccess, true, recursive, getDebugLog());
         try {
             wcAccess.open(true, recursive);
             SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry("", false);
@@ -208,10 +207,10 @@ public class SVNUpdateClient extends SVNBasicClient {
                 url = locs[0].getURL();
             }
 
-            SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess, url.toString(), recursive, isLeaveConflictsUnresolved());
+            SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess, url.toString(), recursive, isLeaveConflictsUnresolved(), getDebugLog());
             
             String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
-            repository.update(url, revNumber, target, recursive, reporter, SVNCancellableEditor.newInstance(editor, this));
+            repository.update(url, revNumber, target, recursive, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
 
             if (editor.getTargetRevision() >= 0 && recursive && !isIgnoreExternals()) {
                 handleExternals(wcAccess);
@@ -544,7 +543,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                     reporter.setPath("", null, revNumber, true);
                     reporter.finishReport();
                 }
-            }, SVNCancellableEditor.newInstance(editor, this));
+            }, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
             // nothing may be created.
             SVNFileType fileType = SVNFileType.getType(dstPath);
             if (fileType == SVNFileType.NONE) {
@@ -678,7 +677,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                     } catch (SVNCancelException e) {
                         throw e;
                     } catch (SVNException e) {
-                        SVNDebugLog.logInfo(e);
+                        getDebugLog().info(e);
                     }
                 }
             }
@@ -867,7 +866,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                     throw th;
                 }
                 dispatchEvent(new SVNEvent(th.getErrorMessage()));
-                SVNDebugLog.logInfo(th);
+                getDebugLog().info(th);
             } finally {
                 setEventPathPrefix(null);
             }
@@ -882,7 +881,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 externalAccess.open(true, true);
                 externalAccess.getAnchor().destroy("", true);
             } catch (Throwable th) {
-                SVNDebugLog.logInfo(th);
+                getDebugLog().info(th);
             } finally {
                 externalAccess.close(true);
             }
