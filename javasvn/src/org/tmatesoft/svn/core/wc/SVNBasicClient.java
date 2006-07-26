@@ -40,6 +40,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
+import org.tmatesoft.svn.util.ISVNDebugLogger;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
@@ -66,6 +67,7 @@ public class SVNBasicClient implements ISVNEventHandler {
     private List myPathPrefixesStack;
     private boolean myIsIgnoreExternals;
     private boolean myIsLeaveConflictsUnresolved;
+    private ISVNDebugLogger myDebugLogger;
 
     protected SVNBasicClient(final ISVNAuthenticationManager authManager, ISVNOptions options) {
         this(new DefaultSVNRepositoryPool(authManager == null ? SVNWCUtil.createDefaultAuthenticationManager() : authManager, options, 
@@ -187,6 +189,17 @@ public class SVNBasicClient implements ISVNEventHandler {
         myEventDispatcher = dispatcher;
     }
     
+    public void setDebugLogger(ISVNDebugLogger logger) {
+        myDebugLogger = logger;
+    }
+    
+    public ISVNDebugLogger getDebugLogger() {
+        if (myDebugLogger == null) {
+            return SVNDebugLog.getLogger();
+        }
+        return myDebugLogger;
+    }
+    
     protected void sleepForTimeStamp() {
         if (myPathPrefixesStack == null || myPathPrefixesStack.isEmpty()) {
             SVNFileUtil.sleepForTimestamp();
@@ -194,10 +207,14 @@ public class SVNBasicClient implements ISVNEventHandler {
     }
 
     protected SVNRepository createRepository(SVNURL url, boolean mayReuse) throws SVNException {
+        SVNRepository repository = null;
         if (myRepositoryPool == null) {
-            return SVNRepositoryFactory.create(url, null);
+            repository = SVNRepositoryFactory.create(url, null);
+        } else {
+            repository = myRepositoryPool.createRepository(url, mayReuse);
         }
-        return myRepositoryPool.createRepository(url, mayReuse);
+        repository.setDebugLogger(getDebugLogger());
+        return repository;
     }
     
     protected ISVNRepositoryPool getRepositoryPool() {
