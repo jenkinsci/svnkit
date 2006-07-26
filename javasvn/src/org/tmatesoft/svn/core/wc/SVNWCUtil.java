@@ -40,6 +40,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 public class SVNWCUtil {
     
     private static final String ECLIPSE_AUTH_MANAGER_CLASSNAME = "org.tmatesoft.svn.core.internal.wc.EclipseSVNAuthenticationManager";
+    private static Boolean ourIsEclipse;
 
     /**
      * Gets the location of the default SVN's run-time configuration area
@@ -365,15 +366,19 @@ public class SVNWCUtil {
     }
     
     private static boolean isEclipse() {
-        try {
-            Class platform = SVNWCUtil.class.getClassLoader().loadClass("org.eclipse.core.runtime.Platform");
-            Method isRunning = platform.getMethod("isRunning", new Class[0]);
-            Object result = isRunning.invoke(null, new Object[0]);
-            if (result != null && Boolean.TRUE.equals(result)) {
-                return true;
+        if (ourIsEclipse == null) {
+            try {
+                Class platform = SVNWCUtil.class.getClassLoader().loadClass("org.eclipse.core.runtime.Platform");
+                Method isRunning = platform.getMethod("isRunning", new Class[0]);
+                Object result = isRunning.invoke(null, new Object[0]);
+                if (result != null && Boolean.TRUE.equals(result)) {
+                    ourIsEclipse = Boolean.TRUE;
+                    return true;
+                }
+            } catch (Throwable th) {
             }
-        } catch (Throwable th) {
+            ourIsEclipse = Boolean.FALSE;
         }
-        return false;
+        return ourIsEclipse.booleanValue();
     }
 }
