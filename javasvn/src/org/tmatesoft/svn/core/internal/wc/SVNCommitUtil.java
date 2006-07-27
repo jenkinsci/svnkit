@@ -618,15 +618,17 @@ public class SVNCommitUtil {
 
         if (commitAddition) {
             SVNProperties props = dir.getProperties(entry.getName(), false);
-            SVNProperties baseProps = dir.getBaseProperties(entry.getName(),
-                    false);
-            Map propDiff = baseProps.compareTo(props);
-            boolean eolChanged = textModified = propDiff != null
-                    && propDiff.containsKey(SVNProperty.EOL_STYLE);
+            SVNProperties baseProps = dir.getBaseProperties(entry.getName(), false);            
+            Map propDiff = null;
+            if (entry.isScheduledForReplacement()) {
+                propDiff = props.asMap();
+            } else {
+                propDiff = baseProps.compareTo(props);
+            }
+            boolean eolChanged = textModified = propDiff != null && propDiff.containsKey(SVNProperty.EOL_STYLE);
             if (entry.getKind() == SVNNodeKind.FILE) {
                 if (commitCopy) {
-                    textModified = propDiff != null
-                            && propDiff.containsKey(SVNProperty.EOL_STYLE);
+                    textModified = propDiff != null && propDiff.containsKey(SVNProperty.EOL_STYLE);
                     if (!textModified) {
                         textModified = dir.hasTextModifications(entry.getName(), eolChanged);
                     }
