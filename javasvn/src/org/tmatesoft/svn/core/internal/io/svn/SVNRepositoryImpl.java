@@ -21,6 +21,7 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -466,6 +467,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                                     message));
                     }
                 } catch (SVNException e) {
+                    if (e instanceof SVNCancelException) {
+                        throw e;
+                    }
                     read("x", buffer);
                     if (limit <= 0 || (limit > 0 && count <= limit)) {
                         read("[()]", buffer);
