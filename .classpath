@@ -5,7 +5,7 @@
 	<classpathentry output="doc/examples/bin" kind="src" path="doc/examples/src"/>
 	<classpathentry output="javasvn-eclipse/bin" kind="src" path="javasvn-eclipse/org.tmatesoft.javasvn/src"/>
 	<classpathentry output="javasvn-test/bin" kind="src" path="javasvn-test/src"/>
-	<classpathentry excluding="**/SVNClient.java|org/tigris/subversion/javahl/tests/" output="contrib/javahl/bin" kind="src" path="contrib/javahl/src"/>
+	<classpathentry excluding="**/SVNAdmin.java|**/SVNClient.java|org/tigris/subversion/javahl/tests/" output="contrib/javahl/bin" kind="src" path="contrib/javahl/src"/>
 	<classpathentry output="contrib/sequence/bin" kind="src" path="contrib/sequence/src"/>
 	<classpathentry output="contrib/sequence/bin" kind="src" path="contrib/sequence/src-test"/>
 	<classpathentry exported="true" kind="con" path="org.eclipse.pde.core.requiredPlugins"/>

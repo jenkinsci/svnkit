@@ -35,6 +35,7 @@
 
         <javac debug="true" destdir="contrib/javahl/bin" srcdir="contrib/javahl/src">
             <exclude name="**/SVNClient.java" />
+            <exclude name="**/SVNAdmin.java" />
             <exclude name="org/tigris/subversion/javahl/tests/**" />
         </javac>
         <javac debug="true" destdir="contrib/sequence/bin" srcdir="contrib/sequence/src" />
@@ -132,6 +133,7 @@
             <fileset dir="javasvn/bin">
                 <exclude name="org/tmatesoft/svn/cli/**" />
                 <exclude name="org/tigris/subversion/javahl/SVNClient**" />
+                <exclude name="org/tigris/subversion/javahl/SVNAdmin**" />
             </fileset>
             <fileset dir="${basedir}" >
                 <include name="javasvn.build.properties" />
@@ -154,6 +156,8 @@
                 <exclude name="org/tigris/subversion/javahl/tests/**" />
                 <exclude name="org/tigris/subversion/javahl/SVNClient.class" />
                 <exclude name="org/tigris/subversion/javahl/SVNClient$*.class" />
+                <exclude name="org/tigris/subversion/javahl/SVNAdmin.class" />
+                <exclude name="org/tigris/subversion/javahl/SVNAdmin$*.class" />
             </fileset>
             <fileset dir="contrib/javahl">
                 <include name="JAVAHL-LICENSE" />
@@ -195,7 +199,10 @@
         <zip destfile="build/lib/javasvnsrc.zip">
             <fileset dir="javasvn/src" />
             <fileset dir="javasvn-eclipse/org.tmatesoft.javasvn/src" />
-            <fileset dir="contrib/javahl/src" />
+            <fileset dir="contrib/javahl/src">
+            	<exclude name="org/tigris/subversion/javahl/SVNAdmin.java"/>
+            	<exclude name="org/tigris/subversion/javahl/SVNClient.java"/>
+            </fileset>
             <fileset dir="contrib/sequence/src" />
         </zip>
     </target>
@@ -465,6 +472,7 @@
                classpathref="library.classpath"
         >
             <exclude name="org/tigris/subversion/javahl/SVNClient.java" />
+            <exclude name="org/tigris/subversion/javahl/SVNAdmin.java" />
         </javac>
         <!-- now we have native SVNClient and JavaSVN's SVNClientImpl -->
         <mkdir dir="contrib/sequence/bin-test" />
@@ -499,6 +507,7 @@
             <fileset dir="javasvn/bin">
                 <exclude name="org/tmatesoft/svn/cli/**" />
                 <exclude name="org/tigris/subversion/javahl/SVNClient**" />
+                <exclude name="org/tigris/subversion/javahl/SVNAdmin**" />
             </fileset>
             <fileset dir="${basedir}" >
                 <include name="javasvn.build.properties" />
