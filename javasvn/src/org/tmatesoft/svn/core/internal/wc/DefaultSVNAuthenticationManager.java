@@ -254,7 +254,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     protected SVNSSHAuthentication getDefaultSSHAuthentication() {
         Map tunnels = getConfigFile().getProperties("tunnels");
         if (tunnels == null || !tunnels.containsKey("ssh")) {
-            return null;
+            tunnels = new HashMap();
         }
         
         String sshProgram = (String) tunnels.get("ssh");
