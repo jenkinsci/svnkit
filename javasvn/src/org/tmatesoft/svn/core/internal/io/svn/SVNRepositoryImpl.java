@@ -467,6 +467,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                                     message));
                     }
                 } catch (SVNException e) {
+                    getDebugLog().info(e);
                     if (e instanceof SVNCancelException) {
                         throw e;
                     }
