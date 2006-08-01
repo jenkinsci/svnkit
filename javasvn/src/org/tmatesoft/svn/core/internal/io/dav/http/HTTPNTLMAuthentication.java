@@ -35,6 +35,9 @@ import org.tmatesoft.svn.util.SVNDebugLog;
 
 
 class HTTPNTLMAuthentication extends HTTPAuthentication {
+
+    private static final String NTLM_CASE_CONVERTION_PROPERTY = "javasvn.http.ntlm.uppercase";
+    
     private static final String DEFAULT_CHARSET = "ASCII";
     private static final String PROTOCOL_NAME = "NTLMSSP";
     private static final int LM_RESPONSE_LENGTH = 24;
@@ -398,8 +401,10 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
             hostName = "";
         }
         
-//        domain = domain.toUpperCase();
-//        hostName = hostName.toUpperCase();
+        if (isUpperCase()) {
+            domain = domain.toUpperCase();
+            hostName = hostName.toUpperCase();
+        }
         
         byte[] protocol = HTTPAuthentication.getBytes(PROTOCOL_NAME, DEFAULT_CHARSET);
         byte[] domainBytes = HTTPAuthentication.getBytes(domain, DEFAULT_CHARSET);
@@ -701,8 +706,13 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
         return "NTLM " + getResponse();
     }
 
+    private boolean isUpperCase() {
+        String upperCase = System.getProperty(NTLM_CASE_CONVERTION_PROPERTY, "true");
+        return Boolean.valueOf(upperCase).booleanValue();
+    }
+
     private byte[] hashPassword(String password) throws SVNException {
-        byte[] passw = password.getBytes();//.toUpperCase().getBytes();
+        byte[] passw = isUpperCase() ? password.toUpperCase().getBytes() : password.getBytes();
         byte[] lmPw1 = new byte[7];
         byte[] lmPw2 = new byte[7];
 
