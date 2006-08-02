@@ -473,8 +473,11 @@ public class SVNWCClient extends SVNBasicClient {
         if (SVNRevisionProperty.isRevisionProperty(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, "Revision property ''{0}'' not allowed in this context", propName);
             SVNErrorManager.error(err);
-        } else if (propName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, "''{0}'' is a wcprop , thus not accessible to clients", propName);
+        } else if (SVNProperty.isWorkingCopyProperty(propName)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, "''{0}'' is a wcprop, thus not accessible to clients", propName);
+            SVNErrorManager.error(err);
+        } else if (SVNProperty.isEntryProperty(propName)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, "''{0}'' is an entry property, thus not accessible to clients", propName);
             SVNErrorManager.error(err);
         }
         propValue = validatePropertyValue(propName, propValue, force);
@@ -2115,8 +2118,7 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
 
-    private void doSetLocalProperty(SVNDirectory anchor, String name,
-            String propName, String propValue, boolean force,
+    private void doSetLocalProperty(SVNDirectory anchor, String name, String propName, String propValue, boolean force,
             boolean recursive, boolean cancel, ISVNPropertyHandler handler) throws SVNException {
         if (cancel) {
             checkCancelled();
@@ -2159,6 +2161,8 @@ public class SVNWCClient extends SVNBasicClient {
                         SVNErrorManager.error(err);
                     } 
                 }
+                String oldValue = props.getPropertyValue(propName);
+                boolean modified = oldValue == null ? propValue != null : !oldValue.equals(propValue);
                 props.setPropertyValue(propName, propValue);
 
                 if (SVNProperty.EOL_STYLE.equals(propName) || SVNProperty.KEYWORDS.equals(propName)) {
@@ -2167,7 +2171,7 @@ public class SVNWCClient extends SVNBasicClient {
                 } else if (SVNProperty.NEEDS_LOCK.equals(propName) && propValue == null) {
                     SVNFileUtil.setReadonly(wcFile, false);
                 }
-                if (handler != null) {
+                if (modified && handler != null) {
                     handler.handleProperty(anchor.getFile(name), new SVNPropertyData(propName, propValue));
                 }
             }
@@ -2185,8 +2189,10 @@ public class SVNWCClient extends SVNBasicClient {
                 SVNErrorManager.error(err);
             }
         } else {
+            String oldValue = props.getPropertyValue(propName);
+            boolean modified = oldValue == null ? propValue != null : !oldValue.equals(propValue);
             props.setPropertyValue(propName, propValue);
-            if (handler != null) {
+            if (modified && handler != null) {
                 handler.handleProperty(anchor.getFile(name), new SVNPropertyData(propName, propValue));
             }
         }
