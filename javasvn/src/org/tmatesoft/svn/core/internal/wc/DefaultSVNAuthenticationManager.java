@@ -345,11 +345,8 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                     return new SVNPasswordAuthentication(myUserName, myPassword, myIsStore);
                 } else if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
                     if (myUserName == null) {                        
-                        String userName = System.getProperty("javasvn.author", System.getProperty("user.name", null));
-                        if (userName != null) {
-                            return new SVNUserNameAuthentication(userName, myIsStore);
-                        }
-                        return null;
+                        String userName = System.getProperty("javasvn.author", "");
+                        return new SVNUserNameAuthentication(userName, myIsStore);
                     }
                     return new SVNUserNameAuthentication(myUserName, myIsStore);
                 }

@@ -1163,7 +1163,11 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                 SVNAuthentication auth = authManager.getFirstAuthentication(ISVNAuthenticationManager.USERNAME, realm, getLocation());
 
                 while (auth != null) {
-                    if (auth.getUserName() != null && !"".equals(auth.getUserName().trim())) {
+                    String userName = auth.getUserName();
+                    if (userName == null || "".equals(userName.trim())) {
+                        userName = System.getProperty("user.name");
+                    }
+                    if (userName != null && !"".equals(userName.trim())) {
                         authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.USERNAME, realm, null, auth);
                         return auth.getUserName();
                     }
