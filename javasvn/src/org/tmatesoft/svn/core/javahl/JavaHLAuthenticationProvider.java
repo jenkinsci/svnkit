@@ -39,16 +39,13 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
     public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
         if (ISVNAuthenticationManager.SSH.equals(kind) && myPrompt instanceof PromptUserPasswordSSH) {
             PromptUserPasswordSSH prompt4 = (PromptUserPasswordSSH) myPrompt;
-            String userName = previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : System.getProperty("user.name");
+            String userName = previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : getUserName(null, url);
             int port = url != null ? url.getPort() : -1;
             if (prompt4.promptSSH(realm, userName, port, authMayBeStored)) {
                 String password = prompt4.getPassword();
                 String keyPath = prompt4.getSSHPrivateKeyPath();
                 String passphrase = prompt4.getSSHPrivateKeyPassphrase();
-                userName = prompt4.getUsername();
-                if (userName == null || "".equals(userName)) {
-                    userName = System.getProperty("user.name", "user");
-                }
+                userName = getUserName(prompt4.getUsername(), url);
                 if ("".equals(passphrase)) {
                     passphrase = null;
                 }
@@ -85,10 +82,7 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
         if (ISVNAuthenticationManager.SSH.equals(kind) && previousAuth == null) {
             // use configuration file here? but it was already used once...
             String keyPath = System.getProperty("javasvn.ssh2.key");
-            String userName = System.getProperty("javasvn.ssh2.username");
-            if (userName == null) {
-                userName = System.getProperty("user.name");
-            }
+            String userName = getUserName(System.getProperty("javasvn.ssh2.username"), url);
             String passPhrase = System.getProperty("javasvn.ssh2.passphrase");
             if (userName == null) {
                 return null;
@@ -99,7 +93,7 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
             }
             // try to get password for ssh from the user.
         } else if(ISVNAuthenticationManager.USERNAME.equals(kind)) {
-            String userName = previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : System.getProperty("user.name");
+            String userName = previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : getUserName(null, url);
             if (myPrompt instanceof PromptUserPasswordUser) {
                 PromptUserPasswordUser prompt3 = (PromptUserPasswordUser) myPrompt;
                 if (prompt3.promptUser(realm, userName, authMayBeStored))  {
@@ -120,7 +114,7 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
         } else if(!ISVNAuthenticationManager.PASSWORD.equals(kind)){
             return null;
         }
-        String userName = previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : System.getProperty("user.name");
+        String userName = previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : getUserName(null, url);
         if (myPrompt instanceof PromptUserPassword3) {
             PromptUserPassword3 prompt3 = (PromptUserPassword3) myPrompt;
             if(prompt3.prompt(realm, userName, authMayBeStored)){
@@ -191,6 +185,16 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
         info.append(" - Fingerprint: ");
         info.append(getFingerprint(cert));
         return info.toString();
+    }
+    
+    private static String getUserName(String userName, SVNURL url) {
+        if (userName == null || "".equals(userName.trim())) {
+            userName = url != null ? url.getUserInfo() : null;
+        }
+        if (userName == null || "".equals(userName.trim())) {
+            userName = System.getProperty("user.name");
+        }
+        return userName;
     }
 
 }
