@@ -1232,7 +1232,7 @@ public class SVNClientImpl implements SVNClientInterface {
         return new JavaSVNVersion();
     }
     
-    private class JavaSVNVersion extends org.tigris.subversion.javahl.Version {
+    private static class JavaSVNVersion extends org.tigris.subversion.javahl.Version {
 
         public int getMajor() {
             return versionMajor();
