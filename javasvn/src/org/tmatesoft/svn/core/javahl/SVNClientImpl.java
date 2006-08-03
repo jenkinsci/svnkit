@@ -1228,27 +1228,7 @@ public class SVNClientImpl implements SVNClientInterface {
                 name.equals(SVNFileUtil.getAdminDirectoryName());
     }
 
-    public org.tigris.subversion.javahl.Version getVersion() {
-        return new JavaSVNVersion();
-    }
-    
-    private static class JavaSVNVersion extends org.tigris.subversion.javahl.Version {
-
-        public int getMajor() {
-            return versionMajor();
-        }
-
-        public int getMinor() {
-            return versionMinor();
-        }
-
-        public int getPatch() {
-            return versionMicro();
-        }
-
-        public String toString() {
-            return "JavaSVN v" + getMajor() + "." + getMinor() + "." + getPatch();
-        }
-        
+    public org.tigris.subversion.javahl.Version getVersion() {        
+        return SVNClientImplVersion.getInstance();
     }
 }
