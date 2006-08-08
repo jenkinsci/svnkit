@@ -49,7 +49,14 @@ public class SVNReporter implements ISVNReporterBaton {
         try {
             SVNEntries targetEntries = myWCAccess.getTarget().getEntries();
             SVNEntries anchorEntries = myWCAccess.getAnchor().getEntries();
-            SVNEntry targetEntry = anchorEntries.getEntry(myWCAccess.getTargetName(), true);
+            SVNEntry targetEntry = null;
+            if (myWCAccess.getTarget() != myWCAccess.getAnchor()) {
+                // target is a directory, try to get its root entry.
+                targetEntry = targetEntries.getEntry("", false);
+            }
+            if (targetEntry == null) {
+                targetEntry = anchorEntries.getEntry(myWCAccess.getTargetName(), true);
+            }
 
             if (targetEntry == null || targetEntry.isHidden() || (targetEntry.isDirectory() && targetEntry.isScheduledForAddition())) {
                 long revision = anchorEntries.getEntry("", true).getRevision();
