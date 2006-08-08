@@ -103,6 +103,8 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             throws SVNException {
         myCurrentDirectory = new SVNDirectoryInfo(myCurrentDirectory, path);
         myCurrentDirectory.myBaseProperties = Collections.EMPTY_MAP;
+        String displayPath = SVNPathUtil.append(myBasePath, path);
+        myDiffGenerator.displayAddedDirectory(displayPath, myRevision1, myRevision2);
     }
 
     public void openDir(String path, long revision) throws SVNException {

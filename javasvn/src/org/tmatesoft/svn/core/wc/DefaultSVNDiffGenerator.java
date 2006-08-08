@@ -380,4 +380,8 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     public void displayDeletedDirectory(String path, String rev1, String rev2) throws SVNException {
         // not implemented.
     }
+
+    public void displayAddedDirectory(String path, String rev1, String rev2) throws SVNException {
+        // not implemented.
+    }
 }
