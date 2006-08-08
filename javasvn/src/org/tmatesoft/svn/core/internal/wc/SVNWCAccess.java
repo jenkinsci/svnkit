@@ -77,9 +77,6 @@ public class SVNWCAccess implements ISVNEventHandler {
             // target is missing, target is file or not versioned dir.
             // do not use it.
             target = null;
-            if (target != null) {
-                target.setWCAccess(null, "");
-            }
         }
         if (target != null && anchor != null) {
             // both are versioned dirs,
