@@ -69,6 +69,7 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
         setAuthentications(new SVNAuthentication[] {
                 new SVNPasswordAuthentication(userName, password, false),
                 new SVNSSHAuthentication(userName, password, -1, false),
+                new SVNUserNameAuthentication(userName, false),
         });        
     }
     
@@ -84,6 +85,7 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
     public BasicAuthenticationManager(String userName, File keyFile, String passphrase, int portNumber) {
         setAuthentications(new SVNAuthentication[] {
                 new SVNSSHAuthentication(userName, keyFile, passphrase, portNumber, false),
+                new SVNUserNameAuthentication(userName, false),
         });        
     }
     
