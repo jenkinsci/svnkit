@@ -515,17 +515,17 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             for (int i = 0; i < targetPaths.length; i++) {
                 absPaths[i] = getRepositoryPath(targetPaths[i]);
             }
-            long histStart = startRevision;
-            long histEnd = endRevision;
             long youngestRev = myFSFS.getYoungestRevision();
             
             if (isInvalidRevision(startRevision)) {
                 startRevision = youngestRev;
             }
-            
             if (isInvalidRevision(endRevision)) {
                 endRevision = youngestRev;
             }
+
+            long histStart = startRevision;
+            long histEnd = endRevision;
 
             if (startRevision > youngestRev) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision {0,number,integer}", new Long(startRevision));
