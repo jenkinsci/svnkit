@@ -87,6 +87,15 @@ public class SVNProperty {
      */
     public static final String COMMITTED_DATE = SVN_ENTRY_PREFIX
             + "committed-date";
+    
+    public static final String HAS_PROPS = "has-props";
+
+    public static final String HAS_PROP_MODS = "has-prop-mods";
+
+    public static final String CACHABLE_PROPS = "cachable-props";
+
+    public static final String PRESENT_PROPS = "present-props";
+    
     /**
      * An <span class="javastring">"svn:entry:checksum"</span> SVN untweakable metaproperty.
      */
@@ -436,4 +445,14 @@ public class SVNProperty {
         return longName;
     }
 
+    public static String getValueOfBooleanProperty(String propName) {
+        if (SVNProperty.EXECUTABLE.equals(propName) || SVNProperty.NEEDS_LOCK.equals(propName) || SVNProperty.SPECIAL.equals(propName)) {
+            return "*";
+        }
+        return null;
+    }
+
+    public static boolean isBooleanProperty(String propName) {
+        return SVNProperty.EXECUTABLE.equals(propName) || SVNProperty.SPECIAL.equals(propName) || SVNProperty.NEEDS_LOCK.equals(propName);
+    }
 }

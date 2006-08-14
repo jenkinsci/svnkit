@@ -32,7 +32,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
  * - how to create new admin area.
  * - how to upgrade from one area to another (save area in certain format).
  * 
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  */
 public abstract class SVNAdminAreaFactory implements Comparable {
@@ -49,22 +49,33 @@ public abstract class SVNAdminAreaFactory implements Comparable {
                 version = factory.getVersion(path);
                 if (version > factory.getSupportedVersion()) {
                     error = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, 
-                            "Working copy format of {1} is too old ({2}); please check out your working copy again", 
-                            new Object[] {path, new Integer(version)});
-                    SVNErrorManager.error(error);
-                } else if (version < 2) {
-                    error = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, 
-                            "This client is too old to work with working copy ''{1}''; please get a never Subversion client", 
+                            "This client is too old to work with working copy ''{0}''; please get a never Subversion client", 
                             path);
+                    SVNErrorManager.error(error);
+                } else if (version < factory.getSupportedVersion()) {
+                    error = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, 
+                            "Working copy format of {0} is too old ({1}); please check out your working copy again", 
+                            new Object[] {path, new Integer(version)});
                     SVNErrorManager.error(error);
                 } 
             } catch (SVNException e) {
                 continue;
             }
-            return factory.doOpen(path, version);
+            SVNAdminArea adminArea = factory.doOpen(path, version);
+            if (adminArea != null) {
+                return adminArea;
+            }
         }
         error = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy");
         SVNErrorManager.error(error);
+        return null;
+    }
+
+    public static SVNAdminArea createVersionedDirectory(File dir) throws SVNException {
+        if (!ourFactories.isEmpty()) {
+            SVNAdminAreaFactory newestFactory = (SVNAdminAreaFactory) ourFactories.iterator().next();
+            return newestFactory.doCreateVersionedDirectory(dir);
+        }
         return null;
     }
 
@@ -86,6 +97,8 @@ public abstract class SVNAdminAreaFactory implements Comparable {
     
     protected abstract SVNAdminArea doOpen(File path, int version) throws SVNException;
 
+    protected abstract SVNAdminArea doCreateVersionedDirectory(File path) throws SVNException;
+
     protected abstract SVNAdminArea doUpgrade(SVNAdminArea area) throws SVNException;
     
     protected static void registerFactory(SVNAdminAreaFactory factory) {
@@ -93,7 +106,6 @@ public abstract class SVNAdminAreaFactory implements Comparable {
             ourFactories.add(factory);
         }
     }
-    
 
     public int compareTo(Object o) {
         if (o == null || !(o instanceof SVNAdminAreaFactory)) {

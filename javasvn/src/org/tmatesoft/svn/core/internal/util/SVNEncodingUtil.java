@@ -295,9 +295,13 @@ public class SVNEncodingUtil {
         return result.toString();
     }
 
-    private static boolean isHexDigit(char ch) {
+    public static boolean isHexDigit(char ch) {
         return Character.isDigit(ch) ||
                (Character.toUpperCase(ch) >= 'A' && Character.toUpperCase(ch) <= 'F');
+    }
+
+    public static boolean isASCIIControlChar(char ch) {
+        return (ch >= 0x00 && ch <= 0x1f) || ch == 0x7f;
     }
 
     private static int hexValue(char ch) {

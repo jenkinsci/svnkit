@@ -270,7 +270,7 @@ public class FSTransactionRoot extends FSRoot {
         }
 
         File propsFile = getTransactionRevNodePropsFile(node.getId());
-        SVNProperties.setProperties(properties, propsFile);
+        SVNProperties.setProperties(properties, propsFile, SVNFileUtil.createUniqueFile(propsFile.getParentFile(), propsFile.getName(), ".tmp"), SVNProperties.SVN_HASH_TERMINATOR);
 
         if (node.getPropsRepresentation() == null || !node.getPropsRepresentation().isTxn()) {
             FSRepresentation mutableRep = new FSRepresentation();

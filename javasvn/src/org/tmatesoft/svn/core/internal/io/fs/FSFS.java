@@ -688,7 +688,7 @@ public class FSFS {
             props.put(FSFS.CHILDREN_LOCK_KEY, value.toString());
         }
         try {
-            SVNProperties.setProperties(props, digestLockFile);
+            SVNProperties.setProperties(props, digestLockFile, SVNFileUtil.createUniqueFile(digestLockFile.getParentFile(), digestLockFile.getName(), ".tmp"), SVNProperties.SVN_HASH_TERMINATOR);
         } catch (SVNException svne) {
             SVNErrorMessage err = svne.getErrorMessage().wrap("Cannot write lock/entries hashfile ''{0}''", digestLockFile);
             SVNErrorManager.error(err, svne);

@@ -300,6 +300,16 @@ public class SVNProperties {
         }
     }
 
+    public void setProperties(Map properties) throws SVNException {
+        if (properties != null) {
+            for (Iterator names = properties.keySet().iterator(); names.hasNext();) {
+                String name = (String) names.next();
+                String value = (String) properties.get(name);
+                setPropertyValue(name, value);
+            }
+        }
+    }
+    
     public Map compareTo(SVNProperties properties) throws SVNException {
         final Map locallyChangedProperties = new HashMap();
         compareTo(properties, new ISVNPropertyComparator() {
@@ -344,14 +354,12 @@ public class SVNProperties {
         SVNFileUtil.deleteFile(getFile());
     }
 
-    public static void setProperties(Map namesToValues, File target) throws SVNException {
+    public static void setProperties(Map namesToValues, File target, File tmpFile, String terminator) throws SVNException {
         OutputStream dst = null;
-        File tmpFile = null;
         try {
-            tmpFile = SVNFileUtil.createUniqueFile(target.getParentFile(),
-                    target.getName(), ".tmp");
+            //tmpFile = SVNFileUtil.createUniqueFile(target.getParentFile(), target.getName(), ".tmp");
             dst = SVNFileUtil.openFileForWriting(tmpFile);
-            setProperties(namesToValues, dst, SVN_HASH_TERMINATOR);
+            setProperties(namesToValues, dst, terminator);
         } finally {
             SVNFileUtil.closeFile(dst);
         }

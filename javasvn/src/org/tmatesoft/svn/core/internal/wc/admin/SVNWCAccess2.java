@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -52,6 +53,12 @@ public class SVNWCAccess2 {
         return myEventHandler;
     }
     
+    public void checkCancelled() throws SVNCancelException {
+        if (myEventHandler != null) {
+            myEventHandler.checkCancelled();
+        }
+    }
+
     public SVNAdminAreaInfo openAnchor(File path, boolean writeLock, int depth) throws SVNException {
         return null;
     }
@@ -111,7 +118,7 @@ public class SVNWCAccess2 {
             if (depth > 0) {
                 depth--;
             }
-            for(Iterator entries = area.entries(); entries.hasNext();) {
+            for(Iterator entries = area.entries(false); entries.hasNext();) {
                 SVNEntry entry = (SVNEntry) entries.next();
                 if (entry.getKind() != SVNNodeKind.DIR  || "".equals(entry.getName())) {
                     continue;

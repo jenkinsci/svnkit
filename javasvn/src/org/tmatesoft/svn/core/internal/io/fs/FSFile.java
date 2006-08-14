@@ -122,7 +122,36 @@ public class FSFile {
         }
         return null;
     }
-    
+
+    public String readLine(StringBuffer buffer) throws SVNException {
+        if (buffer == null) {
+            buffer = new StringBuffer();
+        }
+        boolean endOfLineMet = false;
+        try {
+            while (!endOfLineMet) {
+                allocateReadBuffer(160);
+                while(myReadLineBuffer.hasRemaining()) {
+                    int b = read();
+                    if (b < 0) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_UNEXPECTED_EOF, "Can''t read length line from file {0}", getFile());
+                        SVNErrorManager.error(err);
+                    } else if (b == '\n') {
+                        endOfLineMet = true;
+                        break;
+                    }
+                    myReadLineBuffer.put((byte) (b & 0XFF));
+                }
+                myReadLineBuffer.flip();
+                buffer.append(myDecoder.decode(myReadLineBuffer).toString());
+            }
+        } catch (IOException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Can''t read length line from file {0}: {1}", new Object[]{getFile(), e.getLocalizedMessage()});
+            SVNErrorManager.error(err, e);
+        }
+        return buffer.toString();
+    }
+
     public Map readProperties(boolean allowEOF) throws SVNException {
         Map map = new HashMap();
         String line = null;

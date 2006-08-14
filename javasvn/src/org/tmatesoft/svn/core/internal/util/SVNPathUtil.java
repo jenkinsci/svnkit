@@ -430,6 +430,20 @@ public class SVNPathUtil {
         return count;
     }
     
+    public static boolean isAncestor(String parentPath, String ancestorPath) {
+        parentPath = parentPath == null ? "" : parentPath;
+        ancestorPath = ancestorPath == null ? "" : ancestorPath;
+
+        if (parentPath.length() == 0) {
+            return !ancestorPath.startsWith("/");
+        }
+        
+        if (ancestorPath.startsWith(parentPath)) {
+            return parentPath.length() == ancestorPath.length() || parentPath.endsWith("/") || ancestorPath.charAt(parentPath.length()) == '/';
+        }
+        return false;
+    }
+
     public static String pathIsChild(String path, String pathChild){
     	if(path == null || pathChild == null){
     		return null;
