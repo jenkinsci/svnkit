@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Writer;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,9 +26,6 @@ import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNLog;
-import org.tmatesoft.svn.core.internal.wc.SVNLogRunner;
-import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 
 /**
  * @version 1.1
@@ -37,11 +33,19 @@ import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
  */
 public abstract class SVNAdminArea {
     public static SVNAdminArea MISSING = new SVNAdminArea(null) {
+        public void saveVersionedProperties(ISVNLog log, boolean close) throws SVNException {
+        }
+
+        public void saveWCProperties(boolean close) throws SVNException {
+        }
 
         public SVNAdminArea upgradeFormat(SVNAdminArea adminArea) throws SVNException {
             return this;
         }
-        
+
+        public void saveEntries(boolean close) throws SVNException {
+        }
+
         public void runLogs() throws SVNException {
         }
 
@@ -73,7 +77,7 @@ public abstract class SVNAdminArea {
             return null;
         }
 
-        public void save() throws SVNException {
+        public void save(boolean close) throws SVNException {
         }
 
         public String getThisDirName() {
@@ -133,7 +137,13 @@ public abstract class SVNAdminArea {
 
     public abstract ISVNProperties getProperties(String name) throws SVNException;
 
-    public abstract void save() throws SVNException;
+    public abstract void saveVersionedProperties(ISVNLog log, boolean close) throws SVNException;
+
+    public abstract void saveWCProperties(boolean close) throws SVNException;
+
+    public abstract void saveEntries(boolean close) throws SVNException;
+
+    public abstract void save(boolean close) throws SVNException;
 
     public abstract String getThisDirName();
 
@@ -220,9 +230,16 @@ public abstract class SVNAdminArea {
     public void setWCAccess(SVNWCAccess2 wcAccess) {
         myWCAccess = wcAccess;
     }
+    
+    public void close() {
+        myProperties = null;
+        myBaseProperties = null;
+        myWCProperties = null;
+        myEntries = null;
+    }
 
     protected abstract void writeEntries(Writer writer) throws IOException;
-
+    
     protected abstract int getFormatVersion();
 
     protected abstract Map fetchEntries() throws SVNException;
@@ -261,4 +278,34 @@ public abstract class SVNAdminArea {
         return myWCProperties;
     }
     
+    public static String asString(String[] array, String delimiter) {
+        String str = null;
+        if (array != null) {
+            str = "";
+            for (int i = 0; i < array.length; i++) {
+                str += array[i];
+                if (i < array.length - 1) {
+                    str += delimiter;
+                }
+            }
+        }
+        return str;
+    }
+    
+    public static String[] fromString(String str, String delimiter) {
+        LinkedList list = new LinkedList(); 
+        int startInd = 0;
+        int ind = -1;
+        while ((ind = str.indexOf(delimiter, startInd)) != -1) {
+            list.add(str.substring(startInd, ind));
+            startInd = ind;
+            while (startInd < str.length() && str.charAt(startInd) == ' '){
+                startInd++;
+            }
+        }
+        if (startInd < str.length()) {
+            list.add(str.substring(startInd));
+        }
+        return (String[])list.toArray(new String[list.size()]);
+    }
 }

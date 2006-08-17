@@ -22,10 +22,6 @@ public class SVNProperties13 extends ISVNProperties {
         super(properties);
     }
 
-    protected void handleModified() throws SVNException {
-        setModified(true);
-    }
-
     public String getPropertyValue(String name) throws SVNException {
         Map props = loadProperties();
         if (!isEmpty()) {

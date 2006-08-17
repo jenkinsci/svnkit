@@ -88,7 +88,6 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                 }
             }
         }
-        propsCache.clear();
     }
     
     private void saveBaseProperties() throws SVNException {
@@ -113,10 +112,9 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                 }
             }
         }
-        basePropsCache.clear();
     }
     
-    private void saveWCProperties() throws SVNException {
+    public void saveWCProperties(boolean close) throws SVNException {
         Map wcPropsCache = getWCPropertiesStorage(false);
         if (wcPropsCache == null || wcPropsCache.isEmpty()) {
             return;
@@ -138,7 +136,9 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                 }
             }
         }
-        wcPropsCache.clear();
+        if (close) {
+            myWCProperties = null;
+        }
     }
     
     public ISVNProperties getBaseProperties(String name) throws SVNException {
@@ -222,7 +222,22 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         return props.asMap();
     }
 
-    public void save() throws SVNException {
+    public void save(boolean close) throws SVNException {
+
+        if (myBaseTextFiles != null) {
+            for (Iterator fileNames = myBaseTextFiles.keySet().iterator(); fileNames.hasNext();) {
+                String fileName = (String)fileNames.next();
+                File tmpBaseFile = (File)myBaseTextFiles.get(fileName);
+                String path = "text-base/" + fileName + ".svn-base";
+                File baseFile = getAdminFile(path);
+                SVNFileUtil.rename(tmpBaseFile, baseFile);
+                SVNFileUtil.setReadonly(baseFile, true);
+            }
+            myBaseTextFiles = null;
+        }
+    }
+
+    public void saveEntries(boolean close) throws SVNException {
         if (myEntries != null) {
             SVNEntry rootEntry = (SVNEntry) myEntries.get(getThisDirName());
             if (rootEntry == null) {
@@ -253,24 +268,20 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             
             SVNFileUtil.rename(tmpFile, myEntriesFile);
             SVNFileUtil.setReadonly(myEntriesFile, true);
-            myEntries = null;
-        }
-
-        if (myBaseTextFiles != null) {
-            for (Iterator fileNames = myBaseTextFiles.keySet().iterator(); fileNames.hasNext();) {
-                String fileName = (String)fileNames.next();
-                File tmpBaseFile = (File)myBaseTextFiles.get(fileName);
-                String path = "text-base/" + fileName + ".svn-base";
-                File baseFile = getAdminFile(path);
-                SVNFileUtil.rename(tmpBaseFile, baseFile);
-                SVNFileUtil.setReadonly(baseFile, true);
+            if (close) {
+                myEntries = null;
             }
-            myBaseTextFiles = null;
         }
+    
+    }
 
+    public void saveVersionedProperties(ISVNLog log, boolean close) throws SVNException {
         saveProperties();
         saveBaseProperties();
-        saveWCProperties();
+        if (close) {
+            myBaseProperties = null;
+            myProperties = null;
+        }
     }
 
     protected Map fetchEntries() throws SVNException {
@@ -448,7 +459,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         if (m1.equals(m2)) {
             if (isLocked()) {
                 entry.setPropTime(fullRealTimestamp);
-                save();
+                save(false);
             }
             return false;
         }

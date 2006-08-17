@@ -22,17 +22,11 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNProperties;
-import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNLog;
 
 
 /**
@@ -41,12 +35,59 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
  */
 public class SVNLogRunner2 {
     private boolean myIsEntriesChanged;
+    private boolean myIsWCPropertiesChanged;
 
     public void runCommand(SVNAdminArea adminArea, String name, Map attributes) throws SVNException {
         String fileName = (String) attributes.get(ISVNLog.NAME_ATTR);
         if (ISVNLog.DELETE_ENTRY.equals(name)) {
+
         } else if (ISVNLog.MODIFY_ENTRY.equals(name)) {
+            boolean modified = false;
+            SVNEntry entry = adminArea.getEntry(fileName, true);
+            if (entry == null) {
+                adminArea.addEntry(fileName);
+                modified = true;
+            }
+
+            Map entryAttrs = entry.asMap();
+            for (Iterator atts = attributes.keySet().iterator(); atts.hasNext();) {
+                String attName = (String) atts.next();
+                if ("".equals(attName) || SVNLog.NAME_ATTR.equals(attName)) {
+                    continue;
+                }
+                String value = (String) attributes.get(attName);
+                if (SVNProperty.CACHABLE_PROPS.equals(attName) || SVNProperty.PRESENT_PROPS.equals(attName)) {
+                    String[] propsArray = SVNAdminArea.fromString(value, " ");
+                    entryAttrs.put(attName, propsArray);
+                    modified = true;
+                    continue;
+                } else if (!(SVNProperty.HAS_PROPS.equals(attName) || SVNProperty.HAS_PROP_MODS.equals(attName))) {
+                    attName = SVNProperty.SVN_ENTRY_PREFIX + attName;
+                }
+                
+                if (ISVNLog.WC_TIMESTAMP.equals(value)) {
+                    if (SVNProperty.PROP_TIME.equals(attName)) {
+                        String path = adminArea.getThisDirName().equals(fileName) ? "dir-props" : "props/" + fileName + ".svn-work";
+                        File file = adminArea.getAdminFile(path);
+                        value = SVNTimeUtil.formatDate(new Date(file.lastModified()));
+                    } else if (SVNProperty.TEXT_TIME.equals(attName)) {
+                        String path = adminArea.getThisDirName().equals(fileName) ? adminArea.getThisDirName() : fileName;
+                        File file = new File(adminArea.getRoot(), path);
+                        value = SVNTimeUtil.formatDate(new Date(file.lastModified()));
+                    }
+                }
+                entryAttrs.put(attName, value);
+                modified = true;
+            }
+            setEntriesChanged(modified);
         } else if (ISVNLog.MODIFY_WC_PROPERTY.equals(name)) {
+            ISVNProperties wcprops = adminArea.getWCProperties(fileName);
+            if (wcprops != null) {
+                String propName = (String) attributes .get(ISVNLog.PROPERTY_NAME_ATTR);
+                String propValue = (String) attributes.get(ISVNLog.PROPERTY_VALUE_ATTR);
+                wcprops.setPropertyValue(propName, propValue);
+                setWCPropertiesChanged(true);
+            }
         } else if (ISVNLog.DELETE_LOCK.equals(name)) {
         } else if (ISVNLog.DELETE.equals(name)) {
             File file = new File(adminArea.getRoot(), fileName);
@@ -98,10 +139,27 @@ public class SVNLogRunner2 {
         myIsEntriesChanged |= modified;
     }
     
+    private void setWCPropertiesChanged(boolean modified) {
+        myIsWCPropertiesChanged |= modified;
+    }
+
     public void logFailed(SVNAdminArea adminArea) throws SVNException {
+        if (myIsWCPropertiesChanged) {
+            adminArea.saveWCProperties(true);
+        }
+        if (myIsEntriesChanged) {
+            adminArea.saveEntries(true);
+        }
     }
 
     public void logCompleted(SVNAdminArea adminArea) throws SVNException {
+        if (myIsWCPropertiesChanged) {
+            adminArea.saveWCProperties(true);
+        }
+        if (myIsEntriesChanged) {
+            adminArea.saveEntries(true);
+        }
+
     }
 
 }

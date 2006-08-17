@@ -65,11 +65,9 @@ public abstract class ISVNProperties {
         } else {
             props.remove(name);
         }
-        handleModified();
+        myIsModified = true;
     }
 
-    protected abstract void handleModified() throws SVNException;
-        
     protected abstract ISVNProperties wrap(Map properties);
     
     public ISVNProperties compareTo(ISVNProperties properties) throws SVNException {

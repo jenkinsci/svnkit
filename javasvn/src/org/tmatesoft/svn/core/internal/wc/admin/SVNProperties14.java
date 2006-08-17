@@ -11,7 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.wc.admin;
 
-import java.util.LinkedList;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
@@ -23,40 +22,14 @@ public abstract class SVNProperties14 extends ISVNProperties {
     private SVNAdminArea14 myAdminArea;
     private String myEntryName;
     
-    public SVNProperties14(SVNAdminArea14 adminArea, String entryName) {
-        super(null);
+    public SVNProperties14(Map props, SVNAdminArea14 adminArea, String entryName) {
+        super(props);
         myAdminArea = adminArea;
         myEntryName = entryName;
     }
     
-    protected void handleModified() throws SVNException {
-        ISVNProperties baseProps = myAdminArea.getBaseProperties(myEntryName);
-        ISVNProperties propsDiff = baseProps.compareTo(this);
-        SVNEntry entry = myAdminArea.getEntry(myEntryName, true);
-        
-        String[] cachableProps = SVNAdminArea14.getCachableProperties();
-        entry.setCachableProperties(cachableProps);
-        Map props = loadProperties();
-        LinkedList presentProps = new LinkedList();
-        for (int i = 0; i < cachableProps.length; i++) {
-            if (props.containsKey(cachableProps[i])) {
-                presentProps.addLast(cachableProps[i]);
-            }
-        }
-        if (presentProps.size() > 0) {
-            entry.setPresentProperties((String[])presentProps.toArray(new String[presentProps.size()]));
-        } else {
-            entry.setPresentProperties(null);
-        }
-        
-        entry.setHasProperties(!baseProps.isEmpty() || !isEmpty());
-        boolean hasPropModifications = !propsDiff.isEmpty();
-        entry.setHasPropertyModifications(hasPropModifications);
-        setModified(hasPropModifications);
-    }
-
     public String getPropertyValue(String name) throws SVNException {
-        SVNEntry entry = myAdminArea.getEntry(name, true);
+        SVNEntry entry = myAdminArea.getEntry(myEntryName, true);
         String[] cachableProps = entry.getCachableProperties(); 
         if (cachableProps != null && getIndex(cachableProps, name) >= 0) {
             String[] presentProps = entry.getPresentProperties();
