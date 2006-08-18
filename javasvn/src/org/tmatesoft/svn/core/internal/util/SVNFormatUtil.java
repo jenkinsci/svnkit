@@ -39,9 +39,13 @@ public class SVNFormatUtil {
     
     public static String formatDate(Date date, boolean longFormat) {
         if (longFormat) {
-            return HUMAN_DATE_FORMAT.format(date != null ? date : NULL_DATE);
+            synchronized (HUMAN_DATE_FORMAT) {
+                return HUMAN_DATE_FORMAT.format(date != null ? date : NULL_DATE);
+            }
         }
-        return SHORT_DATE_FORMAT.format(date != null ? date : NULL_DATE);
+        synchronized (SHORT_DATE_FORMAT) {
+            return SHORT_DATE_FORMAT.format(date != null ? date : NULL_DATE);
+        }
     }
     
     public static String formatString(String src, int width, boolean left) {

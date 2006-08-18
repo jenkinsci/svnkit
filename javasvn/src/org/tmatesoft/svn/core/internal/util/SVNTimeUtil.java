@@ -41,7 +41,9 @@ public class SVNTimeUtil {
     }
 
     public static void formatDate(Date date, StringBuffer buffer) {
-        ISO8601_FORMAT_OUT.format(date, buffer, new FieldPosition(0));
+        synchronized (ISO8601_FORMAT_OUT) {
+            ISO8601_FORMAT_OUT.format(date, buffer, new FieldPosition(0));
+        }
     }
 
     public static String formatDate(Date date) {
@@ -53,8 +55,10 @@ public class SVNTimeUtil {
             return null;
         } else if (!formatZeroDate && date.getTime() == 0) {
             return null;
-        }        
-        return ISO8601_FORMAT_OUT.format(date);
+        }
+        synchronized (ISO8601_FORMAT_OUT) {
+            return ISO8601_FORMAT_OUT.format(date);
+        }
     }
 
     public static Date parseDate(String str) {
@@ -117,9 +121,11 @@ public class SVNTimeUtil {
         int sec = result[5];
         int ms = result[6];
 
-        CALENDAR.clear();
-        CALENDAR.set(year, month - 1, date, hour, min, sec);
-        CALENDAR.set(Calendar.MILLISECOND, ms);
-        return CALENDAR.getTimeInMillis();
+        synchronized (CALENDAR) {
+            CALENDAR.clear();
+            CALENDAR.set(year, month - 1, date, hour, min, sec);
+            CALENDAR.set(Calendar.MILLISECOND, ms);
+            return CALENDAR.getTimeInMillis();
+        }
     }
 }
