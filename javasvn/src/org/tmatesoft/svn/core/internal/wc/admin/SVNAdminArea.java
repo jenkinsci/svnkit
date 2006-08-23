@@ -125,7 +125,7 @@ public abstract class SVNAdminArea {
     protected Map myWCProperties;
     protected Map myEntries;
 
-    public abstract boolean isLocked();
+    public abstract boolean isLocked() throws SVNException;
 
     public abstract boolean isVersioned();
 
@@ -231,10 +231,16 @@ public abstract class SVNAdminArea {
         myWCAccess = wcAccess;
     }
     
-    public void close() {
+    public void closeVersionedProperties() {
         myProperties = null;
         myBaseProperties = null;
+    }
+    
+    public void closeWCProperties() {
         myWCProperties = null;
+    }
+    
+    public void closeEntries() {
         myEntries = null;
     }
 

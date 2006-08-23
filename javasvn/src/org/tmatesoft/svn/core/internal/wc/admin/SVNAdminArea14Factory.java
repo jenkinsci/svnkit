@@ -15,8 +15,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -56,6 +54,48 @@ public class SVNAdminArea14Factory extends SVNAdminAreaFactory {
         return adminArea.createVersionedDirectory(); 
     }
 
+    protected int doCheckWC(File path) throws SVNException {
+        File adminDir = new File(path, SVNFileUtil.getAdminDirectoryName());
+        File entriesFile = new File(adminDir, "entries");
+        int formatVersion = -1;
+
+        BufferedReader reader = null;
+        String line = null;
+    
+        try {
+            reader = new BufferedReader(new InputStreamReader(SVNFileUtil.openFileForReading(entriesFile), "UTF-8"));
+            line = reader.readLine();
+        } catch (IOException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot read entries file ''{0}'': {1}", new Object[] {entriesFile, e.getLocalizedMessage()});
+            SVNErrorManager.error(err, e);
+        } catch (SVNException svne) {
+            SVNFileType type = SVNFileType.getType(path);
+            if (type != SVNFileType.DIRECTORY || !entriesFile.exists()) { 
+                if (type == SVNFileType.NONE) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "''{0}'' does not exist", path);
+                    SVNErrorManager.error(err);
+                }
+                return 0;
+            }
+            throw svne;
+        } finally {
+            SVNFileUtil.closeFile(reader);
+        }
+
+        if (line == null || line.length() == 0) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_UNEXPECTED_EOF, "Reading ''{0}''", entriesFile);
+            SVNErrorManager.error(err);
+        }
+        
+        try {
+            formatVersion = Integer.parseInt(line.trim());
+        } catch (NumberFormatException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_VERSION_FILE_FORMAT, "First line of ''{0}'' contains non-digit", entriesFile);
+            SVNErrorManager.error(err);
+        }
+        return formatVersion;
+    }
+    
     protected int getVersion(File path) throws SVNException {
         File adminDir = new File(path, SVNFileUtil.getAdminDirectoryName());
         File entriesFile = new File(adminDir, "entries");
@@ -63,52 +103,35 @@ public class SVNAdminArea14Factory extends SVNAdminAreaFactory {
 
         BufferedReader reader = null;
         String line = null;
-        boolean readFormatFile = false;
     
-
-        if (!entriesFile.isFile() || !entriesFile.canRead()) {
-            readFormatFile = true;
-        } else {
-            try {
-                reader = new BufferedReader(new InputStreamReader(SVNFileUtil.openFileForReading(entriesFile), "UTF-8"));
-                line = reader.readLine();
-            } catch (IOException e) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot read entries file ''{0}'': {1}", new Object[] {entriesFile, e.getLocalizedMessage()});
-                SVNErrorManager.error(err, e);
-            } finally {
-                SVNFileUtil.closeFile(reader);
-            }
-            readFormatFile = line != null ? false : true;
-        }
-    
-        if (!readFormatFile) {
-            try {
-                formatVersion = Integer.parseInt(line.trim());
-                return formatVersion;
-            } catch (NumberFormatException e) {
-                readFormatFile = true;
-            }
+        try {
+            reader = new BufferedReader(new InputStreamReader(SVNFileUtil.openFileForReading(entriesFile), "UTF-8"));
+            line = reader.readLine();
+        } catch (IOException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot read entries file ''{0}'': {1}", new Object[] {entriesFile, e.getLocalizedMessage()});
+            SVNErrorManager.error(err, e);
+        } catch (SVNException svne) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
+            err.setChildErrorMessage(svne.getErrorMessage());
+            SVNErrorManager.error(err, svne);
+        } finally {
+            SVNFileUtil.closeFile(reader);
         }
         
-        if (readFormatFile) {
-            File formatFile = new File(adminDir, "format");
-            try {
-                reader = new BufferedReader(new InputStreamReader(SVNFileUtil.openFileForReading(formatFile), "UTF-8"));
-                line = reader.readLine();
-                formatVersion = Integer.parseInt(line.trim());
-            } catch (IOException e) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot read format file ''{0}'': {1}", new Object[] {formatFile, e.getLocalizedMessage()});
-                SVNErrorManager.error(err, e);
-            } catch (NumberFormatException nfe) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy: {1}", new Object[] {path, nfe.getLocalizedMessage()});
-                SVNErrorManager.error(err, nfe);
-            } catch (SVNException svne) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
-                err.setChildErrorMessage(svne.getErrorMessage());
-                SVNErrorManager.error(err, svne);
-            } finally {
-                SVNFileUtil.closeFile(reader);
-            }
+        if (line == null || line.length() == 0) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_UNEXPECTED_EOF, "Reading ''{0}''", entriesFile);
+            SVNErrorMessage err1 = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
+            err1.setChildErrorMessage(err);
+            SVNErrorManager.error(err1);
+        }
+        
+        try {
+            formatVersion = Integer.parseInt(line.trim());
+        } catch (NumberFormatException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_VERSION_FILE_FORMAT, "First line of ''{0}'' contains non-digit", entriesFile);
+            SVNErrorMessage err1 = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
+            err1.setChildErrorMessage(err);
+            SVNErrorManager.error(err1);
         }
         return formatVersion;
     }

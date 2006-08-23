@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 
@@ -39,6 +40,37 @@ public abstract class SVNAdminAreaFactory implements Comparable {
     
     private static final Collection ourFactories = new TreeSet();
     
+    public static int checkWC(File path) throws SVNException {
+        SVNException error = null;
+        int version = -1;
+        for(Iterator factories = ourFactories.iterator(); factories.hasNext();) {
+            SVNAdminAreaFactory factory = (SVNAdminAreaFactory) factories.next();
+            try {
+                version = factory.doCheckWC(path);
+                if (version == 0) {
+                    return version;
+                }
+                
+                if (version > factory.getSupportedVersion()) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, 
+                            "This client is too old to work with working copy ''{0}''; please get a newer Subversion client", 
+                            path);
+                    SVNErrorManager.error(err);
+                } else if (version < factory.getSupportedVersion()) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, 
+                            "Working copy format of {0} is too old ({1}); please check out your working copy again", 
+                            new Object[] {path, new Integer(version)});
+                    SVNErrorManager.error(err);
+                } 
+            } catch (SVNException e) {
+                error = e;
+                continue;
+            }
+            return version;
+        }
+        throw error;
+    }
+    
     public static SVNAdminArea open(File path) throws SVNException {
         SVNErrorMessage error = null;
         int version = -1;
@@ -49,7 +81,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
                 version = factory.getVersion(path);
                 if (version > factory.getSupportedVersion()) {
                     error = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, 
-                            "This client is too old to work with working copy ''{0}''; please get a never Subversion client", 
+                            "This client is too old to work with working copy ''{0}''; please get a newer Subversion client", 
                             path);
                     SVNErrorManager.error(error);
                 } else if (version < factory.getSupportedVersion()) {
@@ -100,7 +132,9 @@ public abstract class SVNAdminAreaFactory implements Comparable {
     protected abstract SVNAdminArea doCreateVersionedDirectory(File path) throws SVNException;
 
     protected abstract SVNAdminArea doUpgrade(SVNAdminArea area) throws SVNException;
-    
+
+    protected abstract int doCheckWC(File path) throws SVNException;
+
     protected static void registerFactory(SVNAdminAreaFactory factory) {
         if (factory != null) {
             ourFactories.add(factory);

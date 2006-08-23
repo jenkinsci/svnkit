@@ -21,8 +21,9 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 
 
@@ -146,4 +147,82 @@ public class SVNWCAccess2 {
         
     }
 
+    public SVNAdminArea probeRetrieve(File path) throws SVNException {
+        File dir = probe(path);
+        return retrieve(dir);
+    }
+    
+    
+    public SVNAdminArea retrieve(File path) throws SVNException {
+        SVNAdminArea adminArea = getAdminArea(path);
+        if (adminArea == null) {
+            SVNEntry subEntry = null;
+            try {
+                SVNAdminArea dirAdminArea = getAdminArea(path.getParentFile());
+                if (dirAdminArea != null) {
+                    subEntry = dirAdminArea.getEntry(path.getName(), true);
+                }
+            } catch (SVNException svne) {
+                subEntry = null;
+            }
+            SVNFileType type = SVNFileType.getType(path);
+            if (subEntry != null) {
+                if (subEntry.getKind() == SVNNodeKind.DIR && type == SVNFileType.FILE) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Expected ''{0}'' to be a directory but found a file", path);
+                    SVNErrorManager.error(err);
+                } else if (subEntry.getKind() == SVNNodeKind.FILE && type == SVNFileType.DIRECTORY) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Expected ''{0}'' to be a file but found a directory", path);
+                    SVNErrorManager.error(err);
+                }
+            }
+            File adminDir = new File(path, SVNFileUtil.getAdminDirectoryName());
+            SVNFileType wcType = SVNFileType.getType(adminDir);
+            
+            if (type == SVNFileType.NONE) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Directory ''{0}'' is missing", path);
+                SVNErrorManager.error(err);
+            } else if (type == SVNFileType.DIRECTORY && wcType == SVNFileType.NONE) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Directory ''{0}'' containing working copy admin area is missing", adminDir);
+                SVNErrorManager.error(err);
+            } else if (type == SVNFileType.DIRECTORY && wcType == SVNFileType.DIRECTORY) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Unable to lock ''{0}''", path);
+                SVNErrorManager.error(err);
+            }
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Working copy ''{0}'' is not locked", path);
+            SVNErrorManager.error(err);
+        }
+        return adminArea;
+    }
+    
+    private SVNAdminArea getAdminArea(File path) {
+        //internal retrieve
+        SVNAdminArea adminArea = null; 
+        if (myAdminAreas != null) {
+            adminArea = (SVNAdminArea) myAdminAreas.get(path);
+        }
+        if (adminArea == SVNAdminArea.MISSING) {
+            adminArea = null;
+        }
+        return adminArea;
+    }
+    
+    private File probe(File path) throws SVNException {
+        int wcFormat = -1;
+        SVNFileType type = SVNFileType.getType(path);
+        if (type == SVNFileType.DIRECTORY) {
+            wcFormat = SVNAdminAreaFactory.checkWC(path);
+        } else {
+            wcFormat = 0;
+        }
+        
+        //non wc
+        if (type != SVNFileType.DIRECTORY || wcFormat == 0) {
+            if ("..".equals(path.getName()) || ".".equals(path.getName())) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_BAD_PATH, "Path ''{0}'' ends in ''{1}'', which is unsupported for this operation", new Object[]{path, path.getName()});
+                SVNErrorManager.error(err);
+            }
+            path = path.getParentFile();
+        } 
+        return path;
+    }
 }
