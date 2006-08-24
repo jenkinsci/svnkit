@@ -159,6 +159,7 @@ public class SVNExportEditor implements ISVNEditor {
         try {
             String date = (String) myFileProperties.get(SVNProperty.COMMITTED_DATE);
             boolean special = myFileProperties.get(SVNProperty.SPECIAL) != null;
+            boolean binary = SVNProperty.isBinaryMimeType((String) myFileProperties.get(SVNProperty.MIME_TYPE));
             String keywords = (String) myFileProperties.get(SVNProperty.KEYWORDS);
             Map keywordsMap = null;
             if (keywords != null) {
@@ -173,6 +174,11 @@ public class SVNExportEditor implements ISVNEditor {
                 eolBytes = SVNTranslator.getWorkingEOL(myEOLStyle != null ? myEOLStyle : (String) myFileProperties.get(SVNProperty.EOL_STYLE));
             } else if (myFileProperties.containsKey(SVNProperty.EOL_STYLE)) {
                 eolBytes = SVNTranslator.getWorkingEOL((String) myFileProperties.get(SVNProperty.EOL_STYLE));
+            }
+            if (binary) {
+                // no translation unless 'special'.
+                eolBytes = null;
+                keywordsMap = null;
             }
             if (eolBytes != null || (keywordsMap != null && !keywordsMap.isEmpty()) || special) {
                 SVNTranslator.translate(myCurrentTmpFile, myCurrentFile, eolBytes, keywordsMap, special, true);

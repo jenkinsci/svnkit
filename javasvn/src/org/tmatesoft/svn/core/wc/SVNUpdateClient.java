@@ -605,6 +605,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             if (force && dstPath.exists()) {
                 SVNFileUtil.deleteAll(dstPath, this);
             }
+            boolean binary = SVNProperty.isBinaryMimeType((String) properties.get(SVNProperty.MIME_TYPE));
             Map keywords = SVNTranslator.computeKeywords((String) properties.get(SVNProperty.KEYWORDS), url,
                             (String) properties.get(SVNProperty.LAST_AUTHOR),
                             (String) properties.get(SVNProperty.COMMITTED_DATE),
@@ -614,6 +615,10 @@ public class SVNUpdateClient extends SVNBasicClient {
                 eols = SVNTranslator.getWorkingEOL(eolStyle != null ? eolStyle : (String) properties.get(SVNProperty.EOL_STYLE));
             } else if (properties.containsKey(SVNProperty.EOL_STYLE)) {
                 eols = SVNTranslator.getWorkingEOL((String) properties.get(SVNProperty.EOL_STYLE));
+            }
+            if (binary) {
+                eols = null;
+                keywords = null;
             }
             SVNTranslator.translate(tmpFile, dstPath, eols, keywords, properties.get(SVNProperty.SPECIAL) != null, true);
             tmpFile.delete();
