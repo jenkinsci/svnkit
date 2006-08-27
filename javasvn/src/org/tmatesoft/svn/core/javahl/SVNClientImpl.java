@@ -52,7 +52,9 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationStorage;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
+import org.tmatesoft.svn.core.internal.io.dav.http.IHTTPConnectionFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
+import org.tmatesoft.svn.core.internal.io.svn.ISVNConnectorFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNGanymedSession;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
@@ -120,8 +122,13 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     protected SVNClientImpl(SVNClient owner) {
-        DAVRepositoryFactory.setup();
-        SVNRepositoryFactoryImpl.setup();
+        this(owner, null, null);
+    }
+    
+    protected SVNClientImpl(SVNClient owner, IHTTPConnectionFactory httpConnectionFactory,
+                ISVNConnectorFactory svnConnectorFactory) { 
+        DAVRepositoryFactory.setup(httpConnectionFactory);
+        SVNRepositoryFactoryImpl.setup(svnConnectorFactory);
         FSRepositoryFactory.setup();
         myConfigDir = SVNWCUtil.getDefaultConfigurationDirectory().getAbsolutePath();
         myOwner = owner == null ? (SVNClientInterface) this : (SVNClientInterface) owner;
