@@ -114,11 +114,16 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public static SVNClientImpl newInstance() {
-        return new SVNClientImpl(null);
+        return newInstance(null);
     }
     
     public static SVNClientImpl newInstance(SVNClient owner) {
-        return new SVNClientImpl(owner);
+        return newInstance(owner, null, null);
+    }
+
+    public static SVNClientImpl newInstance(SVNClient owner, 
+            IHTTPConnectionFactory httpConnectionFactory, ISVNConnectorFactory svnConnectorFactory) {
+        return new SVNClientImpl(owner, httpConnectionFactory, svnConnectorFactory);
     }
 
     protected SVNClientImpl(SVNClient owner) {
