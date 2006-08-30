@@ -21,6 +21,8 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -64,13 +66,7 @@ public class SVNWCAccess2 {
         return null;
     }
     
-    public SVNAdminArea open(File path, boolean writeLock, boolean openParent, int depth) throws SVNException {
-        if (openParent) {
-            if (!path.isDirectory()) {
-                path = path.getParentFile();
-                depth = 0;
-            }
-        }
+    public SVNAdminArea open(File path, boolean writeLock, int depth) throws SVNException {
         Map tmp = new HashMap();
         SVNAdminArea area = doOpen(path, writeLock, depth, tmp);
         for(Iterator paths = tmp.keySet().iterator(); paths.hasNext();) {
@@ -79,6 +75,27 @@ public class SVNWCAccess2 {
             myAdminAreas.put(childPath, childArea);
         }
         return area;
+    }
+    
+    public SVNAdminArea probeOpen(File path, boolean writeLock, int depth) throws SVNException {
+        File dir = probe(path);
+        if (!path.equals(dir)) {
+            depth = 0;
+        }
+        SVNAdminArea adminArea = null;
+        try {
+            adminArea = open(dir, writeLock, depth);
+        } catch (SVNException svne) {
+            SVNFileType childKind = SVNFileType.getType(path);
+            SVNErrorCode errCode = svne.getErrorMessage().getErrorCode(); 
+            if (!path.equals(dir) && childKind == SVNFileType.DIRECTORY && errCode == SVNErrorCode.WC_NOT_DIRECTORY) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
+                SVNErrorManager.error(err);
+            } else {
+                throw svne;
+            }
+        }
+        return adminArea;
     }
     
     public SVNAdminArea get(File path, boolean getParent) throws SVNException {
@@ -91,7 +108,7 @@ public class SVNWCAccess2 {
     
     public void close() throws SVNException {
         if (myAdminAreas != null) {
-            doClose(myAdminAreas);
+            doClose(myAdminAreas, false);
             myAdminAreas.clear();
         }
     }
@@ -120,8 +137,15 @@ public class SVNWCAccess2 {
                 depth--;
             }
             for(Iterator entries = area.entries(false); entries.hasNext();) {
+                try {
+                    checkCancelled(); 
+                } catch (SVNCancelException e) {
+                    doClose(tmp, false);
+                    throw e;
+                }
+                
                 SVNEntry entry = (SVNEntry) entries.next();
-                if (entry.getKind() != SVNNodeKind.DIR  || "".equals(entry.getName())) {
+                if (entry.getKind() != SVNNodeKind.DIR  || area.getThisDirName().equals(entry.getName())) {
                     continue;
                 }
                 File childPath = new File(path, entry.getName());
@@ -130,8 +154,7 @@ public class SVNWCAccess2 {
                     doOpen(childPath, writeLock, depth, tmp);
                 } catch (SVNException e) {
                     if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_DIRECTORY) {
-                        doClose(tmp);
-                        tmp.clear();
+                        doClose(tmp, false);
                         throw e;
                     }
                     tmp.put(childPath, SVNAdminArea.MISSING);
@@ -143,8 +166,19 @@ public class SVNWCAccess2 {
         return area;
     }
     
-    private void doClose(Map adminAreas) throws SVNException {
-        
+    private void doClose(Map adminAreas, boolean preserveLocks) throws SVNException {
+        for (Iterator paths = adminAreas.keySet().iterator(); paths.hasNext();) {
+            File path = (File) paths.next();
+            SVNAdminArea adminArea = (SVNAdminArea) adminAreas.get(path);
+            if (adminArea == SVNAdminArea.MISSING) {
+                paths.remove();
+                continue;
+            }
+            if (!preserveLocks && adminArea.isLocked()) {
+                adminArea.unlock();
+            }
+            paths.remove();
+        }
     }
 
     public SVNAdminArea probeRetrieve(File path) throws SVNException {
@@ -152,6 +186,62 @@ public class SVNWCAccess2 {
         return retrieve(dir);
     }
     
+    public boolean isMissing(File path) {
+        if (myAdminAreas != null) {
+            SVNAdminArea area = (SVNAdminArea) myAdminAreas.get(path);
+            return area == SVNAdminArea.MISSING;
+        }
+        return false;
+    }
+    
+    public boolean isWCRoot(File path) throws SVNException {
+        SVNEntry entry = getEntry(path, false);
+        SVNAdminArea parentArea = getAdminArea(path.getParentFile());
+        if (parentArea == null) {
+            try {
+                parentArea = probeOpen(path.getParentFile(), false, 0);
+            } catch (SVNException svne) {
+                return true;
+            }
+        }
+        
+        SVNEntry parentEntry = getEntry(path.getParentFile(), false);
+        if (parentEntry == null) {
+            return true;
+        }
+        
+        if (parentEntry.getURL() == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no ancestry information", path.getParentFile());
+            SVNErrorManager.error(err);
+        }
+        
+        if (entry != null && entry.getURL() != null) {
+            if (!entry.getURL().equals(SVNPathUtil.append(parentEntry.getURL(), SVNEncodingUtil.uriEncode(path.getName())))) {
+                return true;
+            }
+        }
+        entry = getEntry(path, false);
+        if (entry == null) {
+            return true;
+        }
+        return false;
+    }
+    
+    public SVNEntry getEntry(File path, boolean showHidden) throws SVNException {
+        SVNAdminArea adminArea = getAdminArea(path);
+        String entryName= null;
+        if (adminArea == null) {
+            adminArea = getAdminArea(path.getParentFile());
+            entryName = path.getName();
+        } else {
+            entryName = adminArea.getThisDirName();
+        }
+        
+        if (adminArea != null) {
+            return adminArea.getEntry(entryName, showHidden);
+        }
+        return null;
+    }
     
     public SVNAdminArea retrieve(File path) throws SVNException {
         SVNAdminArea adminArea = getAdminArea(path);
@@ -194,6 +284,7 @@ public class SVNWCAccess2 {
         return adminArea;
     }
     
+    //analogous to retrieve_internal
     private SVNAdminArea getAdminArea(File path) {
         //internal retrieve
         SVNAdminArea adminArea = null; 

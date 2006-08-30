@@ -19,6 +19,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -76,7 +78,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
     
     public void saveWCProperties(boolean close) throws SVNException {
         Map wcPropsCache = getWCPropertiesStorage(false);
-        if (wcPropsCache == null || wcPropsCache.isEmpty()) {
+        if (wcPropsCache == null) {
             return;
         }
         
@@ -128,7 +130,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
             SVNFileUtil.deleteFile(dstFile);
         }
         if (close) {
-            wcPropsCache = null;
+            closeWCProperties();
         }
     }
     
@@ -203,43 +205,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         }
         
         if (wcPropsCache.isEmpty()) {
-            File propertiesFile = getAdminFile("all-wcprops");
-            if (!propertiesFile.exists()) {
-                props = new SVNProperties13(new HashMap());
-                wcPropsCache.put(entryName, props);
-                return props;
-            } 
-
-            FSFile wcpropsFile = null;
-            try {
-                wcpropsFile = new FSFile(propertiesFile);
-                Map wcProps = wcpropsFile.readProperties(false);
-                ISVNProperties entryWCProps = new SVNProperties13(wcProps); 
-                wcPropsCache.put(getThisDirName(), entryWCProps);
-                
-                String name = null;
-                StringBuffer buffer = new StringBuffer();
-                while(true) {
-                    try {
-                        name = wcpropsFile.readLine(buffer);
-                    } catch (SVNException e) {
-                        if (e.getErrorMessage().getErrorCode() == SVNErrorCode.STREAM_UNEXPECTED_EOF && buffer.length() > 0) {
-                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Missing end of line in wcprops file for ''{0}''", getRoot());
-                            SVNErrorManager.error(err, e);
-                        }
-                        break;
-                    }
-                    wcProps = wcpropsFile.readProperties(false);
-                    entryWCProps = new SVNProperties13(wcProps);
-                    wcPropsCache.put(name, entryWCProps);
-                    buffer.delete(0, buffer.length());
-                }
-            } catch (SVNException svne) {
-                SVNErrorMessage err = svne.getErrorMessage().wrap("Failed to load properties from disk");
-                SVNErrorManager.error(err);
-            } finally {
-                wcpropsFile.close();
-            }
+            wcPropsCache = readAllWCProperties();
         }
 
         props = (ISVNProperties)wcPropsCache.get(entryName); 
@@ -248,6 +214,47 @@ public class SVNAdminArea14 extends SVNAdminArea {
             wcPropsCache.put(entryName, props);
         }
         return props;
+    }
+    
+    private Map readAllWCProperties() throws SVNException {
+        Map wcPropsCache = getWCPropertiesStorage(true);
+        wcPropsCache.clear();
+        File propertiesFile = getAdminFile("all-wcprops");
+        if (!propertiesFile.exists()) {
+            return wcPropsCache;
+        } 
+
+        FSFile wcpropsFile = null;
+        try {
+            wcpropsFile = new FSFile(propertiesFile);
+            Map wcProps = wcpropsFile.readProperties(false);
+            ISVNProperties entryWCProps = new SVNProperties13(wcProps); 
+            wcPropsCache.put(getThisDirName(), entryWCProps);
+            
+            String name = null;
+            StringBuffer buffer = new StringBuffer();
+            while(true) {
+                try {
+                    name = wcpropsFile.readLine(buffer);
+                } catch (SVNException e) {
+                    if (e.getErrorMessage().getErrorCode() == SVNErrorCode.STREAM_UNEXPECTED_EOF && buffer.length() > 0) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Missing end of line in wcprops file for ''{0}''", getRoot());
+                        SVNErrorManager.error(err, e);
+                    }
+                    break;
+                }
+                wcProps = wcpropsFile.readProperties(false);
+                entryWCProps = new SVNProperties13(wcProps);
+                wcPropsCache.put(name, entryWCProps);
+                buffer.delete(0, buffer.length());
+            }
+        } catch (SVNException svne) {
+            SVNErrorMessage err = svne.getErrorMessage().wrap("Failed to load properties from disk");
+            SVNErrorManager.error(err);
+        } finally {
+            wcpropsFile.close();
+        }
+        return wcPropsCache;
     }
     
     private Map readBaseProperties(String name) throws SVNException {
@@ -280,7 +287,6 @@ public class SVNAdminArea14 extends SVNAdminArea {
     }
 
     public void save(boolean close) throws SVNException {
-        
         if (myBaseTextFiles != null) {
             for (Iterator fileNames = myBaseTextFiles.keySet().iterator(); fileNames.hasNext();) {
                 String fileName = (String)fileNames.next();
@@ -1412,6 +1418,196 @@ public class SVNAdminArea14 extends SVNAdminArea {
         return this;
     }
 
+    public void removeFromRevisionControl(String name, boolean deleteWorkingFiles, boolean reportInstantError) throws SVNException {
+        getWCAccess().checkCancelled();
+        boolean isFile = !getThisDirName().equals(name);
+        if (!isFile) {
+            removeThisDirectory(deleteWorkingFiles, reportInstantError);
+        } else {
+            removeFile(name, deleteWorkingFiles, reportInstantError);
+        }
+    }
+
+    private void removeThisDirectory(boolean deleteWorkingFiles, boolean reportInstantError) throws SVNException {
+        SVNWCAccess2 access = getWCAccess(); 
+        access.checkCancelled();
+        boolean leftSomething = false;
+        SVNEntry thisDirEntry = getEntry(getThisDirName(), true);
+        thisDirEntry.setIncomplete(true);
+        saveEntries(false);
+        
+        Map wcProps = getWCPropertiesStorage(true);
+        if (wcProps.size() > 0) {
+            wcProps.clear();
+        }
+        saveWCProperties(true);
+        
+        for (Iterator entries = entries(false); entries.hasNext();) {
+            SVNEntry childEntry = (SVNEntry) entries.next();
+            if (childEntry.isFile()) {
+                try {
+                    removeFile(childEntry.getName(), deleteWorkingFiles, reportInstantError);
+                } catch (SVNException svne) {
+                    if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.WC_LEFT_LOCAL_MOD) {
+                        if (reportInstantError) {
+                            throw svne;
+                        }
+                        leftSomething = true;
+                    } else {
+                        throw svne;
+                    }
+                }
+            } else if (childEntry.isDirectory() && !getThisDirName().equals(childEntry.getName())) {
+                File childPath = getFile(childEntry.getName());
+                if (access.isMissing(childPath)) {
+                    deleteEntry(childEntry.getName());
+                } else {
+                    SVNAdminArea childArea = access.retrieve(childPath);
+                    try {
+                        childArea.removeFromRevisionControl(childEntry.getName(), deleteWorkingFiles, reportInstantError);
+                    } catch (SVNException svne) {
+                        if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.WC_LEFT_LOCAL_MOD) {
+                            if (reportInstantError) {
+                                throw svne;
+                            }
+                            leftSomething = true;
+                        } else {
+                            throw svne;
+                        }
+                    }
+                    
+                    
+                }
+            }
+        }
+        
+        if (!access.isWCRoot(getRoot())) {
+            SVNAdminArea parentArea = access.retrieve(getRoot().getParentFile());
+            parentArea.deleteEntry(getRoot().getName());
+            parentArea.saveEntries(false);
+        }
+        
+        destroyAdminArea();
+        if (deleteWorkingFiles && !leftSomething) {
+            getRoot().delete();
+        }
+        if (leftSomething) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED);
+            SVNErrorManager.error(err);
+        }
+    }
+    
+    private void destroyAdminArea() throws SVNException {
+        if (!isLocked()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Write-lock stolen in ''{0}''", getRoot());
+            SVNErrorManager.error(err);
+        }
+        SVNFileUtil.deleteAll(getAdminDirectory(), getWCAccess().getEventHandler());
+    }
+    
+    private void removeFile(String name, boolean deleteWorkingFiles, boolean reportInstantError) throws SVNException {
+        getWCAccess().checkCancelled();
+        boolean hasLocalMods = hasTextModifications(name, false); 
+        if (hasLocalMods && reportInstantError) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LEFT_LOCAL_MOD, "File ''{0}'' has local modifications", getFile(name));
+            SVNErrorManager.error(err);
+        }
+
+        ISVNProperties wcProps = getWCProperties(name);
+        if (wcProps != null && !wcProps.isEmpty()) {
+            wcProps.removeAll();
+            saveWCProperties(false);
+        }
+        
+        deleteEntry(name);
+        saveEntries(false);
+        
+        File baseFile = getBaseFile(name, false);
+        baseFile.delete();
+
+        File basePropsFile = getAdminFile("prop-base/" + name + ".svn-base");
+        basePropsFile.delete();
+        
+        File propertiesFile = getAdminFile("props/" + name + ".svn-work");
+        propertiesFile.delete();
+        
+        if (deleteWorkingFiles) {
+            if (hasLocalMods) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LEFT_LOCAL_MOD);
+                SVNErrorManager.error(err);
+            } else {
+                File workingFile = getFile(name);
+                workingFile.delete();
+            }
+        }
+    }
+
+    public boolean hasTextModifications(String name, boolean forceComparison) throws SVNException {
+        SVNEntry entry = getEntry(name, false);
+        if (!forceComparison) {
+            if (entry == null || entry.isDirectory()) {
+                return false;
+            }
+            
+            String textTime = entry.getTextTime();
+            if (textTime != null) {
+                long textTimeAsLong = SVNFileUtil.roundTimeStamp(SVNTimeUtil.parseDateAsLong(textTime));
+                long tstamp = SVNFileUtil.roundTimeStamp(getFile(name).lastModified());
+                if (textTimeAsLong == tstamp ) {
+                    return false;
+                }
+            }
+        }
+        
+        SVNFileType fType = SVNFileType.getType(getFile(name));
+        if (fType != SVNFileType.FILE) {
+            return false;
+        }
+        
+        File baseFile = getBaseFile(name, false);
+        SVNFileType baseFileType = SVNFileType.getType(baseFile);
+        if (baseFileType != SVNFileType.FILE) {
+            return true;
+        }
+        // translate versioned file.
+        File baseTmpFile = SVNFileUtil.createUniqueFile(getRoot(), 
+                SVNFileUtil.getBasePath(getBaseFile(name, true)), ".tmp");
+        if (!baseTmpFile.getParentFile().exists()) {
+            baseTmpFile.getParentFile().mkdirs();
+        }
+        File versionedFile = getFile(name);
+        SVNTranslator2.translate(this, name, name, SVNFileUtil.getBasePath(baseTmpFile), false, false);
+
+        // now compare file and get base file checksum (when forced)
+        MessageDigest digest;
+        boolean equals = true;
+        try {
+            digest = forceComparison ? MessageDigest.getInstance("MD5") : null;
+            equals = SVNFileUtil.compareFiles(baseFile, baseTmpFile, digest);
+            if (forceComparison) {
+                // if checksum differs from expected - throw exception
+                String checksum = SVNFileUtil.toHexDigest(digest);
+                if (!checksum.equals(entry.getChecksum())) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, "Checksum mismatch indicates corrupt text base: ''{0}''\n" +
+                            "   expected: {1}\n" +
+                            "     actual: {2}\n", new Object[] {baseFile, entry.getChecksum(), checksum});
+                    SVNErrorManager.error(err);
+                }
+            }
+        } catch (NoSuchAlgorithmException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "MD5 implementation not found: {1}", e.getLocalizedMessage());
+            SVNErrorManager.error(err, e);
+        } finally {
+            baseTmpFile.delete();
+        }
+
+        if (equals && isLocked()) {
+            entry.setTextTime(SVNTimeUtil.formatDate(new Date(versionedFile.lastModified())));
+            saveEntries(false);
+        }
+        return !equals;
+    }
+
     public void runLogs() throws SVNException {
         SVNLogRunner2 runner = new SVNLogRunner2();
         int index = 0;
@@ -1514,6 +1710,32 @@ public class SVNAdminArea14 extends SVNAdminArea {
         return created;
     }
     
+    public boolean unlock() throws SVNException {
+        if (!myLockFile.exists()) {
+            return true;
+        }
+        
+        // only if there are not locks or killme files.
+        boolean killMe = getAdminFile("KILLME").exists();
+        if (killMe) {
+            return false;
+        }
+        File[] logs = getAdminDirectory().listFiles();
+        for (int i = 0; logs != null && i < logs.length; i++) {
+            File log = logs[i];
+            if ("log".equals(log.getName()) || log.getName().startsWith("log.")) {
+                return false;
+            }
+
+        }
+        boolean deleted = myLockFile.delete();
+        if (!deleted) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "Failed to unlock working copy ''{0}''", getRoot());
+            SVNErrorManager.error(err);
+        }
+        return deleted;
+    }
+
     public boolean isVersioned() {
         if (getAdminDirectory().isDirectory() && myEntriesFile.canRead()) {
             try {
@@ -1542,5 +1764,11 @@ public class SVNAdminArea14 extends SVNAdminArea {
 
     protected int getFormatVersion() {
         return WC_FORMAT;
+    }
+    
+    protected File getBaseFile(String name, boolean tmp) {
+        String path = tmp ? "tmp/" : "";
+        path += "text-base/" + name + ".svn-base";
+        return getAdminFile(path);
     }
 }

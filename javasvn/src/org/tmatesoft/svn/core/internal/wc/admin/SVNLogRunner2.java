@@ -22,6 +22,7 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -40,64 +41,15 @@ public class SVNLogRunner2 {
     public void runCommand(SVNAdminArea adminArea, String name, Map attributes) throws SVNException {
         String fileName = (String) attributes.get(ISVNLog.NAME_ATTR);
         if (ISVNLog.DELETE_ENTRY.equals(name)) {
-
-        } else if (ISVNLog.MODIFY_ENTRY.equals(name)) {
-            SVNEntry entry = adminArea.getEntry(fileName, true);
             
+        } else if (ISVNLog.MODIFY_ENTRY.equals(name)) {
             if (attributes.containsKey(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE))) {
                 String schedule = (String) attributes.get(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE));
-                if (entry == null && schedule != SVNProperty.SCHEDULE_ADD) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_SCHEDULE_CONFLICT, "''{0}'' is not under version control", fileName); 
-                    SVNErrorManager.error(err);
-                } else {
-                    entry = adminArea.addEntry(fileName);
-                }
-                SVNEntry thisDirEntry = adminArea.getEntry(adminArea.getThisDirName(), true);
-                String rootSchedule = thisDirEntry.getSchedule();
-                if (!adminArea.getThisDirName().equals(entry.getName()) && (SVNProperty.SCHEDULE_DELETE.equals(rootSchedule))) {
-                    if (SVNProperty.SCHEDULE_ADD.equals(schedule)) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_SCHEDULE_CONFLICT, "Can''t add ''{0}'' to deleted directory; try undeleting its parent directory first", fileName);
-                        SVNErrorManager.error(err);
-                    } else if (SVNProperty.SCHEDULE_REPLACE.equals(schedule)) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_SCHEDULE_CONFLICT, "Can''t replace ''{0}'' in deleted directory; try undeleting its parent directory first", fileName);
-                        SVNErrorManager.error(err);
-                    }
-                }
-                
-                if (entry.isAbsent() && SVNProperty.SCHEDULE_ADD.equals(schedule)) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_SCHEDULE_CONFLICT, "''{0}'' is marked as absent, so it cannot be scheduled for addition", fileName);
-                    SVNErrorManager.error(err);
-                }
-                
-                if (SVNProperty.SCHEDULE_ADD.equals(entry.getSchedule())) {
-                    if (SVNProperty.SCHEDULE_DELETE.equals(schedule)) {
-                        if (!entry.isDeleted()) {
-                            adminArea.deleteEntry(fileName);
-                            setEntriesChanged(true);
-                            return;
-                        } 
-                        attributes.put(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE), null);
-                    } else {
-                        attributes.remove(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE));
-                    }
-                } else if (SVNProperty.SCHEDULE_DELETE.equals(entry.getSchedule())) {
-                    if (SVNProperty.SCHEDULE_ADD.equals(schedule)) {
-                        attributes.put(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE), SVNProperty.SCHEDULE_REPLACE);
-                    } 
-                } else if (SVNProperty.SCHEDULE_REPLACE.equals(entry.getSchedule())) {
-                    if (SVNProperty.SCHEDULE_DELETE.equals(schedule)) {
-                        attributes.put(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE), SVNProperty.SCHEDULE_DELETE);
-                    } else if (SVNProperty.SCHEDULE_REPLACE.equals(schedule) || SVNProperty.SCHEDULE_ADD.equals(schedule)) {
-                        attributes.remove(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE));                        
-                    }
-                } else {
-                    if (SVNProperty.SCHEDULE_ADD.equals(schedule) && !entry.isDeleted()) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_SCHEDULE_CONFLICT, "Entry ''{0}'' is already under version control", fileName);
-                        SVNErrorManager.error(err);
-                    }
-                }
+                adminArea.foldScheduling(fileName, schedule);
+                attributes.remove(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE));
             }
-
+            
+            SVNEntry entry = adminArea.getEntry(fileName, true);
             if (entry == null) {
                 entry = adminArea.addEntry(fileName);
             }

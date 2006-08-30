@@ -24,7 +24,11 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 /**
@@ -33,6 +37,17 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
  */
 public abstract class SVNAdminArea {
     public static SVNAdminArea MISSING = new SVNAdminArea(null) {
+        public boolean unlock() throws SVNException {
+            return false;
+        }
+        
+        public void removeFromRevisionControl(String name, boolean deleteWorkingFiles, boolean reportError) throws SVNException {
+        }
+
+        public boolean hasTextModifications(String name, boolean forceComparison) throws SVNException {
+            return false;
+        }
+
         public void saveVersionedProperties(ISVNLog log, boolean close) throws SVNException {
         }
 
@@ -131,6 +146,8 @@ public abstract class SVNAdminArea {
 
     public abstract boolean lock() throws SVNException;
 
+    public abstract boolean unlock() throws SVNException;
+
     public abstract ISVNProperties getBaseProperties(String name) throws SVNException;
 
     public abstract ISVNProperties getWCProperties(String name) throws SVNException;
@@ -158,11 +175,65 @@ public abstract class SVNAdminArea {
     public abstract ISVNLog getLog();
     
     public abstract SVNAdminArea createVersionedDirectory() throws SVNException;
+    
+    public abstract void removeFromRevisionControl(String name, boolean deleteWorkingFiles, boolean reportError) throws SVNException;
+
+    public abstract boolean hasTextModifications(String name, boolean forceComparison) throws SVNException;
 
     public abstract SVNAdminArea upgradeFormat(SVNAdminArea adminArea) throws SVNException;
     
     public abstract void runLogs() throws SVNException;
 
+    public void foldScheduling(String name, String schedule) throws SVNException {
+        SVNEntry entry = getEntry(name, true);
+        
+        if (entry == null && schedule != SVNProperty.SCHEDULE_ADD) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_SCHEDULE_CONFLICT, "''{0}'' is not under version control", name); 
+            SVNErrorManager.error(err);
+        } else {
+            entry = addEntry(name);
+        }
+        SVNEntry thisDirEntry = getEntry(getThisDirName(), true);
+        String rootSchedule = thisDirEntry.getSchedule();
+        if (!getThisDirName().equals(entry.getName()) && (SVNProperty.SCHEDULE_DELETE.equals(rootSchedule))) {
+            if (SVNProperty.SCHEDULE_ADD.equals(schedule)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_SCHEDULE_CONFLICT, "Can''t add ''{0}'' to deleted directory; try undeleting its parent directory first", name);
+                SVNErrorManager.error(err);
+            } else if (SVNProperty.SCHEDULE_REPLACE.equals(schedule)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_SCHEDULE_CONFLICT, "Can''t replace ''{0}'' in deleted directory; try undeleting its parent directory first", name);
+                SVNErrorManager.error(err);
+            }
+        }
+           
+        if (entry.isAbsent() && SVNProperty.SCHEDULE_ADD.equals(schedule)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_SCHEDULE_CONFLICT, "''{0}'' is marked as absent, so it cannot be scheduled for addition", name);
+            SVNErrorManager.error(err);
+        }
+            
+        if (SVNProperty.SCHEDULE_ADD.equals(entry.getSchedule())) {
+            if (SVNProperty.SCHEDULE_DELETE.equals(schedule)) {
+                if (!entry.isDeleted()) {
+                    deleteEntry(name);
+                    return;
+                } 
+                entry.unschedule();
+            }
+        } else if (SVNProperty.SCHEDULE_DELETE.equals(entry.getSchedule())) {
+            if (SVNProperty.SCHEDULE_ADD.equals(schedule)) {
+                entry.scheduleForReplacement();
+            } 
+        } else if (SVNProperty.SCHEDULE_REPLACE.equals(entry.getSchedule())) {
+            if (SVNProperty.SCHEDULE_DELETE.equals(schedule)) {
+                entry.scheduleForDeletion();
+            } 
+        } else {
+            if (SVNProperty.SCHEDULE_ADD.equals(schedule) && !entry.isDeleted()) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_SCHEDULE_CONFLICT, "Entry ''{0}'' is already under version control", name);
+                SVNErrorManager.error(err);
+            }
+        }
+    }
+    
     public void deleteEntry(String name) throws SVNException {
         Map entries = loadEntries();
         if (entries != null) {
@@ -221,6 +292,10 @@ public abstract class SVNAdminArea {
 
     public File getAdminFile(String name) {
         return new File(getAdminDirectory(), name);
+    }
+
+    public File getFile(String name) {
+        return new File(getRoot(), name);
     }
 
     public SVNWCAccess2 getWCAccess() {

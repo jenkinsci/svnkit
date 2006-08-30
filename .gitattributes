@@ -125,6 +125,7 @@ javasvn/src/org/tmatesoft/svn/core/internal/util/SVNPathUtil.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/util/SVNUUIDGenerator.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/wc/DefaultSVNMerger.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/wc/SVNCancellableOutputStream.java -text
+javasvn/src/org/tmatesoft/svn/core/internal/wc/admin/SVNTranslator2.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/wc/config/README.txt eol=lf
 javasvn/src/org/tmatesoft/svn/core/internal/wc/config/config eol=lf
 javasvn/src/org/tmatesoft/svn/core/internal/wc/config/servers eol=lf

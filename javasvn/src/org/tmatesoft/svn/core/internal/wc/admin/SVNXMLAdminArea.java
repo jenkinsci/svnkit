@@ -19,6 +19,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -38,6 +40,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 
@@ -116,7 +119,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
     
     public void saveWCProperties(boolean close) throws SVNException {
         Map wcPropsCache = getWCPropertiesStorage(false);
-        if (wcPropsCache == null || wcPropsCache.isEmpty()) {
+        if (wcPropsCache == null) {
             return;
         }
         
@@ -137,7 +140,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             }
         }
         if (close) {
-            myWCProperties = null;
+            closeWCProperties();
         }
     }
     
@@ -465,6 +468,72 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         }
         return true;
     }
+    
+    protected File getBaseFile(String name, boolean tmp) {
+        String path = tmp ? "tmp/" : "";
+        path += "text-base/" + name + ".svn-base";
+        return getAdminFile(path);
+    }
+
+    public boolean hasTextModifications(String name, boolean forceComparison) throws SVNException {
+        SVNFileType fType = SVNFileType.getType(getFile(name));
+        if (fType == SVNFileType.DIRECTORY || fType == SVNFileType.NONE) {
+            return false;
+        }
+        SVNEntry entry = getEntry(name, true);
+        if (entry.isDirectory()) {
+            return false;
+        }
+        if (!forceComparison) {
+            String textTime = entry.getTextTime();
+            long textTimeAsLong = SVNFileUtil.roundTimeStamp(SVNTimeUtil.parseDateAsLong(textTime));
+            long tstamp = SVNFileUtil.roundTimeStamp(getFile(name).lastModified());
+            if (textTimeAsLong == tstamp ) {
+                return false;
+            }
+        }
+        File baseFile = getBaseFile(name, false);
+        if (!baseFile.isFile()) {
+            return true;
+        }
+        // translate versioned file.
+        File baseTmpFile = SVNFileUtil.createUniqueFile(getRoot(), 
+                SVNFileUtil.getBasePath(getBaseFile(name, true)), ".tmp");
+        if (!baseTmpFile.getParentFile().exists()) {
+            baseTmpFile.getParentFile().mkdirs();
+        }
+        File versionedFile = getFile(name);
+        SVNTranslator2.translate(this, name, name, SVNFileUtil.getBasePath(baseTmpFile), false, false);
+
+        // now compare file and get base file checksum (when forced)
+        MessageDigest digest;
+        boolean equals = true;
+        try {
+            digest = forceComparison ? MessageDigest.getInstance("MD5") : null;
+            equals = SVNFileUtil.compareFiles(baseFile, baseTmpFile, digest);
+            if (forceComparison) {
+                // if checksum differs from expected - throw exception
+                String checksum = SVNFileUtil.toHexDigest(digest);
+                if (!checksum.equals(entry.getChecksum())) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, "Checksum mismatch indicates corrupt text base: ''{0}''\n" +
+                            "   expected: {1}\n" +
+                            "     actual: {2}\n", new Object[] {baseFile, entry.getChecksum(), checksum});
+                    SVNErrorManager.error(err);
+                }
+            }
+        } catch (NoSuchAlgorithmException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "MD5 implementation not found: {1}", e.getLocalizedMessage());
+            SVNErrorManager.error(err, e);
+        } finally {
+            baseTmpFile.delete();
+        }
+
+        if (equals && isLocked()) {
+            entry.setTextTime(SVNTimeUtil.formatDate(new Date(versionedFile.lastModified())));
+            saveEntries(false);
+        }
+        return !equals;
+    }
 
     public boolean hasProperties(String entryName) throws SVNException {
         File propFile;
@@ -538,6 +607,37 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             }
         }
         return created;
+    }
+
+    /*
+     * TODO: implement 
+     */
+    public void removeFromRevisionControl(String name, boolean deleteWorkingFiles, boolean reportError) throws SVNException {
+    }
+
+    public boolean unlock() throws SVNException {
+        if (!myLockFile.exists()) {
+            return true;
+        }
+        // only if there are not locks or killme files.
+        boolean killMe = getAdminFile("KILLME").exists();
+        if (killMe) {
+            return false;
+        }
+        File[] logs = getAdminDirectory().listFiles();
+        for (int i = 0; logs != null && i < logs.length; i++) {
+            File log = logs[i];
+            if ("log".equals(log.getName()) || log.getName().startsWith("log.")) {
+                return false;
+            }
+
+        }
+        boolean deleted = myLockFile.delete();
+        if (!deleted) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "Failed to unlock working copy ''{0}''", getRoot());
+            SVNErrorManager.error(err);
+        }
+        return deleted;
     }
 
     public ISVNLog getLog() {
