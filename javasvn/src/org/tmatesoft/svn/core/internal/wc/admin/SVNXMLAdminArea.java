@@ -14,15 +14,11 @@ package org.tmatesoft.svn.core.internal.wc.admin;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -61,7 +57,6 @@ public class SVNXMLAdminArea extends SVNAdminArea {
 
     private File myLockFile;
     private File myEntriesFile;
-    private Map myBaseTextFiles;
 
     public SVNXMLAdminArea(File dir) {
         super(dir);
@@ -223,21 +218,6 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         File propertiesFile = getAdminFile(path);
         SVNProperties props = new SVNProperties(propertiesFile, getAdminDirectory().getName() + "/" + path);
         return props.asMap();
-    }
-
-    public void save(boolean close) throws SVNException {
-
-        if (myBaseTextFiles != null) {
-            for (Iterator fileNames = myBaseTextFiles.keySet().iterator(); fileNames.hasNext();) {
-                String fileName = (String)fileNames.next();
-                File tmpBaseFile = (File)myBaseTextFiles.get(fileName);
-                String path = "text-base/" + fileName + ".svn-base";
-                File baseFile = getAdminFile(path);
-                SVNFileUtil.rename(tmpBaseFile, baseFile);
-                SVNFileUtil.setReadonly(baseFile, true);
-            }
-            myBaseTextFiles = null;
-        }
     }
 
     public void saveEntries(boolean close) throws SVNException {
@@ -462,19 +442,13 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         if (m1.equals(m2)) {
             if (isLocked()) {
                 entry.setPropTime(fullRealTimestamp);
-                save(false);
+                saveEntries(false);
             }
             return false;
         }
         return true;
     }
     
-    protected File getBaseFile(String name, boolean tmp) {
-        String path = tmp ? "tmp/" : "";
-        path += "text-base/" + name + ".svn-base";
-        return getAdminFile(path);
-    }
-
     public boolean hasTextModifications(String name, boolean forceComparison) throws SVNException {
         SVNFileType fType = SVNFileType.getType(getFile(name));
         if (fType == SVNFileType.DIRECTORY || fType == SVNFileType.NONE) {
@@ -553,30 +527,6 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         return true;
     }
 
-    public InputStream getBaseFileForReading(String name, boolean tmp) throws SVNException {
-        String path = tmp ? "tmp/" : "";
-        path += "text-base/" + name + ".svn-base";
-        File baseFile = getAdminFile(path);
-        return SVNFileUtil.openFileForReading(baseFile);
-    }
-
-    public OutputStream getBaseFileForWriting(String name) throws SVNException {
-        String path = "tmp/text-base/" + name + ".svn-base";
-        File baseFile = getAdminFile(path);
-        if (myBaseTextFiles == null) {
-            myBaseTextFiles = new HashMap();
-        }
-        myBaseTextFiles.put(name, baseFile);
-
-        try {
-            return SVNFileUtil.openFileForWriting(baseFile); 
-        } catch (SVNException svne) {
-            SVNErrorMessage err = svne.getErrorMessage().wrap("Your .svn/tmp directory may be missing or corrupt; run 'svn cleanup' and try again");
-            SVNErrorManager.error(err);
-        }
-        return null;
-    }
-
     public boolean lock() throws SVNException {
         if (!isVersioned()) {
             return false;
@@ -609,12 +559,6 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         return created;
     }
 
-    /*
-     * TODO: implement 
-     */
-    public void removeFromRevisionControl(String name, boolean deleteWorkingFiles, boolean reportError) throws SVNException {
-    }
-
     public boolean unlock() throws SVNException {
         if (!myLockFile.exists()) {
             return true;
@@ -638,70 +582,6 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             SVNErrorManager.error(err);
         }
         return deleted;
-    }
-
-    public ISVNLog getLog() {
-        int index = 0;
-        File logFile = null;
-        File tmpFile = null;
-        while (true) {
-            logFile = getAdminFile("log" + (index == 0 ? "" : "." + index));
-            if (logFile.exists()) {
-                index++;
-                continue;
-            }
-            tmpFile = getAdminFile("tmp/log" + (index == 0 ? "" : "." + index));
-            return new SVNLog(logFile, tmpFile, this);
-        }
-    }
-    
-    public void runLogs() throws SVNException {
-        SVNLogRunner2 runner = new SVNLogRunner2();
-        int index = 0;
-        Collection processedLogs = new ArrayList();
-        // find first, not yet executed log file.
-        ISVNLog log = null;
-        try {
-            File logFile = null;
-            while (true) {
-                logFile = getAdminFile("log" + (index == 0 ? "" : "." + index));
-                log = new SVNLog(logFile, null, this);
-                getWCAccess().checkCancelled();
-                if (log.exists()) {
-                    log.run(runner);
-                    processedLogs.add(log);
-                    index++;
-                    continue;
-                }
-                break;
-            }
-        } catch (SVNException e) {
-            // to save modifications made to .svn/entries
-            runner.logFailed(this);
-            deleteLogs(processedLogs);
-            int newIndex = 0;
-            while (true && index != 0) {
-                File logFile = getAdminFile("log." + index);
-                if (logFile.exists()) {
-                    File newFile = getAdminFile(newIndex == 0 ? "log" : "log." + newIndex);
-                    SVNFileUtil.rename(logFile, newFile);
-                    newIndex++;
-                    index++;
-                    continue;
-                }
-                break;
-            }
-            throw e;
-        }
-        runner.logCompleted(this);
-        deleteLogs(processedLogs);
-    }
-
-    private static void deleteLogs(Collection logsList) {
-        for (Iterator logs = logsList.iterator(); logs.hasNext();) {
-            ISVNLog log = (ISVNLog) logs.next();
-            log.delete();
-        }
     }
 
     public SVNAdminArea upgradeFormat(SVNAdminArea adminArea) throws SVNException {

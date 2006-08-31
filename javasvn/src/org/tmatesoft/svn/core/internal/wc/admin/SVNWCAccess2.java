@@ -27,13 +27,14 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.SVNEvent;
 
 
 /**
  * @version 1.0
  * @author  TMate Software Ltd.
  */
-public class SVNWCAccess2 {
+public class SVNWCAccess2 implements ISVNEventHandler {
     
     public static final int INFINITE_DEPTH = -1;
     
@@ -59,6 +60,15 @@ public class SVNWCAccess2 {
     public void checkCancelled() throws SVNCancelException {
         if (myEventHandler != null) {
             myEventHandler.checkCancelled();
+        }
+    }
+
+    public void handleEvent(SVNEvent event, double progress) {
+        if (myEventHandler != null) {
+            try {
+                myEventHandler.handleEvent(event, progress);
+            } catch (Throwable th) {
+            }
         }
     }
 

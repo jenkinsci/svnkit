@@ -41,7 +41,27 @@ public class SVNLogRunner2 {
     public void runCommand(SVNAdminArea adminArea, String name, Map attributes) throws SVNException {
         String fileName = (String) attributes.get(ISVNLog.NAME_ATTR);
         if (ISVNLog.DELETE_ENTRY.equals(name)) {
-            
+            SVNEntry entry = adminArea.getEntry(fileName, false);
+            if (entry == null) {
+                return;
+            } else if (entry.isDirectory()) {
+                SVNWCAccess2 access = adminArea.getWCAccess();
+                SVNAdminArea childArea = null;
+                try {
+                    childArea = access.retrieve(adminArea.getFile(fileName));
+                } catch (SVNException svne) {
+                    if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
+                        if (!entry.isScheduledForAddition()) {
+                            adminArea.deleteEntry(fileName);
+                        }
+                        return;
+                    }
+                    throw svne;
+                }
+                childArea.removeFromRevisionControl(childArea.getThisDirName(), true, false);
+            } else if (entry.isFile()) {
+                adminArea.removeFromRevisionControl(fileName, true, false);
+            }
         } else if (ISVNLog.MODIFY_ENTRY.equals(name)) {
             if (attributes.containsKey(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE))) {
                 String schedule = (String) attributes.get(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE));
