@@ -231,7 +231,9 @@ public abstract class SVNAdminArea {
         try {
             File logFile = null;
             while (true) {
-                getWCAccess().checkCancelled();
+                if (getWCAccess() != null) {
+                    getWCAccess().checkCancelled();
+                }
                 logFile = getAdminFile("log" + (index == 0 ? "" : "." + index));
                 log = new SVNLog2(logFile, null, this);
                 if (log.exists()) {

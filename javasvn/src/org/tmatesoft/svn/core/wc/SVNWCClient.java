@@ -49,6 +49,8 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc.admin.ISVNProperties;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
@@ -488,6 +490,15 @@ public class SVNWCClient extends SVNBasicClient {
         } finally {
             wcAccess.close(true);
         }
+/*        
+        SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
+        try {
+            SVNAdminArea area = wcAccess.open(path, true, recursive ? SVNWCAccess2.INFINITE_DEPTH : 1);
+            doSetLocalProperty(area, "", propName, propValue, force, recursive, true, handler);
+        } finally {
+            wcAccess.close();
+        }
+        */
     }
     
     /**
@@ -2200,6 +2211,100 @@ public class SVNWCClient extends SVNBasicClient {
             return;
         }
         for (Iterator ents = entries.entries(true); ents.hasNext();) {
+            SVNEntry entry = (SVNEntry) ents.next();
+            if ("".equals(entry.getName())) {
+                continue;
+            }
+            doSetLocalProperty(anchor, entry.getName(), propName, propValue,
+                    force, recursive, cancel, handler);
+        }
+    }
+
+    private void doSetLocalProperty(SVNAdminArea anchor, String name, String propName, String propValue, boolean force,
+            boolean recursive, boolean cancel, ISVNPropertyHandler handler) throws SVNException {
+        if (cancel) {
+            checkCancelled();
+        }
+        if (!"".equals(name)) {
+            org.tmatesoft.svn.core.internal.wc.admin.SVNEntry entry = anchor.getEntry(name, true);
+            if (entry == null || (recursive && entry.isDeleted())) {
+                return;
+            }
+            if (entry.getKind() == SVNNodeKind.DIR) {
+                File path = new File(anchor.getRoot(), name);
+                SVNAdminArea dir = anchor.getWCAccess().get(path, false);
+                if (dir != null) {
+                    doSetLocalProperty(dir, "", propName, propValue, force, recursive, cancel, handler);
+                }
+            } else if (entry.getKind() == SVNNodeKind.FILE) {
+                File wcFile = anchor.getFile(name);
+                if ((SVNProperty.IGNORE.equals(propName) || SVNProperty.EXTERNALS.equals(propName)) && propValue != null) {
+                    if (!recursive) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Cannot set ''{0}'' on a file (''{1}'')",
+                                new Object[] {propName, wcFile});
+                        SVNErrorManager.error(err);
+                    }
+                    return;
+                }
+                ISVNProperties props = anchor.getProperties(name);
+                if (SVNProperty.EXECUTABLE.equals(propName)) {
+                    SVNFileUtil.setExecutable(wcFile, propValue != null);
+                }
+                if (!force && SVNProperty.EOL_STYLE.equals(propName) && propValue != null) {
+                    if (SVNProperty.isBinaryMimeType(props.getPropertyValue(SVNProperty.MIME_TYPE))) {
+                        if (!recursive) {
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "File ''{0}'' has binary mime type property", wcFile);
+                            SVNErrorManager.error(err);
+                        }
+                        return;
+                    }
+                    if (!SVNTranslator.checkNewLines(wcFile)) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "File ''{0}'' has incosistent newlines", wcFile);
+                        SVNErrorManager.error(err);
+                    } 
+                }
+                String oldValue = props.getPropertyValue(propName);
+                boolean modified = oldValue == null ? propValue != null : !oldValue.equals(propValue);
+                props.setPropertyValue(propName, propValue);
+
+                if (SVNProperty.EOL_STYLE.equals(propName) || SVNProperty.KEYWORDS.equals(propName)) {
+                    entry.setTextTime(null);
+                } else if (SVNProperty.NEEDS_LOCK.equals(propName) && propValue == null) {
+                    SVNFileUtil.setReadonly(wcFile, false);
+                }
+                if (modified && handler != null) {
+                    handler.handleProperty(anchor.getFile(name), new SVNPropertyData(propName, propValue));
+                }
+            }
+            anchor.saveVersionedProperties(anchor.getLog(), false);
+            anchor.saveEntries(true);
+            anchor.runLogs();
+            return;
+        }
+        ISVNProperties props = anchor.getProperties(name);
+        if ((SVNProperty.KEYWORDS.equals(propName)
+                || SVNProperty.EOL_STYLE.equals(propName)
+                || SVNProperty.MIME_TYPE.equals(propName)
+                || SVNProperty.EXECUTABLE.equals(propName)) && propValue != null) {
+            if (!recursive) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Cannot set ''{0}'' on a directory (''{1}'')",
+                        new Object[] {propName, anchor.getRoot()});
+                SVNErrorManager.error(err);
+            }
+        } else {
+            String oldValue = props.getPropertyValue(propName);
+            boolean modified = oldValue == null ? propValue != null : !oldValue.equals(propValue);
+            props.setPropertyValue(propName, propValue);
+            anchor.saveVersionedProperties(anchor.getLog(), false);
+            anchor.runLogs();
+            if (modified && handler != null) {
+                handler.handleProperty(anchor.getFile(name), new SVNPropertyData(propName, propValue));
+            }
+        }
+        if (!recursive) {
+            return;
+        }
+        for (Iterator ents = anchor.entries(true); ents.hasNext();) {
             SVNEntry entry = (SVNEntry) ents.next();
             if ("".equals(entry.getName())) {
                 continue;

@@ -31,10 +31,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 public class SVNXMLAdminAreaFactory extends SVNAdminAreaFactory {
     private static final int WC_FORMAT = 4;
 
-    static {
-        SVNAdminAreaFactory.registerFactory(new SVNXMLAdminAreaFactory());
-    }
-
     protected SVNAdminArea doOpen(File path, int version) throws SVNException {
         if (version != WC_FORMAT) {
             return null;

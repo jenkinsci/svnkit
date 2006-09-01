@@ -20,7 +20,6 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 
@@ -39,6 +38,11 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 public abstract class SVNAdminAreaFactory implements Comparable {
     
     private static final Collection ourFactories = new TreeSet();
+    
+    static {
+        SVNAdminAreaFactory.registerFactory(new SVNAdminArea14Factory());
+        SVNAdminAreaFactory.registerFactory(new SVNXMLAdminAreaFactory());
+    }
     
     public static int checkWC(File path) throws SVNException {
         SVNException error = null;
@@ -98,7 +102,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
                 return adminArea;
             }
         }
-        error = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy");
+        error = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
         SVNErrorManager.error(error);
         return null;
     }

@@ -41,7 +41,7 @@ public class SVNWCAccess2 implements ISVNEventHandler {
     private ISVNEventHandler myEventHandler;
     private Map myAdminAreas;
 
-    public SVNWCAccess2 newInstance(ISVNEventHandler eventHandler) {
+    public static SVNWCAccess2 newInstance(ISVNEventHandler eventHandler) {
         return new SVNWCAccess2(eventHandler);
     }
     

@@ -140,8 +140,8 @@ public class SVNLog2 extends ISVNLog {
     }
 
     public void delete() {
-        myFile.delete();
-        myTmpFile.delete();
+        SVNFileUtil.deleteFile(myFile);
+        SVNFileUtil.deleteFile(myTmpFile);
     }
 
     public boolean exists() {
