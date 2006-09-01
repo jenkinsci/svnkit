@@ -17,8 +17,11 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 /**
@@ -45,6 +48,8 @@ public abstract class ISVNLog {
     public static final String COPY_AND_TRANSLATE = "cp-and-translate";
 
     public static final String COPY_AND_DETRANSLATE = "cp-and-detranslate";
+
+    public static final String COPY = "cp";
 
     public static final String MERGE = "merge";
 
@@ -154,11 +159,18 @@ public abstract class ISVNLog {
         }
         
         try {
+            int count = 0;
             for (Iterator cmds = commands.iterator(); cmds.hasNext();) {
                 Map command = (Map) cmds.next();
                 String name = (String) command.get("");
+                String attrName = (String) command.get(ISVNLog.NAME_ATTR);
+                if (attrName == null && !ISVNLog.UPGRADE_FORMAT.equals(name)) {
+                    SVNErrorCode code = count <= 1 ? SVNErrorCode.WC_BAD_ADM_LOG_START : SVNErrorCode.WC_BAD_ADM_LOG;
+                    SVNErrorMessage err = SVNErrorMessage.create(code, "Log entry missing 'name' attribute (entry ''{0}'' for directory ''{1}'')", new Object[]{name, myAdminArea.getRoot()});
+                    SVNErrorManager.error(err);
+                }
                 if (runner != null) {
-                    runner.runCommand(myAdminArea, name, command);
+                    runner.runCommand(myAdminArea, name, command, ++count);
                 }
                 cmds.remove();
             }

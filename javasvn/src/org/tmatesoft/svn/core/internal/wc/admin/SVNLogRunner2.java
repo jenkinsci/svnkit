@@ -22,12 +22,10 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNLog;
 
 
 /**
@@ -38,7 +36,7 @@ public class SVNLogRunner2 {
     private boolean myIsEntriesChanged;
     private boolean myIsWCPropertiesChanged;
 
-    public void runCommand(SVNAdminArea adminArea, String name, Map attributes) throws SVNException {
+    public void runCommand(SVNAdminArea adminArea, String name, Map attributes, int count) throws SVNException {
         String fileName = (String) attributes.get(ISVNLog.NAME_ATTR);
         if (ISVNLog.DELETE_ENTRY.equals(name)) {
             SVNEntry entry = adminArea.getEntry(fileName, false);
@@ -77,7 +75,7 @@ public class SVNLogRunner2 {
             Map entryAttrs = entry.asMap();
             for (Iterator atts = attributes.keySet().iterator(); atts.hasNext();) {
                 String attName = (String) atts.next();
-                if ("".equals(attName) || SVNLog.NAME_ATTR.equals(attName)) {
+                if ("".equals(attName) || ISVNLog.NAME_ATTR.equals(attName)) {
                     continue;
                 }
                 String value = (String) attributes.get(attName);
@@ -116,20 +114,33 @@ public class SVNLogRunner2 {
                 setWCPropertiesChanged(true);
             }
         } else if (ISVNLog.DELETE_LOCK.equals(name)) {
+            try {
+                SVNEntry entry = adminArea.getEntry(fileName, true);
+                if (entry != null) {
+                    entry.setLockToken(null);
+                    entry.setLockOwner(null);
+                    entry.setLockCreationDate(null);
+                    entry.setLockComment(null);
+                    setEntriesChanged(true);
+                }
+            } catch (SVNException svne) {
+                SVNErrorCode code = count <= 1 ? SVNErrorCode.WC_BAD_ADM_LOG_START : SVNErrorCode.WC_BAD_ADM_LOG;
+                SVNErrorMessage err = SVNErrorMessage.create(code, "Error removing lock from entry for ''{0}''", fileName);
+                SVNErrorManager.error(err, svne);
+            }
         } else if (ISVNLog.DELETE.equals(name)) {
-            File file = new File(adminArea.getRoot(), fileName);
+            File file = adminArea.getFile(fileName);
             file.delete();
         } else if (ISVNLog.READONLY.equals(name)) {
-            File file = new File(adminArea.getRoot(), fileName);
+            File file = adminArea.getFile(fileName);
             SVNFileUtil.setReadonly(file, true);
         } else if (ISVNLog.MOVE.equals(name)) {
-            File src = new File(adminArea.getRoot(), fileName);
-            File dst = new File(adminArea.getRoot(), (String) attributes.get(ISVNLog.DEST_ATTR));
+            File src = adminArea.getFile(fileName);
+            File dst = adminArea.getFile((String) attributes.get(ISVNLog.DEST_ATTR));
             SVNFileUtil.rename(src, dst);
         } else if (ISVNLog.APPEND.equals(name)) {
-            File src = new File(adminArea.getRoot(), fileName);
-            File dst = new File(adminArea.getRoot(), (String) attributes
-                    .get(ISVNLog.DEST_ATTR));
+            File src = adminArea.getFile(fileName);
+            File dst = adminArea.getFile((String) attributes.get(ISVNLog.DEST_ATTR));
             OutputStream os = null;
             InputStream is = null;
             try {
@@ -150,13 +161,18 @@ public class SVNLogRunner2 {
                 SVNFileUtil.closeFile(is);
             }
         } else if (ISVNLog.SET_TIMESTAMP.equals(name)) {
-            File file = new File(adminArea.getRoot(), fileName);
-            Date time = SVNTimeUtil.parseDate((String) attributes
-                    .get(ISVNLog.TIMESTAMP_ATTR));
+            File file = adminArea.getFile(fileName);
+            String timestamp = (String) attributes.get(ISVNLog.TIMESTAMP_ATTR);
+            if (timestamp == null) {
+                
+            }
+            Date time = SVNTimeUtil.parseDate(timestamp);
             file.setLastModified(time.getTime());
         } else if (ISVNLog.MAYBE_READONLY.equals(name)) {
         } else if (ISVNLog.COPY_AND_TRANSLATE.equals(name)) {
         } else if (ISVNLog.COPY_AND_DETRANSLATE.equals(name)) {
+        } else if (ISVNLog.COPY.equals(name)) {
+            
         } else if (ISVNLog.MERGE.equals(name)) {
         } else if (ISVNLog.COMMIT.equals(name)) {
         }
