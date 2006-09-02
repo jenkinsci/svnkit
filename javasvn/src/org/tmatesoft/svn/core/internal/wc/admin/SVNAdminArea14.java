@@ -131,7 +131,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
     }
     
     public ISVNProperties getBaseProperties(String name) throws SVNException {
-        SVNEntry entry = getEntry(name, true);
+        SVNEntry2 entry = getEntry(name, true);
         if (entry == null) {
             return null;
         } 
@@ -156,7 +156,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
     }
 
     public ISVNProperties getProperties(String name) throws SVNException {
-        SVNEntry entry = getEntry(name, true);
+        SVNEntry2 entry = getEntry(name, true);
         if (entry == null) {
             return null;
         } 
@@ -189,7 +189,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
     }
 
     public ISVNProperties getWCProperties(String entryName) throws SVNException {
-        SVNEntry entry = getEntry(entryName, false);
+        SVNEntry2 entry = getEntry(entryName, false);
         if (entry == null) {
             return null;
         } 
@@ -342,6 +342,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
                         log.addCommand(SVNLog.DELETE, command, false);
                     }
                     command.clear();
+                    props.setModified(false);
                 }
             }
         }
@@ -403,6 +404,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
                         command.put(SVNLog.NAME_ATTR, dstPath);
                         log.addCommand(SVNLog.READONLY, command, false);
                     }
+                    baseProps.setModified(false);
                 }
             }
         }
@@ -419,7 +421,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
                 SVNErrorManager.error(err);
             }
             
-            SVNEntry rootEntry = (SVNEntry) myEntries.get(getThisDirName());
+            SVNEntry2 rootEntry = (SVNEntry2) myEntries.get(getThisDirName());
             if (rootEntry == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "No default entry in directory ''{0}''", getRoot());
                 SVNErrorManager.error(err);
@@ -468,7 +470,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
             int entryNumber = 1;
             while(true){
                 try {
-                    SVNEntry entry = readEntry(reader, entryNumber); 
+                    SVNEntry2 entry = readEntry(reader, entryNumber); 
                     if (entry == null) {
                         break;
                     } 
@@ -486,7 +488,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
             SVNFileUtil.closeFile(reader);
         }
 
-        SVNEntry defaultEntry = (SVNEntry)entries.get(getThisDirName());
+        SVNEntry2 defaultEntry = (SVNEntry2)entries.get(getThisDirName());
         if (defaultEntry == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "Missing default entry");
             SVNErrorManager.error(err);
@@ -505,7 +507,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
 
         for (Iterator entriesIter = entries.keySet().iterator(); entriesIter.hasNext();) {
             String name = (String)entriesIter.next();
-            SVNEntry entry = (SVNEntry)entries.get(name);
+            SVNEntry2 entry = (SVNEntry2)entries.get(name);
             if (getThisDirName().equals(name)) {
                 continue;
             }
@@ -538,7 +540,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         return entries;
     }
 
-    private SVNEntry readEntry(BufferedReader reader, int entryNumber) throws IOException, SVNException {
+    private SVNEntry2 readEntry(BufferedReader reader, int entryNumber) throws IOException, SVNException {
         String line = reader.readLine();
         if (line == null && entryNumber > 1) {
             return null;
@@ -549,7 +551,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
 
         Map entryAttrs = new HashMap();
         entryAttrs.put(SVNProperty.NAME, name);
-        SVNEntry entry = new SVNEntry(entryAttrs, this, name);
+        SVNEntry2 entry = new SVNEntry2(entryAttrs, this, name);
         
         line = reader.readLine();
         String kind = parseValue(line);
@@ -579,7 +581,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
             return entry;
         }
         String url = parseString(line);
-        if (url == null) {
+        if (url != null) {
             entryAttrs.put(SVNProperty.URL, url);
         }
         
@@ -651,7 +653,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         }
         String committedAuthor = parseString(line);
         if (committedAuthor != null) {
-            entryAttrs.put(SVNProperty.LAST_AUTHOR, checksum);
+            entryAttrs.put(SVNProperty.LAST_AUTHOR, committedAuthor);
         }
         
         line = reader.readLine();
@@ -839,7 +841,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
     }
     
     private boolean isEntryFinished(String line) {
-        return line != null && line.charAt(0) == '\f';
+        return line != null && line.length() > 0 && line.charAt(0) == '\f';
     }
     
     private boolean parseBoolean(String line, String field) throws SVNException {
@@ -911,13 +913,13 @@ public class SVNAdminArea14 extends SVNAdminArea {
     }
     
     protected void writeEntries(Writer writer) throws IOException {
-        SVNEntry rootEntry = (SVNEntry)myEntries.get(getThisDirName());
+        SVNEntry2 rootEntry = (SVNEntry2)myEntries.get(getThisDirName());
         writer.write(getFormatVersion() + "\n");
         writeEntry(writer, getThisDirName(), rootEntry.asMap(), null);
 
         for (Iterator entries = myEntries.keySet().iterator(); entries.hasNext();) {
             String name = (String)entries.next();
-            SVNEntry entry = (SVNEntry)myEntries.get(name);
+            SVNEntry2 entry = (SVNEntry2)myEntries.get(name);
             if (getThisDirName().equals(name)) {
                 continue;
             }
@@ -956,7 +958,10 @@ public class SVNAdminArea14 extends SVNAdminArea {
         boolean isThisDir = getThisDirName().equals(name);
         boolean isSubDir = !isThisDir && SVNProperty.KIND_DIR.equals(entry.get(SVNProperty.KIND)); 
         int emptyFields = 0;
-        writeString(writer, name, emptyFields);
+        
+        if (!writeString(writer, name, emptyFields)) {
+            ++emptyFields;
+        }
         
         String kind = (String)entry.get(SVNProperty.KIND);
         if (writeValue(writer, kind, emptyFields)){
@@ -1246,7 +1251,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
     }
     
     public boolean hasPropModifications(String name) throws SVNException {
-        SVNEntry entry = getEntry(name, true);
+        SVNEntry2 entry = getEntry(name, true);
         if (entry != null) {
             Map entryAttrs = entry.asMap();
             return SVNProperty.booleanValue((String)entryAttrs.get(SVNProperty.HAS_PROP_MODS));
@@ -1255,7 +1260,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
     }
     
     public boolean hasProperties(String name) throws SVNException {
-        SVNEntry entry = getEntry(name, true);
+        SVNEntry2 entry = getEntry(name, true);
         if (entry != null) {
             Map entryAttrs = entry.asMap();
             return SVNProperty.booleanValue((String)entryAttrs.get(SVNProperty.HAS_PROPS));
@@ -1270,10 +1275,10 @@ public class SVNAdminArea14 extends SVNAdminArea {
         return innerLock(0);
     }
 
-    private void createFormatFile(File adminDir) throws SVNException {
+    private void createFormatFile() throws SVNException {
         OutputStream os = null;
         try {
-            os = SVNFileUtil.openFileForWriting(new File(adminDir, "format"));
+            os = SVNFileUtil.openFileForWriting(getAdminFile("format"));
             os.write(String.valueOf(WC_FORMAT).getBytes("UTF-8"));
             os.write('\n');            
         } catch (IOException e) {
@@ -1305,7 +1310,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
             tmp[i].mkdir();
         }
         // for backward compatibility 
-        createFormatFile(adminDir);
+        createFormatFile();
         // unlock dir.
         SVNFileUtil.deleteFile(myLockFile);
         return this;
@@ -1330,12 +1335,12 @@ public class SVNAdminArea14 extends SVNAdminArea {
         Map propsCache = getPropertiesStorage(true);
         
         for (; entries.hasNext();) {
-            SVNEntry entry = (SVNEntry) entries.next();
+            SVNEntry2 entry = (SVNEntry2) entries.next();
             if (entry.getKind() != SVNNodeKind.FILE && !adminArea.getThisDirName().equals(entry.getName())) {
                 continue;
             }
             
-            SVNEntry newEntry = new SVNEntry(new HashMap(entry.asMap()), this, entry.getName());
+            SVNEntry2 newEntry = new SVNEntry2(new HashMap(entry.asMap()), this, entry.getName());
             myEntries.put(entry.getName(), newEntry);
 
             ISVNProperties srcBaseProps = adminArea.getBaseProperties(entry.getName());
@@ -1346,15 +1351,14 @@ public class SVNAdminArea14 extends SVNAdminArea {
             }
 
             ISVNProperties srcProps = adminArea.getProperties(entry.getName());
-            if (!srcProps.isEmpty()) {
-                ISVNProperties dstProps = new SVNProperties14(new HashMap(srcProps.asMap()), this, entry.getName()){
+            ISVNProperties dstProps = new SVNProperties14(new HashMap(srcProps.asMap()), this, entry.getName()){
 
-                    protected Map loadProperties() throws SVNException {
-                        return myProperties;
-                    }
-                };
-                propsCache.put(entry.getName(), dstProps);
-            }
+                protected Map loadProperties() throws SVNException {
+                    return myProperties;
+                }
+            };
+            propsCache.put(entry.getName(), dstProps);
+            dstProps.setModified(true);
             
             command.put(ISVNLog.NAME_ATTR, entry.getName());
             command.put(SVNProperty.shortPropertyName(SVNProperty.PROP_TIME), SVNTimeUtil.formatDate(new Date(0), true));
@@ -1364,20 +1368,32 @@ public class SVNAdminArea14 extends SVNAdminArea {
             ISVNProperties wcProps = adminArea.getWCProperties(entry.getName());
             log.logChangedWCProperties(entry.getName(),wcProps.asMap());
         }
-        saveVersionedProperties(log, false);
+        saveVersionedProperties(log, true);
         log.save();
 
         SVNFileUtil.deleteFile(getAdminFile("README.txt"));
         SVNFileUtil.deleteFile(getAdminFile("empty-file"));
         SVNFileUtil.deleteAll(getAdminFile("wcprops"), true);
+        SVNFileUtil.deleteAll(getAdminFile("tmp/wcprops"), true);
         SVNFileUtil.deleteAll(getAdminFile("dir-wcprops"), true);
 
         runLogs();
         return this;
     }
 
+    public void postUpgradeFormat(int format) throws SVNException {
+        if (format == WC_FORMAT) {
+            createFormatFile();
+            return;
+        }
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Unexpected format number:\n" + 
+                                                                           "   expected: {0,number,integer}\n" + 
+                                                                           "     actual: {1,number,actual}", new Object[]{new Integer(WC_FORMAT), new Integer(format)});
+        SVNErrorManager.error(err);
+    }
+
     public boolean hasTextModifications(String name, boolean forceComparison) throws SVNException {
-        SVNEntry entry = getEntry(name, false);
+        SVNEntry2 entry = getEntry(name, false);
         if (!forceComparison) {
             if (entry == null || entry.isDirectory()) {
                 return false;

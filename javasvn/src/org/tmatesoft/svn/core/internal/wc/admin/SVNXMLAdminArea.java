@@ -84,6 +84,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                     File tmpFile = getAdminFile(tmpPath);
                     SVNProperties.setProperties(props.asMap(), dstFile, tmpFile, SVNProperties.SVN_HASH_TERMINATOR);
                 }
+                props.setModified(false);
             }
         }
     }
@@ -108,6 +109,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                     File tmpFile = getAdminFile(tmpPath);
                     SVNProperties.setProperties(props.asMap(), dstFile, tmpFile, SVNProperties.SVN_HASH_TERMINATOR);
                 }
+                props.setModified(false);
             }
         }
     }
@@ -132,6 +134,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                     File tmpFile = getAdminFile(tmpPath);
                     SVNProperties.setProperties(props.asMap(), dstFile, tmpFile, SVNProperties.SVN_HASH_TERMINATOR);
                 }
+                props.setModified(false);
             }
         }
         if (close) {
@@ -222,7 +225,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
 
     public void saveEntries(boolean close) throws SVNException {
         if (myEntries != null) {
-            SVNEntry rootEntry = (SVNEntry) myEntries.get(getThisDirName());
+            SVNEntry2 rootEntry = (SVNEntry2) myEntries.get(getThisDirName());
             if (rootEntry == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "No default entry in directory ''{0}''", getRoot());
                 SVNErrorManager.error(err);
@@ -299,9 +302,9 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                         if (entryName == null) {
                             return entries;
                         }
-                        entries.put(entryName, new SVNEntry(entry, this, entryName));
+                        entries.put(entryName, new SVNEntry2(entry, this, entryName));
                         if (!getThisDirName().equals(entryName)) {
-                            SVNEntry rootEntry = (SVNEntry)entries.get(getThisDirName());
+                            SVNEntry2 rootEntry = (SVNEntry2)entries.get(getThisDirName());
                             if (rootEntry != null) {
                                 Map rootEntryAttrs = rootEntry.asMap();
 
@@ -341,7 +344,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
     }
 
     protected void writeEntries(Writer writer) throws IOException {
-        SVNEntry rootEntry = (SVNEntry)myEntries.get(getThisDirName());
+        SVNEntry2 rootEntry = (SVNEntry2)myEntries.get(getThisDirName());
         Map rootEntryAttrs = rootEntry.asMap();
         
         writer.write("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
@@ -350,7 +353,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
 
         for (Iterator entriesIter = myEntries.keySet().iterator(); entriesIter.hasNext();) {
             String name = (String)entriesIter.next();
-            SVNEntry entry = (SVNEntry)myEntries.get(name);
+            SVNEntry2 entry = (SVNEntry2)myEntries.get(name);
             Map entryAttrs = entry.asMap();
             writer.write("<entry");
             for (Iterator names = entryAttrs.keySet().iterator(); names.hasNext();) {
@@ -411,7 +414,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             propFile = getAdminFile("props/" + name + ".svn-work");
             baseFile = getAdminFile("prop-base/" + name + ".svn-base");
         }
-        SVNEntry entry = getEntry(name, true);
+        SVNEntry2 entry = getEntry(name, true);
         long propLength = propFile.length();
         boolean propEmtpy = propLength <= 4;
         if (entry.isScheduledForReplacement()) {
@@ -454,7 +457,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         if (fType == SVNFileType.DIRECTORY || fType == SVNFileType.NONE) {
             return false;
         }
-        SVNEntry entry = getEntry(name, true);
+        SVNEntry2 entry = getEntry(name, true);
         if (entry.isDirectory()) {
             return false;
         }
@@ -635,4 +638,8 @@ public class SVNXMLAdminArea extends SVNAdminArea {
     protected int getFormatVersion() {
         return WC_FORMAT;
     }
+    
+    public void postUpgradeFormat(int format) throws SVNException {
+    }
+
 }

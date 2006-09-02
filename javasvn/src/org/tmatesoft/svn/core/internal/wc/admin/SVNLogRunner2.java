@@ -39,7 +39,7 @@ public class SVNLogRunner2 {
     public void runCommand(SVNAdminArea adminArea, String name, Map attributes, int count) throws SVNException {
         String fileName = (String) attributes.get(ISVNLog.NAME_ATTR);
         if (ISVNLog.DELETE_ENTRY.equals(name)) {
-            SVNEntry entry = adminArea.getEntry(fileName, false);
+            SVNEntry2 entry = adminArea.getEntry(fileName, false);
             if (entry == null) {
                 return;
             } else if (entry.isDirectory()) {
@@ -67,7 +67,7 @@ public class SVNLogRunner2 {
                 attributes.remove(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE));
             }
             
-            SVNEntry entry = adminArea.getEntry(fileName, true);
+            SVNEntry2 entry = adminArea.getEntry(fileName, true);
             if (entry == null) {
                 entry = adminArea.addEntry(fileName);
             }
@@ -87,16 +87,13 @@ public class SVNLogRunner2 {
                     attName = SVNProperty.SVN_ENTRY_PREFIX + attName;
                 }
                 
-                if (ISVNLog.WC_TIMESTAMP.equals(value)) {
-                    if (SVNProperty.PROP_TIME.equals(attName)) {
-                        String path = adminArea.getThisDirName().equals(fileName) ? "dir-props" : "props/" + fileName + ".svn-work";
-                        File file = adminArea.getAdminFile(path);
-                        value = SVNTimeUtil.formatDate(new Date(file.lastModified()));
-                    } else if (SVNProperty.TEXT_TIME.equals(attName)) {
-                        String path = adminArea.getThisDirName().equals(fileName) ? adminArea.getThisDirName() : fileName;
-                        File file = new File(adminArea.getRoot(), path);
-                        value = SVNTimeUtil.formatDate(new Date(file.lastModified()));
-                    }
+                if (SVNProperty.PROP_TIME.equals(attName)) {
+                    adminArea.setPropertyTime(fileName, value);
+                    continue;
+                }
+                if (SVNProperty.TEXT_TIME.equals(attName) && ISVNLog.WC_TIMESTAMP.equals(value)) {
+                    File file = adminArea.getFile(fileName);
+                    value = SVNTimeUtil.formatDate(new Date(file.lastModified()));
                 }
                 if (value != null) {
                     entryAttrs.put(attName, value);
@@ -115,7 +112,7 @@ public class SVNLogRunner2 {
             }
         } else if (ISVNLog.DELETE_LOCK.equals(name)) {
             try {
-                SVNEntry entry = adminArea.getEntry(fileName, true);
+                SVNEntry2 entry = adminArea.getEntry(fileName, true);
                 if (entry != null) {
                     entry.setLockToken(null);
                     entry.setLockOwner(null);
@@ -168,6 +165,22 @@ public class SVNLogRunner2 {
             }
             Date time = SVNTimeUtil.parseDate(timestamp);
             file.setLastModified(time.getTime());
+        } else if (ISVNLog.UPGRADE_FORMAT.equals(name)) {
+            String format = (String) attributes.get(ISVNLog.FORMAT_ATTR);
+            SVNErrorCode code = count <= 1 ? SVNErrorCode.WC_BAD_ADM_LOG_START : SVNErrorCode.WC_BAD_ADM_LOG;
+            if (format == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(code, "Invalid 'format' attribute");
+                SVNErrorManager.error(err);
+            }
+            int number = -1;
+            try {
+                number = Integer.parseInt(format);
+            } catch (NumberFormatException e) {
+                SVNErrorMessage err = SVNErrorMessage.create(code, "Invalid 'format' attribute");
+                SVNErrorManager.error(err);
+            }
+            adminArea.postUpgradeFormat(number);
+            setEntriesChanged(true);
         } else if (ISVNLog.MAYBE_READONLY.equals(name)) {
         } else if (ISVNLog.COPY_AND_TRANSLATE.equals(name)) {
         } else if (ISVNLog.COPY_AND_DETRANSLATE.equals(name)) {

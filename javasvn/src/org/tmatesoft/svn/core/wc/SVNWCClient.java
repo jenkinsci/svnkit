@@ -49,8 +49,11 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc.admin.ISVNLog;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
@@ -490,6 +493,7 @@ public class SVNWCClient extends SVNBasicClient {
         } finally {
             wcAccess.close(true);
         }
+
 /*        
         SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
         try {
@@ -498,7 +502,7 @@ public class SVNWCClient extends SVNBasicClient {
         } finally {
             wcAccess.close();
         }
-        */
+*/        
     }
     
     /**
@@ -2226,7 +2230,7 @@ public class SVNWCClient extends SVNBasicClient {
             checkCancelled();
         }
         if (!"".equals(name)) {
-            org.tmatesoft.svn.core.internal.wc.admin.SVNEntry entry = anchor.getEntry(name, true);
+            SVNEntry2 entry = anchor.getEntry(name, true);
             if (entry == null || (recursive && entry.isDeleted())) {
                 return;
             }
@@ -2276,8 +2280,10 @@ public class SVNWCClient extends SVNBasicClient {
                     handler.handleProperty(anchor.getFile(name), new SVNPropertyData(propName, propValue));
                 }
             }
-            anchor.saveVersionedProperties(anchor.getLog(), false);
+            ISVNLog log = anchor.getLog();
+            anchor.saveVersionedProperties(log, true);
             anchor.saveEntries(true);
+            log.save();
             anchor.runLogs();
             return;
         }
@@ -2295,7 +2301,9 @@ public class SVNWCClient extends SVNBasicClient {
             String oldValue = props.getPropertyValue(propName);
             boolean modified = oldValue == null ? propValue != null : !oldValue.equals(propValue);
             props.setPropertyValue(propName, propValue);
-            anchor.saveVersionedProperties(anchor.getLog(), false);
+            ISVNLog log = anchor.getLog();
+            anchor.saveVersionedProperties(log, true);
+            log.save();
             anchor.runLogs();
             if (modified && handler != null) {
                 handler.handleProperty(anchor.getFile(name), new SVNPropertyData(propName, propValue));
@@ -2305,7 +2313,7 @@ public class SVNWCClient extends SVNBasicClient {
             return;
         }
         for (Iterator ents = anchor.entries(true); ents.hasNext();) {
-            SVNEntry entry = (SVNEntry) ents.next();
+            SVNEntry2 entry = (SVNEntry2) ents.next();
             if ("".equals(entry.getName())) {
                 continue;
             }

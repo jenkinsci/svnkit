@@ -25,13 +25,13 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
  * @version 1.0
  * @author TMate Software Ltd.
  */
-public class SVNEntry implements Comparable {
+public class SVNEntry2 implements Comparable {
 
     private Map myAttributes;
     private SVNAdminArea myAdminArea;
     private String myName;
 
-    public SVNEntry(Map attributes, SVNAdminArea adminArea, String name) {
+    public SVNEntry2(Map attributes, SVNAdminArea adminArea, String name) {
         myAttributes = attributes;
         myName = name;
         myAdminArea = adminArea;
@@ -41,10 +41,10 @@ public class SVNEntry implements Comparable {
     }
 
     public boolean equals(Object obj) {
-        if (obj == null || obj.getClass() != SVNEntry.class) {
+        if (obj == null || obj.getClass() != SVNEntry2.class) {
             return false;
         }
-        SVNEntry entry = (SVNEntry) obj;
+        SVNEntry2 entry = (SVNEntry2) obj;
         return entry.myAttributes == myAttributes && entry.myName.equals(myName);
     }
 
@@ -53,16 +53,16 @@ public class SVNEntry implements Comparable {
     }
 
     public int compareTo(Object obj) {
-        if (obj == null || obj.getClass() != SVNEntry.class) {
+        if (obj == null || obj.getClass() != SVNEntry2.class) {
             return 1;
         }
-        return myName.compareTo(((SVNEntry) obj).myName);
+        return myName.compareTo(((SVNEntry2) obj).myName);
     }
 
     public String getURL() {
         String url = (String)myAttributes.get(SVNProperty.URL);
         if (url == null && !myAdminArea.getThisDirName().equals(myName)) {
-            SVNEntry rootEntry = null; 
+            SVNEntry2 rootEntry = null; 
             try {    
                 rootEntry = myAdminArea.getEntry(myAdminArea.getThisDirName(), true); 
             } catch (SVNException svne) {
@@ -93,7 +93,7 @@ public class SVNEntry implements Comparable {
     public long getRevision() {
         String revStr = (String)myAttributes.get(SVNProperty.REVISION);
         if (revStr == null && !myAdminArea.getThisDirName().equals(myName)) {
-            SVNEntry rootEntry = null;
+            SVNEntry2 rootEntry = null;
             try {
                 myAdminArea.getEntry(myAdminArea.getThisDirName(), true);
             } catch (SVNException svne) {

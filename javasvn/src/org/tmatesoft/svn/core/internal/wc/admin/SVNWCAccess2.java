@@ -154,7 +154,7 @@ public class SVNWCAccess2 implements ISVNEventHandler {
                     throw e;
                 }
                 
-                SVNEntry entry = (SVNEntry) entries.next();
+                SVNEntry2 entry = (SVNEntry2) entries.next();
                 if (entry.getKind() != SVNNodeKind.DIR  || area.getThisDirName().equals(entry.getName())) {
                     continue;
                 }
@@ -205,7 +205,7 @@ public class SVNWCAccess2 implements ISVNEventHandler {
     }
     
     public boolean isWCRoot(File path) throws SVNException {
-        SVNEntry entry = getEntry(path, false);
+        SVNEntry2 entry = getEntry(path, false);
         SVNAdminArea parentArea = getAdminArea(path.getParentFile());
         if (parentArea == null) {
             try {
@@ -215,7 +215,7 @@ public class SVNWCAccess2 implements ISVNEventHandler {
             }
         }
         
-        SVNEntry parentEntry = getEntry(path.getParentFile(), false);
+        SVNEntry2 parentEntry = getEntry(path.getParentFile(), false);
         if (parentEntry == null) {
             return true;
         }
@@ -237,7 +237,7 @@ public class SVNWCAccess2 implements ISVNEventHandler {
         return false;
     }
     
-    public SVNEntry getEntry(File path, boolean showHidden) throws SVNException {
+    public SVNEntry2 getEntry(File path, boolean showHidden) throws SVNException {
         SVNAdminArea adminArea = getAdminArea(path);
         String entryName= null;
         if (adminArea == null) {
@@ -256,7 +256,7 @@ public class SVNWCAccess2 implements ISVNEventHandler {
     public SVNAdminArea retrieve(File path) throws SVNException {
         SVNAdminArea adminArea = getAdminArea(path);
         if (adminArea == null) {
-            SVNEntry subEntry = null;
+            SVNEntry2 subEntry = null;
             try {
                 SVNAdminArea dirAdminArea = getAdminArea(path.getParentFile());
                 if (dirAdminArea != null) {

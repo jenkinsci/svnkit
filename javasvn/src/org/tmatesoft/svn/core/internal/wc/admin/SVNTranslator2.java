@@ -63,7 +63,7 @@ public class SVNTranslator2 {
         byte[] eols;
         if (keywords != null) {
             if (expand) {
-                SVNEntry entry = adminArea.getEntry(name, true);
+                SVNEntry2 entry = adminArea.getEntry(name, true);
                 String url = entry.getURL();
                 String author = entry.getAuthor();
                 String date = entry.getCommittedDate();

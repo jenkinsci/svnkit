@@ -19,6 +19,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -29,6 +30,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
@@ -38,6 +40,9 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
  */
 public abstract class SVNAdminArea {
     public static SVNAdminArea MISSING = new SVNAdminArea(null) {
+
+        public void postUpgradeFormat(int format) throws SVNException {
+        }
 
         public boolean unlock() throws SVNException {
             return false;
@@ -129,6 +134,8 @@ public abstract class SVNAdminArea {
     protected Map myWCProperties;
     protected Map myEntries;
 
+    public abstract void postUpgradeFormat(int format) throws SVNException;
+
     public abstract boolean isLocked() throws SVNException;
 
     public abstract boolean isVersioned();
@@ -207,6 +214,21 @@ public abstract class SVNAdminArea {
         return null;
     }
 
+    public void setPropertyTime(String name, String value) throws SVNException {
+        SVNEntry2 entry = getEntry(name, true);
+        Map attributes = entry.asMap();
+        if (ISVNLog.WC_TIMESTAMP.equals(value)) {
+            String path = getThisDirName().equals(name) ? "dir-props" : "props/" + name + ".svn-work";
+            File file = getAdminFile(path);
+            value = SVNTimeUtil.formatDate(new Date(file.lastModified()));
+        }
+        if (value != null) {
+            attributes.put(SVNProperty.PROP_TIME, value);
+        } else {
+            attributes.remove(SVNProperty.PROP_TIME);
+        }
+    }
+    
     public ISVNLog getLog() {
         int index = 0;
         File logFile = null;
@@ -277,7 +299,7 @@ public abstract class SVNAdminArea {
     }
 
     public void foldScheduling(String name, String schedule) throws SVNException {
-        SVNEntry entry = getEntry(name, true);
+        SVNEntry2 entry = getEntry(name, true);
         
         if (entry == null && schedule != SVNProperty.SCHEDULE_ADD) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_SCHEDULE_CONFLICT, "''{0}'' is not under version control", name); 
@@ -285,7 +307,7 @@ public abstract class SVNAdminArea {
         } else {
             entry = addEntry(name);
         }
-        SVNEntry thisDirEntry = getEntry(getThisDirName(), true);
+        SVNEntry2 thisDirEntry = getEntry(getThisDirName(), true);
         String rootSchedule = thisDirEntry.getSchedule();
         if (!getThisDirName().equals(entry.getName()) && (SVNProperty.SCHEDULE_DELETE.equals(rootSchedule))) {
             if (SVNProperty.SCHEDULE_ADD.equals(schedule)) {
@@ -333,10 +355,10 @@ public abstract class SVNAdminArea {
         }
     }
 
-    public SVNEntry getEntry(String name, boolean hidden) throws SVNException {
+    public SVNEntry2 getEntry(String name, boolean hidden) throws SVNException {
         Map entries = loadEntries();
         if (entries != null && entries.containsKey(name)) {
-            SVNEntry entry = (SVNEntry)entries.get(name);
+            SVNEntry2 entry = (SVNEntry2)entries.get(name);
             if (!hidden && entry.isHidden()) {
                 return null;
             }
@@ -345,14 +367,14 @@ public abstract class SVNAdminArea {
         return null;
     }
 
-    public SVNEntry addEntry(String name) throws SVNException {
+    public SVNEntry2 addEntry(String name) throws SVNException {
         Map entries = loadEntries();
         if (entries == null) {
             myEntries = new TreeMap(); 
             entries = myEntries;
         }
 
-        SVNEntry entry = entries.containsKey(name) ? (SVNEntry) entries.get(name) : new SVNEntry(new HashMap(), this, name);
+        SVNEntry2 entry = entries.containsKey(name) ? (SVNEntry2) entries.get(name) : new SVNEntry2(new HashMap(), this, name);
         entries.put(name, entry);
         return entry;
     }
@@ -365,7 +387,7 @@ public abstract class SVNAdminArea {
         Collection copy = new LinkedList(entries.values());
         if (!hidden) {
             for (Iterator iterator = copy.iterator(); iterator.hasNext();) {
-                SVNEntry entry = (SVNEntry) iterator.next();
+                SVNEntry2 entry = (SVNEntry2) iterator.next();
                 if (entry.isHidden()) {
                     iterator.remove();
                 }
@@ -382,7 +404,7 @@ public abstract class SVNAdminArea {
         return myAdminRoot;
     }
 
-    public File getAdminFile(String name) {
+    protected File getAdminFile(String name) {
         return new File(getAdminDirectory(), name);
     }
 
@@ -492,7 +514,7 @@ public abstract class SVNAdminArea {
         SVNWCAccess2 access = getWCAccess(); 
         access.checkCancelled();
         boolean leftSomething = false;
-        SVNEntry thisDirEntry = getEntry(getThisDirName(), true);
+        SVNEntry2 thisDirEntry = getEntry(getThisDirName(), true);
         thisDirEntry.setIncomplete(true);
         saveEntries(false);
         
@@ -503,7 +525,7 @@ public abstract class SVNAdminArea {
         saveWCProperties(true);
         
         for (Iterator entries = entries(false); entries.hasNext();) {
-            SVNEntry childEntry = (SVNEntry) entries.next();
+            SVNEntry2 childEntry = (SVNEntry2) entries.next();
             if (childEntry.isFile()) {
                 try {
                     removeFile(childEntry.getName(), deleteWorkingFiles, reportInstantError);
