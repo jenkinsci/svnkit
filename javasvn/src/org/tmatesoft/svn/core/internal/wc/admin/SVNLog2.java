@@ -46,7 +46,7 @@ public class SVNLog2 extends ISVNLog {
     }
 
     public void save() throws SVNException {
-        if (myTmpFile == null) {
+        if (myTmpFile == null || myCache == null) {
             return;
         }
         

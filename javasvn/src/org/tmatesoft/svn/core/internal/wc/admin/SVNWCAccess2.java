@@ -109,6 +109,7 @@ public class SVNWCAccess2 implements ISVNEventHandler {
     }
     
     public SVNAdminArea get(File path, boolean getParent) throws SVNException {
+        
         return null;
     }
 
@@ -137,6 +138,8 @@ public class SVNWCAccess2 implements ISVNEventHandler {
         }
         
         SVNAdminArea area = SVNAdminAreaFactory.open(path);
+        area.setWCAccess(this);
+        
         if (writeLock) {
             area.lock();
             area = SVNAdminAreaFactory.upgrade(area);

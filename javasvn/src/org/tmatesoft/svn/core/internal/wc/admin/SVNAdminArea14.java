@@ -1329,6 +1329,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         log.addCommand(ISVNLog.UPGRADE_FORMAT, command, false);
         command.clear();
         
+        setWCAccess(adminArea.getWCAccess());
         Iterator entries = adminArea.entries(true);
         myEntries = new HashMap();
         Map basePropsCache = getBasePropertiesStorage(true);
@@ -1336,20 +1337,19 @@ public class SVNAdminArea14 extends SVNAdminArea {
         
         for (; entries.hasNext();) {
             SVNEntry2 entry = (SVNEntry2) entries.next();
-            if (entry.getKind() != SVNNodeKind.FILE && !adminArea.getThisDirName().equals(entry.getName())) {
-                continue;
-            }
-            
             SVNEntry2 newEntry = new SVNEntry2(new HashMap(entry.asMap()), this, entry.getName());
             myEntries.put(entry.getName(), newEntry);
 
-            ISVNProperties srcBaseProps = adminArea.getBaseProperties(entry.getName());
-            if (!srcBaseProps.isEmpty()) {
-                Map basePropsHolder = new HashMap(srcBaseProps.asMap());
-                ISVNProperties dstBaseProps = new SVNProperties13(basePropsHolder);
-                basePropsCache.put(entry.getName(), dstBaseProps);
+            if (entry.getKind() != SVNNodeKind.FILE && !adminArea.getThisDirName().equals(entry.getName())) {
+                continue;
             }
 
+            ISVNProperties srcBaseProps = adminArea.getBaseProperties(entry.getName());
+            Map basePropsHolder = new HashMap(srcBaseProps.asMap());
+            ISVNProperties dstBaseProps = new SVNProperties13(basePropsHolder);
+            basePropsCache.put(entry.getName(), dstBaseProps);
+            dstBaseProps.setModified(true);
+            
             ISVNProperties srcProps = adminArea.getProperties(entry.getName());
             ISVNProperties dstProps = new SVNProperties14(new HashMap(srcProps.asMap()), this, entry.getName()){
 

@@ -494,11 +494,16 @@ public class SVNWCClient extends SVNBasicClient {
             wcAccess.close(true);
         }
 
-/*        
+/*       
         SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
         try {
-            SVNAdminArea area = wcAccess.open(path, true, recursive ? SVNWCAccess2.INFINITE_DEPTH : 1);
-            doSetLocalProperty(area, "", propName, propValue, force, recursive, true, handler);
+            SVNAdminArea area = wcAccess.probeOpen(path, true, recursive ? SVNWCAccess2.INFINITE_DEPTH : 1);//wcAccess.open(path, true, recursive ? SVNWCAccess2.INFINITE_DEPTH : 1);
+            SVNEntry2 entry = wcAccess.getEntry(path, false);
+            if (entry == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", path);
+                SVNErrorManager.error(err);
+            }
+            doSetLocalProperty(area, entry.isDirectory() ? area.getThisDirName() : entry.getName(), propName, propValue, force, recursive, true, handler);
         } finally {
             wcAccess.close();
         }
@@ -2235,8 +2240,8 @@ public class SVNWCClient extends SVNBasicClient {
                 return;
             }
             if (entry.getKind() == SVNNodeKind.DIR) {
-                File path = new File(anchor.getRoot(), name);
-                SVNAdminArea dir = anchor.getWCAccess().get(path, false);
+                File path = anchor.getFile(name);
+                SVNAdminArea dir = anchor.getWCAccess().retrieve(path);
                 if (dir != null) {
                     doSetLocalProperty(dir, "", propName, propValue, force, recursive, cancel, handler);
                 }
