@@ -486,15 +486,6 @@ public class SVNWCClient extends SVNBasicClient {
             SVNErrorManager.error(err);
         }
         propValue = validatePropertyValue(propName, propValue, force);
-        SVNWCAccess wcAccess = createWCAccess(path);
-        try {
-            wcAccess.open(true, recursive);
-            doSetLocalProperty(wcAccess.getAnchor(), wcAccess.getTargetName(), propName, propValue, force, recursive, true, handler);
-        } finally {
-            wcAccess.close(true);
-        }
-
-/*       
         SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
         try {
             SVNAdminArea area = wcAccess.probeOpen(path, true, recursive ? SVNWCAccess2.INFINITE_DEPTH : 1);//wcAccess.open(path, true, recursive ? SVNWCAccess2.INFINITE_DEPTH : 1);
@@ -507,7 +498,6 @@ public class SVNWCClient extends SVNBasicClient {
         } finally {
             wcAccess.close();
         }
-*/        
     }
     
     /**
