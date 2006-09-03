@@ -79,6 +79,7 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
     
     private Map myPool;
     private static Map ourPool;
+    private static Object ourPoolMonitor = new Object();
     
     private static final boolean ourAllowPersistentConnections = "true".equalsIgnoreCase(System.getProperty("javasvn.http.keepAlive", "true"));
     
@@ -201,7 +202,9 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
             pool = ourPool;
         }
         if (pool != null) {
-            clearPool(pool, shutdownAll);
+            synchronized (ourPoolMonitor) {
+                clearPool(pool, shutdownAll);
+            }
         }
     }
     
@@ -213,10 +216,12 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
                 }
                 return myPool;
             case RUNTIME_POOL:
-                if (ourPool == null) {
-                    ourPool = new HashMap();
+                synchronized (ourPoolMonitor) {
+                    if (ourPool == null) {
+                        ourPool = new HashMap();
+                    }
+                    return ourPool;
                 }
-                return ourPool;
             default:
         }
         return null;
@@ -279,32 +284,36 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
     }
     
     private static SVNRepository retriveRepository(Map pool, String protocol) {
-        clearPool(pool, false);
-        for (Iterator references = pool.keySet().iterator(); references.hasNext();) {
-            WeakReference reference = (WeakReference) references.next();
-            if (reference.get() == Thread.currentThread()) {
-                Map repositoriesMap = (Map) pool.get(reference);
-                if (repositoriesMap.containsKey(protocol)) {
-                    return (SVNRepository) repositoriesMap.get(protocol);
-                }
-                return null;
-            } 
+        synchronized (ourPoolMonitor) {
+            clearPool(pool, false);
+            for (Iterator references = pool.keySet().iterator(); references.hasNext();) {
+                WeakReference reference = (WeakReference) references.next();
+                if (reference.get() == Thread.currentThread()) {
+                    Map repositoriesMap = (Map) pool.get(reference);
+                    if (repositoriesMap.containsKey(protocol)) {
+                        return (SVNRepository) repositoriesMap.get(protocol);
+                    }
+                    return null;
+                } 
+            }
+            return null;
         }
-        return null;
     }
 
     private static void saveRepository(Map pool, SVNRepository repository, String protocol) {
-        clearPool(pool, false);
-        for (Iterator references = pool.keySet().iterator(); references.hasNext();) {
-            WeakReference reference = (WeakReference) references.next();
-            if (reference.get() == Thread.currentThread()) {
-                Map repositoriesMap = (Map) pool.get(reference);
-                repositoriesMap.put(protocol, repository);
-                return;
-            } 
+        synchronized (ourPoolMonitor) {
+            clearPool(pool, false);
+            for (Iterator references = pool.keySet().iterator(); references.hasNext();) {
+                WeakReference reference = (WeakReference) references.next();
+                if (reference.get() == Thread.currentThread()) {
+                    Map repositoriesMap = (Map) pool.get(reference);
+                    repositoriesMap.put(protocol, repository);
+                    return;
+                } 
+            }
+            Map map = new HashMap();
+            map.put(protocol, repository);
+            pool.put(new WeakReference(Thread.currentThread()), map);
         }
-        Map map = new HashMap();
-        map.put(protocol, repository);
-        pool.put(new WeakReference(Thread.currentThread()), map);
     }
 }
