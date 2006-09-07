@@ -119,6 +119,7 @@ public class SVNDeltaCombiner {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SVNDIFF_CORRUPT_WINDOW);
             SVNErrorManager.error(err, e);
         }
+        myReadWindowBuffer.flip();
         if (readLongOffset(myReadWindowBuffer) < 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SVNDIFF_CORRUPT_WINDOW);
             SVNErrorManager.error(err);
