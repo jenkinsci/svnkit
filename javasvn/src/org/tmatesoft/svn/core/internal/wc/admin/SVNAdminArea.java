@@ -31,8 +31,13 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
+import org.tmatesoft.svn.core.wc.ISVNMerger;
+import org.tmatesoft.svn.core.wc.ISVNMergerFactory;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 /**
  * @version 1.1
@@ -167,6 +172,88 @@ public abstract class SVNAdminArea {
     public abstract boolean hasTextModifications(String name, boolean forceComparison) throws SVNException;
 
     public abstract SVNAdminArea upgradeFormat(SVNAdminArea adminArea) throws SVNException;
+    
+    public SVNStatusType mergeText(String localPath, String basePath,
+            String latestPath, String localLabel, String baseLabel,
+            String latestLabel, boolean leaveConflict, boolean dryRun) throws SVNException {
+        ISVNProperties props = getProperties(localPath);
+        String mimeType = props.getPropertyValue(SVNProperty.MIME_TYPE);
+        SVNEntry2 entry = getEntry(localPath, true);
+        if (SVNProperty.isBinaryMimeType(mimeType)) {
+            // binary
+            if (!dryRun) {
+                File oldFile = SVNFileUtil.createUniqueFile(getRoot(),
+                        localPath, baseLabel);
+                File newFile = SVNFileUtil.createUniqueFile(getRoot(),
+                        localPath, latestLabel);
+                SVNFileUtil.copyFile(getFile(basePath), oldFile, false);
+                SVNFileUtil.copyFile(getFile(latestPath), newFile, false);
+                // update entry props
+                entry.setConflictNew(SVNFileUtil.getBasePath(newFile));
+                entry.setConflictOld(SVNFileUtil.getBasePath(oldFile));
+                entry.setConflictWorking(null);
+            }
+            return SVNStatusType.CONFLICTED;
+        }
+        // text
+        // 1. destranslate local
+        File localTmpFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, ".tmp");
+        SVNTranslator2.translate(this, localPath, localPath, SVNFileUtil.getBasePath(localTmpFile), false, false);
+        // 2. run merge between all files we have :)
+        OutputStream result = null;
+        File resultFile = dryRun ? null : SVNFileUtil.createUniqueFile(getRoot(), localPath, ".result");
+
+        byte[] conflictStart = ("<<<<<<< " + localLabel).getBytes();
+        byte[] conflictEnd = (">>>>>>> " + latestLabel).getBytes();
+        byte[] separator = ("=======").getBytes();
+        ISVNMergerFactory factory = myWCAccess.getOptions().getMergerFactory();
+        ISVNMerger merger = factory.createMerger(conflictStart, separator, conflictEnd);
+        
+        result = resultFile == null ? SVNFileUtil.DUMMY_OUT : SVNFileUtil.openFileForWriting(resultFile);
+        SVNStatusType status = SVNStatusType.UNCHANGED;
+        try {
+            status = merger.mergeText(getFile(basePath), localTmpFile, getFile(latestPath), dryRun, result);
+        } finally {
+            SVNFileUtil.closeFile(result);
+        }
+        if (dryRun) {
+            localTmpFile.delete();
+            if (leaveConflict && status == SVNStatusType.CONFLICTED) {
+                return SVNStatusType.CONFLICTED_UNRESOLVED;
+            }
+            return status;
+        }
+        if (status != SVNStatusType.CONFLICTED) {
+            SVNTranslator2.translate(this, localPath, SVNFileUtil.getBasePath(resultFile), localPath, true, true);
+        } else {
+            // copy all to wc.
+            File mineFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, localLabel);
+            String minePath = SVNFileUtil.getBasePath(mineFile);
+            SVNFileUtil.copyFile(getFile(localPath), mineFile, false);
+            File oldFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, baseLabel);
+            String oldPath = SVNFileUtil.getBasePath(oldFile);
+            File newFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, latestLabel);
+            String newPath = SVNFileUtil.getBasePath(newFile);
+            SVNTranslator2.translate(this, localPath, basePath, oldPath, true, false);
+            SVNTranslator2.translate(this, localPath, latestPath, newPath, true, false);
+            // translate result to local
+            if (!leaveConflict) {
+                SVNTranslator2.translate(this, localPath, SVNFileUtil.getBasePath(resultFile), localPath, true, true);
+            }
+
+            entry.setConflictNew(newPath);
+            entry.setConflictOld(oldPath);
+            entry.setConflictWorking(minePath);
+        }
+        localTmpFile.delete();
+        if (resultFile != null) {
+            resultFile.delete();
+        }
+        if (status == SVNStatusType.CONFLICTED && leaveConflict) {
+            return SVNStatusType.CONFLICTED_UNRESOLVED;
+        }
+        return status;
+    }
     
     public InputStream getBaseFileForReading(String name, boolean tmp) throws SVNException {
         String path = tmp ? "tmp/" : "";

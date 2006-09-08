@@ -102,7 +102,9 @@ public abstract class SVNAdminAreaFactory implements Comparable {
                 return adminArea;
             }
         }
-        error = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
+        if (error == null) {
+            error = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
+        }
         SVNErrorManager.error(error);
         return null;
     }

@@ -21,12 +21,15 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 
 
@@ -39,6 +42,7 @@ public class SVNWCAccess2 implements ISVNEventHandler {
     public static final int INFINITE_DEPTH = -1;
     
     private ISVNEventHandler myEventHandler;
+    private ISVNOptions myOptions;
     private Map myAdminAreas;
 
     public static SVNWCAccess2 newInstance(ISVNEventHandler eventHandler) {
@@ -72,8 +76,122 @@ public class SVNWCAccess2 implements ISVNEventHandler {
         }
     }
 
+    public void setOptions(ISVNOptions options) {
+        myOptions = options;
+    }
+
+    public ISVNOptions getOptions() {
+        if (myOptions == null) {
+            myOptions = new DefaultSVNOptions();
+        }
+        return myOptions;
+    }
+
     public SVNAdminAreaInfo openAnchor(File path, boolean writeLock, int depth) throws SVNException {
-        return null;
+        File parent = path.getParentFile();
+        String name = path.getName();
+        SVNAdminArea parentArea = null;
+        SVNAdminArea targetArea = null; 
+        SVNException parentError = null;
+        try {
+            parentArea = open(parent, writeLock, 0);
+        } catch (SVNException svne) {
+            if (writeLock && svne.getErrorMessage().getErrorCode() == SVNErrorCode.WC_LOCKED) {
+                try {
+                    parentArea = open(parent, false, 0);
+                } catch (SVNException svne2) {
+                    throw svne;
+                }
+                parentError = svne;
+            } else {
+                throw svne;
+            }
+        }
+        
+        try {
+            targetArea = open(path, writeLock, depth);
+        } catch (SVNException svne) {
+            if (parentArea == null || svne.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_DIRECTORY) {
+                try {
+                    close();
+                } catch (SVNException svne2) {
+                    //
+                }
+                throw svne;
+            }
+        }
+        
+        if (parentArea != null && targetArea != null) {
+            SVNEntry2 parentEntry = null;
+            SVNEntry2 targetEntry = null;
+            SVNEntry2 targetInParent = null;
+            try {
+                targetInParent = parentArea.getEntry(name, false);
+                targetEntry = targetArea.getEntry(targetArea.getThisDirName(), false);
+                parentEntry = parentArea.getEntry(parentArea.getThisDirName(), false);
+            } catch (SVNException svne) {
+                try {
+                    close();
+                } catch (SVNException svne2) {
+                    //
+                }
+                throw svne;
+            }
+            
+            SVNURL parentURL = parentEntry.getSVNURL();
+            SVNURL targetURL = targetEntry.getSVNURL();
+            String encodedName = SVNEncodingUtil.uriEncode(name);
+            if (targetInParent == null || (parentURL != null && targetURL != null && 
+                    (!parentURL.equals(targetURL.removePathTail()) || !encodedName.equals(SVNPathUtil.tail(targetURL.getPath()))))) {
+                if (myAdminAreas != null) {
+                    myAdminAreas.remove(parent);
+                }
+                try {
+                    doClose(parentArea, false);
+                } catch (SVNException svne) {
+                    try {
+                        close();
+                    } catch (SVNException svne2) {
+                        //
+                    }
+                    throw svne;
+                }
+                parentArea = null;
+            }
+        }
+        
+        if (parentArea != null) {
+            if (parentError != null && targetArea != null) {
+                try {
+                    close();
+                } catch (SVNException svne) {
+                    //
+                }
+                throw parentError;
+            }
+        }
+
+        if (targetArea == null) {
+            SVNEntry2 targetEntry = null;
+            try {
+                targetEntry = parentArea.getEntry(name, false); 
+            } catch (SVNException svne) {
+                try {
+                    close();
+                } catch (SVNException svne2) {
+                    //
+                }
+                throw svne;
+            }
+            if (targetEntry != null && targetEntry.isDirectory()) {
+                if (myAdminAreas != null) {
+                    myAdminAreas.put(path, SVNAdminArea.MISSING);
+                }
+            }
+        }
+        SVNAdminArea anchor = parentArea != null ? parentArea : targetArea;
+        SVNAdminArea target = targetArea != null ? targetArea : parentArea;
+        return new SVNAdminAreaInfo(anchor, target, parentArea == null ? "" : name);
     }
     
     public SVNAdminArea open(File path, boolean writeLock, int depth) throws SVNException {
@@ -106,15 +224,6 @@ public class SVNWCAccess2 implements ISVNEventHandler {
             }
         }
         return adminArea;
-    }
-    
-    public SVNAdminArea get(File path, boolean getParent) throws SVNException {
-        
-        return null;
-    }
-
-    public SVNAdminArea get(File path, boolean writeLock, int depth) throws SVNException {
-        return null;
     }
     
     public void close() throws SVNException {
@@ -187,10 +296,17 @@ public class SVNWCAccess2 implements ISVNEventHandler {
                 paths.remove();
                 continue;
             }
-            if (!preserveLocks && adminArea.isLocked()) {
-                adminArea.unlock();
-            }
+            doClose(adminArea, preserveLocks);
             paths.remove();
+        }
+    }
+
+    private void doClose(SVNAdminArea adminArea, boolean preserveLocks) throws SVNException {
+        if (adminArea == SVNAdminArea.MISSING) {
+            return;
+        }
+        if (!preserveLocks && adminArea.isLocked()) {
+            adminArea.unlock();
         }
     }
 
@@ -242,7 +358,7 @@ public class SVNWCAccess2 implements ISVNEventHandler {
     
     public SVNEntry2 getEntry(File path, boolean showHidden) throws SVNException {
         SVNAdminArea adminArea = getAdminArea(path);
-        String entryName= null;
+        String entryName = null;
         if (adminArea == null) {
             adminArea = getAdminArea(path.getParentFile());
             entryName = path.getName();
