@@ -200,7 +200,8 @@ public class SVNURL {
                 SVNErrorManager.error(err, e);
                 return;
             }
-            if(testURL.getPath() == null || "".equals(testURL.getPath())){
+            String testPath = getPath(testURL);
+            if(testPath == null || "".equals(testPath)){
                 //no path, only host - follow subversion behaviour
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Local URL ''{0}'' contains only a hostname, no path", url);
                 SVNErrorManager.error(err);
@@ -209,7 +210,7 @@ public class SVNURL {
             myHost = testURL.getHost() == null ? "" : testURL.getHost();
             if (uriEncoded) {
                 // autoencode it.
-                myEncodedPath = SVNEncodingUtil.autoURIEncode(testURL.getPath());
+                myEncodedPath = SVNEncodingUtil.autoURIEncode(testPath);
                 SVNEncodingUtil.assertURISafe(myEncodedPath);
                 myPath = SVNEncodingUtil.uriDecode(myEncodedPath);
                 myPath = myPath.replace(File.separatorChar, '/');
@@ -217,7 +218,7 @@ public class SVNURL {
                     myPath = "/" + myPath;
                 }
             } else {
-                myPath = testURL.getPath();
+                myPath = testPath;
                 if(!myPath.startsWith("/")){
                     myPath = "/" + myPath;
                 }
@@ -236,7 +237,7 @@ public class SVNURL {
                 return;
             }
             myHost = httpURL.getHost();
-            String httpPath = norlmalizeURLPath(url, httpURL.getPath());
+            String httpPath = norlmalizeURLPath(url, getPath(httpURL));
             if (uriEncoded) {
                 // autoencode it.
                 myEncodedPath = SVNEncodingUtil.autoURIEncode(httpPath);
@@ -487,4 +488,17 @@ public class SVNURL {
         }
         return result.toString();
     }
+    
+    private static String getPath(URL url) {
+        String path = url.getPath();
+        String ref = url.getRef();
+        if (ref != null) {
+            if (path == null) {
+                path = "";
+            }
+            path += '#' + ref;
+        }
+        return path;
+    }
+
 } 
