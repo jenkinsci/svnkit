@@ -233,6 +233,16 @@ public class SVNWCAccess2 implements ISVNEventHandler {
         }
     }
     
+    public void closeAdminArea(File path) throws SVNException {
+        if (myAdminAreas != null) {
+            SVNAdminArea area = (SVNAdminArea) myAdminAreas.get(path);
+            if (area != null) {
+                doClose(area, false);
+                myAdminAreas.remove(path);
+            }
+        }
+    }
+    
     private SVNAdminArea doOpen(File path, boolean writeLock, int depth, Map tmp) throws SVNException {
         // no support for 'under consturction here' - it will go to adminAreaFactory.
         tmp = tmp == null ? new HashMap() : tmp; 

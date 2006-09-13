@@ -203,16 +203,14 @@ public class SVNXMLAdminArea extends SVNAdminArea {
     }
     
     private Map readProperties(String name) throws SVNException {
-        String path = getThisDirName().equals(name) ? "dir-props" : "props/" + name + ".svn-work";
-        File propertiesFile = getAdminFile(path);
-        SVNProperties props = new SVNProperties(propertiesFile, getAdminDirectory().getName() + "/" + path);
+        File propertiesFile = getPropertiesFile(name, false);
+        SVNProperties props = new SVNProperties(propertiesFile, null);
         return props.asMap();
     }
 
     private Map readBaseProperties(String name) throws SVNException {
-        String path = getThisDirName().equals(name) ? "dir-prop-base" : "prop-base/" + name + ".svn-base";
-        File propertiesFile = getAdminFile(path);
-        SVNProperties props = new SVNProperties(propertiesFile, getAdminDirectory().getName() + "/" + path);
+        File propertiesFile = getBasePropertiesFile(name, false);
+        SVNProperties props = new SVNProperties(propertiesFile, null);
         return props.asMap();
     }
 

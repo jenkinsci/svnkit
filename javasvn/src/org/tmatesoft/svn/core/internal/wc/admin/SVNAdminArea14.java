@@ -134,7 +134,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         SVNEntry2 entry = getEntry(name, true);
         if (entry == null) {
             return null;
-        } 
+        }
 
         Map basePropsCache = getBasePropertiesStorage(true);
         ISVNProperties props = (ISVNProperties)basePropsCache.get(name); 
@@ -159,7 +159,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         SVNEntry2 entry = getEntry(name, true);
         if (entry == null) {
             return null;
-        } 
+        }
 
         Map propsCache = getPropertiesStorage(true);
         ISVNProperties props = (ISVNProperties)propsCache.get(name); 
@@ -254,19 +254,15 @@ public class SVNAdminArea14 extends SVNAdminArea {
     }
     
     private Map readBaseProperties(String name) throws SVNException {
-        //String path = !tmp ? "" : "tmp/";
-        String path = getThisDirName().equals(name) ? "dir-prop-base" : "prop-base/" + name + ".svn-base";
-        File propertiesFile = getAdminFile(path);
-        SVNProperties props = new SVNProperties(propertiesFile, getAdminDirectory().getName() + "/" + path);
+        File propertiesFile = getBasePropertiesFile(name, false);
+        SVNProperties props = new SVNProperties(propertiesFile, null);
         return props.asMap();
     }
     
     private Map readProperties(String name) throws SVNException {
         if (hasPropModifications(name)) {
-            //String path = !tmp ? "" : "tmp/";
-            String path = getThisDirName().equals(name) ? "dir-props" : "props/" + name + ".svn-work";
-            File propertiesFile = getAdminFile(path);
-            SVNProperties props = new SVNProperties(propertiesFile, getAdminDirectory().getName() + "/" + path);
+            File propertiesFile = getPropertiesFile(name, false);
+            SVNProperties props = new SVNProperties(propertiesFile, null);
             return props.asMap();
         } 
             

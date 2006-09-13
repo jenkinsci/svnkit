@@ -22,9 +22,17 @@ public class SVNProperties13 extends ISVNProperties {
         super(properties);
     }
 
-    public String getPropertyValue(String name) throws SVNException {
-        Map props = loadProperties();
+    public boolean containsProperty(String name) throws SVNException {
         if (!isEmpty()) {
+            Map props = loadProperties();
+            return props.containsKey(name);
+        }
+        return false;
+    }
+
+    public String getPropertyValue(String name) throws SVNException {
+        if (!isEmpty()) {
+            Map props = loadProperties();
             return (String)props.get(name); 
         }
         return null;

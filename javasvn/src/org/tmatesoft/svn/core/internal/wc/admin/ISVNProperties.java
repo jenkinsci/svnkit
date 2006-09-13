@@ -28,6 +28,8 @@ public abstract class ISVNProperties {
         myIsModified = false;
     }
     
+    public abstract boolean containsProperty(String name) throws SVNException;
+    
     public abstract String getPropertyValue(String name) throws SVNException;
 
     protected abstract Map loadProperties() throws SVNException;
@@ -88,7 +90,7 @@ public abstract class ISVNProperties {
         tmp.removeAll(props2);
         for (Iterator props = tmp.iterator(); props.hasNext();) {
             String missing = (String) props.next();
-            result.remove(missing);
+            result.put(missing, null);
         }
 
         // added in props2.

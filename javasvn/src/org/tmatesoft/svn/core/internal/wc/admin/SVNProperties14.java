@@ -27,7 +27,24 @@ public abstract class SVNProperties14 extends ISVNProperties {
         myAdminArea = adminArea;
         myEntryName = entryName;
     }
-    
+
+    public boolean containsProperty(String name) throws SVNException {
+        SVNEntry2 entry = myAdminArea.getEntry(myEntryName, true);
+        String[] cachableProps = entry.getCachableProperties(); 
+        if (cachableProps != null && getIndex(cachableProps, name) >= 0) {
+            String[] presentProps = entry.getPresentProperties();
+            if (presentProps == null || getIndex(presentProps, name) < 0) {
+                return false;
+            }
+            return true;
+        }
+        if (!isEmpty()) {
+            Map props = loadProperties();
+            return props.containsKey(name);
+        }
+        return false;
+    }
+
     public String getPropertyValue(String name) throws SVNException {
         SVNEntry2 entry = myAdminArea.getEntry(myEntryName, true);
         String[] cachableProps = entry.getCachableProperties(); 
