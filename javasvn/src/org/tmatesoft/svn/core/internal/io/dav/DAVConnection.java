@@ -216,7 +216,9 @@ public class DAVConnection {
     public HTTPStatus doReport(String path, StringBuffer requestBody, DefaultHandler handler, boolean spool) throws SVNException {
         myHttpConnection.setSpoolResponse(spool);
         try {
-            return myHttpConnection.request("REPORT", path, null, requestBody, -1, 0, null, handler);
+            HTTPHeader header = new HTTPHeader();
+            header.addHeaderValue("Accept-Encoding", "svndiff1;q=0.9,svndiff;q=0.8");
+            return myHttpConnection.request("REPORT", path, header, requestBody, -1, 0, null, handler);
         } finally {
             myHttpConnection.setSpoolResponse(false);
         }
