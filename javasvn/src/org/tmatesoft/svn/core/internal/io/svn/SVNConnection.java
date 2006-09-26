@@ -43,6 +43,8 @@ class SVNConnection {
     private static final String FAILURE = "failure";
     private static final String STEP = "step";
     private static final String EDIT_PIPELINE = "edit-pipeline";
+    private static final String SVNDIFF1 = "svndiff1";
+    private static final String ABSENT_ENTRIES = "absent-entries";
 
     public SVNConnection(ISVNConnector connector, SVNRepositoryImpl repository) {
         myConnector = connector;
@@ -72,7 +74,7 @@ class SVNConnection {
         } else if (!SVNReader.hasValue(items, 2, EDIT_PIPELINE)) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_BAD_VERSION, "Only servers with 'edit-pipeline' capability is supported"));
         }
-        write("(n(w)s)", new Object[] { "2", EDIT_PIPELINE,
+        write("(n(www)s)", new Object[] { "2", EDIT_PIPELINE, SVNDIFF1, ABSENT_ENTRIES, 
                 repository.getLocation().toString() });
     }
 
