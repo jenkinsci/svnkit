@@ -37,6 +37,9 @@ import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
@@ -262,6 +265,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         return myEventDispatcher;
     }
 
+
     protected SVNWCAccess createWCAccess(File file) throws SVNException {
         return createWCAccess(file, null);
     }
@@ -287,6 +291,32 @@ public class SVNBasicClient implements ISVNEventHandler {
         return wcAccess;
     }
     
+    protected SVNWCAccess2 createWCAccess() {
+        return createWCAccess((String)null);
+    }
+
+    protected SVNWCAccess2 createWCAccess(final String pathPrefix) {
+        ISVNEventHandler eventHandler = null;
+        if (pathPrefix != null) {
+            eventHandler = new ISVNEventHandler() {
+                public void handleEvent(SVNEvent event, double progress) throws SVNException {
+                    String fullPath = SVNPathUtil.append(pathPrefix, event.getPath());
+                    event.setPath(fullPath);
+                    dispatchEvent(event, progress);
+                }
+
+                public void checkCancelled() throws SVNCancelException {
+                    SVNBasicClient.this.checkCancelled();
+                }
+            };
+        } else {
+            eventHandler = this;
+        }
+        SVNWCAccess2 access = SVNWCAccess2.newInstance(eventHandler);
+        access.setOptions(myOptions);
+        return access;
+    }
+
     /**
      * Dispatches events to the registered event handler (if any). 
      * 
@@ -329,10 +359,13 @@ public class SVNBasicClient implements ISVNEventHandler {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_VERSIONED_PATH_REQUIRED);
                 SVNErrorManager.error(err);
             }
-            SVNWCAccess wcAccess = createWCAccess(path);
-            SVNEntry entry = wcAccess.getTargetEntry();
+            SVNWCAccess2 wcAccess = createWCAccess();
+            wcAccess.probeOpen(path, false, 0);
+            SVNEntry2 entry = wcAccess.getEntry(path, false);
+            wcAccess.close();
+            
             if (entry == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not unvderversion control", path);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", path);
                 SVNErrorManager.error(err);
             }
             if (revision == SVNRevision.WORKING || revision == SVNRevision.BASE) {

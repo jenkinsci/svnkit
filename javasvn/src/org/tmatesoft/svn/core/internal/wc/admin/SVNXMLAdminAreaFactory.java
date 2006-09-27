@@ -42,11 +42,6 @@ public class SVNXMLAdminAreaFactory extends SVNAdminAreaFactory {
         return area;
     }
 
-    protected SVNAdminArea doCreateVersionedDirectory(File dir) throws SVNException {
-        SVNAdminArea adminArea = new SVNXMLAdminArea(dir);
-        return adminArea.createVersionedDirectory(); 
-    }
-
     protected int getSupportedVersion() {
         return WC_FORMAT;
     }

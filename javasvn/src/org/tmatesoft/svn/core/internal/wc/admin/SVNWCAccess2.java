@@ -12,9 +12,15 @@
 package org.tmatesoft.svn.core.internal.wc.admin;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.StringTokenizer;
+import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -25,7 +31,9 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
+import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
@@ -65,6 +73,10 @@ public class SVNWCAccess2 implements ISVNEventHandler {
         if (myEventHandler != null) {
             myEventHandler.checkCancelled();
         }
+    }
+
+    public void handleEvent(SVNEvent event) {
+        handleEvent(event, ISVNEventHandler.UNKNOWN);
     }
 
     public void handleEvent(SVNEvent event, double progress) {
@@ -191,7 +203,7 @@ public class SVNWCAccess2 implements ISVNEventHandler {
         }
         SVNAdminArea anchor = parentArea != null ? parentArea : targetArea;
         SVNAdminArea target = targetArea != null ? targetArea : parentArea;
-        return new SVNAdminAreaInfo(anchor, target, parentArea == null ? "" : name);
+        return new SVNAdminAreaInfo(this, anchor, target, parentArea == null ? "" : name);
     }
     
     public SVNAdminArea open(File path, boolean writeLock, int depth) throws SVNException {
@@ -382,6 +394,29 @@ public class SVNWCAccess2 implements ISVNEventHandler {
         return null;
     }
     
+    public void setRepositoryRoot(File path, SVNURL reposRoot) throws SVNException {
+        SVNEntry2 entry = getEntry(path, false);
+        if (entry == null) {
+            return;
+        }
+        SVNAdminArea adminArea = null;
+        String name = null;
+        if (entry.isFile()) {
+            adminArea = getAdminArea(path.getParentFile());
+            name = path.getName();
+        } else {
+            adminArea = getAdminArea(path);
+            name = adminArea != null ? adminArea.getThisDirName() : null;
+        }
+        
+        if (adminArea == null) {
+            return;
+        }
+        if (adminArea.tweakEntry(name, null, reposRoot.toString(), -1, false)) {
+            adminArea.saveEntries(false);
+        }
+    }
+    
     public SVNAdminArea retrieve(File path) throws SVNException {
         SVNAdminArea adminArea = getAdminArea(path);
         if (adminArea == null) {
@@ -422,7 +457,7 @@ public class SVNWCAccess2 implements ISVNEventHandler {
         }
         return adminArea;
     }
-    
+
     //analogous to retrieve_internal
     private SVNAdminArea getAdminArea(File path) {
         //internal retrieve

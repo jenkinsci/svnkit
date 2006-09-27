@@ -119,7 +119,11 @@ public abstract class ISVNLog {
             for (Iterator names = modifiedEntryProps.keySet().iterator(); names.hasNext();) {
                 String propName = (String) names.next();
                 String propValue = (String) modifiedEntryProps.get(propName);
-                String longPropName = SVNProperty.SVN_ENTRY_PREFIX + propName;
+                String longPropName = propName;
+                if (!(SVNProperty.CACHABLE_PROPS.equals(propName) || SVNProperty.PRESENT_PROPS.equals(propName) ||
+                        SVNProperty.HAS_PROPS.equals(propName) || SVNProperty.HAS_PROP_MODS.equals(propName))) {
+                    longPropName = SVNProperty.SVN_ENTRY_PREFIX + propName;
+                }
                 if (SVNProperty.LOCK_TOKEN.equals(longPropName)) {
                     Map deleteLockCommand = new HashMap();
                     deleteLockCommand.put(ISVNLog.NAME_ATTR, name);
@@ -130,6 +134,7 @@ public abstract class ISVNLog {
                 }
             }
             addCommand(ISVNLog.MODIFY_ENTRY, command, false);
+            command.clear();
         }
         return status;
     }
@@ -148,6 +153,7 @@ public abstract class ISVNLog {
                     command.remove(ISVNLog.PROPERTY_VALUE_ATTR);
                 }
                 addCommand(ISVNLog.MODIFY_WC_PROPERTY, command, false);
+                command.clear();
             }
         }
     }

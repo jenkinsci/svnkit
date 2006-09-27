@@ -95,6 +95,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
                     SVNErrorManager.error(error);
                 } 
             } catch (SVNException e) {
+                error = e.getErrorMessage() ;
                 continue;
             }
             SVNAdminArea adminArea = factory.doOpen(path, version);
@@ -109,20 +110,34 @@ public abstract class SVNAdminAreaFactory implements Comparable {
         return null;
     }
 
-    public static SVNAdminArea createVersionedDirectory(File dir) throws SVNException {
-        if (!ourFactories.isEmpty()) {
-            SVNAdminAreaFactory newestFactory = (SVNAdminAreaFactory) ourFactories.iterator().next();
-            return newestFactory.doCreateVersionedDirectory(dir);
-        }
-        return null;
-    }
-
     public static SVNAdminArea upgrade(SVNAdminArea area) throws SVNException {
         if (!ourFactories.isEmpty()) {
             SVNAdminAreaFactory newestFactory = (SVNAdminAreaFactory) ourFactories.iterator().next();
             area = newestFactory.doUpgrade(area);
         }
         return area;
+    }
+    
+    public static int readFormatVersion(File adminDir) throws SVNException {
+        SVNErrorMessage error = null;
+        int version = -1;
+        
+        for(Iterator factories = ourFactories.iterator(); factories.hasNext();) {
+            SVNAdminAreaFactory factory = (SVNAdminAreaFactory) factories.next();
+            try {
+                version = factory.getVersion(adminDir);
+            } catch (SVNException e) {
+                error = e.getErrorMessage();
+                continue;
+            }
+            return version;
+        }
+
+        if (error == null) {
+            error = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", adminDir);
+        }
+        SVNErrorManager.error(error);
+        return -1;
     }
     
     protected String getAdminDirectoryName() {
@@ -134,8 +149,6 @@ public abstract class SVNAdminAreaFactory implements Comparable {
     protected abstract int getVersion(File path) throws SVNException;
     
     protected abstract SVNAdminArea doOpen(File path, int version) throws SVNException;
-
-    protected abstract SVNAdminArea doCreateVersionedDirectory(File path) throws SVNException;
 
     protected abstract SVNAdminArea doUpgrade(SVNAdminArea area) throws SVNException;
 

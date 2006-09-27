@@ -45,11 +45,6 @@ public class SVNAdminArea14Factory extends SVNAdminAreaFactory {
         return WC_FORMAT;
     }
 
-    protected SVNAdminArea doCreateVersionedDirectory(File dir) throws SVNException {
-        SVNAdminArea adminArea = new SVNAdminArea14(dir);
-        return adminArea.createVersionedDirectory(); 
-    }
-
     protected int doCheckWC(File path) throws SVNException {
         File adminDir = new File(path, SVNFileUtil.getAdminDirectoryName());
         File entriesFile = new File(adminDir, "entries");

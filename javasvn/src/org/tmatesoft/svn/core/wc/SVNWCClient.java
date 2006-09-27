@@ -486,7 +486,7 @@ public class SVNWCClient extends SVNBasicClient {
             SVNErrorManager.error(err);
         }
         propValue = validatePropertyValue(propName, propValue, force);
-        SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
+        SVNWCAccess2 wcAccess = createWCAccess();
         try {
             SVNAdminArea area = wcAccess.probeOpen(path, true, recursive ? SVNWCAccess2.INFINITE_DEPTH : 1);//wcAccess.open(path, true, recursive ? SVNWCAccess2.INFINITE_DEPTH : 1);
             SVNEntry2 entry = wcAccess.getEntry(path, false);

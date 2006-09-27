@@ -18,6 +18,8 @@ import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 
 /**
  * The <b>SVNEvent</b> class is used to provide detailed information on 
@@ -112,6 +114,7 @@ public class SVNEvent {
     private SVNStatusType myLockStatus;
     private SVNLock myLock;
     private SVNWCAccess mySVNWCAccess;
+    private SVNAdminAreaInfo myAdminAreaInfo;
     private String myName;
     private String myPath;
     private File myRoot;
@@ -183,8 +186,28 @@ public class SVNEvent {
         myRoot = dir != null ? dir.getRoot() : null;
         myName = name;
     }
+
+    public SVNEvent(SVNAdminAreaInfo info, SVNAdminArea adminArea, String name,
+            SVNEventAction action, SVNEventAction expectedAction, SVNNodeKind kind, 
+            long revision, String mimetype, SVNStatusType cstatus, SVNStatusType pstatus,
+            SVNStatusType lstatus, SVNLock lock, SVNErrorMessage error) {
+        myMimeType = mimetype;
+        myErrorMessage = error;
+        myExpectedAction = expectedAction != null ? expectedAction : action;
+        myAction = action;
+        myNodeKind = kind == null ? SVNNodeKind.UNKNOWN : kind;
+        myRevision = revision;
+        myContentsStatus = cstatus == null ? SVNStatusType.INAPPLICABLE
+                : cstatus;
+        myPropertiesStatus = pstatus == null ? SVNStatusType.INAPPLICABLE
+                : pstatus;
+        myLockStatus = lstatus == null ? SVNStatusType.INAPPLICABLE : lstatus;
+        myLock = lock;
+        myAdminAreaInfo = info;
+        myRoot = adminArea != null ? adminArea.getRoot() : null;
+        myName = name;
+    }
     
-    /**
     /**
      * Constructs an <b>SVNEvent</b> object filling it with informational 
      * details most of that would be retrieved and analized by an 
@@ -216,6 +239,12 @@ public class SVNEvent {
         this(source, dir, name, action, null, kind, revision, mimetype, cstatus, pstatus, lstatus, lock, error);
     }
 
+    public SVNEvent(SVNAdminAreaInfo info, SVNAdminArea adminArea, String name,
+            SVNEventAction action, SVNNodeKind kind, long revision,
+            String mimetype, SVNStatusType cstatus, SVNStatusType pstatus,
+            SVNStatusType lstatus, SVNLock lock, SVNErrorMessage error) {
+        this(info, adminArea, name, action, null, kind, revision, mimetype, cstatus, pstatus, lstatus, lock, error);
+    }
     
     /**
      * Constructs an <b>SVNEvent</b> object filling it with informational 
@@ -314,11 +343,11 @@ public class SVNEvent {
         if (myPath != null) {
             return myPath;
         }
-        if (mySVNWCAccess == null && myRootFile == null) {
+        if (myAdminAreaInfo == null && myRootFile == null) {
             return myName;
         }
         File file = getFile();
-        File root = mySVNWCAccess != null ? mySVNWCAccess.getAnchor().getRoot()
+        File root = myAdminAreaInfo != null ? myAdminAreaInfo.getAnchor().getRoot()
                 : myRootFile;
         String rootPath = root.getAbsolutePath().replace(File.separatorChar,
                 '/');
@@ -340,8 +369,8 @@ public class SVNEvent {
         if (myRoot != null) {
             return ("".equals(myName) || ".".equals(myName)) ? myRoot
                     : new File(myRoot, myName);
-        } else if (mySVNWCAccess != null && getPath() != null) {
-            return new File(mySVNWCAccess.getAnchor().getRoot(), getPath());
+        } else if (myAdminAreaInfo != null && getPath() != null) {
+            return new File(myAdminAreaInfo.getAnchor().getRoot(), getPath());
         }
         return null;
     }

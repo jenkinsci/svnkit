@@ -30,6 +30,7 @@ import java.util.TreeMap;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -38,6 +39,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNLog;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 
 /**
@@ -64,52 +66,76 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         myEntriesFile = new File(getAdminDirectory(), "entries");
     }
 
-    private void saveProperties() throws SVNException {
+    private void saveProperties(ISVNLog log) throws SVNException {
         Map propsCache = getPropertiesStorage(false);
         if (propsCache == null || propsCache.isEmpty()) {
             return;
         }
-        
+
+        Map command = new HashMap();
         for(Iterator entries = propsCache.keySet().iterator(); entries.hasNext();) {
             String name = (String)entries.next();
             ISVNProperties props = (ISVNProperties)propsCache.get(name);
             if (props.isModified()) {
                 String dstPath = getThisDirName().equals(name) ? "dir-props" : "props/" + name + ".svn-work";
-                File dstFile = getAdminFile(dstPath);
+                dstPath = getAdminDirectory().getName() + "/" + dstPath;
+                
                 if (props.isEmpty()) {
-                    SVNFileUtil.deleteFile(dstFile);
+                    command.put(ISVNLog.NAME_ATTR, dstPath);
+                    log.addCommand(SVNLog.DELETE, command, false);
                 } else {
                     String tmpPath = "tmp/";
                     tmpPath += getThisDirName().equals(name) ? "dir-props" : "props/" + name + ".svn-work";
                     File tmpFile = getAdminFile(tmpPath);
-                    SVNProperties.setProperties(props.asMap(), dstFile, tmpFile, SVNProperties.SVN_HASH_TERMINATOR);
+                    String srcPath = getAdminDirectory().getName() + "/" + tmpPath;
+                    SVNProperties tmpProps = new SVNProperties(tmpFile, srcPath);
+                    tmpProps.setProperties(props.asMap());
+                    command.put(ISVNLog.NAME_ATTR, srcPath);
+                    command.put(ISVNLog.DEST_ATTR, dstPath);
+                    log.addCommand(SVNLog.MOVE, command, false);
+                    command.clear();
+                    command.put(SVNLog.NAME_ATTR, dstPath);
+                    log.addCommand(SVNLog.READONLY, command, false);
                 }
                 props.setModified(false);
+                command.clear();
             }
         }
     }
     
-    private void saveBaseProperties() throws SVNException {
+    private void saveBaseProperties(ISVNLog log) throws SVNException {
         Map basePropsCache = getBasePropertiesStorage(false);
         if (basePropsCache == null || basePropsCache.isEmpty()) { 
             return;
         }
-        
+
+        Map command = new HashMap();
         for(Iterator entries = basePropsCache.keySet().iterator(); entries.hasNext();) {
             String name = (String)entries.next();
             ISVNProperties props = (ISVNProperties)basePropsCache.get(name);
             if (props.isModified()) {
                 String dstPath = getThisDirName().equals(name) ? "dir-prop-base" : "prop-base/" + name + ".svn-base";
-                File dstFile = getAdminFile(dstPath);
+                dstPath = getAdminDirectory().getName() + "/" + dstPath;
+                
                 if (props.isEmpty()) {
-                    SVNFileUtil.deleteFile(dstFile);
+                    command.put(ISVNLog.NAME_ATTR, dstPath);
+                    log.addCommand(SVNLog.DELETE, command, false);
                 } else {
                     String tmpPath = "tmp/";
                     tmpPath += getThisDirName().equals(name) ? "dir-prop-base" : "prop-base/" + name + ".svn-base";
                     File tmpFile = getAdminFile(tmpPath);
-                    SVNProperties.setProperties(props.asMap(), dstFile, tmpFile, SVNProperties.SVN_HASH_TERMINATOR);
+                    String srcPath = getAdminDirectory().getName() + "/" + tmpPath;
+                    SVNProperties tmpProps = new SVNProperties(tmpFile, srcPath);
+                    tmpProps.setProperties(props.asMap());
+                    command.put(ISVNLog.NAME_ATTR, srcPath);
+                    command.put(ISVNLog.DEST_ATTR, dstPath);
+                    log.addCommand(SVNLog.MOVE, command, false);
+                    command.clear();
+                    command.put(SVNLog.NAME_ATTR, dstPath);
+                    log.addCommand(SVNLog.READONLY, command, false);
                 }
                 props.setModified(false);
+                command.clear();
             }
         }
     }
@@ -260,8 +286,8 @@ public class SVNXMLAdminArea extends SVNAdminArea {
     }
 
     public void saveVersionedProperties(ISVNLog log, boolean close) throws SVNException {
-        saveProperties();
-        saveBaseProperties();
+        saveProperties(log);
+        saveBaseProperties(log);
         if (close) {
             myBaseProperties = null;
             myProperties = null;
@@ -601,31 +627,51 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         }
         return false;
     }
+    
+    public void createChildDirectory(String name, String url, String reposURL, long revision) throws SVNException {
+        File dir = new File(getRoot(), name);
+        createVersionedDirectory(dir, false);
+        SVNAdminArea childArea = new SVNXMLAdminArea(dir);
+        SVNEntry2 rootEntry = childArea.getEntry(childArea.getThisDirName(), true);
+        if (rootEntry == null) {
+            rootEntry = childArea.addEntry(childArea.getThisDirName());
+        }
+        if (url != null) {
+            rootEntry.setURL(url);
+        }
+        rootEntry.setRepositoryRoot(reposURL);
+        rootEntry.setRevision(revision);
+        rootEntry.setKind(SVNNodeKind.DIR);
+        childArea.saveEntries(true);
+    }
 
-    public SVNAdminArea createVersionedDirectory() throws SVNException {
-        File dir = getRoot();
+    public SVNAdminArea createVersionedDirectory(File dir, boolean createMyself) throws SVNException {
+        dir = createMyself ? getRoot() : dir;
         dir.mkdirs();
-        File adminDir = getAdminDirectory();
+        File adminDir = createMyself ? getAdminDirectory() : new File(dir, SVNFileUtil.getAdminDirectoryName());
         adminDir.mkdir();
         SVNFileUtil.setHidden(adminDir, true);
         // lock dir.
-        SVNFileUtil.createEmptyFile(myLockFile);
+        File lockFile = createMyself ? myLockFile : new File(adminDir, "lock");
+        SVNFileUtil.createEmptyFile(lockFile);
         SVNAdminUtil.createReadmeFile(adminDir);
-        SVNFileUtil.createEmptyFile(getAdminFile("empty-file"));
+        SVNFileUtil.createEmptyFile(createMyself ? getAdminFile("empty-file") : new File(adminDir, "empty-file"));
         File[] tmp = {
-                getAdminFile("tmp"),
-                getAdminFile("tmp" + File.separatorChar + "props"),
-                getAdminFile("tmp" + File.separatorChar + "prop-base"),
-                getAdminFile("tmp" + File.separatorChar + "text-base"),
-                getAdminFile("tmp" + File.separatorChar + "wcprops"),
-                getAdminFile("props"), getAdminFile("prop-base"),
-                getAdminFile("text-base"), getAdminFile("wcprops") };
+                createMyself ? getAdminFile("tmp") : new File(adminDir, "tmp"),
+                createMyself ? getAdminFile("tmp" + File.separatorChar + "props") : new File(adminDir, "tmp" + File.separatorChar + "props"),
+                createMyself ? getAdminFile("tmp" + File.separatorChar + "prop-base") : new File(adminDir, "tmp" + File.separatorChar + "prop-base"),
+                createMyself ? getAdminFile("tmp" + File.separatorChar + "text-base") : new File(adminDir, "tmp" + File.separatorChar + "text-base"),
+                createMyself ? getAdminFile("tmp" + File.separatorChar + "wcprops") : new File(adminDir, "tmp" + File.separatorChar + "wcprops"),
+                createMyself ? getAdminFile("props") : new File(adminDir, "props"), 
+                createMyself ? getAdminFile("prop-base") : new File(adminDir, "prop-base"),
+                createMyself ? getAdminFile("text-base") : new File(adminDir, "text-base"), 
+                createMyself ? getAdminFile("wcprops") : new File(adminDir, "wcprops")};
         for (int i = 0; i < tmp.length; i++) {
             tmp[i].mkdir();
         }
         SVNAdminUtil.createFormatFile(adminDir);
         // unlock dir.
-        SVNFileUtil.deleteFile(myLockFile);
+        SVNFileUtil.deleteFile(lockFile);
         return this;
     }
 

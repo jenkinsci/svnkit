@@ -231,9 +231,9 @@ public class SVNReporter implements ISVNReporterBaton {
             dst.setLastModified(tstamp);
             entry.setTextTime(SVNTimeUtil.formatDate(new Date(tstamp)));
         }
-	    if (needsLock) {
-	        SVNFileUtil.setReadonly(dst, entry.getLockToken() == null);
-	    }
+        if (needsLock) {
+            SVNFileUtil.setReadonly(dst, entry.getLockToken() == null);
+        }
         dir.getEntries().save(false);
 
         myWCAccess.handleEvent(SVNEventFactory.createRestoredEvent(myWCAccess, dir, entry));

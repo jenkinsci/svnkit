@@ -217,6 +217,10 @@ public class SVNRevision {
         return !r.isValid();
     }
     
+    public static boolean isValidRevisionNumber(long revision) {
+        return revision >= 0;
+    }
+    
     /**
      * Creates an <b>SVNRevision</b> object given a revision number.
      * 

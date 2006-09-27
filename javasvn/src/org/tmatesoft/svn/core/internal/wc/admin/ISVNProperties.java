@@ -136,8 +136,9 @@ public abstract class ISVNProperties {
         return compareTo(props).isEmpty();
     }
     
-    protected Map asMap() throws SVNException {
-        return loadProperties();
+    public Map asMap() throws SVNException {
+        Map props = loadProperties() != null ? new HashMap(loadProperties()) : new HashMap();
+        return props;
     }
     
     protected void put(Map props) throws SVNException {

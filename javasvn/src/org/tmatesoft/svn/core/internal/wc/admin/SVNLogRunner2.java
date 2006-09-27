@@ -231,8 +231,8 @@ public class SVNLogRunner2 {
                 if (executable) {
                     SVNFileUtil.setExecutable(dst, true);
                 }
-                SVNEntry2 entry = adminArea.getEntry(dstName, true);
-                if (entry.getLockToken() == null && props.getPropertyValue(SVNProperty.NEEDS_LOCK) != null) {
+                SVNEntry2 entry = adminArea.getEntry(dstName, false);
+                if (entry != null && entry.getLockToken() == null && props.getPropertyValue(SVNProperty.NEEDS_LOCK) != null) {
                     SVNFileUtil.setReadonly(dst, true);
                 }
             } catch (SVNException svne) {
