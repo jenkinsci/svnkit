@@ -19,6 +19,7 @@ import java.util.TreeSet;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
@@ -62,7 +63,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
                     SVNErrorManager.error(err);
                 } else if (version < factory.getSupportedVersion()) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, 
-                            "Working copy format of {0} is too old ({1}); please check out your working copy again", 
+                            "Working copy format of {0} is too old ({1,number,integer}); please check out your working copy again", 
                             new Object[] {path, new Integer(version)});
                     SVNErrorManager.error(err);
                 } 
@@ -139,9 +140,58 @@ public abstract class SVNAdminAreaFactory implements Comparable {
         SVNErrorManager.error(error);
         return -1;
     }
-    
-    protected String getAdminDirectoryName() {
-        return SVNFileUtil.getAdminDirectoryName();
+
+    public static void createVersionedDirectory(File path, String url, String rootURL, String uuid, long revNumber) throws SVNException {
+        if (!ourFactories.isEmpty()) {
+            if (!checkAdminAreaExists(path, url, revNumber)) {
+                SVNAdminAreaFactory newestFactory = (SVNAdminAreaFactory) ourFactories.iterator().next();
+                newestFactory.doCreateVersionedDirectory(path, url, rootURL, uuid, revNumber);
+            }
+        }
+    }
+
+    public static void createVersionedDirectory(File path, SVNURL url, SVNURL rootURL, String uuid, long revNumber) throws SVNException {
+        createVersionedDirectory(path, url != null ? url.toString() : null, rootURL != null ? rootURL.toString() : null, uuid, revNumber);
+    }
+        
+    private static boolean checkAdminAreaExists(File dir, String url, long revision) throws SVNException {
+        File adminDir = new File(dir, SVNFileUtil.getAdminDirectoryName());
+        if (adminDir.exists() && !adminDir.isDirectory()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "''{0}'' is not a directory", dir);
+            SVNErrorManager.error(err);
+        } else if (!adminDir.exists()) {
+            return false;
+        } 
+        
+        boolean wcExists = false;
+        try {
+            readFormatVersion(adminDir);
+            wcExists = true;
+        } catch (SVNException svne) {
+            //
+        }
+        
+        if (wcExists) {
+            SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(null);
+            SVNAdminArea adminArea = wcAccess.open(dir, false, 0);
+            SVNEntry2 entry = adminArea.getEntry(adminArea.getThisDirName(), false);
+            wcAccess.closeAdminArea(dir);
+            if (entry == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "No entry for ''{0}''", dir);
+                SVNErrorManager.error(err);
+            }
+            if (!entry.isScheduledForDeletion()) {
+                if (entry.getRevision() != revision) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Revision {0,number,integer} doesn''t match existing revision {1,number,integer} in ''{2}''", new Object[]{new Long(revision), new Long(entry.getRevision()), dir});
+                    SVNErrorManager.error(err);
+                }
+                if (!url.equals(entry.getURL())) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "URL ''{0}'' doesn''t match existing URL ''{1}'' in ''{2}''", new Object[]{url, entry.getURL(), dir});
+                    SVNErrorManager.error(err);
+                }
+            }
+        }
+        return wcExists;
     }
 
     protected abstract int getSupportedVersion();
@@ -152,6 +202,8 @@ public abstract class SVNAdminAreaFactory implements Comparable {
 
     protected abstract SVNAdminArea doUpgrade(SVNAdminArea area) throws SVNException;
 
+    protected abstract void doCreateVersionedDirectory(File path, String url, String rootURL, String uuid, long revNumber) throws SVNException;
+    
     protected abstract int doCheckWC(File path) throws SVNException;
 
     protected static void registerFactory(SVNAdminAreaFactory factory) {

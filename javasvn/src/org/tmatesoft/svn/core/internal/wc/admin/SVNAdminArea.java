@@ -48,9 +48,6 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
 public abstract class SVNAdminArea {
     public static SVNAdminArea MISSING = new SVNAdminArea(null) {
 
-        public void createChildDirectory(String name, String url, String reposURL, long revision) throws SVNException {
-        }
-
         public void postUpgradeFormat(int format) throws SVNException {
         }
 
@@ -75,7 +72,7 @@ public abstract class SVNAdminArea {
         public void saveEntries(boolean close) throws SVNException {
         }
 
-        public SVNAdminArea createVersionedDirectory(File dir, boolean createMyself) throws SVNException {
+        public SVNAdminArea createVersionedDirectory(File dir, String url, String rootURL, String uuid, long revNumber, boolean createMyself) throws SVNException {
             return this;
         }
 
@@ -170,10 +167,8 @@ public abstract class SVNAdminArea {
 
     public abstract boolean hasProperties(String entryName) throws SVNException;
 
-    public abstract SVNAdminArea createVersionedDirectory(File dir, boolean createMyself) throws SVNException;
+    public abstract SVNAdminArea createVersionedDirectory(File dir, String url, String rootURL, String uuid, long revNumber, boolean createMyself) throws SVNException;
     
-    public abstract void createChildDirectory(String name, String url, String reposURL, long revision) throws SVNException;
-
     public abstract boolean hasTextModifications(String name, boolean forceComparison) throws SVNException;
 
     public abstract SVNAdminArea upgradeFormat(SVNAdminArea adminArea) throws SVNException;

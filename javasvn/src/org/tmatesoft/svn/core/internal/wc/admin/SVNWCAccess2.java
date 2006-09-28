@@ -115,7 +115,7 @@ public class SVNWCAccess2 implements ISVNEventHandler {
                     throw svne;
                 }
                 parentError = svne;
-            } else {
+            } else if (svne.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_DIRECTORY) {
                 throw svne;
             }
         }

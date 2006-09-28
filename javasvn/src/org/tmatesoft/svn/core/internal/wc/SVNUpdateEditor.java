@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNLog;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
@@ -221,7 +222,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         entry.setDeleted(false);
         parentArea.saveEntries(true);
 
-        parentArea.createChildDirectory(name, myCurrentDirectory.URL, null, myTargetRevision);
+        SVNAdminAreaFactory.createVersionedDirectory(childDir, myCurrentDirectory.URL, null, null, myTargetRevision);
         myWCAccess.open(childDir, true, 0);
         myWCAccess.handleEvent(SVNEventFactory.createUpdateAddEvent(myAdminInfo, parentArea, SVNNodeKind.DIR, entry));
     }
@@ -425,7 +426,8 @@ public class SVNUpdateEditor implements ISVNEditor {
             modifiedProps.containsKey(SVNProperty.SPECIAL);
         }
         
-        Map oldBaseProps = adminArea.getBaseProperties(name).asMap();
+        ISVNProperties baseProps = adminArea.getBaseProperties(name);
+        Map oldBaseProps = baseProps != null ? baseProps.asMap() : null;
         SVNStatusType propStatus = adminArea.mergeProperties(name, oldBaseProps, modifiedProps, true, false, log);
         if (modifiedEntryProps != null) {
             lockStatus = log.logChangedEntryProperties(name, modifiedEntryProps);
@@ -611,20 +613,23 @@ public class SVNUpdateEditor implements ISVNEditor {
 
     private void cleanupUpdate() throws SVNException {
         SVNAdminArea adminArea = myAdminInfo.getAnchor();
-        SVNEntry2 entry = adminArea.getEntry(myTarget, true);
+        String targetName = myTarget != null ? myTarget : adminArea.getThisDirName();
+        SVNEntry2 entry = adminArea.getEntry(targetName, true);
         if (entry == null) {
             return;
         }
         
+        
         if (entry.isFile() || (entry.isDirectory() && (entry.isAbsent() || entry.isDeleted()))) {
-            if (adminArea.tweakEntry(myTarget, mySwitchURL, myRootURL, myTargetRevision, false)) {
+            if (adminArea.tweakEntry(targetName, mySwitchURL, myRootURL, myTargetRevision, false)) {
                 adminArea.saveEntries(false);
             }
         } else if (entry.isDirectory()) {
-            SVNAdminArea targetArea = myWCAccess.retrieve(adminArea.getFile(myTarget));
+            SVNAdminArea targetArea = targetName.equals(adminArea.getThisDirName()) ? adminArea : myWCAccess.retrieve(adminArea.getFile(targetName));
             bumpDirectory(targetArea, mySwitchURL, myRootURL);
         } else {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "Unrecognized node kind: ''{0}''", adminArea.getFile(myTarget));
+            File target = targetName.equals(adminArea.getThisDirName()) ? adminArea.getRoot() : adminArea.getFile(targetName);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "Unrecognized node kind: ''{0}''", target);
             SVNErrorManager.error(err);
         }
     }

@@ -628,24 +628,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         return false;
     }
     
-    public void createChildDirectory(String name, String url, String reposURL, long revision) throws SVNException {
-        File dir = new File(getRoot(), name);
-        createVersionedDirectory(dir, false);
-        SVNAdminArea childArea = new SVNXMLAdminArea(dir);
-        SVNEntry2 rootEntry = childArea.getEntry(childArea.getThisDirName(), true);
-        if (rootEntry == null) {
-            rootEntry = childArea.addEntry(childArea.getThisDirName());
-        }
-        if (url != null) {
-            rootEntry.setURL(url);
-        }
-        rootEntry.setRepositoryRoot(reposURL);
-        rootEntry.setRevision(revision);
-        rootEntry.setKind(SVNNodeKind.DIR);
-        childArea.saveEntries(true);
-    }
-
-    public SVNAdminArea createVersionedDirectory(File dir, boolean createMyself) throws SVNException {
+    public SVNAdminArea createVersionedDirectory(File dir, String url, String rootURL, String uuid, long revNumber, boolean createMyself) throws SVNException {
         dir = createMyself ? getRoot() : dir;
         dir.mkdirs();
         File adminDir = createMyself ? getAdminDirectory() : new File(dir, SVNFileUtil.getAdminDirectoryName());
@@ -670,9 +653,26 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             tmp[i].mkdir();
         }
         SVNAdminUtil.createFormatFile(adminDir);
+
+        SVNAdminArea adminArea = createMyself ? this : new SVNXMLAdminArea(dir);
+        SVNEntry2 rootEntry = adminArea.getEntry(adminArea.getThisDirName(), true);
+        if (rootEntry == null) {
+            rootEntry = adminArea.addEntry(adminArea.getThisDirName());
+        }
+        if (url != null) {
+            rootEntry.setURL(url);
+        }
+        rootEntry.setRepositoryRoot(rootURL);
+        rootEntry.setRevision(revNumber);
+        rootEntry.setKind(SVNNodeKind.DIR);
+        if (uuid != null) {
+            rootEntry.setUUID(uuid);
+        }
+        adminArea.saveEntries(true);
+        
         // unlock dir.
         SVNFileUtil.deleteFile(lockFile);
-        return this;
+        return adminArea;
     }
 
     public boolean isLocked() {

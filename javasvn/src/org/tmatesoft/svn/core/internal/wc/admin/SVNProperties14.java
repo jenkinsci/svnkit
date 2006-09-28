@@ -30,6 +30,9 @@ public abstract class SVNProperties14 extends ISVNProperties {
 
     public boolean containsProperty(String name) throws SVNException {
         SVNEntry2 entry = myAdminArea.getEntry(myEntryName, true);
+        if (entry == null) {
+            return false;
+        }
         String[] cachableProps = entry.getCachableProperties(); 
         if (cachableProps != null && getIndex(cachableProps, name) >= 0) {
             String[] presentProps = entry.getPresentProperties();
@@ -47,6 +50,9 @@ public abstract class SVNProperties14 extends ISVNProperties {
 
     public String getPropertyValue(String name) throws SVNException {
         SVNEntry2 entry = myAdminArea.getEntry(myEntryName, true);
+        if (entry == null) {
+            return null;
+        }
         String[] cachableProps = entry.getCachableProperties(); 
         if (cachableProps != null && getIndex(cachableProps, name) >= 0) {
             String[] presentProps = entry.getPresentProperties();

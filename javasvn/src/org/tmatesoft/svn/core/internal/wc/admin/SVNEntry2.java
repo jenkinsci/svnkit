@@ -95,7 +95,7 @@ public class SVNEntry2 implements Comparable {
         if (revStr == null && !myAdminArea.getThisDirName().equals(myName)) {
             SVNEntry2 rootEntry = null;
             try {
-                myAdminArea.getEntry(myAdminArea.getThisDirName(), true);
+                rootEntry = myAdminArea.getEntry(myAdminArea.getThisDirName(), true);
             } catch (SVNException svne) {
                 return -1;
             }

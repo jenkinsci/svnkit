@@ -45,7 +45,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNLog;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 
 public class SVNAdminArea14 extends SVNAdminArea {
-    private static final String[] ourCachableProperties = new String[] {
+    public static final String[] ourCachableProperties = new String[] {
         SVNProperty.SPECIAL,
         SVNProperty.EXTERNALS, 
         SVNProperty.NEEDS_LOCK
@@ -131,11 +131,6 @@ public class SVNAdminArea14 extends SVNAdminArea {
     }
     
     public ISVNProperties getBaseProperties(String name) throws SVNException {
-        SVNEntry2 entry = getEntry(name, true);
-        if (entry == null) {
-            return null;
-        }
-
         Map basePropsCache = getBasePropertiesStorage(true);
         ISVNProperties props = (ISVNProperties)basePropsCache.get(name); 
         if (props != null) {
@@ -156,11 +151,6 @@ public class SVNAdminArea14 extends SVNAdminArea {
     }
 
     public ISVNProperties getProperties(String name) throws SVNException {
-        SVNEntry2 entry = getEntry(name, true);
-        if (entry == null) {
-            return null;
-        }
-
         Map propsCache = getPropertiesStorage(true);
         ISVNProperties props = (ISVNProperties)propsCache.get(name); 
         if (props != null) {
@@ -193,7 +183,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         if (entry == null) {
             return null;
         } 
-
+        
         Map wcPropsCache = getWCPropertiesStorage(true);
         ISVNProperties props = (ISVNProperties)wcPropsCache.get(entryName); 
         if (props != null) {
@@ -1285,72 +1275,8 @@ public class SVNAdminArea14 extends SVNAdminArea {
             SVNFileUtil.closeFile(os);
         }
     }
-
-    public void createChildDirectory(String name, String url, String reposURL, long revision) throws SVNException {
-        File childDir = getFile(name);
-        if (!checkAdminAreaExists(childDir, url, revision)) {
-            SVNAdminArea childArea = createVersionedDirectory(childDir, false);
-            SVNEntry2 rootEntry = childArea.getEntry(childArea.getThisDirName(), true);
-            if (rootEntry == null) {
-                rootEntry = childArea.addEntry(childArea.getThisDirName());
-            }
-            rootEntry.setURL(url);
-            rootEntry.setRepositoryRoot(reposURL);
-            rootEntry.setRevision(revision);
-            rootEntry.setKind(SVNNodeKind.DIR);
-            if (revision > 0) {
-                rootEntry.setIncomplete(true);
-            }
-            rootEntry.setCachableProperties(ourCachableProperties);
-            try {
-                childArea.saveEntries(true);
-            } catch (SVNException svne) {
-                SVNErrorMessage err = svne.getErrorMessage().wrap("Error writing entries file for ''{0}''", childDir);
-                SVNErrorManager.error(err, svne);
-            }
-        }
-    }
     
-    private boolean checkAdminAreaExists(File dir, String url, long revision) throws SVNException {
-        File adminDir = new File(dir, SVNFileUtil.getAdminDirectoryName());
-        if (adminDir.exists() && !adminDir.isDirectory()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "''{0}'' is not a directory", dir);
-            SVNErrorManager.error(err);
-        } else if (!adminDir.exists()) {
-            return false;
-        } 
-        
-        boolean wcExists = false;
-        try {
-            SVNAdminAreaFactory.readFormatVersion(adminDir);
-            wcExists = true;
-        } catch (SVNException svne) {
-            //
-        }
-        
-        if (wcExists) {
-            SVNAdminArea adminArea = getWCAccess().open(dir, false, 0);
-            SVNEntry2 entry = adminArea.getEntry(adminArea.getThisDirName(), false);
-            getWCAccess().closeAdminArea(dir);
-            if (entry == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "No entry for ''{0}''", dir);
-                SVNErrorManager.error(err);
-            }
-            if (!entry.isScheduledForDeletion()) {
-                if (entry.getRevision() != revision) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Revision {0,number,integer} doesn''t match existing revision {1,number,integer} in ''{2}''", new Object[]{new Long(revision), new Long(entry.getRevision()), dir});
-                    SVNErrorManager.error(err);
-                }
-                if (!url.equals(entry.getURL())) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "URL ''{0}'' doesn''t match existing URL ''{1}'' in ''{2}''", new Object[]{url, entry.getURL(), dir});
-                    SVNErrorManager.error(err);
-                }
-            }
-        }
-        return wcExists;
-    }
-    
-    public SVNAdminArea createVersionedDirectory(File dir, boolean createMyself) throws SVNException {
+    public SVNAdminArea createVersionedDirectory(File dir, String url, String rootURL, String uuid, long revNumber, boolean createMyself) throws SVNException {
         dir = createMyself ? getRoot() : dir;
         dir.mkdirs();
         File adminDir = createMyself ? getAdminDirectory() : new File(dir, SVNFileUtil.getAdminDirectoryName());
@@ -1375,9 +1301,35 @@ public class SVNAdminArea14 extends SVNAdminArea {
         }
         // for backward compatibility 
         createFormatFile(createMyself ? null : new File(adminDir, "format"), createMyself);
+
+        SVNAdminArea adminArea = createMyself ? this : new SVNAdminArea14(dir);
+        SVNEntry2 rootEntry = adminArea.getEntry(adminArea.getThisDirName(), true);
+        if (rootEntry == null) {
+            rootEntry = adminArea.addEntry(adminArea.getThisDirName());
+        }
+        if (url != null) {
+            rootEntry.setURL(url);
+        }
+        rootEntry.setRepositoryRoot(rootURL);
+        rootEntry.setRevision(revNumber);
+        rootEntry.setKind(SVNNodeKind.DIR);
+        if (uuid != null) {
+            rootEntry.setUUID(uuid);
+        }
+        if (revNumber > 0) {
+            rootEntry.setIncomplete(true);
+        }
+        rootEntry.setCachableProperties(ourCachableProperties);
+        try {
+            adminArea.saveEntries(true);
+        } catch (SVNException svne) {
+            SVNErrorMessage err = svne.getErrorMessage().wrap("Error writing entries file for ''{0}''", dir);
+            SVNErrorManager.error(err, svne);
+        }
+        
         // unlock dir.
         SVNFileUtil.deleteFile(lockFile);
-        return createMyself ? this : new SVNAdminArea14(dir);
+        return adminArea;
     }
 
     public SVNAdminArea upgradeFormat(SVNAdminArea adminArea) throws SVNException {
@@ -1576,7 +1528,6 @@ public class SVNAdminArea14 extends SVNAdminArea {
             if ("log".equals(log.getName()) || log.getName().startsWith("log.")) {
                 return false;
             }
-
         }
         boolean deleted = myLockFile.delete();
         if (!deleted) {

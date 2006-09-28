@@ -19,6 +19,7 @@ import java.io.InputStreamReader;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -30,6 +31,11 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
  */
 public class SVNXMLAdminAreaFactory extends SVNAdminAreaFactory {
     private static final int WC_FORMAT = 4;
+
+    protected void doCreateVersionedDirectory(File path, String url, String rootURL, String uuid, long revNumber) throws SVNException {
+        SVNXMLAdminArea adminArea = new SVNXMLAdminArea(path);
+        adminArea.createVersionedDirectory(path, url, rootURL, uuid, revNumber, true);
+    }
 
     protected SVNAdminArea doOpen(File path, int version) throws SVNException {
         if (version != WC_FORMAT) {
