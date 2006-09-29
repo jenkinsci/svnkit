@@ -73,11 +73,8 @@ public abstract class ISVNProperties {
     protected abstract ISVNProperties wrap(Map properties);
     
     public ISVNProperties compareTo(ISVNProperties properties) throws SVNException {
-        Map thisProps = loadProperties();
         Map result = new HashMap();
-        if (!isEmpty()) {
-            result.putAll(thisProps);
-        } else {
+        if (isEmpty()) {
             result.putAll(properties.asMap());
             return wrap(result);
         }
