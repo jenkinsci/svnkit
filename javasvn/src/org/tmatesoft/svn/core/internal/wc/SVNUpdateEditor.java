@@ -619,7 +619,6 @@ public class SVNUpdateEditor implements ISVNEditor {
             return;
         }
         
-        
         if (entry.isFile() || (entry.isDirectory() && (entry.isAbsent() || entry.isDeleted()))) {
             if (adminArea.tweakEntry(targetName, mySwitchURL, myRootURL, myTargetRevision, false)) {
                 adminArea.saveEntries(false);

@@ -1049,14 +1049,16 @@ public class SVNAdminArea14 extends SVNAdminArea {
         }
         
         String hasProps = (String)entry.get(SVNProperty.HAS_PROPS);
-        if (writeValue(writer, hasProps != null && SVNProperty.booleanValue(hasProps) ? SVNProperty.HAS_PROPS : null, emptyFields)) {
+        if (SVNProperty.booleanValue(hasProps)) {
+            writeValue(writer, SVNProperty.HAS_PROPS, emptyFields);
             emptyFields = 0;
         } else {
             ++emptyFields;
         }
 
         String hasPropMods = (String)entry.get(SVNProperty.HAS_PROP_MODS);
-        if (writeValue(writer, hasPropMods != null && SVNProperty.booleanValue(hasPropMods)? SVNProperty.HAS_PROP_MODS : null, emptyFields)) {
+        if (SVNProperty.booleanValue(hasPropMods)) {
+            writeValue(writer, SVNProperty.HAS_PROP_MODS, emptyFields);
             emptyFields = 0;
         } else {
             ++emptyFields;
@@ -1111,7 +1113,8 @@ public class SVNAdminArea14 extends SVNAdminArea {
         }
 
         String copiedAttr = (String)entry.get(SVNProperty.COPIED);
-        if (writeValue(writer, copiedAttr != null ? ATTRIBUTE_COPIED : null, emptyFields)) {
+        if (SVNProperty.booleanValue(copiedAttr)) {
+            writeValue(writer, ATTRIBUTE_COPIED, emptyFields);
             emptyFields = 0;
         } else {
             ++emptyFields;
@@ -1132,21 +1135,24 @@ public class SVNAdminArea14 extends SVNAdminArea {
         }
         
         String deletedAttr = (String)entry.get(SVNProperty.DELETED);
-        if (writeValue(writer, deletedAttr != null ? ATTRIBUTE_DELETED : null, emptyFields)) {
+        if (SVNProperty.booleanValue(deletedAttr)) {
+            writeValue(writer, ATTRIBUTE_DELETED, emptyFields);
             emptyFields = 0;
         } else {
             ++emptyFields;
         }
         
         String absentAttr = (String)entry.get(SVNProperty.ABSENT);
-        if (writeValue(writer, absentAttr != null ? ATTRIBUTE_ABSENT : null, emptyFields)) {
+        if (SVNProperty.booleanValue(absentAttr)) {
+            writeValue(writer, ATTRIBUTE_ABSENT, emptyFields);
             emptyFields = 0;
         } else {
             ++emptyFields;
         }
 
         String incompleteAttr = (String)entry.get(SVNProperty.INCOMPLETE);
-        if (writeValue(writer, incompleteAttr != null ? ATTRIBUTE_INCOMPLETE : null, emptyFields)) {
+        if (SVNProperty.booleanValue(incompleteAttr)) {
+            writeValue(writer, ATTRIBUTE_INCOMPLETE, emptyFields);
             emptyFields = 0;
         } else {
             ++emptyFields;
