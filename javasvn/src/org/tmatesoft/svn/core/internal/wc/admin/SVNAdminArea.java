@@ -84,15 +84,15 @@ public abstract class SVNAdminArea {
             return false;
         }
 
-        public ISVNProperties getBaseProperties(String name) throws SVNException {
+        public SVNVersionedProperties getBaseProperties(String name) throws SVNException {
             return null;
         }
 
-        public ISVNProperties getWCProperties(String name) throws SVNException {
+        public SVNVersionedProperties getWCProperties(String name) throws SVNException {
             return null;
         }
 
-        public ISVNProperties getProperties(String name) throws SVNException {
+        public SVNVersionedProperties getProperties(String name) throws SVNException {
             return null;
         }
 
@@ -149,11 +149,11 @@ public abstract class SVNAdminArea {
 
     public abstract boolean unlock() throws SVNException;
 
-    public abstract ISVNProperties getBaseProperties(String name) throws SVNException;
+    public abstract SVNVersionedProperties getBaseProperties(String name) throws SVNException;
 
-    public abstract ISVNProperties getWCProperties(String name) throws SVNException;
+    public abstract SVNVersionedProperties getWCProperties(String name) throws SVNException;
 
-    public abstract ISVNProperties getProperties(String name) throws SVNException;
+    public abstract SVNVersionedProperties getProperties(String name) throws SVNException;
 
     public abstract void saveVersionedProperties(ISVNLog log, boolean close) throws SVNException;
 
@@ -280,7 +280,7 @@ public abstract class SVNAdminArea {
     }
     
     public void restoreFile(String name) throws SVNException {
-        ISVNProperties props = getProperties(name);
+        SVNVersionedProperties props = getProperties(name);
         SVNEntry2 entry = getEntry(name, true);
         boolean special = props.getPropertyValue(SVNProperty.SPECIAL) != null;
 
@@ -393,8 +393,8 @@ public abstract class SVNAdminArea {
 
         boolean setReadWrite = false;
         boolean setNotExecutable = false;
-        ISVNProperties baseProps = null;
-        ISVNProperties wcProps = null;
+        SVNVersionedProperties baseProps = null;
+        SVNVersionedProperties wcProps = null;
         if (entry.isDirectory() && !getThisDirName().equals(fileName)) {
             SVNAdminArea childArea = getWCAccess().retrieve(getFile(fileName));
             baseProps = childArea.getBaseProperties(childArea.getThisDirName());
@@ -413,7 +413,7 @@ public abstract class SVNAdminArea {
         // tmp may be missing when there were no prop change at all!
         if (tmpPropsType == SVNFileType.FILE) {
             if (!getThisDirName().equals(fileName)) {
-                ISVNProperties propDiff = baseProps.compareTo(wcProps);
+                SVNVersionedProperties propDiff = baseProps.compareTo(wcProps);
                 setReadWrite = propDiff != null && propDiff.containsProperty(SVNProperty.NEEDS_LOCK)
                         && propDiff.getPropertyValue(SVNProperty.NEEDS_LOCK) == null;
                 setNotExecutable = propDiff != null
@@ -559,9 +559,9 @@ public abstract class SVNAdminArea {
         serverBaseProps = serverBaseProps == null ? Collections.EMPTY_MAP : serverBaseProps;
         propDiff = propDiff == null ? Collections.EMPTY_MAP : propDiff;
         
-        ISVNProperties working = getProperties(name);
+        SVNVersionedProperties working = getProperties(name);
         Map workingProps = working.asMap();
-        ISVNProperties base = getBaseProperties(name);
+        SVNVersionedProperties base = getBaseProperties(name);
 
         Collection conflicts = new ArrayList();
         SVNStatusType result = propDiff.isEmpty() ? SVNStatusType.UNCHANGED : SVNStatusType.CHANGED;
@@ -684,7 +684,7 @@ public abstract class SVNAdminArea {
             return SVNStatusType.UNCHANGED;
         }
 
-        ISVNProperties props = getProperties(localPath);
+        SVNVersionedProperties props = getProperties(localPath);
         String mimeType = props.getPropertyValue(SVNProperty.MIME_TYPE);
         SVNStatusType status = SVNStatusType.UNCHANGED;
         if (SVNProperty.isBinaryMimeType(mimeType)) {
@@ -1233,7 +1233,7 @@ public abstract class SVNAdminArea {
             SVNErrorManager.error(err);
         }
 
-        ISVNProperties wcProps = getWCProperties(name);
+        SVNVersionedProperties wcProps = getWCProperties(name);
         if (wcProps != null && !wcProps.isEmpty()) {
             wcProps.removeAll();
             saveWCProperties(false);

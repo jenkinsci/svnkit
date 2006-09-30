@@ -16,7 +16,7 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
 
-public class SVNProperties13 extends ISVNProperties {
+public class SVNProperties13 extends SVNVersionedProperties {
 
     public SVNProperties13(Map properties) {
         super(properties);
@@ -31,6 +31,10 @@ public class SVNProperties13 extends ISVNProperties {
     }
 
     public String getPropertyValue(String name) throws SVNException {
+        String value = super.getPropertyValue(name);
+        if (value != null) {
+            return value;
+        }
         if (!isEmpty()) {
             Map props = loadProperties();
             return (String)props.get(name); 
@@ -39,13 +43,15 @@ public class SVNProperties13 extends ISVNProperties {
     }
 
     protected Map loadProperties() throws SVNException {
-        if (myProperties == null) {
-            myProperties = new HashMap();
+        Map props = getPropertiesMap();
+        if (props == null) {
+            props = new HashMap();
+            setPropertiesMap(props);
         }
-        return myProperties;
+        return props;
     }
 
-    protected ISVNProperties wrap(Map properties) {
+    protected SVNVersionedProperties wrap(Map properties) {
         return new SVNProperties13(properties);
     }
 }

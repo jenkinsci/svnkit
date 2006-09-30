@@ -96,7 +96,7 @@ public class SVNLogRunner2 {
             }
         } else if (ISVNLog.MODIFY_WC_PROPERTY.equals(name)) {
             try {
-                ISVNProperties wcprops = adminArea.getWCProperties(fileName);
+                SVNVersionedProperties wcprops = adminArea.getWCProperties(fileName);
                 if (wcprops != null) {
                     String propName = (String) attributes .get(ISVNLog.PROPERTY_NAME_ATTR);
                     String propValue = (String) attributes.get(ISVNLog.PROPERTY_VALUE_ATTR);
@@ -203,7 +203,7 @@ public class SVNLogRunner2 {
             try {
                 SVNEntry2 entry = adminArea.getEntry(fileName, false);
                 if (entry != null) {
-                    ISVNProperties props = adminArea.getProperties(fileName);
+                    SVNVersionedProperties props = adminArea.getProperties(fileName);
                     String needsLock = props.getPropertyValue(SVNProperty.NEEDS_LOCK);
                     if (entry.getLockToken() == null && needsLock != null) {
                         SVNFileUtil.setReadonly(file, true);
@@ -225,7 +225,7 @@ public class SVNLogRunner2 {
                     }
                 }
                 // get properties for this entry.
-                ISVNProperties props = adminArea.getProperties(dstName);
+                SVNVersionedProperties props = adminArea.getProperties(dstName);
                 boolean executable = SVNFileUtil.isWindows ? false : props.getPropertyValue(SVNProperty.EXECUTABLE) != null;
     
                 if (executable) {
@@ -274,7 +274,7 @@ public class SVNLogRunner2 {
                 String targetLabel = (String) attributes.get(SVNLog.ATTR5);
                 targetLabel = targetLabel == null ? ".working" : targetLabel;
     
-                ISVNProperties props = adminArea.getProperties(fileName);
+                SVNVersionedProperties props = adminArea.getProperties(fileName);
                 SVNEntry2 entry = adminArea.getEntry(fileName, true);
     
                 String leaveConglictsAttr = (String) attributes.get(SVNLog.ATTR6);

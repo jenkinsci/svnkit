@@ -26,7 +26,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNLog;
-import org.tmatesoft.svn.core.internal.wc.admin.ISVNProperties;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
@@ -282,7 +282,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         for (Iterator ents = adminArea.entries(false); ents.hasNext();) {
             SVNEntry2 entry = (SVNEntry2) ents.next();
             if (entry.isFile() || adminArea.getThisDirName().equals(entry.getName())) {
-                ISVNProperties props = adminArea.getWCProperties(entry.getName());
+                SVNVersionedProperties props = adminArea.getWCProperties(entry.getName());
                 props.setPropertyValue(SVNProperty.WC_URL, null);
             } else {
                 SVNAdminArea childArea = myAdminInfo.getWCAccess().retrieve(adminArea.getFile(entry.getName()));
@@ -303,7 +303,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             if (modifiedProps != null && !modifiedProps.isEmpty()) {
                 myAdminInfo.addExternals(adminArea, (String) modifiedProps.get(SVNProperty.EXTERNALS));
 
-                ISVNProperties oldBaseProps = adminArea.getBaseProperties(adminArea.getThisDirName());
+                SVNVersionedProperties oldBaseProps = adminArea.getBaseProperties(adminArea.getThisDirName());
                 try {
                     propStatus = adminArea.mergeProperties(adminArea.getThisDirName(), oldBaseProps.asMap(), modifiedProps, true, false, log);
                 } catch (SVNException svne) {
@@ -426,7 +426,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             modifiedProps.containsKey(SVNProperty.SPECIAL);
         }
         
-        ISVNProperties baseProps = adminArea.getBaseProperties(name);
+        SVNVersionedProperties baseProps = adminArea.getBaseProperties(name);
         Map oldBaseProps = baseProps != null ? baseProps.asMap() : null;
         SVNStatusType propStatus = adminArea.mergeProperties(name, oldBaseProps, modifiedProps, true, false, log);
         if (modifiedEntryProps != null) {
@@ -520,7 +520,7 @@ public class SVNUpdateEditor implements ISVNEditor {
                     // do test merge.
                     String oldEolStyle = null;
                     String oldKeywords = null;
-                    ISVNProperties props = adminArea.getProperties(myCurrentFile.Name);
+                    SVNVersionedProperties props = adminArea.getProperties(myCurrentFile.Name);
                     try {
                         if (magicPropsChanged && 
                                 (modifiedProps.containsKey(SVNProperty.EOL_STYLE) || modifiedProps.containsKey(SVNProperty.KEYWORDS))) {

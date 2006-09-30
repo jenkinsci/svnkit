@@ -55,7 +55,7 @@ public class SVNTranslator2 {
         File src = adminArea.getFile(srcPath);
         File dst = safe ? SVNFileUtil.createUniqueFile(adminArea.getRoot(), dstPath, ".tmp") : adminArea.getFile(dstPath);
         
-        ISVNProperties props = adminArea.getProperties(name);
+        SVNVersionedProperties props = adminArea.getProperties(name);
         String keywords = props.getPropertyValue(SVNProperty.KEYWORDS);
         String eolStyle = props.getPropertyValue(SVNProperty.EOL_STYLE);
         boolean special = props.getPropertyValue(SVNProperty.SPECIAL) != null;

@@ -17,7 +17,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 
 
-public abstract class SVNProperties14 extends ISVNProperties {
+public abstract class SVNProperties14 extends SVNVersionedProperties {
 
     private SVNAdminArea14 myAdminArea;
     private String myEntryName;
@@ -29,6 +29,11 @@ public abstract class SVNProperties14 extends ISVNProperties {
     }
 
     public boolean containsProperty(String name) throws SVNException {
+        Map propsMap = getPropertiesMap();
+        if (propsMap != null && propsMap.containsKey(name)) {
+            return true;
+        }
+
         SVNEntry2 entry = myAdminArea.getEntry(myEntryName, true);
         if (entry == null) {
             return false;
@@ -49,6 +54,11 @@ public abstract class SVNProperties14 extends ISVNProperties {
     }
 
     public String getPropertyValue(String name) throws SVNException {
+        String value = super.getPropertyValue(name);
+        if (value != null) {
+            return value;
+        }
+
         SVNEntry2 entry = myAdminArea.getEntry(myEntryName, true);
         if (entry != null) {
             String[] cachableProps = entry.getCachableProperties(); 
@@ -87,7 +97,7 @@ public abstract class SVNProperties14 extends ISVNProperties {
         return -1;
     }
 
-    protected ISVNProperties wrap(Map properties) {
+    protected SVNVersionedProperties wrap(Map properties) {
         return new SVNProperties13(properties);
     }
 

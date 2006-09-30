@@ -75,7 +75,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         Map command = new HashMap();
         for(Iterator entries = propsCache.keySet().iterator(); entries.hasNext();) {
             String name = (String)entries.next();
-            ISVNProperties props = (ISVNProperties)propsCache.get(name);
+            SVNVersionedProperties props = (SVNVersionedProperties)propsCache.get(name);
             if (props.isModified()) {
                 String dstPath = getThisDirName().equals(name) ? "dir-props" : "props/" + name + ".svn-work";
                 dstPath = getAdminDirectory().getName() + "/" + dstPath;
@@ -112,7 +112,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         Map command = new HashMap();
         for(Iterator entries = basePropsCache.keySet().iterator(); entries.hasNext();) {
             String name = (String)entries.next();
-            ISVNProperties props = (ISVNProperties)basePropsCache.get(name);
+            SVNVersionedProperties props = (SVNVersionedProperties)basePropsCache.get(name);
             if (props.isModified()) {
                 String dstPath = getThisDirName().equals(name) ? "dir-prop-base" : "prop-base/" + name + ".svn-base";
                 dstPath = getAdminDirectory().getName() + "/" + dstPath;
@@ -148,7 +148,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         
         for(Iterator entries = wcPropsCache.keySet().iterator(); entries.hasNext();) {
             String name = (String)entries.next();
-            ISVNProperties props = (ISVNProperties)wcPropsCache.get(name);
+            SVNVersionedProperties props = (SVNVersionedProperties)wcPropsCache.get(name);
             if (props.isModified()) {
                 String dstPath = getThisDirName().equals(name) ? "dir-wcprops" : "wcprops/" + name + ".svn-work";
                 File dstFile = getAdminFile(dstPath);
@@ -168,9 +168,9 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         }
     }
     
-    public ISVNProperties getBaseProperties(String name) throws SVNException {
+    public SVNVersionedProperties getBaseProperties(String name) throws SVNException {
         Map basePropsCache = getBasePropertiesStorage(true);
-        ISVNProperties props = (ISVNProperties)basePropsCache.get(name); 
+        SVNVersionedProperties props = (SVNVersionedProperties)basePropsCache.get(name); 
         if (props != null) {
             return props;
         }
@@ -188,9 +188,9 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         return props;
     }
 
-    public ISVNProperties getProperties(String name) throws SVNException {
+    public SVNVersionedProperties getProperties(String name) throws SVNException {
         Map propsCache = getPropertiesStorage(true);
-        ISVNProperties props = (ISVNProperties)propsCache.get(name); 
+        SVNVersionedProperties props = (SVNVersionedProperties)propsCache.get(name); 
         if (props != null) {
             return props;
         }
@@ -208,9 +208,9 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         return props;
     }
 
-    public ISVNProperties getWCProperties(String name) throws SVNException {
+    public SVNVersionedProperties getWCProperties(String name) throws SVNException {
         Map wcPropsCache = getWCPropertiesStorage(true);
-        ISVNProperties props = (ISVNProperties)wcPropsCache.get(name); 
+        SVNVersionedProperties props = (SVNVersionedProperties)wcPropsCache.get(name); 
         if (props != null) {
             return props;
         }
@@ -464,8 +464,8 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                 return false;
             }
         }
-        ISVNProperties m1 = getProperties(name);
-        ISVNProperties m2 = getBaseProperties(name);
+        SVNVersionedProperties m1 = getProperties(name);
+        SVNVersionedProperties m2 = getBaseProperties(name);
         if (m1.equals(m2)) {
             if (isLocked()) {
                 entry.setPropTime(fullRealTimestamp);

@@ -84,7 +84,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
 
         for(Iterator entries = wcPropsCache.keySet().iterator(); entries.hasNext();) {
             String name = (String)entries.next();
-            ISVNProperties props = (ISVNProperties)wcPropsCache.get(name);
+            SVNVersionedProperties props = (SVNVersionedProperties)wcPropsCache.get(name);
             if (!props.isEmpty()) {
                 hasAnyProps = true;
                 break;
@@ -95,7 +95,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
             OutputStream target = null;
             try {
                 target = SVNFileUtil.openFileForWriting(tmpFile);
-                ISVNProperties props = (ISVNProperties)wcPropsCache.get(getThisDirName());
+                SVNVersionedProperties props = (SVNVersionedProperties)wcPropsCache.get(getThisDirName());
                 if (props != null && !props.isEmpty()) {
                     SVNProperties.setProperties(props.asMap(), target, SVNProperties.SVN_HASH_TERMINATOR);
                 } else {
@@ -107,7 +107,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
                     if (getThisDirName().equals(name)) {
                         continue;
                     }
-                    props = (ISVNProperties)wcPropsCache.get(name);
+                    props = (SVNVersionedProperties)wcPropsCache.get(name);
                     if (!props.isEmpty()) {
                         target.write(name.getBytes("UTF-8"));
                         target.write('\n');
@@ -130,9 +130,9 @@ public class SVNAdminArea14 extends SVNAdminArea {
         }
     }
     
-    public ISVNProperties getBaseProperties(String name) throws SVNException {
+    public SVNVersionedProperties getBaseProperties(String name) throws SVNException {
         Map basePropsCache = getBasePropertiesStorage(true);
-        ISVNProperties props = (ISVNProperties)basePropsCache.get(name); 
+        SVNVersionedProperties props = (SVNVersionedProperties)basePropsCache.get(name); 
         if (props != null) {
             return props;
         }
@@ -150,9 +150,9 @@ public class SVNAdminArea14 extends SVNAdminArea {
         return props;
     }
 
-    public ISVNProperties getProperties(String name) throws SVNException {
+    public SVNVersionedProperties getProperties(String name) throws SVNException {
         Map propsCache = getPropertiesStorage(true);
-        ISVNProperties props = (ISVNProperties)propsCache.get(name); 
+        SVNVersionedProperties props = (SVNVersionedProperties)propsCache.get(name); 
         if (props != null) {
             return props;
         }
@@ -161,16 +161,18 @@ public class SVNAdminArea14 extends SVNAdminArea {
         props =  new SVNProperties14(null, this, name){
 
             protected Map loadProperties() throws SVNException {
-                if (myProperties == null) {
+                Map props = getPropertiesMap();
+                if (props == null) {
                     try {
-                        myProperties = readProperties(entryName);
+                        props = readProperties(entryName);
                     } catch (SVNException svne) {
                         SVNErrorMessage err = svne.getErrorMessage().wrap("Failed to load properties from disk");
                         SVNErrorManager.error(err);
                     }
-                    myProperties = myProperties != null ? myProperties : new HashMap();
+                    props = props != null ? props : new HashMap();
+                    setPropertiesMap(props);
                 }
-                return myProperties;
+                return props;
             }
         };
 
@@ -178,14 +180,14 @@ public class SVNAdminArea14 extends SVNAdminArea {
         return props;
     }
 
-    public ISVNProperties getWCProperties(String entryName) throws SVNException {
+    public SVNVersionedProperties getWCProperties(String entryName) throws SVNException {
         SVNEntry2 entry = getEntry(entryName, false);
         if (entry == null) {
             return null;
         } 
         
         Map wcPropsCache = getWCPropertiesStorage(true);
-        ISVNProperties props = (ISVNProperties)wcPropsCache.get(entryName); 
+        SVNVersionedProperties props = (SVNVersionedProperties)wcPropsCache.get(entryName); 
         if (props != null) {
             return props;
         }
@@ -194,7 +196,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
             wcPropsCache = readAllWCProperties();
         }
 
-        props = (ISVNProperties)wcPropsCache.get(entryName); 
+        props = (SVNVersionedProperties)wcPropsCache.get(entryName); 
         if (props == null) {
             props = new SVNProperties13(new HashMap());
             wcPropsCache.put(entryName, props);
@@ -214,7 +216,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         try {
             wcpropsFile = new FSFile(propertiesFile);
             Map wcProps = wcpropsFile.readProperties(false);
-            ISVNProperties entryWCProps = new SVNProperties13(wcProps); 
+            SVNVersionedProperties entryWCProps = new SVNProperties13(wcProps); 
             wcPropsCache.put(getThisDirName(), entryWCProps);
             
             String name = null;
@@ -258,7 +260,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
             
         Map basePropsCache = getBasePropertiesStorage(false);
         if (basePropsCache != null ) {
-            ISVNProperties baseProps = (ISVNProperties) basePropsCache.get(name);
+            SVNVersionedProperties baseProps = (SVNVersionedProperties) basePropsCache.get(name);
             if (baseProps != null) {
                 return baseProps.asMap();
             }
@@ -276,10 +278,10 @@ public class SVNAdminArea14 extends SVNAdminArea {
         if (propsCache != null && !propsCache.isEmpty()) {
             for(Iterator entries = propsCache.keySet().iterator(); entries.hasNext();) {
                 String name = (String)entries.next();
-                ISVNProperties props = (ISVNProperties)propsCache.get(name);
+                SVNVersionedProperties props = (SVNVersionedProperties)propsCache.get(name);
                 if (props.isModified()) {
-                    ISVNProperties baseProps = getBaseProperties(name);
-                    ISVNProperties propsDiff = baseProps.compareTo(props);
+                    SVNVersionedProperties baseProps = getBaseProperties(name);
+                    SVNVersionedProperties propsDiff = baseProps.compareTo(props);
                     String[] cachableProps = SVNAdminArea14.getCachableProperties();
                     command.put(SVNProperty.CACHABLE_PROPS, asString(cachableProps, " "));
                     Map propsMap = props.loadProperties();
@@ -337,13 +339,13 @@ public class SVNAdminArea14 extends SVNAdminArea {
         if (basePropsCache != null && !basePropsCache.isEmpty()) {
             for(Iterator entries = basePropsCache.keySet().iterator(); entries.hasNext();) {
                 String name = (String)entries.next();
-                ISVNProperties baseProps = (ISVNProperties)basePropsCache.get(name);
+                SVNVersionedProperties baseProps = (SVNVersionedProperties)basePropsCache.get(name);
                 if (baseProps.isModified()) {
                     String dstPath = getThisDirName().equals(name) ? "dir-prop-base" : "prop-base/" + name + ".svn-base";
                     dstPath = getAdminDirectory().getName() + "/" + dstPath;
                     boolean isEntryProcessed = processedEntries.containsKey(name);
                     if (!isEntryProcessed) {
-                        ISVNProperties props = getProperties(name);
+                        SVNVersionedProperties props = getProperties(name);
                         
                         String[] cachableProps = SVNAdminArea14.getCachableProperties();
                         command.put(SVNProperty.CACHABLE_PROPS, asString(cachableProps, " "));
@@ -364,7 +366,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
                         }
                         
                         command.put(SVNProperty.HAS_PROPS, SVNProperty.toString(props.isEmpty()));
-                        ISVNProperties propsDiff = baseProps.compareTo(props);
+                        SVNVersionedProperties propsDiff = baseProps.compareTo(props);
                         boolean hasPropModifications = !propsDiff.isEmpty();
                         command.put(SVNProperty.HAS_PROP_MODS, SVNProperty.toString(hasPropModifications));
                         command.put(ISVNLog.NAME_ATTR, name);
@@ -1366,17 +1368,17 @@ public class SVNAdminArea14 extends SVNAdminArea {
                 continue;
             }
 
-            ISVNProperties srcBaseProps = adminArea.getBaseProperties(entry.getName());
+            SVNVersionedProperties srcBaseProps = adminArea.getBaseProperties(entry.getName());
             Map basePropsHolder = srcBaseProps.asMap();
-            ISVNProperties dstBaseProps = new SVNProperties13(basePropsHolder);
+            SVNVersionedProperties dstBaseProps = new SVNProperties13(basePropsHolder);
             basePropsCache.put(entry.getName(), dstBaseProps);
             dstBaseProps.setModified(true);
             
-            ISVNProperties srcProps = adminArea.getProperties(entry.getName());
-            ISVNProperties dstProps = new SVNProperties14(srcProps.asMap(), this, entry.getName()){
+            SVNVersionedProperties srcProps = adminArea.getProperties(entry.getName());
+            SVNVersionedProperties dstProps = new SVNProperties14(srcProps.asMap(), this, entry.getName()){
 
                 protected Map loadProperties() throws SVNException {
-                    return myProperties;
+                    return getPropertiesMap();
                 }
             };
             propsCache.put(entry.getName(), dstProps);
@@ -1387,7 +1389,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
             log.addCommand(ISVNLog.MODIFY_ENTRY, command, false);
             command.clear();
             
-            ISVNProperties wcProps = adminArea.getWCProperties(entry.getName());
+            SVNVersionedProperties wcProps = adminArea.getWCProperties(entry.getName());
             log.logChangedWCProperties(entry.getName(), wcProps.asMap());
         }
         saveVersionedProperties(log, true);

@@ -50,7 +50,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNLog;
-import org.tmatesoft.svn.core.internal.wc.admin.ISVNProperties;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
@@ -2245,7 +2245,7 @@ public class SVNWCClient extends SVNBasicClient {
                     }
                     return;
                 }
-                ISVNProperties props = anchor.getProperties(name);
+                SVNVersionedProperties props = anchor.getProperties(name);
                 if (SVNProperty.EXECUTABLE.equals(propName)) {
                     SVNFileUtil.setExecutable(wcFile, propValue != null);
                 }
@@ -2282,7 +2282,7 @@ public class SVNWCClient extends SVNBasicClient {
             anchor.runLogs();
             return;
         }
-        ISVNProperties props = anchor.getProperties(name);
+        SVNVersionedProperties props = anchor.getProperties(name);
         if ((SVNProperty.KEYWORDS.equals(propName)
                 || SVNProperty.EOL_STYLE.equals(propName)
                 || SVNProperty.MIME_TYPE.equals(propName)

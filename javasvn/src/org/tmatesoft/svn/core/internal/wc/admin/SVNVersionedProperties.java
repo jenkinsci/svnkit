@@ -19,20 +19,23 @@ import java.util.TreeSet;
 
 import org.tmatesoft.svn.core.SVNException;
 
-public abstract class ISVNProperties {
-    protected Map myProperties;
+public abstract class SVNVersionedProperties {
+    private Map myProperties;
     private boolean myIsModified;
     
-    protected ISVNProperties(Map props) {
+    protected SVNVersionedProperties(Map props) {
         myProperties = props;
         myIsModified = false;
     }
     
     public abstract boolean containsProperty(String name) throws SVNException;
     
-    public abstract String getPropertyValue(String name) throws SVNException;
-
-    protected abstract Map loadProperties() throws SVNException;
+    public String getPropertyValue(String name) throws SVNException {
+        if (myProperties != null && myProperties.containsKey(name)) {
+            return (String) myProperties.get(name);
+        }
+        return null;
+    }
 
     public boolean isModified() {
         return myIsModified;
@@ -47,7 +50,7 @@ public abstract class ISVNProperties {
         return props == null || props.isEmpty();
     }
     
-    public Collection properties(Collection target) throws SVNException {
+    public Collection getPropertyNames(Collection target) throws SVNException {
         Map props = loadProperties();
 
         target = target == null ? new TreeSet() : target;
@@ -70,17 +73,15 @@ public abstract class ISVNProperties {
         myIsModified = true;
     }
 
-    protected abstract ISVNProperties wrap(Map properties);
-    
-    public ISVNProperties compareTo(ISVNProperties properties) throws SVNException {
+    public SVNVersionedProperties compareTo(SVNVersionedProperties properties) throws SVNException {
         Map result = new HashMap();
         if (isEmpty()) {
             result.putAll(properties.asMap());
             return wrap(result);
         }
         
-        Collection props1 = properties(null);
-        Collection props2 = properties.properties(null);
+        Collection props1 = getPropertyNames(null);
+        Collection props2 = properties.getPropertyNames(null);
         
         // missed in props2.
         Collection tmp = new TreeSet(props1);
@@ -112,7 +113,7 @@ public abstract class ISVNProperties {
         return wrap(result);
     }
     
-    public void copyTo(ISVNProperties destination) throws SVNException {
+    public void copyTo(SVNVersionedProperties destination) throws SVNException {
         Map props = loadProperties();
         if (isEmpty()) {
             destination.removeAll();
@@ -129,7 +130,7 @@ public abstract class ISVNProperties {
         }
     }
     
-    public boolean equals(ISVNProperties props) throws SVNException {
+    public boolean equals(SVNVersionedProperties props) throws SVNException {
         return compareTo(props).isEmpty();
     }
     
@@ -144,4 +145,17 @@ public abstract class ISVNProperties {
         thisProps.putAll(props);
         myIsModified = true;
     }
+
+    protected Map getPropertiesMap() {
+        return myProperties;
+    }
+    
+    protected void setPropertiesMap(Map props) {
+        myProperties = props;
+    }
+    
+    protected abstract SVNVersionedProperties wrap(Map properties);
+
+    protected abstract Map loadProperties() throws SVNException;
+
 }
