@@ -353,10 +353,13 @@ public class SVNWCClient extends SVNBasicClient {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", path);
             SVNErrorManager.error(err);
         }
-        SVNWCAccess wcAccess = createWCAccess(path);
-        wcAccess.open(true, true, true);
-        wcAccess.getAnchor().cleanup();
-        wcAccess.close(true);
+        SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
+        try {
+            SVNAdminArea adminArea = wcAccess.open(path, true, true, 0);
+            adminArea.cleanup();
+        } finally {
+            wcAccess.close();
+        }
     }
     
     /**

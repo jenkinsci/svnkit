@@ -1021,6 +1021,33 @@ public abstract class SVNAdminArea {
         }
         return copy.iterator();
     }
+    
+    public void cleanup() throws SVNException {
+        getWCAccess().checkCancelled();
+        for(Iterator entries = entries(false); entries.hasNext();) {
+            SVNEntry2 entry = (SVNEntry2) entries.next();
+            if (entry.getKind() == SVNNodeKind.DIR && !getThisDirName().equals(entry.getName())) {
+                File childDir = getFile(entry.getName());
+                if(childDir.isDirectory()) {
+                    SVNAdminArea child = getWCAccess().open(childDir, true, true, 0);
+                    child.cleanup();
+                }
+            } else {
+                hasPropModifications(entry.getName());
+                if (entry.getKind() == SVNNodeKind.FILE) {
+                    hasTextModifications(entry.getName(), false);
+                }
+            }
+        }
+        if (isKillMe()) {
+            removeFromRevisionControl(getThisDirName(), true, false);
+        } else {
+            runLogs();
+        }
+        SVNFileUtil.deleteAll(getAdminFile("tmp"), false);
+        getWCAccess().closeAdminArea(getRoot());
+        
+    }
 
     public File getRoot() {
         return myDirectory;
