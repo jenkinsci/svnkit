@@ -164,6 +164,17 @@ public class SVNTranslator2 {
         }
         return true;
     }
+    
+    public static void copy(InputStream src, OutputStream dst) throws IOException {
+        byte[] buffer = new byte[8192];
+        while(true) {
+            int read = src.read(buffer);
+            if (read <= 0) {
+                return;
+            }
+            dst.write(buffer, 0, read);
+        }
+    }
 
     public static void copy(InputStream src, OutputStream dst, byte[] eol, Map keywords) throws IOException {
         if (keywords != null && keywords.isEmpty()) {

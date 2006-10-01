@@ -12,12 +12,12 @@
 package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -50,9 +50,11 @@ import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNLog;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslatorOutputStream;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -197,120 +199,61 @@ public class SVNWCClient extends SVNBasicClient {
      *                            </ul>
      * @see                       #doGetFileContents(SVNURL, SVNRevision, SVNRevision, boolean, OutputStream)                           
      */
-    public void doGetFileContents(File path, SVNRevision pegRevision,
-            SVNRevision revision, boolean expandKeywords, OutputStream dst)
-            throws SVNException {
+    public void doGetFileContents(File path, SVNRevision pegRevision, SVNRevision revision, boolean expandKeywords, OutputStream dst) throws SVNException {
         if (dst == null) {
             return;
         }
         if (revision == null || !revision.isValid()) {
-            revision = SVNRevision.WORKING;
-        }
-        if (revision == SVNRevision.COMMITTED) {
+            revision = SVNRevision.BASE;
+        } else if (revision == SVNRevision.COMMITTED) {
             revision = SVNRevision.BASE;
         }
-        SVNWCAccess wcAccess = createWCAccess(path);
-        if ("".equals(wcAccess.getTargetName()) || wcAccess.getTarget() != wcAccess.getAnchor()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_IS_DIRECTORY, "''{0}'' refers to a directory", path, SVNErrorMessage.TYPE_WARNING);
-            SVNErrorManager.error(err);
+        if (pegRevision == null || !pegRevision.isValid()) {
+            pegRevision = SVNRevision.BASE;
+        } else if (pegRevision == SVNRevision.COMMITTED) {
+            pegRevision = SVNRevision.BASE;
         }
-        checkCancelled();
-        String name = wcAccess.getTargetName();
-        if (revision == SVNRevision.WORKING || revision == SVNRevision.BASE) {
-            File file = wcAccess.getAnchor().getBaseFile(name, false);
-            boolean delete = false;
-            SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry(wcAccess.getTargetName(), false);
-            if (entry == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control or doesn''t exist", path, SVNErrorMessage.TYPE_WARNING);
-                SVNErrorManager.error(err);
-            }
-            try {
-                if (revision == SVNRevision.BASE) {
-                    if (expandKeywords) {
-                        delete = true;
-                        file = wcAccess.getAnchor().getBaseFile(name, true).getParentFile();
-                        file = SVNFileUtil.createUniqueFile(file, name, ".tmp");
-                        SVNTranslator.translate(wcAccess.getAnchor(), name,
-                                SVNFileUtil.getBasePath(wcAccess.getAnchor().getBaseFile(name, false)), 
-                                SVNFileUtil.getBasePath(file), true, false);
-                    }
-                } else {
-                    if (!expandKeywords) {
-                        delete = true;
-                        file = wcAccess.getAnchor().getBaseFile(name, true).getParentFile();
-                        file = SVNFileUtil.createUniqueFile(file, name, ".tmp");
-                        SVNTranslator.translate(wcAccess.getAnchor(), name,
-                                name, SVNFileUtil.getBasePath(file), false,
-                                false);
-                    } else {
-                        file = wcAccess.getAnchor().getFile(name);
-                    }
-                }
-            } finally {
-                if (file != null && file.exists()) {
-                    InputStream is = SVNFileUtil.openFileForReading(file);
-                    try {
-                        int r;
-                        while ((r = is.read()) >= 0) {
-                            dst.write(r);
-                        }
-                    } catch (IOException e) {
-                        getDebugLog().info(e);
-                    } finally {
-                        SVNFileUtil.closeFile(is);
-                        if (delete) {
-                            file.delete();
-                        }
-                    }
-                }
-            }
+        if ((pegRevision == SVNRevision.BASE || pegRevision == SVNRevision.WORKING) && (revision == SVNRevision.BASE || revision == SVNRevision.WORKING)) {
+            doGetLocalFileContents(path, dst, revision, expandKeywords);
         } else {
             SVNRepository repos = createRepository(null, path, pegRevision, revision);
             checkCancelled();
             long revNumber = getRevisionNumber(revision, repos, path);
+            SVNNodeKind kind = repos.checkPath("", revNumber);
+            if (kind == SVNNodeKind.DIR) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_IS_DIRECTORY, "URL ''{0}'' refers to a directory", repos.getLocation());
+                SVNErrorManager.error(err);
+            }
             checkCancelled();
             if (!expandKeywords) {
                 repos.getFile("", revNumber, null, new SVNCancellableOutputStream(dst, this));
             } else {
-                String adminDir = SVNFileUtil.getAdminDirectoryName();
-                File tmpFile = SVNFileUtil.createUniqueFile(new File(path.getParentFile(), adminDir + "/tmp/text-base"), path.getName(), ".tmp");
-                File tmpFile2 = null;
-                OutputStream os = null;
-                InputStream is = null;
-                try {
-                    os = SVNFileUtil.openFileForWriting(tmpFile);
-                    Map properties = new HashMap();
-                    repos.getFile("", revNumber, properties, new SVNCancellableOutputStream(os, this));
-                    SVNFileUtil.closeFile(os);
-                    os = null;
-                    String keywords = (String) properties.get(SVNProperty.KEYWORDS);
-                    String eol = (String) properties.get(SVNProperty.EOL_STYLE);
-                    byte[] eolBytes = SVNTranslator.getWorkingEOL(eol);
-                    Map keywordsMap = SVNTranslator.computeKeywords(keywords, repos.getLocation().toString(),
-                            (String) properties.get(SVNProperty.LAST_AUTHOR),
-                            (String) properties.get(SVNProperty.COMMITTED_DATE),
-                            (String) properties.get(SVNProperty.COMMITTED_REVISION));
-                    tmpFile2 = SVNFileUtil.createUniqueFile(new File(path.getParentFile(), adminDir + "/tmp/text-base"), path.getName(), ".tmp");
-                    SVNTranslator.translate(tmpFile, tmpFile2, eolBytes, keywordsMap, false, true);
-                    // cat tmp file
-                    is = SVNFileUtil.openFileForReading(tmpFile2);
-                    int r;
-                    while ((r = is.read()) >= 0) {
-                        dst.write(r);
+                Map properties = new HashMap();
+                repos.getFile("", revNumber, properties, null);
+                checkCancelled();
+
+                String keywords = (String) properties.get(SVNProperty.KEYWORDS);
+                String eol = (String) properties.get(SVNProperty.EOL_STYLE);
+                if (keywords != null || eol != null) {
+                    String cmtRev = (String) properties.get(SVNProperty.COMMITTED_REVISION);
+                    String cmtDate = (String) properties.get(SVNProperty.COMMITTED_DATE);
+                    String author = (String) properties.get(SVNProperty.LAST_AUTHOR);
+                    Map keywordsMap = SVNTranslator2.computeKeywords(keywords, expandKeywords ? repos.getLocation().toString() : null, author, cmtDate, cmtRev);
+                    OutputStream translatingStream = new SVNTranslatorOutputStream(dst, SVNTranslator2.getEOL(eol), false, keywordsMap, expandKeywords); 
+                    repos.getFile("", revNumber, null, new SVNCancellableOutputStream(translatingStream, getEventDispatcher()));
+                    try {
+                        translatingStream.close();
+                    } catch (IOException e) {
+                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()));
                     }
-                } catch (IOException e) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-                    SVNErrorManager.error(err, e);
-                } finally {
-                    SVNFileUtil.closeFile(os);
-                    SVNFileUtil.closeFile(is);
-                    if (tmpFile != null) {
-                        tmpFile.delete();
-                    }
-                    if (tmpFile2 != null) {
-                        tmpFile2.delete();
-                    }
+                } else {
+                    repos.getFile("", revNumber, null, new SVNCancellableOutputStream(dst, getEventDispatcher()));
                 }
+            }
+            try {
+                dst.flush();
+            } catch (IOException e) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()));
             }
         }
     }
@@ -338,73 +281,46 @@ public class SVNWCClient extends SVNBasicClient {
     public void doGetFileContents(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean expandKeywords, OutputStream dst) throws SVNException {
         revision = revision == null || !revision.isValid() ? SVNRevision.HEAD : revision;
         // now get contents from URL.
-        Map properties = new HashMap();
         SVNRepository repos = createRepository(url, null, pegRevision, revision);
         checkCancelled();
-        long revisionNumber = getRevisionNumber(revision, repos, null);
+        long revNumber = getRevisionNumber(revision, repos, null);
         checkCancelled();
-        SVNNodeKind nodeKind = repos.checkPath("", revisionNumber);
+        SVNNodeKind nodeKind = repos.checkPath("", revNumber);
         checkCancelled();
         if (nodeKind == SVNNodeKind.DIR) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_IS_DIRECTORY, "URL ''{0}'' refers to a directory", url, SVNErrorMessage.TYPE_WARNING);
             SVNErrorManager.error(err);
         }
-        OutputStream os = null;
-        InputStream is = null;
-        File file = null;
-        File file2 = null;
-        try {
-            file = File.createTempFile("svn-contents", ".tmp");
-            file2 = File.createTempFile("svn-contents", ".tmp");
-        } catch (IOException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-            if (file != null) {
-                file.delete();
+        checkCancelled();
+        if (!expandKeywords) {
+            repos.getFile("", revNumber, null, new SVNCancellableOutputStream(dst, this));
+        } else {
+            Map properties = new HashMap();
+            repos.getFile("", revNumber, properties, null);
+            checkCancelled();
+
+            String keywords = (String) properties.get(SVNProperty.KEYWORDS);
+            String eol = (String) properties.get(SVNProperty.EOL_STYLE);
+            if (keywords != null || eol != null) {
+                String cmtRev = (String) properties.get(SVNProperty.COMMITTED_REVISION);
+                String cmtDate = (String) properties.get(SVNProperty.COMMITTED_DATE);
+                String author = (String) properties.get(SVNProperty.LAST_AUTHOR);
+                Map keywordsMap = SVNTranslator2.computeKeywords(keywords, expandKeywords ? repos.getLocation().toString() : null, author, cmtDate, cmtRev);
+                OutputStream translatingStream = new SVNTranslatorOutputStream(dst, SVNTranslator2.getEOL(eol), false, keywordsMap, expandKeywords); 
+                repos.getFile("", revNumber, null, new SVNCancellableOutputStream(translatingStream, getEventDispatcher()));
+                try {
+                    translatingStream.close();
+                } catch (IOException e) {
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()));
+                }
+            } else {
+                repos.getFile("", revNumber, null, new SVNCancellableOutputStream(dst, getEventDispatcher()));
             }
-            if (file2 != null) {
-                file2.delete();
-            }
-            SVNErrorManager.error(err, e);
-            return;
         }
         try {
-            
-            os = new FileOutputStream(file);
-            repos.getFile("", revisionNumber, properties, new SVNCancellableOutputStream(os, this));
-            os.close();
-            os = null;
-            if (expandKeywords) {
-                // use props at committed (peg) revision, not those.
-                String keywords = (String) properties.get(SVNProperty.KEYWORDS);
-                String eol = (String) properties.get(SVNProperty.EOL_STYLE);
-                byte[] eolBytes = SVNTranslator.getWorkingEOL(eol);
-                Map keywordsMap = SVNTranslator.computeKeywords(keywords, url.toString(),
-                        (String) properties.get(SVNProperty.LAST_AUTHOR),
-                        (String) properties.get(SVNProperty.COMMITTED_DATE),
-                        (String) properties.get(SVNProperty.COMMITTED_REVISION));
-                SVNTranslator.translate(file, file2, eolBytes, keywordsMap,
-                        false, true);
-            } else {
-                file2 = file;
-            }
-
-            is = SVNFileUtil.openFileForReading(file2);
-            int r;
-            while ((r = is.read()) >= 0) {
-                dst.write(r);
-            }
+            dst.flush();
         } catch (IOException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-            SVNErrorManager.error(err, e);
-        } finally {
-            SVNFileUtil.closeFile(os);
-            SVNFileUtil.closeFile(is);
-            if (file != null) {
-                file.delete();
-            }
-            if (file2 != null) {
-                file2.delete();
-            }
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()));
         }
     }
     
@@ -2383,6 +2299,70 @@ public class SVNWCClient extends SVNBasicClient {
             tokens.put(path, lock.getID());
         }
         return tokens;
+    }
+    
+    private void doGetLocalFileContents(File path, OutputStream dst, SVNRevision revision, boolean expandKeywords) throws SVNException {
+        SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
+        InputStream input = null;
+        boolean hasMods = false;
+        SVNVersionedProperties properties = null;
+
+        try {
+            SVNAdminArea area = wcAccess.open(path.getParentFile(), false, 0);
+            SVNEntry2 entry = wcAccess.getEntry(path, false);
+            if (entry == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control or doesn't exist", path);
+                SVNErrorManager.error(err);
+            } else if (entry.getKind() != SVNNodeKind.FILE) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' refers to a directory", path);
+                SVNErrorManager.error(err);
+            }
+            String name = path.getName();
+            if (revision != SVNRevision.WORKING) {
+                // get base version and base props.
+                input = area.getBaseFileForReading(name, false);
+                properties = area.getBaseProperties(name);
+            } else {
+                // get working version and working props.
+                input = SVNFileUtil.openFileForReading(area.getFile(path.getName()));
+                hasMods = area.hasPropModifications(name) || area.hasTextModifications(name, true);
+                properties = area.getProperties(name);
+            }
+            String eolStyle = properties.getPropertyValue(SVNProperty.EOL_STYLE);
+            String keywords = properties.getPropertyValue(SVNProperty.KEYWORDS);
+            boolean special = properties.getPropertyValue(SVNProperty.SPECIAL) != null;
+            byte[] eols = null;
+            Map keywordsMap = null;
+            String time = null;
+
+            if (eolStyle != null) {
+                eols = SVNTranslator.getEOL(eolStyle);
+            }
+            if (hasMods && !special) {
+                time = SVNTimeUtil.formatDate(new Date(path.lastModified()));
+            } else {
+                time = entry.getCommittedDate();
+            }
+            if (keywords != null) {
+                String url = entry.getURL();
+                String author = hasMods ? "(local)" : entry.getAuthor();
+                String rev = hasMods ? entry.getCommittedRevision() + "M" : entry.getCommittedRevision() + ""; 
+                keywordsMap = SVNTranslator.computeKeywords(keywords, expandKeywords ? url : null, author, time, rev);
+            }
+            OutputStream translatingStream = eols != null || keywordsMap != null ? new SVNTranslatorOutputStream(dst, eols, false, keywordsMap, expandKeywords) : dst;
+            try {
+                SVNTranslator2.copy(input, new SVNCancellableOutputStream(translatingStream, getEventDispatcher()));
+                if (translatingStream != dst) {
+                    SVNFileUtil.closeFile(translatingStream);
+                }
+                dst.flush();
+            } catch (IOException e) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()));
+            }
+        } finally {
+            SVNFileUtil.closeFile(input);
+            wcAccess.close();
+        }
     }
 
     private static class LockInfo {
