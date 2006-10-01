@@ -590,14 +590,14 @@ public class SVNBasicClient implements ISVNEventHandler {
         if (path == null) {
             return null;
         }
-        SVNWCAccess wcAccess = createWCAccess(path);
-        SVNEntry entry;
-        if (wcAccess.getTarget() != wcAccess.getAnchor()) {
-            entry = wcAccess.getTarget().getEntries().getEntry("", false);
-        } else {
-            entry = wcAccess.getTargetEntry();
+        SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
+        try {
+            wcAccess.probeOpen(path, false, 0);
+            SVNEntry2 entry = wcAccess.getEntry(path, false);
+            return entry != null ? entry.getSVNURL() : null;
+        } finally {
+            wcAccess.close();
         }
-        return entry != null ? entry.getSVNURL() : null;        
     }
     
 
