@@ -116,7 +116,7 @@ public abstract class SVNAdminArea {
             return SVNFileUtil.DUMMY_OUT;
         }
 
-        public boolean lock() throws SVNException {
+        public boolean lock(boolean stealLock) throws SVNException {
             return false;
         }
         
@@ -145,7 +145,7 @@ public abstract class SVNAdminArea {
 
     public abstract boolean isVersioned();
 
-    public abstract boolean lock() throws SVNException;
+    public abstract boolean lock(boolean stealLock) throws SVNException;
 
     public abstract boolean unlock() throws SVNException;
 
@@ -531,7 +531,7 @@ public abstract class SVNAdminArea {
             parentArea = getWCAccess().retrieve(dirFile.getParentFile());
         } catch (SVNException svne) {
             if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
-                parentArea = getWCAccess().open(dirFile.getParentFile(), true, 0);
+                parentArea = getWCAccess().open(dirFile.getParentFile(), true, false, 0);
                 unassociated = true;
             }
             throw svne;

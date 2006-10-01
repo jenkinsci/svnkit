@@ -1261,12 +1261,37 @@ public class SVNAdminArea14 extends SVNAdminArea {
         }
         return false;
     }
-
+    
     public boolean lock() throws SVNException {
+        return lock(false);
+    }
+
+    public boolean lock(boolean stealLock) throws SVNException {
         if (!isVersioned()) {
             return false;
         }
-        return innerLock(0);
+        if (stealLock && myLockFile.isFile()) {
+            return true;
+        }
+        boolean created = false;
+        try {
+            created = myLockFile.createNewFile();
+        } catch (IOException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Cannot lock working copy ''{0}'': {1}", 
+                    new Object[] {getRoot(), e.getLocalizedMessage()});
+            SVNErrorManager.error(err, e);
+        }
+        if (created) {
+            return created;
+        }
+        if (myLockFile.isFile()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "Working copy ''{0}'' is locked; try performing ''cleanup''", getRoot());
+            SVNErrorManager.error(err);
+        } else {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Cannot lock working copy ''{0}''", getRoot());
+            SVNErrorManager.error(err);
+        }
+        return false;
     }
 
     private void createFormatFile(File formatFile, boolean createMyself) throws SVNException {
@@ -1480,44 +1505,6 @@ public class SVNAdminArea14 extends SVNAdminArea {
             saveEntries(false);
         }
         return !equals;
-    }
-
-    private boolean innerLock(int secs) throws SVNException {
-        boolean created = false;
-        while(true){
-            try {
-                created = myLockFile.createNewFile();
-            } catch (IOException e) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Cannot lock working copy ''{0}'': {1}", 
-                        new Object[] {getRoot(), e.getLocalizedMessage()});
-                SVNErrorManager.error(err, e);
-            }
-            
-            if (created) {
-                return created;
-            }
-            
-            if (secs-- <= 0) {
-                break;
-            }
-            
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                break;
-            }
-        }
-
-        if (!created) {
-            if (myLockFile.isFile()) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "Working copy ''{0}'' is locked; try performing ''cleanup''", getRoot());
-                SVNErrorManager.error(err);
-            } else {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Cannot lock working copy ''{0}''", getRoot());
-                SVNErrorManager.error(err);
-            }
-        }
-        return created;
     }
     
     public boolean unlock() throws SVNException {

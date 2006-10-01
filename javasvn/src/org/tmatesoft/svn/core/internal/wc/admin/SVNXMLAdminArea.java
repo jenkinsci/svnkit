@@ -554,11 +554,35 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         return true;
     }
 
-    public boolean lock() throws SVNException {
+    public boolean lock(boolean stealLock) throws SVNException {
         if (!isVersioned()) {
             return false;
         }
-        return innerLock();
+        if (myLockFile.isFile()) {
+            if (stealLock) {
+                return true;
+            }
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "Working copy ''{0}'' locked; try performing ''cleanup''", getRoot());
+            SVNErrorManager.error(err);
+        }
+        boolean created = false;
+        try {
+            created = myLockFile.createNewFile();
+        } catch (IOException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Cannot lock working copy ''{0}'': {1}", 
+                    new Object[] {getRoot(), e.getLocalizedMessage()});
+            SVNErrorManager.error(err, e);
+        }
+        if (!created) {
+            if (myLockFile.isFile()) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "Working copy ''{0}'' is locked; try performing 'cleanup'", getRoot());
+                SVNErrorManager.error(err);
+            } else {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Cannot lock working copy ''{0}''", getRoot());
+                SVNErrorManager.error(err);
+            }
+        }
+        return created;
     }
 
     boolean innerLock() throws SVNException {

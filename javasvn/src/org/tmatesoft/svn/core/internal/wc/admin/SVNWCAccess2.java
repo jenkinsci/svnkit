@@ -12,15 +12,9 @@
 package org.tmatesoft.svn.core.internal.wc.admin;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.StringTokenizer;
-import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -31,9 +25,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
-import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
@@ -106,11 +98,11 @@ public class SVNWCAccess2 implements ISVNEventHandler {
         SVNAdminArea targetArea = null; 
         SVNException parentError = null;
         try {
-            parentArea = open(parent, writeLock, 0);
+            parentArea = open(parent, writeLock, false, 0);
         } catch (SVNException svne) {
             if (writeLock && svne.getErrorMessage().getErrorCode() == SVNErrorCode.WC_LOCKED) {
                 try {
-                    parentArea = open(parent, false, 0);
+                    parentArea = open(parent, false, false, 0);
                 } catch (SVNException svne2) {
                     throw svne;
                 }
@@ -121,7 +113,7 @@ public class SVNWCAccess2 implements ISVNEventHandler {
         }
         
         try {
-            targetArea = open(path, writeLock, depth);
+            targetArea = open(path, writeLock, false, depth);
         } catch (SVNException svne) {
             if (parentArea == null || svne.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_DIRECTORY) {
                 try {
@@ -205,10 +197,14 @@ public class SVNWCAccess2 implements ISVNEventHandler {
         SVNAdminArea target = targetArea != null ? targetArea : parentArea;
         return new SVNAdminAreaInfo(this, anchor, target, parentArea == null ? "" : name);
     }
-    
+
     public SVNAdminArea open(File path, boolean writeLock, int depth) throws SVNException {
+        return open(path, writeLock, false, depth);
+    }
+    
+    public SVNAdminArea open(File path, boolean writeLock, boolean stealLock, int depth) throws SVNException {
         Map tmp = new HashMap();
-        SVNAdminArea area = doOpen(path, writeLock, depth, tmp);
+        SVNAdminArea area = doOpen(path, writeLock, stealLock, depth, tmp);
         for(Iterator paths = tmp.keySet().iterator(); paths.hasNext();) {
             Object childPath = paths.next();
             SVNAdminArea childArea = (SVNAdminArea) tmp.get(childPath);
@@ -224,7 +220,7 @@ public class SVNWCAccess2 implements ISVNEventHandler {
         }
         SVNAdminArea adminArea = null;
         try {
-            adminArea = open(dir, writeLock, depth);
+            adminArea = open(dir, writeLock, false, depth);
         } catch (SVNException svne) {
             SVNFileType childKind = SVNFileType.getType(path);
             SVNErrorCode errCode = svne.getErrorMessage().getErrorCode(); 
@@ -255,7 +251,7 @@ public class SVNWCAccess2 implements ISVNEventHandler {
         }
     }
     
-    private SVNAdminArea doOpen(File path, boolean writeLock, int depth, Map tmp) throws SVNException {
+    private SVNAdminArea doOpen(File path, boolean writeLock, boolean stealLock, int depth, Map tmp) throws SVNException {
         // no support for 'under consturction here' - it will go to adminAreaFactory.
         tmp = tmp == null ? new HashMap() : tmp; 
         if (myAdminAreas != null) {
@@ -272,7 +268,7 @@ public class SVNWCAccess2 implements ISVNEventHandler {
         area.setWCAccess(this);
         
         if (writeLock) {
-            area.lock();
+            area.lock(stealLock);
             area = SVNAdminAreaFactory.upgrade(area);
         }
         
@@ -295,7 +291,7 @@ public class SVNWCAccess2 implements ISVNEventHandler {
                 File childPath = new File(path, entry.getName());
                 try {
                     // this method will put created area into our map.
-                    doOpen(childPath, writeLock, depth, tmp);
+                    doOpen(childPath, writeLock, stealLock, depth, tmp);
                 } catch (SVNException e) {
                     if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_DIRECTORY) {
                         doClose(tmp, false);
