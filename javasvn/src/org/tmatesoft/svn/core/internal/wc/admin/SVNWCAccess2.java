@@ -189,7 +189,7 @@ public class SVNWCAccess2 implements ISVNEventHandler {
             }
             if (targetEntry != null && targetEntry.isDirectory()) {
                 if (myAdminAreas != null) {
-                    myAdminAreas.put(path, SVNAdminArea.MISSING);
+                    myAdminAreas.put(path, null);
                 }
             }
         }
@@ -256,7 +256,7 @@ public class SVNWCAccess2 implements ISVNEventHandler {
         tmp = tmp == null ? new HashMap() : tmp; 
         if (myAdminAreas != null) {
             SVNAdminArea existing = (SVNAdminArea) myAdminAreas.get(path);
-            if (existing != null && existing != SVNAdminArea.MISSING) {
+            if (myAdminAreas.containsKey(path) && existing != null) {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "Working copy ''{0}'' locked", path);
                 SVNErrorManager.error(error);
             }
@@ -297,7 +297,7 @@ public class SVNWCAccess2 implements ISVNEventHandler {
                         doClose(tmp, false);
                         throw e;
                     }
-                    tmp.put(childPath, SVNAdminArea.MISSING);
+                    tmp.put(childPath, null);
                     continue;
                 }
             }
@@ -310,7 +310,7 @@ public class SVNWCAccess2 implements ISVNEventHandler {
         for (Iterator paths = adminAreas.keySet().iterator(); paths.hasNext();) {
             File path = (File) paths.next();
             SVNAdminArea adminArea = (SVNAdminArea) adminAreas.get(path);
-            if (adminArea == SVNAdminArea.MISSING) {
+            if (adminArea == null) {
                 paths.remove();
                 continue;
             }
@@ -320,7 +320,7 @@ public class SVNWCAccess2 implements ISVNEventHandler {
     }
 
     private void doClose(SVNAdminArea adminArea, boolean preserveLocks) throws SVNException {
-        if (adminArea == SVNAdminArea.MISSING) {
+        if (adminArea == null) {
             return;
         }
         if (!preserveLocks && adminArea.isLocked()) {
@@ -335,8 +335,7 @@ public class SVNWCAccess2 implements ISVNEventHandler {
     
     public boolean isMissing(File path) {
         if (myAdminAreas != null) {
-            SVNAdminArea area = (SVNAdminArea) myAdminAreas.get(path);
-            return area == SVNAdminArea.MISSING;
+            return myAdminAreas.containsKey(path) && myAdminAreas.get(path) == null;
         }
         return false;
     }
@@ -460,9 +459,6 @@ public class SVNWCAccess2 implements ISVNEventHandler {
         SVNAdminArea adminArea = null; 
         if (myAdminAreas != null) {
             adminArea = (SVNAdminArea) myAdminAreas.get(path);
-        }
-        if (adminArea == SVNAdminArea.MISSING) {
-            adminArea = null;
         }
         return adminArea;
     }
