@@ -33,10 +33,10 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
@@ -253,20 +253,21 @@ public class SVNLogClient extends SVNBasicClient {
             }
         };
         SVNURL[] urls = new SVNURL[paths.length];
+        SVNWCAccess2 wcAccess = createWCAccess();
         for (int i = 0; i < paths.length; i++) {
             checkCancelled();
             File path = paths[i];
-            SVNWCAccess wcAccess = createWCAccess(path);
-            SVNEntry entry = wcAccess.getTargetEntry();
+            wcAccess.probeOpen(path, false, 0); 
+            SVNEntry2 entry = wcAccess.getEntry(path, false); 
             if (entry == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", path);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", path);
                 SVNErrorManager.error(err);
-                return;
             }
             if (entry.getURL() == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "Entry ''{0}'' has no URL", path);
                 SVNErrorManager.error(err);
             }
+            wcAccess.closeAdminArea(path);
             urls[i] = entry.getSVNURL();
         }
         if (urls.length == 0) {
