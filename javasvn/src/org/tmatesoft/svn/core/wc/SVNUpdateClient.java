@@ -31,8 +31,6 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableOutputStream;
-import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
-import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNExportEditor;
@@ -671,19 +669,19 @@ public class SVNUpdateClient extends SVNBasicClient {
         }
     }
 
-/*    
     public void doCanonicalizeURLs(File dst, boolean omitDefaultPort, boolean recursive) throws SVNException {
-        SVNWCAccess wcAccess = createWCAccess(dst);
+        SVNWCAccess2 wcAccess = createWCAccess();
         try {
-            wcAccess.open(true, recursive);
-            SVNEntry entry = wcAccess.getTargetEntry();
-            String name = "";
+            SVNAdminAreaInfo adminAreaInfo = wcAccess.openAnchor(dst, true, recursive ? SVNWCAccess2.INFINITE_DEPTH : 0);
+            SVNAdminArea target = adminAreaInfo.getTarget();
+            SVNEntry2 entry = wcAccess.getEntry(dst, false);
+            String name = target.getThisDirName();
             if (entry != null && entry.isFile()) {
                 name = entry.getName();
             }
-            doCanonicalizeURLs(wcAccess.getTarget(), name, omitDefaultPort, recursive);
+            doCanonicalizeURLs(adminAreaInfo, target, name, omitDefaultPort, recursive);
             if (recursive && !isIgnoreExternals()) {
-                for(Iterator externals = wcAccess.externals(); externals.hasNext();) {
+                for(Iterator externals = adminAreaInfo.externals(); externals.hasNext();) {
                     SVNExternalInfo info = (SVNExternalInfo) externals.next();
                     try {
                         doCanonicalizeURLs(info.getFile(), omitDefaultPort, true);
@@ -695,55 +693,54 @@ public class SVNUpdateClient extends SVNBasicClient {
                 }
             }
         } finally {
-            wcAccess.close(true);
-
+            wcAccess.close();
         }
     }
-*/    
-    private void doCanonicalizeURLs(SVNDirectory dir, String name, boolean omitDefaultPort, boolean recursive) throws SVNException {
+
+    private void doCanonicalizeURLs(SVNAdminAreaInfo adminAreaInfo, SVNAdminArea adminArea, String name, boolean omitDefaultPort, boolean recursive) throws SVNException {
         boolean save = false;
         checkCancelled();
-        if (!"".equals(name)) {
-            SVNEntry entry = dir.getEntries().getEntry(name, true);
+        if (!adminArea.getThisDirName().equals(name)) {
+            SVNEntry2 entry = adminArea.getEntry(name, true);
             save = canonicalizeEntry(entry, omitDefaultPort);
-            dir.getWCProperties(name).setPropertyValue(SVNProperty.WC_URL, null);
+            adminArea.getWCProperties(name).setPropertyValue(SVNProperty.WC_URL, null);
             if (save) {
-                dir.getEntries().save(true);
+                adminArea.saveEntries(true);
             }
             return;
         }
         if (!isIgnoreExternals()) {
-            String externalsValue = dir.getProperties("", false).getPropertyValue(SVNProperty.EXTERNALS);
-            dir.getWCAccess().addExternals(dir, externalsValue);
+            String externalsValue = adminArea.getProperties(adminArea.getThisDirName()).getPropertyValue(SVNProperty.EXTERNALS);
+            adminAreaInfo.addExternals(adminArea, externalsValue);
             if (externalsValue != null) {
                 externalsValue = canonicalizeExtenrals(externalsValue, omitDefaultPort);
-                dir.getProperties("", false).setPropertyValue(SVNProperty.EXTERNALS, externalsValue);
+                adminArea.getProperties(adminArea.getThisDirName()).setPropertyValue(SVNProperty.EXTERNALS, externalsValue);
             }
         }
         
-        SVNEntry rootEntry = dir.getEntries().getEntry("", true);
+        SVNEntry2 rootEntry = adminArea.getEntry(adminArea.getThisDirName(), true);
         save = canonicalizeEntry(rootEntry, omitDefaultPort);
-        dir.getWCProperties("").setPropertyValue(SVNProperty.WC_URL, null);
+        adminArea.getWCProperties(adminArea.getThisDirName()).setPropertyValue(SVNProperty.WC_URL, null);
         // now all child entries that doesn't has repos/url has new values.
-        for(Iterator ents = dir.getEntries().entries(true); ents.hasNext();) {
-            SVNEntry entry = (SVNEntry) ents.next();
-            if ("".equals(entry.getName())) {
+        for(Iterator ents = adminArea.entries(true); ents.hasNext();) {
+            SVNEntry2 entry = (SVNEntry2) ents.next();
+            if (adminArea.getThisDirName().equals(entry.getName())) {
                 continue;
             }
             checkCancelled();
             if (recursive && entry.isDirectory() && 
                     (entry.isScheduledForAddition() || !entry.isDeleted()) &&
                     !entry.isAbsent()) {
-                SVNDirectory childDir = dir.getChildDirectory(entry.getName());
-                if (childDir != null) {
-                    doCanonicalizeURLs(childDir, "", omitDefaultPort, recursive);
+                SVNAdminArea childArea = adminArea.getWCAccess().retrieve(adminArea.getFile(entry.getName()));
+                if (childArea != null) {
+                    doCanonicalizeURLs(adminAreaInfo, childArea, "", omitDefaultPort, recursive);
                 }
             }
             save |= canonicalizeEntry(entry, omitDefaultPort);
-            dir.getWCProperties(entry.getName()).setPropertyValue(SVNProperty.WC_URL, null);
+            adminArea.getWCProperties(entry.getName()).setPropertyValue(SVNProperty.WC_URL, null);
         }
         if (save) {
-            dir.getEntries().save(true);
+            adminArea.saveEntries(true);
         }
     }
     
@@ -785,7 +782,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         return canonicalized.toString();
     }
     
-    private static boolean canonicalizeEntry(SVNEntry entry, boolean omitDefaultPort) throws SVNException {
+    private static boolean canonicalizeEntry(SVNEntry2 entry, boolean omitDefaultPort) throws SVNException {
         boolean updated = false;
         SVNURL root = canonicalizeURL(entry.getRepositoryRootURL(), omitDefaultPort);
         if (root != null) {

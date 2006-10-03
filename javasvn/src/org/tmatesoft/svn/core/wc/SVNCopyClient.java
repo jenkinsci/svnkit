@@ -48,6 +48,9 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNLog;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
@@ -421,19 +424,23 @@ public class SVNCopyClient extends SVNBasicClient {
     public SVNCommitInfo doCopy(File srcPath, SVNRevision srcRevision, SVNURL dstURL, boolean failWhenDstExists, String commitMessage) throws SVNException {
         // may be url->url.
         if (srcRevision.isValid() && srcRevision != SVNRevision.WORKING) {
-            SVNWCAccess wcAccess = createWCAccess(srcPath);
-            SVNEntry srcEntry = wcAccess.getTargetEntry();
+            SVNWCAccess2 wcAccess = createWCAccess();
+            wcAccess.probeOpen(srcPath, false, 0); 
+            SVNEntry2 srcEntry = wcAccess.getEntry(srcPath, false);
+            wcAccess.close();
+            
             if (srcEntry == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", srcPath);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", srcPath);
                 SVNErrorManager.error(err);
             }
             if (srcEntry.getURL() == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", srcPath);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' does not seem to have a URL associated with it", srcPath);
                 SVNErrorManager.error(err);
             }
             return doCopy(srcEntry.getSVNURL(), srcRevision, dstURL, false, failWhenDstExists, commitMessage);
         }
-        SVNWCAccess wcAccess = createWCAccess(srcPath);
+        SVNWCAccess2 wcAccess = createWCAccess();
+        SVNAdminArea adminArea = wcAccess.probeOpen(srcPath, false, SVNWCAccess2.INFINITE_DEPTH);
         
         SVNURL dstAnchorURL = dstURL.removePathTail();
         String dstTarget = SVNPathUtil.tail(dstURL.toString());
@@ -460,27 +467,32 @@ public class SVNCopyClient extends SVNBasicClient {
             return SVNCommitInfo.NULL;
         }
 
+        SVNAdminArea dirArea = null;
+        SVNFileType kind = SVNFileType.getType(srcPath);
+        if (kind == SVNFileType.DIRECTORY) {
+            dirArea = wcAccess.retrieve(srcPath);
+        } else {
+            dirArea = adminArea;
+        }
         Collection tmpFiles = null;
         SVNCommitInfo info = null;
         ISVNEditor commitEditor = null;
         try {
-            wcAccess.open(false, true);
-
             Map commitables = new TreeMap();
-            SVNEntry entry = wcAccess.getTargetEntry();
+            SVNEntry2 entry = wcAccess.getEntry(srcPath, false);
             if (entry == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", srcPath);
                 SVNErrorManager.error(err);
                 return SVNCommitInfo.NULL;
             }
             
-            SVNCommitUtil.harvestCommitables(commitables, wcAccess.getTarget(), srcPath, null, entry, dstURL.toString(), entry.getURL(), 
+/*            SVNCommitUtil.harvestCommitables(commitables, dirArea, srcPath, null, entry, dstURL.toString(), entry.getURL(), 
                     true, false, false, null, true, false, getCommitParameters());
             items = (SVNCommitItem[]) commitables.values().toArray(new SVNCommitItem[commitables.values().size()]);
             for (int i = 0; i < items.length; i++) {
                 items[i].setWCAccess(wcAccess);
             }
-            
+*/            
             commitables = new TreeMap();
             dstURL = SVNURL.parseURIEncoded(SVNCommitUtil.translateCommitables(items, commitables));
 
@@ -503,7 +515,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 commitEditor.abortEdit();
             }
             if (wcAccess != null) {
-                wcAccess.close(false);
+                wcAccess.close();
             }
         }
         if (info != null && info.getNewRevision() >= 0) { 
