@@ -37,7 +37,6 @@ import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.util.ISVNDebugLog;
 
 /**
  * @version 1.0
@@ -60,12 +59,8 @@ public class SVNUpdateEditor implements ISVNEditor {
     private SVNWCAccess2 myWCAccess; 
     
     private SVNDeltaProcessor myDeltaProcessor;
-    private ISVNDebugLog myLog;
 
-    public SVNUpdateEditor(SVNWCAccess wcAccess, String switchURL, boolean recursive, boolean leaveConflicts, ISVNDebugLog log) throws SVNException {
-    }
-    
-    public SVNUpdateEditor(SVNAdminAreaInfo info, String switchURL, boolean recursive, boolean leaveConflicts, ISVNDebugLog log) throws SVNException {
+    public SVNUpdateEditor(SVNAdminAreaInfo info, String switchURL, boolean recursive, boolean leaveConflicts) throws SVNException {
         myAdminInfo = info;
         myWCAccess = info.getWCAccess();
         myIsRecursive = recursive;
@@ -74,7 +69,6 @@ public class SVNUpdateEditor implements ISVNEditor {
         myTargetRevision = -1;
         myIsLeaveConflicts = leaveConflicts;
         myDeltaProcessor = new SVNDeltaProcessor();
-        myLog = log;
 
         SVNEntry2 entry = info.getAnchor().getEntry(info.getAnchor().getThisDirName(), false);
         myTargetURL = entry != null ? entry.getURL() : null;
