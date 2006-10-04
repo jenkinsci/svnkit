@@ -339,6 +339,19 @@ public class SVNWCAccess2 implements ISVNEventHandler {
         }
         return false;
     }
+
+    public boolean isLocked(File path) throws SVNException {
+        File lockFile = new File(path, SVNFileUtil.getAdminDirectoryName());
+        lockFile = new File(lockFile, "lock");
+        if (SVNFileType.getType(lockFile) == SVNFileType.FILE) {
+            return true;
+        } else if (SVNFileType.getType(lockFile) == SVNFileType.NONE) {
+            return false;
+        }
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "Lock file ''{0}'' is not a regular file", lockFile);
+        SVNErrorManager.error(err);
+        return false;
+    }
     
     public boolean isWCRoot(File path) throws SVNException {
         SVNEntry2 entry = getEntry(path, false);

@@ -15,9 +15,10 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Stack;
 
 import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -25,14 +26,22 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNProperties;
-import org.tmatesoft.svn.core.internal.wc.SVNReporter;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
+import org.tmatesoft.svn.core.internal.wc.SVNRemoteStatusEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNStatusEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNStatusReporter;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNReporter2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
+import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
@@ -126,10 +135,8 @@ public class SVNStatusClient extends SVNBasicClient {
      * @see	                    ISVNStatusHandler
      */
     public long doStatus(File path, boolean recursive, boolean remote,
-                         boolean reportAll, boolean includeIgnored, ISVNStatusHandler handler)
-            throws SVNException {
-        return doStatus(path, recursive, remote, reportAll, includeIgnored, false,
-                 handler);
+                         boolean reportAll, boolean includeIgnored, ISVNStatusHandler handler) throws SVNException {
+        return doStatus(path, recursive, remote, reportAll, includeIgnored, false, handler);
     }
     
     /**
@@ -161,89 +168,106 @@ public class SVNStatusClient extends SVNBasicClient {
      * 										against
      * @throws SVNException
      */
-    public long doStatus(File path, boolean recursive, boolean remote,
-                         boolean reportAll, boolean includeIgnored,
-                         boolean collectParentExternals, final ISVNStatusHandler handler)
-            throws SVNException {
+    public long doStatus(File path, boolean recursive, boolean remote, boolean reportAll, boolean includeIgnored, boolean collectParentExternals, final ISVNStatusHandler handler) throws SVNException {
+        return doStatus(path, SVNRevision.HEAD, recursive, remote, reportAll, includeIgnored, collectParentExternals, handler);
+    }
+    
+    public long doStatus(File path, SVNRevision revision, boolean recursive, boolean remote, boolean reportAll, boolean includeIgnored, boolean collectParentExternals, final ISVNStatusHandler handler) throws SVNException {
         if (handler == null) {
             return -1;
         }
-        SVNWCAccess wcAccess = createWCAccess(path);
-        wcAccess.open(false, recursive);
-        Map parentExternals = new HashMap();
-        if (collectParentExternals) {
-            parentExternals = collectParentExternals(path, wcAccess.getAnchor() != wcAccess.getTarget());
-            SVNExternalInfo thisExternal = (SVNExternalInfo) parentExternals.remove("");
-            if (thisExternal != null) {
-                // report this as external first.
-                handler.handleStatus(new SVNStatus(null, path, SVNNodeKind.DIR,
-                                                   SVNRevision.UNDEFINED, SVNRevision.UNDEFINED, null,
-                                                   null, SVNStatusType.STATUS_EXTERNAL,
-                                                   SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE,
-                                                   SVNStatusType.STATUS_NONE, false, false, false, null,
-                                                   null, null, null, null, SVNRevision.UNDEFINED, null,
-                                                   null, null));
-            }
-        }
-        final boolean[] deletedInRepos = new boolean[] {false};
+        SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
+        SVNStatusEditor editor = null;
+        final boolean[] deletedInRepository = new boolean[] {false};
         ISVNStatusHandler realHandler = new ISVNStatusHandler() {
             public void handleStatus(SVNStatus status) throws SVNException {
-                if (deletedInRepos[0] && status.getCommittedRevision() != SVNRevision.UNDEFINED && status.getCommittedRevision() != null) {
+                if (deletedInRepository[0] && status.getEntry() != null) {
                     status.setRemoteStatus(SVNStatusType.STATUS_DELETED, null, null, null);
-                }
+                } 
                 handler.handleStatus(status);
             }
         };
-        SVNStatusEditor statusEditor = new SVNStatusEditor(getOptions(), wcAccess, realHandler, parentExternals, includeIgnored, reportAll, recursive);
-        if (remote) {
-            SVNURL url = wcAccess.getAnchor().getEntries().getEntry("", true).getSVNURL();
-            SVNRepository repos = createRepository(url, true);
-            SVNNodeKind kind = repos.checkPath("", -1);
-            if (kind == SVNNodeKind.NONE) {
-                deletedInRepos[0] = true;
-                reportAll = true;
-                statusEditor = new SVNStatusEditor(getOptions(), wcAccess, realHandler, parentExternals, includeIgnored, reportAll, recursive);
-            } else {
-                SVNRepository locksRepos = createRepository(url, false);
-    
-                SVNReporter reporter = new SVNReporter(wcAccess, false, recursive, getDebugLog());
-                SVNStatusReporter statusReporter = new SVNStatusReporter(locksRepos, reporter, statusEditor);
-                String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
-    
-                repos.status(-1, target, recursive, statusReporter, SVNCancellableEditor.newInstance(statusEditor, this, getDebugLog()));
+        try {
+            SVNAdminAreaInfo info = wcAccess.openAnchor(path, false, recursive ? -1 : 1);
+            Map externals = null;
+            if (collectParentExternals) {
+                // prefetch externals from parent dirs, and pass it to the editor.
+                externals = collectParentExternals(path, info.getAnchor().getRoot());
             }
-        }
-        // to report all when there is completely no changes
-        checkCancelled();
-        statusEditor.closeEdit();
-        if (remote && statusEditor.getTargetRevision() >= 0) {
-            SVNEvent event = SVNEventFactory.createStatusCompletedEvent(wcAccess, statusEditor.getTargetRevision());
-            handleEvent(event, ISVNEventHandler.UNKNOWN);
-        }
-        wcAccess.close(false);
-        if (!isIgnoreExternals() && recursive) {
-            Map externals = statusEditor.getCollectedExternals();
-            for (Iterator paths = externals.keySet().iterator(); paths.hasNext();) {
-                String externalPath = (String) paths.next();
-                File externalFile = new File(wcAccess.getAnchor().getRoot(),externalPath);
-                if (!externalFile.exists() || !externalFile.isDirectory() || !SVNWCUtil.isWorkingCopyRoot(externalFile, true)) {
-                    continue;
+            if (remote) {
+                SVNEntry2 entry = wcAccess.getEntry(info.getAnchor().getRoot(), false);
+                if (entry == null) {
+                    SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", path);
+                    SVNErrorManager.error(error);
                 }
-                handleEvent(SVNEventFactory.createStatusExternalEvent(wcAccess, externalPath), ISVNEventHandler.UNKNOWN);
-                setEventPathPrefix(externalPath);
-                try {
-                    doStatus(externalFile, recursive, remote, reportAll, includeIgnored, false, handler);
-                } catch (SVNException e) {
-                    // fire error event.
-                    if (e instanceof SVNCancelException) {
-                        throw e;
+                if (entry.getURL() == null) {
+                    SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "Entry ''{0}'' has no URL", info.getAnchor().getRoot());
+                    SVNErrorManager.error(error);
+                }
+                SVNURL url = entry.getSVNURL();
+                SVNRepository repository = createRepository(url, true);
+                long rev;
+                if (revision == SVNRevision.HEAD) {
+                    rev = -1;
+                } else {
+                    rev = getRevisionNumber(revision, repository, path);
+                }
+                SVNNodeKind kind = repository.checkPath("", rev);
+                checkCancelled();
+                if (kind == SVNNodeKind.NONE) {
+                    if (!entry.isScheduledForAddition()) {
+                        deletedInRepository[0] = true;
                     }
-                } finally {
+                    editor = new SVNStatusEditor(getOptions(), wcAccess, info, includeIgnored, reportAll, recursive, realHandler);
+                    editor.setExternals(externals);
+                    checkCancelled();
+                    editor.closeEdit();
+                } else {
+                    editor = new SVNRemoteStatusEditor(getOptions(), wcAccess, info, includeIgnored, reportAll, recursive, realHandler);
+                    editor.setExternals(externals);
+                    SVNRepository locksRepos = createRepository(url, false);
+                    checkCancelled();
+                    SVNReporter2 reporter = new SVNReporter2(info, path, false, recursive, getDebugLog());
+                    SVNStatusReporter statusReporter = new SVNStatusReporter(locksRepos, reporter, editor);
+                    String target = "".equals(info.getTargetName()) ? null : info.getTargetName();
+                    repository.status(rev, target, recursive, statusReporter, SVNCancellableEditor.newInstance((ISVNEditor) editor, getEventDispatcher(), getDebugLog()));
+                }
+                if (getEventDispatcher() != null) {
+                    SVNEvent event = SVNEventFactory.createStatusCompletedEvent(info, editor.getTargetRevision());
+                    getEventDispatcher().handleEvent(event, ISVNEventHandler.UNKNOWN);
+                }
+            } else {
+                editor = new SVNStatusEditor(getOptions(), wcAccess, info, includeIgnored, reportAll, recursive, handler);
+                editor.setExternals(externals);
+                editor.closeEdit();
+            }         
+            if (!isIgnoreExternals() && recursive) {
+                externals = editor.getExternals();
+                for (Iterator paths = externals.keySet().iterator(); paths.hasNext();) {
+                    String externalPath = (String) paths.next();
+                    File externalFile = info.getAnchor().getFile(externalPath);
+                    try {
+                        SVNAdminAreaFactory.checkWC(path);
+                    } catch (SVNException e) {
+                        continue;
+                    }
+                    handleEvent(SVNEventFactory.createStatusExternalEvent(info, externalPath), ISVNEventHandler.UNKNOWN);
                     setEventPathPrefix(externalPath);
+                    try {
+                        doStatus(externalFile, recursive, remote, reportAll, includeIgnored, false, handler);
+                    } catch (SVNException e) {
+                        if (e instanceof SVNCancelException) {
+                            throw e;
+                        }
+                    } finally {
+                        setEventPathPrefix(externalPath);
+                    }
                 }
             }
+        } finally {
+            wcAccess.close();
         }
-        return statusEditor.getTargetRevision();
+        return editor.getTargetRevision();        
     }
     
     /**
@@ -294,86 +318,52 @@ public class SVNStatusClient extends SVNBasicClient {
                 }
             }
         };
-        if (!remote) {
-            // faster status.
-            SVNWCAccess wcAccess = createWCAccess(path);
-            SVNStatusEditor statusEditor = new SVNStatusEditor(getOptions(),
-                                                               wcAccess, handler, new HashMap(), true, true, false);
-            String name = wcAccess.getTargetName();
-            if (wcAccess.getAnchor() != wcAccess.getTarget()) {
-                name = "";
-            }
-            if (collectParentExternals && path.isDirectory()) {
-                Map parentExternals = collectParentExternals(path, wcAccess.getAnchor() != wcAccess.getTarget());
-                SVNExternalInfo thisExternal = (SVNExternalInfo) parentExternals.remove("");
-                if (thisExternal != null) {
-                    handler.handleStatus(new SVNStatus(null, path, SVNNodeKind.DIR,
-                                                       SVNRevision.UNDEFINED, SVNRevision.UNDEFINED, null,
-                                                       null, SVNStatusType.STATUS_EXTERNAL,
-                                                       SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE,
-                                                       SVNStatusType.STATUS_NONE, false, false, false, null,
-                                                       null, null, null, null, SVNRevision.UNDEFINED, null,
-                                                       null, null));
-                }
-            }
-            statusEditor.reportStatus(wcAccess.getTarget(), name, false, false);
-            return result[0];
-        }
         doStatus(path, false, remote, true, true, collectParentExternals, handler);
         return result[0];
     }
 
-    private Map collectParentExternals(File path, boolean asTarget) throws SVNException {
+    private Map collectParentExternals(File path, File root) throws SVNException {
         Map externals = new HashMap();
-        if (path.isFile()) {
+        SVNFileType type = SVNFileType.getType(path);
+        if (type != SVNFileType.DIRECTORY) {
             return externals;
         }
-        // get non-real wc root, just last one with .svn directory in it
-        File wcRoot = path.getAbsoluteFile();
-        if (wcRoot.getParentFile() == null) {
-          return externals;
-        }
-        wcRoot = wcRoot.getParentFile().getAbsoluteFile();
-        if (wcRoot == null || !new File(wcRoot, SVNFileUtil.getAdminDirectoryName()).isDirectory()) {
-          // parent is not versioned.
-          return externals;
-        }
-        Stack dirs = new Stack();
-        String currentPath = path.getName();
-        String baseName = path.getName();
-        while(wcRoot.getParentFile() != null && new File(wcRoot.getParentFile(), SVNFileUtil.getAdminDirectoryName()).isDirectory()) {
-          dirs.push(currentPath);
-          currentPath = SVNPathUtil.append(wcRoot.getName(), currentPath);
-          wcRoot = wcRoot.getParentFile();
-        }
-        dirs.push(currentPath);
-
-        // now go back.
-        while(!dirs.isEmpty()) {
-          currentPath = (String) dirs.pop();
-          SVNProperties props = new SVNProperties(new File(wcRoot, SVNFileUtil.getAdminDirectoryName() + "/dir-props"), "");
-
-          String externalsProperty = props.getPropertyValue(SVNProperty.EXTERNALS);
-          if (externalsProperty != null) {
-            SVNExternalInfo[] infos = SVNWCAccess.parseExternals("", externalsProperty);
-            for (int i = 0; i < infos.length; i++) {
-                SVNExternalInfo info = infos[i];
-                String infoPath = info.getPath();
-                if (infoPath.equals(currentPath)) {
-                    info.setPath("");
-                    externals.put(info.getPath(), info);
-                } else if (infoPath.startsWith(currentPath + "/")) {
-                    info.setPath(infoPath.substring((currentPath + "/").length()));
-                    if (asTarget) {
-                        info.setPath(baseName + "/" + info.getPath());
-                    }
-                    externals.put(info.getPath(), info);
-                }
+        File target = path;
+        SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
+        while(true) {
+            path = path.getParentFile();
+            if (path == null) {
+                break;
             }
-
-          }
-          wcRoot = new File(wcRoot, SVNPathUtil.head(currentPath));
+            SVNAdminArea area = null;
+            try {
+                area = wcAccess.open(path, false, 0);
+            } catch (SVNException e) {
+                break;
+            }
+            try {
+                SVNVersionedProperties properties = area.getProperties("");
+                String external = properties.getPropertyValue(SVNProperty.EXTERNALS);
+                if (externals != null) {
+                    SVNExternalInfo[] infos = SVNWCAccess.parseExternals("", external);
+                    for (int i = 0; i < infos.length; i++) {
+                        // info's path is relative to path, we should make it relative to the root,
+                        // and only if it is child of the root.
+                        File ext = new File(path, infos[i].getPath());
+                        if (SVNPathUtil.isChildOf(target, ext)) {
+                            // put into the map - path relative to root is a key.
+                            String extPath = ext.getAbsolutePath().replace(File.separatorChar, '/');
+                            String rootPath = root.getAbsolutePath().replace(File.separatorChar, '/');
+                            String relativePath = extPath.substring(rootPath.length() + 1);
+                            externals.put(relativePath, infos[i]);
+                        }
+                    }
+                }
+            } finally {
+                wcAccess.closeAdminArea(path);
+            }
         }
         return externals;
     }
+
 }

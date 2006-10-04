@@ -115,8 +115,7 @@ public class SVNEventFactory {
         return event;
     }
 
-    public static SVNEvent createUpdateExternalEvent(SVNAdminAreaInfo info,
-            String path) {
+    public static SVNEvent createUpdateExternalEvent(SVNAdminAreaInfo info, String path) {
         SVNEvent event = new SVNEvent(info, null, null,
                 SVNEventAction.UPDATE_EXTERNAL, SVNNodeKind.DIR, -1, null,
                 null, null, null, null, null);
@@ -124,9 +123,8 @@ public class SVNEventFactory {
         return event;
     }
 
-    public static SVNEvent createStatusExternalEvent(SVNWCAccess source,
-            String path) {
-        SVNEvent event = new SVNEvent(source, null, null,
+    public static SVNEvent createStatusExternalEvent(SVNAdminAreaInfo info, String path) {
+        SVNEvent event = new SVNEvent(info, null, null,
                 SVNEventAction.STATUS_EXTERNAL, SVNNodeKind.DIR, -1, null, null, null,
                 null, null, null);
         event.setPath(path);
@@ -157,6 +155,11 @@ public class SVNEventFactory {
             long revision) {
         return new SVNEvent(source, source != null ? source.getTarget() : null,
                 "", SVNEventAction.STATUS_COMPLETED, SVNNodeKind.NONE, revision, null,
+                null, null, null, null, null);
+    }
+
+    public static SVNEvent createStatusCompletedEvent(SVNAdminAreaInfo info, long revision) {
+        return new SVNEvent(info, null, info.getTargetName(), SVNEventAction.STATUS_COMPLETED, SVNNodeKind.NONE, revision, null,
                 null, null, null, null, null);
     }
 

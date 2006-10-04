@@ -960,7 +960,33 @@ public abstract class SVNAdminArea {
         }
         SVNFileUtil.deleteAll(getAdminFile("tmp"), false);
         getWCAccess().closeAdminArea(getRoot());
-        
+    }
+    
+
+    public boolean hasTextConflict(String name) throws SVNException {
+        SVNEntry2 entry = getEntry(name, false);
+        if (entry == null || entry.getKind() != SVNNodeKind.FILE) {
+            return false;
+        }
+        boolean conflicted = false;
+        if (entry.getConflictNew() != null) {
+            conflicted = SVNFileType.getType(getFile(entry.getConflictNew())) == SVNFileType.FILE;
+        } 
+        if (!conflicted && entry.getConflictWorking() != null) {
+            conflicted = SVNFileType.getType(getFile(entry.getConflictWorking())) == SVNFileType.FILE;
+        }
+        if (!conflicted && entry.getConflictOld() != null) {
+            conflicted = SVNFileType.getType(getFile(entry.getConflictOld())) == SVNFileType.FILE;
+        }
+        return conflicted;
+    }
+
+    public boolean hasPropConflict(String name) throws SVNException {
+        SVNEntry2 entry = getEntry(name, false);
+        if (entry != null && entry.getPropRejectFile() != null) {
+            return SVNFileType.getType(getFile(entry.getPropRejectFile())) == SVNFileType.FILE;
+        }
+        return false;
     }
 
     public File getRoot() {
@@ -976,6 +1002,9 @@ public abstract class SVNAdminArea {
     }
 
     public File getFile(String name) {
+        if (name == null) {
+            return null;
+        }
         return new File(getRoot(), name);
     }
 

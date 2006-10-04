@@ -61,7 +61,7 @@ public class SVNEntry2 implements Comparable {
 
     public String getURL() {
         String url = (String)myAttributes.get(SVNProperty.URL);
-        if (url == null && !myAdminArea.getThisDirName().equals(myName)) {
+        if (url == null && myAdminArea != null && !myAdminArea.getThisDirName().equals(myName)) {
             SVNEntry2 rootEntry = null; 
             try {    
                 rootEntry = myAdminArea.getEntry(myAdminArea.getThisDirName(), true); 
@@ -92,7 +92,7 @@ public class SVNEntry2 implements Comparable {
 
     public long getRevision() {
         String revStr = (String)myAttributes.get(SVNProperty.REVISION);
-        if (revStr == null && !myAdminArea.getThisDirName().equals(myName)) {
+        if (revStr == null && myAdminArea != null && !myAdminArea.getThisDirName().equals(myName)) {
             SVNEntry2 rootEntry = null;
             try {
                 rootEntry = myAdminArea.getEntry(myAdminArea.getThisDirName(), true);
@@ -418,14 +418,6 @@ public class SVNEntry2 implements Comparable {
     public String[] getPresentProperties() {
         return (String[])myAttributes.get(SVNProperty.PRESENT_PROPS);
     }
-
-    public boolean hasProperties() throws SVNException {
-        return myAdminArea.hasProperties(myName);
-    }
-
-    public boolean hasPropertyModifications() throws SVNException {
-        return myAdminArea.hasPropModifications(myName);
-    }
     
     public void setHasProperties(boolean hasProps) {
         setAttributeValue(SVNProperty.HAS_PROPS, SVNProperty.toString(hasProps));
@@ -437,5 +429,9 @@ public class SVNEntry2 implements Comparable {
 
     public Map asMap() {
         return myAttributes;
+    }
+    
+    public SVNEntry2 copy() {
+        return new SVNEntry2(myAttributes, null, myName);
     }
 }
