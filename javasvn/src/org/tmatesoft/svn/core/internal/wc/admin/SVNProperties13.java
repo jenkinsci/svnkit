@@ -31,9 +31,8 @@ public class SVNProperties13 extends SVNVersionedProperties {
     }
 
     public String getPropertyValue(String name) throws SVNException {
-        String value = super.getPropertyValue(name);
-        if (value != null) {
-            return value;
+        if (getPropertiesMap() != null && getPropertiesMap().containsKey(name)) {
+            return (String) getPropertiesMap().get(name);
         }
         if (!isEmpty()) {
             Map props = loadProperties();

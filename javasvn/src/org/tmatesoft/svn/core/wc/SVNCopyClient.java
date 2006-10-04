@@ -48,7 +48,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNLog;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -440,7 +439,7 @@ public class SVNCopyClient extends SVNBasicClient {
             return doCopy(srcEntry.getSVNURL(), srcRevision, dstURL, false, failWhenDstExists, commitMessage);
         }
         SVNWCAccess2 wcAccess = createWCAccess();
-        SVNAdminArea adminArea = wcAccess.probeOpen(srcPath, false, SVNWCAccess2.INFINITE_DEPTH);
+		wcAccess.probeOpen(srcPath, false, SVNWCAccess2.INFINITE_DEPTH);
         
         SVNURL dstAnchorURL = dstURL.removePathTail();
         String dstTarget = SVNPathUtil.tail(dstURL.toString());
@@ -467,13 +466,6 @@ public class SVNCopyClient extends SVNBasicClient {
             return SVNCommitInfo.NULL;
         }
 
-        SVNAdminArea dirArea = null;
-        SVNFileType kind = SVNFileType.getType(srcPath);
-        if (kind == SVNFileType.DIRECTORY) {
-            dirArea = wcAccess.retrieve(srcPath);
-        } else {
-            dirArea = adminArea;
-        }
         Collection tmpFiles = null;
         SVNCommitInfo info = null;
         ISVNEditor commitEditor = null;

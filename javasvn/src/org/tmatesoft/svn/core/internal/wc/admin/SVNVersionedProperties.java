@@ -30,12 +30,7 @@ public abstract class SVNVersionedProperties {
     
     public abstract boolean containsProperty(String name) throws SVNException;
     
-    public String getPropertyValue(String name) throws SVNException {
-        if (myProperties != null && myProperties.containsKey(name)) {
-            return (String) myProperties.get(name);
-        }
-        return null;
-    }
+    public abstract String getPropertyValue(String name) throws SVNException;
 
     public boolean isModified() {
         return myIsModified;

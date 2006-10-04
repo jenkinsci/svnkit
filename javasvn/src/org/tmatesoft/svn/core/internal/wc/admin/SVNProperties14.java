@@ -54,9 +54,8 @@ public abstract class SVNProperties14 extends SVNVersionedProperties {
     }
 
     public String getPropertyValue(String name) throws SVNException {
-        String value = super.getPropertyValue(name);
-        if (value != null) {
-            return value;
+        if (getPropertiesMap() != null && getPropertiesMap().containsKey(name)) {
+            return (String) getPropertiesMap().get(name);
         }
 
         SVNEntry2 entry = myAdminArea.getEntry(myEntryName, true);
