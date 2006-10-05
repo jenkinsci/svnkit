@@ -284,12 +284,18 @@ public class DAVConnection {
         return myHttpConnection.request("MKCOL", path, null, (StringBuffer) null, 201, 0, null, null);
     }
     
-    public HTTPStatus doPutDiff(String repositoryPath, String path, InputStream data, long size) throws SVNException {        
+    public HTTPStatus doPutDiff(String repositoryPath, String path, InputStream data, long size, String baseChecksum, String textChecksum) throws SVNException {        
         HTTPHeader headers = new HTTPHeader();
         headers.setHeaderValue(HTTPHeader.CONTENT_TYPE_HEADER, "application/vnd.svn-svndiff");
         headers.setHeaderValue(HTTPHeader.CONTENT_LENGTH_HEADER, size + "");
         if (myLocks != null && myLocks.containsKey(repositoryPath)) {
             headers.setHeaderValue(HTTPHeader.IF_HEADER, "<" + repositoryPath + "> (<" + myLocks.get(repositoryPath) + ">)");
+        }
+        if (baseChecksum != null) {
+            headers.setHeaderValue(HTTPHeader.BASE_MD5, baseChecksum);
+        }
+        if (textChecksum != null) {
+            headers.setHeaderValue(HTTPHeader.TEXT_MD5, textChecksum);
         }
         return myHttpConnection.request("PUT", path, headers, data, 201, 204, null, null);
     }

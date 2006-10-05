@@ -38,6 +38,8 @@ public class HTTPHeader {
     public static final String CREATION_DATE_HEADER = "X-SVN-Creation-Date";
     public static final String SVN_VERSION_NAME_HEADER = "X-SVN-Version-Name";
     public static final String SVN_OPTIONS_HEADER = "X-SVN-Options";
+    public static final String TEXT_MD5 = "X-SVN-Result-Fulltext-MD5";
+    public static final String BASE_MD5 = "X-SVN-Base-Fulltext-MD5";
     public static final String LOCK_TOKEN_HEADER = "Lock-Token";
     public static final String IF_HEADER = "If";
     public static final String DEPTH_HEADER = "Depth";

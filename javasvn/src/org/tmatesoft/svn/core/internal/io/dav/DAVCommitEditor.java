@@ -53,6 +53,7 @@ class DAVCommitEditor implements ISVNEditor {
     private ISVNWorkspaceMediator myCommitMediator;
     private Map myPathsMap;
     private Map myFilesMap;
+    private String myBaseChecksum;
 
     public DAVCommitEditor(DAVRepository repository, DAVConnection connection, String message, ISVNWorkspaceMediator mediator, Runnable closeCallback) {
         myConnection = connection;
@@ -258,6 +259,7 @@ class DAVCommitEditor implements ISVNEditor {
         myCurrentDelta = null;
         myIsFirstWindow = true;
         myDeltaFile = null;
+        myBaseChecksum = baseChecksum;
     }
     
     private OutputStream myCurrentDelta = null;
@@ -303,8 +305,8 @@ class DAVCommitEditor implements ISVNEditor {
                 InputStream combinedData = null;
                 try {
                     combinedData = new HTTPBodyInputStream(myDeltaFile);
-                    //SVNFileUtil.openFileForReading(myDeltaFile);
-                    myConnection.doPutDiff(currentFile.getURL(), currentFile.getWorkingURL(), combinedData, myDeltaFile.length());
+                    myConnection.doPutDiff(currentFile.getURL(), currentFile.getWorkingURL(), combinedData, myDeltaFile.length(),
+                            myBaseChecksum, textChecksum);
                 } finally {
                     SVNFileUtil.closeFile(combinedData);
                     SVNFileUtil.deleteFile(myDeltaFile);
@@ -319,6 +321,7 @@ class DAVCommitEditor implements ISVNEditor {
         } finally {
             currentFile.dispose();
             myCurrentDelta = null;
+            myBaseChecksum = null;
             myFilesMap.remove(path);
         }
     }
