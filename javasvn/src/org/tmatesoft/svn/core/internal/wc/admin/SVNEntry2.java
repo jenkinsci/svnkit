@@ -301,6 +301,10 @@ public class SVNEntry2 implements Comparable {
         setAttributeValue(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_REPLACE);
     }
 
+    public void setSchedule(String schedule) {
+        setAttributeValue(SVNProperty.SCHEDULE, schedule);
+    }
+
     public void setCopyFromRevision(long revision) {
         setAttributeValue(SVNProperty.COPYFROM_REVISION, revision >= 0 ? Long.toString(revision) : null);
     }

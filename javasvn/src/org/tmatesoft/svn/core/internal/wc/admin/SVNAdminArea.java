@@ -841,7 +841,7 @@ public abstract class SVNAdminArea {
     public void foldScheduling(String name, String schedule) throws SVNException {
         SVNEntry2 entry = getEntry(name, true);
         
-        if (entry == null && schedule != SVNProperty.SCHEDULE_ADD) {
+        if (entry == null && !SVNProperty.SCHEDULE_ADD.equals(schedule)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_SCHEDULE_CONFLICT, "''{0}'' is not under version control", name); 
             SVNErrorManager.error(err);
         } else {

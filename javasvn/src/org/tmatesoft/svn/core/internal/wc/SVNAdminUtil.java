@@ -18,6 +18,7 @@ import java.io.OutputStream;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
 
 
 /**
@@ -29,7 +30,22 @@ public class SVNAdminUtil {
     private static final byte[] FORMAT_TEXT;
     private static final byte[] README_TEXT;
     private static final boolean SKIP_README;
+
+    private static final String BASE_EXT = ".svn-base";
+    private static final String REVERT_EXT = ".svn-revert";
+    private static final String WORK_EXT = ".svn-work";
     
+    private static final String TEXT_BASE_DIR_NAME = "text-base";
+    private static final String PROP_BASE_DIR_NAME = "prop-base";
+    private static final String PROP_WORK_DIR_NAME = "props";
+    private static final String PROP_WC_DIR_NAME = "wcprops";
+    private static final String TMP_DIR_NAME = "tmp";
+
+    private static final String DIR_PROPS_FILE = "dir-props";
+    private static final String DIR_BASE_PROPS_FILE = "dir-prop-base";
+    private static final String DIR_REVERT_PROPS_FILE = "dir-prop-revert";
+    private static final String DIR_WC_PROPS_FILE = "dir-wcprops";
+
     static {
         String eol = System.getProperty("line.separator");
         FORMAT_TEXT = new byte[] {'4', '\n'};
@@ -67,6 +83,110 @@ public class SVNAdminUtil {
             SVNFileUtil.closeFile(os);
         }
     }
+    
+    public static String getTextBasePath(String name, boolean tmp) {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(SVNFileUtil.getAdminDirectoryName());
+        buffer.append('/');
+        if (tmp) {
+            buffer.append(TMP_DIR_NAME);
+            buffer.append('/');
+        }
+        buffer.append(TEXT_BASE_DIR_NAME);
+        buffer.append('/');
+        buffer.append(name);
+        buffer.append(BASE_EXT);
+        return buffer.toString();
+    }
 
+    public static String getTextRevertPath(String name, boolean tmp) {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(SVNFileUtil.getAdminDirectoryName());
+        buffer.append('/');
+        if (tmp) {
+            buffer.append(TMP_DIR_NAME);
+            buffer.append('/');
+        }
+        buffer.append(TEXT_BASE_DIR_NAME);
+        buffer.append('/');
+        buffer.append(name);
+        buffer.append(REVERT_EXT);
+        return buffer.toString();
+    }
 
+    public static String getPropPath(String name, SVNNodeKind kind, boolean tmp) {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(SVNFileUtil.getAdminDirectoryName());
+        buffer.append('/');
+        if (tmp) {
+            buffer.append(TMP_DIR_NAME);
+            buffer.append('/');
+        }
+        if (kind == SVNNodeKind.DIR) {
+            buffer.append(DIR_PROPS_FILE);
+        } else {
+            buffer.append(PROP_WORK_DIR_NAME);
+            buffer.append('/');
+            buffer.append(name);
+            buffer.append(WORK_EXT);
+        }
+        return buffer.toString();
+    }
+
+    public static String getPropBasePath(String name, SVNNodeKind kind, boolean tmp) {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(SVNFileUtil.getAdminDirectoryName());
+        buffer.append('/');
+        if (tmp) {
+            buffer.append(TMP_DIR_NAME);
+            buffer.append('/');
+        }
+        if (kind == SVNNodeKind.DIR) {
+            buffer.append(DIR_BASE_PROPS_FILE);
+        } else {
+            buffer.append(PROP_BASE_DIR_NAME);
+            buffer.append('/');
+            buffer.append(name);
+            buffer.append(BASE_EXT);
+        }
+        return buffer.toString();
+    }
+    
+    public static String getPropRevertPath(String name, SVNNodeKind kind, boolean tmp) {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(SVNFileUtil.getAdminDirectoryName());
+        buffer.append('/');
+        if (tmp) {
+            buffer.append(TMP_DIR_NAME);
+            buffer.append('/');
+        }
+        if (kind == SVNNodeKind.DIR) {
+            buffer.append(DIR_REVERT_PROPS_FILE);
+        } else {
+            buffer.append(PROP_BASE_DIR_NAME);
+            buffer.append('/');
+            buffer.append(name);
+            buffer.append(REVERT_EXT);
+        }
+        return buffer.toString();
+    }
+
+    public static String getWCPropPath(String name, SVNNodeKind kind, boolean tmp) {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(SVNFileUtil.getAdminDirectoryName());
+        buffer.append('/');
+        if (tmp) {
+            buffer.append(TMP_DIR_NAME);
+            buffer.append('/');
+        }
+        if (kind == SVNNodeKind.DIR) {
+            buffer.append(DIR_WC_PROPS_FILE);
+        } else {
+            buffer.append(PROP_WC_DIR_NAME);
+            buffer.append('/');
+            buffer.append(name);
+            buffer.append(WORK_EXT);
+        }
+        return buffer.toString();
+    }
 }
