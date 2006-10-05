@@ -431,7 +431,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
     public boolean hasPropModifications(String name) throws SVNException {
         File propFile;
         File baseFile;
-        if ("".equals(name)) {
+        if (getThisDirName().equals(name)) {
             propFile = getAdminFile("dir-props");
             baseFile = getAdminFile("dir-prop-base");
         } else {
@@ -642,7 +642,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
     public boolean isVersioned() {
         if (getAdminDirectory().isDirectory() && myEntriesFile.canRead()) {
             try {
-                if (getEntry("", false) != null) {
+                if (getEntry(getThisDirName(), false) != null) {
                     return true;
                 }
             } catch (SVNException e) {
