@@ -1796,6 +1796,32 @@ public class SVNWCClient extends SVNBasicClient {
         });
         return result[0];
     }
+    
+    protected void canDelete(File path, boolean skipIgnored) throws SVNException {
+        SVNStatusClient statusClient = new SVNStatusClient((ISVNAuthenticationManager) null, getOptions());
+        statusClient.doStatus(path, SVNRevision.UNDEFINED, true, false, false, !skipIgnored, false, new ISVNStatusHandler() {
+            public void handleStatus(SVNStatus status) throws SVNException {
+                if (status.getContentsStatus() == SVNStatusType.STATUS_OBSTRUCTED) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNEXPECTED_KIND, "''{0}'' is in the way of the resource actually under version control", status.getFile());
+                    SVNErrorManager.error(err);
+                } else if (status.getEntry() == null) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", status.getFile());
+                    SVNErrorManager.error(err);
+                } else if ((status.getContentsStatus() != SVNStatusType.STATUS_NORMAL &&
+                        status.getContentsStatus() != SVNStatusType.STATUS_DELETED &&
+                        status.getContentsStatus() != SVNStatusType.STATUS_MISSING) ||
+                        (status.getPropertiesStatus() != SVNStatusType.STATUS_NONE &&
+                         status.getPropertiesStatus() != SVNStatusType.STATUS_NORMAL)) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_MODIFIED, "''{0}'' has local modifications", status.getFile());
+                    SVNErrorManager.error(err);
+                }
+            }
+        });
+    }
+    
+    private void doDelete(SVNWCAccess2 wcAccess, File path, boolean deleteFiles) throws SVNException {
+        SVNAdminArea dir = wcAccess.probeOpen(path, true, -1);
+    }
 
     private static void collectInfo(SVNDirectory dir, String name,
             boolean recursive, ISVNInfoHandler handler) throws SVNException {
