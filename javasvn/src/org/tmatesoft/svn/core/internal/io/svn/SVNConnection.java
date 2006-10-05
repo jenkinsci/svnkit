@@ -38,6 +38,7 @@ class SVNConnection {
     private OutputStream myOutputStream;
     private InputStream myInputStream;
     private SVNRepositoryImpl myRepository;
+    private boolean myIsSVNDiff1;
 
     private static final String SUCCESS = "success";
     private static final String FAILURE = "failure";
@@ -66,6 +67,10 @@ class SVNConnection {
     public String getRealm() {
         return myRealm;
     }
+    
+    public boolean isSVNDiff1() {
+        return myIsSVNDiff1;
+    }
 
     protected void handshake(SVNRepositoryImpl repository) throws SVNException {
         Object[] items = read("[(*N(*W)(*W))]", null);
@@ -74,6 +79,7 @@ class SVNConnection {
         } else if (!SVNReader.hasValue(items, 2, EDIT_PIPELINE)) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_BAD_VERSION, "Only servers with 'edit-pipeline' capability is supported"));
         }
+        myIsSVNDiff1 = SVNReader.hasValue(items, 2, SVNDIFF1);
         write("(n(www)s)", new Object[] { "2", EDIT_PIPELINE, SVNDIFF1, ABSENT_ENTRIES, 
                 repository.getLocation().toString() });
     }
