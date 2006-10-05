@@ -87,12 +87,12 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
         }
         SVNEntry2 entry = dir.getEntry(name, false);
         if (entry != null) {
-            tweakStatusHash(myDirectoryInfo, file, SVNStatusType.STATUS_DELETED, SVNStatusType.STATUS_NONE, null);
+            tweakStatusHash(myDirectoryInfo, null, file, SVNStatusType.STATUS_DELETED, SVNStatusType.STATUS_NONE, null);
         }
         if (myDirectoryInfo.myParent != null && !hasTarget()) {
-            tweakStatusHash(myDirectoryInfo.myParent, myDirectoryInfo.myPath, SVNStatusType.STATUS_MODIFIED, SVNStatusType.STATUS_NONE, null);
+            tweakStatusHash(myDirectoryInfo.myParent, myDirectoryInfo, myDirectoryInfo.myPath, SVNStatusType.STATUS_MODIFIED, SVNStatusType.STATUS_NONE, null);
         } else if (!hasTarget() && myDirectoryInfo.myParent == null) {
-            myAnchorStatus.setRemoteStatus(SVNStatusType.STATUS_MODIFIED, null, null, SVNNodeKind.DIR);
+            myDirectoryInfo.myIsContentsChanged = true;
         }
     }
 
@@ -133,7 +133,7 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
                 propertiesStatus = myDirectoryInfo.myIsPropertiesChanged ? SVNStatusType.STATUS_MODIFIED : SVNStatusType.STATUS_NONE;
             }
             if (parent != null) {
-                tweakStatusHash(parent, myDirectoryInfo.myPath, contentsStatus, propertiesStatus, null);
+                tweakStatusHash(parent, myDirectoryInfo, myDirectoryInfo.myPath, contentsStatus, propertiesStatus, null);
             }
         }
         if (parent != null && isDescend()) {
@@ -164,10 +164,8 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
                 }
             } else {
                 handleStatusHash(myAnchorStatus.getEntry(), myDirectoryInfo.myChildrenStatuses, false, isDescend());
-                // TODO tweak anchor status!
-                if (myDirectoryInfo != null && myDirectoryInfo.myParent == null &&
-                        myDirectoryInfo.myIsPropertiesChanged) {
-                    myAnchorStatus.setRemoteStatus(null, SVNStatusType.STATUS_MODIFIED, null, SVNNodeKind.DIR);
+                if (myDirectoryInfo != null && myDirectoryInfo.myParent == null) {
+                    tweakAnchorStatus(myDirectoryInfo);
                 }
                 if (isSendableStatus(myAnchorStatus)) {
                     getDefaultHandler().handleStatus(myAnchorStatus);
@@ -249,22 +247,6 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
     public void absentFile(String path) throws SVNException {
     }
     
-    private void tweakStatusHash(FileInfo fileInfo, File path, SVNStatusType text, SVNStatusType props, SVNLock lock) throws SVNException {
-        Map hash = fileInfo.myParent.myChildrenStatuses;
-        SVNStatus status = (SVNStatus) hash.get(fileInfo.myPath);
-        if (status == null) {
-            if (text != SVNStatusType.STATUS_ADDED) {
-                return;
-            }
-            status = createStatus(path);
-            hash.put(fileInfo.myPath, status);
-        }
-        if (text == SVNStatusType.STATUS_ADDED && status.getRemoteContentsStatus() == SVNStatusType.STATUS_DELETED) {
-            text = SVNStatusType.STATUS_REPLACED;
-        }
-        status.setRemoteStatus(fileInfo.myURL, text, props, lock, fileInfo.myRemoteKind, fileInfo.myRemoteRevision, fileInfo.myRemoteDate, fileInfo.myRemoteAuthor);
-    }
-    
     private void handleStatusHash(SVNEntry2 dirEntry, Map hash, boolean deleted, boolean descend) throws SVNException {
         ISVNStatusHandler handler = deleted ? this : getDefaultHandler();
         for(Iterator paths = hash.keySet().iterator(); paths.hasNext();) {
@@ -285,8 +267,24 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
             }
         }
     }
+    
+    private void tweakStatusHash(FileInfo fileInfo, File path, SVNStatusType text, SVNStatusType props, SVNLock lock) throws SVNException {
+        Map hash = fileInfo.myParent.myChildrenStatuses;
+        SVNStatus status = (SVNStatus) hash.get(fileInfo.myPath);
+        if (status == null) {
+            if (text != SVNStatusType.STATUS_ADDED) {
+                return;
+            }
+            status = createStatus(path);
+            hash.put(fileInfo.myPath, status);
+        }
+        if (text == SVNStatusType.STATUS_ADDED && status.getRemoteContentsStatus() == SVNStatusType.STATUS_DELETED) {
+            text = SVNStatusType.STATUS_REPLACED;
+        }
+        status.setRemoteStatus(fileInfo.myURL, text, props, lock, fileInfo.myRemoteKind, fileInfo.myRemoteRevision, fileInfo.myRemoteDate, fileInfo.myRemoteAuthor);
+    }
 
-    private void tweakStatusHash(DirectoryInfo dirInfo, File path, SVNStatusType text, SVNStatusType props, SVNLock lock) throws SVNException {
+    private void tweakStatusHash(DirectoryInfo dirInfo, DirectoryInfo childDir, File path, SVNStatusType text, SVNStatusType props, SVNLock lock) throws SVNException {
         Map hash = dirInfo.myChildrenStatuses;
         SVNStatus status = (SVNStatus) hash.get(path);
         if (status == null) {
@@ -302,8 +300,19 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
         if (text == SVNStatusType.STATUS_DELETED) {
             // remote kind is NONE because entry is deleted in repository.
             status.setRemoteStatus(dirInfo.myURL, text, props, lock, SVNNodeKind.NONE, null, null, null);
-        } else {
+        } else if (childDir == null) {
             status.setRemoteStatus(dirInfo.myURL, text, props, lock, dirInfo.myRemoteKind, dirInfo.myRemoteRevision, dirInfo.myRemoteDate, dirInfo.myRemoteAuthor);
+        } else {
+            status.setRemoteStatus(childDir.myURL, text, props, lock, childDir.myRemoteKind, childDir.myRemoteRevision, childDir.myRemoteDate, childDir.myRemoteAuthor);
+        }
+    }
+    
+    private void tweakAnchorStatus(DirectoryInfo anchorInfo) {
+        if (anchorInfo != null && (anchorInfo.myIsContentsChanged || anchorInfo.myIsPropertiesChanged)) {
+            SVNStatusType text = anchorInfo.myIsContentsChanged ? SVNStatusType.STATUS_MODIFIED : SVNStatusType.STATUS_NONE;
+            SVNStatusType props = anchorInfo.myIsPropertiesChanged ? SVNStatusType.STATUS_MODIFIED : SVNStatusType.STATUS_NONE;
+            myAnchorStatus.setRemoteStatus(myDirectoryInfo.myURL, text, props, null, SVNNodeKind.DIR,
+                    myDirectoryInfo.myRemoteRevision, myDirectoryInfo.myRemoteDate, myDirectoryInfo.myRemoteAuthor);
         }
     }
     
