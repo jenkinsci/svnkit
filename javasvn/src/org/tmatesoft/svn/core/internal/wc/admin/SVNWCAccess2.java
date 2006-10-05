@@ -234,6 +234,26 @@ public class SVNWCAccess2 implements ISVNEventHandler {
         return adminArea;
     }
     
+    public SVNAdminArea probeTry(File path, boolean writeLock, int depth) throws SVNException {
+        SVNAdminArea adminArea = null;
+        try {
+            adminArea = probeRetrieve(path);
+        } catch (SVNException svne) {
+            if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
+                try {
+                    adminArea = probeOpen(path, writeLock, depth);
+                } catch (SVNException svne2) {
+                    if (svne2.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_DIRECTORY) {
+                        throw svne2; 
+                    }
+                }
+            } else {
+                throw svne;
+            }
+        }
+        return adminArea;
+    }
+    
     public void close() throws SVNException {
         if (myAdminAreas != null) {
             doClose(myAdminAreas, false);
