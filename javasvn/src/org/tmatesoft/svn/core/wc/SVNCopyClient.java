@@ -859,25 +859,12 @@ public class SVNCopyClient extends SVNBasicClient {
         }
         // copy props, props base and text-base
         File srcTextBase = srcAccess.getAnchor().getBaseFile(srcAccess.getTargetName(), false);
-        SVNProperties srcProps = srcAccess.getAnchor().getProperties(srcAccess.getTargetName(), false);
-        boolean executable = srcProps.getPropertyValue(SVNProperty.EXECUTABLE) != null;
-        SVNProperties srcBaseProps = srcAccess.getAnchor().getBaseProperties(srcAccess.getTargetName(), false);
+	    File dstTextBase = dstAccess.getAnchor().getBaseFile(dstName, false);
+	    if (srcTextBase.exists()) {
+	        SVNFileUtil.copyFile(srcTextBase, dstTextBase, false);
+	    }
 
-        File dstTextBase = dstAccess.getAnchor().getBaseFile(dstName, false);
-        SVNProperties dstProps = dstAccess.getAnchor().getProperties(dstName, false);
-        SVNProperties dstBaseProps = srcAccess.getAnchor().getBaseProperties(dstName, false);
-        if (srcTextBase.exists()) {
-            SVNFileUtil.copyFile(srcTextBase, dstTextBase, false);
-        }
-        if (srcProps.getFile().exists()) {
-            srcProps.copyTo(dstProps);
-        }
-        if (srcBaseProps.getFile().exists()) {
-            srcBaseProps.copyTo(dstBaseProps);
-        }
-        if (executable) {
-            SVNFileUtil.setExecutable(dstPath, true);
-        }
+	    copyProperties(srcAccess, dstAccess, dstName);
         // and finally -> add.
         String copyFromURL = srcEntry.getURL();
         long copyFromRevision = srcEntry.getRevision();
@@ -890,8 +877,26 @@ public class SVNCopyClient extends SVNBasicClient {
         entry.scheduleForAddition();
         dstAccess.getAnchor().getEntries().save(true);
     }
-    
-    private void addDir(SVNDirectory dir, String name, String copyFromURL, long copyFromRev) throws SVNException {
+
+	public static void copyProperties(SVNWCAccess srcAccess, SVNWCAccess dstAccess, String dstName) throws SVNException {
+		SVNProperties srcProps = srcAccess.getAnchor().getProperties(srcAccess.getTargetName(), false);
+		boolean executable = srcProps.getPropertyValue(SVNProperty.EXECUTABLE) != null;
+		SVNProperties srcBaseProps = srcAccess.getAnchor().getBaseProperties(srcAccess.getTargetName(), false);
+
+		SVNProperties dstProps = dstAccess.getAnchor().getProperties(dstName, false);
+		SVNProperties dstBaseProps = srcAccess.getAnchor().getBaseProperties(dstName, false);
+		if (srcProps.getFile().exists()) {
+		    srcProps.copyTo(dstProps);
+		}
+		if (srcBaseProps.getFile().exists()) {
+		    srcBaseProps.copyTo(dstBaseProps);
+		}
+		if (executable) {
+		    SVNFileUtil.setExecutable(dstAccess.getAnchor().getFile(dstName), true);
+		}
+	}
+
+	private void addDir(SVNDirectory dir, String name, String copyFromURL, long copyFromRev) throws SVNException {
         SVNEntry entry = dir.getEntries().getEntry(name, true);
         if (entry == null) {
             entry = dir.getEntries().addEntry(name);
