@@ -159,7 +159,7 @@ public class SVNEventFactory {
     }
 
     public static SVNEvent createStatusCompletedEvent(SVNAdminAreaInfo info, long revision) {
-        return new SVNEvent(info, null, info.getTargetName(), SVNEventAction.STATUS_COMPLETED, SVNNodeKind.NONE, revision, null,
+        return new SVNEvent(info, info.getAnchor(), info.getTargetName(), SVNEventAction.STATUS_COMPLETED, SVNNodeKind.NONE, revision, null,
                 null, null, null, null, null);
     }
 

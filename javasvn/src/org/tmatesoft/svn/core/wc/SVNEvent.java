@@ -347,12 +347,9 @@ public class SVNEvent {
             return myName;
         }
         File file = getFile();
-        File root = myAdminAreaInfo != null ? myAdminAreaInfo.getAnchor().getRoot()
-                : myRootFile;
-        String rootPath = root.getAbsolutePath().replace(File.separatorChar,
-                '/');
-        String filePath = file.getAbsolutePath().replace(File.separatorChar,
-                '/');
+        File root = myAdminAreaInfo != null ? myAdminAreaInfo.getAnchor().getRoot() : myRootFile;
+        String rootPath = root.getAbsolutePath().replace(File.separatorChar, '/');
+        String filePath = file.getAbsolutePath().replace(File.separatorChar, '/');
         myPath = filePath.substring(rootPath.length());
         if (myPath.startsWith("/")) {
             myPath = myPath.substring(1);
@@ -367,8 +364,7 @@ public class SVNEvent {
      */
     public File getFile() {
         if (myRoot != null) {
-            return ("".equals(myName) || ".".equals(myName)) ? myRoot
-                    : new File(myRoot, myName);
+            return ("".equals(myName) || ".".equals(myName)) ? myRoot : new File(myRoot, myName);
         } else if (myAdminAreaInfo != null && getPath() != null) {
             return new File(myAdminAreaInfo.getAnchor().getRoot(), getPath());
         }
