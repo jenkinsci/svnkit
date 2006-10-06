@@ -298,8 +298,7 @@ public class SVNWCAccess implements ISVNEventHandler {
             return null;
         }
         Collection result = new ArrayList();
-        SVNExternalInfo[] parsed = parseExternals(directory.getPath(),
-                externals);
+        SVNExternalInfo[] parsed = parseExternals(directory.getPath(), externals);
         for (int i = 0; i < parsed.length; i++) {
             SVNExternalInfo info = addExternal(directory, parsed[i].getPath(),
                     parsed[i].getOldURL(), parsed[i].getOldRevision());

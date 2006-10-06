@@ -33,7 +33,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNRemoteStatusEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNStatusEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNStatusReporter;
-import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
@@ -345,7 +344,7 @@ public class SVNStatusClient extends SVNBasicClient {
                 SVNVersionedProperties properties = area.getProperties("");
                 String external = properties.getPropertyValue(SVNProperty.EXTERNALS);
                 if (externals != null) {
-                    SVNExternalInfo[] infos = SVNWCAccess.parseExternals("", external);
+                    SVNExternalInfo[] infos = SVNWCAccess2.parseExternals("", external);
                     for (int i = 0; i < infos.length; i++) {
                         // info's path is relative to path, we should make it relative to the root,
                         // and only if it is child of the root.

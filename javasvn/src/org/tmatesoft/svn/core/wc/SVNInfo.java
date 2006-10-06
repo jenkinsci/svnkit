@@ -20,7 +20,7 @@ import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNEntry;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
 
 /**
  * The <b>SVNInfo</b> class is a wrapper for versioned item's (located either
@@ -74,50 +74,29 @@ import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 public class SVNInfo {
 
     private File myFile;
-
     private String myPath;
-
     private SVNURL myURL;
-
     private SVNRevision myRevision;
-
     private SVNNodeKind myKind;
-
     private SVNURL myRepositoryRootURL;
-
     private String myRepositoryUUID;
-
     private SVNRevision myCommittedRevision;
-
     private Date myCommittedDate;
-
     private String myAuthor;
-
     private SVNLock myLock;
-
     private boolean myIsRemote;
-
     private String mySchedule;
-
     private SVNURL myCopyFromURL;
-
     private SVNRevision myCopyFromRevision;
-
     private Date myTextTime;
-
     private Date myPropTime;
-
     private String myChecksum;
-
     private File myConflictOldFile;
-
     private File myConflictNewFile;
-
     private File myConflictWrkFile;
-
     private File myPropConflictFile;
 
-    static SVNInfo createInfo(File file, SVNEntry entry) throws SVNException {
+    static SVNInfo createInfo(File file, SVNEntry2 entry) throws SVNException {
         if (entry == null) {
             return null;
         }

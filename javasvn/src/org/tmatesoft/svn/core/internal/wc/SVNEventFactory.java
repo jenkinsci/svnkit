@@ -69,9 +69,9 @@ public class SVNEventFactory {
                 SVNStatusType.LOCK_INAPPLICABLE, null, null);
     }
 
-    public static SVNEvent createLockEvent(SVNWCAccess source, String path,
+    public static SVNEvent createLockEvent(SVNAdminArea dir, String path,
             SVNEventAction action, SVNLock lock, SVNErrorMessage message) {
-        SVNEvent event = new SVNEvent(source, null, SVNPathUtil.tail(path), action, SVNNodeKind.FILE, -1, null, null, null, null, lock, message);
+        SVNEvent event = new SVNEvent(null, dir, SVNPathUtil.tail(path), action, SVNNodeKind.FILE, -1, null, null, null, null, lock, message);
         event.setPath(path);
         return event;
     }

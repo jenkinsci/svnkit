@@ -1252,86 +1252,48 @@ public class SVNWCClient extends SVNBasicClient {
      */
     public void doLock(File[] paths, boolean stealLock, String lockMessage) throws SVNException {
         final Map entriesMap = new HashMap();
-        for (int i = 0; i < paths.length; i++) {
-            SVNWCAccess wcAccess = createWCAccess(paths[i]);
-            try {
-                wcAccess.open(false, false);
-                SVNEntry entry = wcAccess.getTargetEntry();
-                if (entry == null || entry.isHidden()) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", wcAccess.getTargetName());
-                    SVNErrorManager.error(err);
-                }
-                if (entry.getURL() == null) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", wcAccess.getTargetName());
-                    SVNErrorManager.error(err);
-                }
-                SVNRevision revision = stealLock ? SVNRevision.UNDEFINED : SVNRevision.create(entry.getRevision());
-                entriesMap.put(entry.getSVNURL(), new LockInfo(paths[i], revision));
-            } finally {
-                wcAccess.close(false);
-            }
-        }
-        checkCancelled();
-        SVNURL[] urls = (SVNURL[]) entriesMap.keySet().toArray(new SVNURL[entriesMap.size()]);
-        Collection urlPaths = new HashSet();
-        final SVNURL topURL = SVNURLUtil.condenceURLs(urls, urlPaths, false);
-        if (urlPaths.isEmpty()) {
-            urlPaths.add("");
-        }
-        if (topURL == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Paths belongs to different repositories");
-            SVNErrorManager.error(err);
-        }
-        // convert encoded paths to path->revision map.
         Map pathsRevisionsMap = new HashMap();
-        for(Iterator encodedPaths = urlPaths. iterator(); encodedPaths.hasNext();) {
-            String encodedPath = (String) encodedPaths.next();
-            // get LockInfo for it.
-            SVNURL fullURL = topURL.appendPath(encodedPath, true);
-            LockInfo lockInfo = (LockInfo) entriesMap.get(fullURL);
-            encodedPath = SVNEncodingUtil.uriDecode(encodedPath);
-            if (lockInfo.myRevision == SVNRevision.UNDEFINED) {
-                pathsRevisionsMap.put(encodedPath, null);
-            } else {
-                pathsRevisionsMap.put(encodedPath, new Long(lockInfo.myRevision.getNumber()));
-            }
-        }
-        SVNRepository repository = createRepository(topURL, true);
-        final SVNURL rootURL = repository.getRepositoryRoot(true);
-        repository.lock(pathsRevisionsMap, lockMessage, stealLock, new ISVNLockHandler() {
-            public void handleLock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
-                SVNURL fullURL = rootURL.appendPath(path, false);
-                LockInfo lockInfo = (LockInfo) entriesMap.get(fullURL);
-                SVNWCAccess wcAccess = createWCAccess(lockInfo.myFile);
-                if (error == null) {
-                    try {
-                        wcAccess.open(true, false);
-                        SVNEntry entry = wcAccess.getTargetEntry();
+        final SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
+        try {
+            final SVNURL topURL = collectLockInfo(wcAccess, paths, entriesMap, pathsRevisionsMap, true, stealLock);
+            SVNRepository repository = createRepository(topURL, true);
+            final SVNURL rootURL = repository.getRepositoryRoot(true);
+    
+            repository.lock(pathsRevisionsMap, lockMessage, stealLock, new ISVNLockHandler() {
+                public void handleLock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
+                    SVNURL fullURL = rootURL.appendPath(path, false);
+                    LockInfo lockInfo = (LockInfo) entriesMap.get(fullURL);
+                    SVNAdminArea dir = wcAccess.probeRetrieve(lockInfo.myFile);
+                    if (error == null) {
+                        SVNEntry2 entry = wcAccess.getEntry(lockInfo.myFile, false);
+                        if (entry == null) {
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", lockInfo.myFile);
+                            SVNErrorManager.error(err);
+                        }
                         entry.setLockToken(lock.getID());
                         entry.setLockComment(lock.getComment());
                         entry.setLockOwner(lock.getOwner());
                         entry.setLockCreationDate(SVNTimeUtil.formatDate(lock.getCreationDate()));
-                        if (wcAccess.getAnchor().getProperties(entry.getName(), false).getPropertyValue(SVNProperty.NEEDS_LOCK) != null) {
-                            SVNFileUtil.setReadonly(wcAccess.getAnchor().getFile(entry.getName()), false);
+                        // get properties and values.
+                        SVNVersionedProperties props = dir.getProperties(entry.getName());
+                        
+                        if (props.getPropertyValue(SVNProperty.NEEDS_LOCK) != null) {
+                            SVNFileUtil.setReadonly(dir.getFile(entry.getName()), false);
                         }
-                        if (wcAccess.getAnchor().getProperties(entry.getName(), false).getPropertyValue(SVNProperty.EXECUTABLE) != null) {
-                            SVNFileUtil.setExecutable(wcAccess.getAnchor().getFile(entry.getName()), true);
-                        }
-                        wcAccess.getAnchor().getEntries().save(true);
-                        wcAccess.getAnchor().getEntries().close();
-                        handleEvent(SVNEventFactory.createLockEvent(wcAccess, wcAccess.getTargetName(), SVNEventAction.LOCKED, lock, null),
+                        dir.saveEntries(false);
+                        handleEvent(SVNEventFactory.createLockEvent(dir, entry.getName(), SVNEventAction.LOCKED, lock, null),
                                 ISVNEventHandler.UNKNOWN);
-                    } finally {
-                        wcAccess.close(true);
+                    } else {
+                        handleEvent(SVNEventFactory.createLockEvent(dir, lockInfo.myFile.getName(), SVNEventAction.LOCK_FAILED, lock, error), 
+                                ISVNEventHandler.UNKNOWN);
                     }
-                } else {
-                    handleEvent(SVNEventFactory.createLockEvent(wcAccess, wcAccess.getTargetName(), SVNEventAction.LOCK_FAILED, lock, error), 
-                            ISVNEventHandler.UNKNOWN);
                 }
-            }
-            public void handleUnlock(String path, SVNLock lock, SVNErrorMessage error) {
-            }
-        });
+                public void handleUnlock(String path, SVNLock lock, SVNErrorMessage error) {
+                }
+            });
+        } finally {
+            wcAccess.close();
+        }
     }
     
     /**
@@ -1393,83 +1355,50 @@ public class SVNWCClient extends SVNBasicClient {
      */
     public void doUnlock(File[] paths, boolean breakLock) throws SVNException {
         final Map entriesMap = new HashMap();
-        for (int i = 0; i < paths.length; i++) {
-            SVNWCAccess wcAccess = createWCAccess(paths[i]);
-            try {
-                wcAccess.open(true, false);
-                SVNEntry entry = wcAccess.getTargetEntry();
-                if (entry == null) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", paths[i]);
-                    SVNErrorManager.error(err);
-                }
-                if (entry.getURL() == null) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", paths[i]);
-                    SVNErrorManager.error(err);
-                }
-                String lockToken = entry.getLockToken();
-                if (!breakLock && lockToken == null) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_MISSING_LOCK_TOKEN, "''{0}'' is not locked", paths[i]);
-                    SVNErrorManager.error(err);
-                }
-                entriesMap.put(entry.getSVNURL(),  new LockInfo(paths[i], lockToken));
-                wcAccess.getAnchor().getEntries().close();
-            } finally {
-                wcAccess.close(true);
-            }
-        }
-        SVNURL[] urls = (SVNURL[]) entriesMap.keySet().toArray(new SVNURL[entriesMap.size()]);
-        Collection urlPaths = new HashSet();
-        final SVNURL topURL = SVNURLUtil.condenceURLs(urls, urlPaths, false);
-        if (urlPaths.isEmpty()) {
-            urlPaths.add("");
-        }
-        if (topURL == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Paths belong to different repositories");
-            SVNErrorManager.error(err);
-        }
         Map pathsTokensMap = new HashMap();
-        for(Iterator encodedPaths = urlPaths. iterator(); encodedPaths.hasNext();) {
-            String encodedPath = (String) encodedPaths.next();
-            SVNURL fullURL = topURL.appendPath(encodedPath, true);
-            LockInfo lockInfo = (LockInfo) entriesMap.get(fullURL);
-            encodedPath = SVNEncodingUtil.uriDecode(encodedPath);
-            pathsTokensMap.put(encodedPath, lockInfo.myToken);
-        }
-        checkCancelled();
-        SVNRepository repository = createRepository(topURL, true);
-        final SVNURL rootURL = repository.getRepositoryRoot(true);
-        repository.unlock(pathsTokensMap, breakLock, new ISVNLockHandler() {
-            public void handleLock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
-            }
-            public void handleUnlock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
-                SVNURL fullURL = rootURL.appendPath(path, false);
-                LockInfo lockInfo = (LockInfo) entriesMap.get(fullURL);
-                SVNWCAccess wcAccess = createWCAccess(lockInfo.myFile);
-                if (error != null) {
-                    handleEvent(SVNEventFactory.createLockEvent(wcAccess, wcAccess.getTargetName(), SVNEventAction.UNLOCK_FAILED, null, error), ISVNEventHandler.UNKNOWN);
+        final SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
+        try {
+            final SVNURL topURL = collectLockInfo(wcAccess, paths, entriesMap, pathsTokensMap, false, breakLock);
+            checkCancelled();
+            SVNRepository repository = createRepository(topURL, true);
+            final SVNURL rootURL = repository.getRepositoryRoot(true);
+            repository.unlock(pathsTokensMap, breakLock, new ISVNLockHandler() {
+                public void handleLock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
                 }
-                if (lock != null) {
-                    try {
-                        wcAccess.open(true, false);
-                        SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry(
-                                wcAccess.getTargetName(), true);
+                public void handleUnlock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
+                    SVNURL fullURL = rootURL.appendPath(path, false);
+                    LockInfo lockInfo = (LockInfo) entriesMap.get(fullURL);
+                    SVNEventAction action = null;
+                    SVNAdminArea dir = wcAccess.probeRetrieve(lockInfo.myFile);
+                    if (error == null || (error != null && error.getErrorCode() != SVNErrorCode.FS_LOCK_OWNER_MISMATCH)) {
+                        SVNEntry2 entry = wcAccess.getEntry(lockInfo.myFile, false);
+                        if (entry == null) {
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", lockInfo.myFile);
+                            SVNErrorManager.error(err);
+                        }
                         entry.setLockToken(null);
                         entry.setLockComment(null);
                         entry.setLockOwner(null);
                         entry.setLockCreationDate(null);
-                        wcAccess.getAnchor().getEntries().save(true);
-                        wcAccess.getAnchor().getEntries().close();
-                        if (wcAccess.getAnchor().getProperties(entry.getName(), false).getPropertyValue(SVNProperty.NEEDS_LOCK) != null) {
-                            SVNFileUtil.setReadonly(wcAccess.getAnchor().getFile(entry.getName()), true);
+                        
+                        SVNVersionedProperties props = dir.getProperties(entry.getName());
+                        
+                        if (props.getPropertyValue(SVNProperty.NEEDS_LOCK) != null) {
+                            SVNFileUtil.setReadonly(dir.getFile(entry.getName()), true);
                         }
-                        handleEvent(SVNEventFactory.createLockEvent(wcAccess, wcAccess.getTargetName(), SVNEventAction.UNLOCKED, lock, null),
-                                ISVNEventHandler.UNKNOWN);
-                    } finally {
-                        wcAccess.close(true);
+                        dir.saveEntries(false);
+                        action = SVNEventAction.UNLOCKED;
+                    } else if (error != null) {
+                        action = SVNEventAction.UNLOCK_FAILED;
+                    }
+                    if (action != null) {
+                      handleEvent(SVNEventFactory.createLockEvent(dir, lockInfo.myFile.getName(), action, lock, error), ISVNEventHandler.UNKNOWN);
                     }
                 }
-            }
-        });
+            });
+        } finally {
+            wcAccess.close();
+        }
     }
 
     /**
@@ -1511,6 +1440,84 @@ public class SVNWCClient extends SVNBasicClient {
                 }
             }
         });
+    }
+
+    private SVNURL collectLockInfo(SVNWCAccess2 wcAccess, File[] files, Map lockInfo, Map lockPaths, boolean lock, boolean stealLock) throws SVNException {
+        String[] paths = new String[files.length];
+        for(int i = 0; i < files.length; i++) {
+            paths[i] = files[i].getAbsolutePath();
+            paths[i] = paths[i].replace(File.separatorChar, '/');
+        }
+        Collection condencedPaths = new ArrayList();
+        String commonParentPath = SVNPathUtil.condencePaths(paths, condencedPaths, false);
+        if (condencedPaths.isEmpty()) {
+            condencedPaths.add(SVNPathUtil.tail(commonParentPath));
+            commonParentPath = SVNPathUtil.removeTail(commonParentPath);
+        }
+        if (commonParentPath == null || "".equals(commonParentPath)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "No common parent found, unable to operate on dijoint arguments");
+            SVNErrorManager.error(err);
+        }
+        paths = (String[]) condencedPaths.toArray(new String[condencedPaths.size()]);
+        int depth = 0;
+        for (int i = 0; i < paths.length; i++) {
+            int segments = SVNPathUtil.getSegmentsCount(paths[i]);
+            if (depth < segments) {
+                depth = segments;
+            }
+        }
+        wcAccess.probeOpen(new File(commonParentPath), true, depth);
+        for (int i = 0; i < paths.length; i++) {
+            File file = new File(commonParentPath, paths[i]);
+            SVNEntry2 entry = wcAccess.getEntry(file, false);
+            if (entry == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", file);
+                SVNErrorManager.error(err);
+            }
+            if (entry.getURL() == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", file);
+                SVNErrorManager.error(err);
+            }
+            if (lock) {
+                SVNRevision revision = stealLock ? SVNRevision.UNDEFINED : SVNRevision.create(entry.getRevision());
+                lockInfo.put(entry.getSVNURL(), new LockInfo(file, revision));
+            } else {
+                if (!stealLock && entry.getLockToken() == null) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_MISSING_LOCK_TOKEN, "''{0}'' is not locked in this working copy", file);
+                    SVNErrorManager.error(err);
+                }
+                lockInfo.put(entry.getSVNURL(), new LockInfo(file, entry.getLockToken()));
+            }
+        }
+        checkCancelled();
+        SVNURL[] urls = (SVNURL[]) lockInfo.keySet().toArray(new SVNURL[lockInfo.size()]);
+        Collection urlPaths = new HashSet();
+        final SVNURL topURL = SVNURLUtil.condenceURLs(urls, urlPaths, false);
+        if (urlPaths.isEmpty()) {
+            urlPaths.add("");
+        }
+        if (topURL == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Unable to lock/unlock across multiple repositories");
+            SVNErrorManager.error(err);
+        }
+        // prepare Map for SVNRepository (decoded path : revision/lock token).
+        for(Iterator encodedPaths = urlPaths. iterator(); encodedPaths.hasNext();) {
+            String encodedPath = (String) encodedPaths.next();
+            // get LockInfo for it.
+            SVNURL fullURL = topURL.appendPath(encodedPath, true);
+            LockInfo info = (LockInfo) lockInfo.get(fullURL);
+            encodedPath = SVNEncodingUtil.uriDecode(encodedPath);
+            if (lock) {
+                if (info.myRevision == SVNRevision.UNDEFINED) {
+                    lockPaths.put(encodedPath, null);
+                } else {
+                    lockPaths.put(encodedPath, new Long(info.myRevision.getNumber()));
+                }
+            } else {
+                lockPaths.put(encodedPath, info.myToken);
+            }
+        }
+        return topURL;
     }
     
     /**
@@ -1579,14 +1586,14 @@ public class SVNWCClient extends SVNBasicClient {
             (pegRevision == null || !pegRevision.isValid() || pegRevision.isLocal());
         
         if (!local) {
-            SVNWCAccess wcAccess = createWCAccess(path);
+            SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
             SVNRevision wcRevision = null;
             SVNURL url = null;
             try {
-                wcAccess.open(false, false);
-                SVNEntry entry = wcAccess.getTargetEntry();
+                wcAccess.probeOpen(path, false, 0);
+                SVNEntry2 entry = wcAccess.getEntry(path, false);
                 if (entry == null) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", path);
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", path);
                     SVNErrorManager.error(err);
                 }
                 url = entry.getSVNURL();
@@ -1596,18 +1603,56 @@ public class SVNWCClient extends SVNBasicClient {
                 }
                 wcRevision = SVNRevision.create(entry.getRevision());
             } finally {
-                wcAccess.close(false);
+                wcAccess.close();
             }
             doInfo(url, pegRevision == null || !pegRevision.isValid() || pegRevision.isLocal() ? wcRevision : pegRevision, revision, recursive, handler);
             return;
         }
-        SVNWCAccess wcAccess = createWCAccess(path);
+        SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
         try {
-            wcAccess.open(false, recursive);
-            collectInfo(wcAccess.getAnchor(), wcAccess.getTargetName(),
-                    recursive, handler);
+            wcAccess.probeOpen(path, false, recursive ? SVNWCAccess2.INFINITE_DEPTH : 0);
+            SVNEntry2 entry = wcAccess.getEntry(path, false);
+            if (entry == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "Cannot read entry for ''{0}''", path);
+                SVNErrorManager.error(err);
+            }
+            if (entry.isFile()) {
+                reportEntry(path, entry, handler);
+            } else if (entry.isDirectory()) {
+                if (recursive) {
+                    reportAllEntries(wcAccess, path, handler);
+                } else {
+                    reportEntry(path, entry, handler);
+                }
+            }
         } finally {
-            wcAccess.close(false);
+            wcAccess.close();
+        }
+    }
+    
+    private void reportEntry(File path, SVNEntry2 entry, ISVNInfoHandler handler) throws SVNException {
+        if (entry.isDirectory() && !"".equals(entry.getName())) {
+            return;
+        }
+        handler.handleInfo(SVNInfo.createInfo(path, entry));
+    }
+
+    private void reportAllEntries(SVNWCAccess2 wcAccess, File path, ISVNInfoHandler handler) throws SVNException {
+        SVNEntry2 entry = wcAccess.getEntry(path, false);
+        reportEntry(path, entry, handler);
+        if (entry.isDirectory()) {
+            SVNAdminArea dir = wcAccess.retrieve(path);
+            for(Iterator entries = dir.entries(false); entries.hasNext();) {
+                SVNEntry2 childEntry = (SVNEntry2) entries.next();
+                if (dir.getThisDirName().equals(childEntry.getName())) {
+                    continue;
+                }
+                File childPath = dir.getFile(childEntry.getName());
+                if (childEntry.isDirectory()) {
+                    reportAllEntries(wcAccess, childPath, handler);
+                }
+                reportEntry(childPath, childEntry, handler);
+            }
         }
     }
     
@@ -1628,8 +1673,7 @@ public class SVNWCClient extends SVNBasicClient {
      * @see                     #doInfo(SVNURL, SVNRevision, SVNRevision)
      * @see                     #doInfo(File, SVNRevision, boolean, ISVNInfoHandler)
      */
-    public void doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNInfoHandler handler)
-            throws SVNException {
+    public void doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNInfoHandler handler) throws SVNException {
         if (revision == null || !revision.isValid()) {
             revision = SVNRevision.HEAD;
         }
@@ -1764,8 +1808,9 @@ public class SVNWCClient extends SVNBasicClient {
      *                         even exported
      */
     public String doGetWorkingCopyID(final File path, String trailURL) throws SVNException {
+        SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
         try {
-            createWCAccess(path);
+            wcAccess.probeOpen(path, false, 0);
         } catch (SVNException e) {            
             SVNFileType pathType = SVNFileType.getType(path);
             if (pathType == SVNFileType.DIRECTORY) {
@@ -1773,6 +1818,8 @@ public class SVNWCClient extends SVNBasicClient {
             } 
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "''{0}'' is not versioned and not exported", path);
             SVNErrorManager.error(err);
+        } finally {
+            wcAccess.close();
         }
         SVNStatusClient statusClient = new SVNStatusClient((ISVNAuthenticationManager) null, getOptions());
         statusClient.setIgnoreExternals(true);
@@ -2054,60 +2101,10 @@ public class SVNWCClient extends SVNBasicClient {
         dir.saveEntries(false);
     }
 
-    private static void collectInfo(SVNDirectory dir, String name,
-            boolean recursive, ISVNInfoHandler handler) throws SVNException {
-        SVNEntries entries = dir.getEntries();
-        SVNEntry entry = entries.getEntry(name, false);
-        dir.getWCAccess().checkCancelled();
-        try {
-            if (entry != null) {
-                if (entry.isFile()) {
-                    // child file
-                    File file = dir.getFile(name);
-                    handler.handleInfo(SVNInfo.createInfo(file, entry));
-                    return;
-                } else if (entry.isDirectory() && !"".equals(name)) {
-                    // child dir
-                    dir = dir.getChildDirectory(name);
-                    if (dir != null) {
-                        collectInfo(dir, "", recursive, handler);
-                    }
-                    return;
-                } else if ("".equals(name)) {
-                    // report root.
-                    handler
-                            .handleInfo(SVNInfo
-                                    .createInfo(dir.getRoot(), entry));
-                }
-
-                if (recursive) {
-                    for (Iterator ents = entries.entries(true); ents.hasNext();) {
-                        SVNEntry childEntry = (SVNEntry) ents.next();
-                        if ("".equals(childEntry.getName())) {
-                            continue;
-                        }
-                        if (childEntry.isDirectory()) {
-                            SVNDirectory childDir = dir
-                                    .getChildDirectory(childEntry.getName());
-                            if (childDir != null) {
-                                collectInfo(childDir, "", recursive, handler);
-                            }
-                        } else if (childEntry.isFile()) {
-                            handler.handleInfo(SVNInfo.createInfo(dir.getFile(childEntry.getName()), childEntry));
-                        }
-                    }
-                }
-            }
-        } finally {
-            entries.close();
-        }
-
-    }
 
     private void collectInfo(SVNRepository repos, SVNDirEntry entry,
             SVNRevision rev, String path, SVNURL root, String uuid, SVNURL url,
-            Map locks, boolean recursive, ISVNInfoHandler handler)
-            throws SVNException {
+            Map locks, boolean recursive, ISVNInfoHandler handler) throws SVNException {
         checkCancelled();
         String displayPath = repos.getFullPath(path);
         displayPath = displayPath.substring(repos.getLocation().getPath().length());
@@ -2116,14 +2113,11 @@ public class SVNWCClient extends SVNBasicClient {
         }
         handler.handleInfo(SVNInfo.createInfo(displayPath, root, uuid, url, rev, entry, (SVNLock) locks.get(path)));
         if (entry.getKind() == SVNNodeKind.DIR && recursive) {
-            Collection children = repos.getDir(path, rev.getNumber(), null,
-                    new ArrayList());
+            Collection children = repos.getDir(path, rev.getNumber(), null, new ArrayList());
             for (Iterator ents = children.iterator(); ents.hasNext();) {
                 SVNDirEntry child = (SVNDirEntry) ents.next();
                 SVNURL childURL = url.appendPath(child.getName(), false);
-                collectInfo(repos, child, rev, SVNPathUtil.append(path, child
-                        .getName()), root, uuid, childURL, locks, recursive,
-                        handler);
+                collectInfo(repos, child, rev, SVNPathUtil.append(path, child.getName()), root, uuid, childURL, locks, recursive, handler);
             }
         }
     }
@@ -2525,7 +2519,7 @@ public class SVNWCClient extends SVNBasicClient {
                 value += "\n";
             }
             if (SVNProperty.EXTERNALS.equals(name)) {
-                SVNExternalInfo[] externalInfos = SVNWCAccess.parseExternals("", value);
+                SVNExternalInfo[] externalInfos = SVNWCAccess2.parseExternals("", value);
                 for (int i = 0; externalInfos != null && i < externalInfos.length; i++) {
                     String path = externalInfos[i].getPath();
                     SVNExternalInfo.checkPath(path);

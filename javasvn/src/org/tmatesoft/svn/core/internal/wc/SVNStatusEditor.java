@@ -139,7 +139,7 @@ public class SVNStatusEditor {
 
         String externals = dir.getProperties("").getPropertyValue(SVNProperty.EXTERNALS);
         if (externals != null) {
-            SVNExternalInfo[] externalsInfo = SVNWCAccess.parseExternals(dir.getRelativePath(myAdminInfo.getAnchor()), externals);
+            SVNExternalInfo[] externalsInfo = SVNWCAccess2.parseExternals(dir.getRelativePath(myAdminInfo.getAnchor()), externals);
             for (int i = 0; i < externalsInfo.length; i++) {
                 SVNExternalInfo external = externalsInfo[i];
                 myExternalsMap.put(external.getPath(), external);

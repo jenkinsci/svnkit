@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
 
 /**
  * The <b>SVNWCUtil</b> is a utility class providing some common methods 
@@ -335,7 +336,7 @@ public class SVNWCUtil {
                     SVNWCAccess parentAccess = SVNWCAccess.create(parent);
                     SVNProperties props = parentAccess.getTarget()
                             .getProperties("", false);
-                    SVNExternalInfo[] externals = SVNWCAccess.parseExternals(
+                    SVNExternalInfo[] externals = SVNWCAccess2.parseExternals(
                             "", props.getPropertyValue(SVNProperty.EXTERNALS));
                     // now externals could point to our dir.
                     for (int i = 0; i < externals.length; i++) {

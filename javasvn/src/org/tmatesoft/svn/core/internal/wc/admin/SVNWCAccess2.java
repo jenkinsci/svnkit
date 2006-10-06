@@ -12,9 +12,13 @@
 package org.tmatesoft.svn.core.internal.wc.admin;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -26,6 +30,7 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
@@ -485,6 +490,78 @@ public class SVNWCAccess2 implements ISVNEventHandler {
         }
         return adminArea;
     }
+
+    public static SVNExternalInfo[] parseExternals(String rootPath, String externals) {
+        Collection result = new ArrayList();
+        if (externals == null) {
+            return (SVNExternalInfo[]) result.toArray(new SVNExternalInfo[result.size()]);
+        }
+
+        for (StringTokenizer lines = new StringTokenizer(externals, "\n\r"); lines.hasMoreTokens();) {
+            String line = lines.nextToken().trim();
+            if (line.length() == 0 || line.startsWith("#")) {
+                continue;
+            }
+            String url = null;
+            String path;
+            long rev = -1;
+            List parts = new ArrayList(4);
+            for (StringTokenizer tokens = new StringTokenizer(line, " \t"); tokens
+                    .hasMoreTokens();) {
+                String token = tokens.nextToken().trim();
+                parts.add(token);
+            }
+            if (parts.size() < 2) {
+                continue;
+            }
+            path = SVNPathUtil.append(rootPath, (String) parts.get(0));
+            if (path.endsWith("/")) {
+                path = path.substring(0, path.length() - 1);
+            }
+            if (parts.size() == 2) {
+                url = (String) parts.get(1);
+            } else if (parts.size() == 3 && parts.get(1).toString().startsWith("-r")) {
+                String revStr = parts.get(1).toString();
+                revStr = revStr.substring("-r".length());
+                if (!"HEAD".equals(revStr)) {
+                    try {
+                        rev = Long.parseLong(revStr);
+                    } catch (NumberFormatException nfe) {
+                        continue;
+                    }
+                }
+                url = (String) parts.get(2);
+            } else if (parts.size() == 4 && "-r".equals(parts.get(1))) {
+                String revStr = parts.get(2).toString();
+                if (!"HEAD".equals(revStr)) {
+                    try {
+                        rev = Long.parseLong(revStr);
+                    } catch (NumberFormatException nfe) {
+                        continue;
+                    }
+                }
+                url = (String) parts.get(3);
+            }
+            if (path != null && url != null) {
+                if ("".equals(rootPath) && ((String) parts.get(0)).startsWith("/")) {
+                    path = "/" + path;
+                }
+                try {
+                    url = SVNURL.parseURIEncoded(url).toString();
+                } catch (SVNException e) {
+                    continue;
+                }
+                
+                try {
+                    SVNExternalInfo info = new SVNExternalInfo("", null, path, SVNURL.parseURIEncoded(url), rev);
+                    result.add(info);
+                } catch (SVNException e) {
+                }
+            }
+        }
+        return (SVNExternalInfo[]) result.toArray(new SVNExternalInfo[result.size()]);
+    }
+
 
     //analogous to retrieve_internal
     private SVNAdminArea getAdminArea(File path) {
