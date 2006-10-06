@@ -162,37 +162,36 @@ public abstract class SVNAdminArea {
         if (!text && !props) {
             return false;
         }
-        
         SVNEntry2 entry = getEntry(name, true);
         if (entry == null) {
             return false;
         }
         boolean modified = false;
         if (text && entry.getConflictOld() != null) {
-            modified = true;
             File file = getFile(entry.getConflictOld());
-            file.delete();
-            entry.setConflictOld(null);
+            modified |= file.isFile();
+            SVNFileUtil.deleteFile(file);
         }
         if (text && entry.getConflictNew() != null) {
-            modified = true;
             File file = getFile(entry.getConflictNew());
-            file.delete();
-            entry.setConflictNew(null);
+            modified |= file.isFile();
+            SVNFileUtil.deleteFile(file);
         }
         if (text && entry.getConflictWorking() != null) {
-            modified = true;
             File file = getFile(entry.getConflictWorking());
-            file.delete();
-            entry.setConflictWorking(null);
+            modified |= file.isFile();
+            SVNFileUtil.deleteFile(file);
         }
         if (props && entry.getPropRejectFile() != null) {
             File file = getFile(entry.getPropRejectFile());
-            file.delete();
-            modified = true;
-            entry.setPropRejectFile(null);
+            modified |= file.isFile();
+            SVNFileUtil.deleteFile(file);
         }
         if (modified) {
+            entry.setConflictOld(null);
+            entry.setConflictNew(null);
+            entry.setConflictWorking(null);
+            entry.setPropRejectFile(null);
             saveEntries(false);
         }
         return modified;

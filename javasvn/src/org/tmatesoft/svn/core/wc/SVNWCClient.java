@@ -351,10 +351,6 @@ public class SVNWCClient extends SVNBasicClient {
         } else if (fType == SVNFileType.FILE || fType == SVNFileType.SYMLINK) {
             path = path.getParentFile();
         }
-        if (!SVNWCAccess.isVersionedDirectory(path)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", path);
-            SVNErrorManager.error(err);
-        }
         SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
         try {
             SVNAdminArea adminArea = wcAccess.open(path, true, true, 0);
@@ -1188,61 +1184,53 @@ public class SVNWCClient extends SVNBasicClient {
      * @throws SVNException    if <code>path</code> is not under version control
      */
     public void doResolve(File path, boolean recursive) throws SVNException {
-        SVNWCAccess wcAccess = createWCAccess(path);
+        SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
         try {
-            wcAccess.open(true, recursive);
-            String target = wcAccess.getTargetName();
-            SVNDirectory dir = wcAccess.getAnchor();
-
-            if (wcAccess.getTarget() != wcAccess.getAnchor()) {
-                target = "";
-                dir = wcAccess.getTarget();
-            }
-            SVNEntry entry = dir.getEntries().getEntry(target, false);
-            if (entry == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", path);
-                SVNErrorManager.error(err);
-                return;
-            }
-
-            if (!recursive || entry.getKind() != SVNNodeKind.DIR) {
-                if (dir.markResolved(target, true, true)) {
-                    SVNEvent event = SVNEventFactory.createResolvedEvent(
-                            wcAccess, dir, entry);
-                    handleEvent(event, ISVNEventHandler.UNKNOWN);
+            wcAccess.probeOpen(path, true, recursive ? SVNWCAccess2.INFINITE_DEPTH : 0);
+            if (!recursive) {
+                SVNEntry2 entry = wcAccess.getEntry(path, false);
+                if (entry == null) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", path);
+                    SVNErrorManager.error(err);
                 }
+                resolveEntry(wcAccess, path, entry);
             } else {
-                doResolveAll(wcAccess, dir);
+                resolveAll(wcAccess, path);
             }
         } finally {
-            wcAccess.close(true);
+            wcAccess.close();
+        }
+    }
+    
+    private void resolveEntry(SVNWCAccess2 wcAccess, File path, SVNEntry2 entry) throws SVNException {
+        if (entry.getKind() == SVNNodeKind.DIR && !"".equals(entry.getName())) {
+            return;
+        }
+        File dirPath = path;
+        if (entry.getKind() == SVNNodeKind.FILE) {
+            dirPath = path.getParentFile();
+        }
+        SVNAdminArea dir = wcAccess.retrieve(dirPath);
+        if (dir.markResolved(entry.getName(), true, true)) {
+            SVNEvent event = SVNEventFactory.createRestoredEvent(null, dir, entry);
+            dispatchEvent(event);
         }
     }
 
-    private void doResolveAll(SVNWCAccess access, SVNDirectory dir) throws SVNException {
+    private void resolveAll(SVNWCAccess2 access, File path) throws SVNException {
         checkCancelled();
-        SVNEntries entries = dir.getEntries();
-        Collection childDirs = new ArrayList();
-        for (Iterator ents = entries.entries(false); ents.hasNext();) {
-            SVNEntry entry = (SVNEntry) ents.next();
-            if ("".equals(entry.getName()) || entry.isFile()) {
-                if (dir.markResolved(entry.getName(), true, true)) {
-                    SVNEvent event = SVNEventFactory.createResolvedEvent(
-                            access, dir, entry);
-                    handleEvent(event, ISVNEventHandler.UNKNOWN);
+        SVNEntry2 entry = access.getEntry(path, false);
+        resolveEntry(access, path, entry);
+        if (entry.isDirectory()) {
+            SVNAdminArea dir = access.retrieve(path);
+            for (Iterator ents = dir.entries(false); ents.hasNext();) {
+                SVNEntry2 childEntry = (SVNEntry2) ents.next();
+                if ("".equals(childEntry.getName())) {
+                    continue;
                 }
-            } else if (entry.isDirectory()) {
-                SVNDirectory childDir = dir.getChildDirectory(entry.getName());
-                if (childDir != null) {
-                    childDirs.add(childDir);
-                }
+                resolveAll(access, dir.getFile(childEntry.getName()));
             }
-        }
-        entries.save(true);
-        for (Iterator dirs = childDirs.iterator(); dirs.hasNext();) {
-            SVNDirectory child = (SVNDirectory) dirs.next();
-            doResolveAll(access, child);
-        }
+        } 
     }
     
     /**
@@ -1991,7 +1979,7 @@ public class SVNWCClient extends SVNBasicClient {
     private void doDeleteUnversionedFiles(File path, boolean deleteFiles) throws SVNException {
         checkCancelled();
         if (deleteFiles) {
-            SVNFileUtil.deleteAll(path, true);
+            SVNFileUtil.deleteAll(path, true, getEventDispatcher());
         }
     }
     
