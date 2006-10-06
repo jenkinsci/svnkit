@@ -406,26 +406,28 @@ public abstract class SVNAdminArea {
         }
         
         // update entry
-        entry.setRevision(revisionNumber);
-        entry.setKind(getThisDirName().equals(fileName) ? SVNNodeKind.DIR : SVNNodeKind.FILE);
+        Map entryAttrs = new HashMap();
+        entryAttrs.put(SVNProperty.shortPropertyName(SVNProperty.REVISION), SVNProperty.toString(revisionNumber));
+        entryAttrs.put(SVNProperty.shortPropertyName(SVNProperty.KIND), getThisDirName().equals(fileName) ? SVNProperty.KIND_DIR : SVNProperty.KIND_FILE);
         if (!implicit) {
-            entry.unschedule();
+            entryAttrs.put(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE), null);
         }
-        entry.setCopied(false);
-        entry.setDeleted(false);
+        entryAttrs.put(SVNProperty.shortPropertyName(SVNProperty.COPIED), SVNProperty.toString(false));
+        entryAttrs.put(SVNProperty.shortPropertyName(SVNProperty.DELETED), SVNProperty.toString(false));
         if (textTime != 0 && !implicit) {
-            entry.setTextTime(SVNTimeUtil.formatDate(new Date(textTime)));
+            entryAttrs.put(SVNProperty.shortPropertyName(SVNProperty.TEXT_TIME), SVNTimeUtil.formatDate(new Date(textTime)));
         }
+        entryAttrs.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_NEW), null);
+        entryAttrs.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_OLD), null);
+        entryAttrs.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_WRK), null);
+        entryAttrs.put(SVNProperty.shortPropertyName(SVNProperty.PROP_REJECT_FILE), null);
+        entryAttrs.put(SVNProperty.shortPropertyName(SVNProperty.COPYFROM_REVISION), null);
+        entryAttrs.put(SVNProperty.shortPropertyName(SVNProperty.COPYFROM_URL), null);
+        entryAttrs.put(SVNProperty.shortPropertyName(SVNProperty.HAS_PROP_MODS), SVNProperty.toString(false));
 
-        entry.setConflictNew(null);
-        entry.setConflictOld(null);
-        entry.setConflictWorking(null);
-        entry.setPropRejectFile(null);
-        entry.setCopyFromRevision(-1);
-        entry.setCopyFromURL(null);
-        entry.setHasPropertyModifications(false);
+        
         try {
-            foldScheduling(fileName, null);
+            modifyEntry(fileName, entryAttrs, false);
         } catch (SVNException svne) {
             SVNErrorMessage err = SVNErrorMessage.create(errorCode, "Error modifying entry of ''{0}''", fileName);
             SVNErrorManager.error(err, svne);
@@ -455,13 +457,21 @@ public abstract class SVNAdminArea {
         
         SVNEntry2 entryInParent = parentArea.getEntry(dirFile.getName(), false);
         if (entryInParent != null) {
+            entryAttrs.clear();
+
             if (!implicit) {
-                entryInParent.unschedule();
+                entryAttrs.put(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE), null);
             }
-            entryInParent.setCopied(false);
-            entryInParent.setCopyFromRevision(-1);
-            entryInParent.setCopyFromURL(null);
-            entryInParent.setDeleted(false);
+            entryAttrs.put(SVNProperty.shortPropertyName(SVNProperty.COPIED), SVNProperty.toString(false));
+            entryAttrs.put(SVNProperty.shortPropertyName(SVNProperty.COPYFROM_REVISION), null);
+            entryAttrs.put(SVNProperty.shortPropertyName(SVNProperty.COPYFROM_URL), null);
+            entryAttrs.put(SVNProperty.shortPropertyName(SVNProperty.DELETED), SVNProperty.toString(false));
+            try {
+                parentArea.modifyEntry(entryInParent.getName(), entryAttrs, true);
+            } catch (SVNException svne) {
+                SVNErrorMessage err = SVNErrorMessage.create(errorCode, "Error modifying entry of ''{0}''", fileName);
+                SVNErrorManager.error(err, svne);
+            }
         }
         parentArea.saveEntries(false);
         
