@@ -106,6 +106,11 @@ public class SVNEventFactory {
                 null, null, null, null, null, null);
     }
 
+    public static SVNEvent createDeletedEvent(SVNAdminArea dir, String name) {
+        return new SVNEvent(null, dir, name, SVNEventAction.DELETE, null, 0,
+                null, null, null, null, null, null);
+    }
+
     public static SVNEvent createUpdateExternalEvent(SVNWCAccess source,
             String path) {
         SVNEvent event = new SVNEvent(source, null, null,

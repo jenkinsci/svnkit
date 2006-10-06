@@ -1880,9 +1880,8 @@ public class SVNWCClient extends SVNBasicClient {
             log.save();
             root.runLogs();
         }
-        // TODO fire event
-//        SVNEvent event = SVNEventFactory.createDeletedEvent
-//        dispatchEvent(event);
+        SVNEvent event = SVNEventFactory.createDeletedEvent(root, name);
+        dispatchEvent(event);
         if (SVNProperty.SCHEDULE_ADD.equals(schedule)) {
             doDeleteUnversionedFiles(path, deleteFiles);
         } else {
@@ -1952,8 +1951,8 @@ public class SVNWCClient extends SVNBasicClient {
                 entry.setCopied(copied);
             }
             if (SVNProperty.SCHEDULE_DELETE.equals(schedule)) {
-                // TODO fire_event
-//                dispatchEvent(event);
+                SVNEvent event = SVNEventFactory.createDeletedEvent(dir, entry.getName());
+                dispatchEvent(event);
             }
         }
         SVNEntry2 dirEntry = dir.getEntry(dir.getThisDirName(), false);
