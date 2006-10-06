@@ -37,13 +37,13 @@ import org.tmatesoft.svn.core.internal.wc.SVNExportEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.SVNUpdateEditor;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNReporter2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator2;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
 import org.tmatesoft.svn.core.io.ISVNReporter;
@@ -500,10 +500,10 @@ public class SVNUpdateClient extends SVNBasicClient {
         boolean special = props.getPropertyValue(SVNProperty.SPECIAL) != null;
         boolean executable = props.getPropertyValue(SVNProperty.EXECUTABLE) != null;
         String keywords = props.getPropertyValue(SVNProperty.KEYWORDS);
-        byte[] eols = eol != null ? SVNTranslator.getEOL(eol) : null;
+        byte[] eols = eol != null ? SVNTranslator2.getEOL(eol) : null;
         if (eols == null) {
             eol = props.getPropertyValue(SVNProperty.EOL_STYLE);
-            eols = SVNTranslator.getWorkingEOL(eol);
+            eols = SVNTranslator2.getWorkingEOL(eol);
         }
         if (modified && !special) {
             timestamp = adminArea.getFile(fileName).lastModified();
@@ -520,7 +520,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             } else {
                 author = entry.getAuthor();                
             }
-            keywordsMap = SVNTranslator.computeKeywords(keywords, entry.getURL(), author, entry.getCommittedDate(), rev);            
+            keywordsMap = SVNTranslator2.computeKeywords(keywords, entry.getURL(), author, entry.getCommittedDate(), rev);            
         }
         File srcFile = revision == SVNRevision.WORKING ? adminArea.getFile(fileName) : adminArea.getBaseFile(fileName, false);
         SVNFileType fileType = SVNFileType.getType(srcFile);
@@ -528,13 +528,13 @@ public class SVNUpdateClient extends SVNBasicClient {
             // base will be translated OK, but working not.
             File tmpBaseFile = adminArea.getBaseFile(fileName, true);
             try {
-                SVNTranslator.translate(srcFile, tmpBaseFile, eols, keywordsMap, special, false);
-                SVNTranslator.translate(tmpBaseFile, dstPath, eols, keywordsMap, special, true);
+                SVNTranslator2.translate(srcFile, tmpBaseFile, eols, keywordsMap, special, false);
+                SVNTranslator2.translate(tmpBaseFile, dstPath, eols, keywordsMap, special, true);
             } finally {
                 tmpBaseFile.delete();
             }
         } else {
-            SVNTranslator.translate(srcFile, dstPath, eols, keywordsMap, special, true);
+            SVNTranslator2.translate(srcFile, dstPath, eols, keywordsMap, special, true);
         }
         if (executable) {
             SVNFileUtil.setExecutable(dstPath, true);
@@ -616,21 +616,21 @@ public class SVNUpdateClient extends SVNBasicClient {
                 SVNFileUtil.deleteAll(dstPath, this);
             }
             boolean binary = SVNProperty.isBinaryMimeType((String) properties.get(SVNProperty.MIME_TYPE));
-            Map keywords = SVNTranslator.computeKeywords((String) properties.get(SVNProperty.KEYWORDS), url,
+            Map keywords = SVNTranslator2.computeKeywords((String) properties.get(SVNProperty.KEYWORDS), url,
                             (String) properties.get(SVNProperty.LAST_AUTHOR),
                             (String) properties.get(SVNProperty.COMMITTED_DATE),
                             (String) properties.get(SVNProperty.COMMITTED_REVISION));
             byte[] eols = null;
             if (SVNProperty.EOL_STYLE_NATIVE.equals(properties.get(SVNProperty.EOL_STYLE))) {
-                eols = SVNTranslator.getWorkingEOL(eolStyle != null ? eolStyle : (String) properties.get(SVNProperty.EOL_STYLE));
+                eols = SVNTranslator2.getWorkingEOL(eolStyle != null ? eolStyle : (String) properties.get(SVNProperty.EOL_STYLE));
             } else if (properties.containsKey(SVNProperty.EOL_STYLE)) {
-                eols = SVNTranslator.getWorkingEOL((String) properties.get(SVNProperty.EOL_STYLE));
+                eols = SVNTranslator2.getWorkingEOL((String) properties.get(SVNProperty.EOL_STYLE));
             }
             if (binary) {
                 eols = null;
                 keywords = null;
             }
-            SVNTranslator.translate(tmpFile, dstPath, eols, keywords, properties.get(SVNProperty.SPECIAL) != null, true);
+            SVNTranslator2.translate(tmpFile, dstPath, eols, keywords, properties.get(SVNProperty.SPECIAL) != null, true);
             tmpFile.delete();
             if (properties.get(SVNProperty.EXECUTABLE) != null) {
                 SVNFileUtil.setExecutable(dstPath, true);

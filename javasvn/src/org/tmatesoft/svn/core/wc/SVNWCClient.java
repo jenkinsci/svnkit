@@ -48,7 +48,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
-import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNLog;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
@@ -2329,7 +2328,7 @@ public class SVNWCClient extends SVNBasicClient {
                         }
                         return;
                     }
-                    if (!SVNTranslator.checkNewLines(wcFile)) {
+                    if (!SVNTranslator2.checkNewLines(wcFile)) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "File ''{0}'' has incosistent newlines", wcFile);
                         SVNErrorManager.error(err);
                     } 
@@ -2420,7 +2419,7 @@ public class SVNWCClient extends SVNBasicClient {
                         }
                         return;
                     }
-                    if (!SVNTranslator.checkNewLines(wcFile)) {
+                    if (!SVNTranslator2.checkNewLines(wcFile)) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "File ''{0}'' has incosistent newlines", wcFile);
                         SVNErrorManager.error(err);
                     } 
@@ -2583,7 +2582,7 @@ public class SVNWCClient extends SVNBasicClient {
             String time = null;
 
             if (eolStyle != null) {
-                eols = SVNTranslator.getEOL(eolStyle);
+                eols = SVNTranslator2.getEOL(eolStyle);
             }
             if (hasMods && !special) {
                 time = SVNTimeUtil.formatDate(new Date(path.lastModified()));
@@ -2594,7 +2593,7 @@ public class SVNWCClient extends SVNBasicClient {
                 String url = entry.getURL();
                 String author = hasMods ? "(local)" : entry.getAuthor();
                 String rev = hasMods ? entry.getCommittedRevision() + "M" : entry.getCommittedRevision() + ""; 
-                keywordsMap = SVNTranslator.computeKeywords(keywords, expandKeywords ? url : null, author, time, rev);
+                keywordsMap = SVNTranslator2.computeKeywords(keywords, expandKeywords ? url : null, author, time, rev);
             }
             OutputStream translatingStream = eols != null || keywordsMap != null ? new SVNTranslatorOutputStream(dst, eols, false, keywordsMap, expandKeywords) : dst;
             try {

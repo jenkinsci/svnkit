@@ -37,6 +37,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator2;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
@@ -623,7 +624,7 @@ public class SVNFileUtil {
     
     public static String getNativeEOLMarker(){
         if(nativeEOLMarker == null){
-            nativeEOLMarker = new String(SVNTranslator.getEOL(SVNProperty.EOL_STYLE_NATIVE));
+            nativeEOLMarker = new String(SVNTranslator2.getEOL(SVNProperty.EOL_STYLE_NATIVE));
         }
         return nativeEOLMarker;
     }

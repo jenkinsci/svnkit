@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator2;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
@@ -167,13 +168,13 @@ public class SVNExportEditor implements ISVNEditor {
                 url = SVNPathUtil.append(url, SVNEncodingUtil.uriEncode(myCurrentFile.getName()));
                 String author = (String) myFileProperties.get(SVNProperty.LAST_AUTHOR);
                 String revStr = (String) myFileProperties.get(SVNProperty.COMMITTED_REVISION);
-                keywordsMap = SVNTranslator.computeKeywords(keywords, url, author, date, revStr);
+                keywordsMap = SVNTranslator2.computeKeywords(keywords, url, author, date, revStr);
             }
             byte[] eolBytes = null;
             if (SVNProperty.EOL_STYLE_NATIVE.equals(myFileProperties.get(SVNProperty.EOL_STYLE))) {
-                eolBytes = SVNTranslator.getWorkingEOL(myEOLStyle != null ? myEOLStyle : (String) myFileProperties.get(SVNProperty.EOL_STYLE));
+                eolBytes = SVNTranslator2.getWorkingEOL(myEOLStyle != null ? myEOLStyle : (String) myFileProperties.get(SVNProperty.EOL_STYLE));
             } else if (myFileProperties.containsKey(SVNProperty.EOL_STYLE)) {
-                eolBytes = SVNTranslator.getWorkingEOL((String) myFileProperties.get(SVNProperty.EOL_STYLE));
+                eolBytes = SVNTranslator2.getWorkingEOL((String) myFileProperties.get(SVNProperty.EOL_STYLE));
             }
             if (binary) {
                 // no translation unless 'special'.
@@ -181,7 +182,7 @@ public class SVNExportEditor implements ISVNEditor {
                 keywordsMap = null;
             }
             if (eolBytes != null || (keywordsMap != null && !keywordsMap.isEmpty()) || special) {
-                SVNTranslator.translate(myCurrentTmpFile, myCurrentFile, eolBytes, keywordsMap, special, true);
+                SVNTranslator2.translate(myCurrentTmpFile, myCurrentFile, eolBytes, keywordsMap, special, true);
             } else {
                 SVNFileUtil.rename(myCurrentTmpFile, myCurrentFile);
             }
