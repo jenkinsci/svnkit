@@ -151,7 +151,7 @@ public class SVNStatusEditor {
             if (entry != null) {
                 SVNFileType fileType = SVNFileType.getType(file);
                 boolean special = fileType == SVNFileType.SYMLINK;
-                SVNNodeKind fileKind = getNodeKind(fileType);
+                SVNNodeKind fileKind = SVNFileType.getNodeKind(fileType);
                 handleDirEntry(dir, entryName, dirEntry, entry, 
                         fileKind, special, descend, getAll, noIgnore, handler);
             } else {
@@ -189,7 +189,7 @@ public class SVNStatusEditor {
             File file = (File) childrenFiles.get(entry.getName());
             SVNFileType fileType = SVNFileType.getType(file);
             boolean special = fileType == SVNFileType.SYMLINK;
-            SVNNodeKind fileKind = getNodeKind(fileType);
+            SVNNodeKind fileKind = SVNFileType.getNodeKind(fileType);
             handleDirEntry(dir, entry.getName(), dirEntry, entry, 
                     fileKind, special, descend, getAll, noIgnore, handler);
         }
@@ -323,7 +323,7 @@ public class SVNStatusEditor {
         }
         if (fileKind == SVNNodeKind.UNKNOWN || fileKind == null) {
             SVNFileType fileType = SVNFileType.getType(file);
-            fileKind = getNodeKind(fileType);
+            fileKind = SVNFileType.getNodeKind(fileType);
             special = fileType == SVNFileType.SYMLINK;
         }
         if (entry == null) {
@@ -490,12 +490,4 @@ public class SVNStatusEditor {
         return Collections.EMPTY_MAP;
     }
     
-    private static SVNNodeKind getNodeKind(SVNFileType type) {
-        if (type == null || type == SVNFileType.NONE || type == SVNFileType.UNKNOWN) {
-            return SVNNodeKind.NONE;
-        } else if (type == SVNFileType.DIRECTORY) {
-            return SVNNodeKind.DIR;
-        }
-        return SVNNodeKind.FILE;
-    }
 }

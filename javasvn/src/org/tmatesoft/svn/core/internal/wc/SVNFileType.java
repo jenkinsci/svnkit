@@ -140,4 +140,14 @@ public class SVNFileType {
     public boolean isFile() {
         return this == SVNFileType.FILE || this == SVNFileType.SYMLINK;
     }
+    
+    public static SVNNodeKind getNodeKind(SVNFileType type) {
+        if (type == null || type == SVNFileType.NONE || type == SVNFileType.UNKNOWN) {
+            return SVNNodeKind.NONE;
+        } else if (type == SVNFileType.DIRECTORY) {
+            return SVNNodeKind.DIR;
+        }
+        return SVNNodeKind.FILE;
+    }
+
 }
