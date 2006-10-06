@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Date;
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -50,45 +50,34 @@ public class SVNLogRunner2 {
             }
         } else if (ISVNLog.MODIFY_ENTRY.equals(name)) {
             try {
-                if (attributes.containsKey(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE))) {
-                    String schedule = (String) attributes.get(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE));
-                    adminArea.foldScheduling(fileName, schedule);
-                    attributes.remove(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE));
-                }
-                
-                SVNEntry2 entry = adminArea.getEntry(fileName, true);
-                if (entry == null) {
-                    entry = adminArea.addEntry(fileName);
-                }
-                
-                Map entryAttrs = entry.asMap();
-                for (Iterator atts = attributes.keySet().iterator(); atts.hasNext();) {
-                    String attName = (String) atts.next();
-                    if ("".equals(attName) || ISVNLog.NAME_ATTR.equals(attName)) {
-                        continue;
-                    }
-                    String value = (String) attributes.get(attName);
-                    if (SVNProperty.CACHABLE_PROPS.equals(attName) || SVNProperty.PRESENT_PROPS.equals(attName)) {
-                        String[] propsArray = SVNAdminArea.fromString(value, " ");
-                        entryAttrs.put(attName, propsArray);
-                        continue;
-                    } else if (!(SVNProperty.HAS_PROPS.equals(attName) || SVNProperty.HAS_PROP_MODS.equals(attName))) {
-                        attName = SVNProperty.SVN_ENTRY_PREFIX + attName;
-                    }
-                    
-                    if (SVNProperty.PROP_TIME.equals(attName)) {
-                        adminArea.setPropertyTime(fileName, value);
-                        continue;
-                    }
-                    if (SVNProperty.TEXT_TIME.equals(attName) && ISVNLog.WC_TIMESTAMP.equals(value)) {
+                Map entryAttrs = new HashMap(attributes);
+                entryAttrs.remove("");
+                entryAttrs.remove(ISVNLog.NAME_ATTR);
+                if (entryAttrs.containsKey(SVNProperty.shortPropertyName(SVNProperty.TEXT_TIME))) {
+                    String value = (String) entryAttrs.get(SVNProperty.shortPropertyName(SVNProperty.TEXT_TIME)); 
+                    if (ISVNLog.WC_TIMESTAMP.equals(value)) {
                         File file = adminArea.getFile(fileName);
                         value = SVNTimeUtil.formatDate(new Date(file.lastModified()));
+                        entryAttrs.put(SVNProperty.shortPropertyName(SVNProperty.TEXT_TIME), value);
                     }
-                    if (value != null) {
-                        entryAttrs.put(attName, value);
-                    } else {
-                        entryAttrs.remove(attName);
-                    }
+                }
+                if (entryAttrs.containsKey(SVNProperty.shortPropertyName(SVNProperty.PROP_TIME))) {
+                    String value = (String) entryAttrs.get(SVNProperty.shortPropertyName(SVNProperty.PROP_TIME)); 
+                    if (ISVNLog.WC_TIMESTAMP.equals(value)) {
+                        SVNEntry2 entry = adminArea.getEntry(fileName, false);
+                        if (entry == null) {
+                            return;
+                        }
+                        value = adminArea.getPropertyTime(fileName); 
+                        entryAttrs.put(SVNProperty.shortPropertyName(SVNProperty.PROP_TIME), value);
+                    }                
+                }
+                try {
+                    adminArea.modifyEntry(fileName, entryAttrs, false);
+                } catch (SVNException svne) {
+                    SVNErrorCode code = count <= 1 ? SVNErrorCode.WC_BAD_ADM_LOG_START : SVNErrorCode.WC_BAD_ADM_LOG;
+                    SVNErrorMessage err = SVNErrorMessage.create(code, "Error modifying entry for ''{0}''", fileName);
+                    SVNErrorManager.error(err, svne);
                 }
                 setEntriesChanged(true);
             } catch (SVNException svne) {

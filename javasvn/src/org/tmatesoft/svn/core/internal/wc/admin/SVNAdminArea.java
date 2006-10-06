@@ -32,6 +32,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -39,6 +40,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.ISVNMerger;
 import org.tmatesoft.svn.core.wc.ISVNMergerFactory;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 /**
@@ -735,19 +737,10 @@ public abstract class SVNAdminArea {
         return null;
     }
 
-    public void setPropertyTime(String name, String value) throws SVNException {
-        SVNEntry2 entry = getEntry(name, true);
-        Map attributes = entry.asMap();
-        if (ISVNLog.WC_TIMESTAMP.equals(value)) {
-            String path = getThisDirName().equals(name) ? "dir-props" : "props/" + name + ".svn-work";
-            File file = getAdminFile(path);
-            value = SVNTimeUtil.formatDate(new Date(file.lastModified()));
-        }
-        if (value != null) {
-            attributes.put(SVNProperty.PROP_TIME, value);
-        } else {
-            attributes.remove(SVNProperty.PROP_TIME);
-        }
+    public String getPropertyTime(String name) {
+        String path = getThisDirName().equals(name) ? "dir-props" : "props/" + name + ".svn-work";
+        File file = getAdminFile(path);
+        return SVNTimeUtil.formatDate(new Date(file.lastModified()));
     }
     
     public ISVNLog getLog() {
@@ -838,18 +831,24 @@ public abstract class SVNAdminArea {
         }
     }
 
-    public void foldScheduling(String name, String schedule) throws SVNException {
-        SVNEntry2 entry = getEntry(name, true);
+    public void foldScheduling(String name, Map attributes) throws SVNException {
+        if (!attributes.containsKey(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE))) {
+            return;
+        }
+        String schedule = (String) attributes.get(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE));
+        schedule = "".equals(schedule) ? null : schedule;
         
-        if (entry == null && !SVNProperty.SCHEDULE_ADD.equals(schedule)) {
+        SVNEntry2 entry = getEntry(name, true);
+        if (entry == null) {
+            if (SVNProperty.SCHEDULE_ADD.equals(schedule)) {
+                return;
+            }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_SCHEDULE_CONFLICT, "''{0}'' is not under version control", name); 
             SVNErrorManager.error(err);
-        } else {
-            entry = addEntry(name);
         }
+
         SVNEntry2 thisDirEntry = getEntry(getThisDirName(), true);
-        String rootSchedule = thisDirEntry.getSchedule();
-        if (!getThisDirName().equals(entry.getName()) && (SVNProperty.SCHEDULE_DELETE.equals(rootSchedule))) {
+        if (!getThisDirName().equals(entry.getName()) && thisDirEntry.isScheduledForDeletion()) {
             if (SVNProperty.SCHEDULE_ADD.equals(schedule)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_SCHEDULE_CONFLICT, "Can''t add ''{0}'' to deleted directory; try undeleting its parent directory first", name);
                 SVNErrorManager.error(err);
@@ -868,23 +867,104 @@ public abstract class SVNAdminArea {
             if (SVNProperty.SCHEDULE_DELETE.equals(schedule)) {
                 if (!entry.isDeleted()) {
                     deleteEntry(name);
-                    return;
-                } 
-                entry.unschedule();
+                } else {
+                    attributes.put(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE), null);
+                }
+            } else {
+                attributes.remove(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE));
             }
         } else if (SVNProperty.SCHEDULE_DELETE.equals(entry.getSchedule())) {
-            if (SVNProperty.SCHEDULE_ADD.equals(schedule)) {
-                entry.scheduleForReplacement();
+            if (SVNProperty.SCHEDULE_DELETE.equals(schedule)) {
+                attributes.remove(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE));
+            } else if (SVNProperty.SCHEDULE_ADD.equals(schedule)) {
+                attributes.put(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE), SVNProperty.SCHEDULE_REPLACE);
             } 
         } else if (SVNProperty.SCHEDULE_REPLACE.equals(entry.getSchedule())) {
             if (SVNProperty.SCHEDULE_DELETE.equals(schedule)) {
-                entry.scheduleForDeletion();
-            } 
+                attributes.put(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE), SVNProperty.SCHEDULE_DELETE);
+            } else if (SVNProperty.SCHEDULE_ADD.equals(schedule) || SVNProperty.SCHEDULE_REPLACE.equals(schedule)) {
+                attributes.remove(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE));
+            }
         } else {
             if (SVNProperty.SCHEDULE_ADD.equals(schedule) && !entry.isDeleted()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_SCHEDULE_CONFLICT, "Entry ''{0}'' is already under version control", name);
                 SVNErrorManager.error(err);
+            } else if (schedule == null) {
+                attributes.remove(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE));
             }
+        }
+    }
+    
+    public void modifyEntry(String name, Map attributes, boolean save) throws SVNException {
+        if (name == null) {
+            name = getThisDirName();
+        }
+        
+        boolean deleted = false;
+        if (attributes.containsKey(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE))) {
+            SVNEntry2 entryBefore = getEntry(name, true);
+            foldScheduling(name, attributes);
+            SVNEntry2 entryAfter = getEntry(name, true);
+            if (entryBefore != null && entryAfter == null) {
+                deleted = true;
+            }
+        }
+        
+        if (!deleted) {
+            SVNEntry2 entry = getEntry(name, true);
+            if (entry == null) {
+                entry = addEntry(name);
+            }
+            
+            Map entryAttrs = entry.asMap();
+            for (Iterator atts = attributes.keySet().iterator(); atts.hasNext();) {
+                String attName = (String) atts.next();
+                String value = (String) attributes.get(attName);
+                if (SVNProperty.CACHABLE_PROPS.equals(attName) || SVNProperty.PRESENT_PROPS.equals(attName)) {
+                    String[] propsArray = SVNAdminArea.fromString(value, " ");
+                    entryAttrs.put(attName, propsArray);
+                    continue;
+                } else if (!(SVNProperty.HAS_PROPS.equals(attName) || SVNProperty.HAS_PROP_MODS.equals(attName))) {
+                    attName = SVNProperty.SVN_ENTRY_PREFIX + attName;
+                }
+               
+                if (value != null) {
+                    entryAttrs.put(attName, value);
+                } else {
+                    entryAttrs.remove(attName);
+                }
+            }
+            
+            if (!entry.isDirectory()) {
+                SVNEntry2 rootEntry = getEntry(getThisDirName(), true);
+                if (rootEntry != null) {
+                    if (!SVNRevision.isValidRevisionNumber(entry.getRevision())) {
+                        entry.setRevision(rootEntry.getRevision());
+                    }
+                    if (entry.getURL() == null) {
+                        entry.setURL(SVNPathUtil.append(rootEntry.getURL(), SVNEncodingUtil.uriEncode(name)));
+                    }
+                    if (entry.getRepositoryRoot() == null) {
+                        entry.setRepositoryRoot(rootEntry.getRepositoryRoot());
+                    }
+                    if (entry.getUUID() == null && !entry.isScheduledForAddition() && !entry.isScheduledForReplacement()) {
+                        entry.setUUID(rootEntry.getUUID());
+                    }
+                    if (entry.getCachableProperties() == null) {
+                        entry.setCachableProperties(rootEntry.getCachableProperties());
+                    }
+                }
+            }
+            
+            if (attributes.containsKey(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE)) && entry.isScheduledForDeletion()) {
+                entry.setCopied(false);
+                entry.setCopyFromRevision(-1);
+                entry.setCopyFromURL(null);
+            }
+        }
+        
+        if (save) {
+            saveEntries(true);
         }
     }
     
