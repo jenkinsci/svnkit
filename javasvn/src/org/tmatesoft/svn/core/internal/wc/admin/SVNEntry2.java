@@ -142,23 +142,6 @@ public class SVNEntry2 implements Comparable {
     }
 
     private boolean setAttributeValue(String name, String value) {
-        if (SVNProperty.SCHEDULE.equals(name)) {
-            if (SVNProperty.SCHEDULE_DELETE.equals(value)) {
-                if (SVNProperty.SCHEDULE_ADD.equals(myAttributes.get(SVNProperty.SCHEDULE))) {
-                    if (myAttributes.get(SVNProperty.DELETED) == null) {
-                        try {
-                            myAdminArea.deleteEntry(myName); 
-                        } catch (SVNException svne) {
-                            //
-                        }
-                    } else {
-                        myAttributes.remove(SVNProperty.SCHEDULE);
-                    }
-                    return true;
-                }
-            }
-        }
-
         if (value == null) {
             return myAttributes.remove(name) != null;
         }
