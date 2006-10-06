@@ -62,7 +62,7 @@ public class SVNLog2 extends ISVNLog {
                     String attr = (String) attrs.next();
                     String value = (String) command.get(attr);
                     if (value == null) {
-                        continue;
+                        value = "";
                     }
                     value = SVNEncodingUtil.xmlEncodeAttr(value);
                     os.write("\n   ");
@@ -115,6 +115,9 @@ public class SVNLog2 extends ISVNLog {
                         value = value.substring(0, value.length() - 1);
                     }
                     value = SVNEncodingUtil.xmlDecode(value);
+                    if ("".equals(value) && !ISVNLog.NAME_ATTR.equals(attrName)) {
+                        value = null;
+                    }
                     attrs.put(attrName, value);
                 }
                 if (line.endsWith("/>") && name != null) {

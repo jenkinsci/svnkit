@@ -56,6 +56,7 @@ public abstract class SVNAdminArea {
     protected Map myProperties;
     protected Map myWCProperties;
     protected Map myEntries;
+    private Map myRevertProperties;
 
     public abstract boolean isLocked() throws SVNException;
 
@@ -66,6 +67,8 @@ public abstract class SVNAdminArea {
     public abstract boolean unlock() throws SVNException;
 
     public abstract SVNVersionedProperties getBaseProperties(String name) throws SVNException;
+
+    public abstract SVNVersionedProperties getRevertProperties(String name) throws SVNException;
 
     public abstract SVNVersionedProperties getWCProperties(String name) throws SVNException;
 
@@ -1143,6 +1146,13 @@ public abstract class SVNAdminArea {
         return propertiesFile;
     }
 
+    protected File getRevertPropertiesFile(String name, boolean tmp) {
+        String path = !tmp ? "" : "tmp/";
+        path += getThisDirName().equals(name) ? "dir-prop-revert" : "prop-base/" + name + ".svn-revert";
+        File propertiesFile = getAdminFile(path);
+        return propertiesFile;
+    }
+
     protected File getPropertiesFile(String name, boolean tmp) {
         String path = !tmp ? "" : "tmp/";
         path += getThisDirName().equals(name) ? "dir-props" : "props/" + name + ".svn-work";
@@ -1163,6 +1173,13 @@ public abstract class SVNAdminArea {
             myBaseProperties = new HashMap();
         }
         return myBaseProperties;
+    }
+
+    protected Map getRevertPropertiesStorage(boolean create) {
+        if (myRevertProperties == null && create) {
+            myRevertProperties = new HashMap();
+        }
+        return myRevertProperties;
     }
 
     protected Map getPropertiesStorage(boolean create) {
@@ -1194,6 +1211,9 @@ public abstract class SVNAdminArea {
     }
     
     public static String[] fromString(String str, String delimiter) {
+        if (str == null) {
+            return new String[0];
+        }
         LinkedList list = new LinkedList(); 
         int startInd = 0;
         int ind = -1;

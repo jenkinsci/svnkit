@@ -228,9 +228,8 @@ public class SVNEventFactory {
                 null, null, null, null, null, null);
     }
 
-    public static SVNEvent createRevertedEvent(SVNWCAccess source,
-            SVNDirectory dir, SVNEntry entry) {
-        return new SVNEvent(source, dir, entry.getName(),
+    public static SVNEvent createRevertedEvent(SVNAdminArea dir, SVNEntry2 entry) {
+        return new SVNEvent(null, dir, entry.getName(),
                 SVNEventAction.REVERT, entry.getKind(), entry.getRevision(),
                 null, null, null, null, null, null);
     }
@@ -242,9 +241,8 @@ public class SVNEventFactory {
                 null, null, null, null, null, null);
     }
 
-    public static SVNEvent createNotRevertedEvent(SVNWCAccess source,
-            SVNDirectory dir, SVNEntry entry) {
-        return new SVNEvent(source, dir, entry.getName(),
+    public static SVNEvent createNotRevertedEvent(SVNAdminArea dir, SVNEntry2 entry) {
+        return new SVNEvent(null, dir, entry.getName(),
                 SVNEventAction.FAILED_REVERT, entry.getKind(), entry
                         .getRevision(), null, null, null, null, null, null);
     }

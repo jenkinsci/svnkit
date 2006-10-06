@@ -150,6 +150,26 @@ public class SVNAdminArea14 extends SVNAdminArea {
         return props;
     }
 
+    public SVNVersionedProperties getRevertProperties(String name) throws SVNException {
+        Map revertPropsCache = getRevertPropertiesStorage(true);
+        SVNVersionedProperties props = (SVNVersionedProperties)revertPropsCache.get(name); 
+        if (props != null) {
+            return props;
+        }
+        
+        Map revertProps = null;
+        try {
+            revertProps = readRevertProperties(name);
+        } catch (SVNException svne) {
+            SVNErrorMessage err = svne.getErrorMessage().wrap("Failed to load properties from disk");
+            SVNErrorManager.error(err);
+        }
+
+        props = new SVNProperties13(revertProps);
+        revertPropsCache.put(name, props);
+        return props;
+    }
+
     public SVNVersionedProperties getProperties(String name) throws SVNException {
         Map propsCache = getPropertiesStorage(true);
         SVNVersionedProperties props = (SVNVersionedProperties)propsCache.get(name); 
@@ -247,6 +267,12 @@ public class SVNAdminArea14 extends SVNAdminArea {
     
     private Map readBaseProperties(String name) throws SVNException {
         File propertiesFile = getBasePropertiesFile(name, false);
+        SVNProperties props = new SVNProperties(propertiesFile, null);
+        return props.asMap();
+    }
+
+    private Map readRevertProperties(String name) throws SVNException {
+        File propertiesFile = getRevertPropertiesFile(name, false);
         SVNProperties props = new SVNProperties(propertiesFile, null);
         return props.asMap();
     }
