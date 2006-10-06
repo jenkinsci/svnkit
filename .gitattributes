@@ -144,11 +144,6 @@ javasvn/src/org/tmatesoft/svn/core/wc/ISVNMerger.java -text
 javasvn/src/org/tmatesoft/svn/core/wc/ISVNMergerFactory.java -text
 javasvn/src/org/tmatesoft/svn/core/wc/package.html -text
 javasvn/src/org/tmatesoft/svn/core/wc/xml/SVNXMLInfoHandler.java -text
-javasvn/src/org/tmatesoft/svn/core/wc/xml/dtd/blame.dtd -text
-javasvn/src/org/tmatesoft/svn/core/wc/xml/dtd/info.dtd -text
-javasvn/src/org/tmatesoft/svn/core/wc/xml/dtd/list.dtd -text
-javasvn/src/org/tmatesoft/svn/core/wc/xml/dtd/log.dtd -text
-javasvn/src/org/tmatesoft/svn/core/wc/xml/dtd/status.dtd -text
 javasvn/src/org/tmatesoft/svn/core/wc/xml/package.html -text
 javasvn/src/org/tmatesoft/svn/util/ISVNDebugLog.java -text
 javasvn/src/org/tmatesoft/svn/util/SVNDebugLog.java -text
