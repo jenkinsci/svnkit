@@ -156,7 +156,7 @@ public class SVNStatusEditor {
                         fileKind, special, descend, getAll, noIgnore, handler);
             } else {
                 if (ignorePatterns == null) {
-                    ignorePatterns = getIgnorePatterns(dir);
+                    ignorePatterns = getIgnorePatterns(dir, myGlobalIgnores);
                 }
                 sendUnversionedStatus(file, entryName, SVNNodeKind.NONE, false, dir, ignorePatterns, noIgnore, handler);
             }
@@ -169,7 +169,7 @@ public class SVNStatusEditor {
                 continue;
             }
             if (ignorePatterns == null) {
-                ignorePatterns = getIgnorePatterns(dir);
+                ignorePatterns = getIgnorePatterns(dir, myGlobalIgnores);
             }
             File file = (File) childrenFiles.get(fileName);
             sendUnversionedStatus(file, fileName, SVNNodeKind.NONE, false, dir, ignorePatterns, noIgnore, handler);
@@ -440,11 +440,11 @@ public class SVNStatusEditor {
         return myExternalsMap.containsKey(path);
     }
     
-    private Collection getIgnorePatterns(SVNAdminArea dir) throws SVNException {
+    public static Collection getIgnorePatterns(SVNAdminArea dir, Collection globalIgnores) throws SVNException {
         String localIgnores = dir.getProperties("").getPropertyValue(SVNProperty.IGNORE);
         if (localIgnores != null) {
             Collection patterns = new HashSet();
-            patterns.addAll(myGlobalIgnores);
+            patterns.addAll(globalIgnores);
             for(StringTokenizer tokens = new StringTokenizer(localIgnores, "\r\n"); tokens.hasMoreTokens();) {
                 String token = tokens.nextToken().trim();
                 if (token.length() > 0) {
@@ -453,10 +453,10 @@ public class SVNStatusEditor {
             }
             return patterns;
         }
-        return myGlobalIgnores;
+        return globalIgnores;
     }
     
-    private static Collection getGlobalIgnores(ISVNOptions options) {
+    public static Collection getGlobalIgnores(ISVNOptions options) {
         String[] ignores = options.getIgnorePatterns();
         if (ignores != null) {
             Collection patterns = new HashSet();
@@ -468,7 +468,7 @@ public class SVNStatusEditor {
         return Collections.EMPTY_SET;
     }
     
-    private static boolean isIgnored(Collection patterns, String name) {
+    public static boolean isIgnored(Collection patterns, String name) {
         for (Iterator ps = patterns.iterator(); ps.hasNext();) {
             String pattern = (String) ps.next();
             if (DefaultSVNOptions.matches(pattern, name)) {

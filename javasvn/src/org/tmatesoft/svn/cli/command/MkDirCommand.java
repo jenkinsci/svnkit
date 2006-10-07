@@ -62,7 +62,7 @@ public class MkDirCommand extends SVNCommand {
         for (Iterator files = paths.iterator(); files.hasNext();) {
             File file = (File) files.next();
             try {
-                wcClient.doAdd(file, false, true, false, recursive);
+                wcClient.doAdd(file, false, true, false, recursive, false);
             } catch (SVNException e) {
                 err.println(e.getMessage());
             }

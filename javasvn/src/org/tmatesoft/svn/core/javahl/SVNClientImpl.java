@@ -377,7 +377,7 @@ public class SVNClientImpl implements SVNClientInterface {
     public void add(String path, boolean recurse, boolean force) throws ClientException {
         SVNWCClient wcClient = getSVNWCClient();
         try {
-            wcClient.doAdd(new File(path).getAbsoluteFile(), force, true, false, recurse);
+            wcClient.doAdd(new File(path).getAbsoluteFile(), force, true, false, recurse, false);
         } catch (SVNException e) {
             throwException(e);
         }
@@ -544,7 +544,7 @@ public class SVNClientImpl implements SVNClientInterface {
             for (int i = 0; i < files.length; i++) {
                 File file = files[i];
                 try {
-                    getSVNWCClient().doAdd(file, false, true, false, false);
+                    getSVNWCClient().doAdd(file, false, true, false, false, false);
                 } catch (SVNException e) {
                     throwException(e);
                 }

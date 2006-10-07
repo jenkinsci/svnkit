@@ -40,11 +40,11 @@ public class AddCommand extends SVNCommand {
         if (enableAutoProps) {
             wcClient.getOptions().setUseAutoProperties(true);
         }
-
+        boolean noIgnore = getCommandLine().hasArgument(SVNArgument.NO_IGNORE);
         for (int i = 0; i < getCommandLine().getPathCount(); i++) {
             final String absolutePath = getCommandLine().getPathAt(i);
             matchTabsInPath(absolutePath, err);
-            wcClient.doAdd(new File(absolutePath), force, true, false, recursive);
+            wcClient.doAdd(new File(absolutePath), force, true, false, recursive, noIgnore);
         }
     }
 }

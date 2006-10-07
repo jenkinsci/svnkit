@@ -159,7 +159,7 @@ public class SVNMoveClient extends SVNBasicClient {
         } else if (!srcIsVersioned) {
             // world:wc (add, if dst is 'deleted' it will be replaced)
             SVNFileUtil.rename(src, dst);
-            myWCClient.doAdd(dst, false, false, false, true);
+            myWCClient.doAdd(dst, false, false, false, true, false);
         } else {
             // wc:wc.
 
@@ -188,7 +188,7 @@ public class SVNMoveClient extends SVNBasicClient {
                 // attempt replace.
                 SVNFileUtil.copy(src, dst, false, false);
                 try {
-                    myWCClient.doAdd(dst, false, false, false, true);
+                    myWCClient.doAdd(dst, false, false, false, true, false);
                 } catch (SVNException e) {
                     // will be thrown on obstruction.
                 }
@@ -203,7 +203,7 @@ public class SVNMoveClient extends SVNBasicClient {
             if (!sameWC) {
                 // just add dst (at least try to add, files already there).
                 try {
-                    myWCClient.doAdd(dst, false, false, false, true);
+                    myWCClient.doAdd(dst, false, false, false, true, false);
                 } catch (SVNException e) {
                     // obstruction
                 }
@@ -315,7 +315,7 @@ public class SVNMoveClient extends SVNBasicClient {
                     dstAccess.getAnchor().getEntries().save(true);
                     SVNFileUtil.deleteAll(dst, this);
                     SVNFileUtil.copy(src, dst, false, false);
-                    myWCClient.doAdd(dst, false, false, false, true);
+                    myWCClient.doAdd(dst, false, false, false, true, false);
                 }
             }
 
@@ -428,7 +428,7 @@ public class SVNMoveClient extends SVNBasicClient {
             if (dstEntry != null && dstEntry.isScheduledForDeletion()) {
                 myWCClient.doRevert(dst, true);
             } else {
-                myWCClient.doAdd(dst, false, false, false, true);
+                myWCClient.doAdd(dst, false, false, false, true, false);
             }
         } else {
             // wc:wc.
@@ -463,7 +463,7 @@ public class SVNMoveClient extends SVNBasicClient {
             if (!sameWC) {
                 // just add dst (at least try to add, files already there).
                 try {
-                    myWCClient.doAdd(dst, false, false, false, true);
+                    myWCClient.doAdd(dst, false, false, false, true, false);
                 } catch (SVNException e) {
                     // obstruction
                 }
@@ -566,7 +566,7 @@ public class SVNMoveClient extends SVNBasicClient {
                     dstAccess.getAnchor().getEntries().save(true);
                     SVNFileUtil.deleteAll(dst, this);
                     SVNFileUtil.copy(src, dst, false, false);
-                    myWCClient.doAdd(dst, false, false, false, true);
+                    myWCClient.doAdd(dst, false, false, false, true, false);
                 }
             }
 
@@ -681,7 +681,7 @@ public class SVNMoveClient extends SVNBasicClient {
             myWCClient.doDelete(src, true, false);
         }
         if (added) {
-            myWCClient.doAdd(dst, true, false, false, false);            
+            myWCClient.doAdd(dst, true, false, false, false, false);            
             return;
         }
 

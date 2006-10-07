@@ -98,6 +98,11 @@ public class SVNEventFactory {
         }
         return new SVNEvent(source, dir, entry.getName(), SVNEventAction.ADD,
                 entry.getKind(), 0, mimeType, null, null, null, null, null);
+
+    }
+    public static SVNEvent createAddedEvent(SVNAdminArea dir, String name, SVNNodeKind kind, String mimeType) {
+        return new SVNEvent(null, dir, name, SVNEventAction.ADD,
+                kind, 0, mimeType, null, null, null, null, null);
     }
 
     public static SVNEvent createDeletedEvent(SVNWCAccess source,
