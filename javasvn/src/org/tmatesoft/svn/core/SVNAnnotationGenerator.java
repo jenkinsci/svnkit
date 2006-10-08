@@ -94,6 +94,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
     private SVNDeltaProcessor myDeltaProcessor;
     private ISVNEventHandler myCancelBaton;
     private long myStartRevision;
+    private boolean myIsForce;
     
     /**
      * Constructs an annotation generator object. A user may want to have
@@ -108,9 +109,14 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
      *                       is cancelled
      */
     public SVNAnnotationGenerator(String path, File tmpDirectory, long startRevision, ISVNEventHandler cancelBaton) {
+        this(path, tmpDirectory, startRevision, false, cancelBaton);
+        
+    }
+    public SVNAnnotationGenerator(String path, File tmpDirectory, long startRevision, boolean force, ISVNEventHandler cancelBaton) {
         myTmpDirectory = tmpDirectory;
         myCancelBaton = cancelBaton;
         myPath = path;
+        myIsForce = force;
         if (!myTmpDirectory.isDirectory()) {
             myTmpDirectory.mkdirs();
         }
@@ -131,7 +137,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
     public void openRevision(SVNFileRevision fileRevision) throws SVNException {
         Map propDiff = fileRevision.getPropertiesDelta();
         String newMimeType = (String) (propDiff != null ? propDiff.get(SVNProperty.MIME_TYPE) : null);
-        if (SVNProperty.isBinaryMimeType(newMimeType)) {
+        if (!myIsForce && SVNProperty.isBinaryMimeType(newMimeType)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_IS_BINARY_FILE, "Cannot calculate blame information for binary file ''{0}''", myPath);
             SVNErrorManager.error(err);
         }

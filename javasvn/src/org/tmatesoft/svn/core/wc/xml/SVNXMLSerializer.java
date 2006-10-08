@@ -71,7 +71,7 @@ public class SVNXMLSerializer implements ContentHandler {
 
     public void startDocument() throws SAXException {
         try {
-            myWriter.write("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
+            myWriter.write("<?xml version=\"1.0\"?>");
         } catch (IOException e) {
             throw new SAXException(e);
         }
