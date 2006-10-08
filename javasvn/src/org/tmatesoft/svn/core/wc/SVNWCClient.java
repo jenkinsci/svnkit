@@ -903,6 +903,21 @@ public class SVNWCClient extends SVNBasicClient {
     }
     
     public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, boolean recursive, boolean includeIgnored) throws SVNException {
+        if (!mkdir && climbUnversionedParents) {
+            // check if parent is versioned. if not, add it.
+            SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
+            try {
+                wcAccess.open(path.getParentFile(), false, 0);
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
+                    doAdd(path.getParentFile(), false, false, climbUnversionedParents, false);
+                } else {
+                    throw e;
+                }
+            } finally {
+                wcAccess.close();
+            }
+        }
         if (mkdir) {
             // attempt to create dir
             File parent = path;
@@ -921,7 +936,7 @@ public class SVNWCClient extends SVNBasicClient {
                 }
                 SVNErrorManager.error(err);
             }
-            doAdd(firstCreated, false, false, false, true, true);
+            doAdd(firstCreated, false, false, climbUnversionedParents, true, true);
             return;
         }
         SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
@@ -936,7 +951,7 @@ public class SVNWCClient extends SVNBasicClient {
                 SVNWCManager.add(path, dir, null, SVNRevision.UNDEFINED);
             }
         } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.ENTRY_EXISTS) {
+            if (!(force && e.getErrorMessage().getErrorCode() == SVNErrorCode.ENTRY_EXISTS)) {
                 throw e;
             }
         } finally {        
@@ -949,7 +964,7 @@ public class SVNWCClient extends SVNBasicClient {
         try {
             SVNWCManager.add(path, parentDir, null, SVNRevision.UNDEFINED);
         } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.ENTRY_EXISTS) {
+            if (!(force && e.getErrorMessage().getErrorCode() == SVNErrorCode.ENTRY_EXISTS)) {
                 throw e;
             }
         }

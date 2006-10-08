@@ -15,6 +15,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.StringTokenizer;
 
@@ -72,6 +73,30 @@ public class SVNPropertiesManager {
         }
         SVNAdminArea dir = entry.getKind() == SVNNodeKind.DIR ? access.retrieve(path) : access.retrieve(path.getParentFile());
         return dir.getWCProperties(entry.getName()).getPropertyValue(propName);
+    }
+    
+    public static void deleteWCProperties(SVNAdminArea dir, String name, boolean recursive) throws SVNException {
+        if (name != null) {
+            SVNVersionedProperties props = dir.getWCProperties(name);
+            props.removeAll();
+        } 
+        if (recursive) {
+            for(Iterator entries = dir.entries(false); entries.hasNext();) {
+                SVNEntry2 entry = (SVNEntry2) entries.next();
+                if (name != null) {
+                    dir.getWCProperties(entry.getName()).removeAll();
+                }
+                if (dir.getThisDirName().equals(entry.getName())) {
+                    continue;
+                }
+                if (entry.isFile()) {
+                    continue;                    
+                }
+                SVNAdminArea childDir = dir.getWCAccess().retrieve(dir.getFile(entry.getName()));
+                deleteWCProperties(childDir, null, true);
+            }
+        }
+        dir.saveWCProperties(false);
     }
 
     public static String getProperty(SVNWCAccess2 access, File path, String propName) throws SVNException {
@@ -169,7 +194,7 @@ public class SVNPropertiesManager {
     }
     
     public static Map computeAutoProperties(ISVNOptions options, File file) {
-        Map properties = options.getAutoProperties();
+        Map properties = options.applyAutoProperties(file.getName(), null);
         if (!properties.containsKey(SVNProperty.MIME_TYPE)) {
             String mimeType = SVNFileUtil.detectMimeType(file);
             if (mimeType != null) {
