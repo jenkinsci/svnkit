@@ -39,6 +39,10 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 public class SVNWCManager {
     
     public static void add(File path, SVNAdminArea parentDir, SVNURL copyFromURL, SVNRevision copyFromRev) throws SVNException {
+        add(path, parentDir, copyFromURL, copyFromRev.getNumber());
+    }
+
+    public static void add(File path, SVNAdminArea parentDir, SVNURL copyFromURL, long copyFromRev) throws SVNException {
         SVNWCAccess2 wcAccess = parentDir.getWCAccess();
         SVNFileType fileType = SVNFileType.getType(path);
         if (fileType == SVNFileType.NONE) {
@@ -61,7 +65,7 @@ public class SVNWCManager {
                 SVNErrorManager.error(err);
             } else if (entry.getKind() != kind) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NODE_KIND_CHANGE, 
-                        "Can't replace ''{0}'' with a node of a different type; the deletion must be committed and the parent updated before adding ''{0}''", path);
+                        "Can''t replace ''{0}'' with a node of a different type; the deletion must be committed and the parent updated before adding ''{0}''", path);
                 SVNErrorManager.error(err);
             }
             replace = entry.isScheduledForDeletion();
@@ -69,12 +73,12 @@ public class SVNWCManager {
         SVNEntry2 parentEntry = wcAccess.getEntry(path.getParentFile(), false);
         if (parentEntry == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, 
-                    "Can't find parent directory's entry while trying to add ''{0}''", path);
+                    "Can''t find parent directory's entry while trying to add ''{0}''", path);
             SVNErrorManager.error(err);
         }
         if (parentEntry.isScheduledForDeletion()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_SCHEDULE_CONFLICT, 
-                    "Can't add ''{0}'' to a parent directory scheduled for deletion", path);
+                    "Can''t add ''{0}'' to a parent directory scheduled for deletion", path);
             SVNErrorManager.error(err);
         }
         Map command = new HashMap();
@@ -86,7 +90,7 @@ public class SVNWCManager {
                 SVNErrorManager.error(err);
             }
             command.put(SVNProperty.shortPropertyName(SVNProperty.COPYFROM_URL), copyFromURL.toString());
-            command.put(SVNProperty.shortPropertyName(SVNProperty.COPYFROM_REVISION), copyFromRev.toString());
+            command.put(SVNProperty.shortPropertyName(SVNProperty.COPYFROM_REVISION), SVNProperty.toString(copyFromRev));
             command.put(SVNProperty.shortPropertyName(SVNProperty.COPIED), Boolean.TRUE.toString());
         }
         if (replace) {
@@ -110,7 +114,7 @@ public class SVNWCManager {
                 SVNURL newURL = pEntry.getSVNURL().appendPath(name, false);
                 SVNAdminAreaFactory.createVersionedDirectory(path, newURL, pEntry.getRepositoryRootURL(), pEntry.getUUID(), 0);
             } else {
-                SVNAdminAreaFactory.createVersionedDirectory(path, copyFromURL, parentEntry.getRepositoryRootURL(), parentEntry.getUUID(), copyFromRev.getNumber());
+                SVNAdminAreaFactory.createVersionedDirectory(path, copyFromURL, parentEntry.getRepositoryRootURL(), parentEntry.getUUID(), copyFromRev);
             }
             if (entry == null || entry.isDeleted()) {
                 dir = wcAccess.open(path, true, copyFromURL != null ? SVNWCAccess2.INFINITE_DEPTH : 0);

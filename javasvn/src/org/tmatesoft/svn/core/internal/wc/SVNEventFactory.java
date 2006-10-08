@@ -100,6 +100,19 @@ public class SVNEventFactory {
                 entry.getKind(), 0, mimeType, null, null, null, null, null);
 
     }
+
+    public static SVNEvent createAddedEvent(SVNAdminAreaInfo info, SVNAdminArea dir, SVNEntry2 entry) {
+        String mimeType = null;
+        try {
+            mimeType = dir.getProperties(entry.getName()).getPropertyValue(SVNProperty.MIME_TYPE);
+        } catch (SVNException e) {
+            //
+        }
+        return new SVNEvent(info, dir, entry.getName(), SVNEventAction.ADD,
+                entry.getKind(), 0, mimeType, null, null, null, null, null);
+
+    }
+
     public static SVNEvent createAddedEvent(SVNAdminArea dir, String name, SVNNodeKind kind, String mimeType) {
         return new SVNEvent(null, dir, name, SVNEventAction.ADD,
                 kind, 0, mimeType, null, null, null, null, null);
