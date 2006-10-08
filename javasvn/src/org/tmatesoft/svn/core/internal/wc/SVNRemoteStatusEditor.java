@@ -348,10 +348,15 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
     }
     
     private SVNStatus createStatus(File path) throws SVNException {
-        SVNEntry2 entry = getWCAccess().getEntry(path, false);        
-        SVNEntry2 parentEntry = path.getParentFile() != null ? getWCAccess().getEntry(path.getParentFile(), false) : null;
-        SVNAdminArea parentDir = parentEntry != null && path.getParentFile() != null ?  getWCAccess().retrieve(path.getParentFile()) : null;
-        return assembleStatus(path, parentDir == null ? getWCAccess().retrieve(path) : parentDir, entry, parentEntry, SVNNodeKind.UNKNOWN, false, true, false);
+        SVNEntry2 entry = getWCAccess().getEntry(path, false);
+        SVNEntry2 parentEntry = null;
+        if (entry != null) {
+            SVNAdminArea parentDir = getWCAccess().getAdminArea(path.getParentFile());
+            if (parentDir != null) {
+                parentEntry = getWCAccess().getEntry(path.getParentFile(), false);
+            }
+        }
+        return assembleStatus(path, entry != null ? getWCAccess().probeRetrieve(path) : null, entry, parentEntry, SVNNodeKind.UNKNOWN, false, true, false);
     }
     
     public void handleStatus(SVNStatus status) throws SVNException {

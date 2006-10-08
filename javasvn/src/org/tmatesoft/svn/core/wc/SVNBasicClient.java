@@ -33,7 +33,6 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
@@ -445,16 +444,21 @@ public class SVNBasicClient implements ISVNEventHandler {
         }
         
         if (path != null && url == null) {
-            SVNWCAccess wcAccess = createWCAccess(path);
-            SVNEntry entry = wcAccess.getTargetEntry();
-            if (entry.getCopyFromURL() != null && revision == SVNRevision.WORKING) {
-                url = entry.getCopyFromSVNURL();
-                pegRevisionNumber = entry.getCopyFromRevision();
-            } else if (entry.getURL() != null){
-                url = entry.getSVNURL();
-            } else {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path);
-                SVNErrorManager.error(err);
+            SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(null);
+            try {
+                wcAccess.openAnchor(path, false, 0);
+                SVNEntry2 entry = wcAccess.getEntry(path, false);
+                if (entry.getCopyFromURL() != null && revision == SVNRevision.WORKING) {
+                    url = entry.getCopyFromSVNURL();
+                    pegRevisionNumber = entry.getCopyFromRevision();
+                } else if (entry.getURL() != null){
+                    url = entry.getSVNURL();
+                } else {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path);
+                    SVNErrorManager.error(err);
+                }
+            } finally {
+                wcAccess.close();
             }
         }
         SVNRepository repository = createRepository(url, true);

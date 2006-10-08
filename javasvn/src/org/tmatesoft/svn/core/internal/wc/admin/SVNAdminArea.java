@@ -27,6 +27,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -35,9 +36,11 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNLog;
 import org.tmatesoft.svn.core.wc.ISVNMerger;
 import org.tmatesoft.svn.core.wc.ISVNMergerFactory;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -141,7 +144,7 @@ public abstract class SVNAdminArea {
             }
         }
 
-        if (newRevision >= 0 && entry.isScheduledForAddition() && entry.isScheduledForReplacement() && 
+        if (newRevision >= 0 && !entry.isScheduledForAddition() && !entry.isScheduledForReplacement() && 
                 entry.getRevision() != newRevision) {
             rewrite = true;
             entry.setRevision(newRevision);
@@ -1152,7 +1155,7 @@ public abstract class SVNAdminArea {
         return propertiesFile;
     }
 
-    protected File getPropertiesFile(String name, boolean tmp) {
+    public File getPropertiesFile(String name, boolean tmp) {
         String path = !tmp ? "" : "tmp/";
         path += getThisDirName().equals(name) ? "dir-props" : "props/" + name + ".svn-work";
         File propertiesFile = getAdminFile(path);
@@ -1347,5 +1350,97 @@ public abstract class SVNAdminArea {
             log.delete();
         }
     }
+    
+    public void commit(String target, SVNCommitInfo info, Map wcPropChanges,
+            boolean removeLock, boolean recursive, Collection explicitCommitPaths) throws SVNException {
+        
+        SVNAdminArea anchor = getWCAccess().retrieve(getWCAccess().getAnchor());
+        String path = getRelativePath(anchor);
+        path = "".equals(target) ? path : SVNPathUtil.append(path, target);
+        if (!explicitCommitPaths.contains(path)) {
+            // if this item is explicitly copied -> skip it.
+            SVNEntry2 entry = getEntry(target, true);
+            if (entry != null && entry.getCopyFromURL() != null) {
+                return;
+            }
+        }
+
+        ISVNLog log = getLog();
+        //
+        String checksum = null;
+        if (!"".equals(target)) {
+            File baseFile = getBaseFile(target, true);
+            SVNFileType baseType = SVNFileType.getType(baseFile);
+            if (baseType == SVNFileType.NONE) {
+                baseFile = getBaseFile(target, false);
+                baseType = SVNFileType.getType(baseFile);
+            }
+            if (baseType == SVNFileType.FILE) {
+                checksum = SVNFileUtil.computeChecksum(baseFile);
+            }
+            recursive = false;
+        } else {
+
+        }
+        Map command = new HashMap();
+        if (info != null) {
+            command.put(SVNLog.NAME_ATTR, target);
+            command.put(SVNProperty.shortPropertyName(SVNProperty.COMMITTED_REVISION), Long.toString(info.getNewRevision()));
+            command.put(SVNProperty.shortPropertyName(SVNProperty.COMMITTED_DATE), SVNTimeUtil.formatDate(info.getDate()));
+            command.put(SVNProperty.shortPropertyName(SVNProperty.LAST_AUTHOR), info.getAuthor());
+            log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
+            command.clear();
+        }
+        if (checksum != null) {
+            command.put(SVNLog.NAME_ATTR, target);
+            command.put(SVNProperty.shortPropertyName(SVNProperty.CHECKSUM), checksum);
+            log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
+            command.clear();
+        }
+        if (removeLock) {
+            command.put(SVNLog.NAME_ATTR, target);
+            log.addCommand(SVNLog.DELETE_LOCK, command, false);
+            command.clear();
+        }
+        command.put(SVNLog.NAME_ATTR, target);
+        command.put(SVNLog.REVISION_ATTR, info == null ? null : Long.toString(info.getNewRevision()));
+        if (!explicitCommitPaths.contains(path)) {
+            command.put("implicit", "true");
+        }
+        log.addCommand(SVNLog.COMMIT, command, false);
+        command.clear();
+        if (wcPropChanges != null && !wcPropChanges.isEmpty()) {
+            for (Iterator propNames = wcPropChanges.keySet().iterator(); propNames.hasNext();) {
+                String propName = (String) propNames.next();
+                String propValue = (String) wcPropChanges.get(propName);
+                command.put(SVNLog.NAME_ATTR, target);
+                command.put(SVNLog.PROPERTY_NAME_ATTR, propName);
+                command.put(SVNLog.PROPERTY_VALUE_ATTR, propValue);
+                log.addCommand(SVNLog.MODIFY_WC_PROPERTY, command, false);
+                command.clear();
+            }
+        }
+        log.save();
+        runLogs();
+
+        if (recursive) {
+            for (Iterator ents = entries(true); ents.hasNext();) {
+                SVNEntry entry = (SVNEntry) ents.next();
+                if ("".equals(entry.getName())) {
+                    continue;
+                }
+                if (entry.getKind() == SVNNodeKind.DIR) {
+                    File childPath = getFile(entry.getName());
+                    SVNAdminArea childDir = getWCAccess().retrieve(childPath);
+                    if (childDir != null) {
+                        childDir.commit("", info, null, removeLock, true, explicitCommitPaths);
+                    }
+                } else {
+                    commit(entry.getName(), info, null, removeLock, false, explicitCommitPaths);
+                }
+            }
+        }
+    }
+
 
 }

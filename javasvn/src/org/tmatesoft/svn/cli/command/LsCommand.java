@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.xml.SVNXMLDirEntryHandler;
 import org.tmatesoft.svn.core.wc.xml.SVNXMLSerializer;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @author TMate Software Ltd.
@@ -60,7 +61,8 @@ public class LsCommand extends SVNCommand implements ISVNDirEntryHandler {
         SVNRevision revision = parseRevision(getCommandLine());
         SVNLogClient logClient = getClientManager().getLogClient();
         if (!getCommandLine().hasURLs() && !getCommandLine().hasPaths()) {
-            getCommandLine().setPathAt(0, ".");
+            getCommandLine().setPathAt(0, "");
+            SVNDebugLog.getDefaultLog().info("path set");
         }
         if (handler != null) {
             if (!getCommandLine().hasArgument(SVNArgument.INCREMENTAL)) {
@@ -79,6 +81,7 @@ public class LsCommand extends SVNCommand implements ISVNDirEntryHandler {
         }
         for(int i = 0; i < getCommandLine().getPathCount(); i++) {
             File path = new File(getCommandLine().getPathAt(i)).getAbsoluteFile();
+            SVNDebugLog.getDefaultLog().info("path: " + path + " from " + getCommandLine().getPathAt(i));
             if (handler != null) {
                 handler.startTarget(path.getAbsolutePath().replace(File.separatorChar, '/'));
             }

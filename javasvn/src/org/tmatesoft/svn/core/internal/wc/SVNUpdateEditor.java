@@ -26,11 +26,11 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNLog;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
@@ -77,7 +77,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             myTargetURL = SVNPathUtil.append(myTargetURL, SVNEncodingUtil.uriEncode(myTarget));
         }
         if (mySwitchURL != null && entry != null && entry.getRepositoryRoot() != null) {
-            if (SVNPathUtil.isAncestor(entry.getRepositoryRoot(), mySwitchURL)) {
+            if (!SVNPathUtil.isAncestor(entry.getRepositoryRoot(), mySwitchURL)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_SWITCH, "''{0}''\nis not the same repository as\n''{1}''",
                         new Object[] {mySwitchURL, entry.getRepositoryRoot()});
                 SVNErrorManager.error(err);
@@ -144,8 +144,8 @@ public class SVNUpdateEditor implements ISVNEditor {
             SVNErrorManager.error(err, svne);
         }
 
-        SVNAdminArea childArea = myWCAccess.retrieve(parentArea.getFile(name));
         if (mySwitchURL != null && kind == SVNNodeKind.DIR) {
+            SVNAdminArea childArea = myWCAccess.retrieve(parentArea.getFile(name));
             try {
                 childArea.removeFromRevisionControl(childArea.getThisDirName(), true, true);
             } catch (SVNException svne) {
@@ -155,7 +155,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         try {
             myCurrentDirectory.runLogs();
         } catch (SVNException svne) {
-            handleLeftLocalModificationsError(svne, log, childArea);
+            handleLeftLocalModificationsError(svne, log, parentArea);
         }
 
         if (isDeleted) {
@@ -327,7 +327,9 @@ public class SVNUpdateEditor implements ISVNEditor {
             completeDirectory(myCurrentDirectory);
         }
         if (!myIsTargetDeleted) {
-            cleanupUpdate();
+            File targetFile = myTarget != null ? myAdminInfo.getAnchor().getFile(myTarget) : myAdminInfo.getAnchor().getRoot(); 
+            SVNWCManager.updateCleanup(targetFile, myWCAccess, myIsRecursive, mySwitchURL, myRootURL, myTargetRevision, true);
+//            cleanupUpdate();
         }
         return null;
     }
@@ -603,57 +605,6 @@ public class SVNUpdateEditor implements ISVNEditor {
     }
 
     public void abortEdit() throws SVNException {
-    }
-
-    private void cleanupUpdate() throws SVNException {
-        SVNAdminArea adminArea = myAdminInfo.getAnchor();
-        String targetName = myTarget != null ? myTarget : adminArea.getThisDirName();
-        SVNEntry2 entry = adminArea.getEntry(targetName, true);
-        if (entry == null) {
-            return;
-        }
-        
-        if (entry.isFile() || (entry.isDirectory() && (entry.isAbsent() || entry.isDeleted()))) {
-            if (adminArea.tweakEntry(targetName, mySwitchURL, myRootURL, myTargetRevision, false)) {
-                adminArea.saveEntries(false);
-            }
-        } else if (entry.isDirectory()) {
-            SVNAdminArea targetArea = targetName.equals(adminArea.getThisDirName()) ? adminArea : myWCAccess.retrieve(adminArea.getFile(targetName));
-            bumpDirectory(targetArea, mySwitchURL, myRootURL);
-        } else {
-            File target = targetName.equals(adminArea.getThisDirName()) ? adminArea.getRoot() : adminArea.getFile(targetName);
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "Unrecognized node kind: ''{0}''", target);
-            SVNErrorManager.error(err);
-        }
-    }
-    
-    private void bumpDirectory(SVNAdminArea adminArea, String url, String rootURL) throws SVNException {
-        boolean save = adminArea.tweakEntry(adminArea.getThisDirName(), url, rootURL, myTargetRevision, false);
-        for (Iterator entries = adminArea.entries(true); entries.hasNext();) {
-            SVNEntry2 entry = (SVNEntry2) entries.next();
-            if (adminArea.getThisDirName().equals(entry.getName())) {
-                continue;
-            }
-            
-            String childURL = url != null ? SVNPathUtil.append(url, SVNEncodingUtil.uriEncode(entry.getName())) : null;
-            if (entry.isFile() || (myIsRecursive && (entry.isAbsent() || entry.isDeleted()))) {
-                save |= adminArea.tweakEntry(entry.getName(), childURL, rootURL, myTargetRevision, true);
-            } else if (myIsRecursive && entry.isDirectory()) {
-                File childPath = adminArea.getFile(entry.getName());
-                if (myWCAccess.isMissing(childPath) && !entry.isScheduledForAddition()) {
-                    adminArea.deleteEntry(entry.getName());
-                    myWCAccess.handleEvent(SVNEventFactory.createUpdateDeleteEvent(myAdminInfo, adminArea, entry));
-                    save = true;
-                } else {
-                    SVNAdminArea childArea = myWCAccess.retrieve(childPath);
-                    bumpDirectory(childArea, childURL, rootURL);
-                }
-            }
-        }
-        
-        if (save) {
-            adminArea.saveEntries(false);
-        }
     }
 
     private void completeDirectory(SVNDirectoryInfo info) throws SVNException {

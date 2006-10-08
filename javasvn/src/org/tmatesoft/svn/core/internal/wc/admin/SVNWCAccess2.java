@@ -50,6 +50,8 @@ public class SVNWCAccess2 implements ISVNEventHandler {
     private ISVNOptions myOptions;
     private Map myAdminAreas;
 
+    private File myAnchor;
+
     public static SVNWCAccess2 newInstance(ISVNEventHandler eventHandler) {
         return new SVNWCAccess2(eventHandler);
     }
@@ -94,6 +96,14 @@ public class SVNWCAccess2 implements ISVNEventHandler {
             myOptions = new DefaultSVNOptions();
         }
         return myOptions;
+    }
+    
+    public void setAnchor(File anchor) {
+        myAnchor = anchor;
+    }
+    
+    public File getAnchor() {
+        return myAnchor;
     }
 
     public SVNAdminAreaInfo openAnchor(File path, boolean writeLock, int depth) throws SVNException {
@@ -450,6 +460,13 @@ public class SVNWCAccess2 implements ISVNEventHandler {
         }
     }
     
+    public SVNAdminArea[] getAdminAreas() {
+        if (myAdminAreas != null) {
+            return (SVNAdminArea[]) myAdminAreas.values().toArray(new SVNAdminArea[myAdminAreas.size()]);
+        }
+        return new SVNAdminArea[0];
+    }
+    
     public SVNAdminArea retrieve(File path) throws SVNException {
         SVNAdminArea adminArea = getAdminArea(path);
         if (adminArea == null) {
@@ -564,7 +581,7 @@ public class SVNWCAccess2 implements ISVNEventHandler {
 
 
     //analogous to retrieve_internal
-    private SVNAdminArea getAdminArea(File path) {
+    public SVNAdminArea getAdminArea(File path) {
         //internal retrieve
         SVNAdminArea adminArea = null; 
         if (myAdminAreas != null) {

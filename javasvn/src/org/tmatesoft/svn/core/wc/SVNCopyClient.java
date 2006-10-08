@@ -47,7 +47,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNLog;
-import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc.SVNWCManager;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNLog;
@@ -490,7 +489,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 return SVNCommitInfo.NULL;
             }
             
-            SVNCommitUtil.harvestCommitables(commitables, dirArea, "", srcPath, null, entry, dstURL.toString(), entry.getURL(), 
+            SVNCommitUtil.harvestCommitables(commitables, dirArea, srcPath, null, entry, dstURL.toString(), entry.getURL(), 
                     true, false, false, null, true, false, getCommitParameters());
             items = (SVNCommitItem[]) commitables.values().toArray(new SVNCommitItem[commitables.values().size()]);
             for (int i = 0; i < items.length; i++) {

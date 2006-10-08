@@ -663,7 +663,7 @@ public class SVNWCClient extends SVNBasicClient {
                     if ((base && entry.isScheduledForAddition()) || (!base && entry.isScheduledForDeletion())) {
                         return;
                     }
-                    SVNVersionedProperties properties = base ? area.getBaseProperties(entry.getName()) : area.getWCProperties(entry.getName());
+                    SVNVersionedProperties properties = base ? area.getBaseProperties(entry.getName()) : area.getProperties(entry.getName());
                     if (propName != null) {
                         String propValue = properties.getPropertyValue(propName);
                         if (propValue != null) {
@@ -936,7 +936,12 @@ public class SVNWCClient extends SVNBasicClient {
                 }
                 SVNErrorManager.error(err);
             }
-            doAdd(firstCreated, false, false, climbUnversionedParents, true, true);
+            try {
+                doAdd(firstCreated, false, false, climbUnversionedParents, true, true);
+            } catch (SVNException e) {
+                SVNFileUtil.deleteAll(firstCreated, true);
+                throw e;
+            }
             return;
         }
         SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
@@ -1147,7 +1152,7 @@ public class SVNWCClient extends SVNBasicClient {
         if (baseProperties == null) {
             if (dir.hasPropModifications(name)) {
                 baseProperties = dir.getBaseProperties(name);
-                SVNVersionedProperties propDiff = dir.getWCProperties(name).compareTo(baseProperties);
+                SVNVersionedProperties propDiff = dir.getProperties(name).compareTo(baseProperties);
                 Collection propNames = propDiff.getPropertyNames(null);
                 reinstallWorkingFile = propNames.contains(SVNProperty.EXECUTABLE) ||
                                 propNames.contains(SVNProperty.KEYWORDS) ||
@@ -2015,11 +2020,15 @@ public class SVNWCClient extends SVNBasicClient {
     }
     
     private void doDelete(SVNWCAccess2 wcAccess, SVNAdminArea root, File path, boolean deleteFiles) throws SVNException {
-        SVNAdminArea dir = wcAccess.probeTry(path, true, -1);
+        SVNAdminArea dir = wcAccess.probeTry(path, true, SVNWCAccess2.INFINITE_DEPTH);
         SVNEntry2 entry = null;
         if (dir != null) {
             entry = wcAccess.getEntry(path, false);
         } else {
+            doDeleteUnversionedFiles(path, deleteFiles);
+            return;
+        }
+        if (entry == null) {
             doDeleteUnversionedFiles(path, deleteFiles);
             return;
         }
@@ -2211,7 +2220,7 @@ public class SVNWCClient extends SVNBasicClient {
             if ((base && entry.isScheduledForAddition()) || (!base && entry.isScheduledForDeletion())) {
                 continue;
             }
-            SVNVersionedProperties properties = base ? area.getBaseProperties(entry.getName()) : area.getWCProperties(entry.getName());
+            SVNVersionedProperties properties = base ? area.getBaseProperties(entry.getName()) : area.getProperties(entry.getName());
             if (propName != null) {
                 String propVal = properties.getPropertyValue(propName);
                 if (propVal != null) {

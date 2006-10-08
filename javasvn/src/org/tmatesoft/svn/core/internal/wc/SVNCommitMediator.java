@@ -19,6 +19,9 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
 
@@ -51,17 +54,17 @@ public class SVNCommitMediator implements ISVNWorkspaceMediator {
         if (item == null) {
             return null;
         }
-        SVNDirectory dir;
+        SVNAdminArea dir;
         String target;
-        SVNWCAccess wcAccess = item.getWCAccess();
+        SVNWCAccess2 wcAccess = item.getWCAccess();
         if (item.getKind() == SVNNodeKind.DIR) {
-            dir = wcAccess.getDirectory(item.getPath());
+            dir = wcAccess.retrieve(item.getFile());
             target = "";
         } else {
-            dir = wcAccess.getDirectory(SVNPathUtil.removeTail(item.getPath()));
+            dir = wcAccess.retrieve(item.getFile().getParentFile());
             target = SVNPathUtil.tail(item.getPath());
         }
-        SVNProperties wcProps = dir.getWCProperties(target);
+        SVNVersionedProperties wcProps = dir.getWCProperties(target);
         return wcProps.getPropertyValue(name);
     }
 

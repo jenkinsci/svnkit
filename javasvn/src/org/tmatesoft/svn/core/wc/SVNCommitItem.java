@@ -11,12 +11,12 @@
  */
 package org.tmatesoft.svn.core.wc;
 
+import java.io.File;
+
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
-
-import java.io.File;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
 
 /**
  * The <b>SVNCommitItem</b> represents a versioned item that is  
@@ -55,7 +55,7 @@ public class SVNCommitItem {
     private boolean myIsCopied;
     private boolean myIsLocked;
     private String myPath;
-    private SVNWCAccess myWCAccess;
+    private SVNWCAccess2 myWCAccess;
     private SVNAdminArea myAnchorArea;
     
     /**
@@ -241,11 +241,11 @@ public class SVNCommitItem {
      * 
      * @return wc access object
      */
-    public SVNWCAccess getWCAccess() {
+    public SVNWCAccess2 getWCAccess() {
         return myWCAccess;
     }
 
-    void setWCAccess(SVNWCAccess wcAccess) {
+    void setWCAccess(SVNWCAccess2 wcAccess) {
         myWCAccess = wcAccess;
     }
 

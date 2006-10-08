@@ -61,6 +61,8 @@ public class SVNAdminArea14 extends SVNAdminArea {
 
     private File myLockFile;
     private File myEntriesFile;
+
+    private boolean myWasLocked;
     
     public SVNAdminArea14(File dir) {
         super(dir);
@@ -1297,6 +1299,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
             return false;
         }
         if (stealLock && myLockFile.isFile()) {
+            myWasLocked = true;
             return true;
         }
         boolean created = false;
@@ -1308,6 +1311,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
             SVNErrorManager.error(err, e);
         }
         if (created) {
+            myWasLocked = true;
             return created;
         }
         if (myLockFile.isFile()) {
@@ -1361,7 +1365,8 @@ public class SVNAdminArea14 extends SVNAdminArea {
         // for backward compatibility 
         createFormatFile(createMyself ? null : new File(adminDir, "format"), createMyself);
 
-        SVNAdminArea adminArea = createMyself ? this : new SVNAdminArea14(dir);
+        SVNAdminArea14 adminArea = createMyself ? this : new SVNAdminArea14(dir);
+        adminArea.setLocked(true);
         SVNEntry2 rootEntry = adminArea.getEntry(adminArea.getThisDirName(), true);
         if (rootEntry == null) {
             rootEntry = adminArea.addEntry(adminArea.getThisDirName());
@@ -1571,7 +1576,14 @@ public class SVNAdminArea14 extends SVNAdminArea {
         return false;
     }
     
+    public void setLocked(boolean locked) {
+        myWasLocked = locked;
+    }
+    
     public boolean isLocked() throws SVNException {
+        if (!myWasLocked) {
+            return false;
+        }
         SVNFileType type = SVNFileType.getType(myLockFile);
         if (type == SVNFileType.FILE) {
             return true;

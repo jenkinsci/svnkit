@@ -11,13 +11,14 @@
  */
 package org.tmatesoft.svn.core.wc;
 
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
-
-import java.util.Map;
-import java.util.Collection;
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
+
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
 
 /**
  * The <b>SVNCommitPacket</b> is a storage for <b>SVNCommitItem</b>
@@ -44,7 +45,7 @@ public class SVNCommitPacket {
     private boolean[] myIsSkipped;
     private boolean myIsDisposed;
 
-    SVNCommitPacket(SVNWCAccess wcAccess, SVNCommitItem[] items, Map lockTokens) {
+    SVNCommitPacket(SVNWCAccess2 wcAccess, SVNCommitItem[] items, Map lockTokens) {
         myCommitItems = items;
         myLockTokens = lockTokens;
         myIsSkipped = new boolean[items == null ? 0 : items.length];
@@ -126,7 +127,7 @@ public class SVNCommitPacket {
         try {
             for (int i = 0; i < myCommitItems.length; i++) {
                 if (myCommitItems[i] != null && myCommitItems[i].getWCAccess() != null) {
-                    myCommitItems[i].getWCAccess().close(true);
+                    myCommitItems[i].getWCAccess().close();
                 }
             }
         } finally { 

@@ -358,16 +358,16 @@ public class SVNStatusEditor {
         }
         if (textStatus != SVNStatusType.STATUS_OBSTRUCTED) {
             String name = entry.getName();
-            if (dir.hasProperties(name)) {
+            if (dir != null && dir.hasProperties(name)) {
                 propStatus = SVNStatusType.STATUS_NORMAL;
                 hasProps = true;
             }
-            isPropsModified = dir.hasPropModifications(name);
+            isPropsModified = dir != null && dir.hasPropModifications(name);
             if (hasProps) {
-                isSpecial = dir.getProperties(name).getPropertyValue(SVNProperty.SPECIAL) != null;
+                isSpecial = dir != null && dir.getProperties(name).getPropertyValue(SVNProperty.SPECIAL) != null;
             }
             if (entry.getKind() == SVNNodeKind.FILE && special == isSpecial) {
-                isTextModified = dir.hasTextModifications(name, false);
+                isTextModified = dir != null && dir.hasTextModifications(name, false);
             }
             if (isTextModified) {
                 textStatus = SVNStatusType.STATUS_MODIFIED;
@@ -377,10 +377,10 @@ public class SVNStatusEditor {
             }
             if (entry.getPropRejectFile() != null || 
                     entry.getConflictOld() != null || entry.getConflictNew() != null || entry.getConflictWorking() != null) {
-                if (dir.hasTextConflict(name)) {
+                if (dir != null && dir.hasTextConflict(name)) {
                     textStatus = SVNStatusType.STATUS_CONFLICTED;
                 }
-                if (dir.hasPropConflict(name)) {
+                if (dir != null && dir.hasPropConflict(name)) {
                     propStatus = SVNStatusType.STATUS_CONFLICTED;
                 }
             }
@@ -421,14 +421,17 @@ public class SVNStatusEditor {
             localLock = new SVNLock(null, entry.getLockToken(), entry.getLockOwner(), entry.getLockComment(),
                     SVNTimeUtil.parseDate(entry.getLockCreationDate()), null);
         }
+        File conflictNew = dir != null ? dir.getFile(entry.getConflictNew()) : null;
+        File conflictOld = dir != null ? dir.getFile(entry.getConflictOld()) : null;
+        File conflictWrk = dir != null ? dir.getFile(entry.getConflictWorking()) : null;
+        File conflictProp = dir != null ? dir.getFile(entry.getPropRejectFile()) : null;
         SVNStatus status = new SVNStatus(entry.getSVNURL(), file, entry.getKind(),
                 SVNRevision.create(entry.getRevision()), SVNRevision.create(entry.getCommittedRevision()),
                 SVNTimeUtil.parseDate(entry.getCommittedDate()), entry.getAuthor(), 
                 textStatus,  propStatus, 
                 SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, 
                 isLocked, entry.isCopied(), isSwitched, 
-                dir.getFile(entry.getConflictNew()), dir.getFile(entry.getConflictOld()), dir.getFile(entry.getConflictWorking()), 
-                dir.getFile(entry.getPropRejectFile()),
+                conflictNew, conflictOld, conflictWrk, conflictProp, 
                 entry.getCopyFromURL(), SVNRevision.create(entry.getCopyFromRevision()),
                 repositoryLock, localLock, entry.asMap());
         status.setEntry(entry);

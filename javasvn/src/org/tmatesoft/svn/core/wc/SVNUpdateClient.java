@@ -265,6 +265,12 @@ public class SVNUpdateClient extends SVNBasicClient {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_FILENAME, "Checkout destination path can not be NULL");
             SVNErrorManager.error(err);
         }
+        if (!revision.isValid() && pegRevision.isValid()) {
+            revision = pegRevision;
+        }
+        if (!revision.isValid()) {
+            revision = SVNRevision.HEAD;
+        }
         SVNRepository repos = createRepository(url, null, pegRevision, revision);
         long revNumber = getRevisionNumber(revision, repos, null);
         SVNNodeKind targetNodeKind = repos.checkPath("", revNumber);

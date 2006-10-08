@@ -118,9 +118,9 @@ public class SVNWCManager {
             if (copyFromURL == null) {
                 SVNEntry2 pEntry = wcAccess.getEntry(path.getParentFile(), false);
                 SVNURL newURL = pEntry.getSVNURL().appendPath(name, false);
-                SVNAdminAreaFactory.createVersionedDirectory(path, newURL, pEntry.getRepositoryRootURL(), pEntry.getUUID(), 0);
+                ensureAdmiAreaExists(path, newURL.toString(), pEntry.getRepositoryRootURL().toString(), pEntry.getUUID(), 0);
             } else {
-                SVNAdminAreaFactory.createVersionedDirectory(path, copyFromURL, parentEntry.getRepositoryRootURL(), parentEntry.getUUID(), copyFromRev);
+                ensureAdmiAreaExists(path, copyFromURL.toString(), parentEntry.getRepositoryRootURL().toString(), parentEntry.getUUID(), copyFromRev);
             }
             if (entry == null || entry.isDeleted()) {
                 dir = wcAccess.open(path, true, copyFromURL != null ? SVNWCAccess2.INFINITE_DEPTH : 0);
@@ -143,6 +143,7 @@ public class SVNWCManager {
     public static final int COPIED = 2; 
     
     public static void markTree(SVNAdminArea dir, String schedule, boolean copied, int flags) throws SVNException {
+        Map attributes = new HashMap();
         for(Iterator entries = dir.entries(false); entries.hasNext();) {
             SVNEntry2 entry = (SVNEntry2) entries.next();
             if (dir.getThisDirName().equals(entry.getName())) {
@@ -154,11 +155,13 @@ public class SVNWCManager {
                 markTree(childDir, schedule, copied, flags);
             }
             if ((flags & SCHEDULE) != 0) {
-                entry.setSchedule(schedule);
+                attributes.put(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE), schedule);
             }
             if ((flags & COPIED) != 0) {
-                entry.setCopied(copied);
+                attributes.put(SVNProperty.shortPropertyName(SVNProperty.COPIED), copied ? Boolean.TRUE.toString() : null);
             }
+            dir.modifyEntry(entry.getName(), attributes, true);
+            attributes.clear();
             if (SVNProperty.SCHEDULE_DELETE.equals(schedule)) {
                 SVNEvent event = SVNEventFactory.createDeletedEvent(dir, entry.getName());
                 dir.getWCAccess().handleEvent(event);
@@ -167,11 +170,13 @@ public class SVNWCManager {
         SVNEntry2 dirEntry = dir.getEntry(dir.getThisDirName(), false);
         if (!(dirEntry.isScheduledForAddition() && SVNProperty.SCHEDULE_DELETE.equals(schedule))) {
             if ((flags & SCHEDULE) != 0) {
-                dirEntry.setSchedule(schedule);
+                attributes.put(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE), schedule);
             }
             if ((flags & COPIED) != 0) {
-                dirEntry.setCopied(copied);
+                attributes.put(SVNProperty.shortPropertyName(SVNProperty.COPIED), copied ? Boolean.TRUE.toString() : null);
             }
+            dir.modifyEntry(dir.getThisDirName(), attributes, true);
+            attributes.clear();
         }
         dir.saveEntries(false);
     }
@@ -222,6 +227,50 @@ public class SVNWCManager {
                     tweakEntries(childDir, childURL, rootURL, newRevision, removeMissingDirs, recursive);
                 }
             } 
+        }
+        if (write) {
+            dir.saveEntries(false);
+        }
+    }
+    
+    private static void ensureAdmiAreaExists(File path, String url, String rootURL, String uuid, long revision) throws SVNException{
+        SVNFileType fileType = SVNFileType.getType(path);
+        if (fileType != SVNFileType.DIRECTORY && fileType != SVNFileType.NONE) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "''{0}'' is not a directory", path);
+            SVNErrorManager.error(err);            
+        }
+        if (fileType == SVNFileType.NONE) {
+            SVNAdminAreaFactory.createVersionedDirectory(path, url, rootURL, uuid, revision);
+            return;
+        }
+        SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(null);
+        try {
+            wcAccess.open(path, false, 0);
+            SVNEntry2 entry = wcAccess.getEntry(path, false);
+            if (entry == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "No entry for ''{0}''", path);
+                SVNErrorManager.error(err);            
+            }
+            if (!entry.isScheduledForDeletion()) {
+                if (entry.getRevision() != revision) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Revision {0} doesn''t match existing revision {1} in ''{2}''", 
+                            new Object[] {new Long(revision), new Long(entry.getRevision()), path});
+                    SVNErrorManager.error(err);            
+                }
+                if (!entry.getURL().equals(url)) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "URL {0} doesn''t match existing URL {1} in ''{2}''", 
+                            new Object[] {url, entry.getURL(), path});
+                    SVNErrorManager.error(err);            
+                }
+            }
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
+                SVNAdminAreaFactory.createVersionedDirectory(path, url, rootURL, uuid, revision);
+                return;
+            }
+            throw e;
+        } finally {
+            wcAccess.close();
         }
     }
 
