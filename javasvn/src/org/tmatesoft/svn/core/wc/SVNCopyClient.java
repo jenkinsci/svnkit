@@ -724,8 +724,8 @@ public class SVNCopyClient extends SVNBasicClient {
     public void doCopy(File srcPath, SVNRevision srcRevision, File dstPath, boolean force, boolean isMove) throws SVNException {
         if (srcRevision.isValid() && srcRevision != SVNRevision.WORKING && !isMove) {
             // url->wc copy
-            SVNWCAccess wcAccess = createWCAccess(srcPath);
-            SVNEntry srcEntry = wcAccess.getTargetEntry();
+            SVNWCAccess2 wcAccess = createWCAccess();
+            SVNEntry2 srcEntry = wcAccess.getEntry(srcPath, false);
             if (srcEntry == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", srcPath);
                 SVNErrorManager.error(err);
@@ -760,13 +760,77 @@ public class SVNCopyClient extends SVNBasicClient {
             dstPath = new File(dstPath, srcPath.getName());
             dstType = SVNFileType.getType(dstPath);
             if (dstType != SVNFileType.NONE) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "''{0}'' already exists and is in a way", dstPath);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "''{0}'' already exists and is in the way", dstPath);
                 SVNErrorManager.error(err);
             }
         } else if (dstType != SVNFileType.NONE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "File ''{0}'' already exists", dstPath);
             SVNErrorManager.error(err);
         }
+        
+        SVNWCAccess2 wcAccess = createWCAccess();
+        SVNAdminArea adminArea = null;
+        File srcParent = srcPath.getParentFile();
+        File dstParent = dstPath.getParentFile();
+
+        try {
+            if (isMove) {
+                SVNAdminArea srcParentArea = wcAccess.open(srcParent, true, srcType == SVNFileType.DIRECTORY ? SVNWCAccess2.INFINITE_DEPTH : 0);
+                if (srcParent.equals(dstParent)) {
+                    adminArea = srcParentArea;
+                } else {
+                    if (srcType == SVNFileType.DIRECTORY && SVNPathUtil.isChildOf(srcParent, dstParent)) {
+                        adminArea = wcAccess.retrieve(dstParent);
+                    } else {
+                        adminArea = wcAccess.open(dstParent, true, 0);
+                    }
+                }
+                
+                if (!force) {
+                    try {
+                        SVNWCManager.canDelete(srcPath, false, getOptions());
+                    } catch (SVNException svne) {
+                        SVNErrorMessage err = svne.getErrorMessage().wrap("Move will not be attempted unless forced");
+                        SVNErrorManager.error(err, svne);
+                    }
+                }
+            } else {
+                adminArea = wcAccess.open(dstParent, true, 0);
+            }
+            
+            SVNAdminArea srcArea = wcAccess.probeOpen(srcPath, false, SVNWCAccess2.INFINITE_DEPTH);
+            SVNEntry2 dstEntry = adminArea.getEntry(adminArea.getThisDirName(), false);
+            if (dstEntry == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", adminArea.getRoot());
+                SVNErrorManager.error(err);
+            }
+            
+            SVNEntry2 srcEntry = wcAccess.getEntry(srcPath, false);
+            if (srcEntry == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", srcPath);
+                SVNErrorManager.error(err);
+            }
+            
+            if (srcEntry.getRepositoryRoot() != null && dstEntry.getRepositoryRoot() != null &&
+                    !srcEntry.getRepositoryRoot().equals(dstEntry.getRepositoryRoot())) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_SCHEDULE, "Cannot copy to ''{0}'', as it is not from repository ''{1}''; it is from ''{2}''", new Object[] {adminArea.getRoot(), srcEntry.getRepositoryRoot(), dstEntry.getRepositoryRoot()});
+                SVNErrorManager.error(err);
+            }
+            
+            if (dstEntry.isScheduledForDeletion()) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_SCHEDULE, "Cannot copy to ''{0}'' as it is scheduled for deletion", adminArea.getRoot());
+                SVNErrorManager.error(err);
+            }
+            
+            if (srcType == SVNFileType.FILE) {
+                
+            } else if (srcType == SVNFileType.DIRECTORY) {
+                
+            }
+        } finally {
+            wcAccess.close();
+        }
+        
         // 5. if move -> check if dst could be deleted later.
         SVNWCAccess srcAccess = createWCAccess(srcPath);
         SVNWCAccess dstAccess = createWCAccess(dstPath);
@@ -803,7 +867,7 @@ public class SVNCopyClient extends SVNBasicClient {
             if (srcType == SVNFileType.DIRECTORY) {
                 copyDirectory(dstAccess, srcAccess, dstPath.getName());
             } else {
-                copyFile(dstAccess, srcAccess, dstPath.getName());
+                //copyFile(dstAccess, srcAccess, dstPath.getName());
             }
 
             if (isMove) {
@@ -925,8 +989,19 @@ public class SVNCopyClient extends SVNBasicClient {
         dir.runLogs();
     }
 
-    private void copyFile(SVNWCAccess dstAccess, SVNWCAccess srcAccess,  String dstName) throws SVNException {
-        SVNEntry dstEntry = dstAccess.getAnchor().getEntries().getEntry(dstName, false);
+    private void copyFile(SVNAdminArea dstParent, SVNAdminArea srcArea,  File srcPath, String dstName) throws SVNException {
+        SVNWCAccess2 wcAccess = dstParent.getWCAccess();
+        File dstPath = dstParent.getFile(dstName);
+        
+        SVNEntry2 dstEntry = wcAccess.getEntry(dstPath, false);
+        if (dstEntry != null && dstEntry.isFile()) {
+            if (!dstEntry.isScheduledForDeletion()) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "There is already a versioned item ''{0}''", dstPath);
+                SVNErrorManager.error(err);
+            }
+        }
+        
+/*        SVNEntry dstEntry = dstAccess.getAnchor().getEntries().getEntry(dstName, false);
         File dstPath = new File(dstAccess.getAnchor().getRoot(), dstName);
         File srcPath = new File(srcAccess.getAnchor().getRoot(), srcAccess.getTargetName());
         if (dstEntry != null && dstEntry.isFile()) {
@@ -986,7 +1061,7 @@ public class SVNCopyClient extends SVNBasicClient {
         entry.setCopyFromURL(copyFromURL);
         entry.setRevision(copyFromRevision);
         entry.scheduleForAddition();
-        dstAccess.getAnchor().getEntries().save(true);
+        dstAccess.getAnchor().getEntries().save(true);*/
     }
     
     private void addDir(SVNDirectory dir, String name, String copyFromURL, long copyFromRev) throws SVNException {

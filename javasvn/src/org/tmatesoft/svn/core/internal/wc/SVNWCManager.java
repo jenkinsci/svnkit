@@ -22,14 +22,20 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNStatus;
+import org.tmatesoft.svn.core.wc.SVNStatusClient;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 
 /**
@@ -217,6 +223,28 @@ public class SVNWCManager {
                 }
             } 
         }
+    }
+
+    public static void canDelete(File path, boolean skipIgnored, ISVNOptions options) throws SVNException {
+        SVNStatusClient statusClient = new SVNStatusClient((ISVNAuthenticationManager) null, options);
+        statusClient.doStatus(path, SVNRevision.UNDEFINED, true, false, false, !skipIgnored, false, new ISVNStatusHandler() {
+            public void handleStatus(SVNStatus status) throws SVNException {
+                if (status.getContentsStatus() == SVNStatusType.STATUS_OBSTRUCTED) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNEXPECTED_KIND, "''{0}'' is in the way of the resource actually under version control", status.getFile());
+                    SVNErrorManager.error(err);
+                } else if (status.getEntry() == null) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", status.getFile());
+                    SVNErrorManager.error(err);
+                } else if ((status.getContentsStatus() != SVNStatusType.STATUS_NORMAL &&
+                        status.getContentsStatus() != SVNStatusType.STATUS_DELETED &&
+                        status.getContentsStatus() != SVNStatusType.STATUS_MISSING) ||
+                        (status.getPropertiesStatus() != SVNStatusType.STATUS_NONE &&
+                         status.getPropertiesStatus() != SVNStatusType.STATUS_NORMAL)) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_MODIFIED, "''{0}'' has local modifications", status.getFile());
+                    SVNErrorManager.error(err);
+                }
+            }
+        });
     }
 
 }
