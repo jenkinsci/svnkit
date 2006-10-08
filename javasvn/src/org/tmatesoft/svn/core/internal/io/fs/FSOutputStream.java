@@ -53,8 +53,9 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
     private long mySourceOffset;
     private ByteBuffer myTextBuffer;
     private boolean myIsClosed;
+    private boolean myIsCompress;
 
-    private FSOutputStream(FSRevisionNode revNode, CountingStream file, InputStream source, long deltaStart, long repSize, long repOffset, FSTransactionRoot txnRoot) throws SVNException {
+    private FSOutputStream(FSRevisionNode revNode, CountingStream file, InputStream source, long deltaStart, long repSize, long repOffset, FSTransactionRoot txnRoot, boolean compress) throws SVNException {
         myTxnRoot = txnRoot;
         myTargetFile = file;
         mySourceStream = source;
@@ -75,6 +76,7 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "MD5 implementation not found: {0}", nsae.getLocalizedMessage());
             SVNErrorManager.error(err, nsae);
         }
+        myIsCompress = compress;
     }
 
     private void reset(FSRevisionNode revNode, CountingStream file, InputStream source, long deltaStart, long repSize, long repOffset, FSTransactionRoot txnRoot) {
@@ -92,7 +94,7 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
         myTextBuffer.clear();
     }
 
-    public static OutputStream createStream(FSRevisionNode revNode, FSTransactionRoot txnRoot, OutputStream dstStream) throws SVNException {
+    public static OutputStream createStream(FSRevisionNode revNode, FSTransactionRoot txnRoot, OutputStream dstStream, boolean compress) throws SVNException {
         if (revNode.getType() != SVNNodeKind.FILE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FILE, "Attempted to set textual contents of a *non*-file node");
             SVNErrorManager.error(err);
@@ -133,7 +135,7 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
                 return dstStream;
             }
 
-            return new FSOutputStream(revNode, revWriter, sourceStream, deltaStart, 0, offset, txnRoot);
+            return new FSOutputStream(revNode, revWriter, sourceStream, deltaStart, 0, offset, txnRoot, compress);
 
         } catch (IOException ioe) {
             SVNFileUtil.closeFile(targetOS);
@@ -224,7 +226,7 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
         mySourceOffset += diffWindow.getInstructionsLength();
         try {
-            diffWindow.writeTo(myTargetFile, !isHeaderWritten);
+            diffWindow.writeTo(myTargetFile, !isHeaderWritten, myIsCompress);
             isHeaderWritten = true;
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());

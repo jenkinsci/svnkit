@@ -11,9 +11,11 @@
  */
 package org.tmatesoft.svn.core.internal.delta;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
+import java.util.zip.InflaterInputStream;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -67,7 +69,7 @@ public class SVNDeltaCombiner {
         myRangeTree.dispose();
     }
     
-    public SVNDiffWindow readWindow(FSFile file) throws SVNException {
+    public SVNDiffWindow readWindow(FSFile file, int version) throws SVNException {
         myReadWindowBuffer = clearBuffer(myReadWindowBuffer);
         myReadWindowBuffer = ensureBufferSize(myReadWindowBuffer, 4096);
         long position = 0;
@@ -97,15 +99,72 @@ public class SVNDeltaCombiner {
         try {
             file.read(myReadWindowBuffer);
         } catch (IOException e) {
+            SVNDebugLog.getDefaultLog().error(e);
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SVNDIFF_CORRUPT_WINDOW);
             SVNErrorManager.error(err, e);
         }
         myReadWindowBuffer.position(0);
         myReadWindowBuffer.limit(myReadWindowBuffer.capacity());
-        
+        if (version == 1) {
+            // decompress instructions and new data, put back to the buffer.
+            try {
+                int[] lenghts = decompress(instructionsLength, dataLength);
+                instructionsLength = lenghts[0];
+                dataLength = lenghts[1];
+            } catch (IOException e) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SVNDIFF_CORRUPT_WINDOW);
+                SVNErrorManager.error(err, e);
+            }
+        }
         SVNDiffWindow window = new SVNDiffWindow(sourceOffset, sourceLength, targetLength, instructionsLength, dataLength);
         window.setData(myReadWindowBuffer);
         return window;
+    }
+
+    private int[] decompress(int instructionsLength, int dataLength) throws IOException {
+        int originalPosition = myReadWindowBuffer.position();
+        int realInstructionsLength = readOffset(myReadWindowBuffer);
+        byte[] instructionsData = new byte[realInstructionsLength];
+        byte[] data = null;
+        int realDataLength = 0;
+        int compressedLength = instructionsLength - (myReadWindowBuffer.position() - originalPosition);
+        if (realInstructionsLength == compressedLength) {
+            myReadWindowBuffer.get(instructionsData, 0, realInstructionsLength);
+        } else {
+            byte[] compressedData = new byte[compressedLength];
+            myReadWindowBuffer.get(compressedData, 0, compressedLength);
+            InflaterInputStream is = new InflaterInputStream(new ByteArrayInputStream(compressedData));
+            int read = 0;
+            while(read < realInstructionsLength) {
+                read += is.read(instructionsData, read, realInstructionsLength - read);
+            }
+        }
+        if (dataLength > 0) {
+            originalPosition = myReadWindowBuffer.position();
+            realDataLength = readOffset(myReadWindowBuffer);
+            compressedLength = dataLength - (myReadWindowBuffer.position() - originalPosition);
+            data = new byte[realDataLength];
+            if (compressedLength == realDataLength) {
+                myReadWindowBuffer.get(data, 0, realDataLength);
+            } else {
+                byte[] compressedData = new byte[compressedLength];
+                myReadWindowBuffer.get(compressedData, 0, compressedLength);
+                InflaterInputStream is = new InflaterInputStream(new ByteArrayInputStream(compressedData));
+                int read = 0;
+                while(read < realDataLength) {
+                    read += is.read(data, read, realDataLength - read);
+                }
+            }
+        }
+        myReadWindowBuffer = clearBuffer(myReadWindowBuffer);
+        myReadWindowBuffer = ensureBufferSize(myReadWindowBuffer, realInstructionsLength + realDataLength);
+        myReadWindowBuffer.put(instructionsData);
+        if (data != null) {
+            myReadWindowBuffer.put(data);
+        }
+        myReadWindowBuffer.position(0);
+        myReadWindowBuffer.limit(myReadWindowBuffer.capacity());
+        return new int[] {realInstructionsLength, realDataLength};
     }
 
     public void skipWindow(FSFile file) throws SVNException {

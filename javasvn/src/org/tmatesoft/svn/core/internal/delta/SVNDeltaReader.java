@@ -154,23 +154,19 @@ public class SVNDeltaReader {
         int originalPosition = myBuffer.position();
         int uncompressedLength = readOffset();
         // substract offset length from the total length.
+        byte[] uncompressedData = new byte[uncompressedLength];
         if (uncompressedLength == (compressedLength - (myBuffer.position() - originalPosition))) {
-            for(int i = 0; i < uncompressedLength; i++) {
-                out.write(myBuffer.get());
-            }
+            myBuffer.get(uncompressedData);
+            out.write(uncompressedData);
         } else {
             byte[] compressed = myBuffer.array();
             int offset = myBuffer.arrayOffset() + myBuffer.position();
             InputStream in = new InflaterInputStream(new ByteArrayInputStream(compressed, offset, compressedLength));
-            int length = 0;
-            while(true) {
-                int r = in.read();
-                if (r < 0) {
-                    break;
-                }
-                out.write(r);
-                length++;
+            int read = 0;
+            while(read < uncompressedLength) {
+                read += in.read(uncompressedData, read, uncompressedLength - read);
             }
+            out.write(uncompressedLength);
         }
         myBuffer.position(originalPosition + compressedLength);
         return uncompressedLength;

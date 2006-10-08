@@ -128,9 +128,13 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     public File getRepositoryRootDir() {
         return myReposRootDir;
     }
+    
+    public int getReposFormat() {
+        return myFSFS.getReposFormat();
+    }
 
-    File getReposRootDir() {
-        return myReposRootDir;
+    public int getDBFormat() {
+        return myFSFS.getDBFormat();
     }
 
     public long getLatestRevision() throws SVNException {
