@@ -265,6 +265,13 @@ public class SVNStatusEditor {
             if (descend && fullEntry != entry) {
                 SVNAdminArea childDir = myWCAccess.retrieve(path);
                 getDirStatus(dirEntry, childDir, null, descend, getAll, noIgnore, null, false, handler);
+            } else if (fullEntry != entry) {
+                // get correct dir.
+                SVNAdminArea childDir = myWCAccess.retrieve(path);
+                SVNStatus status = assembleStatus(path, childDir, fullEntry, dirEntry, fileKind, special, getAll, false);
+                if (status != null && handler != null) {
+                    handler.handleStatus(status);
+                }
             } else {
                 SVNStatus status = assembleStatus(path, dir, fullEntry, dirEntry, fileKind, special, getAll, false);
                 if (status != null && handler != null) {

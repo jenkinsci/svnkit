@@ -2422,10 +2422,10 @@ public class SVNWCClient extends SVNBasicClient {
             SVNAdminArea area = wcAccess.open(path.getParentFile(), false, 0);
             SVNEntry2 entry = wcAccess.getEntry(path, false);
             if (entry == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control or doesn't exist", path);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control or doesn''t exist", path, SVNErrorMessage.TYPE_WARNING);
                 SVNErrorManager.error(err);
             } else if (entry.getKind() != SVNNodeKind.FILE) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' refers to a directory", path);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' refers to a directory", path, SVNErrorMessage.TYPE_WARNING);
                 SVNErrorManager.error(err);
             }
             String name = path.getName();
