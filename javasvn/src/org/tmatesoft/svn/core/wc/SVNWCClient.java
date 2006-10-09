@@ -674,7 +674,7 @@ public class SVNWCClient extends SVNBasicClient {
                         for(Iterator names = allProps.keySet().iterator(); names.hasNext();) {
                             String name = (String) names.next();
                             String val = (String) allProps.get(name);
-                            handler.handleProperty(area.getFile(entry.getName()), new SVNPropertyData(propName, val));
+                            handler.handleProperty(area.getFile(entry.getName()), new SVNPropertyData(name, val));
                         }
                     }
                 }

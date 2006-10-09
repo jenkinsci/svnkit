@@ -450,12 +450,10 @@ public class SVNDiffWindow {
         if (compress) {
             instructions = inflate(myData, myDataOffset, myInstructionsLength);
             instLength = instructions.remaining();
-            if (myNewDataLength > 0) {
-                newData = inflate(myData, myDataOffset + myInstructionsLength, myNewDataLength);
-                dataLength = newData.remaining();
-                SVNDiffInstruction.writeInt(offsets, instLength);
-                SVNDiffInstruction.writeInt(offsets, dataLength);
-            }
+            newData = inflate(myData, myDataOffset + myInstructionsLength, myNewDataLength);
+            dataLength = newData.remaining();
+            SVNDiffInstruction.writeInt(offsets, instLength);
+            SVNDiffInstruction.writeInt(offsets, dataLength);
         } else {
             SVNDiffInstruction.writeInt(offsets, myInstructionsLength);
             SVNDiffInstruction.writeInt(offsets, myNewDataLength);
@@ -463,9 +461,7 @@ public class SVNDiffWindow {
         os.write(offsets.array(), offsets.arrayOffset(), offsets.position());
         if (compress) {
             os.write(instructions.array(), instructions.arrayOffset(), instructions.remaining());
-            if (newData != null) {
-                os.write(newData.array(), newData.arrayOffset(), newData.remaining());
-            }
+            os.write(newData.array(), newData.arrayOffset(), newData.remaining());
         } else {
             os.write(myData, myDataOffset, myInstructionsLength);
             if (myNewDataLength > 0) {
@@ -525,7 +521,7 @@ public class SVNDiffWindow {
     }
     
     private static ByteBuffer inflate(byte[] src, int offset, int length) throws IOException {
-        final ByteBuffer buffer = ByteBuffer.allocate(length*2);
+        final ByteBuffer buffer = ByteBuffer.allocate(length*2 + 2);
         SVNDiffInstruction.writeInt(buffer, length);
         if (length < 512) {
             buffer.put(src, offset, length);
@@ -547,7 +543,7 @@ public class SVNDiffWindow {
                 buffer.clear();
                 SVNDiffInstruction.writeInt(buffer, length);
                 buffer.put(src, offset, length);
-            } 
+            }
         }
         buffer.flip();
         return buffer;
