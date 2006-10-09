@@ -107,7 +107,7 @@ public class SVNWCManager {
         if (!(replace || copyFromURL != null)) {
             command.put(SVNProperty.shortPropertyName(SVNProperty.REVISION), "0");
         }
-        parentDir.modifyEntry(name, command, true);
+        parentDir.modifyEntry(name, command, true, false);
         
         if (entry != null && copyFromURL == null) {
             String propPath = SVNAdminUtil.getPropPath(name, entry.getKind(), false);
@@ -160,7 +160,7 @@ public class SVNWCManager {
             if ((flags & COPIED) != 0) {
                 attributes.put(SVNProperty.shortPropertyName(SVNProperty.COPIED), copied ? Boolean.TRUE.toString() : null);
             }
-            dir.modifyEntry(entry.getName(), attributes, true);
+            dir.modifyEntry(entry.getName(), attributes, true, false);
             attributes.clear();
             if (SVNProperty.SCHEDULE_DELETE.equals(schedule)) {
                 SVNEvent event = SVNEventFactory.createDeletedEvent(dir, entry.getName());
@@ -175,7 +175,7 @@ public class SVNWCManager {
             if ((flags & COPIED) != 0) {
                 attributes.put(SVNProperty.shortPropertyName(SVNProperty.COPIED), copied ? Boolean.TRUE.toString() : null);
             }
-            dir.modifyEntry(dir.getThisDirName(), attributes, true);
+            dir.modifyEntry(dir.getThisDirName(), attributes, true, false);
             attributes.clear();
         }
         dir.saveEntries(false);

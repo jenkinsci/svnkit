@@ -73,7 +73,7 @@ public class SVNLogRunner2 {
                     }                
                 }
                 try {
-                    adminArea.modifyEntry(fileName, entryAttrs, false);
+                    adminArea.modifyEntry(fileName, entryAttrs, false, false);
                 } catch (SVNException svne) {
                     SVNErrorCode code = count <= 1 ? SVNErrorCode.WC_BAD_ADM_LOG_START : SVNErrorCode.WC_BAD_ADM_LOG;
                     SVNErrorMessage err = SVNErrorMessage.create(code, "Error modifying entry for ''{0}''", fileName);

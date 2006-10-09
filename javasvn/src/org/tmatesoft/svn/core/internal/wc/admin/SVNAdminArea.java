@@ -432,7 +432,7 @@ public abstract class SVNAdminArea {
 
         
         try {
-            modifyEntry(fileName, entryAttrs, false);
+            modifyEntry(fileName, entryAttrs, false, true);
         } catch (SVNException svne) {
             SVNErrorMessage err = SVNErrorMessage.create(errorCode, "Error modifying entry of ''{0}''", fileName);
             SVNErrorManager.error(err, svne);
@@ -472,7 +472,7 @@ public abstract class SVNAdminArea {
             entryAttrs.put(SVNProperty.shortPropertyName(SVNProperty.COPYFROM_URL), null);
             entryAttrs.put(SVNProperty.shortPropertyName(SVNProperty.DELETED), SVNProperty.toString(false));
             try {
-                parentArea.modifyEntry(entryInParent.getName(), entryAttrs, true);
+                parentArea.modifyEntry(entryInParent.getName(), entryAttrs, true, true);
             } catch (SVNException svne) {
                 SVNErrorMessage err = SVNErrorMessage.create(errorCode, "Error modifying entry of ''{0}''", fileName);
                 SVNErrorManager.error(err, svne);
@@ -846,8 +846,8 @@ public abstract class SVNAdminArea {
         }
     }
 
-    public void foldScheduling(String name, Map attributes) throws SVNException {
-        if (!attributes.containsKey(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE))) {
+    public void foldScheduling(String name, Map attributes, boolean force) throws SVNException {
+        if (!attributes.containsKey(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE)) || force) {
             return;
         }
         String schedule = (String) attributes.get(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE));
@@ -910,7 +910,7 @@ public abstract class SVNAdminArea {
         }
     }
     
-    public void modifyEntry(String name, Map attributes, boolean save) throws SVNException {
+    public void modifyEntry(String name, Map attributes, boolean save, boolean force) throws SVNException {
         if (name == null) {
             name = getThisDirName();
         }
@@ -918,7 +918,7 @@ public abstract class SVNAdminArea {
         boolean deleted = false;
         if (attributes.containsKey(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE))) {
             SVNEntry2 entryBefore = getEntry(name, true);
-            foldScheduling(name, attributes);
+            foldScheduling(name, attributes, force);
             SVNEntry2 entryAfter = getEntry(name, true);
             if (entryBefore != null && entryAfter == null) {
                 deleted = true;
