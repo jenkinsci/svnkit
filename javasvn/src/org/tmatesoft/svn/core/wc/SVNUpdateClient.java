@@ -37,6 +37,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNExportEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.internal.wc.SVNUpdateEditor;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
@@ -1001,7 +1002,6 @@ public class SVNUpdateClient extends SVNBasicClient {
             }
             if (repos.startsWith(from)) {
                 entry.setRepositoryRoot(to + repos.substring(from.length()));
-                entry.setURL(to + entry.getURL().substring(from.length()));
                 validatedURLs = validateRelocateTargetURL(entry.getRepositoryRootURL(), entry.getUUID(), validatedURLs, true);
             }
         }
@@ -1029,9 +1029,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         
         if (entry.isFile()) {
             relocateEntry(entry, from, to, validatedURLs);
-            SVNVersionedProperties wcProps = adminArea.getWCProperties(name);
-            wcProps.removeAll();
-            adminArea.saveWCProperties(true);
+            SVNPropertiesManager.deleteWCProperties(adminArea, name, false);
             adminArea.saveEntries(true);
             return validatedURLs;
         }
@@ -1043,9 +1041,8 @@ public class SVNUpdateClient extends SVNBasicClient {
             if (adminArea.getThisDirName().equals(childEntry.getName())) {
                 continue;
             }
-            if (recursive && entry.isDirectory() && 
-                    (entry.isScheduledForAddition() || !entry.isDeleted()) &&
-                    !entry.isAbsent()) {
+            if (recursive && childEntry.isDirectory() && 
+                    (childEntry.isScheduledForAddition() || !childEntry.isDeleted()) && !childEntry.isAbsent()) {
                 File childDir = adminArea.getFile(childEntry.getName());
                 if (wcAccess.isMissing(childDir)) {
                     continue;
@@ -1053,14 +1050,10 @@ public class SVNUpdateClient extends SVNBasicClient {
                 SVNAdminArea childArea = wcAccess.retrieve(childDir);
                 validatedURLs = doRelocate(childArea, childArea.getThisDirName(), from, to, recursive, validatedURLs);
             }
-            validatedURLs = relocateEntry(entry, from, to, validatedURLs);
-            SVNVersionedProperties childProps = adminArea.getWCProperties(childEntry.getName());
-            childProps.removeAll();
+            validatedURLs = relocateEntry(childEntry, from, to, validatedURLs);
+            SVNPropertiesManager.deleteWCProperties(adminArea, childEntry.getName(), false);
         }
-        
-        SVNVersionedProperties rootProps = adminArea.getWCProperties(name);
-        rootProps.removeAll();
-        adminArea.saveWCProperties(true);
+        SVNPropertiesManager.deleteWCProperties(adminArea, "", false);
         adminArea.saveEntries(true);
         return validatedURLs;
     }
