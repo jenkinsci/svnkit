@@ -43,10 +43,39 @@ public class SVNLogRunner2 {
         SVNException error = null;
         String fileName = (String) attributes.get(ISVNLog.NAME_ATTR);
         if (ISVNLog.DELETE_ENTRY.equals(name)) {
+            File path = adminArea.getFile(fileName);
+            SVNAdminArea dir = adminArea.getWCAccess().probeRetrieve(path);
+            SVNEntry2 entry = dir.getWCAccess().getEntry(path, false);
+            if (entry == null) {
+                return;
+            }
             try {
-                adminArea.removeFromRevisionControl(fileName, true, false);
-            } catch (SVNException svne) {
-                error = svne;
+                if (entry.isDirectory()) {
+                    try {
+                        SVNAdminArea childDir = dir.getWCAccess().retrieve(path);
+                        // it should be null when there is no dir already.
+                        if (childDir != null) {
+                            childDir.removeFromRevisionControl(childDir.getThisDirName(), true, false);
+                        } else {
+                            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED));
+                        }
+                    } catch (SVNException e) {
+                        if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
+                            if (!entry.isScheduledForAddition()) {
+                                adminArea.deleteEntry(fileName);
+                                adminArea.saveEntries(false);
+                            }
+                        } else {
+                            throw e;
+                        }
+                    }
+                } else if (entry.isFile()) {
+                    adminArea.removeFromRevisionControl(fileName, true, false);
+                }
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_LEFT_LOCAL_MOD) {
+                    error = e;
+                }
             }
         } else if (ISVNLog.MODIFY_ENTRY.equals(name)) {
             try {

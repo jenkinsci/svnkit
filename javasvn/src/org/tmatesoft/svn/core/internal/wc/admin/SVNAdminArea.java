@@ -36,11 +36,13 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNLog;
+import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.wc.ISVNMerger;
 import org.tmatesoft.svn.core.wc.ISVNMergerFactory;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -191,10 +193,14 @@ public abstract class SVNAdminArea {
             SVNFileUtil.deleteFile(file);
         }
         if (modified) {
-            entry.setConflictOld(null);
-            entry.setConflictNew(null);
-            entry.setConflictWorking(null);
-            entry.setPropRejectFile(null);
+            if (text) {
+                entry.setConflictOld(null);
+                entry.setConflictNew(null);
+                entry.setConflictWorking(null);
+            }
+            if (props) {
+                entry.setPropRejectFile(null);
+            }
             saveEntries(false);
         }
         return modified;
@@ -818,32 +824,117 @@ public abstract class SVNAdminArea {
     }
 
     public void removeFromRevisionControl(String name, boolean deleteWorkingFiles, boolean reportInstantError) throws SVNException {
-        SVNWCAccess2 access = getWCAccess();
-        access.checkCancelled();
-        SVNEntry2 entry = getEntry(name, false);
-        boolean isThisDir = getThisDirName().equals(name);
-
-        if (entry == null) {
-            return;
-        } else if (isThisDir) {
-            removeThisDirectory(deleteWorkingFiles, reportInstantError);
-        } else if (entry.isDirectory()) {
-            SVNAdminArea childArea = null;
-            try {
-                childArea = access.retrieve(getFile(name));
-            } catch (SVNException svne) {
-                if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
-                    if (!entry.isScheduledForAddition()) {
-                        deleteEntry(name);
-                    }
-                    return;
-                }
-                throw svne;
+        getWCAccess().checkCancelled();
+        boolean isFile = !getThisDirName().equals(name);
+        boolean leftSomething = false;
+        
+        if (isFile) {
+            File path = getFile(name);
+            boolean textModified = hasTextModifications(name, false);
+            if (reportInstantError && textModified) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LEFT_LOCAL_MOD, "File ''{0}'' has local modifications", path);
+                SVNErrorManager.error(err);
             }
-            childArea.removeFromRevisionControl(childArea.getThisDirName(), deleteWorkingFiles, reportInstantError);
-        } else if (entry.isFile()) {
-            removeFile(name, deleteWorkingFiles, reportInstantError);
+            SVNPropertiesManager.deleteWCProperties(this, name, false);
+            deleteEntry(name);
+            saveEntries(false);
+            
+            SVNFileUtil.deleteFile(getFile(SVNAdminUtil.getTextBasePath(name, false)));
+            SVNFileUtil.deleteFile(getFile(SVNAdminUtil.getPropPath(name, isFile ? SVNNodeKind.FILE : SVNNodeKind.DIR, false)));
+            SVNFileUtil.deleteFile(getFile(SVNAdminUtil.getPropBasePath(name, isFile ? SVNNodeKind.FILE : SVNNodeKind.DIR, false)));
+            if (deleteWorkingFiles) {
+                if (textModified) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LEFT_LOCAL_MOD);
+                    SVNErrorManager.error(err);
+                } else {
+                    SVNFileUtil.deleteFile(path);
+                }
+            }
+        } else {
+            SVNEntry2 dirEntry = getEntry(getThisDirName(), false);
+            dirEntry.setIncomplete(true);
+            saveEntries(false);
+            SVNPropertiesManager.deleteWCProperties(this, getThisDirName(), false);
+            for(Iterator entries = entries(false); entries.hasNext();) {
+                SVNEntry2 entry = (SVNEntry2) entries.next();
+                String entryName = getThisDirName().equals(entry.getName()) ? null : entry.getName();
+                if (entry.isFile()) {
+                    try {
+                        removeFromRevisionControl(entryName, deleteWorkingFiles, reportInstantError);
+                    } catch (SVNException e) {
+                        if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_LEFT_LOCAL_MOD) {
+                            if (reportInstantError) {
+                                throw e;
+                            }
+                            leftSomething = true;
+                        } else {
+                            throw e;
+                        }
+                    }
+                } else if (entryName != null && entry.isDirectory()) {
+                    File entryPath = getFile(entryName);
+                    if (getWCAccess().isMissing(entryPath)) {
+                        deleteEntry(entryName);
+                    } else {
+                        try {
+                            SVNAdminArea entryArea = getWCAccess().retrieve(entryPath);
+                            entryArea.removeFromRevisionControl(getThisDirName(), deleteWorkingFiles, reportInstantError);
+                        } catch (SVNException e) {
+                            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_LEFT_LOCAL_MOD) {
+                                if (reportInstantError) {
+                                    throw e;
+                                }
+                                leftSomething = true;
+                            } else {
+                                throw e;
+                            }
+                        }
+                    }
+                }
+            }
+            if (!getWCAccess().isWCRoot(getRoot())) {
+                getWCAccess().retrieve(getRoot().getParentFile()).deleteEntry(getRoot().getName());
+                getWCAccess().retrieve(getRoot().getParentFile()).saveEntries(false);
+            }
+            destroyAdminArea();
+            if (deleteWorkingFiles && !leftSomething) {
+                if (!getRoot().delete()) {
+                    leftSomething = true;
+                }
+            }
+            
         }
+        if (leftSomething) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LEFT_LOCAL_MOD);
+            SVNErrorManager.error(err);
+        }
+//        
+//        SVNWCAccess2 access = getWCAccess();
+//        access.checkCancelled();
+//        SVNEntry2 entry = getEntry(name, false);
+//        boolean isThisDir = getThisDirName().equals(name);
+//
+//        if (entry == null) {
+//            return;
+//        } else if (isThisDir) {
+//            removeThisDirectory(deleteWorkingFiles, reportInstantError);
+//        } else if (entry.isDirectory()) {
+//            SVNAdminArea childArea = null;
+//            try {
+//                childArea = access.retrieve(getFile(name));
+//            } catch (SVNException svne) {
+//                if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
+//                    if (!entry.isScheduledForAddition()) {
+//                        deleteEntry(name);
+//                    }
+//                    return;
+//                }
+//                throw svne;
+//            }
+//            childArea.removeFromRevisionControl(childArea.getThisDirName(), deleteWorkingFiles, reportInstantError);
+//        } else if (entry.isFile()) {
+//            removeFile(name, deleteWorkingFiles, reportInstantError);
+//        }
     }
 
     public void foldScheduling(String name, Map attributes, boolean force) throws SVNException {
@@ -1231,73 +1322,6 @@ public abstract class SVNAdminArea {
         }
         return (String[])list.toArray(new String[list.size()]);
     }
-
-    private void removeThisDirectory(boolean deleteWorkingFiles, boolean reportInstantError) throws SVNException {
-        SVNWCAccess2 access = getWCAccess(); 
-        access.checkCancelled();
-        boolean leftSomething = false;
-        SVNEntry2 thisDirEntry = getEntry(getThisDirName(), true);
-        thisDirEntry.setIncomplete(true);
-        saveEntries(false);
-        
-        Map wcProps = getWCPropertiesStorage(true);
-        if (wcProps.size() > 0) {
-            wcProps.clear();
-        }
-        saveWCProperties(true);
-        
-        for (Iterator entries = entries(false); entries.hasNext();) {
-            SVNEntry2 childEntry = (SVNEntry2) entries.next();
-            if (childEntry.isFile()) {
-                try {
-                    removeFile(childEntry.getName(), deleteWorkingFiles, reportInstantError);
-                } catch (SVNException svne) {
-                    if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.WC_LEFT_LOCAL_MOD) {
-                        if (reportInstantError) {
-                            throw svne;
-                        }
-                        leftSomething = true;
-                    } else {
-                        throw svne;
-                    }
-                }
-            } else if (childEntry.isDirectory() && !getThisDirName().equals(childEntry.getName())) {
-                File childPath = getFile(childEntry.getName());
-                if (access.isMissing(childPath)) {
-                    deleteEntry(childEntry.getName());
-                } else {
-                    SVNAdminArea childArea = access.retrieve(childPath);
-                    try {
-                        childArea.removeFromRevisionControl(childEntry.getName(), deleteWorkingFiles, reportInstantError);
-                    } catch (SVNException svne) {
-                        if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.WC_LEFT_LOCAL_MOD) {
-                            if (reportInstantError) {
-                                throw svne;
-                            }
-                            leftSomething = true;
-                        } else {
-                            throw svne;
-                        }
-                    }
-                }
-            }
-        }
-        
-        if (!access.isWCRoot(getRoot())) {
-            SVNAdminArea parentArea = access.retrieve(getRoot().getParentFile());
-            parentArea.deleteEntry(getRoot().getName());
-            parentArea.saveEntries(false);
-        }
-        
-        destroyAdminArea();
-        if (deleteWorkingFiles && !leftSomething) {
-            getRoot().delete();
-        }
-        if (leftSomething) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED);
-            SVNErrorManager.error(err);
-        }
-    }
     
     private void destroyAdminArea() throws SVNException {
         if (!isLocked()) {
@@ -1305,43 +1329,6 @@ public abstract class SVNAdminArea {
             SVNErrorManager.error(err);
         }
         SVNFileUtil.deleteAll(getAdminDirectory(), getWCAccess());
-    }
-    
-    private void removeFile(String name, boolean deleteWorkingFiles, boolean reportInstantError) throws SVNException {
-        getWCAccess().checkCancelled();
-        boolean hasLocalMods = hasTextModifications(name, false); 
-        if (hasLocalMods && reportInstantError) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LEFT_LOCAL_MOD, "File ''{0}'' has local modifications", getFile(name));
-            SVNErrorManager.error(err);
-        }
-
-        SVNVersionedProperties wcProps = getWCProperties(name);
-        if (wcProps != null && !wcProps.isEmpty()) {
-            wcProps.removeAll();
-            saveWCProperties(false);
-        }
-        
-        deleteEntry(name);
-        saveEntries(false);
-        
-        File baseFile = getBaseFile(name, false);
-        baseFile.delete();
-
-        File basePropsFile = getAdminFile("prop-base/" + name + ".svn-base");
-        basePropsFile.delete();
-        
-        File propertiesFile = getAdminFile("props/" + name + ".svn-work");
-        propertiesFile.delete();
-        
-        if (deleteWorkingFiles) {
-            if (hasLocalMods) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LEFT_LOCAL_MOD);
-                SVNErrorManager.error(err);
-            } else {
-                File workingFile = getFile(name);
-                workingFile.delete();
-            }
-        }
     }
 
     private static void deleteLogs(Collection logsList) {

@@ -78,13 +78,18 @@ public class SVNPropertiesManager {
     public static void deleteWCProperties(SVNAdminArea dir, String name, boolean recursive) throws SVNException {
         if (name != null) {
             SVNVersionedProperties props = dir.getWCProperties(name);
-            props.removeAll();
+            if (props != null) {
+                props.removeAll();
+            }
         } 
         if (recursive) {
             for(Iterator entries = dir.entries(false); entries.hasNext();) {
                 SVNEntry2 entry = (SVNEntry2) entries.next();
                 if (name != null) {
-                    dir.getWCProperties(entry.getName()).removeAll();
+                    SVNVersionedProperties props = dir.getWCProperties(entry.getName());
+                    if (props != null) {
+                        props.removeAll();
+                    }
                 }
                 if (dir.getThisDirName().equals(entry.getName())) {
                     continue;

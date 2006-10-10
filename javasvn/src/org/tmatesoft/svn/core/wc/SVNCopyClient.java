@@ -826,6 +826,9 @@ public class SVNCopyClient extends SVNBasicClient {
             } else if (srcType == SVNFileType.DIRECTORY) {
                 
             }
+            if (isMove) {
+                SVNWCManager.delete(srcArea.getWCAccess(), srcArea, srcPath, true);
+            }
         } finally {
             wcAccess.close();
         }

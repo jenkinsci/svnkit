@@ -12,7 +12,9 @@
 package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -25,6 +27,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.admin.ISVNLog;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
@@ -233,7 +236,7 @@ public class SVNWCManager {
         }
     }
     
-    private static void ensureAdmiAreaExists(File path, String url, String rootURL, String uuid, long revision) throws SVNException{
+    public static boolean ensureAdmiAreaExists(File path, String url, String rootURL, String uuid, long revision) throws SVNException{
         SVNFileType fileType = SVNFileType.getType(path);
         if (fileType != SVNFileType.DIRECTORY && fileType != SVNFileType.NONE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "''{0}'' is not a directory", path);
@@ -241,7 +244,7 @@ public class SVNWCManager {
         }
         if (fileType == SVNFileType.NONE) {
             SVNAdminAreaFactory.createVersionedDirectory(path, url, rootURL, uuid, revision);
-            return;
+            return true;
         }
         SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(null);
         try {
@@ -266,12 +269,13 @@ public class SVNWCManager {
         } catch (SVNException e) {
             if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
                 SVNAdminAreaFactory.createVersionedDirectory(path, url, rootURL, uuid, revision);
-                return;
+                return true;
             }
             throw e;
         } finally {
             wcAccess.close();
         }
+        return false;
     }
 
     public static void canDelete(File path, boolean skipIgnored, ISVNOptions options) throws SVNException {
@@ -294,6 +298,120 @@ public class SVNWCManager {
                 }
             }
         });
+    }
+
+    public static void delete(SVNWCAccess2 wcAccess, SVNAdminArea root, File path, boolean deleteFiles) throws SVNException {
+        SVNAdminArea dir = wcAccess.probeTry(path, true, SVNWCAccess2.INFINITE_DEPTH);
+        SVNEntry2 entry = null;
+        if (dir != null) {
+            entry = wcAccess.getEntry(path, false);
+        } else {
+            SVNWCManager.doDeleteUnversionedFiles(wcAccess, path, deleteFiles);
+            return;
+        }
+        if (entry == null) {
+            SVNWCManager.doDeleteUnversionedFiles(wcAccess, path, deleteFiles);
+            return;
+        }
+        String schedule = entry.getSchedule();
+        SVNNodeKind kind = entry.getKind();
+        boolean copied = entry.isCopied();
+        boolean deleted = false;
+        String name = path.getName();
+        
+        if (kind == SVNNodeKind.DIR) {
+            SVNAdminArea parent = wcAccess.retrieve(path.getParentFile());
+            SVNEntry2 entryInParent = parent.getEntry(name, true);
+            deleted = entryInParent != null ? entryInParent.isDeleted() : false;
+            if (!deleted && SVNProperty.SCHEDULE_ADD.equals(schedule)) {
+                if (dir != root) {
+                    dir.removeFromRevisionControl("", false, false);
+                } else {
+                    parent.deleteEntry(name);
+                    parent.saveEntries(false);
+                }
+            } else {
+                if (dir != root) {
+                    markTree(dir, SVNProperty.SCHEDULE_DELETE, false, SCHEDULE);
+                }
+            }
+        }
+        if (!(kind == SVNNodeKind.DIR && SVNProperty.SCHEDULE_ADD.equals(schedule) && !deleted)) {
+            ISVNLog log = root.getLog();
+            
+            Map command = new HashMap();
+            command.put(ISVNLog.NAME_ATTR, name);
+            command.put(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE), SVNProperty.SCHEDULE_DELETE);
+            log.addCommand(ISVNLog.MODIFY_ENTRY, command, false);
+            command.clear();
+            if (SVNProperty.SCHEDULE_REPLACE.equals(schedule) && copied) {
+                if (kind != SVNNodeKind.DIR) {
+                    command.put(ISVNLog.NAME_ATTR, SVNAdminUtil.getTextRevertPath(name, false));
+                    command.put(ISVNLog.DEST_ATTR, SVNAdminUtil.getTextBasePath(name, false));
+                    log.addCommand(ISVNLog.MOVE, command, false);
+                    command.clear();
+                }
+                command.put(ISVNLog.NAME_ATTR, SVNAdminUtil.getPropRevertPath(name, kind, false));
+                command.put(ISVNLog.DEST_ATTR, SVNAdminUtil.getPropBasePath(name, kind, false));
+                log.addCommand(ISVNLog.MOVE, command, false);
+                command.clear();
+            }
+            if (SVNProperty.SCHEDULE_ADD.equals(schedule)) {
+                command.put(ISVNLog.NAME_ATTR, SVNAdminUtil.getPropPath(name, kind, false));
+                log.addCommand(ISVNLog.DELETE, command, false);
+                command.clear();
+            }
+            log.save();
+            root.runLogs();
+        }
+        SVNEvent event = SVNEventFactory.createDeletedEvent(root, name);
+        wcAccess.handleEvent(event);
+        if (SVNProperty.SCHEDULE_ADD.equals(schedule)) {
+            SVNWCManager.doDeleteUnversionedFiles(wcAccess, path, deleteFiles);
+        } else {
+            SVNWCManager.doEraseFromWC(path, root, kind, deleteFiles);
+        }
+    }
+
+    public static void doDeleteUnversionedFiles(SVNWCAccess2 wcAccess, File path, boolean deleteFiles) throws SVNException {
+        wcAccess.checkCancelled();
+        if (deleteFiles) {
+            SVNFileUtil.deleteAll(path, true, wcAccess.getEventHandler());
+        }
+    }
+
+    public static void doEraseFromWC(File path, SVNAdminArea dir, SVNNodeKind kind, boolean deleteFiles) throws SVNException {
+        SVNFileType type = SVNFileType.getType(path);
+        if (type == SVNFileType.NONE) {
+            return;
+        }
+        dir.getWCAccess().checkCancelled();
+        if (kind == SVNNodeKind.FILE) {
+            SVNFileUtil.deleteFile(path);
+        } else if (kind == SVNNodeKind.DIR) {
+            SVNAdminArea childDir = dir.getWCAccess().retrieve(path);
+            Collection versioned = new HashSet();
+            for(Iterator entries = childDir.entries(false); entries.hasNext();) {
+                SVNEntry2 entry = (SVNEntry2) entries.next();
+                versioned.add(entry.getName());
+                if (childDir.getThisDirName().equals(entry.getName())) {
+                    continue;
+                }
+                File childPath = childDir.getFile(entry.getName());
+                doEraseFromWC(childPath, childDir, entry.getKind(), deleteFiles);
+                
+            }
+            File[] children = path.listFiles();
+            for(int i = 0; children != null && i < children.length; i++) {
+                if (SVNFileUtil.getAdminDirectoryName().equals(children[i].getName())) {
+                    continue;
+                }
+                if (versioned.contains(children[i].getName())) {
+                    continue;
+                }
+                doDeleteUnversionedFiles(dir.getWCAccess(), children[i], deleteFiles);
+            }
+        }
     }
 
 }

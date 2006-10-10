@@ -27,7 +27,6 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNLog;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
@@ -216,7 +215,17 @@ public class SVNUpdateEditor implements ISVNEditor {
         entry.setDeleted(false);
         parentArea.saveEntries(true);
 
-        SVNAdminAreaFactory.createVersionedDirectory(childDir, myCurrentDirectory.URL, null, null, myTargetRevision);
+        String rootURL = null;
+        if (SVNPathUtil.isAncestor(myRootURL, myCurrentDirectory.URL)) {
+            rootURL = myRootURL;
+        }
+        if (myWCAccess.getAdminArea(childDir) != null) {
+            myWCAccess.closeAdminArea(childDir);
+        }
+        if (SVNWCManager.ensureAdmiAreaExists(childDir, myCurrentDirectory.URL, rootURL, null, myTargetRevision)) {
+            // hack : remove created lock file.
+            SVNFileUtil.deleteFile(new File(childDir, SVNFileUtil.getAdminDirectoryName() + "/lock"));
+        }
         myWCAccess.open(childDir, true, 0);
         myWCAccess.handleEvent(SVNEventFactory.createUpdateAddEvent(myAdminInfo, parentArea, SVNNodeKind.DIR, entry));
     }
