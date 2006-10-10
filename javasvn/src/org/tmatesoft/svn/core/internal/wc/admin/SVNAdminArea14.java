@@ -43,6 +43,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNLog;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 public class SVNAdminArea14 extends SVNAdminArea {
     public static final String[] ourCachableProperties = new String[] {
@@ -1315,7 +1316,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
             return created;
         }
         if (myLockFile.isFile()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "Working copy ''{0}'' is locked; try performing ''cleanup''", getRoot());
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "Working copy ''{0}'' locked; try performing ''cleanup''", getRoot());
             SVNErrorManager.error(err);
         } else {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Cannot lock working copy ''{0}''", getRoot());
@@ -1556,6 +1557,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
             }
         }
         boolean deleted = myLockFile.delete();
+        SVNDebugLog.getDefaultLog().info("deleting : " + myLockFile);
         if (!deleted) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "Failed to unlock working copy ''{0}''", getRoot());
             SVNErrorManager.error(err);

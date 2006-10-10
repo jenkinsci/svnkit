@@ -236,7 +236,7 @@ public class SVNLogRunner2 {
             File dst = adminArea.getFile(dstName);
             try {
                 try {
-                    SVNTranslator2.translate(adminArea, dstName, fileName, dstName, true, true);
+                    SVNTranslator2.translate(adminArea, dstName, fileName, dstName, true, false);
                 } catch (SVNException svne) {
                     if (src.exists()) {
                         throw svne;
@@ -267,7 +267,7 @@ public class SVNLogRunner2 {
             File src = adminArea.getFile(fileName);
             File dst = adminArea.getFile((String) attributes.get(ISVNLog.DEST_ATTR));
             try {
-                SVNFileUtil.copyFile(src, dst, true);
+                SVNFileUtil.copy(src, dst, true, true);
             } catch (SVNException svne) {
                 error = svne;
             }

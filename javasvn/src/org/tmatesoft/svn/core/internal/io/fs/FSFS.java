@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.internal.io.fs;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.MessageDigest;
@@ -117,6 +118,10 @@ public class FSFS {
         formatFile = new FSFile(new File(myDBRoot, "format"));
         try {
             format = formatFile.readInt();
+        } catch (SVNException svne) {
+            if (svne.getCause() instanceof FileNotFoundException) {
+                format = DB_FORMAT;
+            }
         } finally {
             formatFile.close();
         }

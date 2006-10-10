@@ -479,6 +479,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             // only props were changed, but we have to retranslate file.
             // only if wc file exists (may be locally deleted), otherwise no
             // need to retranslate...
+            tmpPath = SVNAdminUtil.getTextBasePath(name, true);
             command.put(ISVNLog.NAME_ATTR, name);
             command.put(ISVNLog.DEST_ATTR, tmpPath);
             log.addCommand(ISVNLog.COPY_AND_DETRANSLATE, command, false);

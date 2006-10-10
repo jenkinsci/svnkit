@@ -46,6 +46,7 @@ import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusClient;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.0
@@ -152,24 +153,22 @@ public class SVNCommitUtil {
                 statusClient.checkCancelled();
                 String targetPath = (String) targets.next();
                 File targetFile = new File(baseDir, targetPath);
-                String target = getTargetName(targetFile);
-                if (!"".equals(target)) {
-                    SVNFileType targetType = SVNFileType.getType(targetFile);
-                    if (targetType == SVNFileType.DIRECTORY) {
-                        if (recursive || (force && isRecursiveCommitForced(targetFile))) {
-                            dirsToLockRecursively.add(targetPath);
-                        } else {
-                            dirsToLock.add(targetPath);
-                        }
+                SVNFileType targetKind = SVNFileType.getType(targetFile);
+                if (targetKind == SVNFileType.DIRECTORY) {
+                    if (recursive || (force && isRecursiveCommitForced(targetFile))) {
+                        dirsToLockRecursively.add(targetPath);
+                    } else if (!targetFile.equals(baseDir)){
+                        dirsToLock.add(targetPath);
                     }
                 }
-                // now lock all dirs from anchor to base dir (non-recursive).
-                targetFile = targetFile.getParentFile();
-                targetPath = SVNPathUtil.removeTail(targetPath);
-                while (targetFile != null && !baseDir.equals(targetFile) && !"".equals(targetPath) && !dirsToLock.contains(targetPath)) {
-                    dirsToLock.add(targetPath);
+                if (!targetFile.equals(baseDir)) {
                     targetFile = targetFile.getParentFile();
                     targetPath = SVNPathUtil.removeTail(targetPath);
+                    while (!targetFile.equals(baseDir) && !dirsToLock.contains(targetPath)) {
+                        dirsToLock.add(targetPath);
+                        targetPath = SVNPathUtil.removeTail(targetPath);
+                        targetFile = targetFile.getParentFile();
+                    }
                 }
             }
         }
@@ -180,8 +179,8 @@ public class SVNCommitUtil {
                 statusClient.checkCancelled();
             }
         });
-        baseAccess.open(baseDir, true, lockAll ? SVNWCAccess2.INFINITE_DEPTH : 0);
         try {
+            baseAccess.open(baseDir, true, lockAll ? SVNWCAccess2.INFINITE_DEPTH : 0);
             statusClient.checkCancelled();
             if (!lockAll) {                
                 removeRedundantPaths(dirsToLockRecursively, dirsToLock);
@@ -309,6 +308,7 @@ public class SVNCommitUtil {
             File targetFile = new File(baseAccess.getAnchor(), target);
             String targetName = "".equals(target) ? "" : SVNPathUtil.tail(target);
             String parentPath = SVNPathUtil.removeTail(target);
+            SVNDebugLog.getDefaultLog().info("retriving: " + targetFile);
             SVNAdminArea dir = baseAccess.probeRetrieve(targetFile);
             SVNEntry2 entry = baseAccess.getEntry(targetFile, false);
             String url = null;

@@ -37,7 +37,6 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -706,8 +705,7 @@ public abstract class SVNAdminArea {
             }
             if (entry.getLockToken() == null && props.getPropertyValue(SVNProperty.NEEDS_LOCK) != null) {
                 SVNFileUtil.setReadonly(getFile(localPath), true);
-            }
-
+            } 
         }
         return status;
     }
@@ -1122,7 +1120,7 @@ public abstract class SVNAdminArea {
         return copy.iterator();
     }
     
-    public void cleanup() throws SVNException {
+    public void cleanup() throws SVNException {        
         getWCAccess().checkCancelled();
         for(Iterator entries = entries(false); entries.hasNext();) {
             SVNEntry2 entry = (SVNEntry2) entries.next();
@@ -1145,7 +1143,6 @@ public abstract class SVNAdminArea {
             runLogs();
         }
         SVNFileUtil.deleteAll(getAdminFile("tmp"), false);
-        getWCAccess().closeAdminArea(getRoot());
     }
     
 
@@ -1412,7 +1409,7 @@ public abstract class SVNAdminArea {
 
         if (recursive) {
             for (Iterator ents = entries(true); ents.hasNext();) {
-                SVNEntry entry = (SVNEntry) ents.next();
+                SVNEntry2 entry = (SVNEntry2) ents.next();
                 if ("".equals(entry.getName())) {
                     continue;
                 }

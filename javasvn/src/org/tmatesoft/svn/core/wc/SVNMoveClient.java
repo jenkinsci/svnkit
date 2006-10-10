@@ -13,10 +13,7 @@ package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
 
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -693,6 +690,9 @@ public class SVNMoveClient extends SVNBasicClient {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "''{0}'' is already under version control", dst);
                 SVNErrorManager.error(err);                
             }
+
+//	          SVNCopyClient.copyProperties(srcAccess, dstAccess, dstAccess.getTargetName());
+
             dstEntry = dstAccess.getAnchor().getEntries().addEntry(dst.getName());
             dstEntry.setCopyFromURL(cfURL);
             dstEntry.setCopyFromRevision(cfRevision);

@@ -128,9 +128,9 @@ public class SVNWCManager {
             if (entry == null || entry.isDeleted()) {
                 dir = wcAccess.open(path, true, copyFromURL != null ? SVNWCAccess2.INFINITE_DEPTH : 0);
             }
-            dir.getEntry(dir.getThisDirName(), false).setSchedule(replace ? SVNProperty.SCHEDULE_REPLACE : SVNProperty.SCHEDULE_ADD);
-            dir.getEntry(dir.getThisDirName(), false).setIncomplete(false);
-            dir.saveEntries(false);
+            command.put(SVNProperty.shortPropertyName(SVNProperty.INCOMPLETE), null);
+            command.put(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE), replace ? SVNProperty.SCHEDULE_REPLACE : SVNProperty.SCHEDULE_ADD);
+            dir.modifyEntry(dir.getThisDirName(), command, true, true);
             if (copyFromURL != null) {
                 SVNURL newURL = parentEntry.getSVNURL().appendPath(name, false);
                 updateCleanup(path, wcAccess, true, newURL.toString(), parentEntry.getRepositoryRoot(), -1, false);

@@ -143,6 +143,11 @@ public class SVNDirectory {
         File[] logs = getAdminDirectory().listFiles();
         for (int i = 0; logs != null && i < logs.length; i++) {
             File log = logs[i];
+            if (log.getName().endsWith(".ro")) {
+                // temporary readonly file, left there by mistake or after a crash.
+                SVNFileUtil.deleteFile(log);
+                continue;
+            }
             if ("log".equals(log.getName()) || log.getName().startsWith("log.")) {
                 return false;
             }

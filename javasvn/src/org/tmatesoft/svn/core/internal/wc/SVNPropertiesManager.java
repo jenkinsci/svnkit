@@ -82,7 +82,7 @@ public class SVNPropertiesManager {
                 props.removeAll();
             }
         } 
-        if (recursive) {
+        if (recursive || name == null) {
             for(Iterator entries = dir.entries(false); entries.hasNext();) {
                 SVNEntry2 entry = (SVNEntry2) entries.next();
                 if (name != null) {
@@ -97,8 +97,10 @@ public class SVNPropertiesManager {
                 if (entry.isFile()) {
                     continue;                    
                 }
-                SVNAdminArea childDir = dir.getWCAccess().retrieve(dir.getFile(entry.getName()));
-                deleteWCProperties(childDir, null, true);
+                if (recursive) {
+                    SVNAdminArea childDir = dir.getWCAccess().retrieve(dir.getFile(entry.getName()));
+                    deleteWCProperties(childDir, null, true);
+                }
             }
         }
         dir.saveWCProperties(false);

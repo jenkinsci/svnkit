@@ -219,11 +219,15 @@ public class SVNWCAccess2 implements ISVNEventHandler {
     
     public SVNAdminArea open(File path, boolean writeLock, boolean stealLock, int depth) throws SVNException {
         Map tmp = new HashMap();
-        SVNAdminArea area = doOpen(path, writeLock, stealLock, depth, tmp);
-        for(Iterator paths = tmp.keySet().iterator(); paths.hasNext();) {
-            Object childPath = paths.next();
-            SVNAdminArea childArea = (SVNAdminArea) tmp.get(childPath);
-            myAdminAreas.put(childPath, childArea);
+        SVNAdminArea area;
+        try {
+            area = doOpen(path, writeLock, stealLock, depth, tmp);
+        } finally {
+            for(Iterator paths = tmp.keySet().iterator(); paths.hasNext();) {
+                Object childPath = paths.next();
+                SVNAdminArea childArea = (SVNAdminArea) tmp.get(childPath);
+                myAdminAreas.put(childPath, childArea);
+            }
         }
         return area;
     }
@@ -306,6 +310,7 @@ public class SVNWCAccess2 implements ISVNEventHandler {
             area.lock(stealLock);
             area = SVNAdminAreaFactory.upgrade(area);
         }
+        tmp.put(path, area);
         
         if (depth != 0) {
             if (depth > 0) {
@@ -337,7 +342,6 @@ public class SVNWCAccess2 implements ISVNEventHandler {
                 }
             }
         }
-        tmp.put(path, area);
         return area;
     }
     
