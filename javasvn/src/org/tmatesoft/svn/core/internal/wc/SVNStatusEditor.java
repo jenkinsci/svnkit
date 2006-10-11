@@ -158,6 +158,9 @@ public class SVNStatusEditor {
                 if (ignorePatterns == null) {
                     ignorePatterns = getIgnorePatterns(dir, myGlobalIgnores);
                 }
+                if (file == null) {
+                    file = new File(entryName);
+                }
                 sendUnversionedStatus(file, entryName, SVNNodeKind.NONE, false, dir, ignorePatterns, noIgnore, handler);
             }
             return;
@@ -342,7 +345,12 @@ public class SVNStatusEditor {
                     null, SVNRevision.UNDEFINED,
                     repositoryLock, null, null);
             status.setRemoteStatus(SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, repositoryLock, SVNNodeKind.NONE);
-            status.setContentsStatus(isIgnored ? SVNStatusType.STATUS_IGNORED : SVNStatusType.STATUS_UNVERSIONED);
+            SVNStatusType text = SVNStatusType.STATUS_NONE;
+            SVNFileType fileType = SVNFileType.getType(file);
+            if (fileType != SVNFileType.NONE) {
+                text = isIgnored ? SVNStatusType.STATUS_IGNORED : SVNStatusType.STATUS_UNVERSIONED;
+            }
+            status.setContentsStatus(text);
             return status;
         }
         if (entry.getKind() == SVNNodeKind.DIR) {

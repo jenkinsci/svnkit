@@ -279,7 +279,9 @@ public class SVNErrorMessage implements Serializable {
      */
     public String toString() {
         StringBuffer line = new StringBuffer();
-        if (getType() == TYPE_WARNING) {
+        if (getType() == TYPE_WARNING && getErrorCode() == SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED) {
+            line.append("Warning: ");
+        } else if (getType() == TYPE_WARNING) {
             line.append("svn: warning: ");
         } else {
             line.append("svn: ");
@@ -330,6 +332,15 @@ public class SVNErrorMessage implements Serializable {
         SVNErrorMessage parentError = SVNErrorMessage.create(this.getErrorCode(), parentMessage, relatedObject);
         parentError.setChildErrorMessage(this);
         return parentError;
+    }
+    
+    /**
+     * Returns true if this message is a warning message, not error one.
+     * 
+     * @return true or false
+     */
+    public boolean isWarning() {
+        return myType == TYPE_WARNING;
     }
     
 }

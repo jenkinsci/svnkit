@@ -46,7 +46,6 @@ import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusClient;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.0
@@ -197,23 +196,19 @@ public class SVNCommitUtil {
                     baseAccess.open(pathFile, true, SVNWCAccess2.INFINITE_DEPTH);
                 }
             }
-            if (!recursive && !force) {
-                for (Iterator targets = relativePaths.iterator(); targets.hasNext();) {
-                    statusClient.checkCancelled();
-                    String targetPath = (String) targets.next();
-                    File targetFile = new File(baseDir, targetPath);
-                    SVNAdminArea dir = null; 
-                    try {
-                        dir = baseAccess.probeRetrieve(targetFile);
-                    } catch (SVNException e) {
-                        //
-                    }
-                    if (dir == null) {
-                        // TODO we should get here if paths belongs to different working copies.
-                    }
-                    if (SVNFileType.getType(targetFile) == SVNFileType.DIRECTORY) {
+            for(int i = 0; i < paths.length; i++) {
+                statusClient.checkCancelled();
+                File path = new File(SVNPathUtil.validateFilePath(paths[i].getAbsolutePath()));
+                try {
+                    baseAccess.probeRetrieve(path);
+                } catch (SVNException e) {
+                    SVNErrorMessage err = e.getErrorMessage().wrap("Are all the targets part of the same working copy?");
+                    SVNErrorManager.error(err);
+                }
+                if (!recursive && !force) {
+                    if (SVNFileType.getType(path) == SVNFileType.DIRECTORY) {
                         // TODO replace with direct SVNStatusEditor call.
-                        SVNStatus status = statusClient.doStatus(targetFile, false);
+                        SVNStatus status = statusClient.doStatus(path, false);
                         if (status != null && (status.getContentsStatus() == SVNStatusType.STATUS_DELETED || status.getContentsStatus() == SVNStatusType.STATUS_REPLACED)) {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Cannot non-recursively commit a directory deletion");
                             SVNErrorManager.error(err);
@@ -308,7 +303,6 @@ public class SVNCommitUtil {
             File targetFile = new File(baseAccess.getAnchor(), target);
             String targetName = "".equals(target) ? "" : SVNPathUtil.tail(target);
             String parentPath = SVNPathUtil.removeTail(target);
-            SVNDebugLog.getDefaultLog().info("retriving: " + targetFile);
             SVNAdminArea dir = baseAccess.probeRetrieve(targetFile);
             SVNEntry2 entry = baseAccess.getEntry(targetFile, false);
             String url = null;

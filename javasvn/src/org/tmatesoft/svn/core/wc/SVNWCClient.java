@@ -903,6 +903,7 @@ public class SVNWCClient extends SVNBasicClient {
     }
     
     public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, boolean recursive, boolean includeIgnored) throws SVNException {
+        path = path.getAbsoluteFile();
         if (!mkdir && climbUnversionedParents) {
             // check if parent is versioned. if not, add it.
             SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());

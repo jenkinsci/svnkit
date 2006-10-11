@@ -138,6 +138,7 @@ public class SVNUpdateClient extends SVNBasicClient {
      * @throws SVNException 
      */
     public long doUpdate(File file, SVNRevision revision, boolean recursive) throws SVNException {
+        file = new File(SVNPathUtil.validateFilePath(file.getAbsolutePath()));
         SVNWCAccess2 wcAccess = createWCAccess();
         SVNAdminAreaInfo adminInfo = null;
         try {

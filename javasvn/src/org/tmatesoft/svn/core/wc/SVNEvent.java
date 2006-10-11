@@ -197,10 +197,8 @@ public class SVNEvent {
         myAction = action;
         myNodeKind = kind == null ? SVNNodeKind.UNKNOWN : kind;
         myRevision = revision;
-        myContentsStatus = cstatus == null ? SVNStatusType.INAPPLICABLE
-                : cstatus;
-        myPropertiesStatus = pstatus == null ? SVNStatusType.INAPPLICABLE
-                : pstatus;
+        myContentsStatus = cstatus == null ? SVNStatusType.INAPPLICABLE : cstatus;
+        myPropertiesStatus = pstatus == null ? SVNStatusType.INAPPLICABLE : pstatus;
         myLockStatus = lstatus == null ? SVNStatusType.INAPPLICABLE : lstatus;
         myLock = lock;
         myAdminAreaInfo = info;

@@ -88,7 +88,7 @@ public class PropsetCommand extends SVNCommand {
                             public void handleProperty(File path, SVNPropertyData property) throws SVNException {
                             }
                             public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
-                                out.println("Property '" + propertyName +"' set on repository revision " + url);
+                                out.println("property '" + propertyName +"' set on repository revision " + url);
                             }
                             public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
                             }
@@ -103,7 +103,7 @@ public class PropsetCommand extends SVNCommand {
                             public void handleProperty(File path, SVNPropertyData property) throws SVNException {
                             }
                             public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
-                                out.println("Property '" + propertyName +"' set on repository revision " + url);
+                                out.println("property '" + propertyName +"' set on repository revision " + url);
                             }
                             public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
                             }
@@ -116,7 +116,7 @@ public class PropsetCommand extends SVNCommand {
                 if (!recursive) {
                     wcClient.doSetProperty(new File(absolutePath), propertyName, propertyValue, force, recursive, new ISVNPropertyHandler() {
                         public void handleProperty(File path, SVNPropertyData property) throws SVNException {
-                            out.println("Property '" + propertyName + "' set on '" + SVNFormatUtil.formatPath(path) + "'");
+                            out.println("property '" + propertyName + "' set on '" + SVNFormatUtil.formatPath(path) + "'");
                         }
                         public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
                         }
@@ -136,7 +136,7 @@ public class PropsetCommand extends SVNCommand {
                         }
                     });
                     if (wasSet[0]) {
-                        out.println("Property '" + propertyName + "' set (recursively) on '" + absolutePath + "'");
+                        out.println("property '" + propertyName + "' set (recursively) on '" + absolutePath + "'");
                     }
                 }
             }
