@@ -252,17 +252,26 @@ public class SVNLogClient extends SVNBasicClient {
      * @see                    #doLog(SVNURL, String[], SVNRevision, SVNRevision, SVNRevision, boolean, boolean, long, ISVNLogEntryHandler)                        
      */
     public void doLog(File[] paths, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean reportPaths, long limit, final ISVNLogEntryHandler handler) throws SVNException {
+        doLog(paths, SVNRevision.UNDEFINED, startRevision, endRevision, stopOnCopy, reportPaths, limit, handler);
+    }
+    
+    public void doLog(File[] paths, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean reportPaths, long limit, final ISVNLogEntryHandler handler) throws SVNException {
         if (paths == null || paths.length == 0) {
             return;
         }
         if (startRevision.isValid() && !endRevision.isValid()) {
             endRevision = startRevision;
         } else if (!startRevision.isValid()) {
-            startRevision = SVNRevision.BASE;
+            if (!pegRevision.isValid()) {
+                startRevision = SVNRevision.BASE;
+            } else {
+                startRevision = pegRevision;
+            }
             if (!endRevision.isValid()) {
                 endRevision = SVNRevision.create(0);
             }
         }
+        SVNDebugLog.getDefaultLog().info("log on : " + startRevision + ":" + endRevision);
         ISVNLogEntryHandler wrappingHandler = new ISVNLogEntryHandler() {
             public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
                 checkCancelled();
@@ -279,13 +288,13 @@ public class SVNLogClient extends SVNBasicClient {
             if (entry == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", path);
                 SVNErrorManager.error(err);
-            }
+            }   
             if (entry.getURL() == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "Entry ''{0}'' has no URL", path);
                 SVNErrorManager.error(err);
             }
-            wcAccess.closeAdminArea(path);
             urls[i] = entry.getSVNURL();
+            wcAccess.closeAdminArea(path);
         }
         if (urls.length == 0) {
             return;
@@ -299,7 +308,10 @@ public class SVNLogClient extends SVNBasicClient {
         if (targets.isEmpty()) {
             targets.add("");
         }
-        SVNRepository repos = createRepository(baseURL, true);
+        SVNDebugLog.getDefaultLog().info("start is local: " + startRevision.isLocal());
+        SVNRepository repos = !startRevision.isLocal() ?
+                createRepository(baseURL, null, startRevision, SVNRevision.HEAD) : createRepository(baseURL, true);
+        SVNDebugLog.getDefaultLog().info("repos location: " + repos.getLocation());
         String[] targetPaths = (String[]) targets.toArray(new String[targets.size()]);
         for (int i = 0; i < targetPaths.length; i++) {
             targetPaths[i] = SVNEncodingUtil.uriDecode(targetPaths[i]);
@@ -367,7 +379,11 @@ public class SVNLogClient extends SVNBasicClient {
         if (startRevision.isValid() && !endRevision.isValid()) {
             endRevision = startRevision;
         } else if (!startRevision.isValid()) {
-            startRevision = SVNRevision.HEAD;
+            if (!pegRevision.isValid()) {
+                startRevision = SVNRevision.HEAD;
+            } else {
+                startRevision = pegRevision;
+            }
             if (!endRevision.isValid()) {
                 endRevision = SVNRevision.create(0);
             }

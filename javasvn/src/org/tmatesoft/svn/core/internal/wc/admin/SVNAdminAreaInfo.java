@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 
 /**
@@ -69,19 +70,17 @@ public class SVNAdminAreaInfo {
         Collection result = new ArrayList();
         
         String relPath = adminArea.getRelativePath(myAnchor);
-        SVNExternalInfo[] parsed = parseExternals(relPath,
-                externals);
+        SVNExternalInfo[] parsed = parseExternals(relPath, externals);
         for (int i = 0; i < parsed.length; i++) {
-            SVNExternalInfo info = addExternal(adminArea, parsed[i].getPath(),
-                    parsed[i].getOldURL(), parsed[i].getOldRevision());
+            SVNExternalInfo info = addExternal(adminArea, parsed[i].getPath(), parsed[i].getOldURL(), parsed[i].getOldRevision());
             result.add(info);
         }
         // get existing externals and update all that are not in result but in
         // this dir.
         for (Iterator exts = externals(); exts.hasNext();) {
             SVNExternalInfo info = (SVNExternalInfo) exts.next();
-            if (!result.contains(info)
-                    && relPath.equals(info.getOwnerPath())) {
+            if (!result.contains(info) && relPath.equals(info.getOwnerPath())) {
+                SVNDebugLog.getDefaultLog().info("clearing external " + info.getPath());
                 info.setNewExternal(null, -1);
             }
         }
@@ -164,10 +163,14 @@ public class SVNAdminAreaInfo {
             myExternals = new TreeMap();
         }
 
+        SVNDebugLog.getDefaultLog().info("adding external: " + path + " " + url + " " + revision);
         SVNExternalInfo info = (SVNExternalInfo) myExternals.get(path);
         if (info == null) {
             info = new SVNExternalInfo(adminArea.getRelativePath(myAnchor), new File(getAnchor().getRoot(), path), path, null, -1);
+            SVNDebugLog.getDefaultLog().info("added, file: " + info.getFile());
             myExternals.put(path, info);
+        } else {
+            SVNDebugLog.getDefaultLog().info("updating existing one");
         }
         info.setNewExternal(url, revision);
         return info;

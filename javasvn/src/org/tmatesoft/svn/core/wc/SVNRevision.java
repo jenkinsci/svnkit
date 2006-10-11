@@ -252,7 +252,8 @@ public class SVNRevision {
      *          a kind of a local revision, otherwise <span class="javakeyword">false</span> 
      */
     public boolean isLocal() {
-        return isValid() && (this == SVNRevision.BASE || this == SVNRevision.WORKING);
+        boolean remote = !isValid() || this == SVNRevision.HEAD || getNumber() >= 0 || getDate() != null;
+        return !remote;
     }
     
     /**

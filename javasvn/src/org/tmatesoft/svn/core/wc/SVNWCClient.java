@@ -58,6 +58,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * The <b>SVNWCClient</b> class combines a number of version control 
@@ -208,12 +209,13 @@ public class SVNWCClient extends SVNBasicClient {
         } else if (revision == SVNRevision.COMMITTED) {
             revision = SVNRevision.BASE;
         }
-        if (pegRevision == null || !pegRevision.isValid()) {
-            pegRevision = SVNRevision.BASE;
-        } else if (pegRevision == SVNRevision.COMMITTED) {
-            pegRevision = SVNRevision.BASE;
-        }
-        if ((pegRevision == SVNRevision.BASE || pegRevision == SVNRevision.WORKING) && (revision == SVNRevision.BASE || revision == SVNRevision.WORKING)) {
+        if ((!pegRevision.isValid() || pegRevision == SVNRevision.BASE || pegRevision == SVNRevision.WORKING) && 
+                (!revision.isValid() || revision == SVNRevision.BASE || revision == SVNRevision.WORKING)) {
+            if (pegRevision == null || !pegRevision.isValid()) {
+                pegRevision = SVNRevision.BASE;
+            } else if (pegRevision == SVNRevision.COMMITTED) {
+                pegRevision = SVNRevision.BASE;
+            }
             doGetLocalFileContents(path, dst, revision, expandKeywords);
         } else {
             SVNRepository repos = createRepository(null, path, pegRevision, revision);
@@ -903,7 +905,8 @@ public class SVNWCClient extends SVNBasicClient {
     }
     
     public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, boolean recursive, boolean includeIgnored) throws SVNException {
-        path = path.getAbsoluteFile();
+        path = new File(SVNPathUtil.validateFilePath(path.getAbsolutePath()));
+        SVNDebugLog.getDefaultLog().info("adding: " + path);
         if (!mkdir && climbUnversionedParents) {
             // check if parent is versioned. if not, add it.
             SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
@@ -947,11 +950,17 @@ public class SVNWCClient extends SVNBasicClient {
         }
         SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
         try {
-            SVNAdminArea dir = wcAccess.open(path.getParentFile(), true, 0);
+            SVNAdminArea dir = null;
+            if (path.isDirectory()) {
+                dir = wcAccess.open(SVNWCUtil.isVersionedDirectory(path.getParentFile()) ? path.getParentFile() : path, true, 0);
+            } else {
+                dir = wcAccess.open(path.getParentFile(), true, 0);
+            }
             SVNFileType fileType = SVNFileType.getType(path);
             if (fileType == SVNFileType.DIRECTORY && recursive) {
                 addDirectory(path, dir, force, includeIgnored);
             } else if (fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) {
+                dir.getWCAccess().setEventHandler(null);
                 addFile(path, fileType, dir);
             } else {
                 SVNWCManager.add(path, dir, null, SVNRevision.UNDEFINED);
@@ -1041,6 +1050,7 @@ public class SVNWCClient extends SVNBasicClient {
      *                         </ul>
      */
     public void doRevert(File path, boolean recursive) throws SVNException {
+        path = new File(SVNPathUtil.validateFilePath(path.getAbsolutePath()));
         SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
         try {
             SVNAdminAreaInfo info = wcAccess.openAnchor(path, true, recursive ? SVNWCAccess2.INFINITE_DEPTH : 0);
@@ -1143,6 +1153,7 @@ public class SVNWCClient extends SVNBasicClient {
             String propRevertPath = SVNAdminUtil.getPropRevertPath(name, entry.getKind(), false);
             if (dir.getFile(propRevertPath).isFile()) {
                 baseProperties = dir.getRevertProperties(name);
+                SVNDebugLog.getDefaultLog().info("revert props will be used..");
                 command.put(ISVNLog.NAME_ATTR, propRevertPath);
                 log.addCommand(ISVNLog.DELETE, command, false);
                 command.clear();
@@ -1164,11 +1175,16 @@ public class SVNWCClient extends SVNBasicClient {
         }
         if (baseProperties != null) {
             // save base props both to base and working. 
+            Map newProperties = baseProperties.asMap();
+            SVNDebugLog.getDefaultLog().info("original props to set: " + newProperties);
             SVNVersionedProperties originalBaseProperties = dir.getBaseProperties(name);
             SVNVersionedProperties workProperties = dir.getProperties(name);
-            originalBaseProperties.removeAll();
+            if (entry.isScheduledForReplacement()) {
+                originalBaseProperties.removeAll();
+            }
             workProperties.removeAll();
-            Map newProperties = baseProperties.asMap();
+            SVNDebugLog.getDefaultLog().info("after all props removed: " + workProperties.asMap() + ", base= " + originalBaseProperties.asMap());
+            SVNDebugLog.getDefaultLog().info("props to set: " + newProperties);
             for(Iterator names = newProperties.keySet().iterator(); names.hasNext();) {
                 String propName = (String) names.next();
                 if (entry.isScheduledForReplacement()) {
@@ -1176,6 +1192,7 @@ public class SVNWCClient extends SVNBasicClient {
                 }
                 workProperties.setPropertyValue(propName, (String) newProperties.get(propName));
             }
+            SVNDebugLog.getDefaultLog().info("props reverted: " + workProperties.asMap() + ", base= " + originalBaseProperties.asMap());
             dir.saveVersionedProperties(log, false);
             reverted = true;
         } 
@@ -1205,12 +1222,13 @@ public class SVNWCClient extends SVNBasicClient {
                 reinstallWorkingFile = true;
             }
             if (!reinstallWorkingFile) {
-                reinstallWorkingFile = dir.hasTextModifications(name, false);
+                reinstallWorkingFile = dir.hasTextModifications(name, false, false, false);
             }
             if (reinstallWorkingFile) {
                 command.put(ISVNLog.NAME_ATTR, SVNAdminUtil.getTextBasePath(name, false));
                 command.put(ISVNLog.DEST_ATTR, name);
                 log.addCommand(ISVNLog.COPY_AND_TRANSLATE, command, false);
+                SVNDebugLog.getDefaultLog().info("command added: " + SVNAdminUtil.getTextBasePath(name, false) + " to " + name);
                 command.clear();
                 if (useCommitTime && entry.getCommittedDate() != null) {
                     command.put(ISVNLog.NAME_ATTR, name);
@@ -1223,7 +1241,7 @@ public class SVNWCClient extends SVNBasicClient {
                 log.addCommand(ISVNLog.MODIFY_ENTRY, command, false);
                 command.clear();                    
             }
-            reverted = true;
+            reverted |= reinstallWorkingFile;
         }
         if (entry.getConflictNew() != null) {
             command.put(ISVNLog.NAME_ATTR, entry.getConflictNew());
@@ -1454,6 +1472,10 @@ public class SVNWCClient extends SVNBasicClient {
                 public void handleLock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
                 }
                 public void handleUnlock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
+                    SVNDebugLog.getDefaultLog().info("unlock: " + lock + " " + error);
+                    if (error != null) {
+                        SVNDebugLog.getDefaultLog().info("code: "+ error.getErrorCode());
+                    }
                     SVNURL fullURL = rootURL.appendPath(path, false);
                     LockInfo lockInfo = (LockInfo) entriesMap.get(fullURL);
                     SVNEventAction action = null;
@@ -1476,7 +1498,8 @@ public class SVNWCClient extends SVNBasicClient {
                         }
                         dir.saveEntries(false);
                         action = SVNEventAction.UNLOCKED;
-                    } else if (error != null) {
+                    } 
+                    if (error != null) {
                         action = SVNEventAction.UNLOCK_FAILED;
                     }
                     if (action != null) {
@@ -1559,7 +1582,7 @@ public class SVNWCClient extends SVNBasicClient {
             File file = new File(commonParentPath, paths[i]);
             SVNEntry2 entry = wcAccess.getEntry(file, false);
             if (entry == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", file);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", file.getName());
                 SVNErrorManager.error(err);
             }
             if (entry.getURL() == null) {
@@ -1830,7 +1853,7 @@ public class SVNWCClient extends SVNBasicClient {
         // 2. add lock for this entry, only when it is 'related' to head (and is a file).
         if (rootEntry.getKind() == SVNNodeKind.FILE) {
             try {
-                SVNRepositoryLocation[] locations = getLocations(url, null, revision, SVNRevision.HEAD, SVNRevision.UNDEFINED);
+                SVNRepositoryLocation[] locations = getLocations(url, null, null, revision, SVNRevision.HEAD, SVNRevision.UNDEFINED);
                 if (locations != null && locations.length > 0) {
                     SVNURL headURL = locations[0].getURL();
                     if (headURL.equals(url)) {
@@ -2179,6 +2202,8 @@ public class SVNWCClient extends SVNBasicClient {
                 String oldValue = props.getPropertyValue(propName);
                 boolean modified = oldValue == null ? propValue != null : !oldValue.equals(propValue);
                 props.setPropertyValue(propName, propValue);
+                SVNDebugLog.getDefaultLog().info("property set: " + propName + " = " + propValue);
+                SVNDebugLog.getDefaultLog().info(props.getPropertyValue(propValue));
 
                 if (SVNProperty.EOL_STYLE.equals(propName) || SVNProperty.KEYWORDS.equals(propName)) {
                     entry.setTextTime(null);

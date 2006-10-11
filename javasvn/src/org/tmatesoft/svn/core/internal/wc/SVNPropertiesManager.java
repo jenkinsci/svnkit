@@ -271,7 +271,7 @@ public class SVNPropertiesManager {
             return keywords;
         }
         for(StringTokenizer tokens = new StringTokenizer(value, " \t\n\r"); tokens.hasMoreTokens();) {
-            keywords.add(tokens.nextToken());
+            keywords.add(tokens.nextToken().toLowerCase());
         }
         return keywords;
     }

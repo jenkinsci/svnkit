@@ -18,8 +18,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -1471,72 +1469,6 @@ public class SVNAdminArea14 extends SVNAdminArea {
                                                                            "   expected: {0,number,integer}\n" + 
                                                                            "     actual: {1,number,integer}", new Object[]{new Integer(WC_FORMAT), new Integer(format)});
         SVNErrorManager.error(err);
-    }
-
-    public boolean hasTextModifications(String name, boolean forceComparison) throws SVNException {
-        SVNEntry2 entry = getEntry(name, false);
-        if (!forceComparison) {
-            if (entry == null || entry.isDirectory()) {
-                return false;
-            }
-            
-            String textTime = entry.getTextTime();
-            if (textTime != null) {
-                long textTimeAsLong = SVNFileUtil.roundTimeStamp(SVNTimeUtil.parseDateAsLong(textTime));
-                long tstamp = SVNFileUtil.roundTimeStamp(getFile(name).lastModified());
-                if (textTimeAsLong == tstamp ) {
-                    return false;
-                }
-            }
-        }
-        
-        SVNFileType fType = SVNFileType.getType(getFile(name));
-        if (fType != SVNFileType.FILE) {
-            return false;
-        }
-        
-        File baseFile = getBaseFile(name, false);
-        SVNFileType baseFileType = SVNFileType.getType(baseFile);
-        if (baseFileType != SVNFileType.FILE) {
-            return true;
-        }
-        // translate versioned file.
-        File baseTmpFile = SVNFileUtil.createUniqueFile(getRoot(), 
-                SVNFileUtil.getBasePath(getBaseFile(name, true)), ".tmp");
-        if (!baseTmpFile.getParentFile().exists()) {
-            baseTmpFile.getParentFile().mkdirs();
-        }
-        File versionedFile = getFile(name);
-        SVNTranslator2.translate(this, name, name, SVNFileUtil.getBasePath(baseTmpFile), false, false);
-
-        // now compare file and get base file checksum (when forced)
-        MessageDigest digest;
-        boolean equals = true;
-        try {
-            digest = forceComparison ? MessageDigest.getInstance("MD5") : null;
-            equals = SVNFileUtil.compareFiles(baseFile, baseTmpFile, digest);
-            if (forceComparison) {
-                // if checksum differs from expected - throw exception
-                String checksum = SVNFileUtil.toHexDigest(digest);
-                if (!checksum.equals(entry.getChecksum())) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, "Checksum mismatch indicates corrupt text base: ''{0}''\n" +
-                            "   expected: {1}\n" +
-                            "     actual: {2}\n", new Object[] {baseFile, entry.getChecksum(), checksum});
-                    SVNErrorManager.error(err);
-                }
-            }
-        } catch (NoSuchAlgorithmException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "MD5 implementation not found: {1}", e.getLocalizedMessage());
-            SVNErrorManager.error(err, e);
-        } finally {
-            baseTmpFile.delete();
-        }
-
-        if (equals && isLocked()) {
-            entry.setTextTime(SVNTimeUtil.formatDate(new Date(versionedFile.lastModified())));
-            saveEntries(false);
-        }
-        return !equals;
     }
     
     public boolean unlock() throws SVNException {

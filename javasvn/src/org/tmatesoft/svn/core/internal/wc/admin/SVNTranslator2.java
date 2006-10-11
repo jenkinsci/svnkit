@@ -329,24 +329,24 @@ public class SVNTranslator2 {
         try {
             for (StringTokenizer tokens = new StringTokenizer(keywords," \t\n\b\r\f"); tokens.hasMoreTokens();) {
                 String token = tokens.nextToken();
-                if ("LastChangedDate".equals(token) || "Date".equals(token)) {
+                if ("LastChangedDate".equalsIgnoreCase(token) || "Date".equalsIgnoreCase(token)) {
                     date = expand && date == null ? SVNFormatUtil.formatDate(jDate, true).getBytes("UTF-8") : date;
                     map.put("LastChangedDate", date);
                     map.put("Date", date);
-                } else if ("LastChangedRevision".equals(token) || "Revision".equals(token) || "Rev".equals(token)) {
+                } else if ("LastChangedRevision".equalsIgnoreCase(token) || "Revision".equalsIgnoreCase(token) || "Rev".equalsIgnoreCase(token)) {
                     rev = expand && rev == null ? r.getBytes("UTF-8") : rev;
                     map.put("LastChangedRevision", rev);
                     map.put("Revision", rev);
                     map.put("Rev", rev);
-                } else if ("LastChangedBy".equals(token) || "Author".equals(token)) {
+                } else if ("LastChangedBy".equalsIgnoreCase(token) || "Author".equalsIgnoreCase(token)) {
                     author = expand && author == null ? (a == null ? new byte[0] : a.getBytes("UTF-8")) : author;
                     map.put("LastChangedBy", author);
                     map.put("Author", author);
-                } else if ("HeadURL".equals(token) || "URL".equals(token)) {
+                } else if ("HeadURL".equalsIgnoreCase(token) || "URL".equalsIgnoreCase(token)) {
                     url = expand && url == null ? SVNEncodingUtil.uriDecode(u).getBytes("UTF-8") : url;
                     map.put("HeadURL", url);
                     map.put("URL", url);
-                } else if ("Id".equals(token)) {
+                } else if ("Id".equalsIgnoreCase(token)) {
                     if (expand && id == null) {
                         rev = rev == null ? r.getBytes("UTF-8") : rev;
                         date = date == null ? SVNFormatUtil.formatDate(jDate, false).getBytes("UTF-8") : date;

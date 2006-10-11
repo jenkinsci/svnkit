@@ -469,7 +469,7 @@ public class SVNDiffClient extends SVNBasicClient {
         }
         SVNURL anchorURL = anchorEntry.getSVNURL();
         if (pegRevision.isValid()) {
-            SVNRepositoryLocation[] locations = getLocations(url1, null, pegRevision, revision1, SVNRevision.UNDEFINED);
+            SVNRepositoryLocation[] locations = getLocations(url1, null, null, pegRevision, revision1, SVNRevision.UNDEFINED);
             url1 = locations[0].getURL();
             String anchorPath2 = SVNPathUtil.append(anchorURL.toString(), target == null ? "" : target);
             getDiffGenerator().init(url1.toString(), anchorPath2);
@@ -507,7 +507,7 @@ public class SVNDiffClient extends SVNBasicClient {
         SVNURL url1;
         SVNURL anchorURL = anchorEntry.getSVNURL();
         if (pegRevision.isValid()) {
-            SVNRepositoryLocation[] locations = getLocations(null, path1, pegRevision, revision1, SVNRevision.UNDEFINED);
+            SVNRepositoryLocation[] locations = getLocations(null, path1, null, pegRevision, revision1, SVNRevision.UNDEFINED);
             url1 = locations[0].getURL();
             String anchorPath2 = SVNPathUtil.append(anchorURL.toString(), target == null ? "" : target);
             getDiffGenerator().init(url1.toString(), anchorPath2);
@@ -556,7 +556,7 @@ public class SVNDiffClient extends SVNBasicClient {
             basePath = path2;
         }
         if (pegRevision.isValid()) {
-            SVNRepositoryLocation[] locations = getLocations(url2, path2, pegRevision, revision1, revision2);
+            SVNRepositoryLocation[] locations = getLocations(url2, path2, null, pegRevision, revision1, revision2);
             url1 = locations[0].getURL();
             url2 = locations[1].getURL();
             
@@ -1059,7 +1059,7 @@ public class SVNDiffClient extends SVNBasicClient {
             SVNErrorManager.error(err);
         }
         if (pegRevision.isValid()) {
-            SVNRepositoryLocation[] locations = getLocations(url2, path2, pegRevision, revision1, revision2);
+            SVNRepositoryLocation[] locations = getLocations(url2, path2, null, pegRevision, revision1, revision2);
             url1 = locations[0].getURL();
             url2 = locations[1].getURL();
             revision1 = SVNRevision.create(locations[0].getRevisionNumber());
@@ -1089,7 +1089,7 @@ public class SVNDiffClient extends SVNBasicClient {
             SVNWCAccess wcAccess, boolean force, boolean dryRun) throws SVNException {
         
         if (pegRevision.isValid()) {
-            SVNRepositoryLocation[] locations = getLocations(url2, path2, pegRevision, revision1, revision2);
+            SVNRepositoryLocation[] locations = getLocations(url2, path2, null, pegRevision, revision1, revision2);
             url1 = locations[0].getURL();
             url2 = locations[1].getURL();
             revision1 = SVNRevision.create(locations[0].getRevisionNumber());

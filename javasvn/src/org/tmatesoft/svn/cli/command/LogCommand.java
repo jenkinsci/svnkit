@@ -60,19 +60,6 @@ public class LogCommand extends SVNCommand implements ISVNLogEntryHandler {
             startRevision = SVNRevision.parse(revStr);
         }
 
-        if (startRevision.isValid() && !endRevision.isValid()) {
-            endRevision = startRevision;
-        } else if (!startRevision.isValid()) {
-            if (getCommandLine().hasURLs()) {
-                startRevision = SVNRevision.HEAD;
-            } else {
-                startRevision  = SVNRevision.BASE;
-            }
-            if (!endRevision.isValid()) {
-                endRevision = SVNRevision.create(0);
-            }
-        }
-
         boolean stopOnCopy = getCommandLine().hasArgument(SVNArgument.STOP_ON_COPY);
         myReportPaths = getCommandLine().hasArgument(SVNArgument.VERBOSE);
         myIsQuiet = getCommandLine().hasArgument(SVNArgument.QUIET);
@@ -96,19 +83,22 @@ public class LogCommand extends SVNCommand implements ISVNLogEntryHandler {
         }
         if (getCommandLine().hasURLs()) {
             String url = getCommandLine().getURL(0);
+            SVNRevision pegRevision = getCommandLine().getPegRevision(0);
             Collection targets = new ArrayList();
             for(int i = 0; i < getCommandLine().getPathCount(); i++) {
                 targets.add(getCommandLine().getPathAt(i));
             }
             String[] paths = (String[]) targets.toArray(new String[targets.size()]);
-            logClient.doLog(SVNURL.parseURIEncoded(url), paths, SVNRevision.UNDEFINED, startRevision ,endRevision, stopOnCopy, myReportPaths, limit, handler);
+            logClient.doLog(SVNURL.parseURIEncoded(url), paths, pegRevision, startRevision ,endRevision, stopOnCopy, myReportPaths, limit, handler);
         } else if (getCommandLine().hasPaths()) {
             Collection targets = new ArrayList();
+            SVNRevision[] pegRevisions = new SVNRevision[getCommandLine().getPathCount()];
             for(int i = 0; i < getCommandLine().getPathCount(); i++) {
                 targets.add(new File(getCommandLine().getPathAt(i)).getAbsoluteFile());
+                pegRevisions[i] = getCommandLine().getPathPegRevision(i);
             }
             File[] paths = (File[]) targets.toArray(new File[targets.size()]);
-            logClient.doLog(paths, startRevision ,endRevision, stopOnCopy, myReportPaths, limit, handler);
+            logClient.doLog(paths, pegRevisions[0], startRevision ,endRevision, stopOnCopy, myReportPaths, limit, handler);
         }
         if (getCommandLine().hasArgument(SVNArgument.XML)) {
             if (!getCommandLine().hasArgument(SVNArgument.INCREMENTAL)) {

@@ -50,6 +50,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * This class provides methods which allow to check out, update, switch and relocate a
@@ -216,7 +217,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             SVNRepository repository = createRepository(sourceURL, true);
             long revNumber = getRevisionNumber(revision, repository, file);
             if (pegRevision != null && pegRevision.isValid()) {
-                SVNRepositoryLocation[] locs = getLocations(url, null, pegRevision, SVNRevision.create(revNumber), SVNRevision.UNDEFINED);
+                SVNRepositoryLocation[] locs = getLocations(url, null, null, pegRevision, SVNRevision.create(revNumber), SVNRevision.UNDEFINED);
                 url = locs[0].getURL();
             }
 
@@ -832,6 +833,9 @@ public class SVNUpdateClient extends SVNBasicClient {
     private void handleExternals(SVNAdminAreaInfo info) throws SVNException {
         for (Iterator externals = info.externals(); externals.hasNext();) {
             SVNExternalInfo external = (SVNExternalInfo) externals.next();
+            SVNDebugLog.getDefaultLog().info("external: " + external.getPath());
+            SVNDebugLog.getDefaultLog().info("old URL: " + external.getOldURL());
+            SVNDebugLog.getDefaultLog().info("new URL: " + external.getNewURL());
             if (external.getOldURL() == null && external.getNewURL() == null) {
                 continue;
             }
@@ -884,7 +888,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                             if (external.getNewURL().toString().equals(url)) {
                                 dispatchEvent(SVNEventFactory.createUpdateExternalEvent(info, ""));
                                 doUpdate(external.getFile(), revision, true);
-                                return;
+                                continue;
                             } else if (entry.getRepositoryRoot() != null) {
                                 if (!SVNPathUtil.isAncestor(entry.getRepositoryRoot(), external.getNewURL().toString())) {
                                     SVNRepository repos = createRepository(external.getNewURL(), true);
@@ -898,13 +902,13 @@ public class SVNUpdateClient extends SVNBasicClient {
                                             external.getFile().mkdirs();
                                             dispatchEvent(SVNEventFactory.createUpdateExternalEvent(info, ""));
                                             doCheckout(external.getNewURL(), external.getFile(), revision, revision, true);
-                                            return;
+                                            continue;
                                         } 
                                         throw svne;
                                     }
                                 }
                                 doSwitch(external.getFile(), external.getNewURL(), revision, true);
-                                return;
+                                continue;
                             }
                         }
 

@@ -56,6 +56,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * The <b>SVNCopyClient</b> provides methods to perform any kinds of copying and moving that SVN
@@ -652,7 +653,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 srcRevisionNumber = realRevision;
             }
             
-            addRepositoryFile(adminArea, dstPath.getName(), null, tmpFile, properties, null, 
+            addRepositoryFile(adminArea, dstPath.getName(), null, tmpFile, null, properties,  
                     sameRepositories ? srcURL.toString() : null, 
                     sameRepositories ? srcRevisionNumber : -1);
             
@@ -867,8 +868,7 @@ public class SVNCopyClient extends SVNBasicClient {
             log.addCommand(SVNLog.MOVE, command, false);
             command.clear();
             
-            SVNFileType kind = SVNFileType.getType(dir.getFile(basePropsPath));
-            if (kind == SVNFileType.FILE) {
+            if (dir.getFile(basePropsPath).isFile()) {
                 command.put(ISVNLog.NAME_ATTR, basePropsPath);
                 command.put(ISVNLog.DEST_ATTR, revertPropsPath);
                 log.addCommand(SVNLog.MOVE, command, false);
@@ -894,8 +894,8 @@ public class SVNCopyClient extends SVNBasicClient {
         log.logChangedEntryProperties(fileName, entryAttrs);
         entryAttrs.clear();
 
+        addProperties(dir, fileName, baseProperties, true, log);
         addProperties(dir, fileName, properties, false, log);
-        addProperties(dir, fileName, baseProperties, false, log);
         
         File tmpTextBase = dir.getBaseFile(fileName, true);
         if (!tmpTextBase.equals(textBase)) {
@@ -968,13 +968,14 @@ public class SVNCopyClient extends SVNBasicClient {
                 regularProps.put(propName, propValue);
             }
         }
-        SVNVersionedProperties props = base ? dir.getProperties(fileName) : dir.getProperties(fileName);
+        SVNVersionedProperties props = base ? dir.getBaseProperties(fileName) : dir.getProperties(fileName);
+        props.removeAll();
         for (Iterator propNames = regularProps.keySet().iterator(); propNames.hasNext();) {
             String propName = (String) propNames.next();
             String propValue = (String) regularProps.get(propName);
             props.setPropertyValue(propName, propValue);
         }
-        dir.saveVersionedProperties(log, true);
+        dir.saveVersionedProperties(log, false);
         log.logChangedEntryProperties(fileName, entryProps);
         log.logChangedWCProperties(fileName, wcProps);
     }
@@ -1009,14 +1010,16 @@ public class SVNCopyClient extends SVNBasicClient {
         String copyFromURL = srcEntry.getURL();
         long copyFromRevision = srcEntry.getRevision();
         
-        SVNVersionedProperties baseProperties = srcArea.getBaseProperties(srcEntry.getName());
-        SVNVersionedProperties properties = srcArea.getProperties(srcEntry.getName());
+        Map baseProperties = srcArea.getBaseProperties(srcEntry.getName()).asMap();
+        Map properties = srcArea.getProperties(srcEntry.getName()).asMap();
+        SVNDebugLog.getDefaultLog().info("base props of " + srcEntry.getName() + " : " + baseProperties);
+        SVNDebugLog.getDefaultLog().info("props of " + srcEntry.getName() + " : " + baseProperties);
         
         SVNFileUtil.copyFile(textBase, tmpTextBase, false);
         File tmpFile = SVNFileUtil.createUniqueFile(dstParent.getRoot(), dstName, ".tmp");
         SVNFileUtil.copy(srcArea.getFile(srcEntry.getName()), tmpFile, false, false);
        
-        addRepositoryFile(dstParent, dstName, tmpFile, tmpTextBase, baseProperties.asMap(), properties.asMap(), copyFromURL, copyFromRevision);
+        addRepositoryFile(dstParent, dstName, tmpFile, tmpTextBase, baseProperties, properties, copyFromURL, copyFromRevision);
     
         SVNEvent event = SVNEventFactory.createAddedEvent(dstParent, dstName, SVNNodeKind.FILE, null);
         dstParent.getWCAccess().handleEvent(event);

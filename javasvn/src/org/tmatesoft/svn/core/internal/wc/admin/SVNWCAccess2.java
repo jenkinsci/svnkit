@@ -473,7 +473,7 @@ public class SVNWCAccess2 implements ISVNEventHandler {
     
     public SVNAdminArea retrieve(File path) throws SVNException {
         SVNAdminArea adminArea = getAdminArea(path);
-        if (adminArea == null) {
+        if (adminArea == null && !myAdminAreas.containsKey(path)) {
             SVNEntry2 subEntry = null;
             try {
                 SVNAdminArea dirAdminArea = getAdminArea(path.getParentFile());

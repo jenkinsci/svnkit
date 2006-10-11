@@ -375,6 +375,11 @@ public class SVNWCManager {
 
     public static void doDeleteUnversionedFiles(SVNWCAccess2 wcAccess, File path, boolean deleteFiles) throws SVNException {
         wcAccess.checkCancelled();
+        SVNFileType fileType = SVNFileType.getType(path);
+        if (fileType == SVNFileType.NONE) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_FILENAME, "''{0}'' does not exist", path);
+            SVNErrorManager.error(err);
+        }
         if (deleteFiles) {
             SVNFileUtil.deleteAll(path, true, wcAccess.getEventHandler());
         }

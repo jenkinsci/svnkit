@@ -416,8 +416,9 @@ public class SVNBasicClient implements ISVNEventHandler {
                 pegRevision = SVNRevision.WORKING;
             } 
         }
+//        SVNRepository repository = createRepository(initialURL, true);
         
-        SVNRepositoryLocation[] locations = getLocations(url, path, pegRevision, startRevision, SVNRevision.UNDEFINED);
+        SVNRepositoryLocation[] locations = getLocations(url, path, null, pegRevision, startRevision, SVNRevision.UNDEFINED);
         url = locations[0].getURL();
         long actualRevision = locations[0].getRevisionNumber();
         SVNRepository repository = createRepository(url, true);
@@ -431,7 +432,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         return repository;
     }
     
-    protected SVNRepositoryLocation[] getLocations(SVNURL url, File path, SVNRevision revision, SVNRevision start, SVNRevision end) throws SVNException {
+    protected SVNRepositoryLocation[] getLocations(SVNURL url, File path, SVNRepository repository, SVNRevision revision, SVNRevision start, SVNRevision end) throws SVNException {
         if (!revision.isValid() || !start.isValid()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION));
         }
@@ -443,7 +444,7 @@ public class SVNBasicClient implements ISVNEventHandler {
             getDebugLog().info(new Exception());
         }
         
-        if (path != null && url == null) {
+        if (path != null) {
             SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(null);
             try {
                 wcAccess.openAnchor(path, false, 0);
@@ -461,7 +462,9 @@ public class SVNBasicClient implements ISVNEventHandler {
                 wcAccess.close();
             }
         }
-        SVNRepository repository = createRepository(url, true);
+        if (repository == null) {
+            repository = createRepository(url, true);
+        }
         if (pegRevisionNumber < 0) {
             pegRevisionNumber = getRevisionNumber(revision, repository, path);
         }

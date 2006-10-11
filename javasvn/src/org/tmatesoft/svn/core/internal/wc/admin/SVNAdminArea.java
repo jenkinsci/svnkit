@@ -92,11 +92,133 @@ public abstract class SVNAdminArea {
 
     public abstract SVNAdminArea createVersionedDirectory(File dir, String url, String rootURL, String uuid, long revNumber, boolean createMyself) throws SVNException;
     
-    public abstract boolean hasTextModifications(String name, boolean forceComparison) throws SVNException;
-
     public abstract SVNAdminArea upgradeFormat(SVNAdminArea adminArea) throws SVNException;
     
     public abstract void postUpgradeFormat(int format) throws SVNException;
+    
+    public boolean hasTextModifications(String name, boolean forceComparision) throws SVNException {
+        return hasTextModifications(name, forceComparision, true, false);
+    }
+
+    public boolean hasTextModifications(String name, boolean forceComparison, boolean compareTextBase, boolean compareChecksum) throws SVNException {
+        SVNEntry2 entry = getEntry(name, false);
+        if (!forceComparison) {
+            if (entry == null || entry.isDirectory()) {
+                return false;
+            }
+            
+            String textTime = entry.getTextTime();
+            if (textTime != null) {
+                long textTimeAsLong = SVNFileUtil.roundTimeStamp(SVNTimeUtil.parseDateAsLong(textTime));
+                long tstamp = SVNFileUtil.roundTimeStamp(getFile(name).lastModified());
+                if (textTimeAsLong == tstamp ) {
+                    return false;
+                }
+            }
+        }
+        SVNFileType fType = SVNFileType.getType(getFile(name));
+        if (fType != SVNFileType.FILE) {
+            return false;
+        }
+        File textFile = getFile(name);
+        File baseFile = getBaseFile(name, false);
+        if (!baseFile.isFile()) {
+            return true;
+        }
+        boolean differs = compareAndVerify(textFile, baseFile, compareTextBase, compareChecksum);
+        if (!differs && isLocked()) {
+            entry.setTextTime(SVNTimeUtil.formatDate(new Date(textFile.lastModified())));
+            saveEntries(false);
+        }
+        return differs;
+    }
+    
+    private boolean compareAndVerify(File text, File baseFile, boolean compareTextBase, boolean checksum) throws SVNException {
+        String eolStyle = getProperties(text.getName()).getPropertyValue(SVNProperty.EOL_STYLE);
+        String keywords = getProperties(text.getName()).getPropertyValue(SVNProperty.KEYWORDS);
+        boolean special = getProperties(text.getName()).getPropertyValue(SVNProperty.SPECIAL) != null;
+        
+        if (special) {
+            compareTextBase = true;
+        }
+        
+        boolean needsTranslation = eolStyle != null || keywords != null || special;
+        SVNChecksumInputStream checksumStream = null;
+        SVNEntry2 entry = null;
+        
+        if (checksum || needsTranslation) {
+            InputStream baseStream = null;
+            InputStream textStream = null;
+            entry = getEntry(text.getName(), true);
+            if (entry == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", text);
+                SVNErrorManager.error(err);
+            }
+            try {
+                baseStream = SVNFileUtil.openFileForReading(baseFile);
+                textStream = SVNFileUtil.openFileForReading(text);
+                if (checksum) {
+                    if (entry.getChecksum() != null) {
+                        checksumStream = new SVNChecksumInputStream(baseStream);
+                        baseStream = checksumStream;
+                    }
+                }
+                if (compareTextBase && needsTranslation) {
+                    if (!special) {
+                        Map keywordsMap = SVNTranslator2.computeKeywords(keywords, null, entry.getAuthor(), entry.getCommittedDate(), entry.getRevision() + "");
+                        byte[] eols = SVNTranslator2.getBaseEOL(eolStyle);
+                        textStream = new SVNTranslatorInputStream(textStream, eols, false, keywordsMap, false);
+                    } else {
+                        String tmpPath = SVNAdminUtil.getTextBasePath(text.getName(), true);
+                        SVNTranslator2.translate(this, text.getName(), text.getName(), tmpPath, false, false);
+                        SVNFileUtil.closeFile(textStream);
+                        textStream = SVNFileUtil.openFileForReading(getFile(tmpPath));
+                    }
+                } else if (needsTranslation) {
+                    Map keywordsMap = SVNTranslator2.computeKeywords(keywords, entry.getURL(), entry.getAuthor(), entry.getCommittedDate(), entry.getRevision() + "");
+                    byte[] eols = SVNTranslator2.getBaseEOL(eolStyle);
+                    baseStream = new SVNTranslatorInputStream(baseStream, eols, false, keywordsMap, true);                    
+                }
+                byte[] buffer1 = new byte[8192];
+                byte[] buffer2 = new byte[8192];
+                try {
+                    while(true) {
+                        int r1 = baseStream.read(buffer1);
+                        int r2 = textStream.read(buffer2);
+                        r1 = r1 == -1 ? 0 : r1;
+                        r2 = r2 == -1 ? 0 : r2;
+                        if (r1 != r2) {
+                            return true;
+                        } else if (r1 == 0) {
+                            return false;
+                        }
+                        for(int i = 0; i < r1; i++) {
+                            if (buffer1[i] != buffer2[i]) {
+                                return true;
+                            }
+                        }
+                    }
+                } catch (IOException e) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
+                    SVNErrorManager.error(err);
+                }
+            } finally {
+                SVNFileUtil.closeFile(baseStream);
+                SVNFileUtil.closeFile(textStream);
+            }
+        } else {
+            return !SVNFileUtil.compareFiles(text, baseFile, null);
+        }
+        if (entry != null && checksumStream != null)  {
+            if (!entry.getChecksum().equals(checksumStream.getDigest())) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, "Checksum mismatch indicates corrupt text base: ''{0}''\n" +
+                        "   expected: {1}\n" +
+                        "     actual: {2}\n", new Object[] {baseFile, entry.getChecksum(), checksumStream.getDigest()});
+                SVNErrorManager.error(err);
+            }
+        }
+        return false;
+    }
 
     public String getRelativePath(SVNAdminArea anchor) {
         String absoluteAnchor = anchor.getRoot().getAbsolutePath();
