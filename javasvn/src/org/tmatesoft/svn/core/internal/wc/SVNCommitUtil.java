@@ -574,7 +574,7 @@ public class SVNCommitUtil {
         }
         if ((entry.isCopied() || copyMode) && !entry.isDeleted() && entry.getSchedule() == null) {
             long parentRevision = entry.getRevision() - 1;
-            if (!SVNWCUtil.isWorkingCopyRoot(path, true)) {
+            if (!dir.getWCAccess().isWCRoot(path)) {
                 if (parentEntry != null) {
                     parentRevision = parentEntry.getRevision();
                 }

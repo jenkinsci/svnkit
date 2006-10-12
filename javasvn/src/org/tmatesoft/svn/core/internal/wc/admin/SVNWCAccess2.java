@@ -413,12 +413,14 @@ public class SVNWCAccess2 implements ISVNEventHandler {
             SVNErrorManager.error(err);
         }
         
+        // what about switched paths?
+        /*
         if (entry != null && entry.getURL() != null) {
             if (!entry.getURL().equals(SVNPathUtil.append(parentEntry.getURL(), SVNEncodingUtil.uriEncode(path.getName())))) {
                 return true;
             }
-        }
-        entry = getEntry(path, false);
+        }*/
+        entry = parentArea.getEntry(path.getName(), false);
         if (entry == null) {
             return true;
         }

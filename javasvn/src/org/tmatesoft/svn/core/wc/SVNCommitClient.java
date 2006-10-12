@@ -46,7 +46,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNImportMediator;
 import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
-import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
@@ -914,10 +913,16 @@ public class SVNCommitClient extends SVNBasicClient {
                 checkCancelled();
                 SVNCommitPacket packet = packetsArray[i];
                 File wcRoot = SVNWCUtil.getWorkingCopyRoot(packet.getCommitItems()[0].getWCAccess().getAnchor(), true);
-                SVNWCAccess rootWCAccess = SVNWCAccess.create(wcRoot);
-                String uuid = rootWCAccess.getTargetEntry().getUUID();
-                SVNURL url = rootWCAccess.getTargetEntry().getSVNURL();
-                rootWCAccess.close(false);
+                SVNWCAccess2 rootWCAccess = SVNWCAccess2.newInstance(null);
+                String uuid = null;
+                SVNURL url = null;
+                try {
+                    SVNAdminArea rootDir = rootWCAccess.open(wcRoot, false, 0);
+                    uuid = rootDir.getEntry(rootDir.getThisDirName(), false).getUUID();
+                    url = rootDir.getEntry(rootDir.getThisDirName(), false).getSVNURL();
+                } finally {
+                    rootWCAccess.close();
+                }
                 checkCancelled();
                 if (uuid == null) {
                     if (url != null) {

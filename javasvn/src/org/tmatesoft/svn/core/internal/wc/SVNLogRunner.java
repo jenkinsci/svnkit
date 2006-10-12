@@ -371,7 +371,7 @@ public class SVNLogRunner {
             }
             // update entry in parent.
             File dirFile = dir.getRoot();
-            if (SVNWCUtil.isWorkingCopyRoot(dirFile, true)) {
+            if (SVNWCUtil.isWorkingCopyRoot(dirFile)) {
                 return;
             }
             String parentPath = SVNPathUtil.removeTail(dir.getPath());
@@ -425,7 +425,7 @@ public class SVNLogRunner {
             dir.destroy("", true);
             // compare revision with parent's one
             File dirFile = dir.getRoot();
-            if (SVNWCUtil.isWorkingCopyRoot(dirFile, true)) {
+            if (SVNWCUtil.isWorkingCopyRoot(dirFile)) {
                 return;
             }
             String parentPath = SVNPathUtil.removeTail(dir.getPath());
