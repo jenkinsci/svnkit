@@ -350,7 +350,7 @@ public class SVNWCClient extends SVNBasicClient {
         } else if (fType == SVNFileType.FILE || fType == SVNFileType.SYMLINK) {
             path = path.getParentFile();
         }
-        SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
+        SVNWCAccess2 wcAccess = createWCAccess();
         try {
             SVNAdminArea adminArea = wcAccess.open(path, true, true, 0);
             adminArea.cleanup();
@@ -639,7 +639,7 @@ public class SVNWCClient extends SVNBasicClient {
         if (revision == null || !revision.isValid()) {
             revision = SVNRevision.WORKING;
         }
-        SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
+        SVNWCAccess2 wcAccess = createWCAccess();
 
         try {
             SVNAdminArea area = wcAccess.probeOpen(path, false, recursive ? SVNWCAccess2.INFINITE_DEPTH : 0);
@@ -855,7 +855,8 @@ public class SVNWCClient extends SVNBasicClient {
      *                        </ul>
      */
     public void doDelete(File path, boolean force, boolean deleteFiles, boolean dryRun) throws SVNException {
-        SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
+        SVNWCAccess2 wcAccess = createWCAccess();
+        path = new File(SVNPathUtil.validateFilePath(path.getAbsolutePath())).getAbsoluteFile();
         try {
             if (!force) {
                 SVNWCManager.canDelete(path, false, getOptions());
@@ -907,7 +908,7 @@ public class SVNWCClient extends SVNBasicClient {
         path = new File(SVNPathUtil.validateFilePath(path.getAbsolutePath()));
         if (!mkdir && climbUnversionedParents) {
             // check if parent is versioned. if not, add it.
-            SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
+            SVNWCAccess2 wcAccess = createWCAccess();
             try {
                 wcAccess.open(path.getParentFile(), false, 0);
             } catch (SVNException e) {
@@ -946,7 +947,7 @@ public class SVNWCClient extends SVNBasicClient {
             }
             return;
         }
-        SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
+        SVNWCAccess2 wcAccess = createWCAccess();
         try {
             SVNAdminArea dir = null;
             if (path.isDirectory()) {
@@ -1049,7 +1050,7 @@ public class SVNWCClient extends SVNBasicClient {
      */
     public void doRevert(File path, boolean recursive) throws SVNException {
         path = new File(SVNPathUtil.validateFilePath(path.getAbsolutePath()));
-        SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
+        SVNWCAccess2 wcAccess = createWCAccess();
         try {
             SVNAdminAreaInfo info = wcAccess.openAnchor(path, true, recursive ? SVNWCAccess2.INFINITE_DEPTH : 0);
             boolean useCommitTimes = getOptions().isUseCommitTimes();
@@ -1282,7 +1283,7 @@ public class SVNWCClient extends SVNBasicClient {
      * @throws SVNException    if <code>path</code> is not under version control
      */
     public void doResolve(File path, boolean recursive) throws SVNException {
-        SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
+        SVNWCAccess2 wcAccess = createWCAccess();
         try {
             wcAccess.probeOpen(path, true, recursive ? SVNWCAccess2.INFINITE_DEPTH : 0);
             if (!recursive) {
@@ -1351,7 +1352,7 @@ public class SVNWCClient extends SVNBasicClient {
     public void doLock(File[] paths, boolean stealLock, String lockMessage) throws SVNException {
         final Map entriesMap = new HashMap();
         Map pathsRevisionsMap = new HashMap();
-        final SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
+        final SVNWCAccess2 wcAccess = createWCAccess();
         try {
             final SVNURL topURL = collectLockInfo(wcAccess, paths, entriesMap, pathsRevisionsMap, true, stealLock);
             SVNRepository repository = createRepository(topURL, true);
@@ -1454,7 +1455,7 @@ public class SVNWCClient extends SVNBasicClient {
     public void doUnlock(File[] paths, boolean breakLock) throws SVNException {
         final Map entriesMap = new HashMap();
         Map pathsTokensMap = new HashMap();
-        final SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
+        final SVNWCAccess2 wcAccess = createWCAccess();
         try {
             final SVNURL topURL = collectLockInfo(wcAccess, paths, entriesMap, pathsTokensMap, false, breakLock);
             checkCancelled();
@@ -1685,7 +1686,7 @@ public class SVNWCClient extends SVNBasicClient {
             (pegRevision == null || !pegRevision.isValid() || pegRevision.isLocal());
         
         if (!local) {
-            SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
+            SVNWCAccess2 wcAccess = createWCAccess();
             SVNRevision wcRevision = null;
             SVNURL url = null;
             try {
@@ -1707,7 +1708,7 @@ public class SVNWCClient extends SVNBasicClient {
             doInfo(url, pegRevision == null || !pegRevision.isValid() || pegRevision.isLocal() ? wcRevision : pegRevision, revision, recursive, handler);
             return;
         }
-        SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
+        SVNWCAccess2 wcAccess = createWCAccess();
         try {
             wcAccess.probeOpen(path, false, recursive ? SVNWCAccess2.INFINITE_DEPTH : 0);
             SVNEntry2 entry = wcAccess.getEntry(path, false);
@@ -1907,7 +1908,7 @@ public class SVNWCClient extends SVNBasicClient {
      *                         even exported
      */
     public String doGetWorkingCopyID(final File path, String trailURL) throws SVNException {
-        SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
+        SVNWCAccess2 wcAccess = createWCAccess();
         try {
             wcAccess.probeOpen(path, false, 0);
         } catch (SVNException e) {            
@@ -2311,7 +2312,7 @@ public class SVNWCClient extends SVNBasicClient {
     }
     
     private void doGetLocalFileContents(File path, OutputStream dst, SVNRevision revision, boolean expandKeywords) throws SVNException {
-        SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
+        SVNWCAccess2 wcAccess = createWCAccess();
         InputStream input = null;
         boolean hasMods = false;
         SVNVersionedProperties properties = null;

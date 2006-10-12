@@ -913,7 +913,7 @@ public class SVNCommitClient extends SVNBasicClient {
                 checkCancelled();
                 SVNCommitPacket packet = packetsArray[i];
                 File wcRoot = SVNWCUtil.getWorkingCopyRoot(packet.getCommitItems()[0].getWCAccess().getAnchor(), true);
-                SVNWCAccess2 rootWCAccess = SVNWCAccess2.newInstance(null);
+                SVNWCAccess2 rootWCAccess = createWCAccess();
                 String uuid = null;
                 SVNURL url = null;
                 try {

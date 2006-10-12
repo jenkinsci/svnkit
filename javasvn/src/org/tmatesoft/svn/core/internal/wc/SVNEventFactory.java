@@ -48,6 +48,22 @@ public class SVNEventFactory {
         return event;
     }
 
+    public static SVNEvent createMergeEvent(SVNAdminAreaInfo info, SVNAdminArea dir, String path,
+            SVNEventAction action, SVNEventAction expectedAction, SVNStatusType cType, SVNStatusType pType, SVNNodeKind kind) {
+        SVNEvent event = new SVNEvent(info, dir, SVNPathUtil.tail(path),
+                action, expectedAction, kind, -1, null, cType, pType, null, null, null);
+        event.setPath(path);
+        return event;
+    }
+
+    public static SVNEvent createMergeEvent(SVNAdminAreaInfo info, SVNAdminArea dir, String path,
+            SVNEventAction action, SVNStatusType cType, SVNStatusType pType, SVNNodeKind kind) {
+        SVNEvent event = new SVNEvent(info, dir, SVNPathUtil.tail(path),
+                action, kind, -1, null, cType, pType, null, null, null);
+        event.setPath(path);
+        return event;
+    }
+
     public static SVNEvent createCommitEvent(File rootFile, File file,
             SVNEventAction action, SVNNodeKind kind, String mimeType) {
         return new SVNEvent(rootFile, file, action, kind, -1, mimeType,

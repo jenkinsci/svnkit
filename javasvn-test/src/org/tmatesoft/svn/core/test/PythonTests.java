@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
+import org.tmatesoft.svn.util.SVNDebugLog;
+
 /**
  * @author TMate Software Ltd.
  */
@@ -321,6 +323,7 @@ public class PythonTests {
 				String line;
 				while ((line = myInputStream.readLine()) != null) {
                     PythonTestResult testResult = PythonTestResult.parse(line);
+                    SVNDebugLog.getDefaultLog().info(line);
                     if (testResult != null) {
                         for (int i = 0; i < ourLoggers.length; i++) {
                             ourLoggers[i].handleTest(testResult);

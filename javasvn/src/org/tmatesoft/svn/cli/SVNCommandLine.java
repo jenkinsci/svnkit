@@ -135,7 +135,7 @@ public class SVNCommandLine {
             String argument = arguments[i];
             if (previousArgument != null) {
                 // parse as value (limit could allow negative numbers).
-                if (argument.startsWith("--") || argument.startsWith("-") && SVNArgument.LIMIT != previousArgument) {
+                if (argument.startsWith("--") || argument.startsWith("-") && SVNArgument.LIMIT != previousArgument && SVNArgument.CHANGE != previousArgument) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "argument '" + previousArgumentName + "' requires value");
                     throw new SVNException(err);
                 }

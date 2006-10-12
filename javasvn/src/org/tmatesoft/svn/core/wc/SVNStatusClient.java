@@ -175,7 +175,7 @@ public class SVNStatusClient extends SVNBasicClient {
         if (handler == null) {
             return -1;
         }
-        SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
+        SVNWCAccess2 wcAccess = createWCAccess();
         SVNStatusEditor editor = null;
         final boolean[] deletedInRepository = new boolean[] {false};
         ISVNStatusHandler realHandler = new ISVNStatusHandler() {
@@ -328,7 +328,7 @@ public class SVNStatusClient extends SVNBasicClient {
             return externals;
         }
         File target = path;
-        SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
+        SVNWCAccess2 wcAccess = createWCAccess();
         while(true) {
             path = path.getParentFile();
             if (path == null) {

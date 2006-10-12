@@ -26,6 +26,9 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
@@ -44,15 +47,16 @@ public class SVNMergeEditor implements ISVNEditor {
     private SVNRepository myRepos;
     private long myRevision1;
     private long myRevision2;
-    private SVNWCAccess myWCAccess;
+    private SVNWCAccess2 myWCAccess;
     private String myTarget;
     private SVNDirectoryInfo myCurrentDirectory;
     private SVNFileInfo myCurrentFile;
     private SVNMerger myMerger;
     private SVNDeltaProcessor myDeltaProcessor;
     private ISVNEventHandler myEventHandler;
+    private SVNAdminAreaInfo myAdminInfo;
 
-    public SVNMergeEditor(SVNWCAccess wcAccess, SVNRepository repos,
+    public SVNMergeEditor(SVNWCAccess2 wcAccess, SVNAdminAreaInfo info, SVNRepository repos,
             long revision1, long revision2, SVNMerger merger, ISVNEventHandler handler) {
         myRepos = repos;
         myRevision1 = revision1;
@@ -60,7 +64,8 @@ public class SVNMergeEditor implements ISVNEditor {
         myWCAccess = wcAccess;
         myEventHandler = handler;
         myMerger = merger;
-        myTarget = "".equals(myWCAccess.getTargetName()) ? null : myWCAccess.getTargetName();
+        myAdminInfo = info;
+        myTarget = "".equals(myAdminInfo.getTargetName()) ? null : myAdminInfo.getTargetName();
         myDeltaProcessor = new SVNDeltaProcessor();
     }
 
@@ -94,7 +99,8 @@ public class SVNMergeEditor implements ISVNEditor {
         } else {
             expectedAction = SVNEventAction.UPDATE_DELETE;
         }
-        SVNEvent event = SVNEventFactory.createMergeEvent(myWCAccess, path, action, expectedAction, null, null, null);
+        // TODO get dir for event.
+        SVNEvent event = SVNEventFactory.createMergeEvent(myAdminInfo, null, path, action, expectedAction, null, null, null);
         myWCAccess.handleEvent(event, ISVNEventHandler.UNKNOWN);
     }
 
@@ -116,14 +122,14 @@ public class SVNMergeEditor implements ISVNEditor {
             action = SVNEventAction.SKIP;
             expectedAction = SVNEventAction.UPDATE_ADD;
         }
-        SVNEvent event = SVNEventFactory.createMergeEvent(myWCAccess,
+        // TODO get dir for event.
+        SVNEvent event = SVNEventFactory.createMergeEvent(myAdminInfo, null,
                 myCurrentDirectory.myWCPath, action, expectedAction, null, null, SVNNodeKind.DIR);
         myWCAccess.handleEvent(event, ISVNEventHandler.UNKNOWN);
     }
 
     public void openDir(String path, long revision) throws SVNException {
-        myCurrentDirectory = new SVNDirectoryInfo(myCurrentDirectory, path,
-                false);
+        myCurrentDirectory = new SVNDirectoryInfo(myCurrentDirectory, path, false);
 
         myCurrentDirectory.myBaseProperties = new HashMap();
         String wcPath = SVNPathUtil.append(myTarget, path);
@@ -151,10 +157,12 @@ public class SVNMergeEditor implements ISVNEditor {
     public void closeDir() throws SVNException {
         SVNStatusType propStatus = SVNStatusType.UNCHANGED;
         if (myCurrentDirectory.myPropertyDiff != null) {
-            SVNDirectory dir = myWCAccess.getDirectory(myCurrentDirectory.myWCPath);
+            File dirPath = new File(myAdminInfo.getAnchor().getRoot(), myCurrentDirectory.myWCPath);
+            SVNAdminArea dir = myWCAccess.retrieve(dirPath);
             if (dir == null && !myMerger.isDryRun()) {
                 SVNEventAction expectedAction = myCurrentDirectory.myIsAdded ? SVNEventAction.UPDATE_ADD : SVNEventAction.UPDATE_UPDATE;
-                SVNEvent event = SVNEventFactory.createMergeEvent(myWCAccess,
+                // TODO get dir for event.
+                SVNEvent event = SVNEventFactory.createMergeEvent(myAdminInfo, null,
                         myCurrentDirectory.myWCPath, SVNEventAction.SKIP, expectedAction, null,
                         null, SVNNodeKind.DIR);
                 myWCAccess.handleEvent(event, ISVNEventHandler.UNKNOWN);
@@ -169,7 +177,8 @@ public class SVNMergeEditor implements ISVNEditor {
             }
         }
         if (!myCurrentDirectory.myIsAdded && propStatus != SVNStatusType.UNCHANGED) {
-            SVNEvent event = SVNEventFactory.createMergeEvent(myWCAccess,
+            // TODO get dir for event.
+            SVNEvent event = SVNEventFactory.createMergeEvent(myAdminInfo, null,
                     myCurrentDirectory.myWCPath, SVNEventAction.UPDATE_UPDATE,
                     null, propStatus, SVNNodeKind.DIR);
             myWCAccess.handleEvent(event, ISVNEventHandler.UNKNOWN);
@@ -227,12 +236,13 @@ public class SVNMergeEditor implements ISVNEditor {
     }
 
     public void closeFile(String commitPath, String textChecksum) throws SVNException {
-//        myDeltaProcessor.close();
-        SVNDirectory dir = myWCAccess.getDirectory(myCurrentDirectory.myWCPath);
+        File dirPath = new File(myAdminInfo.getAnchor().getRoot(), myCurrentDirectory.myWCPath);
+        SVNAdminArea dir = myWCAccess.retrieve(dirPath);
         if (dir == null && !myMerger.isDryRun()) {
             // not for dry run?
             SVNEventAction expectedAction = myCurrentFile.myIsAdded ? SVNEventAction.UPDATE_ADD : SVNEventAction.UPDATE_UPDATE;
-            SVNEvent event = SVNEventFactory.createMergeEvent(myWCAccess,
+            // TODO get dir for event.
+            SVNEvent event = SVNEventFactory.createMergeEvent(myAdminInfo, null,
                     myCurrentFile.myWCPath, SVNEventAction.SKIP,  expectedAction, null, null, SVNNodeKind.FILE);
             myWCAccess.handleEvent(event, ISVNEventHandler.UNKNOWN);
         } else {
@@ -287,7 +297,7 @@ public class SVNMergeEditor implements ISVNEditor {
             } else {
                 action = SVNEventAction.UPDATE_UPDATE;
             }
-            SVNEvent event = SVNEventFactory.createMergeEvent(myWCAccess, myCurrentFile.myWCPath, action, expectedAction, contents, props, SVNNodeKind.FILE);
+            SVNEvent event = SVNEventFactory.createMergeEvent(myAdminInfo, null, myCurrentFile.myWCPath, action, expectedAction, contents, props, SVNNodeKind.FILE);
             myWCAccess.handleEvent(event, ISVNEventHandler.UNKNOWN);
         }
         if (myCurrentFile.myFile != null) {

@@ -231,8 +231,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         if (myEventDispatcher != null) {
             String path = "";
             if (!myPathPrefixesStack.isEmpty()) {
-                for (Iterator paths = myPathPrefixesStack.iterator(); paths
-                        .hasNext();) {
+                for (Iterator paths = myPathPrefixesStack.iterator(); paths.hasNext();) {
                     String segment = (String) paths.next();
                     path = SVNPathUtil.append(path, segment);
                 }
@@ -290,7 +289,7 @@ public class SVNBasicClient implements ISVNEventHandler {
     }
     
     protected SVNWCAccess2 createWCAccess() {
-        return createWCAccess((String)null);
+        return createWCAccess((String) null);
     }
 
     protected SVNWCAccess2 createWCAccess(final String pathPrefix) {
@@ -597,7 +596,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         if (path == null) {
             return null;
         }
-        SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
+        SVNWCAccess2 wcAccess = createWCAccess();
         try {
             wcAccess.probeOpen(path, false, 0);
             SVNEntry2 entry = wcAccess.getEntry(path, false);

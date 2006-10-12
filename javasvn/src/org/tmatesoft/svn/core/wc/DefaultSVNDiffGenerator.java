@@ -18,8 +18,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -28,6 +30,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 import de.regnis.q.sequence.line.diff.QDiffGenerator;
 import de.regnis.q.sequence.line.diff.QDiffManager;
@@ -121,19 +124,34 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     }
 
     public void displayPropDiff(String path, Map baseProps, Map diff, OutputStream result) throws SVNException {
+        baseProps = baseProps != null ? baseProps : Collections.EMPTY_MAP;
+        diff = diff != null ? diff : Collections.EMPTY_MAP;
+        SVNDebugLog.getDefaultLog().info("propdiff, was: " + baseProps+ ", diff: " + diff);
+        for (Iterator changedPropNames = diff.keySet().iterator(); changedPropNames.hasNext();) {
+            String name = (String) changedPropNames.next();
+            String originalValue = (String) baseProps.get(name);
+            String newValue = (String) diff.get(name);
+            if ((originalValue != null && originalValue.equals(newValue)) || originalValue == newValue) {
+                changedPropNames.remove();
+            }
+        }
+        if (diff.isEmpty()) {
+            return;
+        }
         path = getDisplayPath(path);
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        SVNDebugLog.getDefaultLog().info("propdiff, was: " + baseProps+ ", diff: " + diff);
+        SVNDebugLog.getDefaultLog().info(new Exception());
+        diff = new TreeMap(diff);
         try {
             bos.write(EOL);
             bos.write(("Property changes on: " + path).getBytes(getEncoding()));
             bos.write(EOL);
             bos.write(PROPERTIES_SEPARATOR);
             bos.write(EOL);
-            for (Iterator changedPropNames = diff.keySet().iterator(); changedPropNames
-                    .hasNext();) {
+            for (Iterator changedPropNames = diff.keySet().iterator(); changedPropNames.hasNext();) {
                 String name = (String) changedPropNames.next();
-                String originalValue = baseProps != null ? (String) baseProps
-                        .get(name) : null;
+                String originalValue = baseProps != null ? (String) baseProps.get(name) : null;
                 String newValue = (String) diff.get(name);
                 bos.write(("Name: " + name).getBytes(getEncoding()));
                 bos.write(EOL);
@@ -146,7 +164,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                     bos.write("   + ".getBytes(getEncoding()));
                     bos.write(newValue.getBytes(getEncoding()));
                     bos.write(EOL);
-                }
+                } 
             }
             bos.write(EOL);
         } catch (IOException e) {
@@ -156,6 +174,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             try {
                 bos.close();
                 bos.writeTo(result);
+                SVNDebugLog.getDefaultLog().info(new String(bos.toByteArray()));
             } catch (IOException e) {
             }
         }
@@ -212,6 +231,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                 bos.write(EOL);
                 bos.close();
                 bos.writeTo(result);
+                SVNDebugLog.getDefaultLog().info(new String(bos.toByteArray()));
                 return;
             }
             bos.write("Index: ".getBytes(getEncoding()));
@@ -223,6 +243,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             try {
                 bos.close();
                 bos.writeTo(result);
+                SVNDebugLog.getDefaultLog().info(new String(bos.toByteArray()));
             } catch (IOException inner) {
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
@@ -264,6 +285,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                 try {
                     bos.close();
                     bos.writeTo(result);
+                    SVNDebugLog.getDefaultLog().info(new String(bos.toByteArray()));
                 } catch (IOException e) {
                 }
             }
@@ -273,6 +295,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             try {
                 bos.close();
                 bos.writeTo(result);
+                SVNDebugLog.getDefaultLog().info(new String(bos.toByteArray()));
             } catch (IOException e) {
             }
             return;
@@ -293,6 +316,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             try {
                 bos.close();
                 bos.writeTo(result);
+                SVNDebugLog.getDefaultLog().info(new String(bos.toByteArray()));
             } catch (IOException inner) {
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
@@ -301,6 +325,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         try {
             bos.close();
             bos.writeTo(result);
+            SVNDebugLog.getDefaultLog().info(new String(bos.toByteArray()));
         } catch (IOException inner) {
             //
         }

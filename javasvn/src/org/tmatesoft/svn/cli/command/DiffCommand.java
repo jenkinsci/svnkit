@@ -62,6 +62,15 @@ public class DiffCommand extends SVNCommand {
                 rM = SVNRevision.parse(revStr.substring(revStr.indexOf(':') + 1));
             } else if (revStr != null) {
                 rN = SVNRevision.parse(revStr);
+            } else if (revStr == null && getCommandLine().hasArgument(SVNArgument.CHANGE)) {
+                long changeRev = Long.parseLong((String) getCommandLine().getArgumentValue(SVNArgument.CHANGE));
+                if (changeRev >= 0) {
+                    rM = SVNRevision.create(changeRev);
+                    rN = SVNRevision.create(changeRev - 1);
+                } else {
+                    rN = SVNRevision.create(-changeRev);
+                    rM = SVNRevision.create((-changeRev) - 1);
+                }
             }
             if (getCommandLine().hasArgument(SVNArgument.OLD)) {
                 // diff [-rN[:M]] --old=url[@r] [--new=url[@r]] [path...] (case2)
@@ -136,7 +145,7 @@ public class DiffCommand extends SVNCommand {
                 SVNRevision r2 = rM;
                 r1 = r1 == SVNRevision.UNDEFINED ? SVNRevision.BASE : r1;
                 r2 = r2 == SVNRevision.UNDEFINED ? SVNRevision.WORKING : r2;
-                boolean peggedDiff = r1 != SVNRevision.WORKING && r1 != SVNRevision.BASE;
+                boolean peggedDiff = r1 != SVNRevision.WORKING && r1 != SVNRevision.BASE && r1 != SVNRevision.PREVIOUS;
                 
                 for(int i = 0; i < getCommandLine().getPathCount(); i++) {
                     String path = getCommandLine().getPathAt(i);

@@ -811,7 +811,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 adminArea = wcAccess.open(dstParent, true, 0);
             }
             
-            SVNWCAccess2 copyAccess = SVNWCAccess2.newInstance(getEventDispatcher());
+            SVNWCAccess2 copyAccess = createWCAccess();
             try {
                 SVNAdminArea srcArea = copyAccess.probeOpen(srcPath, false, SVNWCAccess2.INFINITE_DEPTH);
                 SVNEntry2 dstEntry = adminArea.getEntry(adminArea.getThisDirName(), false);

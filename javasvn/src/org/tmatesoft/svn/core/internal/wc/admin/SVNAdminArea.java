@@ -1275,7 +1275,7 @@ public abstract class SVNAdminArea {
         return myAdminRoot;
     }
 
-    protected File getAdminFile(String name) {
+    public File getAdminFile(String name) {
         return new File(getAdminDirectory(), name);
     }
 

@@ -177,6 +177,7 @@ public class SVNCommitUtil {
                 statusClient.checkCancelled();
             }
         });
+        baseAccess.setOptions(statusClient.getOptions());
         try {
             baseAccess.open(baseDir, true, lockAll ? SVNWCAccess2.INFINITE_DEPTH : 0);
             statusClient.checkCancelled();

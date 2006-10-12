@@ -154,8 +154,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     }
 
     public void changeFileProperty(String commitPath, String name, String value) throws SVNException {
-        if (name == null || name.startsWith(SVNProperty.SVN_WC_PREFIX)
-                || name.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) {
+        if (name == null || name.startsWith(SVNProperty.SVN_WC_PREFIX) || name.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) {
             return;
         }
         if (myCurrentFile.myPropertyDiff == null) {
@@ -186,6 +185,9 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     public void closeFile(String commitPath, String textChecksum) throws SVNException {
 //        myDeltaProcessor.close();
         String displayPath = SVNPathUtil.append(myBasePath, myCurrentFile.myPath);
+        if (myCurrentFile.myBaseFile == null && myCurrentFile.myPropertyDiff != null) {
+            myCurrentFile.loadFromRepository(null, myRepos, myRevision, myEventHandler);
+        }
         if (myCurrentFile.myFile != null) {
             String mimeType1 = (String) myCurrentFile.myBaseProperties.get(SVNProperty.MIME_TYPE);
             String mimeType2 = myCurrentFile.myPropertyDiff != null ? (String) myCurrentFile.myPropertyDiff.get(SVNProperty.MIME_TYPE) : null;
@@ -245,10 +247,10 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
         }
 
         public void loadFromRepository(File dst, SVNRepository repos, long revision, ISVNEventHandler handler) throws SVNException {
-            OutputStream os = SVNFileUtil.openFileForWriting(dst);
+            OutputStream os = dst != null ? SVNFileUtil.openFileForWriting(dst) : null;
             try {
                 myBaseProperties = new HashMap();
-                repos.getFile(myPath, revision, myBaseProperties, new SVNCancellableOutputStream(os, handler));
+                repos.getFile(myPath, revision, myBaseProperties, os != null ? new SVNCancellableOutputStream(os, handler) : null);
             } finally {
                 SVNFileUtil.closeFile(os);
             }
