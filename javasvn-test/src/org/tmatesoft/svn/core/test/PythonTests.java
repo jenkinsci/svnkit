@@ -24,12 +24,11 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
-
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @author TMate Software Ltd.
@@ -165,14 +164,16 @@ public class PythonTests {
 	}
 
 	private static void processTestCase(String pythonLauncher, String testFile, String options, String testCase, String url) {
-		String[] commands = new String[]{
-			pythonLauncher,
-			testFile,
-			"-v",
-			"--url=" + url,
-			options,
-			String.valueOf(testCase),
-		};
+	    Collection commandsList = new ArrayList();
+        commandsList.add(pythonLauncher);
+        commandsList.add(testFile);
+        commandsList.add("--v");
+        commandsList.add("--url=" + url);
+        if (options != null && !"".equals(options.trim())) {
+            commandsList.add(options);
+        }
+        commandsList.add(String.valueOf(testCase));
+        String[] commands = (String[]) commandsList.toArray(new String[commandsList.size()]); 
 
 		try {
 			Process process = Runtime.getRuntime().exec(commands, null, new File("python/cmdline"));
