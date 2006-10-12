@@ -70,8 +70,7 @@ public class SVNCommitUtil {
         }
         for (; index < pathsArray.length; index++) {
             String commitPath = pathsArray[index];
-            String commonAncestor = lastPath == null || "".equals(lastPath) ? 
-                    "" : SVNPathUtil.getCommonPathAncestor(commitPath, lastPath);
+            String commonAncestor = lastPath == null || "".equals(lastPath) ? "" : SVNPathUtil.getCommonPathAncestor(commitPath, lastPath);
             if (lastPath != null) {
                 while (!lastPath.equals(commonAncestor)) {
                     editor.closeDir();

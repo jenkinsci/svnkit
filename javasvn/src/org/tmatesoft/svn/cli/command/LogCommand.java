@@ -69,7 +69,14 @@ public class LogCommand extends SVNCommand implements ISVNLogEntryHandler {
         if (limitStr != null) {
             try {
                 limit = Long.parseLong(limitStr);
-            } catch (NumberFormatException nfe) {}
+                if (limit <= 0) {
+                    System.err.println("svn: Argument to --limit must be positive number");
+                    return;
+                }
+            } catch (NumberFormatException nfe) {
+                System.err.println("svn: Argument to --limit must be positive number");
+                return;
+            }
         }
         SVNLogClient logClient = getClientManager().getLogClient();
         ISVNLogEntryHandler handler = this;

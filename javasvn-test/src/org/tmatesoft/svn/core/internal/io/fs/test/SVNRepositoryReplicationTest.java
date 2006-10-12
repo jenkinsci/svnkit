@@ -18,11 +18,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
-import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
@@ -222,11 +221,9 @@ public class SVNRepositoryReplicationTest {
 
     private static boolean checkDirItems(SVNItem item1, SVNItem item2) {
         if (item1.getKind() != SVNNodeKind.DIR) {
-            SVNDebugLog.getDefaultLog().info("'" + item1.getRepositoryPath() + "' is not a directory");
             return false;
         }
         if (item2.getKind() != SVNNodeKind.DIR) {
-            SVNDebugLog.getDefaultLog().info("'" + item2.getRepositoryPath() + "' is not a directory");
             return false;
         }
         return checkItemProps(item1.getProperties(), item2.getProperties());
@@ -234,22 +231,18 @@ public class SVNRepositoryReplicationTest {
 
     private static boolean checkFileItems(SVNItem item1, SVNItem item2) {
         if (item1.getKind() != SVNNodeKind.FILE) {
-            SVNDebugLog.getDefaultLog().info("'" + item1.getRepositoryPath() + "' is not a file");
             return false;
         }
         if (item2.getKind() != SVNNodeKind.FILE) {
-            SVNDebugLog.getDefaultLog().info("'" + item2.getRepositoryPath() + "' is not a file");
             return false;
         }
         if (!checkItemProps(item1.getProperties(), item2.getProperties())) {
             return false;
         }
         if (!item1.getChecksum().equals(item2.getChecksum())) {
-            SVNDebugLog.getDefaultLog().info("Unequal checksums: '" + item1.getChecksum() + "' vs. '" + item2.getChecksum() + "'");
             return false;
         }
         if (item1.getNumberOfDeltaChunks() != item2.getNumberOfDeltaChunks()) {
-            SVNDebugLog.getDefaultLog().info("Different number of delta chunks received: " + item1.getNumberOfDeltaChunks() + " vs. " + item2.getNumberOfDeltaChunks());
             return false;
         }
         return true;
@@ -261,14 +254,12 @@ public class SVNRepositoryReplicationTest {
         }
 
         if ((props1 == null && props2 != null) || (props1 != null && props2 == null)) {
-            SVNDebugLog.getDefaultLog().info("Unequal versioned properties");
             return false;
         }
 
         for (Iterator propsIter = props1.keySet().iterator(); propsIter.hasNext();) {
             String propName = (String) propsIter.next();
             if (props2.get(propName) == null) {
-                SVNDebugLog.getDefaultLog().info("Unequal versioned properties");
                 return false;
             }
             if (propName.equals(SVNProperty.UUID)) {
@@ -277,7 +268,6 @@ public class SVNRepositoryReplicationTest {
             String propVal1 = (String) props1.get(propName);
             String propVal2 = (String) props2.get(propName);
             if (!propVal1.equals(propVal2)) {
-                SVNDebugLog.getDefaultLog().info("Unequal versioned properties");
                 return false;
             }
         }
@@ -303,8 +293,6 @@ public class SVNRepositoryReplicationTest {
         Map events1 = new HashMap();
         Map events2 = new HashMap();
         long i = start;
-        SVNDebugLog.getDefaultLog().info("Checking revision #" + i);
-        System.out.println("Checking revision #" + i);
         if (!compareRevisionProps(srcURL, dstURL, i)) {
             return false;
         }
@@ -317,14 +305,11 @@ public class SVNRepositoryReplicationTest {
         handler.setEventsMap(events2);
         updateClient.doCheckout(dstURL, dstWCRoot, SVNRevision.create(i), SVNRevision.create(i), true);
 
-        if (!compareEvents(events1, events2, i)) {
-            SVNDebugLog.getDefaultLog().info("Unequal Working Copies at revision " + i);
+        if (!compareEvents(events1, events2)) {
             return false;
         }
 
         for (i = start + 1; i <= end; i++) {
-            SVNDebugLog.getDefaultLog().info("Checking revision #" + i);
-            System.out.println("Checking revision #" + i);
             if (!compareRevisionProps(srcURL, dstURL, i)) {
                 return false;
             }
@@ -338,24 +323,21 @@ public class SVNRepositoryReplicationTest {
             handler.setEventsMap(events2);
             updateClient.doUpdate(dstWCRoot, SVNRevision.create(i), true);
 
-            if (!compareEvents(events1, events2, i)) {
-                SVNDebugLog.getDefaultLog().info("Unequal Working Copies at revision " + i);
+            if (!compareEvents(events1, events2)) {
                 return false;
             }
         }
         return true;
     }
 
-    private static boolean compareEvents(Map events1, Map events2, long revision) throws SVNException {
+    private static boolean compareEvents(Map events1, Map events2) throws SVNException {
         // first check that we've got the same number of update events
         if (events1.size() != events2.size()) {
-            SVNDebugLog.getDefaultLog().info("Unequal Working Copies at revision " + revision + ": different number of events");
             return false;
         }
         for (Iterator eventsIter = events1.keySet().iterator(); eventsIter.hasNext();) {
             String path = (String) eventsIter.next();
             if (events2.get(path) == null) {
-                SVNDebugLog.getDefaultLog().info("Unequal Working Copies at revision " + revision + ": path '" + path + "'");
                 return false;
             }
             SVNEvent event1 = (SVNEvent) events1.get(path);
@@ -381,7 +363,6 @@ public class SVNRepositoryReplicationTest {
         srcRep.getRevisionProperties(revision, srcRevProps);
         dstRep.getRevisionProperties(revision, dstRevProps);
         if (!compareProps(srcRevProps, dstRevProps)) {
-            SVNDebugLog.getDefaultLog().info("Unequal revision props at revision " + revision);
             return false;
         }
         return true;
@@ -407,17 +388,14 @@ public class SVNRepositoryReplicationTest {
             return true;
         }
         if (!dir1.isDirectory()) {
-            SVNDebugLog.getDefaultLog().info("'" + dir1 + "' is not a directory");
             return false;
         }
         if (!dir2.isDirectory()) {
-            SVNDebugLog.getDefaultLog().info("'" + dir2 + "' is not a directory");
             return false;
         }
         SVNClientManager manager = SVNClientManager.newInstance();
         SVNWCClient wcClient = manager.getWCClient();
         if (!isRoot && !dir1.getName().equals(dir2.getName())) {
-            SVNDebugLog.getDefaultLog().info("Unequal dir names: '" + dir1.getName() + "' vs. '" + dir2.getName() + "'");
             return false;
         }
         Map props1 = new HashMap();
@@ -427,7 +405,6 @@ public class SVNRepositoryReplicationTest {
         wcClient.doGetProperty(dir1, null, SVNRevision.HEAD, SVNRevision.WORKING, false, handler1);
         wcClient.doGetProperty(dir2, null, SVNRevision.HEAD, SVNRevision.WORKING, false, handler2);
         if (!compareProps(props1, props2)) {
-            SVNDebugLog.getDefaultLog().info("Unequal dir props: '" + dir1 + "' vs. '" + dir2 + "'");
             return false;
         }
         return true;
@@ -435,11 +412,9 @@ public class SVNRepositoryReplicationTest {
 
     private static boolean compareFiles(File file1, File file2) throws SVNException {
         if (!file1.isFile()) {
-            SVNDebugLog.getDefaultLog().info("'" + file1 + "' is not a file");
             return false;
         }
         if (!file2.isFile()) {
-            SVNDebugLog.getDefaultLog().info("'" + file2 + "' is not a file");
             return false;
         }
         SVNClientManager manager = SVNClientManager.newInstance();
@@ -447,7 +422,6 @@ public class SVNRepositoryReplicationTest {
         SVNInfo file1Info = wcClient.doInfo(file1, SVNRevision.WORKING);
         SVNInfo file2Info = wcClient.doInfo(file2, SVNRevision.WORKING);
         if (!file1.getName().equals(file2.getName())) {
-            SVNDebugLog.getDefaultLog().info("Unequal file names: '" + file1.getName() + "' vs. '" + file2.getName() + "'");
             return false;
         }
         Map props1 = new HashMap();
@@ -457,13 +431,11 @@ public class SVNRepositoryReplicationTest {
         wcClient.doGetProperty(file1, null, SVNRevision.HEAD, SVNRevision.WORKING, false, handler1);
         wcClient.doGetProperty(file2, null, SVNRevision.HEAD, SVNRevision.WORKING, false, handler2);
         if (!compareProps(props1, props2)) {
-            SVNDebugLog.getDefaultLog().info("Unequal file props: '" + file1 + "' vs. '" + file2 + "'");
             return false;
         }
         String checksum1 = file1Info.getChecksum();// SVNFileUtil.computeChecksum(file1);
         String checksum2 = file2Info.getChecksum();// SVNFileUtil.computeChecksum(file2);
         if (!checksum1.equals(checksum2)) {
-            SVNDebugLog.getDefaultLog().info("Unequal file contents: '" + file1 + "' (" + checksum1 + ") vs. '" + file2 + "' (" + checksum2 + ")");
             return false;
         }
         return true;
@@ -475,35 +447,13 @@ public class SVNRepositoryReplicationTest {
         srcLog = (List) src.log(new String[] {
             ""
         }, srcLog, 0, src.getLatestRevision(), true, false);
-        SVNDebugLog.getDefaultLog().info("source history fetched");
         dstLog = (List) dst.log(new String[] {
             ""
         }, dstLog, 0, dst.getLatestRevision(), true, false);
-        SVNDebugLog.getDefaultLog().info("target history fetched");
         for (int i = 0; i < srcLog.size(); i++) {
             SVNLogEntry srcEntry = (SVNLogEntry) srcLog.get(i);
             SVNLogEntry dstEntry = (SVNLogEntry) dstLog.get(i);
-            SVNDebugLog.getDefaultLog().info("processing revision " + srcEntry.getRevision());
             if (!srcEntry.equals(dstEntry)) {
-                SVNDebugLog.getDefaultLog().info("log entries are not equal:");
-                SVNDebugLog.getDefaultLog().info("src:");
-                SVNDebugLog.getDefaultLog().info(srcEntry.toString());
-                SVNDebugLog.getDefaultLog().info("dst:");
-                SVNDebugLog.getDefaultLog().info(dstEntry.toString());
-                SVNDebugLog.getDefaultLog().info("");
-                for (Iterator paths = srcEntry.getChangedPaths().values().iterator(); paths.hasNext();) {
-                    SVNLogEntryPath path = (SVNLogEntryPath) paths.next();
-                    SVNLogEntryPath srcPath = (SVNLogEntryPath) dstEntry.getChangedPaths().remove(path.getPath());
-                    if (srcPath == null) {
-                        SVNDebugLog.getDefaultLog().info("target miss: " + path);
-                    } else if (!srcPath.equals(path)) {
-                        SVNDebugLog.getDefaultLog().info("target path is not equal to source: " + srcPath);
-                    }
-                }
-                if (!dstEntry.getChangedPaths().isEmpty()) {
-                    SVNDebugLog.getDefaultLog().info("there are more paths in target entry:");
-                    SVNDebugLog.getDefaultLog().info(dstEntry.toString());
-                }
                 return false;
             }
         }

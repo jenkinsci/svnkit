@@ -1028,33 +1028,6 @@ public abstract class SVNAdminArea {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LEFT_LOCAL_MOD);
             SVNErrorManager.error(err);
         }
-//        
-//        SVNWCAccess2 access = getWCAccess();
-//        access.checkCancelled();
-//        SVNEntry2 entry = getEntry(name, false);
-//        boolean isThisDir = getThisDirName().equals(name);
-//
-//        if (entry == null) {
-//            return;
-//        } else if (isThisDir) {
-//            removeThisDirectory(deleteWorkingFiles, reportInstantError);
-//        } else if (entry.isDirectory()) {
-//            SVNAdminArea childArea = null;
-//            try {
-//                childArea = access.retrieve(getFile(name));
-//            } catch (SVNException svne) {
-//                if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
-//                    if (!entry.isScheduledForAddition()) {
-//                        deleteEntry(name);
-//                    }
-//                    return;
-//                }
-//                throw svne;
-//            }
-//            childArea.removeFromRevisionControl(childArea.getThisDirName(), deleteWorkingFiles, reportInstantError);
-//        } else if (entry.isFile()) {
-//            removeFile(name, deleteWorkingFiles, reportInstantError);
-//        }
     }
 
     public void foldScheduling(String name, Map attributes, boolean force) throws SVNException {
@@ -1448,6 +1421,7 @@ public abstract class SVNAdminArea {
             SVNErrorManager.error(err);
         }
         SVNFileUtil.deleteAll(getAdminDirectory(), getWCAccess());
+        getWCAccess().closeAdminArea(getRoot());
     }
 
     private static void deleteLogs(Collection logsList) {

@@ -134,11 +134,12 @@ public class SVNCommandLine {
         for (int i = 0; i < arguments.length; i++) {
             String argument = arguments[i];
             if (previousArgument != null) {
-                // parse as value.
-                if (argument.startsWith("--") || argument.startsWith("-")) {
+                // parse as value (limit could allow negative numbers).
+                if (argument.startsWith("--") || argument.startsWith("-") && SVNArgument.LIMIT != previousArgument) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "argument '" + previousArgumentName + "' requires value");
                     throw new SVNException(err);
                 }
+                
                 Object value = previousArgument.parseValue(argument);
                 myBinaryArguments.put(previousArgument, value);
 
@@ -197,9 +198,7 @@ public class SVNCommandLine {
                         if (atIndex > 0 && atIndex != argument.length() - 1) {
                             pegRevision = argument.substring(argument.lastIndexOf('@') + 1);
                             argument = argument.substring(0, argument.lastIndexOf('@'));
-                            try {
-                                Long.parseLong(pegRevision);
-                            } catch (NumberFormatException e) {                            
+                            if (SVNRevision.parse(pegRevision) == SVNRevision.UNDEFINED) {
                                 SVNErrorMessage msg = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Syntax error parsing revision '" + pegRevision + "'");
                                 throw new SVNException(msg);
                             }

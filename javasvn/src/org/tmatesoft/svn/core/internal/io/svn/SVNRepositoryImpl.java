@@ -657,7 +657,6 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             try {
                 authenticate();
             } catch (SVNException e) {                
-                getDebugLog().info(e.getErrorMessage().getErrorCode() + "");
                 if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_SVN_UNKNOWN_CMD) {
                     closeConnection();
                     openConnection();

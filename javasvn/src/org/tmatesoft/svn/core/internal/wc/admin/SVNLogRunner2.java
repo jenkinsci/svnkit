@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNLog;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 
 /**
@@ -378,28 +379,28 @@ public class SVNLogRunner2 {
         } else {
             adminArea.closeEntries();
         }
-
         boolean killMe = adminArea.isKillMe();
         if (killMe) {
             SVNEntry2 entry = adminArea.getEntry(adminArea.getThisDirName(), false);
             long dirRevision = entry != null ? entry.getRevision() : -1;
             // deleted dir, files and entry in parent.
+            File dir = adminArea.getRoot();
+            SVNWCAccess2 access = adminArea.getWCAccess(); 
+            boolean isWCRoot = access.isWCRoot(adminArea.getRoot());
             try {
                 adminArea.removeFromRevisionControl(adminArea.getThisDirName(), true, false);
             } catch (SVNException svne) {
+                SVNDebugLog.getDefaultLog().info(svne);
                 if (svne.getErrorMessage().getErrorCode() != SVNErrorCode.WC_LEFT_LOCAL_MOD) {
                     throw svne;
                 }
             }
-            
-            SVNWCAccess2 access = adminArea.getWCAccess(); 
-            File dir = adminArea.getRoot();
-            if (access.isWCRoot(dir)) {
+            if (isWCRoot) {
                 return;
             }
             // compare revision with parent's one
             SVNAdminArea parentArea = access.retrieve(dir.getParentFile());
-            SVNEntry2 parentEntry = parentArea.getEntry(parentArea.getThisDirName(), false); 
+            SVNEntry2 parentEntry = parentArea.getEntry(parentArea.getThisDirName(), false);
             if (dirRevision > parentEntry.getRevision()) {
                 SVNEntry2 entryInParent = parentArea.addEntry(dir.getName());
                 entryInParent.setDeleted(true);

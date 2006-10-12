@@ -50,7 +50,6 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * This class provides methods which allow to check out, update, switch and relocate a
@@ -833,9 +832,6 @@ public class SVNUpdateClient extends SVNBasicClient {
     private void handleExternals(SVNAdminAreaInfo info) throws SVNException {
         for (Iterator externals = info.externals(); externals.hasNext();) {
             SVNExternalInfo external = (SVNExternalInfo) externals.next();
-            SVNDebugLog.getDefaultLog().info("external: " + external.getPath());
-            SVNDebugLog.getDefaultLog().info("old URL: " + external.getOldURL());
-            SVNDebugLog.getDefaultLog().info("new URL: " + external.getNewURL());
             if (external.getOldURL() == null && external.getNewURL() == null) {
                 continue;
             }

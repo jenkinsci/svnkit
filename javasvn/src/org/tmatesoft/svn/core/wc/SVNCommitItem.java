@@ -15,7 +15,6 @@ import java.io.File;
 
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
 
 /**
@@ -56,7 +55,6 @@ public class SVNCommitItem {
     private boolean myIsLocked;
     private String myPath;
     private SVNWCAccess2 myWCAccess;
-    private SVNAdminArea myAnchorArea;
     
     /**
      * Constructs and initializes an <b>SVNCommitItem</b> object.
@@ -248,13 +246,4 @@ public class SVNCommitItem {
     void setWCAccess(SVNWCAccess2 wcAccess) {
         myWCAccess = wcAccess;
     }
-
-    public SVNAdminArea getAnchorArea() {
-        return myAnchorArea;
-    }
-
-    void setAnchorArea(SVNAdminArea adminArea) {
-        myAnchorArea = adminArea;
-    }
-    
 }

@@ -701,7 +701,10 @@ public class SVNUpdateEditor implements ISVNEditor {
             SVNEntry2 dirEntry = null;
             try {
                 area = info.getAdminArea();
-                dirEntry = area.getEntry(area.getThisDirName(), false);
+                if (area != null) {
+                    // could be missing.
+                    dirEntry = area.getEntry(area.getThisDirName(), false);
+                }
             } catch (SVNException svne) {
                 //
             }

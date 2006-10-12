@@ -125,8 +125,6 @@ public class DAVConnection {
         try {
             status = doReport(path, DAVGetLocksHandler.generateGetLocksRequest(null), handler);
         } catch (SVNException e) {
-            myRepository.getDebugLog().info("error message: " + e.getErrorMessage());
-            myRepository.getDebugLog().info("error code: " + e.getErrorMessage().getErrorCode());
             if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.UNSUPPORTED_FEATURE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "Server does not support locking features");
                 SVNErrorManager.error(err, e.getErrorMessage());

@@ -677,7 +677,6 @@ class HTTPConnection implements IHTTPConnection {
             mySocket = null;
             myOutputStream = null;
             myInputStream = null;
-            myRepository.getDebugLog().info("HTTP connection closed");
         }
     }
 

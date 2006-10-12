@@ -41,7 +41,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNLog;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 public class SVNAdminArea14 extends SVNAdminArea {
     public static final String[] ourCachableProperties = new String[] {
@@ -1475,7 +1474,6 @@ public class SVNAdminArea14 extends SVNAdminArea {
         if (!myLockFile.exists()) {
             return true;
         }
-        
         // only if there are not locks or killme files.
         boolean killMe = getAdminFile("KILLME").exists();
         if (killMe) {
@@ -1489,7 +1487,6 @@ public class SVNAdminArea14 extends SVNAdminArea {
             }
         }
         boolean deleted = myLockFile.delete();
-        SVNDebugLog.getDefaultLog().info("deleting : " + myLockFile);
         if (!deleted) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "Failed to unlock working copy ''{0}''", getRoot());
             SVNErrorManager.error(err);

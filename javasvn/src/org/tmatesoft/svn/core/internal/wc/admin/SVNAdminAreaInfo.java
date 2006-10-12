@@ -25,7 +25,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 
 /**
@@ -80,7 +79,6 @@ public class SVNAdminAreaInfo {
         for (Iterator exts = externals(); exts.hasNext();) {
             SVNExternalInfo info = (SVNExternalInfo) exts.next();
             if (!result.contains(info) && relPath.equals(info.getOwnerPath())) {
-                SVNDebugLog.getDefaultLog().info("clearing external " + info.getPath());
                 info.setNewExternal(null, -1);
             }
         }
@@ -163,15 +161,11 @@ public class SVNAdminAreaInfo {
             myExternals = new TreeMap();
         }
 
-        SVNDebugLog.getDefaultLog().info("adding external: " + path + " " + url + " " + revision);
         SVNExternalInfo info = (SVNExternalInfo) myExternals.get(path);
         if (info == null) {
             info = new SVNExternalInfo(adminArea.getRelativePath(myAnchor), new File(getAnchor().getRoot(), path), path, null, -1);
-            SVNDebugLog.getDefaultLog().info("added, file: " + info.getFile());
             myExternals.put(path, info);
-        } else {
-            SVNDebugLog.getDefaultLog().info("updating existing one");
-        }
+        } 
         info.setNewExternal(url, revision);
         return info;
     }

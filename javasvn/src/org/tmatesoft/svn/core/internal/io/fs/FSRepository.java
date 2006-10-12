@@ -60,7 +60,6 @@ import org.tmatesoft.svn.core.io.SVNFileRevision;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.0
@@ -900,7 +899,6 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
         // fetch user name!
         String author = getUserName();
-        SVNDebugLog.getDefaultLog().info("username: " + author);
         FSCommitEditor commitEditor = new FSCommitEditor(getRepositoryPath(""), logMessage, author, locks, keepLocks, null, myFSFS, this);
         return commitEditor;
     }
@@ -1162,19 +1160,16 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
 
     private String getUserName() throws SVNException {
         if (getLocation().getUserInfo() != null && getLocation().getUserInfo().trim().length() > 0) {
-            SVNDebugLog.getDefaultLog().info("username from url");
             return getLocation().getUserInfo();
         }
         if (getAuthenticationManager() != null) {
             try {
                 String realm = getRepositoryUUID(true);
                 ISVNAuthenticationManager authManager = getAuthenticationManager();
-                SVNDebugLog.getDefaultLog().info("realm: " + realm);
                 SVNAuthentication auth = authManager.getFirstAuthentication(ISVNAuthenticationManager.USERNAME, realm, getLocation());
 
                 while (auth != null) {
                     String userName = auth.getUserName();
-                    SVNDebugLog.getDefaultLog().info("fetched name: " + auth.getUserName());
                     if (userName == null || "".equals(userName.trim())) {
                         userName = System.getProperty("user.name");
                     }

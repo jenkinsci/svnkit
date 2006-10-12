@@ -12,6 +12,9 @@
 
 package org.tmatesoft.svn.cli.command;
 
+import java.io.File;
+import java.io.PrintStream;
+
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
@@ -20,10 +23,6 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
-import org.tmatesoft.svn.util.SVNDebugLog;
-
-import java.io.File;
-import java.io.PrintStream;
 
 /**
  * @author TMate Software Ltd.
@@ -45,8 +44,6 @@ public class CheckoutCommand extends SVNCommand {
         SVNUpdateClient updater = getClientManager().getUpdateClient();
         if (getCommandLine().getURLCount() == 1) {
             SVNRevision pegRevision = getCommandLine().getPegRevision(0);
-            SVNDebugLog.getDefaultLog().info("PEG revision: " + pegRevision);
-            SVNDebugLog.getDefaultLog().info("revision: " + revision);
             updater.doCheckout(SVNURL.parseURIEncoded(url), new File(path), pegRevision, revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
         } else {
             for(int i = 0; i < getCommandLine().getURLCount(); i++) {

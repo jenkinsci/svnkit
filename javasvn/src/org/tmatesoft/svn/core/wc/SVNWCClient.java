@@ -58,7 +58,6 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * The <b>SVNWCClient</b> class combines a number of version control 
@@ -906,7 +905,6 @@ public class SVNWCClient extends SVNBasicClient {
     
     public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, boolean recursive, boolean includeIgnored) throws SVNException {
         path = new File(SVNPathUtil.validateFilePath(path.getAbsolutePath()));
-        SVNDebugLog.getDefaultLog().info("adding: " + path);
         if (!mkdir && climbUnversionedParents) {
             // check if parent is versioned. if not, add it.
             SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(getEventDispatcher());
@@ -1153,7 +1151,6 @@ public class SVNWCClient extends SVNBasicClient {
             String propRevertPath = SVNAdminUtil.getPropRevertPath(name, entry.getKind(), false);
             if (dir.getFile(propRevertPath).isFile()) {
                 baseProperties = dir.getRevertProperties(name);
-                SVNDebugLog.getDefaultLog().info("revert props will be used..");
                 command.put(ISVNLog.NAME_ATTR, propRevertPath);
                 log.addCommand(ISVNLog.DELETE, command, false);
                 command.clear();
@@ -1176,15 +1173,12 @@ public class SVNWCClient extends SVNBasicClient {
         if (baseProperties != null) {
             // save base props both to base and working. 
             Map newProperties = baseProperties.asMap();
-            SVNDebugLog.getDefaultLog().info("original props to set: " + newProperties);
             SVNVersionedProperties originalBaseProperties = dir.getBaseProperties(name);
             SVNVersionedProperties workProperties = dir.getProperties(name);
             if (entry.isScheduledForReplacement()) {
                 originalBaseProperties.removeAll();
             }
             workProperties.removeAll();
-            SVNDebugLog.getDefaultLog().info("after all props removed: " + workProperties.asMap() + ", base= " + originalBaseProperties.asMap());
-            SVNDebugLog.getDefaultLog().info("props to set: " + newProperties);
             for(Iterator names = newProperties.keySet().iterator(); names.hasNext();) {
                 String propName = (String) names.next();
                 if (entry.isScheduledForReplacement()) {
@@ -1192,7 +1186,6 @@ public class SVNWCClient extends SVNBasicClient {
                 }
                 workProperties.setPropertyValue(propName, (String) newProperties.get(propName));
             }
-            SVNDebugLog.getDefaultLog().info("props reverted: " + workProperties.asMap() + ", base= " + originalBaseProperties.asMap());
             dir.saveVersionedProperties(log, false);
             reverted = true;
         } 
@@ -1228,7 +1221,6 @@ public class SVNWCClient extends SVNBasicClient {
                 command.put(ISVNLog.NAME_ATTR, SVNAdminUtil.getTextBasePath(name, false));
                 command.put(ISVNLog.DEST_ATTR, name);
                 log.addCommand(ISVNLog.COPY_AND_TRANSLATE, command, false);
-                SVNDebugLog.getDefaultLog().info("command added: " + SVNAdminUtil.getTextBasePath(name, false) + " to " + name);
                 command.clear();
                 if (useCommitTime && entry.getCommittedDate() != null) {
                     command.put(ISVNLog.NAME_ATTR, name);
@@ -1472,10 +1464,6 @@ public class SVNWCClient extends SVNBasicClient {
                 public void handleLock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
                 }
                 public void handleUnlock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
-                    SVNDebugLog.getDefaultLog().info("unlock: " + lock + " " + error);
-                    if (error != null) {
-                        SVNDebugLog.getDefaultLog().info("code: "+ error.getErrorCode());
-                    }
                     SVNURL fullURL = rootURL.appendPath(path, false);
                     LockInfo lockInfo = (LockInfo) entriesMap.get(fullURL);
                     SVNEventAction action = null;
@@ -2202,8 +2190,6 @@ public class SVNWCClient extends SVNBasicClient {
                 String oldValue = props.getPropertyValue(propName);
                 boolean modified = oldValue == null ? propValue != null : !oldValue.equals(propValue);
                 props.setPropertyValue(propName, propValue);
-                SVNDebugLog.getDefaultLog().info("property set: " + propName + " = " + propValue);
-                SVNDebugLog.getDefaultLog().info(props.getPropertyValue(propValue));
 
                 if (SVNProperty.EOL_STYLE.equals(propName) || SVNProperty.KEYWORDS.equals(propName)) {
                     entry.setTextTime(null);

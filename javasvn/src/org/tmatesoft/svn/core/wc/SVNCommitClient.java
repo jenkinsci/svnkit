@@ -658,15 +658,21 @@ public class SVNCommitClient extends SVNBasicClient {
                     SVNCommitItem item = (SVNCommitItem) commitables.get(url);
                     SVNWCAccess2 wcAccess = item.getWCAccess();
                     String path = item.getPath();
-                    SVNAdminArea dir;
-                    String target;
+                    SVNAdminArea dir = null;
+                    String target = null;
 
-                    if (item.getKind() == SVNNodeKind.DIR) {
-                        dir = wcAccess.retrieve(item.getFile());
-                        target = "";
-                    } else {
-                        dir = wcAccess.retrieve(item.getFile().getParentFile());
-                        target = SVNPathUtil.tail(path);
+                    try {
+                        if (item.getKind() == SVNNodeKind.DIR) {
+                            dir = wcAccess.retrieve(item.getFile());
+                            target = "";
+                        } else {
+                            dir = wcAccess.retrieve(item.getFile().getParentFile());
+                            target = SVNPathUtil.tail(path);
+                        }
+                    } catch (SVNException e) {
+                        if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
+                            dir = null;
+                        }
                     }
                     if (dir == null) {
                         if (hasProcessedParents(processedItems, path)) {
@@ -690,7 +696,6 @@ public class SVNCommitClient extends SVNBasicClient {
                             processedItems.add(path);
                             continue;
                         }
-
                     }
                     SVNEntry2 entry = dir.getEntry(target, true);
                     if (entry == null && hasProcessedParents(processedItems, path)) {
@@ -711,7 +716,6 @@ public class SVNCommitClient extends SVNBasicClient {
                 // commit completed, include revision number.
                 dispatchEvent(SVNEventFactory.createCommitCompletedEvent(null, info.getNewRevision()), ISVNEventHandler.UNKNOWN);
             } catch (SVNException e) {
-                e.printStackTrace();
                 if (e instanceof SVNCancelException) {
                     throw e;
                 }
@@ -1028,10 +1032,8 @@ public class SVNCommitClient extends SVNBasicClient {
             String value = (String) autoProperties.get(name);
             if (SVNProperty.EOL_STYLE.equals(name) && value != null) {
                 if (SVNProperty.isBinaryMimeType((String) autoProperties.get(SVNProperty.MIME_TYPE))) {
-                    getDebugLog().info("svn: File '" + file + "' has binary mime-type, svn:eol-style property is not applicable");
                     continue;
                 }else if (!SVNTranslator.checkNewLines(file)) {
-                    getDebugLog().info("svn: File '" + file + "' has inconsistent newlines");
                     continue;
                 } 
             }

@@ -153,7 +153,6 @@ public class SVNFileUtil {
                     }
                     return;
                 }
-                SVNDebugLog.getDefaultLog().info("file: retrying to rename file " + src + " to " + dst);
                 try {
                     Thread.sleep(100);
                 } catch (InterruptedException e) {

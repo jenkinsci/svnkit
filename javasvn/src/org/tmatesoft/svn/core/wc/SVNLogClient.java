@@ -38,7 +38,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * The <b>SVNLogClient</b> class is intended for such purposes as getting
@@ -125,7 +124,6 @@ public class SVNLogClient extends SVNBasicClient {
     }
 
     public void doAnnotate(File path, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean force, ISVNAnnotateHandler handler) throws SVNException {
-        SVNDebugLog.getDefaultLog().info(startRevision + ":" + endRevision + "@" + pegRevision);
         if (startRevision == null || !startRevision.isValid()) {
             startRevision = SVNRevision.create(1);
         }
@@ -135,7 +133,6 @@ public class SVNLogClient extends SVNBasicClient {
         SVNRepository repos = createRepository(null, path, pegRevision, endRevision);
         long endRev = getRevisionNumber(endRevision, repos, path);
         long startRev = getRevisionNumber(startRevision, repos, path);
-        SVNDebugLog.getDefaultLog().info(startRev + ":" + endRev);
         if (endRev < startRev) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Start revision must precede end revision"));
         }
@@ -271,7 +268,6 @@ public class SVNLogClient extends SVNBasicClient {
                 endRevision = SVNRevision.create(0);
             }
         }
-        SVNDebugLog.getDefaultLog().info("log on : " + startRevision + ":" + endRevision);
         ISVNLogEntryHandler wrappingHandler = new ISVNLogEntryHandler() {
             public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
                 checkCancelled();
@@ -308,10 +304,8 @@ public class SVNLogClient extends SVNBasicClient {
         if (targets.isEmpty()) {
             targets.add("");
         }
-        SVNDebugLog.getDefaultLog().info("start is local: " + startRevision.isLocal());
-        SVNRepository repos = !startRevision.isLocal() ?
-                createRepository(baseURL, null, startRevision, SVNRevision.HEAD) : createRepository(baseURL, true);
-        SVNDebugLog.getDefaultLog().info("repos location: " + repos.getLocation());
+        SVNRepository repos = !startRevision.isLocal() && !pegRevision.isLocal() ?
+                createRepository(baseURL, null, pegRevision, startRevision) : createRepository(baseURL, true);
         String[] targetPaths = (String[]) targets.toArray(new String[targets.size()]);
         for (int i = 0; i < targetPaths.length; i++) {
             targetPaths[i] = SVNEncodingUtil.uriDecode(targetPaths[i]);
@@ -395,9 +389,8 @@ public class SVNLogClient extends SVNBasicClient {
                 handler.handleLogEntry(logEntry);
             }
         };
-        long targetRevNumber = startRevision.getNumber();
-        SVNRepository repos = targetRevNumber > 0 && pegRevision.isValid() && !pegRevision.isLocal() ?
-                createRepository(url, null, pegRevision, SVNRevision.create(targetRevNumber)) : createRepository(url, true);
+        SVNRepository repos = startRevision.isValid() ? 
+                createRepository(url, null, pegRevision, startRevision) : createRepository(url, true);
         checkCancelled();
         long startRev = getRevisionNumber(startRevision, repos, null);
         checkCancelled();

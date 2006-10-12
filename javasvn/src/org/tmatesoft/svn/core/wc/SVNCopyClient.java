@@ -56,7 +56,6 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * The <b>SVNCopyClient</b> provides methods to perform any kinds of copying and moving that SVN
@@ -445,6 +444,7 @@ public class SVNCopyClient extends SVNBasicClient {
         }
         SVNWCAccess2 wcAccess = createWCAccess();
 		SVNAdminArea adminArea = wcAccess.probeOpen(srcPath, false, SVNWCAccess2.INFINITE_DEPTH);
+        wcAccess.setAnchor(adminArea.getRoot());
         
         SVNURL dstAnchorURL = dstURL.removePathTail();
         String dstTarget = SVNPathUtil.tail(dstURL.toString());
@@ -466,6 +466,7 @@ public class SVNCopyClient extends SVNBasicClient {
         SVNCommitItem[] items = new SVNCommitItem[] { 
                 new SVNCommitItem(null, dstURL, null, SVNNodeKind.NONE, SVNRevision.UNDEFINED, true, false, false, false, true, false) 
                 };
+        items[0].setWCAccess(adminArea.getWCAccess());
         commitMessage = getCommitHandler().getCommitMessage(commitMessage, items);
         if (commitMessage == null) {
             return SVNCommitInfo.NULL;
@@ -494,7 +495,7 @@ public class SVNCopyClient extends SVNBasicClient {
                     true, false, false, null, true, false, getCommitParameters());
             items = (SVNCommitItem[]) commitables.values().toArray(new SVNCommitItem[commitables.values().size()]);
             for (int i = 0; i < items.length; i++) {
-                items[i].setAnchorArea(dirArea);
+                items[i].setWCAccess(wcAccess);
             }
             
             commitables = new TreeMap();
@@ -581,86 +582,89 @@ public class SVNCopyClient extends SVNBasicClient {
         }
         
         SVNWCAccess2 dstAccess = createWCAccess();
-        SVNAdminArea adminArea = dstAccess.probeOpen(dstPath, true, 0);
-        
-        SVNEntry2 dstEntry = dstAccess.getEntry(dstPath, false);
-        if (dstEntry != null && !dstEntry.isDirectory() && !dstEntry.isScheduledForDeletion()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Entry for ''{0}'' exists (though the working copy file is missing)", dstPath);
-            SVNErrorManager.error(err);
-        }
-        
-        boolean sameRepositories;
-        
-        String srcUUID = null;
-        String dstUUID = null;
-        
-        try {
-            srcUUID = repository.getRepositoryUUID(true);
-            dstUUID = getUUIDFromPath(dstAccess, dstPath.getParentFile());
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NO_REPOS_UUID) {
-                srcUUID = dstUUID = null;
-            } else {
-                throw e;
-            }
-        }
-        if (dstUUID == null || srcUUID == null) {
-            sameRepositories = false;
-        } else {
-            sameRepositories = srcUUID.equals(dstUUID);
-        }
-        
         long revision = -1;
-        if (srcKind == SVNNodeKind.DIR) {
-            // do checkout.
-            SVNUpdateClient updateClient = new SVNUpdateClient(getRepositoryPool(), getOptions());
-            updateClient.setEventHandler(getEventDispatcher());
-
-            updateClient.setEventPathPrefix("");
-            try {
-                revision = updateClient.doCheckout(srcURL, dstPath, srcRevision, srcRevision, true);
-            } finally {
-                updateClient.setEventPathPrefix(null);
-            }
+        try {
+            SVNAdminArea adminArea = dstAccess.probeOpen(dstPath, true, 0);
             
-            if (srcRevision == SVNRevision.HEAD && sameRepositories) {
-                SVNAdminArea dstArea = dstAccess.open(dstPath, true, SVNWCAccess2.INFINITE_DEPTH);
-                SVNEntry2 dstRootEntry = dstArea.getEntry(dstArea.getThisDirName(), false);
-                revision = dstRootEntry.getRevision();
-            }
-            if (sameRepositories) {
-                SVNWCManager.add(dstPath, adminArea, srcURL, revision);
-            } else {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Source URL ''{0}'' is from foreign repository; leaving it as a disjoint WC", srcURL);
+            SVNEntry2 dstEntry = dstAccess.getEntry(dstPath, false);
+            if (dstEntry != null && !dstEntry.isDirectory() && !dstEntry.isScheduledForDeletion()) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Entry for ''{0}'' exists (though the working copy file is missing)", dstPath);
                 SVNErrorManager.error(err);
             }
-        } else if (srcKind == SVNNodeKind.FILE) {
-            Map properties = new HashMap();
-            File tmpFile = null;
-
-            File baseTmpFile = adminArea.getBaseFile(dstPath.getName(), true);
-            tmpFile = SVNFileUtil.createUniqueFile(baseTmpFile.getParentFile(), dstPath.getName(), ".tmp");
-            OutputStream os = null;
             
-            long realRevision = -1;
+            boolean sameRepositories;
+            
+            String srcUUID = null;
+            String dstUUID = null;
+            
             try {
-                os = SVNFileUtil.openFileForWriting(tmpFile);
-                realRevision = repository.getFile("", srcRevisionNumber, properties, new SVNCancellableOutputStream(os, this));
-            } finally {
-                SVNFileUtil.closeFile(os);
+                srcUUID = repository.getRepositoryUUID(true);
+                dstUUID = getUUIDFromPath(dstAccess, dstPath.getParentFile());
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NO_REPOS_UUID) {
+                    srcUUID = dstUUID = null;
+                } else {
+                    throw e;
+                }
             }
-            if (!SVNRevision.isValidRevisionNumber(srcRevisionNumber)) {
-                srcRevisionNumber = realRevision;
+            if (dstUUID == null || srcUUID == null) {
+                sameRepositories = false;
+            } else {
+                sameRepositories = srcUUID.equals(dstUUID);
             }
             
-            addRepositoryFile(adminArea, dstPath.getName(), null, tmpFile, null, properties,  
-                    sameRepositories ? srcURL.toString() : null, 
-                    sameRepositories ? srcRevisionNumber : -1);
-            
-            dispatchEvent(SVNEventFactory.createAddedEvent(null, adminArea, dstAccess.getEntry(dstPath, false)));
-            revision = srcRevisionNumber;
+            if (srcKind == SVNNodeKind.DIR) {
+                // do checkout.
+                SVNUpdateClient updateClient = new SVNUpdateClient(getRepositoryPool(), getOptions());
+                updateClient.setEventHandler(getEventDispatcher());
+    
+                updateClient.setEventPathPrefix("");
+                try {
+                    revision = updateClient.doCheckout(srcURL, dstPath, srcRevision, srcRevision, true);
+                } finally {
+                    updateClient.setEventPathPrefix(null);
+                }
+                
+                if (srcRevision == SVNRevision.HEAD && sameRepositories) {
+                    SVNAdminArea dstArea = dstAccess.open(dstPath, true, SVNWCAccess2.INFINITE_DEPTH);
+                    SVNEntry2 dstRootEntry = dstArea.getEntry(dstArea.getThisDirName(), false);
+                    revision = dstRootEntry.getRevision();
+                }
+                if (sameRepositories) {
+                    SVNWCManager.add(dstPath, adminArea, srcURL, revision);
+                } else {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Source URL ''{0}'' is from foreign repository; leaving it as a disjoint WC", srcURL);
+                    SVNErrorManager.error(err);
+                }
+            } else if (srcKind == SVNNodeKind.FILE) {
+                Map properties = new HashMap();
+                File tmpFile = null;
+    
+                File baseTmpFile = adminArea.getBaseFile(dstPath.getName(), true);
+                tmpFile = SVNFileUtil.createUniqueFile(baseTmpFile.getParentFile(), dstPath.getName(), ".tmp");
+                OutputStream os = null;
+                
+                long realRevision = -1;
+                try {
+                    os = SVNFileUtil.openFileForWriting(tmpFile);
+                    realRevision = repository.getFile("", srcRevisionNumber, properties, new SVNCancellableOutputStream(os, this));
+                } finally {
+                    SVNFileUtil.closeFile(os);
+                }
+                if (!SVNRevision.isValidRevisionNumber(srcRevisionNumber)) {
+                    srcRevisionNumber = realRevision;
+                }
+                
+                addRepositoryFile(adminArea, dstPath.getName(), null, tmpFile, null, properties,  
+                        sameRepositories ? srcURL.toString() : null, 
+                        sameRepositories ? srcRevisionNumber : -1);
+                
+                dispatchEvent(SVNEventFactory.createAddedEvent(null, adminArea, dstAccess.getEntry(dstPath, false)));
+                revision = srcRevisionNumber;
+            }
+        } finally {
+            dstAccess.close();
         }
-        dstAccess.close();
         return revision;
     }
     
@@ -721,23 +725,32 @@ public class SVNCopyClient extends SVNBasicClient {
      *                        </ul>
      */
     public void doCopy(File srcPath, SVNRevision srcRevision, File dstPath, boolean force, boolean isMove) throws SVNException {
+        srcPath = new File(SVNPathUtil.validateFilePath(srcPath.getAbsolutePath())).getAbsoluteFile();
+        dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath())).getAbsoluteFile();
         if (srcRevision.isValid() && srcRevision != SVNRevision.WORKING && !isMove) {
             // url->wc copy
             SVNWCAccess2 wcAccess = createWCAccess();
-            SVNEntry2 srcEntry = wcAccess.getEntry(srcPath, false);
-            if (srcEntry == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", srcPath);
-                SVNErrorManager.error(err);
+            SVNURL srcURL = null;
+            try {
+                wcAccess.probeOpen(srcPath, false, 0);
+                SVNEntry2 srcEntry = wcAccess.getEntry(srcPath, false);
+                if (srcEntry == null) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", srcPath);
+                    SVNErrorManager.error(err);
+                }
+                if (srcEntry.getURL() == null) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", srcPath);
+                    SVNErrorManager.error(err);
+                }
+                srcURL = srcEntry.getSVNURL();
+            } finally {
+                wcAccess.close();
             }
-            if (srcEntry.getURL() == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", srcPath);
-                SVNErrorManager.error(err);
-            }
-            doCopy(srcEntry.getSVNURL(), srcRevision, dstPath);
+            doCopy(srcURL, srcRevision, dstPath);
             return;
         }
         // 1. can't copy src to its own child
-        if (SVNPathUtil.isChildOf(srcPath, dstPath)) {
+        if (SVNPathUtil.isChildOf(srcPath, dstPath) || srcPath.equals(dstPath)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Cannot copy ''{0}'' into its own child ''{1}''",
                     new Object[] {srcPath, dstPath});
             SVNErrorManager.error(err);
@@ -1012,8 +1025,6 @@ public class SVNCopyClient extends SVNBasicClient {
         
         Map baseProperties = srcArea.getBaseProperties(srcEntry.getName()).asMap();
         Map properties = srcArea.getProperties(srcEntry.getName()).asMap();
-        SVNDebugLog.getDefaultLog().info("base props of " + srcEntry.getName() + " : " + baseProperties);
-        SVNDebugLog.getDefaultLog().info("props of " + srcEntry.getName() + " : " + baseProperties);
         
         SVNFileUtil.copyFile(textBase, tmpTextBase, false);
         File tmpFile = SVNFileUtil.createUniqueFile(dstParent.getRoot(), dstName, ".tmp");
