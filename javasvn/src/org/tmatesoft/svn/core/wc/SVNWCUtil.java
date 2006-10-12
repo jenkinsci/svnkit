@@ -276,6 +276,22 @@ public class SVNWCUtil {
     }
     
     /**
+     * @deprecated
+     * 
+     */
+    public static boolean isWorkingCopyRoot(final File versionedDir, boolean externalIsRoot) throws SVNException {
+        if (isWorkingCopyRoot(versionedDir)) {
+            if (!externalIsRoot) {
+                return true;
+                
+            }
+            File root = getWorkingCopyRoot(versionedDir, false);
+            return root.equals(versionedDir);
+        }
+        return false;
+    }
+    
+    /**
      * Returns the Working Copy root directory given a versioned
      * directory that belongs to the Working Copy.
      * 
