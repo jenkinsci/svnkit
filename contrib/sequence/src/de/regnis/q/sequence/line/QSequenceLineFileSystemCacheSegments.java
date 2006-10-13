@@ -59,7 +59,7 @@ class QSequenceLineFileSystemCacheSegments {
 	public int getHash(int index) throws IOException {
 		final int segmentIndex = index / maximumEntriesPerSegment;
 		final int relativeIndex = index % maximumEntriesPerSegment;
-		return getSegment(segmentIndex).getLength(relativeIndex);
+		return getSegment(segmentIndex).getHash(relativeIndex);
 	}
 
 	public void setFromLengthHash(int index, long from, int length, int hash) throws IOException {

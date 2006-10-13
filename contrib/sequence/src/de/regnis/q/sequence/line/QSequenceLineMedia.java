@@ -6,6 +6,7 @@ import java.util.List;
 
 import de.regnis.q.sequence.QSequenceDifference;
 import de.regnis.q.sequence.QSequenceDifferenceBlockShifter;
+import de.regnis.q.sequence.line.simplifier.*;
 import de.regnis.q.sequence.core.QSequenceAssert;
 import de.regnis.q.sequence.core.QSequenceDummyCanceller;
 import de.regnis.q.sequence.core.QSequenceException;
@@ -47,26 +48,30 @@ public final class QSequenceLineMedia implements QSequenceCachableMedia, QSequen
 		if (data.length() <= MEMORY_THRESHOLD) {
 			final InputStream stream = data.read(0, data.length());
 			try {
-				return QSequenceLineMemoryCache.read(stream);
+				return QSequenceLineMemoryCache.read(stream, new QSequenceLineDummySimplifier());
 			}
 			finally {
 				stream.close();
 			}
 		}
 
-		return QSequenceLineFileSystemCache.create(data, new QSequenceLineSystemTempDirectoryFactory(), MEMORY_THRESHOLD, FILE_SEGMENT_SIZE);
+		return QSequenceLineFileSystemCache.create(data, new QSequenceLineSystemTempDirectoryFactory(), MEMORY_THRESHOLD, FILE_SEGMENT_SIZE, new QSequenceLineDummySimplifier());
 	}
 
 	public static QSequenceLineResult createBlocks(QSequenceLineRAData leftData, QSequenceLineRAData rightData) throws IOException, QSequenceException {
-		return createBlocks(leftData, rightData, MEMORY_THRESHOLD, FILE_SEGMENT_SIZE, SEARCH_DEPTH_EXPONENT, new QSequenceLineSystemTempDirectoryFactory());
+		return createBlocks(leftData, rightData, new QSequenceLineDummySimplifier());
 	}
 
-	public static QSequenceLineResult createBlocks(QSequenceLineRAData leftData, QSequenceLineRAData rightData, int memoryThreshold, int fileSegmentSize, double searchDepthExponent, QSequenceLineTempDirectoryFactory tempDirectoryFactory) throws IOException, QSequenceException {
+	public static QSequenceLineResult createBlocks(QSequenceLineRAData leftData, QSequenceLineRAData rightData, QSequenceLineSimplifier simplifier) throws IOException, QSequenceException {
+		return createBlocks(leftData, rightData, MEMORY_THRESHOLD, FILE_SEGMENT_SIZE, SEARCH_DEPTH_EXPONENT, new QSequenceLineSystemTempDirectoryFactory(), simplifier);
+	}
+
+	public static QSequenceLineResult createBlocks(QSequenceLineRAData leftData, QSequenceLineRAData rightData, int memoryThreshold, int fileSegmentSize, double searchDepthExponent, QSequenceLineTempDirectoryFactory tempDirectoryFactory, QSequenceLineSimplifier simplifier) throws IOException, QSequenceException {
 		if (leftData.length() <= memoryThreshold && rightData.length() <= memoryThreshold) {
 			final InputStream leftStream = leftData.read(0, leftData.length());
 			final InputStream rightStream = rightData.read(0, rightData.length());
 			try {
-				return createBlocksInMemory(leftStream, rightStream, searchDepthExponent);
+				return createBlocksInMemory(leftStream, rightStream, searchDepthExponent, simplifier);
 			}
 			finally {
 				leftStream.close();
@@ -74,12 +79,12 @@ public final class QSequenceLineMedia implements QSequenceCachableMedia, QSequen
 			}
 		}
 
-		return createBlocksInFilesystem(leftData, rightData, tempDirectoryFactory, searchDepthExponent, memoryThreshold, fileSegmentSize);
+		return createBlocksInFilesystem(leftData, rightData, tempDirectoryFactory, searchDepthExponent, memoryThreshold, fileSegmentSize, simplifier);
 	}
 
-	static QSequenceLineResult createBlocksInMemory(InputStream leftStream, InputStream rightStream, double searchDepthExponent) throws IOException, QSequenceException {
-		final QSequenceLineMemoryCache leftCache = QSequenceLineMemoryCache.read(leftStream);
-		final QSequenceLineMemoryCache rightCache = QSequenceLineMemoryCache.read(rightStream);
+	static QSequenceLineResult createBlocksInMemory(InputStream leftStream, InputStream rightStream, double searchDepthExponent, QSequenceLineSimplifier simplifier) throws IOException, QSequenceException {
+		final QSequenceLineMemoryCache leftCache = QSequenceLineMemoryCache.read(leftStream, simplifier);
+		final QSequenceLineMemoryCache rightCache = QSequenceLineMemoryCache.read(rightStream, simplifier);
 		final QSequenceLineMedia lineMedia = new QSequenceLineMedia(leftCache, rightCache);
 		final QSequenceCachingMedia cachingMedia = new QSequenceCachingMedia(lineMedia, new QSequenceDummyCanceller());
 		final QSequenceDiscardingMedia discardingMedia = new QSequenceDiscardingMedia(cachingMedia, new QSequenceDiscardingMediaNoConfusionDectector(true), new QSequenceDummyCanceller());
@@ -88,9 +93,9 @@ public final class QSequenceLineMedia implements QSequenceCachableMedia, QSequen
 		return new QSequenceLineResult(blocks, leftCache, rightCache);
 	}
 
-	static QSequenceLineResult createBlocksInFilesystem(QSequenceLineRAData leftData, QSequenceLineRAData rightData, QSequenceLineTempDirectoryFactory tempDirectoryFactory, double searchDepthExponent, int memoryThreshold, int fileSegmentSize) throws IOException, QSequenceException {
-		final QSequenceLineFileSystemCache leftCache = QSequenceLineFileSystemCache.create(leftData, tempDirectoryFactory, memoryThreshold, fileSegmentSize);
-		final QSequenceLineFileSystemCache rightCache = QSequenceLineFileSystemCache.create(rightData, tempDirectoryFactory, memoryThreshold, fileSegmentSize);
+	static QSequenceLineResult createBlocksInFilesystem(QSequenceLineRAData leftData, QSequenceLineRAData rightData, QSequenceLineTempDirectoryFactory tempDirectoryFactory, double searchDepthExponent, int memoryThreshold, int fileSegmentSize, QSequenceLineSimplifier simplifier) throws IOException, QSequenceException {
+		final QSequenceLineFileSystemCache leftCache = QSequenceLineFileSystemCache.create(leftData, tempDirectoryFactory, memoryThreshold, fileSegmentSize, simplifier);
+		final QSequenceLineFileSystemCache rightCache = QSequenceLineFileSystemCache.create(rightData, tempDirectoryFactory, memoryThreshold, fileSegmentSize, simplifier);
 		final QSequenceLineMedia lineMedia = new QSequenceLineMedia(leftCache, rightCache);
 		final List blocks = new QSequenceDifference(lineMedia, new QSequenceMediaDummyIndexTransformer(lineMedia), getSearchDepth(lineMedia, searchDepthExponent)).getBlocks();
 		new QSequenceDifferenceBlockShifter(lineMedia, lineMedia).shiftBlocks(blocks);

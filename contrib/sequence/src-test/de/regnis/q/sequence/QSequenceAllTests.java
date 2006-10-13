@@ -29,6 +29,7 @@ public class QSequenceAllTests {
 		suite.addTestSuite(QSequenceDifferenceAssemblyTest.class);
 		suite.addTestSuite(QSequenceDifferenceBlockShifterTest.class);
 		suite.addTestSuite(QSequenceLineReaderTest.class);
+		suite.addTestSuite(QSequenceLineSimplifierTest.class);
 		suite.addTestSuite(QSequenceLineMediaTest.class);
 		return suite;
 	}

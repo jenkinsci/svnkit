@@ -18,6 +18,7 @@ import java.util.*;
 import de.regnis.q.sequence.*;
 import de.regnis.q.sequence.core.*;
 import de.regnis.q.sequence.line.*;
+import de.regnis.q.sequence.line.simplifier.*;
 
 /**
  * @author Ian Sullivan
@@ -50,7 +51,7 @@ public abstract class QDiffSequenceGenerator implements QDiffGenerator {
 	public void generateTextDiff(InputStream left, InputStream right, String encoding, Writer output) throws IOException {
 		final QSequenceLineResult result;
 		try {
-			result = QSequenceLineMedia.createBlocks(QSequenceLineRAByteData.create(left), QSequenceLineRAByteData.create(right));
+			result = QSequenceLineMedia.createBlocks(QSequenceLineRAByteData.create(left), QSequenceLineRAByteData.create(right), getSimplifier());
 		}
 		catch (QSequenceException ex) {
 			throw new IOException(ex.getMessage());
@@ -85,6 +86,26 @@ public abstract class QDiffSequenceGenerator implements QDiffGenerator {
 		return System.getProperty("line.separator", "\n");
 	}
 
+	protected QSequenceLineSimplifier getSimplifier() {
+		final Object ignore = getProperties().get(QDiffGeneratorFactory.IGNORE_SPACE_PROPERTY);
+		final QSequenceLineSimplifier baseSimplifier;
+		if (QDiffGeneratorFactory.IGNORE_ALL_SPACE.equals(ignore)) {
+			baseSimplifier = new QSequenceLineWhiteSpaceSkippingSimplifier();
+		}
+		else if (QDiffGeneratorFactory.IGNORE_SPACE_CHANGE.equals(ignore)) {
+			baseSimplifier = new QSequenceLineWhiteSpaceReducingSimplifier();
+		}
+		else {
+			baseSimplifier = new QSequenceLineDummySimplifier();
+		}
+
+		if (!getProperties().containsKey(QDiffGeneratorFactory.IGNORE_EOL_PROPERTY)) {
+			return new QSequenceLineTeeSimplifier(baseSimplifier, new QSequenceLineEOLSkippingSimplifier());
+		}
+
+		return baseSimplifier;
+	}
+
 	protected int getGutter() {
 		Object gutterStr = getProperties().get(QDiffGeneratorFactory.GUTTER_PROPERTY);
 		if (gutterStr == null) {
@@ -99,7 +120,7 @@ public abstract class QDiffSequenceGenerator implements QDiffGenerator {
 	}
 
 	protected String printLine(QSequenceLine line, String encoding) throws IOException {
-		String str = new String(line.getBytes(), encoding);
+		String str = new String(line.getContentBytes(), encoding);
 		return str;
 	}
 

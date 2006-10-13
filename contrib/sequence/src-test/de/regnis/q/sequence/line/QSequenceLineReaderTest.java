@@ -3,6 +3,8 @@ package de.regnis.q.sequence.line;
 import java.io.*;
 import junit.framework.*;
 
+import de.regnis.q.sequence.line.simplifier.*;
+
 /**
  * @author Marc Strapetz
  */
@@ -36,7 +38,7 @@ public class QSequenceLineReaderTest extends TestCase {
 		final byte[] bytes = testString.getBytes();
 		final QSequenceLineMemoryCache cache = new QSequenceLineMemoryCache();
 		final QSequenceLineReader reader = new QSequenceLineReader(4);
-		reader.read(new ByteArrayInputStream(bytes), cache);
+		reader.read(new ByteArrayInputStream(bytes), cache, new QSequenceLineDummySimplifier());
 		assertEquals(expectedLineCount, cache.getLineCount());
 
 		for (int index = 0; index < cache.getLineCount(); index++) {
@@ -45,15 +47,15 @@ public class QSequenceLineReaderTest extends TestCase {
 				assertEquals(0, line.getFrom());
 			}
 			else if (index == cache.getLineCount() - 1) {
-				assertEquals(bytes.length, line.getFrom() + line.getLength());
+				assertEquals(bytes.length, line.getFrom() + line.getContentLength());
 			}
 			else {
-				final int expectedTo = (int)cache.getLine(index - 1).getFrom() + cache.getLine(index - 1).getLength();
+				final int expectedTo = (int)cache.getLine(index - 1).getFrom() + cache.getLine(index - 1).getContentLength();
 				assertEquals(expectedTo, line.getFrom());
 			}
 
-			for (int byteIndex = (int)line.getFrom(); byteIndex < line.getFrom() + line.getLength(); byteIndex++) {
-				assertEquals(bytes[byteIndex], line.getBytes()[byteIndex - (int)line.getFrom()]);
+			for (int byteIndex = (int)line.getFrom(); byteIndex < line.getFrom() + line.getContentLength(); byteIndex++) {
+				assertEquals(bytes[byteIndex], line.getContentBytes()[byteIndex - (int)line.getFrom()]);
 			}
 		}
 	}

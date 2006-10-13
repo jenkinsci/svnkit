@@ -2,6 +2,8 @@ package de.regnis.q.sequence.line;
 
 import java.io.*;
 
+import de.regnis.q.sequence.line.simplifier.*;
+
 /**
  * @author Marc Strapetz
  */
@@ -23,7 +25,7 @@ final class QSequenceLineReader {
 
 	// Static =================================================================
 
-	public void read(InputStream rawStream, QSequenceLineCache cache) throws IOException {
+	public void read(InputStream rawStream, QSequenceLineCache cache, QSequenceLineSimplifier simplifier) throws IOException {
 		final BufferedInputStream stream = new BufferedInputStream(rawStream);
 		try {
 			int pushBack = -1;
@@ -57,7 +59,7 @@ final class QSequenceLineReader {
 						final byte[] bytes;
 						bytes = new byte[length];
 						System.arraycopy(buffer, 0, bytes, 0, length);
-						cache.addLine(new QSequenceLine(from, bytes));
+						cache.addLine(new QSequenceLine(from, bytes, simplifier));
 					}
 					from = from + length;
 					length = 0;
