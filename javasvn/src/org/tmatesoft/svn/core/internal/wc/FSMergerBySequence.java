@@ -265,9 +265,8 @@ class FSMergerBySequence {
 		return maxBaseTo;
 	}
 
-	private void writeLine(OutputStream os, QSequenceLine line)
-			throws IOException {
-		final byte[] bytes = line.getBytes();
+	private void writeLine(OutputStream os, QSequenceLine line) throws IOException {
+		final byte[] bytes = line.getContentBytes();
 		if (bytes.length == 0) {
 			return;
 		}

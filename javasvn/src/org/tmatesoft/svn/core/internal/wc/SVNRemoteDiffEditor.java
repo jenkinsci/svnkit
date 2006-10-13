@@ -183,7 +183,6 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     }
 
     public void closeFile(String commitPath, String textChecksum) throws SVNException {
-//        myDeltaProcessor.close();
         String displayPath = SVNPathUtil.append(myBasePath, myCurrentFile.myPath);
         if (myCurrentFile.myBaseFile == null && myCurrentFile.myPropertyDiff != null) {
             myCurrentFile.loadFromRepository(null, myRepos, myRevision, myEventHandler);
@@ -232,11 +231,8 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
         }
 
         private String myPath;
-
         private Map myBaseProperties;
-
         private Map myPropertyDiff;
-
         private SVNDirectoryInfo myParent;
     }
 
@@ -257,13 +253,9 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
         }
 
         private String myPath;
-
         private File myFile;
-
         private File myBaseFile;
-
         private Map myBaseProperties;
-
         private Map myPropertyDiff;
     }
 }

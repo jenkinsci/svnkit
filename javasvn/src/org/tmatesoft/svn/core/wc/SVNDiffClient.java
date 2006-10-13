@@ -25,8 +25,10 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.AbstractDiffCallback;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableOutputStream;
+import org.tmatesoft.svn.core.internal.wc.SVNDiffCallback;
 import org.tmatesoft.svn.core.internal.wc.SVNDiffEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNDiffStatusEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -547,12 +549,14 @@ public class SVNDiffClient extends SVNBasicClient {
                 getDiffGenerator().init(url1.toString(), anchorPath2);
             }
             SVNRepository repository = createRepository(anchorURL, true);
-            SVNDiffEditor editor = new SVNDiffEditor(wcAccess, info, getDiffGenerator(),
+            long revNumber = getRevisionNumber(revision1, repository, null);
+            AbstractDiffCallback callback = new SVNDiffCallback(info, getDiffGenerator(), 
+                    reverse ? -1 : revNumber, reverse ? revNumber : -1, result);
+            SVNDiffEditor editor = new SVNDiffEditor(wcAccess, info, callback, 
                     useAncestry, reverse /* reverse */,
                     revision2 == SVNRevision.BASE  || revision2 == SVNRevision.COMMITTED  /* compare to base */, 
-                    recursive, result);
+                    recursive);
             SVNReporter2 reporter = new SVNReporter2(info, info.getAnchor().getFile(info.getTargetName()), false, recursive, getDebugLog());
-            long revNumber = getRevisionNumber(revision1, repository, null);
             
             long pegRevisionNumber = getRevisionNumber(revision2, repository, path2);
             try {
@@ -595,13 +599,15 @@ public class SVNDiffClient extends SVNBasicClient {
                 url1 = getURL(path1);
             }
             SVNRepository repository = createRepository(anchorURL, true);
-            SVNDiffEditor editor = new SVNDiffEditor(wcAccess, info, getDiffGenerator(),
+            long revNumber = getRevisionNumber(revision1, repository, path1);
+            AbstractDiffCallback callback = new SVNDiffCallback(info, getDiffGenerator(), 
+                    reverse ? -1 : revNumber, reverse ? revNumber : -1, result);
+            SVNDiffEditor editor = new SVNDiffEditor(wcAccess, info, callback,
                     useAncestry, 
                     reverse /* reverse */, 
                     revision2 == SVNRevision.BASE || revision2 == SVNRevision.COMMITTED /* compare to base */, 
-                    recursive, result);
+                    recursive);
             SVNReporter2 reporter = new SVNReporter2(info, info.getAnchor().getFile(info.getTargetName()), false, recursive, getDebugLog());
-            long revNumber = getRevisionNumber(revision1, repository, path1);
             
             // this should be rev2.
             long pegRevisionNumber = getRevisionNumber(revision2, repository, path2);
@@ -632,7 +638,10 @@ public class SVNDiffClient extends SVNBasicClient {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", path1);
                 SVNErrorManager.error(err);
             }
-            SVNDiffEditor editor = new SVNDiffEditor(wcAccess, info, getDiffGenerator(), useAncestry, false, false, recursive, result);
+            long rev = getRevisionNumber(revision1, null, path1);
+            AbstractDiffCallback callback = new SVNDiffCallback(info, getDiffGenerator(), 
+                    rev, -1, result);
+            SVNDiffEditor editor = new SVNDiffEditor(wcAccess, info, callback, useAncestry, false, false, recursive);
             try {
                 editor.closeEdit();
             } finally {
@@ -645,7 +654,6 @@ public class SVNDiffClient extends SVNBasicClient {
     
     private void doDiffURLURL(SVNURL url1, File path1, SVNRevision revision1, SVNURL url2, File path2, SVNRevision revision2, SVNRevision pegRevision,
             boolean recursive, boolean useAncestry, OutputStream result) throws SVNException {
-        SVNDebugLog.getDefaultLog().info(new Exception());
         File basePath = null;
         if (path1 != null) {
             basePath = path1;

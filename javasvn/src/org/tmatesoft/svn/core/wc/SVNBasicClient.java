@@ -440,7 +440,6 @@ public class SVNBasicClient implements ISVNEventHandler {
         long endRevisionNumber;
         if (url != null && path != null) {
             getDebugLog().info("possibly, not valid getLocations call:");
-            getDebugLog().info(new Exception());
         }
         
         if (path != null) {

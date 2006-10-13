@@ -141,7 +141,6 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         path = getDisplayPath(path);
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         SVNDebugLog.getDefaultLog().info("propdiff, was: " + baseProps+ ", diff: " + diff);
-        SVNDebugLog.getDefaultLog().info(new Exception());
         diff = new TreeMap(diff);
         try {
             bos.write(EOL);

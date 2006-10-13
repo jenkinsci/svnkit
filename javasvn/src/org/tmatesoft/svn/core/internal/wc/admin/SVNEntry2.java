@@ -59,15 +59,15 @@ public class SVNEntry2 implements Comparable {
         if (obj == null || obj.getClass() != SVNEntry2.class) {
             return 1;
         }
-        SVNEntry2 entry = (SVNEntry2) obj;
         if (isThisDir()) {
             return 1;
         }
-        int kind = getKind().compareTo(entry.getKind());
-        if (kind == 0) {
-            return myName.compareTo(entry.myName);
-        }
-        return -kind;
+        SVNEntry2 entry = (SVNEntry2) obj;
+//        int kind = getKind().compareTo(entry.getKind());
+//        if (kind == 0) {
+            return myName.toLowerCase().compareTo(entry.myName.toLowerCase());
+//        }
+//        return -kind;
     }
     
     public boolean isThisDir() {

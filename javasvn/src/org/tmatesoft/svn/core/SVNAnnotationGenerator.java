@@ -216,7 +216,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
                         LineInfo line = new LineInfo();
                         line.revision = myCurrentDate != null ? myCurrentRevision : -1;
                         line.author = myCurrentAuthor;
-                        line.line = result.getRightCache().getLine(j).getBytes();
+                        line.line = result.getRightCache().getLine(j).getContentBytes();
                         line.date = myCurrentDate;
                         newLines.add(line);
                     }

@@ -228,7 +228,6 @@ class SVNConnection {
 
     private void checkConnection() throws SVNException {
         if (!myIsReopening && !myConnector.isConnected(myRepository)) {
-            myRepository.getDebugLog().info(new Exception());
             myIsReopening = true;
             try {
                 close();
