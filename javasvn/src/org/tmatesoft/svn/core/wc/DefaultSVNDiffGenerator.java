@@ -145,7 +145,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         diff = new TreeMap(diff);
         try {
             bos.write(EOL);
-            bos.write(("Property changes on: " + path).getBytes(getEncoding()));
+            bos.write(("Property changes on: " + path.replace('/', File.separatorChar)).getBytes(getEncoding()));
             bos.write(EOL);
             bos.write(PROPERTIES_SEPARATOR);
             bos.write(EOL);

@@ -20,10 +20,12 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -52,6 +54,25 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
  * @author  TMate Software Ltd.
  */
 public abstract class SVNAdminArea {
+
+    /**
+     * @version 1.0
+     * @author  TMate Software Ltd.
+     */
+    private static final Comparator ENTRIES_COMPARATOR = new Comparator() {
+        public int compare(Object arg0, Object arg1) {
+            if (arg0 == arg1) {
+                return 0;
+            } else if (arg0 == null) {
+                return arg1 == null ? 0 : -1; 
+            } else if (arg1 == null) {
+                return 1; 
+            }
+            SVNEntry2 e0 = (SVNEntry2) arg0;
+            SVNEntry2 e1 = (SVNEntry2) arg1;
+            return e0.getName().toLowerCase().compareTo(e1.getName().toLowerCase());
+        }
+    };
 
     private File myDirectory;
     private SVNWCAccess2 myWCAccess;
@@ -1203,7 +1224,7 @@ public abstract class SVNAdminArea {
         if (entries == null) {
             return Collections.EMPTY_LIST.iterator();
         }
-        Collection copy = new LinkedList(entries.values());
+        List copy = new ArrayList(entries.values());
         if (!hidden) {
             for (Iterator iterator = copy.iterator(); iterator.hasNext();) {
                 SVNEntry2 entry = (SVNEntry2) iterator.next();
@@ -1212,6 +1233,7 @@ public abstract class SVNAdminArea {
                 }
             }
         }
+        Collections.sort(copy, ENTRIES_COMPARATOR);
         return copy.iterator();
     }
     

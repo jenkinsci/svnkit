@@ -45,7 +45,7 @@ public class SVNPathUtil {
             }
             String p1 = (String) o1;
             String p2 = (String) o2;
-            return p1.replace('/', '\0').compareTo(p2.replace('/', '\0'));
+            return p1.replace('/', '\0').toLowerCase().compareTo(p2.toLowerCase().replace('/', '\0'));
         }
         
     };
