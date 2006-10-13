@@ -17,7 +17,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
  * @version 1.0
  * @author TMate Software Ltd.
  */
-public class FSEntry {
+public class FSEntry implements Comparable {
 
     private FSID myId;
     private SVNNodeKind myType;
@@ -59,4 +59,21 @@ public class FSEntry {
     public String toString() {
         return myType + " " + myId;
     }
+
+    public int compareTo(Object obj) {
+        if (obj == this) {
+            return 0;
+        }
+        if (obj == null || obj.getClass() != FSEntry.class) {
+            return 1;
+        }
+        FSEntry entry = (FSEntry) obj;
+        int kind = getType().compareTo(entry.getType());
+        if (kind == 0) {
+            return myName.compareTo(entry.myName);
+        }
+        return -kind;
+    }
+    
+    
 }

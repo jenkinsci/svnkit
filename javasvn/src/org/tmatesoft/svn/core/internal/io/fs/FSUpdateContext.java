@@ -18,6 +18,7 @@ import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.TreeSet;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -332,9 +333,9 @@ public class FSUpdateContext {
         }
 
         if (sourceEntries != null) {
-            Object[] names = sourceEntries.keySet().toArray();
-            for (int i = 0; i < names.length; i++) {
-                FSEntry srcEntry = (FSEntry) sourceEntries.get(names[i]);
+            FSEntry[] srcEntries = (FSEntry[]) new TreeSet(sourceEntries.values()).toArray(new FSEntry[sourceEntries.size()]);
+            for (int i = 0; i < srcEntries.length; i++) {
+                FSEntry srcEntry = srcEntries[i];
                 if (targetEntries.get(srcEntry.getName()) == null) {
                     String entryEditPath = SVNPathUtil.append(editPath, srcEntry.getName());
                     if (isRecursive() || srcEntry.getType() != SVNNodeKind.DIR) {
@@ -344,9 +345,9 @@ public class FSUpdateContext {
             }
         }
 
-        Object[] names = targetEntries.keySet().toArray();
-        for (int i = 0; i < names.length; i++) {
-            FSEntry tgtEntry = (FSEntry) targetEntries.get(names[i]);
+        FSEntry[] tgtEntries = (FSEntry[]) new TreeSet(targetEntries.values()).toArray(new FSEntry[targetEntries.size()]);
+        for (int i = 0; i < tgtEntries.length; i++) {
+            FSEntry tgtEntry = tgtEntries[i];
             String entryEditPath = SVNPathUtil.append(editPath, tgtEntry.getName());
             String entryTargetPath = SVNPathUtil.concatToAbs(targetPath, tgtEntry.getName());
             FSEntry srcEntry = sourceEntries != null ? (FSEntry) sourceEntries.get(tgtEntry.getName()) : null;

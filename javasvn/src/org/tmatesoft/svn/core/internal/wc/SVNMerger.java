@@ -274,7 +274,9 @@ public class SVNMerger {
                 mergeResult = parentDir.mergeText(minePath, olderPath,
                         yoursPath, targetLabel, leftLabel, rightLabel,
                         myIsLeaveConflicts, myIsDryRun);
-                parentDir.saveEntries(false);
+                if (!myIsDryRun) {
+                    parentDir.saveEntries(false);
+                }
             }
 
             if (mergeResult == SVNStatusType.CONFLICTED || mergeResult == SVNStatusType.CONFLICTED_UNRESOLVED) {
