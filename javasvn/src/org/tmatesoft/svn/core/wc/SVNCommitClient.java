@@ -442,11 +442,13 @@ public class SVNCommitClient extends SVNBasicClient {
         }
         List newPaths = new ArrayList();
         SVNURL rootURL = dstURL;
-        while (true) {
-            repos = createRepository(rootURL, true);
+        repos = createRepository(rootURL, true);
+        SVNURL reposRoot = repos.getRepositoryRoot(true);
+        while (!reposRoot.equals(rootURL)) {
             if (repos.checkPath("", -1) == SVNNodeKind.NONE) {
                 newPaths.add(SVNPathUtil.tail(rootURL.getPath()));
                 rootURL = rootURL.removePathTail();
+                repos = createRepository(rootURL, true);
             } else {
                 break;
             }

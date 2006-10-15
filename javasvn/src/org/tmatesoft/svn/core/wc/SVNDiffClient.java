@@ -560,7 +560,7 @@ public class SVNDiffClient extends SVNBasicClient {
             
             long pegRevisionNumber = getRevisionNumber(revision2, repository, path2);
             try {
-                repository.diff(url1, revNumber, pegRevisionNumber, target, !useAncestry, recursive, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
+                repository.diff(url1, revNumber, pegRevisionNumber, target, !useAncestry, recursive, true, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
             } finally {
                 editor.cleanup();
             }
@@ -612,7 +612,7 @@ public class SVNDiffClient extends SVNBasicClient {
             // this should be rev2.
             long pegRevisionNumber = getRevisionNumber(revision2, repository, path2);
             try {
-                repository.diff(url1, revNumber, pegRevisionNumber, target, !useAncestry, recursive, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
+                repository.diff(url1, revNumber, pegRevisionNumber, target, !useAncestry, recursive, true, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
             } finally {
                 editor.cleanup();
             }
@@ -711,7 +711,7 @@ public class SVNDiffClient extends SVNBasicClient {
                     reporter.finishReport();
                 }
             };
-            repository1.diff(url2, rev2, rev1, target1, !useAncestry, recursive, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
+            repository1.diff(url2, rev2, rev1, target1, !useAncestry, recursive, true, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
         } finally {
             if (editor != null) {
                 editor.cleanup();
@@ -776,7 +776,7 @@ public class SVNDiffClient extends SVNBasicClient {
                     reporter.finishReport();
                 }
             };
-            repository1.diff(url2, rev2, rev1, target1, !useAncestry, recursive, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
+            repository1.diff(url2, rev2, rev1, target1, !useAncestry, recursive, false, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
         } finally {
             if (tmpFile != null) {
                 SVNFileUtil.deleteAll(tmpFile, true, null);
@@ -1256,7 +1256,7 @@ public class SVNDiffClient extends SVNBasicClient {
         SVNRemoteDiffEditor editor = new SVNRemoteDiffEditor(info, info.getTarget().getRoot(), callback, repository2, rev1, rev2, dryRun, this, this);
         
         try {
-            repository1.diff(url2, rev2, rev1, null, !useAncestry, recursive,
+            repository1.diff(url2, rev2, rev1, null, !useAncestry, recursive, true,
                     new ISVNReporterBaton() {
                         public void report(ISVNReporter reporter) throws SVNException {
                             reporter.setPath("", null, rev1, false);

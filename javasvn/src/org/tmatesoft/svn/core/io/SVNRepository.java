@@ -1170,6 +1170,8 @@ public abstract class SVNRepository {
      *                          ignored, otherwise not 
      * @param  recursive        if <span class="javakeyword">true</span> and the diff scope
      *                          is a directory, descends recursively, otherwise not 
+     * @param  getContents      if <span class="javakeyword">false</span> contents (diff windows) will not be sent ot 
+     *                          the editor. 
      * @param  reporter 		a caller's reporter
      * @param  editor 			a caller's editor
      * @throws SVNException     in the following cases:
@@ -1184,7 +1186,13 @@ public abstract class SVNRepository {
      * @see 					ISVNReporter
      * @see 					ISVNEditor
 	 */
+    public abstract void diff(SVNURL url, long targetRevision, long revision, String target, boolean ignoreAncestry, boolean recursive, boolean getContents, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException;
+
+    /**
+     * @deprecated
+     */
     public abstract void diff(SVNURL url, long targetRevision, long revision, String target, boolean ignoreAncestry, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException;
+
     
     /**
      * Calculates the differences between two items. 

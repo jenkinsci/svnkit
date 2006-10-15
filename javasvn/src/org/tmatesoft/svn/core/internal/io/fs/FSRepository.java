@@ -797,6 +797,16 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
     }
 
+    public void diff(SVNURL url, long targetRevision, long revision, String target, boolean ignoreAncestry, boolean recursive, boolean getContents, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
+        try {
+            openRepository();
+            makeReporterContext(targetRevision, target, url, recursive, ignoreAncestry, getContents, editor);
+            reporter.report(this);
+        } finally {
+            closeRepository();
+        }
+    }
+
     public void update(long revision, String target, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
         try {
             openRepository();

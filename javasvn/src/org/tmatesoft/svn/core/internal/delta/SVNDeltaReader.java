@@ -26,7 +26,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
-
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * Reads diff windows from stream and feeds them to the ISVNDeltaConsumer instance.
@@ -124,10 +124,10 @@ public class SVNDeltaReader {
                     instructionsLength = deflate(instructionsLength, out);
                     newDataLength = deflate(newDataLength, out);
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    SVNDebugLog.getDefaultLog().error(e);
                 }
-                
-                ByteBuffer decompressed = ByteBuffer.wrap(out.toByteArray());
+                byte[] bytes = out.toByteArray();
+                ByteBuffer decompressed = ByteBuffer.wrap(bytes);
                 decompressed.position(0);
                 window = new SVNDiffWindow(sourceOffset, sourceLength, targetLength, instructionsLength, newDataLength);
                 window.setData(decompressed);
@@ -166,7 +166,7 @@ public class SVNDeltaReader {
             while(read < uncompressedLength) {
                 read += in.read(uncompressedData, read, uncompressedLength - read);
             }
-            out.write(uncompressedLength);
+            out.write(uncompressedData);
         }
         myBuffer.position(originalPosition + compressedLength);
         return uncompressedLength;
