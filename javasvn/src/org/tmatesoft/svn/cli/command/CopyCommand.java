@@ -125,6 +125,7 @@ public class CopyCommand extends SVNCommand {
         SVNCopyClient updater = getClientManager().getCopyClient();
 
         SVNRevision srcRevision = SVNRevision.parse((String) getCommandLine().getArgumentValue(SVNArgument.REVISION));
+        updater.setEventHandler(null);
         SVNCommitInfo info = updater.doCopy(new File(srcPath), srcRevision, SVNURL.parseURIEncoded(dstURL), message);
         if (info != SVNCommitInfo.NULL) {
             out.println();
