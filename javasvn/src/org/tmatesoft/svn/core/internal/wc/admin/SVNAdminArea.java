@@ -119,7 +119,7 @@ public abstract class SVNAdminArea {
             }
         }
         SVNFileType fType = SVNFileType.getType(getFile(name));
-        if (fType != SVNFileType.FILE) {
+        if (fType != SVNFileType.FILE && fType != SVNFileType.SYMLINK) {
             return false;
         }
         File textFile = getFile(name);
@@ -158,7 +158,7 @@ public abstract class SVNAdminArea {
             }
             try {
                 baseStream = SVNFileUtil.openFileForReading(baseFile);
-                textStream = SVNFileUtil.openFileForReading(text);
+                textStream = special ? null : SVNFileUtil.openFileForReading(text);
                 if (checksum) {
                     if (entry.getChecksum() != null) {
                         checksumStream = new SVNChecksumInputStream(baseStream);
@@ -173,7 +173,6 @@ public abstract class SVNAdminArea {
                     } else {
                         String tmpPath = SVNAdminUtil.getTextBasePath(text.getName(), true);
                         SVNTranslator2.translate(this, text.getName(), text.getName(), tmpPath, false, false);
-                        SVNFileUtil.closeFile(textStream);
                         textStream = SVNFileUtil.openFileForReading(getFile(tmpPath));
                     }
                 } else if (needsTranslation) {

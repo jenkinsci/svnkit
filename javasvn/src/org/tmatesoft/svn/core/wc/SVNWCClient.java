@@ -1379,6 +1379,7 @@ public class SVNWCClient extends SVNBasicClient {
                         if (props.getPropertyValue(SVNProperty.NEEDS_LOCK) != null) {
                             SVNFileUtil.setReadonly(dir.getFile(entry.getName()), false);
                         }
+                        SVNFileUtil.setExecutable(dir.getFile(entry.getName()), props.getPropertyValue(SVNProperty.EXECUTABLE) != null);
                         dir.saveEntries(false);
                         handleEvent(SVNEventFactory.createLockEvent(dir, entry.getName(), SVNEventAction.LOCKED, lock, null),
                                 ISVNEventHandler.UNKNOWN);

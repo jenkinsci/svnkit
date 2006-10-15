@@ -14,9 +14,9 @@ package org.tmatesoft.svn.core.internal.wc;
 import java.io.File;
 import java.io.OutputStream;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -374,7 +374,7 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
                 myPath = getAnchor().getRoot();
             }
             myName = path != null ? SVNPathUtil.tail(path) : null;
-            myChildrenStatuses = new HashMap();
+            myChildrenStatuses = new TreeMap();
             myURL = computeURL();
             myRemoteRevision = SVNRevision.UNDEFINED;
             myRemoteKind = SVNNodeKind.DIR;

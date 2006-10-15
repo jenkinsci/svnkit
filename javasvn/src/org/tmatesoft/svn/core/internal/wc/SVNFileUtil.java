@@ -268,6 +268,7 @@ public class SVNFileUtil {
                 dst.delete();
             }
         }
+        boolean executable = isExecutable(src);
         FileChannel srcChannel = null;
         FileChannel dstChannel = null;
         FileInputStream is = null;
@@ -307,6 +308,9 @@ public class SVNFileUtil {
         }
         if (safe && tmpDst != dst) {
             rename(tmpDst, dst);
+        }
+        if (executable) {
+            setExecutable(dst, true);
         }
         dst.setLastModified(src.lastModified());
     }
