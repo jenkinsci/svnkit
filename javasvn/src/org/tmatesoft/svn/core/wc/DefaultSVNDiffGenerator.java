@@ -19,6 +19,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
@@ -33,6 +34,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 import de.regnis.q.sequence.line.diff.QDiffGenerator;
+import de.regnis.q.sequence.line.diff.QDiffGeneratorFactory;
 import de.regnis.q.sequence.line.diff.QDiffManager;
 import de.regnis.q.sequence.line.diff.QDiffUniGenerator;
 
@@ -63,6 +65,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     private boolean myIsDiffDeleted;
     private File myBasePath;
     private boolean myIsDiffUnversioned;
+    private SVNDiffOptions myDiffOptions;
     
     /**
      * Constructs a <b>DefaultSVNDiffGenerator</b>.
@@ -78,6 +81,10 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         myAnchorPath1 = anchorPath1.replace(File.separatorChar, '/');
         myAnchorPath2 = anchorPath2.replace(File.separatorChar, '/');
     }
+    
+    public void setDiffOptions(SVNDiffOptions options) {
+        myDiffOptions = options;
+    }
 
     public void setBasePath(File basePath) {
         myBasePath = basePath;
@@ -89,6 +96,13 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
 
     public boolean isDiffDeleted() {
         return myIsDiffDeleted;
+    }
+    
+    public SVNDiffOptions getDiffOptions() {
+        if (myDiffOptions == null) {
+            myDiffOptions = new SVNDiffOptions();
+        }
+        return myDiffOptions;
     }
 
     protected String getDisplayPath(String path) {
@@ -336,7 +350,15 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             is2 = file2 == null ? EMPTY_FILE_IS : SVNFileUtil.openFileForReading(file2);
 
             QDiffUniGenerator.setup();
-            QDiffGenerator generator = QDiffManager.getDiffGenerator(QDiffUniGenerator.TYPE, null);
+            Map properties = new HashMap();
+            
+            properties.put(QDiffGeneratorFactory.IGNORE_EOL_PROPERTY, Boolean.valueOf(getDiffOptions().isIgnoreEOLStyle()));
+            if (getDiffOptions().isIgnoreAllWhitespace()) {
+                properties.put(QDiffGeneratorFactory.IGNORE_SPACE_PROPERTY, QDiffGeneratorFactory.IGNORE_ALL_SPACE);
+            } else if (getDiffOptions().isIgnoreAmountOfWhitespace()) {
+                properties.put(QDiffGeneratorFactory.IGNORE_SPACE_PROPERTY, QDiffGeneratorFactory.IGNORE_SPACE_CHANGE);
+            }
+            QDiffGenerator generator = QDiffManager.getDiffGenerator(QDiffUniGenerator.TYPE, properties);
             Writer writer = new OutputStreamWriter(result, getEncoding());
             QDiffManager.generateTextDiff(is1, is2, getEncoding(), writer, generator);
             writer.flush();

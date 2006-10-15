@@ -536,7 +536,7 @@ public class SVNUpdateEditor implements ISVNEditor {
                             props.setPropertyValue(SVNProperty.EOL_STYLE, (String) modifiedProps.get(SVNProperty.EOL_STYLE));
                             props.setPropertyValue(SVNProperty.KEYWORDS, (String) modifiedProps.get(SVNProperty.KEYWORDS));
                         }
-                        textStatus = adminArea.mergeText(name, basePath, tmpPath, "", "", "", myIsLeaveConflicts, true);
+                        textStatus = adminArea.mergeText(name, adminArea.getFile(basePath), adminArea.getFile(tmpPath), "", "", "", myIsLeaveConflicts, true);
                     } finally {
                         if (magicPropsChanged && 
                                 (modifiedProps.containsKey(SVNProperty.EOL_STYLE) || modifiedProps.containsKey(SVNProperty.KEYWORDS))) {

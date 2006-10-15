@@ -21,8 +21,11 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
+import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.ISVNDiffStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
+import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNDiffStatus;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -39,6 +42,15 @@ public class DiffCommand extends SVNCommand implements ISVNDiffStatusHandler {
         myOut = out;
         boolean error = false;
         SVNDiffClient differ = getClientManager().getDiffClient();
+        if (getCommandLine().hasArgument(SVNArgument.EXTENSIONS)) {
+            SVNDiffOptions diffOptions = new SVNDiffOptions(getCommandLine().hasArgument(SVNArgument.IGNORE_ALL_WS),
+                    getCommandLine().hasArgument(SVNArgument.IGNORE_WS_CHANGE), 
+                    getCommandLine().hasArgument(SVNArgument.IGNORE_EOL_STYLE));
+            ISVNDiffGenerator generator = differ.getDiffGenerator();
+            if (generator instanceof DefaultSVNDiffGenerator) {
+                ((DefaultSVNDiffGenerator) generator).setDiffOptions(diffOptions);
+            }
+        }
         File userDir = new File(".").getAbsoluteFile().getParentFile();
         differ.getDiffGenerator().setBasePath(userDir);
 

@@ -55,6 +55,7 @@ public class SVNCommitItem {
     private boolean myIsLocked;
     private String myPath;
     private SVNWCAccess2 myWCAccess;
+    private SVNRevision myCopyFromRevision;
     
     /**
      * Constructs and initializes an <b>SVNCommitItem</b> object.
@@ -86,10 +87,11 @@ public class SVNCommitItem {
      *                              <span class="javakeyword">false</span>
      */
     public SVNCommitItem(File file, SVNURL URL, SVNURL copyFromURL,
-            SVNNodeKind kind, SVNRevision revision, boolean isAdded,
-            boolean isDeleted, boolean isPropertiesModified,
+            SVNNodeKind kind, SVNRevision revision, SVNRevision copyFromRevision,
+            boolean isAdded, boolean isDeleted, boolean isPropertiesModified,
             boolean isContentsModified, boolean isCopied, boolean locked) {
         myRevision = revision == null ? SVNRevision.UNDEFINED : revision;
+        myCopyFromRevision = copyFromRevision == null ? SVNRevision.UNDEFINED : copyFromRevision;
         myFile = file;
         myURL = URL;
         myCopyFromURL = copyFromURL;
@@ -110,6 +112,10 @@ public class SVNCommitItem {
      */
     public SVNRevision getRevision() {
         return myRevision;
+    }
+
+    public SVNRevision getCopyFromRevision() {
+        return myCopyFromRevision;
     }
     
     /**

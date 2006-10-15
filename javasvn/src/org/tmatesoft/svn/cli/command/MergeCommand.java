@@ -38,17 +38,27 @@ public class MergeCommand extends SVNCommand {
         getClientManager().setEventHandler(new SVNCommandEventProcessor(out, err, false, false));
         SVNDiffClient differ = getClientManager().getDiffClient();
         
-        if (getCommandLine().hasArgument(SVNArgument.REVISION)) {
+        if (getCommandLine().hasArgument(SVNArgument.REVISION) || getCommandLine().hasArgument(SVNArgument.CHANGE)) {
             // merge -rN:M urlOrPath@r wcPath
             SVNRevision rN = SVNRevision.UNDEFINED;
             SVNRevision rM = SVNRevision.UNDEFINED;
             String revStr = (String) getCommandLine().getArgumentValue(SVNArgument.REVISION);
-            if (revStr.indexOf(':') <= 0) {
+            if (revStr == null && getCommandLine().hasArgument(SVNArgument.CHANGE)) {
+                long changeRev = Long.parseLong((String) getCommandLine().getArgumentValue(SVNArgument.CHANGE));
+                if (changeRev >= 0) {
+                    rM = SVNRevision.create(changeRev);
+                    rN = SVNRevision.create(changeRev - 1);
+                } else {
+                    rN = SVNRevision.create(-changeRev);
+                    rM = SVNRevision.create((-changeRev) - 1);
+                }
+            }else if (revStr.indexOf(':') <= 0) {
                 println(err, "svn: merge needs both source and target revisions to be specified");
                 return;
+            } else {
+                rN = SVNRevision.parse(revStr.substring(0, revStr.indexOf(':')));
+                rM = SVNRevision.parse(revStr.substring(revStr.indexOf(':') + 1));
             }
-            rN = SVNRevision.parse(revStr.substring(0, revStr.indexOf(':')));
-            rM = SVNRevision.parse(revStr.substring(revStr.indexOf(':') + 1));
             if (!rN.isValid() || !rM.isValid() || rN == SVNRevision.WORKING || rM == SVNRevision.WORKING) {
                 println(err, "svn: merge needs both source and target revisions to be specified");
                 return;

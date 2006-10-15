@@ -69,6 +69,8 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  */
 public class SVNLogClient extends SVNBasicClient {
 
+    private SVNDiffOptions myDiffOptions;
+
     /**
      * Constructs and initializes an <b>SVNLogClient</b> object
      * with the specified run-time configuration and authentication 
@@ -99,6 +101,18 @@ public class SVNLogClient extends SVNBasicClient {
     protected SVNLogClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
         super(repositoryPool, options);
     }
+    
+    public void setDiffOptions(SVNDiffOptions diffOptions) {
+        myDiffOptions = diffOptions;
+    }
+
+    public SVNDiffOptions getDiffOptions() {
+        if (myDiffOptions == null) {
+            myDiffOptions = new SVNDiffOptions();
+        }
+        return myDiffOptions;
+    }
+
     
     /**
      * Obtains annotation information for each file text line from a repository
@@ -189,7 +203,7 @@ public class SVNLogClient extends SVNBasicClient {
 	}
 
     private void doAnnotate(String path, long startRev, File tmpFile, SVNRepository repos, long endRev, boolean force, ISVNAnnotateHandler handler, String inputEncoding) throws SVNException {
-        SVNAnnotationGenerator generator = new SVNAnnotationGenerator(path, tmpFile, startRev, force, this);
+        SVNAnnotationGenerator generator = new SVNAnnotationGenerator(path, tmpFile, startRev, force, getDiffOptions(), this);
         try {
             repos.getFileRevisions("", startRev > 0 ? startRev - 1 : startRev, endRev, generator);
             generator.reportAnnotations(handler, inputEncoding);

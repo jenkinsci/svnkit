@@ -284,13 +284,14 @@ public class SVNAdminArea14 extends SVNAdminArea {
             return props.asMap();
         } 
             
-        Map basePropsCache = getBasePropertiesStorage(false);
+        Map basePropsCache = getBasePropertiesStorage(true);
         if (basePropsCache != null ) {
             SVNVersionedProperties baseProps = (SVNVersionedProperties) basePropsCache.get(name);
             if (baseProps != null) {
                 return baseProps.asMap();
             }
-        } else if (hasProperties(name)) {
+        } 
+        if (hasProperties(name)) {
             return readBaseProperties(name);
         }        
         return new HashMap();

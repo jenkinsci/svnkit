@@ -29,9 +29,14 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
 public abstract class AbstractDiffCallback {
     
     private SVNAdminAreaInfo myAdminInfo;
+    private File myBasePath;
     
     protected AbstractDiffCallback(SVNAdminAreaInfo info) {
         myAdminInfo = info;
+    }
+    
+    public void setBasePath(File path) {
+        myBasePath = path;
     }
     
     public abstract boolean isDiffUnversioned();
@@ -54,6 +59,12 @@ public abstract class AbstractDiffCallback {
     public abstract SVNStatusType directoryDeleted(String path) throws SVNException;
     
     protected String getDisplayPath(String path) {
+        if (myAdminInfo == null) {
+            if (myBasePath != null) {
+                return new File(myBasePath, path).getAbsolutePath().replace(File.separatorChar, '/');
+            }
+            return path.replace(File.separatorChar, '/');
+        }
         return myAdminInfo.getAnchor().getFile(path).getAbsolutePath().replace(File.separatorChar, '/');
     }
     

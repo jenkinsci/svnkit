@@ -238,7 +238,8 @@ public class SVNCommitClient extends SVNBasicClient {
         for (int i = 0; i < commitItems.length; i++) {
             String path = (String) paths.get(i);
             commitItems[i] = new SVNCommitItem(null, rootURL.appendPath(path, true),
-                    null, SVNNodeKind.NONE, SVNRevision.UNDEFINED, false, true, false, false, false, false);
+                    null, SVNNodeKind.NONE, SVNRevision.UNDEFINED, SVNRevision.UNDEFINED, 
+                    false, true, false, false, false, false);
         }
         commitMessage = getCommitHandler().getCommitMessage(commitMessage, commitItems);
         if (commitMessage == null) {
@@ -331,7 +332,8 @@ public class SVNCommitClient extends SVNBasicClient {
         for (int i = 0; i < commitItems.length; i++) {
             String path = (String) paths.get(i);
             commitItems[i] = new SVNCommitItem(null, rootURL.appendPath(path, true),
-                    null, SVNNodeKind.DIR, SVNRevision.UNDEFINED, true, false, false, false, false, false);
+                    null, SVNNodeKind.DIR, SVNRevision.UNDEFINED, SVNRevision.UNDEFINED,
+                    true, false, false, false, false, false);
         }
         commitMessage = getCommitHandler().getCommitMessage(commitMessage, commitItems);
         if (commitMessage == null) {
@@ -458,7 +460,8 @@ public class SVNCommitClient extends SVNBasicClient {
             SVNErrorManager.error(err);
         }
         SVNCommitItem[] items = new SVNCommitItem[1];
-        items[0] = new SVNCommitItem(path, dstURL, null, srcKind == SVNFileType.DIRECTORY ? SVNNodeKind.DIR : SVNNodeKind.FILE, SVNRevision.UNDEFINED, 
+        items[0] = new SVNCommitItem(path, dstURL, null, srcKind == SVNFileType.DIRECTORY ? SVNNodeKind.DIR : 
+                        SVNNodeKind.FILE, SVNRevision.UNDEFINED, SVNRevision.UNDEFINED,  
                         true, false, false, false, false, false);
         commitMessage = getCommitHandler().getCommitMessage(commitMessage, items);
         if (commitMessage == null) {

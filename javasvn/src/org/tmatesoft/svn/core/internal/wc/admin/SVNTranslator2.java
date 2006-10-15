@@ -52,8 +52,12 @@ public class SVNTranslator2 {
     
     public static void translate(SVNAdminArea adminArea, String name, String srcPath,
             String dstPath, boolean expand, boolean safe) throws SVNException {
-        File src = adminArea.getFile(srcPath);
-        File dst = safe ? SVNFileUtil.createUniqueFile(adminArea.getRoot(), dstPath, ".tmp") : adminArea.getFile(dstPath);
+        translate(adminArea, name, adminArea.getFile(srcPath), adminArea.getFile(dstPath), expand, safe);
+    }
+    public static void translate(SVNAdminArea adminArea, String name, File src,
+            File dst, boolean expand, boolean safe) throws SVNException {
+        safe = false;
+        File dst2 = safe ? SVNFileUtil.createUniqueFile(adminArea.getRoot(), dst.getName(), ".tmp") : dst;
         
         SVNVersionedProperties props = adminArea.getProperties(name);
         String keywords = props.getPropertyValue(SVNProperty.KEYWORDS);
@@ -78,10 +82,10 @@ public class SVNTranslator2 {
         } else {
             eols = getWorkingEOL(eolStyle);
         }
-        translate(src, dst, eols, keywordsMap, special, expand);
+        translate(src, dst2, eols, keywordsMap, special, expand);
         if (safe) {
             try {
-                SVNFileUtil.rename(dst, adminArea.getFile(dstPath));
+                SVNFileUtil.rename(dst2, dst);
             } finally {
                 dst.delete();
             }

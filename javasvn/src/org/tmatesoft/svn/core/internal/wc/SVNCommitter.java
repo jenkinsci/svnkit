@@ -92,7 +92,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
             wcAccess.handleEvent(event, ISVNEventHandler.UNKNOWN);
         }
         long rev = item.getRevision().getNumber();
-        long cfRev = item.getCopyFromURL() != null ? rev : -1;
+        long cfRev = item.getCopyFromRevision().getNumber();//item.getCopyFromURL() != null ? rev : -1;
         if (item.isDeleted()) {
             commitEditor.deleteEntry(commitPath, rev);
         }

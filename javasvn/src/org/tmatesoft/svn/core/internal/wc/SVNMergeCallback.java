@@ -15,13 +15,21 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc.admin.ISVNLog;
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 
 /**
@@ -31,9 +39,17 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
 public class SVNMergeCallback extends AbstractDiffCallback {
 
     private boolean myIsDryRun;
+    private SVNURL myURL;
 
-    protected SVNMergeCallback(SVNAdminAreaInfo info) {
+    private boolean myIsAddNecessitatedMerge;
+    private String myAddedPath = null;
+    private boolean myIsForce;
+    
+    public SVNMergeCallback(SVNAdminAreaInfo info, SVNURL url, boolean force, boolean dryRun) {
         super(info);
+        myURL = url;
+        myIsDryRun = dryRun;
+        myIsForce = force;
     }
 
     public File createTempDirectory() throws SVNException {
@@ -50,59 +66,279 @@ public class SVNMergeCallback extends AbstractDiffCallback {
         if (regularProps.isEmpty()) {
             return SVNStatusType.UNCHANGED;
         }
-        File file = getFile(path);
-        SVNEntry2 entry = null;
         try {
-            entry = getWCAccess().getEntry(file, false);
+            File file = getFile(path);
+            SVNDebugLog.getDefaultLog().info("merging: " + originalProperties + " " + regularProps);
+            SVNStatusType result = SVNPropertiesManager.mergeProperties(getWCAccess(), file, originalProperties, regularProps, false, myIsDryRun);
+            SVNDebugLog.getDefaultLog().info("merged:  " + result.getID());
+            return result;
         } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.UNVERSIONED_RESOURCE ||
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.UNVERSIONED_RESOURCE || 
                     e.getErrorMessage().getErrorCode() == SVNErrorCode.ENTRY_NOT_FOUND) {
                 return SVNStatusType.MISSING;
             }
             throw e;
         }
-        if (entry == null) {
+    }
+
+    public SVNStatusType directoryAdded(String path, long revision) throws SVNException {
+        File mergedFile = getFile(path);
+        SVNAdminArea dir = retrieve(mergedFile.getParentFile(), true);
+        if (dir == null) {
+            if (myIsDryRun && myAddedPath != null && SVNPathUtil.isAncestor(myAddedPath, path)) {
+                return SVNStatusType.CHANGED;
+            } 
             return SVNStatusType.MISSING;
         }
-        SVNAdminArea dir = getWCAccess().probeRetrieve(file);
-        String name = file.getName();
-        if (entry.isDirectory()) {
-            name = "";
+        
+        SVNURL copyFromURL = myURL.appendPath(path, false);
+        // TODO protocol
+        SVNFileType fileType = SVNFileType.getType(mergedFile);
+        if (fileType == SVNFileType.NONE) {
+            SVNEntry2 entry = getWCAccess().getEntry(mergedFile, false);
+            if (entry != null && !entry.isScheduledForDeletion()) {
+                return SVNStatusType.OBSTRUCTED;
+            }
+            if (!myIsDryRun) {
+                if (!mergedFile.mkdirs()) {
+                    if (SVNFileType.getType(mergedFile) != SVNFileType.DIRECTORY) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create directory ''{0}''", mergedFile);
+                        SVNErrorManager.error(err);
+                    }
+                }
+                ISVNEventHandler oldEventHandler = dir.getWCAccess().getEventHandler();
+                dir.getWCAccess().setEventHandler(null);                
+                SVNWCManager.add(mergedFile, dir, copyFromURL, revision);
+                dir.getWCAccess().setEventHandler(oldEventHandler);
+            }
+            if (myIsDryRun) {
+                myAddedPath = path;
+            }
+            return SVNStatusType.CHANGED;
+        } else if (fileType == SVNFileType.DIRECTORY) {
+            SVNEntry2 entry = getWCAccess().getEntry(mergedFile, false);
+            if (entry == null || entry.isScheduledForDeletion()) {
+                if (!myIsDryRun) {
+                    ISVNEventHandler oldEventHandler = dir.getWCAccess().getEventHandler();
+                    dir.getWCAccess().setEventHandler(null);                
+                    SVNWCManager.add(mergedFile, dir, copyFromURL, revision);
+                    dir.getWCAccess().setEventHandler(oldEventHandler);
+                }
+                if (myIsDryRun) {
+                    myAddedPath = path;
+                }
+                return SVNStatusType.CHANGED;
+            }
+            return SVNStatusType.OBSTRUCTED;
+        } else if (fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) {
+            if (myIsDryRun) {
+                myAddedPath = null;
+            }
+            return SVNStatusType.OBSTRUCTED;
         }
-        ISVNLog log = null;
-        if (!myIsDryRun) {
-            log = dir.getLog();
+        if (myIsDryRun) {
+            myAddedPath = null;
         }
-        SVNStatusType result = dir.mergeProperties(name, originalProperties, diff, false, myIsDryRun, log);
-        if (!myIsDryRun) {
-            log.save();
-            dir.runLogs();
+        return SVNStatusType.UNKNOWN;
+    }
+
+    public SVNStatusType directoryDeleted(final String path) throws SVNException {
+        final File mergedFile = getFile(path);
+        final SVNAdminArea dir = retrieve(mergedFile.getParentFile(), true);
+        if (dir == null) {
+            return SVNStatusType.MISSING;
+        }
+        SVNFileType fileType = SVNFileType.getType(mergedFile);
+        if (fileType == SVNFileType.DIRECTORY) {
+            final ISVNEventHandler oldEventHandler = getWCAccess().getEventHandler();            
+            ISVNEventHandler handler = new ISVNEventHandler() {
+                public void checkCancelled() throws SVNCancelException {
+                    oldEventHandler.checkCancelled();
+                }
+                public void handleEvent(SVNEvent event, double progress) throws SVNException {
+                    if (event.getFile().equals(mergedFile)) {
+                        return;
+                    }
+                    if (event.getAction() == SVNEventAction.DELETE) {
+                        event = SVNEventFactory.createMergeEvent(getAdminInfo(), event.getFile(), 
+                                SVNEventAction.UPDATE_DELETE, SVNEventAction.UPDATE_DELETE, 
+                                SVNStatusType.UNKNOWN, SVNStatusType.UNKNOWN, event.getNodeKind());
+                    }
+                    oldEventHandler.handleEvent(event, progress);
+                }
+            };
+            getWCAccess().setEventHandler(handler);
+            try {
+                delete(mergedFile, myIsForce, myIsDryRun);
+            } catch (SVNException e) {
+                return SVNStatusType.OBSTRUCTED;
+            } finally {
+                getWCAccess().setEventHandler(oldEventHandler);
+            }
+            return SVNStatusType.CHANGED;
+        } else if (fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) {
+            return SVNStatusType.OBSTRUCTED;
+        } else if (fileType == SVNFileType.NONE) {
+            return SVNStatusType.MISSING;
+        }
+        
+        return SVNStatusType.UNKNOWN;
+    }
+
+    public SVNStatusType[] fileChanged(String path, File file1, File file2, long revision1, long revision2, String mimeType1, String mimeType2, Map originalProperties, Map diff) throws SVNException {
+        boolean needsMerge = true;
+        File mergedFile = getFile(path);
+        SVNAdminArea dir = retrieve(mergedFile.getParentFile(), myIsDryRun);
+        if (dir == null) {
+            return new SVNStatusType[] {SVNStatusType.MISSING, SVNStatusType.MISSING};
+        }
+        SVNStatusType[] result = new SVNStatusType[] {SVNStatusType.UNCHANGED, SVNStatusType.UNCHANGED};
+        SVNEntry2 entry = getWCAccess().getEntry(mergedFile, false);
+        SVNFileType fileType = null;
+        if (entry != null) {
+            fileType = SVNFileType.getType(mergedFile);
+        }
+        if (entry == null || fileType != SVNFileType.FILE) {
+            return new SVNStatusType[] {SVNStatusType.MISSING, SVNStatusType.MISSING};
+        }
+        if (diff != null && !diff.isEmpty()) {
+            result[1] = propertiesChanged(path, originalProperties, diff);
+            SVNDebugLog.getDefaultLog().info("prop merge result: " + result[1]);
+        } 
+        String name = mergedFile.getName();
+        if (file1 != null) {
+            boolean textModified = dir.hasTextModifications(name, false);
+            if (!textModified && 
+                    (SVNProperty.isBinaryMimeType(mimeType1) || SVNProperty.isBinaryMimeType(mimeType2))) {
+                boolean same = SVNFileUtil.compareFiles(!myIsAddNecessitatedMerge ? file1 : file2, mergedFile, null);
+                if (same) {
+                    if (!myIsDryRun && !myIsAddNecessitatedMerge) {
+                        SVNFileUtil.rename(file2, mergedFile);
+                    }
+                    result[0] = SVNStatusType.CHANGED;
+                    needsMerge = false;
+                }
+            }
+            if (needsMerge) {
+                String localLabel = ".working";
+                String baseLabel = ".merge-left.r" + revision1;
+                String latestLabel = ".merge-right.r" + revision2;
+                SVNDebugLog.getDefaultLog().info("merging: " + name + " from " + file1 + " and " + file2);
+                SVNStatusType mergeResult = dir.mergeText(name, file1, file2, localLabel, baseLabel, latestLabel, false, myIsDryRun);
+                SVNDebugLog.getDefaultLog().info("merged: " + mergeResult + " (" + myIsDryRun + ")");
+                if (mergeResult == SVNStatusType.CONFLICTED || mergeResult == SVNStatusType.CONFLICTED_UNRESOLVED) {
+                    result[0] = mergeResult;
+                } else if (textModified) {
+                    result[0] = SVNStatusType.MERGED;
+                } else if (mergeResult == SVNStatusType.MERGED) {
+                    result[0] = SVNStatusType.CHANGED;
+                } else {
+                    result[0] = SVNStatusType.UNCHANGED;
+                }
+            }
+        } else {
+            SVNDebugLog.getDefaultLog().info("no file for merge: " + mergedFile);
+        }
+        return result;
+    }
+    public SVNStatusType[] fileAdded(String path, File file1, File file2, long revision1, long revision2, String mimeType1, String mimeType2, Map originalProperties, Map diff) throws SVNException {
+        SVNStatusType[] result = new SVNStatusType[] {null, SVNStatusType.UNKNOWN};
+        
+        File mergedFile = getFile(path);
+        SVNAdminArea dir = retrieve(mergedFile.getParentFile(), true);
+        if (dir == null) {
+            if (myIsDryRun && myAddedPath != null && SVNPathUtil.isAncestor(myAddedPath, path)) {
+                result[0] = SVNStatusType.CHANGED;
+                result[1] = SVNStatusType.CHANGED;
+            } else {
+                result[0] = SVNStatusType.MISSING;
+            }
+            return result;
+        }
+        
+        SVNFileType fileType = SVNFileType.getType(mergedFile);
+        if (fileType == SVNFileType.NONE) {
+            SVNEntry2 entry = getWCAccess().getEntry(mergedFile, false);
+            if (entry != null && !entry.isScheduledForDeletion()) {
+                result[0] = SVNStatusType.OBSTRUCTED;
+                return result;
+            }
+            if (!myIsDryRun) {
+                SVNURL copyFromURL = myURL.appendPath(path, false);
+                // TODO compare protocols with dir one.
+                SVNWCManager.addRepositoryFile(dir, mergedFile.getName(), null, file2, null, diff, copyFromURL.toString(), revision2);
+            }
+            result[0] = SVNStatusType.CHANGED;
+            if (diff != null && !diff.isEmpty()) {
+                result[1] = SVNStatusType.CHANGED;
+            }
+        } else if (fileType == SVNFileType.DIRECTORY || fileType == SVNFileType.SYMLINK) {
+            result[0] = SVNStatusType.OBSTRUCTED;
+        } else if (fileType == SVNFileType.FILE) {
+            SVNEntry2 entry = getWCAccess().getEntry(mergedFile, false);
+            if (entry == null || entry.isScheduledForDeletion()) {
+                result[0] = SVNStatusType.OBSTRUCTED;
+            } else {
+                myIsAddNecessitatedMerge = true;
+                fileChanged(path, file1, file2, revision1, revision2, mimeType1, mimeType2, originalProperties, diff);
+                myIsAddNecessitatedMerge = false;
+            }
         }
         return result;
     }
 
-    public SVNStatusType directoryAdded(String path, long revision) throws SVNException {
-        return null;
-    }
-
-    public SVNStatusType directoryDeleted(String path) throws SVNException {
-        return null;
-    }
-
-    public SVNStatusType[] fileAdded(String path, File file1, File file2, long revision1, long revision2, String mimeType1, String mimeType2, Map originalProperties, Map diff) throws SVNException {
-        return null;
-    }
-
-    public SVNStatusType[] fileChanged(String path, File file1, File file2, long revision1, long revision2, String mimeType1, String mimeType2, Map originalProperties, Map diff) throws SVNException {
-        return null;
-    }
-
     public SVNStatusType fileDeleted(String path, File file1, File file2, String mimeType1, String mimeType2, Map originalProperties) throws SVNException {
-        return null;
+        File mergedFile = getFile(path);
+        SVNAdminArea dir = retrieve(mergedFile.getParentFile(), true);
+        if (dir == null) {
+            return SVNStatusType.MISSING;
+        }
+        SVNFileType fileType = SVNFileType.getType(mergedFile);
+        if (fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) {
+            ISVNEventHandler oldEventHandler = getWCAccess().getEventHandler();
+            getWCAccess().setEventHandler(null);
+            try {
+                delete(mergedFile, myIsForce, myIsDryRun);
+            } catch (SVNException e) {
+                return SVNStatusType.OBSTRUCTED;
+            } finally {
+                getWCAccess().setEventHandler(oldEventHandler);
+            }
+            return SVNStatusType.CHANGED;
+        } else if (fileType == SVNFileType.DIRECTORY) {
+            return SVNStatusType.OBSTRUCTED;
+        } else if (fileType == SVNFileType.NONE) {
+            return SVNStatusType.MISSING;
+        }
+        return SVNStatusType.UNKNOWN;
     }
     
     protected File getFile(String path) {
-        return getAdminInfo().getAnchor().getFile(path);
+        return getAdminInfo().getTarget().getFile(path);
+    }
+    
+    protected SVNAdminArea retrieve(File path, boolean lenient) throws SVNException {
+        if (getAdminInfo() == null) {
+            return null;
+        }
+        try {
+            return getAdminInfo().getWCAccess().retrieve(path);
+        } catch (SVNException e) {
+            if (lenient) {
+                return null;
+            }
+            throw e;
+        }
+    }
+    
+    protected void delete(File path, boolean force, boolean dryRun) throws SVNException {
+        if (!force) {
+            SVNWCManager.canDelete(path, false, getWCAccess().getOptions());
+        }
+        SVNAdminArea root = getWCAccess().retrieve(path.getParentFile()); 
+        if (!dryRun) {
+            SVNWCManager.delete(getWCAccess(), root, path, true);
+        }
     }
 
 }

@@ -643,7 +643,7 @@ public class SVNCommitUtil {
                 || commitCopy || commitLock) {
             SVNCommitItem item = new SVNCommitItem(path, 
                     SVNURL.parseURIEncoded(url), cfURL != null ? SVNURL.parseURIEncoded(cfURL) : null, entry.getKind(), 
-                    cfURL != null ? SVNRevision.create(cfRevision) : SVNRevision.create(entry.getRevision()), 
+                    SVNRevision.create(entry.getRevision()), SVNRevision.create(cfRevision), 
                     commitAddition, commitDeletion, propsModified, textModified, commitCopy,
                     commitLock);
             String itemPath = dir.getRelativePath(dir.getWCAccess().retrieve(dir.getWCAccess().getAnchor()));
@@ -689,7 +689,7 @@ public class SVNCommitUtil {
                         if (currentType == SVNFileType.NONE && currentEntry.isScheduledForDeletion()) {
                             SVNCommitItem item = new SVNCommitItem(currentFile,
                                     SVNURL.parseURIEncoded(currentURL), null, currentEntry.getKind(),
-                                    SVNRevision.UNDEFINED, false, true, false,
+                                    SVNRevision.UNDEFINED, SVNRevision.UNDEFINED, false, true, false,
                                     false, false, false);
                             String dirPath = dir.getRelativePath(dir.getWCAccess().retrieve(dir.getWCAccess().getAnchor()));
                             item.setPath(SVNPathUtil.append(dirPath, currentEntry.getName()));
@@ -706,7 +706,7 @@ public class SVNCommitUtil {
                             if (action == ISVNCommitParameters.DELETE) {
                                 SVNCommitItem item = new SVNCommitItem(currentFile,
                                         SVNURL.parseURIEncoded(currentURL), null, currentEntry.getKind(),
-                                        SVNRevision.UNDEFINED, false, true, false,
+                                        SVNRevision.UNDEFINED, SVNRevision.UNDEFINED, false, true, false,
                                         false, false, false);
                                 String dirPath = dir.getRelativePath(dir.getWCAccess().retrieve(dir.getWCAccess().getAnchor()));
                                 item.setPath(SVNPathUtil.append(dirPath, currentEntry.getName()));

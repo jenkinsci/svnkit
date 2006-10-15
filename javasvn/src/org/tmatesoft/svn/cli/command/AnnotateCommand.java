@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
+import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.xml.AbstractXMLHandler;
@@ -39,6 +40,12 @@ public class AnnotateCommand extends SVNCommand implements ISVNAnnotateHandler {
 
     public void run(PrintStream out, PrintStream err) throws SVNException {
         SVNLogClient logClient = getClientManager().getLogClient();
+        if (getCommandLine().hasArgument(SVNArgument.EXTENSIONS)) {
+            SVNDiffOptions diffOptions = new SVNDiffOptions(getCommandLine().hasArgument(SVNArgument.IGNORE_ALL_WS),
+                    getCommandLine().hasArgument(SVNArgument.IGNORE_WS_CHANGE), 
+                    getCommandLine().hasArgument(SVNArgument.IGNORE_EOL_STYLE));
+            logClient.setDiffOptions(diffOptions);
+        }
         myIsVerbose = getCommandLine().hasArgument(SVNArgument.VERBOSE);
         myPrintStream = out;
         SVNRevision startRevision = SVNRevision.UNDEFINED;

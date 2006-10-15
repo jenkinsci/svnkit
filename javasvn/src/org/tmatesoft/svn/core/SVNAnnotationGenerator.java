@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
@@ -38,6 +39,12 @@ import de.regnis.q.sequence.QSequenceDifferenceBlock;
 import de.regnis.q.sequence.line.QSequenceLineMedia;
 import de.regnis.q.sequence.line.QSequenceLineRAFileData;
 import de.regnis.q.sequence.line.QSequenceLineResult;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineDummySimplifier;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineEOLSkippingSimplifier;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineSimplifier;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineTeeSimplifier;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineWhiteSpaceReducingSimplifier;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineWhiteSpaceSkippingSimplifier;
 
 
 /**
@@ -95,6 +102,8 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
     private ISVNEventHandler myCancelBaton;
     private long myStartRevision;
     private boolean myIsForce;
+    private SVNDiffOptions myDiffOptions;
+    private QSequenceLineSimplifier mySimplifier;
     
     /**
      * Constructs an annotation generator object. A user may want to have
@@ -112,7 +121,12 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         this(path, tmpDirectory, startRevision, false, cancelBaton);
         
     }
+    
     public SVNAnnotationGenerator(String path, File tmpDirectory, long startRevision, boolean force, ISVNEventHandler cancelBaton) {
+        this(path, tmpDirectory, startRevision, force, new SVNDiffOptions(), cancelBaton);
+    }
+
+    public SVNAnnotationGenerator(String path, File tmpDirectory, long startRevision, boolean force, SVNDiffOptions diffOptions, ISVNEventHandler cancelBaton) {
         myTmpDirectory = tmpDirectory;
         myCancelBaton = cancelBaton;
         myPath = path;
@@ -123,7 +137,9 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         myLines = new ArrayList();
         myDeltaProcessor = new SVNDeltaProcessor();
         myStartRevision = startRevision;
+        myDiffOptions = diffOptions;
     }
+    
     
     /**
      * 
@@ -197,7 +213,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             ArrayList newLines = new ArrayList();
             int lastStart = 0;
 
-            final QSequenceLineResult result = QSequenceLineMedia.createBlocks(new QSequenceLineRAFileData(left), new QSequenceLineRAFileData(right));
+            final QSequenceLineResult result = QSequenceLineMedia.createBlocks(new QSequenceLineRAFileData(left), new QSequenceLineRAFileData(right), createSimplifier());
             try {
                 List blocksList = result.getBlocks();
                 for(int i = 0; i < blocksList.size(); i++) {
@@ -297,6 +313,22 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             myPreviousFile.delete();
         }
     }
+    
+    private QSequenceLineSimplifier createSimplifier() {
+        if (mySimplifier == null) {
+            QSequenceLineSimplifier first = myDiffOptions.isIgnoreEOLStyle() ? 
+                    (QSequenceLineSimplifier) new QSequenceLineEOLSkippingSimplifier() : 
+                    (QSequenceLineSimplifier) new QSequenceLineDummySimplifier();
+            QSequenceLineSimplifier second = new QSequenceLineDummySimplifier();
+            if (myDiffOptions.isIgnoreAllWhitespace()) {
+                second = new QSequenceLineWhiteSpaceSkippingSimplifier();
+            } else if (myDiffOptions.isIgnoreAmountOfWhitespace()) {
+                second = new QSequenceLineWhiteSpaceReducingSimplifier();
+            }
+            mySimplifier = new QSequenceLineTeeSimplifier(first, second);
+        }
+        return mySimplifier;
+    }
 
     private static class LineInfo {
         public byte[] line;
@@ -304,4 +336,6 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         public String author;
         public Date date;
     }
+    
+    
 }

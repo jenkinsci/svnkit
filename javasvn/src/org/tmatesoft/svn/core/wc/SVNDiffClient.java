@@ -34,8 +34,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNDiffStatusEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNMergeEditor;
-import org.tmatesoft.svn.core.internal.wc.SVNMerger;
+import org.tmatesoft.svn.core.internal.wc.SVNMergeCallback;
 import org.tmatesoft.svn.core.internal.wc.SVNRemoteDiffEditor;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
@@ -75,6 +74,7 @@ import org.tmatesoft.svn.util.SVNDebugLog;
 public class SVNDiffClient extends SVNBasicClient {
 
     private ISVNDiffGenerator myDiffGenerator;
+
     /**
      * Constructs and initializes an <b>SVNDiffClient</b> object
      * with the specified run-time configuration and authentication 
@@ -700,10 +700,11 @@ public class SVNDiffClient extends SVNBasicClient {
             repository1 = createRepository(url1, true);
         }
         repository2 = createRepository(url1, false); 
-        File tmpFile = getDiffGenerator().createTempDirectory();
+        SVNRemoteDiffEditor editor = null;
         try {
-            String baseDisplayPath = basePath != null ? basePath.getAbsolutePath().replace(File.separatorChar, '/') : "";
-            SVNRemoteDiffEditor editor = new SVNRemoteDiffEditor(baseDisplayPath, tmpFile, getDiffGenerator(), repository2, rev1, result, this);
+            SVNDiffCallback callback = new SVNDiffCallback(null, getDiffGenerator(), rev1, rev2, result);
+            callback.setBasePath(basePath);
+            editor = new SVNRemoteDiffEditor(null, null, callback, repository2, rev1, rev2, false, null, this);
             ISVNReporterBaton reporter = new ISVNReporterBaton() {
                 public void report(ISVNReporter reporter) throws SVNException {
                     reporter.setPath("", null, rev1, false);
@@ -712,8 +713,8 @@ public class SVNDiffClient extends SVNBasicClient {
             };
             repository1.diff(url2, rev2, rev1, target1, !useAncestry, recursive, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
         } finally {
-            if (tmpFile != null) {
-                SVNFileUtil.deleteAll(tmpFile, true, null);
+            if (editor != null) {
+                editor.cleanup();
             }
         }
     }
@@ -851,6 +852,7 @@ public class SVNDiffClient extends SVNBasicClient {
         }
         SVNWCAccess2 wcAccess = createWCAccess();
         try {
+            dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath()));
             SVNAdminAreaInfo info = wcAccess.openAnchor(dstPath, !dryRun, recusrsive ? SVNWCAccess2.INFINITE_DEPTH : 0);
             
             SVNEntry2 targetEntry = wcAccess.getEntry(dstPath, false);
@@ -922,6 +924,7 @@ public class SVNDiffClient extends SVNBasicClient {
         }
         SVNWCAccess2 wcAccess = createWCAccess();
         try {
+            dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath()));
             SVNAdminAreaInfo info = wcAccess.openAnchor(dstPath, !dryRun, recusrsive ? SVNWCAccess2.INFINITE_DEPTH : 0);
             
             SVNEntry2 targetEntry = wcAccess.getEntry(dstPath, false);
@@ -992,6 +995,7 @@ public class SVNDiffClient extends SVNBasicClient {
         }
         SVNWCAccess2 wcAccess = createWCAccess();
         try {
+            dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath()));
             SVNAdminAreaInfo info = wcAccess.openAnchor(dstPath, !dryRun, recusrsive ? SVNWCAccess2.INFINITE_DEPTH : 0);
             
             SVNEntry2 targetEntry = wcAccess.getEntry(dstPath, false);
@@ -1060,6 +1064,7 @@ public class SVNDiffClient extends SVNBasicClient {
         }
         SVNWCAccess2 wcAccess = createWCAccess();
         try {
+            dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath()));
             SVNAdminAreaInfo info = wcAccess.openAnchor(dstPath, !dryRun, recusrsive ? SVNWCAccess2.INFINITE_DEPTH : 0);
             SVNEntry2 targetEntry = wcAccess.getEntry(dstPath, false);
             
@@ -1128,6 +1133,7 @@ public class SVNDiffClient extends SVNBasicClient {
             pegRevision = SVNRevision.HEAD;
         }
         SVNWCAccess2 wcAccess = createWCAccess();
+        dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath()));
         try {
             SVNAdminAreaInfo info = wcAccess.openAnchor(dstPath, !dryRun, recusrsive ? SVNWCAccess2.INFINITE_DEPTH : 0);
             
@@ -1208,6 +1214,7 @@ public class SVNDiffClient extends SVNBasicClient {
         }
         SVNWCAccess2 wcAccess = createWCAccess();
         try {
+            dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath()));
             SVNAdminAreaInfo info = wcAccess.openAnchor(dstPath, !dryRun, recusrsive ? SVNWCAccess2.INFINITE_DEPTH : 0);
             
             SVNEntry2 targetEntry = wcAccess.getEntry(dstPath, false);
@@ -1245,22 +1252,25 @@ public class SVNDiffClient extends SVNBasicClient {
         long rev2 = getRevisionNumber(revision2, repository1, path2);
         SVNRepository repository2 = createRepository(url1, false);
         
-        SVNMerger merger = new SVNMerger(info, url2.toString(), rev2, force, dryRun, isLeaveConflictsUnresolved(), getDebugLog());
-        SVNMergeEditor mergeEditor = new SVNMergeEditor(info.getWCAccess(), info, repository2, rev1, rev2, merger, this);
+        SVNMergeCallback callback = new SVNMergeCallback(info, url2, force, dryRun);
+        SVNRemoteDiffEditor editor = new SVNRemoteDiffEditor(info, info.getTarget().getRoot(), callback, repository2, rev1, rev2, dryRun, this, this);
         
-        repository1.diff(url2, rev2, rev1, null, !useAncestry, recursive,
-                new ISVNReporterBaton() {
-                    public void report(ISVNReporter reporter) throws SVNException {
-                        reporter.setPath("", null, rev1, false);
-                        reporter.finishReport();
-                    }
-                }, SVNCancellableEditor.newInstance(mergeEditor, this, getDebugLog()));
+        try {
+            repository1.diff(url2, rev2, rev1, null, !useAncestry, recursive,
+                    new ISVNReporterBaton() {
+                        public void report(ISVNReporter reporter) throws SVNException {
+                            reporter.setPath("", null, rev1, false);
+                            reporter.finishReport();
+                        }
+                    }, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
+        } finally {
+            editor.cleanup();
+        }
         
     }
     
     private void doMergeFile(SVNURL url1, File path1, SVNRevision revision1, SVNURL url2, File path2, SVNRevision revision2, SVNRevision pegRevision,
             SVNAdminAreaInfo info, boolean force, boolean dryRun) throws SVNException {
-        
         if (pegRevision.isValid()) {
             SVNRepositoryLocation[] locations = getLocations(url2, path2, null, pegRevision, revision1, revision2);
             url1 = locations[0].getURL();
@@ -1296,8 +1306,9 @@ public class SVNDiffClient extends SVNBasicClient {
                     names.remove();
                 }
             }
-            SVNMerger merger = new SVNMerger(info, url2.toString(), rev2[0], force, dryRun, isLeaveConflictsUnresolved(), getDebugLog());
-            mergeResult = merger.fileChanged(name, f1, f2, rev1[0], rev2[0], mimeType1, mimeType2, props1, propsDiff);
+            SVNMergeCallback callback = new SVNMergeCallback(info, url2, force, dryRun);
+//            SVNMerger merger = new SVNMerger(info, url2.toString(), rev2[0], force, dryRun, isLeaveConflictsUnresolved(), getDebugLog());
+            mergeResult = callback.fileChanged(name, f1, f2, rev1[0], rev2[0], mimeType1, mimeType2, props1, propsDiff);
         } finally {
             SVNFileUtil.deleteAll(f1, null);
             SVNFileUtil.deleteAll(f2, null);
@@ -1311,7 +1322,9 @@ public class SVNDiffClient extends SVNBasicClient {
     private File loadFile(SVNURL url, File path, SVNRevision revision, Map properties, SVNAdminAreaInfo info, long[] revNumber) throws SVNException {
         String name = info.getTargetName();        
         File tmpDir = info.getAnchor().getRoot();
+        SVNDebugLog.getDefaultLog().info("root is : " + tmpDir);
         File result = SVNFileUtil.createUniqueFile(tmpDir, name, ".tmp");
+        SVNDebugLog.getDefaultLog().info("file is : " + result);
         SVNFileUtil.createEmptyFile(result);
         
         SVNRepository repository = createRepository(url, true);

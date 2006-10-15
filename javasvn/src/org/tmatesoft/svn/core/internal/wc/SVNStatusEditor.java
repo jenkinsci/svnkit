@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -166,6 +167,7 @@ public class SVNStatusEditor {
             return;
         }
         // iterate over files.
+        childrenFiles = new TreeMap(childrenFiles);
         for (Iterator files = childrenFiles.keySet().iterator(); files.hasNext();) {
             String fileName = (String) files.next();
             if (dir.getEntry(fileName, false) != null || SVNFileUtil.getAdminDirectoryName().equals(fileName)) {

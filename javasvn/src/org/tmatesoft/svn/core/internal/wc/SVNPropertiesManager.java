@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator2;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 
 /**
@@ -198,6 +199,35 @@ public class SVNPropertiesManager {
         dir.saveVersionedProperties(log, false);
         log.save();
         dir.runLogs();
+    }
+    
+    public static SVNStatusType mergeProperties(SVNWCAccess2 wcAccess, File path, Map baseProperties, Map diff, boolean baseMerge, boolean dryRun) throws SVNException {
+        SVNEntry2 entry = wcAccess.getEntry(path, false);
+        if (entry == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", path);
+            SVNErrorManager.error(err);
+        }
+        File parent = null;
+        String name = null;
+        if (entry.isDirectory()) {
+            parent = path;
+            name = "";
+        } else if (entry.isFile()) {
+            parent = path.getParentFile();
+            name = entry.getName();
+        } 
+        
+        ISVNLog log = null;
+        SVNAdminArea dir = wcAccess.retrieve(parent);
+        if (!dryRun) {
+            log = dir.getLog();            
+        }
+        SVNStatusType result = dir.mergeProperties(name, baseProperties, diff, baseMerge, dryRun, log);
+        if (!dryRun) {
+            log.save();
+            dir.runLogs();
+        }
+        return result; 
     }
     
     public static Map computeAutoProperties(ISVNOptions options, File file) {
