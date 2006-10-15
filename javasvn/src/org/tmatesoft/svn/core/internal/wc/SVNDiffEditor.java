@@ -198,6 +198,7 @@ public class SVNDiffEditor implements ISVNEditor {
             String mimeType = dir.getProperties(fileName).getPropertyValue(SVNProperty.MIME_TYPE);
             
             File tmpFile = detranslateFile(dir, fileName);
+//            SVNDebugLog.getDefaultLog().info("added");
             getDiffCallback().fileAdded(filePath, null, tmpFile, 0, entry.getRevision(), mimeType, null, dir.getBaseProperties(fileName).asMap(), propDiff);
         } else if (schedule == null) {
             boolean modified = dir.hasTextModifications(fileName, false);
@@ -205,6 +206,7 @@ public class SVNDiffEditor implements ISVNEditor {
             if (modified) {
                 tmpFile = detranslateFile(dir, fileName);
             }
+//            SVNDebugLog.getDefaultLog().info("modified: " + modified);
             if (modified || (propDiff != null && !propDiff.isEmpty())) {
                 String baseMimeType = dir.getBaseProperties(fileName).getPropertyValue(SVNProperty.MIME_TYPE); 
                 String mimeType = dir.getProperties(fileName).getPropertyValue(SVNProperty.MIME_TYPE);
@@ -427,7 +429,6 @@ public class SVNDiffEditor implements ISVNEditor {
                 SVNVersionedProperties baseProps = dir.getBaseProperties(dir.getThisDirName());
                 Map propDiff = baseProps.compareTo(dir.getProperties(dir.getThisDirName())).asMap();
                 getDiffCallback().propertiesChanged(info.myPath, baseProps.asMap(), propDiff);
-//                myDiffGenerator.displayPropDiff(displayPath, baseProps.asMap(), propDiff, myResult);
             }
         }
         Set processedFiles = null;

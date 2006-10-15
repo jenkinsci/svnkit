@@ -42,7 +42,8 @@ public class SVNAdminArea14Factory extends SVNAdminAreaFactory {
         if (adminArea == null || adminArea.getClass() == SVNAdminArea14.class) {
             return adminArea;
         }
-        SVNAdminArea newestAdminArea = new SVNAdminArea14(adminArea.getRoot());
+        SVNAdminArea14 newestAdminArea = new SVNAdminArea14(adminArea.getRoot());
+        newestAdminArea.setLocked(true);
         return newestAdminArea.upgradeFormat(adminArea);
     }
 

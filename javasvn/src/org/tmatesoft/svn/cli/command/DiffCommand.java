@@ -224,6 +224,7 @@ public class DiffCommand extends SVNCommand implements ISVNDiffStatusHandler {
                 }
             }
         }
+        out.flush();
         if (error) {
             System.exit(1);
         }
