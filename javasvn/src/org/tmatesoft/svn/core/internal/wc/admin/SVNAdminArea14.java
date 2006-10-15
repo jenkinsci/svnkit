@@ -1305,7 +1305,8 @@ public class SVNAdminArea14 extends SVNAdminArea {
         try {
             created = myLockFile.createNewFile();
         } catch (IOException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Cannot lock working copy ''{0}'': {1}", 
+            SVNErrorCode code = e.getMessage().indexOf("denied") >= 0 ? SVNErrorCode.WC_LOCKED : SVNErrorCode.WC_NOT_LOCKED;
+            SVNErrorMessage err = SVNErrorMessage.create(code, "Cannot lock working copy ''{0}'': {1}", 
                     new Object[] {getRoot(), e.getLocalizedMessage()});
             SVNErrorManager.error(err, e);
         }
