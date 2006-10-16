@@ -321,6 +321,7 @@ public class SVNTranslator2 {
         }
         boolean expand = u != null;
         byte[] date = null;
+        byte[] idDate = null;
         byte[] url = null;
         byte[] rev = null;
         byte[] author = null;
@@ -353,7 +354,7 @@ public class SVNTranslator2 {
                 } else if ("Id".equalsIgnoreCase(token)) {
                     if (expand && id == null) {
                         rev = rev == null ? r.getBytes("UTF-8") : rev;
-                        date = date == null ? SVNFormatUtil.formatDate(jDate, false).getBytes("UTF-8") : date;
+                        idDate = idDate == null ? SVNFormatUtil.formatDate(jDate, false).getBytes("UTF-8") : idDate;
                         name = name == null ? SVNEncodingUtil.uriDecode(SVNPathUtil.tail(u)).getBytes("UTF-8") : name;
                         author = author == null ? (a == null ? new byte[0] : a.getBytes("UTF-8")) : author;
                         ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -361,7 +362,7 @@ public class SVNTranslator2 {
                         bos.write(' ');
                         bos.write(rev);
                         bos.write(' ');
-                        bos.write(date);
+                        bos.write(idDate);
                         bos.write(' ');
                         bos.write(author);
                         bos.close();
