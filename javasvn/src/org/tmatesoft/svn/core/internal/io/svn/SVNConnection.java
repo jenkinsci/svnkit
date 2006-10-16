@@ -73,7 +73,7 @@ class SVNConnection {
     }
 
     protected void handshake(SVNRepositoryImpl repository) throws SVNException {
-        Object[] items = read("[(*N(*W)(*W))]", null);
+        Object[] items = read("[(*N(*W)(*W))]", null, true);
         if (!SVNReader.hasValue(items, 0, 2)) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_BAD_VERSION, "Only protocol of version '2' or older is supported"));
         } else if (!SVNReader.hasValue(items, 2, EDIT_PIPELINE)) {
@@ -89,7 +89,7 @@ class SVNConnection {
 
     public void authenticate(SVNRepositoryImpl repository) throws SVNException {
         SVNErrorMessage failureReason = null;
-        Object[] items = read("[((*W)?S)]", null);
+        Object[] items = read("[((*W)?S)]", null, true);
         List mechs = SVNReader.getList(items, 0);
         myRealm = SVNReader.getString(items, 1);
         if (mechs == null || mechs.size() == 0) {
@@ -129,10 +129,10 @@ class SVNConnection {
                 write("(w())", new Object[] { "CRAM-MD5" });
                 while (true) {
                     authenticator.setUserCredentials(auth);
-                    items = read("(W(?B))", null);
+                    items = read("(W(?B))", null, true);
                     if (SUCCESS.equals(items[0])) {
                         if (!myIsCredentialsReceived) {
-                            Object[] creds = read("[(S?S)]", null);
+                            Object[] creds = read("[(S?S)]", null, true);
                             if (creds != null && creds.length == 2
                                     && creds[0] != null && creds[1] != null) {
                                 SVNURL rootURL = SVNURL.parseURIEncoded((String) creds[1]); 
@@ -169,10 +169,10 @@ class SVNConnection {
     }
 
     private SVNErrorMessage readAuthResponse(SVNRepositoryImpl repository) throws SVNException {
-        Object[] items = read("(W(?S))", null);
+        Object[] items = read("(W(?S))", null, true);
         if (SUCCESS.equals(items[0])) {
             if (!myIsCredentialsReceived) {
-                Object[] creds = read("[(?S?S)]", null);
+                Object[] creds = read("[(?S?S)]", null, true);
                 if (repository != null
                         && repository.getRepositoryRoot(false) == null) {
                     SVNURL rootURL = creds[1] != null ? SVNURL.parseURIEncoded((String) creds[1]) : null; 
@@ -200,10 +200,23 @@ class SVNConnection {
         myConnector.close(myRepository);
     }
 
-    public Object[] read(String template, Object[] items) throws SVNException {
+    public Object[] read(String template, Object[] items, boolean readMalformedData) throws SVNException {
         try {
             checkConnection();
             return SVNReader.parse(getInputStream(), template, items);
+        } catch (SVNException e) {
+            if (readMalformedData && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_SVN_MALFORMED_DATA) {
+                // read let's say next 255 bytes into the logging stream.
+                byte[] malfored = new byte[1024];
+                try {
+                    // could it hang here for timeout?
+                    System.out.println("reading malformed data");
+                    getInputStream().read(malfored);
+                } catch (IOException e1) {
+                    // ignore.
+                }
+            }
+            throw e;
         } finally {
             myRepository.getDebugLog().flushStream(myLoggingInputStream);
         }

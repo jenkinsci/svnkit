@@ -191,17 +191,17 @@ class SVNCommitEditor implements ISVNEditor {
 	    try {
 		    myConnection.write("(w())", new Object[] { "close-edit" });
 
-		    myConnection.read("[()]", null);
+		    myConnection.read("[()]", null, true);
 		    myRepository.authenticate();
 
-		    Object[] items = myConnection.read("(N(?S)(?S)", new Object[3]);
+		    Object[] items = myConnection.read("(N(?S)(?S)", new Object[3], true);
             Object[] error = null;
             try { 
-                error = myConnection.read("(?S)", new Object[1]);
+                error = myConnection.read("(?S)", new Object[1], false);
             } catch (SVNException e) {
                 // pre 1.4. servers are not sending this data.
             }
-            myConnection.read(")", null);
+            myConnection.read(")", null, true);
 		    long revision = SVNReader.getLong(items, 0);
 		    Date date = SVNReader.getDate(items, 1);
             SVNErrorMessage err = null;

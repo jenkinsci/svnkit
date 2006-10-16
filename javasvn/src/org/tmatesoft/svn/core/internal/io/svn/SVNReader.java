@@ -541,7 +541,7 @@ class SVNReader {
     private static void readChar(InputStream is, char test) throws IOException, SVNException {
         char ch = skipWhitespace(is);
         if (ch != test) {
-            if (ch < 0) {
+            if (ch < 0 || ch == Character.MAX_VALUE) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED));
             }
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Malformed network data"));
