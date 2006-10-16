@@ -168,7 +168,8 @@ class HTTPRequest {
             myErrorMessage = createDefaultErrorMessage(myConnection.getHost(), myStatus, context.getMessageTemplate(), context.getRelatedObjects());
             myConnection.skipData(this);
             return;
-        }
+        } 
+        
         boolean notExpected = false;        
         int expectedCode = "PROPFIND".equals(request) ? 207 : 200;
         if (ok1 >= 0) {
@@ -179,6 +180,8 @@ class HTTPRequest {
                 ok2 = ok1;
             }
             notExpected = !(myStatus.getCode() == ok1 || myStatus.getCode() == ok2); 
+        } else if ("CONNECT".equalsIgnoreCase(request) && myStatus.getCode() != HttpURLConnection.HTTP_OK) {
+            notExpected = true;
         }
         if (notExpected) {
             // unexpected response code.
@@ -195,7 +198,7 @@ class HTTPRequest {
         } else {
             if (!"CONNECT".equalsIgnoreCase(request)) {
                 myConnection.skipData(this);
-            }
+            } 
         }
     }
 
