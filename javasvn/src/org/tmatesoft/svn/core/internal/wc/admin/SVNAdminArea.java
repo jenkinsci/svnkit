@@ -98,6 +98,24 @@ public abstract class SVNAdminArea {
     
     public abstract void postUpgradeFormat(int format) throws SVNException;
     
+    public void updateURL(String rootURL, boolean recursive) throws SVNException {
+        SVNWCAccess2 wcAccess = getWCAccess();
+        for (Iterator ents = entries(false); ents.hasNext();) {
+            SVNEntry2 entry = (SVNEntry2) ents.next();
+            if (!getThisDirName().equals(entry.getName()) && entry.isDirectory() && recursive) {
+                SVNAdminArea childDir = wcAccess.retrieve(getFile(entry.getName()));
+                if (childDir != null) {
+                    String childURL = SVNPathUtil.append(rootURL, SVNEncodingUtil.uriEncode(entry.getName()));
+                    childDir.updateURL(childURL, recursive);
+                }
+                continue;
+            }
+            entry.setURL(getThisDirName().equals(entry.getName()) ? rootURL : SVNPathUtil.append(
+                    rootURL, SVNEncodingUtil.uriEncode(entry.getName())));
+        }
+        saveEntries(false);
+    }
+    
     public boolean hasTextModifications(String name, boolean forceComparision) throws SVNException {
         return hasTextModifications(name, forceComparision, true, false);
     }

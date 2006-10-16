@@ -249,6 +249,7 @@ public class SVNWCUtil {
             try {
                 wcAccess.close();
             } catch (SVNException e) {
+                //
             }
         }
         return true;
