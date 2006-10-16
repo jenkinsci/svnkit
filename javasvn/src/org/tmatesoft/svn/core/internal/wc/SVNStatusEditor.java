@@ -336,7 +336,7 @@ public class SVNStatusEditor {
         if (fileKind == SVNNodeKind.UNKNOWN || fileKind == null) {
             SVNFileType fileType = SVNFileType.getType(file);
             fileKind = SVNFileType.getNodeKind(fileType);
-            special = fileType == SVNFileType.SYMLINK;
+            special = SVNFileUtil.isWindows ? false : fileType == SVNFileType.SYMLINK;
         }
         if (entry == null) {
             SVNStatus status = new SVNStatus(null, file, SVNNodeKind.NONE,
@@ -381,7 +381,7 @@ public class SVNStatusEditor {
             }
             isPropsModified = dir != null && dir.hasPropModifications(name);
             if (hasProps) {
-                isSpecial = dir != null && dir.getProperties(name).getPropertyValue(SVNProperty.SPECIAL) != null;
+                isSpecial = !SVNFileUtil.isWindows && dir != null && dir.getProperties(name).getPropertyValue(SVNProperty.SPECIAL) != null;
             }
             if (entry.getKind() == SVNNodeKind.FILE && special == isSpecial) {
                 isTextModified = dir != null && dir.hasTextModifications(name, false);
