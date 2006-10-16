@@ -38,12 +38,16 @@ class SVNCommitEditor implements ISVNEditor {
 
     private SVNConnection myConnection;
     private SVNRepositoryImpl myRepository;
-    private Runnable myCloseCallback;
+    private ISVNCommitCallback myCloseCallback;
     private Stack myDirsStack;
     private int myNextToken;
     private Map myFilesToTokens;
+    
+    public interface ISVNCommitCallback {
+        public void run(SVNException error);
+    }
 
-    public SVNCommitEditor(SVNRepositoryImpl location, SVNConnection connection, Runnable closeCallback) {
+    public SVNCommitEditor(SVNRepositoryImpl location, SVNConnection connection, ISVNCommitCallback closeCallback) {
         myRepository = location;
         myConnection = connection;
         myCloseCallback = closeCallback;
@@ -188,17 +192,18 @@ class SVNCommitEditor implements ISVNEditor {
     }
 
     public SVNCommitInfo closeEdit() throws SVNException {
+        SVNException e = null;
 	    try {
 		    myConnection.write("(w())", new Object[] { "close-edit" });
+	        myConnection.read("[()]", null, true);
 
-		    myConnection.read("[()]", null, true);
-		    myRepository.authenticate();
+            myRepository.authenticate();
 
 		    Object[] items = myConnection.read("(N(?S)(?S)", new Object[3], true);
             Object[] error = null;
             try { 
                 error = myConnection.read("(?S)", new Object[1], false);
-            } catch (SVNException e) {
+            } catch (SVNException e2) {
                 // pre 1.4. servers are not sending this data.
             }
             myConnection.read(")", null, true);
@@ -209,8 +214,14 @@ class SVNCommitEditor implements ISVNEditor {
                 err = SVNErrorMessage.create(SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED, error[0].toString(), SVNErrorMessage.TYPE_WARNING);
             }
 		    return new SVNCommitInfo(revision, (String) items[2], date, err);
-	    } finally {
-		    myCloseCallback.run();
+	    } catch (SVNException exception) {
+            e = exception;
+            try {
+                myConnection.write("(w())", new Object[] { "abort-edit" });
+            } catch (SVNException e1) {}
+            throw exception;
+        } finally {
+		    myCloseCallback.run(e);
             myCloseCallback = null;
 	    }
     }
@@ -220,10 +231,15 @@ class SVNCommitEditor implements ISVNEditor {
             return;
         }
         myIsAborted = true;
+        SVNException error = null;
 	    try {
 		    myConnection.write("(w())", new Object[] { "abort-edit" });
-	    } finally {
-		    myCloseCallback.run();
+            myConnection.read("[()]", null, true);
+	    } catch (SVNException e) {
+            error = e;
+            throw e;
+        } finally {        
+		    myCloseCallback.run(error);
             myCloseCallback = null;
 	    }
     }

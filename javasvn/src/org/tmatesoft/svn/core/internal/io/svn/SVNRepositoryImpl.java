@@ -48,7 +48,6 @@ import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.0
@@ -74,7 +73,6 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     
     public void setLocation(SVNURL url, boolean forceReconnect) throws SVNException {
         // attempt to use reparent.
-        SVNDebugLog.getDefaultLog().info("new location: " + url);
         if (reparent(url)) {
             super.setLocation(url, false);
             return;
@@ -96,6 +94,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 read("[()]", null, true);
                 return true;
             } catch (SVNException e) {
+                closeSession();
                 if (e instanceof SVNCancelException || e instanceof SVNAuthenticationException) {
                     throw e;
                 }
@@ -114,6 +113,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             write("(w())", buffer);
             authenticate();
             buffer = read("[(N)]", buffer, true);
+        } catch (SVNException e) {
+            closeSession();
+            throw e;
         } finally {
             closeConnection();
         }
@@ -130,6 +132,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             write("(w(s))", buffer);
             authenticate();
             buffer = read("[(N)]", buffer, true);
+        } catch (SVNException e) {
+            closeSession();
+            throw e;
         } finally {
             closeConnection();
         }
@@ -149,6 +154,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             authenticate();
             buffer[0] = properties;
             read("[((*P))]", buffer, true);
+        } catch (SVNException e) {
+            closeSession();
+            throw e;
         } finally {
             closeConnection();
         }
@@ -164,6 +172,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             write("(w(ns))", buffer);
             authenticate();
             buffer = read("[((?S))]", buffer, true);
+        } catch (SVNException e) {
+            closeSession();
+            throw e;
         } finally {
             closeConnection();
         }
@@ -179,6 +190,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             authenticate();
             read("[(W)]", buffer, true);
             return SVNNodeKind.parseKind((String) buffer[0]);
+        } catch (SVNException e) {
+            closeSession();
+            throw e;
         } finally {
             closeConnection();
         }
@@ -208,8 +222,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     long revision = SVNReader.getLong(buffer, 0);
                     String location = SVNReader.getString(buffer, 1);
                     if (location != null) {
-                        handler.handleLocationEntry(new SVNLocationEntry(
-                                revision, location));
+                        handler.handleLocationEntry(new SVNLocationEntry(revision, location));
                     }
                 }
             }
@@ -246,6 +259,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 read("[()]", buffer2, true);
             }
             return SVNReader.getLong(buffer, 1);
+        } catch (SVNException e) {
+            closeSession();
+            throw e;
         } finally {
             closeConnection();
         }
@@ -280,6 +296,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             } else {
                 read("()))", null, true);
             }
+        } catch (SVNException e) {
+            closeSession();
+            throw e;
         } finally {
             closeConnection();
         }
@@ -339,6 +358,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     entry.setCommitMessage((String) buffer[0]);
                 }
             }
+        } catch (SVNException e) {
+            closeSession();
+            throw e;
         } finally {
             closeConnection();
         }
@@ -488,7 +510,6 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     }
                 } catch (SVNException e) {
                     if (e instanceof SVNCancelException || e instanceof SVNAuthenticationException) {
-                        closeSession();
                         throw e;
                     }
                     read("x", buffer, true);
@@ -498,6 +519,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     return count;
                 }
             }
+        } catch (SVNException e) {
+            closeSession();
+            throw e;
         } finally {
             closeConnection();
         }
@@ -564,6 +588,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         diff(url, revision, revision, target, ignoreAncestry, recursive, true,
                 reporter, editor);
     }
+    
     public void diff(SVNURL url, long tRevision, long revision, String target,
                 boolean ignoreAncestry, boolean recursive, boolean getContents,
                 ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
@@ -626,6 +651,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             write("(w(nss))", buffer);
             authenticate();
             read("[()]", buffer, true);
+        } catch (SVNException e) {
+            closeSession();
+            throw e;
         } finally {
             closeConnection();
         }
@@ -645,12 +673,19 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             authenticate();
             read("[()]", null, true);
             return new SVNCommitEditor(this, myConnection,
-                    new Runnable() {
-                        public void run() {
+                    new SVNCommitEditor.ISVNCommitCallback() {
+                        public void run(SVNException error) {
                             closeConnection();
+                            if (error != null) {
+                                try {
+                                    closeSession();
+                                } catch (SVNException e) {
+                                }
+                            }
                         }
                     });
         } catch (SVNException e) {
+            closeConnection();
             closeSession();
             throw e;
         }
@@ -708,12 +743,14 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             try {
                 authenticate();
             } catch (SVNException e) {                
-                closeSession();
                 if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_SVN_UNKNOWN_CMD) {
+                    closeConnection();
+                    closeSession();
                     openConnection();
                     lock12(pathsToRevisions, comment, force, handler);
                     return;
                 }
+                closeSession();
                 throw e;
             }
             for (Iterator paths = pathsToRevisions.keySet().iterator(); paths.hasNext();) {
@@ -761,7 +798,6 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     }
                 }
                 if (error == null) {
-                    closeSession();
                     throw e;
                 }
             }
@@ -787,8 +823,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             try {
                 authenticate();
             } catch (SVNException e) {
-                closeSession();
                 if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_SVN_UNKNOWN_CMD) {
+                    closeConnection();
+                    closeSession();
                     openConnection();
                     unlock12(pathToTokens, force, handler);
                     return;
@@ -850,7 +887,6 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     error = e.getErrorMessage();
                     error = SVNErrorMessage.create(error.getErrorCode(), error.getMessageTemplate(), path);
                 } else {
-                    closeSession();
                     throw e;
                 }
             }
@@ -895,7 +931,6 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
 
     private void openConnection() throws SVNException {
         if (myConnection != null) {
-            closeConnection();
             // attempt to reparent, close connection if reparent failed.
             if (reparent(getLocation())) {
                 return;
@@ -923,17 +958,6 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     }
 
     private void closeConnection() {
-        // do we need to close it now, when 'reparent' could be done.
-        /*
-        if (myConnection != null) {
-            try {
-                myConnection.close();
-            } catch (SVNException e) {
-                //
-            } finally {
-                myConnection = null;
-            }
-        }*/
         unlock();
     }
 
