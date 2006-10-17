@@ -39,10 +39,19 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 public abstract class SVNAdminAreaFactory implements Comparable {
     
     private static final Collection ourFactories = new TreeSet();
+    private static boolean ourIsUpgradeEnabled = Boolean.valueOf(System.getProperty("javasvn.upgradeWC", "true")).booleanValue();
     
     static {
         SVNAdminAreaFactory.registerFactory(new SVNAdminArea14Factory());
         SVNAdminAreaFactory.registerFactory(new SVNXMLAdminAreaFactory());
+    }
+    
+    public static void setUpgradeEnabled(boolean enabled) {
+        ourIsUpgradeEnabled = enabled;
+    }
+
+    public static boolean isUpgradeEnabled() {
+        return ourIsUpgradeEnabled;
     }
     
     public static int checkWC(File path) throws SVNException {
@@ -112,7 +121,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
     }
 
     public static SVNAdminArea upgrade(SVNAdminArea area) throws SVNException {
-        if (!ourFactories.isEmpty()) {
+        if (isUpgradeEnabled() && !ourFactories.isEmpty()) {
             SVNAdminAreaFactory newestFactory = (SVNAdminAreaFactory) ourFactories.iterator().next();
             area = newestFactory.doUpgrade(area);
         }
