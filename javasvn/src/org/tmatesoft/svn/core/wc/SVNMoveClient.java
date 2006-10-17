@@ -24,11 +24,11 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.admin.ISVNLog;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 
 /**
  * The <b>SVNMoveClient</b> provides an extra client-side functionality over
@@ -165,7 +165,7 @@ public class SVNMoveClient extends SVNBasicClient {
         } else {
             // wc:wc.
 
-            SVNWCAccess2 wcAccess = createWCAccess();
+            SVNWCAccess wcAccess = createWCAccess();
             File srcParent = src.getParentFile();
             File dstParent = dst.getParentFile();
             SVNAdminArea srcParentArea = null;
@@ -179,8 +179,8 @@ public class SVNMoveClient extends SVNBasicClient {
                     dstParentArea = wcAccess.open(dstParent, true, 0);
                 }
 
-                SVNEntry2 srcEntry = srcParentArea.getEntry(src.getName(), true);
-                SVNEntry2 dstEntry = dstParentArea.getEntry(dst.getName(), true);
+                SVNEntry srcEntry = srcParentArea.getEntry(src.getName(), true);
+                SVNEntry dstEntry = dstParentArea.getEntry(dst.getName(), true);
 
                 File srcWCRoot = SVNWCUtil.getWorkingCopyRoot(src, true);
                 File dstWCRoot = SVNWCUtil.getWorkingCopyRoot(dst, true);
@@ -247,7 +247,7 @@ public class SVNMoveClient extends SVNBasicClient {
                         }
                     }
                     
-                    ISVNLog log = dstParentArea.getLog(); 
+                    SVNLog log = dstParentArea.getLog(); 
                     dstParentArea.saveEntries(false);
                     dstParentArea.saveVersionedProperties(log, true);
                     log.save();
@@ -258,12 +258,12 @@ public class SVNMoveClient extends SVNBasicClient {
                     if (dstEntry == null) {
                         dstEntry = dstParentArea.addEntry(dst.getName());
                     }
-                    SVNAdminArea dstArea = wcAccess.open(dst, true, SVNWCAccess2.INFINITE_DEPTH);
+                    SVNAdminArea dstArea = wcAccess.open(dst, true, SVNWCAccess.INFINITE_DEPTH);
                     
                     SVNVersionedProperties srcProps = srcArea.getProperties(srcArea.getThisDirName());
                     SVNVersionedProperties dstProps = dstArea.getProperties(dstArea.getThisDirName());
                     
-                    SVNEntry2 dstParentEntry = dstParentArea.getEntry(dstParentArea.getThisDirName(), false); 
+                    SVNEntry dstParentEntry = dstParentArea.getEntry(dstParentArea.getThisDirName(), false); 
                     String srcURL = srcEntry.getURL();
                     String srcCFURL = srcEntry.getCopyFromURL();
                     String dstURL = dstParentEntry.getURL();
@@ -278,7 +278,7 @@ public class SVNMoveClient extends SVNBasicClient {
                         dstEntry.scheduleForAddition();
                         dstEntry.setKind(SVNNodeKind.DIR);
 
-                        SVNEntry2 dstThisEntry = dstArea.getEntry(dstArea.getThisDirName(), false);
+                        SVNEntry dstThisEntry = dstArea.getEntry(dstArea.getThisDirName(), false);
                         dstThisEntry.scheduleForAddition();
                         dstThisEntry.setKind(SVNNodeKind.DIR);
                         dstThisEntry.setCopyFromRevision(srcCFRevision);
@@ -286,7 +286,7 @@ public class SVNMoveClient extends SVNBasicClient {
                         dstThisEntry.setRevision(srcRevision);
                         dstThisEntry.setCopied(true);
                         
-                        ISVNLog log = dstArea.getLog();
+                        SVNLog log = dstArea.getLog();
                         dstArea.saveVersionedProperties(log, true);
                         dstParentArea.saveEntries(false);
                         log.save();
@@ -303,7 +303,7 @@ public class SVNMoveClient extends SVNBasicClient {
                         dstEntry.setKind(SVNNodeKind.DIR);
 
                         // update URL, CF-URL and CF-REV in children.
-                        SVNEntry2 dstThisEntry = dstArea.getEntry(dstArea.getThisDirName(), false);
+                        SVNEntry dstThisEntry = dstArea.getEntry(dstArea.getThisDirName(), false);
                         dstThisEntry.scheduleForAddition();
                         dstThisEntry.setKind(SVNNodeKind.DIR);
                         dstThisEntry.setCopied(true);
@@ -314,7 +314,7 @@ public class SVNMoveClient extends SVNBasicClient {
                         dstThisEntry.setURL(dstURL);
                         dstThisEntry.setRepositoryRoot(repositoryRootURL);
 
-                        ISVNLog log = dstArea.getLog();
+                        SVNLog log = dstArea.getLog();
                         dstArea.saveVersionedProperties(log, true);
                         dstArea.saveEntries(false);
                         log.save();
@@ -347,8 +347,8 @@ public class SVNMoveClient extends SVNBasicClient {
     }
 
     private void updateCopiedDirectory(SVNAdminArea dir, String name, String newURL, String reposRootURL, String copyFromURL, long copyFromRevision) throws SVNException {
-        SVNWCAccess2 wcAccess = dir.getWCAccess();
-        SVNEntry2 entry = dir.getEntry(name, true);
+        SVNWCAccess wcAccess = dir.getWCAccess();
+        SVNEntry entry = dir.getEntry(name, true);
         if (entry != null) {
             entry.setCopied(true);
             if (newURL != null) {
@@ -393,7 +393,7 @@ public class SVNMoveClient extends SVNBasicClient {
                     entry.setCopyFromRevision(copyFromRevision);
                 }
                 for (Iterator ents = dir.entries(true); ents.hasNext();) {
-                    SVNEntry2 childEntry = (SVNEntry2) ents.next();
+                    SVNEntry childEntry = (SVNEntry) ents.next();
                     if (dir.getThisDirName().equals(childEntry.getName())) {
                         continue;
                     }
@@ -498,11 +498,11 @@ public class SVNMoveClient extends SVNBasicClient {
             // world:wc (add, if dst is 'deleted' it will be replaced)
             SVNFileUtil.rename(src, dst);
             // dst should probably be deleted, in this case - revert it
-            SVNWCAccess2 dstAccess = createWCAccess();
+            SVNWCAccess dstAccess = createWCAccess();
             boolean revert = false;
             try {
                 dstAccess.probeOpen(dst, false, 0);
-                SVNEntry2 dstEntry = dstAccess.getEntry(dst, false);
+                SVNEntry dstEntry = dstAccess.getEntry(dst, false);
                 revert = dstEntry != null && dstEntry.isScheduledForDeletion();
             } catch (SVNException e) {
             } finally {
@@ -515,7 +515,7 @@ public class SVNMoveClient extends SVNBasicClient {
             }
         } else {
             // wc:wc.
-            SVNWCAccess2 wcAccess = createWCAccess();
+            SVNWCAccess wcAccess = createWCAccess();
             File srcParent = src.getParentFile();
             File dstParent = dst.getParentFile();
             SVNAdminArea srcParentArea = null;
@@ -529,8 +529,8 @@ public class SVNMoveClient extends SVNBasicClient {
                     dstParentArea = wcAccess.open(dstParent, true, 0);
                 }
 
-                SVNEntry2 srcEntry = srcParentArea.getEntry(src.getName(), true);
-                SVNEntry2 dstEntry = dstParentArea.getEntry(dst.getName(), true);
+                SVNEntry srcEntry = srcParentArea.getEntry(src.getName(), true);
+                SVNEntry dstEntry = dstParentArea.getEntry(dst.getName(), true);
                 if (dstEntry != null && dstEntry.isScheduledForDeletion()) {
                     wcAccess.close();
                     // clear undo.
@@ -538,7 +538,7 @@ public class SVNMoveClient extends SVNBasicClient {
                     myWCClient.doDelete(src, true, false);
                     return;
                 }
-                SVNEntry2 dstParentEntry = wcAccess.getEntry(dstParent, false);
+                SVNEntry dstParentEntry = wcAccess.getEntry(dstParent, false);
 
                 File srcWCRoot = SVNWCUtil.getWorkingCopyRoot(src, true);
                 File dstWCRoot = SVNWCUtil.getWorkingCopyRoot(dst, true);
@@ -607,7 +607,7 @@ public class SVNMoveClient extends SVNBasicClient {
 
                     dstURL = SVNPathUtil.append(dstURL, SVNEncodingUtil.uriEncode(dst.getName()));
                     
-                    SVNAdminArea dstArea = wcAccess.open(dst, true, SVNWCAccess2.INFINITE_DEPTH);
+                    SVNAdminArea dstArea = wcAccess.open(dst, true, SVNWCAccess.INFINITE_DEPTH);
                     
                     if (srcEntry.isScheduledForAddition() && srcEntry.isCopied()) {
                         dstEntry.scheduleForAddition();
@@ -626,7 +626,7 @@ public class SVNMoveClient extends SVNBasicClient {
 
                         dstParentArea.saveEntries(true);
 
-                        SVNEntry2 dstThisEntry = dstArea.getEntry(dstArea.getThisDirName(), false);
+                        SVNEntry dstThisEntry = dstArea.getEntry(dstArea.getThisDirName(), false);
                         dstThisEntry.setCopied(true);
                         dstThisEntry.scheduleForAddition();
                         dstThisEntry.setKind(SVNNodeKind.DIR);
@@ -716,10 +716,10 @@ public class SVNMoveClient extends SVNBasicClient {
             SVNErrorManager.error(err);
         }
 
-        SVNWCAccess2 dstAccess = createWCAccess();
+        SVNWCAccess dstAccess = createWCAccess();
         try {
             dstAccess.probeOpen(dst, false, 0);
-            SVNEntry2 dstEntry = dstAccess.getEntry(dst, false);
+            SVNEntry dstEntry = dstAccess.getEntry(dst, false);
             if (dstEntry != null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "''{0}'' is already under version control", dst);
                 SVNErrorManager.error(err);                
@@ -728,13 +728,13 @@ public class SVNMoveClient extends SVNBasicClient {
             dstAccess.close();
         }
         
-        SVNWCAccess2 srcAccess = createWCAccess();
+        SVNWCAccess srcAccess = createWCAccess();
         String cfURL = null;
         boolean added = false;
         long cfRevision = -1;
         try {
             srcAccess.probeOpen(src, false, 0);
-            SVNEntry2 srcEntry = srcAccess.getEntry(src, false);
+            SVNEntry srcEntry = srcAccess.getEntry(src, false);
             if (srcEntry == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", src);
                 SVNErrorManager.error(err);
@@ -767,7 +767,7 @@ public class SVNMoveClient extends SVNBasicClient {
         srcAccess = createWCAccess();
         try {
             SVNAdminArea dstArea = dstAccess.probeOpen(dst, true, 0);
-            SVNEntry2 dstEntry = dstAccess.getEntry(dst, false);
+            SVNEntry dstEntry = dstAccess.getEntry(dst, false);
             if (dstEntry != null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "''{0}'' is already under version control", dst);
                 SVNErrorManager.error(err);                
@@ -787,7 +787,7 @@ public class SVNMoveClient extends SVNBasicClient {
             dstEntry.scheduleForAddition();
             
             dstArea.saveEntries(true);
-            ISVNLog log = dstArea.getLog();
+            SVNLog log = dstArea.getLog();
             dstArea.saveVersionedProperties(log, true);
             log.save();
             dstArea.runLogs();
@@ -799,14 +799,14 @@ public class SVNMoveClient extends SVNBasicClient {
     }
 
     private static boolean isVersionedFile(File file) {
-        SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(null);
+        SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
         try {
             SVNAdminArea area = wcAccess.probeOpen(file, false, 0);
             if (area.getEntry(area.getThisDirName(), false) == null) {
                 return false;
             }
             if (SVNFileType.getType(file).isFile()) {
-                SVNEntry2 fileEntry = area.getEntry(file.getName(), false);
+                SVNEntry fileEntry = area.getEntry(file.getName(), false);
                 return fileEntry != null; 
             } 
             return true;
@@ -825,7 +825,7 @@ public class SVNMoveClient extends SVNBasicClient {
         if (path == null) {
             return null;
         }
-        SVNWCAccess2 wcAccess = createWCAccess();
+        SVNWCAccess wcAccess = createWCAccess();
         try {
             wcAccess.probeOpen(path, false, 0);
         } catch (SVNException e) {
@@ -834,7 +834,7 @@ public class SVNMoveClient extends SVNBasicClient {
         } 
         // urlTail is either name of an entry
         try {
-            SVNEntry2 entry = wcAccess.getEntry(path, false);
+            SVNEntry entry = wcAccess.getEntry(path, false);
             if (entry == null) {
                 return null;
             }
@@ -854,7 +854,7 @@ public class SVNMoveClient extends SVNBasicClient {
         if (path == null) {
             return -1;
         }
-        SVNWCAccess2 wcAccess = createWCAccess();
+        SVNWCAccess wcAccess = createWCAccess();
         try {
             wcAccess.probeOpen(path, false, 0);
         } catch (SVNException e) {
@@ -862,7 +862,7 @@ public class SVNMoveClient extends SVNBasicClient {
             return -1;
         } 
         try {
-            SVNEntry2 entry = wcAccess.getEntry(path, false);
+            SVNEntry entry = wcAccess.getEntry(path, false);
             if (entry == null) {
                 return -1;
             }

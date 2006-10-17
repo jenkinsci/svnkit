@@ -29,8 +29,8 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
@@ -53,7 +53,7 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
     private DirectoryInfo myDirectoryInfo;
     private FileInfo myFileInfo;
 
-    public SVNRemoteStatusEditor(ISVNOptions options, SVNWCAccess2 wcAccess, SVNAdminAreaInfo info, boolean noIgnore, boolean reportAll, boolean descend, ISVNStatusHandler handler) throws SVNException {
+    public SVNRemoteStatusEditor(ISVNOptions options, SVNWCAccess wcAccess, SVNAdminAreaInfo info, boolean noIgnore, boolean reportAll, boolean descend, ISVNStatusHandler handler) throws SVNException {
         super(options, wcAccess, info, noIgnore, reportAll, descend, handler);
         myTargetRevision = -1;
         myAnchorStatus = createStatus(info.getAnchor().getRoot());
@@ -85,7 +85,7 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
             }
             throw e;
         }
-        SVNEntry2 entry = dir.getEntry(name, false);
+        SVNEntry entry = dir.getEntry(name, false);
         if (entry != null) {
             tweakStatusHash(myDirectoryInfo, null, file, SVNStatusType.STATUS_DELETED, SVNStatusType.STATUS_NONE, null);
         }
@@ -247,7 +247,7 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
     public void absentFile(String path) throws SVNException {
     }
     
-    private void handleStatusHash(SVNEntry2 dirEntry, Map hash, boolean deleted, boolean descend) throws SVNException {
+    private void handleStatusHash(SVNEntry dirEntry, Map hash, boolean deleted, boolean descend) throws SVNException {
         ISVNStatusHandler handler = deleted ? this : getDefaultHandler();
         for(Iterator paths = hash.keySet().iterator(); paths.hasNext();) {
             File path = (File) paths.next();
@@ -348,8 +348,8 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
     }
     
     private SVNStatus createStatus(File path) throws SVNException {
-        SVNEntry2 entry = getWCAccess().getEntry(path, false);
-        SVNEntry2 parentEntry = null;
+        SVNEntry entry = getWCAccess().getEntry(path, false);
+        SVNEntry parentEntry = null;
         if (entry != null) {
             SVNAdminArea parentDir = getWCAccess().getAdminArea(path.getParentFile());
             if (parentDir != null) {

@@ -27,8 +27,8 @@ import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.util.ISVNDebugLog;
@@ -38,7 +38,7 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  * @version 1.1
  * @author  TMate Software Ltd.
  */
-public class SVNReporter2 implements ISVNReporterBaton {
+public class SVNReporter implements ISVNReporterBaton {
 
     private SVNAdminAreaInfo myInfo;
     private boolean myIsRecursive;
@@ -46,7 +46,7 @@ public class SVNReporter2 implements ISVNReporterBaton {
     private File myTarget;
     private ISVNDebugLog myLog;
 
-    public SVNReporter2(SVNAdminAreaInfo info, File file, boolean restoreFiles, boolean recursive, ISVNDebugLog log) {
+    public SVNReporter(SVNAdminAreaInfo info, File file, boolean restoreFiles, boolean recursive, ISVNDebugLog log) {
         myInfo = info;
         myIsRecursive = recursive;
         myIsRestore = restoreFiles;
@@ -57,10 +57,10 @@ public class SVNReporter2 implements ISVNReporterBaton {
     public void report(ISVNReporter reporter) throws SVNException {
         try {
             SVNAdminArea targetArea = myInfo.getTarget();
-            SVNWCAccess2 wcAccess = myInfo.getWCAccess();
-            SVNEntry2 targetEntry = wcAccess.getEntry(myTarget, false);
+            SVNWCAccess wcAccess = myInfo.getWCAccess();
+            SVNEntry targetEntry = wcAccess.getEntry(myTarget, false);
             if (targetEntry == null || (targetEntry.isDirectory() && targetEntry.isScheduledForAddition())) {
-                SVNEntry2 parentEntry = wcAccess.getEntry(myTarget.getParentFile(), false);
+                SVNEntry parentEntry = wcAccess.getEntry(myTarget.getParentFile(), false);
                 long revision = parentEntry.getRevision();
                 reporter.setPath("", null, revision, targetEntry != null ? targetEntry.isIncomplete() : true);
                 reporter.deletePath("");
@@ -68,7 +68,7 @@ public class SVNReporter2 implements ISVNReporterBaton {
                 return;
             }
             
-            SVNEntry2 parentEntry = null;
+            SVNEntry parentEntry = null;
             long revision = targetEntry.getRevision();
             if (revision < 0) {
                  parentEntry = wcAccess.getEntry(myTarget.getParentFile(), false);
@@ -124,14 +124,14 @@ public class SVNReporter2 implements ISVNReporterBaton {
     }
 
     private void reportEntries(ISVNReporter reporter, SVNAdminArea adminArea, String dirPath, long dirRevision, boolean reportAll, boolean recursive) throws SVNException {
-        SVNWCAccess2 wcAccess = myInfo.getWCAccess();
+        SVNWCAccess wcAccess = myInfo.getWCAccess();
         SVNExternalInfo[] externals = myInfo.addExternals(adminArea, adminArea.getProperties(adminArea.getThisDirName()).getPropertyValue(SVNProperty.EXTERNALS));
         for (int i = 0; externals != null && i < externals.length; i++) {
             externals[i].setOldExternal(externals[i].getNewURL(), externals[i].getNewRevision());
         }
 
         for (Iterator e = adminArea.entries(true); e.hasNext();) {
-            SVNEntry2 entry = (SVNEntry2) e.next();
+            SVNEntry entry = (SVNEntry) e.next();
             if (adminArea.getThisDirName().equals(entry.getName())) {
                 continue;
             }
@@ -179,7 +179,7 @@ public class SVNReporter2 implements ISVNReporterBaton {
                     continue;
                 }
                 SVNAdminArea childArea = wcAccess.retrieve(adminArea.getFile(entry.getName()));
-                SVNEntry2 childEntry = childArea.getEntry(childArea.getThisDirName(), true);
+                SVNEntry childEntry = childArea.getEntry(childArea.getThisDirName(), true);
                 String url = childEntry.getURL();
                 if (reportAll) {
                     if (!url.equals(expectedURL)) {
@@ -204,7 +204,7 @@ public class SVNReporter2 implements ISVNReporterBaton {
             return;
         }
         adminArea.restoreFile(name);
-        SVNEntry2 entry = adminArea.getEntry(name, true);
+        SVNEntry entry = adminArea.getEntry(name, true);
         myInfo.getWCAccess().handleEvent(SVNEventFactory.createRestoredEvent(myInfo, adminArea, entry));
     }
     

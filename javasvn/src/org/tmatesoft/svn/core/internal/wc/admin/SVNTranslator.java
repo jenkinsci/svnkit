@@ -39,7 +39,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
  * @version 1.1
  * @author  TMate Software Ltd.
  */
-public class SVNTranslator2 {
+public class SVNTranslator {
     public static final byte[] CRLF = new byte[] { '\r', '\n' };
 
     public static final byte[] LF = new byte[] { '\n' };
@@ -67,7 +67,7 @@ public class SVNTranslator2 {
         byte[] eols;
         if (keywords != null) {
             if (expand) {
-                SVNEntry2 entry = adminArea.getEntry(name, true);
+                SVNEntry entry = adminArea.getEntry(name, true);
                 String url = entry.getURL();
                 String author = entry.getAuthor();
                 String date = entry.getCommittedDate();

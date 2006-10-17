@@ -35,8 +35,8 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
@@ -289,12 +289,12 @@ public class SVNLogClient extends SVNBasicClient {
             }
         };
         SVNURL[] urls = new SVNURL[paths.length];
-        SVNWCAccess2 wcAccess = createWCAccess();
+        SVNWCAccess wcAccess = createWCAccess();
         for (int i = 0; i < paths.length; i++) {
             checkCancelled();
             File path = paths[i];
             wcAccess.probeOpen(path, false, 0); 
-            SVNEntry2 entry = wcAccess.getEntry(path, false); 
+            SVNEntry entry = wcAccess.getEntry(path, false); 
             if (entry == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", path);
                 SVNErrorManager.error(err);

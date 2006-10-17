@@ -33,7 +33,7 @@ import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 
 /**
  * <b>SVNRepositoryFactory</b> is an abstract factory that is responsible
@@ -403,7 +403,7 @@ public abstract class SVNRepositoryFactory {
             try {
                 tmpChild = SVNFileUtil.createUniqueFile(directory, child.getName() + ".", ".tmp");
                 if (child.isFile()) {
-                    SVNTranslator2.translate(child, tmpChild, eol, null, false, true);
+                    SVNTranslator.translate(child, tmpChild, eol, null, false, true);
                 }
                 SVNFileUtil.deleteFile(child);
                 SVNFileUtil.rename(tmpChild, child);

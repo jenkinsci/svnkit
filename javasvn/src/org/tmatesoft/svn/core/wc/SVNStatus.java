@@ -19,7 +19,7 @@ import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 
 /**
  * The <b>SVNStatus</b> class is used to provide detailed status information for
@@ -125,7 +125,7 @@ public class SVNStatus {
     private Date myRemoteDate;
     private Date myLocalContentsDate;
     private Date myLocalPropertiesDate;
-    private SVNEntry2 myEntry;
+    private SVNEntry myEntry;
 
     /**
      * Constructs an <b>SVNStatus</b> object filling it with status information
@@ -610,11 +610,11 @@ public class SVNStatus {
         myContentsStatus = statusType;
     }
     
-    public void setEntry(SVNEntry2 entry) {
+    public void setEntry(SVNEntry entry) {
         myEntry = entry;
     }
     
-    public SVNEntry2 getEntry() {
+    public SVNEntry getEntry() {
         return myEntry;
     }
 }

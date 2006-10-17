@@ -27,7 +27,6 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNLog;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
@@ -36,17 +35,17 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  * @version 1.1
  * @author  TMate Software Ltd.
  */
-public class SVNLogRunner2 {
+public class SVNLogRunner {
     private boolean myIsEntriesChanged;
     private boolean myIsWCPropertiesChanged;
 
     public void runCommand(SVNAdminArea adminArea, String name, Map attributes, int count) throws SVNException {
         SVNException error = null;
-        String fileName = (String) attributes.get(ISVNLog.NAME_ATTR);
-        if (ISVNLog.DELETE_ENTRY.equals(name)) {
+        String fileName = (String) attributes.get(SVNLog.NAME_ATTR);
+        if (SVNLog.DELETE_ENTRY.equals(name)) {
             File path = adminArea.getFile(fileName);
             SVNAdminArea dir = adminArea.getWCAccess().probeRetrieve(path);
-            SVNEntry2 entry = dir.getWCAccess().getEntry(path, false);
+            SVNEntry entry = dir.getWCAccess().getEntry(path, false);
             if (entry == null) {
                 return;
             }
@@ -78,14 +77,14 @@ public class SVNLogRunner2 {
                     error = e;
                 }
             }
-        } else if (ISVNLog.MODIFY_ENTRY.equals(name)) {
+        } else if (SVNLog.MODIFY_ENTRY.equals(name)) {
             try {
                 Map entryAttrs = new HashMap(attributes);
                 entryAttrs.remove("");
-                entryAttrs.remove(ISVNLog.NAME_ATTR);
+                entryAttrs.remove(SVNLog.NAME_ATTR);
                 if (entryAttrs.containsKey(SVNProperty.shortPropertyName(SVNProperty.TEXT_TIME))) {
                     String value = (String) entryAttrs.get(SVNProperty.shortPropertyName(SVNProperty.TEXT_TIME)); 
-                    if (ISVNLog.WC_TIMESTAMP.equals(value)) {
+                    if (SVNLog.WC_TIMESTAMP.equals(value)) {
                         File file = adminArea.getFile(fileName);
                         value = SVNTimeUtil.formatDate(new Date(file.lastModified()));
                         entryAttrs.put(SVNProperty.shortPropertyName(SVNProperty.TEXT_TIME), value);
@@ -93,8 +92,8 @@ public class SVNLogRunner2 {
                 }
                 if (entryAttrs.containsKey(SVNProperty.shortPropertyName(SVNProperty.PROP_TIME))) {
                     String value = (String) entryAttrs.get(SVNProperty.shortPropertyName(SVNProperty.PROP_TIME)); 
-                    if (ISVNLog.WC_TIMESTAMP.equals(value)) {
-                        SVNEntry2 entry = adminArea.getEntry(fileName, false);
+                    if (SVNLog.WC_TIMESTAMP.equals(value)) {
+                        SVNEntry entry = adminArea.getEntry(fileName, false);
                         if (entry == null) {
                             return;
                         }
@@ -113,21 +112,21 @@ public class SVNLogRunner2 {
             } catch (SVNException svne) {
                 error = svne;
             }
-        } else if (ISVNLog.MODIFY_WC_PROPERTY.equals(name)) {
+        } else if (SVNLog.MODIFY_WC_PROPERTY.equals(name)) {
             try {
                 SVNVersionedProperties wcprops = adminArea.getWCProperties(fileName);
                 if (wcprops != null) {
-                    String propName = (String) attributes .get(ISVNLog.PROPERTY_NAME_ATTR);
-                    String propValue = (String) attributes.get(ISVNLog.PROPERTY_VALUE_ATTR);
+                    String propName = (String) attributes .get(SVNLog.PROPERTY_NAME_ATTR);
+                    String propValue = (String) attributes.get(SVNLog.PROPERTY_VALUE_ATTR);
                     wcprops.setPropertyValue(propName, propValue);
                     setWCPropertiesChanged(true);
                 }
             } catch (SVNException svne) {
                 error = svne;
             }
-        } else if (ISVNLog.DELETE_LOCK.equals(name)) {
+        } else if (SVNLog.DELETE_LOCK.equals(name)) {
             try {
-                SVNEntry2 entry = adminArea.getEntry(fileName, true);
+                SVNEntry entry = adminArea.getEntry(fileName, true);
                 if (entry != null) {
                     entry.setLockToken(null);
                     entry.setLockOwner(null);
@@ -140,23 +139,23 @@ public class SVNLogRunner2 {
                 SVNErrorMessage err = SVNErrorMessage.create(code, "Error removing lock from entry for ''{0}''", fileName);
                 error = new SVNException(err, svne);
             }
-        } else if (ISVNLog.DELETE.equals(name)) {
+        } else if (SVNLog.DELETE.equals(name)) {
             File file = adminArea.getFile(fileName);
             SVNFileUtil.deleteFile(file);
-        } else if (ISVNLog.READONLY.equals(name)) {
+        } else if (SVNLog.READONLY.equals(name)) {
             File file = adminArea.getFile(fileName);
             SVNFileUtil.setReadonly(file, true);
-        } else if (ISVNLog.MOVE.equals(name)) {
+        } else if (SVNLog.MOVE.equals(name)) {
             File src = adminArea.getFile(fileName);
-            File dst = adminArea.getFile((String) attributes.get(ISVNLog.DEST_ATTR));
+            File dst = adminArea.getFile((String) attributes.get(SVNLog.DEST_ATTR));
             try {
                 SVNFileUtil.rename(src, dst);
             } catch (SVNException svne) {
                 error = new SVNException(svne.getErrorMessage().wrap("Can't move source to dest"), svne);
             }
-        } else if (ISVNLog.APPEND.equals(name)) {
+        } else if (SVNLog.APPEND.equals(name)) {
             File src = adminArea.getFile(fileName);
-            File dst = adminArea.getFile((String) attributes.get(ISVNLog.DEST_ATTR));
+            File dst = adminArea.getFile((String) attributes.get(SVNLog.DEST_ATTR));
             OutputStream os = null;
             InputStream is = null;
             try {
@@ -182,9 +181,9 @@ public class SVNLogRunner2 {
                 SVNFileUtil.closeFile(os);
                 SVNFileUtil.closeFile(is);
             }
-        } else if (ISVNLog.SET_TIMESTAMP.equals(name)) {
+        } else if (SVNLog.SET_TIMESTAMP.equals(name)) {
             File file = adminArea.getFile(fileName);
-            String timestamp = (String) attributes.get(ISVNLog.TIMESTAMP_ATTR);
+            String timestamp = (String) attributes.get(SVNLog.TIMESTAMP_ATTR);
             try {
                 if (timestamp == null) {
                     SVNErrorCode code = count <= 1 ? SVNErrorCode.WC_BAD_ADM_LOG_START : SVNErrorCode.WC_BAD_ADM_LOG;
@@ -197,8 +196,8 @@ public class SVNLogRunner2 {
             } catch (SVNException svne) {
                 error = svne;
             }
-        } else if (ISVNLog.UPGRADE_FORMAT.equals(name)) {
-            String format = (String) attributes.get(ISVNLog.FORMAT_ATTR);
+        } else if (SVNLog.UPGRADE_FORMAT.equals(name)) {
+            String format = (String) attributes.get(SVNLog.FORMAT_ATTR);
             SVNErrorCode code = count <= 1 ? SVNErrorCode.WC_BAD_ADM_LOG_START : SVNErrorCode.WC_BAD_ADM_LOG;
             try {
                 if (format == null) {
@@ -217,10 +216,10 @@ public class SVNLogRunner2 {
             } catch (SVNException svne) {
                 error = svne;
             }
-        } else if (ISVNLog.MAYBE_READONLY.equals(name)) {
+        } else if (SVNLog.MAYBE_READONLY.equals(name)) {
             File file = adminArea.getFile(fileName);
             try {
-                SVNEntry2 entry = adminArea.getEntry(fileName, false);
+                SVNEntry entry = adminArea.getEntry(fileName, false);
                 if (entry != null) {
                     SVNVersionedProperties props = adminArea.getProperties(fileName);
                     String needsLock = props.getPropertyValue(SVNProperty.NEEDS_LOCK);
@@ -231,13 +230,13 @@ public class SVNLogRunner2 {
             } catch (SVNException svne) {
                 error = svne;
             }
-        } else if (ISVNLog.COPY_AND_TRANSLATE.equals(name)) {
+        } else if (SVNLog.COPY_AND_TRANSLATE.equals(name)) {
             String dstName = (String) attributes.get(SVNLog.DEST_ATTR);
             File src = adminArea.getFile(fileName);
             File dst = adminArea.getFile(dstName);
             try {
                 try {
-                    SVNTranslator2.translate(adminArea, dstName, fileName, dstName, true, false);
+                    SVNTranslator.translate(adminArea, dstName, fileName, dstName, true, false);
                 } catch (SVNException svne) {
                     if (src.exists()) {
                         throw svne;
@@ -250,29 +249,29 @@ public class SVNLogRunner2 {
                 if (executable) {
                     SVNFileUtil.setExecutable(dst, true);
                 }
-                SVNEntry2 entry = adminArea.getEntry(dstName, false);
+                SVNEntry entry = adminArea.getEntry(dstName, false);
                 if (entry != null && entry.getLockToken() == null && props.getPropertyValue(SVNProperty.NEEDS_LOCK) != null) {
                     SVNFileUtil.setReadonly(dst, true);
                 }
             } catch (SVNException svne) {
                 error = svne;
             }
-        } else if (ISVNLog.COPY_AND_DETRANSLATE.equals(name)) {
+        } else if (SVNLog.COPY_AND_DETRANSLATE.equals(name)) {
             String dstName = (String) attributes.get(SVNLog.DEST_ATTR);
             try {
-                SVNTranslator2.translate(adminArea, fileName, fileName, dstName, false, true);
+                SVNTranslator.translate(adminArea, fileName, fileName, dstName, false, true);
             } catch (SVNException svne) {
                 error = svne;
             }
-        } else if (ISVNLog.COPY.equals(name)) {
+        } else if (SVNLog.COPY.equals(name)) {
             File src = adminArea.getFile(fileName);
-            File dst = adminArea.getFile((String) attributes.get(ISVNLog.DEST_ATTR));
+            File dst = adminArea.getFile((String) attributes.get(SVNLog.DEST_ATTR));
             try {
                 SVNFileUtil.copy(src, dst, true, true);
             } catch (SVNException svne) {
                 error = svne;
             }
-        } else if (ISVNLog.MERGE.equals(name)) {
+        } else if (SVNLog.MERGE.equals(name)) {
             File target = adminArea.getFile(fileName);
             try {
                 SVNErrorCode code = count <= 1 ? SVNErrorCode.WC_BAD_ADM_LOG_START : SVNErrorCode.WC_BAD_ADM_LOG;
@@ -294,7 +293,7 @@ public class SVNLogRunner2 {
                 targetLabel = targetLabel == null ? ".working" : targetLabel;
     
                 SVNVersionedProperties props = adminArea.getProperties(fileName);
-                SVNEntry2 entry = adminArea.getEntry(fileName, true);
+                SVNEntry entry = adminArea.getEntry(fileName, true);
     
                 String leaveConglictsAttr = (String) attributes.get(SVNLog.ATTR6);
                 boolean leaveConflicts = Boolean.TRUE.toString().equals(leaveConglictsAttr);
@@ -313,7 +312,7 @@ public class SVNLogRunner2 {
             } catch (SVNException svne) {
                 error = svne;
             }
-        } else if (ISVNLog.COMMIT.equals(name)) {
+        } else if (SVNLog.COMMIT.equals(name)) {
             try {
                 SVNErrorCode code = count <= 1 ? SVNErrorCode.WC_BAD_ADM_LOG_START : SVNErrorCode.WC_BAD_ADM_LOG;
                 if (attributes.get(SVNLog.REVISION_ATTR) == null) {
@@ -321,7 +320,7 @@ public class SVNLogRunner2 {
                     SVNErrorManager.error(err);
                 }
                 
-                SVNEntry2 entry = adminArea.getEntry(fileName, true);
+                SVNEntry entry = adminArea.getEntry(fileName, true);
                 if (entry == null || (!adminArea.getThisDirName().equals(fileName) && entry.getKind() != SVNNodeKind.FILE)) {
                     SVNErrorMessage err = SVNErrorMessage.create(code, "Log command for directory ''{0}'' is mislocated", adminArea.getRoot()); 
                     SVNErrorManager.error(err);
@@ -381,11 +380,11 @@ public class SVNLogRunner2 {
         }
         boolean killMe = adminArea.isKillMe();
         if (killMe) {
-            SVNEntry2 entry = adminArea.getEntry(adminArea.getThisDirName(), false);
+            SVNEntry entry = adminArea.getEntry(adminArea.getThisDirName(), false);
             long dirRevision = entry != null ? entry.getRevision() : -1;
             // deleted dir, files and entry in parent.
             File dir = adminArea.getRoot();
-            SVNWCAccess2 access = adminArea.getWCAccess(); 
+            SVNWCAccess access = adminArea.getWCAccess(); 
             boolean isWCRoot = access.isWCRoot(adminArea.getRoot());
             try {
                 adminArea.removeFromRevisionControl(adminArea.getThisDirName(), true, false);
@@ -400,9 +399,9 @@ public class SVNLogRunner2 {
             }
             // compare revision with parent's one
             SVNAdminArea parentArea = access.retrieve(dir.getParentFile());
-            SVNEntry2 parentEntry = parentArea.getEntry(parentArea.getThisDirName(), false);
+            SVNEntry parentEntry = parentArea.getEntry(parentArea.getThisDirName(), false);
             if (dirRevision > parentEntry.getRevision()) {
-                SVNEntry2 entryInParent = parentArea.addEntry(dir.getName());
+                SVNEntry entryInParent = parentArea.addEntry(dir.getName());
                 entryInParent.setDeleted(true);
                 entryInParent.setKind(SVNNodeKind.DIR);
                 entryInParent.setRevision(dirRevision);

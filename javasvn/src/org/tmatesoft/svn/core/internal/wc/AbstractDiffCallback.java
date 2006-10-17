@@ -18,7 +18,7 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 
@@ -88,7 +88,7 @@ public abstract class AbstractDiffCallback {
         return myAdminInfo;        
     }
     
-    protected SVNWCAccess2 getWCAccess() {
+    protected SVNWCAccess getWCAccess() {
         return getAdminInfo().getWCAccess();
     }
 

@@ -45,10 +45,10 @@ import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNImportMediator;
-import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
@@ -660,7 +660,7 @@ public class SVNCommitClient extends SVNBasicClient {
                 for (Iterator urls = commitables.keySet().iterator(); urls.hasNext();) {
                     String url = (String) urls.next();
                     SVNCommitItem item = (SVNCommitItem) commitables.get(url);
-                    SVNWCAccess2 wcAccess = item.getWCAccess();
+                    SVNWCAccess wcAccess = item.getWCAccess();
                     String path = item.getPath();
                     SVNAdminArea dir = null;
                     String target = null;
@@ -689,7 +689,7 @@ public class SVNCommitClient extends SVNBasicClient {
                             if (parentPath != null) {
                                 SVNAdminArea parentDir = wcAccess.retrieve(parentPath);
                                 if (parentDir != null) {
-                                    SVNEntry2 entryInParent = parentDir.getEntry(nameInParent, true);
+                                    SVNEntry entryInParent = parentDir.getEntry(nameInParent, true);
                                     if (entryInParent != null) {
                                         entryInParent.unschedule();
                                         entryInParent.setDeleted(true);
@@ -701,7 +701,7 @@ public class SVNCommitClient extends SVNBasicClient {
                             continue;
                         }
                     }
-                    SVNEntry2 entry = dir.getEntry(target, true);
+                    SVNEntry entry = dir.getEntry(target, true);
                     if (entry == null && hasProcessedParents(processedItems, path)) {
                         processedItems.add(path);
                         continue;
@@ -793,7 +793,7 @@ public class SVNCommitClient extends SVNBasicClient {
                 SVNCommitClient.this.checkCancelled();
             }
         });
-        SVNWCAccess2 wcAccess = SVNCommitUtil.createCommitWCAccess(paths, recursive, force, targets, statusClient);
+        SVNWCAccess wcAccess = SVNCommitUtil.createCommitWCAccess(paths, recursive, force, targets, statusClient);
         try {
             Map lockTokens = new HashMap();
             checkCancelled();
@@ -870,10 +870,10 @@ public class SVNCommitClient extends SVNBasicClient {
                 SVNCommitClient.this.checkCancelled();
             }
         });
-        SVNWCAccess2[] wcAccesses = SVNCommitUtil.createCommitWCAccess2(paths, recursive, force, targets, statusClient);
+        SVNWCAccess[] wcAccesses = SVNCommitUtil.createCommitWCAccess2(paths, recursive, force, targets, statusClient);
 
         for (int i = 0; i < wcAccesses.length; i++) {
-            SVNWCAccess2 wcAccess = wcAccesses[i];
+            SVNWCAccess wcAccess = wcAccesses[i];
             Collection targetPaths = (Collection) targets.get(wcAccess);
             try {
                 checkCancelled();
@@ -918,7 +918,7 @@ public class SVNCommitClient extends SVNBasicClient {
                 checkCancelled();
                 SVNCommitPacket packet = packetsArray[i];
                 File wcRoot = SVNWCUtil.getWorkingCopyRoot(packet.getCommitItems()[0].getWCAccess().getAnchor(), true);
-                SVNWCAccess2 rootWCAccess = createWCAccess();
+                SVNWCAccess rootWCAccess = createWCAccess();
                 String uuid = null;
                 SVNURL url = null;
                 try {

@@ -35,9 +35,8 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
@@ -262,37 +261,11 @@ public class SVNBasicClient implements ISVNEventHandler {
         return myEventDispatcher;
     }
 
-
-    protected SVNWCAccess createWCAccess(File file) throws SVNException {
-        return createWCAccess(file, null);
-    }
-
-    protected SVNWCAccess createWCAccess(File file, final String pathPrefix) throws SVNException {
-        SVNWCAccess wcAccess = SVNWCAccess.create(file);
-        if (pathPrefix != null) {
-            wcAccess.setEventDispatcher(new ISVNEventHandler() {
-                public void handleEvent(SVNEvent event, double progress) throws SVNException {
-                    String fullPath = SVNPathUtil.append(pathPrefix, event.getPath());
-                    event.setPath(fullPath);
-                    dispatchEvent(event, progress);
-                }
-
-                public void checkCancelled() throws SVNCancelException {
-                    SVNBasicClient.this.checkCancelled();
-                }
-            });
-        } else {
-            wcAccess.setEventDispatcher(this);
-        }
-        wcAccess.setOptions(myOptions);
-        return wcAccess;
-    }
-    
-    protected SVNWCAccess2 createWCAccess() {
+    protected SVNWCAccess createWCAccess() {
         return createWCAccess((String) null);
     }
 
-    protected SVNWCAccess2 createWCAccess(final String pathPrefix) {
+    protected SVNWCAccess createWCAccess(final String pathPrefix) {
         ISVNEventHandler eventHandler = null;
         if (pathPrefix != null) {
             eventHandler = new ISVNEventHandler() {
@@ -309,7 +282,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         } else {
             eventHandler = this;
         }
-        SVNWCAccess2 access = SVNWCAccess2.newInstance(eventHandler);
+        SVNWCAccess access = SVNWCAccess.newInstance(eventHandler);
         access.setOptions(myOptions);
         return access;
     }
@@ -356,9 +329,9 @@ public class SVNBasicClient implements ISVNEventHandler {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_VERSIONED_PATH_REQUIRED);
                 SVNErrorManager.error(err);
             }
-            SVNWCAccess2 wcAccess = createWCAccess();
+            SVNWCAccess wcAccess = createWCAccess();
             wcAccess.probeOpen(path, false, 0);
-            SVNEntry2 entry = wcAccess.getEntry(path, false);
+            SVNEntry entry = wcAccess.getEntry(path, false);
             wcAccess.close();
             
             if (entry == null) {
@@ -443,10 +416,10 @@ public class SVNBasicClient implements ISVNEventHandler {
         }
         
         if (path != null) {
-            SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(null);
+            SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
             try {
                 wcAccess.openAnchor(path, false, 0);
-                SVNEntry2 entry = wcAccess.getEntry(path, false);
+                SVNEntry entry = wcAccess.getEntry(path, false);
                 if (entry.getCopyFromURL() != null && revision == SVNRevision.WORKING) {
                     url = entry.getCopyFromSVNURL();
                     pegRevisionNumber = entry.getCopyFromRevision();
@@ -595,10 +568,10 @@ public class SVNBasicClient implements ISVNEventHandler {
         if (path == null) {
             return null;
         }
-        SVNWCAccess2 wcAccess = createWCAccess();
+        SVNWCAccess wcAccess = createWCAccess();
         try {
             wcAccess.probeOpen(path, false, 0);
-            SVNEntry2 entry = wcAccess.getEntry(path, false);
+            SVNEntry entry = wcAccess.getEntry(path, false);
             return entry != null ? entry.getSVNURL() : null;
         } finally {
             wcAccess.close();

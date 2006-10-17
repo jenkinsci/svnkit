@@ -24,12 +24,12 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.internal.wc.admin.ISVNLog;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
@@ -54,8 +54,8 @@ public class SVNPropertiesManager {
         NOT_ALLOWED_FOR_DIR.add(SVNProperty.MIME_TYPE);
     }
 
-    public static void setWCProperty(SVNWCAccess2 access, File path, String propName, String propValue, boolean write) throws SVNException {
-        SVNEntry2 entry = access.getEntry(path, false);
+    public static void setWCProperty(SVNWCAccess access, File path, String propName, String propValue, boolean write) throws SVNException {
+        SVNEntry entry = access.getEntry(path, false);
         if (entry == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", path);
             SVNErrorManager.error(err);
@@ -67,8 +67,8 @@ public class SVNPropertiesManager {
         }
     }
 
-    public static String getWCProperty(SVNWCAccess2 access, File path, String propName) throws SVNException {
-        SVNEntry2 entry = access.getEntry(path, false);
+    public static String getWCProperty(SVNWCAccess access, File path, String propName) throws SVNException {
+        SVNEntry entry = access.getEntry(path, false);
         if (entry == null) {
             return null;
         }
@@ -85,7 +85,7 @@ public class SVNPropertiesManager {
         } 
         if (recursive || name == null) {
             for(Iterator entries = dir.entries(false); entries.hasNext();) {
-                SVNEntry2 entry = (SVNEntry2) entries.next();
+                SVNEntry entry = (SVNEntry) entries.next();
                 if (name != null) {
                     SVNVersionedProperties props = dir.getWCProperties(entry.getName());
                     if (props != null) {
@@ -107,8 +107,8 @@ public class SVNPropertiesManager {
         dir.saveWCProperties(false);
     }
 
-    public static String getProperty(SVNWCAccess2 access, File path, String propName) throws SVNException {
-        SVNEntry2 entry = access.getEntry(path, false);
+    public static String getProperty(SVNWCAccess access, File path, String propName) throws SVNException {
+        SVNEntry entry = access.getEntry(path, false);
         if (entry == null) {
             return null;
         }
@@ -132,7 +132,7 @@ public class SVNPropertiesManager {
         return dir.getProperties(entry.getName()).getPropertyValue(propName);
     }
 
-    public static void setProperty(SVNWCAccess2 access, File path, String propName, String propValue, boolean skipChecks) throws SVNException {
+    public static void setProperty(SVNWCAccess access, File path, String propName, String propValue, boolean skipChecks) throws SVNException {
         if (SVNProperty.isWorkingCopyProperty(propName)) {
             setWCProperty(access, path, propName, propValue, true);
             return;
@@ -140,7 +140,7 @@ public class SVNPropertiesManager {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_PROP_KIND, "Property ''{0}'' is an entry property", propName);
             SVNErrorManager.error(err);
         }
-        SVNEntry2 entry = access.getEntry(path, false);
+        SVNEntry entry = access.getEntry(path, false);
         if (entry == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", path);
             SVNErrorManager.error(err);
@@ -188,12 +188,12 @@ public class SVNPropertiesManager {
             Collection newKeywords = getKeywords(propValue);
             updateTimeStamp = !oldKeywords.equals(newKeywords); 
         }
-        ISVNLog log = dir.getLog();
+        SVNLog log = dir.getLog();
         if (updateTimeStamp) {
             Map command = new HashMap();
-            command.put(ISVNLog.NAME_ATTR, entry.getName());
+            command.put(SVNLog.NAME_ATTR, entry.getName());
             command.put(SVNProperty.shortPropertyName(SVNProperty.TEXT_TIME), null);
-            log.addCommand(ISVNLog.MODIFY_ENTRY, command, false);
+            log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
         }
         properties.setPropertyValue(propName, propValue);
         dir.saveVersionedProperties(log, false);
@@ -201,8 +201,8 @@ public class SVNPropertiesManager {
         dir.runLogs();
     }
     
-    public static SVNStatusType mergeProperties(SVNWCAccess2 wcAccess, File path, Map baseProperties, Map diff, boolean baseMerge, boolean dryRun) throws SVNException {
-        SVNEntry2 entry = wcAccess.getEntry(path, false);
+    public static SVNStatusType mergeProperties(SVNWCAccess wcAccess, File path, Map baseProperties, Map diff, boolean baseMerge, boolean dryRun) throws SVNException {
+        SVNEntry entry = wcAccess.getEntry(path, false);
         if (entry == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", path);
             SVNErrorManager.error(err);
@@ -217,7 +217,7 @@ public class SVNPropertiesManager {
             name = entry.getName();
         } 
         
-        ISVNLog log = null;
+        SVNLog log = null;
         SVNAdminArea dir = wcAccess.retrieve(parent);
         if (!dryRun) {
             log = dir.getLog();            
@@ -267,13 +267,13 @@ public class SVNPropertiesManager {
         }
     }
 
-    private static void validateEOLProperty(File path, SVNWCAccess2 access) throws SVNException {
+    private static void validateEOLProperty(File path, SVNWCAccess access) throws SVNException {
         String mimeType = getProperty(access, path, SVNProperty.MIME_TYPE);
         if (mimeType != null && SVNProperty.isBinaryMimeType(mimeType)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "File ''{0}'' has binary mime type property", path);
             SVNErrorManager.error(err);
         }
-        boolean consistent = SVNTranslator2.checkNewLines(path);
+        boolean consistent = SVNTranslator.checkNewLines(path);
         if (!consistent) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "File ''{0}'' has inconsistent newlines", path);
             SVNErrorManager.error(err);

@@ -20,7 +20,7 @@ import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 
 /**
  * The <b>SVNInfo</b> class is a wrapper for versioned item's (located either
@@ -96,7 +96,7 @@ public class SVNInfo {
     private File myConflictWrkFile;
     private File myPropConflictFile;
 
-    static SVNInfo createInfo(File file, SVNEntry2 entry) throws SVNException {
+    static SVNInfo createInfo(File file, SVNEntry entry) throws SVNException {
         if (entry == null) {
             return null;
         }

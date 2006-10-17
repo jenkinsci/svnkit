@@ -34,8 +34,8 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -49,7 +49,7 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
  */
 public class SVNStatusEditor {
     
-    private SVNWCAccess2 myWCAccess;
+    private SVNWCAccess myWCAccess;
     private SVNAdminAreaInfo myAdminInfo;
 
     private boolean myIsReportAll;
@@ -65,7 +65,7 @@ public class SVNStatusEditor {
     private Map myRepositoryLocks;
     private long myTargetRevision;
     
-    public SVNStatusEditor(ISVNOptions options, SVNWCAccess2 wcAccess, SVNAdminAreaInfo info, boolean noIgnore, boolean reportAll, boolean descend,
+    public SVNStatusEditor(ISVNOptions options, SVNWCAccess wcAccess, SVNAdminAreaInfo info, boolean noIgnore, boolean reportAll, boolean descend,
             ISVNStatusHandler handler) {
         myWCAccess = wcAccess;
         myAdminInfo = info;
@@ -102,7 +102,7 @@ public class SVNStatusEditor {
                 File path = myAdminInfo.getAnchor().getFile(myAdminInfo.getTargetName());
                 SVNFileType type = SVNFileType.getType(path);
                 if (type == SVNFileType.DIRECTORY) {
-                    SVNEntry2 entry = myWCAccess.getEntry(path, false);
+                    SVNEntry entry = myWCAccess.getEntry(path, false);
                     if (entry == null) {
                         getDirStatus(null, myAdminInfo.getAnchor(), myAdminInfo.getTargetName(), 
                                 false, myIsReportAll, true, null, true, myStatusHandler);
@@ -130,17 +130,17 @@ public class SVNStatusEditor {
         myRepositoryLocks = repositoryLocks;
     }
     
-    protected void getDirStatus(SVNEntry2 parentEntry, SVNAdminArea dir, String entryName, 
+    protected void getDirStatus(SVNEntry parentEntry, SVNAdminArea dir, String entryName, 
             boolean descend, boolean getAll, boolean noIgnore, Collection ignorePatterns, boolean skipThisDir,
             ISVNStatusHandler handler) throws SVNException {
         myWCAccess.checkCancelled();
         
         Map childrenFiles = getChildrenFiles(dir.getRoot());
-        SVNEntry2 dirEntry = myWCAccess.getEntry(dir.getRoot(), false);
+        SVNEntry dirEntry = myWCAccess.getEntry(dir.getRoot(), false);
 
         String externals = dir.getProperties("").getPropertyValue(SVNProperty.EXTERNALS);
         if (externals != null) {
-            SVNExternalInfo[] externalsInfo = SVNWCAccess2.parseExternals(dir.getRelativePath(myAdminInfo.getAnchor()), externals);
+            SVNExternalInfo[] externalsInfo = SVNWCAccess.parseExternals(dir.getRelativePath(myAdminInfo.getAnchor()), externals);
             for (int i = 0; i < externalsInfo.length; i++) {
                 SVNExternalInfo external = externalsInfo[i];
                 myExternalsMap.put(external.getPath(), external);
@@ -148,7 +148,7 @@ public class SVNStatusEditor {
         }
         if (entryName != null) {
             File file = (File) childrenFiles.get(entryName);
-            SVNEntry2 entry = dir.getEntry(entryName, false);
+            SVNEntry entry = dir.getEntry(entryName, false);
             if (entry != null) {
                 SVNFileType fileType = SVNFileType.getType(file);
                 boolean special = fileType == SVNFileType.SYMLINK;
@@ -187,7 +187,7 @@ public class SVNStatusEditor {
             }
         }
         for(Iterator entries = dir.entries(false); entries.hasNext();) {
-            SVNEntry2 entry = (SVNEntry2) entries.next();
+            SVNEntry entry = (SVNEntry) entries.next();
             if ("".equals(entry.getName())) {
                 continue;
             }
@@ -210,7 +210,7 @@ public class SVNStatusEditor {
         return myAdminInfo.getAnchor();
     }
 
-    protected SVNWCAccess2 getWCAccess() {
+    protected SVNWCAccess getWCAccess() {
         return myWCAccess;
     }
     
@@ -254,12 +254,12 @@ public class SVNStatusEditor {
         return (SVNLock) myRepositoryLocks.get(path);
     }
 
-    private void handleDirEntry(SVNAdminArea dir, String entryName, SVNEntry2 dirEntry, SVNEntry2 entry, SVNNodeKind fileKind, boolean special, 
+    private void handleDirEntry(SVNAdminArea dir, String entryName, SVNEntry dirEntry, SVNEntry entry, SVNNodeKind fileKind, boolean special, 
             boolean descend, boolean getAll, boolean noIgnore, ISVNStatusHandler handler) throws SVNException {
         File path = dir.getFile(entryName);
         
         if (fileKind == SVNNodeKind.DIR) {
-            SVNEntry2 fullEntry = entry;
+            SVNEntry fullEntry = entry;
             if (entry.getKind() == fileKind) {
                 fullEntry = myWCAccess.getEntry(path, false);
                 if (fullEntry == null) {
@@ -307,7 +307,7 @@ public class SVNStatusEditor {
     }
     
     protected SVNStatus assembleStatus(File file, SVNAdminArea dir, 
-            SVNEntry2 entry, SVNEntry2 parentEntry, SVNNodeKind fileKind, boolean special, 
+            SVNEntry entry, SVNEntry parentEntry, SVNNodeKind fileKind, boolean special, 
             boolean reportAll, boolean isIgnored) throws SVNException {
         
         boolean hasProps = false;

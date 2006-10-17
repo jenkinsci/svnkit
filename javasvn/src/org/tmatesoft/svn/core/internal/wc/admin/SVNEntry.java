@@ -25,13 +25,13 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
  * @version 1.0
  * @author TMate Software Ltd.
  */
-public class SVNEntry2 implements Comparable {
+public class SVNEntry implements Comparable {
 
     private Map myAttributes;
     private SVNAdminArea myAdminArea;
     private String myName;
 
-    public SVNEntry2(Map attributes, SVNAdminArea adminArea, String name) {
+    public SVNEntry(Map attributes, SVNAdminArea adminArea, String name) {
         myAttributes = attributes;
         myName = name;
         myAdminArea = adminArea;
@@ -41,10 +41,10 @@ public class SVNEntry2 implements Comparable {
     }
 
     public boolean equals(Object obj) {
-        if (obj == null || obj.getClass() != SVNEntry2.class) {
+        if (obj == null || obj.getClass() != SVNEntry.class) {
             return false;
         }
-        SVNEntry2 entry = (SVNEntry2) obj;
+        SVNEntry entry = (SVNEntry) obj;
         return entry.myAttributes == myAttributes && entry.myName.equals(myName);
     }
 
@@ -56,13 +56,13 @@ public class SVNEntry2 implements Comparable {
         if (obj == this) {
             return 0;
         }
-        if (obj == null || obj.getClass() != SVNEntry2.class) {
+        if (obj == null || obj.getClass() != SVNEntry.class) {
             return 1;
         }
         if (isThisDir()) {
             return 1;
         }
-        SVNEntry2 entry = (SVNEntry2) obj;
+        SVNEntry entry = (SVNEntry) obj;
 //        int kind = getKind().compareTo(entry.getKind());
 //        if (kind == 0) {
             return myName.toLowerCase().compareTo(entry.myName.toLowerCase());
@@ -77,7 +77,7 @@ public class SVNEntry2 implements Comparable {
     public String getURL() {
         String url = (String)myAttributes.get(SVNProperty.URL);
         if (url == null && myAdminArea != null && !myAdminArea.getThisDirName().equals(myName)) {
-            SVNEntry2 rootEntry = null; 
+            SVNEntry rootEntry = null; 
             try {    
                 rootEntry = myAdminArea.getEntry(myAdminArea.getThisDirName(), true); 
             } catch (SVNException svne) {
@@ -108,7 +108,7 @@ public class SVNEntry2 implements Comparable {
     public long getRevision() {
         String revStr = (String)myAttributes.get(SVNProperty.REVISION);
         if (revStr == null && myAdminArea != null && !myAdminArea.getThisDirName().equals(myName)) {
-            SVNEntry2 rootEntry = null;
+            SVNEntry rootEntry = null;
             try {
                 rootEntry = myAdminArea.getEntry(myAdminArea.getThisDirName(), true);
             } catch (SVNException svne) {
@@ -433,7 +433,7 @@ public class SVNEntry2 implements Comparable {
         return myAttributes;
     }
     
-    public SVNEntry2 copy() {
-        return new SVNEntry2(myAttributes, null, myName);
+    public SVNEntry copy() {
+        return new SVNEntry(myAttributes, null, myName);
     }
 }

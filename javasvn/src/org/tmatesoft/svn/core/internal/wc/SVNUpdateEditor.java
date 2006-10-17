@@ -25,12 +25,12 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.admin.ISVNLog;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
@@ -55,7 +55,7 @@ public class SVNUpdateEditor implements ISVNEditor {
     private boolean myIsRootOpen;
     private boolean myIsTargetDeleted;
     private boolean myIsLeaveConflicts;
-    private SVNWCAccess2 myWCAccess; 
+    private SVNWCAccess myWCAccess; 
     
     private SVNDeltaProcessor myDeltaProcessor;
 
@@ -69,7 +69,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         myIsLeaveConflicts = leaveConflicts;
         myDeltaProcessor = new SVNDeltaProcessor();
 
-        SVNEntry2 entry = info.getAnchor().getEntry(info.getAnchor().getThisDirName(), false);
+        SVNEntry entry = info.getAnchor().getEntry(info.getAnchor().getThisDirName(), false);
         myTargetURL = entry != null ? entry.getURL() : null;
         myRootURL = entry != null ? entry.getRepositoryRoot() : null;
         if (myTarget != null) {
@@ -102,7 +102,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         myCurrentDirectory = createDirectoryInfo(null, "", false);
         if (myTarget == null) {
             SVNAdminArea adminArea = myCurrentDirectory.getAdminArea();
-            SVNEntry2 entry = adminArea.getEntry(adminArea.getThisDirName(), true);
+            SVNEntry entry = adminArea.getEntry(adminArea.getThisDirName(), true);
             entry.setRevision(myTargetRevision);
             entry.setURL(myCurrentDirectory.URL);
             entry.setIncomplete(true);
@@ -116,24 +116,24 @@ public class SVNUpdateEditor implements ISVNEditor {
     public void deleteEntry(String path, long revision) throws SVNException {
         String name = SVNPathUtil.tail(path);
         SVNAdminArea parentArea = myCurrentDirectory.getAdminArea();
-        SVNEntry2 entry = parentArea.getEntry(name, true);
+        SVNEntry entry = parentArea.getEntry(name, true);
         if (entry == null) {
             return;
         }
 
-        ISVNLog log = myCurrentDirectory.getLog();
+        SVNLog log = myCurrentDirectory.getLog();
         Map attributes = new HashMap();
 
-        attributes.put(ISVNLog.NAME_ATTR, name);
-        log.addCommand(ISVNLog.DELETE_ENTRY, attributes, false);
+        attributes.put(SVNLog.NAME_ATTR, name);
+        log.addCommand(SVNLog.DELETE_ENTRY, attributes, false);
         SVNNodeKind kind = entry.getKind();
         boolean isDeleted = entry.isDeleted();
         if (path.equals(myTarget)) {
-            attributes.put(ISVNLog.NAME_ATTR, name);
+            attributes.put(SVNLog.NAME_ATTR, name);
             attributes.put(SVNProperty.shortPropertyName(SVNProperty.KIND), kind == SVNNodeKind.DIR ? SVNProperty.KIND_DIR : SVNProperty.KIND_FILE);
             attributes.put(SVNProperty.shortPropertyName(SVNProperty.REVISION), Long.toString(myTargetRevision));
             attributes.put(SVNProperty.shortPropertyName(SVNProperty.DELETED), Boolean.TRUE.toString());
-            log.addCommand(ISVNLog.MODIFY_ENTRY, attributes, false);
+            log.addCommand(SVNLog.MODIFY_ENTRY, attributes, false);
             myIsTargetDeleted = true;
         }
         try {
@@ -165,7 +165,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         myWCAccess.handleEvent(SVNEventFactory.createUpdateDeleteEvent(myAdminInfo, myCurrentDirectory.getAdminArea(), kind, name));
     }
 
-    private void handleLeftLocalModificationsError(SVNException originalError, ISVNLog log, SVNAdminArea adminArea) throws SVNException {
+    private void handleLeftLocalModificationsError(SVNException originalError, SVNLog log, SVNAdminArea adminArea) throws SVNException {
         SVNException error = null;
         for (error = originalError; error != null;) {
             if (error.getErrorMessage().getErrorCode() == SVNErrorCode.WC_LEFT_LOCAL_MOD) {
@@ -201,7 +201,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             SVNErrorManager.error(err);
         }
         
-        SVNEntry2 entry = parentArea.getEntry(name, false);
+        SVNEntry entry = parentArea.getEntry(name, false);
         if (entry != null) {
             if (entry.isScheduledForAddition()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Failed to add directory ''{0}'': object of the same name already exists", path);
@@ -233,7 +233,7 @@ public class SVNUpdateEditor implements ISVNEditor {
     public void openDir(String path, long revision) throws SVNException {
         myCurrentDirectory = createDirectoryInfo(myCurrentDirectory, path, false);
         SVNAdminArea adminArea = myCurrentDirectory.getAdminArea(); 
-        SVNEntry2 entry = adminArea.getEntry(adminArea.getThisDirName(), true);
+        SVNEntry entry = adminArea.getEntry(adminArea.getThisDirName(), true);
         entry.setRevision(myTargetRevision);
         entry.setURL(myCurrentDirectory.URL);
         entry.setIncomplete(true);
@@ -257,7 +257,7 @@ public class SVNUpdateEditor implements ISVNEditor {
     private void absentEntry(String path, SVNNodeKind kind) throws SVNException {
         String name = SVNPathUtil.tail(path);
         SVNAdminArea adminArea = myCurrentDirectory.getAdminArea();
-        SVNEntry2 entry = adminArea.getEntry(name, false);
+        SVNEntry entry = adminArea.getEntry(name, false);
         if (entry != null && entry.isScheduledForAddition()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Failed to mark ''{0}'' absent: item of the same name is already scheduled for addition", path);
             SVNErrorManager.error(err);
@@ -283,7 +283,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             return;
         }
         for (Iterator ents = adminArea.entries(false); ents.hasNext();) {
-            SVNEntry2 entry = (SVNEntry2) ents.next();
+            SVNEntry entry = (SVNEntry) ents.next();
             if (entry.isFile() || adminArea.getThisDirName().equals(entry.getName())) {
                 SVNVersionedProperties props = adminArea.getWCProperties(entry.getName());
                 props.setPropertyValue(SVNProperty.WC_URL, null);
@@ -302,7 +302,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         SVNStatusType propStatus = SVNStatusType.UNCHANGED;
         SVNAdminArea adminArea = myCurrentDirectory.getAdminArea();
         if (modifiedWCProps != null || modifiedEntryProps != null || modifiedProps != null) {
-            ISVNLog log = myCurrentDirectory.getLog();
+            SVNLog log = myCurrentDirectory.getLog();
             if (modifiedProps != null && !modifiedProps.isEmpty()) {
                 myAdminInfo.addExternals(adminArea, (String) modifiedProps.get(SVNProperty.EXTERNALS));
 
@@ -360,7 +360,7 @@ public class SVNUpdateEditor implements ISVNEditor {
 
     public void applyTextDelta(String commitPath, String baseChecksum) throws SVNException {
         SVNAdminArea adminArea = myCurrentFile.getAdminArea();
-        SVNEntry2 entry = adminArea.getEntry(myCurrentFile.Name, false);
+        SVNEntry entry = adminArea.getEntry(myCurrentFile.Name, false);
         File baseFile = adminArea.getBaseFile(myCurrentFile.Name, false);
         if (entry != null && entry.getChecksum() != null) {
             String realChecksum = SVNFileUtil.computeChecksum(baseFile);
@@ -408,7 +408,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             checksum = textChecksum;
         }
         SVNAdminArea adminArea = myCurrentFile.getAdminArea();
-        ISVNLog log = myCurrentDirectory.getLog();
+        SVNLog log = myCurrentDirectory.getLog();
 
         // merge props.
         Map modifiedWCProps = myCurrentFile.getChangedWCProperties();
@@ -440,9 +440,9 @@ public class SVNUpdateEditor implements ISVNEditor {
 
         boolean isLocalPropsModified = !myCurrentFile.IsAdded && adminArea.hasPropModifications(name);
         if (modifiedProps != null && !isLocalPropsModified) {
-            command.put(ISVNLog.NAME_ATTR, name);
-            command.put(SVNProperty.shortPropertyName(SVNProperty.PROP_TIME), ISVNLog.WC_TIMESTAMP);
-            log.addCommand(ISVNLog.MODIFY_ENTRY, command, false);
+            command.put(SVNLog.NAME_ATTR, name);
+            command.put(SVNProperty.shortPropertyName(SVNProperty.PROP_TIME), SVNLog.WC_TIMESTAMP);
+            log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
             command.clear();
         }
         if (modifiedWCProps != null) {
@@ -452,7 +452,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         boolean isLocallyModified = !myCurrentFile.IsAdded && adminArea.hasTextModifications(name, false);
         boolean isReplaced = false;
         if (!isLocallyModified) {
-            SVNEntry2 entry = adminArea.getEntry(name, false);
+            SVNEntry entry = adminArea.getEntry(name, false);
             if (entry != null && entry.isScheduledForReplacement()) {
                 isReplaced = true;
             }
@@ -480,18 +480,18 @@ public class SVNUpdateEditor implements ISVNEditor {
             // only if wc file exists (may be locally deleted), otherwise no
             // need to retranslate...
             tmpPath = SVNAdminUtil.getTextBasePath(name, true);
-            command.put(ISVNLog.NAME_ATTR, name);
-            command.put(ISVNLog.DEST_ATTR, tmpPath);
-            log.addCommand(ISVNLog.COPY_AND_DETRANSLATE, command, false);
+            command.put(SVNLog.NAME_ATTR, name);
+            command.put(SVNLog.DEST_ATTR, tmpPath);
+            log.addCommand(SVNLog.COPY_AND_DETRANSLATE, command, false);
             command.clear();
-            command.put(ISVNLog.NAME_ATTR, tmpPath);
-            command.put(ISVNLog.DEST_ATTR, name);
-            log.addCommand(ISVNLog.COPY_AND_TRANSLATE, command, false);
+            command.put(SVNLog.NAME_ATTR, tmpPath);
+            command.put(SVNLog.DEST_ATTR, name);
+            log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
             command.clear();
         }
         
         // update entry.
-        command.put(ISVNLog.NAME_ATTR, name);
+        command.put(SVNLog.NAME_ATTR, name);
         command.put(SVNProperty.shortPropertyName(SVNProperty.KIND), SVNProperty.KIND_FILE);
         command.put(SVNProperty.shortPropertyName(SVNProperty.REVISION), Long.toString(myTargetRevision));
         command.put(SVNProperty.shortPropertyName(SVNProperty.DELETED), Boolean.FALSE.toString());
@@ -499,26 +499,26 @@ public class SVNUpdateEditor implements ISVNEditor {
         if (myCurrentFile.URL != null) {
             command.put(SVNProperty.shortPropertyName(SVNProperty.URL), myCurrentFile.URL);
         }
-        log.addCommand(ISVNLog.MODIFY_ENTRY, command, false);
+        log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
         command.clear();
 
         if (myCurrentFile.TextUpdated && textTmpBase.exists()) {
             textStatus = SVNStatusType.CHANGED;
             // there is a text replace working copy with.
             if (!isLocallyModified && !isReplaced) {
-                command.put(ISVNLog.NAME_ATTR, tmpPath);
-                command.put(ISVNLog.DEST_ATTR, name);
-                log.addCommand(ISVNLog.COPY_AND_TRANSLATE, command, false);
+                command.put(SVNLog.NAME_ATTR, tmpPath);
+                command.put(SVNLog.DEST_ATTR, name);
+                log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
                 command.clear();
             } else {
                 SVNFileType kind = SVNFileType.getType(workingFile);
                 if (kind == SVNFileType.NONE) {
-                    command.put(ISVNLog.NAME_ATTR, tmpPath);
-                    command.put(ISVNLog.DEST_ATTR, name);
-                    log.addCommand(ISVNLog.COPY_AND_TRANSLATE, command, false);
+                    command.put(SVNLog.NAME_ATTR, tmpPath);
+                    command.put(SVNLog.DEST_ATTR, name);
+                    log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
                     command.clear();
                 } else {
-                    SVNEntry2 entry = adminArea.getEntry(name, false);
+                    SVNEntry entry = adminArea.getEntry(name, false);
                     if (entry == null) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", workingFile);
                         SVNErrorManager.error(err);
@@ -551,50 +551,50 @@ public class SVNUpdateEditor implements ISVNEditor {
                     String oldRevisionStr = ".r" + entry.getRevision();
                     String newRevisionStr = ".r" + myTargetRevision;
 
-                    command.put(ISVNLog.NAME_ATTR, name);
-                    command.put(ISVNLog.ATTR1, basePath);
-                    command.put(ISVNLog.ATTR2, tmpPath);
-                    command.put(ISVNLog.ATTR3, oldRevisionStr);
-                    command.put(ISVNLog.ATTR4, newRevisionStr);
-                    command.put(ISVNLog.ATTR5, ".mine");
+                    command.put(SVNLog.NAME_ATTR, name);
+                    command.put(SVNLog.ATTR1, basePath);
+                    command.put(SVNLog.ATTR2, tmpPath);
+                    command.put(SVNLog.ATTR3, oldRevisionStr);
+                    command.put(SVNLog.ATTR4, newRevisionStr);
+                    command.put(SVNLog.ATTR5, ".mine");
                     if (textStatus == SVNStatusType.CONFLICTED_UNRESOLVED) {
-                        command.put(ISVNLog.ATTR6, Boolean.TRUE.toString());
+                        command.put(SVNLog.ATTR6, Boolean.TRUE.toString());
                     }
-                    log.addCommand(ISVNLog.MERGE, command, false);
+                    log.addCommand(SVNLog.MERGE, command, false);
                     command.clear();
                 }
             }
         } else if (lockStatus == SVNStatusType.LOCK_UNLOCKED) {
-            command.put(ISVNLog.NAME_ATTR, name);
-            log.addCommand(ISVNLog.MAYBE_READONLY, command, false);
+            command.put(SVNLog.NAME_ATTR, name);
+            log.addCommand(SVNLog.MAYBE_READONLY, command, false);
             command.clear();
         }
         if (myCurrentFile.TextUpdated && textTmpBase.exists()) {
-            command.put(ISVNLog.NAME_ATTR, tmpPath);
-            command.put(ISVNLog.DEST_ATTR, basePath);
-            log.addCommand(ISVNLog.MOVE, command, false);
+            command.put(SVNLog.NAME_ATTR, tmpPath);
+            command.put(SVNLog.DEST_ATTR, basePath);
+            log.addCommand(SVNLog.MOVE, command, false);
             command.clear();
-            command.put(ISVNLog.NAME_ATTR, basePath);
-            log.addCommand(ISVNLog.READONLY, command, false);
+            command.put(SVNLog.NAME_ATTR, basePath);
+            log.addCommand(SVNLog.READONLY, command, false);
             command.clear();
             if (!isReplaced) {
-                command.put(ISVNLog.NAME_ATTR, name);
+                command.put(SVNLog.NAME_ATTR, name);
                 command.put(SVNProperty.shortPropertyName(SVNProperty.CHECKSUM), checksum);
-                log.addCommand(ISVNLog.MODIFY_ENTRY, command, false);
+                log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
                 command.clear();
             }
         }
         if (!isLocallyModified) {
             if (commitTime != null) {
-                command.put(ISVNLog.NAME_ATTR, name);
-                command.put(ISVNLog.TIMESTAMP_ATTR, commitTime);
-                log.addCommand(ISVNLog.SET_TIMESTAMP, command, false);
+                command.put(SVNLog.NAME_ATTR, name);
+                command.put(SVNLog.TIMESTAMP_ATTR, commitTime);
+                log.addCommand(SVNLog.SET_TIMESTAMP, command, false);
                 command.clear();
             }
             if ((myCurrentFile.TextUpdated && textTmpBase.exists()) || magicPropsChanged) {
-                command.put(ISVNLog.NAME_ATTR, name);
+                command.put(SVNLog.NAME_ATTR, name);
                 command.put(SVNProperty.shortPropertyName(SVNProperty.TEXT_TIME), SVNLog.WC_TIMESTAMP);
-                log.addCommand(ISVNLog.MODIFY_ENTRY, command, false);
+                log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
                 command.clear();
             }
         }
@@ -632,7 +632,7 @@ public class SVNUpdateEditor implements ISVNEditor {
                 SVNErrorManager.error(err);
             }
             for (Iterator ents = adminArea.entries(true); ents.hasNext();) {
-                SVNEntry2 entry = (SVNEntry2) ents.next();
+                SVNEntry entry = (SVNEntry) ents.next();
                 if (adminArea.getThisDirName().equals(entry.getName())) {
                     entry.setIncomplete(false);
                     continue;
@@ -668,7 +668,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             SVNErrorManager.error(err);
         }
         try {
-            SVNEntry2 entry = adminArea.getEntry(info.Name, true);
+            SVNEntry entry = adminArea.getEntry(info.Name, true);
             if (added && entry != null && entry.isScheduledForAddition()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Failed to add file ''{0}'': object of the same name already exists and scheduled for addition", path);
                 SVNErrorManager.error(err);
@@ -698,7 +698,7 @@ public class SVNUpdateEditor implements ISVNEditor {
 
         if (mySwitchURL == null) {
             SVNAdminArea area = null;
-            SVNEntry2 dirEntry = null;
+            SVNEntry dirEntry = null;
             try {
                 area = info.getAdminArea();
                 if (area != null) {
@@ -810,8 +810,8 @@ public class SVNUpdateEditor implements ISVNEditor {
             return myAdminInfo.getWCAccess().retrieve(file);
         }
 
-        public ISVNLog getLog() throws SVNException {
-            ISVNLog log = getAdminArea().getLog();
+        public SVNLog getLog() throws SVNException {
+            SVNLog log = getAdminArea().getLog();
             return log;
         }
 

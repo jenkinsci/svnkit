@@ -27,10 +27,10 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
@@ -59,7 +59,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
 
     public boolean handleCommitPath(String commitPath, ISVNEditor commitEditor) throws SVNException {
         SVNCommitItem item = (SVNCommitItem) myCommitItems.get(commitPath);
-        SVNWCAccess2 wcAccess = item.getWCAccess();
+        SVNWCAccess wcAccess = item.getWCAccess();
         wcAccess.checkCancelled();
         if (item.isCopied()) {
             if (item.getCopyFromURL() == null) {
@@ -139,7 +139,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
         for (Iterator paths = myModifiedFiles.keySet().iterator(); paths.hasNext();) {
             String path = (String) paths.next();
             SVNCommitItem item = (SVNCommitItem) myModifiedFiles.get(path);
-            SVNWCAccess2 wcAccess = item.getWCAccess();
+            SVNWCAccess wcAccess = item.getWCAccess();
             wcAccess.checkCancelled();
 
             SVNEvent event = SVNEventFactory.createCommitEvent(wcAccess.getAnchor(), item.getFile(),
@@ -148,11 +148,11 @@ public class SVNCommitter implements ISVNCommitPathHandler {
 
             SVNAdminArea dir = wcAccess.retrieve(item.getFile().getParentFile());
             String name = SVNPathUtil.tail(item.getPath());
-            SVNEntry2 entry = dir.getEntry(name, false);
+            SVNEntry entry = dir.getEntry(name, false);
 
             File tmpFile = dir.getBaseFile(name, true);
             myTmpFiles.add(tmpFile);
-            SVNTranslator2.translate(dir, name, name, SVNFileUtil.getBasePath(tmpFile), false, false);
+            SVNTranslator.translate(dir, name, name, SVNFileUtil.getBasePath(tmpFile), false, false);
 
             String checksum = null;
             if (!item.isAdded()) {
@@ -187,7 +187,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
     private void sendPropertiedDelta(String commitPath, SVNCommitItem item, ISVNEditor editor) throws SVNException {
         SVNAdminArea dir;
         String name;
-        SVNWCAccess2 wcAccess = item.getWCAccess();
+        SVNWCAccess wcAccess = item.getWCAccess();
         if (item.getKind() == SVNNodeKind.DIR) {
             dir = wcAccess.retrieve(item.getFile());
             name = "";
@@ -198,7 +198,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
         if (!dir.hasPropModifications(name)) {
             return;
         }
-        SVNEntry2 entry = dir.getEntry(name, false);
+        SVNEntry entry = dir.getEntry(name, false);
         boolean replaced = false;
         if (entry != null) {
             replaced = entry.isScheduledForReplacement();

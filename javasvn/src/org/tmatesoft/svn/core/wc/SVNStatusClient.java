@@ -36,10 +36,10 @@ import org.tmatesoft.svn.core.internal.wc.SVNStatusReporter;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNReporter2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNReporter;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
@@ -175,7 +175,7 @@ public class SVNStatusClient extends SVNBasicClient {
         if (handler == null) {
             return -1;
         }
-        SVNWCAccess2 wcAccess = createWCAccess();
+        SVNWCAccess wcAccess = createWCAccess();
         SVNStatusEditor editor = null;
         final boolean[] deletedInRepository = new boolean[] {false};
         ISVNStatusHandler realHandler = new ISVNStatusHandler() {
@@ -194,7 +194,7 @@ public class SVNStatusClient extends SVNBasicClient {
                 externals = collectParentExternals(path, info.getAnchor().getRoot());
             }
             if (remote) {
-                SVNEntry2 entry = wcAccess.getEntry(info.getAnchor().getRoot(), false);
+                SVNEntry entry = wcAccess.getEntry(info.getAnchor().getRoot(), false);
                 if (entry == null) {
                     SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", path);
                     SVNErrorManager.error(error);
@@ -226,7 +226,7 @@ public class SVNStatusClient extends SVNBasicClient {
                     editor.setExternals(externals);
                     SVNRepository locksRepos = createRepository(url, false);
                     checkCancelled();
-                    SVNReporter2 reporter = new SVNReporter2(info, path, false, recursive, getDebugLog());
+                    SVNReporter reporter = new SVNReporter(info, path, false, recursive, getDebugLog());
                     SVNStatusReporter statusReporter = new SVNStatusReporter(locksRepos, reporter, editor);
                     String target = "".equals(info.getTargetName()) ? null : info.getTargetName();
                     repository.status(rev, target, recursive, statusReporter, SVNCancellableEditor.newInstance((ISVNEditor) editor, getEventDispatcher(), getDebugLog()));
@@ -328,7 +328,7 @@ public class SVNStatusClient extends SVNBasicClient {
             return externals;
         }
         File target = path;
-        SVNWCAccess2 wcAccess = createWCAccess();
+        SVNWCAccess wcAccess = createWCAccess();
         while(true) {
             path = path.getParentFile();
             if (path == null) {
@@ -344,7 +344,7 @@ public class SVNStatusClient extends SVNBasicClient {
                 SVNVersionedProperties properties = area.getProperties("");
                 String external = properties.getPropertyValue(SVNProperty.EXTERNALS);
                 if (externals != null) {
-                    SVNExternalInfo[] infos = SVNWCAccess2.parseExternals("", external);
+                    SVNExternalInfo[] infos = SVNWCAccess.parseExternals("", external);
                     for (int i = 0; i < infos.length; i++) {
                         // info's path is relative to path, we should make it relative to the root,
                         // and only if it is child of the root.

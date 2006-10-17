@@ -24,7 +24,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
@@ -95,7 +95,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
         // TODO protocol
         SVNFileType fileType = SVNFileType.getType(mergedFile);
         if (fileType == SVNFileType.NONE) {
-            SVNEntry2 entry = getWCAccess().getEntry(mergedFile, false);
+            SVNEntry entry = getWCAccess().getEntry(mergedFile, false);
             if (entry != null && !entry.isScheduledForDeletion()) {
                 return SVNStatusType.OBSTRUCTED;
             }
@@ -116,7 +116,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
             }
             return SVNStatusType.CHANGED;
         } else if (fileType == SVNFileType.DIRECTORY) {
-            SVNEntry2 entry = getWCAccess().getEntry(mergedFile, false);
+            SVNEntry entry = getWCAccess().getEntry(mergedFile, false);
             if (entry == null || entry.isScheduledForDeletion()) {
                 if (!myIsDryRun) {
                     ISVNEventHandler oldEventHandler = dir.getWCAccess().getEventHandler();
@@ -193,7 +193,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
             return new SVNStatusType[] {SVNStatusType.MISSING, SVNStatusType.MISSING};
         }
         SVNStatusType[] result = new SVNStatusType[] {SVNStatusType.UNCHANGED, SVNStatusType.UNCHANGED};
-        SVNEntry2 entry = getWCAccess().getEntry(mergedFile, false);
+        SVNEntry entry = getWCAccess().getEntry(mergedFile, false);
         SVNFileType fileType = null;
         if (entry != null) {
             fileType = SVNFileType.getType(mergedFile);
@@ -258,7 +258,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
         
         SVNFileType fileType = SVNFileType.getType(mergedFile);
         if (fileType == SVNFileType.NONE) {
-            SVNEntry2 entry = getWCAccess().getEntry(mergedFile, false);
+            SVNEntry entry = getWCAccess().getEntry(mergedFile, false);
             if (entry != null && !entry.isScheduledForDeletion()) {
                 result[0] = SVNStatusType.OBSTRUCTED;
                 return result;
@@ -275,7 +275,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
         } else if (fileType == SVNFileType.DIRECTORY || fileType == SVNFileType.SYMLINK) {
             result[0] = SVNStatusType.OBSTRUCTED;
         } else if (fileType == SVNFileType.FILE) {
-            SVNEntry2 entry = getWCAccess().getEntry(mergedFile, false);
+            SVNEntry entry = getWCAccess().getEntry(mergedFile, false);
             if (entry == null || entry.isScheduledForDeletion()) {
                 result[0] = SVNStatusType.OBSTRUCTED;
             } else {

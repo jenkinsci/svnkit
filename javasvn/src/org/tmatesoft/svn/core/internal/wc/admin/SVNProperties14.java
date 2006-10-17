@@ -34,7 +34,7 @@ public abstract class SVNProperties14 extends SVNVersionedProperties {
             return true;
         }
 
-        SVNEntry2 entry = myAdminArea.getEntry(myEntryName, true);
+        SVNEntry entry = myAdminArea.getEntry(myEntryName, true);
         if (entry == null) {
             return false;
         }
@@ -58,7 +58,7 @@ public abstract class SVNProperties14 extends SVNVersionedProperties {
             return (String) getPropertiesMap().get(name);
         }
 
-        SVNEntry2 entry = myAdminArea.getEntry(myEntryName, true);
+        SVNEntry entry = myAdminArea.getEntry(myEntryName, true);
         if (entry != null) {
             String[] cachableProps = entry.getCachableProperties(); 
             if (cachableProps != null && getIndex(cachableProps, name) >= 0) {

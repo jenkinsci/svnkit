@@ -26,7 +26,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 
 /**
  * The <b>SVNWCUtil</b> is a utility class providing some common methods 
@@ -240,7 +240,7 @@ public class SVNWCUtil {
         if (type != SVNFileType.DIRECTORY) {
             return false;
         }
-        SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(null);
+        SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
         try {
             wcAccess.open(dir, false, 0);
         } catch (SVNException e) {
@@ -265,7 +265,7 @@ public class SVNWCUtil {
      *                                  is <span class="javakeyword">true</span>), otherwise <span class="javakeyword">false</span> 
      */
     public static boolean isWorkingCopyRoot(final File versionedDir) throws SVNException {
-        SVNWCAccess2 wcAccess = SVNWCAccess2.newInstance(null);
+        SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
         try {
             wcAccess.open(versionedDir, false, 0);
             return wcAccess.isWCRoot(versionedDir);
@@ -331,11 +331,11 @@ public class SVNWCUtil {
             // definition for this dir.
 
             while (parent != null) {
-                SVNWCAccess2 parentAccess = SVNWCAccess2.newInstance(null);
+                SVNWCAccess parentAccess = SVNWCAccess.newInstance(null);
                 try {
                     SVNAdminArea dir = parentAccess.open(parent, false, 0);
                     SVNVersionedProperties props = dir.getProperties(dir.getThisDirName());
-                    SVNExternalInfo[] externals = SVNWCAccess2.parseExternals("", props.getPropertyValue(SVNProperty.EXTERNALS));
+                    SVNExternalInfo[] externals = SVNWCAccess.parseExternals("", props.getPropertyValue(SVNProperty.EXTERNALS));
                     // now externals could point to our dir.
                     for (int i = 0; i < externals.length; i++) {
                         SVNExternalInfo external = externals[i];

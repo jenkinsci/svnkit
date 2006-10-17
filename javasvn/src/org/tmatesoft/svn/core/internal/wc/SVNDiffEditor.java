@@ -30,10 +30,10 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
@@ -45,7 +45,7 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  */
 public class SVNDiffEditor implements ISVNEditor {
 
-    private SVNWCAccess2 myWCAccess;
+    private SVNWCAccess myWCAccess;
     private boolean myUseAncestry;
     private boolean myIsReverseDiff;
     private boolean myIsCompareToBase;
@@ -59,7 +59,7 @@ public class SVNDiffEditor implements ISVNEditor {
     private File myTempDirectory;
     private AbstractDiffCallback myDiffCallback;
 
-    public SVNDiffEditor(SVNWCAccess2 wcAccess, SVNAdminAreaInfo info, AbstractDiffCallback callback,
+    public SVNDiffEditor(SVNWCAccess wcAccess, SVNAdminAreaInfo info, AbstractDiffCallback callback,
             boolean useAncestry, boolean reverseDiff, boolean compareToBase, boolean recursive) {
         myWCAccess = wcAccess;
         myAdminInfo = info;
@@ -83,7 +83,7 @@ public class SVNDiffEditor implements ISVNEditor {
     public void deleteEntry(String path, long revision) throws SVNException {
         File fullPath = new File(myAdminInfo.getAnchor().getRoot(), path);
         SVNAdminArea dir = myWCAccess.probeRetrieve(fullPath);
-        SVNEntry2 entry = myWCAccess.getEntry(fullPath, false);
+        SVNEntry entry = myWCAccess.getEntry(fullPath, false);
         if (entry == null) {
             return;
         }
@@ -119,7 +119,7 @@ public class SVNDiffEditor implements ISVNEditor {
             getDiffCallback().propertiesChanged(info.myPath, null, propDiff);
         }
         for(Iterator entries = dir.entries(false); entries.hasNext();) {
-            SVNEntry2 entry = (SVNEntry2) entries.next();
+            SVNEntry entry = (SVNEntry) entries.next();
             if (dir.getThisDirName().equals(entry.getName())) {
                 continue;
             }
@@ -135,7 +135,7 @@ public class SVNDiffEditor implements ISVNEditor {
         }
     }
 
-    private void reportAddedFile(SVNDirectoryInfo info, String path, SVNEntry2 entry) throws SVNException {
+    private void reportAddedFile(SVNDirectoryInfo info, String path, SVNEntry entry) throws SVNException {
         if (entry.isCopied()) {
             if (myIsCompareToBase) {
                 return;
@@ -163,7 +163,7 @@ public class SVNDiffEditor implements ISVNEditor {
         getDiffCallback().fileAdded(path, null, sourceFile, 0, entry.getRevision(), null, mimeType, null, propDiff);
     }
     
-    private void reportModifiedFile(SVNDirectoryInfo dirInfo, SVNEntry2 entry) throws SVNException {
+    private void reportModifiedFile(SVNDirectoryInfo dirInfo, SVNEntry entry) throws SVNException {
         SVNAdminArea dir = retrieve(dirInfo.myPath);
         String schedule = entry.getSchedule();
         String fileName = entry.getName();
@@ -298,7 +298,7 @@ public class SVNDiffEditor implements ISVNEditor {
     }
 
     public void applyTextDelta(String path, String baseChecksum) throws SVNException {
-        SVNEntry2 entry = myWCAccess.getEntry(myAdminInfo.getAnchor().getFile(path), false);
+        SVNEntry entry = myWCAccess.getEntry(myAdminInfo.getAnchor().getFile(path), false);
         if (entry != null && entry.isCopied()) {
             myCurrentFile.myIsAdded = false;
         }
@@ -324,7 +324,7 @@ public class SVNDiffEditor implements ISVNEditor {
         
         File filePath = myAdminInfo.getAnchor().getFile(myCurrentFile.myPath);
         SVNAdminArea dir = myWCAccess.probeRetrieve(filePath);
-        SVNEntry2 entry = myWCAccess.getEntry(filePath, false);
+        SVNEntry entry = myWCAccess.getEntry(filePath, false);
         Map baseProperties = null;
         if (myCurrentFile.myIsAdded) {
             baseProperties = new HashMap();
@@ -436,7 +436,7 @@ public class SVNDiffEditor implements ISVNEditor {
             processedFiles = new HashSet();
         }
         for (Iterator entries = dir.entries(false); entries.hasNext();) {
-            SVNEntry2 entry = (SVNEntry2) entries.next();
+            SVNEntry entry = (SVNEntry) entries.next();
             SVNDebugLog.getDefaultLog().info("processing " + entry.getName());
             SVNDebugLog.getDefaultLog().info("compared: " + info.myComparedEntries);
             
@@ -528,10 +528,10 @@ public class SVNDiffEditor implements ISVNEditor {
         if (keywords == null && eolStyle == null && (!special || SVNFileUtil.isWindows)) {
             return dir.getFile(name);
         }
-        byte[] eol = SVNTranslator2.getEOL(eolStyle);
+        byte[] eol = SVNTranslator.getEOL(eolStyle);
         File tmpFile = createTempFile();
-        Map keywordsMap = SVNTranslator2.computeKeywords(keywords, null, null, null, null);
-        SVNTranslator2.translate(dir.getFile(name), tmpFile, eol, keywordsMap, special, false);
+        Map keywordsMap = SVNTranslator.computeKeywords(keywords, null, null, null, null);
+        SVNTranslator.translate(dir.getFile(name), tmpFile, eol, keywordsMap, special, false);
         return tmpFile;
     }
     

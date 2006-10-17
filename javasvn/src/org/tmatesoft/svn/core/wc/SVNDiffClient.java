@@ -37,9 +37,9 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNMergeCallback;
 import org.tmatesoft.svn.core.internal.wc.SVNRemoteDiffEditor;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry2;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNReporter2;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess2;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNReporter;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -526,14 +526,14 @@ public class SVNDiffClient extends SVNBasicClient {
     
     private void doDiffURLWC(SVNURL url1, SVNRevision revision1, SVNRevision pegRevision, File path2, SVNRevision revision2, 
             boolean reverse, boolean recursive, boolean useAncestry, OutputStream result) throws SVNException {
-        SVNWCAccess2 wcAccess = createWCAccess();
+        SVNWCAccess wcAccess = createWCAccess();
         SVNDebugLog.getDefaultLog().info("diff url:wc " + revision1 + ":" + revision2);
         try {
-            SVNAdminAreaInfo info = wcAccess.openAnchor(path2, false, recursive ? SVNWCAccess2.INFINITE_DEPTH : 0);
+            SVNAdminAreaInfo info = wcAccess.openAnchor(path2, false, recursive ? SVNWCAccess.INFINITE_DEPTH : 0);
             File anchorPath = info.getAnchor().getRoot();
             String target = "".equals(info.getTargetName()) ? null : info.getTargetName();
             
-            SVNEntry2 anchorEntry = info.getAnchor().getEntry("", false);
+            SVNEntry anchorEntry = info.getAnchor().getEntry("", false);
             if (anchorEntry == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", anchorPath);
                 SVNErrorManager.error(err);
@@ -556,7 +556,7 @@ public class SVNDiffClient extends SVNBasicClient {
                     useAncestry, reverse /* reverse */,
                     revision2 == SVNRevision.BASE  || revision2 == SVNRevision.COMMITTED  /* compare to base */, 
                     recursive);
-            SVNReporter2 reporter = new SVNReporter2(info, info.getAnchor().getFile(info.getTargetName()), false, recursive, getDebugLog());
+            SVNReporter reporter = new SVNReporter(info, info.getAnchor().getFile(info.getTargetName()), false, recursive, getDebugLog());
             
             long pegRevisionNumber = getRevisionNumber(revision2, repository, path2);
             try {
@@ -573,14 +573,14 @@ public class SVNDiffClient extends SVNBasicClient {
             boolean reverse, boolean recursive, boolean useAncestry, OutputStream result) throws SVNException {
         
         SVNDebugLog.getDefaultLog().info("diff wc:ulr " + revision1 + ":" + revision2);
-        SVNWCAccess2 wcAccess = createWCAccess();
+        SVNWCAccess wcAccess = createWCAccess();
         try {
-            SVNAdminAreaInfo info = wcAccess.openAnchor(path2, false, recursive ? SVNWCAccess2.INFINITE_DEPTH : 0);
+            SVNAdminAreaInfo info = wcAccess.openAnchor(path2, false, recursive ? SVNWCAccess.INFINITE_DEPTH : 0);
             
             File anchorPath = info.getAnchor().getRoot();
             String target = "".equals(info.getTargetName()) ? null : info.getTargetName();
             
-            SVNEntry2 anchorEntry = info.getAnchor().getEntry("", false);
+            SVNEntry anchorEntry = info.getAnchor().getEntry("", false);
             if (anchorEntry == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", anchorPath);
                 SVNErrorManager.error(err);
@@ -607,7 +607,7 @@ public class SVNDiffClient extends SVNBasicClient {
                     reverse /* reverse */, 
                     revision2 == SVNRevision.BASE || revision2 == SVNRevision.COMMITTED /* compare to base */, 
                     recursive);
-            SVNReporter2 reporter = new SVNReporter2(info, info.getAnchor().getFile(info.getTargetName()), false, recursive, getDebugLog());
+            SVNReporter reporter = new SVNReporter(info, info.getAnchor().getFile(info.getTargetName()), false, recursive, getDebugLog());
             
             // this should be rev2.
             long pegRevisionNumber = getRevisionNumber(revision2, repository, path2);
@@ -630,10 +630,10 @@ public class SVNDiffClient extends SVNBasicClient {
             SVNErrorManager.error(err);
         }
         
-        SVNWCAccess2 wcAccess = createWCAccess();
+        SVNWCAccess wcAccess = createWCAccess();
         try {
-            SVNAdminAreaInfo info = wcAccess.openAnchor(path1, false, recursive ? SVNWCAccess2.INFINITE_DEPTH: 0);
-            SVNEntry2 entry = wcAccess.getEntry(path1, false);
+            SVNAdminAreaInfo info = wcAccess.openAnchor(path1, false, recursive ? SVNWCAccess.INFINITE_DEPTH: 0);
+            SVNEntry entry = wcAccess.getEntry(path1, false);
             if (entry == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", path1);
                 SVNErrorManager.error(err);
@@ -850,12 +850,12 @@ public class SVNDiffClient extends SVNBasicClient {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path2);
             SVNErrorManager.error(err);
         }
-        SVNWCAccess2 wcAccess = createWCAccess();
+        SVNWCAccess wcAccess = createWCAccess();
         try {
             dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath()));
-            SVNAdminAreaInfo info = wcAccess.openAnchor(dstPath, !dryRun, recusrsive ? SVNWCAccess2.INFINITE_DEPTH : 0);
+            SVNAdminAreaInfo info = wcAccess.openAnchor(dstPath, !dryRun, recusrsive ? SVNWCAccess.INFINITE_DEPTH : 0);
             
-            SVNEntry2 targetEntry = wcAccess.getEntry(dstPath, false);
+            SVNEntry targetEntry = wcAccess.getEntry(dstPath, false);
             if (targetEntry == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", dstPath);
                 SVNErrorManager.error(err);
@@ -922,12 +922,12 @@ public class SVNDiffClient extends SVNBasicClient {
         if (url1.equals(url2)) {
             pegRevision = SVNRevision.HEAD;
         }
-        SVNWCAccess2 wcAccess = createWCAccess();
+        SVNWCAccess wcAccess = createWCAccess();
         try {
             dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath()));
-            SVNAdminAreaInfo info = wcAccess.openAnchor(dstPath, !dryRun, recusrsive ? SVNWCAccess2.INFINITE_DEPTH : 0);
+            SVNAdminAreaInfo info = wcAccess.openAnchor(dstPath, !dryRun, recusrsive ? SVNWCAccess.INFINITE_DEPTH : 0);
             
-            SVNEntry2 targetEntry = wcAccess.getEntry(dstPath, false);
+            SVNEntry targetEntry = wcAccess.getEntry(dstPath, false);
             if (targetEntry == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", dstPath);
                 SVNErrorManager.error(err);
@@ -993,12 +993,12 @@ public class SVNDiffClient extends SVNBasicClient {
         if (url1.equals(url2)) {
             pegRevision = SVNRevision.WORKING;
         }
-        SVNWCAccess2 wcAccess = createWCAccess();
+        SVNWCAccess wcAccess = createWCAccess();
         try {
             dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath()));
-            SVNAdminAreaInfo info = wcAccess.openAnchor(dstPath, !dryRun, recusrsive ? SVNWCAccess2.INFINITE_DEPTH : 0);
+            SVNAdminAreaInfo info = wcAccess.openAnchor(dstPath, !dryRun, recusrsive ? SVNWCAccess.INFINITE_DEPTH : 0);
             
-            SVNEntry2 targetEntry = wcAccess.getEntry(dstPath, false);
+            SVNEntry targetEntry = wcAccess.getEntry(dstPath, false);
             if (targetEntry == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", dstPath);
                 SVNErrorManager.error(err);
@@ -1062,11 +1062,11 @@ public class SVNDiffClient extends SVNBasicClient {
         if (url1.equals(url2)) {
             pegRevision = SVNRevision.HEAD;
         }
-        SVNWCAccess2 wcAccess = createWCAccess();
+        SVNWCAccess wcAccess = createWCAccess();
         try {
             dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath()));
-            SVNAdminAreaInfo info = wcAccess.openAnchor(dstPath, !dryRun, recusrsive ? SVNWCAccess2.INFINITE_DEPTH : 0);
-            SVNEntry2 targetEntry = wcAccess.getEntry(dstPath, false);
+            SVNAdminAreaInfo info = wcAccess.openAnchor(dstPath, !dryRun, recusrsive ? SVNWCAccess.INFINITE_DEPTH : 0);
+            SVNEntry targetEntry = wcAccess.getEntry(dstPath, false);
             
             if (targetEntry == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", dstPath);
@@ -1132,12 +1132,12 @@ public class SVNDiffClient extends SVNBasicClient {
         if (pegRevision == null || !pegRevision.isValid()) {
             pegRevision = SVNRevision.HEAD;
         }
-        SVNWCAccess2 wcAccess = createWCAccess();
+        SVNWCAccess wcAccess = createWCAccess();
         dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath()));
         try {
-            SVNAdminAreaInfo info = wcAccess.openAnchor(dstPath, !dryRun, recusrsive ? SVNWCAccess2.INFINITE_DEPTH : 0);
+            SVNAdminAreaInfo info = wcAccess.openAnchor(dstPath, !dryRun, recusrsive ? SVNWCAccess.INFINITE_DEPTH : 0);
             
-            SVNEntry2 targetEntry = wcAccess.getEntry(dstPath, false);
+            SVNEntry targetEntry = wcAccess.getEntry(dstPath, false);
             if (targetEntry == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", dstPath);
                 SVNErrorManager.error(err);
@@ -1212,12 +1212,12 @@ public class SVNDiffClient extends SVNBasicClient {
         if (pegRevision == null || !pegRevision.isValid()) {
             pegRevision = SVNRevision.WORKING;
         }
-        SVNWCAccess2 wcAccess = createWCAccess();
+        SVNWCAccess wcAccess = createWCAccess();
         try {
             dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath()));
-            SVNAdminAreaInfo info = wcAccess.openAnchor(dstPath, !dryRun, recusrsive ? SVNWCAccess2.INFINITE_DEPTH : 0);
+            SVNAdminAreaInfo info = wcAccess.openAnchor(dstPath, !dryRun, recusrsive ? SVNWCAccess.INFINITE_DEPTH : 0);
             
-            SVNEntry2 targetEntry = wcAccess.getEntry(dstPath, false);
+            SVNEntry targetEntry = wcAccess.getEntry(dstPath, false);
             if (targetEntry == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", dstPath);
                 SVNErrorManager.error(err);

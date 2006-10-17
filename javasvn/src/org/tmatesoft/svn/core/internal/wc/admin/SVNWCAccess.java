@@ -42,7 +42,7 @@ import org.tmatesoft.svn.core.wc.SVNEvent;
  * @version 1.0
  * @author  TMate Software Ltd.
  */
-public class SVNWCAccess2 implements ISVNEventHandler {
+public class SVNWCAccess implements ISVNEventHandler {
     
     public static final int INFINITE_DEPTH = -1;
     
@@ -52,11 +52,11 @@ public class SVNWCAccess2 implements ISVNEventHandler {
 
     private File myAnchor;
 
-    public static SVNWCAccess2 newInstance(ISVNEventHandler eventHandler) {
-        return new SVNWCAccess2(eventHandler);
+    public static SVNWCAccess newInstance(ISVNEventHandler eventHandler) {
+        return new SVNWCAccess(eventHandler);
     }
     
-    private SVNWCAccess2(ISVNEventHandler handler) {
+    private SVNWCAccess(ISVNEventHandler handler) {
         myEventHandler = handler;
     }
     
@@ -141,9 +141,9 @@ public class SVNWCAccess2 implements ISVNEventHandler {
         }
         
         if (parentArea != null && targetArea != null) {
-            SVNEntry2 parentEntry = null;
-            SVNEntry2 targetEntry = null;
-            SVNEntry2 targetInParent = null;
+            SVNEntry parentEntry = null;
+            SVNEntry targetEntry = null;
+            SVNEntry targetInParent = null;
             try {
                 targetInParent = parentArea.getEntry(name, false);
                 targetEntry = targetArea.getEntry(targetArea.getThisDirName(), false);
@@ -191,7 +191,7 @@ public class SVNWCAccess2 implements ISVNEventHandler {
         }
 
         if (targetArea == null) {
-            SVNEntry2 targetEntry = null;
+            SVNEntry targetEntry = null;
             try {
                 targetEntry = parentArea.getEntry(name, false); 
             } catch (SVNException svne) {
@@ -324,7 +324,7 @@ public class SVNWCAccess2 implements ISVNEventHandler {
                     throw e;
                 }
                 
-                SVNEntry2 entry = (SVNEntry2) entries.next();
+                SVNEntry entry = (SVNEntry) entries.next();
                 if (entry.getKind() != SVNNodeKind.DIR  || area.getThisDirName().equals(entry.getName())) {
                     continue;
                 }
@@ -393,7 +393,7 @@ public class SVNWCAccess2 implements ISVNEventHandler {
     }
     
     public boolean isWCRoot(File path) throws SVNException {
-        SVNEntry2 entry = getEntry(path, false);
+        SVNEntry entry = getEntry(path, false);
         SVNAdminArea parentArea = getAdminArea(path.getParentFile());
         if (parentArea == null) {
             try {
@@ -403,7 +403,7 @@ public class SVNWCAccess2 implements ISVNEventHandler {
             }
         }
         
-        SVNEntry2 parentEntry = getEntry(path.getParentFile(), false);
+        SVNEntry parentEntry = getEntry(path.getParentFile(), false);
         if (parentEntry == null) {
             return true;
         }
@@ -427,7 +427,7 @@ public class SVNWCAccess2 implements ISVNEventHandler {
         return false;
     }
     
-    public SVNEntry2 getEntry(File path, boolean showHidden) throws SVNException {
+    public SVNEntry getEntry(File path, boolean showHidden) throws SVNException {
         SVNAdminArea adminArea = getAdminArea(path);
         String entryName = null;
         if (adminArea == null) {
@@ -444,7 +444,7 @@ public class SVNWCAccess2 implements ISVNEventHandler {
     }
     
     public void setRepositoryRoot(File path, SVNURL reposRoot) throws SVNException {
-        SVNEntry2 entry = getEntry(path, false);
+        SVNEntry entry = getEntry(path, false);
         if (entry == null) {
             return;
         }
@@ -476,7 +476,7 @@ public class SVNWCAccess2 implements ISVNEventHandler {
     public SVNAdminArea retrieve(File path) throws SVNException {
         SVNAdminArea adminArea = getAdminArea(path);
         if (adminArea == null && !myAdminAreas.containsKey(path)) {
-            SVNEntry2 subEntry = null;
+            SVNEntry subEntry = null;
             try {
                 SVNAdminArea dirAdminArea = getAdminArea(path.getParentFile());
                 if (dirAdminArea != null) {
