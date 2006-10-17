@@ -251,10 +251,10 @@ public class SVNMoveClient extends SVNBasicClient {
                     }
                     
                     ISVNLog log = dstParentArea.getLog(); 
+                    dstParentArea.saveEntries(false);
                     dstParentArea.saveVersionedProperties(log, true);
                     log.save();
                     dstParentArea.runLogs();
-                    dstParentArea.saveEntries(true);
                 } else if (srcEntry.isDirectory()) {
                     SVNAdminArea srcArea = wcAccess.open(src, false, 0);
                     srcEntry = srcArea.getEntry(srcArea.getThisDirName(), false);
@@ -291,6 +291,7 @@ public class SVNMoveClient extends SVNBasicClient {
                         
                         ISVNLog log = dstArea.getLog();
                         dstArea.saveVersionedProperties(log, true);
+                        dstParentArea.saveEntries(false);
                         log.save();
                         dstArea.runLogs();
                         
@@ -318,6 +319,7 @@ public class SVNMoveClient extends SVNBasicClient {
 
                         ISVNLog log = dstArea.getLog();
                         dstArea.saveVersionedProperties(log, true);
+                        dstArea.saveEntries(false);
                         log.save();
                         dstArea.runLogs();
 
@@ -334,7 +336,13 @@ public class SVNMoveClient extends SVNBasicClient {
                         myWCClient.doAdd(dst, false, false, false, true, false);
                     }
                 }
-
+                // now delete src (if it is not the same as dst :))
+                try {
+                    wcAccess.close();
+                    myWCClient.doDelete(src, true, false);
+                } catch (SVNException e) {
+                    //
+                }
             } finally {
                 wcAccess.close();
             }
@@ -682,8 +690,7 @@ public class SVNMoveClient extends SVNBasicClient {
                 return;
             }
 
-            boolean sameWC = dstParentEntry.getUUID() != null
-                    && dstParentEntry.getUUID().equals(srcEntry.getUUID());
+            boolean sameWC = dstParentEntry.getUUID() != null && dstParentEntry.getUUID().equals(srcEntry.getUUID());
 
             // 2. do manual copy of the file or directory
             SVNFileUtil.copy(src, dst, false, sameWC);
@@ -751,8 +758,7 @@ public class SVNMoveClient extends SVNBasicClient {
                 long srcCFRevision = srcEntry.getCopyFromRevision();
                 String repositoryRootURL = srcEntry.getRepositoryRoot();
 
-                dstURL = SVNPathUtil
-                        .append(dstURL, SVNEncodingUtil.uriEncode(dst.getName()));
+                dstURL = SVNPathUtil.append(dstURL, SVNEncodingUtil.uriEncode(dst.getName()));
                 if (srcEntry.isScheduledForAddition() && srcEntry.isCopied()) {
                     dstEntry.scheduleForAddition();
                     dstEntry.setCopyFromRevision(srcCFRevision);
@@ -954,9 +960,9 @@ public class SVNMoveClient extends SVNBasicClient {
             if (area.getEntry(area.getThisDirName(), false) == null) {
                 return false;
             }
-            if (SVNFileType.getType(file) == SVNFileType.FILE) {
+            if (SVNFileType.getType(file).isFile()) {
                 SVNEntry2 fileEntry = area.getEntry(file.getName(), false);
-                return fileEntry == null; 
+                return fileEntry != null; 
             } 
             return true;
         } catch (SVNException e) {
