@@ -40,12 +40,12 @@ public final class QDiffUniGenerator extends QDiffSequenceGenerator implements Q
 
 	// Setup ==================================================================
 
-	private QDiffUniGenerator(Map properties) {
-		super(properties);
+	public QDiffUniGenerator(Map properties, String header) {
+		super(initProperties(properties), header);
 	}
 
 	private QDiffUniGenerator() {
-		super(null);
+		super(null, null);
 	}
 
 	// Implemented ============================================================
@@ -139,15 +139,11 @@ public final class QDiffUniGenerator extends QDiffSequenceGenerator implements Q
 		if (myGeneratorsCache == null) {
 			myGeneratorsCache = new HashMap();
 		}
-		if (properties == null || !properties.containsKey(QDiffGeneratorFactory.GUTTER_PROPERTY)) {
-			properties = new HashMap(properties == null ? Collections.EMPTY_MAP : properties);
-			properties.put(QDiffGeneratorFactory.GUTTER_PROPERTY, "3");
-		}
 		QDiffGenerator generator = (QDiffGenerator)myGeneratorsCache.get(properties);
 		if (generator != null) {
 			return generator;
 		}
-		generator = new QDiffUniGenerator(properties);
+		generator = new QDiffUniGenerator(properties, null);
 		myGeneratorsCache.put(properties, generator);
 		return generator;
 	}
@@ -159,5 +155,13 @@ public final class QDiffUniGenerator extends QDiffSequenceGenerator implements Q
 			println(output);
 			println("\\ No newline at end of file", output);
 		}
+	}
+
+	private static Map initProperties(Map properties) {
+		if (properties == null || !properties.containsKey(QDiffGeneratorFactory.GUTTER_PROPERTY)) {
+			properties = new HashMap(properties == null ? Collections.EMPTY_MAP : properties);
+			properties.put(QDiffGeneratorFactory.GUTTER_PROPERTY, "3");
+		}
+		return properties;
 	}
 }

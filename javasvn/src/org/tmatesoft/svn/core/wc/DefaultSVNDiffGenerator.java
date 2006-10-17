@@ -335,12 +335,14 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
             SVNErrorManager.error(err, e);
         }
+
+	      String header;
         try {
             bos.close();
-            bos.writeTo(result);
+            header = bos.toString();
             SVNDebugLog.getDefaultLog().info(new String(bos.toByteArray()));
         } catch (IOException inner) {
-            //
+            header = "";
         }
 
         InputStream is1 = null;
@@ -358,7 +360,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             } else if (getDiffOptions().isIgnoreAmountOfWhitespace()) {
                 properties.put(QDiffGeneratorFactory.IGNORE_SPACE_PROPERTY, QDiffGeneratorFactory.IGNORE_SPACE_CHANGE);
             }
-            QDiffGenerator generator = QDiffManager.getDiffGenerator(QDiffUniGenerator.TYPE, properties);
+            QDiffGenerator generator = new QDiffUniGenerator(properties, header);
             Writer writer = new OutputStreamWriter(result, getEncoding());
             QDiffManager.generateTextDiff(is1, is2, getEncoding(), writer, generator);
             writer.flush();

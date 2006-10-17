@@ -29,7 +29,7 @@ public class QSequenceLineSimplifierTest extends TestCase {
 	}
 
 	public void testEolSkippingSimplifier() {
-		final QSequenceLineSimplifier simplifier = new QSequenceLineTeeSimplifier(new QSequenceLineWhiteSpaceReducingSimplifier(), new QSequenceLineEOLSkippingSimplifier());
-		assertEquals(" something to simplify", new String(simplifier.simplify(" something\t to   simplify\n\r".getBytes())));
+		final QSequenceLineSimplifier simplifier = new QSequenceLineTeeSimplifier(new QSequenceLineWhiteSpaceReducingSimplifier(), new QSequenceLineEOLUnifyingSimplifier());
+		assertEquals(" something to simplify\n", new String(simplifier.simplify(" something\t to   simplify\n\r".getBytes())));
 	}
 }

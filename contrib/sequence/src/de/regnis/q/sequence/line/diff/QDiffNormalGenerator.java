@@ -41,11 +41,11 @@ public final class QDiffNormalGenerator extends QDiffSequenceGenerator implement
 	// Setup ==================================================================
 
 	private QDiffNormalGenerator(Map properties) {
-		super(properties);
+		super(properties, null);
 	}
 
 	private QDiffNormalGenerator() {
-		super(null);
+		super(null, null);
 	}
 
 	// Implemented ============================================================
