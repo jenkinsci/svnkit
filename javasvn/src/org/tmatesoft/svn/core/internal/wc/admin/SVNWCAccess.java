@@ -108,10 +108,16 @@ public class SVNWCAccess implements ISVNEventHandler {
 
     public SVNAdminAreaInfo openAnchor(File path, boolean writeLock, int depth) throws SVNException {
         File parent = path.getParentFile();
+        if (parent == null) {
+            SVNAdminArea anchor = open(path, writeLock, depth);
+            return new SVNAdminAreaInfo(this, anchor, anchor, "");
+        }
+
         String name = path.getName();
         SVNAdminArea parentArea = null;
         SVNAdminArea targetArea = null; 
         SVNException parentError = null;
+        
         try {
             parentArea = open(parent, writeLock, false, 0);
         } catch (SVNException svne) {
