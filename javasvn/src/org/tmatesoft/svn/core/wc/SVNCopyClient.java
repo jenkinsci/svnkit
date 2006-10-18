@@ -616,12 +616,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 SVNUpdateClient updateClient = new SVNUpdateClient(getRepositoryPool(), getOptions());
                 updateClient.setEventHandler(getEventDispatcher());
     
-                updateClient.setEventPathPrefix("");
-                try {
-                    revision = updateClient.doCheckout(srcURL, dstPath, srcRevision, srcRevision, true);
-                } finally {
-                    updateClient.setEventPathPrefix(null);
-                }
+                revision = updateClient.doCheckout(srcURL, dstPath, srcRevision, srcRevision, true);
                 
                 if (srcRevision == SVNRevision.HEAD && sameRepositories) {
                     SVNAdminArea dstArea = dstAccess.open(dstPath, true, SVNWCAccess.INFINITE_DEPTH);
@@ -659,6 +654,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 
                 dispatchEvent(SVNEventFactory.createAddedEvent(null, adminArea, dstAccess.getEntry(dstPath, false)));
                 revision = srcRevisionNumber;
+                sleepForTimeStamp();
             }
         } finally {
             dstAccess.close();
