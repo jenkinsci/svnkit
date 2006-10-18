@@ -176,7 +176,7 @@ public class SVNDiffEditor implements ISVNEditor {
         Map propDiff = null;
         Map baseProps = null;
         File baseFile = dir.getBaseFile(fileName, false);
-        if (entry.isScheduledForDeletion()) {
+        if (!entry.isScheduledForDeletion()) {
             boolean modified = dir.hasPropModifications(fileName);
             if (modified) {
                 baseProps = dir.getBaseProperties(fileName).asMap();
