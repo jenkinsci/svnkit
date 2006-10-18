@@ -606,7 +606,7 @@ public class SVNWCAccess implements ISVNEventHandler {
         int wcFormat = -1;
         SVNFileType type = SVNFileType.getType(path);
         if (type == SVNFileType.DIRECTORY) {
-            wcFormat = SVNAdminAreaFactory.checkWC(path);
+            wcFormat = SVNAdminAreaFactory.checkWC(path, true);
         } else {
             wcFormat = 0;
         }

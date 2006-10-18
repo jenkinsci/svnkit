@@ -38,8 +38,13 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
  */
 public abstract class SVNAdminAreaFactory implements Comparable {
     
+    public static final int WC_FORMAT_14 = SVNAdminArea14Factory.WC_FORMAT;
+    public static final int WC_FORMAT_13 = SVNXMLAdminAreaFactory.WC_FORMAT;
+    
     private static final Collection ourFactories = new TreeSet();
     private static boolean ourIsUpgradeEnabled = Boolean.valueOf(System.getProperty("javasvn.upgradeWC", "true")).booleanValue();
+    private static ISVNAdminAreaFactorySelector ourSelector;
+    private static ISVNAdminAreaFactorySelector ourDefaultSelector = new DefaultSelector();
     
     static {
         SVNAdminAreaFactory.registerFactory(new SVNAdminArea14Factory());
@@ -54,10 +59,22 @@ public abstract class SVNAdminAreaFactory implements Comparable {
         return ourIsUpgradeEnabled;
     }
     
-    public static int checkWC(File path) throws SVNException {
+    public static void setSelector(ISVNAdminAreaFactorySelector selector) {
+        ourSelector = selector;
+    }
+    
+    public static ISVNAdminAreaFactorySelector getSelector() {
+        return ourSelector != null ? ourSelector : ourDefaultSelector;
+    }
+    
+    public static int checkWC(File path, boolean useSelector) throws SVNException {
+        Collection enabledFactories = ourFactories;
+        if (useSelector) {
+            enabledFactories = getSelector().getEnabledFactories(path, enabledFactories);
+        }
         SVNException error = null;
         int version = -1;
-        for(Iterator factories = ourFactories.iterator(); factories.hasNext();) {
+        for(Iterator factories = enabledFactories.iterator(); factories.hasNext();) {
             SVNAdminAreaFactory factory = (SVNAdminAreaFactory) factories.next();
             try {
                 version = factory.doCheckWC(path);
@@ -88,8 +105,9 @@ public abstract class SVNAdminAreaFactory implements Comparable {
     public static SVNAdminArea open(File path) throws SVNException {
         SVNErrorMessage error = null;
         int version = -1;
+        Collection enabledFactories = getSelector().getEnabledFactories(path, ourFactories);
         
-        for(Iterator factories = ourFactories.iterator(); factories.hasNext();) {
+        for(Iterator factories = enabledFactories.iterator(); factories.hasNext();) {
             SVNAdminAreaFactory factory = (SVNAdminAreaFactory) factories.next();
             try {
                 version = factory.getVersion(path);
@@ -122,17 +140,21 @@ public abstract class SVNAdminAreaFactory implements Comparable {
 
     public static SVNAdminArea upgrade(SVNAdminArea area) throws SVNException {
         if (isUpgradeEnabled() && !ourFactories.isEmpty()) {
-            SVNAdminAreaFactory newestFactory = (SVNAdminAreaFactory) ourFactories.iterator().next();
-            area = newestFactory.doUpgrade(area);
+            Collection enabledFactories = getSelector().getEnabledFactories(area.getRoot(), ourFactories);
+            if (!enabledFactories.isEmpty()) {
+                SVNAdminAreaFactory newestFactory = (SVNAdminAreaFactory) enabledFactories.iterator().next();
+                area = newestFactory.doUpgrade(area);
+            }
         }
         return area;
     }
     
-    public static int readFormatVersion(File adminDir) throws SVNException {
+    private static int readFormatVersion(File adminDir) throws SVNException {
         SVNErrorMessage error = null;
         int version = -1;
         
-        for(Iterator factories = ourFactories.iterator(); factories.hasNext();) {
+        Collection enabledFactories = getSelector().getEnabledFactories(adminDir.getParentFile(), ourFactories);
+        for(Iterator factories = enabledFactories.iterator(); factories.hasNext();) {
             SVNAdminAreaFactory factory = (SVNAdminAreaFactory) factories.next();
             try {
                 version = factory.getVersion(adminDir);
@@ -153,8 +175,11 @@ public abstract class SVNAdminAreaFactory implements Comparable {
     public static void createVersionedDirectory(File path, String url, String rootURL, String uuid, long revNumber) throws SVNException {
         if (!ourFactories.isEmpty()) {
             if (!checkAdminAreaExists(path, url, revNumber)) {
-                SVNAdminAreaFactory newestFactory = (SVNAdminAreaFactory) ourFactories.iterator().next();
-                newestFactory.doCreateVersionedDirectory(path, url, rootURL, uuid, revNumber);
+                Collection enabledFactories = getSelector().getEnabledFactories(path, ourFactories);
+                if (!enabledFactories.isEmpty()) {
+                    SVNAdminAreaFactory newestFactory = (SVNAdminAreaFactory) enabledFactories.iterator().next();
+                    newestFactory.doCreateVersionedDirectory(path, url, rootURL, uuid, revNumber);
+                }
             }
         }
     }
@@ -177,7 +202,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
             readFormatVersion(adminDir);
             wcExists = true;
         } catch (SVNException svne) {
-            //
+            return false;
         }
         
         if (wcExists) {
@@ -203,7 +228,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
         return wcExists;
     }
 
-    protected abstract int getSupportedVersion();
+    public abstract int getSupportedVersion();
     
     protected abstract int getVersion(File path) throws SVNException;
     
@@ -227,5 +252,13 @@ public abstract class SVNAdminAreaFactory implements Comparable {
         }
         int version = ((SVNAdminAreaFactory) o).getSupportedVersion(); 
         return getSupportedVersion() > version ? -1 : (getSupportedVersion() < version) ? 1 : 0; 
+    }
+    
+    private static class DefaultSelector implements ISVNAdminAreaFactorySelector {
+
+        public Collection getEnabledFactories(File path, Collection factories) throws SVNException {
+            return factories;
+        }
+
     }
 }

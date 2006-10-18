@@ -717,6 +717,9 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         if (uuid != null) {
             rootEntry.setUUID(uuid);
         }
+        if (revNumber > 0) {
+            rootEntry.setIncomplete(true);
+        }
         adminArea.saveEntries(false);
         
         // unlock dir.

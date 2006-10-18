@@ -23,8 +23,9 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
-public class SVNAdminArea14Factory extends SVNAdminAreaFactory {
-    private static final int WC_FORMAT = 8;
+class SVNAdminArea14Factory extends SVNAdminAreaFactory {
+    
+    public static final int WC_FORMAT = 8;
     
     protected void doCreateVersionedDirectory(File path, String url, String rootURL, String uuid, long revNumber) throws SVNException {
         SVNAdminArea adminArea = new SVNAdminArea14(path); 
@@ -47,7 +48,7 @@ public class SVNAdminArea14Factory extends SVNAdminAreaFactory {
         return newestAdminArea.upgradeFormat(adminArea);
     }
 
-    protected int getSupportedVersion() {
+    public int getSupportedVersion() {
         return WC_FORMAT;
     }
 

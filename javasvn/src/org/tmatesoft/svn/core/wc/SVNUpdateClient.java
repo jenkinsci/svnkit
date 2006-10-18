@@ -294,7 +294,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 SVNAdminAreaFactory.createVersionedDirectory(dstPath, url, repositoryRoot, uuid, revNumber);
                 result = doUpdate(dstPath, revision, recursive);
             } else if (kind == SVNFileType.DIRECTORY) {
-                int formatVersion = SVNAdminAreaFactory.checkWC(dstPath);
+                int formatVersion = SVNAdminAreaFactory.checkWC(dstPath, true);
                 if (formatVersion != 0) {
                     SVNAdminArea adminArea = wcAccess.open(dstPath, false, 0);
                     SVNEntry rootEntry = adminArea.getEntry(adminArea.getThisDirName(), false);

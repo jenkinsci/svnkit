@@ -246,7 +246,7 @@ public class SVNStatusClient extends SVNBasicClient {
                     String externalPath = (String) paths.next();
                     File externalFile = info.getAnchor().getFile(externalPath);
                     try {
-                        SVNAdminAreaFactory.checkWC(path);
+                        SVNAdminAreaFactory.checkWC(path, true);
                     } catch (SVNException e) {
                         continue;
                     }
