@@ -831,6 +831,9 @@ public class SVNDiffClient extends SVNBasicClient {
      */
     public void doMerge(File path1, SVNRevision revision1, File path2, SVNRevision revision2, File dstPath, boolean recusrsive, boolean useAncestry, 
             boolean force, boolean dryRun) throws SVNException {
+        path1 = new File(SVNPathUtil.validateFilePath(path1.getAbsolutePath())).getAbsoluteFile();
+        path2 = new File(SVNPathUtil.validateFilePath(path2.getAbsolutePath())).getAbsoluteFile();
+        dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath())).getAbsoluteFile();
         /*
          * Same as 2. merge sourceWCPATH1@N sourceWCPATH2@M [WCPATH]
          * or      3. merge -r N:M SOURCE[@REV] [WCPATH]
@@ -851,6 +854,7 @@ public class SVNDiffClient extends SVNBasicClient {
             SVNErrorManager.error(err);
         }
         SVNWCAccess wcAccess = createWCAccess();
+        dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath()));
         try {
             dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath()));
             SVNAdminAreaInfo info = wcAccess.openAnchor(dstPath, !dryRun, recusrsive ? SVNWCAccess.INFINITE_DEPTH : 0);
@@ -913,6 +917,8 @@ public class SVNDiffClient extends SVNBasicClient {
      */
     public void doMerge(File path1, SVNRevision revision1, SVNURL url2, SVNRevision revision2, File dstPath, boolean recusrsive, boolean useAncestry, 
             boolean force, boolean dryRun) throws SVNException {
+        path1 = new File(SVNPathUtil.validateFilePath(path1.getAbsolutePath())).getAbsoluteFile();
+        dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath())).getAbsoluteFile();
         SVNURL url1 = getURL(path1);
         if (url1 == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path1);
@@ -984,6 +990,8 @@ public class SVNDiffClient extends SVNBasicClient {
      */
     public void doMerge(SVNURL url1, SVNRevision revision1, File path2, SVNRevision revision2, File dstPath, boolean recusrsive, boolean useAncestry, 
             boolean force, boolean dryRun) throws SVNException {
+        path2 = new File(SVNPathUtil.validateFilePath(path2.getAbsolutePath())).getAbsoluteFile();
+        dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath())).getAbsoluteFile();
         SVNURL url2 = getURL(path2);
         if (url2 == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path2);
@@ -1064,7 +1072,7 @@ public class SVNDiffClient extends SVNBasicClient {
         }
         SVNWCAccess wcAccess = createWCAccess();
         try {
-            dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath()));
+            dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath())).getAbsoluteFile();
             SVNAdminAreaInfo info = wcAccess.openAnchor(dstPath, !dryRun, recusrsive ? SVNWCAccess.INFINITE_DEPTH : 0);
             SVNEntry targetEntry = wcAccess.getEntry(dstPath, false);
             
@@ -1133,7 +1141,7 @@ public class SVNDiffClient extends SVNBasicClient {
             pegRevision = SVNRevision.HEAD;
         }
         SVNWCAccess wcAccess = createWCAccess();
-        dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath()));
+        dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath())).getAbsoluteFile();
         try {
             SVNAdminAreaInfo info = wcAccess.openAnchor(dstPath, !dryRun, recusrsive ? SVNWCAccess.INFINITE_DEPTH : 0);
             
@@ -1214,7 +1222,8 @@ public class SVNDiffClient extends SVNBasicClient {
         }
         SVNWCAccess wcAccess = createWCAccess();
         try {
-            dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath()));
+            dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath())).getAbsoluteFile();
+            path1 = new File(SVNPathUtil.validateFilePath(path1.getAbsolutePath())).getAbsoluteFile();
             SVNAdminAreaInfo info = wcAccess.openAnchor(dstPath, !dryRun, recusrsive ? SVNWCAccess.INFINITE_DEPTH : 0);
             
             SVNEntry targetEntry = wcAccess.getEntry(dstPath, false);
