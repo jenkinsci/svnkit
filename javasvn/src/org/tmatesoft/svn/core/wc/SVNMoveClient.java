@@ -755,7 +755,7 @@ public class SVNMoveClient extends SVNBasicClient {
         } finally {
             srcAccess.close();
         }
-        if (!move) {
+        if (move) {
             myWCClient.doDelete(src, true, false);
         }
         if (added) {
@@ -775,9 +775,9 @@ public class SVNMoveClient extends SVNBasicClient {
             
             SVNAdminArea srcArea = srcAccess.probeOpen(src, false, 0);
             SVNVersionedProperties srcProps = srcArea.getProperties(src.getName());
-            SVNVersionedProperties dstProps = srcArea.getProperties(src.getName());
+            SVNVersionedProperties dstProps = dstArea.getProperties(dst.getName());
 
-            dstProps.copyTo(srcProps);
+            srcProps.copyTo(dstProps);
 
             dstEntry = dstArea.addEntry(dst.getName());
             dstEntry.setCopyFromURL(cfURL);
