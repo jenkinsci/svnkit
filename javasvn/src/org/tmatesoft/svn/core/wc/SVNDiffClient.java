@@ -1224,7 +1224,7 @@ public class SVNDiffClient extends SVNBasicClient {
         try {
             dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath())).getAbsoluteFile();
             path1 = new File(SVNPathUtil.validateFilePath(path1.getAbsolutePath())).getAbsoluteFile();
-            SVNAdminAreaInfo info = wcAccess.openAnchor(dstPath, !dryRun, recusrsive ? SVNWCAccess.INFINITE_DEPTH : 0);
+            SVNAdminAreaInfo info = wcAccess.openAnchor(dstPath.getAbsoluteFile(), !dryRun, recusrsive ? SVNWCAccess.INFINITE_DEPTH : 0);
             
             SVNEntry targetEntry = wcAccess.getEntry(dstPath, false);
             if (targetEntry == null) {
@@ -1232,9 +1232,9 @@ public class SVNDiffClient extends SVNBasicClient {
                 SVNErrorManager.error(err);
             }
             if (targetEntry.isFile()) {
-                doMergeFile(url1, path1, revision1, url1, path1, revision2, pegRevision, info, force, dryRun);
+                doMergeFile(url1, path1.getAbsoluteFile(), revision1, url1, path1.getAbsoluteFile(), revision2, pegRevision, info, force, dryRun);
             } else if (targetEntry.isDirectory()) {
-                doMerge(url1, path1, revision1, url1, path1, revision2, pegRevision, info, recusrsive, useAncestry, force, dryRun);
+                doMerge(url1, path1.getAbsoluteFile(), revision1, url1, path1.getAbsoluteFile(), revision2, pegRevision, info, recusrsive, useAncestry, force, dryRun);
             }
         } finally {
             wcAccess.close();
