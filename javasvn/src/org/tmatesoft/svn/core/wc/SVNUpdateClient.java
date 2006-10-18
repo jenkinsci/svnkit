@@ -713,7 +713,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             save = canonicalizeEntry(entry, omitDefaultPort);
             adminArea.getWCProperties(name).setPropertyValue(SVNProperty.WC_URL, null);
             if (save) {
-                adminArea.saveEntries(true);
+                adminArea.saveEntries(false);
             }
             return;
         }
@@ -1031,7 +1031,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         if (entry.isFile()) {
             relocateEntry(entry, from, to, validatedURLs);
             SVNPropertiesManager.deleteWCProperties(adminArea, name, false);
-            adminArea.saveEntries(true);
+            adminArea.saveEntries(false);
             return validatedURLs;
         }
         
@@ -1055,7 +1055,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             SVNPropertiesManager.deleteWCProperties(adminArea, childEntry.getName(), false);
         }
         SVNPropertiesManager.deleteWCProperties(adminArea, "", false);
-        adminArea.saveEntries(true);
+        adminArea.saveEntries(false);
         return validatedURLs;
     }
 }

@@ -109,7 +109,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             if (mySwitchURL != null) {
                 clearWCProperty(myCurrentDirectory.getAdminArea());
             }
-            adminArea.saveEntries(true);
+            adminArea.saveEntries(false);
         }
     }
 
@@ -213,7 +213,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         entry.setKind(SVNNodeKind.DIR);
         entry.setAbsent(false);
         entry.setDeleted(false);
-        parentArea.saveEntries(true);
+        parentArea.saveEntries(false);
 
         String rootURL = null;
         if (SVNPathUtil.isAncestor(myRootURL, myCurrentDirectory.URL)) {
@@ -243,7 +243,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         if (mySwitchURL != null) {
             clearWCProperty(myCurrentDirectory.getAdminArea());
         }
-        adminArea.saveEntries(true);
+        adminArea.saveEntries(false);
     }
 
     public void absentDir(String path) throws SVNException {
@@ -271,7 +271,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             entry.setRevision(myTargetRevision);
             entry.setAbsent(true);
         }
-        adminArea.saveEntries(true);
+        adminArea.saveEntries(false);
     }
 
     public void changeDirProperty(String name, String value) throws SVNException {
@@ -287,6 +287,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             if (entry.isFile() || adminArea.getThisDirName().equals(entry.getName())) {
                 SVNVersionedProperties props = adminArea.getWCProperties(entry.getName());
                 props.setPropertyValue(SVNProperty.WC_URL, null);
+                adminArea.saveWCProperties(false);
             } else {
                 SVNAdminArea childArea = myAdminInfo.getWCAccess().retrieve(adminArea.getFile(entry.getName()));
                 clearWCProperty(childArea);
@@ -299,7 +300,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         Map modifiedEntryProps = myCurrentDirectory.getChangedEntryProperties();
         Map modifiedProps = myCurrentDirectory.getChangedProperties();
 
-        SVNStatusType propStatus = SVNStatusType.UNCHANGED;
+        SVNStatusType propStatus = SVNStatusType.UNKNOWN;
         SVNAdminArea adminArea = myCurrentDirectory.getAdminArea();
         if (modifiedWCProps != null || modifiedEntryProps != null || modifiedProps != null) {
             SVNLog log = myCurrentDirectory.getLog();
@@ -320,8 +321,8 @@ public class SVNUpdateEditor implements ISVNEditor {
         }
         myCurrentDirectory.runLogs();
         completeDirectory(myCurrentDirectory);
-        if (!myCurrentDirectory.IsAdded && propStatus != SVNStatusType.UNCHANGED) {
-            myWCAccess.handleEvent(SVNEventFactory.createUpdateModifiedEvent(myAdminInfo, adminArea, "", SVNNodeKind.DIR, SVNEventAction.UPDATE_UPDATE, null, SVNStatusType.UNCHANGED, propStatus, null));
+        if (!myCurrentDirectory.IsAdded) {
+            myWCAccess.handleEvent(SVNEventFactory.createUpdateModifiedEvent(myAdminInfo, adminArea, "", SVNNodeKind.DIR, SVNEventAction.UPDATE_UPDATE, null, SVNStatusType.UNKNOWN, propStatus, null));
         }
         myCurrentDirectory = myCurrentDirectory.Parent;
     }

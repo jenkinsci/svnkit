@@ -360,7 +360,7 @@ public class SVNLogRunner {
             adminArea.closeWCProperties();
         }
         if (myIsEntriesChanged) {
-            adminArea.saveEntries(true);
+            adminArea.saveEntries(false);
         } else {
             adminArea.closeEntries();
         }
@@ -369,15 +369,11 @@ public class SVNLogRunner {
     public void logCompleted(SVNAdminArea adminArea) throws SVNException {
         if (myIsWCPropertiesChanged) {
             adminArea.saveWCProperties(false);
-        } else {
-            adminArea.closeWCProperties();
-        }
+        } 
         
         if (myIsEntriesChanged) {
-            adminArea.saveEntries(true);
-        } else {
-            adminArea.closeEntries();
-        }
+            adminArea.saveEntries(false);
+        } 
         boolean killMe = adminArea.isKillMe();
         if (killMe) {
             SVNEntry entry = adminArea.getEntry(adminArea.getThisDirName(), false);

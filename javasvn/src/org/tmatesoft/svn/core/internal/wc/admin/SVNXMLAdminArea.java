@@ -717,7 +717,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         if (uuid != null) {
             rootEntry.setUUID(uuid);
         }
-        adminArea.saveEntries(true);
+        adminArea.saveEntries(false);
         
         // unlock dir.
         SVNFileUtil.deleteFile(lockFile);

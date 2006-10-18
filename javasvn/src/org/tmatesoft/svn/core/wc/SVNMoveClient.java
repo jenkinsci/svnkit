@@ -401,7 +401,7 @@ public class SVNMoveClient extends SVNBasicClient {
                     String newChildURL = newURL == null ? null : SVNPathUtil.append(newURL, SVNEncodingUtil.uriEncode(childEntry.getName()));
                     updateCopiedDirectory(dir, childEntry.getName(), newChildURL, reposRootURL, childCopyFromURL, copyFromRevision);
                 }
-                dir.saveEntries(true);
+                dir.saveEntries(false);
             }
         }
     }
@@ -592,7 +592,7 @@ public class SVNMoveClient extends SVNBasicClient {
                             dstEntry.setRevision(0);
                         }
                     }
-                    dstParentArea.saveEntries(true);
+                    dstParentArea.saveEntries(false);
                 } else if (srcEntry.isDirectory()) {
                     SVNAdminArea srcArea = wcAccess.open(src, false, 0);
                     srcEntry = srcArea.getEntry(srcArea.getThisDirName(), false);
@@ -786,7 +786,7 @@ public class SVNMoveClient extends SVNBasicClient {
             dstEntry.setKind(SVNNodeKind.FILE);
             dstEntry.scheduleForAddition();
             
-            dstArea.saveEntries(true);
+            dstArea.saveEntries(false);
             SVNLog log = dstArea.getLog();
             dstArea.saveVersionedProperties(log, true);
             log.save();

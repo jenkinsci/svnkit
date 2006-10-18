@@ -932,7 +932,7 @@ public abstract class SVNAdminArea {
         }
         
         if (save) {
-            saveEntries(true);
+            saveEntries(false);
         }
     }
     

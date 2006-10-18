@@ -1384,7 +1384,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         }
         rootEntry.setCachableProperties(ourCachableProperties);
         try {
-            adminArea.saveEntries(true);
+            adminArea.saveEntries(false);
         } catch (SVNException svne) {
             SVNErrorMessage err = svne.getErrorMessage().wrap("Error writing entries file for ''{0}''", dir);
             SVNErrorManager.error(err, svne);

@@ -2204,7 +2204,7 @@ public class SVNWCClient extends SVNBasicClient {
             }
             SVNLog log = anchor.getLog();
             anchor.saveVersionedProperties(log, true);
-            anchor.saveEntries(true);
+            anchor.saveEntries(false);
             log.save();
             anchor.runLogs();
             return;
