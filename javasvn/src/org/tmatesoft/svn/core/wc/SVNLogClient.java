@@ -33,10 +33,10 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
@@ -69,6 +69,8 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  */
 public class SVNLogClient extends SVNBasicClient {
 
+    private SVNDiffOptions myDiffOptions;
+
     /**
      * Constructs and initializes an <b>SVNLogClient</b> object
      * with the specified run-time configuration and authentication 
@@ -100,6 +102,18 @@ public class SVNLogClient extends SVNBasicClient {
         super(repositoryPool, options);
     }
     
+    public void setDiffOptions(SVNDiffOptions diffOptions) {
+        myDiffOptions = diffOptions;
+    }
+
+    public SVNDiffOptions getDiffOptions() {
+        if (myDiffOptions == null) {
+            myDiffOptions = new SVNDiffOptions();
+        }
+        return myDiffOptions;
+    }
+
+    
     /**
      * Obtains annotation information for each file text line from a repository
      * (using a Working Copy path to get a corresponding URL) and passes it to a 
@@ -120,8 +134,15 @@ public class SVNLogClient extends SVNBasicClient {
      * @see                   #doAnnotate(SVNURL, SVNRevision, SVNRevision, SVNRevision, ISVNAnnotateHandler)
      */
     public void doAnnotate(File path, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, ISVNAnnotateHandler handler) throws SVNException {
+        doAnnotate(path, pegRevision, startRevision, endRevision, false, handler);
+    }
+
+    public void doAnnotate(File path, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean force, ISVNAnnotateHandler handler) throws SVNException {
         if (startRevision == null || !startRevision.isValid()) {
             startRevision = SVNRevision.create(1);
+        }
+        if (endRevision == null || !endRevision.isValid()) {
+            endRevision = pegRevision;
         }
         SVNRepository repos = createRepository(null, path, pegRevision, endRevision);
         long endRev = getRevisionNumber(endRevision, repos, path);
@@ -134,7 +155,7 @@ public class SVNLogClient extends SVNBasicClient {
         if (!tmpFile.isDirectory()) {
             tmpFile = SVNFileUtil.createTempDirectory("annotate");
         }
-        doAnnotate(path.getAbsolutePath(), startRev, tmpFile, repos, endRev, handler, null);
+        doAnnotate(path.getAbsolutePath(), startRev, tmpFile, repos, endRev, force, handler, null);
     }
     
     /**
@@ -160,10 +181,17 @@ public class SVNLogClient extends SVNBasicClient {
         doAnnotate(url, pegRevision, startRevision, endRevision, handler, null);
     }
 
-	public void doAnnotate(SVNURL url, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, ISVNAnnotateHandler handler, String inputEncoding) throws SVNException {
+    public void doAnnotate(SVNURL url, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, ISVNAnnotateHandler handler, String inputEncoding) throws SVNException {
+        doAnnotate(url, pegRevision, startRevision, endRevision, false, handler, inputEncoding);
+    }
+
+	public void doAnnotate(SVNURL url, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean force, ISVNAnnotateHandler handler, String inputEncoding) throws SVNException {
 	    if (startRevision == null || !startRevision.isValid()) {
 	        startRevision = SVNRevision.create(1);
 	    }
+        if (endRevision == null || !endRevision.isValid()) {
+            endRevision = pegRevision;
+        }
 	    SVNRepository repos = createRepository(url, null, pegRevision, endRevision);
 	    long endRev = getRevisionNumber(endRevision, repos, null);
 	    long startRev = getRevisionNumber(startRevision, repos, null);
@@ -171,11 +199,11 @@ public class SVNLogClient extends SVNBasicClient {
 	        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Start revision must precede end revision"));
 	    }
 	    File tmpFile = SVNFileUtil.createTempDirectory("annotate");
-	    doAnnotate(repos.getLocation().toDecodedString(), startRev, tmpFile, repos, endRev, handler, inputEncoding);
+	    doAnnotate(repos.getLocation().toDecodedString(), startRev, tmpFile, repos, endRev, force, handler, inputEncoding);
 	}
 
-    private void doAnnotate(String path, long startRev, File tmpFile, SVNRepository repos, long endRev, ISVNAnnotateHandler handler, String inputEncoding) throws SVNException {
-        SVNAnnotationGenerator generator = new SVNAnnotationGenerator(path, tmpFile, startRev, this);
+    private void doAnnotate(String path, long startRev, File tmpFile, SVNRepository repos, long endRev, boolean force, ISVNAnnotateHandler handler, String inputEncoding) throws SVNException {
+        SVNAnnotationGenerator generator = new SVNAnnotationGenerator(path, tmpFile, startRev, force, getDiffOptions(), this);
         try {
             repos.getFileRevisions("", startRev > 0 ? startRev - 1 : startRev, endRev, generator);
             generator.reportAnnotations(handler, inputEncoding);
@@ -235,13 +263,21 @@ public class SVNLogClient extends SVNBasicClient {
      * @see                    #doLog(SVNURL, String[], SVNRevision, SVNRevision, SVNRevision, boolean, boolean, long, ISVNLogEntryHandler)                        
      */
     public void doLog(File[] paths, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean reportPaths, long limit, final ISVNLogEntryHandler handler) throws SVNException {
+        doLog(paths, SVNRevision.UNDEFINED, startRevision, endRevision, stopOnCopy, reportPaths, limit, handler);
+    }
+    
+    public void doLog(File[] paths, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean reportPaths, long limit, final ISVNLogEntryHandler handler) throws SVNException {
         if (paths == null || paths.length == 0) {
             return;
         }
         if (startRevision.isValid() && !endRevision.isValid()) {
             endRevision = startRevision;
         } else if (!startRevision.isValid()) {
-            startRevision = SVNRevision.BASE;
+            if (!pegRevision.isValid()) {
+                startRevision = SVNRevision.BASE;
+            } else {
+                startRevision = pegRevision;
+            }
             if (!endRevision.isValid()) {
                 endRevision = SVNRevision.create(0);
             }
@@ -253,21 +289,22 @@ public class SVNLogClient extends SVNBasicClient {
             }
         };
         SVNURL[] urls = new SVNURL[paths.length];
+        SVNWCAccess wcAccess = createWCAccess();
         for (int i = 0; i < paths.length; i++) {
             checkCancelled();
             File path = paths[i];
-            SVNWCAccess wcAccess = createWCAccess(path);
-            SVNEntry entry = wcAccess.getTargetEntry();
+            wcAccess.probeOpen(path, false, 0); 
+            SVNEntry entry = wcAccess.getEntry(path, false); 
             if (entry == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", path);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", path);
                 SVNErrorManager.error(err);
-                return;
-            }
+            }   
             if (entry.getURL() == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "Entry ''{0}'' has no URL", path);
                 SVNErrorManager.error(err);
             }
             urls[i] = entry.getSVNURL();
+            wcAccess.closeAdminArea(path);
         }
         if (urls.length == 0) {
             return;
@@ -281,7 +318,8 @@ public class SVNLogClient extends SVNBasicClient {
         if (targets.isEmpty()) {
             targets.add("");
         }
-        SVNRepository repos = createRepository(baseURL, true);
+        SVNRepository repos = !startRevision.isLocal() && !pegRevision.isLocal() ?
+                createRepository(baseURL, null, pegRevision, startRevision) : createRepository(baseURL, true);
         String[] targetPaths = (String[]) targets.toArray(new String[targets.size()]);
         for (int i = 0; i < targetPaths.length; i++) {
             targetPaths[i] = SVNEncodingUtil.uriDecode(targetPaths[i]);
@@ -349,7 +387,11 @@ public class SVNLogClient extends SVNBasicClient {
         if (startRevision.isValid() && !endRevision.isValid()) {
             endRevision = startRevision;
         } else if (!startRevision.isValid()) {
-            startRevision = SVNRevision.HEAD;
+            if (!pegRevision.isValid()) {
+                startRevision = SVNRevision.HEAD;
+            } else {
+                startRevision = pegRevision;
+            }
             if (!endRevision.isValid()) {
                 endRevision = SVNRevision.create(0);
             }
@@ -361,9 +403,8 @@ public class SVNLogClient extends SVNBasicClient {
                 handler.handleLogEntry(logEntry);
             }
         };
-        long targetRevNumber = startRevision.getNumber();
-        SVNRepository repos = targetRevNumber > 0 && pegRevision.isValid() && !pegRevision.isLocal() ?
-                createRepository(url, null, pegRevision, SVNRevision.create(targetRevNumber)) : createRepository(url, true);
+        SVNRepository repos = startRevision.isValid() ? 
+                createRepository(url, null, pegRevision, startRevision) : createRepository(url, true);
         checkCancelled();
         long startRev = getRevisionNumber(startRevision, repos, null);
         checkCancelled();

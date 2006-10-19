@@ -239,9 +239,4 @@ public class DAVUtil {
         }
         return target;
     }
-/*
-    public static void getChildren(DAVConnection connection, final String parentPath, DAVElement[] properties, IDAVResponseHandler handler) throws SVNException {
-        connection.doPropfind(parentPath, 1, null, properties, handler, 0, 0);
-    }
-    */
 }

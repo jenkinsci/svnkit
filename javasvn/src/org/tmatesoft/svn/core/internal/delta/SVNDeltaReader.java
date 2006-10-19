@@ -11,8 +11,13 @@
  */
 package org.tmatesoft.svn.core.internal.delta;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.util.zip.InflaterInputStream;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -21,7 +26,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
-
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * Reads diff windows from stream and feeds them to the ISVNDeltaConsumer instance.
@@ -37,6 +42,7 @@ public class SVNDeltaReader {
     private long myLastSourceOffset;
     private int myLastSourceLength;
     private boolean myIsWindowSent;
+    private byte myVersion;
     
     public SVNDeltaReader() {
         myBuffer = ByteBuffer.allocate(4096);
@@ -65,10 +71,11 @@ public class SVNDeltaReader {
                 return;
             }
             if (myBuffer.get(0) != 'S' || myBuffer.get(1) != 'V' || myBuffer.get(2) != 'N' ||
-                    myBuffer.get(3) != '\0') {
+                    (myBuffer.get(3) != '\0' && myBuffer.get(3) != '\1')) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SVNDIFF_CORRUPT_WINDOW, "Svndiff has invalid header");
                 SVNErrorManager.error(err);
             }
+            myVersion = myBuffer.get(3);
             myBuffer.position(4);
             int remainging = myBuffer.remaining();
             myBuffer.compact();
@@ -108,13 +115,31 @@ public class SVNDeltaReader {
             }
             myLastSourceOffset = sourceOffset;
             myLastSourceLength = sourceLength;
-            
-            SVNDiffWindow window = new SVNDiffWindow(sourceOffset, sourceLength, targetLength, instructionsLength, newDataLength);
-            window.setData(myBuffer);
+            SVNDiffWindow window = null;
+            int allDataLength = newDataLength + instructionsLength;
+            if (myVersion == 1) {
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                int bufferPosition = myBuffer.position();
+                try {
+                    instructionsLength = deflate(instructionsLength, out);
+                    newDataLength = deflate(newDataLength, out);
+                } catch (IOException e) {
+                    SVNDebugLog.getDefaultLog().error(e);
+                }
+                byte[] bytes = out.toByteArray();
+                ByteBuffer decompressed = ByteBuffer.wrap(bytes);
+                decompressed.position(0);
+                window = new SVNDiffWindow(sourceOffset, sourceLength, targetLength, instructionsLength, newDataLength);
+                window.setData(decompressed);
+                myBuffer.position(bufferPosition);
+            } else {
+                window = new SVNDiffWindow(sourceOffset, sourceLength, targetLength, instructionsLength, newDataLength);
+                window.setData(myBuffer);
+            }
             int position = myBuffer.position();
             OutputStream os = consumer.textDeltaChunk(path, window);
             SVNFileUtil.closeFile(os);
-            myBuffer.position(position + newDataLength + instructionsLength);
+            myBuffer.position(position + allDataLength);
             int remains = myBuffer.remaining();
             myIsWindowSent = true;
             
@@ -125,6 +150,28 @@ public class SVNDeltaReader {
         }
     }
     
+    private int deflate(int compressedLength, OutputStream out) throws IOException {
+        int originalPosition = myBuffer.position();
+        int uncompressedLength = readOffset();
+        // substract offset length from the total length.
+        byte[] uncompressedData = new byte[uncompressedLength];
+        if (uncompressedLength == (compressedLength - (myBuffer.position() - originalPosition))) {
+            myBuffer.get(uncompressedData);
+            out.write(uncompressedData);
+        } else {
+            byte[] compressed = myBuffer.array();
+            int offset = myBuffer.arrayOffset() + myBuffer.position();
+            InputStream in = new InflaterInputStream(new ByteArrayInputStream(compressed, offset, compressedLength));
+            int read = 0;
+            while(read < uncompressedLength) {
+                read += in.read(uncompressedData, read, uncompressedLength - read);
+            }
+            out.write(uncompressedData);
+        }
+        myBuffer.position(originalPosition + compressedLength);
+        return uncompressedLength;
+    }
+
     private void appendToBuffer(byte[] data, int offset, int length) {
         int limit = myBuffer.limit(); // amount of pending data?
         if (myBuffer.capacity() < limit + length) {
@@ -172,4 +219,6 @@ public class SVNDeltaReader {
         myBuffer.reset();
         return -1;
     }
+    
+    
 }

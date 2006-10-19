@@ -60,7 +60,7 @@ public class LsCommand extends SVNCommand implements ISVNDirEntryHandler {
         SVNRevision revision = parseRevision(getCommandLine());
         SVNLogClient logClient = getClientManager().getLogClient();
         if (!getCommandLine().hasURLs() && !getCommandLine().hasPaths()) {
-            getCommandLine().setPathAt(0, ".");
+            getCommandLine().setPathAt(0, "");
         }
         if (handler != null) {
             if (!getCommandLine().hasArgument(SVNArgument.INCREMENTAL)) {
@@ -99,7 +99,6 @@ public class LsCommand extends SVNCommand implements ISVNDirEntryHandler {
     }
 
     public void handleDirEntry(SVNDirEntry dirEntry) {
-        getClientManager().getDebugLog().info("handling: " + dirEntry);
         if (myIsVerbose) {
             StringBuffer verbose = new StringBuffer();
             verbose.append(SVNCommand.formatString(dirEntry.getRevision() + "", 7, false));

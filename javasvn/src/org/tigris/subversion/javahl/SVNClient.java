@@ -183,7 +183,7 @@ public class SVNClient implements SVNClientInterface {
     }
 
     public void merge(String path, Revision pegRevision, Revision revision1, Revision revision2, String localPath, boolean force, boolean recurse, boolean ignoreAncestry, boolean dryRun) throws ClientException {
-        myDelegate.merge(path, pegRevision, revision2, revision2, localPath, force, recurse, ignoreAncestry, dryRun);
+        myDelegate.merge(path, pegRevision, revision1, revision2, localPath, force, recurse, ignoreAncestry, dryRun);
     }
 
     public void diff(String target1, Revision revision1, String target2, Revision revision2, String outFileName, boolean recurse) throws ClientException {

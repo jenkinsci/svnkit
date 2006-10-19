@@ -23,9 +23,15 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
-public class SVNAdminArea14Factory extends SVNAdminAreaFactory {
-    private static final int WC_FORMAT = 8;
+class SVNAdminArea14Factory extends SVNAdminAreaFactory {
     
+    public static final int WC_FORMAT = 8;
+    
+    protected void doCreateVersionedDirectory(File path, String url, String rootURL, String uuid, long revNumber) throws SVNException {
+        SVNAdminArea adminArea = new SVNAdminArea14(path); 
+        adminArea.createVersionedDirectory(path, url, rootURL, uuid, revNumber, true);
+    }
+
     protected SVNAdminArea doOpen(File path, int version) throws SVNException {
         if (version != WC_FORMAT) {
             return null;
@@ -37,17 +43,13 @@ public class SVNAdminArea14Factory extends SVNAdminAreaFactory {
         if (adminArea == null || adminArea.getClass() == SVNAdminArea14.class) {
             return adminArea;
         }
-        SVNAdminArea newestAdminArea = new SVNAdminArea14(adminArea.getRoot());
+        SVNAdminArea14 newestAdminArea = new SVNAdminArea14(adminArea.getRoot());
+        newestAdminArea.setLocked(true);
         return newestAdminArea.upgradeFormat(adminArea);
     }
 
-    protected int getSupportedVersion() {
+    public int getSupportedVersion() {
         return WC_FORMAT;
-    }
-
-    protected SVNAdminArea doCreateVersionedDirectory(File dir) throws SVNException {
-        SVNAdminArea adminArea = new SVNAdminArea14(dir);
-        return adminArea.createVersionedDirectory(); 
     }
 
     protected int doCheckWC(File path) throws SVNException {

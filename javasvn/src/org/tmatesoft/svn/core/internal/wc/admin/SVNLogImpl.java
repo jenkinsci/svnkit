@@ -34,12 +34,12 @@ import java.util.Map;
  * @version 1.0
  * @author TMate Software Ltd.
  */
-public class SVNLog2 extends ISVNLog {
+public class SVNLogImpl extends SVNLog {
 
     private File myFile;
     private File myTmpFile;
 
-    public SVNLog2(File logFile, File tmpFile, SVNAdminArea adminArea) {
+    public SVNLogImpl(File logFile, File tmpFile, SVNAdminArea adminArea) {
         super(adminArea);
         myFile = logFile;
         myTmpFile = tmpFile;
@@ -62,7 +62,7 @@ public class SVNLog2 extends ISVNLog {
                     String attr = (String) attrs.next();
                     String value = (String) command.get(attr);
                     if (value == null) {
-                        continue;
+                        value = "";
                     }
                     value = SVNEncodingUtil.xmlEncodeAttr(value);
                     os.write("\n   ");
@@ -115,6 +115,9 @@ public class SVNLog2 extends ISVNLog {
                         value = value.substring(0, value.length() - 1);
                     }
                     value = SVNEncodingUtil.xmlDecode(value);
+                    if ("".equals(value) && !SVNLog.NAME_ATTR.equals(attrName)) {
+                        value = null;
+                    }
                     attrs.put(attrName, value);
                 }
                 if (line.endsWith("/>") && name != null) {

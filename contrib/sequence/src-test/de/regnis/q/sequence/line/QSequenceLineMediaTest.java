@@ -1,22 +1,13 @@
 package de.regnis.q.sequence.line;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.util.List;
-import java.util.Random;
+import java.io.*;
+import java.util.*;
+import junit.framework.*;
 
-import junit.framework.TestCase;
-import de.regnis.q.sequence.QSequenceDifference;
-import de.regnis.q.sequence.QSequenceDifferenceAssemblyTest;
-import de.regnis.q.sequence.QSequenceDifferenceBlock;
-import de.regnis.q.sequence.QSequenceDifferenceBlockShifter;
-import de.regnis.q.sequence.core.QSequenceDummyCanceller;
-import de.regnis.q.sequence.core.QSequenceException;
-import de.regnis.q.sequence.media.QSequenceCachingMedia;
-import de.regnis.q.sequence.media.QSequenceMediaDummyIndexTransformer;
+import de.regnis.q.sequence.*;
+import de.regnis.q.sequence.line.simplifier.*;
+import de.regnis.q.sequence.core.*;
+import de.regnis.q.sequence.media.*;
 
 /**
  * @author Marc Strapetz
@@ -37,7 +28,16 @@ public class QSequenceLineMediaTest extends TestCase {
 	// Accessing ==============================================================
 
 	public void testBasicMemoryVersusFileSystem() throws IOException, QSequenceException {
-		test(new String[]{"a", "c", "b."}, new String[]{"a", "d", "b."});
+		test(new String[] {"a", "c", "b."}, new String[] {"a", "d", "b."}, new QSequenceLineDummySimplifier(), null);
+	}
+
+	public void testSimplifier() throws IOException, QSequenceException {
+		final String[] left = new String[] {"equal", "number of ws only ", "all ws"};
+		final String[] right = new String[] {"equal", "number\tof  ws only  ", " allws "};
+
+		test(left, right, new QSequenceLineDummySimplifier(), Collections.singletonList(new QSequenceDifferenceBlock(1, 2, 1, 2)));
+		test(left, right, new QSequenceLineWhiteSpaceReducingSimplifier(), Collections.singletonList(new QSequenceDifferenceBlock(2, 2, 2, 2)));
+		test(left, right, new QSequenceLineWhiteSpaceSkippingSimplifier(), Collections.EMPTY_LIST);
 	}
 
 	public void testRandomMemoryVersusFileSystem() throws IOException, QSequenceException {
@@ -51,14 +51,37 @@ public class QSequenceLineMediaTest extends TestCase {
 	private void testRandomStrings(int lineCount, double pMod, double pAddRemove) throws IOException, QSequenceException {
 		final String[] left = QSequenceDifferenceAssemblyTest.createLines(lineCount, random);
 		final String[] right = QSequenceDifferenceAssemblyTest.alterLines(left, pMod, pAddRemove, random);
-		test(left, right);
+		test(left, right, new QSequenceLineDummySimplifier(), null);
 	}
 
-	private void test(String[] left, String[] right) throws IOException, QSequenceException {
+	private void test(String[] left, String[] right, QSequenceLineSimplifier simplifier, List expectedBlocks) throws IOException, QSequenceException {
 		final File leftFile = createTestFile(left, true);
 		final File rightFile = createTestFile(right, false);
 		try {
-			test(leftFile, rightFile);
+			final QSequenceLineResult memoryResult = createBlocksInMemory(leftFile, rightFile, simplifier);
+			final QSequenceLineResult raFileResult1 = createRAFileBlocks(leftFile, rightFile, 16, 16, simplifier);
+			final QSequenceLineResult raFileResult2 = createRAFileBlocks(leftFile, rightFile, 256, 16, simplifier);
+			final QSequenceLineResult raFileResult3 = createRAFileBlocks(leftFile, rightFile, 256, 64, simplifier);
+			final QSequenceLineResult raFileResult4 = createRAFileBlocks(leftFile, rightFile, 256, 256, simplifier);
+			final QSequenceLineResult raFileResult5 = createRAFileBlocks(leftFile, rightFile, Integer.MAX_VALUE, 48, simplifier);
+			try {
+				if (expectedBlocks != null) {
+					compareBlocks(expectedBlocks, memoryResult.getBlocks());
+				}
+				compareBlocks(memoryResult.getBlocks(), raFileResult1.getBlocks());
+				compareBlocks(memoryResult.getBlocks(), raFileResult2.getBlocks());
+				compareBlocks(memoryResult.getBlocks(), raFileResult3.getBlocks());
+				compareBlocks(memoryResult.getBlocks(), raFileResult4.getBlocks());
+				compareBlocks(memoryResult.getBlocks(), raFileResult5.getBlocks());
+			}
+			finally {
+				memoryResult.close();
+				raFileResult1.close();
+				raFileResult2.close();
+				raFileResult3.close();
+				raFileResult4.close();
+				raFileResult5.close();
+			}
 		}
 		finally {
 			leftFile.delete();
@@ -66,35 +89,11 @@ public class QSequenceLineMediaTest extends TestCase {
 		}
 	}
 
-	private void test(final File leftFile, final File rightFile) throws IOException, QSequenceException {
-		final QSequenceLineResult memoryResult = createBlocksInMemory(leftFile, rightFile);
-		final QSequenceLineResult raFileResult1 = createRAFileBlocks(leftFile, rightFile, 16, 16);
-		final QSequenceLineResult raFileResult2 = createRAFileBlocks(leftFile, rightFile, 256, 16);
-		final QSequenceLineResult raFileResult3 = createRAFileBlocks(leftFile, rightFile, 256, 64);
-		final QSequenceLineResult raFileResult4 = createRAFileBlocks(leftFile, rightFile, 256, 256);
-		final QSequenceLineResult raFileResult5 = createRAFileBlocks(leftFile, rightFile, Integer.MAX_VALUE, 48);
-		try {
-			compareBlocks(memoryResult.getBlocks(), raFileResult1.getBlocks());
-			compareBlocks(memoryResult.getBlocks(), raFileResult2.getBlocks());
-			compareBlocks(memoryResult.getBlocks(), raFileResult3.getBlocks());
-			compareBlocks(memoryResult.getBlocks(), raFileResult4.getBlocks());
-			compareBlocks(memoryResult.getBlocks(), raFileResult5.getBlocks());
-		}
-		finally {
-			memoryResult.close();
-			raFileResult1.close();
-			raFileResult2.close();
-			raFileResult3.close();
-			raFileResult4.close();
-			raFileResult5.close();
-		}
-	}
-
-	private QSequenceLineResult createBlocksInMemory(final File leftFile, final File rightFile) throws IOException, QSequenceException {
+	private static QSequenceLineResult createBlocksInMemory(final File leftFile, final File rightFile, QSequenceLineSimplifier simplifier) throws IOException, QSequenceException {
 		final FileInputStream left = new FileInputStream(leftFile);
 		final FileInputStream right = new FileInputStream(rightFile);
-		final QSequenceLineMemoryCache leftCache = QSequenceLineMemoryCache.read(left);
-		final QSequenceLineMemoryCache rightCache = QSequenceLineMemoryCache.read(right);
+		final QSequenceLineMemoryCache leftCache = QSequenceLineMemoryCache.read(left, simplifier);
+		final QSequenceLineMemoryCache rightCache = QSequenceLineMemoryCache.read(right, simplifier);
 		final QSequenceLineMedia lineMedia = new QSequenceLineMedia(leftCache, rightCache);
 		final QSequenceCachingMedia cachingMedia = new QSequenceCachingMedia(lineMedia, new QSequenceDummyCanceller());
 		final List blocks = new QSequenceDifference(cachingMedia, new QSequenceMediaDummyIndexTransformer(cachingMedia)).getBlocks();
@@ -102,11 +101,11 @@ public class QSequenceLineMediaTest extends TestCase {
 		return new QSequenceLineResult(blocks, leftCache, rightCache);
 	}
 
-	private QSequenceLineResult createRAFileBlocks(File leftFile, File rightFile, int maximumMemorySize, int fileSegmentSize) throws IOException, QSequenceException {
+	private static QSequenceLineResult createRAFileBlocks(File leftFile, File rightFile, int maximumMemorySize, int fileSegmentSize, QSequenceLineSimplifier simplifier) throws IOException, QSequenceException {
 		final RandomAccessFile leftRAFile = new RandomAccessFile(leftFile, "r");
 		final RandomAccessFile rightRAFile = new RandomAccessFile(rightFile, "r");
 		try {
-			return QSequenceLineMedia.createBlocksInFilesystem(new QSequenceLineRAFileData(leftRAFile), new QSequenceLineRAFileData(rightRAFile), new QSequenceLineSystemTempDirectoryFactory(), 1.0, maximumMemorySize, fileSegmentSize);
+			return QSequenceLineMedia.createBlocksInFilesystem(new QSequenceLineRAFileData(leftRAFile), new QSequenceLineRAFileData(rightRAFile), new QSequenceLineSystemTempDirectoryFactory(), 1.0, maximumMemorySize, fileSegmentSize, simplifier);
 		}
 		finally {
 			leftRAFile.close();
@@ -114,7 +113,21 @@ public class QSequenceLineMediaTest extends TestCase {
 		}
 	}
 
-	private File createTestFile(String[] content, boolean left) throws IOException {
+	private static void compareBlocks(List expected, List actual) {
+		assertEquals(expected.size(), actual.size());
+
+		for (int index = 0; index < expected.size(); index++) {
+			final QSequenceDifferenceBlock expectedBlock = (QSequenceDifferenceBlock)expected.get(index);
+			final QSequenceDifferenceBlock actualBlock = (QSequenceDifferenceBlock)actual.get(index);
+
+			assertEquals(expectedBlock.getLeftFrom(), actualBlock.getLeftFrom());
+			assertEquals(expectedBlock.getLeftTo(), actualBlock.getLeftTo());
+			assertEquals(expectedBlock.getRightFrom(), actualBlock.getRightFrom());
+			assertEquals(expectedBlock.getRightTo(), actualBlock.getRightTo());
+		}
+	}
+
+	private static File createTestFile(String[] content, boolean left) throws IOException {
 		final File file = File.createTempFile("SequenceMediaTest", left ? "left" : "right");
 		file.delete();
 
@@ -128,17 +141,5 @@ public class QSequenceLineMediaTest extends TestCase {
 
 		stream.close();
 		return file;
-	}
-
-	private void compareBlocks(List expected, List actual) {
-		assertEquals(expected.size(), actual.size());
-
-		for (int index = 0; index < expected.size(); index++) {
-			final QSequenceDifferenceBlock expectedBlock = (QSequenceDifferenceBlock)expected.get(index);
-			final QSequenceDifferenceBlock actualBlock = (QSequenceDifferenceBlock)actual.get(index);
-
-			assertEquals(expectedBlock.getLeftFrom(), actualBlock.getLeftFrom());
-			assertEquals(expectedBlock.getLeftTo(), actualBlock.getLeftTo());
-		}
 	}
 }

@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.wc;
 
+import org.tmatesoft.svn.core.SVNProperty;
+
 /**
  * <b>SVNPropertyData</b> is a wrapper for both versioned and unversioned
  * properties. This class represents the pair: property name - property value.
@@ -40,6 +42,9 @@ public class SVNPropertyData {
     public SVNPropertyData(String name, String data) {
         myName = name;
         myValue = data;
+        if (myValue != null && SVNProperty.isSVNProperty(myName)) {
+            myValue = myValue.replaceAll("\n", System.getProperty("line.separator"));
+        }
     }
     
     /**

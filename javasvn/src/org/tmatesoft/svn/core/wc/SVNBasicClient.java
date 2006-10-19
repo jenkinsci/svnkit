@@ -33,10 +33,10 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
@@ -230,8 +230,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         if (myEventDispatcher != null) {
             String path = "";
             if (!myPathPrefixesStack.isEmpty()) {
-                for (Iterator paths = myPathPrefixesStack.iterator(); paths
-                        .hasNext();) {
+                for (Iterator paths = myPathPrefixesStack.iterator(); paths.hasNext();) {
                     String segment = (String) paths.next();
                     path = SVNPathUtil.append(path, segment);
                 }
@@ -262,14 +261,14 @@ public class SVNBasicClient implements ISVNEventHandler {
         return myEventDispatcher;
     }
 
-    protected SVNWCAccess createWCAccess(File file) throws SVNException {
-        return createWCAccess(file, null);
+    protected SVNWCAccess createWCAccess() {
+        return createWCAccess((String) null);
     }
 
-    protected SVNWCAccess createWCAccess(File file, final String pathPrefix) throws SVNException {
-        SVNWCAccess wcAccess = SVNWCAccess.create(file);
+    protected SVNWCAccess createWCAccess(final String pathPrefix) {
+        ISVNEventHandler eventHandler = null;
         if (pathPrefix != null) {
-            wcAccess.setEventDispatcher(new ISVNEventHandler() {
+            eventHandler = new ISVNEventHandler() {
                 public void handleEvent(SVNEvent event, double progress) throws SVNException {
                     String fullPath = SVNPathUtil.append(pathPrefix, event.getPath());
                     event.setPath(fullPath);
@@ -279,14 +278,15 @@ public class SVNBasicClient implements ISVNEventHandler {
                 public void checkCancelled() throws SVNCancelException {
                     SVNBasicClient.this.checkCancelled();
                 }
-            });
+            };
         } else {
-            wcAccess.setEventDispatcher(this);
+            eventHandler = this;
         }
-        wcAccess.setOptions(myOptions);
-        return wcAccess;
+        SVNWCAccess access = SVNWCAccess.newInstance(eventHandler);
+        access.setOptions(myOptions);
+        return access;
     }
-    
+
     /**
      * Dispatches events to the registered event handler (if any). 
      * 
@@ -329,10 +329,13 @@ public class SVNBasicClient implements ISVNEventHandler {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_VERSIONED_PATH_REQUIRED);
                 SVNErrorManager.error(err);
             }
-            SVNWCAccess wcAccess = createWCAccess(path);
-            SVNEntry entry = wcAccess.getTargetEntry();
+            SVNWCAccess wcAccess = createWCAccess();
+            wcAccess.probeOpen(path, false, 0);
+            SVNEntry entry = wcAccess.getEntry(path, false);
+            wcAccess.close();
+            
             if (entry == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not unvderversion control", path);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", path);
                 SVNErrorManager.error(err);
             }
             if (revision == SVNRevision.WORKING || revision == SVNRevision.BASE) {
@@ -385,8 +388,9 @@ public class SVNBasicClient implements ISVNEventHandler {
                 pegRevision = SVNRevision.WORKING;
             } 
         }
+//        SVNRepository repository = createRepository(initialURL, true);
         
-        SVNRepositoryLocation[] locations = getLocations(url, path, pegRevision, startRevision, SVNRevision.UNDEFINED);
+        SVNRepositoryLocation[] locations = getLocations(url, path, null, pegRevision, startRevision, SVNRevision.UNDEFINED);
         url = locations[0].getURL();
         long actualRevision = locations[0].getRevisionNumber();
         SVNRepository repository = createRepository(url, true);
@@ -400,7 +404,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         return repository;
     }
     
-    protected SVNRepositoryLocation[] getLocations(SVNURL url, File path, SVNRevision revision, SVNRevision start, SVNRevision end) throws SVNException {
+    protected SVNRepositoryLocation[] getLocations(SVNURL url, File path, SVNRepository repository, SVNRevision revision, SVNRevision start, SVNRevision end) throws SVNException {
         if (!revision.isValid() || !start.isValid()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION));
         }
@@ -409,23 +413,29 @@ public class SVNBasicClient implements ISVNEventHandler {
         long endRevisionNumber;
         if (url != null && path != null) {
             getDebugLog().info("possibly, not valid getLocations call:");
-            getDebugLog().info(new Exception());
         }
         
-        if (path != null && url == null) {
-            SVNWCAccess wcAccess = createWCAccess(path);
-            SVNEntry entry = wcAccess.getTargetEntry();
-            if (entry.getCopyFromURL() != null && revision == SVNRevision.WORKING) {
-                url = entry.getCopyFromSVNURL();
-                pegRevisionNumber = entry.getCopyFromRevision();
-            } else if (entry.getURL() != null){
-                url = entry.getSVNURL();
-            } else {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path);
-                SVNErrorManager.error(err);
+        if (path != null) {
+            SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
+            try {
+                wcAccess.openAnchor(path, false, 0);
+                SVNEntry entry = wcAccess.getEntry(path, false);
+                if (entry.getCopyFromURL() != null && revision == SVNRevision.WORKING) {
+                    url = entry.getCopyFromSVNURL();
+                    pegRevisionNumber = entry.getCopyFromRevision();
+                } else if (entry.getURL() != null){
+                    url = entry.getSVNURL();
+                } else {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path);
+                    SVNErrorManager.error(err);
+                }
+            } finally {
+                wcAccess.close();
             }
         }
-        SVNRepository repository = createRepository(url, true);
+        if (repository == null) {
+            repository = createRepository(url, true);
+        }
         if (pegRevisionNumber < 0) {
             pegRevisionNumber = getRevisionNumber(revision, repository, path);
         }
@@ -558,14 +568,14 @@ public class SVNBasicClient implements ISVNEventHandler {
         if (path == null) {
             return null;
         }
-        SVNWCAccess wcAccess = createWCAccess(path);
-        SVNEntry entry;
-        if (wcAccess.getTarget() != wcAccess.getAnchor()) {
-            entry = wcAccess.getTarget().getEntries().getEntry("", false);
-        } else {
-            entry = wcAccess.getTargetEntry();
+        SVNWCAccess wcAccess = createWCAccess();
+        try {
+            wcAccess.probeOpen(path, false, 0);
+            SVNEntry entry = wcAccess.getEntry(path, false);
+            return entry != null ? entry.getSVNURL() : null;
+        } finally {
+            wcAccess.close();
         }
-        return entry != null ? entry.getSVNURL() : null;        
     }
     
 

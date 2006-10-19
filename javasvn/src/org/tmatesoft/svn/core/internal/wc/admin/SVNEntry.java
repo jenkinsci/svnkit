@@ -25,13 +25,13 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
  * @version 1.0
  * @author TMate Software Ltd.
  */
-public class SVNEntry2 implements Comparable {
+public class SVNEntry implements Comparable {
 
     private Map myAttributes;
     private SVNAdminArea myAdminArea;
     private String myName;
 
-    public SVNEntry2(Map attributes, SVNAdminArea adminArea, String name) {
+    public SVNEntry(Map attributes, SVNAdminArea adminArea, String name) {
         myAttributes = attributes;
         myName = name;
         myAdminArea = adminArea;
@@ -41,10 +41,10 @@ public class SVNEntry2 implements Comparable {
     }
 
     public boolean equals(Object obj) {
-        if (obj == null || obj.getClass() != SVNEntry2.class) {
+        if (obj == null || obj.getClass() != SVNEntry.class) {
             return false;
         }
-        SVNEntry2 entry = (SVNEntry2) obj;
+        SVNEntry entry = (SVNEntry) obj;
         return entry.myAttributes == myAttributes && entry.myName.equals(myName);
     }
 
@@ -53,16 +53,31 @@ public class SVNEntry2 implements Comparable {
     }
 
     public int compareTo(Object obj) {
-        if (obj == null || obj.getClass() != SVNEntry2.class) {
+        if (obj == this) {
+            return 0;
+        }
+        if (obj == null || obj.getClass() != SVNEntry.class) {
             return 1;
         }
-        return myName.compareTo(((SVNEntry2) obj).myName);
+        if (isThisDir()) {
+            return 1;
+        }
+        SVNEntry entry = (SVNEntry) obj;
+//        int kind = getKind().compareTo(entry.getKind());
+//        if (kind == 0) {
+            return myName.toLowerCase().compareTo(entry.myName.toLowerCase());
+//        }
+//        return -kind;
+    }
+    
+    public boolean isThisDir() {
+        return "".equals(getName());
     }
 
     public String getURL() {
         String url = (String)myAttributes.get(SVNProperty.URL);
-        if (url == null && !myAdminArea.getThisDirName().equals(myName)) {
-            SVNEntry2 rootEntry = null; 
+        if (url == null && myAdminArea != null && !myAdminArea.getThisDirName().equals(myName)) {
+            SVNEntry rootEntry = null; 
             try {    
                 rootEntry = myAdminArea.getEntry(myAdminArea.getThisDirName(), true); 
             } catch (SVNException svne) {
@@ -92,10 +107,10 @@ public class SVNEntry2 implements Comparable {
 
     public long getRevision() {
         String revStr = (String)myAttributes.get(SVNProperty.REVISION);
-        if (revStr == null && !myAdminArea.getThisDirName().equals(myName)) {
-            SVNEntry2 rootEntry = null;
+        if (revStr == null && myAdminArea != null && !myAdminArea.getThisDirName().equals(myName)) {
+            SVNEntry rootEntry = null;
             try {
-                myAdminArea.getEntry(myAdminArea.getThisDirName(), true);
+                rootEntry = myAdminArea.getEntry(myAdminArea.getThisDirName(), true);
             } catch (SVNException svne) {
                 return -1;
             }
@@ -142,23 +157,6 @@ public class SVNEntry2 implements Comparable {
     }
 
     private boolean setAttributeValue(String name, String value) {
-        if (SVNProperty.SCHEDULE.equals(name)) {
-            if (SVNProperty.SCHEDULE_DELETE.equals(value)) {
-                if (SVNProperty.SCHEDULE_ADD.equals(myAttributes.get(SVNProperty.SCHEDULE))) {
-                    if (myAttributes.get(SVNProperty.DELETED) == null) {
-                        try {
-                            myAdminArea.deleteEntry(myName); 
-                        } catch (SVNException svne) {
-                            //
-                        }
-                    } else {
-                        myAttributes.remove(SVNProperty.SCHEDULE);
-                    }
-                    return true;
-                }
-            }
-        }
-
         if (value == null) {
             return myAttributes.remove(name) != null;
         }
@@ -301,6 +299,10 @@ public class SVNEntry2 implements Comparable {
         setAttributeValue(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_REPLACE);
     }
 
+    public void setSchedule(String schedule) {
+        setAttributeValue(SVNProperty.SCHEDULE, schedule);
+    }
+
     public void setCopyFromRevision(long revision) {
         setAttributeValue(SVNProperty.COPYFROM_REVISION, revision >= 0 ? Long.toString(revision) : null);
     }
@@ -418,14 +420,6 @@ public class SVNEntry2 implements Comparable {
     public String[] getPresentProperties() {
         return (String[])myAttributes.get(SVNProperty.PRESENT_PROPS);
     }
-
-    public boolean hasProperties() throws SVNException {
-        return myAdminArea.hasProperties(myName);
-    }
-
-    public boolean hasPropertyModifications() throws SVNException {
-        return myAdminArea.hasPropModifications(myName);
-    }
     
     public void setHasProperties(boolean hasProps) {
         setAttributeValue(SVNProperty.HAS_PROPS, SVNProperty.toString(hasProps));
@@ -437,5 +431,9 @@ public class SVNEntry2 implements Comparable {
 
     public Map asMap() {
         return myAttributes;
+    }
+    
+    public SVNEntry copy() {
+        return new SVNEntry(myAttributes, null, myName);
     }
 }

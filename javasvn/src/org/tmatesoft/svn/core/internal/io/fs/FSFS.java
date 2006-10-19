@@ -64,9 +64,12 @@ public class FSFS {
     public static final String EXPIRATION_DATE_LOCK_KEY = "expiration_date";
     public static final String COMMENT_LOCK_KEY = "comment";
     
-    private static final int REPOSITORY_FORMAT = 3;
-    private static final int DB_FORMAT = 1;
+    private static final int REPOSITORY_FORMAT = 5;
+    private static final int DB_FORMAT = 2;
     private static final String DB_TYPE = "fsfs";
+    
+    private int myDBFormat;
+    private int myReposFormat;
     
     private String myUUID;
     
@@ -89,6 +92,14 @@ public class FSFS {
         myLocksRoot = new File(myDBRoot, "locks");
     }
     
+    public int getDBFormat() {
+        return myDBFormat;
+    }
+    
+    public int getReposFormat() {
+        return myReposFormat;
+    }
+    
     public void open() throws SVNException {
         // repo format /root/format
         FSFile formatFile = new FSFile(new File(myRepositoryRoot, "format"));
@@ -98,10 +109,11 @@ public class FSFS {
         } finally {
             formatFile.close();
         }
-        if (format != REPOSITORY_FORMAT) {
+        if (format > REPOSITORY_FORMAT) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_UNSUPPORTED_VERSION, "Expected format ''{0,number,integer}'' of repository; found format ''{1,number,integer}''", new Object[]{new Integer(REPOSITORY_FORMAT), new Integer(format)});
             SVNErrorManager.error(err);
         }
+        myReposFormat = format;
         // fs format /root/db/format
         formatFile = new FSFile(new File(myDBRoot, "format"));
         try {
@@ -113,10 +125,11 @@ public class FSFS {
         } finally {
             formatFile.close();
         }
-        if (format != DB_FORMAT) {
+        if (format > DB_FORMAT) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_UNSUPPORTED_FORMAT, "Expected FS format ''{0,number,integer}''; found format ''{1,number,integer}''", new Object[]{new Integer(DB_FORMAT), new Integer(format)});
             SVNErrorManager.error(err);
         }
+        myDBFormat = format;
 
         // fs type /root/db/fs-type
         formatFile = new FSFile(new File(myDBRoot, "fs-type"));

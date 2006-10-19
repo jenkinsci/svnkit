@@ -147,6 +147,13 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
             myUserNameIndex = 0; 
             return (SVNAuthentication) myUserNameAuthentications.get(0);
         }
+        if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
+            if (url.getUserInfo() != null && !"".equals(url.getUserInfo())) {
+                return new SVNUserNameAuthentication(url.getUserInfo(), false);
+            }
+            // client will use default.
+            return new SVNUserNameAuthentication(null, false);
+        }
         SVNErrorManager.authenticationFailed("Authentication required for ''{0}''", realm);
         return null;
     } 

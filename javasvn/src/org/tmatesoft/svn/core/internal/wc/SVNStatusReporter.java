@@ -38,8 +38,7 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
 
     private SVNStatusEditor myEditor;
 
-    public SVNStatusReporter(SVNRepository repos, ISVNReporterBaton baton,
-            SVNStatusEditor editor) {
+    public SVNStatusReporter(SVNRepository repos, ISVNReporterBaton baton, SVNStatusEditor editor) {
         myBaton = baton;
         myRepository = repos;
         myRepositoryLocation = repos.getLocation().toString();
@@ -88,7 +87,6 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
     }
 
     public void finishReport() throws SVNException {
-        myEditor.setStatusReporter(this);
         // collect locks
         SVNLock[] locks = null;
         try {
@@ -105,6 +103,7 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
                 myLocks.put(lock.getPath(), lock);
             }
         }
+        myEditor.setRepositoryInfo(myRepositoryRoot, myLocks);
         myReporter.finishReport();
     }
 

@@ -162,7 +162,7 @@ public class FSInputStream extends InputStream {
                             SVNErrorManager.error(err);
                         }
                     }
-                    SVNDiffWindow window = myCombiner.readWindow(curState.myFile);
+                    SVNDiffWindow window = myCombiner.readWindow(curState.myFile, curState.myVersion);
                     ByteBuffer target = myCombiner.addWindow(window);
                     curState.myChunkIndex++;
                     curState.myOffset = curState.myFile.position();

@@ -126,9 +126,9 @@ public class SVNCommandStatusHandler implements ISVNStatusHandler {
                 result.append(lockStatus);
                 result.append(" ");
                 result.append(remoteStatus);
-                result.append("    ");
+                result.append("   ");
                 result.append(SVNCommand.formatString(wcRevision, 6, false)); // 6 chars
-                result.append("    ");
+                result.append("   ");
                 result.append(SVNFormatUtil.formatPath(status.getFile()));
             }
         }

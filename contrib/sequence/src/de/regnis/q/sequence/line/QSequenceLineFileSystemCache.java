@@ -3,6 +3,8 @@ package de.regnis.q.sequence.line;
 import java.io.IOException;
 import java.io.InputStream;
 
+import de.regnis.q.sequence.line.simplifier.*;
+
 /**
  * @author Marc Strapetz
  */
@@ -10,11 +12,11 @@ final class QSequenceLineFileSystemCache implements QSequenceLineCache {
 
 	// Static =================================================================
 
-	public static QSequenceLineFileSystemCache create(QSequenceLineRAData data, QSequenceLineTempDirectoryFactory tempDirectoryFactory, int maximumBytesInMemory, int maximumSegmentSize) throws IOException {
-		final QSequenceLineFileSystemCache cache = new QSequenceLineFileSystemCache(data, tempDirectoryFactory, maximumBytesInMemory, maximumSegmentSize);
+	public static QSequenceLineFileSystemCache create(QSequenceLineRAData data, QSequenceLineTempDirectoryFactory tempDirectoryFactory, int maximumBytesInMemory, int maximumSegmentSize, QSequenceLineSimplifier simplifier) throws IOException {
+		final QSequenceLineFileSystemCache cache = new QSequenceLineFileSystemCache(data, tempDirectoryFactory, maximumBytesInMemory, maximumSegmentSize, simplifier);
 		final QSequenceLineReader reader = new QSequenceLineReader();
 		final InputStream stream = data.read(0, data.length());
-		reader.read(stream, cache);
+		reader.read(stream, cache, simplifier);
 		stream.close();
 		return cache;
 	}
@@ -22,14 +24,16 @@ final class QSequenceLineFileSystemCache implements QSequenceLineCache {
 	// Fields =================================================================
 
 	private final QSequenceLineRAData data;
+	private final QSequenceLineSimplifier simplifier;
 	private final QSequenceLineFileSystemCacheSegments segments;
 
 	private int lineCount;
 
 	// Setup ==================================================================
 
-	private QSequenceLineFileSystemCache(QSequenceLineRAData data, QSequenceLineTempDirectoryFactory tempDirectoryFactory, int maximumBytesInMemory, int maximumSegmentSize) {
+	private QSequenceLineFileSystemCache(QSequenceLineRAData data, QSequenceLineTempDirectoryFactory tempDirectoryFactory, int maximumBytesInMemory, int maximumSegmentSize, QSequenceLineSimplifier simplifier) {
 		this.data = data;
+		this.simplifier = simplifier;
 		this.segments = new QSequenceLineFileSystemCacheSegments(tempDirectoryFactory, maximumBytesInMemory, maximumSegmentSize);
 	}
 
@@ -40,11 +44,11 @@ final class QSequenceLineFileSystemCache implements QSequenceLineCache {
 	}
 
 	public void addLine(QSequenceLine line) throws IOException {
-		segments.setFromLengthHash(lineCount, line.getFrom(), line.getLength(), new String(line.getBytes()).hashCode());
 		if (lineCount >= Integer.MAX_VALUE) {
-			throw new IOException("Too many lines."); 
+			throw new IOException("Too many lines.");
 		}
 
+		segments.setFromLengthHash(lineCount, line.getFrom(), line.getContentLength(), line.getCompareHash());
 		lineCount++;
 	}
 
@@ -57,7 +61,7 @@ final class QSequenceLineFileSystemCache implements QSequenceLineCache {
 		final int length = segments.getLength(index);
 		final byte[] bytes = new byte[length];
 		data.get(bytes, from, length);
-		return new QSequenceLine(from, bytes);
+		return new QSequenceLine(from, bytes, simplifier);
 	}
 
 	public int getLineHash(int index) throws IOException {

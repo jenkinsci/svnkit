@@ -17,7 +17,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 
 
-public abstract class SVNProperties14 extends ISVNProperties {
+public abstract class SVNProperties14 extends SVNVersionedProperties {
 
     private SVNAdminArea14 myAdminArea;
     private String myEntryName;
@@ -27,17 +27,48 @@ public abstract class SVNProperties14 extends ISVNProperties {
         myAdminArea = adminArea;
         myEntryName = entryName;
     }
-    
-    public String getPropertyValue(String name) throws SVNException {
-        SVNEntry2 entry = myAdminArea.getEntry(myEntryName, true);
+
+    public boolean containsProperty(String name) throws SVNException {
+        Map propsMap = getPropertiesMap();
+        if (propsMap != null && propsMap.containsKey(name)) {
+            return true;
+        }
+
+        SVNEntry entry = myAdminArea.getEntry(myEntryName, true);
+        if (entry == null) {
+            return false;
+        }
         String[] cachableProps = entry.getCachableProperties(); 
         if (cachableProps != null && getIndex(cachableProps, name) >= 0) {
             String[] presentProps = entry.getPresentProperties();
             if (presentProps == null || getIndex(presentProps, name) < 0) {
-                return null;
+                return false;
             }
-            if (SVNProperty.isBooleanProperty(name)) {
-                return SVNProperty.getValueOfBooleanProperty(name);
+            return true;
+        }
+        if (!isEmpty()) {
+            Map props = loadProperties();
+            return props.containsKey(name);
+        }
+        return false;
+    }
+
+    public String getPropertyValue(String name) throws SVNException {
+        if (getPropertiesMap() != null && getPropertiesMap().containsKey(name)) {
+            return (String) getPropertiesMap().get(name);
+        }
+
+        SVNEntry entry = myAdminArea.getEntry(myEntryName, true);
+        if (entry != null) {
+            String[] cachableProps = entry.getCachableProperties(); 
+            if (cachableProps != null && getIndex(cachableProps, name) >= 0) {
+                String[] presentProps = entry.getPresentProperties();
+                if (presentProps == null || getIndex(presentProps, name) < 0) {
+                    return null;
+                }
+                if (SVNProperty.isBooleanProperty(name)) {
+                    return SVNProperty.getValueOfBooleanProperty(name);
+                }
             }
         }
         
@@ -65,7 +96,7 @@ public abstract class SVNProperties14 extends ISVNProperties {
         return -1;
     }
 
-    protected ISVNProperties wrap(Map properties) {
+    protected SVNVersionedProperties wrap(Map properties) {
         return new SVNProperties13(properties);
     }
 

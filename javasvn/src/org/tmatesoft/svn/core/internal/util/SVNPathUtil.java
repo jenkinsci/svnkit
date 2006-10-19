@@ -45,7 +45,7 @@ public class SVNPathUtil {
             }
             String p1 = (String) o1;
             String p2 = (String) o2;
-            return p1.replace('/', '\0').compareTo(p2.replace('/', '\0'));
+            return p1.replace('/', '\0').toLowerCase().compareTo(p2.toLowerCase().replace('/', '\0'));
         }
         
     };
@@ -467,82 +467,4 @@ public class SVNPathUtil {
     	return null;
     }
     
-    /* Divide the canonicalized path into two components: dirPath and baseName
-     *
-     * If @a path has two or more components, the separator between dirPath
-     * and baseName is not included in either of the new names
-     *
-     *   examples:
-     *             - <pre>"/foo/bar/baz"  ==>  "/foo/bar" and "baz"</pre>
-     *             - <pre>"/bar"          ==>  "/"  and "bar"</pre>
-     *             - <pre>"/"             ==>  "/"  and "/"</pre>
-     *             - <pre>"bar"           ==>  ""   and "bar"</pre>
-     *             - <pre>""              ==>  ""   and ""</pre>
-     */
-
-    public static String[] extractParentAndChild(String path){
-        if(path == null){
-            return null;
-        }        
-        String[] arr = path.split("/");
-        
-        /*there is only '/' in path*/
-        if(arr.length == 0){
-            String[] result = new String[2];
-            result[0] = "/";
-            result[1] = "/";
-            return result;
-        }
-        /*no occurences of '/' around the path*/
-        else if(arr.length == 1){
-            if(arr[0].equals("")){
-                String[] result = new String[2];
-                result[0] = "";
-                result[1] = "";
-                return result;               
-            }
-            String[] result = new String[2];
-            result[0] = "";
-            result[1] = arr[0];
-            return result;            
-        }
-        /*path consiss of several parts*/
-        StringBuffer parent = new StringBuffer();
-        for(int count = 0; count < arr.length - 1; count++){
-            parent.append(arr[count]);
-            if(count == (arr.length - 2)){
-                break;
-            }
-            parent.append("/");
-        }
-        String[] result = new String[2];
-        result[0] = new String(parent);
-        result[1] = arr[arr.length-1];
-        return result;
-    }
-    
-    /* Get the dirname of the specified canonicalized @a path, defined as
-     * the path with its basename removed
-     * If @a path is root ("/"), it is returned unchanged 
-     */
-    public static String svnPathDirName(String path){
-        if(path == null){
-            return null;
-        }
-        String[] arr = path.split("/");
-        if(arr.length == 0){
-            return "/";
-        }else if(arr.length == 1){
-            return "";
-        }
-        StringBuffer result = new StringBuffer();
-        for(int count = 0; count < arr.length - 1; count++){
-            result.append(arr[count]);
-            if(count == arr.length - 2){
-                break;
-            }
-            result.append("/");
-        }
-        return new String(result);
-    }
 }

@@ -602,6 +602,10 @@ class DAVRepository extends SVNRepository {
     }
     
     public void diff(SVNURL url, long targetRevision, long revision, String target, boolean ignoreAncestry, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
+        diff(url, revision, revision, target, ignoreAncestry, recursive, true, reporter, editor);
+    }
+
+    public void diff(SVNURL url, long targetRevision, long revision, String target, boolean ignoreAncestry, boolean recursive, boolean getContents, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
         if (url == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "URL could not be NULL");
             SVNErrorManager.error(err);
@@ -611,7 +615,7 @@ class DAVRepository extends SVNRepository {
         }
         try {
             openConnection();
-            StringBuffer request = DAVEditorHandler.generateEditorRequest(myConnection, null, getLocation().toString(), targetRevision, target, url.toString(), recursive, ignoreAncestry, false, true, reporter);
+            StringBuffer request = DAVEditorHandler.generateEditorRequest(myConnection, null, getLocation().toString(), targetRevision, target, url.toString(), recursive, ignoreAncestry, false, getContents, reporter);
             DAVEditorHandler handler = new DAVEditorHandler(editor, true);
             String path = SVNEncodingUtil.uriEncode(getLocation().getPath());
             path = DAVUtil.getVCCPath(myConnection, this, path);

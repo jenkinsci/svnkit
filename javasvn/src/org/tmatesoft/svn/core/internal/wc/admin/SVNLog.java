@@ -28,7 +28,7 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
  * @version 1.0
  * @author  TMate Software Ltd.
  */
-public abstract class ISVNLog {
+public abstract class SVNLog {
     public static final String DELETE_ENTRY = "delete-entry";
 
     public static final String MODIFY_ENTRY = "modify-entry";
@@ -95,7 +95,7 @@ public abstract class ISVNLog {
 
     public abstract boolean exists();
     
-    protected ISVNLog(SVNAdminArea adminArea) {
+    protected SVNLog(SVNAdminArea adminArea) {
         myAdminArea = adminArea;
     }
     
@@ -115,21 +115,26 @@ public abstract class ISVNLog {
         SVNStatusType status = SVNStatusType.LOCK_UNCHANGED;
         if (modifiedEntryProps != null) {
             Map command = new HashMap();
-            command.put(ISVNLog.NAME_ATTR, name);
+            command.put(SVNLog.NAME_ATTR, name);
             for (Iterator names = modifiedEntryProps.keySet().iterator(); names.hasNext();) {
                 String propName = (String) names.next();
                 String propValue = (String) modifiedEntryProps.get(propName);
-                String longPropName = SVNProperty.SVN_ENTRY_PREFIX + propName;
+                String longPropName = propName;
+                if (!(SVNProperty.CACHABLE_PROPS.equals(propName) || SVNProperty.PRESENT_PROPS.equals(propName) ||
+                        SVNProperty.HAS_PROPS.equals(propName) || SVNProperty.HAS_PROP_MODS.equals(propName))) {
+                    longPropName = SVNProperty.SVN_ENTRY_PREFIX + propName;
+                }
                 if (SVNProperty.LOCK_TOKEN.equals(longPropName)) {
                     Map deleteLockCommand = new HashMap();
-                    deleteLockCommand.put(ISVNLog.NAME_ATTR, name);
-                    addCommand(ISVNLog.DELETE_LOCK, deleteLockCommand, false);
+                    deleteLockCommand.put(SVNLog.NAME_ATTR, name);
+                    addCommand(SVNLog.DELETE_LOCK, deleteLockCommand, false);
                     status = SVNStatusType.LOCK_UNLOCKED;
                 } else if (propValue != null) {
                     command.put(propName, propValue);
                 }
             }
-            addCommand(ISVNLog.MODIFY_ENTRY, command, false);
+            addCommand(SVNLog.MODIFY_ENTRY, command, false);
+            command.clear();
         }
         return status;
     }
@@ -137,22 +142,23 @@ public abstract class ISVNLog {
     public void logChangedWCProperties(String name, Map modifiedWCProps) throws SVNException {
         if (modifiedWCProps != null) {
             Map command = new HashMap();
-            command.put(ISVNLog.NAME_ATTR, name);
+            command.put(SVNLog.NAME_ATTR, name);
             for (Iterator names = modifiedWCProps.keySet().iterator(); names.hasNext();) {
                 String propName = (String) names.next();
                 String propValue = (String) modifiedWCProps.get(propName);
-                command.put(ISVNLog.PROPERTY_NAME_ATTR, propName);
+                command.put(SVNLog.PROPERTY_NAME_ATTR, propName);
                 if (propValue != null) {
-                    command.put(ISVNLog.PROPERTY_VALUE_ATTR, propValue);
+                    command.put(SVNLog.PROPERTY_VALUE_ATTR, propValue);
                 } else {
-                    command.remove(ISVNLog.PROPERTY_VALUE_ATTR);
+                    command.remove(SVNLog.PROPERTY_VALUE_ATTR);
                 }
-                addCommand(ISVNLog.MODIFY_WC_PROPERTY, command, false);
+                addCommand(SVNLog.MODIFY_WC_PROPERTY, command, false);
+                command.clear();
             }
         }
     }
 
-    public void run(SVNLogRunner2 runner) throws SVNException {
+    public void run(SVNLogRunner runner) throws SVNException {
         Collection commands = readCommands();
         if (commands == null || commands.isEmpty()) {
             return;
@@ -163,8 +169,8 @@ public abstract class ISVNLog {
             for (Iterator cmds = commands.iterator(); cmds.hasNext();) {
                 Map command = (Map) cmds.next();
                 String name = (String) command.get("");
-                String attrName = (String) command.get(ISVNLog.NAME_ATTR);
-                if (attrName == null && !ISVNLog.UPGRADE_FORMAT.equals(name)) {
+                String attrName = (String) command.get(SVNLog.NAME_ATTR);
+                if (attrName == null && !SVNLog.UPGRADE_FORMAT.equals(name)) {
                     SVNErrorCode code = count <= 1 ? SVNErrorCode.WC_BAD_ADM_LOG_START : SVNErrorCode.WC_BAD_ADM_LOG;
                     SVNErrorMessage err = SVNErrorMessage.create(code, "Log entry missing 'name' attribute (entry ''{0}'' for directory ''{1}'')", new Object[]{name, myAdminArea.getRoot()});
                     SVNErrorManager.error(err);

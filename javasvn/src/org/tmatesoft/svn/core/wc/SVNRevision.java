@@ -217,6 +217,10 @@ public class SVNRevision {
         return !r.isValid();
     }
     
+    public static boolean isValidRevisionNumber(long revision) {
+        return revision >= 0;
+    }
+    
     /**
      * Creates an <b>SVNRevision</b> object given a revision number.
      * 
@@ -248,7 +252,8 @@ public class SVNRevision {
      *          a kind of a local revision, otherwise <span class="javakeyword">false</span> 
      */
     public boolean isLocal() {
-        return isValid() && (this == SVNRevision.BASE || this == SVNRevision.WORKING);
+        boolean remote = !isValid() || this == SVNRevision.HEAD || getNumber() >= 0 || getDate() != null;
+        return !remote;
     }
     
     /**

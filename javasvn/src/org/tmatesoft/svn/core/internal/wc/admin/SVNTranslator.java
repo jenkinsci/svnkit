@@ -39,7 +39,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
  * @version 1.1
  * @author  TMate Software Ltd.
  */
-public class SVNTranslator2 {
+public class SVNTranslator {
     public static final byte[] CRLF = new byte[] { '\r', '\n' };
 
     public static final byte[] LF = new byte[] { '\n' };
@@ -52,10 +52,14 @@ public class SVNTranslator2 {
     
     public static void translate(SVNAdminArea adminArea, String name, String srcPath,
             String dstPath, boolean expand, boolean safe) throws SVNException {
-        File src = adminArea.getFile(srcPath);
-        File dst = safe ? SVNFileUtil.createUniqueFile(adminArea.getRoot(), dstPath, ".tmp") : adminArea.getFile(dstPath);
+        translate(adminArea, name, adminArea.getFile(srcPath), adminArea.getFile(dstPath), expand, safe);
+    }
+    public static void translate(SVNAdminArea adminArea, String name, File src,
+            File dst, boolean expand, boolean safe) throws SVNException {
+        safe = false;
+        File dst2 = safe ? SVNFileUtil.createUniqueFile(adminArea.getRoot(), dst.getName(), ".tmp") : dst;
         
-        ISVNProperties props = adminArea.getProperties(name);
+        SVNVersionedProperties props = adminArea.getProperties(name);
         String keywords = props.getPropertyValue(SVNProperty.KEYWORDS);
         String eolStyle = props.getPropertyValue(SVNProperty.EOL_STYLE);
         boolean special = props.getPropertyValue(SVNProperty.SPECIAL) != null;
@@ -63,7 +67,7 @@ public class SVNTranslator2 {
         byte[] eols;
         if (keywords != null) {
             if (expand) {
-                SVNEntry2 entry = adminArea.getEntry(name, true);
+                SVNEntry entry = adminArea.getEntry(name, true);
                 String url = entry.getURL();
                 String author = entry.getAuthor();
                 String date = entry.getCommittedDate();
@@ -78,10 +82,10 @@ public class SVNTranslator2 {
         } else {
             eols = getWorkingEOL(eolStyle);
         }
-        translate(src, dst, eols, keywordsMap, special, expand);
+        translate(src, dst2, eols, keywordsMap, special, expand);
         if (safe) {
             try {
-                SVNFileUtil.rename(dst, adminArea.getFile(dstPath));
+                SVNFileUtil.rename(dst2, dst);
             } finally {
                 dst.delete();
             }
@@ -163,6 +167,17 @@ public class SVNTranslator2 {
             SVNFileUtil.closeFile(is);
         }
         return true;
+    }
+    
+    public static void copy(InputStream src, OutputStream dst) throws IOException {
+        byte[] buffer = new byte[8192];
+        while(true) {
+            int read = src.read(buffer);
+            if (read <= 0) {
+                return;
+            }
+            dst.write(buffer, 0, read);
+        }
     }
 
     public static void copy(InputStream src, OutputStream dst, byte[] eol, Map keywords) throws IOException {
@@ -306,6 +321,7 @@ public class SVNTranslator2 {
         }
         boolean expand = u != null;
         byte[] date = null;
+        byte[] idDate = null;
         byte[] url = null;
         byte[] rev = null;
         byte[] author = null;
@@ -318,27 +334,27 @@ public class SVNTranslator2 {
         try {
             for (StringTokenizer tokens = new StringTokenizer(keywords," \t\n\b\r\f"); tokens.hasMoreTokens();) {
                 String token = tokens.nextToken();
-                if ("LastChangedDate".equals(token) || "Date".equals(token)) {
+                if ("LastChangedDate".equalsIgnoreCase(token) || "Date".equalsIgnoreCase(token)) {
                     date = expand && date == null ? SVNFormatUtil.formatDate(jDate, true).getBytes("UTF-8") : date;
                     map.put("LastChangedDate", date);
                     map.put("Date", date);
-                } else if ("LastChangedRevision".equals(token) || "Revision".equals(token) || "Rev".equals(token)) {
+                } else if ("LastChangedRevision".equalsIgnoreCase(token) || "Revision".equalsIgnoreCase(token) || "Rev".equalsIgnoreCase(token)) {
                     rev = expand && rev == null ? r.getBytes("UTF-8") : rev;
                     map.put("LastChangedRevision", rev);
                     map.put("Revision", rev);
                     map.put("Rev", rev);
-                } else if ("LastChangedBy".equals(token) || "Author".equals(token)) {
+                } else if ("LastChangedBy".equalsIgnoreCase(token) || "Author".equalsIgnoreCase(token)) {
                     author = expand && author == null ? (a == null ? new byte[0] : a.getBytes("UTF-8")) : author;
                     map.put("LastChangedBy", author);
                     map.put("Author", author);
-                } else if ("HeadURL".equals(token) || "URL".equals(token)) {
+                } else if ("HeadURL".equalsIgnoreCase(token) || "URL".equalsIgnoreCase(token)) {
                     url = expand && url == null ? SVNEncodingUtil.uriDecode(u).getBytes("UTF-8") : url;
                     map.put("HeadURL", url);
                     map.put("URL", url);
-                } else if ("Id".equals(token)) {
+                } else if ("Id".equalsIgnoreCase(token)) {
                     if (expand && id == null) {
                         rev = rev == null ? r.getBytes("UTF-8") : rev;
-                        date = date == null ? SVNFormatUtil.formatDate(jDate, false).getBytes("UTF-8") : date;
+                        idDate = idDate == null ? SVNFormatUtil.formatDate(jDate, false).getBytes("UTF-8") : idDate;
                         name = name == null ? SVNEncodingUtil.uriDecode(SVNPathUtil.tail(u)).getBytes("UTF-8") : name;
                         author = author == null ? (a == null ? new byte[0] : a.getBytes("UTF-8")) : author;
                         ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -346,7 +362,7 @@ public class SVNTranslator2 {
                         bos.write(' ');
                         bos.write(rev);
                         bos.write(' ');
-                        bos.write(date);
+                        bos.write(idDate);
                         bos.write(' ');
                         bos.write(author);
                         bos.close();

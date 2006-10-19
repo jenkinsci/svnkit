@@ -212,9 +212,13 @@ public class SVNCommandEventProcessor implements ISVNEventHandler {
         } else if (event.getAction() == SVNEventAction.RESTORE) {
             SVNCommand.println(myPrintStream, "Restored '" + SVNFormatUtil.formatPath(event.getFile()) + "'");
         } else if (event.getAction() == SVNEventAction.ADD) {
-            SVNCommand.println(myPrintStream, "A    " + SVNFormatUtil.formatPath(event.getFile()));
+            if (SVNProperty.isBinaryMimeType(event.getMimeType())) {
+                SVNCommand.println(myPrintStream, "A  (bin)  " + SVNFormatUtil.formatPath(event.getFile()));
+            } else {
+                SVNCommand.println(myPrintStream, "A         " + SVNFormatUtil.formatPath(event.getFile()));
+            }
         } else if (event.getAction() == SVNEventAction.DELETE) {
-            SVNCommand.println(myPrintStream, "D    " + SVNFormatUtil.formatPath(event.getFile()));
+            SVNCommand.println(myPrintStream,     "D         " + SVNFormatUtil.formatPath(event.getFile()));
         } else if (event.getAction() == SVNEventAction.SKIP) {
             SVNCommand.println(myPrintStream, "Skipped '" + SVNFormatUtil.formatPath(event.getFile()) + "'");
         } else if (event.getAction() == SVNEventAction.RESOLVED) {

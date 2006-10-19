@@ -59,6 +59,13 @@ public abstract class SVNArgument {
     public static final SVNArgument XML = createUnaryArgument(new String[] { "--xml" });
     public static final SVNArgument LIMIT = createStringArgument(new String[] { "--limit" });
     public static final SVNArgument NON_INTERACTIVE = createUnaryArgument(new String[] { "--non-interactive" });
+    public static final SVNArgument CHANGE = createStringArgument(new String[] { "--change", "-c" });
+    public static final SVNArgument SUMMARIZE = createUnaryArgument(new String[] { "--summarize" });
+
+    public static final SVNArgument EXTENSIONS = createUnaryArgument(new String[] { "-x", "--extensions" });
+    public static final SVNArgument IGNORE_WS_CHANGE = createUnaryArgument(new String[] { "-b", "--ignore-space-change" });
+    public static final SVNArgument IGNORE_ALL_WS = createUnaryArgument(new String[] { "-w", "--ignore-all-space" });
+    public static final SVNArgument IGNORE_EOL_STYLE = createUnaryArgument(new String[] { "--ignore-eol-style" });
 
     public static SVNArgument findArgument(String name) {
         for (Iterator arguments = ourArguments.iterator(); arguments.hasNext();) {
@@ -112,6 +119,12 @@ public abstract class SVNArgument {
         ourArguments.add(SVNArgument.LIMIT);
         ourArguments.add(SVNArgument.STOP_ON_COPY);
         ourArguments.add(SVNArgument.NON_INTERACTIVE);
+        ourArguments.add(SVNArgument.CHANGE);
+        ourArguments.add(SVNArgument.SUMMARIZE);
+        ourArguments.add(SVNArgument.EXTENSIONS);
+        ourArguments.add(SVNArgument.IGNORE_ALL_WS);
+        ourArguments.add(SVNArgument.IGNORE_EOL_STYLE);
+        ourArguments.add(SVNArgument.IGNORE_WS_CHANGE);
     }
 
     private static SVNArgument createStringArgument(String[] names) {

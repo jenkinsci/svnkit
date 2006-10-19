@@ -3,6 +3,8 @@ package de.regnis.q.sequence.line;
 import java.io.*;
 import java.util.*;
 
+import de.regnis.q.sequence.line.simplifier.*;
+
 /**
  * @author Marc Strapetz
  */
@@ -10,10 +12,10 @@ final class QSequenceLineMemoryCache implements QSequenceLineCache {
 
 	// Constants ==============================================================
 
-	public static QSequenceLineMemoryCache read(InputStream is) throws IOException {
+	public static QSequenceLineMemoryCache read(InputStream is, QSequenceLineSimplifier simplifier) throws IOException {
 		final QSequenceLineMemoryCache cache = new QSequenceLineMemoryCache();
 		final QSequenceLineReader reader = new QSequenceLineReader();
-		reader.read(is, cache);
+		reader.read(is, cache, simplifier);
 		return cache;
 	}
 

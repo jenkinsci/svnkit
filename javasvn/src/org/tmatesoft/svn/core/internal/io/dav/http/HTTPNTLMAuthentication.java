@@ -31,7 +31,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 
 class HTTPNTLMAuthentication extends HTTPAuthentication {
@@ -347,7 +346,6 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
             }
         }
         log.append('\n');
-        SVNDebugLog.getDefaultLog().info(log.toString());
     }
     
     private static int toInt(byte[] num){
@@ -701,7 +699,6 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
         log.append("Length: " + message.length());
         log.append('\n');
         log.append(sublog);
-        SVNDebugLog.getDefaultLog().info(log.toString());
 
         return "NTLM " + getResponse();
     }

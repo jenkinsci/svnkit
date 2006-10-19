@@ -22,9 +22,11 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNProperties;
-import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 
 /**
  * The <b>SVNWCUtil</b> is a utility class providing some common methods 
@@ -234,62 +236,60 @@ public class SVNWCUtil {
      *              otherwise <span class="javakeyword">false</span>
      */
     public static boolean isVersionedDirectory(File dir) {
-        return SVNWCAccess.isVersionedDirectory(dir);
+        SVNFileType type = SVNFileType.getType(dir);
+        if (type != SVNFileType.DIRECTORY) {
+            return false;
+        }
+        SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
+        try {
+            wcAccess.open(dir, false, 0);
+        } catch (SVNException e) {
+            return false;
+        } finally {
+            try {
+                wcAccess.close();
+            } catch (SVNException e) {
+                //
+            }
+        }
+        return true;
     }
     
     /**
      * Determines if a directory is the root of the Working Copy.
      * 
      * @param  versionedDir             a versioned directory to check
-     * @param  considerExternalAsRoot   if <span class="javakeyword">true</span>
-     *                                  and <code>versionedDir</code> is really
-     *                                  versioned and the root of externals definitions
-     *                                  then this method will return <span class="javakeyword">true</span>
      * @return                          <span class="javakeyword">true</span> if 
      *                                  <code>versionedDir</code> is versioned and the WC root
      *                                  (or the root of externals if <code>considerExternalAsRoot</code>
      *                                  is <span class="javakeyword">true</span>), otherwise <span class="javakeyword">false</span> 
      */
-    public static boolean isWorkingCopyRoot(final File versionedDir, final boolean considerExternalAsRoot) throws SVNException {
-        if (versionedDir == null || !isVersionedDirectory(versionedDir)) {
-            // unversioned.
-            return false;
-        }
-        // call status of parent instead:
-        if (versionedDir.getParentFile() == null) {
-            return true;
-        }
-        SVNStatusClient stClient = new SVNStatusClient((ISVNAuthenticationManager) null, null);
-        final boolean[] isRoot = new boolean[] { true }; // if no status is
-                                                            // reporter, this
-                                                            // may be ignored
-                                                            // dir in parent's
-                                                            // folder.
+    public static boolean isWorkingCopyRoot(final File versionedDir) throws SVNException {
+        SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
         try {
-            stClient.doStatus(versionedDir.getParentFile(), false, false, true,
-                    true, new ISVNStatusHandler() {
-                        public void handleStatus(SVNStatus status) {
-                            if (versionedDir.equals(status.getFile())) {
-                                isRoot[0] = false;
-                                if (status.getContentsStatus() == SVNStatusType.STATUS_IGNORED
-                                        || status.getContentsStatus() == SVNStatusType.STATUS_UNVERSIONED
-                                        || status.getContentsStatus() == SVNStatusType.STATUS_EXTERNAL) {
-                                    if (status.getContentsStatus() == SVNStatusType.STATUS_EXTERNAL
-                                            && !considerExternalAsRoot) {
-                                        return;
-                                    }
-                                    isRoot[0] = true;
-                                }
-                            }
-                        }
-                    });
+            wcAccess.open(versionedDir, false, 0);
+            return wcAccess.isWCRoot(versionedDir);
         } catch (SVNException e) {
-            if (e instanceof SVNCancelException) {
-                throw e;
-            }
-            return true;
+            return false;
+        } finally {
+            wcAccess.close();
         }
-        return isRoot[0];
+    }
+    
+    /**
+     * @deprecated
+     * 
+     */
+    public static boolean isWorkingCopyRoot(final File versionedDir, boolean externalIsRoot) throws SVNException {
+        if (isWorkingCopyRoot(versionedDir)) {
+            if (!externalIsRoot) {
+                return true;
+                
+            }
+            File root = getWorkingCopyRoot(versionedDir, false);
+            return root.equals(versionedDir);
+        }
+        return false;
     }
     
     /**
@@ -316,7 +316,7 @@ public class SVNWCUtil {
             return null;
         }
 
-        if (isWorkingCopyRoot(versionedDir, true)) {
+        if (isWorkingCopyRoot(versionedDir)) {
             // this is root.
             if (stopOnExtenrals) {
                 return versionedDir;
@@ -331,12 +331,11 @@ public class SVNWCUtil {
             // definition for this dir.
 
             while (parent != null) {
+                SVNWCAccess parentAccess = SVNWCAccess.newInstance(null);
                 try {
-                    SVNWCAccess parentAccess = SVNWCAccess.create(parent);
-                    SVNProperties props = parentAccess.getTarget()
-                            .getProperties("", false);
-                    SVNExternalInfo[] externals = SVNWCAccess.parseExternals(
-                            "", props.getPropertyValue(SVNProperty.EXTERNALS));
+                    SVNAdminArea dir = parentAccess.open(parent, false, 0);
+                    SVNVersionedProperties props = dir.getProperties(dir.getThisDirName());
+                    SVNExternalInfo[] externals = SVNWCAccess.parseExternals("", props.getPropertyValue(SVNProperty.EXTERNALS));
                     // now externals could point to our dir.
                     for (int i = 0; i < externals.length; i++) {
                         SVNExternalInfo external = externals[i];
@@ -349,6 +348,8 @@ public class SVNWCUtil {
                     if (e instanceof SVNCancelException) {
                         throw e;
                     }
+                } finally {
+                    parentAccess.close();
                 }
                 if (parent.equals(parentRoot)) {
                     break;

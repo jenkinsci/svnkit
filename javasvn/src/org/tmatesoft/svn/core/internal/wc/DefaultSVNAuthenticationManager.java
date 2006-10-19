@@ -344,13 +344,14 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                     }
                     return new SVNPasswordAuthentication(myUserName, myPassword, myIsStore);
                 } else if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
-                    if (myUserName == null) {                        
+                    if (myUserName == null || "".equals(myUserName)) {                        
                         // empty user name should only be returned when there is no provider,
                         // i.e. no more chances to get a username.
-                        if (myProviders[3] == null) { 
-                            String userName = System.getProperty("javasvn.author", "");
-                            return new SVNUserNameAuthentication(userName, myIsStore);
-                        } 
+                        // but there could be other providers - runtime and cache one!
+//                        if (myProviders[3] == null) { 
+//                            String userName = System.getProperty("javasvn.author", "");
+//                            return new SVNUserNameAuthentication(userName, myIsStore);
+//                        } 
                         return null;
                     }
                     return new SVNUserNameAuthentication(myUserName, myIsStore);
@@ -463,6 +464,9 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                 dir.mkdirs();
             }
             if (!dir.isDirectory()) {
+                return;
+            }
+            if ("".equals(auth.getUserName()) || auth.getUserName() == null) {
                 return;
             }
             Map values = new HashMap();

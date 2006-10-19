@@ -125,8 +125,6 @@ public class DAVConnection {
         try {
             status = doReport(path, DAVGetLocksHandler.generateGetLocksRequest(null), handler);
         } catch (SVNException e) {
-            myRepository.getDebugLog().info("error message: " + e.getErrorMessage());
-            myRepository.getDebugLog().info("error code: " + e.getErrorMessage().getErrorCode());
             if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.UNSUPPORTED_FEATURE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "Server does not support locking features");
                 SVNErrorManager.error(err, e.getErrorMessage());
@@ -216,7 +214,9 @@ public class DAVConnection {
     public HTTPStatus doReport(String path, StringBuffer requestBody, DefaultHandler handler, boolean spool) throws SVNException {
         myHttpConnection.setSpoolResponse(spool);
         try {
-            return myHttpConnection.request("REPORT", path, null, requestBody, -1, 0, null, handler);
+            HTTPHeader header = new HTTPHeader();
+            header.addHeaderValue("Accept-Encoding", "svndiff1;q=0.9,svndiff;q=0.8");
+            return myHttpConnection.request("REPORT", path, header, requestBody, -1, 0, null, handler);
         } finally {
             myHttpConnection.setSpoolResponse(false);
         }
@@ -282,12 +282,18 @@ public class DAVConnection {
         return myHttpConnection.request("MKCOL", path, null, (StringBuffer) null, 201, 0, null, null);
     }
     
-    public HTTPStatus doPutDiff(String repositoryPath, String path, InputStream data, long size) throws SVNException {        
+    public HTTPStatus doPutDiff(String repositoryPath, String path, InputStream data, long size, String baseChecksum, String textChecksum) throws SVNException {        
         HTTPHeader headers = new HTTPHeader();
         headers.setHeaderValue(HTTPHeader.CONTENT_TYPE_HEADER, "application/vnd.svn-svndiff");
         headers.setHeaderValue(HTTPHeader.CONTENT_LENGTH_HEADER, size + "");
         if (myLocks != null && myLocks.containsKey(repositoryPath)) {
             headers.setHeaderValue(HTTPHeader.IF_HEADER, "<" + repositoryPath + "> (<" + myLocks.get(repositoryPath) + ">)");
+        }
+        if (baseChecksum != null) {
+            headers.setHeaderValue(HTTPHeader.BASE_MD5, baseChecksum);
+        }
+        if (textChecksum != null) {
+            headers.setHeaderValue(HTTPHeader.TEXT_MD5, textChecksum);
         }
         return myHttpConnection.request("PUT", path, headers, data, 201, 204, null, null);
     }

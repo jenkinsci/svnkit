@@ -15,8 +15,6 @@ package org.tmatesoft.svn.core.internal.wc;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import org.tmatesoft.svn.util.SVNDebugLog;
-
 import de.regnis.q.sequence.QSequenceDifferenceBlock;
 import de.regnis.q.sequence.core.QSequenceException;
 import de.regnis.q.sequence.line.QSequenceLine;
@@ -267,9 +265,8 @@ class FSMergerBySequence {
 		return maxBaseTo;
 	}
 
-	private void writeLine(OutputStream os, QSequenceLine line)
-			throws IOException {
-		final byte[] bytes = line.getBytes();
+	private void writeLine(OutputStream os, QSequenceLine line) throws IOException {
+		final byte[] bytes = line.getContentBytes();
 		if (bytes.length == 0) {
 			return;
 		}
@@ -284,14 +281,4 @@ class FSMergerBySequence {
 			os.write(DEFAULT_EOL.getBytes());
 		}
 	}
-
-    public static void dump(String name, QSequenceLineRAData data) throws IOException {
-        SVNDebugLog.getDefaultLog().info("=== " + name + " ===");
-        byte[] buffer = new byte[(int) data.length()];
-        data.get(buffer, 0, data.length());
-        SVNDebugLog.getDefaultLog().info(new String(buffer));
-        SVNDebugLog.getDefaultLog().info("===");
-
-    }
-
 }

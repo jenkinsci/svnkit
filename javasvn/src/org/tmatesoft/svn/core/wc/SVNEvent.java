@@ -16,8 +16,8 @@ import java.io.File;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
-import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 
 /**
  * The <b>SVNEvent</b> class is used to provide detailed information on 
@@ -111,7 +111,7 @@ public class SVNEvent {
     private SVNStatusType myPropertiesStatus;
     private SVNStatusType myLockStatus;
     private SVNLock myLock;
-    private SVNWCAccess mySVNWCAccess;
+    private SVNAdminAreaInfo myAdminAreaInfo;
     private String myName;
     private String myPath;
     private File myRoot;
@@ -131,38 +131,8 @@ public class SVNEvent {
         myErrorMessage = errorMessage;
     }
     
-    /**
-     * Constructs an <b>SVNEvent</b> object filling it with informational 
-     * details most of that would be retrieved and analized by an 
-     * <b>ISVNEventHandler</b> implementation. 
-     * 
-     * <p>
-     * Used by JavaSVN internals to construct and initialize an 
-     * <b>SVNEvent</b> object. It's not intended for users (from an API point of view).
-     * 
-     * <p>
-     * If <code>action</code> is {@link SVNEventAction#SKIP} (i.e. operation is skipped) 
-     * then the expected action (that would have occurred if the operation hadn't been skipped) 
-     * is provided in <code>expectedAction</code>. 
-     * 
-     * @param source           a JavaSVN internal for managing Working Copy entries,
-     *                         administrative area, etc.
-     * @param dir              a JavaSVN internal used to specify the fylesystem root 
-     *                         directory for the entry the event is to be generated for
-     * @param name             the name of the item
-     * @param action           the type of action the item is exposed to
-     * @param expectedAction   the action that is expected to happen, but may
-     *                         be skipped in real for some reason
-     * @param kind             the item's node kind
-     * @param revision         a revision number
-     * @param mimetype         the item's MIME type
-     * @param cstatus          the item's contents status
-     * @param pstatus          the item's properties status
-     * @param lstatus          the item's lock status
-     * @param lock             the item's lock
-     * @param error            an error message
-     */
-    public SVNEvent(SVNWCAccess source, SVNDirectory dir, String name,
+
+    public SVNEvent(SVNAdminAreaInfo info, SVNAdminArea adminArea, String name,
             SVNEventAction action, SVNEventAction expectedAction, SVNNodeKind kind, 
             long revision, String mimetype, SVNStatusType cstatus, SVNStatusType pstatus,
             SVNStatusType lstatus, SVNLock lock, SVNErrorMessage error) {
@@ -172,50 +142,21 @@ public class SVNEvent {
         myAction = action;
         myNodeKind = kind == null ? SVNNodeKind.UNKNOWN : kind;
         myRevision = revision;
-        myContentsStatus = cstatus == null ? SVNStatusType.INAPPLICABLE
-                : cstatus;
-        myPropertiesStatus = pstatus == null ? SVNStatusType.INAPPLICABLE
-                : pstatus;
+        myContentsStatus = cstatus == null ? SVNStatusType.INAPPLICABLE : cstatus;
+        myPropertiesStatus = pstatus == null ? SVNStatusType.INAPPLICABLE : pstatus;
         myLockStatus = lstatus == null ? SVNStatusType.INAPPLICABLE : lstatus;
         myLock = lock;
-
-        mySVNWCAccess = source;
-        myRoot = dir != null ? dir.getRoot() : null;
+        myAdminAreaInfo = info;
+        myRoot = adminArea != null ? adminArea.getRoot() : null;
         myName = name;
     }
-    
-    /**
-    /**
-     * Constructs an <b>SVNEvent</b> object filling it with informational 
-     * details most of that would be retrieved and analized by an 
-     * <b>ISVNEventHandler</b> implementation. 
-     * 
-     * <p>
-     * Used by JavaSVN internals to construct and initialize an 
-     * <b>SVNEvent</b> object. It's not intended for users (from an API point of view).
-     * 
-     * @param source           a JavaSVN internal for managing Working Copy entries,
-     *                         administrative area, etc.
-     * @param dir              a JavaSVN internal used to specify the fylesystem root 
-     *                         directory for the entry the event is to be generated for
-     * @param name             the name of the item
-     * @param action           the type of action the item is exposed to
-     * @param kind             the item's node kind
-     * @param revision         a revision number
-     * @param mimetype         the item's MIME type
-     * @param cstatus          the item's contents status
-     * @param pstatus          the item's properties status
-     * @param lstatus          the item's lock status
-     * @param lock             the item's lock
-     * @param error            an error message
-     */
-    public SVNEvent(SVNWCAccess source, SVNDirectory dir, String name,
+
+    public SVNEvent(SVNAdminAreaInfo info, SVNAdminArea adminArea, String name,
             SVNEventAction action, SVNNodeKind kind, long revision,
             String mimetype, SVNStatusType cstatus, SVNStatusType pstatus,
             SVNStatusType lstatus, SVNLock lock, SVNErrorMessage error) {
-        this(source, dir, name, action, null, kind, revision, mimetype, cstatus, pstatus, lstatus, lock, error);
+        this(info, adminArea, name, action, null, kind, revision, mimetype, cstatus, pstatus, lstatus, lock, error);
     }
-
     
     /**
      * Constructs an <b>SVNEvent</b> object filling it with informational 
@@ -296,16 +237,6 @@ public class SVNEvent {
     }
     
     /**
-     * Gets a JavaSVN internal that manages Working Copy entries, administrative 
-     * area. It's not intended for users (from an API point of view). 
-     * 
-     * @return an internal for WC managing 
-     */
-    public SVNWCAccess getSource() {
-        return mySVNWCAccess;
-    }
-    
-    /**
      * Gets the item's path relative to the Working Copy root directory.
      * 
      * @return a string representation of the item's path
@@ -314,16 +245,13 @@ public class SVNEvent {
         if (myPath != null) {
             return myPath;
         }
-        if (mySVNWCAccess == null && myRootFile == null) {
+        if (myAdminAreaInfo == null && myRootFile == null) {
             return myName;
         }
         File file = getFile();
-        File root = mySVNWCAccess != null ? mySVNWCAccess.getAnchor().getRoot()
-                : myRootFile;
-        String rootPath = root.getAbsolutePath().replace(File.separatorChar,
-                '/');
-        String filePath = file.getAbsolutePath().replace(File.separatorChar,
-                '/');
+        File root = myAdminAreaInfo != null ? myAdminAreaInfo.getAnchor().getRoot() : myRootFile;
+        String rootPath = root.getAbsolutePath().replace(File.separatorChar, '/');
+        String filePath = file.getAbsolutePath().replace(File.separatorChar, '/');
         myPath = filePath.substring(rootPath.length());
         if (myPath.startsWith("/")) {
             myPath = myPath.substring(1);
@@ -338,10 +266,9 @@ public class SVNEvent {
      */
     public File getFile() {
         if (myRoot != null) {
-            return ("".equals(myName) || ".".equals(myName)) ? myRoot
-                    : new File(myRoot, myName);
-        } else if (mySVNWCAccess != null && getPath() != null) {
-            return new File(mySVNWCAccess.getAnchor().getRoot(), getPath());
+            return ("".equals(myName) || ".".equals(myName)) ? myRoot : new File(myRoot, myName);
+        } else if (myAdminAreaInfo != null && getPath() != null) {
+            return new File(myAdminAreaInfo.getAnchor().getRoot(), getPath());
         }
         return null;
     }

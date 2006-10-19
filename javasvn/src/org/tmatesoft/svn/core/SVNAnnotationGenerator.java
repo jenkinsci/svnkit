@@ -31,13 +31,21 @@ import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 import de.regnis.q.sequence.QSequenceDifferenceBlock;
+import de.regnis.q.sequence.line.QSequenceLine;
+import de.regnis.q.sequence.line.QSequenceLineCache;
 import de.regnis.q.sequence.line.QSequenceLineMedia;
 import de.regnis.q.sequence.line.QSequenceLineRAFileData;
 import de.regnis.q.sequence.line.QSequenceLineResult;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineDummySimplifier;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineEOLUnifyingSimplifier;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineSimplifier;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineTeeSimplifier;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineWhiteSpaceReducingSimplifier;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineWhiteSpaceSkippingSimplifier;
 
 
 /**
@@ -94,6 +102,9 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
     private SVNDeltaProcessor myDeltaProcessor;
     private ISVNEventHandler myCancelBaton;
     private long myStartRevision;
+    private boolean myIsForce;
+    private SVNDiffOptions myDiffOptions;
+    private QSequenceLineSimplifier mySimplifier;
     
     /**
      * Constructs an annotation generator object. A user may want to have
@@ -108,16 +119,28 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
      *                       is cancelled
      */
     public SVNAnnotationGenerator(String path, File tmpDirectory, long startRevision, ISVNEventHandler cancelBaton) {
+        this(path, tmpDirectory, startRevision, false, cancelBaton);
+        
+    }
+    
+    public SVNAnnotationGenerator(String path, File tmpDirectory, long startRevision, boolean force, ISVNEventHandler cancelBaton) {
+        this(path, tmpDirectory, startRevision, force, new SVNDiffOptions(), cancelBaton);
+    }
+
+    public SVNAnnotationGenerator(String path, File tmpDirectory, long startRevision, boolean force, SVNDiffOptions diffOptions, ISVNEventHandler cancelBaton) {
         myTmpDirectory = tmpDirectory;
         myCancelBaton = cancelBaton;
         myPath = path;
+        myIsForce = force;
         if (!myTmpDirectory.isDirectory()) {
             myTmpDirectory.mkdirs();
         }
         myLines = new ArrayList();
         myDeltaProcessor = new SVNDeltaProcessor();
         myStartRevision = startRevision;
+        myDiffOptions = diffOptions;
     }
+    
     
     /**
      * 
@@ -131,7 +154,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
     public void openRevision(SVNFileRevision fileRevision) throws SVNException {
         Map propDiff = fileRevision.getPropertiesDelta();
         String newMimeType = (String) (propDiff != null ? propDiff.get(SVNProperty.MIME_TYPE) : null);
-        if (SVNProperty.isBinaryMimeType(newMimeType)) {
+        if (!myIsForce && SVNProperty.isBinaryMimeType(newMimeType)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_IS_BINARY_FILE, "Cannot calculate blame information for binary file ''{0}''", myPath);
             SVNErrorManager.error(err);
         }
@@ -189,42 +212,48 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             right = new RandomAccessFile(myCurrentFile, "r");
 
             ArrayList newLines = new ArrayList();
-            int lastStart = 0;
+            int oldStart = 0;
+	          int newStart = 0;
 
-            final QSequenceLineResult result = QSequenceLineMedia.createBlocks(new QSequenceLineRAFileData(left), new QSequenceLineRAFileData(right));
+            final QSequenceLineResult result = QSequenceLineMedia.createBlocks(new QSequenceLineRAFileData(left), new QSequenceLineRAFileData(right), createSimplifier());
             try {
                 List blocksList = result.getBlocks();
                 for(int i = 0; i < blocksList.size(); i++) {
                     QSequenceDifferenceBlock block = (QSequenceDifferenceBlock) blocksList.get(i);
-                    int start = block.getLeftFrom();
-                    for(int j = lastStart; j < Math.min(myLines.size(), start); j++) {
-                        newLines.add(myLines.get(j));
-                        lastStart = j + 1;
-                    }
-                    // skip it.
-                    if (block.getLeftSize() > 0) {
-                        lastStart += block.getLeftSize();
-                    }
+	                  copyOldLinesToNewLines(oldStart, newStart, block.getLeftFrom() - oldStart, myLines, newLines, result.getRightCache());
                     // copy all from right.
                     for (int j = block.getRightFrom(); j <= block.getRightTo(); j++) {
                         LineInfo line = new LineInfo();
                         line.revision = myCurrentDate != null ? myCurrentRevision : -1;
                         line.author = myCurrentAuthor;
-                        line.line = result.getRightCache().getLine(j).getBytes();
+                        line.line = result.getRightCache().getLine(j).getContentBytes();
                         line.date = myCurrentDate;
                         newLines.add(line);
                     }
+	                oldStart = block.getLeftTo() + 1;
+	                newStart = block.getRightTo() + 1;
                 }
-                for(int j = lastStart; j < myLines.size(); j++) {
-                    newLines.add(myLines.get(j));
-                }
+	              copyOldLinesToNewLines(oldStart, newStart, myLines.size() - oldStart, myLines, newLines, result.getRightCache());
                 myLines = newLines;
             }
             finally {
                 result.close();
             }
+
+	        //System.out.println("=====");
+	        //for (Iterator it = newLines.iterator(); it.hasNext();) {
+		       // final LineInfo info = (LineInfo)it.next();
+		       // String line = new String(info.line);
+		       // if (line.endsWith("\n")) {
+			     //   line = line.substring(0, line.length() - 1);
+		       // }
+		       // if (line.endsWith("\r")) {
+			     //   line = line.substring(0, line.length() - 1);
+		       // }
+		       // System.out.println(info.revision + " " + line);
+	        //}
         } catch (Throwable e) {
-            SVNDebugLog.getDefaultLog().info(e);
+            throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE, e);
         } finally {
             if (left != null) {
                 try {
@@ -243,8 +272,18 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         }
         SVNFileUtil.rename(myCurrentFile, myPreviousFile);
     }
-    
-    /**
+
+	private static void copyOldLinesToNewLines(int oldStart, int newStart, int count, List oldLines, List newLines, QSequenceLineCache newCache) throws IOException {
+		for (int index = 0; index < count; index++) {
+			final LineInfo line = (LineInfo)oldLines.get(oldStart + index);
+			final QSequenceLine sequenceLine = newCache.getLine(newStart + index);
+			line.line = sequenceLine.getContentBytes();
+
+			newLines.add(line);
+		}
+	}
+
+	/**
      * Dispatches file lines along with author & revision info to the provided
      * annotation handler.  
      * 
@@ -291,6 +330,22 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             myPreviousFile.delete();
         }
     }
+    
+    private QSequenceLineSimplifier createSimplifier() {
+        if (mySimplifier == null) {
+            QSequenceLineSimplifier first = myDiffOptions.isIgnoreEOLStyle() ? 
+                    (QSequenceLineSimplifier) new QSequenceLineEOLUnifyingSimplifier() :
+                    (QSequenceLineSimplifier) new QSequenceLineDummySimplifier();
+            QSequenceLineSimplifier second = new QSequenceLineDummySimplifier();
+            if (myDiffOptions.isIgnoreAllWhitespace()) {
+                second = new QSequenceLineWhiteSpaceSkippingSimplifier();
+            } else if (myDiffOptions.isIgnoreAmountOfWhitespace()) {
+                second = new QSequenceLineWhiteSpaceReducingSimplifier();
+            }
+            mySimplifier = new QSequenceLineTeeSimplifier(first, second);
+        }
+        return mySimplifier;
+    }
 
     private static class LineInfo {
         public byte[] line;
@@ -298,4 +353,6 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         public String author;
         public Date date;
     }
+    
+    
 }

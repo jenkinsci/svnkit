@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
+import java.util.zip.DeflaterOutputStream;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -47,6 +48,7 @@ public class SVNDiffWindow {
      * start with this header. 
      */
     public static final byte[] SVN_HEADER = new byte[] {'S', 'V', 'N', '\0'};
+    public static final byte[] SVN1_HEADER = new byte[] {'S', 'V', 'N', '\1'};
     
     /**
      * An empty window (in particular, its instructions length = 0). Corresponds 
@@ -426,8 +428,12 @@ public class SVNDiffWindow {
      * @throws IOException   if an I/O error occurs
      */
     public void writeTo(OutputStream os, boolean writeHeader) throws IOException {
+        writeTo(os, writeHeader, false);
+    }
+    
+    public void writeTo(OutputStream os, boolean writeHeader, boolean compress) throws IOException {
         if (writeHeader) {
-            os.write(SVN_HEADER);
+            os.write(compress ? SVN1_HEADER : SVN_HEADER);
         }
         if (!hasInstructions()) {
             return;
@@ -436,13 +442,31 @@ public class SVNDiffWindow {
         SVNDiffInstruction.writeLong(offsets, mySourceViewOffset);
         SVNDiffInstruction.writeInt(offsets, mySourceViewLength);
         SVNDiffInstruction.writeInt(offsets, myTargetViewLength);
-        SVNDiffInstruction.writeInt(offsets, myInstructionsLength);
-        SVNDiffInstruction.writeInt(offsets, myNewDataLength);
-        os.write(offsets.array(), 0, offsets.position());
-        // write instructions
-        os.write(myData, myDataOffset, myInstructionsLength);
-        if (myNewDataLength > 0) {
-            os.write(myData, myDataOffset + myInstructionsLength, myNewDataLength);
+
+        ByteBuffer instructions = null;
+        ByteBuffer newData = null;
+        int instLength = 0;
+        int dataLength = 0;
+        if (compress) {
+            instructions = inflate(myData, myDataOffset, myInstructionsLength);
+            instLength = instructions.remaining();
+            newData = inflate(myData, myDataOffset + myInstructionsLength, myNewDataLength);
+            dataLength = newData.remaining();
+            SVNDiffInstruction.writeInt(offsets, instLength);
+            SVNDiffInstruction.writeInt(offsets, dataLength);
+        } else {
+            SVNDiffInstruction.writeInt(offsets, myInstructionsLength);
+            SVNDiffInstruction.writeInt(offsets, myNewDataLength);
+        }
+        os.write(offsets.array(), offsets.arrayOffset(), offsets.position());
+        if (compress) {
+            os.write(instructions.array(), instructions.arrayOffset(), instructions.remaining());
+            os.write(newData.array(), newData.arrayOffset(), newData.remaining());
+        } else {
+            os.write(myData, myDataOffset, myInstructionsLength);
+            if (myNewDataLength > 0) {
+                os.write(myData, myDataOffset + myInstructionsLength, myNewDataLength);
+            }
         }
     }
     
@@ -494,6 +518,35 @@ public class SVNDiffWindow {
         clone.setData(targetData);
         clone.myDataOffset = targetOffset;
         return clone;
+    }
+    
+    private static ByteBuffer inflate(byte[] src, int offset, int length) throws IOException {
+        final ByteBuffer buffer = ByteBuffer.allocate(length*2 + 2);
+        SVNDiffInstruction.writeInt(buffer, length);
+        if (length < 512) {
+            buffer.put(src, offset, length);
+        } else {
+            DeflaterOutputStream out = new DeflaterOutputStream(new OutputStream() {
+                public void write(int b) throws IOException {
+                    buffer.put((byte) (b & 0xFF));
+                }
+                public void write(byte[] b, int off, int len) throws IOException {
+                    buffer.put(b, off, len);
+                }
+                public void write(byte[] b) throws IOException {
+                    write(b, 0, b.length);
+                }
+            });
+            out.write(src, offset, length);
+            out.finish();
+            if (buffer.position() >= length) {
+                buffer.clear();
+                SVNDiffInstruction.writeInt(buffer, length);
+                buffer.put(src, offset, length);
+            }
+        }
+        buffer.flip();
+        return buffer;
     }
     
     private class InstructionsIterator implements Iterator {

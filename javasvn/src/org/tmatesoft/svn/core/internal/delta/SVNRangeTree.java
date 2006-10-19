@@ -282,12 +282,6 @@ public class SVNRangeTree {
             }
         }
         myRoot = root;
-        if (!((offset >= root.offset) || (root.left == null && root.prev == null))) {
-            System.out.println("offset: " + offset);
-            System.out.println("root.offset: " + root.offset);
-            System.out.println("root.left: " + root.left);
-            System.out.println("root.prev: " + root.prev);
-        }
         SVNDeltaCombiner.assertCondition((offset >= root.offset) || (root.left == null && root.prev == null), "assert #4");
     }
     

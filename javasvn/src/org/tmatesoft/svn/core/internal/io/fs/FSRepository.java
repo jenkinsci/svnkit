@@ -128,9 +128,13 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     public File getRepositoryRootDir() {
         return myReposRootDir;
     }
+    
+    public int getReposFormat() {
+        return myFSFS.getReposFormat();
+    }
 
-    File getReposRootDir() {
-        return myReposRootDir;
+    public int getDBFormat() {
+        return myFSFS.getDBFormat();
     }
 
     public long getLatestRevision() throws SVNException {
@@ -793,6 +797,16 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
     }
 
+    public void diff(SVNURL url, long targetRevision, long revision, String target, boolean ignoreAncestry, boolean recursive, boolean getContents, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
+        try {
+            openRepository();
+            makeReporterContext(targetRevision, target, url, recursive, ignoreAncestry, getContents, editor);
+            reporter.report(this);
+        } finally {
+            closeRepository();
+        }
+    }
+
     public void update(long revision, String target, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
         try {
             openRepository();
@@ -893,7 +907,9 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             closeRepository();
             throw svne;
         }
-        FSCommitEditor commitEditor = new FSCommitEditor(getRepositoryPath(""), logMessage, getUserName(), locks, keepLocks, null, myFSFS, this);
+        // fetch user name!
+        String author = getUserName();
+        FSCommitEditor commitEditor = new FSCommitEditor(getRepositoryPath(""), logMessage, author, locks, keepLocks, null, myFSFS, this);
         return commitEditor;
     }
 

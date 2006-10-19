@@ -19,9 +19,9 @@ import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
+import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 /**
  * @author TMate Software Ltd.
@@ -41,11 +41,11 @@ public class UpdateCommand extends SVNCommand {
             File file = new File(path).getAbsoluteFile();
             if (!file.exists()) {
                 File parent = file.getParentFile();
-                if (!parent.exists() || !SVNWCAccess.isVersionedDirectory(parent)) {
+                if (!parent.exists() || !SVNWCUtil.isVersionedDirectory(parent)) {
                     if (!getCommandLine().hasArgument(SVNArgument.QUIET)) {
                         println(out, "Skipped '" +  SVNFormatUtil.formatPath(file).replace('/', File.separatorChar) + "'");
                     }
-                    return;
+                    continue;
                 }
             }
             try {

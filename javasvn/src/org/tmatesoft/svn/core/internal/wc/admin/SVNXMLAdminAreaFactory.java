@@ -28,8 +28,13 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
  * @version 1.1
  * @author  TMate Software Ltd.
  */
-public class SVNXMLAdminAreaFactory extends SVNAdminAreaFactory {
-    private static final int WC_FORMAT = 4;
+class SVNXMLAdminAreaFactory extends SVNAdminAreaFactory {
+    public static final int WC_FORMAT = 4;
+
+    protected void doCreateVersionedDirectory(File path, String url, String rootURL, String uuid, long revNumber) throws SVNException {
+        SVNXMLAdminArea adminArea = new SVNXMLAdminArea(path);
+        adminArea.createVersionedDirectory(path, url, rootURL, uuid, revNumber, true);
+    }
 
     protected SVNAdminArea doOpen(File path, int version) throws SVNException {
         if (version != WC_FORMAT) {
@@ -42,12 +47,7 @@ public class SVNXMLAdminAreaFactory extends SVNAdminAreaFactory {
         return area;
     }
 
-    protected SVNAdminArea doCreateVersionedDirectory(File dir) throws SVNException {
-        SVNAdminArea adminArea = new SVNXMLAdminArea(dir);
-        return adminArea.createVersionedDirectory(); 
-    }
-
-    protected int getSupportedVersion() {
+    public int getSupportedVersion() {
         return WC_FORMAT;
     }
 

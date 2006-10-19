@@ -18,8 +18,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -27,9 +30,11 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 import de.regnis.q.sequence.line.diff.QDiffGenerator;
+import de.regnis.q.sequence.line.diff.QDiffGeneratorFactory;
 import de.regnis.q.sequence.line.diff.QDiffManager;
 import de.regnis.q.sequence.line.diff.QDiffUniGenerator;
 
@@ -60,6 +65,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     private boolean myIsDiffDeleted;
     private File myBasePath;
     private boolean myIsDiffUnversioned;
+    private SVNDiffOptions myDiffOptions;
     
     /**
      * Constructs a <b>DefaultSVNDiffGenerator</b>.
@@ -75,6 +81,10 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         myAnchorPath1 = anchorPath1.replace(File.separatorChar, '/');
         myAnchorPath2 = anchorPath2.replace(File.separatorChar, '/');
     }
+    
+    public void setDiffOptions(SVNDiffOptions options) {
+        myDiffOptions = options;
+    }
 
     public void setBasePath(File basePath) {
         myBasePath = basePath;
@@ -86,6 +96,13 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
 
     public boolean isDiffDeleted() {
         return myIsDiffDeleted;
+    }
+    
+    public SVNDiffOptions getDiffOptions() {
+        if (myDiffOptions == null) {
+            myDiffOptions = new SVNDiffOptions();
+        }
+        return myDiffOptions;
     }
 
     protected String getDisplayPath(String path) {
@@ -121,19 +138,33 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     }
 
     public void displayPropDiff(String path, Map baseProps, Map diff, OutputStream result) throws SVNException {
+        baseProps = baseProps != null ? baseProps : Collections.EMPTY_MAP;
+        diff = diff != null ? diff : Collections.EMPTY_MAP;
+        SVNDebugLog.getDefaultLog().info("propdiff, was: " + baseProps+ ", diff: " + diff);
+        for (Iterator changedPropNames = diff.keySet().iterator(); changedPropNames.hasNext();) {
+            String name = (String) changedPropNames.next();
+            String originalValue = (String) baseProps.get(name);
+            String newValue = (String) diff.get(name);
+            if ((originalValue != null && originalValue.equals(newValue)) || originalValue == newValue) {
+                changedPropNames.remove();
+            }
+        }
+        if (diff.isEmpty()) {
+            return;
+        }
         path = getDisplayPath(path);
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        SVNDebugLog.getDefaultLog().info("propdiff, was: " + baseProps+ ", diff: " + diff);
+        diff = new TreeMap(diff);
         try {
             bos.write(EOL);
-            bos.write(("Property changes on: " + path).getBytes(getEncoding()));
+            bos.write(("Property changes on: " + path.replace('/', File.separatorChar)).getBytes(getEncoding()));
             bos.write(EOL);
             bos.write(PROPERTIES_SEPARATOR);
             bos.write(EOL);
-            for (Iterator changedPropNames = diff.keySet().iterator(); changedPropNames
-                    .hasNext();) {
+            for (Iterator changedPropNames = diff.keySet().iterator(); changedPropNames.hasNext();) {
                 String name = (String) changedPropNames.next();
-                String originalValue = baseProps != null ? (String) baseProps
-                        .get(name) : null;
+                String originalValue = baseProps != null ? (String) baseProps.get(name) : null;
                 String newValue = (String) diff.get(name);
                 bos.write(("Name: " + name).getBytes(getEncoding()));
                 bos.write(EOL);
@@ -146,7 +177,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                     bos.write("   + ".getBytes(getEncoding()));
                     bos.write(newValue.getBytes(getEncoding()));
                     bos.write(EOL);
-                }
+                } 
             }
             bos.write(EOL);
         } catch (IOException e) {
@@ -156,6 +187,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             try {
                 bos.close();
                 bos.writeTo(result);
+                SVNDebugLog.getDefaultLog().info(new String(bos.toByteArray()));
             } catch (IOException e) {
             }
         }
@@ -212,6 +244,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                 bos.write(EOL);
                 bos.close();
                 bos.writeTo(result);
+                SVNDebugLog.getDefaultLog().info(new String(bos.toByteArray()));
                 return;
             }
             bos.write("Index: ".getBytes(getEncoding()));
@@ -223,6 +256,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             try {
                 bos.close();
                 bos.writeTo(result);
+                SVNDebugLog.getDefaultLog().info(new String(bos.toByteArray()));
             } catch (IOException inner) {
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
@@ -264,6 +298,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                 try {
                     bos.close();
                     bos.writeTo(result);
+                    SVNDebugLog.getDefaultLog().info(new String(bos.toByteArray()));
                 } catch (IOException e) {
                 }
             }
@@ -273,6 +308,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             try {
                 bos.close();
                 bos.writeTo(result);
+                SVNDebugLog.getDefaultLog().info(new String(bos.toByteArray()));
             } catch (IOException e) {
             }
             return;
@@ -293,16 +329,20 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             try {
                 bos.close();
                 bos.writeTo(result);
+                SVNDebugLog.getDefaultLog().info(new String(bos.toByteArray()));
             } catch (IOException inner) {
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
             SVNErrorManager.error(err, e);
         }
+
+	      String header;
         try {
             bos.close();
-            bos.writeTo(result);
+            header = bos.toString();
+            SVNDebugLog.getDefaultLog().info(new String(bos.toByteArray()));
         } catch (IOException inner) {
-            //
+            header = "";
         }
 
         InputStream is1 = null;
@@ -312,7 +352,15 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             is2 = file2 == null ? EMPTY_FILE_IS : SVNFileUtil.openFileForReading(file2);
 
             QDiffUniGenerator.setup();
-            QDiffGenerator generator = QDiffManager.getDiffGenerator(QDiffUniGenerator.TYPE, null);
+            Map properties = new HashMap();
+            
+            properties.put(QDiffGeneratorFactory.IGNORE_EOL_PROPERTY, Boolean.valueOf(getDiffOptions().isIgnoreEOLStyle()));
+            if (getDiffOptions().isIgnoreAllWhitespace()) {
+                properties.put(QDiffGeneratorFactory.IGNORE_SPACE_PROPERTY, QDiffGeneratorFactory.IGNORE_ALL_SPACE);
+            } else if (getDiffOptions().isIgnoreAmountOfWhitespace()) {
+                properties.put(QDiffGeneratorFactory.IGNORE_SPACE_PROPERTY, QDiffGeneratorFactory.IGNORE_SPACE_CHANGE);
+            }
+            QDiffGenerator generator = new QDiffUniGenerator(properties, header);
             Writer writer = new OutputStreamWriter(result, getEncoding());
             QDiffManager.generateTextDiff(is1, is2, getEncoding(), writer, generator);
             writer.flush();

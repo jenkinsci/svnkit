@@ -182,7 +182,6 @@ public class SVNRepositoryReplicator implements ISVNEventHandler {
         }
         
         for(long i = fromRevision; i <= toRevision; i++) {
-            src.getDebugLog().info("Replicating revision #" + i);
             Map revisionProps = src.getRevisionProperties(i, null);
             String commitMessage = (String) revisionProps.get(SVNRevisionProperty.LOG);
             

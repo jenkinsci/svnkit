@@ -37,6 +37,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
@@ -152,7 +153,6 @@ public class SVNFileUtil {
                     }
                     return;
                 }
-                SVNDebugLog.getDefaultLog().info("file: retrying to rename file " + src + " to " + dst);
                 try {
                     Thread.sleep(100);
                 } catch (InterruptedException e) {
@@ -268,6 +268,7 @@ public class SVNFileUtil {
                 dst.delete();
             }
         }
+        boolean executable = isExecutable(src);
         FileChannel srcChannel = null;
         FileChannel dstChannel = null;
         FileInputStream is = null;
@@ -307,6 +308,9 @@ public class SVNFileUtil {
         }
         if (safe && tmpDst != dst) {
             rename(tmpDst, dst);
+        }
+        if (executable) {
+            setExecutable(dst, true);
         }
         dst.setLastModified(src.lastModified());
     }
