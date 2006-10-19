@@ -181,7 +181,7 @@
       <test name="base->repos diff of moved file" id="35" result="FAILED"></test>
       <test name="wc->repos diff of added subtree" id="36" result="PASSED"></test>
       <test name="basic diff summarize" id="37" result="PASSED"></test>
-      <test name="diff with svn:author that has < in it" id="38" result="PASSED"></test>
+      <test name="diff with svn:author that has &lt; in it" id="38" result="PASSED"></test>
       <test name="ignore whitespace when diffing" id="39" result="PASSED"></test>
       <test name="ignore eol styles when diffing" id="40" result="PASSED"></test>
     </suite>
@@ -625,7 +625,7 @@
       <test name="base->repos diff of moved file" id="35" result="FAILED"></test>
       <test name="wc->repos diff of added subtree" id="36" result="PASSED"></test>
       <test name="basic diff summarize" id="37" result="PASSED"></test>
-      <test name="diff with svn:author that has < in it" id="38" result="PASSED"></test>
+      <test name="diff with svn:author that has &lt; in it" id="38" result="PASSED"></test>
       <test name="ignore whitespace when diffing" id="39" result="PASSED"></test>
       <test name="ignore eol styles when diffing" id="40" result="PASSED"></test>
     </suite>
@@ -1069,7 +1069,7 @@
       <test name="base->repos diff of moved file" id="35" result="FAILED"></test>
       <test name="wc->repos diff of added subtree" id="36" result="PASSED"></test>
       <test name="basic diff summarize" id="37" result="PASSED"></test>
-      <test name="diff with svn:author that has < in it" id="38" result="PASSED"></test>
+      <test name="diff with svn:author that has &lt; in it" id="38" result="PASSED"></test>
       <test name="ignore whitespace when diffing" id="39" result="PASSED"></test>
       <test name="ignore eol styles when diffing" id="40" result="PASSED"></test>
     </suite>
