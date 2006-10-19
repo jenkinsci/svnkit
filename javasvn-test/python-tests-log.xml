@@ -1329,7 +1329,7 @@
       <test name="update a nested wc in a read-only wc" id="24" result="PASSED"></test>
       <test name="obstructed update alters WC properties" id="25" result="PASSED"></test>
       <test name="update dir with xml-unsafe name" id="26" result="PASSED"></test>
-    </suite>
       <test name="checkout file with broken eol style" id="27" result="PASSED"></test>
+    </suite>
   </server>
 </PythonTests>
