@@ -411,10 +411,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         long pegRevisionNumber = -1;
         long startRevisionNumber;
         long endRevisionNumber;
-        if (url != null && path != null) {
-            getDebugLog().info("possibly, not valid getLocations call:");
-        }
-        
+
         if (path != null) {
             SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
             try {

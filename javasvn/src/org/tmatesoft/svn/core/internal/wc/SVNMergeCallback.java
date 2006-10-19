@@ -29,7 +29,6 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 
 /**
@@ -68,9 +67,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
         }
         try {
             File file = getFile(path);
-            SVNDebugLog.getDefaultLog().info("merging: " + originalProperties + " " + regularProps);
             SVNStatusType result = SVNPropertiesManager.mergeProperties(getWCAccess(), file, originalProperties, regularProps, false, myIsDryRun);
-            SVNDebugLog.getDefaultLog().info("merged:  " + result.getID());
             return result;
         } catch (SVNException e) {
             if (e.getErrorMessage().getErrorCode() == SVNErrorCode.UNVERSIONED_RESOURCE || 
@@ -203,7 +200,6 @@ public class SVNMergeCallback extends AbstractDiffCallback {
         }
         if (diff != null && !diff.isEmpty()) {
             result[1] = propertiesChanged(path, originalProperties, diff);
-            SVNDebugLog.getDefaultLog().info("prop merge result: " + result[1]);
         } 
         String name = mergedFile.getName();
         if (file1 != null) {
@@ -223,9 +219,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                 String localLabel = ".working";
                 String baseLabel = ".merge-left.r" + revision1;
                 String latestLabel = ".merge-right.r" + revision2;
-                SVNDebugLog.getDefaultLog().info("merging: " + name + " from " + file1 + " and " + file2);
                 SVNStatusType mergeResult = dir.mergeText(name, file1, file2, localLabel, baseLabel, latestLabel, false, myIsDryRun);
-                SVNDebugLog.getDefaultLog().info("merged: " + mergeResult + " (" + myIsDryRun + ")");
                 if (mergeResult == SVNStatusType.CONFLICTED || mergeResult == SVNStatusType.CONFLICTED_UNRESOLVED) {
                     result[0] = mergeResult;
                 } else if (textModified) {
@@ -236,9 +230,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                     result[0] = SVNStatusType.UNCHANGED;
                 }
             }
-        } else {
-            SVNDebugLog.getDefaultLog().info("no file for merge: " + mergedFile);
-        }
+        } 
         return result;
     }
     public SVNStatusType[] fileAdded(String path, File file1, File file2, long revision1, long revision2, String mimeType1, String mimeType2, Map originalProperties, Map diff) throws SVNException {

@@ -69,7 +69,6 @@ public class SVNRepositoryReplicationTest {
 
     public static void main(String[] args) {
         if (args.length < 4) {
-            System.out.println("Expected input values: 1. source repository url. 2. destination repository url. 3. source working copy dir. 4. destination working copy dir. [5.] top revision to copy up to");
             SVNDebugLog.getDefaultLog().info("Expected input values: 1. source repository url. 2. destination repository url. 3. source working copy dir. 4. destination working copy dir. [5.] top revision to copy up to");
             System.exit(1);
         }
@@ -90,7 +89,6 @@ public class SVNRepositoryReplicationTest {
         String targetWC = args.length > 8 ? args[8] : null;
 
         if (useWC && (sourceWC == null || targetWC == null)) {
-            System.out.println("Both WC root dirs (source and target) must be specified");
             SVNDebugLog.getDefaultLog().info("Both WC root dirs (source and target) must be specified");
             System.exit(1);
         }
@@ -112,10 +110,8 @@ public class SVNRepositoryReplicationTest {
 
             SVNRepositoryReplicator replicator = SVNRepositoryReplicator.newInstance();
             long processedRevs = replicator.replicateRepository(src, dst, fromRev, topRev);
-            System.out.println("Number of processed revisions: " + processedRevs);
             SVNDebugLog.getDefaultLog().info("Number of processed revisions: " + processedRevs);
             // compare history logs
-            System.out.println("Comparing full history...");
             SVNDebugLog.getDefaultLog().info("Comparing full history...");
             compareHistory(src, dst);
 
@@ -128,16 +124,13 @@ public class SVNRepositoryReplicationTest {
                     startComparisonRev, endComparisonRev);
         } catch (SVNException svne) {
             SVNDebugLog.getDefaultLog().info("Repositories comparing test FAILED with errors: " + svne.getErrorMessage().getMessage());
-            System.out.println("Repositories comparing test FAILED with errors: " + svne.getErrorMessage().getMessage());
             System.out.println(svne.getErrorMessage().getMessage());
             System.exit(1);
         }
         if (passed) {
             SVNDebugLog.getDefaultLog().info("Repositories comparing test PASSED");
-            System.out.println("Repositories comparing test PASSED");
         } else {
             SVNDebugLog.getDefaultLog().info("Repositories comparing test FAILED");
-            System.out.println("Repositories comparing test FAILED");
             System.exit(1);
         }
     }
@@ -147,7 +140,6 @@ public class SVNRepositoryReplicationTest {
         Map dstItems = new HashMap();
         for (long i = start; i <= end; i++) {
             SVNDebugLog.getDefaultLog().info("Checking revision #" + i);
-            System.out.println("Checking revision #" + i);
             if (!compareRevisionProps(srcRepos.getLocation(), dstRepos.getLocation(), i)) {
                 return false;
             }

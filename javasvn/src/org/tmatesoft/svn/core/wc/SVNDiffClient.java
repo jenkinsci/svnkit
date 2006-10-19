@@ -43,7 +43,6 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * The <b>SVNDiffClient</b> class provides methods allowing to get differences
@@ -527,7 +526,6 @@ public class SVNDiffClient extends SVNBasicClient {
     private void doDiffURLWC(SVNURL url1, SVNRevision revision1, SVNRevision pegRevision, File path2, SVNRevision revision2, 
             boolean reverse, boolean recursive, boolean useAncestry, OutputStream result) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess();
-        SVNDebugLog.getDefaultLog().info("diff url:wc " + revision1 + ":" + revision2);
         try {
             SVNAdminAreaInfo info = wcAccess.openAnchor(path2, false, recursive ? SVNWCAccess.INFINITE_DEPTH : 0);
             File anchorPath = info.getAnchor().getRoot();
@@ -572,7 +570,6 @@ public class SVNDiffClient extends SVNBasicClient {
     private void doDiffURLWC(File path1, SVNRevision revision1, SVNRevision pegRevision, File path2, SVNRevision revision2, 
             boolean reverse, boolean recursive, boolean useAncestry, OutputStream result) throws SVNException {
         
-        SVNDebugLog.getDefaultLog().info("diff wc:ulr " + revision1 + ":" + revision2);
         SVNWCAccess wcAccess = createWCAccess();
         try {
             SVNAdminAreaInfo info = wcAccess.openAnchor(path2, false, recursive ? SVNWCAccess.INFINITE_DEPTH : 0);
@@ -623,7 +620,6 @@ public class SVNDiffClient extends SVNBasicClient {
     
     private void doDiffWCWC(File path1, SVNRevision revision1, File path2, SVNRevision revision2, boolean recursive, boolean useAncestry,
             OutputStream result) throws SVNException {
-        SVNDebugLog.getDefaultLog().info("diff wc:wc " + revision1 + ":" + revision2);
         if (!path1.equals(path2) || !(revision1 == SVNRevision.BASE && revision2 == SVNRevision.WORKING)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Only diffs between a path's text-base " +
                                     "and its working files are supported at this time (-rBASE:WORKING)");
@@ -676,8 +672,6 @@ public class SVNDiffClient extends SVNBasicClient {
         
         final long rev1 = getRevisionNumber(revision1, repository1, path1);
         long rev2 = getRevisionNumber(revision2, repository2, path2);
-        
-        SVNDebugLog.getDefaultLog().info("diff url:url " + rev1 + ":" + rev2);
         
         SVNNodeKind kind1 = repository1.checkPath("", rev1);
         SVNNodeKind kind2 = repository2.checkPath("", rev2);
@@ -743,8 +737,6 @@ public class SVNDiffClient extends SVNBasicClient {
         
         final long rev1 = getRevisionNumber(revision1, repository1, path1);
         long rev2 = getRevisionNumber(revision2, repository2, path2);
-        
-        SVNDebugLog.getDefaultLog().info("diff url:url " + rev1 + ":" + rev2);
         
         SVNNodeKind kind1 = repository1.checkPath("", rev1);
         SVNNodeKind kind2 = repository2.checkPath("", rev2);
@@ -1331,9 +1323,7 @@ public class SVNDiffClient extends SVNBasicClient {
     private File loadFile(SVNURL url, File path, SVNRevision revision, Map properties, SVNAdminAreaInfo info, long[] revNumber) throws SVNException {
         String name = info.getTargetName();        
         File tmpDir = info.getAnchor().getRoot();
-        SVNDebugLog.getDefaultLog().info("root is : " + tmpDir);
         File result = SVNFileUtil.createUniqueFile(tmpDir, name, ".tmp");
-        SVNDebugLog.getDefaultLog().info("file is : " + result);
         SVNFileUtil.createEmptyFile(result);
         
         SVNRepository repository = createRepository(url, true);

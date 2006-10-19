@@ -88,7 +88,7 @@ public class SVNCancellableEditor implements ISVNEditor {
 
     public void changeDirProperty(String name, String value) throws SVNException {
         myCancel.checkCancelled();
-        myLog.info("change dir prop " + name + " : " + value);
+        myLog.info("change dir prop " + name + " = " + value);
         myDelegate.changeDirProperty(name, value);
     }
 
@@ -112,12 +112,12 @@ public class SVNCancellableEditor implements ISVNEditor {
 
     public void applyTextDelta(String path, String baseChecksum) throws SVNException {
         myCancel.checkCancelled();
-        myLog.info("apply delta" + path);
+        myLog.info("apply delta " + path);
         myDelegate.applyTextDelta(path, baseChecksum);
     }
 
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
-        myLog.info("delta chunk" + path);
+        myLog.info("delta chunk " + path);
         return myDelegate.textDeltaChunk(path, diffWindow);
     }
 

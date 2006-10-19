@@ -46,7 +46,6 @@ import org.tmatesoft.svn.core.wc.ISVNMerger;
 import org.tmatesoft.svn.core.wc.ISVNMergerFactory;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.1
@@ -386,7 +385,6 @@ public abstract class SVNAdminArea {
         
         SVNVersionedProperties working = getProperties(name);
         Map workingProps = working.asMap();
-        SVNDebugLog.getDefaultLog().info("wc props: " + workingProps);
         SVNVersionedProperties base = getBaseProperties(name);
 
         Collection conflicts = new ArrayList();

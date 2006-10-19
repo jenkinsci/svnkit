@@ -25,14 +25,9 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.util.ISVNDebugLog;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.1
@@ -145,7 +140,6 @@ public class SVNReporter implements ISVNReporterBaton {
             if (entry.isScheduledForAddition()) {
                 continue;
             }
-            SVNDebugLog.getDefaultLog().info("reporing: " + dirPath + "/" + entry.getName());
             File file = adminArea.getFile(entry.getName());
             SVNFileType fileType = SVNFileType.getType(file);
             boolean missing = fileType == SVNFileType.NONE;
