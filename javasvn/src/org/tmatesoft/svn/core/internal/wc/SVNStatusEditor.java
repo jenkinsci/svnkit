@@ -294,7 +294,9 @@ public class SVNStatusEditor {
     private void sendUnversionedStatus(File file, String name, SVNNodeKind fileType, boolean special, SVNAdminArea dir, Collection ignorePatterns, 
             boolean noIgnore, ISVNStatusHandler handler) throws SVNException {
         boolean isIgnored = isIgnored(ignorePatterns, name);
-        boolean isExternal = isExternal(dir.getRelativePath(myAdminInfo.getAnchor()) + "/" + name);
+        String path = dir.getRelativePath(myAdminInfo.getAnchor());
+        path = SVNPathUtil.append(path, name);  
+        boolean isExternal = isExternal(path);
         SVNStatus status = assembleStatus(file, dir, null, null, fileType, special, true, isIgnored);
         if (status != null) {
             if (isExternal) {
@@ -456,7 +458,6 @@ public class SVNStatusEditor {
     }
     
     private boolean isExternal(String path) {
-        // TODO check if any external is a child of a path?
         return myExternalsMap.containsKey(path);
     }
     
