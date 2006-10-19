@@ -29,7 +29,6 @@ import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNDiffStatus;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @author TMate Software Ltd.
@@ -245,6 +244,5 @@ public class DiffCommand extends SVNCommand implements ISVNDiffStatusHandler {
             result.append(diffStatus.getPath());
         }
         myOut.println(result.toString());
-        SVNDebugLog.getDefaultLog().info(result.toString());
     }
 }

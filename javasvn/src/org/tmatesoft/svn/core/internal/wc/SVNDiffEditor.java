@@ -37,7 +37,6 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.0
@@ -247,17 +246,13 @@ public class SVNDiffEditor implements ISVNEditor {
                     originalProps = dir.getBaseProperties(dir.getThisDirName()).asMap();
                 } else {
                     originalProps = dir.getProperties(dir.getThisDirName()).asMap();
-                    SVNDebugLog.getDefaultLog().info("original: " + originalProps);
                     Map baseProps = dir.getBaseProperties(dir.getThisDirName()).asMap();
-                    SVNDebugLog.getDefaultLog().info("repos: " + originalProps);
                     Map reposProps = new HashMap(baseProps);
                     for(Iterator diffNames = diff.keySet().iterator(); diffNames.hasNext();) {
                         String diffName = (String) diffNames.next();
                         reposProps.put(diffName, diff.get(diffName));
                     }
-                    SVNDebugLog.getDefaultLog().info("repos with diff: " + reposProps);
                     diff = computePropsDiff(originalProps, reposProps);
-                    SVNDebugLog.getDefaultLog().info("new diff: " + diff);
                     
                 }
             }
@@ -420,7 +415,6 @@ public class SVNDiffEditor implements ISVNEditor {
         if (myIsCompareToBase) {
             return;
         }
-        SVNDebugLog.getDefaultLog().info("local diff");
         SVNAdminArea dir = retrieve(info.myPath);
         boolean anchor = !"".equals(myAdminInfo.getTargetName()) && dir == myAdminInfo.getAnchor();
         if (!anchor && !info.myComparedEntries.contains("")) {
@@ -437,8 +431,6 @@ public class SVNDiffEditor implements ISVNEditor {
         }
         for (Iterator entries = dir.entries(false); entries.hasNext();) {
             SVNEntry entry = (SVNEntry) entries.next();
-            SVNDebugLog.getDefaultLog().info("processing " + entry.getName());
-            SVNDebugLog.getDefaultLog().info("compared: " + info.myComparedEntries);
             
             if (processedFiles != null && !dir.getThisDirName().equals(entry.getName())) {
                 processedFiles.add(entry.getName());
