@@ -122,9 +122,11 @@ public class SVNWCManager {
             if (copyFromURL == null) {
                 SVNEntry pEntry = wcAccess.getEntry(path.getParentFile(), false);
                 SVNURL newURL = pEntry.getSVNURL().appendPath(name, false);
-                ensureAdmiAreaExists(path, newURL.toString(), pEntry.getRepositoryRootURL().toString(), pEntry.getUUID(), 0);
+                SVNURL rootURL = pEntry.getRepositoryRootURL();
+                ensureAdmiAreaExists(path, newURL.toString(), rootURL != null ? rootURL.toString() : null, pEntry.getUUID(), 0);
             } else {
-                ensureAdmiAreaExists(path, copyFromURL.toString(), parentEntry.getRepositoryRootURL().toString(), parentEntry.getUUID(), copyFromRev);
+                SVNURL rootURL = parentEntry.getRepositoryRootURL();
+                ensureAdmiAreaExists(path, copyFromURL.toString(), rootURL != null ? rootURL.toString() : null, parentEntry.getUUID(), copyFromRev);
             }
             if (entry == null || entry.isDeleted()) {
                 dir = wcAccess.open(path, true, copyFromURL != null ? SVNWCAccess.INFINITE_DEPTH : 0);
