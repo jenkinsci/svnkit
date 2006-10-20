@@ -393,7 +393,9 @@ public class SVNWCManager {
         }
         dir.getWCAccess().checkCancelled();
         if (kind == SVNNodeKind.FILE) {
-            SVNFileUtil.deleteFile(path);
+            if (deleteFiles) {
+                SVNFileUtil.deleteFile(path);
+            }
         } else if (kind == SVNNodeKind.DIR) {
             SVNAdminArea childDir = dir.getWCAccess().retrieve(path);
             Collection versioned = new HashSet();
