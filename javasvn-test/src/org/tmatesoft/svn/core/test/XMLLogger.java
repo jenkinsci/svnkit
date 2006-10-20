@@ -84,7 +84,7 @@ public class XMLLogger extends AbstractPythonTestLogger {
     }
 
     public void handleTest(PythonTestResult test) {
-        String name = test.getName();
+        String name = validateTestName(test.getName());
         int id = test.getID();
         String result = test.isPass() ? "PASSED" : "FAILED";
 
@@ -97,6 +97,32 @@ public class XMLLogger extends AbstractPythonTestLogger {
     
     }
 
+    private String validateTestName(String text) {
+        String validatedText = text;
+        
+        int ind = text.indexOf('&'); 
+        if (ind != -1) {
+            validatedText = validatedText.replaceAll("&", "&amp;");
+        }
+
+        ind = text.indexOf('"'); 
+        if (ind != -1) {
+            validatedText = validatedText.replaceAll("\"", "&quot;");
+        }
+
+        ind = text.indexOf('>'); 
+        if (ind != -1) {
+            validatedText = validatedText.replaceAll(">", "&gt;");
+        }
+
+        ind = text.indexOf('<'); 
+        if (ind != -1) {
+            validatedText = validatedText.replaceAll("<", "&lt;");
+        }
+
+        return validatedText;
+    }
+    
     public void endSuite(String suiteName) {
 	    String resultString = "    </suite>";
 	    myResults.addFirst(resultString);
