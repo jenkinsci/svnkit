@@ -156,6 +156,12 @@ public class SVNEventAction {
     public static final SVNEventAction UPDATE_UPDATE = new SVNEventAction(10);
     
     /**
+     * In an update operation denotes that the item is not modified, but its children are.
+     * 
+     */
+    public static final SVNEventAction UPDATE_NONE = new SVNEventAction(10);
+
+    /**
      * In an update operation denotes that the operation itself is completed
      * (for instance, in a console client can be used to print out the
      * revision updated to).

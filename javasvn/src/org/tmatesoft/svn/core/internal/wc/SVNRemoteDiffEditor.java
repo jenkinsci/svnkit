@@ -165,6 +165,9 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             }
         }
         if (!myCurrentDirectory.myIsAdded && myEventHandler != null) {
+            if (type == SVNStatusType.UNKNOWN) {
+                action = SVNEventAction.UPDATE_NONE;
+            }
             SVNEvent event = SVNEventFactory.createMergeEvent(myAdminInfo, myCurrentDirectory.myRepositoryPath, action, 
                     expectedAction, SVNStatusType.INAPPLICABLE, type, SVNNodeKind.DIR);
             myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);

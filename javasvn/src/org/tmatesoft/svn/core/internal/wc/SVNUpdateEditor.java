@@ -322,7 +322,11 @@ public class SVNUpdateEditor implements ISVNEditor {
         myCurrentDirectory.runLogs();
         completeDirectory(myCurrentDirectory);
         if (!myCurrentDirectory.IsAdded) {
-            myWCAccess.handleEvent(SVNEventFactory.createUpdateModifiedEvent(myAdminInfo, adminArea, "", SVNNodeKind.DIR, SVNEventAction.UPDATE_UPDATE, null, SVNStatusType.UNKNOWN, propStatus, null));
+            SVNEventAction action = SVNEventAction.UPDATE_UPDATE;
+            if (propStatus == SVNStatusType.UNKNOWN) {
+                action = SVNEventAction.UPDATE_NONE;
+            }
+            myWCAccess.handleEvent(SVNEventFactory.createUpdateModifiedEvent(myAdminInfo, adminArea, "", SVNNodeKind.DIR, action, null, SVNStatusType.UNKNOWN, propStatus, null));
         }
         myCurrentDirectory = myCurrentDirectory.Parent;
     }

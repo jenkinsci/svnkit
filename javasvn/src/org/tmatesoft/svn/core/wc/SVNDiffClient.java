@@ -1308,7 +1308,6 @@ public class SVNDiffClient extends SVNBasicClient {
                 }
             }
             SVNMergeCallback callback = new SVNMergeCallback(info, url2, force, dryRun);
-//            SVNMerger merger = new SVNMerger(info, url2.toString(), rev2[0], force, dryRun, isLeaveConflictsUnresolved(), getDebugLog());
             mergeResult = callback.fileChanged(name, f1, f2, rev1[0], rev2[0], mimeType1, mimeType2, props1, propsDiff);
         } finally {
             SVNFileUtil.deleteAll(f1, null);
