@@ -46,6 +46,8 @@ import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.wc.ISVNCommitPathHandler;
+import org.tmatesoft.svn.core.internal.wc.SVNCommitUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -777,6 +779,47 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
     }
 
+    public void replay(long lowRevision, long highRevision, boolean sendDeltas, ISVNEditor editor) throws SVNException {
+        try {
+            openRepository();
+            FSRevisionRoot root = myFSFS.createRevisionRoot(highRevision);
+            Map fsChanges = root.getChangedPaths();
+            String basePath = getRepositoryPath("");
+
+            basePath = basePath.startsWith("/") ? basePath.substring(1) : basePath;
+            Collection interestingPaths = new LinkedList();
+            Map changedPaths = new HashMap();
+            for (Iterator paths = fsChanges.keySet().iterator(); paths.hasNext();) {
+                String path = (String) paths.next();
+                FSPathChange change = (FSPathChange) fsChanges.get(path);  
+
+                path = path.startsWith("/") ? path.substring(1) : path;
+                if ("".equals(basePath) || (path.startsWith(basePath) && (path.charAt(basePath.length()) == '/' || path.length() == basePath.length()))) {
+                    path = path.substring(basePath.length());
+                    path = path.startsWith("/") ? path.substring(1) : path;
+                    interestingPaths.add(path);
+                    changedPaths.put(path, change);
+                }
+            }
+            if (isInvalidRevision(lowRevision)) {
+                lowRevision = 0;
+            }
+            
+            FSRoot compareRoot = null;
+            if (sendDeltas) {
+                compareRoot = myFSFS.createRevisionRoot(root.getRevision() - 1);
+            }
+            
+            editor.targetRevision(root.getRevision());
+            
+            ISVNCommitPathHandler handler = new FSReplayPathHandler(myFSFS, root, compareRoot, changedPaths, basePath, lowRevision);
+            SVNCommitUtil.driveCommitEditor(handler, interestingPaths, editor, -1);
+            editor.closeEdit();
+        } finally {
+            closeRepository();
+        }
+    }
+    
     public void diff(SVNURL url, long revision, String target, boolean ignoreAncestry, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
         try {
             openRepository();
@@ -1097,7 +1140,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         return !areRepresentationsEqual(revNode1, revNode2, false);
     }
 
-    public Map getPropsDiffs(Map sourceProps, Map targetProps){
+    public static Map getPropsDiffs(Map sourceProps, Map targetProps){
         Map result = new HashMap();
         
         if(sourceProps == null){

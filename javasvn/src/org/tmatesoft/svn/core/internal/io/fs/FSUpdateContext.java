@@ -387,7 +387,8 @@ public class FSUpdateContext {
                 } else {
                     sourceStream = FSInputStream.createDeltaStream(myDeltaCombiner, (FSRevisionNode) null, myFSFS);
                 }
-                targetStream = getTargetRoot().getFileStreamForPath(new SVNDeltaCombiner(), targetPath);
+                //TODO: not sure whether we can use the same combiner here
+                targetStream = getTargetRoot().getFileStreamForPath(myDeltaCombiner, targetPath);
                 myDeltaGenerator.sendDelta(editPath, sourceStream, 0, targetStream, getEditor(), false);
             } finally {
                 SVNFileUtil.closeFile(sourceStream);
@@ -557,7 +558,7 @@ public class FSUpdateContext {
         }
 
         Map targetProps = targetNode.getProperties(myFSFS);
-        Map propsDiffs = myRepository.getPropsDiffs(sourceProps, targetProps);
+        Map propsDiffs = FSRepository.getPropsDiffs(sourceProps, targetProps);
         Object[] names = propsDiffs.keySet().toArray();
         for (int i = 0; i < names.length; i++) {
             String propName = (String) names[i];
