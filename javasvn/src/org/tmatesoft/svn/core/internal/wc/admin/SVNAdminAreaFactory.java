@@ -70,7 +70,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
     public static int checkWC(File path, boolean useSelector) throws SVNException {
         Collection enabledFactories = ourFactories;
         if (useSelector) {
-            enabledFactories = getSelector().getEnabledFactories(path, enabledFactories);
+            enabledFactories = getSelector().getEnabledFactories(path, enabledFactories, false);
         }
         SVNException error = null;
         int version = -1;
@@ -105,7 +105,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
     public static SVNAdminArea open(File path) throws SVNException {
         SVNErrorMessage error = null;
         int version = -1;
-        Collection enabledFactories = getSelector().getEnabledFactories(path, ourFactories);
+        Collection enabledFactories = getSelector().getEnabledFactories(path, ourFactories, false);
         
         for(Iterator factories = enabledFactories.iterator(); factories.hasNext();) {
             SVNAdminAreaFactory factory = (SVNAdminAreaFactory) factories.next();
@@ -140,7 +140,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
 
     public static SVNAdminArea upgrade(SVNAdminArea area) throws SVNException {
         if (isUpgradeEnabled() && !ourFactories.isEmpty()) {
-            Collection enabledFactories = getSelector().getEnabledFactories(area.getRoot(), ourFactories);
+            Collection enabledFactories = getSelector().getEnabledFactories(area.getRoot(), ourFactories, true);
             if (!enabledFactories.isEmpty()) {
                 SVNAdminAreaFactory newestFactory = (SVNAdminAreaFactory) enabledFactories.iterator().next();
                 area = newestFactory.doUpgrade(area);
@@ -153,7 +153,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
         SVNErrorMessage error = null;
         int version = -1;
         
-        Collection enabledFactories = getSelector().getEnabledFactories(adminDir.getParentFile(), ourFactories);
+        Collection enabledFactories = getSelector().getEnabledFactories(adminDir.getParentFile(), ourFactories, false);
         for(Iterator factories = enabledFactories.iterator(); factories.hasNext();) {
             SVNAdminAreaFactory factory = (SVNAdminAreaFactory) factories.next();
             try {
@@ -175,7 +175,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
     public static void createVersionedDirectory(File path, String url, String rootURL, String uuid, long revNumber) throws SVNException {
         if (!ourFactories.isEmpty()) {
             if (!checkAdminAreaExists(path, url, revNumber)) {
-                Collection enabledFactories = getSelector().getEnabledFactories(path, ourFactories);
+                Collection enabledFactories = getSelector().getEnabledFactories(path, ourFactories, true);
                 if (!enabledFactories.isEmpty()) {
                     SVNAdminAreaFactory newestFactory = (SVNAdminAreaFactory) enabledFactories.iterator().next();
                     newestFactory.doCreateVersionedDirectory(path, url, rootURL, uuid, revNumber);
@@ -256,7 +256,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
     
     private static class DefaultSelector implements ISVNAdminAreaFactorySelector {
 
-        public Collection getEnabledFactories(File path, Collection factories) throws SVNException {
+        public Collection getEnabledFactories(File path, Collection factories, boolean writeAccess) throws SVNException {
             return factories;
         }
 

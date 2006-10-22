@@ -23,6 +23,6 @@ import org.tmatesoft.svn.core.SVNException;
  */
 public interface ISVNAdminAreaFactorySelector {
     
-    public Collection getEnabledFactories(File path, Collection factories) throws SVNException;
+    public Collection getEnabledFactories(File path, Collection factories, boolean writeAccess) throws SVNException;
 
 }
