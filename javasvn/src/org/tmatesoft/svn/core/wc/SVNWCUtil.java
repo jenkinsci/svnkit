@@ -316,12 +316,16 @@ public class SVNWCUtil {
             return null;
         }
 
+	    File parent = versionedDir.getParentFile();
+		  if (parent == null) {
+			  return versionedDir;
+		  }
+
         if (isWorkingCopyRoot(versionedDir)) {
             // this is root.
             if (stopOnExtenrals) {
                 return versionedDir;
             }
-            File parent = versionedDir.getParentFile();
             File parentRoot = getWorkingCopyRoot(parent, stopOnExtenrals);
             if (parentRoot == null) {
                 // if parent is not versioned return this dir.
@@ -358,12 +362,8 @@ public class SVNWCUtil {
             }
             return versionedDir;
         }
-        // if dir is not a root -> just recurse till root, the call get root
-        // again.
-        if (versionedDir.getParentFile() != null) {
-            return getWorkingCopyRoot(versionedDir.getParentFile(), stopOnExtenrals);
-        }
-        return versionedDir;
+
+	    return getWorkingCopyRoot(parent, stopOnExtenrals);
     }
     
     private static boolean isEclipse() {
