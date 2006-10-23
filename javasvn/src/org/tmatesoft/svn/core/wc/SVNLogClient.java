@@ -318,8 +318,14 @@ public class SVNLogClient extends SVNBasicClient {
         if (targets.isEmpty()) {
             targets.add("");
         }
-        SVNRepository repos = !startRevision.isLocal() && !pegRevision.isLocal() ?
-                createRepository(baseURL, null, pegRevision, startRevision) : createRepository(baseURL, true);
+        SVNRevision rev = SVNRevision.UNDEFINED;
+        if (startRevision.getNumber() >= 0 && endRevision.getNumber() >= 0) {
+            rev = startRevision.getNumber() > endRevision.getNumber() ? startRevision : endRevision;
+        } else if (startRevision.getDate() != null && endRevision.getDate() != null) {
+            rev = startRevision.getDate().compareTo(endRevision.getDate()) > 0 ? startRevision : endRevision;
+        } 
+        SVNRepository repos = rev.isValid() ? //!startRevision.isLocal() && !pegRevision.isLocal() ?
+                createRepository(baseURL, null, pegRevision, rev) : createRepository(baseURL, true);
         String[] targetPaths = (String[]) targets.toArray(new String[targets.size()]);
         for (int i = 0; i < targetPaths.length; i++) {
             targetPaths[i] = SVNEncodingUtil.uriDecode(targetPaths[i]);
@@ -403,8 +409,14 @@ public class SVNLogClient extends SVNBasicClient {
                 handler.handleLogEntry(logEntry);
             }
         };
-        SVNRepository repos = startRevision.isValid() ? 
-                createRepository(url, null, pegRevision, startRevision) : createRepository(url, true);
+        SVNRevision rev = SVNRevision.UNDEFINED;
+        if (startRevision.getNumber() >= 0 && endRevision.getNumber() >= 0) {
+            rev = startRevision.getNumber() > endRevision.getNumber() ? startRevision : endRevision;
+        } else if (startRevision.getDate() != null && endRevision.getDate() != null) {
+            rev = startRevision.getDate().compareTo(endRevision.getDate()) > 0 ? startRevision : endRevision;
+        } 
+        SVNRepository repos = rev.isValid() ? 
+                createRepository(url, null, pegRevision, rev) : createRepository(url, true);
         checkCancelled();
         long startRev = getRevisionNumber(startRevision, repos, null);
         checkCancelled();
