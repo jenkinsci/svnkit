@@ -51,9 +51,8 @@ public class SVNTunnelConnector implements ISVNConnector {
         String expandedTunnel = expandTunnelSpec(myName, myTunnelSpec);
         // 2. create tunnel command using repo URL. 
         String host = repository.getLocation().getHost();
-        String username = System.getProperty("user.name");
         if (repository.getLocation().getUserInfo() != null) {
-            username = repository.getLocation().getUserInfo();
+            String username = repository.getLocation().getUserInfo();
             host = username + "@" + host;
         }
         expandedTunnel = MessageFormat.format(TUNNEL_COMMAND, new String[] {expandedTunnel, host});
@@ -65,6 +64,7 @@ public class SVNTunnelConnector implements ISVNConnector {
             }
             repository.getAuthenticationManager().acknowledgeAuthentication(true, ISVNAuthenticationManager.USERNAME, host, null, auth);
             expandedTunnel += " --tunnel-user " + auth.getUserName();
+            repository.setExternalUserName(auth.getUserName());
         } 
         
         // 4. launch process.       
