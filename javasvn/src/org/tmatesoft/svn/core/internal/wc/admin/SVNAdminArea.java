@@ -37,6 +37,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNMerger;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
@@ -512,9 +513,17 @@ public abstract class SVNAdminArea {
         SVNVersionedProperties props = getProperties(localPath);
         String mimeType = props.getPropertyValue(SVNProperty.MIME_TYPE);
         SVNStatusType status = SVNStatusType.UNCHANGED;
-        if (SVNProperty.isBinaryMimeType(mimeType)) {
+        
+        byte[] conflictStart = ("<<<<<<< " + localLabel).getBytes();
+        byte[] conflictEnd = (">>>>>>> " + latestLabel).getBytes();
+        byte[] separator = ("=======").getBytes();
+        ISVNMergerFactory factory = myWCAccess.getOptions().getMergerFactory();
+        ISVNMerger merger = factory.createMerger(conflictStart, separator, conflictEnd);
+        boolean customMerger = merger.getClass() != DefaultSVNMerger.class;
+
+        if (SVNProperty.isBinaryMimeType(mimeType) && !customMerger) {
             // binary
-            if (!dryRun) {
+            if (!dryRun) {                
                 File oldFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, baseLabel);
                 File newFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, latestLabel);
                 SVNFileUtil.copyFile(base, oldFile, false);
@@ -533,16 +542,10 @@ public abstract class SVNAdminArea {
             // 2. run merge between all files we have :)
             OutputStream result = null;
             File resultFile = dryRun ? null : SVNFileUtil.createUniqueFile(getRoot(), localPath, ".result");
-    
-            byte[] conflictStart = ("<<<<<<< " + localLabel).getBytes();
-            byte[] conflictEnd = (">>>>>>> " + latestLabel).getBytes();
-            byte[] separator = ("=======").getBytes();
-            ISVNMergerFactory factory = myWCAccess.getOptions().getMergerFactory();
-            ISVNMerger merger = factory.createMerger(conflictStart, separator, conflictEnd);
             
             result = resultFile == null ? SVNFileUtil.DUMMY_OUT : SVNFileUtil.openFileForWriting(resultFile);
             try {
-                status = merger.mergeText(base, localTmpFile, latest, dryRun, result);
+                status = SVNProperty.isBinaryMimeType(mimeType) ? merger.mergeBinary(base, localTmpFile, latest, dryRun, result) : merger.mergeText(base, localTmpFile, latest, dryRun, result);
             } finally {
                 SVNFileUtil.closeFile(result);
             }

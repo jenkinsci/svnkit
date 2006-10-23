@@ -92,4 +92,8 @@ public class DefaultSVNMerger implements ISVNMerger {
         return status;
     }
 
+    public SVNStatusType mergeBinary(File baseFile, File localFile, File latestFile, boolean dryRun, OutputStream out) throws SVNException {
+        return SVNStatusType.CONFLICTED;
+    }
+
 }
