@@ -63,7 +63,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
         Map regularProps = new HashMap();
         categorizeProperties(diff, regularProps, null, null);
         if (regularProps.isEmpty()) {
-            return SVNStatusType.UNCHANGED;
+            return SVNStatusType.UNKNOWN;
         }
         try {
             File file = getFile(path);
