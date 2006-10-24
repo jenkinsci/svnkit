@@ -527,6 +527,24 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         }
     }
 
+    public void replay(long lowRevision, long highRevision, boolean sendDeltas, ISVNEditor editor) throws SVNException {
+        Object[] buffer = new Object[] { "replay", getRevisionObject(highRevision),
+                getRevisionObject(lowRevision), Boolean.valueOf(sendDeltas) };
+        try {
+            openConnection();
+            write("(w((nnw))", buffer);
+            authenticate();
+            read("*E", new Object[] { editor }, true);
+            write("(w())", new Object[] {"success"});
+            read("[()]", null, true);
+        } catch (SVNException e) {
+            closeSession();
+            handleUnsupportedCommand(e, "Server doesn't support the replay command");
+        } finally {
+            closeConnection();
+        }
+    }
+
     public void update(long revision, String target, boolean recursive,
             ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
         target = target == null ? "" : target;

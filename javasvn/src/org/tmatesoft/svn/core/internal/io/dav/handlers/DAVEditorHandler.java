@@ -138,35 +138,35 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
         return buffer;
 	}
     
-    private static final DAVElement TARGET_REVISION = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "target-revision");
-    private static final DAVElement UPDATE_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "update-report");
-    private static final DAVElement RESOURCE = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "resource");
-    private static final DAVElement OPEN_DIRECTORY = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "open-directory");
-    private static final DAVElement ADD_DIRECTORY = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "add-directory");
-    private static final DAVElement ABSENT_DIRECTORY = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "absent-directory");
-    private static final DAVElement OPEN_FILE = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "open-file");
-    private static final DAVElement ADD_FILE = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "add-file");
-    private static final DAVElement ABSENT_FILE = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "absent-file");
-    private static final DAVElement DELETE_ENTRY = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "delete-entry");
-    private static final DAVElement FETCH_PROPS = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "fetch-props");
-    private static final DAVElement SET_PROP = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "set-prop");
-    private static final DAVElement REMOVE_PROP = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "remove-prop");
-    private static final DAVElement FETCH_FILE = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "fetch-file");
+    protected static final DAVElement TARGET_REVISION = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "target-revision");
+    protected static final DAVElement UPDATE_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "update-report");
+    protected static final DAVElement RESOURCE = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "resource");
+    protected static final DAVElement OPEN_DIRECTORY = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "open-directory");
+    protected static final DAVElement ADD_DIRECTORY = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "add-directory");
+    protected static final DAVElement ABSENT_DIRECTORY = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "absent-directory");
+    protected static final DAVElement OPEN_FILE = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "open-file");
+    protected static final DAVElement ADD_FILE = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "add-file");
+    protected static final DAVElement ABSENT_FILE = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "absent-file");
+    protected static final DAVElement DELETE_ENTRY = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "delete-entry");
+    protected static final DAVElement FETCH_PROPS = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "fetch-props");
+    protected static final DAVElement SET_PROP = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "set-prop");
+    protected static final DAVElement REMOVE_PROP = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "remove-prop");
+    protected static final DAVElement FETCH_FILE = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "fetch-file");
     
-    private static final String REVISION_ATTR = "rev";
-    private static final String NAME_ATTR = "name";
-    private static final String ENCODING_ATTR = "encoding";
-    private static final String COPYFROM_REV_ATTR = "copyfrom-rev";
-    private static final String COPYFROM_PATH_ATTR = "copyfrom-path";
-    private static final String SEND_ALL_ATTR = "send-all";
+    protected static final String REVISION_ATTR = "rev";
+    protected static final String NAME_ATTR = "name";
+    protected static final String ENCODING_ATTR = "encoding";
+    protected static final String COPYFROM_REV_ATTR = "copyfrom-rev";
+    protected static final String COPYFROM_PATH_ATTR = "copyfrom-path";
+    protected static final String SEND_ALL_ATTR = "send-all";
 
-    private ISVNEditor myEditor;
-    private String myPath;
-    private String myPropertyName;
+    protected ISVNEditor myEditor;
+    protected String myPath;
+    protected String myPropertyName;
+    protected boolean myIsFetchContent;
+    protected boolean myIsDirectory;
     private String myChecksum;
     private String myEncoding;
-    private boolean myIsFetchContent;
-    private boolean myIsDirectory;
 
     public DAVEditorHandler(ISVNEditor editor, boolean fetchContent) {
         myIsFetchContent = fetchContent; 

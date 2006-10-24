@@ -1462,6 +1462,8 @@ public abstract class SVNRepository {
                 }, editor);
     }
     
+    public abstract void replay(long lowRevision, long highRevision, boolean sendDeltas, ISVNEditor editor) throws SVNException;
+
     /* write methods */
     /**
      * Gets an editor for committing changes to a repository. Having got the editor

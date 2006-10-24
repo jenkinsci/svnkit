@@ -36,6 +36,21 @@ public class DAVUtil {
     public static int DEPTH_ONE = 1;
     public static int DEPTH_INFINITE = -1;
 
+    public static StringBuffer generateReplayRequest(long highRevision, long lowRevision, boolean sendDeltas) {
+        StringBuffer request = new StringBuffer();
+        request.append("<S:replay-report xmlns:S=\"svn:\">\n");
+        request.append("  <S:revision>");
+        request.append(highRevision);
+        request.append("</S:revision>\n");
+        request.append("  <S:low-water-mark>");
+        request.append(lowRevision);
+        request.append("</S:low-water-mark>\n");
+        request.append("  <S:send-deltas>");
+        request.append(sendDeltas ? "1" : "0");
+        request.append("</S:send-deltas>\n</S:replay-report>");
+        return request;
+    }
+    
     public static HTTPStatus getProperties(DAVConnection connection, String path, int depth, String label, DAVElement[] properties, Map result) throws SVNException {
         HTTPHeader header = new HTTPHeader();
         if (depth == DEPTH_ZERO) {

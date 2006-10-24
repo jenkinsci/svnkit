@@ -41,6 +41,7 @@ import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVFileRevisionHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVLocationsHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVLogHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVProppatchHandler;
+import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVReplayHandler;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPStatus;
 import org.tmatesoft.svn.core.internal.io.dav.http.IHTTPConnectionFactory;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
@@ -545,6 +546,25 @@ class DAVRepository extends SVNRepository {
         } finally {
             closeConnection();
         }
+    }
+
+    public void replay(long lowRevision, long highRevision, boolean sendDeltas, ISVNEditor editor) throws SVNException {
+        try {
+            openConnection();
+            StringBuffer request = DAVUtil.generateReplayRequest(highRevision, lowRevision, sendDeltas);
+            DAVReplayHandler handler = new DAVReplayHandler(editor, true);
+
+            String bcPath = SVNEncodingUtil.uriEncode(getLocation().getPath());
+            try {
+                bcPath = DAVUtil.getVCCPath(myConnection, this, bcPath);
+            } catch (SVNException e) {
+                throw e;
+            }
+            myConnection.doReport(bcPath, request, handler);
+        } finally {
+            closeConnection();
+        }
+
     }
 
     public void update(long revision, String target, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
