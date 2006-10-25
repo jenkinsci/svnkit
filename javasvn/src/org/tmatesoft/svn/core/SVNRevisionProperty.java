@@ -69,6 +69,16 @@ public class SVNRevisionProperty {
      */
     public static final String DATE = "svn:date";
     
+    public static final String LOCK = "svn:sync-lock";
+    
+    public static final String FROM_URL = "svn:sync-from-url";
+
+    public static final String FROM_UUID = "svn:sync-from-uuid";
+    
+    public static final String LAST_MERGED_REVISION = "svn:sync-last-merged-rev";
+
+    public static final String CURRENTLY_COPYING = "svn:sync-currently-copying";
+        
     public static final String AUTOVERSIONED = "svn:autoversioned";
     public static final String ORIGINAL_DATE = "svn:original-date";
 }
