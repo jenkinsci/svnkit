@@ -1040,6 +1040,9 @@ public class SVNClientImpl implements SVNClientInterface {
             }
             return JavaHLObjectFactory.createInfo(client.doInfo(new File(path).getAbsoluteFile(), SVNRevision.UNDEFINED));
         } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.UNVERSIONED_RESOURCE) {
+                return null;
+            }
             throwException(e);
         }
         return null;
@@ -1114,6 +1117,9 @@ public class SVNClientImpl implements SVNClientInterface {
             }
             return (Info2[]) infos.toArray(new Info2[infos.size()]);
         } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.UNVERSIONED_RESOURCE) {
+                return new Info2[0];
+            }
             throwException(e);
         }
         return null;
