@@ -551,7 +551,7 @@ class DAVRepository extends SVNRepository {
     public void replay(long lowRevision, long highRevision, boolean sendDeltas, ISVNEditor editor) throws SVNException {
         try {
             openConnection();
-            StringBuffer request = DAVUtil.generateReplayRequest(highRevision, lowRevision, sendDeltas);
+            StringBuffer request = DAVReplayHandler.generateReplayRequest(highRevision, lowRevision, sendDeltas);
             DAVReplayHandler handler = new DAVReplayHandler(editor, true);
 
             String bcPath = SVNEncodingUtil.uriEncode(getLocation().getPath());

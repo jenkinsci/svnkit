@@ -199,4 +199,19 @@ public class DAVReplayHandler extends DAVEditorHandler {
             }
         }
     }
+
+    public static StringBuffer generateReplayRequest(long highRevision, long lowRevision, boolean sendDeltas) {
+        StringBuffer request = new StringBuffer();
+        request.append("<S:replay-report xmlns:S=\"svn:\">\n");
+        request.append("  <S:revision>");
+        request.append(highRevision);
+        request.append("</S:revision>\n");
+        request.append("  <S:low-water-mark>");
+        request.append(lowRevision);
+        request.append("</S:low-water-mark>\n");
+        request.append("  <S:send-deltas>");
+        request.append(sendDeltas ? "1" : "0");
+        request.append("</S:send-deltas>\n</S:replay-report>");
+        return request;
+    }
 }

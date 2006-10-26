@@ -80,5 +80,6 @@ public class SVNRevisionProperty {
     public static final String CURRENTLY_COPYING = "svn:sync-currently-copying";
         
     public static final String AUTOVERSIONED = "svn:autoversioned";
+    
     public static final String ORIGINAL_DATE = "svn:original-date";
 }

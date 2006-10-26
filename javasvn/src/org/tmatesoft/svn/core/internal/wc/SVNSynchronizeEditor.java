@@ -13,8 +13,10 @@ package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.OutputStream;
 
+import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -31,12 +33,15 @@ public class SVNSynchronizeEditor implements ISVNEditor {
     private SVNURL myTargetURL;
     private boolean myIsRootOpened;
     private long myBaseRevision;
+    private SVNCommitInfo myCommitInfo;
+    private ISVNLogEntryHandler myHandler;
     
-    public SVNSynchronizeEditor(ISVNEditor wrappedEditor, SVNURL toURL, long baseRevision) {
+    public SVNSynchronizeEditor(ISVNEditor wrappedEditor, SVNURL toURL, ISVNLogEntryHandler handler, long baseRevision) {
         myWrappedEditor = wrappedEditor;
         myTargetURL = toURL;
         myIsRootOpened = false;
         myBaseRevision = baseRevision;
+        myHandler = handler; 
     }
     
     public void abortEdit() throws SVNException {
@@ -85,7 +90,12 @@ public class SVNSynchronizeEditor implements ISVNEditor {
         if (!myIsRootOpened) {
             myWrappedEditor.openRoot(myBaseRevision);
         }
-        return myWrappedEditor.closeEdit();
+        myCommitInfo = myWrappedEditor.closeEdit();
+        if (myHandler != null) {
+            SVNLogEntry logEntry = new SVNLogEntry(null, myCommitInfo.getNewRevision(), myCommitInfo.getAuthor(), myCommitInfo.getDate(), null);
+            myHandler.handleLogEntry(logEntry);
+        }
+        return myCommitInfo;
     }
 
     public void closeFile(String path, String textChecksum) throws SVNException {
@@ -125,4 +135,7 @@ public class SVNSynchronizeEditor implements ISVNEditor {
         myWrappedEditor.textDeltaEnd(path);
     }
 
+    public SVNCommitInfo getCommitInfo() {
+        return myCommitInfo;
+    }
 }
