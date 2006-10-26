@@ -921,7 +921,11 @@ public class SVNWCClient extends SVNBasicClient {
                 wcAccess.close();
             }
         }
-        if (mkdir) {
+        if (force && mkdir && SVNFileType.getType(path) == SVNFileType.DIRECTORY) {
+            // directory is already there.
+            doAdd(path, force, false, true, false, true);
+            return;
+        } else if (mkdir) {
             // attempt to create dir
             File parent = path;
             File firstCreated = path;
