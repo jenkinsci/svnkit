@@ -239,19 +239,6 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             finally {
                 result.close();
             }
-
-	        //System.out.println("=====");
-	        //for (Iterator it = newLines.iterator(); it.hasNext();) {
-		       // final LineInfo info = (LineInfo)it.next();
-		       // String line = new String(info.line);
-		       // if (line.endsWith("\n")) {
-			     //   line = line.substring(0, line.length() - 1);
-		       // }
-		       // if (line.endsWith("\r")) {
-			     //   line = line.substring(0, line.length() - 1);
-		       // }
-		       // System.out.println(info.revision + " " + line);
-	        //}
         } catch (Throwable e) {
             throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE, e);
         } finally {

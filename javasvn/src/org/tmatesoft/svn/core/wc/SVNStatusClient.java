@@ -245,8 +245,15 @@ public class SVNStatusClient extends SVNBasicClient {
                 for (Iterator paths = externals.keySet().iterator(); paths.hasNext();) {
                     String externalPath = (String) paths.next();
                     File externalFile = info.getAnchor().getFile(externalPath);
+                    if (SVNFileType.getType(externalFile) != SVNFileType.DIRECTORY) {
+                        continue;
+                    }
                     try {
-                        SVNAdminAreaFactory.checkWC(path, true);
+                        int format = SVNAdminAreaFactory.checkWC(externalFile, true);
+                        if (format == 0) {
+                            // something unversioned instead of external.
+                            continue;
+                        }
                     } catch (SVNException e) {
                         continue;
                     }
