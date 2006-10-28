@@ -57,16 +57,10 @@ public class SVNSynchronizeEditor implements ISVNEditor {
     }
 
     public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
-        if (copyFromPath != null) {
-            copyFromPath = myTargetURL.appendPath(copyFromPath, false).toDecodedString();
-        }
         myWrappedEditor.addDir(path, copyFromPath, copyFromRevision);
     }
 
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
-        if (copyFromPath != null) {
-            copyFromPath = myTargetURL.appendPath(copyFromPath, false).toDecodedString();
-        }
         myWrappedEditor.addFile(path, copyFromPath, copyFromRevision);
     }
 

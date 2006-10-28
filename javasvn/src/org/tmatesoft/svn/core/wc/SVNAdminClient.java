@@ -45,6 +45,10 @@ public class SVNAdminClient extends SVNBasicClient {
         super(authManager, options);
     }
 
+    protected SVNAdminClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
+        super(repositoryPool, options);
+    }
+
     public void setReplayHandler(ISVNLogEntryHandler handler) {
         myHandler = handler;
     }
@@ -94,7 +98,7 @@ public class SVNAdminClient extends SVNBasicClient {
                 SVNErrorManager.error(err);
             }
             
-            SVNRepository fromRepos = createRepository(fromURL, true);
+            SVNRepository fromRepos = createRepository(fromURL, false);
             checkIfRepositoryIsAtRoot(fromRepos, fromURL);
             
             toRepos.setRevisionPropertyValue(0, SVNRevisionProperty.FROM_URL, fromURL.toDecodedString());
@@ -127,9 +131,9 @@ public class SVNAdminClient extends SVNBasicClient {
         try {
             doInitialize(fromURL, toURL);
             doSynchronize(toURL);
-            SVNRepository fromRepos = createRepository(fromURL, true);
+            SVNRepository fromRepos = createRepository(fromURL, false);
             for (long currentRev = 1; currentRev <= fromRepos.getLatestRevision(); currentRev++) {
-                doCopyRevisionProperties(fromURL, currentRev);
+                doCopyRevisionProperties(toURL, currentRev);
             }
             return;
         } catch (SVNException svne) {
@@ -140,7 +144,7 @@ public class SVNAdminClient extends SVNBasicClient {
         
         SVNRepositoryReplicator replicator = SVNRepositoryReplicator.newInstance();
         SVNRepository fromRepos = createRepository(fromURL, true);
-        SVNRepository toRepos = createRepository(toURL, true);
+        SVNRepository toRepos = createRepository(toURL, false);
         replicator.replicateRepository(fromRepos, toRepos, 1, -1);
     }
     
@@ -223,7 +227,7 @@ public class SVNAdminClient extends SVNBasicClient {
         }
         
         SVNURL srcURL = SVNURL.parseURIDecoded(fromURL);
-        SVNRepository srcRepos = createRepository(srcURL, true);
+        SVNRepository srcRepos = createRepository(srcURL, false);
 
         checkIfRepositoryIsAtRoot(srcRepos, srcURL);
 

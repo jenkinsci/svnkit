@@ -795,7 +795,6 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
 
                 path = path.startsWith("/") ? path.substring(1) : path;
                 if ("".equals(basePath) || (path.startsWith(basePath) && (path.charAt(basePath.length()) == '/' || path.length() == basePath.length()))) {
-                    path = path.substring(basePath.length());
                     path = path.startsWith("/") ? path.substring(1) : path;
                     interestingPaths.add(path);
                     changedPaths.put(path, change);

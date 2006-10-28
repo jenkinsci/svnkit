@@ -119,6 +119,7 @@ public class SVNClientManager implements ISVNRepositoryPool {
     private SVNStatusClient myStatusClient;
     private SVNUpdateClient myUpdateClient;
     private SVNWCClient myWCClient;
+    private SVNAdminClient myAdminClient;
     
     private ISVNEventHandler myEventHandler;
     private ISVNRepositoryPool myRepositoryPool;
@@ -299,7 +300,10 @@ public class SVNClientManager implements ISVNRepositoryPool {
         }
         if (myWCClient != null) {
             myWCClient.setEventHandler(handler);
-        }        
+        }
+        if (myAdminClient != null) {
+            myAdminClient.setEventHandler(handler);
+        }
     }
     
     /**
@@ -323,6 +327,15 @@ public class SVNClientManager implements ISVNRepositoryPool {
         return myCommitClient;
     }
 
+    public SVNAdminClient getAdminClient() {
+        if (myAdminClient == null) {
+            myAdminClient = new SVNAdminClient(this, myOptions);
+            myAdminClient.setEventHandler(myEventHandler);
+            myAdminClient.setDebugLog(getDebugLog());
+        }
+        return myAdminClient;
+    }
+    
     /**
      * Returns an instance of the {@link SVNCopyClient} class. 
      * 
@@ -502,6 +515,9 @@ public class SVNClientManager implements ISVNRepositoryPool {
         }
         if (myWCClient != null) {
             myWCClient.setDebugLog(log);
-        }        
+        }
+        if (myAdminClient != null) {
+            myAdminClient.setDebugLog(log);
+        }
     }
 }
