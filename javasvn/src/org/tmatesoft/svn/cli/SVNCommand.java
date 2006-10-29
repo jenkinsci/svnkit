@@ -271,6 +271,9 @@ public abstract class SVNCommand {
         ourCommands.put(new String[] { "lock" }, "org.tmatesoft.svn.cli.command.LockCommand");
         ourCommands.put(new String[] { "unlock" }, "org.tmatesoft.svn.cli.command.UnlockCommand");
         ourCommands.put(new String[] { "annotate", "blame", "praise", "ann" }, "org.tmatesoft.svn.cli.command.AnnotateCommand");
+        ourCommands.put(new String[] { "initialize", "init" }, "org.tmatesoft.svn.cli.command.InitCommand");
+        ourCommands.put(new String[] { "synchronize", "sync" }, "org.tmatesoft.svn.cli.command.SynchronizeCommand");
+        ourCommands.put(new String[] { "copy-revprops" }, "org.tmatesoft.svn.cli.command.CopyRevpropsCommand");
         
         ourPegCommands = new HashSet();
         ourPegCommands.addAll(Arrays.asList(new String[] {"cat", "annotate", "checkout", "diff", "export", "info", "ls", "merge", "propget", "proplist", "log"}));
