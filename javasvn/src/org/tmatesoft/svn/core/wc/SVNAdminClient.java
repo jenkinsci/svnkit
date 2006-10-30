@@ -193,9 +193,10 @@ public class SVNAdminClient extends SVNBasicClient {
 
             for (long currentRev = lastMergedRevision + 1; currentRev <= fromLatestRevision; currentRev++) {
                 toRepos.setRevisionPropertyValue(0, SVNRevisionProperty.CURRENTLY_COPYING, SVNProperty.toString(currentRev));
-                ISVNEditor commitEditor = toRepos.getCommitEditor("", null, false, null);
-                SVNSynchronizeEditor syncEditor = new SVNSynchronizeEditor(commitEditor, toURL, myHandler, currentRev - 1);
-                ISVNEditor cancellableEditor = SVNCancellableEditor.newInstance(syncEditor, this, getDebugLog());
+//                ISVNEditor commitEditor = toRepos.getCommitEditor("", null, false, null);
+                SVNSynchronizeEditor syncEditor = new SVNSynchronizeEditor(toRepos, myHandler, currentRev - 1);
+                ISVNEditor cancellableEditor = null;
+                cancellableEditor = SVNCancellableEditor.newInstance(syncEditor, this, getDebugLog());
                 fromRepos.replay(0, currentRev, true, cancellableEditor);
                 if (syncEditor.getCommitInfo().getNewRevision() != currentRev) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Commit created rev {0,number,integer} but should have created {1,number,integer}", new Long[] {

@@ -115,7 +115,8 @@ except ImportError:
 svn_binary = os.path.abspath('../../../build/lib/svn' + _bat)
 svnadmin_binary = 'svnadmin' + _exe
 svnlook_binary = 'svnlook' + _exe
-svnsync_binary = 'svnsync' + _exe
+#svnsync_binary = 'svnsync' + _exe
+svnsync_binary = os.path.abspath('../../../build/lib/svnsync' + _bat)
 svnversion_binary = 'svnversion' + _exe
 
 # Username and password used by the working copies

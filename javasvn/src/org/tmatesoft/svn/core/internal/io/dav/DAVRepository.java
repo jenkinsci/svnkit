@@ -560,7 +560,13 @@ class DAVRepository extends SVNRepository {
             } catch (SVNException e) {
                 throw e;
             }
-            myConnection.doReport(bcPath, request, handler);
+            HTTPStatus status = myConnection.doReport(bcPath, request, handler);
+            if (status.getCode() == 501) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "'replay' REPORT not implemented");
+                SVNErrorManager.error(err, status.getError());
+            } else if (status.getError() != null) {
+                SVNErrorManager.error(status.getError());
+            }
         } finally {
             closeConnection();
         }

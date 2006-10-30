@@ -18,8 +18,8 @@ import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 
 
@@ -30,61 +30,68 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 public class SVNSynchronizeEditor implements ISVNEditor {
 
     private ISVNEditor myWrappedEditor;
-    private SVNURL myTargetURL;
     private boolean myIsRootOpened;
     private long myBaseRevision;
     private SVNCommitInfo myCommitInfo;
     private ISVNLogEntryHandler myHandler;
+    private SVNRepository myTargetRepository;
     
-    public SVNSynchronizeEditor(ISVNEditor wrappedEditor, SVNURL toURL, ISVNLogEntryHandler handler, long baseRevision) {
-        myWrappedEditor = wrappedEditor;
-        myTargetURL = toURL;
+    public SVNSynchronizeEditor(SVNRepository toRepository, ISVNLogEntryHandler handler, long baseRevision) {
+        myTargetRepository = toRepository;
         myIsRootOpened = false;
         myBaseRevision = baseRevision;
-        myHandler = handler; 
+        myHandler = handler;
     }
     
     public void abortEdit() throws SVNException {
-    
+        getWrappedEditor().abortEdit();
     }
 
+    private ISVNEditor getWrappedEditor() throws SVNException {
+        if (myWrappedEditor == null) {
+            myWrappedEditor = myTargetRepository.getCommitEditor("", null, false, null);
+        }
+        return myWrappedEditor;
+    }
+    
     public void absentDir(String path) throws SVNException {
-        myWrappedEditor.absentDir(path);
+        getWrappedEditor().absentDir(path);
     }
 
     public void absentFile(String path) throws SVNException {
-        myWrappedEditor.absentFile(path);
+        getWrappedEditor().absentFile(path);
     }
 
     public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
-        myWrappedEditor.addDir(path, copyFromPath, copyFromRevision);
+        getWrappedEditor().addDir(path, copyFromPath, copyFromRevision);
     }
 
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
-        myWrappedEditor.addFile(path, copyFromPath, copyFromRevision);
+        getWrappedEditor().addFile(path, copyFromPath, copyFromRevision);
     }
 
     public void changeDirProperty(String name, String value) throws SVNException {
         if (SVNProperty.isRegularProperty(name)) {
-            myWrappedEditor.changeDirProperty(name, value);
+            getWrappedEditor().changeDirProperty(name, value);
         }
     }
 
     public void changeFileProperty(String path, String name, String value) throws SVNException {
         if (SVNProperty.isRegularProperty(name)) {
-            myWrappedEditor.changeFileProperty(path, name, value);
+            getWrappedEditor().changeFileProperty(path, name, value);
         }
     }
 
     public void closeDir() throws SVNException {
-        myWrappedEditor.closeDir();
+        getWrappedEditor().closeDir();
     }
 
     public SVNCommitInfo closeEdit() throws SVNException {
+        ISVNEditor wrappedEditor = getWrappedEditor();
         if (!myIsRootOpened) {
-            myWrappedEditor.openRoot(myBaseRevision);
+            wrappedEditor.openRoot(myBaseRevision);
         }
-        myCommitInfo = myWrappedEditor.closeEdit();
+        myCommitInfo = wrappedEditor.closeEdit();
         if (myHandler != null) {
             SVNLogEntry logEntry = new SVNLogEntry(null, myCommitInfo.getNewRevision(), myCommitInfo.getAuthor(), myCommitInfo.getDate(), null);
             myHandler.handleLogEntry(logEntry);
@@ -93,40 +100,40 @@ public class SVNSynchronizeEditor implements ISVNEditor {
     }
 
     public void closeFile(String path, String textChecksum) throws SVNException {
-        myWrappedEditor.closeFile(path, textChecksum);
+        getWrappedEditor().closeFile(path, textChecksum);
     }
 
     public void deleteEntry(String path, long revision) throws SVNException {
-        myWrappedEditor.deleteEntry(path, revision);
+        getWrappedEditor().deleteEntry(path, revision);
     }
 
     public void openDir(String path, long revision) throws SVNException {
-        myWrappedEditor.openDir(path, revision);
+        getWrappedEditor().openDir(path, revision);
     }
 
     public void openFile(String path, long revision) throws SVNException {
-        myWrappedEditor.openFile(path, revision);
+        getWrappedEditor().openFile(path, revision);
     }
 
     public void openRoot(long revision) throws SVNException {
-        myWrappedEditor.openRoot(revision);
+        getWrappedEditor().openRoot(revision);
         myIsRootOpened = true;
     }
 
     public void targetRevision(long revision) throws SVNException {
-        myWrappedEditor.targetRevision(revision);
+        getWrappedEditor().targetRevision(revision);
     }
 
     public void applyTextDelta(String path, String baseChecksum) throws SVNException {
-        myWrappedEditor.applyTextDelta(path, baseChecksum);
+        getWrappedEditor().applyTextDelta(path, baseChecksum);
     }
 
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
-        return myWrappedEditor.textDeltaChunk(path, diffWindow);
+        return getWrappedEditor().textDeltaChunk(path, diffWindow);
     }
 
     public void textDeltaEnd(String path) throws SVNException {
-        myWrappedEditor.textDeltaEnd(path);
+        getWrappedEditor().textDeltaEnd(path);
     }
 
     public SVNCommitInfo getCommitInfo() {
