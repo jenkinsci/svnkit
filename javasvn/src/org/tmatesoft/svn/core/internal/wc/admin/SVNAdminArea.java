@@ -175,6 +175,7 @@ public abstract class SVNAdminArea {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", text);
                 SVNErrorManager.error(err);
             }
+            File tmpFile = null;
             try {
                 baseStream = SVNFileUtil.openFileForReading(baseFile);
                 textStream = special ? null : SVNFileUtil.openFileForReading(text);
@@ -191,6 +192,7 @@ public abstract class SVNAdminArea {
                         textStream = new SVNTranslatorInputStream(textStream, eols, false, keywordsMap, false);
                     } else {
                         String tmpPath = SVNAdminUtil.getTextBasePath(text.getName(), true);
+                        tmpFile = getFile(tmpPath);
                         SVNTranslator.translate(this, text.getName(), text.getName(), tmpPath, false, false);
                         textStream = SVNFileUtil.openFileForReading(getFile(tmpPath));
                     }
@@ -225,6 +227,7 @@ public abstract class SVNAdminArea {
             } finally {
                 SVNFileUtil.closeFile(baseStream);
                 SVNFileUtil.closeFile(textStream);
+                SVNFileUtil.deleteFile(tmpFile);
             }
         } else {
             return !SVNFileUtil.compareFiles(text, baseFile, null);

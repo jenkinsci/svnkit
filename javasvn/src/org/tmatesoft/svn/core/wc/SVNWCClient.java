@@ -1117,7 +1117,12 @@ public class SVNWCClient extends SVNBasicClient {
             reverted = true;
             recursive = false;
             if (wasDeleted) {
-                parent.getEntry(path.getName(), true).setDeleted(true);
+                SVNEntry entryInParent = parent.getEntry(path.getName(), true);
+                if (entryInParent == null) {
+                    entryInParent = parent.addEntry(path.getName());
+                }
+                entryInParent.setKind(entry.getKind());
+                entryInParent.setDeleted(true);
                 parent.saveEntries(false);
             }
         } else if (entry.getSchedule() == null || entry.isScheduledForDeletion() || entry.isScheduledForReplacement()) {
