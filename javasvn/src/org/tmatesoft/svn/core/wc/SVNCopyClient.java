@@ -271,10 +271,6 @@ public class SVNCopyClient extends SVNBasicClient {
         boolean isResurrect = false;
         
         if (dstURL.equals(srcURL)) {
-            if (failWhenDstExists) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, "Destination URL could not be the same as source URL");
-                SVNErrorManager.error(err);
-            }
             topURL = srcURL.removePathTail();
             isResurrect = true;
         }
