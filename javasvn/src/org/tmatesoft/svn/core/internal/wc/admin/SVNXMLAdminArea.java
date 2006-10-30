@@ -585,6 +585,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         }
         if (myLockFile.isFile()) {
             if (stealLock) {
+                setLocked(true);
                 return true;
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "Working copy ''{0}'' locked; try performing ''cleanup''", getRoot());
@@ -607,6 +608,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                 SVNErrorManager.error(err);
             }
         }
+        setLocked(true);
         return created;
     }
 
@@ -704,6 +706,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         SVNAdminUtil.createFormatFile(adminDir);
 
         SVNAdminArea adminArea = createMyself ? this : new SVNXMLAdminArea(dir);
+        adminArea.setLocked(true);
         SVNEntry rootEntry = adminArea.getEntry(adminArea.getThisDirName(), true);
         if (rootEntry == null) {
             rootEntry = adminArea.addEntry(adminArea.getThisDirName());
@@ -728,6 +731,9 @@ public class SVNXMLAdminArea extends SVNAdminArea {
     }
 
     public boolean isLocked() {
+        if (!myWasLocked) {
+            return false;
+        }
         return myLockFile.isFile();
     }
 

@@ -62,6 +62,8 @@ public abstract class SVNAdminArea {
     protected Map myWCProperties;
     protected Map myEntries;
     private Map myRevertProperties;
+    
+    protected boolean myWasLocked;
 
     public abstract boolean isLocked() throws SVNException;
 
@@ -1293,6 +1295,10 @@ public abstract class SVNAdminArea {
                 }
             }
         }
+    }
+
+    protected void setLocked(boolean locked) {
+        myWasLocked = locked;
     }
 
 
