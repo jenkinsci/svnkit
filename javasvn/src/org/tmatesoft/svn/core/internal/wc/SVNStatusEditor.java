@@ -64,6 +64,7 @@ public class SVNStatusEditor {
     private SVNURL myRepositoryRoot;
     private Map myRepositoryLocks;
     private long myTargetRevision;
+    private Map myExternalsInfo;
     
     public SVNStatusEditor(ISVNOptions options, SVNWCAccess wcAccess, SVNAdminAreaInfo info, boolean noIgnore, boolean reportAll, boolean descend,
             ISVNStatusHandler handler) {
@@ -74,6 +75,7 @@ public class SVNStatusEditor {
         myIsDescend = descend;
         myStatusHandler = handler;
         myExternalsMap = new HashMap();
+        myExternalsInfo = new HashMap();
         myGlobalIgnores = getGlobalIgnores(options);
         myTargetRevision = -1;
     }
@@ -112,14 +114,19 @@ public class SVNStatusEditor {
                                 myIsDescend, myIsReportAll, myIsNoIgnore, null, false, myStatusHandler);
                     }
                 } else {
-                    getDirStatus(null, myAdminInfo.getAnchor(), myAdminInfo.getTargetName(), 
-                            false, myIsReportAll, true, null, true, myStatusHandler);
+                    getDirStatus(null, myAdminInfo.getAnchor(), myAdminInfo.getTargetName(), false, myIsReportAll, true, null, true, myStatusHandler);
                 }
             } else {
                 getDirStatus(null, myAdminInfo.getAnchor(), null, 
                         myIsDescend, myIsReportAll, myIsNoIgnore, null, false, myStatusHandler);
             }
         } finally {
+            if (hasTarget() && myExternalsInfo.containsKey(myAdminInfo.getAnchor())) {
+                SVNExternalInfo[] anchorExternals = (SVNExternalInfo[]) myExternalsInfo.get(myAdminInfo.getAnchor());
+                for (int i = 0; i < anchorExternals.length; i++) {
+                    myExternalsMap.remove(anchorExternals[i].getPath());
+                }
+            }
             cleanup();
         }
         return null;
@@ -145,6 +152,7 @@ public class SVNStatusEditor {
                 SVNExternalInfo external = externalsInfo[i];
                 myExternalsMap.put(external.getPath(), external);
             }
+            myExternalsInfo.put(dir, externalsInfo);
         }
         if (entryName != null) {
             File file = (File) childrenFiles.get(entryName);
