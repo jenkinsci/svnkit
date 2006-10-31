@@ -459,6 +459,15 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             boolean changedPaths, boolean strictNode, long limit,
             ISVNLogEntryHandler handler) throws SVNException {
         long count = 0;
+        
+        long latestRev = -1;
+        if (isInvalidRevision(startRevision)) {
+            startRevision = latestRev = getLatestRevision();
+        }
+        if (isInvalidRevision(endRevision)) {
+            endRevision = latestRev != -1 ? latestRev : getLatestRevision(); 
+        }
+        
         try {
             openConnection();
             String[] repositoryPaths = getRepositoryPaths(targetPaths);

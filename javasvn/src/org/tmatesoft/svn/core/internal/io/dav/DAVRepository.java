@@ -460,8 +460,18 @@ class DAVRepository extends SVNRepository {
                     }
                     handler.handleLogEntry(logEntry);
                 }
-            };
-		try {
+            
+        };
+		
+        long latestRev = -1;
+        if (isInvalidRevision(startRevision)) {
+            startRevision = latestRev = getLatestRevision();
+        }
+        if (isInvalidRevision(endRevision)) {
+            endRevision = latestRev != -1 ? latestRev : getLatestRevision(); 
+        }
+        
+        try {
 			openConnection();
 			String[] fullPaths = new String[targetPaths.length];
 			
