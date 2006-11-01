@@ -86,7 +86,7 @@ public class DAVReplayHandler extends DAVEditorHandler {
                 myEditor.deleteEntry(path, Long.parseLong(rev));
             }
         } else if (element == OPEN_DIRECTORY || element == ADD_DIRECTORY) {
-            String path = attrs.getValue(PATH_ATTR);
+            String path = attrs.getValue(NAME_ATTR);
             String rev = attrs.getValue(REVISION_ATTR);
             
             if (path == null) {
@@ -174,7 +174,7 @@ public class DAVReplayHandler extends DAVEditorHandler {
     
     protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
         if (element == EDITOR_REPORT) {
-            myEditor.closeEdit();
+            //myEditor.closeEdit();
         } else if (element == APPLY_TEXT_DELTA) {
             setDeltaProcessing(false);
         } else if (element == CHANGE_FILE_PROPERTY || element == CHANGE_DIR_PROPERTY) {

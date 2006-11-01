@@ -48,6 +48,7 @@ public class SVNEditModeReader {
         COMMANDS_MAP.put("close-file", "(S(?S))");
         COMMANDS_MAP.put("close-edit", "()");
         COMMANDS_MAP.put("abort-edit", "()");
+        COMMANDS_MAP.put("finish-replay", "()");
     }
 
     private ISVNEditor myEditor;
@@ -71,7 +72,7 @@ public class SVNEditModeReader {
             return true;
         }
 
-        boolean last = "close-edit".equals(commandName) || "abort-edit".equals(commandName);
+        boolean last = "close-edit".equals(commandName) || "abort-edit".equals(commandName) || "finish-replay".equals(commandName);
         Object[] items = SVNReader.parse(parameters, pattern, new Object[10]);
         if ("target-rev".equals(commandName)) {
             myEditor.targetRevision(SVNReader.getLong(items, 0));

@@ -541,10 +541,10 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 getRevisionObject(lowRevision), Boolean.valueOf(sendDeltas) };
         try {
             openConnection();
-            write("(w((nnw))", buffer);
+            write("(w(nnw))", buffer);
             authenticate();
             read("*E", new Object[] { editor }, true);
-            write("(w())", new Object[] {"success"});
+//            write("(w())", new Object[] {"success"});
             read("[()]", null, true);
         } catch (SVNException e) {
             closeSession();

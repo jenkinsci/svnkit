@@ -813,7 +813,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             
             ISVNCommitPathHandler handler = new FSReplayPathHandler(myFSFS, root, compareRoot, changedPaths, basePath, lowRevision);
             SVNCommitUtil.driveCommitEditor(handler, interestingPaths, editor, -1);
-            editor.closeEdit();
+            //editor.closeEdit();
         } finally {
             closeRepository();
         }
