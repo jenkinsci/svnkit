@@ -121,8 +121,8 @@ public class SVNCommitUtil {
             return null;
         }
         File baseDir = new File(rootPath);
-        Collection dirsToLock = new TreeSet(); // relative paths to lock.
-        Collection dirsToLockRecursively = new TreeSet(); 
+        Collection dirsToLock = new TreeSet(SVNPathUtil.PATH_COMPARATOR); // relative paths to lock.
+        Collection dirsToLockRecursively = new TreeSet(SVNPathUtil.PATH_COMPARATOR); 
         boolean lockAll = false;
         if (relativePaths.isEmpty()) {
             statusClient.checkCancelled();
@@ -181,7 +181,22 @@ public class SVNCommitUtil {
         try {
             baseAccess.open(baseDir, true, lockAll ? SVNWCAccess.INFINITE_DEPTH : 0);
             statusClient.checkCancelled();
-            if (!lockAll) {                
+            if (!lockAll) {
+                Collection uniqueDirsToLockRecursively = new TreeSet(SVNPathUtil.PATH_COMPARATOR);
+                uniqueDirsToLockRecursively.addAll(dirsToLockRecursively);
+                for(Iterator ps = uniqueDirsToLockRecursively.iterator(); ps.hasNext();) {
+                    String pathToLock = (String) ps.next();
+                    for(Iterator existing = dirsToLockRecursively.iterator(); existing.hasNext();) {
+                        String existingPath = (String) existing.next();
+                        if (pathToLock.startsWith(existingPath + "/")) {
+                            // child of other path
+                            ps.remove();
+                            break;
+                        }
+                    }
+                    
+                }
+                dirsToLockRecursively = uniqueDirsToLockRecursively;
                 removeRedundantPaths(dirsToLockRecursively, dirsToLock);
                 for (Iterator nonRecusivePaths = dirsToLock.iterator(); nonRecusivePaths.hasNext();) {
                     statusClient.checkCancelled();
@@ -749,15 +764,13 @@ public class SVNCommitUtil {
         adminArea.closeEntries();
     }
 
-    private static void removeRedundantPaths(Collection dirsToLockRecursively,
-            Collection dirsToLock) {
+    private static void removeRedundantPaths(Collection dirsToLockRecursively, Collection dirsToLock) {
         for (Iterator paths = dirsToLock.iterator(); paths.hasNext();) {
             String path = (String) paths.next();
             if (dirsToLockRecursively.contains(path)) {
                 paths.remove();
             } else {
-                for (Iterator recPaths = dirsToLockRecursively.iterator(); recPaths
-                        .hasNext();) {
+                for (Iterator recPaths = dirsToLockRecursively.iterator(); recPaths.hasNext();) {
                     String existingPath = (String) recPaths.next();
                     if (path.startsWith(existingPath + "/")) {
                         paths.remove();
@@ -768,8 +781,7 @@ public class SVNCommitUtil {
         }
     }
 
-    private static File adjustRelativePaths(File rootFile,
-            Collection relativePaths) throws SVNException {
+    private static File adjustRelativePaths(File rootFile, Collection relativePaths) throws SVNException {
         if (relativePaths.contains("")) {
             String targetName = getTargetName(rootFile);
             if (!"".equals(targetName) && rootFile.getParentFile() != null) {
