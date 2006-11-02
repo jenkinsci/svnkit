@@ -193,7 +193,6 @@ public class SVNAdminClient extends SVNBasicClient {
 
             for (long currentRev = lastMergedRevision + 1; currentRev <= fromLatestRevision; currentRev++) {
                 toRepos.setRevisionPropertyValue(0, SVNRevisionProperty.CURRENTLY_COPYING, SVNProperty.toString(currentRev));
-//                ISVNEditor commitEditor = toRepos.getCommitEditor("", null, false, null);
                 SVNSynchronizeEditor syncEditor = new SVNSynchronizeEditor(toRepos, myHandler, currentRev - 1);
                 ISVNEditor cancellableEditor = SVNCancellableEditor.newInstance(syncEditor, this, getDebugLog());
                 fromRepos.replay(0, currentRev, true, cancellableEditor);

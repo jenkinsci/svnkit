@@ -30,15 +30,14 @@ import org.xml.sax.Attributes;
  */
 public class DAVReplayHandler extends DAVEditorHandler {
 
-    private static final DAVElement EDITOR_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "editor-report");
-    private static final DAVElement OPEN_ROOT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "open-root");
-    private static final DAVElement APPLY_TEXT_DELTA = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "apply-textdelta");
-    private static final DAVElement CLOSE_FILE = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "close-file");
-    private static final DAVElement CLOSE_DIRECTORY = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "close-directory");
-    private static final DAVElement CHANGE_FILE_PROPERTY = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "change-file-prop");
-    private static final DAVElement CHANGE_DIR_PROPERTY = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "change-dir-prop");
+    protected static final DAVElement EDITOR_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "editor-report");
+    protected static final DAVElement OPEN_ROOT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "open-root");
+    protected static final DAVElement APPLY_TEXT_DELTA = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "apply-textdelta");
+    protected static final DAVElement CLOSE_FILE = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "close-file");
+    protected static final DAVElement CLOSE_DIRECTORY = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "close-directory");
+    protected static final DAVElement CHANGE_FILE_PROPERTY = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "change-file-prop");
+    protected static final DAVElement CHANGE_DIR_PROPERTY = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "change-dir-prop");
 
-    protected static final String PATH_ATTR = "path";
     protected static final String CHECKSUM_ATTR = "checksum";
     protected static final String DEL_ATTR = "del";
 
@@ -173,9 +172,7 @@ public class DAVReplayHandler extends DAVEditorHandler {
     }
     
     protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
-        if (element == EDITOR_REPORT) {
-            //myEditor.closeEdit();
-        } else if (element == APPLY_TEXT_DELTA) {
+        if (element == APPLY_TEXT_DELTA) {
             setDeltaProcessing(false);
         } else if (element == CHANGE_FILE_PROPERTY || element == CHANGE_DIR_PROPERTY) {
             if (cdata != null && !"".equals(cdata) && myPropertyName == null) {
