@@ -343,6 +343,7 @@ public class SVNWCAccess implements ISVNEventHandler {
                         doClose(tmp, false);
                         throw e;
                     }
+                    // only for missing!
                     tmp.put(childPath, null);
                     continue;
                 }
@@ -481,7 +482,7 @@ public class SVNWCAccess implements ISVNEventHandler {
     
     public SVNAdminArea retrieve(File path) throws SVNException {
         SVNAdminArea adminArea = getAdminArea(path);
-        if (adminArea == null && !myAdminAreas.containsKey(path)) {
+        if (adminArea == null) {
             SVNEntry subEntry = null;
             try {
                 SVNAdminArea dirAdminArea = getAdminArea(path.getParentFile());
