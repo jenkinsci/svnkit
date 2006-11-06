@@ -91,7 +91,7 @@ public abstract class SVNLog {
 
     public abstract String toString();
 
-    public abstract void delete();
+    public abstract void delete() throws SVNException;
 
     public abstract boolean exists();
     

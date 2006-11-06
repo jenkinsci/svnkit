@@ -74,7 +74,7 @@ public class FSUpdateContext {
     }
 
     public void reset(FSRepository repository, FSFS owner, long revision, File reportFile, String target, String targetPath, boolean isSwitch, boolean recursive, boolean ignoreAncestry,
-            boolean textDeltas, ISVNEditor editor) {
+            boolean textDeltas, ISVNEditor editor) throws SVNException {
         dispose();
         myRepository = repository;
         myFSFS = owner;
@@ -116,7 +116,7 @@ public class FSUpdateContext {
         return myTargetPath;
     }
 
-    public void dispose() {
+    public void dispose() throws SVNException {
         SVNFileUtil.closeFile(myReportOS);
         myReportOS = null;
 

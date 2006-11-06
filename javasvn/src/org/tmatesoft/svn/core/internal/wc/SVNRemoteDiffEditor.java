@@ -269,7 +269,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     public void absentFile(String path) throws SVNException {
     }
 
-    public void cleanup() {
+    public void cleanup() throws SVNException {
         if (myTempDirectory != null) {
             SVNFileUtil.deleteAll(myTempDirectory, true);
             myTempDirectory = null;

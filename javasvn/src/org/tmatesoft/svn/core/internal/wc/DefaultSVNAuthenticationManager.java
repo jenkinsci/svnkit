@@ -178,7 +178,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         return null;
     }
 
-    public void acknowledgeAuthentication(boolean accepted, String kind, String realm, SVNErrorMessage errorMessage, SVNAuthentication authentication) {
+    public void acknowledgeAuthentication(boolean accepted, String kind, String realm, SVNErrorMessage errorMessage, SVNAuthentication authentication) throws SVNException {
         if (!accepted) {
             myPreviousErrorMessage = errorMessage;
             myPreviousAuthentication = authentication;
@@ -395,7 +395,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     }
 
     public interface IPersistentAuthenticationProvider {
-        public void saveAuthentication(SVNAuthentication auth, String kind, String realm);        
+        public void saveAuthentication(SVNAuthentication auth, String kind, String realm) throws SVNException;        
     }
 
     private class PersistentAuthenticationProvider implements ISVNAuthenticationProvider, IPersistentAuthenticationProvider {
@@ -458,7 +458,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             return null;
         }
         
-        public void saveAuthentication(SVNAuthentication auth, String kind, String realm) {
+        public void saveAuthentication(SVNAuthentication auth, String kind, String realm) throws SVNException {
             File dir = new File(myDirectory, kind);
             if (!dir.exists()) {
                 dir.mkdirs();

@@ -142,7 +142,7 @@ public class SVNLogImpl extends SVNLog {
         return "Log: " + myFile;
     }
 
-    public void delete() {
+    public void delete() throws SVNException {
         SVNFileUtil.deleteFile(myFile);
         SVNFileUtil.deleteFile(myTmpFile);
     }

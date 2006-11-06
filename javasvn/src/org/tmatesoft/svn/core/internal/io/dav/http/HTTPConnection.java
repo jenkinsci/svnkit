@@ -589,7 +589,11 @@ class HTTPConnection implements IHTTPConnection {
                 SVNFileUtil.closeFile(is);
             }
             if (tmpFile != null) {
-                SVNFileUtil.deleteFile(tmpFile);
+                try {
+                    SVNFileUtil.deleteFile(tmpFile);
+                } catch (SVNException e) {
+                    throw new IOException(e.getMessage());
+                }
             }
             myIsSpoolResponse = false;
         }

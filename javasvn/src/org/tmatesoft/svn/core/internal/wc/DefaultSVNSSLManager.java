@@ -161,7 +161,11 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
                             boolean store = myAuthManager.isAuthStorageEnabled();
                             int result = authProvider.acceptServerAuthentication(myURL, myRealm, certs[0], store);
                             if (result == ISVNAuthenticationProvider.ACCEPTED && store) {
-                                storeServerCertificate(myRealm, data, failures);
+                                try {
+                                    storeServerCertificate(myRealm, data, failures);
+                                } catch (SVNException e) {
+                                    throw new CertificateException("svn: Server SSL ceritificate for '" + myRealm + "' cannot be saved");
+                                }
                             }
                             if (result != ISVNAuthenticationProvider.REJECTED) {
                                 myAuthManager.getRuntimeAuthStorage().putData("svn.ssl.server", myRealm, data);
@@ -234,7 +238,7 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
         return null;
     }
 
-    private void storeServerCertificate(String realm, String data, int failures) {
+    private void storeServerCertificate(String realm, String data, int failures) throws SVNException {
         myAuthDirectory.mkdirs();
         
         File file = new File(myAuthDirectory, SVNFileUtil.computeChecksum(realm));

@@ -1199,7 +1199,7 @@ public abstract class SVNAdminArea {
         getWCAccess().closeAdminArea(getRoot());
     }
 
-    private static void deleteLogs(Collection logsList) {
+    private static void deleteLogs(Collection logsList) throws SVNException {
         for (Iterator logs = logsList.iterator(); logs.hasNext();) {
             SVNLog log = (SVNLog) logs.next();
             log.delete();

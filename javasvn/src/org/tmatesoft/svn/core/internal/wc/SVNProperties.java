@@ -350,7 +350,7 @@ public class SVNProperties {
         }
     }
 
-    public void delete() {
+    public void delete() throws SVNException {
         SVNFileUtil.deleteFile(getFile());
     }
 

@@ -231,8 +231,9 @@ public interface ISVNAuthenticationManager {
      * @param realm          a repository authentication realm 
      * @param errorMessage   the reason of the authentication failure 
      * @param authentication a user credential to accept/drop
+     * @throws SVNException 
      */
-    public void acknowledgeAuthentication(boolean accepted, String kind, String realm, SVNErrorMessage errorMessage, SVNAuthentication authentication);
+    public void acknowledgeAuthentication(boolean accepted, String kind, String realm, SVNErrorMessage errorMessage, SVNAuthentication authentication) throws SVNException;
     
     /**
      * Sets a specific runtime authentication storage manager. This storage 
