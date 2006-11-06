@@ -698,7 +698,15 @@ public class SVNCommitUtil {
                 File currentFile = dir.getFile(currentEntry.getName());
                 SVNAdminArea childDir;
                 if (currentEntry.getKind() == SVNNodeKind.DIR) {
-                    childDir = dir.getWCAccess().retrieve(dir.getFile(currentEntry.getName()));
+                    try {
+                        childDir = dir.getWCAccess().retrieve(dir.getFile(currentEntry.getName()));
+                    } catch (SVNException e) {
+                        if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
+                            childDir = null;
+                        } else {
+                            throw e;
+                        }
+                    }
                     if (childDir == null) {
                         SVNFileType currentType = SVNFileType.getType(currentFile);
                         if (currentType == SVNFileType.NONE && currentEntry.isScheduledForDeletion()) {
