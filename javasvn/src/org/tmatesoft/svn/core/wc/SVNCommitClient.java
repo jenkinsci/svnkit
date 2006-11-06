@@ -20,9 +20,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
@@ -784,7 +782,7 @@ public class SVNCommitClient extends SVNBasicClient {
         if (paths == null || paths.length == 0) {
             return SVNCommitPacket.EMPTY;
         }
-        Set targets = new TreeSet();
+        Collection targets = new ArrayList();
         SVNStatusClient statusClient = new SVNStatusClient(getRepositoryPool(), getOptions());
         statusClient.setEventHandler(new ISVNEventHandler() {
             public void handleEvent(SVNEvent event, double progress) throws SVNException {

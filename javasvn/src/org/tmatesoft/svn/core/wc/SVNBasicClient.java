@@ -535,9 +535,10 @@ public class SVNBasicClient implements ISVNEventHandler {
             } 
             return null;
         } else if (!logEntry.getChangedPaths().isEmpty()){
-            TreeMap sortedMap = new TreeMap(SVNPathUtil.PATH_COMPARATOR);
+            Map sortedMap = new HashMap();
             sortedMap.putAll(logEntry.getChangedPaths());
             List pathsList = new ArrayList(sortedMap.keySet());
+            Collections.sort(pathsList, SVNPathUtil.PATH_COMPARATOR);
             Collections.reverse(pathsList);
             for(Iterator paths = pathsList.iterator(); paths.hasNext();) {
                 String p = (String) paths.next();

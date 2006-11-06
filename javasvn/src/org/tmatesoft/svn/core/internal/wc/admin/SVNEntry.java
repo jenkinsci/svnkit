@@ -63,11 +63,7 @@ public class SVNEntry implements Comparable {
             return 1;
         }
         SVNEntry entry = (SVNEntry) obj;
-//        int kind = getKind().compareTo(entry.getKind());
-//        if (kind == 0) {
-            return myName.toLowerCase().compareTo(entry.myName.toLowerCase());
-//        }
-//        return -kind;
+        return myName.toLowerCase().compareTo(entry.myName.toLowerCase());
     }
     
     public boolean isThisDir() {

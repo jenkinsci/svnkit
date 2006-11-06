@@ -15,10 +15,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.TreeSet;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -32,6 +34,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.0
@@ -333,7 +336,8 @@ public class FSUpdateContext {
         }
 
         if (sourceEntries != null) {
-            FSEntry[] srcEntries = (FSEntry[]) new TreeSet(sourceEntries.values()).toArray(new FSEntry[sourceEntries.size()]);
+            FSEntry[] srcEntries = (FSEntry[]) new ArrayList(sourceEntries.values()).toArray(new FSEntry[sourceEntries.size()]);
+            Arrays.sort(srcEntries);
             for (int i = 0; i < srcEntries.length; i++) {
                 FSEntry srcEntry = srcEntries[i];
                 if (targetEntries.get(srcEntry.getName()) == null) {
@@ -345,7 +349,22 @@ public class FSUpdateContext {
             }
         }
 
-        FSEntry[] tgtEntries = (FSEntry[]) new TreeSet(targetEntries.values()).toArray(new FSEntry[targetEntries.size()]);
+        FSEntry[] tgtEntries = (FSEntry[]) new ArrayList(targetEntries.values()).toArray(new FSEntry[targetEntries.size()]);
+        final Map srcMap = sourceEntries;
+        Arrays.sort(tgtEntries, new Comparator() {
+            public int compare(Object o1, Object o2) {
+                FSEntry e1 = (FSEntry) o1;
+                FSEntry e2 = (FSEntry) o2;
+                if (srcMap != null) {
+                    boolean has1Src = srcMap.containsKey(e1.getName()); 
+                    boolean has2Src = srcMap.containsKey(e2.getName());
+                    if (has1Src != has2Src) {
+                        return has1Src ? 1 : -1;
+                    }
+                }
+                return e1.compareTo(e2);
+            }
+        });
         for (int i = 0; i < tgtEntries.length; i++) {
             FSEntry tgtEntry = tgtEntries[i];
             String entryEditPath = SVNPathUtil.append(editPath, tgtEntry.getName());
@@ -499,6 +518,7 @@ public class FSUpdateContext {
             diffDirs(sourceRevision, sourcePath, targetPath, editPath, pathInfo != null ? pathInfo.isStartEmpty() : false);
             getEditor().closeDir();
         } else {
+            SVNDebugLog.getDefaultLog().info("processing file: " + editPath);
             if (related) {
                 getEditor().openFile(editPath, sourceRevision);
             } else {

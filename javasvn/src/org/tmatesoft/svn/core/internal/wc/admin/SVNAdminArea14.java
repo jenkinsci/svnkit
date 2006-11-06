@@ -21,10 +21,11 @@ import java.io.Writer;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.TreeMap;
+import java.util.Set;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -296,7 +297,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
 
     public void saveVersionedProperties(SVNLog log, boolean close) throws SVNException {
         Map command = new HashMap();
-        Map processedEntries = new TreeMap();
+        Set processedEntries = new HashSet();
         
         Map propsCache = getPropertiesStorage(false);
         if (propsCache != null && !propsCache.isEmpty()) {
@@ -329,8 +330,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
                     command.put(SVNProperty.HAS_PROP_MODS, SVNProperty.toString(hasPropModifications));
                     command.put(SVNLog.NAME_ATTR, name);
                     log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
-                    //don't care of the value, because we need only the presence of a mapping
-                    processedEntries.put(name, "");
+                    processedEntries.add(name);
                     command.clear();
                         
                     String dstPath = getThisDirName().equals(name) ? "dir-props" : "props/" + name + ".svn-work";
@@ -367,7 +367,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
                 if (baseProps.isModified()) {
                     String dstPath = getThisDirName().equals(name) ? "dir-prop-base" : "prop-base/" + name + ".svn-base";
                     dstPath = getAdminDirectory().getName() + "/" + dstPath;
-                    boolean isEntryProcessed = processedEntries.containsKey(name);
+                    boolean isEntryProcessed = processedEntries.contains(name);
                     if (!isEntryProcessed) {
                         SVNVersionedProperties props = getProperties(name);
                         
@@ -473,7 +473,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
             return null;
         }
         
-        Map entries = new TreeMap();
+        Map entries = new HashMap();
         BufferedReader reader = null;
         try {
             reader = new BufferedReader(new InputStreamReader(SVNFileUtil.openFileForReading(myEntriesFile), "UTF-8"));

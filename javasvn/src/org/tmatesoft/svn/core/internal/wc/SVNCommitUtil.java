@@ -15,13 +15,14 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -121,8 +122,8 @@ public class SVNCommitUtil {
             return null;
         }
         File baseDir = new File(rootPath);
-        Collection dirsToLock = new TreeSet(SVNPathUtil.PATH_COMPARATOR); // relative paths to lock.
-        Collection dirsToLockRecursively = new TreeSet(SVNPathUtil.PATH_COMPARATOR); 
+        List dirsToLock = new ArrayList(); // relative paths to lock.
+        List dirsToLockRecursively = new ArrayList(); 
         boolean lockAll = false;
         if (relativePaths.isEmpty()) {
             statusClient.checkCancelled();
@@ -181,8 +182,10 @@ public class SVNCommitUtil {
         try {
             baseAccess.open(baseDir, true, lockAll ? SVNWCAccess.INFINITE_DEPTH : 0);
             statusClient.checkCancelled();
+            Collections.sort(dirsToLock, SVNPathUtil.PATH_COMPARATOR);
+            Collections.sort(dirsToLockRecursively, SVNPathUtil.PATH_COMPARATOR);
             if (!lockAll) {
-                Collection uniqueDirsToLockRecursively = new TreeSet(SVNPathUtil.PATH_COMPARATOR);
+                List uniqueDirsToLockRecursively = new ArrayList();
                 uniqueDirsToLockRecursively.addAll(dirsToLockRecursively);
                 for(Iterator ps = uniqueDirsToLockRecursively.iterator(); ps.hasNext();) {
                     String pathToLock = (String) ps.next();
@@ -196,6 +199,7 @@ public class SVNCommitUtil {
                     }
                     
                 }
+                Collections.sort(uniqueDirsToLockRecursively, SVNPathUtil.PATH_COMPARATOR);
                 dirsToLockRecursively = uniqueDirsToLockRecursively;
                 removeRedundantPaths(dirsToLockRecursively, dirsToLock);
                 for (Iterator nonRecusivePaths = dirsToLock.iterator(); nonRecusivePaths.hasNext();) {
@@ -287,7 +291,7 @@ public class SVNCommitUtil {
                 File root = (File) roots.next();
                 Collection filesList = (Collection) rootsMap.get(root);
                 File[] filesArray = (File[]) filesList.toArray(new File[filesList.size()]);
-                Collection relativePaths = new TreeSet();
+                Collection relativePaths = new ArrayList();
                 SVNWCAccess wcAccess = createCommitWCAccess(filesArray, recursive, force, relativePaths, statusClient);
                 relativePathsMap.put(wcAccess, relativePaths);
                 result.add(wcAccess);
@@ -795,13 +799,16 @@ public class SVNCommitUtil {
             if (!"".equals(targetName) && rootFile.getParentFile() != null) {
                 // there is a versioned parent.
                 rootFile = rootFile.getParentFile();
-                Collection result = new TreeSet();
+                List result = new ArrayList();
                 for (Iterator paths = relativePaths.iterator(); paths.hasNext();) {
                     String path = (String) paths.next();
                     path = "".equals(path) ? targetName : SVNPathUtil.append(targetName, path);
-                    result.add(path);
+                    if (!result.contains(path)) {
+                        result.add(path);
+                    }
                 }
                 relativePaths.clear();
+                Collections.sort(result);
                 relativePaths.addAll(result);
             }
         }

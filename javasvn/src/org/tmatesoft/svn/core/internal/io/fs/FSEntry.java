@@ -68,11 +68,7 @@ public class FSEntry implements Comparable {
             return 1;
         }
         FSEntry entry = (FSEntry) obj;
-//        int kind = getType().compareTo(entry.getType());
-//        if (kind == 0) {
-            return myName.toLowerCase().compareTo(entry.myName);
-//        }
-//        return -kind;
+        return myName.toLowerCase().compareTo(entry.myName.toLowerCase());
     }
     
     

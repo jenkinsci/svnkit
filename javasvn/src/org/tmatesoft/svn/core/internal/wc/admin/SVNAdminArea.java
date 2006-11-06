@@ -24,9 +24,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
-import java.util.TreeSet;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -964,7 +963,7 @@ public abstract class SVNAdminArea {
     public SVNEntry addEntry(String name) throws SVNException {
         Map entries = loadEntries();
         if (entries == null) {
-            myEntries = new TreeMap(); 
+            myEntries = new HashMap(); 
             entries = myEntries;
         }
 
@@ -978,7 +977,7 @@ public abstract class SVNAdminArea {
         if (entries == null) {
             return Collections.EMPTY_LIST.iterator();
         }
-        Collection copy = new TreeSet(entries.values());
+        List copy = new ArrayList(entries.values());
         if (!hidden) {
             for (Iterator iterator = copy.iterator(); iterator.hasNext();) {
                 SVNEntry entry = (SVNEntry) iterator.next();
@@ -987,6 +986,7 @@ public abstract class SVNAdminArea {
                 }
             }
         }
+        Collections.sort(copy);
         return copy.iterator();
     }
     

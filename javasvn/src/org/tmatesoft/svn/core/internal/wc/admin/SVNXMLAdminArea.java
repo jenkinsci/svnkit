@@ -25,7 +25,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -323,7 +322,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         if (!myEntriesFile.exists()) {
             return null;
         }
-        Map entries = new TreeMap();
+        Map entries = new HashMap();
         
         BufferedReader reader = null;
         try {
