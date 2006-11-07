@@ -1019,7 +1019,7 @@ public class SVNCommitClient extends SVNBasicClient {
         String mimeType = null;
         Map autoProperties = new HashMap();
         if (fileType != SVNFileType.SYMLINK) {
-            autoProperties = getOptions().applyAutoProperties(file.getName(), autoProperties);
+            autoProperties = getOptions().applyAutoProperties(file, autoProperties);
             if (!autoProperties.containsKey(SVNProperty.MIME_TYPE)) {
                 mimeType = SVNFileUtil.detectMimeType(file);
                 if (mimeType != null) {

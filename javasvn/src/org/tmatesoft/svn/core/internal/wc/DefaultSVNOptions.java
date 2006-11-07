@@ -202,7 +202,8 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
         getConfigFile().setPropertyValue(AUTOPROPS_GROUP, pattern, properties, !myIsReadonly);
     }
 
-    public Map applyAutoProperties(String fileName, Map target) {
+    public Map applyAutoProperties(File file, Map target) {
+        String fileName = file.getName();
         target = target == null ? new HashMap() : target;
         if (!isUseAutoProperties()) {
             return target;

@@ -231,7 +231,7 @@ public class SVNPropertiesManager {
     }
     
     public static Map computeAutoProperties(ISVNOptions options, File file) {
-        Map properties = options.applyAutoProperties(file.getName(), null);
+        Map properties = options.applyAutoProperties(file, null);
         if (!properties.containsKey(SVNProperty.MIME_TYPE)) {
             String mimeType = SVNFileUtil.detectMimeType(file);
             if (mimeType != null) {

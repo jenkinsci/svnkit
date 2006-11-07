@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.wc;
 
+import java.io.File;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.io.ISVNTunnelProvider;
@@ -327,12 +328,12 @@ public interface ISVNOptions extends ISVNTunnelProvider {
      * For one file name pattern there can be several autoproperties set,
      * delimited by ";".  
      * 
-     * @param fileName  a target file name
+     * @param file      a target file
      * @param target    a {@link java.util.Map} that will receive
      *                  autoproperties
      * @return          <code>target</code> itself
      */
-    public Map applyAutoProperties(String fileName, Map target);
+    public Map applyAutoProperties(File file, Map target);
     
     /**
      * Returns a factory object which is responsible for creating 
