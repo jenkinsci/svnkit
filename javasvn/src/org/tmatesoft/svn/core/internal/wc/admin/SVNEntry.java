@@ -60,7 +60,7 @@ public class SVNEntry implements Comparable {
             return 1;
         }
         if (isThisDir()) {
-            return 1;
+            return -1;
         }
         SVNEntry entry = (SVNEntry) obj;
         return myName.toLowerCase().compareTo(entry.myName.toLowerCase());

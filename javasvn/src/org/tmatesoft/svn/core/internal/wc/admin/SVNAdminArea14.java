@@ -18,12 +18,14 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -929,7 +931,9 @@ public class SVNAdminArea14 extends SVNAdminArea {
         writer.write(getFormatVersion() + "\n");
         writeEntry(writer, getThisDirName(), rootEntry.asMap(), null);
 
-        for (Iterator entries = myEntries.keySet().iterator(); entries.hasNext();) {
+        List names = new ArrayList(myEntries.keySet());
+        Collections.sort(names);
+        for (Iterator entries = names.iterator(); entries.hasNext();) {
             String name = (String)entries.next();
             SVNEntry entry = (SVNEntry)myEntries.get(name);
             if (getThisDirName().equals(name)) {

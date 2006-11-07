@@ -19,10 +19,13 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -399,7 +402,9 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         writer.write("<wc-entries\n");
         writer.write("   xmlns=\"svn:\">\n");
 
-        for (Iterator entriesIter = myEntries.keySet().iterator(); entriesIter.hasNext();) {
+        List entryNames = new ArrayList(myEntries.keySet());
+        Collections.sort(entryNames);
+        for (Iterator entriesIter = entryNames.iterator(); entriesIter.hasNext();) {
             String name = (String)entriesIter.next();
             SVNEntry entry = (SVNEntry)myEntries.get(name);
             Map entryAttrs = entry.asMap();
@@ -935,8 +940,6 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         entryAttrs.put(SVNProperty.shortPropertyName(SVNProperty.PROP_REJECT_FILE), null);
         entryAttrs.put(SVNProperty.shortPropertyName(SVNProperty.COPYFROM_REVISION), null);
         entryAttrs.put(SVNProperty.shortPropertyName(SVNProperty.COPYFROM_URL), null);
-        entryAttrs.put(SVNProperty.shortPropertyName(SVNProperty.HAS_PROP_MODS), SVNProperty.toString(false));
-
         
         try {
             modifyEntry(fileName, entryAttrs, false, true);
