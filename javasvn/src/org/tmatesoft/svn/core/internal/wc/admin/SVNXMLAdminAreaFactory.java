@@ -112,6 +112,13 @@ class SVNXMLAdminAreaFactory extends SVNAdminAreaFactory {
         } finally {
             SVNFileUtil.closeFile(reader);
         }
+
+        if (line == null || line.length() == 0) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_UNEXPECTED_EOF, "Reading ''{0}''", formatFile);
+            SVNErrorMessage err1 = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
+            err1.setChildErrorMessage(err);
+            SVNErrorManager.error(err1);
+        }
         
         try {
             formatVersion = Integer.parseInt(line.trim());
