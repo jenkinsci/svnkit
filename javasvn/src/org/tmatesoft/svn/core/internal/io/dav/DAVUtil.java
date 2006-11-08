@@ -167,7 +167,7 @@ public class DAVUtil {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "'DAV:baseline-collection' not present on the baseline resource");
             SVNErrorManager.error(err);
         }
-        info.baselineBase = SVNEncodingUtil.uriEncode(info.baselineBase);
+//        info.baselineBase = SVNEncodingUtil.uriEncode(info.baselineBase);
         if (includeRevision) {
             String version = baselineProperties.getPropertyValue(DAVElement.VERSION_NAME);
             if (version == null) {
