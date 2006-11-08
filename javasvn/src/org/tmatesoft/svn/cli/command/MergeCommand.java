@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
+import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 /**
@@ -37,6 +38,14 @@ public class MergeCommand extends SVNCommand {
 
         getClientManager().setEventHandler(new SVNCommandEventProcessor(out, err, false, false));
         SVNDiffClient differ = getClientManager().getDiffClient();
+        
+        if (getCommandLine().hasArgument(SVNArgument.EXTENSIONS)) {
+            SVNDiffOptions diffOptions = new SVNDiffOptions(getCommandLine().hasArgument(SVNArgument.IGNORE_ALL_WS),
+                    getCommandLine().hasArgument(SVNArgument.IGNORE_WS_CHANGE), 
+                    getCommandLine().hasArgument(SVNArgument.IGNORE_EOL_STYLE));
+            differ.setMergeOptions(diffOptions);
+        }
+
         
         if (getCommandLine().hasArgument(SVNArgument.REVISION) || getCommandLine().hasArgument(SVNArgument.CHANGE)) {
             // merge -rN:M urlOrPath@r wcPath

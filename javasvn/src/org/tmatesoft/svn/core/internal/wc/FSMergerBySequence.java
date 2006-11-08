@@ -15,6 +15,8 @@ package org.tmatesoft.svn.core.internal.wc;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import org.tmatesoft.svn.core.wc.SVNDiffOptions;
+
 import de.regnis.q.sequence.QSequenceDifferenceBlock;
 import de.regnis.q.sequence.core.QSequenceException;
 import de.regnis.q.sequence.line.QSequenceLine;
@@ -22,6 +24,12 @@ import de.regnis.q.sequence.line.QSequenceLineCache;
 import de.regnis.q.sequence.line.QSequenceLineMedia;
 import de.regnis.q.sequence.line.QSequenceLineRAData;
 import de.regnis.q.sequence.line.QSequenceLineResult;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineDummySimplifier;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineEOLUnifyingSimplifier;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineSimplifier;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineTeeSimplifier;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineWhiteSpaceReducingSimplifier;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineWhiteSpaceSkippingSimplifier;
 
 /**
  * @author TMate Software Ltd.
@@ -39,6 +47,8 @@ class FSMergerBySequence {
 	private final byte[] myConflictStart;
 	private final byte[] myConflictSeparator;
 	private final byte[] myConflictEnd;
+    
+    private QSequenceLineTeeSimplifier mySimplifer;
 
 	// Setup ==================================================================
 
@@ -52,6 +62,7 @@ class FSMergerBySequence {
 
 	public int merge(QSequenceLineRAData baseData,
 	                 QSequenceLineRAData localData, QSequenceLineRAData latestData,
+                     SVNDiffOptions options,
 	                 OutputStream result) throws IOException {
 
 //        dump("base", baseData);
@@ -60,7 +71,21 @@ class FSMergerBySequence {
 
 		final QSequenceLineResult localResult;
 		final QSequenceLineResult latestResult;
+        QSequenceLineSimplifier eolSimplifier = options != null && options.isIgnoreEOLStyle() ? 
+                (QSequenceLineSimplifier) new QSequenceLineEOLUnifyingSimplifier() : 
+                    (QSequenceLineSimplifier) new QSequenceLineDummySimplifier();
+        
+        QSequenceLineSimplifier spaceSimplifier = new QSequenceLineDummySimplifier();
+        if (options != null) {
+            if (options.isIgnoreAllWhitespace()) {
+                spaceSimplifier = new QSequenceLineWhiteSpaceSkippingSimplifier();
+            } else if (options.isIgnoreAmountOfWhitespace()) {
+                spaceSimplifier = new QSequenceLineWhiteSpaceReducingSimplifier();
+            }
+        }
+        mySimplifer = new QSequenceLineTeeSimplifier(eolSimplifier, spaceSimplifier);
 		try {
+            // XXX simplifier could be passed into createBlocks...
 			localResult = QSequenceLineMedia.createBlocks(baseData, localData);
 			latestResult = QSequenceLineMedia.createBlocks(baseData, latestData);
 		}
@@ -91,7 +116,7 @@ class FSMergerBySequence {
 					final QSequenceDifferenceBlock localStartBlock = local.current();
 					final QSequenceDifferenceBlock latestStartBlock = latest.current();
 					if (checkConflict(local, latest, localLines, latestLines, baseLines.getLineCount())) {
-						baseLineIndex = createConflict(result, localStartBlock, local.current(), latestStartBlock, latest								.current(), baseLines, localLines, latestLines, baseLineIndex);
+						baseLineIndex = createConflict(result, localStartBlock, local.current(), latestStartBlock, latest.current(), baseLines, localLines, latestLines, baseLineIndex);
 						local.forward();
 						latest.forward();
 						conflict = true;
@@ -171,7 +196,7 @@ class FSMergerBySequence {
 	private int appendLines(OutputStream result,
 	                        QSequenceDifferenceBlock block, QSequenceLineCache changedLines,
 	                        int baseLineIndex) throws IOException {
-		for (int equalLineIndex = block.getRightFrom() - (block.getLeftFrom() - 1 - baseLineIndex); equalLineIndex < block				.getRightFrom(); equalLineIndex++) {
+		for (int equalLineIndex = block.getRightFrom() - (block.getLeftFrom() - 1 - baseLineIndex); equalLineIndex < block.getRightFrom(); equalLineIndex++) {
 			writeLine(result, changedLines.getLine(equalLineIndex));
 		}
 

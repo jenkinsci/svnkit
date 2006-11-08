@@ -44,6 +44,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.wc.ISVNMerger;
 import org.tmatesoft.svn.core.wc.ISVNMergerFactory;
+import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
@@ -505,10 +506,15 @@ public abstract class SVNAdminArea {
         }
         return result;
     }
-
     public SVNStatusType mergeText(String localPath, File base,
             File latest, String localLabel, String baseLabel,
             String latestLabel, boolean leaveConflict, boolean dryRun) throws SVNException {
+        return mergeText(localPath, base, latest, localLabel, baseLabel, latestLabel, leaveConflict, dryRun, null);
+    }
+
+    public SVNStatusType mergeText(String localPath, File base,
+            File latest, String localLabel, String baseLabel,
+            String latestLabel, boolean leaveConflict, boolean dryRun, SVNDiffOptions options) throws SVNException {
         SVNEntry entry = getEntry(localPath, false);
         if (entry == null) {
             return SVNStatusType.UNCHANGED;
@@ -549,7 +555,9 @@ public abstract class SVNAdminArea {
             
             result = resultFile == null ? SVNFileUtil.DUMMY_OUT : SVNFileUtil.openFileForWriting(resultFile);
             try {
-                status = SVNProperty.isBinaryMimeType(mimeType) ? merger.mergeBinary(base, localTmpFile, latest, dryRun, result) : merger.mergeText(base, localTmpFile, latest, dryRun, result);
+                status = SVNProperty.isBinaryMimeType(mimeType) ? 
+                        merger.mergeBinary(base, localTmpFile, latest, dryRun, result) : 
+                        merger.mergeText(base, localTmpFile, latest, dryRun, options, result);
             } finally {
                 SVNFileUtil.closeFile(result);
             }

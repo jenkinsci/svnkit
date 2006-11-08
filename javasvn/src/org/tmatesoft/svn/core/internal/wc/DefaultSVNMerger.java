@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNMerger;
+import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import de.regnis.q.sequence.line.QSequenceLineRAData;
@@ -41,7 +42,7 @@ public class DefaultSVNMerger implements ISVNMerger {
         myEnd = end;
     }
 
-    public SVNStatusType mergeText(File baseFile, File localFile, File latestFile, boolean dryRun, OutputStream result) throws SVNException {
+    public SVNStatusType mergeText(File baseFile, File localFile, File latestFile, boolean dryRun, SVNDiffOptions options, OutputStream result) throws SVNException {
         FSMergerBySequence merger = new FSMergerBySequence(myStart, mySeparator, myEnd);
         int mergeResult = 0;
         RandomAccessFile localIS = null;
@@ -55,7 +56,7 @@ public class DefaultSVNMerger implements ISVNMerger {
             QSequenceLineRAData baseData = new QSequenceLineRAFileData(baseIS);
             QSequenceLineRAData localData = new QSequenceLineRAFileData(localIS);
             QSequenceLineRAData latestData = new QSequenceLineRAFileData(latestIS);
-            mergeResult = merger.merge(baseData, localData, latestData, result);
+            mergeResult = merger.merge(baseData, localData, latestData, options, result);
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
             SVNErrorManager.error(err, e);

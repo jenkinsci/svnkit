@@ -73,6 +73,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 public class SVNDiffClient extends SVNBasicClient {
 
     private ISVNDiffGenerator myDiffGenerator;
+    private SVNDiffOptions myDiffOptions;
 
     /**
      * Constructs and initializes an <b>SVNDiffClient</b> object
@@ -136,6 +137,19 @@ public class SVNDiffClient extends SVNBasicClient {
         }
         return myDiffGenerator;
     }
+    
+    
+    public void setMergeOptions(SVNDiffOptions diffOptions) {
+        myDiffOptions = diffOptions;
+    }
+
+    public SVNDiffOptions getMergeOptions() {
+        if (myDiffOptions == null) {
+            myDiffOptions = new SVNDiffOptions();
+        }
+        return myDiffOptions;
+    }
+
     
     /**
      * Generates the differences for the specified URL taken from the two 
@@ -1253,7 +1267,7 @@ public class SVNDiffClient extends SVNBasicClient {
         long rev2 = getRevisionNumber(revision2, repository1, path2);
         SVNRepository repository2 = createRepository(url1, false);
         
-        SVNMergeCallback callback = new SVNMergeCallback(info, url2, force, dryRun);
+        SVNMergeCallback callback = new SVNMergeCallback(info, url2, force, dryRun, getMergeOptions());
         SVNRemoteDiffEditor editor = new SVNRemoteDiffEditor(info, info.getTarget().getRoot(), callback, repository2, rev1, rev2, dryRun, this, this);
         
         try {
@@ -1307,7 +1321,7 @@ public class SVNDiffClient extends SVNBasicClient {
                     names.remove();
                 }
             }
-            SVNMergeCallback callback = new SVNMergeCallback(info, url2, force, dryRun);
+            SVNMergeCallback callback = new SVNMergeCallback(info, url2, force, dryRun, getMergeOptions());
             mergeResult = callback.fileChanged(name, f1, f2, rev1[0], rev2[0], mimeType1, mimeType2, props1, propsDiff);
         } finally {
             SVNFileUtil.deleteAll(f1, null);

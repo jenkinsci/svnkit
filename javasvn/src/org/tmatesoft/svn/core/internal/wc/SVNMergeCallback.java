@@ -26,6 +26,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -43,12 +44,14 @@ public class SVNMergeCallback extends AbstractDiffCallback {
     private boolean myIsAddNecessitatedMerge;
     private String myAddedPath = null;
     private boolean myIsForce;
+    private SVNDiffOptions myDiffOptions;
     
-    public SVNMergeCallback(SVNAdminAreaInfo info, SVNURL url, boolean force, boolean dryRun) {
+    public SVNMergeCallback(SVNAdminAreaInfo info, SVNURL url, boolean force, boolean dryRun, SVNDiffOptions options) {
         super(info);
         myURL = url;
         myIsDryRun = dryRun;
         myIsForce = force;
+        myDiffOptions = options;
     }
 
     public File createTempDirectory() throws SVNException {
@@ -219,7 +222,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                 String localLabel = ".working";
                 String baseLabel = ".merge-left.r" + revision1;
                 String latestLabel = ".merge-right.r" + revision2;
-                SVNStatusType mergeResult = dir.mergeText(name, file1, file2, localLabel, baseLabel, latestLabel, false, myIsDryRun);
+                SVNStatusType mergeResult = dir.mergeText(name, file1, file2, localLabel, baseLabel, latestLabel, false, myIsDryRun, myDiffOptions);
                 if (mergeResult == SVNStatusType.CONFLICTED || mergeResult == SVNStatusType.CONFLICTED_UNRESOLVED) {
                     result[0] = mergeResult;
                 } else if (textModified) {
