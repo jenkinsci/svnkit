@@ -20,3 +20,4 @@ stat ALL
 switch ALL
 trans ALL
 update ALL
+svnsync ALL
