@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.wc;
 //import java.io.File;
 //import java.io.IOException;
 //import java.io.InputStream;
+import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 //import java.util.HashMap;
@@ -36,6 +37,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNSynchronizeEditor;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.replicator.SVNRepositoryReplicator;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
@@ -76,6 +78,10 @@ public class SVNAdminClient extends SVNBasicClient {
         myLoadHandler = handler;
     }
 */
+    
+    public SVNURL doCreateRepository(File path, String uuid, boolean enableRevisionProperties, boolean force) throws SVNException {
+        return SVNRepositoryFactory.createLocalRepository(path, uuid, enableRevisionProperties, force);
+    }
     
     public void doCopyRevisionProperties(SVNURL toURL, long revision) throws SVNException {
         SVNRepository toRepos = createRepository(toURL, true);
