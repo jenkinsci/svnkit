@@ -1193,15 +1193,15 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         if (copyDstRoot.checkNodeKind(path) == SVNNodeKind.NONE) {
             return null;
         }
-        
-        FSRevisionNode curRev = copyDstRoot.getRevisionNode(path);
-        if (!parentPath.getRevNode().getId().isRelated(curRev.getId())) {
+        FSParentPath copyDstParentPath = copyDstRoot.openPath(path, true, true);
+        FSRevisionNode copyDstNode = copyDstParentPath.getRevNode();
+        if (!copyDstNode.getId().isRelated(parentPath.getRevNode().getId())) {
             return null;
         }
 
-        long createdRev = parentPath.getRevNode().getId().getRevision();
+        long createdRev = copyDstNode.getId().getRevision();
         if (createdRev == copyDstEntry.getRevision()) {
-            if (parentPath.getRevNode().getPredecessorId() == null) {
+            if (copyDstNode.getPredecessorId() == null) {
                 return null;
             }
         }
