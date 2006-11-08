@@ -62,6 +62,7 @@ import org.tmatesoft.svn.core.io.SVNFileRevision;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.0
@@ -722,8 +723,10 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
 
             FSRevisionRoot root = null;
             while (count < revisions.length) {
+                SVNDebugLog.getDefaultLog().info("looking at rev: " + revision);
                 root = myFSFS.createRevisionRoot(revision);
                 FSClosestCopy tempClCopy = closestCopy(root, path);
+                SVNDebugLog.getDefaultLog().info("closest copy: " + tempClCopy.getPath() + ", " + tempClCopy.getRevisionRoot().getRevision());
                 if (tempClCopy == null) {
                     break;
                 }
@@ -742,7 +745,6 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                 FSRevisionNode copyfromNode = croot.getRevisionNode(cpath);
                 String copyfromPath = copyfromNode.getCopyFromPath();
                 long copyfromRevision = copyfromNode.getCopyFromRevision();
-
                 while ((count < revisions.length) && locationRevs[count] > copyfromRevision) {
                     ++count;
                 }

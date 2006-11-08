@@ -115,7 +115,11 @@ public class SVNCommandEventProcessor implements ISVNEventHandler {
             } else {
                 myIsChanged = true;
             }
-            SVNCommand.println(myPrintStream, "A    " + SVNFormatUtil.formatPath(event.getFile()));
+            if (event.getContentsStatus() == SVNStatusType.CONFLICTED) {
+                SVNCommand.println(myPrintStream, "C    " + SVNFormatUtil.formatPath(event.getFile()));
+            } else {
+                SVNCommand.println(myPrintStream, "A    " + SVNFormatUtil.formatPath(event.getFile()));
+            }
         } else if (event.getAction() == SVNEventAction.UPDATE_DELETE) {
             if (myIsExternal) {
                 myIsExternalChanged = true;

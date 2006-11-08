@@ -272,7 +272,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                 result[0] = SVNStatusType.OBSTRUCTED;
             } else {
                 myIsAddNecessitatedMerge = true;
-                fileChanged(path, file1, file2, revision1, revision2, mimeType1, mimeType2, originalProperties, diff);
+                result = fileChanged(path, file1, file2, revision1, revision2, mimeType1, mimeType2, originalProperties, diff);
                 myIsAddNecessitatedMerge = false;
             }
         }

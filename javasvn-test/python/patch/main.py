@@ -99,8 +99,8 @@ if sys.platform == 'win32':
 else:
   windows = 0
   file_scheme_prefix = 'file://'
-  _bat = ''
   _exe = ''
+  _bat = ''
 
 # os.wait() specifics
 try:
@@ -109,6 +109,8 @@ try:
 except ImportError:
   platform_with_os_wait = 0
 
+# The locations of the svn, svnadmin and svnlook binaries, relative to
+# the only scripts that import this file right now (they live in ../).
 # The locations of the svn, svnadmin and svnlook binaries, relative to
 # the only scripts that import this file right now (they live in ../).
 #svn_binary = os.path.abspath('../../../clients/cmdline/svn' + _exe)
@@ -258,7 +260,10 @@ def run_command_stdin(command, error_expected, binary_mode=0,
 
   args = ''
   for arg in varargs:                   # build the command string
-    args = args + ' "' + str(arg) + '"'
+    arg = str(arg)
+    if os.name != 'nt':
+      arg = arg.replace('$', '\$')
+    args = args + ' "' + arg + '"'
 
   # Log the command line
   if verbose_mode:
@@ -545,6 +550,19 @@ def create_python_hook_script (hook_path, hook_script_code):
     # For all other platforms
     file_append (hook_path, "#!%s\n%s" % (sys.executable, hook_script_code))
     os.chmod (hook_path, 0755)
+
+
+def compare_unordered_output(expected, actual):
+  """Compare lists of output lines for equality disregarding the
+     order of the lines"""
+  if len(actual) != len(expected):
+    raise Failure("Length of expected output not equal to actual length")
+  for aline in actual:
+    try:
+      i = expected.index(aline)
+      expected.pop(i)
+    except ValueError:
+      raise Failure("Expected output does not match actual output")
 
 
 ######################################################################

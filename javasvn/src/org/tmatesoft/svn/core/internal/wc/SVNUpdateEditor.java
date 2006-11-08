@@ -366,10 +366,12 @@ public class SVNUpdateEditor implements ISVNEditor {
     public void applyTextDelta(String commitPath, String baseChecksum) throws SVNException {
         SVNAdminArea adminArea = myCurrentFile.getAdminArea();
         SVNEntry entry = adminArea.getEntry(myCurrentFile.Name, false);
-        File baseFile = adminArea.getBaseFile(myCurrentFile.Name, false);
+        boolean replaced = entry != null && entry.isScheduledForReplacement();
+
+        File baseFile = replaced ? adminArea.getFile(SVNAdminUtil.getTextRevertPath(myCurrentFile.Name, false)) : adminArea.getBaseFile(myCurrentFile.Name, false);
+        
         if (entry != null && entry.getChecksum() != null) {
             String realChecksum = SVNFileUtil.computeChecksum(baseFile);
-
             if (baseChecksum != null) {
                 if (!baseChecksum.equals(realChecksum)) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, "Checksum mismatch for ''{0}''; expected: ''{1}'', actual: ''{2}''",
@@ -380,13 +382,13 @@ public class SVNUpdateEditor implements ISVNEditor {
             
             String realChecksumSafe = realChecksum == null ? "" : realChecksum;
             String entryChecksumSafe = entry.getChecksum() == null ? "" : entry.getChecksum();
-            if (!realChecksumSafe.equals(entryChecksumSafe)) {
+            if (!replaced && !realChecksumSafe.equals(entryChecksumSafe)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, "Checksum mismatch for ''{0}''; recorded: ''{1}'', actual: ''{2}''",
                         new Object[] {myCurrentFile.getPath(), entry.getChecksum(), realChecksum}); 
                 SVNErrorManager.error(err);
             }
         }
-        File baseTmpFile = adminArea.getBaseFile(myCurrentFile.Name, true);
+        File baseTmpFile = replaced ? adminArea.getFile(SVNAdminUtil.getTextRevertPath(myCurrentFile.Name, true)) : adminArea.getBaseFile(myCurrentFile.Name, true);
         myCurrentFile.TextUpdated = true;
         myDeltaProcessor.applyTextDelta(baseFile, baseTmpFile, true);
     }
@@ -403,9 +405,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         // check checksum.
         String checksum = null;
         if (textChecksum != null && myCurrentFile.TextUpdated) {            
-            File baseTmpFile = myCurrentFile.getAdminArea().getBaseFile(myCurrentFile.Name, true);
-            checksum = myCurrentFile.Checksum != null ? myCurrentFile.Checksum : SVNFileUtil.computeChecksum(baseTmpFile);            
-            if (!textChecksum.equals(checksum)) {
+            if (myCurrentFile.Checksum != null && !textChecksum.equals(myCurrentFile.Checksum)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH, "Checksum mismatch for ''{0}''; expected: ''{1}'', actual: ''{2}''",
                         new Object[] {myCurrentFile.getPath(), textChecksum, checksum}); 
                 SVNErrorManager.error(err);
@@ -466,6 +466,9 @@ public class SVNUpdateEditor implements ISVNEditor {
         //merge contents.
         String adminDir = SVNFileUtil.getAdminDirectoryName();
         File textTmpBase = adminArea.getBaseFile(name, true);
+        if (isReplaced) {
+            textTmpBase = adminArea.getFile(SVNAdminUtil.getTextRevertPath(name, true));
+        }
         File workingFile = adminArea.getFile(name);
         String tmpPath = null;
         String basePath = null;
@@ -475,10 +478,8 @@ public class SVNUpdateEditor implements ISVNEditor {
                 tmpPath = adminDir + "/tmp/text-base/" + name + ".svn-base";
                 basePath = adminDir + "/text-base/" + name + ".svn-base";
             } else {
-                String realTmpPath = adminDir + "/tmp/text-base/" + name + ".svn-base";
                 tmpPath = adminDir + "/tmp/text-base/" + name + ".svn-revert";
                 basePath = adminDir + "/text-base/" + name + ".svn-revert";
-                SVNFileUtil.rename(adminArea.getFile(realTmpPath), adminArea.getFile(tmpPath));
             }
         } else if (!myCurrentFile.TextUpdated && magicPropsChanged && workingFile.exists()) {
             // only props were changed, but we have to retranslate file.

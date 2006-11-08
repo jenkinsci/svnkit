@@ -178,6 +178,8 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         myCurrentFile = new SVNFileInfo(path, true);
         myCurrentFile.myBaseProperties = Collections.EMPTY_MAP;
+        myCurrentFile.myBaseFile = SVNFileUtil.createUniqueFile(getTempDirectory(), "diff", ".tmp");
+        SVNFileUtil.createEmptyFile(myCurrentFile.myBaseFile);
     }
 
     public void openFile(String path, long revision) throws SVNException {
@@ -233,7 +235,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             if (myCurrentFile.myIsAdded) {
                 type = getDiffCallback().fileAdded(commitPath, 
                         myCurrentFile.myFile != null ? myCurrentFile.myBaseFile : null, myCurrentFile.myFile, 
-                        myRevision1, myRevision2, baseMimeType, mimeType, 
+                        0, myRevision2, baseMimeType, mimeType, 
                         myCurrentFile.myBaseProperties, myCurrentFile.myPropertyDiff);
             } else {
                 type = getDiffCallback().fileChanged(commitPath, 
