@@ -92,6 +92,7 @@ javasvn-test/test.windows.properties eol=crlf
 javasvn/cli/logging.properties.disabled -text
 javasvn/cli/svn eol=lf
 javasvn/cli/svn.bat eol=crlf
+javasvn/cli/svnsync -text
 javasvn/cli/svnsync.bat -text
 javasvn/src/org/tigris/subversion/javahl/SVNClient.java -text
 javasvn/src/org/tmatesoft/svn/core/SVNURL.java -text
