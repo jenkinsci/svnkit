@@ -192,6 +192,7 @@
             </fileset>
         </copy>
         <chmod file="build/lib/svn" perm="ugo+rx" />
+        <chmod file="build/lib/svnsync" perm="ugo+rx" />
     </target>
 
     <target name="build-src">
