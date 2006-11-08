@@ -128,11 +128,18 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                     myAddedPath = path;
                 }
                 return SVNStatusType.CHANGED;
+            } else if (myIsDryRun && isPathDeleted(path)) {
+                return SVNStatusType.CHANGED;
+                
             }
             return SVNStatusType.OBSTRUCTED;
         } else if (fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) {
             if (myIsDryRun) {
                 myAddedPath = null;
+            }
+            SVNEntry entry = getWCAccess().getEntry(mergedFile, false);
+            if (entry != null && myIsDryRun && isPathDeleted(path)) {
+                return SVNStatusType.CHANGED;
             }
             return SVNStatusType.OBSTRUCTED;
         }
@@ -268,11 +275,17 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                 result[1] = SVNStatusType.CHANGED;
             }
         } else if (fileType == SVNFileType.DIRECTORY || fileType == SVNFileType.SYMLINK) {
-            result[0] = SVNStatusType.OBSTRUCTED;
+            if (myIsDryRun && isPathDeleted(path)){
+                result[0] = SVNStatusType.CHANGED;
+            } else { 
+                result[0] = SVNStatusType.OBSTRUCTED;
+            }
         } else if (fileType == SVNFileType.FILE) {
             SVNEntry entry = getWCAccess().getEntry(mergedFile, false);
             if (entry == null || entry.isScheduledForDeletion()) {
                 result[0] = SVNStatusType.OBSTRUCTED;
+            } else if (myIsDryRun && isPathDeleted(path)){
+                result[0] = SVNStatusType.CHANGED;
             } else {
                 myIsAddNecessitatedMerge = true;
                 result = fileChanged(path, file1, file2, revision1, revision2, mimeType1, mimeType2, originalProperties, diff);

@@ -12,8 +12,10 @@
 package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -30,6 +32,7 @@ public abstract class AbstractDiffCallback {
     
     private SVNAdminAreaInfo myAdminInfo;
     private File myBasePath;
+    private Set myDeletedPaths;
     
     protected AbstractDiffCallback(SVNAdminAreaInfo info) {
         myAdminInfo = info;
@@ -90,6 +93,21 @@ public abstract class AbstractDiffCallback {
     
     protected SVNWCAccess getWCAccess() {
         return getAdminInfo().getWCAccess();
+    }
+    
+    protected void addDeletedPath(String path) {
+        if (myDeletedPaths == null) {
+            myDeletedPaths = new HashSet();
+        }
+        myDeletedPaths.add(path);
+    }
+    
+    protected boolean isPathDeleted(String path) {
+        return myDeletedPaths != null && myDeletedPaths.contains(path);
+    }
+
+    protected void clearDeletedPaths() {
+        myDeletedPaths = null;
     }
 
 }

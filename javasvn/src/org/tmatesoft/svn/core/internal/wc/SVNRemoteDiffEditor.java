@@ -104,6 +104,9 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             }
             if (type != SVNStatusType.MISSING && type != SVNStatusType.OBSTRUCTED) {
                 action = SVNEventAction.UPDATE_DELETE;
+                if (myIsDryRun) {
+                    getDiffCallback().addDeletedPath(path);
+                }
             }
         }
         if (myEventHandler != null) {
@@ -142,6 +145,10 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
         SVNStatusType type = SVNStatusType.UNKNOWN;
         SVNEventAction expectedAction = SVNEventAction.UPDATE_UPDATE;
         SVNEventAction action = expectedAction;
+        
+        if (myIsDryRun) {
+            getDiffCallback().clearDeletedPaths();
+        }
         
         SVNAdminArea dir = null;
         if (!myCurrentDirectory.myPropertyDiff.isEmpty()) {
