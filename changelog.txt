@@ -1,3 +1,8 @@
+= version 1.1.0
+
++ command line application and API to perform svnsync.
++ bugfixes.
+
 = version 1.1.0.beta5
 
 + support for Subversion 1.4 working copy and new fsfs repository format.
