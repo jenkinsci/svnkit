@@ -368,7 +368,7 @@ public class SVNLogRunner {
 
     public void logCompleted(SVNAdminArea adminArea) throws SVNException {
         if (myIsWCPropertiesChanged) {
-            adminArea.saveWCProperties(false);
+            adminArea.saveWCProperties(true);
         } 
         
         if (myIsEntriesChanged) {
