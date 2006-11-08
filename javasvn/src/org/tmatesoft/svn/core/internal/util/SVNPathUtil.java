@@ -156,6 +156,56 @@ public class SVNPathUtil {
         return path1.substring(0, separatorIndex);
     }
 
+    public static String canonicalizeAbsPath(String path) {
+        //No path, no problem
+        if (path == null) {
+            return null;
+        }       
+        
+        //If no content in path
+        if ("".equals(path)) {
+            return "/";
+        }
+
+        StringBuffer newString = new StringBuffer();
+        //Set leading '/' character
+        if (!path.startsWith("/")) {
+            newString.append('/');
+        }
+
+        //dispose of slashes number of that is 
+        boolean eatingSlashes = false;
+        for (int count = 0; count < path.length(); count++) {
+            if (path.charAt(count) == '/') {
+                if (eatingSlashes) {
+                    continue;
+                }
+                eatingSlashes = true;
+            } else {
+                if (eatingSlashes) {
+                    eatingSlashes = false;
+                }
+            }
+            newString.append(path.charAt(count));
+        }           
+
+        if (newString.length() > 1 && newString.charAt(newString.length() - 1) == '/') {
+            newString.deleteCharAt(newString.length() - 1);
+        }
+        
+        return newString.toString();
+    }    
+    
+    public static void checkPathIsValid(String path) throws SVNException {
+        for (int i = 0; i < path.length(); i++) {
+            char ch = path.charAt(i);
+            if (SVNEncodingUtil.isASCIIControlChar(ch)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_PATH_SYNTAX, "Invalid control character ''{0}'' in path ''{1}''", new String[] {"''0x" + SVNFormatUtil.getHexNumberFromByte((byte)ch) + "''", path});
+                SVNErrorManager.error(err);
+            }
+        }
+    }
+    
     public static String getCommonURLAncestor(String url1, String url2) {
         // skip protocol and host, if they are different -> return "";
         if (url1 == null || url2 == null) {

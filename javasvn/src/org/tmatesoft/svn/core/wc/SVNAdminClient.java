@@ -11,8 +11,12 @@
  */
 package org.tmatesoft.svn.core.wc;
 
+//import java.io.File;
+//import java.io.IOException;
+//import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+//import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -24,13 +28,16 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+//import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+//import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNSynchronizeEditor;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.replicator.SVNRepositoryReplicator;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.0
@@ -38,8 +45,21 @@ import org.tmatesoft.svn.core.replicator.SVNRepositoryReplicator;
  */
 public class SVNAdminClient extends SVNBasicClient {
 
-    private ISVNLogEntryHandler myHandler;
+/*    public static final String DUMPFILE_MAGIC_HEADER = "SVN-fs-dump-format-version";
+    public static final String DUMPFILE_REVISION_NUMBER = "Revision-number";
+    public static final String DUMPFILE_NODE_PATH = "Node-path";
+    public static final String DUMPFILE_NODE_KIND = "Node-kind";
+    public static final String DUMPFILE_NODE_ACTION = "Node-action";
+    public static final String DUMPFILE_NODE_COPYFROM_REVISION = "Node-copyfrom-rev";
+    public static final String DUMPFILE_NODE_COPYFROM_PATH = "Node-copyfrom-path";
+    public static final String DUMPFILE_TEXT_CONTENT_LENGTH = "Text-content-length";
 
+    private static final int DUMPFILE_FORMAT_VERSION = 3;
+*/
+    
+    private ISVNLogEntryHandler mySyncHandler;
+//    private ISVNLoadHandler myLoadHandler;
+    
     public SVNAdminClient(ISVNAuthenticationManager authManager, ISVNOptions options) {
         super(authManager, options);
     }
@@ -49,9 +69,14 @@ public class SVNAdminClient extends SVNBasicClient {
     }
 
     public void setReplayHandler(ISVNLogEntryHandler handler) {
-        myHandler = handler;
+        mySyncHandler = handler;
     }
 
+/*    public void setLoadHandler(ISVNLoadHandler handler) {
+        myLoadHandler = handler;
+    }
+*/
+    
     public void doCopyRevisionProperties(SVNURL toURL, long revision) throws SVNException {
         SVNRepository toRepos = createRepository(toURL, true);
         checkIfRepositoryIsAtRoot(toRepos, toURL);
@@ -64,7 +89,7 @@ public class SVNAdminClient extends SVNBasicClient {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot copy revprops for a revision that has not been synchronized yet");
                 SVNErrorManager.error(err);
             }
-            copyRevisionProperties(info.myRepository, toRepos, revision);
+            copyRevisionProperties(info.myRepository, toRepos, revision, false);
         } finally {
             try {
                 unlock(toRepos);
@@ -105,14 +130,7 @@ public class SVNAdminClient extends SVNBasicClient {
             toRepos.setRevisionPropertyValue(0, SVNRevisionProperty.FROM_UUID, uuid);
             toRepos.setRevisionPropertyValue(0, SVNRevisionProperty.LAST_MERGED_REVISION, "0");
 
-            Map revProps = fromRepos.getRevisionProperties(0, null);
-            for (Iterator propNames = revProps.keySet().iterator(); propNames.hasNext();) {
-                String propName = (String) propNames.next();
-                String propValue = (String) revProps.get(propName);
-                if (!propName.startsWith("svn:sync-")) {
-                    toRepos.setRevisionPropertyValue(0, propName, propValue);
-                }
-            }
+            copyRevisionProperties(fromRepos, toRepos, 0, false);
         } finally {
             try {
                 unlock(toRepos);
@@ -173,7 +191,7 @@ public class SVNAdminClient extends SVNBasicClient {
                     SVNErrorManager.error(err);
                 } else if (copyingRev == toLatestRevision) {
                     if (copyingRev > lastMergedRevision) {
-                        copyRevisionProperties(fromRepos, toRepos, toLatestRevision);
+                        copyRevisionProperties(fromRepos, toRepos, toLatestRevision, true);
                         lastMergedRevision = copyingRev;
                     }
                     toRepos.setRevisionPropertyValue(0, SVNRevisionProperty.LAST_MERGED_REVISION, SVNProperty.toString(lastMergedRevision));
@@ -193,7 +211,7 @@ public class SVNAdminClient extends SVNBasicClient {
 
             for (long currentRev = lastMergedRevision + 1; currentRev <= fromLatestRevision; currentRev++) {
                 toRepos.setRevisionPropertyValue(0, SVNRevisionProperty.CURRENTLY_COPYING, SVNProperty.toString(currentRev));
-                SVNSynchronizeEditor syncEditor = new SVNSynchronizeEditor(toRepos, myHandler, currentRev - 1);
+                SVNSynchronizeEditor syncEditor = new SVNSynchronizeEditor(toRepos, mySyncHandler, currentRev - 1);
                 ISVNEditor cancellableEditor = SVNCancellableEditor.newInstance(syncEditor, this, getDebugLog());
                 fromRepos.replay(0, currentRev, true, cancellableEditor);
                 cancellableEditor.closeEdit();
@@ -203,7 +221,7 @@ public class SVNAdminClient extends SVNBasicClient {
                     });
                     SVNErrorManager.error(err);
                 }
-                copyRevisionProperties(fromRepos, toRepos, currentRev);
+                copyRevisionProperties(fromRepos, toRepos, currentRev, true);
                 toRepos.setRevisionPropertyValue(0, SVNRevisionProperty.LAST_MERGED_REVISION, SVNProperty.toString(currentRev));
                 toRepos.setRevisionPropertyValue(0, SVNRevisionProperty.CURRENTLY_COPYING, null);
             }
@@ -220,12 +238,162 @@ public class SVNAdminClient extends SVNBasicClient {
         }
     }
 
-    private void copyRevisionProperties(SVNRepository fromRepository, SVNRepository toRepository, long revision) throws SVNException {
+/*    public void load(File repositoryRoot, InputStream dumpStream, boolean usePreCommitHook, boolean usePostCommitHook, String parentDir) throws SVNException {
+        FSFS fsfs = openRepository(repositoryRoot);
+        ISVNLoadHandler handler = getLoadHandler(usePreCommitHook, usePostCommitHook, parentDir);
+        
+        String line = null;
+        StringBuffer buffer = new StringBuffer();
+        try {
+            line = SVNFileUtil.readLineFromStream(dumpStream, buffer);
+            if (line == null) {
+                generateIncompleteDataError();
+            }
+            
+            //parse format
+            if (!line.startsWith(DUMPFILE_MAGIC_HEADER + ":")) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Malformed dumpfile header");
+                SVNErrorManager.error(err);
+            }
+            try {
+                int version = Integer.parseInt(line.substring(DUMPFILE_MAGIC_HEADER.length() + 1));
+                if (version > DUMPFILE_FORMAT_VERSION) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Unsupported dumpfile version: {0,number,integer}", new Integer(version));
+                    SVNErrorManager.error(err);
+                }
+            } catch (NumberFormatException nfe) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Malformed dumpfile header");
+                SVNErrorManager.error(err);
+            }
+            
+
+            while (true) {
+                checkCancelled();
+
+                boolean foundNode = false;
+                
+                //skip empty lines
+                buffer.setLength(0);
+                line = SVNFileUtil.readLineFromStream(dumpStream, buffer);
+                if (line == null) {
+                    if (buffer.length() > 0) {
+                        generateIncompleteDataError();
+                    } else {
+                        break;
+                    }
+                } 
+                
+                line = line.trim();
+                if (line.length() == 0) {
+                    continue;
+                }
+                
+                Map headers = readHeaderBlock(dumpStream, line);
+                if (headers.containsKey(DUMPFILE_REVISION_NUMBER)) {
+                    handler.closeRevision();
+                    handler.openRevision(headers);
+                } else if (headers.containsKey(DUMPFILE_NODE_PATH)) {
+                    handler.openNode(headers);
+                    foundNode = true;
+                }
+                
+            }
+        } catch (IOException ioe) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
+            SVNErrorManager.error(err, ioe);
+        }
+    }
+*/
+    
+/*    private ISVNLoadHandler getLoadHandler(boolean usePreCommitHook, boolean usePostCommitHook, String parentDir) {
+        if (myLoadHandler == null) {
+            myLoadHandler = new DefaultLoadHandler(false, false, parentDir);
+        }
+        return myLoadHandler;
+    }
+    
+    private Map readHeaderBlock(InputStream dumpStream, String firstHeader) throws SVNException, IOException {
+        Map headers = new HashMap();
+        StringBuffer buffer = new StringBuffer();
+        while (true) {
+            String header = null;
+            buffer.setLength(0);
+            if (firstHeader != null) {
+                header = firstHeader;
+                firstHeader = null;
+            } else {
+                header = SVNFileUtil.readLineFromStream(dumpStream, buffer);
+            }
+            
+            if (header == null && buffer.length() > 0) {
+                generateIncompleteDataError();
+            } else if (buffer.length() == 0) {
+                break;
+            }
+            
+            int colonInd = header.indexOf(':');
+            if (colonInd == -1) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Dump stream contains a malformed header (with no '':'') at ''{0}''", header.length() > 20 ? header.substring(0, 19) : header);
+                SVNErrorManager.error(err);
+            }
+            
+            String name = header.substring(0, colonInd);
+            if (colonInd + 2 > header.length()) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Dump stream contains a malformed header (with no value) at ''{0}''", header.length() > 20 ? header.substring(0, 19) : header);
+                SVNErrorManager.error(err);
+            }
+            String value = header.substring(colonInd + 2);
+            headers.put(name, value);
+        }
+        
+        return headers;
+    }
+    
+    private void generateIncompleteDataError() throws SVNException {
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, "Premature end of content data in dumpstream");
+        SVNErrorManager.error(err);
+    }
+    
+    private FSFS openRepository(File reposRootPath) throws SVNException {
+        FSFS fsfs = new FSFS(reposRootPath);
+        fsfs.open();
+        return fsfs;
+    }
+*/
+    
+    private void copyRevisionProperties(SVNRepository fromRepository, SVNRepository toRepository, long revision, boolean sync) throws SVNException {
+        Map existingRevProps = null;
+        if (sync) {
+            existingRevProps = toRepository.getRevisionProperties(revision, null);
+        }
+        
+        boolean sawSyncProperties = false;
         Map revProps = fromRepository.getRevisionProperties(revision, null);
         for (Iterator propNames = revProps.keySet().iterator(); propNames.hasNext();) {
             String propName = (String) propNames.next();
             String propValue = (String) revProps.get(propName);
-            toRepository.setRevisionPropertyValue(revision, propName, propValue);
+            if (propName.startsWith("sync-")) {
+                sawSyncProperties = true;
+            } else {
+                toRepository.setRevisionPropertyValue(revision, propName, propValue);
+            }
+            
+            if (sync) {
+                existingRevProps.remove(propName);
+            }
+        }
+        
+        if (sync) {
+            for (Iterator propNames = existingRevProps.keySet().iterator(); propNames.hasNext();) {
+                String propName = (String) propNames.next();
+                toRepository.setRevisionPropertyValue(revision, propName, null);
+            }            
+        }
+        
+        if (sawSyncProperties) {
+            SVNDebugLog.getDefaultLog().info("Copied properties for revision " + revision + " (sync-* properties skipped).\n");
+        } else {
+            SVNDebugLog.getDefaultLog().info("Copied properties for revision " + revision + ".\n");
         }
     }
 

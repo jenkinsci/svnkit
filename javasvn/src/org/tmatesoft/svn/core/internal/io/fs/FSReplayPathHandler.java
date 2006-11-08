@@ -82,6 +82,7 @@ public class FSReplayPathHandler implements ISVNCommitPathHandler {
         
         if (isDelete) {
             editor.deleteEntry(path, -1);
+            return false;
         }
         
         SVNNodeKind kind = null;

@@ -217,8 +217,17 @@ public class FSFS {
         return new FSRevisionRoot(this, revision);
     }
     
-    public FSTransactionRoot createTransactionRoot(String txnID, int flags) {
-        return new FSTransactionRoot(this, txnID, flags);
+    public FSTransactionRoot createTransactionRoot(String txnId) throws SVNException {
+        Map txnProps = getTransactionProperties(txnId);
+        int flags = 0;
+        if (txnProps.get(SVNProperty.TXN_CHECK_OUT_OF_DATENESS) != null) {
+            flags |= FSTransactionRoot.SVN_FS_TXN_CHECK_OUT_OF_DATENESS;
+        }
+        if (txnProps.get(SVNProperty.TXN_CHECK_LOCKS) != null) {
+            flags |= FSTransactionRoot.SVN_FS_TXN_CHECK_LOCKS;
+        }
+
+        return new FSTransactionRoot(this, txnId, flags);
     }
 
     public FSRevisionNode getRevisionNode(FSID id) throws SVNException  {
@@ -517,11 +526,9 @@ public class FSFS {
         revProps.setPropertyValue(propertyName, propertyValue);
     }
 
-    public void setRevisionProperty(long revision, String propertyName, String propertyNewValue, String propertyOldValue, String userName, String action) throws SVNException {
-        FSHooks.runPreRevPropChangeHook(myRepositoryRoot, propertyName, propertyNewValue, userName, revision, action);
+    public void setRevisionProperty(long revision, String propertyName, String propertyValue) throws SVNException {
         SVNProperties revProps = new SVNProperties(getRevisionPropertiesFile(revision), null);
-        revProps.setPropertyValue(propertyName, propertyNewValue);
-        FSHooks.runPostRevPropChangeHook(myRepositoryRoot, propertyName, propertyOldValue, userName, revision, action);
+        revProps.setPropertyValue(propertyName, propertyValue);
     }
 
     public Map getTransactionProperties(String txnID) throws SVNException {

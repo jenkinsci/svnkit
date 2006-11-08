@@ -648,6 +648,19 @@ public class SVNFileUtil {
         }
     }
     
+    //method that reads line until a LF ('\n') is met. all read bytes are appended to the passed buffer
+    //returns the resultant string collected in the buffer excluding an LF. if an eof is met returns null. 
+    public static String readLineFromStream (InputStream is, StringBuffer buffer) throws IOException {
+        int r = -1;
+        while ((r = is.read()) != '\n') {
+            if (r == -1) {
+                return null; 
+            }
+            buffer.append((char)r);
+        }
+        return buffer.toString();
+    }
+    
     public static String detectMimeType(InputStream is) throws IOException {
         byte[] buffer = new byte[1024];
         int read = 0;

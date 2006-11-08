@@ -22,7 +22,6 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 
-
 /**
  * @version 1.0
  * @author  TMate Software Ltd.
