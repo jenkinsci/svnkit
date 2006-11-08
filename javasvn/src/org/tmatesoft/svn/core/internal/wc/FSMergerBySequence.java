@@ -12,30 +12,22 @@
 
 package org.tmatesoft.svn.core.internal.wc;
 
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
+import java.util.*;
+import org.tmatesoft.svn.core.wc.*;
 
-import org.tmatesoft.svn.core.wc.SVNDiffOptions;
-
-import de.regnis.q.sequence.QSequenceDifferenceBlock;
-import de.regnis.q.sequence.core.QSequenceException;
-import de.regnis.q.sequence.line.QSequenceLine;
-import de.regnis.q.sequence.line.QSequenceLineCache;
-import de.regnis.q.sequence.line.QSequenceLineMedia;
-import de.regnis.q.sequence.line.QSequenceLineRAData;
-import de.regnis.q.sequence.line.QSequenceLineResult;
-import de.regnis.q.sequence.line.simplifier.QSequenceLineDummySimplifier;
-import de.regnis.q.sequence.line.simplifier.QSequenceLineEOLUnifyingSimplifier;
-import de.regnis.q.sequence.line.simplifier.QSequenceLineSimplifier;
-import de.regnis.q.sequence.line.simplifier.QSequenceLineTeeSimplifier;
-import de.regnis.q.sequence.line.simplifier.QSequenceLineWhiteSpaceReducingSimplifier;
-import de.regnis.q.sequence.line.simplifier.QSequenceLineWhiteSpaceSkippingSimplifier;
+import de.regnis.q.sequence.*;
+import de.regnis.q.sequence.core.*;
+import de.regnis.q.sequence.line.*;
+import de.regnis.q.sequence.line.simplifier.*;
 
 /**
  * @author TMate Software Ltd.
  * @version 1.0
  */
 class FSMergerBySequence {
+
+	// Constants ==============================================================
 
 	public static final String DEFAULT_EOL = System.getProperty("line.separator");
 	public static final int NOT_MODIFIED = 0;
@@ -47,8 +39,6 @@ class FSMergerBySequence {
 	private final byte[] myConflictStart;
 	private final byte[] myConflictSeparator;
 	private final byte[] myConflictEnd;
-    
-    private QSequenceLineTeeSimplifier mySimplifer;
 
 	// Setup ==================================================================
 
@@ -62,32 +52,19 @@ class FSMergerBySequence {
 
 	public int merge(QSequenceLineRAData baseData,
 	                 QSequenceLineRAData localData, QSequenceLineRAData latestData,
-                     SVNDiffOptions options,
+	                 SVNDiffOptions options,
 	                 OutputStream result) throws IOException {
 
-//        dump("base", baseData);
-//        dump("latest", latestData);
-//        dump("local", localData);
+		//        dump("base", baseData);
+		//        dump("latest", latestData);
+		//        dump("local", localData);
 
 		final QSequenceLineResult localResult;
 		final QSequenceLineResult latestResult;
-        QSequenceLineSimplifier eolSimplifier = options != null && options.isIgnoreEOLStyle() ? 
-                (QSequenceLineSimplifier) new QSequenceLineEOLUnifyingSimplifier() : 
-                    (QSequenceLineSimplifier) new QSequenceLineDummySimplifier();
-        
-        QSequenceLineSimplifier spaceSimplifier = new QSequenceLineDummySimplifier();
-        if (options != null) {
-            if (options.isIgnoreAllWhitespace()) {
-                spaceSimplifier = new QSequenceLineWhiteSpaceSkippingSimplifier();
-            } else if (options.isIgnoreAmountOfWhitespace()) {
-                spaceSimplifier = new QSequenceLineWhiteSpaceReducingSimplifier();
-            }
-        }
-        mySimplifer = new QSequenceLineTeeSimplifier(eolSimplifier, spaceSimplifier);
+		final QSequenceLineTeeSimplifier mySimplifer = createSimplifier(options);
 		try {
-            // XXX simplifier could be passed into createBlocks...
-			localResult = QSequenceLineMedia.createBlocks(baseData, localData);
-			latestResult = QSequenceLineMedia.createBlocks(baseData, latestData);
+			localResult = QSequenceLineMedia.createBlocks(baseData, localData, mySimplifer);
+			latestResult = QSequenceLineMedia.createBlocks(baseData, latestData, mySimplifer);
 		}
 		catch (QSequenceException ex) {
 			throw new IOException(ex.getMessage());
@@ -99,6 +76,7 @@ class FSMergerBySequence {
 			final QSequenceLineCache latestLines = latestResult.getRightCache();
 			final FSMergerBySequenceList local = new FSMergerBySequenceList(localResult.getBlocks());
 			final FSMergerBySequenceList latest = new FSMergerBySequenceList(latestResult.getBlocks());
+			final List transformedLocalLines = transformLocalLines(localResult.getBlocks(), localLines);
 
 			int baseLineIndex = -1;
 			boolean conflict = false;
@@ -106,7 +84,7 @@ class FSMergerBySequence {
 
 			while (local.hasCurrent() || latest.hasCurrent()) {
 				if (local.hasCurrent() && latest.hasCurrent() && isEqualChange(local.current(), latest.current(), localLines, latestLines)) {
-					baseLineIndex = appendLines(result, local.current(), localLines, baseLineIndex);
+					baseLineIndex = appendLines(result, local.current(), localLines, baseLineIndex, transformedLocalLines);
 					local.forward();
 					latest.forward();
 					continue;
@@ -116,7 +94,7 @@ class FSMergerBySequence {
 					final QSequenceDifferenceBlock localStartBlock = local.current();
 					final QSequenceDifferenceBlock latestStartBlock = latest.current();
 					if (checkConflict(local, latest, localLines, latestLines, baseLines.getLineCount())) {
-						baseLineIndex = createConflict(result, localStartBlock, local.current(), latestStartBlock, latest.current(), baseLines, localLines, latestLines, baseLineIndex);
+						baseLineIndex = createConflict(result, localStartBlock, local.current(), latestStartBlock, latest.current(), localLines, latestLines, baseLineIndex, transformedLocalLines);
 						local.forward();
 						latest.forward();
 						conflict = true;
@@ -125,23 +103,20 @@ class FSMergerBySequence {
 				}
 
 				if (local.hasCurrent() && isBefore(local.current(), latest.hasCurrent() ? latest.current() : null)) {
-					baseLineIndex = appendLines(result, local.current(), localLines, baseLineIndex);
+					baseLineIndex = appendLines(result, local.current(), localLines, baseLineIndex, transformedLocalLines);
 					local.forward();
 					merged = true;
 					continue;
 				}
 
 				if (latest.hasCurrent()) {
-					baseLineIndex = appendLines(result, latest.current(), latestLines, baseLineIndex);
+					baseLineIndex = appendLines(result, latest.current(), latestLines, baseLineIndex, transformedLocalLines);
 					latest.forward();
 					merged = true;
-					continue;
 				}
 			}
 
-			for (baseLineIndex++; baseLineIndex < baseLines.getLineCount(); baseLineIndex++) {
-				writeLine(result, baseLines.getLine(baseLineIndex));
-			}
+			appendTransformedLocalLines(baseLineIndex, baseLines.getLineCount(), transformedLocalLines, result);
 
 			if (conflict) {
 				return CONFLICTED;
@@ -160,6 +135,44 @@ class FSMergerBySequence {
 	}
 
 	// Utils ==================================================================
+
+	private List transformLocalLines(List blocks, QSequenceLineCache localLines) throws IOException {
+		final List transformedLocalLines = new ArrayList();
+		final FSMergerBySequenceList blockList = new FSMergerBySequenceList(blocks);
+
+		int localIndex = 0;
+		int baseIndex = 0;
+
+		for (;localIndex < localLines.getLineCount();) {
+			final int baseTo;
+			if (blockList.hasCurrent()) {
+				final QSequenceDifferenceBlock block = blockList.current();
+				baseTo = block.getLeftFrom() -1;
+			}
+			else {
+				baseTo = Integer.MAX_VALUE;
+			}
+
+			while (localIndex < localLines.getLineCount() && baseIndex <= baseTo) {
+				transformedLocalLines.add(localLines.getLine(localIndex));
+				localIndex++;
+				baseIndex++;
+			}
+
+			if (blockList.hasCurrent()) {
+				for (int index = 0; index < blockList.current().getLeftSize(); index++) {
+					transformedLocalLines.add(null);
+				}
+
+				baseIndex += blockList.current().getLeftSize();
+				localIndex += blockList.current().getRightSize();
+
+				blockList.forward();
+			}
+		}
+
+		return transformedLocalLines;
+	}
 
 	private boolean isBefore(QSequenceDifferenceBlock block1,
 	                         QSequenceDifferenceBlock block2) {
@@ -195,10 +208,8 @@ class FSMergerBySequence {
 
 	private int appendLines(OutputStream result,
 	                        QSequenceDifferenceBlock block, QSequenceLineCache changedLines,
-	                        int baseLineIndex) throws IOException {
-		for (int equalLineIndex = block.getRightFrom() - (block.getLeftFrom() - 1 - baseLineIndex); equalLineIndex < block.getRightFrom(); equalLineIndex++) {
-			writeLine(result, changedLines.getLine(equalLineIndex));
-		}
+	                        int baseLineIndex, List transformedLocalLines) throws IOException {
+		appendTransformedLocalLines(baseLineIndex, block.getLeftFrom(), transformedLocalLines, result);
 
 		for (int changedLineIndex = block.getRightFrom(); changedLineIndex <= block.getRightTo(); changedLineIndex++) {
 			writeLine(result, changedLines.getLine(changedLineIndex));
@@ -210,7 +221,7 @@ class FSMergerBySequence {
 	private boolean isEqualChange(QSequenceDifferenceBlock localBlock,
 	                              QSequenceDifferenceBlock latestBlock,
 	                              QSequenceLineCache localLines, QSequenceLineCache latestLines)
-			throws IOException {
+		 throws IOException {
 		if (localBlock.getLeftFrom() != latestBlock.getLeftFrom() || localBlock.getLeftTo() != latestBlock.getLeftTo()) {
 			return false;
 		}
@@ -233,7 +244,7 @@ class FSMergerBySequence {
 	private boolean checkConflict(FSMergerBySequenceList localChanges,
 	                              FSMergerBySequenceList latestChanges,
 	                              QSequenceLineCache localLines, QSequenceLineCache latestLines, int baseLineCount)
-			throws IOException {
+		 throws IOException {
 		boolean conflict = false;
 		while (intersect(localChanges.current(), latestChanges.current(), baseLineCount) && !isEqualChange(localChanges.current(), latestChanges.current(), localLines, latestLines)) {
 			conflict = true;
@@ -262,15 +273,13 @@ class FSMergerBySequence {
 	                           QSequenceDifferenceBlock localStart,
 	                           QSequenceDifferenceBlock localEnd,
 	                           QSequenceDifferenceBlock latestStart,
-	                           QSequenceDifferenceBlock latestEnd, QSequenceLineCache baseLines,
+	                           QSequenceDifferenceBlock latestEnd,
 	                           QSequenceLineCache localLines, QSequenceLineCache latestLines,
-	                           int baseLineIndex) throws IOException {
+	                           int baseLineIndex, List transformedLocalLines) throws IOException {
 		final int minBaseFrom = Math.min(localStart.getLeftFrom(), latestStart.getLeftFrom());
 		final int maxBaseTo = Math.max(localEnd.getLeftTo(), latestEnd.getLeftTo());
 
-		for (baseLineIndex++; baseLineIndex < minBaseFrom; baseLineIndex++) {
-			writeLine(result, baseLines.getLine(baseLineIndex));
-		}
+		appendTransformedLocalLines(baseLineIndex, minBaseFrom, transformedLocalLines, result);
 
 		final int localFrom = Math.max(0, localStart.getRightFrom() - (localStart.getLeftFrom() - minBaseFrom));
 		final int localTo = Math.min(localLines.getLineCount() - 1, localEnd.getRightTo() + (maxBaseTo - localEnd.getLeftTo()));
@@ -290,6 +299,16 @@ class FSMergerBySequence {
 		return maxBaseTo;
 	}
 
+	private void appendTransformedLocalLines(int baseLineIndex, int to, List transformedLocalLines, OutputStream result) throws IOException {
+		for (baseLineIndex++; baseLineIndex < to; baseLineIndex++) {
+			final QSequenceLine sequenceLine = (QSequenceLine)transformedLocalLines.get(baseLineIndex);
+			if (sequenceLine == null) {
+				throw new RuntimeException();
+			}
+			writeLine(result, sequenceLine);
+		}
+	}
+
 	private void writeLine(OutputStream os, QSequenceLine line) throws IOException {
 		final byte[] bytes = line.getContentBytes();
 		if (bytes.length == 0) {
@@ -300,10 +319,27 @@ class FSMergerBySequence {
 	}
 
 	private void writeBytesAndEol(OutputStream os, final byte[] bytes)
-			throws IOException {
+		 throws IOException {
 		if (bytes.length > 0) {
 			os.write(bytes);
 			os.write(DEFAULT_EOL.getBytes());
 		}
+	}
+
+	private QSequenceLineTeeSimplifier createSimplifier(SVNDiffOptions options) {
+		final QSequenceLineSimplifier eolSimplifier = options != null && options.isIgnoreEOLStyle() ?
+			 (QSequenceLineSimplifier)new QSequenceLineEOLUnifyingSimplifier() :
+			 (QSequenceLineSimplifier)new QSequenceLineDummySimplifier();
+
+		QSequenceLineSimplifier spaceSimplifier = new QSequenceLineDummySimplifier();
+		if (options != null) {
+			if (options.isIgnoreAllWhitespace()) {
+				spaceSimplifier = new QSequenceLineWhiteSpaceSkippingSimplifier();
+			}
+			else if (options.isIgnoreAmountOfWhitespace()) {
+				spaceSimplifier = new QSequenceLineWhiteSpaceReducingSimplifier();
+			}
+		}
+		return new QSequenceLineTeeSimplifier(eolSimplifier, spaceSimplifier);
 	}
 }
