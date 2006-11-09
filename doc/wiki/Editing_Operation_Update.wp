@@ -3,7 +3,7 @@
 <br />
 
 == Editing Operation: receiving changes from a repository ==
-Another field of using [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html ISVNEditor] is update 
+Another field of using [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html ISVNEditor] is update 
 operations (checkout, update, switch, export). But in update operations roles are just opposite to ones in commit 
 operations: that is, while in a commit you ''obtain'' and use the library's editor to edit a repository, in an update 
 you ''provide'' your own '''ISVNEditor''' implementation to the library which will be called by a repository server to 
@@ -20,7 +20,7 @@ This mechanism gives a certain freedom in choosing the format of storing local v
 not restricted by the bounds of a general Working Copy.
 
 == Reporting a local versioned tree state to a server-side ==
-Descriptions of a local versioned tree state are made via the [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/ISVNReporter.html ISVNReporter] 
+Descriptions of a local versioned tree state are made via the [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/ISVNReporter.html ISVNReporter] 
 interface. We will study how to report local revisions by the example of using the low-level layer in the high-level one, 
 i.e. we will describe how '''SVNKit''' reports revisions of Working Copy items using '''ISVNReporter'''. 
 
@@ -31,8 +31,8 @@ Let's imagine we have got the following Working Copy tree:
 
 A user performs a recursive update to the latest (HEAD) revision on the root of the Working Copy. How does '''SVNKit''' make a report of local 
 revisions in this case? First of all, reports are provided to an '''SVNRepository''' driver through an 
-[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/ISVNReporterBaton.html ISVNReporterBaton] implementation. 
-When you pass it to an update method of '''SVNRepository''' the latter one calls the baton's [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/ISVNReporterBaton.html#report(org.tmatesoft.svn.core.io.ISVNReporter) report()] 
+[http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/ISVNReporterBaton.html ISVNReporterBaton] implementation. 
+When you pass it to an update method of '''SVNRepository''' the latter one calls the baton's [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/ISVNReporterBaton.html#report(org.tmatesoft.svn.core.io.ISVNReporter) report()] 
 method passing it an '''ISVNReporter''' object.
 
 <p>
@@ -445,7 +445,7 @@ public class Export {
     
     public static void main(String[] args) { 
         DAVRepositoryFactory.setup();
-        SVNURL url = SVNURL.parseURIEncoded("http://svn.tmate.org/svn/jsvn/trunk/doc");
+        SVNURL url = SVNURL.parseURIEncoded("http://svn.svnkit.com/repos/svnkit/trunk/doc");
         String userName = "foo";
         String userPassword = "bar";
         
@@ -498,7 +498,7 @@ public class Export {
 </java>
 
 ----
-Download the [http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples/repository/Export.java example program source code].
+Download the [http://svn.svnkit.com/repos/svnkit/trunk/doc/examples/src/org/tmatesoft/svn/examples/repository/Export.java example program source code].
 
 <br />
 <br />

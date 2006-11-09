@@ -4,7 +4,7 @@
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
- * are also available at http://tmate.org/svn/license.html.
+ * are also available at http://svnkit.com/license.html
  * If newer versions of this license are posted there, you may use a
  * newer version instead, at your option.
  * ====================================================================
@@ -45,13 +45,13 @@ import org.tmatesoft.svn.core.SVNURL;
  * directory's revision.
  *
  * For more information on using reporters, please, read these on-line article: 
- * <a href="http://tmate.org/svn/kb/dev-guide-update-operation.html">Using ISVNReporter/ISVNEditor in update-related operations</a>
+ * <a href="http://svnkit.com/kb/dev-guide-update-operation.html">Using ISVNReporter/ISVNEditor in update-related operations</a>
  * 
  * @version 1.1
  * @author 	TMate Software Ltd.
  * @see 	ISVNReporterBaton
  * @see 	SVNRepository
- * @see     <a target="_top" href="http://tmate.org/svn/kb/examples/">Examples</a>
+ * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
  */
 public interface ISVNReporter {
 

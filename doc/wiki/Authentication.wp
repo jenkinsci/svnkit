@@ -5,8 +5,8 @@
 == Authentication manager ==
 When an anonymous access to a repository is not permitted, a server asks for authentication credentials. For these 
 purposes '''SVNKit''' uses authentication managers. Such managers implement the 
-[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.html ISVNAuthenticationManager] 
-interface. The [[Getting Started With SVNKit|previous article]] describes how to create an [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html SVNRepository] 
+[http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.html ISVNAuthenticationManager] 
+interface. The [[Getting Started With SVNKit|previous article]] describes how to create an [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html SVNRepository] 
 driver for working with a repository. After such a driver has been instantiated you provide an authentication manager 
 in the following way:
 <java>
@@ -39,14 +39,14 @@ The whole authentication manager is based on the following four logical blocks:
 [[Image:AuthManager_Architecture.png]]
 <br />
 
-On the diagram each logical block is followed by a corresponding interface (in a bold font) provided within the [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/package-summary.html auth package].
+On the diagram each logical block is followed by a corresponding interface (in a bold font) provided within the [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/auth/package-summary.html auth package].
 These blokcs are like pinions of a gear, in our case - of an authentication gear that is used within '''SVNKit'''. Such a 
 structure allows you to replace different blocks while the authentication manager itself remaining the same. Let's look 
 at those blocks closer.
 
 ==== Authentication Provider ====
-This block is represented by the [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationProvider.html ISVNAuthenticationProvider] 
-interface in '''SVNKit''' authentication API. It's responsible for providing [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/SVNAuthentication.html user authentication credentials] 
+This block is represented by the [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationProvider.html ISVNAuthenticationProvider] 
+interface in '''SVNKit''' authentication API. It's responsible for providing [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/auth/SVNAuthentication.html user authentication credentials] 
 of different kinds. Such providers are passed to an authentication manager. Let's look at how SVNKit acts when it receives a server 
 challenge for authentication.
 
@@ -79,7 +79,7 @@ But imagine, that the user has mistyped his password.
 <p>
 '''SVNKit''' keeps on asking the auth manager for the next credentials until either the server acknowledges some of them or the 
 auth provider (hence the auth manager, too) runs out of credentials (returns ''null''). In the latter case 
-'''SVNKit''' throws an [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/SVNAuthenticationException.html SVNAuthenticationException].
+'''SVNKit''' throws an [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/SVNAuthenticationException.html SVNAuthenticationException].
 
 <p>
 There may be more than one auth provider registered in the auth manager (like in the default auth manager implementation 
@@ -93,13 +93,13 @@ correspond to them:
 {|border=1
 |bgcolor=#AACCFF|Kind||bgcolor=#AACCFF|Class representation||bgcolor=#AACCFF|Field of usage
 |-
-|[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.html#PASSWORD PASSWORD]||[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/SVNPasswordAuthentication.html SVNPasswordAuthentication]||''login:password'' authentication (''svn://'', ''http:// '')
+|[http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.html#PASSWORD PASSWORD]||[http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/auth/SVNPasswordAuthentication.html SVNPasswordAuthentication]||''login:password'' authentication (''svn://'', ''http:// '')
 |-
-|[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.html#SSH SSH]||[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/SVNSSHAuthentication.html SVNSSHAuthentication]||In ''svn+ssh://'' tunneled connections
+|[http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.html#SSH SSH]||[http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/auth/SVNSSHAuthentication.html SVNSSHAuthentication]||In ''svn+ssh://'' tunneled connections
 |-
-|[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.html#SSL SSL]||[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/SVNSSLAuthentication.html SVNSSLAuthentication]||In secure ''https:// '' connections
+|[http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.html#SSL SSL]||[http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/auth/SVNSSLAuthentication.html SVNSSLAuthentication]||In secure ''https:// '' connections
 |-
-|[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.html#USERNAME USERNAME]||[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/SVNUserNameAuthentication.html SVNUserNameAuthentication]||With ''file:///'' protocol, on local machines
+|[http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.html#USERNAME USERNAME]||[http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/auth/SVNUserNameAuthentication.html SVNUserNameAuthentication]||With ''file:///'' protocol, on local machines
 |}
 
 <p>
@@ -113,17 +113,17 @@ According to an access scheme '''SVNKit''' passes an appropriate kind to an auth
 scheme is used, '''SVNKit''' passes the '''SSH''' kind to an auth manager.
 
 ==== Authentication Storage ====
-This block is represented by the [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationStorage.html ISVNAuthenticationStorage] 
+This block is represented by the [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationStorage.html ISVNAuthenticationStorage] 
 interface. '''SVNKit''' implements this interface as a run-time in-memory storage for credentials of different kinds. In our previous example 
 the auth provider can store login\password provided by the user in such a storage, so that later credentials (acknowledged by the server and stored in 
 the run-time storage) may be reused without prompting the user again.
 
 ==== Proxy Manager ====
-If an authentication manager provides a non-null [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNProxyManager.html proxy manager], 
+If an authentication manager provides a non-null [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNProxyManager.html proxy manager], 
 '''SVNKit''' interacts with a target server through a proxy server represented by the proxy manager.
 
 ==== SSL Manager ====
-This block is represented by the [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNSSLManager.html ISVNSSLManager] 
+This block is represented by the [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNSSLManager.html ISVNSSLManager] 
 interface. When a secured http connection is used (''https:// ''), and this manager is not ''null'', it's used by 
 '''SVNKit''' to create SSL encrypted sockets (i.e. such a manager provides an appropriate SSL context). However if 
 no SSL manager is provided by an auth manager, '''SVNKit''' uses a default one which, of course, knows nothing of 
@@ -132,7 +132,7 @@ server certificate file.
 
 === Default ISVNAuthenticationManager implementations ===
 '''SVNKit''' provides the following implementations of '''ISVNAuthenticationManager''':
-* [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/BasicAuthenticationManager.html BasicAuthenticationManager]
+* [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/auth/BasicAuthenticationManager.html BasicAuthenticationManager]
 * DefaultSVNAuthenticationManager
 
 ==== DefaultSVNAuthenticationManager ====
@@ -147,7 +147,7 @@ On Windows machines name\password credentials are often stored encrypted. Unfort
 decrypt such credentials, therefore they are not used (just skipped).
 
 <p>
-The class which is responsible for instantiating '''DefaultSVNAuthenticationManager''' objects is [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/SVNWCUtil.html SVNWCUtil].
+The class which is responsible for instantiating '''DefaultSVNAuthenticationManager''' objects is [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/wc/SVNWCUtil.html SVNWCUtil].
 
 ==== BasicAuthenticationManager ====
 This is another very simple implementation of '''ISVNAuthenticationManager'''. Its features:

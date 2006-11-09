@@ -13,7 +13,7 @@ public class DisplayFile {
     public static void main(String[] args) {
         DAVRepositoryFactory.setup();
 
-        String url = "http://svn.tmate.org:8080/svn/jsvn/trunk";
+        String url = "http://svn.svnkit.com/repos/svnkit/trunk";
         String name = "anonymous";
         String password = "anonymous";
         String filePath = "www/license.html";
@@ -97,7 +97,7 @@ And finally we run the program and have the following output in our console:
  Repository latest revision: 645
 
 ----
-Download the [http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples/repository/DisplayFile.java example program source code].
+Download the [http://svn.svnkit.com/repos/svnkit/trunk/doc/examples/src/org/tmatesoft/svn/examples/repository/DisplayFile.java example program source code].
 
 <br />
 <br />

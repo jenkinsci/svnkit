@@ -82,7 +82,7 @@ is disabled.
 The third parameter of the ''createLocalRepository(...)'' method controls whether a repository creation must be forced 
 or not. That is, if this parameter is ''true'' and a repository already exists at the path you provide to 
 ''createLocalRepository(...)'' '''SVNKit''' replaces it with a new repository. However if it's ''false'' an existing 
-repository is not removed and a new repository creation fails with an [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/SVNException.html SVNException].
+repository is not removed and a new repository creation fails with an [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/SVNException.html SVNException].
 
 <p>
 If a repository is successfully created the ''createLocalRepository(...)'' method returns a ''file:///'' url of the 

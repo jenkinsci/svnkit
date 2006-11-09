@@ -3,14 +3,14 @@
 <br />
 
 == How to use different repository access protocols in SVNKit? ==
-When you have downloaded [http://tmate.org/svn/download/index.php the latest SVNKit binaries] and ready to start using it, a question arises: what initialization 
+When you have downloaded [http://svnkit.com/download/index.php the latest SVNKit binaries] and ready to start using it, a question arises: what initialization 
 steps should be performed in order to set up the library? 
 
 <p>
 Direct interacting with a Subversion repository is carried out by a low-level layer, where the main class representing a 
-repository access driver is an abstract [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html SVNRepository] class.
+repository access driver is an abstract [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html SVNRepository] class.
 There are several protocol specific realizations of this driver, one for each protocol. Each driver is created by an abstract factory class - 
-[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepositoryFactory.html SVNRepositoryFactory], which also has several protocol 
+[http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepositoryFactory.html SVNRepositoryFactory], which also has several protocol 
 specific realizations, each one for each protocol. The following table matches a protocol against a corresponding SVNRepositoryFactory realization:
 {|border=1
 |bgcolor=#AACCFF|protocol||bgcolor=#AACCFF|SVNRepositoryFactory realization
@@ -46,8 +46,8 @@ it contains your registered factory. And further you create a driver itself:
             //handle exception       		
        }
 </java>
-In '''SVNKit''' all repository urls are represented by the [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/SVNURL.html SVNURL] 
-class. If a path string is not ''UTF-8'' encoded yet, use the '''SVNURL''''s [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/SVNURL.html#parseURIDecoded(java.lang.String) parseURIDecoded()] 
+In '''SVNKit''' all repository urls are represented by the [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/SVNURL.html SVNURL] 
+class. If a path string is not ''UTF-8'' encoded yet, use the '''SVNURL''''s [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/SVNURL.html#parseURIDecoded(java.lang.String) parseURIDecoded()] 
 method to create a new url representation (it will be encoded if necessary).
 <br />
 Then you pass the url representation to the '''SVNRepositoryFactory''' to create a new '''SVNRepository''' driver. So, 
@@ -70,12 +70,12 @@ the high-level layer uses the low-level one for working with a repository. If yo
 you may get an exception saying that '''SVNKit''' could not create an '''SVNRepository''' object for the provided 
 url.
 === SVN*Client classes ===
-All high-level operations for managing Working Copies are logically divided to [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/package-summary.html SVN*Client] 
-classes: each '''SVN*Client''' class joins a separate group of operations (for example, [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/SVNUpdateClient.html SVNUpdateClient] 
+All high-level operations for managing Working Copies are logically divided to [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/wc/package-summary.html SVN*Client] 
+classes: each '''SVN*Client''' class joins a separate group of operations (for example, [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/wc/SVNUpdateClient.html SVNUpdateClient] 
 provides API on update operations, such as checkout, update, switch, export). There're two different ways of instantiating
 objects of these classes: 
 * Create only necessary '''SVN*Client''' objects.
-* Create a single [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/SVNClientManager.html SVNClientManager] instance which provides objects of necessary '''SVN*Client''' types.
+* Create a single [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/wc/SVNClientManager.html SVNClientManager] instance which provides objects of necessary '''SVN*Client''' types.
 
 <br />
 <br />

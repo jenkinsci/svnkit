@@ -4,7 +4,7 @@
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
- * are also available at http://tmate.org/svn/license.html.
+ * are also available at http://svnkit.com/license.html
  * If newer versions of this license are posted there, you may use a
  * newer version instead, at your option.
  * ====================================================================
@@ -121,7 +121,7 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  * @author      TMate Software Ltd.
  * @see         SVNRepositoryFactory
  * @see         org.tmatesoft.svn.core.auth.ISVNAuthenticationManager
- * @see         <a target="_top" href="http://tmate.org/svn/kb/examples/">Examples</a>
+ * @see         <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
  */
 public abstract class SVNRepository {
         
@@ -1313,7 +1313,7 @@ public abstract class SVNRepository {
      * @see 					ISVNReporterBaton
      * @see 					ISVNReporter
      * @see 					ISVNEditor
-     * @see                     <a href="http://tmate.org/svn/kb/dev-guide-update-operation.html">Using ISVNReporter/ISVNEditor in update-related operations</a>
+     * @see                     <a href="http://svnkit.com/kb/dev-guide-update-operation.html">Using ISVNReporter/ISVNEditor in update-related operations</a>
      */
     public abstract void update(long revision, String target, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException;
     
@@ -1397,7 +1397,7 @@ public abstract class SVNRepository {
      * @see 					ISVNReporterBaton
      * @see 					ISVNReporter
      * @see 					ISVNEditor
-     * @see                     <a href="http://tmate.org/svn/kb/dev-guide-update-operation.html">Using ISVNReporter/ISVNEditor in update-related operations</a>
+     * @see                     <a href="http://svnkit.com/kb/dev-guide-update-operation.html">Using ISVNReporter/ISVNEditor in update-related operations</a>
      */
     public abstract void update(SVNURL url, long revision, String target, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException;
     
@@ -1503,7 +1503,7 @@ public abstract class SVNRepository {
      *                          </ul>
 	 * @see 					ISVNEditor
 	 * @see 					ISVNWorkspaceMediator
-     * @see                     <a href="http://tmate.org/svn/kb/dev-guide-commit-operation.html">Using ISVNEditor in commit operations</a>
+     * @see                     <a href="http://svnkit.com/kb/dev-guide-commit-operation.html">Using ISVNEditor in commit operations</a>
      */
     public ISVNEditor getCommitEditor(String logMessage, final ISVNWorkspaceMediator mediator) throws SVNException {
         return getCommitEditor(logMessage, null, false, mediator);
@@ -1582,7 +1582,7 @@ public abstract class SVNRepository {
      *                          (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
      *                          </ul>
      * @see                     #getCommitEditor(String, ISVNWorkspaceMediator)
-     * @see                     <a href="http://tmate.org/svn/kb/dev-guide-commit-operation.html">Using ISVNEditor in commit operations</a>
+     * @see                     <a href="http://svnkit.com/kb/dev-guide-commit-operation.html">Using ISVNEditor in commit operations</a>
      */    
     public abstract ISVNEditor getCommitEditor(String logMessage, Map locks, boolean keepLocks, final ISVNWorkspaceMediator mediator) throws SVNException;
     

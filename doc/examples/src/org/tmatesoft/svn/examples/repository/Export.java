@@ -4,7 +4,7 @@
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
- * are also available at http://tmate.org/svn/license.html.
+ * are also available at http://svnkit.com/license.html
  * If newer versions of this license are posted there, you may use a
  * newer version instead, at your option.
  * ====================================================================
@@ -43,7 +43,7 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
  * simple one and allows to demonstrate this approach without going too much into the details.
  * 
  * You may find and an article describing this (update) technique at 
- * http://tmate.org/svn/kb/dev-guide-update-operation.html
+ * http://svnkit.com/kb/dev-guide-update-operation.html
  * 
  * To perform any update-like operation one have to do the following:
  * 
@@ -97,7 +97,7 @@ public class Export {
 
     private static void exportExample() throws SVNException {
 
-        SVNURL url = SVNURL.parseURIEncoded("http://svn.tmate.org/svn/jsvn/trunk/doc");
+        SVNURL url = SVNURL.parseURIEncoded("http://svn.svnkit.com/repos/svnkit/trunk/doc");
         String userName = "foo";
         String userPassword = "bar";
         

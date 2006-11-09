@@ -4,7 +4,7 @@
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
- * are also available at http://tmate.org/svn/license.html.
+ * are also available at http://svnkit.com/license.html
  * If newer versions of this license are posted there, you may use a
  * newer version instead, at your option.
  * ====================================================================
@@ -72,7 +72,7 @@ public class DisplayFile {
         /*
          * Default values:
          */
-        String url = "http://svn.tmate.org:8080/svn/jsvn/trunk";
+        String url = "http://svn.svnkit.com/repos/svnkit/trunk";
         String name = "anonymous";
         String password = "anonymous";
         String filePath = "www/license.html";

@@ -9,7 +9,7 @@ code): you add new nodes (directories) and items (files) under those nodes, chan
 them (refering to them) by their paths in a repository. Now we are going to show this model in details.
 
 == Using the ISVNEditor Interface ==
-[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html ISVNEditor] is the interface for editing 
+[http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html ISVNEditor] is the interface for editing 
 operations, for committing changes to a repository in particular. '''ISVNEditor''' is also used to receive and apply 
 changes from a repository during an update but this is the scope of [[Editing Operation Update|another article]]. 
 
@@ -48,7 +48,7 @@ commit editor:
     ...
 </java>
 Now when we have got an editor we can not call any reposiotory access methods of our '''SVNRepository''' driver till we 
-call the editor's [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html#closeEdit() closeEdit()] 
+call the editor's [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html#closeEdit() closeEdit()] 
 method. The following code snippet demonstrates how to prepare our planned changes in a single transaction. Main steps 
 of the editing a repository tree process are numbered to the left of the code:
 <java>
@@ -78,7 +78,7 @@ case:
     editor.applyTextDelta("nodeC/itemC1", baseChecksum);
 </java>
 Use a delta generator to calculate differences between base and working versions of the item. The generator produces 
-differences or delta as a sequence of [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/diff/SVNDiffWindow.html diff windows] 
+differences or delta as a sequence of [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/diff/SVNDiffWindow.html diff windows] 
 of fixed size. It means that applying one such a window against item contents gives you not larger than N bytes of the 
 output text. A default size of a window is 100K bytes. 
 <java>
@@ -89,17 +89,17 @@ output text. A default size of a window is 100K bytes.
     SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
     String checksum = deltaGenerator.sendDelta("nodeC/itemC1", baseData, 0, workingData, editor, true);
 </java>
-The delta generator passes each produced diff window to the editor calling its [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html#textDeltaChunk(java.lang.String,%20org.tmatesoft.svn.core.io.diff.SVNDiffWindow) textDeltaChunk()] 
+The delta generator passes each produced diff window to the editor calling its [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html#textDeltaChunk(java.lang.String,%20org.tmatesoft.svn.core.io.diff.SVNDiffWindow) textDeltaChunk()] 
 method:
 <java>
     editor.textDeltaChunk("nodeC/itemC1", window);
 </java>
-When the generator is finished it calls the editor's [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html#textDeltaEnd(java.lang.String) textDeltaEnd()] 
+When the generator is finished it calls the editor's [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html#textDeltaEnd(java.lang.String) textDeltaEnd()] 
 method: 
 <java>
     editor.textDeltaEnd("nodeC/itemC1");
 </java>
-[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/diff/SVNDeltaGenerator.html#sendDelta(java.lang.String,%20java.io.InputStream,%20java.io.InputStream,%20org.tmatesoft.svn.core.io.ISVNEditor,%20boolean) sendDelat()] 
+[http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/diff/SVNDeltaGenerator.html#sendDelta(java.lang.String,%20java.io.InputStream,%20java.io.InputStream,%20org.tmatesoft.svn.core.io.ISVNEditor,%20boolean) sendDelat()] 
 method returns the checksum for the working version of the item contents. This checksum may be used to verify that the 
 delta is applied correctly on the repository side. If contents of the local working item and one in the repository do 
 not match, checksums must also be different:
@@ -152,7 +152,7 @@ the editor. The final point - closing our editor what results in committing the 
     SVNCommitInfo info = editor.closeEdit();
 </java>
 If transaction succeeds and this call makes our changes immutable in the repository, the editor returns an 
-[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/SVNCommitInfo.html SVNCommitInfo] object containing information 
+[http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/SVNCommitInfo.html SVNCommitInfo] object containing information 
 about a new revision. However at any call to the editor it can throw an exception which means that something has went 
 wrong. When we've got an exception from the editor we should abort it to purge the transaction like this:
 <java>
@@ -175,9 +175,9 @@ Notes:
 * for all items (meaning all repository contents, that is in our model including both nodes and items) which are present in a repository and on your local machine you have to keep local revision numbers somehow, so that when you try to change an item, a repository server can check whether your local item is out of date or not.
 * you don't have to apply text deltas immediately after you have opened a file; you may first open all necessary files in the way described above, then close all directories (including the root one) remaining opened in a way inverse to the one you opened them, then apply deltas to opened files and finally close files; you can not change directory properties after you've closed target directories.
 * In repository edition operations you'll never need to use the following methods of a commit editor (they are irrelevant in commits, but relevant in updates):
-** [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html#absentDir(java.lang.String) absentDir()]
-** [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html#absentFile(java.lang.String) absentFile()]
-** [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html#targetRevision(long) targetRevision()]
+** [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html#absentDir(java.lang.String) absentDir()]
+** [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html#absentFile(java.lang.String) absentFile()]
+** [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html#targetRevision(long) targetRevision()]
 
 == Example On Using ISVNEditor In A Commit Operation ==
 In the following example we'll continue discussing application of '''ISVNEditor''' in low-level commit operations. 
@@ -379,7 +379,7 @@ That's what you'll see if you run the program:
  Repository latest revision (after committing): 5
 
 ----
-Download the [http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples/repository/Commit.java example program source code].
+Download the [http://svn.svnkit.com/repos/svnkit/trunk/doc/examples/src/org/tmatesoft/svn/examples/repository/Commit.java example program source code].
 
 <br />
 <br />

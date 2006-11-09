@@ -9,7 +9,7 @@ right within java applications. The library structure can be represented as foll
 [[Image:SVNKit_architecture.png]]
 
 That is there are two main layers in '''SVNKit''':
-* A high-level layer to manage Working Copies. A [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/package-summary.html corresponding API] gives you an ability to manage Working Copies just like in the manner that the [http://svnbook.red-bean.com/nightly/en/svn.ref.html#svn.ref.svn Subversion command line client] does. 
+* A high-level layer to manage Working Copies. A [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/wc/package-summary.html corresponding API] gives you an ability to manage Working Copies just like in the manner that the [http://svnbook.red-bean.com/nightly/en/svn.ref.html#svn.ref.svn Subversion command line client] does. 
 * A low-level layer is similar to the [http://svnbook.red-bean.com/nightly/en/svn.developer.html#svn.developer.layerlib.ra Subversion Repository Access Layer]. It represents a driver for direct working with a Subversion Repository.
 
 
@@ -17,12 +17,12 @@ That is there are two main layers in '''SVNKit''':
 High-level API is similar to the commands of the Subversion native command line client: all operations for managing 
 Working Copies are logically divided and combined in different '''SVN*Client''' classes. For example, all WC update 
 operations (check out, update, switch, etc.) are performed by the single 
-[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/SVNUpdateClient.html SVNUpdateClient] class. Arguments which 
+[http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/wc/SVNUpdateClient.html SVNUpdateClient] class. Arguments which 
 are accepted by methods of these classes are similar to arguments of the command line client.
 When an access to a repository is indeed required, the high-level layer uses the low-level one.
 
 === Low-level layer ===
-[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/package-summary.html This layer] represents an abstract Subversion repository access protocol layer. There're two important things about this layer:
+[http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/package-summary.html This layer] represents an abstract Subversion repository access protocol layer. There're two important things about this layer:
 * It does not deal with WCs at all, since WC is a higher layer than this one. This layer knows how to ''speak to'' Subversion repositories via different protocols.
 * Data structure is handled by this layer as an abstract data hierarchy, what gives an ability to represent more sophisticated (than just files and directories) abstractions as a tree-like hierarchy and put it under version control.
 
