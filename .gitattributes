@@ -158,6 +158,7 @@ www/download/library.php -text
 www/download/rss.php -text
 www/download/rss2.php -text
 www/download/test-results.php -text
+www/feed/api.php -text
 www/feed/feedcreator.class.php eol=lf
 www/feed/lgpl.txt eol=lf
 www/feed/rss.php eol=lf
@@ -176,6 +177,7 @@ www/kb/build-standalone.html -text
 www/kb/build-subclipse.html -text
 www/kb/config-settings.html -text
 www/kb/dev-guide-authentication.html -text
+www/kb/dev-guide-authentication_ru.html -text
 www/kb/dev-guide-commit-operation.html -text
 www/kb/dev-guide-general-options.html -text
 www/kb/dev-guide-multithreaded-environment.html -text

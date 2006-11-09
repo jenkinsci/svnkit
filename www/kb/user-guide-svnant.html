@@ -56,17 +56,17 @@ The only pure Java Subversion library in the world!
 </tr>
 </table>
 
-<h1>Making SvnAnt use JavaSVN</h1>
+<h1>Making SvnAnt (1.1.0-rc1) use JavaSVN</h1>
 <p>Step-by-step instructions:</b>
 <ul>
-<li>Remove existing <code>javahl.jar</code> and <code>svnClientAdapter.jar</code> (libraries distirbuted with the svnant) from your Ant classpath (ANT_HOME/lib/ directory).</li>
-<li><a id="normal" href="../download/index.php">Download</a> latest version of JavaSVN library. You will need javasvn.jar and javasvn-javahl.jar files from the library distribution.</li>
-<li>Get patched version of <a id="normal" href="http://tmate.org/svn/svnClientAdapter-0.9.32.jar">svnClientAdapter.jar</a> (version 0.9.32).</li>
-<li>Put <code>javasvn.jar</code>,&nbsp;<code>javasvn-javahl.jar</code> and <code>svnClientAdapter-0.9.32.jar</code> files on your Ant classpath (ANT_HOME/lib/ directory).</li>
+<li>Checkout svnant 1.1.0-rc1: <code>svn co http://subclipse.tigris.org/svn/subclipse/tags/svnant/1.0.0 svnant-1.1.0</code></li>
+<li>Go to checked out directory and run <code>ant makeDistrib</code> command</li>
+<li>Put all jars from <code>svnant-1.1.0/build/distrib</code> to <code>ANT_HOME/lib</code> directory</li>
 </ul>
-<p>After performing the steps above svnant will use JavaSVN instead of JavaHL bindings.</b>
+<p>You may now run <code>build.xml</code> from <code>svnant-1.1.0/build/distrib/ant.xml</code> - JavaSVN will be used automatically when JavaHL is not available.
 <br>
 <br>
+Note: build.xml will fail, because URL specified in build.properties is not valid, but you may change it to another URL, i.e. one of svnant above, run ant with -v option to see what adapter (JavaHL or JavaSVN) is used.
 <p>If you have any questions regarding JavaSVN, would like to report a bug or contribute a patch, please write to 
 <a id="normal" href="mailto:support@tmatesoft.com">support@tmatesoft.com</a></p>
 <br />

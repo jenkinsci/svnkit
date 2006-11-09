@@ -94,6 +94,9 @@ The only pure Java Subversion library in the world!
 <xsl:when test="@name='svnserve'">
 <a name="svnserve"></a>
 </xsl:when>
+<xsl:when test="@name='file'">
+<a name="file"></a>
+</xsl:when>
 <xsl:otherwise>
 <a name="apache"></a>
 </xsl:otherwise>
@@ -119,8 +122,13 @@ The only pure Java Subversion library in the world!
 Click <a href="#svnserve">here</a> to view the results of the tests run against <b>svnserve</b>.
 <br />
 </xsl:when>
+<xsl:when test="@name='file'">
+Click <a href="#file">here</a> to view the results of the tests run against local <b>fsfs</b> repository.
+<br />
+</xsl:when>
 <xsl:otherwise>
 Click <a href="#apache">here</a> to view the results of the tests run against <b>apache</b> server.
+<br />
 </xsl:otherwise>
 </xsl:choose>
 
