@@ -51,7 +51,7 @@ public class SVNAdminUtil {
         FORMAT_TEXT = new byte[] {'4', '\n'};
         README_TEXT = ("This is a Subversion working copy administrative directory." + eol
             + "Visit http://subversion.tigris.org/ for more information." + eol).getBytes();
-        SKIP_README = Boolean.getBoolean("javasvn.skipReadme");
+        SKIP_README = Boolean.getBoolean("javasvn.skipReadme") ? true : Boolean.getBoolean("svnkit.skipReadme");
     }
     
     public static void createReadmeFile(File adminDir) throws SVNException {

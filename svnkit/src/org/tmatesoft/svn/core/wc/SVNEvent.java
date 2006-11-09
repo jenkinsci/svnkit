@@ -122,7 +122,7 @@ public class SVNEvent {
      * Constructs an <b>SVNEvent</b> object given
      * an error message for a filed operation. 
      * <p>
-     * Used by JavaSVN internals to construct and initialize an 
+     * Used by SVNKit internals to construct and initialize an 
      * <b>SVNEvent</b> object. It's not intended for users (from an API point of view).
      * 
      * @param errorMessage the message describing the operation fault
@@ -164,7 +164,7 @@ public class SVNEvent {
      * <b>ISVNEventHandler</b> implementation. 
      * 
      * <p>
-     * Used by JavaSVN internals to construct and initialize an 
+     * Used by SVNKit internals to construct and initialize an 
      * <b>SVNEvent</b> object. It's not intended for users (from an API point of view).
      *
      * <p>
@@ -214,7 +214,7 @@ public class SVNEvent {
      * <b>ISVNEventHandler</b> implementation. 
      * 
      * <p>
-     * Used by JavaSVN internals to construct and initialize an 
+     * Used by SVNKit internals to construct and initialize an 
      * <b>SVNEvent</b> object. It's not intended for users (from an API point of view).
      *
      * @param rootFile   the item's root directory

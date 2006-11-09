@@ -47,7 +47,7 @@ public class SVNWCUtil {
     /**
      * Gets the location of the default SVN's run-time configuration area
      * on the current machine. The result path depends on the platform
-     * on which JavaSVN is running:
+     * on which SVNKit is running:
      * <ul>
      * <li>on <i>Windows</i> this path usually looks like <i>'Documents and Settings\UserName\Subversion'</i> 
      * or simply <i>'%APPDATA%\Subversion'</i>.

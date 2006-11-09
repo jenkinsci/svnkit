@@ -1,9 +1,9 @@
-[[Replicating An Existing Repository|<<]] | [[Managing repository With JavaSVN|List]]
+[[Replicating An Existing Repository|<<]] | [[Managing repository With SVNKit|List]]
 <br />
 <br />
 
 == Managing A Working Copy ==
-Finally we came to discussing the '''JavaSVN''' [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/package-summary.html high-level API] - 
+Finally we came to discussing the '''SVNKit''' [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/package-summary.html high-level API] - 
 the one for manipulating Working Copies. All Working Copy operations are logically organized in different '''SVN*Client''' 
 classes. At the same time there's [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/SVNClientManager.html SVNClientManager] 
 class which composes all '''SVN*Client''' classes and, thus, simplifies work on creating and keeping various client 
@@ -17,7 +17,7 @@ it, but not earlier.
 
 <p>
 Methods of each '''SVN*Client''' class are similar to commands of the [http://svnbook.red-bean.com/nightly/en/svn.ref.html#svn.ref.svn native Subversion command line client].
-We will show several simple operations you can perform upon Working Copies using '''JavaSVN'''. We write a class 
+We will show several simple operations you can perform upon Working Copies using '''SVNKit'''. We write a class 
 ''WorkingCopy'' which utilizes an '''SVNClientManager''' object:
 <java>
 ...
@@ -1219,4 +1219,4 @@ Download the full sources of this example program:
 
 <br />
 <br />
-[[Replicating An Existing Repository|<<]] | [[Managing repository With JavaSVN|List]]
+[[Replicating An Existing Repository|<<]] | [[Managing repository With SVNKit|List]]

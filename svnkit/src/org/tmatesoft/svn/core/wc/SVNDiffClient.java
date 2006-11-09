@@ -56,7 +56,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  * 
  * <table cellpadding="3" cellspacing="1" border="0" width="40%" bgcolor="#999933">
  * <tr bgcolor="#ADB8D9" align="left">
- * <td><b>JavaSVN</b></td>
+ * <td><b>SVNKit</b></td>
  * <td><b>Subversion</b></td>
  * </tr>   
  * <tr bgcolor="#EAEAEA" align="left">

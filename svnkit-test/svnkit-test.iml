@@ -17,7 +17,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="sequence" />
-    <orderEntry type="module" module-name="javasvn" />
+    <orderEntry type="module" module-name="svnkit" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>

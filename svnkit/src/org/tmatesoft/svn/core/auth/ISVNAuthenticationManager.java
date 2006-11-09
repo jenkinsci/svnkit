@@ -35,7 +35,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  *     ...</pre>
  * 
  * <p>
- * JavaSVN provides a default authentication manager implementation - <b>org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager</b>. 
+ * SVNKit provides a default authentication manager implementation - <b>org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager</b>. 
  * This manager has got the following features:
  * <ul>
  * <li> uses the auth storage from the default Subversion runtime configuration area;

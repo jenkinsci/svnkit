@@ -1,4 +1,4 @@
-[[What Is Subversion For|<<]] ... [[JavaSVN Architecture|>>]]
+[[What Is Subversion For|<<]] ... [[SVNKit Architecture|>>]]
 <br />
 <br />
 
@@ -35,9 +35,9 @@ The layout of a repository root directory looks like this:
 Read [http://svnbook.red-bean.com/nightly/en/svn.reposadmin.create.html official instructions] how to create and set up 
 a repository on your computer using official Subversion tools.
 
-== Creating a Subversion repository with JavaSVN ==
-'''JavaSVN''' provides an ability to create only FSFS-type repositories. The following is a code snippet which 
-demonstrates how you can create a blank repository using '''JavaSVN''':
+== Creating a Subversion repository with SVNKit ==
+'''SVNKit''' provides an ability to create only FSFS-type repositories. The following is a code snippet which 
+demonstrates how you can create a blank repository using '''SVNKit''':
 
 <java>
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
@@ -71,9 +71,9 @@ returns a non-zero value, modifications to revision properties are rejected by t
 <p>
 When you create a new repository with the Subversion's '''svnadmin''' tool a new repository's ''hook'' directory 
 contains no real hook files, but only hook templates. This means that you won't be able to change revision properties 
-until you place a ''pre-revprop-change'' hook manually into the target ''hooks'' directory. With '''JavaSVN''' enabling 
+until you place a ''pre-revprop-change'' hook manually into the target ''hooks'' directory. With '''SVNKit''' enabling 
 changes to revision properties is quite straightforward. When the second parameter of the ''createLocalRepository(...)''
-methos is ''true'' '''JavaSVN''' places an empty executable ''pre-revprop-change'' hook script into the ''hooks'' 
+methos is ''true'' '''SVNKit''' places an empty executable ''pre-revprop-change'' hook script into the ''hooks'' 
 directory of a new repository. Such a hook does nothing, simply returns 0 letting the requested change operation perform.
 However when this parameter is ''false'' no hook scripts are added (but only templates), and revision properties changing 
 is disabled.
@@ -81,7 +81,7 @@ is disabled.
 <p>
 The third parameter of the ''createLocalRepository(...)'' method controls whether a repository creation must be forced 
 or not. That is, if this parameter is ''true'' and a repository already exists at the path you provide to 
-''createLocalRepository(...)'' '''JavaSVN''' replaces it with a new repository. However if it's ''false'' an existing 
+''createLocalRepository(...)'' '''SVNKit''' replaces it with a new repository. However if it's ''false'' an existing 
 repository is not removed and a new repository creation fails with an [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/SVNException.html SVNException].
 
 <p>
@@ -131,4 +131,4 @@ book.
 
 <br />
 <br />
-[[What Is Subversion For|<<]] ... [[JavaSVN Architecture|>>]]
+[[What Is Subversion For|<<]] ... [[SVNKit Architecture|>>]]

@@ -42,7 +42,7 @@ import de.regnis.q.sequence.line.diff.QDiffUniGenerator;
  * <b>ISVNDiffGenerator</b>.
  * <p>
  * By default, if there's no any specified implementation of the diff generator's
- * interface, JavaSVN uses this default implementation. To set a custom
+ * interface, SVNKit uses this default implementation. To set a custom
  * diff driver use {@link SVNDiffClient#setDiffGenerator(ISVNDiffGenerator) setDiffGenerator()}.
  * 
  * @version 1.1

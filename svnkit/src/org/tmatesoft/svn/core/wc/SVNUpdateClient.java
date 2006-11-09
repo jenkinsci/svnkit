@@ -62,7 +62,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  * 
  * <table cellpadding="3" cellspacing="1" border="0" width="40%" bgcolor="#999933">
  * <tr bgcolor="#ADB8D9" align="left">
- * <td><b>JavaSVN</b></td>
+ * <td><b>SVNKit</b></td>
  * <td><b>Subversion</b></td>
  * </tr>   
  * <tr bgcolor="#EAEAEA" align="left">
@@ -343,7 +343,7 @@ public class SVNUpdateClient extends SVNBasicClient {
      * for EOL markers, regardless of the operating system in use (for instance, this EOL marker was used by 
      * software on older Macintosh platforms).
      * <li>"native" - this causes files to contain the EOL markers that are native to the operating system 
-     * on which JavaSVN is run.
+     * on which SVNKit is run.
      * </ul>
      * 
      * @param  url				a repository location from where the unversioned directory/file  will
@@ -402,7 +402,7 @@ public class SVNUpdateClient extends SVNBasicClient {
      * for EOL markers, regardless of the operating system in use (for instance, this EOL marker was used by 
      * software on older Macintosh platforms).
      * <li>"native" - this causes files to contain the EOL markers that are native to the operating system 
-     * on which JavaSVN is run.
+     * on which SVNKit is run.
      * </ul>
      * 
      * @param  srcPath			a repository location from where the unversioned directory/file  will

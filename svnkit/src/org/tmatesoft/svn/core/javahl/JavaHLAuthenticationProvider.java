@@ -81,9 +81,9 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
         }
         if (ISVNAuthenticationManager.SSH.equals(kind) && previousAuth == null) {
             // use configuration file here? but it was already used once...
-            String keyPath = System.getProperty("javasvn.ssh2.key");
-            String userName = getUserName(System.getProperty("javasvn.ssh2.username"), url);
-            String passPhrase = System.getProperty("javasvn.ssh2.passphrase");
+            String keyPath = System.getProperty("svnkit.ssh2.key", System.getProperty("javasvn.ssh2.key"));
+            String userName = getUserName(System.getProperty("svnkit.ssh2.username", System.getProperty("javasvn.ssh2.username")), url);
+            String passPhrase = System.getProperty("svnkit.ssh2.passphrase", System.getProperty("javasvn.ssh2.passphrase"));
             if (userName == null) {
                 return null;
             }

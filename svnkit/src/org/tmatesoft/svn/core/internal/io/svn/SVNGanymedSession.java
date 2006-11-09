@@ -47,7 +47,7 @@ public class SVNGanymedSession {
     private static Object ourRequestor;
     
     static {
-        String persistent = System.getProperty("javasvn.ssh2.persistent", Boolean.TRUE.toString());
+        String persistent = System.getProperty("svnkit.ssh2.persistent", System.getProperty("javasvn.ssh2.persistent", Boolean.TRUE.toString()));
         ourIsUsePersistentConnection = Boolean.TRUE.toString().equals(persistent);
     }
 

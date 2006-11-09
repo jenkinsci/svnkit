@@ -221,7 +221,7 @@ public class SVNDirEntry implements Comparable {
     }
 
     /**
-     * This method is used by JavaSVN internals and not intended for users (from an API point of view).
+     * This method is used by SVNKit internals and not intended for users (from an API point of view).
      * 
      * @param path this entry's path
      */
@@ -230,7 +230,7 @@ public class SVNDirEntry implements Comparable {
     }
     
     /**
-     * This method is used by JavaSVN internals and not intended for users (from an API point of view).
+     * This method is used by SVNKit internals and not intended for users (from an API point of view).
      * 
      * @param message a commit message
      */

@@ -35,7 +35,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  * caches credentials.
  * 
  * <p>
- * This manager is not used in JavaSVN internals. You may use a default 
+ * This manager is not used in SVNKit internals. You may use a default 
  * manager (how to get it read javadoc for {@link ISVNAuthenticationManager}), 
  * this basic manager or implement your own one.  
  * 

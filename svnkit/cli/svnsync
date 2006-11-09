@@ -5,22 +5,22 @@ case "`uname`" in
   CYGWIN*) cygwin=true ;;
 esac
 
-JAVASVN_HOME=`dirname $0`
-JAVASVN_HOME=`cd "$JAVASVN_HOME" ; pwd`
+SVNKIT_HOME=`dirname $0`
+SVNKIT_HOME=`cd "$SVNKIT_HOME" ; pwd`
 
-JAVASVN_CP=$JAVASVN_HOME/javasvn.jar:$JAVASVN_HOME/javasvn-cli.jar:$JAVASVN_HOME/ganymed.jar
+SVNKIT_CP=$SVNKIT_HOME/javasvn.jar:$SVNKIT_HOME/javasvn-cli.jar:$SVNKIT_HOME/ganymed.jar
 
 if $cygwin ; then
-  JAVASVN_CP=`cygpath --windows --path "$JAVASVN_CP"`
-  [ -n "$JAVASVN_LOGDIR" ] &&
-    JAVASVN_LOGDIR=`cygpath --unix "$JAVASVN_LOGDIR"`
+  SVNKIT_CP=`cygpath --windows --path "$SVNKIT_CP"`
+  [ -n "$SVNKIT_LOGDIR" ] &&
+    SVNKIT_LOGDIR=`cygpath --unix "$SVNKIT_LOGDIR"`
 fi
 
-if [ ! -d $JAVASVN_LOGDIR ]; then
-	mkdir $JAVASVN_LOGDIR
+if [ ! -d $SVNKIT_LOGDIR ]; then
+	mkdir $SVNKIT_LOGDIR
 fi
 
-JAVASVN_VM_OPTIONS="-Dsun.io.useCanonCaches=false -Djava.util.logging.config.file=$JAVASVN_HOME/logging.properties"
+SVNKIT_VM_OPTIONS="-Dsun.io.useCanonCaches=false -Djava.util.logging.config.file=$SVNKIT_HOME/logging.properties"
 
-JAVASVN_MAINCLASS=org.tmatesoft.svn.cli.SVNSync
-$JAVA_HOME/bin/java $JAVASVN_VM_OPTIONS -cp $JAVASVN_CP $JAVASVN_MAINCLASS "$@"
+SVNKIT_MAINCLASS=org.tmatesoft.svn.cli.SVNSync
+$JAVA_HOME/bin/java $SVNKIT_VM_OPTIONS -cp $SVNKIT_CP $SVNKIT_MAINCLASS "$@"

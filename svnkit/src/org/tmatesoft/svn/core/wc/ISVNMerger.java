@@ -18,7 +18,7 @@ import org.tmatesoft.svn.core.SVNException;
 
 
 /**
- * <b>ISVNMerger</b> is the merger driver interface used by JavaSVN in 
+ * <b>ISVNMerger</b> is the merger driver interface used by SVNKit in 
  * merging operations. 
  * 
  * <p>

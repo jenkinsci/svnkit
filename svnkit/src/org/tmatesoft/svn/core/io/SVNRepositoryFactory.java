@@ -113,7 +113,7 @@ public abstract class SVNRepositoryFactory {
      * 
      * <p>
      * The protocol is defined as the beginning part of the URL schema. Currently
-     * JavaSVN supports only <i>svn://</i> (<i>svn+ssh://</i>) and <i>http://</i> (<i>https://</i>)
+     * SVNKit supports only <i>svn://</i> (<i>svn+ssh://</i>) and <i>http://</i> (<i>https://</i>)
      * schemas.
      * 
      * <p>
@@ -133,7 +133,7 @@ public abstract class SVNRepositoryFactory {
      * @throws SVNException     if there's no implementation for the specified protocol
      *                          (the user may have forgotten to register a specific 
      *                          factory that creates <b>SVNRepository</b>
-     *                          instances for that protocol or the JavaSVN 
+     *                          instances for that protocol or the SVNKit 
      *                          library does not support that protocol at all)
      * @see                     #create(SVNURL, ISVNSession)
      * @see                     SVNRepository
@@ -150,7 +150,7 @@ public abstract class SVNRepositoryFactory {
      * 
      * <p>
      * The protocol is defined as the beginning part of the URL schema. Currently
-     * JavaSVN supports only <i>svn://</i> (<i>svn+ssh://</i>) and <i>http://</i> (<i>https://</i>)
+     * SVNKit supports only <i>svn://</i> (<i>svn+ssh://</i>) and <i>http://</i> (<i>https://</i>)
      * schemas.
      * 
      * <p>
@@ -173,7 +173,7 @@ public abstract class SVNRepositoryFactory {
      * @throws SVNException     if there's no implementation for the specified protocol
      *                          (the user may have forgotten to register a specific 
      *                          factory that creates <b>SVNRepository</b>
-     *                          instances for that protocol or the JavaSVN 
+     *                          instances for that protocol or the SVNKit 
      *                          library does not support that protocol at all)
      * @see                     #create(SVNURL)
      * @see                     SVNRepository
@@ -258,7 +258,7 @@ public abstract class SVNRepositoryFactory {
         }
         InputStream is = SVNRepositoryFactory.class.getClassLoader().getResourceAsStream(REPOSITORY_TEMPLATE_PATH);
         if (is == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "No repository template found; should be part of JavaSVN library jar");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "No repository template found; should be part of SVNKit library jar");
             SVNErrorManager.error(err);
         }
         File jarFile = SVNFileUtil.createUniqueFile(path, "template.", ".jar");

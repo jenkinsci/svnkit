@@ -1,11 +1,11 @@
 @echo off
 
-set DEFAULT_JAVASVN_HOME=%~dp0
+set DEFAULT_SVNKIT_HOME=%~dp0
 
-if "%JAVASVN_HOME%"=="" set JAVASVN_HOME=%DEFAULT_JAVASVN_HOME%
+if "%SVNKIT_HOME%"=="" set SVNKIT_HOME=%DEFAULT_SVNKIT_HOME%
 
-set JAVASVN_CLASSPATH= "%JAVASVN_HOME%javasvn.jar";"%JAVASVN_HOME%javasvn-cli.jar";"%JAVASVN_HOME%ganymed.jar"
-set JAVASVN_MAINCLASS=org.tmatesoft.svn.cli.SVN
-set JAVASVN_OPTIONS=-Djava.util.logging.config.file="%JAVASVN_HOME%/logging.properties"
+set SVNKIT_CLASSPATH= "%SVNKIT_HOME%svnkit.jar";"%SVNKIT_HOME%svnkit-cli.jar";"%SVNKIT_HOME%ganymed.jar"
+set SVNKIT_MAINCLASS=org.tmatesoft.svn.cli.SVN
+set SVNKIT_OPTIONS=-Djava.util.logging.config.file="%SVNKIT_HOME%/logging.properties"
 
-"%JAVA_HOME%\bin\java" %JAVASVN_OPTIONS% -cp %JAVASVN_CLASSPATH% %JAVASVN_MAINCLASS% %*
+"%JAVA_HOME%\bin\java" %SVNKIT_OPTIONS% -cp %SVNKIT_CLASSPATH% %SVNKIT_MAINCLASS% %*

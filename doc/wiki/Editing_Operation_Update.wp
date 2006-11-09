@@ -1,4 +1,4 @@
-[[Editing Operation Commit|<<]] | [[Managing repository With JavaSVN|List]] |  [[Replicating An Existing Repository|>>]]
+[[Editing Operation Commit|<<]] | [[Managing repository With SVNKit|List]] |  [[Replicating An Existing Repository|>>]]
 <br />
 <br />
 
@@ -8,7 +8,7 @@ operations (checkout, update, switch, export). But in update operations roles ar
 operations: that is, while in a commit you ''obtain'' and use the library's editor to edit a repository, in an update 
 you ''provide'' your own '''ISVNEditor''' implementation to the library which will be called by a repository server to 
 transmit changes to a client side. If a remote access to a repository is used, it means that according to a particular 
-access protocol a server sends commands which are translated by '''JavaSVN''' into calls to a client's editor. 
+access protocol a server sends commands which are translated by '''SVNKit''' into calls to a client's editor. 
 
 <p>
 So, a low-level update operation takes two main stages:
@@ -22,14 +22,14 @@ not restricted by the bounds of a general Working Copy.
 == Reporting a local versioned tree state to a server-side ==
 Descriptions of a local versioned tree state are made via the [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/ISVNReporter.html ISVNReporter] 
 interface. We will study how to report local revisions by the example of using the low-level layer in the high-level one, 
-i.e. we will describe how '''JavaSVN''' reports revisions of Working Copy items using '''ISVNReporter'''. 
+i.e. we will describe how '''SVNKit''' reports revisions of Working Copy items using '''ISVNReporter'''. 
 
 <p>
 Let's imagine we have got the following Working Copy tree:
 
 [[Image:Update_Tree1.png]]
 
-A user performs a recursive update to the latest (HEAD) revision on the root of the Working Copy. How does '''JavaSVN''' make a report of local 
+A user performs a recursive update to the latest (HEAD) revision on the root of the Working Copy. How does '''SVNKit''' make a report of local 
 revisions in this case? First of all, reports are provided to an '''SVNRepository''' driver through an 
 [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/ISVNReporterBaton.html ISVNReporterBaton] implementation. 
 When you pass it to an update method of '''SVNRepository''' the latter one calls the baton's [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/ISVNReporterBaton.html#report(org.tmatesoft.svn.core.io.ISVNReporter) report()] 
@@ -312,7 +312,7 @@ is correct.
 
 <p>
 With a reporter ('''ISVNReporter''') and an editor ('''ISVNEditor''') you are not restricted by a Working Copy format.
-The '''JavaSVN''' high-level engine implements an editor that stores a local data tree as directories and files within 
+The '''SVNKit''' high-level engine implements an editor that stores a local data tree as directories and files within 
 a Working Copy, but you can choose a different format of saving received versioned data for your editor. 
 
 == Example: exporting a repository directory ==
@@ -479,7 +479,7 @@ public class Export {
         ISVNEditor exportEditor = new ExportEditor(exportDir);
         
         /*
-         * Now ask JavaSVN to perform generic 'update' operation using our reporter and editor.
+         * Now ask SVNKit to perform generic 'update' operation using our reporter and editor.
          * 
          * We are passing:
          * 
@@ -502,5 +502,5 @@ Download the [http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmateso
 
 <br />
 <br />
-[[Editing Operation Commit|<<]] | [[Managing repository With JavaSVN|List]] |  [[Replicating An Existing Repository|>>]]
+[[Editing Operation Commit|<<]] | [[Managing repository With SVNKit|List]] |  [[Replicating An Existing Repository|>>]]
  

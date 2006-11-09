@@ -42,7 +42,7 @@ import org.tmatesoft.svn.core.SVNURL;
  * runtime auth storage (see {@link ISVNAuthenticationStorage}). If the one is not found, it then tries to 
  * find it in the disk auth storage in the runtime config area. Also if the 
  * <span class="javastring">"ssl-trust-default-ca"</span> is set to <span class="javastring">"yes"</span>, then 
- * JavaSVN will trust those CAs found in the JDK "JKS" KeyStore. User certificates are also got from the 
+ * SVNKit will trust those CAs found in the JDK "JKS" KeyStore. User certificates are also got from the 
  * options in the <i>servers</i> file.
  * 
  * <p>

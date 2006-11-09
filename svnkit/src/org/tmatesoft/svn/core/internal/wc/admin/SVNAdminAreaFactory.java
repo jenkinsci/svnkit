@@ -42,7 +42,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
     public static final int WC_FORMAT_13 = SVNXMLAdminAreaFactory.WC_FORMAT;
     
     private static final Collection ourFactories = new TreeSet();
-    private static boolean ourIsUpgradeEnabled = Boolean.valueOf(System.getProperty("javasvn.upgradeWC", "true")).booleanValue();
+    private static boolean ourIsUpgradeEnabled = Boolean.valueOf(System.getProperty("svnkit.upgradeWC", System.getProperty("javasvn.upgradeWC", "true"))).booleanValue();
     private static ISVNAdminAreaFactorySelector ourSelector;
     private static ISVNAdminAreaFactorySelector ourDefaultSelector = new DefaultSelector();
     

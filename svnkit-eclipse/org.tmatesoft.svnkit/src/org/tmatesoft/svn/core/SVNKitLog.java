@@ -24,7 +24,7 @@ import org.tmatesoft.svn.util.SVNDebugLogAdapter;
 /**
  * @author alex
  */
-public class JavaSVNLog extends SVNDebugLogAdapter {
+public class SVNKitLog extends SVNDebugLogAdapter {
 	
 	private static final String DEBUG_FINE = "/debug/fine";
 	private static final String DEBUG_INFO = "/debug/info";
@@ -37,7 +37,7 @@ public class JavaSVNLog extends SVNDebugLogAdapter {
 	private ILog myLog;
 	private String myPluginID;
 
-	public JavaSVNLog(Bundle bundle, boolean enabled) {		
+	public SVNKitLog(Bundle bundle, boolean enabled) {		
 		myLog = Platform.getLog(bundle);
 		myPluginID = bundle.getSymbolicName();
 

@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <site>
-    <description url="http://tmate.org/svn/">
+    <description url="http://svnkit.com/">
        TMate Sofware Eclipse Plugins Update Site
     </description>
  
-	<feature id="org.tmatesoft.javasvn"
+	<feature id="org.tmatesoft.svnkit"
 	         patch="false"
-	         url="features/org.tmatesoft.javasvn_%javasvn.version%.jar"
-	         version="%javasvn.version%">
-       <category name="JavaSVN Library"/>
+	         url="features/org.tmatesoft.svnkit_%svnkit.version%.jar"
+	         version="%svnkit.version%">
+       <category name="SVNKit Library"/>
 	</feature>
 
-	<category-def name="JavaSVN Library" label="JavaSVN Library">
+	<category-def name="SVNKit Library" label="SVNKit Library">
 		<description>
-			JavaSVN Library Plugin
+			SVNKit Library Plugin
 		</description>
 	</category-def>
 </site>

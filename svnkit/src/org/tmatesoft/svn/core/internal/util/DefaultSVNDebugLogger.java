@@ -69,7 +69,7 @@ public class DefaultSVNDebugLogger extends SVNDebugLogAdapter {
     
     private Logger getLogger() {
         if (myLogger == null) {
-            myLogger = Logger.getLogger("javasvn");
+            myLogger = Logger.getLogger("svnkit");
         }
         return myLogger;
     }

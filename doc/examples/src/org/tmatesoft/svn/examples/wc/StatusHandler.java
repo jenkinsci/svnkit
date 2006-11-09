@@ -122,7 +122,7 @@ public class StatusHandler implements ISVNStatusHandler, ISVNEventHandler {
              * copy is some other kind. For example, Subversion  might  have  a 
              * file in the repository,  but  the  user  removed  the  file  and 
              * created a directory in its place, without using the 'svn delete' 
-             * or 'svn add' command (or JavaSVN analogues for them).
+             * or 'svn add' command (or SVNKit analogues for them).
              */
             pathChangeType = "~";
         } else if (contentsStatus == SVNStatusType.STATUS_REPLACED) {

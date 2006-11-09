@@ -1026,7 +1026,7 @@ public class SVNFileUtil {
             if (getEnvironmentVariable("SVN_ASP_DOT_NET_HACK") != null){
                 defaultAdminDir = "_svn";
             }
-            ourAdminDirectoryName = System.getProperty("javasvn.admindir", defaultAdminDir);
+            ourAdminDirectoryName = System.getProperty("svnkit.admindir", System.getProperty("javasvn.admindir", defaultAdminDir));
             if (ourAdminDirectoryName == null || "".equals(ourAdminDirectoryName.trim())) {
                 ourAdminDirectoryName = defaultAdminDir;
             }
@@ -1102,7 +1102,7 @@ public class SVNFileUtil {
     public static File createTempDirectory(String name) throws SVNException {
         File tmpFile = null;
         try {
-            tmpFile = File.createTempFile(".javasvn." + name + ".", ".tmp");
+            tmpFile = File.createTempFile(".svnkit." + name + ".", ".tmp");
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create temporary directory: {1}", e.getLocalizedMessage());
             SVNErrorManager.error(err, e);

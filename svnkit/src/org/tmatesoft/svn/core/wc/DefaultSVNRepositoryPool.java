@@ -81,7 +81,8 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
     private static Map ourPool;
     private static Object ourPoolMonitor = new Object();
     
-    private static final boolean ourAllowPersistentConnections = "true".equalsIgnoreCase(System.getProperty("javasvn.http.keepAlive", "true"));
+    private static final boolean ourAllowPersistentConnections = "true".equalsIgnoreCase(
+            System.getProperty("svnkit.http.keepAlive", System.getProperty("javasvn.http.keepAlive", "true")));
     
     /**
      * Constructs a <b>DefaultSVNRepositoryPool</b> instance

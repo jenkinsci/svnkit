@@ -24,7 +24,7 @@ import org.tmatesoft.svn.core.SVNURL;
  * 
  * <p>
  * <b>ISVNAuthenticationProvider</b> may be implemented to keep a list of credentials, for example, there is 
- * such a default JavaSVN implementation (that comes along with a default implementation of 
+ * such a default SVNKit implementation (that comes along with a default implementation of 
  * <b>ISVNAuthenticationManager</b> - <b>org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager</b>),  
  * that saves credentials in and retrieves them from the in-memory cache only during runtime (not on the disk); 
  * or the default one that uses the auth area cache (read the <a href="http://svnbook.red-bean.com/nightly/en/svn-book.html#svn.serverconfig.netmodel.credcache">Subversion book chapter</a>).    

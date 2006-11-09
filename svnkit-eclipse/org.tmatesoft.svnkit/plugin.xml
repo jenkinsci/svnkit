@@ -5,7 +5,7 @@
    name="SVNKit Library Plug-in"
    version="%svnkit.version%"
    provider-name="TMate Software"
-   class="org.tmatesoft.svn.core.JavaSVNPlugin">
+   class="org.tmatesoft.svn.core.SVNKitPlugin">
 
    <runtime>
       <library name="svnkit-javahl.jar">

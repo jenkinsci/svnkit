@@ -33,32 +33,32 @@ import org.tmatesoft.svn.core.javahl.SVNClientImpl;
 public class Benchmark {
 
     public static void main(String[] args) throws ClientException, SVNException {
-        File root = new File("c:/javasvn/benchmark-test");
+        File root = new File("c:/svnkit/benchmark-test");
         SVNFileUtil.deleteAll(root, true);
         root.mkdirs();
         
         long start = System.currentTimeMillis();
-        System.out.println("JAVASVN");
-        Mark[] javaSVN = doBenchmark(createJavaSVNClient(), "c:/javasvn/benchmark-test/javasvn");
+        System.out.println("SVNKIT");
+        Mark[] svnKit = doBenchmark(createSVNKitClient(), "c:/svnkit/benchmark-test/svnkit");
         System.out.println("total time: " + (System.currentTimeMillis() - start));
         start = System.currentTimeMillis();
         System.out.println("JAVAHL");
-        Mark[] javaHL = doBenchmark(createJavaHLClient(), "c:/javasvn/benchmark-test/javahl");
+        Mark[] javaHL = doBenchmark(createJavaHLClient(), "c:/svnkit/benchmark-test/javahl");
         System.out.println("total time: " + (System.currentTimeMillis() - start));
-        publishResults(javaSVN, javaHL, "c:/javasvn/javasvn/result.html");
+        publishResults(svnKit, javaHL, "c:/svnkit/svnkit/result.html");
     }
     
-    private static void publishResults(Mark[] javaSVN, Mark[] javaHL, String filePath) throws SVNException {
+    private static void publishResults(Mark[] svnKit, Mark[] javaHL, String filePath) throws SVNException {
         File file = new File(filePath);
         
         OutputStream os = null;
         try {
             os = SVNFileUtil.openFileForWriting(file);
             os.write("<table width=\"100%\">".getBytes());
-            String line = "<tr><th>Test</th><th>JavaSVN (ms)</th><th>JavaHL (ms)</th><th>Diff</th></tr>";
+            String line = "<tr><th>Test</th><th>SVNKit (ms)</th><th>JavaHL (ms)</th><th>Diff</th></tr>";
             os.write(line.getBytes());
             for (int i = 0; i < javaHL.length; i++) {
-                Mark m1 = javaSVN[i];
+                Mark m1 = svnKit[i];
                 Mark m2 = javaHL[i];
                 double diff = ((double) m1.getTime())/((double) m2.getTime());
                 line = "<tr><td>" + m1.getName() + "</td><td align=right>" + m1.getTime() + "</td><td align=right>" + m2.getTime()+ "</td>" +
@@ -195,7 +195,7 @@ public class Benchmark {
         return new SVNClient();        
     }
 
-    private static SVNClientInterface createJavaSVNClient() {
+    private static SVNClientInterface createSVNKitClient() {
         SVNClientInterface client = SVNClientImpl.newInstance();
         return client;
     }

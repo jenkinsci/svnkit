@@ -22,14 +22,14 @@ import org.tmatesoft.svn.util.SVNDebugLog;
 /**
  * The main plugin class to be used in the desktop.
  */
-public class JavaSVNPlugin extends Plugin {
+public class SVNKitPlugin extends Plugin {
 
-    public JavaSVNPlugin() {
+    public SVNKitPlugin() {
     }
 
     public void start(BundleContext context) throws Exception {
         super.start(context);
-        SVNDebugLog.setDefaultLog(new JavaSVNLog(getBundle(), isDebugging()));
+        SVNDebugLog.setDefaultLog(new SVNKitLog(getBundle(), isDebugging()));
         
         DAVRepositoryFactory.setup();
         SVNRepositoryFactoryImpl.setup();

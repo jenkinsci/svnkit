@@ -16,7 +16,7 @@ public class UnitTests extends TestCase {
     }
 
     public static Test suite() {
-        final TestSuite suite = new TestSuite("JavaSVN Unit Tests");
+        final TestSuite suite = new TestSuite("SVNKit Unit Tests");
         suite.addTest(QSequenceAllTests.suite());
         return suite;
     }

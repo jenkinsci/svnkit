@@ -24,13 +24,13 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 
 /**
- * The <b>SVNURL</b> class is used for representing urls. Those JavaSVN
+ * The <b>SVNURL</b> class is used for representing urls. Those SVNKit
  * API methods, that need repository locations to carry out an operation, 
  * receive a repository location url represented by <b>SVNURL</b>. This
  * class does all the basic work for a caller: parses an original url 
  * string (splitting it to components), encodes/decodes a path component
  * to/from the UTF-8 charset, checks for validity (such as protocol support
- *  - if JavaSVN does not support a particular protocol, <b>SVNURL</b> 
+ *  - if SVNKit does not support a particular protocol, <b>SVNURL</b> 
  * throws a corresponding exception). 
  * 
  * <p>

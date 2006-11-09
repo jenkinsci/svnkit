@@ -1,4 +1,4 @@
-[[Managing repository With JavaSVN|List]] | [[Printing Out File Contents|>>]]
+[[Managing repository With SVNKit|List]] | [[Printing Out File Contents|>>]]
 <br />
 <br />
 
@@ -105,9 +105,9 @@ And finally we run the program and have the following output in our console:
  /javadoc-files/overview.html (author: 'sa'; revision: 1985; date: Sat Jan 14 23:04:00 NOVT 2006)
  /javadoc-files/info.png (author: 'sa'; revision: 1287; date: Mon Aug 08 18:27:37 NOVST 2005)
  /javadoc-files/javadoc.css (author: 'sa'; revision: 1294; date: Tue Aug 09 02:46:29 NOVST 2005)
- /javadoc-files/JavaSVN_API_Packages.jpg (author: 'sa'; revision: 1027; date: Fri Jul 08 22:33:09 NOVST 2005)
+ /javadoc-files/SVNKit_API_Packages.jpg (author: 'sa'; revision: 1027; date: Fri Jul 08 22:33:09 NOVST 2005)
  /examples (author: 'sa'; revision: 2412; date: Thu Apr 27 00:36:08 NOVST 2006)
- /examples/javasvn-examples.iml (author: 'alex'; revision: 1012; date: Wed Jul 06 17:27:11 NOVST 2005)
+ /examples/svnkit-examples.iml (author: 'alex'; revision: 1012; date: Wed Jul 06 17:27:11 NOVST 2005)
  /examples/src (author: 'sa'; revision: 2412; date: Thu Apr 27 00:36:08 NOVST 2006)
  /examples/src/org (author: 'sa'; revision: 2412; date: Thu Apr 27 00:36:08 NOVST 2006)
  /examples/src/org/tmatesoft (author: 'sa'; revision: 2412; date: Thu Apr 27 00:36:08 NOVST 2006)
@@ -136,4 +136,4 @@ Download the [http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmateso
 
 <br />
 <br />
-[[Managing repository With JavaSVN|List]] | [[Printing Out File Contents|>>]]
+[[Managing repository With SVNKit|List]] | [[Printing Out File Contents|>>]]

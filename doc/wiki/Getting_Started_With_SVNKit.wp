@@ -1,9 +1,9 @@
-[[JavaSVN Architecture|<<]] ... [[Authentication|>>]]
+[[SVNKit Architecture|<<]] ... [[Authentication|>>]]
 <br />
 <br />
 
-== How to use different repository access protocols in JavaSVN? ==
-When you have downloaded [http://tmate.org/svn/download/index.php the latest JavaSVN binaries] and ready to start using it, a question arises: what initialization 
+== How to use different repository access protocols in SVNKit? ==
+When you have downloaded [http://tmate.org/svn/download/index.php the latest SVNKit binaries] and ready to start using it, a question arises: what initialization 
 steps should be performed in order to set up the library? 
 
 <p>
@@ -22,7 +22,7 @@ specific realizations, each one for each protocol. The following table matches a
 |''file:///''||FSRepositoryFactory
 |}
 
-=== Instructions on initializing JavaSVN ===
+=== Instructions on initializing SVNKit ===
 <font color=red>Prior to using the library</font> you must set up an appropriate '''SVNRepositoryFactory''' realization for a 
 particular protocol. For example, if you would like to work with a repository via the ''svn://'' protocol, you must 
 register the following factory:
@@ -46,7 +46,7 @@ it contains your registered factory. And further you create a driver itself:
             //handle exception       		
        }
 </java>
-In '''JavaSVN''' all repository urls are represented by the [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/SVNURL.html SVNURL] 
+In '''SVNKit''' all repository urls are represented by the [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/SVNURL.html SVNURL] 
 class. If a path string is not ''UTF-8'' encoded yet, use the '''SVNURL''''s [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/SVNURL.html#parseURIDecoded(java.lang.String) parseURIDecoded()] 
 method to create a new url representation (it will be encoded if necessary).
 <br />
@@ -65,9 +65,9 @@ repository, accept a repository path which may be one of two types:
 ----
 
 == Using high-level layer ==
-When you use '''JavaSVN''' for managing Working Copies you also should set up appropriate factory classes since 
+When you use '''SVNKit''' for managing Working Copies you also should set up appropriate factory classes since 
 the high-level layer uses the low-level one for working with a repository. If you miss this initialization step 
-you may get an exception saying that '''JavaSVN''' could not create an '''SVNRepository''' object for the provided 
+you may get an exception saying that '''SVNKit''' could not create an '''SVNRepository''' object for the provided 
 url.
 === SVN*Client classes ===
 All high-level operations for managing Working Copies are logically divided to [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/package-summary.html SVN*Client] 
@@ -79,5 +79,5 @@ objects of these classes:
 
 <br />
 <br />
-[[JavaSVN Architecture|<<]] ... [[Authentication|>>]]
+[[SVNKit Architecture|<<]] ... [[Authentication|>>]]
 

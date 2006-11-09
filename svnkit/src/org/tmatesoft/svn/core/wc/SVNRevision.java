@@ -45,7 +45,7 @@ public class SVNRevision {
     public static final SVNRevision HEAD = new SVNRevision("HEAD", 0);
     
     /**
-     * Denotes an item's working (current) revision. This is a JavaSVN constant
+     * Denotes an item's working (current) revision. This is a SVNKit constant
      * that should be provided to mean working revisions (what the native SVN 
      * client assumes by default). 
      */

@@ -21,7 +21,7 @@ import org.tmatesoft.svn.core.io.ISVNTunnelProvider;
  * global run-time configuration options. 
  * 
  * <p>
- * Like the Subversion client library JavaSVN uses configuration options
+ * Like the Subversion client library SVNKit uses configuration options
  * during runtime. <b>ISVNOptions</b> is intended for managing those
  * options which are similar to ones you can meet in the <i>config</i> file 
  * located in the default Subversion configuration area - on <i>Windows</i> platforms
@@ -49,7 +49,7 @@ import org.tmatesoft.svn.core.io.ISVNTunnelProvider;
  * ...
  *     <span class="javacomment">//here the only one boolean parameter - <i>readonly</i> - enables</span>
  *     <span class="javacomment">//or disables writing to the config file: if true (like in this snippet) -</span>
- *     <span class="javacomment">//JavaSVN can only read options from the config file but not write</span>
+ *     <span class="javacomment">//SVNKit can only read options from the config file but not write</span>
  *     ISVNOptions options = SVNWCUtil.createDefaultOptions(<span class="javakeyword">true</span>);
  *     SVNClientManager clientManager = SVNClientManager.newInstance(options, <span class="javastring">"name"</span>, <span class="javastring">"password"</span>);
  *     ...</pre>
@@ -65,7 +65,7 @@ import org.tmatesoft.svn.core.io.ISVNTunnelProvider;
  *     ISVNOptions options = SVNWCUtil.createDefaultOptions(defaultConfigDir, <span class="javakeyword">true</span>);
  *     SVNClientManager clientManager = SVNClientManager.newInstance(options, <span class="javastring">"name"</span>, <span class="javastring">"password"</span>);
  *     ...</pre><br />
- * In this case in the specified directory JavaSVN will create necessary configuration files (in particular <i>config</i> and <i>servers</i>) which
+ * In this case in the specified directory SVNKit will create necessary configuration files (in particular <i>config</i> and <i>servers</i>) which
  * are absolutely identical to those <u>default</u> ones (without any user's edits) located in the SVN config area.
  * 
  * <p>
@@ -198,7 +198,7 @@ public interface ISVNOptions extends ISVNTunnelProvider {
      * 
      * <p>
      * The global ignore patterns describe the names of 
-     * files and directories that JavaSVN should ignore during status, add and 
+     * files and directories that SVNKit should ignore during status, add and 
      * import operations. Similar to the 
      * <i>'global-ignores'</i> option that can be found in the SVN's <i>config</i> 
      * file under the <i>[miscellany]</i> section.
@@ -214,7 +214,7 @@ public interface ISVNOptions extends ISVNTunnelProvider {
      * 
      * <p>
      * The global ignore patterns describe the names of 
-     * files and directories that JavaSVN should ignore during status, add and 
+     * files and directories that SVNKit should ignore during status, add and 
      * import operations. Similar to the 
      * <i>'global-ignores'</i> option that can be found in the SVN's <i>config</i> 
      * file under the <i>[miscellany]</i> section.
@@ -231,7 +231,7 @@ public interface ISVNOptions extends ISVNTunnelProvider {
      * 
      * <p>
      * The global ignore patterns describe the names of 
-     * files and directories that JavaSVN should ignore during status, add and 
+     * files and directories that SVNKit should ignore during status, add and 
      * import operations. Similar to the 
      * <i>'global-ignores'</i> option that can be found in the SVN's <i>config</i> 
      * file under the <i>[miscellany]</i> section.
@@ -356,19 +356,19 @@ public interface ISVNOptions extends ISVNTunnelProvider {
     public void setMergerFactory(ISVNMergerFactory merger);
     
     /**
-     * Returns the value of a property from the <i>[javasvn]</i> section
+     * Returns the value of a property from the <i>[svnkit]</i> section
      * of the <i>config</i> file. Currently not used.
      * 
-     * @param   propertyName a JavaSVN specific config property name
+     * @param   propertyName a SVNKit specific config property name
      * @return               the value of the property
      */
     public String getPropertyValue(String propertyName);
     
     /**
-     * Sets the value of a property from the <i>[javasvn]</i> section
+     * Sets the value of a property from the <i>[svnkit]</i> section
      * of the <i>config</i> file. Currently not used.
      * 
-     * @param   propertyName   a JavaSVN specific config property name
+     * @param   propertyName   a SVNKit specific config property name
      * @param   propertyValue  a new value for the property; if 
      *                         <span class="javakeyword">null</span> the 
      *                         property is removed

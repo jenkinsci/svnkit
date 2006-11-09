@@ -132,7 +132,7 @@ public class SVNStatus {
      * details.  
      * 
      * <p>
-     * Used by JavaSVN internals to construct and initialize an 
+     * Used by SVNKit internals to construct and initialize an 
      * <b>SVNStatus</b> object. It's not intended for users (from an API 
      * point of view).
      * 
@@ -546,7 +546,7 @@ public class SVNStatus {
     }
     
     /**
-     * Marks the item as an external. This method is used by JavaSVN internals
+     * Marks the item as an external. This method is used by SVNKit internals
      * and not intended for users (from an API point of view).
      *
      */
@@ -555,7 +555,7 @@ public class SVNStatus {
     }
     
     /**
-     * Sets the item's remote status. Used by JavaSVN internals and not
+     * Sets the item's remote status. Used by SVNKit internals and not
      * intended for users (from an API point of view).
      * 
      * @param contents item's contents status type against the repository 
@@ -578,7 +578,7 @@ public class SVNStatus {
     }
     
     /**
-     * Sets the item's remote status. Used by JavaSVN internals and not
+     * Sets the item's remote status. Used by SVNKit internals and not
      * intended for users (from an API point of view).
      * 
      * @param url      item's repository URL
@@ -601,7 +601,7 @@ public class SVNStatus {
     }
     
     /**
-     * Sets the item's contents status type. Used by JavaSVN internals and not
+     * Sets the item's contents status type. Used by SVNKit internals and not
      * intended for users (from an API point of view).
      * 
      * @param statusType status type of the item's contents

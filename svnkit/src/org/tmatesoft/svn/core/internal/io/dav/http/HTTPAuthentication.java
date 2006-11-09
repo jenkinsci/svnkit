@@ -39,6 +39,7 @@ abstract class HTTPAuthentication {
     private String myPassword;
     
     private static final String AUTH_METHODS_PROPERTY = "javasvn.http.methods";
+    private static final String OLD_AUTH_METHODS_PROPERTY = "svnkit.http.methods";
     
     protected HTTPAuthentication (SVNPasswordAuthentication credentials) {
         if (credentials != null) {
@@ -233,7 +234,7 @@ abstract class HTTPAuthentication {
     }
     
     private static Collection sortSchemes(Collection authHeaders) {
-        String priorities = System.getProperty(AUTH_METHODS_PROPERTY);
+        String priorities = System.getProperty(AUTH_METHODS_PROPERTY, System.getProperty(OLD_AUTH_METHODS_PROPERTY));
         if (priorities == null) {
             return authHeaders;
         }

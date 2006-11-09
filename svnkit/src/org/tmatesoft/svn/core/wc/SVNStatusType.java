@@ -286,7 +286,7 @@ public class SVNStatusType {
     /**
      * In a status operation denotes that the item in the Working Copy being 
      * currently processed is under version control but is missing  - for example, 
-     * removed from the filesystem with a non-SVN, non-JavaSVN or 
+     * removed from the filesystem with a non-SVN, non-SVNKit or 
      * any other SVN non-compatible delete command).
      */
     public static final SVNStatusType STATUS_MISSING = new SVNStatusType(6, "missing", '!');

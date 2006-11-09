@@ -692,7 +692,7 @@ public class SVNMoveClient extends SVNBasicClient {
      *                       <li><code>src</code> is not under version control
      *                       <li><code>dst</code> is already under version control
      *                       <li>if <code>src</code> is copied but not scheduled for
-     *                       addition, and JavaSVN is not able to locate the copied
+     *                       addition, and SVNKit is not able to locate the copied
      *                       directory root for <code>src</code>
      *                       </ul>
      */

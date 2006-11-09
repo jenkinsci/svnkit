@@ -244,7 +244,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             return -1;
         }
         String port = getOptionValue(sshProgram, sshProgram.toLowerCase().trim().startsWith("plink") ? "-p" : "-P");
-        port = port == null ? System.getProperty("javasvn.ssh2.port") : port;
+        port = port == null ? System.getProperty("svnkit.ssh2.port", System.getProperty("javasvn.ssh2.port")) : port;
         if (port != null) {
             return Integer.parseInt(port);
         }
@@ -264,11 +264,11 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         String port = getOptionValue(sshProgram, sshProgram != null && sshProgram.toLowerCase().trim().startsWith("plink") ? "-P" : "-p");
         String passphrase = null; 
         // fallback to system properties.
-        userName = userName == null ? System.getProperty("javasvn.ssh2.username") : userName;
-        keyFile = keyFile == null ? System.getProperty("javasvn.ssh2.key") : keyFile;
-        passphrase = passphrase == null ? System.getProperty("javasvn.ssh2.passphrase") : passphrase;
-        password = password == null ? System.getProperty("javasvn.ssh2.password") : password;
-        port = port == null ? System.getProperty("javasvn.ssh2.port") : port;
+        userName = userName == null ? System.getProperty("svnkit.ssh2.username", System.getProperty("javasvn.ssh2.username")) : userName;
+        keyFile = keyFile == null ? System.getProperty("svnkit.ssh2.key", System.getProperty("javasvn.ssh2.key")) : keyFile;
+        passphrase = passphrase == null ? System.getProperty("svnkit.ssh2.passphrase", System.getProperty("javasvn.ssh2.passphrase")) : passphrase;
+        password = password == null ? System.getProperty("svnkit.ssh2.password", System.getProperty("javasvn.ssh2.password")) : password;
+        port = port == null ? System.getProperty("svnkit.ssh2.port", System.getProperty("javasvn.ssh2.port")) : port;
 
         if (userName == null) {
             userName = System.getProperty("user.name");
@@ -345,13 +345,6 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                     return new SVNPasswordAuthentication(myUserName, myPassword, myIsStore);
                 } else if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
                     if (myUserName == null || "".equals(myUserName)) {                        
-                        // empty user name should only be returned when there is no provider,
-                        // i.e. no more chances to get a username.
-                        // but there could be other providers - runtime and cache one!
-//                        if (myProviders[3] == null) { 
-//                            String userName = System.getProperty("javasvn.author", "");
-//                            return new SVNUserNameAuthentication(userName, myIsStore);
-//                        } 
                         return null;
                     }
                     return new SVNUserNameAuthentication(myUserName, myIsStore);

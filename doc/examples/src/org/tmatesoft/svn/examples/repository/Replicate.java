@@ -29,7 +29,7 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 /*
  * This example shows how you can create new repositories
- * and replicate existing ones using JavaSVN. The program accepts 
+ * and replicate existing ones using SVNKit. The program accepts 
  * two args:filesystem locations of source and target repository.
  * If they're not provided the program uses default locations.
  * 
@@ -106,7 +106,7 @@ public class Replicate {
              * revision properties enabled or not. By default 
              * Subversion repositories disallow such changes until you 
              * put a pre-revprop-change hook that allows them to the 
-             * repository. So, if the second parameter is true JavaSVN 
+             * repository. So, if the second parameter is true SVNKit 
              * creates a repository with an empty pre-revprop-change hook, 
              * so that you don't have to care of that by yourself. In 
              * this program we're not going to modify revision props of 

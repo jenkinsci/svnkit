@@ -14,8 +14,8 @@ package org.tmatesoft.svn.core;
 
 
 /**
- * A main exception class that is used in the JavaSVN library. All other
- * JavaSVN exception classes extend this one. Detailed information 
+ * A main exception class that is used in the SVNKit library. All other
+ * SVNKit exception classes extend this one. Detailed information 
  * on the error (description, error code) is encapsulated inside an error 
  * message that is held by an <b>SVNException</b>. 
  *  

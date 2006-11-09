@@ -1,12 +1,12 @@
-[[Getting Started With JavaSVN|<<]] ... [[Managing Repository With JavaSVN|>>]]
+[[Getting Started With SVNKit|<<]] ... [[Managing Repository With SVNKit|>>]]
 <br />
 <br />
 
 == Authentication manager ==
 When an anonymous access to a repository is not permitted, a server asks for authentication credentials. For these 
-purposes '''JavaSVN''' uses authentication managers. Such managers implement the 
+purposes '''SVNKit''' uses authentication managers. Such managers implement the 
 [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.html ISVNAuthenticationManager] 
-interface. The [[Getting Started With JavaSVN|previous article]] describes how to create an [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html SVNRepository] 
+interface. The [[Getting Started With SVNKit|previous article]] describes how to create an [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html SVNRepository] 
 driver for working with a repository. After such a driver has been instantiated you provide an authentication manager 
 in the following way:
 <java>
@@ -40,14 +40,14 @@ The whole authentication manager is based on the following four logical blocks:
 <br />
 
 On the diagram each logical block is followed by a corresponding interface (in a bold font) provided within the [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/package-summary.html auth package].
-These blokcs are like pinions of a gear, in our case - of an authentication gear that is used within '''JavaSVN'''. Such a 
+These blokcs are like pinions of a gear, in our case - of an authentication gear that is used within '''SVNKit'''. Such a 
 structure allows you to replace different blocks while the authentication manager itself remaining the same. Let's look 
 at those blocks closer.
 
 ==== Authentication Provider ====
 This block is represented by the [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationProvider.html ISVNAuthenticationProvider] 
-interface in '''JavaSVN''' authentication API. It's responsible for providing [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/SVNAuthentication.html user authentication credentials] 
-of different kinds. Such providers are passed to an authentication manager. Let's look at how JavaSVN acts when it receives a server 
+interface in '''SVNKit''' authentication API. It's responsible for providing [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/SVNAuthentication.html user authentication credentials] 
+of different kinds. Such providers are passed to an authentication manager. Let's look at how SVNKit acts when it receives a server 
 challenge for authentication.
 
 <br />
@@ -55,31 +55,31 @@ challenge for authentication.
 <br />
 
 <p>
-The above sequence diagram illustrates a commit process performed by JavaSVN.
-# A user initiates a commit request. '''JavaSVN''' sends the request to the server.
+The above sequence diagram illustrates a commit process performed by SVNKit.
+# A user initiates a commit request. '''SVNKit''' sends the request to the server.
 # The server receives the request and answers with a challenge for authentication.
-# '''JavaSVN''' receives the server's challenge and asks the auth manager provided by the client for the first credentials. Here we assume that this is the first time credentials are requested, and since there can be probably more than one credentials for the same authentication realm, '''JavaSVN''' starts with the first credentials.
+# '''SVNKit''' receives the server's challenge and asks the auth manager provided by the client for the first credentials. Here we assume that this is the first time credentials are requested, and since there can be probably more than one credentials for the same authentication realm, '''SVNKit''' starts with the first credentials.
 # The auth manager invokes its auth provider asking for the first credentials.
 # The auth provider returns user credentials to the manager. In our example it prompts a user for login\password. However there can be other implementations: for example, a provider which fetches credentials from the standard Subversion auth storage. Actually, it's up to a user.
-# The auth manager returns the credentials to the caller. Surely, this diagram is a bit relative: the auth manager (as well as auth provider) is also a part of '''JavaSVN''', but is shown separately only for more clear demonstration. 
-# '''JavaSVN''' sends the request with credentials to the server.
+# The auth manager returns the credentials to the caller. Surely, this diagram is a bit relative: the auth manager (as well as auth provider) is also a part of '''SVNKit''', but is shown separately only for more clear demonstration. 
+# '''SVNKit''' sends the request with credentials to the server.
 # The server receives the credentials, checks them for validity. If the user is authorized seccessfully, the server carries out the request and sends back a response.
-# So, if negotiation is successful '''JavaSVN''' says to the auth manager that the provided credentials have been acknowledged by the server. Then returns the control back to the caller.
+# So, if negotiation is successful '''SVNKit''' says to the auth manager that the provided credentials have been acknowledged by the server. Then returns the control back to the caller.
 
 <p>
 But imagine, that the user has mistyped his password. 
 # In this case the server rejects the credentials and challenges for authentication again. 
-# '''JavaSVN''' receives an error message and says to the auth manager that the provided credentials are not acknowledged by the server. 
-# Then '''JavaSVN''' asks the manager for the next credentials and the process described above repeats once again.
+# '''SVNKit''' receives an error message and says to the auth manager that the provided credentials are not acknowledged by the server. 
+# Then '''SVNKit''' asks the manager for the next credentials and the process described above repeats once again.
 
 <br />
 [[Image:AuthProvider_In_Work_1.png]]
 <br />
 
 <p>
-'''JavaSVN''' keeps on asking the auth manager for the next credentials until either the server acknowledges some of them or the 
+'''SVNKit''' keeps on asking the auth manager for the next credentials until either the server acknowledges some of them or the 
 auth provider (hence the auth manager, too) runs out of credentials (returns ''null''). In the latter case 
-'''JavaSVN''' throws an [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/SVNAuthenticationException.html SVNAuthenticationException].
+'''SVNKit''' throws an [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/SVNAuthenticationException.html SVNAuthenticationException].
 
 <p>
 There may be more than one auth provider registered in the auth manager (like in the default auth manager implementation 
@@ -103,35 +103,35 @@ correspond to them:
 |}
 
 <p>
-These kinds are provided by '''JavaSVN''' to the credentials-getter methods of an authentication manager. And an auth 
+These kinds are provided by '''SVNKit''' to the credentials-getter methods of an authentication manager. And an auth 
 manager provides them to its auth provider. Those '''SVNAuthentication''' instances which are returned back from an 
 auth manager <font color=red>must</font> correspond to the kind passed. That means that, for example, if credentials of 
 type '''PASSWORD''' are requested, an auth manager must return an '''SVNPasswordAuthentication''' object, and so on.
 
 <p>
-According to an access scheme '''JavaSVN''' passes an appropriate kind to an auth manager. For example, if ''svn+ssh://'' 
-scheme is used, '''JavaSVN''' passes the '''SSH''' kind to an auth manager.
+According to an access scheme '''SVNKit''' passes an appropriate kind to an auth manager. For example, if ''svn+ssh://'' 
+scheme is used, '''SVNKit''' passes the '''SSH''' kind to an auth manager.
 
 ==== Authentication Storage ====
 This block is represented by the [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationStorage.html ISVNAuthenticationStorage] 
-interface. '''JavaSVN''' implements this interface as a run-time in-memory storage for credentials of different kinds. In our previous example 
+interface. '''SVNKit''' implements this interface as a run-time in-memory storage for credentials of different kinds. In our previous example 
 the auth provider can store login\password provided by the user in such a storage, so that later credentials (acknowledged by the server and stored in 
 the run-time storage) may be reused without prompting the user again.
 
 ==== Proxy Manager ====
 If an authentication manager provides a non-null [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNProxyManager.html proxy manager], 
-'''JavaSVN''' interacts with a target server through a proxy server represented by the proxy manager.
+'''SVNKit''' interacts with a target server through a proxy server represented by the proxy manager.
 
 ==== SSL Manager ====
 This block is represented by the [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNSSLManager.html ISVNSSLManager] 
 interface. When a secured http connection is used (''https:// ''), and this manager is not ''null'', it's used by 
-'''JavaSVN''' to create SSL encrypted sockets (i.e. such a manager provides an appropriate SSL context). However if 
-no SSL manager is provided by an auth manager, '''JavaSVN''' uses a default one which, of course, knows nothing of 
+'''SVNKit''' to create SSL encrypted sockets (i.e. such a manager provides an appropriate SSL context). However if 
+no SSL manager is provided by an auth manager, '''SVNKit''' uses a default one which, of course, knows nothing of 
 user certificate files. But this default one will provide an SSL context for creating SSL sockets as well as receive 
 server certificate file.
 
 === Default ISVNAuthenticationManager implementations ===
-'''JavaSVN''' provides the following implementations of '''ISVNAuthenticationManager''':
+'''SVNKit''' provides the following implementations of '''ISVNAuthenticationManager''':
 * [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/BasicAuthenticationManager.html BasicAuthenticationManager]
 * DefaultSVNAuthenticationManager
 
@@ -143,7 +143,7 @@ This implementation has the following features:
 * Uses SSL, SSH, proxy settings from the ''config'' and ''servers'' files found in the default Subversion run-time configuration area.
 
 <p>
-On Windows machines name\password credentials are often stored encrypted. Unfortunately, '''JavaSVN''' is not able to 
+On Windows machines name\password credentials are often stored encrypted. Unfortunately, '''SVNKit''' is not able to 
 decrypt such credentials, therefore they are not used (just skipped).
 
 <p>
@@ -159,16 +159,16 @@ This is another very simple implementation of '''ISVNAuthenticationManager'''. I
 
 <p>
 You may provide an array of different '''SVNAuthentication''' credentials, your own specific proxy and ssh settings to 
-such an auth manager and then use it in '''JavaSVN'''.
+such an auth manager and then use it in '''SVNKit'''.
 
 === Forcing authentication ===
 Although one of the Subversion advantages is that you do not need to authenticate yourself until a server challenges 
-you, sometimes it may be effective to have an ability to make '''JavaSVN''' immediately authenticate a user without 
-wasting time. The '''ISVNAuthenticationInterface''' provides this ability: it returns a flag which '''JavaSVN''' 
+you, sometimes it may be effective to have an ability to make '''SVNKit''' immediately authenticate a user without 
+wasting time. The '''ISVNAuthenticationInterface''' provides this ability: it returns a flag which '''SVNKit''' 
 uses to control such a behaviour.
 
 == HTTP authentication schemes ==
-'''JavaSVN''' supports the following http auth schemes (for both server and proxy authentication):
+'''SVNKit''' supports the following http auth schemes (for both server and proxy authentication):
 * Basic
 * Digest
 * NTLM
@@ -195,5 +195,5 @@ In the NTLM auth scheme you also provide a domain name:
 
 <br />
 <br />
-[[Getting Started With JavaSVN|<<]] ... [[Managing Repository With JavaSVN|>>]]
+[[Getting Started With SVNKit|<<]] ... [[Managing Repository With SVNKit|>>]]
 

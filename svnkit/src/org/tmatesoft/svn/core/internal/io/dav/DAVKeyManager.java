@@ -23,8 +23,10 @@ import org.tmatesoft.svn.util.SVNDebugLog;
 
 class DAVKeyManager {
     
-    private static final String CERTIFICATE_FILE = "javasvn.ssl.client-cert-file";
-    private static final String CERTIFICATE_PASSPHRASE = "javasvn.ssl.client-cert-password";
+    private static final String CERTIFICATE_FILE = "svnkit.ssl.client-cert-file";
+    private static final String CERTIFICATE_PASSPHRASE = "svnkit.ssl.client-cert-password";
+    private static final String OLD_CERTIFICATE_FILE = "javasvn.ssl.client-cert-file";
+    private static final String OLD_CERTIFICATE_PASSPHRASE = "javasvn.ssl.client-cert-password";
     
     private static KeyManager[] ourKeyManagers;
     private static boolean ourIsInitialized;
@@ -34,13 +36,14 @@ class DAVKeyManager {
             return ourKeyManagers;
         }
         ourIsInitialized = true;
-        String certFileName = System.getProperty(CERTIFICATE_FILE);
+        String certFileName = System.getProperty(CERTIFICATE_FILE, System.getProperty(OLD_CERTIFICATE_FILE));
         if (certFileName == null) {
             return null;
         }
         char[] passphrase = null;
-        if (System.getProperty(CERTIFICATE_PASSPHRASE) != null) {
-            passphrase = System.getProperty(CERTIFICATE_PASSPHRASE).toCharArray();
+        String pph = System.getProperty(CERTIFICATE_PASSPHRASE, System.getProperty(OLD_CERTIFICATE_PASSPHRASE));
+        if (pph != null) {
+            passphrase = pph.toCharArray();
         }
         KeyStore keyStore = null;            
         InputStream is = null;

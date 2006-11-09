@@ -1,4 +1,4 @@
-[[Editing Operation Update|<<]] | [[Managing repository With JavaSVN|List]] |  [[Managing A Working Copy|>>]]
+[[Editing Operation Update|<<]] | [[Managing repository With SVNKit|List]] |  [[Managing A Working Copy|>>]]
 <br />
 <br />
 
@@ -95,7 +95,7 @@ strongly depends on permissions you have on both source and destination reposito
 some directory in the source repository, it is obvious that this directory will be missing in the destination one.
 
 <p>
-You can use different repository access [[JavaSVN Architecture|protocols supported by JavaSVN]] for both source and 
+You can use different repository access [[SVNKit Architecture|protocols supported by SVNKit]] for both source and 
 destination repositories. This provides you an ability to make a local back-up of a repository located on the server 
 machine.
 
@@ -294,4 +294,4 @@ Download the [http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmateso
 
 <br />
 <br />
-[[Editing Operation Update|<<]] | [[Managing repository With JavaSVN|List]] |  [[Managing A Working Copy|>>]]
+[[Editing Operation Update|<<]] | [[Managing repository With SVNKit|List]] |  [[Managing A Working Copy|>>]]

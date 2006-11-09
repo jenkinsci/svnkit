@@ -556,7 +556,7 @@ class HTTPConnection implements IHTTPConnection {
             if (myIsSpoolResponse) {
                 OutputStream dst = null;
                 try {
-                    tmpFile = SVNFileUtil.createTempFile(".javasvn", ".spool");
+                    tmpFile = SVNFileUtil.createTempFile(".svnkit", ".spool");
                     dst = SVNFileUtil.openFileForWriting(tmpFile);
                     // this will exhaust http stream anyway.
                     err = readData(request, dst);
