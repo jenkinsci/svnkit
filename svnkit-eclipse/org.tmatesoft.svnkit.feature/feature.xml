@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<feature id="org.tmatesoft.svnkit"
+	version="%svnkit.version%"
+	label="SVNKit Library"
+	provider-name="TMate Software"
+	>
+
+   <description url="http://svnkit.com/">
+    SVNKit is a pure java Subversion client library that may be 
+    used through its own API or serve as a transparent replacement 
+    of native javahl bindings.
+   </description>
+
+   <copyright url="http://tmatesoft.com/">
+   	(c) 2004-2006, TMate Software Ltd.
+   </copyright>
+
+   <license url="http://svnkit.com/license.html">
+   %license
+   </license>
+
+   <url>
+      <update label="TMate Software Update Site" url="http://svnkit.com"/>
+      <discovery label="TMate Software Update Site" url="http://svnkit.com"/>
+   </url>
+   
+   <plugin id="org.tmatesoft.svnkit" 
+	       version="%svnkit.version%" 
+   />
+   
+</feature>

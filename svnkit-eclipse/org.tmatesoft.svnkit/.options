@@ -1,0 +1,7 @@
+org.tmatesoft.svnkit/debug=true
+org.tmatesoft.svnkit/debug/error=true
+org.tmatesoft.svnkit/debug/warning=true
+org.tmatesoft.svnkit/debug/info=true
+org.tmatesoft.svnkit/debug/fine=true
+org.tmatesoft.svnkit/debug/trace/http=true
+org.tmatesoft.svnkit/debug/trace/svn=true

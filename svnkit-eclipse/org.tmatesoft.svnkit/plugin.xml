@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.0"?>
 <plugin
-   id="org.tmatesoft.javasvn"
-   name="JavaSVN Library Plug-in"
-   version="%javasvn.version%"
+   id="org.tmatesoft.svnkit"
+   name="SVNKit Library Plug-in"
+   version="%svnkit.version%"
    provider-name="TMate Software"
    class="org.tmatesoft.svn.core.JavaSVNPlugin">
 
    <runtime>
-      <library name="javasvn-javahl.jar">
+      <library name="svnkit-javahl.jar">
          <export name="*"/>
       </library>
-      <library name="javasvn.jar">
+      <library name="svnkit.jar">
          <export name="*"/>
       </library>
-      <library name="javasvnplugin.jar"/>
+      <library name="svnkitplugin.jar"/>
       <library name="ganymed.jar"/>
    </runtime>
    
