@@ -161,7 +161,8 @@ public class SVNMoveClient extends SVNBasicClient {
         } else if (!srcIsVersioned) {
             // world:wc (add, if dst is 'deleted' it will be replaced)
             SVNFileUtil.rename(src, dst);
-            myWCClient.doAdd(dst, false, false, false, true, false);
+            // do we have to add it if it was unversioned?
+            //myWCClient.doAdd(dst, false, false, false, true, false);
         } else {
             // wc:wc.
 
@@ -511,7 +512,8 @@ public class SVNMoveClient extends SVNBasicClient {
             if (revert) {
                 myWCClient.doRevert(dst, true);
             } else {
-                myWCClient.doAdd(dst, false, false, false, true, false);
+                // should we do this? there is no old source, may be rename is enough.
+//                myWCClient.doAdd(dst, false, false, false, true, false);
             }
         } else {
             // wc:wc.
@@ -805,9 +807,13 @@ public class SVNMoveClient extends SVNBasicClient {
             if (area.getEntry(area.getThisDirName(), false) == null) {
                 return false;
             }
-            if (SVNFileType.getType(file).isFile()) {
-                SVNEntry fileEntry = area.getEntry(file.getName(), false);
-                return fileEntry != null; 
+            SVNFileType type = SVNFileType.getType(file);
+            if (type.isFile() || type == SVNFileType.NONE) {
+                // file or missing file
+                return area.getEntry(file.getName(), false) != null;
+            } else if (type != SVNFileType.NONE && !area.getRoot().equals(file)) {
+                // directory, but not anchor. always considered unversioned.
+                return false;
             } 
             return true;
         } catch (SVNException e) {
