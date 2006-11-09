@@ -267,6 +267,8 @@ public class SVNUpdateClient extends SVNBasicClient {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_FILENAME, "Checkout destination path can not be NULL");
             SVNErrorManager.error(err);
         }
+        pegRevision = pegRevision == null ? SVNRevision.UNDEFINED : pegRevision;
+        
         if (!revision.isValid() && pegRevision.isValid()) {
             revision = pegRevision;
         }
