@@ -21,10 +21,10 @@
 <table border="0" cellpadding="0" cellspacing="0" style="width: 100%;">
 <tr>
 <td rowspan="2" colspan="1" width="50%">
-<a style="border-bottom: 0px;" href="http://tmate.org/svn/"><img width="415" height="97" src="../img/javasvn_logo.png" border="0"></a>
+<a style="border-bottom: 0px;" href="/"><img width="415" height="97" src="../img/svnkit_logo.jpg" border="0"></a>
 </td>
 <td rowspan="1" colspan="1" width="50%" style="font-style: italic; font-size: 17px; padding-left: 15px" align="left" valign="center">
-The only pure Java Subversion library in the world!
+The only pure Java&#153; Subversion library in the world!
 </td>
 </tr>
 <tr>
@@ -56,9 +56,9 @@ The only pure Java Subversion library in the world!
 </table>
 
 <h1>Setting a custom logger (for debug logging)</h1>
-<p>When you're using JavaSVN in your application it is not always an option to let
-JavaSVN use JDK logging API. Instead you may like to have a fine-grained control over
-the way JavaSVN logs its operations. The solution is to provide JavaSVN with a custom logger
+<p>When you're using SVNKit in your application it is not always an option to let
+SVNKit use JDK logging API. Instead you may like to have a fine-grained control over
+the way SVNKit logs its operations. The solution is to provide SVNKit with a custom logger
 class that should extend the <code>SVNDebugLoggerAdapter</code> class. The code below demonstrates
 how it could be done.
 </p> 
@@ -72,11 +72,11 @@ how it could be done.
     <span class="javaCommentMulti">/*
      * Set up your logger
      */</span>
-    <span class="javaKeyword">public static void</span> initJavaSVNLogger() {
-        SVNDebugLog.setLogger(<span class="javaKeyword">new</span> CustomJavaSVNLogger());
+    <span class="javaKeyword">public static void</span> initSVNKitLogger() {
+        SVNDebugLog.setLogger(<span class="javaKeyword">new</span> CustomSVNKitLogger());
     }
 
-    <span class="javaKeyword">private static class</span> CustomJavaSVNLogger 
+    <span class="javaKeyword">private static class</span> CustomSVNKitLogger 
                                    <span class="javaKeyword">extends</span> <code>SVNDebugLoggerAdapter</code> {
     	<span class="javaCommentMulti">/* Override superclass methods to redirect logging
     	 * as you wish. Superclass implementaion is empty, i.e.
@@ -121,20 +121,20 @@ how it could be done.
          }
     }
 ...
-    initJavaSVNLogger();
+    initSVNKitLogger();
 ...    
 </pre>
 </p>
 <p><b>Note</b>: One have to set up a custom logger before any other calls are made to
-JavaSVN, otherwise default logging will be used - i.e. <code>DefaultSVNDebugLogger</code> (<b>org.tmatesoft.svn.core.internal.util</b>).
+SVNKit, otherwise default logging will be used - i.e. <code>DefaultSVNDebugLogger</code> (<b>org.tmatesoft.svn.core.internal.util</b>).
 How to obtain its log files read this <a href="user-guide-debug-logs.html">article</a>.</p>
 <br>
 <br>
-<p>If you have any questions regarding JavaSVN, would like to report a bug or contribute a patch, please write to 
-<a id="normal" href="mailto:support@tmatesoft.com">support@tmatesoft.com</a></p>
+<p>If you have any questions regarding SVNKit, would like to report a bug or contribute a patch, please write to 
+<a id="normal" href="mailto:support@svnkit.com">support@svnkit.com</a></p>
 <br />
 <table style="margin-top: 1em;" width="100%" cellpadding="0" cellspacing="0"><tr><td id="footer" align="left">Copyright &copy; 
-2004-2006, TMate Software</td><td align="right" id="footer">feedback is welcome at <a href="mailto:feedback%40tmatesoft.com">feedback@tmatesoft.com</a></td></tr></table>
+2004-2006, TMate Software</td><td align="right" id="footer">feedback is welcome at <a href="mailto:feedback%40svnkit.com">feedback@svnkit.com</a></td></tr></table>
 </td>
 </tr>
 </table>

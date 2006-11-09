@@ -14,23 +14,23 @@ if (file_exists($cacheFile)) {
                                            
 $rss = new UniversalFeedCreator();
 $rss->useCached("RSS1.0", $cacheFile);
-$rss->title = "TMate JavaSVN";
-$rss->description = "TMate JavaSVN Library Change Log";
-$rss->link = "http://tmate.org/svn.old/";
-$rss->syndicationURL = "http://tmate.org/" . $PHP_SELF;
+$rss->title = "TMate SVNKit";
+$rss->description = "TMate SVNKit Library Change Log";
+$rss->link = "http://svnkit.com/";
+$rss->syndicationURL = "http://svnkit.com/" . $PHP_SELF;
 $rss->author = "TMate Software"; 
 $rss->editor = "TMate Software"; 
-$rss->authorEmail = "support@tmatesoft.com"; 
-$rss->editorEmail = "support@tmatesoft.com"; 
+$rss->authorEmail = "support@svnkit.com"; 
+$rss->editorEmail = "support@svnkit.com"; 
 
-$repository = "http://svn.tmate.org/repos/jsvn/tags/";
+$repository = "http://svn.svnkit.com/repos/svnkit/tags/";
 $contents = read_contents($repository);
 if (!$contents) {
    echo $rss->createFeed();
    exit;
 }
 
-$items = publish_rss20($repository, $contents, "http://tmate.org/svn.old/");
+$items = publish_rss20($repository, $contents, "http://svnkit.com/");
 for($i = 0; $i < count($items); $i++) {
 
      $item = $items[$i];
@@ -42,8 +42,8 @@ for($i = 0; $i < count($items); $i++) {
      $rssitem->link   = $item["link"];
      $rssitem->author = $item["author"];
      $rssitem->date   = $item["date"];
-     $rssitem->authorEmail = "support@tmatesoft.com"; 
-     $rssitem->editorEmail = "support@tmatesoft.com"; 
+     $rssitem->authorEmail = "support@svnkit.com"; 
+     $rssitem->editorEmail = "support@svnkit.com"; 
 
      $rssitem->description = $item["rss_description"];
      $rss->addItem($rssitem);

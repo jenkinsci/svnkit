@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" >
-<head><title>Using JavaSVN in Multithreaded Environment</title>
+<head><title>Using SVNKit in Multithreaded Environment</title>
 <meta name="keywords" content="Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development">   
 <meta name="description" content="Pure Java Subversion Library. Open Source, provided by TMate Software">
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
@@ -19,10 +19,10 @@
 <td align="left" valign="top" style="padding: 20px 20px 20px 20px;">
 
 <p>
-<span class="javasvn"><a style="border-bottom: 0px; color: rgb(51, 102, 153);" href="http://tmate.org/svn/">JavaSVN</a>&nbsp;</span><span style="font-size: 140%; font-weight: bold;">The only pure Java Subversion client library in the world!</span>
+<span class="svnkit"><a style="border-bottom: 0px; color: rgb(51, 102, 153);" href="/">SVNKit</a>&nbsp;</span><span style="font-size: 140%; font-weight: bold;">The only pure Java Subversion client library in the world!</span>
 </p>
 <p><div style="border-bottom: 1px solid rgb(51, 102, 153);"></div></p>
-<!--<small><a href="../index.html" style="border-bottom: 0px;">Home</a> :: <a href="index.html" style="border-bottom: 0px;">Knowledge Base</a> :: Configuring JavaSVN</small>-->
+<!--<small><a href="../index.html" style="border-bottom: 0px;">Home</a> :: <a href="index.html" style="border-bottom: 0px;">Knowledge Base</a> :: Configuring SVNKit</small>-->
 
 <table border=0 cellpadding="0" cellspacing="0" style="width: 100%; margin-top: 0.7em">
 <tr style="height: 10px;">
@@ -52,7 +52,7 @@
 <table border=0 cellpadding="0" cellspacing="0" style="width: 100%;">
 <tr>
 <td>
-<a style="border-bottom: 0px;" href="http://tmate.org/svn/"><img src="../img/javasvn_logo.png" border=0 align=bottom></a>
+<a style="border-bottom: 0px;" href="/"><img src="../img/svnkit_logo.jpg" border=0 align=bottom></a>
 </td>
 
 <td align="right">
@@ -86,16 +86,16 @@
 </table>
 -->
 
-<h1>Using JavaSVN in Multithreaded Environment</h1>
+<h1>Using SVNKit in Multithreaded Environment</h1>
 <p>
-Either working with the JavaSVN low-level API (<b>org.tmatesoft.svn.core.io</b>)
+Either working with the SVNKit low-level API (<b>org.tmatesoft.svn.core.io</b>)
 or with the high-level one (<b>org.tmatesoft.svn.core.wc</b>) you should remember
 that their classes (i.e. SVNRepository, SVN*Client classes) are not thread safe.
 Details follow.
 </p>
 <h4>Using SVNRepository</h4>
 <p>
-Regarding the JavaSVN low-level API (SVNRepository): if JavaSVN is used in a 
+Regarding the SVNKit low-level API (SVNRepository): if SVNKit is used in a 
 multithreaded application, you should not use one SVNRepository object in multiple 
 threads. There should be one SVNRepository instance per one thread. The cause is 
 that the repository access methods of SVNRepository are not reenterable, i.e. if 
@@ -104,7 +104,7 @@ next operation (method of an SVNRepository object).
 </p>
 <h4>Using SVN*Client classes</h4>
 <p>
-Regarding the JavaSVN high-level API (SVN*Client classes): although every SVN*Client
+Regarding the SVNKit high-level API (SVN*Client classes): although every SVN*Client
 object creates a new SVNRepository driver in every case it needs an access to a repository,
 you also should not use one SVN*Client object (as well as one SVNClientManager) in more than 
 one thread. The reason why SVN*Client objects are not thread safe is that these objects
@@ -121,11 +121,11 @@ until the operation finishes. All other write access operations will be denied u
 </p>
 <br />
 <br />
-<p>If you have any questions regarding JavaSVN, would like to report a bug or contribute a patch, please write to 
-<a id="normal" href="mailto:support@tmatesoft.com">support@tmatesoft.com</a></p>
+<p>If you have any questions regarding SVNKit, would like to report a bug or contribute a patch, please write to 
+<a id="normal" href="mailto:support@svnkit.com">support@svnkit.com</a></p>
 <br />
 <table style="margin-top: 1em;" width="100%" cellpadding="0" cellspacing="0"><tr><td id="footer" align="left">Copyright &copy; 
-2004-2006, TMate Software</td><td align="right" id="footer">feedback is welcome at <a href="mailto:feedback%40tmatesoft.com">feedback@tmatesoft.com</a></td></tr></table>
+2004-2006, TMate Software</td><td align="right" id="footer">feedback is welcome at <a href="mailto:feedback%40svnkit.com">feedback@svnkit.com</a></td></tr></table>
 
 </td>
 </tr>

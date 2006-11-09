@@ -20,10 +20,9 @@
 <td align="left" valign="top" style="padding: 20px 20px 20px 20px;">
 
 <p>
-<span class="javasvn"><a style="border-bottom: 0px; color: rgb(51, 102, 153);" href="http://tmate.org/svn/">JavaSVN</a>&nbsp;</span><span style="font-size: 140%; font-weight: bold;">The only pure Java Subversion client library in the world!</span>
+<span class="svnkit"><a style="border-bottom: 0px; color: rgb(51, 102, 153);" href="/">SVNKit</a>&nbsp;</span><span style="font-size: 140%; font-weight: bold;">The only pure Java&#153; Subversion client library in the world!</span>
 </p>
 <p><div style="border-bottom: 1px solid #ccc;"></div></p>
-<!--<small><a href="../index.html" style="border-bottom: 0px;">Home</a> :: <a href="index.html" style="border-bottom: 0px;">Knowledge Base</a> :: Configuring JavaSVN</small>-->
 
 <table border=0 cellpadding="0" cellspacing="0" style="width: 100%; margin-top: 0.7em">
 <tr style="height: 10px;">
@@ -49,74 +48,37 @@
 </tr>
 </table>
 
-<!--
-<table border=0 cellpadding="0" cellspacing="0" style="width: 100%;">
-<tr>
-<td>
-<a style="border-bottom: 0px;" href="http://tmate.org/svn/"><img src="../img/javasvn_logo.png" border=0 align=bottom></a>
-</td>
 
-<td align="right">
-<span style="font-size: 140%; font-weight: bold;">The only pure Java Subversion client library in the world!</span>
-
-<table border=0 cellpadding="0" cellspacing="0" style="width: 100%; margin-top: 0.7em">
-<tr style="height: 10px;">
-
-<td width="40%" valign="top" align="center">
-</td>
-
-<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
-<a class="headitem" style="border-bottom: 0px;" href="../index.html">Home</a>
-</td>
-
-<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
-<a class="headitem" style="border-bottom: 0px;" href="../download/index.php">Get Library</a>
-</td>
-
-<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
-<a class="headitem" style="border-bottom: 0px;" href="index.html">Knowledge Base</a> 
-</td>
-
-<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial;">
-<a class="headitem" style="border-bottom: 0px;" href="../licensing/index.html">Licensing</a>
-</td>
-</tr>
-</table>
-</td>
-</tr>
-</table>
--->
-
-<h1>Configuring JavaSVN</h1>
+<h1>Configuring SVNKit</h1>
 <p>
-This section contains information on configuring the JavaSVN library - in order
+This section contains information on configuring the SVNKit library - in order
 that one can adjust the library up to his individual wishes. Here you will find
-information on what configuration files JavaSVN uses during rungtime, what 
+information on what configuration files SVNKit uses during rungtime, what 
 system properties are used in that case when config files are not available, and
 so on.
 </p>
 <h4>HTTP proxy setup</h4>
-<p>By default JavaSVN uses proxy settings from the <i>servers</i> configuration file
+<p>By default SVNKit uses proxy settings from the <i>servers</i> configuration file
 that is located in the default SVN run-time configuration area.
 </p>
 <h4>SVN+SSH authentication with private key</h4>
-<p>By default JavaSVN tries to obtain all necessary information
+<p>By default SVNKit tries to obtain all necessary information
 from the <i>[tunnels]</i> section of the <i>config</i> file that is
 located in the default SVN run-time configuration area. However if
-that information is not complete or not found at all, JavaSVN tries
+that information is not complete or not found at all, SVNKit tries
 then to use predefined system properties listed beneath.
-<p>JavaSVN uses pure java <a id=normal href="http://www.jcraft.com">JSCH library</a> to establish SSH 
+<p>SVNKit uses pure java <a id=normal href="http://www.jcraft.com">JSCH library</a> to establish SSH 
 connection. This library supports only SSH version 2, with password or private key authentication. Using 
 password authentication is not a problem with Subclipse, but currently it doesn't provide a way to define 
-private key and passphrase for private key authentication. You may use the following properties to let JavaSVN
+private key and passphrase for private key authentication. You may use the following properties to let SVNKit
 know about your private key and passphrase (you need to provide these properties when starting Eclipse): </p>
 <pre class="javaCode">
 $ eclipse -vmargs \ 
--Djavasvn.ssh2.key=/path/to/private/key/file \
--Djavasvn.ssh2.username=userName \ 
--Djavasvn.ssh2.passphrase=optionalPassphrase \
--Djavasvn.ssh2.password=userpassword
--Djavasvn.ssh2.port=optionalPort
+-Dsvnkit.ssh2.key=/path/to/private/key/file \
+-Dsvnkit.ssh2.username=userName \ 
+-Dsvnkit.ssh2.passphrase=optionalPassphrase \
+-Dsvnkit.ssh2.password=userpassword
+-Dsvnkit.ssh2.port=optionalPort
 </pre>
 <p><b>Note:</b> User name for ssh connection will be taken from SVN Repository properties that may be altered in Subclipse
 SVN Repositories view.</p>
@@ -124,11 +86,11 @@ SVN Repositories view.</p>
 Eclipse config.ini file <code>ECLIPSE_HOME/configuration/config.ini</code> (tip provided by Andrew Berman):
 <pre class="javaCode">
   ...
-  javasvn.ssh2.key=path/to/private/key/file
-  javasvn.ssh2.passphrase=passphrase
-  javasvn.ssh2.username=username
-  javasvn.ssh2.password=userpassword 
-  javasvn.ssh2.port=port
+  svnkit.ssh2.key=path/to/private/key/file
+  svnkit.ssh2.passphrase=passphrase
+  svnkit.ssh2.username=username
+  svnkit.ssh2.password=userpassword 
+  svnkit.ssh2.port=port
 </pre>
 </p>
 <p>
@@ -140,13 +102,13 @@ adding something like that (tip provided by Valentin Alekseev):
 <pre style="color: rgb(0,0,128);" class="javaCode">
 &lt;array&gt;
   ...
-   &lt;string&gt;-Djavasvn.ssh2.key=/path/to/key/file&lt;/string&gt;
+   &lt;string&gt;-Dsvnkit.ssh2.key=/path/to/key/file&lt;/string&gt;
 &lt;/array&gt;
 </pre>
 </p>
 <h4>SSL Connections</h4>
 <p>
-JavaSVN uses SSL support included into JDK. Some JDK versions don't 
+SVNKit uses SSL support included into JDK. Some JDK versions don't 
 support SSL server certificates longer than 1024 bytes or don't support 
 certain Cypher Suites. If you're experiencing problems accessing a Subversion 
 repository over SSL connection (via https protocol) consider using the 
@@ -156,8 +118,8 @@ for more details on how to install JCE.
 </p>
 <h4>Trusting SSL Certificates</h4>
 <p>
-If JavaSVN is used as a standalone library and no custom authentication 
-provider is registered, JavaSVN: 
+If SVNKit is used as a standalone library and no custom authentication 
+provider is registered, SVNKit: 
 <ul>
 <li>by default trusts all SSL servers, though it doesn't cache server certificates;
 <li>or uses a default JDK certificates storage to get SSL certificates of
@@ -187,11 +149,11 @@ Read more information on this options in the <a href="http://svnbook.red-bean.co
 </p>
 <br>
 <br>
-<p>If you have any questions regarding JavaSVN, would like to report a bug or contribute a patch, please write to 
-<a id="normal" href="mailto:support@tmatesoft.com">support@tmatesoft.com</a></p>
+<p>If you have any questions regarding SVNKit, would like to report a bug or contribute a patch, please write to 
+<a id="normal" href="mailto:support@svnkit.com">support@svnkit.com</a></p>
 <br />
 <table style="margin-top: 1em;" width="100%" cellpadding="0" cellspacing="0"><tr><td id="footer" align="left">Copyright &copy; 
-2004-2006, TMate Software</td><td align="right" id="footer">feedback is welcome at <a href="mailto:feedback%40tmatesoft.com">feedback@tmatesoft.com</a></td></tr></table>
+2004-2006, TMate Software</td><td align="right" id="footer">feedback is welcome at <a href="mailto:feedback%40svnkit.com">feedback@svnkit.com</a></td></tr></table>
 
 </td>
 </tr>

@@ -8,7 +8,7 @@ if (file_exists($cacheFile)) {
     return;
 } 
                                      
-$repository = "http://svn.tmate.org/repos/jsvn/tags/";
+$repository = "http://svn.svnkit.com/repos/svnkit/tags/";
 $contents = read_contents($repository);
 $handle = fopen($cacheFile, "w+");
 if (!$contents) {
@@ -41,7 +41,7 @@ if (preg_match_all("/<li><a href=\"(.*)\/\">(.*\..*\..*)(<\/a>)<\/li>/", $conten
        $build = $matches[1][$i];
        $changelog_url = $repository . $build . "/changelog.txt";
        $test_url = $repository . $build . "/tests.log";
-       $test_results_xml_url = $repository . $build . "/javasvn-test/python-tests-log.xml";
+       $test_results_xml_url = $repository . $build . "/svnkit-test/python-tests-log.xml";
            
        $changelog = read_contents($changelog_url);
 
@@ -77,7 +77,7 @@ if (preg_match_all("/<li><a href=\"(.*)\/\">(.*\..*\..*)(<\/a>)<\/li>/", $conten
        $item_description .= "<h5>ChangeLog</h5><pre>" . $changelog_str . "</pre>";
        $item_description .= "<a href=\"" . $changelog_url . "\">full changelog up to this build</a>";
        $item_description .= "<a href=\"" . $test_url . "\">tests results</a>";
-       $item_description .= "<h5>Contact</h5><p>Your questions and feedback are welcome at <a href=\"mailto:support@tmatesoft.com\">support@tmatesoft.com</a></p>";
+       $item_description .= "<h5>Contact</h5><p>Your questions and feedback are welcome at <a href=\"mailto:support@svnkit.com\">support@svnkit.com</a></p>";
 
 
        $html_description  = "<tr><td colspan=\"2\">&nbsp;" . $date_string . ", version <b>" . $build . "</b></td></tr>";
@@ -96,8 +96,8 @@ if (preg_match_all("/<li><a href=\"(.*)\/\">(.*\..*\..*)(<\/a>)<\/li>/", $conten
 
        $item = array();
        $item["title"]  = "Build '" . $build . "' published";
-       $item["source"] = "http://tmate.org/svn/";
-       $item["link"]   = "http://tmate.org/svn/";
+       $item["source"] = "http://svnkit.com/";
+       $item["link"]   = "http://svnkit.com/";
        $item["author"] = "TMate Software";
        $item["date"]   = filemtime($standalone_file);
 
@@ -112,7 +112,7 @@ return $items;
 }
 
 function read_contents($url) {
-	$fp = fsockopen("svn.tmate.org", 8080, $errno, $errstr, 1);	
+	$fp = fsockopen("svn.svnkit.com", 8080, $errno, $errstr, 1);	
         if (!$fp) {
         	return false; 
         }
