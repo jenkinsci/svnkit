@@ -122,8 +122,8 @@ public class SVNCommitUtil {
             return null;
         }
         File baseDir = new File(rootPath);
-        List dirsToLock = new ArrayList(); // relative paths to lock.
-        List dirsToLockRecursively = new ArrayList(); 
+        Collection dirsToLock = new HashSet(); // relative paths to lock.
+        Collection dirsToLockRecursively = new HashSet(); 
         boolean lockAll = false;
         if (relativePaths.isEmpty()) {
             statusClient.checkCancelled();
@@ -182,8 +182,10 @@ public class SVNCommitUtil {
         try {
             baseAccess.open(baseDir, true, lockAll ? SVNWCAccess.INFINITE_DEPTH : 0);
             statusClient.checkCancelled();
-            Collections.sort(dirsToLock, SVNPathUtil.PATH_COMPARATOR);
-            Collections.sort(dirsToLockRecursively, SVNPathUtil.PATH_COMPARATOR);
+            dirsToLock = new ArrayList(dirsToLock);
+            dirsToLockRecursively = new ArrayList(dirsToLockRecursively);
+            Collections.sort((List) dirsToLock, SVNPathUtil.PATH_COMPARATOR);
+            Collections.sort((List) dirsToLockRecursively, SVNPathUtil.PATH_COMPARATOR);
             if (!lockAll) {
                 List uniqueDirsToLockRecursively = new ArrayList();
                 uniqueDirsToLockRecursively.addAll(dirsToLockRecursively);
