@@ -83,7 +83,7 @@ public class SVNWCManager {
         SVNEntry parentEntry = wcAccess.getEntry(path.getParentFile(), false);
         if (parentEntry == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, 
-                    "Can''t find parent directory's entry while trying to add ''{0}''", path);
+                    "Can''t find parent directory''s entry while trying to add ''{0}''", path);
             SVNErrorManager.error(err);
         }
         if (parentEntry.isScheduledForDeletion()) {
