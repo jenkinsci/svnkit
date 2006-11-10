@@ -42,6 +42,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.0
@@ -443,6 +444,8 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                     }
                 }
                 if (propName == null || !propName.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) {
+                    SVNDebugLog.getDefaultLog().info("attempt to write invalid entry property: " + propName + "=" + propValue);
+                    SVNDebugLog.getDefaultLog().info(new Exception());
                     continue;
                 }
                 propName = propName.substring(SVNProperty.SVN_ENTRY_PREFIX.length());
