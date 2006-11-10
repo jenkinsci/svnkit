@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="svnkit" default="build-library" basedir=".">
+<project name="svnkit" default="deploy" basedir=".">
 
     <target name="init-environment">
         <property environment="env" />

@@ -35,8 +35,8 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 class HTTPNTLMAuthentication extends HTTPAuthentication {
 
-    private static final String NTLM_CASE_CONVERTION_PROPERTY = "javasvn.http.ntlm.uppercase";
-    private static final String OLD_NTLM_CASE_CONVERTION_PROPERTY = "svnkit.http.ntlm.uppercase";
+    private static final String NTLM_CASE_CONVERTION_PROPERTY = "svnkit.http.ntlm.uppercase";
+    private static final String OLD_NTLM_CASE_CONVERTION_PROPERTY = "javasvn.http.ntlm.uppercase";
     
     private static final String DEFAULT_CHARSET = "ASCII";
     private static final String PROTOCOL_NAME = "NTLMSSP";

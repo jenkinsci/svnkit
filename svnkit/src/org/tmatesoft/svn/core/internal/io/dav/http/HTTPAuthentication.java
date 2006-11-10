@@ -38,8 +38,8 @@ abstract class HTTPAuthentication {
     private String myUserName;
     private String myPassword;
     
-    private static final String AUTH_METHODS_PROPERTY = "javasvn.http.methods";
-    private static final String OLD_AUTH_METHODS_PROPERTY = "svnkit.http.methods";
+    private static final String AUTH_METHODS_PROPERTY = "svnkit.http.methods";
+    private static final String OLD_AUTH_METHODS_PROPERTY = "javasvn.http.methods";
     
     protected HTTPAuthentication (SVNPasswordAuthentication credentials) {
         if (credentials != null) {
