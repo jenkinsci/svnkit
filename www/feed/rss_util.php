@@ -1,7 +1,7 @@
 <?
 
 function publish_html($rss) {
-$cacheFile = $_SERVER["DOCUMENT_ROOT"] . "/svn/feed/html.cache";
+$cacheFile = $_SERVER["DOCUMENT_ROOT"] . "/feed/html.cache";
                                        
 if (file_exists($cacheFile)) {
     readfile($cacheFile);

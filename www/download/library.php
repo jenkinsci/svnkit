@@ -53,7 +53,7 @@ follow further steps prompted by Eclipse.
 
 <?
 include("../feed/rss_util.php");
-publish_html("/");
+publish_html("http://www.svnkit.com/");
 ?>
 <table cellpadding="0" border="0" cellspacing="0" width="100%">
 <tr>

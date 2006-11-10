@@ -1,9 +1,9 @@
 <?
-include($_SERVER["DOCUMENT_ROOT"] . "/svn.old/feed/feedcreator.class.php");
-include($_SERVER["DOCUMENT_ROOT"] . "/svn.old/feed/rss_util.php");
+include($_SERVER["DOCUMENT_ROOT"] . "/feed/feedcreator.class.php");
+include($_SERVER["DOCUMENT_ROOT"] . "/feed/rss_util.php");
 include($_SERVER["DOCUMENT_ROOT"] . "/stats/counter.php");
 
-$cacheFile = $_SERVER["DOCUMENT_ROOT"] . "/svn.old/feed/rss20.cache";
+$cacheFile = $_SERVER["DOCUMENT_ROOT"] . "/feed/rss20.cache";
 
 if (file_exists($cacheFile)) {
 //    if (time() - filemtime($cacheFile) <= 3600) {
@@ -30,7 +30,7 @@ if (!$contents) {
    exit;
 }
 
-$items = publish_rss20($repository, $contents, "http://svnkit.com/");
+$items = publish_rss20($repository, $contents, "http://www.svnkit.com/");
 for($i = 0; $i < count($items); $i++) {
 
      $item = $items[$i];

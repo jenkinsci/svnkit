@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" >
-<head><title>Get&nbsp;SVNKit&nbsp;Library</title>
+<head><title>SVNKit&nbsp;::&nbsp;Download</title>
 <meta name="keywords" content="Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development">   
 <meta name="description" content="Pure Java Subversion Library. Open Source, provided by TMate Software">
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
@@ -80,7 +80,7 @@ Subclipse preference page to make Subclipse use SVNKit.
 
 <?
 include("../feed/rss_util.php");
-publish_html("/");
+publish_html("http://www.svnkit.com/");
 ?>
 
 </table>
