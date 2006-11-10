@@ -442,6 +442,9 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                         }
                     }
                 }
+                if (propName == null || !propName.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) {
+                    continue;
+                }
                 propName = propName.substring(SVNProperty.SVN_ENTRY_PREFIX.length());
                 propValue = SVNEncodingUtil.xmlEncodeAttr(propValue);
                 writer.write("\n   ");

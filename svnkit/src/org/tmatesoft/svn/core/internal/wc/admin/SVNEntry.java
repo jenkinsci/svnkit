@@ -405,24 +405,8 @@ public class SVNEntry implements Comparable {
         return (String[])myAttributes.get(SVNProperty.CACHABLE_PROPS);
     }
 
-    public void setPresentProperties(String[] presentProps) {
-        if (presentProps != null) {
-            myAttributes.put(SVNProperty.PRESENT_PROPS, presentProps);
-        } else {
-            myAttributes.remove(SVNProperty.PRESENT_PROPS);
-        }
-    }
-
     public String[] getPresentProperties() {
         return (String[])myAttributes.get(SVNProperty.PRESENT_PROPS);
-    }
-    
-    public void setHasProperties(boolean hasProps) {
-        setAttributeValue(SVNProperty.HAS_PROPS, SVNProperty.toString(hasProps));
-    }
-    
-    public void setHasPropertyModifications(boolean hasPropModifications) {
-        setAttributeValue(SVNProperty.HAS_PROP_MODS, SVNProperty.toString(hasPropModifications));
     }
 
     public Map asMap() {
