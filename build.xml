@@ -332,14 +332,18 @@
 
     <target name="deploy-snapshot" depends="init-environment">
         <zip destfile="build/org.tmatesoft.svn_${svnkit.version}.src.zip">
-            <zipfileset dir="." prefix="svnkit-src-${svnkit.version}">
-                <exclude name="build/**" />
-                <exclude name="**/bin/**" />
-                <exclude name="**/bin-test/**" />
-                <exclude name="svnkit-eclipse/**" />
-                <exclude name="svnkit-test/**" />
-                <exclude name="www/**" />
+            <zipfileset dir="svnkit" prefix="svnkit-src-${svnkit.version}/svnkit">
                 <exclude name="**/.svn" />
+                <exclude name="**/bin/**" />
+                <exclude name="bin/**" />
+            </zipfileset>
+            <zipfileset dir="contrib" prefix="svnkit-src-${svnkit.version}/contrib">
+                <exclude name="**/.svn" />
+                <exclude name="**/bin/**" />
+                <exclude name="bin/**" />
+            </zipfileset>
+            <zipfileset dir="." prefix="svnkit-src-${svnkit.version}">
+                <include name="*.*" />
             </zipfileset>
             <zipfileset dir="build/doc" prefix="svnkit-src-${svnkit.version}/doc" />
         </zip>
