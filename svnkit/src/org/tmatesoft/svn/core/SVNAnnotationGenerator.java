@@ -107,10 +107,10 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
     private QSequenceLineSimplifier mySimplifier;
     
     /**
-     * Constructs an annotation generator object. A user may want to have
-     * a chance to interrupt an operation - so, <code>cancelBaton</code>'s
-     * {@link org.tmatesoft.svn.core.wc.ISVNEventHandler#checkCancelled()} method
-     * is used for this purpose. 
+     * Constructs an annotation generator object. 
+     * <p>
+     * This constructor is equivalent to 
+     * <code>SVNAnnotationGenerator(path, tmpDirectory, startRevision, false, cancelBaton)</code>.
      * 
      * @param path           a file path (relative to a repository location)
      * @param tmpDirectory   a revision to stop at
@@ -123,10 +123,31 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         
     }
     
+    /**
+     * Constructs an annotation generator object. 
+     * 
+     * @param path           a file path (relative to a repository location)
+     * @param tmpDirectory   a revision to stop at
+     * @param startRevision  a start revision to begin annotation with
+     * @param force          forces binary files processing  
+     * @param cancelBaton    a baton which is used to check if an operation 
+     *                       is cancelled
+     */
     public SVNAnnotationGenerator(String path, File tmpDirectory, long startRevision, boolean force, ISVNEventHandler cancelBaton) {
         this(path, tmpDirectory, startRevision, force, new SVNDiffOptions(), cancelBaton);
     }
 
+    /**
+     * Constructs an annotation generator object.
+     *  
+     * @param path           a file path (relative to a repository location)
+     * @param tmpDirectory   a revision to stop at
+     * @param startRevision  a start revision to begin annotation with
+     * @param force          forces binary files processing  
+     * @param diffOptions    diff options 
+     * @param cancelBaton    a baton which is used to check if an operation 
+     *                       is cancelled
+     */
     public SVNAnnotationGenerator(String path, File tmpDirectory, long startRevision, boolean force, SVNDiffOptions diffOptions, ISVNEventHandler cancelBaton) {
         myTmpDirectory = tmpDirectory;
         myCancelBaton = cancelBaton;
@@ -185,6 +206,9 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
     
     /**
      * Does nothing.
+     * 
+     * @param token       
+     * @throws SVNException
      */
     public void closeRevision(String token) throws SVNException {
     }
@@ -273,6 +297,10 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
 	/**
      * Dispatches file lines along with author & revision info to the provided
      * annotation handler.  
+     * 
+     * <p>
+     * If <code>inputEncoding</code> is <span class="javakeyword">null</span> then 
+     * <span class="javastring">"file.encoding"</span> system property is used. 
      * 
      * @param  handler        an annotation handler that processes file lines with
      *                        author & revision info

@@ -273,5 +273,11 @@ public interface ISVNAuthenticationManager {
      */
     public void setAuthenticationForced(boolean forced);
     
+    /**
+     * Returns a connection timeout value.
+     * 
+     * @param   repository a repository access driver
+     * @return             connection timeout value
+     */
     public long getHTTPTimeout(SVNRepository repository);
 }

@@ -175,8 +175,8 @@ public interface ISVNDiffGenerator {
      *                      generated and written to the output
      * @param  file1        a file with old contents
      * @param  file2        a file with new contents
-     * @param  rev1         the revision of <code>file1</code>
-     * @param  rev2         the revision of <code>file2</code>
+     * @param  rev1         the first diff revision of <code>file1</code>
+     * @param  rev2         the second diff revision of <code>file2</code>
      * @param  mimeType1    the MIME-type of <code>file1</code> 
      * @param  mimeType2    the MIME-type of <code>file2</code>
      * @param  result       the target {@link java.io.OutputStream} where
@@ -185,7 +185,23 @@ public interface ISVNDiffGenerator {
      */
     public void displayFileDiff(String path, File file1, File file2, String rev1, String rev2, String mimeType1, String mimeType2, OutputStream result) throws SVNException;
     
+    /**
+     * Notifies this generator that the directory was deleted in revision <code>rev2</code>.
+     * 
+     * @param  path           a directory path
+     * @param  rev1           the first diff revision
+     * @param  rev2           the second diff revision
+     * @throws SVNException   
+     */
     public void displayDeletedDirectory(String path, String rev1, String rev2) throws SVNException;
 
+    /**
+     * Notifies this generator that the directory was added in revision <code>rev2</code>.
+     * 
+     * @param  path           a directory path
+     * @param  rev1           the first diff revision
+     * @param  rev2           the second diff revision
+     * @throws SVNException
+     */
     public void displayAddedDirectory(String path, String rev1, String rev2) throws SVNException;
 }

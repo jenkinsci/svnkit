@@ -63,6 +63,9 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  * <td>doDiff()</td><td>'svn diff'</td>
  * </tr>
  * <tr bgcolor="#EAEAEA" align="left">
+ * <td>doDiffStatus()</td><td>'svn diff --summarize'</td>
+ * </tr>
+ * <tr bgcolor="#EAEAEA" align="left">
  * <td>doMerge()</td><td>'svn merge'</td>
  * </tr>
  * </table>
@@ -138,11 +141,21 @@ public class SVNDiffClient extends SVNBasicClient {
         return myDiffGenerator;
     }
     
-    
+    /**
+     * Sets diff options for this client to use in merge operations.
+     * 
+     * @param diffOptions diff options object
+     */
     public void setMergeOptions(SVNDiffOptions diffOptions) {
         myDiffOptions = diffOptions;
     }
 
+    /**
+     * Gets the diff options that are used in merge operations 
+     * by this client. Creates a new one if none was used before.
+     * 
+     * @return diff options
+     */
     public SVNDiffOptions getMergeOptions() {
         if (myDiffOptions == null) {
             myDiffOptions = new SVNDiffOptions();
@@ -472,6 +485,22 @@ public class SVNDiffClient extends SVNBasicClient {
         }
     }
 
+    /**
+     * Diffs one path against another one providing short status-like change information to the provided
+     * handler. This method functionality is equivalent to the 'svn diff --summarize' command.
+     * 
+     * @param  path1             the path of a left-hand item to diff
+     * @param  rN                a revision of <code>path1</code>
+     * @param  path2             the path of a right-hand item to diff
+     * @param  rM                a revision of <code>path2</code>
+     * @param  recursive         controls whether operation must recurse or not 
+     * @param  useAncestry       if <span class="javakeyword">true</span> then
+     *                           the paths ancestry will be noticed while calculating differences,
+     *                           otherwise not
+     * @param  handler           a diff status handler
+     * @throws SVNException
+     * @since                    1.1, new in Subversion 1.4
+     */
     public void doDiffStatus(File path1, SVNRevision rN, File path2, SVNRevision rM, boolean recursive, boolean useAncestry,
             ISVNDiffStatusHandler handler) throws SVNException {
         if (handler == null) {
@@ -491,6 +520,22 @@ public class SVNDiffClient extends SVNBasicClient {
         doDiffURLURL(null, path1, rN, null, path2, rM, SVNRevision.UNDEFINED, recursive, useAncestry, handler);        
     }
     
+    /**
+     * Diffs a path against a url providing short status-like change information to the provided
+     * handler. This method functionality is equivalent to the 'svn diff --summarize' command.
+     * 
+     * @param  path1             the path of a left-hand item to diff
+     * @param  rN                a revision of <code>path1</code>
+     * @param  url2              the url of a right-hand item to diff
+     * @param  rM                a revision of <code>url2</code>
+     * @param  recursive         controls whether operation must recurse or not 
+     * @param  useAncestry       if <span class="javakeyword">true</span> then
+     *                           the paths ancestry will be noticed while calculating differences,
+     *                           otherwise not
+     * @param  handler           a diff status handler
+     * @throws SVNException
+     * @since                    1.1, new in Subversion 1.4
+     */
     public void doDiffStatus(File path1, SVNRevision rN, SVNURL url2, SVNRevision rM, boolean recursive, boolean useAncestry,
             ISVNDiffStatusHandler handler) throws SVNException {
         if (handler == null) {
@@ -508,6 +553,22 @@ public class SVNDiffClient extends SVNBasicClient {
         }
     }
 
+    /**
+     * Diffs a url against a path providing short status-like change information to the provided
+     * handler. This method functionality is equivalent to the 'svn diff --summarize' command.
+     * 
+     * @param  url1              the url of a left-hand item to diff
+     * @param  rN                a revision of <code>url1</code>
+     * @param  path2             the path of a right-hand item to diff
+     * @param  rM                a revision of <code>path2</code>
+     * @param  recursive         controls whether operation must recurse or not 
+     * @param  useAncestry       if <span class="javakeyword">true</span> then
+     *                           the paths ancestry will be noticed while calculating differences,
+     *                           otherwise not
+     * @param  handler           a diff status handler
+     * @throws SVNException
+     * @since                    1.1, new in Subversion 1.4
+     */
     public void doDiffStatus(SVNURL url1, SVNRevision rN, File path2, SVNRevision rM, boolean recursive, boolean useAncestry,
             ISVNDiffStatusHandler handler) throws SVNException {
         if (handler == null) {
@@ -525,6 +586,22 @@ public class SVNDiffClient extends SVNBasicClient {
         }
     }
 
+    /**
+     * Diffs one url against another one providing short status-like change information to the provided
+     * handler. This method functionality is equivalent to the 'svn diff --summarize' command.
+     * 
+     * @param  url1              the url of a left-hand item to diff
+     * @param  rN                a revision of <code>url1</code>
+     * @param  url2              the url of a right-hand item to diff
+     * @param  rM                a revision of <code>url2</code>
+     * @param  recursive         controls whether operation must recurse or not 
+     * @param  useAncestry       if <span class="javakeyword">true</span> then
+     *                           the paths ancestry will be noticed while calculating differences,
+     *                           otherwise not
+     * @param  handler           a diff status handler
+     * @throws SVNException
+     * @since                    1.1, new in Subversion 1.4
+     */
     public void doDiffStatus(SVNURL url1, SVNRevision rN, SVNURL url2, SVNRevision rM, boolean recursive, boolean useAncestry,
             ISVNDiffStatusHandler handler) throws SVNException {
         if (handler == null) {

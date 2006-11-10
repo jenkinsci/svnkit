@@ -88,12 +88,24 @@ public class SVNProperty {
     public static final String COMMITTED_DATE = SVN_ENTRY_PREFIX
             + "committed-date";
     
+    /**
+     * <span class="javastring">"has-props"</span> SVN untweakable metaproperty.
+     */
     public static final String HAS_PROPS = "has-props";
 
+    /**
+     * <span class="javastring">"has-prop-mods"</span> SVN untweakable metaproperty.
+     */
     public static final String HAS_PROP_MODS = "has-prop-mods";
 
+    /**
+     * <span class="javastring">"cachable-props"</span> SVN untweakable metaproperty.
+     */
     public static final String CACHABLE_PROPS = "cachable-props";
 
+    /**
+     * <span class="javastring">"present-props"</span> SVN untweakable metaproperty.
+     */
     public static final String PRESENT_PROPS = "present-props";
     
     /**
@@ -445,6 +457,17 @@ public class SVNProperty {
         return longName;
     }
 
+    /**
+     * Returns the value for such boolean properties as 
+     * <span class="javastring">"svn:executable"</span>, <span class="javastring">"svn:needs-lock"</span> 
+     * and <span class="javastring">"svn:special"</span>.
+     * Used by internals.
+     * 
+     * @param  propName a property name
+     * @return          the property value <span class="javastring">"*"</span>, or 
+     *                  <span class="javakeyword">null</span> if the property is not boolean
+     * @see             #isBooleanProperty(String) 
+     */
     public static String getValueOfBooleanProperty(String propName) {
         if (SVNProperty.EXECUTABLE.equals(propName) || SVNProperty.NEEDS_LOCK.equals(propName) || SVNProperty.SPECIAL.equals(propName)) {
             return "*";
@@ -452,6 +475,13 @@ public class SVNProperty {
         return null;
     }
 
+    /**
+     * Checks whether the property is boolean.
+     * 
+     * @param  propName  a property name
+     * @return           <span class="javakeyword">true</span> if boolean, 
+     *                   otherwise <span class="javakeyword">false</span>
+     */
     public static boolean isBooleanProperty(String propName) {
         return SVNProperty.EXECUTABLE.equals(propName) || SVNProperty.SPECIAL.equals(propName) || SVNProperty.NEEDS_LOCK.equals(propName);
     }

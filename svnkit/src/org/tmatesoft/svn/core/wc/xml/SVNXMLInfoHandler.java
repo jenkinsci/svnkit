@@ -63,14 +63,32 @@ public class SVNXMLInfoHandler extends AbstractXMLHandler implements ISVNInfoHan
     
     private File myTargetPath;
 
+    /**
+     * Creates a new info handler.
+     * 
+     * @param contentHandler a <b>ContentHandler</b> to form 
+     *                       an XML tree
+     */
     public SVNXMLInfoHandler(ContentHandler contentHandler) {
         this(contentHandler, null);
     }
 
+    /**
+     * Creates a new info handler.
+     * 
+     * @param contentHandler a <b>ContentHandler</b> to form 
+     *                       an XML tree
+     * @param log            a debug logger
+     */
     public SVNXMLInfoHandler(ContentHandler contentHandler, ISVNDebugLog log) {
         super(contentHandler, log);
     }
     
+    /**
+     * Sets the target path what makes all paths be relative to this one. 
+     * 
+     * @param path target path
+     */
     public void setTargetPath(File path) {
         myTargetPath = path;
     }

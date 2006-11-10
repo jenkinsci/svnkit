@@ -148,7 +148,7 @@ public class SVNRepositoryReplicator implements ISVNEventHandler {
      * @param  toRevision     a final revision 
      * @return                the number of revisions copied from the source repository
      * @throws SVNException
-     * @see                      #replicateRepository(SVNRepository, SVNRepository, boolean)
+     * @see                   #replicateRepository(SVNRepository, SVNRepository, boolean)
      */
     public long replicateRepository(SVNRepository src, SVNRepository dst, long fromRevision, long toRevision) throws SVNException {
         fromRevision = fromRevision <= 0 ? 1 : fromRevision;
@@ -313,7 +313,11 @@ public class SVNRepositoryReplicator implements ISVNEventHandler {
     }
     
     /**
-     * Does nothing. 
+     * Does nothing.
+     * 
+     * @param  event
+     * @param  progress
+     * @throws SVNException
      */
     public void handleEvent(SVNEvent event, double progress) throws SVNException {
     }
@@ -321,6 +325,8 @@ public class SVNRepositoryReplicator implements ISVNEventHandler {
     /**
      * Redirects a call to the registered handler's {@link ISVNReplicationHandler#checkCancelled() checkCancelled()} 
      * method.
+     * 
+     * @throws SVNCancelException
      */
     public void checkCancelled() throws SVNCancelException {
         if (myHandler != null) {

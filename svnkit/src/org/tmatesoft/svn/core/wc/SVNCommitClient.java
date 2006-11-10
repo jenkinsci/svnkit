@@ -124,7 +124,7 @@ public class SVNCommitClient extends SVNBasicClient {
     }
 
     /**
-     * 
+     * @param handler
      * @deprecated use {@link #setCommitHandler(ISVNCommitHandler)} instead
      */
     public void setCommitHander(ISVNCommitHandler handler) {

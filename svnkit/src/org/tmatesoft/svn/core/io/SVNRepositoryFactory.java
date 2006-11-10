@@ -231,9 +231,8 @@ public abstract class SVNRepositoryFactory {
      * permitted, unless one puts such a hook into that very directory.   
      *
      * <p>
-     * If <code>force</code> is <span class="javakeyword">true</span> and there is already 
-     * a repository at the specified <code>path</code>, deletes that repository and creates 
-     * a new one in its place. 
+     * If <code>force</code> is <span class="javakeyword">true</span> and <code>path</code> already 
+     * exists, deletes that path and creates a repository in its place. 
      * 
      * @param  path                          a repository root location
      * @param  uuid                          a repository's uuid

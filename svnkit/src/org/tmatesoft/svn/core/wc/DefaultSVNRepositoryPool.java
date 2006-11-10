@@ -93,7 +93,8 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
      * This constructor is equivalent to 
      * <code>DefaultSVNRepositoryPool(authManager, <span class="javakeyword">true</span>, RUNTIME_POOL)</code>.
      * 
-     * @param authManager an authentication driver
+     * @param authManager      an authentication driver
+     * @param tunnelProvider   a tunnel provider
      */
     public DefaultSVNRepositoryPool(ISVNAuthenticationManager authManager, ISVNTunnelProvider tunnelProvider) {
         this(authManager, tunnelProvider, true, RUNTIME_POOL);
@@ -103,6 +104,7 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
      * Constructs a <b>DefaultSVNRepositoryPool</b> instance.
      * 
      * @param authManager         an authentication driver
+     * @param tunnelProvider      a tunnel provider  
      * @param keepConnections     if <span class="javakeyword">true</span>
      *                            then <b>SVNRepository</b> objects will keep 
      *                            a single connection for accessing a repository,

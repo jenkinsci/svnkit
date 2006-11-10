@@ -44,10 +44,13 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 public class SVNDiffWindow {
     
     /**
-     * Delta header bytes. Every sequence of delta windows should 
-     * start with this header. 
+     * Bytes of the delta header of an uncompressed diff window. 
      */
     public static final byte[] SVN_HEADER = new byte[] {'S', 'V', 'N', '\0'};
+
+    /**
+     * Bytes of the delta header of a compressed diff window. 
+     */
     public static final byte[] SVN1_HEADER = new byte[] {'S', 'V', 'N', '\1'};
     
     /**
@@ -431,6 +434,20 @@ public class SVNDiffWindow {
         writeTo(os, writeHeader, false);
     }
     
+    /**
+     * Formats and writes this window bytes to the specified output stream.
+     * 
+     * @param os              an output stream to write the window to
+     * @param writeHeader     if <span class="javakeyword">true</span> a window
+     *                        header will be also written
+     * @param compress        if <span class="javakeyword">true</span> writes  
+     *                        compressed window bytes using {@link #SVN1_HEADER} 
+     *                        to indicate that (if <code>writeHeader</code> is 
+     *                        <span class="javakeyword">true</span>), otherwise 
+     *                        non-compressed window is written with {@link #SVN_HEADER} 
+     *                        (again if <code>writeHeader</code> is <span class="javakeyword">true</span>) 
+     * @throws IOException
+     */
     public void writeTo(OutputStream os, boolean writeHeader, boolean compress) throws IOException {
         if (writeHeader) {
             os.write(compress ? SVN1_HEADER : SVN_HEADER);

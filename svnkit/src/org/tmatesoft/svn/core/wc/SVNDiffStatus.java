@@ -18,7 +18,10 @@ import org.tmatesoft.svn.core.SVNURL;
 
 
 /**
- * @version 1.0
+ * The <b>SVNDiffStatus</b> class is used to provide short information on path changes
+ * during diff status operations. 
+ * 
+ * @version 1.1
  * @author  TMate Software Ltd.
  */
 public class SVNDiffStatus {
@@ -30,6 +33,16 @@ public class SVNDiffStatus {
     private String myPath;
     private File myFile;
     
+    /**
+     * Instantiates a new object.
+     * 
+     * @param file             a wc item path
+     * @param url              an item url
+     * @param path             a relative item path (may be <span class="javakeyword">null</span>)
+     * @param type             a type of path change
+     * @param propsModified    sets whether properties are modified
+     * @param kind             a path kind (dir or file)  
+     */
     public SVNDiffStatus(File file, SVNURL url, String path, SVNStatusType type, boolean propsModified, SVNNodeKind kind) {
         myURL = url;
         myPath = path;
@@ -39,26 +52,60 @@ public class SVNDiffStatus {
         myFile = file;
     }
     
+    /**
+     * Returns File representation of the Working Copy item path. 
+     * 
+     * @return wc item path as File 
+     */
     public File getFile() {
         return myFile;
     }
     
+    /**
+     * Says whether properties of the Working Copy item are modified. 
+     *  
+     * @return <span class="javakeyword">true</span> if properties were modified
+     *         in a particular revision, <span class="javakeyword">false</span> 
+     *         otherwise
+     */
     public boolean isPropertiesModified() {
         return myIsPropertiesModified;
     }
     
+    /**
+     * Returns the node kind of the Working Copy item. 
+     * 
+     * @return node kind
+     */
     public SVNNodeKind getKind() {
         return myKind;
     }
     
+    /**
+     * Returns the type of modification for the current 
+     * item. 
+     * 
+     * @return a path change type
+     */
     public SVNStatusType getModificationType() {
         return myModificationType;
     }    
     
+    /**
+     * Returns a relative path of the item. 
+     * Set for Working Copy items and relative to the anchor of diff status operation.
+     * 
+     * @return item path
+     */
     public String getPath() {
         return myPath;
     }
     
+    /**
+     * Url of the item.
+     * 
+     * @return item url
+     */
     public SVNURL getURL() {
         return myURL;
     }

@@ -229,6 +229,9 @@ public class SVNStatusType {
      */
     public static final SVNStatusType LOCK_INAPPLICABLE = new SVNStatusType(0);
     
+    /**
+     * No lock information is known.
+     */
     public static final SVNStatusType LOCK_UNKNOWN = new SVNStatusType(1);
     
     /**
@@ -237,6 +240,9 @@ public class SVNStatusType {
      */
     public static final SVNStatusType LOCK_UNCHANGED = new SVNStatusType(2);
     
+    /**
+     * During an operation denotes that the file item's locked. 
+     */
     public static final SVNStatusType LOCK_LOCKED = new SVNStatusType(3);
     
     /**

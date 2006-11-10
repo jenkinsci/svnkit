@@ -70,6 +70,13 @@ public class SVNXMLDirEntryHandler extends AbstractXMLHandler implements ISVNDir
         this(saxHandler, null);
     }    
 
+    /**
+     * Creates a new handler.
+     * 
+     * @param saxHandler a <b>ContentHandler</b> to form 
+     *                   an XML tree
+     * @param log        a debug logger
+     */
     public SVNXMLDirEntryHandler(ContentHandler saxHandler, ISVNDebugLog log) {
         super(saxHandler, log);
     }    

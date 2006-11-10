@@ -66,6 +66,8 @@ public class SVNCommitItem {
      *                              (if the item was or to be copied)
      * @param kind                  the item's node kind
      * @param revision              the item's revision
+     * @param copyFromRevision      the revision of the item's ancestor 
+     *                              it's copied from
      * @param isAdded               <span class="javakeyword">true</span> if the 
      *                              item is to be added to version control, otherwise
      *                              <span class="javakeyword">false</span>
@@ -114,6 +116,12 @@ public class SVNCommitItem {
         return myRevision;
     }
 
+    /**
+     * Gets the revision of the versioned item's ancestor
+     * from which the item was copied. 
+     * 
+     * @return the revision the item was copied from
+     */
     public SVNRevision getCopyFromRevision() {
         return myCopyFromRevision;
     }

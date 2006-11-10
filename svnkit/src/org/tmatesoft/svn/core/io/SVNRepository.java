@@ -1462,7 +1462,36 @@ public abstract class SVNRepository {
                 }, editor);
     }
     
-    public abstract void replay(long lowRevision, long highRevision, boolean sendDeltas, ISVNEditor editor) throws SVNException;
+    /**
+     * Replays the changes from the specified revision through the given editor.
+     * 
+     * <p>
+     * Changes will be limited to those that occur under a session's URL, and
+     * the server will assume that the client has no knowledge of revisions
+     * prior to a <code>lowRevision</code>.  These two limiting factors define the portion
+     * of the tree that the server will assume the client already has knowledge of,
+     * and thus any copies of data from outside that part of the tree will be
+     * sent in their entirety, not as simple copies or deltas against a previous
+     * version.
+     * 
+     * <p>
+     * If <code>sendDeltas</code> is <span class="javakeyword">null</span>, the actual text 
+     * and property changes in the revision will be sent, otherwise no text deltas and 
+     * <span class="javakeyword">null</span> property changes will be sent instead.
+     * 
+     * <p>
+     * If <code>lowRevision</code> is invalid, it defaults to 0.
+     * 
+     * @param  lowRevision     a low revision point beyond which a client has no
+     *                         knowledge of paths history        
+     * @param  revision        a revision to replay
+     * @param  sendDeltas      controls whether text and property changes are to be
+     *                         sent
+     * @param  editor          a commit editor to receive changes 
+     * @throws SVNException
+     * @since  1.1, new in SVN 1.4
+     */
+    public abstract void replay(long lowRevision, long revision, boolean sendDeltas, ISVNEditor editor) throws SVNException;
 
     /* write methods */
     /**
@@ -1871,10 +1900,25 @@ public abstract class SVNRepository {
         return fullPath;
     }
     
+    /**
+     * Sets a logger to write debug log information to.
+     * 
+     * @param log a debug logger
+     */
     public void setDebugLog(ISVNDebugLog log) {
         myDebugLog = log;
     }
     
+    /**
+     * Returns the debug logger currently in use.  
+     * 
+     * <p>
+     * If no debug logger has been specified by the time this call occurs, 
+     * a default one (returned by <code>org.tmatesoft.svn.util.SVNDebugLog.getDefaultLog()</code>) 
+     * will be created and used.
+     * 
+     * @return a debug logger
+     */
     public ISVNDebugLog getDebugLog() {
         if (myDebugLog == null) {
             return SVNDebugLog.getDefaultLog();

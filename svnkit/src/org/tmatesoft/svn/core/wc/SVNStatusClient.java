@@ -140,8 +140,11 @@ public class SVNStatusClient extends SVNBasicClient {
     
     /**
      * Collects status information on Working Copy items and passes
-     * it to a <code>handler</code> . 
+     * it to a <code>handler</code>. 
      *
+     * <p>
+     * Calling this method is equivalent to 
+     * <code>doStatus(path, SVNRevision.HEAD, recursive, remote, reportAll, includeIgnored, collectParentExternals, handler)</code>.
      *  
      * @param  path							local item's path
      * @param  recursive					relevant only if <code>path</code> denotes a directory:
@@ -171,6 +174,36 @@ public class SVNStatusClient extends SVNBasicClient {
         return doStatus(path, SVNRevision.HEAD, recursive, remote, reportAll, includeIgnored, collectParentExternals, handler);
     }
     
+    /**
+     * Collects status information on Working Copy items and passes
+     * it to a <code>handler</code>. 
+     * 
+     * @param  path                         local item's path
+     * @param  revision                     if <code>remote</code> is <span class="javakeyword">true</span>
+     *                                      this revision is used to calculate status against
+     * @param  recursive                    relevant only if <code>path</code> denotes a directory:
+     *                                      <span class="javakeyword">true</span> to obtain status info recursively for all
+     *                                      child entries, <span class="javakeyword">false</span> only for items located 
+     *                                      immediately in the directory itself
+     * @param  remote                       <span class="javakeyword">true</span> to check up the status of the item in the repository,
+     *                                      that will tell if the local item is out-of-date (like <i>'-u'</i> option in the
+     *                                      SVN client's <code>'svn status'</code> command), 
+     *                                      otherwise <span class="javakeyword">false</span>
+     * @param  reportAll                    <span class="javakeyword">true</span> to collect status information on all items including those ones that are in a 
+     *                                      <i>'normal'</i> state (unchanged), otherwise <span class="javakeyword">false</span>
+     * @param  includeIgnored               <span class="javakeyword">true</span> to force the operation to collect information
+     *                                      on items that were set to be ignored (like <i>'--no-ignore'</i> option in the SVN 
+     *                                      client's <code>'svn status'</code> command to disregard default and <i>'svn:ignore'</i> property
+     *                                      ignores), otherwise <span class="javakeyword">false</span>
+     * @param  collectParentExternals       <span class="javakeyword">false</span> to make the operation ignore information
+     *                                      on externals definitions (like <i>'--ignore-externals'</i> option in the SVN
+     *                                      client's <code>'svn status'</code> command), otherwise <span class="javakeyword">true</span>
+     * @param  handler                      a caller's status handler that will be involved
+     *                                      in processing status information
+     * @return                              the revision number the status information was collected
+     *                                      against
+     * @throws SVNException
+     */
     public long doStatus(File path, SVNRevision revision, boolean recursive, boolean remote, boolean reportAll, boolean includeIgnored, boolean collectParentExternals, final ISVNStatusHandler handler) throws SVNException {
         if (handler == null) {
             return -1;

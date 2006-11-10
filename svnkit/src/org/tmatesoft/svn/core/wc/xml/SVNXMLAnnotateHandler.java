@@ -56,6 +56,13 @@ public class SVNXMLAnnotateHandler extends AbstractXMLHandler implements ISVNAnn
         this(contentHandler, null);
     }
 
+    /**
+     * Creates a new annotation handler.
+     * 
+     * @param contentHandler a <b>ContentHandler</b> to form 
+     *                       an XML tree
+     * @param log            a debug logger
+     */
     public SVNXMLAnnotateHandler(ContentHandler contentHandler, ISVNDebugLog log) {
         super(contentHandler, log);
     }

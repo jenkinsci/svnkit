@@ -58,6 +58,13 @@ public class SVNXMLLogHandler extends AbstractXMLHandler implements ISVNLogEntry
         this(contentHandler, null);
     }
 
+    /**
+     * Creates a new log handler.
+     * 
+     * @param contentHandler a <b>ContentHandler</b> to form 
+     *                       an XML tree
+     * @param log            a debug logger
+     */
     public SVNXMLLogHandler(ContentHandler contentHandler, ISVNDebugLog log) {
         super(contentHandler, log);
     }

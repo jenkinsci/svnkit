@@ -15,11 +15,21 @@ import org.tmatesoft.svn.core.SVNException;
 
 
 /**
- * @version 1.0
+ * The <b>ISVNDiffStatusHandler</b> is used to handle diff status operations supported by
+ * the <b>SVNDiffClient</b>.
+ * 
+ * @version 1.1
  * @author  TMate Software Ltd.
+ * @since   1.1, new in SVN 1.4
  */
 public interface ISVNDiffStatusHandler {
     
+    /**
+     * Receives a diff status object to handle. 
+     * 
+     * @param  diffStatus    a diff status object
+     * @throws SVNException
+     */
     public void handleDiffStatus(SVNDiffStatus diffStatus) throws SVNException;
 
 }

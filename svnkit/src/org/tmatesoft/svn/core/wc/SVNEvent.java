@@ -132,6 +132,26 @@ public class SVNEvent {
     }
     
 
+    /**
+     * Constructs an <b>SVNEvent</b> object.
+     * <p>
+     * Used by SVNKit internals to construct and initialize an 
+     * <b>SVNEvent</b> object. It's not intended for users (from an API point of view).
+     * 
+     * @param info           admin info
+     * @param adminArea      admin area the item belongs to
+     * @param name           the item's name
+     * @param action         the type of action the item is exposed to
+     * @param expectedAction the action type that was expected 
+     * @param kind           the item's node kind
+     * @param revision       a revision number
+     * @param mimetype       the item's MIME type
+     * @param cstatus        the item's contents status
+     * @param pstatus        the item's properties status
+     * @param lstatus        the item's lock status
+     * @param lock           the item's lock
+     * @param error          an error message
+     */
     public SVNEvent(SVNAdminAreaInfo info, SVNAdminArea adminArea, String name,
             SVNEventAction action, SVNEventAction expectedAction, SVNNodeKind kind, 
             long revision, String mimetype, SVNStatusType cstatus, SVNStatusType pstatus,
@@ -151,6 +171,25 @@ public class SVNEvent {
         myName = name;
     }
 
+    /**
+     * Constructs an <b>SVNEvent</b> object.
+     * <p>
+     * Used by SVNKit internals to construct and initialize an 
+     * <b>SVNEvent</b> object. It's not intended for users (from an API point of view).
+     * 
+     * @param info       admin info
+     * @param adminArea  admin area the item belongs to
+     * @param name       the item's name
+     * @param action     the type of action the item is exposed to
+     * @param kind       the item's node kind
+     * @param revision   a revision number
+     * @param mimetype   the item's MIME type
+     * @param cstatus    the item's contents status
+     * @param pstatus    the item's properties status
+     * @param lstatus    the item's lock status
+     * @param lock       the item's lock
+     * @param error      an error message
+     */
     public SVNEvent(SVNAdminAreaInfo info, SVNAdminArea adminArea, String name,
             SVNEventAction action, SVNNodeKind kind, long revision,
             String mimetype, SVNStatusType cstatus, SVNStatusType pstatus,

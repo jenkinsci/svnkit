@@ -137,6 +137,12 @@ public class SVNURL {
         return SVNURL.parseURIDecoded("file://" + path);
     }
     
+    /**
+     * Returns the default port number for the specified protocol.
+     * 
+     * @param protocol a particular access protocol
+     * @return         default port number
+     */
     public static int getDefaultPortNumber(String protocol) {
         if (protocol == null) {
             return -1;

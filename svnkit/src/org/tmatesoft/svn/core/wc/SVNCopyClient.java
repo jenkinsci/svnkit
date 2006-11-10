@@ -214,6 +214,7 @@ public class SVNCopyClient extends SVNBasicClient {
      *                        <span class="javakeyword">false</span> to copy
      * @param  commitMessage  a commit log message
      * @return                information on the committed revision
+     * @throws SVNException
      * @see                   #doCopy(SVNURL, SVNRevision, SVNURL, boolean, boolean, String)                       
      */
     public SVNCommitInfo doCopy(SVNURL srcURL, SVNRevision srcRevision, SVNURL dstURL, boolean isMove, String commitMessage) throws SVNException {

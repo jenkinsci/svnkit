@@ -878,6 +878,10 @@ public class SVNWCClient extends SVNBasicClient {
      * To create and add to version control a new directory, set <code>mkdir</code>
      * to <span class="javakeyword">true</span>. 
      * 
+     * <p>
+     * Calling this method is equivalent to 
+     * <code>doAdd(path, force, mkdir, climbUnversionedParents, recursive, false)</code>. 
+     * 
      * @param  path                        a path to be put under version 
      *                                     control (will be added to a repository
      *                                     in next commit)
@@ -904,6 +908,37 @@ public class SVNWCClient extends SVNBasicClient {
         doAdd(path, force, mkdir, climbUnversionedParents, recursive, false);
     }
     
+    /**
+     * Schedules an unversioned item for addition to a repository thus 
+     * putting it under version control.
+     * 
+     * <p>
+     * To create and add to version control a new directory, set <code>mkdir</code>
+     * to <span class="javakeyword">true</span>. 
+     * 
+     * @param  path                        a path to be put under version 
+     *                                     control (will be added to a repository
+     *                                     in next commit)
+     * @param  force                       <span class="javakeyword">true</span> to
+     *                                     force the operation to run
+     * @param  mkdir                       if <span class="javakeyword">true</span> - 
+     *                                     creates a new directory and schedules it for
+     *                                     addition
+     * @param  climbUnversionedParents     if <span class="javakeyword">true</span> and
+     *                                     <code>path</code> is located in an unversioned
+     *                                     parent directory then the parent will be automatically
+     *                                     scheduled for addition, too 
+     * @param  recursive                   <span class="javakeyword">true</span> to
+     *                                     descend recursively (relevant for directories)
+     * @param  includeIgnored              controls whether ignored items must be also added
+     * @throws SVNException                if one of the following is true:
+     *                                     <ul>
+     *                                     <li><code>path</code> doesn't belong
+     *                                     to a Working Copy 
+     *                                     <li><code>path</code> doesn't exist and
+     *                                     <code>mkdir</code> is <span class="javakeyword">false</span>
+     *                                     <li><code>path</code> is the root directory of the Working Copy
+     */
     public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, boolean recursive, boolean includeIgnored) throws SVNException {
         path = new File(SVNPathUtil.validateFilePath(path.getAbsolutePath()));
         if (!mkdir && climbUnversionedParents) {

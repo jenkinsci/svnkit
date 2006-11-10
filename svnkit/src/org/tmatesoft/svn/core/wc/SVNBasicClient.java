@@ -56,7 +56,7 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  * obtain run-time configuration options, and others. 
  * 
  * @version 1.1
- * @author TMate Software Ltd.
+ * @author  TMate Software Ltd.
  */
 public class SVNBasicClient implements ISVNEventHandler {
 
@@ -188,10 +188,25 @@ public class SVNBasicClient implements ISVNEventHandler {
         myEventDispatcher = dispatcher;
     }
     
+    /**
+     * Sets a logger to write debug log information to.
+     * 
+     * @param log a debug logger
+     */
     public void setDebugLog(ISVNDebugLog log) {
         myDebugLog = log;
     }
     
+    /**
+     * Returns the debug logger currently in use.  
+     * 
+     * <p>
+     * If no debug logger has been specified by the time this call occurs, 
+     * a default one (returned by <code>org.tmatesoft.svn.util.SVNDebugLog.getDefaultLog()</code>) 
+     * will be created and used.
+     * 
+     * @return a debug logger
+     */
     public ISVNDebugLog getDebugLog() {
         if (myDebugLog == null) {
             return SVNDebugLog.getDefaultLog();

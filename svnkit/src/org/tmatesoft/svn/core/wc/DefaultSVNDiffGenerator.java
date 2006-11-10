@@ -81,6 +81,11 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         myAnchorPath2 = anchorPath2.replace(File.separatorChar, '/');
     }
     
+    /**
+     * Sets diff options containing diff rules.
+     * 
+     * @param options diff options
+     */
     public void setDiffOptions(SVNDiffOptions options) {
         myDiffOptions = options;
     }
@@ -97,6 +102,12 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         return myIsDiffDeleted;
     }
     
+    /**
+     * Gets the diff options that are used by this generator. 
+     * Creates a new one if none was used before.
+     * 
+     * @return diff options
+     */
     public SVNDiffOptions getDiffOptions() {
         if (myDiffOptions == null) {
             myDiffOptions = new SVNDiffOptions();
@@ -415,10 +426,26 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         myIsDiffUnversioned = diffUnversioned;
     }
 
+    /**
+     * Does nothing.
+     * 
+     * @param  path           a directory path
+     * @param  rev1           the first diff revision
+     * @param  rev2           the second diff revision
+     * @throws SVNException   
+     */
     public void displayDeletedDirectory(String path, String rev1, String rev2) throws SVNException {
         // not implemented.
     }
 
+    /**
+     * Does nothing.
+     * 
+     * @param  path           a directory path
+     * @param  rev1           the first diff revision
+     * @param  rev2           the second diff revision
+     * @throws SVNException
+     */
     public void displayAddedDirectory(String path, String rev1, String rev2) throws SVNException {
         // not implemented.
     }

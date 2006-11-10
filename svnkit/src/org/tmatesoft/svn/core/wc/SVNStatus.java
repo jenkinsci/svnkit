@@ -610,10 +610,21 @@ public class SVNStatus {
         myContentsStatus = statusType;
     }
     
+    /**
+     * Sets a WC entry for which this object is generated.
+     * Used in internals.
+     * 
+     * @param entry  a WC entry
+     */
     public void setEntry(SVNEntry entry) {
         myEntry = entry;
     }
     
+    /**
+     * Returns a WC entry for which this object is generated.
+     * 
+     * @return a WC entry (if set)
+     */
     public SVNEntry getEntry() {
         return myEntry;
     }

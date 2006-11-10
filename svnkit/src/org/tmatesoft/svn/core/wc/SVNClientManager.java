@@ -327,6 +327,18 @@ public class SVNClientManager implements ISVNRepositoryPool {
         return myCommitClient;
     }
 
+    /**
+     * Returns an instance of the {@link SVNAdminClient} class. 
+     * 
+     * <p>
+     * If it's the first time this method is being called the object is
+     * created, initialized and then returned. Further calls to this
+     * method will get the same object instantiated at that moment of 
+     * the first call. <b>SVNClientManager</b> does not reinstantiate
+     * its <b>SVN</b>*<b>Client</b> objects. 
+     * 
+     * @return an <b>SVNAdminClient</b> instance
+     */
     public SVNAdminClient getAdminClient() {
         if (myAdminClient == null) {
             myAdminClient = new SVNAdminClient(this, myOptions);
@@ -483,6 +495,16 @@ public class SVNClientManager implements ISVNRepositoryPool {
         return myWCClient;
     }
     
+    /**
+     * Returns the debug logger currently in use.  
+     * 
+     * <p>
+     * If no debug logger has been specified by the time this call occurs, 
+     * a default one (returned by <code>org.tmatesoft.svn.util.SVNDebugLog.getDefaultLog()</code>) 
+     * will be created and used.
+     * 
+     * @return a debug logger
+     */
     public ISVNDebugLog getDebugLog() {
         if (myDebugLog == null) {
             return SVNDebugLog.getDefaultLog();
@@ -490,6 +512,13 @@ public class SVNClientManager implements ISVNRepositoryPool {
         return myDebugLog;
     }
 
+    /**
+     * Sets a logger to write debug log information to. Sets this same logger
+     * object to all <b>SVN</b>*<b>Client</b> objects instantiated by this 
+     * moment. 
+     * 
+     * @param log a debug logger
+     */
     public void setDebugLog(ISVNDebugLog log) {
         myDebugLog = log;
         if (myCommitClient != null) {

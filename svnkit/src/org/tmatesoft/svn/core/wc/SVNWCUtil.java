@@ -161,8 +161,8 @@ public class SVNWCUtil {
      *                    area
      * @param  userName   a user's name
      * @param  password   a user's password
-     * @param  keyFile    a private key file for SSH session
-     * @param  passPhrase a passphrase that goes with the key file.
+     * @param  privateKey a private key file for SSH session
+     * @param  passphrase a passphrase that goes with the key file
      * @param  storeAuth  if <span class="javakeyword">true</span> then
      *                    the auth storage is enabled, otherwise disabled
      * @return            a default implementation of the credentials
@@ -262,7 +262,8 @@ public class SVNWCUtil {
      * @return                          <span class="javakeyword">true</span> if 
      *                                  <code>versionedDir</code> is versioned and the WC root
      *                                  (or the root of externals if <code>considerExternalAsRoot</code>
-     *                                  is <span class="javakeyword">true</span>), otherwise <span class="javakeyword">false</span> 
+     *                                  is <span class="javakeyword">true</span>), otherwise <span class="javakeyword">false</span>
+     * @throws SVNException                                  
      */
     public static boolean isWorkingCopyRoot(final File versionedDir) throws SVNException {
         SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
@@ -277,8 +278,14 @@ public class SVNWCUtil {
     }
     
     /**
-     * @deprecated
-     * 
+     * @param  versionedDir             a versioned directory to check
+     * @param externalIsRoot
+     * @return                          <span class="javakeyword">true</span> if 
+     *                                  <code>versionedDir</code> is versioned and the WC root
+     *                                  (or the root of externals if <code>considerExternalAsRoot</code>
+     *                                  is <span class="javakeyword">true</span>), otherwise <span class="javakeyword">false</span>
+     * @throws SVNException
+     * @deprecated                     use {@link #isWorkingCopyRoot(File)}} instead
      */
     public static boolean isWorkingCopyRoot(final File versionedDir, boolean externalIsRoot) throws SVNException {
         if (isWorkingCopyRoot(versionedDir)) {
@@ -307,6 +314,7 @@ public class SVNWCUtil {
      *                          which any externals definitions are set
      * @return                  the WC root directory (if it is found) or
      *                          <span class="javakeyword">null</span>.
+     * @throws SVNException
      */
     public static File getWorkingCopyRoot(File versionedDir, boolean stopOnExtenrals) throws SVNException {
         versionedDir = versionedDir.getAbsoluteFile();

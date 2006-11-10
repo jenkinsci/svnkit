@@ -64,7 +64,7 @@ public class SVNXMLStatusHandler extends AbstractXMLHandler implements ISVNStatu
     private File myTargetPath;
     
     /**
-     * Creates a new handler.
+     * Creates a new status handler.
      * 
      * @param saxHandler a <b>ContentHandler</b> to form 
      *                   an XML tree
@@ -73,6 +73,13 @@ public class SVNXMLStatusHandler extends AbstractXMLHandler implements ISVNStatu
         this(saxHandler, null);
     }    
 
+    /**
+     * Creates a new status handler.
+     * 
+     * @param saxHandler a <b>ContentHandler</b> to form 
+     *                   an XML tree
+     * @param log        a debug logger
+     */
     public SVNXMLStatusHandler(ContentHandler saxHandler, ISVNDebugLog log) {
         super(saxHandler, log);
     }    

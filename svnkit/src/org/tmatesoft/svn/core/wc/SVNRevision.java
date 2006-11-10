@@ -217,6 +217,13 @@ public class SVNRevision {
         return !r.isValid();
     }
     
+    /**
+     * Checks whether a revision number is valid.
+     * 
+     * @param   revision a revision number
+     * @return           <span class="javakeyword">true</span> if valid, 
+     *                   otherwise false
+     */
     public static boolean isValidRevisionNumber(long revision) {
         return revision >= 0;
     }

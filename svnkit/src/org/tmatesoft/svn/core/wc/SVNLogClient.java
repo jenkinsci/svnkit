@@ -102,10 +102,21 @@ public class SVNLogClient extends SVNBasicClient {
         super(repositoryPool, options);
     }
     
+    /**
+     * Sets diff options for this client to use in annotate operations.
+     * 
+     * @param diffOptions diff options object
+     */
     public void setDiffOptions(SVNDiffOptions diffOptions) {
         myDiffOptions = diffOptions;
     }
 
+    /**
+     * Gets the diff options that are used in annotate operations 
+     * by this client. Creates a new one if none was used before.
+     * 
+     * @return diff options
+     */
     public SVNDiffOptions getDiffOptions() {
         if (myDiffOptions == null) {
             myDiffOptions = new SVNDiffOptions();
@@ -124,6 +135,10 @@ public class SVNLogClient extends SVNBasicClient {
      * <code>startRevision = </code>{@link SVNRevision#UNDEFINED UNDEFINED}) then
      * it's set to revision 1.
      * 
+     * <p>
+     * Calling this method is equivalent to 
+     * <code>doAnnotate(path, pegRevision, startRevision, endRevision, false, handler)</code>.
+     * 
      * @param  path           a WC file item to be annotated
      * @param  pegRevision    a revision in which <code>path</code> is first looked up
      *                        in the repository
@@ -137,6 +152,27 @@ public class SVNLogClient extends SVNBasicClient {
         doAnnotate(path, pegRevision, startRevision, endRevision, false, handler);
     }
 
+    /**
+     * Obtains annotation information for each file text line from a repository
+     * (using a Working Copy path to get a corresponding URL) and passes it to a 
+     * provided annotation handler. 
+     * 
+     * <p>
+     * If <code>startRevision</code> is invalid (for example, 
+     * <code>startRevision = </code>{@link SVNRevision#UNDEFINED UNDEFINED}) then
+     * it's set to revision 1.
+     * 
+     * @param  path           a WC file item to be annotated
+     * @param  pegRevision    a revision in which <code>path</code> is first looked up
+     *                        in the repository
+     * @param  startRevision  a revision for an operation to start from
+     * @param  endRevision    a revision for an operation to stop at
+     * @param  force          forces operation to run (all files to be treated as 
+     *                        text, no matter what svn has inferred from the mime-type 
+     *                        property) 
+     * @param  handler        a caller's handler to process annotation information
+     * @throws SVNException
+     */
     public void doAnnotate(File path, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean force, ISVNAnnotateHandler handler) throws SVNException {
         if (startRevision == null || !startRevision.isValid()) {
             startRevision = SVNRevision.create(1);
@@ -167,6 +203,9 @@ public class SVNLogClient extends SVNBasicClient {
      * <code>startRevision = </code>{@link SVNRevision#UNDEFINED UNDEFINED}) then
      * it's set to revision 1.
      * 
+     * <p>
+     * Calling this method is equivalent to  
+     * <code>doAnnotate(url, pegRevision, startRevision, endRevision, handler, null)</code>.
      * 
      * @param  url            a URL of a text file that is to be annotated 
      * @param  pegRevision    a revision in which <code>path</code> is first looked up
@@ -181,10 +220,57 @@ public class SVNLogClient extends SVNBasicClient {
         doAnnotate(url, pegRevision, startRevision, endRevision, handler, null);
     }
 
+    /**
+     * Obtains annotation information for each file text line from a repository
+     * and passes it to a provided annotation handler. 
+     * 
+     * <p>
+     * If <code>startRevision</code> is invalid (for example, 
+     * <code>startRevision = </code>{@link SVNRevision#UNDEFINED UNDEFINED}) then
+     * it's set to revision 1.
+     * 
+     * <p>
+     * Calling this method is equivalent to  
+     * <code>doAnnotate(url, pegRevision, startRevision, endRevision, false, handler, inputEncoding)</code>.
+     * 
+     * @param  url            a URL of a text file that is to be annotated 
+     * @param  pegRevision    a revision in which <code>path</code> is first looked up
+     *                        in the repository
+     * @param  startRevision  a revision for an operation to start from
+     * @param  endRevision    a revision for an operation to stop at
+     * @param  handler        a caller's handler to process annotation information
+     * @param  inputEncoding  a desired character set (encoding) of text lines
+     * @throws SVNException
+     */
     public void doAnnotate(SVNURL url, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, ISVNAnnotateHandler handler, String inputEncoding) throws SVNException {
         doAnnotate(url, pegRevision, startRevision, endRevision, false, handler, inputEncoding);
     }
 
+    /**
+     * Obtains annotation information for each file text line from a repository
+     * and passes it to a provided annotation handler. 
+     * 
+     * <p>
+     * If <code>startRevision</code> is invalid (for example, 
+     * <code>startRevision = </code>{@link SVNRevision#UNDEFINED UNDEFINED}) then
+     * it's set to revision 1.
+     *
+     * <p>
+     * If <code>inputEncoding</code> is <span class="javakeyword">null</span> then 
+     * <span class="javastring">"file.encoding"</span> system property is used.
+     *  
+     * @param  url            a URL of a text file that is to be annotated 
+     * @param  pegRevision    a revision in which <code>path</code> is first looked up
+     *                        in the repository
+     * @param  startRevision  a revision for an operation to start from
+     * @param  endRevision    a revision for an operation to stop at
+     * @param  force          forces operation to run (all files to be treated as 
+     *                        text, no matter what svn has inferred from the mime-type 
+     *                        property) 
+     * @param  handler        a caller's handler to process annotation information
+     * @param  inputEncoding  a desired character set (encoding) of text lines
+     * @throws SVNException
+     */
 	public void doAnnotate(SVNURL url, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean force, ISVNAnnotateHandler handler, String inputEncoding) throws SVNException {
 	    if (startRevision == null || !startRevision.isValid()) {
 	        startRevision = SVNRevision.create(1);
@@ -237,6 +323,10 @@ public class SVNLogClient extends SVNBasicClient {
      * then it's equated to {@link SVNRevision#BASE BASE}. In this case if <code>endRevision</code> is
      * also invalid, then <code>endRevision</code> is set to revision 0.
      * 
+     * <p>
+     * Calling this method is equivalent to 
+     * <code>doLog(paths, SVNRevision.UNDEFINED, startRevision, endRevision, stopOnCopy, reportPaths, limit, handler)</code>.
+     * 
      * @param  paths           an array of Working Copy paths,
      *                         should not be <span class="javakeyword">null</span>
      * @param  startRevision   a revision for an operation to start from (including
@@ -266,6 +356,56 @@ public class SVNLogClient extends SVNBasicClient {
         doLog(paths, SVNRevision.UNDEFINED, startRevision, endRevision, stopOnCopy, reportPaths, limit, handler);
     }
     
+    /**
+     * Gets commit log messages with other revision specific 
+     * information from a repository (using Working Copy paths to get 
+     * corresponding URLs) and passes them to a log entry handler for
+     * processing. Useful for observing the history of affected paths,
+     * author, date and log comments information per revision.
+     * 
+     * <p>
+     * If <code>paths</code> is not empty then the result will be restricted
+     * to only those revisions from the specified range [<code>startRevision</code>, <code>endRevision</code>], 
+     * where <code>paths</code> were changed in the repository. To cover the
+     * entire range set <code>paths</code> just to an empty array:
+     * <pre class="javacode">
+     *     logClient.doLog(<span class="javakeyword">new</span> File[]{<span class="javastring">""</span>},..);</pre><br />
+     * <p>
+     * If <code>startRevision</code> is valid but <code>endRevision</code> is
+     * not (for example, <code>endRevision = </code>{@link SVNRevision#UNDEFINED UNDEFINED})
+     * then <code>endRevision</code> is equated to <code>startRevision</code>.
+     * 
+     * <p>
+     * If <code>startRevision</code> is invalid (for example, {@link SVNRevision#UNDEFINED UNDEFINED}) 
+     * then it's equated to {@link SVNRevision#BASE BASE}. In this case if <code>endRevision</code> is
+     * also invalid, then <code>endRevision</code> is set to revision 0.
+     * 
+     * @param  paths           an array of Working Copy paths,
+     *                         should not be <span class="javakeyword">null</span>
+     * @param  pegRevision     a revision in which <code>path</code> is first looked up
+     *                         in the repository
+     * @param  startRevision   a revision for an operation to start from (including
+     *                         this revision)    
+     * @param  endRevision     a revision for an operation to stop at (including
+     *                         this revision)
+     * @param  stopOnCopy      <span class="javakeyword">true</span> not to cross
+     *                         copies while traversing history, otherwise copies history
+     *                         will be also included into processing
+     * @param  reportPaths     <span class="javakeyword">true</span> to report
+     *                         of all changed paths for every revision being processed 
+     *                         (those paths will be available by calling 
+     *                         {@link org.tmatesoft.svn.core.SVNLogEntry#getChangedPaths()})
+     * @param  limit           a maximum number of log entries to be processed 
+     * @param  handler         a caller's log entry handler
+     * @throws SVNException    if one of the following is true:
+     *                         <ul>
+     *                         <li>a path is not under version control
+     *                         <li>can not obtain a URL of a WC path - there's no such
+     *                         entry in the Working Copy
+     *                         <li><code>paths</code> contain entries that belong to
+     *                         different repositories
+     *                         </ul>
+     */
     public void doLog(File[] paths, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean reportPaths, long limit, final ISVNLogEntryHandler handler) throws SVNException {
         if (paths == null || paths.length == 0) {
             return;

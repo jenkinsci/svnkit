@@ -182,6 +182,10 @@ public class SVNUpdateClient extends SVNBasicClient {
      * to update the Working Copy to the latest revision of the repository use 
      * {@link SVNRevision#HEAD HEAD}.
      * 
+     * <p>
+     * Calling this method is equivalent to 
+     * <code>doSwitch(file, url, SVNRevision.UNDEFINED, revision, recursive)</code>.
+     * 
      * @param  file			the Working copy item to be switched
      * @param  url			the repository location as a target against which the item will 
      * 						be switched
@@ -197,6 +201,27 @@ public class SVNUpdateClient extends SVNBasicClient {
         return doSwitch(file, url, SVNRevision.UNDEFINED, revision, recursive);
     }
 
+    /**
+     * Updates the Working Copy item to mirror a new URL. 
+     * 
+     * <p>
+     * As a revision <b>SVNRevision</b>'s pre-defined constant fields can be used. For example,
+     * to update the Working Copy to the latest revision of the repository use 
+     * {@link SVNRevision#HEAD HEAD}.
+     * 
+     * @param  file         the Working copy item to be switched
+     * @param  url          the repository location as a target against which the item will 
+     *                      be switched
+     * @param  pegRevision  a revision in which <code>file</code> is first looked up
+     *                      in the repository
+     * @param  revision     the desired revision of the repository target   
+     * @param  recursive    if <span class="javakeyword">true</span> and <code>file</code> is
+     *                      a directory then the entire tree will be updated, otherwise if 
+     *                      <span class="javakeyword">false</span> - only items located immediately
+     *                      in the directory itself
+     * @return              the revision number to which <code>file</code> was updated to
+     * @throws SVNException
+     */
     public long doSwitch(File file, SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess();
         try {
@@ -679,6 +704,16 @@ public class SVNUpdateClient extends SVNBasicClient {
         }
     }
 
+    /**
+     * Canonicalizes all urls in the specified Working Copy.
+     * 
+     * @param dst               a WC path     
+     * @param omitDefaultPort   if <span class="javakeyword">true</span> then removes all
+     *                          port numbers from urls which equal to default ones, otherwise
+     *                          does not
+     * @param recursive         recurses an operation
+     * @throws SVNException
+     */
     public void doCanonicalizeURLs(File dst, boolean omitDefaultPort, boolean recursive) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess();
         try {
