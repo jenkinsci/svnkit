@@ -13,6 +13,7 @@ package org.tmatesoft.svn.core.internal.io.dav.http;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.ParseException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -131,7 +132,7 @@ public class HTTPHeader {
         return myHeaders;
     }
 
-    public static HTTPHeader parseHeader(InputStream is) throws IOException {
+    public static HTTPHeader parseHeader(InputStream is) throws IOException, ParseException {
         HTTPHeader headers = new HTTPHeader();
         String name = null;
         StringBuffer value = null;
@@ -152,7 +153,7 @@ public class HTTPHeader {
                 
                 int colon = line.indexOf(":");
                 if (colon < 0) {
-                    throw new IOException("Unable to parse header: " + line);
+                    throw new ParseException("Unable to parse header: " + line, 0);
                 }
                 name = line.substring(0, colon).trim();
                 value = new StringBuffer(line.substring(colon + 1).trim());
@@ -165,5 +166,4 @@ public class HTTPHeader {
         }
         return headers;
     }
-    
 }

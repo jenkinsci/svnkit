@@ -23,6 +23,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.text.ParseException;
 import java.util.Collection;
 import java.util.zip.GZIPInputStream;
 
@@ -153,6 +154,14 @@ class HTTPConnection implements IHTTPConnection {
             HTTPHeader header = HTTPHeader.parseHeader(is);
             request.setStatus(status);
             request.setResponseHeader(header);
+        } catch (ParseException e) {
+            // in case of parse exception:
+            // try to read remaining and log it.
+            String line = HTTPParser.readLine(is);
+            while(line != null && line.length() > 0) {
+                line = HTTPParser.readLine(is);
+            }
+            throw new IOException(e.getMessage());
         } finally {
             myRepository.getDebugLog().flushStream(is);
         }

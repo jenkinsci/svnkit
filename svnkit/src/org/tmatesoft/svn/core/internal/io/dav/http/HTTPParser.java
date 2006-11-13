@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.io.dav.http;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.ParseException;
 
 /**
  * @version 1.0
@@ -21,13 +22,13 @@ import java.io.InputStream;
  */
 class HTTPParser {
     
-    public static HTTPStatus parseStatus(InputStream is) throws IOException {
+    public static HTTPStatus parseStatus(InputStream is) throws IOException, ParseException {
         String line = null;
         do {
             line = readLine(is);
         } while (line != null && line.length() == 0);
         if (line == null) {
-            throw new IOException("can not read HTTP status line");
+            throw new ParseException("can not read HTTP status line", 0);
         }
         return HTTPStatus.createHTTPStatus(line);
     }
