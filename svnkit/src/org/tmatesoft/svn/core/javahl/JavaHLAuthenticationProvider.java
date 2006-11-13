@@ -28,6 +28,10 @@ import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 
+/**
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
+ */
 class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
     
     private PromptUserPassword myPrompt;

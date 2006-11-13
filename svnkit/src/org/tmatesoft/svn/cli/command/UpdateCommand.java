@@ -24,7 +24,8 @@ import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 /**
- * @author TMate Software Ltd.
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
  */
 public class UpdateCommand extends SVNCommand {
 

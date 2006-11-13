@@ -18,7 +18,7 @@ package org.tmatesoft.svn.core;
  * supported by Subversion. This class holds string constants that are property 
  * names, and gives some useful methods to operate with properties (in particular).
  * 
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  */
 public class SVNProperty {

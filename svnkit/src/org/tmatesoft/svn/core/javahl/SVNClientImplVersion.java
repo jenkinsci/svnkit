@@ -13,6 +13,10 @@ package org.tmatesoft.svn.core.javahl;
 
 import org.tigris.subversion.javahl.Version;
 
+/**
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
+ */
 class SVNClientImplVersion extends org.tigris.subversion.javahl.Version {
 
     private static SVNClientImplVersion ourInstance;

@@ -69,7 +69,7 @@ import org.tmatesoft.svn.core.wc.SVNEvent;
  * destination repository the same changes in both versioned and unversioned (revision 
  * properties) data except locks as in the source repository.  
  * 
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  */
 public class SVNRepositoryReplicator implements ISVNEventHandler {

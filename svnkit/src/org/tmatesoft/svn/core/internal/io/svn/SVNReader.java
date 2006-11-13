@@ -38,7 +38,8 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
- * @author Alexander Kitaev
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
  */
 class SVNReader {
 

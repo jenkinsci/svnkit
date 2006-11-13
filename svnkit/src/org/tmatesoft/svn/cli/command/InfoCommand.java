@@ -35,7 +35,8 @@ import org.tmatesoft.svn.core.wc.xml.SVNXMLInfoHandler;
 import org.tmatesoft.svn.core.wc.xml.SVNXMLSerializer;
 
 /**
- * @author TMate Software Ltd.
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
  */
 public class InfoCommand extends SVNCommand implements ISVNInfoHandler {
 

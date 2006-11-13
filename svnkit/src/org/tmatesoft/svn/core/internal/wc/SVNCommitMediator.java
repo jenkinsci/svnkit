@@ -26,8 +26,8 @@ import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
 
 /**
- * @version 1.0
- * @author TMate Software Ltd.
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
  */
 public class SVNCommitMediator implements ISVNWorkspaceMediator {
 

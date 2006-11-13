@@ -22,7 +22,8 @@ import org.osgi.framework.Bundle;
 import org.tmatesoft.svn.util.SVNDebugLogAdapter;
 
 /**
- * @author alex
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
  */
 public class SVNKitLog extends SVNDebugLogAdapter {
 	

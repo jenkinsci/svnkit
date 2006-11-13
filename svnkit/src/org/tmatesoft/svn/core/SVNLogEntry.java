@@ -23,8 +23,8 @@ import java.util.Map;
  * a revision number, the datestamp when the revision was committed, the author 
  * of the revision, a commit log message and all paths changed in that revision. 
  * 
- * @version 1.1
- * @author 	TMate Software Ltd.
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
  * @see 	SVNLogEntryPath
  * @see     ISVNLogEntryHandler
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>

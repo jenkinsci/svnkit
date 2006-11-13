@@ -31,8 +31,8 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- * @version 1.0
- * @author TMate Software Ltd.
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
  */
 public class SVNLogImpl extends SVNLog {
 

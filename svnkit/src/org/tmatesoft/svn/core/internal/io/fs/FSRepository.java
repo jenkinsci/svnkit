@@ -64,8 +64,8 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 
 /**
- * @version 1.0
- * @author TMate Software Ltd.
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
  */
 public class FSRepository extends SVNRepository implements ISVNReporter {
     public static final int SVN_INVALID_REVNUM = -1;
@@ -814,7 +814,6 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             
             ISVNCommitPathHandler handler = new FSReplayPathHandler(myFSFS, root, compareRoot, changedPaths, basePath, lowRevision);
             SVNCommitUtil.driveCommitEditor(handler, interestingPaths, editor, -1);
-            //editor.closeEdit();
         } finally {
             closeRepository();
         }

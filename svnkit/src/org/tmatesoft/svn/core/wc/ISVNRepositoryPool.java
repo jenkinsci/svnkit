@@ -27,7 +27,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  * share that pool, but each thread is able only to retrieve those objects,
  * that belong to it (were created in that thread). 
  * 
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  * @see     DefaultSVNRepositoryPool
  */

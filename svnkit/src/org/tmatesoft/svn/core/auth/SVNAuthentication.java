@@ -22,7 +22,7 @@ package org.tmatesoft.svn.core.auth;
  * a user to a repository server, are provided to those drivers by 
  * <b>ISVNAuthenticationManager</b> implementations.
  * 
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  * @see     SVNPasswordAuthentication
  * @see     SVNSSHAuthentication

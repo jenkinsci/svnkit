@@ -29,7 +29,7 @@ import org.xml.sax.Attributes;
 
 
 /**
- * @version 1.0
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  */
 public class DAVPropertiesHandler extends BasicDAVHandler {

@@ -40,6 +40,10 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 
+/**
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
+ */
 class DAVCommitEditor implements ISVNEditor {
     
     private String myLogMessage;

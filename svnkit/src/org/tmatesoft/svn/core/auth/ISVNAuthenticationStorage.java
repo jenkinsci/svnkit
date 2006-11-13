@@ -28,7 +28,7 @@ package org.tmatesoft.svn.core.auth;
  * caches credentials only in the memory (not in the filesystem) during runtime. This feature is handy especially when 
  * on-disk caching is disabled in the standard <i>config</i> file (option <span class="javastring">"store-auth-creds"</span> is <span class="javastring">"no"</span>).
  * 
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  * @see     ISVNAuthenticationManager
  */

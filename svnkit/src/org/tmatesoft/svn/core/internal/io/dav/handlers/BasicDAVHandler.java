@@ -28,7 +28,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 
 /**
- * @version 1.0
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  */
 public abstract class BasicDAVHandler extends DefaultHandler {

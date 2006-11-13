@@ -26,8 +26,8 @@ import java.util.Date;
  * In addition, this class provides anexception that, if a commit has failed,
  * has got a description of a failure reason.
  * 
- * @version 1.1
- * @author 	TMate Software Ltd.
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
  */
 public class SVNCommitInfo {
     /**

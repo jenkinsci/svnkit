@@ -29,7 +29,7 @@ import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 /**
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  */
 abstract class HTTPAuthentication {

@@ -19,7 +19,7 @@ import java.util.List;
 
 
 /**
- * @version 1.0
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  */
 public class SVNRollbackInputStream extends InputStream {

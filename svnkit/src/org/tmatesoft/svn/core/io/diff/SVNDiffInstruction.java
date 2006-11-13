@@ -40,7 +40,7 @@ import java.nio.ByteBuffer;
  * These are three different ways how full text representation bytes are 
  * obtained. 
  *  
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  */
 public class SVNDiffInstruction {

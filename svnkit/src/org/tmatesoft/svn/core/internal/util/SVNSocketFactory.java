@@ -42,9 +42,8 @@ import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
  * The created socket then used by the inner engine of <b><i>SVNKit</i></b>
  * library to communicate with a Subversion repository.
  * 
- * @version 1.0
- * @author TMate Software Ltd.
- * 
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
  */
 public class SVNSocketFactory {
     

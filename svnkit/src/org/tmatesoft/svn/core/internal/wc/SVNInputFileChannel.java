@@ -19,7 +19,7 @@ import java.nio.channels.FileChannel;
 import java.nio.ByteBuffer;
 
 /**
- * @version 1.0
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  */
 public class SVNInputFileChannel implements ISVNInputFile {

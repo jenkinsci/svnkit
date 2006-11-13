@@ -20,7 +20,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNSubstitutor;
 
 
 /**
- * @version 1.0
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  */
 public class SVNTranslatorInputStream extends InputStream {

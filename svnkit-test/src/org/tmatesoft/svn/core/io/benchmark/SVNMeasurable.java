@@ -14,6 +14,10 @@ package org.tmatesoft.svn.core.io.benchmark;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
+/**
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
+ */
 abstract class SVNMeasurable implements Runnable {
     
     private SVNRepository myRepository2;

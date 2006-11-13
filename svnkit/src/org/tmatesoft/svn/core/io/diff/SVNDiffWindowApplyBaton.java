@@ -27,7 +27,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
  * a diff window's instructions are applied, the digest will be the checksum
  * for the full expanded text written to the target stream during delta application. 
  *  
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  */
 public class SVNDiffWindowApplyBaton {

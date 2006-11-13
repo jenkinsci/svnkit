@@ -21,7 +21,7 @@ import org.tmatesoft.svn.core.SVNURL;
  * The <b>SVNDiffStatus</b> class is used to provide short information on path changes
  * during diff status operations. 
  * 
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  */
 public class SVNDiffStatus {

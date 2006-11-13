@@ -70,7 +70,7 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  * </tr>
  * </table>
  * 
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  * @since   1.1
  */
@@ -178,6 +178,7 @@ public class SVNAdminClient extends SVNBasicClient {
         checkIfRepositoryIsAtRoot(toRepos, toURL);
 
         SVNException error = null;
+        SVNException error2 = null;
         lock(toRepos);
         try {
             SessionInfo info = openSourceRepository(toRepos);
@@ -186,16 +187,20 @@ public class SVNAdminClient extends SVNBasicClient {
                 SVNErrorManager.error(err);
             }
             copyRevisionProperties(info.myRepository, toRepos, revision, false);
+        } catch (SVNException svne) {
+            error = svne;
         } finally {
             try {
                 unlock(toRepos);
             } catch (SVNException svne) {
-                error = svne;
+                error2 = svne;
             }
         }
 
         if (error != null) {
             throw error;
+        } else if (error2 != null) {
+            throw error2;
         }
     }
 
@@ -217,6 +222,7 @@ public class SVNAdminClient extends SVNBasicClient {
         checkIfRepositoryIsAtRoot(toRepos, toURL);
 
         SVNException error = null;
+        SVNException error2 = null;
         lock(toRepos);
         try {
             long latestRevision = toRepos.getLatestRevision();
@@ -240,16 +246,20 @@ public class SVNAdminClient extends SVNBasicClient {
             toRepos.setRevisionPropertyValue(0, SVNRevisionProperty.LAST_MERGED_REVISION, "0");
 
             copyRevisionProperties(fromRepos, toRepos, 0, false);
+        } catch (SVNException svne) {
+            error = svne;
         } finally {
             try {
                 unlock(toRepos);
             } catch (SVNException svne) {
-                error = svne;
+                error2 = svne;
             }
         }
 
         if (error != null) {
             throw error;
+        } else if (error2 != null) {
+            throw error2;
         }
     }
 
@@ -303,6 +313,8 @@ public class SVNAdminClient extends SVNBasicClient {
         checkIfRepositoryIsAtRoot(toRepos, toURL);
 
         SVNException error = null;
+        SVNException error2 = null;
+
         lock(toRepos);
         try {
             SessionInfo info = openSourceRepository(toRepos);
@@ -358,16 +370,20 @@ public class SVNAdminClient extends SVNBasicClient {
                 toRepos.setRevisionPropertyValue(0, SVNRevisionProperty.LAST_MERGED_REVISION, SVNProperty.toString(currentRev));
                 toRepos.setRevisionPropertyValue(0, SVNRevisionProperty.CURRENTLY_COPYING, null);
             }
+        } catch (SVNException svne) {
+            error = svne;
         } finally {
             try {
                 unlock(toRepos);
             } catch (SVNException svne) {
-                error = svne;
+                error2 = svne;
             }
         }
 
         if (error != null) {
             throw error;
+        } else if (error2 != null) {
+            throw error2;
         }
     }
 

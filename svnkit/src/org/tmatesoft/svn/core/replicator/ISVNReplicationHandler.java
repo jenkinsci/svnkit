@@ -22,7 +22,7 @@ import org.tmatesoft.svn.core.SVNLogEntry;
  * which are registered to a repository replicator to keep track of the 
  * replicating process. 
  * 
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  */
 public interface ISVNReplicationHandler {

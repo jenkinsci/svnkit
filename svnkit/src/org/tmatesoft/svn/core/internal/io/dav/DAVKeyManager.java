@@ -21,6 +21,10 @@ import javax.net.ssl.KeyManagerFactory;
 
 import org.tmatesoft.svn.util.SVNDebugLog;
 
+/**
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
+ */
 class DAVKeyManager {
     
     private static final String CERTIFICATE_FILE = "svnkit.ssl.client-cert-file";

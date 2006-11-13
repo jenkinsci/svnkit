@@ -38,7 +38,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
  * string (like <span class="javastring">"http://userInfo@host:port/path"</span>)
  * to a corresponding <i>parse</i> method of this class. 
  *  
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
  */

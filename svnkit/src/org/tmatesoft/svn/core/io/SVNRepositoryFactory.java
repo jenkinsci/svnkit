@@ -84,7 +84,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
  * Also <b>SVNRepositoryFactory</b> may be used to create local 
  * FSFS-type repositories.
  * 
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  * @see     SVNRepository
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>

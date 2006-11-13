@@ -31,7 +31,7 @@ import org.xml.sax.SAXException;
  * This log handler implementation writes xml formatted information 
  * about the log entries it's passed to a specified <b>ContentHandler</b>. 
  * 
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  */
 public class SVNXMLLogHandler extends AbstractXMLHandler implements ISVNLogEntryHandler {

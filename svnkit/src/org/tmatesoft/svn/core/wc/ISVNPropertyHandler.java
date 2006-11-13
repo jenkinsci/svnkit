@@ -38,7 +38,7 @@ import org.tmatesoft.svn.core.SVNURL;
  * to notify a developer.    
  * </li></ul>
  * 
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  * @see     SVNPropertyData
  * @see     SVNWCClient

@@ -56,7 +56,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  * <p>
  * How to get a default auth manager instance see {@link org.tmatesoft.svn.core.wc.SVNWCUtil}. 
  *
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  * @see     org.tmatesoft.svn.core.io.SVNRepository
  */

@@ -34,7 +34,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
  * run-time configuration and authentication drivers and some others.
  *  
  * 
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  * @see     ISVNOptions
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>

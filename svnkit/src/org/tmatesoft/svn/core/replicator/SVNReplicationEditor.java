@@ -46,7 +46,7 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  * the calls of that driver to calls to a commit editor of the destination <b>SVNRepository</b> 
  * driver.   
  * 
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  * @see     org.tmatesoft.svn.core.io.SVNRepository
  */

@@ -45,8 +45,8 @@ import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
- * @version 1.0
- * @author TMate Software Ltd.
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
  */
 public class SVNXMLAdminArea extends SVNAdminArea {
     public static final int WC_FORMAT = 4;

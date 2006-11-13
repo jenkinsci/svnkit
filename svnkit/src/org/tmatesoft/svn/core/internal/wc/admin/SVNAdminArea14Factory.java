@@ -23,6 +23,10 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
+/**
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
+ */
 class SVNAdminArea14Factory extends SVNAdminAreaFactory {
     
     public static final int WC_FORMAT = 8;

@@ -22,6 +22,10 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
+/**
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
+ */
 public class FSRevisionNode {
 
     // rev-node files keywords

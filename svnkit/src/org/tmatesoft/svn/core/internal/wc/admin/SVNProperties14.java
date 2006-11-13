@@ -16,7 +16,10 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 
-
+/**
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
+ */
 public abstract class SVNProperties14 extends SVNVersionedProperties {
 
     private SVNAdminArea14 myAdminArea;

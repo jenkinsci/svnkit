@@ -30,7 +30,7 @@ import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 
 
 /**
- * @version 1.0
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  */
 public class FSReplayPathHandler implements ISVNCommitPathHandler {

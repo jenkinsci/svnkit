@@ -44,7 +44,7 @@ package org.tmatesoft.svn.core.wc;
  * <i>UPDATE_</i> prefix are relevant only for update related operations
  * (update, checkout, switch, etc.). 
  *  
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  * @see     SVNEvent
  * @see     ISVNEventHandler

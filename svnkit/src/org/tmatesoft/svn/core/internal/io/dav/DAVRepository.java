@@ -58,7 +58,8 @@ import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
- * @author Alexander Kitaev
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
  */
 class DAVRepository extends SVNRepository {
 

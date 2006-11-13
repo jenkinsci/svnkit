@@ -35,10 +35,9 @@ import org.xml.sax.Attributes;
 
 
 /**
- * @version 1.0
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  */
-	
 public class DAVEditorHandler extends BasicDAVDeltaHandler {
 
     public static StringBuffer generateEditorRequest(final DAVConnection connection, StringBuffer buffer, final String url, 

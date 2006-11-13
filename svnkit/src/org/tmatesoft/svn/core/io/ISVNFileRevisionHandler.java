@@ -26,8 +26,8 @@ import org.tmatesoft.svn.core.SVNException;
  * {@link SVNRepository#getFileRevisions(String, long, long, ISVNFileRevisionHandler) getFileRevisions()}
  * method of <b>SVNRepository</b> when getting file revisions (in particular, when annotating).
  * 
- * @version 1.1
- * @author 	TMate Software Ltd.
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
  * @see 	SVNRepository
  * @see     org.tmatesoft.svn.core.SVNAnnotationGenerator
  */

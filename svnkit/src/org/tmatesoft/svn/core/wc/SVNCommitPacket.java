@@ -29,7 +29,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
  * Used by <b>SVNCommitClient</b> in {@link SVNCommitClient#doCollectCommitItems(File[], boolean, boolean, boolean) doCollectCommitItems()}
  * to collect and hold information on paths that have local changes.
  * 
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  * @see     SVNCommitItem
  */

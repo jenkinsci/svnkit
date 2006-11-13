@@ -23,8 +23,8 @@ package org.tmatesoft.svn.core;
  * <li>unknown     - the node kind can not be recognized
  * </ul>
  *  
- * @version 1.1
- * @author 	TMate Software Ltd.
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
  * @see 	SVNDirEntry
  */
 public final class SVNNodeKind implements Comparable {

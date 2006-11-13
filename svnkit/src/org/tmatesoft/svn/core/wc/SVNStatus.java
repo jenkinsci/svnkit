@@ -87,7 +87,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
  * for remote status invocations - that is when a doStatus() method of <b>SVNStatusClient</b>
  * is called with the flag <code>remote</code> set to <span class="javakeyword">true</span>.
  *  
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  * @see     ISVNStatusHandler
  * @see     SVNStatusType

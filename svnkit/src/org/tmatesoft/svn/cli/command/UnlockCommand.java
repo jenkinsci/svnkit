@@ -22,6 +22,10 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
+/**
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
+ */
 public class UnlockCommand extends SVNCommand {
 
     public void run(PrintStream out, PrintStream err) throws SVNException {

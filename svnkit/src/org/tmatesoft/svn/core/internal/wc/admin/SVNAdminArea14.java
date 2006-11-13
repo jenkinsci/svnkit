@@ -44,6 +44,10 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 
+/**
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
+ */
 public class SVNAdminArea14 extends SVNAdminArea {
     public static final String[] ourCachableProperties = new String[] {
         SVNProperty.SPECIAL,

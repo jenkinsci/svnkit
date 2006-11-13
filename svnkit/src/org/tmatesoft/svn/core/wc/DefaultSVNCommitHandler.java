@@ -23,7 +23,7 @@ import org.tmatesoft.svn.core.SVNException;
  * special implementation of <b>ISVNCommitHandler</b> is provided into those 
  * classes then <b>DefaultSVNCommitHandler</b> is the one that is used by default.
  * 
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  * @see		ISVNCommitHandler
  */

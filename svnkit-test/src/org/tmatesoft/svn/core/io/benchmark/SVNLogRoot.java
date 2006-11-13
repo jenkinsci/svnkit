@@ -16,6 +16,10 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
+/**
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
+ */
 class SVNLogRoot extends SVNMeasurable implements Runnable {
 
     protected void measure(SVNRepository repos) throws SVNException {

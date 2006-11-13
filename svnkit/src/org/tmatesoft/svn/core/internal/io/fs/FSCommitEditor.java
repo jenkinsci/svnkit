@@ -38,7 +38,7 @@ import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  
 /**
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  */
 public class FSCommitEditor implements ISVNEditor {

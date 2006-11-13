@@ -21,7 +21,7 @@ import org.tmatesoft.svn.core.SVNProperty;
  * <b>handleProperty()</b> methods of <b>ISVNPropertyHandler</b> for processing
  * or simply return that 'properties object' as a target.
  * 
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  * @see     ISVNPropertyHandler
  * @see     SVNWCClient

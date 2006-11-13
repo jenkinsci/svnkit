@@ -20,7 +20,8 @@ import java.util.Set;
 import org.tmatesoft.svn.core.SVNException;
 
 /**
- * @author TMate Software Ltd.
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
  */
 public abstract class SVNArgument {
 

@@ -25,8 +25,8 @@ import java.io.Serializable;
  * they are representations of all the changed paths in the revision represented
  * by that <b>SVNLogEntry</b> object.
  * 
- * @version 1.1
- * @author 	TMate Software Ltd.
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
  * @see 	SVNLogEntry
  */
 public class SVNLogEntryPath implements Serializable {

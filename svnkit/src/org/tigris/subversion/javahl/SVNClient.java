@@ -15,6 +15,11 @@ import java.io.OutputStream;
 
 import org.tmatesoft.svn.core.javahl.SVNClientImpl;
 
+/**
+ * 
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
+ */
 public class SVNClient implements SVNClientInterface {
 
     private SVNClientImpl myDelegate;

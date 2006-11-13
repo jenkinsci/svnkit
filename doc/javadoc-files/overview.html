@@ -31,7 +31,10 @@ for working particularly with the native Subversion client's format - <i>'Workin
 also easily performed by using this high-level API. Obviously in those cases when an operation needs an access to a repository this high-level API 
 uses the low-level one.
 </ul>
+
 <p> 
+<h1>Features</h1>
+ 
 Currently SVNKit supports the following repository access protocols:
 <ul>
 <li>
@@ -40,7 +43,35 @@ svn://, svn+ssh://
 <li>
 http://, https://
 </li>
+<li>file:/// (Since 1.1.0 and for FSFS-type repositories only)</li>
 </ul>
-Also since 1.0.2 SVNKit supports error codes similar to error codes of the native SVN.
+
+<h4>Since 1.0.2</h4>
+Support for error codes similar to error codes of the native SVN.
+
+<h4>Since 1.1.0</h4>
+<p>
+Support for SVN 1.4 Working Copy format.
+
+<p>
+Administrative functionality: creation of local <b>FSFS</b>-type (Subversion compatible) 
+repositories with the latest format version.
+ 
+<p>
+SVNKit also supports the native Subversion svnsync utility
+functionality. At the same time SVNKit has its own engine to replicate 
+revisions from one repository to another one. This allows to clone repositories even in those 
+cases when a Subversion running server is too old and does not support synchronization 
+functionality. Also repository replicator supports incremental mode: if you've copied a repository, 
+then created some new revisions in it and would like to have them 
+in your repository clone too, you do not need to copy the whole 
+original repository again - you simply copy those missing revisions 
+to the clone and it's up to date with the original one again!
+
+<p>
+svn+xxx:// URL schemes (not only svn+ssh). JavaSVN API gives a user an 
+ability to define tunnel providers which are responsible for matching 
+subprotocol names (xxx) to tunnel command lines.
+
 </BODY>
 </HTML>

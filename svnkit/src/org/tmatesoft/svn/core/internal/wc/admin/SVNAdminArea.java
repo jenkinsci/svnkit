@@ -49,7 +49,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 /**
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  */
 public abstract class SVNAdminArea {

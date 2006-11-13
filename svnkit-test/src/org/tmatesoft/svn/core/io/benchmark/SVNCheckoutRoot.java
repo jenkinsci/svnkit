@@ -22,6 +22,10 @@ import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 
+/**
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
+ */
 class SVNCheckoutRoot extends SVNMeasurable implements Runnable, ISVNEditor, ISVNReporterBaton {
 
     private long myLastRevision;

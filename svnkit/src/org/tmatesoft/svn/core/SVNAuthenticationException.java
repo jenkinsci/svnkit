@@ -17,8 +17,8 @@ package org.tmatesoft.svn.core;
  * occured exactly during an authentication try. Provides the same kind 
  * of information as its base class does.
  *   
- * @version	1.1
- * @author 	TMate Software Ltd.
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
  * @see		SVNException
  */
 public class SVNAuthenticationException extends SVNException {

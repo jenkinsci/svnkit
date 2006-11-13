@@ -16,7 +16,7 @@ import java.io.OutputStream;
 
 
 /**
- * @version 1.0
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  */
 public interface ISVNDebugLog {

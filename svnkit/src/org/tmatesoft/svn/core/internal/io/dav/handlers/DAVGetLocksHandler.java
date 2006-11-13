@@ -24,7 +24,7 @@ import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.xml.sax.Attributes;
 
 /**
- * @version 1.0
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  */
 public class DAVGetLocksHandler extends BasicDAVHandler {

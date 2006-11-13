@@ -18,7 +18,7 @@ package org.tmatesoft.svn.core.wc;
  * when it's necessary to say whether a file should be or should not be considered as 
  * changed. 
  * 
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  */
 public class SVNDiffOptions {

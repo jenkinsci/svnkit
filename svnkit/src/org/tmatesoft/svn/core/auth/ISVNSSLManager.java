@@ -48,7 +48,7 @@ import org.tmatesoft.svn.core.SVNURL;
  * <p>
  * An SSL manager is invoked when a user tries to access a repository via the https:// protocol. 
  * 
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  * @see     ISVNAuthenticationManager
  */

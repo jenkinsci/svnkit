@@ -19,8 +19,8 @@ import java.util.Set;
 import org.tmatesoft.svn.core.SVNNodeKind;
 
 /**
- * @version 1.0
- * @author TMate Software Ltd.
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
  */
 public class SVNFileType {
 

@@ -21,7 +21,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 /**
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  */
 class HTTPDigestAuthentication extends HTTPAuthentication {

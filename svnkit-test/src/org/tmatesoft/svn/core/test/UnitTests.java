@@ -7,7 +7,8 @@ import junit.textui.TestRunner;
 import de.regnis.q.sequence.QSequenceAllTests;
 
 /**
- * @author Marc Strapetz
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
  */
 public class UnitTests extends TestCase {
 

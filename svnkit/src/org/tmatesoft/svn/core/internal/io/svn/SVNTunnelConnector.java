@@ -28,7 +28,7 @@ import ch.ethz.ssh2.StreamGobbler;
 
 
 /**
- * @version 1.0
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  */
 public class SVNTunnelConnector implements ISVNConnector {

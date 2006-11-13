@@ -68,7 +68,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  * methods are called non-recursively and allow to get status info on a single 
  * item. 
  * 
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  * @see		ISVNStatusHandler
  * @see		SVNStatus

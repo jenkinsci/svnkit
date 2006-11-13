@@ -32,7 +32,10 @@ import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
-
+/**
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
+ */
 class HTTPNTLMAuthentication extends HTTPAuthentication {
 
     private static final String NTLM_CASE_CONVERTION_PROPERTY = "svnkit.http.ntlm.uppercase";

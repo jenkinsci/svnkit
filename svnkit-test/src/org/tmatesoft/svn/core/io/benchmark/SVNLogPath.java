@@ -16,6 +16,10 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
+/**
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
+ */
 public class SVNLogPath extends SVNMeasurable implements Runnable {
     
     private static final String[] DEFAULT_LOG_PATHS = new String[] {"/trunk"};

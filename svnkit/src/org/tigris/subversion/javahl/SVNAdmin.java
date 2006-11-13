@@ -23,7 +23,7 @@ import org.tmatesoft.svn.core.javahl.SVNClientImpl;
 
 
 /**
- * @version 1.0
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  */
 public class SVNAdmin {

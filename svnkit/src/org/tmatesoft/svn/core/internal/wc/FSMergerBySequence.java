@@ -22,8 +22,8 @@ import de.regnis.q.sequence.line.*;
 import de.regnis.q.sequence.line.simplifier.*;
 
 /**
- * @author TMate Software Ltd.
- * @version 1.0
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
  */
 class FSMergerBySequence {
 

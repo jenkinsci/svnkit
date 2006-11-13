@@ -16,7 +16,8 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * @author Alexander Kitaev
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
  */
 class FixedSizeInputStream extends InputStream {
     

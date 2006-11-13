@@ -20,8 +20,8 @@ import org.tmatesoft.svn.core.SVNLogEntryPath;
 /**
  * The kind of change that occurred on the path.
  * 
- * @version 1.0
- * @author TMate Software Ltd.
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
  */
 public class FSPathChangeKind implements Serializable {
 

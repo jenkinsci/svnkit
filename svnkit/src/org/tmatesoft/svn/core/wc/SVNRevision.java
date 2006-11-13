@@ -35,7 +35,7 @@ import java.util.Map;
  * can parse strings (that can be anything: string representations of numbers,
  * dates, keywords) to construct an <b>SVNRevision</b> to use. 
  *  
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  */
 public class SVNRevision {

@@ -19,6 +19,10 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.xml.sax.helpers.DefaultHandler;
 
+/**
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
+ */
 public interface IHTTPConnection {
     
     public void setSpoolResponse(boolean spoolResponse);

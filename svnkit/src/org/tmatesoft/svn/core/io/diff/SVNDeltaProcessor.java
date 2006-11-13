@@ -25,7 +25,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
  * The <b>SVNDeltaProcessor</b> is used to get a full text of a file 
  * in series applying diff windows being passed to a processor.  
  * 
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  */
 public class SVNDeltaProcessor {

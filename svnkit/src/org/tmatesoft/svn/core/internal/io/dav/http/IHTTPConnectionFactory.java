@@ -13,8 +13,9 @@ package org.tmatesoft.svn.core.internal.io.dav.http;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
+
 /**
- * @version 1.0
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  */
 public interface IHTTPConnectionFactory {

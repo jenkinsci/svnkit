@@ -65,7 +65,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
  * ...</pre>
  * </p> 
  * 
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  * @see     ISVNInfoHandler
  * @see     SVNWCClient

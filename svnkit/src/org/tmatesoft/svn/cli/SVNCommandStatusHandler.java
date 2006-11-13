@@ -19,6 +19,11 @@ import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
+/**
+ * 
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
+ */
 public class SVNCommandStatusHandler implements ISVNStatusHandler {
 
     private PrintStream myOut;

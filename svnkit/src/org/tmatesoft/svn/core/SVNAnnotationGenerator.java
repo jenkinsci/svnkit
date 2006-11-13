@@ -83,7 +83,7 @@ import de.regnis.q.sequence.line.simplifier.QSequenceLineWhiteSpaceSkippingSimpl
  *     }
  * ...</pre>
  *   
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  */
 public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {

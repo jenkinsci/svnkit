@@ -37,7 +37,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
  * for subsequent iterations an iterator simply uses the same instruction object 
  * to return as a newly read and decoded instruction.      
  * 
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  * @see     SVNDiffInstruction
  */

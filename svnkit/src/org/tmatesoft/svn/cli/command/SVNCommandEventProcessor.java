@@ -27,6 +27,10 @@ import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
+/**
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
+ */
 public class SVNCommandEventProcessor implements ISVNEventHandler {
 
     private boolean myIsExternal;

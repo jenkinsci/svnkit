@@ -36,8 +36,8 @@ import ch.ethz.ssh2.InteractiveCallback;
 import ch.ethz.ssh2.crypto.PEMDecoder;
 
 /**
- * @version 1.0
- * @author TMate Software Ltd.
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
  */
 public class SVNGanymedSession {
 

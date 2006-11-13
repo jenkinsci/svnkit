@@ -93,7 +93,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
  * will be dispatched progress events. 
  * </p>
  * 
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  * @see     ISVNEventHandler
  * @see     SVNStatusType

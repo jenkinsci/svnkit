@@ -31,7 +31,7 @@ import org.tmatesoft.svn.util.SVNDebugLog;
 /**
  * Reads diff windows from stream and feeds them to the ISVNDeltaConsumer instance.
  * 
- * @version 1.0
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  */
 public class SVNDeltaReader {

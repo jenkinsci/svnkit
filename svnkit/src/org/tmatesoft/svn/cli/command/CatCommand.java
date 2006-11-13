@@ -23,7 +23,8 @@ import java.io.File;
 import java.io.PrintStream;
 
 /**
- * @author TMate Software Ltd.
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
  */
 public class CatCommand extends SVNCommand {
 

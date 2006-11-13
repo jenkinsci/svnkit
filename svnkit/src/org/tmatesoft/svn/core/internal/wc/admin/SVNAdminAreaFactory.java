@@ -33,7 +33,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
  * - how to create new admin area.
  * - how to upgrade from one area to another (save area in certain format).
  * 
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  */
 public abstract class SVNAdminAreaFactory implements Comparable {

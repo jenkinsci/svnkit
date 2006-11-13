@@ -43,7 +43,7 @@ package org.tmatesoft.svn.core.io;
  * driver you get calling a <b>createDefaultOptions()</b> method 
  * of the {@link org.tmatesoft.svn.core.wc.SVNWCUtil} class.
  * 
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  */
 public interface ISVNTunnelProvider {

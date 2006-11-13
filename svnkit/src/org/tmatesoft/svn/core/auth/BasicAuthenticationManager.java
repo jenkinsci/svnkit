@@ -39,7 +39,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  * manager (how to get it read javadoc for {@link ISVNAuthenticationManager}), 
  * this basic manager or implement your own one.  
  * 
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  * @see     ISVNAuthenticationProvider
  */

@@ -39,7 +39,7 @@ import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
  * and the X-Delta algorithm for generating delta as a difference between target and 
  * non-empty source streams.    
  * 
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  */
 public class SVNDeltaGenerator {

@@ -62,8 +62,8 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  * 
  * sourceWCRoot, targetWCRoot: if useWC == 1 - WC root dirs
  * 
- * @version 1.0
- * @author TMate Software Ltd.
+ * @version 1.1.0
+ * @author  TMate Software Ltd.
  */
 public class SVNRepositoryReplicationTest {
 

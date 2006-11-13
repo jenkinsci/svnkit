@@ -22,7 +22,7 @@ import org.tmatesoft.svn.core.SVNException;
  * contents difference between files in order to be used in 'diff' operations 
  * performed by <b>SVNDiffClient</b>. 
  * 
- * @version 1.1
+ * @version 1.1.0
  * @author  TMate Software Ltd.
  * @see     SVNDiffClient
  * @see     DefaultSVNDiffGenerator
