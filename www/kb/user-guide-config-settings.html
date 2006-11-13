@@ -1,10 +1,11 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" >
-<head><title>Supported system properties and configuration options</title>
+<head><title>SVNKit&nbsp;::&nbsp;Supported system properties and configuration options</title>
 <meta name="keywords" content="Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development">   
 <meta name="description" content="Pure Java Subversion Library. Open Source, provided by TMate Software">
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <link rel="stylesheet" type="text/css" media="screen" href="../css/home.css">
+<link rel="shortcut icon" href="/img/favicon.ico"/>
 </head>
 <body>
 <table bgcolor="white" width="900" cellpadding="0" align="center" style="height: 100%;"  border="0" cellspacing="0" >
@@ -21,10 +22,10 @@
 <table border="0" cellpadding="0" cellspacing="0" style="width: 100%;">
 <tr>
 <td rowspan="2" colspan="1" width="50%">
-<a style="border-bottom: 0px;" href="http://tmate.org/svn/"><img width="415" height="97" src="../img/javasvn_logo.png" border="0"></a>
+<a style="border-bottom: 0px;" href="/"><img width="415" height="97" src="../img/svnkit_logo.jpg" border="0"></a>
 </td>
 <td rowspan="1" colspan="1" width="50%" style="font-style: italic; font-size: 17px; padding-left: 15px" align="left" valign="center">
-The only pure Java Subversion library in the world!
+The only pure Java&#153; Subversion library in the world!
 </td>
 </tr>
 <tr>
@@ -57,14 +58,14 @@ The only pure Java Subversion library in the world!
 
 <h1>Supported system properties and configuration options</h1>
 <p>
-This section contains information on configuring the JavaSVN library - in order
+This section contains information on configuring the SVNKit library - in order
 that one can adjust the library up to his individual wishes. Here you will find
-information on what configuration files JavaSVN uses during runtime, what 
+information on what configuration files SVNKit uses during runtime, what 
 system properties are used in that case when config files are not available, and
 so on.
 </p>
 <h4>HTTP proxy setup</h4>
-<p>By default JavaSVN uses proxy settings from the <i>servers</i> configuration file
+<p>By default SVNKit uses proxy settings from the <i>servers</i> configuration file
 that is located in the default SVN run-time configuration area.
 </p>
 <p>Default configuration area is located at <code>~/.subversion</code> on Linux and OS X and 
@@ -72,51 +73,51 @@ at <code>C:\Documents and Settings\userName\Application Data\Subversion</code> o
 You may read more on Subversion client configuration files at <a href="http://svnbook.red-bean.com/en/1.1/ch07.html#svn-ch-7-sect-1">Subversion Book</a>.
 </p>
 <h4>SVN+SSH authentication whith Subclipse</h4>
-<p>If you're using JavaSVN with Subclipse version 0.9.37 or newer there is no 
+<p>If you're using SVNKit with Subclipse version 0.9.37 or newer there is no 
 need to use system properties to define SSH credentials, Subclipse will automatically prompt you for 
 private key or password during establishing SSH connection.
 </p>
 <h4>SVN+SSH authentication with private key</h4>
-<p>By default JavaSVN tries to obtain all necessary information
+<p>By default SVNKit tries to obtain all necessary information
 from the <i>[tunnels]</i> section of the <i>config</i> file that is
 located in the default SVN run-time configuration area. However if
-that information is not complete or not found at all, JavaSVN tries
+that information is not complete or not found at all, SVNKit tries
 then to use predefined system properties listed beneath.
-<p>JavaSVN uses a pure java <a id=normal href="http://www.ganymed.ethz.ch/ssh2/">Ganymed library</a> to establish SSH 
+<p>SVNKit uses a pure java <a id=normal href="http://www.ganymed.ethz.ch/ssh2/">Ganymed library</a> to establish SSH 
 connections. This library supports only SSH version 2, with password or private key authentication. You may use the 
-following system properties to let JavaSVN know about your private key and passphrase:
+following system properties to let SVNKit know about your private key and passphrase:
 <pre class="javaCode">
-javasvn.ssh2.key = /path/to/private/key/file 
-javasvn.ssh2.username = userName  
-javasvn.ssh2.passphrase = optionalPassphrase 
-javasvn.ssh2.password = userpassword
-javasvn.ssh2.port = optionalPort
+svnkit.ssh2.key = /path/to/private/key/file 
+svnkit.ssh2.username = userName  
+svnkit.ssh2.passphrase = optionalPassphrase 
+svnkit.ssh2.password = userpassword
+svnkit.ssh2.port = optionalPort
 </pre>
 <h4>SVN+SSH authentication with private key in Eclipse</h4>
 When starting Eclipse you can provide the above properties like this: </p>
 <pre class="javaCode">
 $ eclipse -vmargs \ 
--Djavasvn.ssh2.key=/path/to/private/key/file \
--Djavasvn.ssh2.username=userName \ 
--Djavasvn.ssh2.passphrase=optionalPassphrase \
--Djavasvn.ssh2.password=userpassword \
--Djavasvn.ssh2.port=optionalPort
+-Dsvnkit.ssh2.key=/path/to/private/key/file \
+-Dsvnkit.ssh2.username=userName \ 
+-Dsvnkit.ssh2.passphrase=optionalPassphrase \
+-Dsvnkit.ssh2.password=userpassword \
+-Dsvnkit.ssh2.port=optionalPort
 </pre>
 <p><b>Note:</b> a user name for an ssh connection will be taken from SVN Repository properties.</p>
 <p>To avoid special batch script creation to launch Eclipse you may define ssh related properties in
 Eclipse config.ini file - <code>ECLIPSE_HOME/configuration/config.ini</code> (tip provided by Andrew Berman):
 <pre class="javaCode">
   ...
-  javasvn.ssh2.key=path/to/private/key/file
-  javasvn.ssh2.passphrase=passphrase
-  javasvn.ssh2.username=username
-  javasvn.ssh2.password=userpassword 
-  javasvn.ssh2.port=port
+  svnkit.ssh2.key=path/to/private/key/file
+  svnkit.ssh2.passphrase=passphrase
+  svnkit.ssh2.username=username
+  svnkit.ssh2.password=userpassword 
+  svnkit.ssh2.port=port
 </pre>
 </p>
 <h4>SSL Connections</h4>
 <p>
-JavaSVN uses SSL support included into JDK. Some JDK versions don't 
+SVNKit uses SSL support included into JDK. Some JDK versions don't 
 support SSL server certificates longer than 1024 bytes or don't support 
 certain Cypher Suites. If you're experiencing problems accessing a Subversion 
 repository over SSL connection (via https protocol) consider using the 
@@ -126,8 +127,8 @@ for more details on how to install JCE.
 </p>
 <h4>Trusting SSL Certificates</h4>
 <p>
-If JavaSVN is used as a standalone library and no custom authentication 
-provider is registered, JavaSVN: 
+If SVNKit is used as a standalone library and no custom authentication 
+provider is registered, SVNKit: 
 <ul>
 <li>by default trusts all SSL servers, though it doesn't cache server certificates;
 <li>or uses a default JDK certificates storage to get SSL certificates of
@@ -157,12 +158,15 @@ Read more information on this options in the <a href="http://svnbook.red-bean.co
 </p>
 <br>
 <br>
-<p>If you have any questions regarding JavaSVN, would like to report a bug or contribute a patch, please write to 
-<a id="normal" href="mailto:support@tmatesoft.com">support@tmatesoft.com</a></p>
+<p>If you have any questions regarding SVNKit, would like to report a bug or contribute a patch, please write to 
+<a id="normal" href="mailto:support@svnkit.com">support@svnkit.com</a></p>
 <br />
-<table style="margin-top: 1em;" width="100%" cellpadding="0" cellspacing="0"><tr><td id="footer" align="left">Copyright &copy; 
-2004-2006, TMate Software</td><td align="right" id="footer">feedback is welcome at <a href="mailto:feedback%40tmatesoft.com">feedback@tmatesoft.com</a></td></tr></table>
-
+<table style="margin-top: 1em;" width="100%" cellpadding="0" cellspacing="0"><tr><td id="footer" align="left" valign="top">Copyright &copy; 
+2004-2006, TMate Software</td><td align="right" valign="top" id="footer">feedback is welcome at <a href="mailto:feedback%40svnkit.com">feedback@svnkit.com</a></td></tr>
+<tr><td colspan=2 id="footer2">Java&#153; and all Java-based marks are a trademark or registered trademark of Sun Microsystems, Inc, in the United States and other countries. 
+TMate Software and the website svnkit.com are independent of Sun Microsystems, Inc. and have no relationship, formal or informal.
+</td></tr>
+</table>
 </td>
 </tr>
 </table>

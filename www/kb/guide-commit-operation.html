@@ -1,10 +1,11 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" >
-<head><title>Using ISVNEditor in commit operations</title>
+<head><title>SVNKit&nbsp;::&nbsp;Using ISVNEditor in commit operations</title>
 <meta name="keywords" content="Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development">   
 <meta name="description" content="Pure Java Subversion Library. Open Source, provided by TMate Software">
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <link rel="stylesheet" type="text/css" media="screen" href="../css/home.css">
+<link rel="shortcut icon" href="/img/favicon.ico"/>
 </head>
 <body>
 <body>
@@ -21,7 +22,7 @@
 
 
 <p>
-<span class="javasvn"><a style="border-bottom: 0px; color: rgb(51, 102, 153);" href="http://tmate.org/svn/">JavaSVN</a>&nbsp;</span><span style="font-size: 140%; font-weight: bold;">The only pure Java Subversion client library in the world!</span>
+<span class="svnkit"><a style="border-bottom: 0px; color: rgb(51, 102, 153);" href="/">SVNKit</a>&nbsp;</span><span style="font-size: 140%; font-weight: bold;">The only pure Java Subversion client library in the world!</span>
 </p>
 <p><div style="border-bottom: 1px solid rgb(51, 102, 153);"></div></p>
 <!--<small><a href="../index.html" style="border-bottom: 0px;">Home</a> :: <a href="index.html" style="border-bottom: 0px;">Knowledge Base</a> :: How to use ISVNReporter/ISVNEditor in update-related operations</small>-->
@@ -54,7 +55,7 @@
 <table border=0 cellpadding="0" cellspacing="0" style="width: 100%;">
 <tr>
 <td>
-<a style="border-bottom: 0px;" href="http://tmate.org/svn/"><img src="../img/javasvn_logo.png" border=0 align=bottom></a>
+<a style="border-bottom: 0px;" href="/"><img src="../img/svnkit_logo.jpg" border=0 align=bottom></a>
 </td>
 
 <td align="right">
@@ -91,7 +92,7 @@
 <h1>Using ISVNEditor in commit operations</h1>
 <p>
 Performing a commit operation is simple with the ISVNEditor interface (from the <b>org.tmatesoft.svn.core.io</b> package). 
-This article learns you how to use this low-level API provided by JavaSVN to make commits to a repository.
+This article learns you how to use this low-level API provided by SVNKit to make commits to a repository.
 </p>
 
 <h4>SVNRepository - the provider of commit editors</h4>
@@ -269,7 +270,7 @@ of the versioned tree you can see that <code>'dirA/dirB'</code> with its child e
 <code>'dirA/dirC/file2.txt'</code> has got local edits, <code>'dirD'</code> has got changes 
 in properties and at last <code>'dirA/file3.txt'</code>
 is scheduled for deletion (of course, deleted files may have been already removed from
-the filesystem, although with JavaSVN you are able only to schedule a file for deletion
+the filesystem, although with SVNKit you are able only to schedule a file for deletion
 but not delete it from the filesystem). Let's commit changes that are found in <code>'/dirA'</code>.
 </p>
 <p>
@@ -457,13 +458,17 @@ reports calling the editor's <code>abortEdit()</code> method.
 <br>
 <br>
 
-<p>If you have any questions regarding JavaSVN, would like to report a bug or contribute a patch, please write to 
-<a id="normal" href="mailto:support@tmatesoft.com">support@tmatesoft.com</a></p>
+<p>If you have any questions regarding SVNKit, would like to report a bug or contribute a patch, please write to 
+<a id="normal" href="mailto:support@svnkit.com">support@svnkit.com</a></p>
 <br />
 
 
-<table style="margin-top: 1em;" width="100%" cellpadding="0" cellspacing="0"><tr><td id="footer" align="left">Copyright &copy; 
-2004-2006, TMate Software</td><td align="right" id="footer">feedback is welcome at <a href="mailto:feedback%40tmatesoft.com">feedback@tmatesoft.com</a></td></tr></table>
+<table style="margin-top: 1em;" width="100%" cellpadding="0" cellspacing="0"><tr><td id="footer" align="left" valign="top">Copyright &copy; 
+2004-2006, TMate Software</td><td align="right" valign="top" id="footer">feedback is welcome at <a href="mailto:feedback%40svnkit.com">feedback@svnkit.com</a></td></tr>
+<tr><td colspan=2 id="footer2">Java&#153; and all Java-based marks are a trademark or registered trademark of Sun Microsystems, Inc, in the United States and other countries. 
+TMate Software and the website svnkit.com are independent of Sun Microsystems, Inc. and have no relationship, formal or informal.
+</td></tr>
+</table>
 </td>
 </tr>
 </table>

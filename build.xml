@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="javasvn" default="build-library" basedir=".">
+<project name="svnkit" default="deploy" basedir=".">
 
     <target name="init-environment">
         <property environment="env" />
         <property name="eclipse.home" value="${env.ECLIPSE_HOME}" />
         <property name="java.home" value="${env.JAVA_HOME}" />
-        <property file="javasvn.build.properties"/>
+        <property file="svnkit.build.properties"/>
     		
     	<condition property="eclipse.present">
         	<available file="${eclipse.home}/startup.jar" property="eclipse.ini"/>
@@ -23,7 +23,7 @@
     </target>
 
     <target name="compile-library">
-        <mkdir dir="javasvn/bin" />
+        <mkdir dir="svnkit/bin" />
         <mkdir dir="contrib/javahl/bin" />
         <mkdir dir="contrib/sequence/bin" />
 
@@ -40,8 +40,8 @@
         </javac>
         <javac debug="true" destdir="contrib/sequence/bin" srcdir="contrib/sequence/src" />
         <javac debug="true"
-               destdir="javasvn/bin"
-               srcdir="javasvn/src"
+               destdir="svnkit/bin"
+               srcdir="svnkit/src"
                classpathref="library.classpath">
             <exclude name="org/tmatesoft/svn/util/SVNTest.java" />
         </javac>
@@ -58,8 +58,8 @@
 	        </fileset>
         </path>
         <javac debug="true"
-               destdir="javasvn/bin"
-               srcdir="javasvn-eclipse/org.tmatesoft.javasvn/src"
+               destdir="svnkit/bin"
+               srcdir="svnkit-eclipse/org.tmatesoft.svnkit/src"
                classpathref="library-eclipse.classpath">
             <include name="org/tmatesoft/svn/core/internal/wc/EclipseSVNAuthenticationManager.java" />
         </javac>
@@ -68,7 +68,7 @@
 	<target name="compile-examples">
 		<mkdir dir="doc/examples/bin" />
 		<path id="examples.classpath">
-            <pathelement path="javasvn/bin" />
+            <pathelement path="svnkit/bin" />
 		</path>
 		<javac debug="true"
 			destdir="doc/examples/bin"
@@ -78,10 +78,10 @@
 	</target>
     
 	<target name="compile-eclipse" depends="init-environment,compile-library,compile-library-eclipse" if="eclipse.present">
-        <mkdir dir="javasvn-eclipse/bin" />
+        <mkdir dir="svnkit-eclipse/bin" />
 		
         <path id="eclipse.classpath">
-            <pathelement path="build/lib/javasvn.jar" />
+            <pathelement path="build/lib/svnkit.jar" />
             <pathelement path="build/lib/ganymed.jar" />
         	<fileset dir="${eclipse.home}/plugins">
     	        <include name="**/*.jar"/>
@@ -89,9 +89,9 @@
         </path>
 
         <javac debug="true"
-               srcdir="javasvn-eclipse/org.tmatesoft.javasvn/src"
+               srcdir="svnkit-eclipse/org.tmatesoft.svnkit/src"
                classpathref="eclipse.classpath"
-               destdir="javasvn-eclipse/bin"
+               destdir="svnkit-eclipse/bin"
          >
             <exclude name="org/tmatesoft/svn/core/internal/wc/EclipseSVNAuthenticationManager.java" />
 		</javac>
@@ -99,14 +99,14 @@
 
     <target name="compile-tests" depends="compile-library, compile-library-eclipse">
         <mkdir dir="contrib/sequence/bin-test" />
-        <mkdir dir="javasvn-test/bin" />
+        <mkdir dir="svnkit-test/bin" />
         <path id="tests.classpath">
             <pathelement location="contrib/ganymed/ganymed.jar" />
             <pathelement location="contrib/junit/junit.jar" />
             <pathelement path="contrib/javahl/bin" />
             <pathelement path="contrib/sequence/bin" />
             <pathelement path="contrib/sequence/bin-test" />
-            <pathelement path="javasvn/bin" />
+            <pathelement path="svnkit/bin" />
         </path>
 
         <path id="sequence.tests.classpath">
@@ -120,8 +120,8 @@
                classpathref="sequence.tests.classpath"
         />
         <javac debug="true"
-               destdir="javasvn-test/bin"
-               srcdir="javasvn-test/src"
+               destdir="svnkit-test/bin"
+               srcdir="svnkit-test/src"
                classpathref="tests.classpath"
         />
     </target>
@@ -129,27 +129,27 @@
     <target name="build-library" depends="compile-library, compile-library-eclipse">
         <mkdir dir="build/lib" />
 
-        <jar destfile="build/lib/javasvn.jar">
-            <fileset dir="javasvn/bin">
+        <jar destfile="build/lib/svnkit.jar">
+            <fileset dir="svnkit/bin">
                 <exclude name="org/tmatesoft/svn/cli/**" />
                 <exclude name="org/tigris/subversion/javahl/SVNClient**" />
                 <exclude name="org/tigris/subversion/javahl/SVNAdmin**" />
             </fileset>
             <fileset dir="${basedir}" >
-                <include name="javasvn.build.properties" />
+                <include name="svnkit.build.properties" />
                 <include name="COPYING" />
             </fileset>
         	<fileset dir="contrib/sequence">
                 <include name="SEQUENCE-LICENSE" />
         	</fileset>
             <fileset dir="contrib/sequence/bin" />
-            <fileset dir="javasvn/src">
+            <fileset dir="svnkit/src">
                 <include name="org/tmatesoft/svn/core/internal/wc/config/**" />
                 <include name="org/tmatesoft/svn/core/io/repository/**" />
             </fileset>
         </jar>
-        <jar destfile="build/lib/javasvn-javahl.jar">
-            <fileset dir="javasvn/bin">
+        <jar destfile="build/lib/svnkit-javahl.jar">
+            <fileset dir="svnkit/bin">
                 <include name="org/tigris/**" />
             </fileset>
             <fileset dir="contrib/javahl/bin" >
@@ -178,8 +178,8 @@
     </target>
 
     <target name="build-cli" depends="build-library">
-        <jar destfile="build/lib/javasvn-cli.jar">
-            <fileset dir="javasvn/bin">
+        <jar destfile="build/lib/svnkit-cli.jar">
+            <fileset dir="svnkit/bin">
                 <include name="org/tmatesoft/svn/cli/**" />
             </fileset>
             <fileset dir="${basedir}">
@@ -187,18 +187,19 @@
             </fileset>
         </jar>
         <copy todir="build/lib">
-            <fileset dir="javasvn/cli">
+            <fileset dir="svnkit/cli">
                 <include name="**" />
             </fileset>
         </copy>
         <chmod file="build/lib/svn" perm="ugo+rx" />
+        <chmod file="build/lib/svnsync" perm="ugo+rx" />
     </target>
 
     <target name="build-src">
         <mkdir dir="build/lib" />
-        <zip destfile="build/lib/javasvnsrc.zip">
-            <fileset dir="javasvn/src" />
-            <fileset dir="javasvn-eclipse/org.tmatesoft.javasvn/src" />
+        <zip destfile="build/lib/svnkitsrc.zip">
+            <fileset dir="svnkit/src" />
+            <fileset dir="svnkit-eclipse/org.tmatesoft.svnkit/src" />
             <fileset dir="contrib/javahl/src">
             	<exclude name="org/tigris/subversion/javahl/SVNAdmin.java"/>
             	<exclude name="org/tigris/subversion/javahl/SVNClient.java"/>
@@ -208,23 +209,23 @@
     </target>
 
     <target name="build-eclipse" depends="build-library,build-src,compile-eclipse" if="eclipse.present">
-        <property name="javasvn.plugin.name" value="plugins/org.tmatesoft.javasvn_${javasvn.version}" />
-        <property name="javasvn.feature.name" value="features/org.tmatesoft.javasvn_${javasvn.version}" />
+        <property name="svnkit.plugin.name" value="plugins/org.tmatesoft.svnkit_${svnkit.version}" />
+        <property name="svnkit.feature.name" value="features/org.tmatesoft.svnkit_${svnkit.version}" />
 
-        <mkdir dir="build/eclipse/${javasvn.plugin.name}" />
-        <mkdir dir="build/eclipse/${javasvn.feature.name}" />
+        <mkdir dir="build/eclipse/${svnkit.plugin.name}" />
+        <mkdir dir="build/eclipse/${svnkit.feature.name}" />
         <mkdir dir="build/eclipse/site/plugins" />
         <mkdir dir="build/eclipse/site/features" />
         
-        <!-- build javasvn plugin -->
-        <copy todir="build/eclipse/${javasvn.plugin.name}">
+        <!-- build svnkit plugin -->
+        <copy todir="build/eclipse/${svnkit.plugin.name}">
             <fileset dir="build/lib">
                 <include name="*.jar" />
-                <exclude name="javasvn-cli.jar" />
-                <include name="javasvnsrc.zip" />
+                <exclude name="svnkit-cli.jar" />
+                <include name="svnkitsrc.zip" />
             </fileset>
         </copy>
-        <copy todir="build/eclipse/${javasvn.plugin.name}">
+        <copy todir="build/eclipse/${svnkit.plugin.name}">
             <fileset dir="build/lib">
                 <include name="changelog.txt" />
                 <include name="README.txt" />
@@ -233,41 +234,41 @@
                 <include name="SEQUENCE-LICENSE" />
                 <include name="JAVAHL-LICENSE" />
             </fileset>
-            <fileset dir="javasvn-eclipse/org.tmatesoft.javasvn">
+            <fileset dir="svnkit-eclipse/org.tmatesoft.svnkit">
                 <include name="plugin.xml" />
                 <include name=".options" />
             </fileset>
         </copy>
-        <jar destfile="build/eclipse/${javasvn.plugin.name}/javasvnplugin.jar">
-            <fileset dir="javasvn-eclipse/bin" />
+        <jar destfile="build/eclipse/${svnkit.plugin.name}/svnkitplugin.jar">
+            <fileset dir="svnkit-eclipse/bin" />
             <fileset dir="${basedir}">
                 <include name="COPYING" />
             </fileset>
         </jar>
         
         <!-- build features -->
-        <copy todir="build/eclipse/${javasvn.feature.name}">
-            <fileset dir="javasvn-eclipse/org.tmatesoft.javasvn.feature">
+        <copy todir="build/eclipse/${svnkit.feature.name}">
+            <fileset dir="svnkit-eclipse/org.tmatesoft.svnkit.feature">
                 <exclude name="**/.svn"/>
             </fileset>
         </copy>
-        <copy file="javasvn-eclipse/site.xml" todir="build/eclipse/site"/>
+        <copy file="svnkit-eclipse/site.xml" todir="build/eclipse/site"/>
 
         <!-- update versions -->
-        <replace dir="build/eclipse" includes="**/site.xml,**/plugin.xml,**/feature.xml" token="%javasvn.version%" value="${javasvn.version}"/>
+        <replace dir="build/eclipse" includes="**/site.xml,**/plugin.xml,**/feature.xml" token="%svnkit.version%" value="${svnkit.version}"/>
         
         <!-- build jars for update site -->
-        <zip destfile="build/eclipse/site/${javasvn.plugin.name}.jar" basedir="build/eclipse/${javasvn.plugin.name}"/>
-        <zip destfile="build/eclipse/site/${javasvn.feature.name}.jar" basedir="build/eclipse/${javasvn.feature.name}"/>
+        <zip destfile="build/eclipse/site/${svnkit.plugin.name}.jar" basedir="build/eclipse/${svnkit.plugin.name}"/>
+        <zip destfile="build/eclipse/site/${svnkit.feature.name}.jar" basedir="build/eclipse/${svnkit.feature.name}"/>
     </target>
 
     <target name="build-doc">
         <mkdir dir="build/doc/javadoc" />
-    	<copy file="doc/javadoc-files/JavaSVN_API_Packages.jpg" todir="build/doc/javadoc"/>
+    	<copy file="doc/javadoc-files/SVNKit_API_Packages.jpg" todir="build/doc/javadoc"/>
        	<copy file="doc/javadoc-files/info.png" todir="build/doc/javadoc"/>
 
     	<path id="doc.classpath">
-            <pathelement path="javasvn/bin" />
+            <pathelement path="svnkit/bin" />
             <pathelement path="contrib/sequence/bin" />
             <pathelement path="contrib/javahl/bin" />
 		</path>
@@ -279,14 +280,14 @@
     			 classpathref="doc.classpath"
     		>
             
-    		<packageset dir="javasvn/src" defaultexcludes="yes">
+    		<packageset dir="svnkit/src" defaultexcludes="yes">
                 <exclude name="**/util/**" />
             	<exclude name="**/internal/**" />
             	<include name="**/core/**" />
             </packageset>
 
     		<header>
-                <![CDATA[<a target="_top" href="http://tmate.org/svn/"><span class="javasvn">JavaSVN</span>&nbsp;Home<a/>]]></header>
+                <![CDATA[<a target="_top" href="http://svnkit.com/"><span class="svnkit">SVNKit</span>&nbsp;Home<a/>]]></header>
             <bottom>
                 <![CDATA[Copyright &#169; 2004-2006 TMate Software Ltd. All Rights Reserved.]]>
             </bottom>
@@ -304,43 +305,47 @@
                 <include name="contrib/javahl/bin/**" />
                 <include name="contrib/sequence/bin/**" />
                 <include name="contrib/sequence/bin-test/**" />
-                <include name="javasvn/bin/**" />
-                <include name="javasvn-eclipse/bin/**" />
-                <include name="javasvn-test/bin/**" />
+                <include name="svnkit/bin/**" />
+                <include name="svnkit-eclipse/bin/**" />
+                <include name="svnkit-test/bin/**" />
             </fileset>
         </delete>
     </target>
 
     <target name="deploy-library" depends="init-environment,build-library,build-cli,build-src,build-doc">
-        <zip destfile="build/org.tmatesoft.svn_${javasvn.version}.standalone.zip">
-            <zipfileset dir="build/lib" prefix="javasvn-${javasvn.version}">
+        <zip destfile="build/org.tmatesoft.svn_${svnkit.version}.standalone.zip">
+            <zipfileset dir="build/lib" prefix="svnkit-${svnkit.version}">
                 <exclude name="svn" />
             </zipfileset>
-            <zipfileset file="build/lib/svn" filemode="555" prefix="javasvn-${javasvn.version}" />
-            <zipfileset dir="build/doc" prefix="javasvn-${javasvn.version}/doc" />
+            <zipfileset file="build/lib/svn" filemode="555" prefix="svnkit-${svnkit.version}" />
+            <zipfileset dir="build/doc" prefix="svnkit-${svnkit.version}/doc" />
         </zip>
     </target>
 
     <target name="deploy-eclipse"
             depends="init-environment,build-library,build-src,build-doc,build-eclipse"
             if="eclipse.present">
-    	<zip destfile="build/org.tmatesoft.svn_${javasvn.version}.eclipse.zip">
+    	<zip destfile="build/org.tmatesoft.svn_${svnkit.version}.eclipse.zip">
             <zipfileset dir="build/eclipse/site/"/>
         </zip>
     </target>
 
     <target name="deploy-snapshot" depends="init-environment">
-        <zip destfile="build/org.tmatesoft.svn_${javasvn.version}.src.zip">
-            <zipfileset dir="." prefix="javasvn-src-${javasvn.version}">
-                <exclude name="build/**" />
-                <exclude name="**/bin/**" />
-                <exclude name="**/bin-test/**" />
-                <exclude name="javasvn-eclipse/**" />
-                <exclude name="javasvn-test/**" />
-                <exclude name="www/**" />
+        <zip destfile="build/org.tmatesoft.svn_${svnkit.version}.src.zip">
+            <zipfileset dir="svnkit" prefix="svnkit-src-${svnkit.version}/svnkit">
                 <exclude name="**/.svn" />
+                <exclude name="**/bin/**" />
+                <exclude name="bin/**" />
             </zipfileset>
-            <zipfileset dir="build/doc" prefix="javasvn-src-${javasvn.version}/doc" />
+            <zipfileset dir="contrib" prefix="svnkit-src-${svnkit.version}/contrib">
+                <exclude name="**/.svn" />
+                <exclude name="**/bin/**" />
+                <exclude name="bin/**" />
+            </zipfileset>
+            <zipfileset dir="." prefix="svnkit-src-${svnkit.version}">
+                <include name="*.*" />
+            </zipfileset>
+            <zipfileset dir="build/doc" prefix="svnkit-src-${svnkit.version}/doc" />
         </zip>
     </target>
 
@@ -349,13 +354,13 @@
     <target name="test-java" depends="init-environment,compile-tests">
         <path id="test.classpath">
             <pathelement path="contrib/junit/junit.jar" />
-            <pathelement path="javasvn/bin" />
+            <pathelement path="svnkit/bin" />
             <pathelement path="contrib/sequence/bin" />
-            <pathelement path="javasvn-test/bin" />
+            <pathelement path="svnkit-test/bin" />
             <pathelement path="contrib/sequence/bin-test" />
         </path>
         <java classpathref="test.classpath"
-              dir="javasvn-test"
+              dir="svnkit-test"
               fork="true"
               classname="org.tmatesoft.svn.core.test.UnitTests"
         />
@@ -363,30 +368,30 @@
 
 	<target name="test-special" depends="init-environment,compile-tests">
 		<!-- remove wc --> 
-		<delete failonerror="false" includeemptydirs="true" dir="javasvn-test/wc">
+		<delete failonerror="false" includeemptydirs="true" dir="svnkit-test/wc">
 		</delete>
 		
 		<!-- and repository -->
-		<delete failonerror="false" includeemptydirs="true" dir="javasvn-test/repos/special">
+		<delete failonerror="false" includeemptydirs="true" dir="svnkit-test/repos/special">
 		</delete>
 		
 		<!-- create new repos with anon access -->
-                <mkdir dir="javasvn-test/repos" />
+                <mkdir dir="svnkit-test/repos" />
 		<exec executable="svnadmin">
 			<arg value="create"/>
-			<arg value="javasvn-test/repos/special"/>
+			<arg value="svnkit-test/repos/special"/>
 		</exec>
-		<echo append="true" file="javasvn-test/repos/special/conf/svnserve.conf" message="[general]${line.separator}anon-access=write${line.separator}" />
+		<echo append="true" file="svnkit-test/repos/special/conf/svnserve.conf" message="[general]${line.separator}anon-access=write${line.separator}" />
 		
         <path id="test.classpath">
             <pathelement path="contrib/junit/junit.jar" />
-            <pathelement path="javasvn/bin" />
+            <pathelement path="svnkit/bin" />
             <pathelement path="contrib/sequence/bin" />
-            <pathelement path="javasvn-test/bin" />
+            <pathelement path="svnkit-test/bin" />
             <pathelement path="contrib/sequence/bin-test" />
         </path>
         <java classpathref="test.classpath"
-              dir="javasvn-test"
+              dir="svnkit-test"
               fork="true"
               classname="org.tmatesoft.svn.core.test.SpecialTest"
            	  args="svn://localhost/repos/special wc"
@@ -394,48 +399,48 @@
     </target>
 
     <target name="test-python" depends="init-environment,compile-tests,build-library,build-cli">
-        <copy file="javasvn-test/test.${os}.properties"
-              tofile="javasvn-test/test.properties"
+        <copy file="svnkit-test/test.${os}.properties"
+              tofile="svnkit-test/test.properties"
               failonerror="false"
               overwrite="false"
         />
 
-        <copy file="javasvn-test/python/cmdline/svntest/main.py"
+        <copy file="svnkit-test/python/cmdline/svntest/main.py"
               overwrite="true"
-              tofile="javasvn-test/python/cmdline/svntest/main.py.bak"
+              tofile="svnkit-test/python/cmdline/svntest/main.py.bak"
               failonerror="true"
         />
-        <copy file="javasvn-test/python/patch/main.py"
+        <copy file="svnkit-test/python/patch/main.py"
               overwrite="true"
-              tofile="javasvn-test/python/cmdline/svntest/main.py"
+              tofile="svnkit-test/python/cmdline/svntest/main.py"
               failonerror="true"
         />
 
         <path id="python.classpath">
-            <pathelement path="build/lib/javasvn.jar" />
-            <pathelement path="build/lib/javasvn-cli.jar" />
+            <pathelement path="build/lib/svnkit.jar" />
+            <pathelement path="build/lib/svnkit-cli.jar" />
             <pathelement path="contrib/junit/junit.jar" />
-            <pathelement path="javasvn-test/bin" />
+            <pathelement path="svnkit-test/bin" />
         </path>
 
-        <delete dir="${user.home}/.javasvn" failonerror="false"/>
-        <mkdir dir="${user.home}/.javasvn"/>    
-        <copy file="javasvn/cli/logging.properties.disabled" 
+        <delete dir="${user.home}/.svnkit" failonerror="false"/>
+        <mkdir dir="${user.home}/.svnkit"/>    
+        <copy file="svnkit/cli/logging.properties.disabled" 
               overwrite="false"
               tofile="build/lib/logging.properties"
               failonerror="false"
         />
 
         <java classpathref="python.classpath"
-              dir="javasvn-test"
+              dir="svnkit-test"
               fork="true"
               classname="org.tmatesoft.svn.core.test.PythonTests">        
          <jvmarg value="-Djava.util.logging.config.file=logging.properties" />
          <arg line="test.properties" />
         </java>
 
-        <move file="javasvn-test/python/cmdline/svntest/main.py.bak"
-              tofile="javasvn-test/python/cmdline/svntest/main.py"
+        <move file="svnkit-test/python/cmdline/svntest/main.py.bak"
+              tofile="svnkit-test/python/cmdline/svntest/main.py"
               overwrite="true"
               failonerror="true"
         />
@@ -452,7 +457,7 @@
     
     <target name="benchmark"> 
         <!-- build library with native SVNClient -->
-        <mkdir dir="javasvn/bin" />
+        <mkdir dir="svnkit/bin" />
         <mkdir dir="contrib/javahl/bin" />
         <mkdir dir="contrib/sequence/bin" />
 
@@ -467,23 +472,23 @@
         </javac>
         <javac debug="true" optimize="true" destdir="contrib/sequence/bin" srcdir="contrib/sequence/src" />
         <javac debug="true" optimize="true" 
-               destdir="javasvn/bin"
-               srcdir="javasvn/src"
+               destdir="svnkit/bin"
+               srcdir="svnkit/src"
                classpathref="library.classpath"
         >
             <exclude name="org/tigris/subversion/javahl/SVNClient.java" />
             <exclude name="org/tigris/subversion/javahl/SVNAdmin.java" />
         </javac>
-        <!-- now we have native SVNClient and JavaSVN's SVNClientImpl -->
+        <!-- now we have native SVNClient and SVNKit's SVNClientImpl -->
         <mkdir dir="contrib/sequence/bin-test" />
-        <mkdir dir="javasvn-test/bin" />
+        <mkdir dir="svnkit-test/bin" />
         <path id="tests.classpath">
             <pathelement location="contrib/ganymed/ganymed.jar" />
             <pathelement location="contrib/junit/junit.jar" />
             <pathelement path="contrib/javahl/bin" />
             <pathelement path="contrib/sequence/bin" />
             <pathelement path="contrib/sequence/bin-test" />
-            <pathelement path="javasvn/bin" />
+            <pathelement path="svnkit/bin" />
         </path>
 
         <path id="sequence.tests.classpath">
@@ -497,32 +502,32 @@
                classpathref="sequence.tests.classpath"
         />
         <javac debug="true" optimize="true" 
-               destdir="javasvn-test/bin"
-               srcdir="javasvn-test/src"
+               destdir="svnkit-test/bin"
+               srcdir="svnkit-test/src"
                classpathref="tests.classpath"
         />
 
         <mkdir dir="build/lib" />
-        <jar destfile="build/lib/javasvn.jar" compress="false">
-            <fileset dir="javasvn/bin">
+        <jar destfile="build/lib/svnkit.jar" compress="false">
+            <fileset dir="svnkit/bin">
                 <exclude name="org/tmatesoft/svn/cli/**" />
                 <exclude name="org/tigris/subversion/javahl/SVNClient**" />
                 <exclude name="org/tigris/subversion/javahl/SVNAdmin**" />
             </fileset>
             <fileset dir="${basedir}" >
-                <include name="javasvn.build.properties" />
+                <include name="svnkit.build.properties" />
                 <include name="COPYING" />
             </fileset>
             <fileset dir="contrib/sequence">
                 <include name="SEQUENCE-LICENSE" />
             </fileset>
             <fileset dir="contrib/sequence/bin" />
-            <fileset dir="javasvn/src">
+            <fileset dir="svnkit/src">
                 <include name="org/tmatesoft/svn/core/internal/wc/config/**" />
                 <include name="org/tmatesoft/svn/core/io/repository/**" />
             </fileset>
         </jar>
-        <jar destfile="build/lib/javasvn-javahl.jar"  >
+        <jar destfile="build/lib/svnkit-javahl.jar"  >
             <fileset dir="contrib/javahl/bin" >
                 <exclude name="org/tigris/subversion/javahl/tests/**" />
             </fileset>
@@ -533,9 +538,9 @@
         
         <!-- run benchmark -->
         <path id="benchmark.classpath">
-            <pathelement path="build/lib/javasvn.jar" />
-            <pathelement path="build/lib/javasvn-javahl.jar" />
-            <pathelement path="javasvn-test/bin" />
+            <pathelement path="build/lib/svnkit.jar" />
+            <pathelement path="build/lib/svnkit-javahl.jar" />
+            <pathelement path="svnkit-test/bin" />
         </path>
         
         <java classpathref="benchmark.classpath"

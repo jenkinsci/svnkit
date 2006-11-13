@@ -4,7 +4,7 @@
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
- * are also available at http://tmate.org/svn/license.html.
+ * are also available at http://svnkit.com/license.html
  * If newer versions of this license are posted there, you may use a
  * newer version instead, at your option.
  * ====================================================================
@@ -64,7 +64,7 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
  * working copies and URLs. Here's a brief description  of  what  the  program  does 
  * (main steps):
  * 
- * 0)first of all initializes the  JavaSVN  library  (it must be done prior to using 
+ * 0)first of all initializes the  SVNKit  library  (it must be done prior to using 
  * the library);
  * 
  * 1)if the program was run with some in parameters, it fetches them out of the args 
@@ -1099,7 +1099,7 @@ public class WorkingCopy {
     }
     
     /*
-     * This method does not relate to JavaSVN API. Just a method which creates
+     * This method does not relate to SVNKit API. Just a method which creates
      * local directories and files :)
      */
     private static final void createLocalDir(File aNewDir, File[] localFiles, String[] fileContents){

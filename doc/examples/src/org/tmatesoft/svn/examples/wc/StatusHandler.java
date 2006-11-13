@@ -4,7 +4,7 @@
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
- * are also available at http://tmate.org/svn/license.html.
+ * are also available at http://svnkit.com/license.html
  * If newer versions of this license are posted there, you may use a
  * newer version instead, at your option.
  * ====================================================================
@@ -122,7 +122,7 @@ public class StatusHandler implements ISVNStatusHandler, ISVNEventHandler {
              * copy is some other kind. For example, Subversion  might  have  a 
              * file in the repository,  but  the  user  removed  the  file  and 
              * created a directory in its place, without using the 'svn delete' 
-             * or 'svn add' command (or JavaSVN analogues for them).
+             * or 'svn add' command (or SVNKit analogues for them).
              */
             pathChangeType = "~";
         } else if (contentsStatus == SVNStatusType.STATUS_REPLACED) {

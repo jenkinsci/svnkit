@@ -48,7 +48,7 @@
 	//new keyword group for 'package'
 //	$geshi->add_keyword_group(5, 'color: rgb(127,0,85); font-weight: bold;', true, array('package', 'import'));
 
-	$geshi->set_header_content('JavaSVN API examlpe: '.$fileName);
+	$geshi->set_header_content('SVNKit API examlpe: '.$fileName);
 	$geshi->set_header_content_style('font-family: Verdana, Arial, sans-serif; color: #808080; font-size: 70%; font-weight: bold; background-color: #f0f0ff; border-bottom: 1px solid #d0d0d0; padding: 2px;');
 	$geshi->set_symbols_highlighting(false);
 	$geshi->set_footer_content_style('font-family: Verdana, Arial, sans-serif; color: #808080; font-size: 70%; font-weight: bold; background-color: #f0f0ff; border-top: 1px solid #d0d0d0; padding: 2px;');

@@ -15,7 +15,8 @@
 <meta name="keywords" content="Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development" />   
 <meta name="description" content="Pure Java Subversion Library. Open Source, provided by TMate Software" />
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-<link rel="stylesheet" type="text/css" media="screen" href="/svn/css/home.css"></link>
+<link rel="stylesheet" type="text/css" media="screen" href="/css/home.css"></link>
+<link rel="shortcut icon" href="/img/favicon.ico"/>
 </head>
 <body>
 <table bgcolor="white" width="900" cellpadding="0" align="center" style="height: 100%;"  border="0" cellspacing="0" >
@@ -32,10 +33,10 @@
 <table border="0" cellpadding="0" cellspacing="0" style="width: 100%;">
 <tr>
 <td rowspan="2" colspan="1" width="50%">
-<a style="border-bottom: 0px;" href="http://tmate.org/svn/"><img width="415" height="97" src="../img/javasvn_logo.png" border="0" /></a>
+<a style="border-bottom: 0px;" href="/"><img width="415" height="97" src="../img/svnkit_logo.jpg" border="0" /></a>
 </td>
 <td rowspan="1" colspan="1" width="50%" style="font-style: italic; font-size: 17px; padding-left: 15px" align="left" valign="center">
-The only pure Java Subversion library in the world!
+The only pure Java&#153; Subversion library in the world!
 </td>
 </tr>
 <tr>
@@ -74,7 +75,7 @@ The only pure Java Subversion library in the world!
 <xsl:text>Total time elapsed: </xsl:text><xsl:value-of select="@elapsed" />
 </p>	
 <br />
-<table style="margin-top: 1em;" width="100%" cellpadding="0" cellspacing="0"><tr><td id="footer" align="left">Copyright &#50;&#48;&#48;&#52;-&#50;&#48;&#48;&#53;, TMate Software</td><td align="right" id="footer">feedback is welcome at <a href="mailto:feedback%40tmatesoft.com">feedback@tmatesoft.com</a></td></tr></table>
+<table style="margin-top: 1em;" width="100%" cellpadding="0" cellspacing="0"><tr><td id="footer" align="left">Copyright &#50;&#48;&#48;&#52;-&#50;&#48;&#48;&#53;, TMate Software</td><td align="right" id="footer">feedback is welcome at <a href="mailto:feedback%40svnkit.com">feedback@svnkit.com</a></td></tr></table>
 </td>
 </tr>
 </table>
@@ -93,6 +94,9 @@ The only pure Java Subversion library in the world!
 <xsl:choose>
 <xsl:when test="@name='svnserve'">
 <a name="svnserve"></a>
+</xsl:when>
+<xsl:when test="@name='file'">
+<a name="file"></a>
 </xsl:when>
 <xsl:otherwise>
 <a name="apache"></a>
@@ -119,8 +123,13 @@ The only pure Java Subversion library in the world!
 Click <a href="#svnserve">here</a> to view the results of the tests run against <b>svnserve</b>.
 <br />
 </xsl:when>
+<xsl:when test="@name='file'">
+Click <a href="#file">here</a> to view the results of the tests run against local <b>fsfs</b> repository.
+<br />
+</xsl:when>
 <xsl:otherwise>
 Click <a href="#apache">here</a> to view the results of the tests run against <b>apache</b> server.
+<br />
 </xsl:otherwise>
 </xsl:choose>
 

@@ -1,9 +1,9 @@
 <?
-include($_SERVER["DOCUMENT_ROOT"] . "/svn/feed/feedcreator.class.php");
-include($_SERVER["DOCUMENT_ROOT"] . "/svn/feed/rss_util.php");
+include($_SERVER["DOCUMENT_ROOT"] . "/feed/feedcreator.class.php");
+include($_SERVER["DOCUMENT_ROOT"] . "/feed/rss_util.php");
 //include($_SERVER["DOCUMENT_ROOT"] . "/stats/counter.php");
 
-$cacheFile = $_SERVER["DOCUMENT_ROOT"] . "/svn/feed/rss22.cache";
+$cacheFile = $_SERVER["DOCUMENT_ROOT"] . "/feed/rss22.cache";
 
 if (file_exists($cacheFile)) {
 //    if (time() - filemtime($cacheFile) <= 3600) {
@@ -14,23 +14,23 @@ if (file_exists($cacheFile)) {
                                            
 $rss = new UniversalFeedCreator();
 $rss->useCached("RSS2.0", $cacheFile);
-$rss->title = "TMate JavaSVN";
-$rss->description = "TMate JavaSVN Library Change Log";
-$rss->link = "http://tmate.org/svn/";
-$rss->syndicationURL = "http://tmate.org/" . $PHP_SELF;
+$rss->title = "TMate SVNKit";
+$rss->description = "TMate SVNKit Library Change Log";
+$rss->link = "http://svnkit.com/";
+$rss->syndicationURL = "http://svnkit.com/" . $PHP_SELF;
 $rss->author = "TMate Software"; 
 $rss->editor = "TMate Software"; 
-$rss->authorEmail = "support@tmatesoft.com"; 
-$rss->editorEmail = "support@tmatesoft.com"; 
+$rss->authorEmail = "support@svnkit.com"; 
+$rss->editorEmail = "support@svnkit.com"; 
 
-$repository = "http://svn.tmate.org/repos/jsvn/tags/";
+$repository = "http://svn.svnkit.com/repos/svnkit/tags/";
 $contents = read_contents($repository);
 if (!$contents) {
    echo $rss->createFeed();
    exit;
 }
 
-$items = publish_rss20($repository, $contents, "http://tmate.org/svn/");
+$items = publish_rss20($repository, $contents, "http://www.snvkit.com/");
 for($i = 0; $i < count($items); $i++) {
 
      $item = $items[$i];
@@ -42,8 +42,8 @@ for($i = 0; $i < count($items); $i++) {
      $rssitem->link   = $item["link"];
      $rssitem->author = $item["author"];
      $rssitem->date   = $item["date"];
-     $rssitem->authorEmail = "support@tmatesoft.com"; 
-     $rssitem->editorEmail = "support@tmatesoft.com"; 
+     $rssitem->authorEmail = "support@svnkit.com"; 
+     $rssitem->editorEmail = "support@svnkit.com"; 
 
      $rssitem->description = $item["rss_description"];
      $rss->addItem($rssitem);

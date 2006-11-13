@@ -1,5 +1,5 @@
 <?
-$home = "<html><body><meta http-equiv=\"REFRESH\" content=\"0;URL='http://tmate.org/svn/download/'\"></body></html>";
+$home = "<html><body><meta http-equiv=\"REFRESH\" content=\"0;URL='http://svnkit.com/download/'\"></body></html>";
 
 //Read plain PHP-XML output
 $xmlData = fopen ($fileurl, "r");
@@ -30,7 +30,7 @@ if(titlepos == false){
     return;
 }
 
-$result = substr($result, 0, $titlepos + strlen("<title>")) . "JavaSVN :: Test Results :: ". $build . substr($result, $titlepos + strlen("<title>"));
+$result = substr($result, 0, $titlepos + strlen("<title>")) . "SVNKit :: Test Results :: ". $build . substr($result, $titlepos + strlen("<title>"));
 
 $headerpos = strpos($result, "<h1>Python tests");
 if(titlepos == false){

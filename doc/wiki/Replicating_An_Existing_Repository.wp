@@ -1,14 +1,14 @@
-[[Editing Operation Update|<<]] | [[Managing repository With JavaSVN|List]] |  [[Managing A Working Copy|>>]]
+[[Editing Operation Update|<<]] | [[Managing repository With SVNKit|List]] |  [[Managing A Working Copy|>>]]
 <br />
 <br />
 
 == Replicating an existing repository ==
-The [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/replicator/package-summary.html repository replicator] is a tool 
+The [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/replicator/package-summary.html repository replicator] is a tool 
 that gives you an ability to create clones of existing repositories. That is, the replicator copies revisions of existing 
 repositories to other clean repositories what results in two separate repositories containing the same versioned data.
 
 <p>
-The replicator is represented by the class [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/replicator/SVNRepositoryReplicator.html SVNRepositoryReplicator]. 
+The replicator is represented by the class [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/replicator/SVNRepositoryReplicator.html SVNRepositoryReplicator]. 
 Here's a lite class diagram demonstrating relationships between the replicator and other components which are involved by 
 the replicator:
 
@@ -57,19 +57,19 @@ the source repository is incrementally copied up to the latest revision.
 Starting with the first revision to copy the replicator obtains information about all changed paths in the particular 
 revision of the source repository. This information is analysed for the presence of paths copied in that revision. Then 
 the replicator obtains a [[Editing Operation Commit|commit editor]] for the destination repository. This editor is 
-passed to an instance of [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/replicator/SVNReplicationEditor.html SVNReplicationEditor]. 
+passed to an instance of [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/replicator/SVNReplicationEditor.html SVNReplicationEditor]. 
 A replication editor is like a bridge between the source and destination repositories: the replicator calls an update 
 operation for the same particular revision on the source driver passing it a replication editor as an [[Editing Operation Update|update editor]].
 When the source driver calls the replication editor, the latter transforms these calls to calls to the commit editor of 
 the destination driver. Thus changes received are ''redirected'' immediately to the destination repository. 
 
 <p>
-[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/replicator/ISVNReplicationHandler.html ISVNReplicationHandler] is introduced to control 
+[http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/replicator/ISVNReplicationHandler.html ISVNReplicationHandler] is introduced to control 
 replication process. At the start of each replication iteration the replicator checks the registered handler's method 
 <java>
     public void checkCancelled() throws SVNCancelException
 </java>
-To stop the replication process it's enough for the handler to throw an [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/SVNCancelException.html SVNCancelException] 
+To stop the replication process it's enough for the handler to throw an [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/SVNCancelException.html SVNCancelException] 
 exception. <code>replicateRepository(...)</code> method will throw it upper.
 
 <p>
@@ -95,7 +95,7 @@ strongly depends on permissions you have on both source and destination reposito
 some directory in the source repository, it is obvious that this directory will be missing in the destination one.
 
 <p>
-You can use different repository access [[JavaSVN Architecture|protocols supported by JavaSVN]] for both source and 
+You can use different repository access [[SVNKit Architecture|protocols supported by SVNKit]] for both source and 
 destination repositories. This provides you an ability to make a local back-up of a repository located on the server 
 machine.
 
@@ -290,8 +290,8 @@ Running a program:
  /dirA/fileA.txt (author: 'me'; revision: 2; date: Wed Apr 26 02:10:14 NOVST 2006)
 
 ----
-Download the [http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples/repository/Replicate.java example program source code].
+Download the [http://svn.svnkit.com/repos/svnkit/trunk/doc/examples/src/org/tmatesoft/svn/examples/repository/Replicate.java example program source code].
 
 <br />
 <br />
-[[Editing Operation Update|<<]] | [[Managing repository With JavaSVN|List]] |  [[Managing A Working Copy|>>]]
+[[Editing Operation Update|<<]] | [[Managing repository With SVNKit|List]] |  [[Managing A Working Copy|>>]]

@@ -95,6 +95,12 @@ code {
 	font-family:Verdana, Arial, Helvetica, sans-serif;
 	font-size: 80%;
 }
+#footer2 {
+	color: gray;
+	font-family:Verdana, Arial, Helvetica, sans-serif;
+	font-size: 70%;
+	line-height: 1em;
+}
 
 h1 {
     line-height: 1.4em;
@@ -295,7 +301,7 @@ a.contents:visited {
 	border: 0px;
 }
 
-.javasvn {
+.svnkit {
 	font-size: 28pt; 
 	color: rgb(51, 102, 153); 
 	font-weight: bold;

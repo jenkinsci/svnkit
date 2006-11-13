@@ -8,13 +8,13 @@
 
 <BODY BGCOLOR="white">
 <HR>
-<B><SPAN CLASS="javasvn">JavaSVN</SPAN><SUP>TM</SUP></B> - the only pure Java<SUP>TM</SUP> Subversion client library in the World.
+<B><SPAN CLASS="svnkit">SVNKit</SPAN><SUP>TM</SUP></B> - the only pure Java<SUP>TM</SUP> Subversion client library in the World.
 
 <BR>
-<!--<img src="JavaSVN_API_Packages.jpg"></img>-->
+<!--<img src="SVNKit_API_Packages.jpg"></img>-->
 
 <P>
-<b>JavaSVN</b><SUP>TM</SUP> is a powerful pure Java Subversion (SVN) client library. This means that users of the library, i.e. java applications 
+<b>SVNKit</b><SUP>TM</SUP> is a powerful pure Java Subversion (SVN) client library. This means that users of the library, i.e. java applications 
 do not have to include SVN native binaries or <i>javahl</i> bindings to work with a Subversion repository.
 <P>
 The library represents two main concepts for developers who use a Subversion repository in their projects:
@@ -31,16 +31,37 @@ for working particularly with the native Subversion client's format - <i>'Workin
 also easily performed by using this high-level API. Obviously in those cases when an operation needs an access to a repository this high-level API 
 uses the low-level one.
 </ul>
+
 <p> 
-Currently JavaSVN supports the following repository access protocols:
+<h1>Features</h1>
+ 
+Currently SVNKit supports the following repository access protocols:
 <ul>
-<li>
-svn://, svn+ssh://
-</li>
-<li>
-http://, https://
-</li>
+<li>svn://, svn+ssh://</li>
+<li>http://, https://</li>
+<li>file:/// (for FSFS-type repositories)</li>
 </ul>
-Also since 1.0.2 JavaSVN supports error codes similar to error codes of the native SVN.
+
+<p>
+Low level repository access, that allows to access and manipulate repository efficiently 
+without creating working copies or using custom, non-file based, working copy.
+
+<p>
+Support of SVN 1.4.x Working Copy format. All Subversion operations over working copy are supported, plus
+smart move operation that, for instance, allows to move already moved files.
+
+<p> 
+Local repository access over 'file' protocol (for FSFS repositories).
+
+<p>
+Administrative functionality: 
+<li>Creation of local <b>FSFS</b>-type (Subversion compatible) repositories with the latest format version.
+<li>Repository replication (svnsync) both with 1.4.x servers and older ones.
+ 
+<p>
+svn+xxx:// URL schemes (not only svn+ssh). JavaSVN API gives a user an 
+ability to define tunnel providers which are responsible for matching 
+subprotocol names (xxx) to tunnel command lines.
+
 </BODY>
 </HTML>

@@ -1,10 +1,11 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" >
-<head><title>Knowledge&nbsp;Base</title>
+<head><title>SVNKit&nbsp;::&nbsp;Knowledge&nbsp;Base</title>
 <meta name="keywords" content="Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development">   
 <meta name="description" content="Pure Java Subversion Library. Open Source, provided by TMate Software">
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <link rel="stylesheet" type="text/css" media="screen" href="../css/home.css">
+<link rel="shortcut icon" href="/img/favicon.ico"/>
 </head>
 
 <body>
@@ -22,10 +23,10 @@
 <table border="0" cellpadding="0" cellspacing="0" style="width: 100%;">
 <tr>
 <td rowspan="2" colspan="1" width="50%">
-<a style="border-bottom: 0px;" href="http://tmate.org/svn/"><img width="415" height="97" src="../img/javasvn_logo.png" border="0"></a>
+<a style="border-bottom: 0px;" href="/"><img width="415" height="97" src="../img/svnkit_logo.jpg" border="0"></a>
 </td>
 <td rowspan="1" colspan="1" width="50%" style="font-style: italic; font-size: 17px; padding-left: 15px" align="left" valign="center">
-The only pure Java Subversion library in the world!
+The only pure Java&#153; Subversion library in the world!
 </td>
 </tr>
 <tr>
@@ -60,7 +61,7 @@ Knowledge Base
 <tr>
 <td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
 <td align=LEFT valign=TOP>
-<a href="javadoc/index.html">JavaSVN API (javadoc)</a>
+<a href="javadoc/index.html">SVNKit API (javadoc)</a>
 <br>
 Generated Java Documentation for API packages which include:
 <br>
@@ -75,7 +76,7 @@ handlers that output information to an org.xml.sax.ContentHandler.
 <b>org.tmatesoft.svn.core</b> - common package that contains interfaces and classes used
 by the low-level API as well as the high-level one.
 <br>
-The following separate packages are the base set of interfaces and classes used by JavaSVN 
+The following separate packages are the base set of interfaces and classes used by SVNKit 
 for authentication and delta (versioned context changes) managing purposes: 
 <br>
 <b>org.tmatesoft.svn.core.auth</b> - contains interfaces and classes used for authentication purposes
@@ -87,7 +88,7 @@ delta generating, manipulating, etc.
 And yet one package for a javahl replacement:
 <br>
 <b>org.tmatesoft.svn.core.javahl</b> - contains an implementation of SVNClientInterface to use instead of 
-the native SVN binding - SVNClient. This implementation uses the JavaSVN library. 
+the native SVN binding - SVNClient. This implementation uses the SVNKit library. 
 </td>
 </tr>
 
@@ -131,9 +132,9 @@ This article gives information on using <b>ISVNEditor</b> (from the
 <tr>
 <td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
 <td align=LEFT valign=TOP>
-<a href="dev-guide-multithreaded-environment.html">Using JavaSVN in multithreaded environment</a>
+<a href="dev-guide-multithreaded-environment.html">Using SVNKit in multithreaded environment</a>
 <br>
-Some notes on how JavaSVN objects must be used in multithreaded programs.
+Some notes on how SVNKit objects must be used in multithreaded programs.
 </td>
 </tr>
 
@@ -142,7 +143,7 @@ Some notes on how JavaSVN objects must be used in multithreaded programs.
 <td align=LEFT valign=TOP>
 <a href="dev-guide-network-connection.html" >Customizing network connections</a>
 <br>
-This article describes how to customize JavaSVN http-connections, what default client-side 
+This article describes how to customize SVNKit http-connections, what default client-side 
 implementations of the HTTP protocol are used and what is needed to switch between them.
 </td>
 </tr>
@@ -150,10 +151,10 @@ implementations of the HTTP protocol are used and what is needed to switch betwe
 <tr>
 <td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
 <td align=LEFT valign=TOP>
-<a href="dev-guide-authentication.html" >Authentication</a>
+<a href="dev-guide-authentication.html" >Authentication</a>&nbsp;(in <a href="dev-guide-authentication_ru.html">russian</a>)
 <br>
-Read about how JavaSVN authenticates a client to a server, how to use default SVN
-credentials storage and settings, and how to make JavaSVN use your authentication driver.
+Read about how SVNKit authenticates a client to a server, how to use default SVN
+credentials storage and settings, and how to make SVNKit use your authentication driver.
 </td>
 </tr>
 
@@ -162,7 +163,7 @@ credentials storage and settings, and how to make JavaSVN use your authenticatio
 <td align=LEFT valign=TOP>
 <a href="dev-guide-general-options.html" >General options</a>
 <br>
-Like the SVN command line client JavaSVN WC managment classes use run-time configuration options. 
+Like the SVN command line client SVNKit WC managment classes use run-time configuration options. 
 This article is an overview of how those options are managed (read, save) and how default ones 
 are used.
 </td>
@@ -173,16 +174,16 @@ are used.
 <td align=LEFT valign=TOP>
 <a href="dev-guide-setting-custom-logger.html" >Setting a custom logger (for debug logging)</a>
 <br>
-Read brief instructions on how to customize logging JavaSVN operations.
+Read brief instructions on how to customize logging SVNKit operations.
 </td>
 </tr>
 
 <tr>
 <td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
 <td align=LEFT valign=TOP>
-<a href="dev-guide-svnclient.html">Using JavaSVN via SVNClientInterface (JavaHL) API</a>
+<a href="dev-guide-svnclient.html">Using SVNKit via SVNClientInterface (JavaHL) API</a>
 <br>
-Some notes on how you can use JavaSVN via the JavaHL API.
+Some notes on how you can use SVNKit via the JavaHL API.
 </td>
 </tr>
 
@@ -195,27 +196,27 @@ Some notes on how you can use JavaSVN via the JavaHL API.
 <tr>
 <td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
 <td align=LEFT valign=TOP>
-<a href="user-guide-debug-logs.html">Obtaining debug logs of JavaSVN operations</a>
+<a href="user-guide-debug-logs.html">Obtaining debug logs of SVNKit operations</a>
 <br>
-This article gives information on how to put into usage default logging of JavaSVN operations.
+This article gives information on how to put into usage default logging of SVNKit operations.
 </td>
 </tr>
 
 <tr>
 <td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
 <td align=LEFT valign=TOP>
-<a href="user-guide-svnant.html" >Using JavaSVN with SvnAnt</a>
+<a href="user-guide-svnant.html" >Using SVNKit with SvnAnt</a>
 <br>
-Here you will find brief instructions of how to make SvnAnt use JavaSVN.  
+Here you will find brief instructions of how to make SvnAnt use SVNKit.  
 </td>
 </tr>
 
 <tr>
 <td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
 <td align=LEFT valign=TOP>
-<a href="user-guide-ant.html" >Using JavaSVN with Ant</a>
+<a href="user-guide-ant.html" >Using SVNKit with Ant</a>
 <br>
-This article describes how you can use JavaSVN in Ant tasks.
+This article describes how you can use SVNKit in Ant tasks.
 </td>
 </tr>
 
@@ -224,7 +225,7 @@ This article describes how you can use JavaSVN in Ant tasks.
 <td align=LEFT valign=TOP>
 <a href="user-guide-config-settings.html" >Supported system properties and configuration options</a>
 <br>
-This article describes what configuration settings JavaSVN uses during
+This article describes what configuration settings SVNKit uses during
 run-time which include proxy, ssh, ssl and other ones. The article explains what is 
 used by default and what system properties are involved if a default
 configuration is not available for some reason.
@@ -237,16 +238,16 @@ configuration is not available for some reason.
 <a href="user-guide-javahl-replacement.html">Replacement for JavaHL API</a>
 <br>
 Some notes on how you can replace the JavaHL SVNClient class with the SVNClient
-one that uses only JavaSVN API.
+one that uses only SVNKit API.
 </td>
 </tr>
 
 <tr>
 <td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
 <td align=LEFT valign=TOP>
-<a href="user-guide-command-line-client.html" >JavaSVN command line client</a>
+<a href="user-guide-command-line-client.html" >SVNKit command line client</a>
 <br>
-Read information on the JavaSVN command line client which is an alternate for
+Read information on the SVNKit command line client which is an alternate for
 the native SVN one (supports most of the SVN's main commands).
 </td>
 </tr>
@@ -262,8 +263,8 @@ the native SVN one (supports most of the SVN's main commands).
 <td align=LEFT valign=TOP>
 <a href="build-standalone.html" >To use in a standalone application</a>
 <br>
-Would like to use JavaSVN in a standalone application? Read this article about how to build
-a standalone JavaSVN library from sources.
+Would like to use SVNKit in a standalone application? Read this article about how to build
+a standalone SVNKit library from sources.
 </td>
 </tr>
 
@@ -278,20 +279,22 @@ a standalone JavaSVN library from sources.
 <td align=LEFT valign=TOP>
 <a href="mailinglist.html" >Mailing Lists</a>
 <br>
-If you want to ask questions about JavaSVN API, don't understand how to make things
-work, would like to get questions of other users and receive answers of the JavaSVN support
+If you want to ask questions about SVNKit API, don't understand how to make things
+work, would like to get questions of other users and receive answers of the SVNKit support
 service, wish to discuss a problem or suggest a feature, would like to get announcements    
-of new JavaSVN versions, you should join our mailing list.
+of new SVNKit versions, you should join our mailing list.
+<br>
+To view older messages check <a href="http://www.nabble.com/JavaSVN-f10898.html">mailing list archive</a>.
 </td>
 </tr>
 
 <tr>
 <td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
 <td align=LEFT valign=TOP>
-<a href="http://tmate.org/tracker/">Issue tracker</a>
+<a href="http://svnkit.com/tracker/">Issue tracker</a>
 <br>
-Use this link to view JavaSVN issues or submit a new one. Please read 
-<a href="user-guide-debug-logs.html">documentation chapter</a> on how to get JavaSVN logs before submitting 
+Use this link to view SVNKit issues or submit a new one. Please read 
+<a href="user-guide-debug-logs.html">documentation chapter</a> on how to get SVNKit logs before submitting 
 a bug report.
 </td>
 </tr>
@@ -300,9 +303,12 @@ a bug report.
 
 <br>
 <br />
-<table style="margin-top: 1em;" width="100%" cellpadding="0" cellspacing="0"><tr><td id="footer" align="left">Copyright &copy; 
-2004-2006, TMate Software</td><td align="right" id="footer">feedback is welcome at <a href="mailto:feedback%40tmatesoft.com">feedback@tmatesoft.com</a></td></tr></table>
-
+<table style="margin-top: 1em;" width="100%" cellpadding="0" cellspacing="0"><tr><td id="footer" align="left" valign="top">Copyright &copy; 
+2004-2006, TMate Software</td><td align="right" valign="top" id="footer">feedback is welcome at <a href="mailto:feedback%40svnkit.com">feedback@svnkit.com</a></td></tr>
+<tr><td colspan=2 id="footer2">Java&#153; and all Java-based marks are a trademark or registered trademark of Sun Microsystems, Inc, in the United States and other countries. 
+TMate Software and the website svnkit.com are independent of Sun Microsystems, Inc. and have no relationship, formal or informal.
+</td></tr>
+</table>
 </td>
 </tr>
 </table>

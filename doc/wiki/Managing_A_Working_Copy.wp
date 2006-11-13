@@ -1,11 +1,11 @@
-[[Replicating An Existing Repository|<<]] | [[Managing repository With JavaSVN|List]]
+[[Replicating An Existing Repository|<<]] | [[Managing repository With SVNKit|List]]
 <br />
 <br />
 
 == Managing A Working Copy ==
-Finally we came to discussing the '''JavaSVN''' [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/package-summary.html high-level API] - 
+Finally we came to discussing the '''SVNKit''' [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/wc/package-summary.html high-level API] - 
 the one for manipulating Working Copies. All Working Copy operations are logically organized in different '''SVN*Client''' 
-classes. At the same time there's [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/SVNClientManager.html SVNClientManager] 
+classes. At the same time there's [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/wc/SVNClientManager.html SVNClientManager] 
 class which composes all '''SVN*Client''' classes and, thus, simplifies work on creating and keeping various client 
 classes:
 
@@ -17,7 +17,7 @@ it, but not earlier.
 
 <p>
 Methods of each '''SVN*Client''' class are similar to commands of the [http://svnbook.red-bean.com/nightly/en/svn.ref.html#svn.ref.svn native Subversion command line client].
-We will show several simple operations you can perform upon Working Copies using '''JavaSVN'''. We write a class 
+We will show several simple operations you can perform upon Working Copies using '''SVNKit'''. We write a class 
 ''WorkingCopy'' which utilizes an '''SVNClientManager''' object:
 <java>
 ...
@@ -116,9 +116,9 @@ This function copies or moves one location to another one within the same reposi
 </java>
 We also need a function which will report us status (including remote status) of our Working Copy. The high-level API 
 introduces several types of handlers to procees information on the fly. For our purposes we need to implement two 
-handler interfaces so that we could perform status operations on our Working Copy: [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/ISVNStatusHandler.html ISVNStatusHandler] 
-and [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/ISVNEventHandler.html ISVNEventHandler]. This handler 
-will receive status information about Working Copy items as a [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/SVNStatusClient.html status client] 
+handler interfaces so that we could perform status operations on our Working Copy: [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/wc/ISVNStatusHandler.html ISVNStatusHandler] 
+and [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/wc/ISVNEventHandler.html ISVNEventHandler]. This handler 
+will receive status information about Working Copy items as a [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/wc/SVNStatusClient.html status client] 
 traverses the Working Copy tree:
 <java>
 ...
@@ -352,7 +352,7 @@ We use this handler in a status function:
     }
 </java>
 For getting info on Working Copy items (like <code>svn info</code> command) we implement an 
-[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/ISVNInfoHandler.html info handler]:
+[http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/wc/ISVNInfoHandler.html info handler]:
 <java>
 ...
 public class InfoHandler implements ISVNInfoHandler {
@@ -1210,13 +1210,13 @@ And if the program runs successfully you'll see in your console the following ou
  Committed to revision 9
 ----
 Download the full sources of this example program:
-# [http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples/wc/WorkingCopy.java WorkingCopy.java]
-# [http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples/wc/CommitEventHandler.java CommitEventHandler.java]
-# [http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples/wc/InfoHandler.java InfoHandler.java]
-# [http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples/wc/StatusHandler.java StatusHandler.java]
-# [http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples/wc/UpdateEventHandler.java UpdateEventHandler.java]
-# [http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples/wc/WCEventHandler.java WCEventHandler.java]
+# [http://svn.svnkit.com/repos/svnkit/trunk/doc/examples/src/org/tmatesoft/svn/examples/wc/WorkingCopy.java WorkingCopy.java]
+# [http://svn.svnkit.com/repos/svnkit/trunk/doc/examples/src/org/tmatesoft/svn/examples/wc/CommitEventHandler.java CommitEventHandler.java]
+# [http://svn.svnkit.com/repos/svnkit/trunk/doc/examples/src/org/tmatesoft/svn/examples/wc/InfoHandler.java InfoHandler.java]
+# [http://svn.svnkit.com/repos/svnkit/trunk/doc/examples/src/org/tmatesoft/svn/examples/wc/StatusHandler.java StatusHandler.java]
+# [http://svn.svnkit.com/repos/svnkit/trunk/doc/examples/src/org/tmatesoft/svn/examples/wc/UpdateEventHandler.java UpdateEventHandler.java]
+# [http://svn.svnkit.com/repos/svnkit/trunk/doc/examples/src/org/tmatesoft/svn/examples/wc/WCEventHandler.java WCEventHandler.java]
 
 <br />
 <br />
-[[Replicating An Existing Repository|<<]] | [[Managing repository With JavaSVN|List]]
+[[Replicating An Existing Repository|<<]] | [[Managing repository With SVNKit|List]]

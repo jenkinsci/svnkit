@@ -1,4 +1,4 @@
-[[Printing Out File Contents|<<]] | [[Managing repository With JavaSVN|List]] |  [[Editing operation Commit|>>]]
+[[Printing Out File Contents|<<]] | [[Managing repository With SVNKit|List]] |  [[Editing operation Commit|>>]]
 <br />
 <br />
 
@@ -13,7 +13,7 @@ public class History {
     public static void main(String[] args) {
         DAVRepositoryFactory.setup();
 
-        String url = "http://svn.tmate.org:8080/svn/jsvn/trunk/doc";
+        String url = "http://svn.svnkit.com/repos/svnkit/trunk/doc";
         String name = "anonymous";
         String password = "anonymous";
         long startRevision = 0;
@@ -37,7 +37,7 @@ We don't use paths to get only those revisions where paths were changed, so we p
 <p>
 The second 
 parameter is a Collection to receive history objects. Information about each revision is represented by a single 
-[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/SVNLogEntry.html SVNLogEntry] object. We pass <code>null</code> 
+[http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/SVNLogEntry.html SVNLogEntry] object. We pass <code>null</code> 
 since we don't need to fill an existing collection with history objects. 
 
 <p>
@@ -47,7 +47,7 @@ the history of changes to be fetched out.
 <p>
 The fifth parameter controls whether information of all changed paths per 
 revision should be included into histroy objects. Such information is represented by an 
-[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/SVNLogEntryPath.html SVNLogEntryPath] object for each revision.
+[http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/SVNLogEntryPath.html SVNLogEntryPath] object for each revision.
 We are going to print out all changed paths, so setting it to <code>true</code>. 
 
 <p>
@@ -124,8 +124,8 @@ And finally we run the program and have the following output in our console:
  log message: corrected wc examples, modified javadoc files
  
 ----
-Download the [http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples/repository/DisplayFile.java example program source code].
+Download the [http://svn.svnkit.com/repos/svnkit/trunk/doc/examples/src/org/tmatesoft/svn/examples/repository/DisplayFile.java example program source code].
 
 <br />
 <br />
-[[Printing Out File Contents|<<]] | [[Managing repository With JavaSVN|List]] |  [[Editing operation Commit|>>]]
+[[Printing Out File Contents|<<]] | [[Managing repository With SVNKit|List]] |  [[Editing operation Commit|>>]]

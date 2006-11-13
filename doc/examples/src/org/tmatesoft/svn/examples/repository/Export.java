@@ -4,7 +4,7 @@
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
- * are also available at http://tmate.org/svn/license.html.
+ * are also available at http://svnkit.com/license.html
  * If newer versions of this license are posted there, you may use a
  * newer version instead, at your option.
  * ====================================================================
@@ -36,14 +36,14 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 /*
  * This example program export contents of the repository directory into file system using 
- * JavaSVN library low level API.
+ * SVNKit library low level API.
  * 
  * In general, approach we are using in this example is the same that is used for operations
  * like 'update', 'remote status', 'diff' or 'checkout'. The export operation is the most 
  * simple one and allows to demonstrate this approach without going too much into the details.
  * 
  * You may find and an article describing this (update) technique at 
- * http://tmate.org/svn/kb/dev-guide-update-operation.html
+ * http://svnkit.com/kb/dev-guide-update-operation.html
  * 
  * To perform any update-like operation one have to do the following:
  * 
@@ -60,7 +60,7 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
  *    updates working copy in the filsystem, remote status operation merely logs files and directories that 
  *    have to be updated and displays this information. 
  *    
- *    With JavaSVN API you may implement your own processing code, e.g. repository replication or custom merging code.
+ *    With SVNKit API you may implement your own processing code, e.g. repository replication or custom merging code.
  *    ISVNEditor is the interface which implementations process update instructions sent by the server and in 
  *    this example ISVNEditor implementation (ExportEditor) creates files and directories corresponding to those 
  *    in the repository.  
@@ -97,7 +97,7 @@ public class Export {
 
     private static void exportExample() throws SVNException {
 
-        SVNURL url = SVNURL.parseURIEncoded("http://svn.tmate.org/svn/jsvn/trunk/doc");
+        SVNURL url = SVNURL.parseURIEncoded("http://svn.svnkit.com/repos/svnkit/trunk/doc");
         String userName = "foo";
         String userPassword = "bar";
         
@@ -178,7 +178,7 @@ public class Export {
         ISVNEditor exportEditor = new ExportEditor(exportDir);
         
         /*
-         * Now ask JavaSVN to perform generic 'update' operation using our reporter and editor.
+         * Now ask SVNKit to perform generic 'update' operation using our reporter and editor.
          * 
          * We are passing:
          * 

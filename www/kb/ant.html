@@ -1,10 +1,11 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" >
-<head><title>Using&nbsp;JavaSVN&nbsp;with&nbsp;Ant</title>
+<head><title>SVNKit&nbsp;::&nbsp;Using&nbsp;SVNKit&nbsp;with&nbsp;Ant</title>
 <meta name="keywords" content="Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development">   
 <meta name="description" content="Pure Java Subversion Library. Open Source, provided by TMate Software">
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <link rel="stylesheet" type="text/css" media="screen" href="../css/home.css">
+<link rel="shortcut icon" href="/img/favicon.ico"/>
 </head>
 
 <body>
@@ -21,10 +22,10 @@
 <td align="left" valign="top" style="padding: 20px 20px 20px 20px;">
 
 <p>
-<span class="javasvn"><a style="border-bottom: 0px; color: rgb(51, 102, 153);" href="http://tmate.org/svn/">JavaSVN</a>&nbsp;</span><span style="font-size: 140%; font-weight: bold;">The only pure Java Subversion client library in the world!</span>
+<span class="svnkit"><a style="border-bottom: 0px; color: rgb(51, 102, 153);" href="/">SVNKit</a>&nbsp;</span><span style="font-size: 140%; font-weight: bold;">The only pure Java&#153; Subversion client library in the world!</span>
 </p>
 <p><div style="border-bottom: 1px solid #ccc;"></div></p>
-<!--<small><a href="../index.html" style="border-bottom: 0px;">Home</a> :: <a href="index.html" style="border-bottom: 0px;">Knowledge Base</a> :: Using JavaSVN with Ant</small>-->
+<!--<small><a href="../index.html" style="border-bottom: 0px;">Home</a> :: <a href="index.html" style="border-bottom: 0px;">Knowledge Base</a> :: Using SVNKit with Ant</small>-->
 
 <table border=0 cellpadding="0" cellspacing="0" style="width: 100%; margin-top: 0.7em">
 <tr style="height: 10px;">
@@ -54,7 +55,7 @@
 <table border=0 cellpadding="0" cellspacing="0" style="width: 100%;">
 <tr>
 <td>
-<a style="border-bottom: 0px;" href="http://tmate.org/svn/"><img src="../img/javasvn_logo.png" border=0 align=bottom></a>
+<a style="border-bottom: 0px;" href="/"><img src="../img/svnkit_logo.jpg" border=0 align=bottom></a>
 </td>
 
 <td align="right">
@@ -88,11 +89,11 @@
 </table>
 -->
 
-<h1>Using JavaSVN with Ant</h1>
-<p>There are two ways of using JavaSVN in Ant tasks. First way is using <b>svnant</b> - part of Subclipce project, how to do it
+<h1>Using SVNKit with Ant</h1>
+<p>There are two ways of using SVNKit in Ant tasks. First way is using <b>svnant</b> - part of Subclipce project, how to do it
 you may read this <a href="svnant.html">documentation page</a> for details. 
-Another way, that is described below, is using JavaSVN command line interface.</p>
-<a name="sample-ant-tasks-that-uses-javasvn"></a><h4>3.1. Sample Ant tasks that uses JavaSVN <i>(contributed by William Lovins)</i></h4>
+Another way, that is described below, is using SVNKit command line interface.</p>
+<a name="sample-ant-tasks-that-uses-svnkit"></a><h4>3.1. Sample Ant tasks that uses SVNKit <i>(contributed by William Lovins)</i></h4>
 <p><b>Note:</b> There are areas where this library is very inefficient when working
 with large repositories which will be resolved in later versions.
 </p>
@@ -112,7 +113,7 @@ fixing bugs).</p>
 <p>Please see the svn documentation for assistance on what parameters the
 command accepts.
 A large subset of the command line arguments are available via the
-javasvn-cli.jar file, including lesser used switches such as "svn
+svnkit-cli.jar file, including lesser used switches such as "svn
 status -u".</p>
 <h4>Examples</h4>
 <b>Checking out files from the repository</b>
@@ -134,8 +135,8 @@ anonymous checkouts from your repository.</p>
       &lt;arg value=<span class="javaCommentSingle">"admin"</span>/&gt;
       &lt;arg value=<span class="javaCommentSingle">"${repository.URL}/TESTING"</span>/&gt;
       &lt;classpath&gt;
-        &lt;pathelement location=<span class="javaCommentSingle">"${antroot}/LIB/javasvn.jar"</span> /&gt;
-        &lt;pathelement location=<span class="javaCommentSingle">"${antroot}/LIB/javasvn-cli.jar"</span> /&gt;
+        &lt;pathelement location=<span class="javaCommentSingle">"${antroot}/LIB/svnkit.jar"</span> /&gt;
+        &lt;pathelement location=<span class="javaCommentSingle">"${antroot}/LIB/svnkit-cli.jar"</span> /&gt;
       &lt;/classpath&gt;
     &lt;/java&gt;
   &lt;/target&gt;
@@ -170,8 +171,8 @@ version would.</p>
       &lt;arg value=<span class="javaCommentSingle">'"Testing"'</span>/&gt;
       &lt;arg value=<span class="javaCommentSingle">"${repository.URL}/TESTING"</span>/&gt;
       &lt;classpath&gt;
-        &lt;pathelement location=<span class="javaCommentSingle">"${antroot}/LIB/javasvn.jar"</span> /&gt;
-        &lt;pathelement location=<span class="javaCommentSingle">"${antroot}/LIB/javasvn-cli.jar"</span> /&gt;
+        &lt;pathelement location=<span class="javaCommentSingle">"${antroot}/LIB/svnkit.jar"</span> /&gt;
+        &lt;pathelement location=<span class="javaCommentSingle">"${antroot}/LIB/svnkit-cli.jar"</span> /&gt;
       &lt;/classpath&gt;
     &lt;/java&gt;
   &lt;/target&gt;
@@ -180,12 +181,15 @@ version would.</p>
 <br/>
 <br/>
 
-<p>If you have any questions regarding JavaSVN, would like to report a bug or contribute a patch, please write to 
-<a id="normal" href="mailto:support@tmatesoft.com">support@tmatesoft.com</a></p>
+<p>If you have any questions regarding SVNKit, would like to report a bug or contribute a patch, please write to 
+<a id="normal" href="mailto:support@svnkit.com">support@svnkit.com</a></p>
 <br />
-<table style="margin-top: 1em;" width="100%" cellpadding="0" cellspacing="0"><tr><td id="footer" align="left">Copyright &copy; 
-2004-2006, TMate Software</td><td align="right" id="footer">feedback is welcome at <a href="mailto:feedback%40tmatesoft.com">feedback@tmatesoft.com</a></td></tr></table>
-
+<table style="margin-top: 1em;" width="100%" cellpadding="0" cellspacing="0"><tr><td id="footer" align="left" valign="top">Copyright &copy; 
+2004-2006, TMate Software</td><td align="right" valign="top" id="footer">feedback is welcome at <a href="mailto:feedback%40svnkit.com">feedback@svnkit.com</a></td></tr>
+<tr><td colspan=2 id="footer2">Java&#153; and all Java-based marks are a trademark or registered trademark of Sun Microsystems, Inc, in the United States and other countries. 
+TMate Software and the website svnkit.com are independent of Sun Microsystems, Inc. and have no relationship, formal or informal.
+</td></tr>
+</table>
 </td>
 </tr>
 </table>

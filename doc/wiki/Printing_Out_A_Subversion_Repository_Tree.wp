@@ -1,4 +1,4 @@
-[[Managing repository With JavaSVN|List]] | [[Printing Out File Contents|>>]]
+[[Managing repository With SVNKit|List]] | [[Printing Out File Contents|>>]]
 <br />
 <br />
 
@@ -20,7 +20,7 @@ read repository contents, but you may change them to some valid credentials to o
 unregistered persons). Having these parameters we create an '''SVNRepository''' driver for the selected location:
 <java>
         ...
-        String url = "http://svn.tmate.org:8080/svn/jsvn/trunk/doc";
+        String url = "http://svn.svnkit.com/repos/svnkit/trunk/doc";
         String name = "anonymous";
         String password = "anonymous";
         
@@ -54,7 +54,7 @@ finished.
             }
             ...
 </java>
-Repository nodes are represented by [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/SVNNodeKind.html SVNNodeKind] 
+Repository nodes are represented by [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/SVNNodeKind.html SVNNodeKind] 
 enum objects. Here and later we use an invalid revision number -1 to mean that the latest revision must be used. The 
 next step - writing a function which will recursively call itself to traverse the repository tree starting at a 
 particular path (parameter) and print out all contents:
@@ -75,7 +75,7 @@ particular path (parameter) and print out all contents:
 </java>
 This function receives a path of a repository subtree which is to be printed out. Using a <code>getDir(...)</code> method 
 of the repository access driver passed it reads the contents of the current path which are represented by 
-[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/SVNDirEntry.html SVNDirEntry] objects. If an entry is a 
+[http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/SVNDirEntry.html SVNDirEntry] objects. If an entry is a 
 directory the function recursively calls itself with the path of that directory. And so on. Collected '''SVNDirEntry''' 
 objects contain such information as the last change revision, author, and date-stamp. 
 
@@ -105,9 +105,9 @@ And finally we run the program and have the following output in our console:
  /javadoc-files/overview.html (author: 'sa'; revision: 1985; date: Sat Jan 14 23:04:00 NOVT 2006)
  /javadoc-files/info.png (author: 'sa'; revision: 1287; date: Mon Aug 08 18:27:37 NOVST 2005)
  /javadoc-files/javadoc.css (author: 'sa'; revision: 1294; date: Tue Aug 09 02:46:29 NOVST 2005)
- /javadoc-files/JavaSVN_API_Packages.jpg (author: 'sa'; revision: 1027; date: Fri Jul 08 22:33:09 NOVST 2005)
+ /javadoc-files/SVNKit_API_Packages.jpg (author: 'sa'; revision: 1027; date: Fri Jul 08 22:33:09 NOVST 2005)
  /examples (author: 'sa'; revision: 2412; date: Thu Apr 27 00:36:08 NOVST 2006)
- /examples/javasvn-examples.iml (author: 'alex'; revision: 1012; date: Wed Jul 06 17:27:11 NOVST 2005)
+ /examples/svnkit-examples.iml (author: 'alex'; revision: 1012; date: Wed Jul 06 17:27:11 NOVST 2005)
  /examples/src (author: 'sa'; revision: 2412; date: Thu Apr 27 00:36:08 NOVST 2006)
  /examples/src/org (author: 'sa'; revision: 2412; date: Thu Apr 27 00:36:08 NOVST 2006)
  /examples/src/org/tmatesoft (author: 'sa'; revision: 2412; date: Thu Apr 27 00:36:08 NOVST 2006)
@@ -132,8 +132,8 @@ And finally we run the program and have the following output in our console:
  Repository latest revision: 2505
 
 ----
-Download the [http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples/repository/DisplayRepositoryTree.java example program source code].
+Download the [http://svn.svnkit.com/repos/svnkit/trunk/doc/examples/src/org/tmatesoft/svn/examples/repository/DisplayRepositoryTree.java example program source code].
 
 <br />
 <br />
-[[Managing repository With JavaSVN|List]] | [[Printing Out File Contents|>>]]
+[[Managing repository With SVNKit|List]] | [[Printing Out File Contents|>>]]
