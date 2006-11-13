@@ -37,37 +37,27 @@ uses the low-level one.
  
 Currently SVNKit supports the following repository access protocols:
 <ul>
-<li>
-svn://, svn+ssh://
-</li>
-<li>
-http://, https://
-</li>
-<li>file:/// (Since 1.1.0 and for FSFS-type repositories only)</li>
+<li>svn://, svn+ssh://</li>
+<li>http://, https://</li>
+<li>file:/// (for FSFS-type repositories)</li>
 </ul>
 
-<h4>Since 1.0.2</h4>
-Support for error codes similar to error codes of the native SVN.
-
-<h4>Since 1.1.0</h4>
 <p>
-Support for SVN 1.4 Working Copy format.
+Low level repository access, that allows to access and manipulate repository efficiently 
+without creating working copies or using custom, non-file based, working copy.
 
 <p>
-Administrative functionality: creation of local <b>FSFS</b>-type (Subversion compatible) 
-repositories with the latest format version.
+Support of SVN 1.4.x Working Copy format. All Subversion operations over working copy are supported, plus
+smart move operation that, for instance, allows to move already moved files.
+
+<p> 
+Local repository access over 'file' protocol (for FSFS repositories).
+
+<p>
+Administrative functionality: 
+<li>Creation of local <b>FSFS</b>-type (Subversion compatible) repositories with the latest format version.
+<li>Repository replication (svnsync) both with 1.4.x servers and older ones.
  
-<p>
-SVNKit also supports the native Subversion svnsync utility
-functionality. At the same time SVNKit has its own engine to replicate 
-revisions from one repository to another one. This allows to clone repositories even in those 
-cases when a Subversion running server is too old and does not support synchronization 
-functionality. Also repository replicator supports incremental mode: if you've copied a repository, 
-then created some new revisions in it and would like to have them 
-in your repository clone too, you do not need to copy the whole 
-original repository again - you simply copy those missing revisions 
-to the clone and it's up to date with the original one again!
-
 <p>
 svn+xxx:// URL schemes (not only svn+ssh). JavaSVN API gives a user an 
 ability to define tunnel providers which are responsible for matching 
