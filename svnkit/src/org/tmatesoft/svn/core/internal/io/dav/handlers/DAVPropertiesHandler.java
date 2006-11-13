@@ -12,8 +12,8 @@
 
 package org.tmatesoft.svn.core.internal.io.dav.handlers;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -135,7 +135,7 @@ public class DAVPropertiesHandler extends BasicDAVHandler {
                     invalidXML();
                 }
                 myStatusCode = status.getCode();
-            } catch (IOException e) {
+            } catch (ParseException e) {
                 invalidXML();
             }
             return;

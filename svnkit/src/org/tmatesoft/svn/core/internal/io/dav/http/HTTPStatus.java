@@ -11,7 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.io.dav.http;
 
-import java.io.IOException;
+import java.text.ParseException;
 
 import org.tmatesoft.svn.core.SVNErrorMessage;
 
@@ -28,7 +28,7 @@ public class HTTPStatus {
     private HTTPHeader myHeader;
     private SVNErrorMessage myError;
     
-    public static HTTPStatus createHTTPStatus(String statusLine) throws IOException {
+    public static HTTPStatus createHTTPStatus(String statusLine) throws ParseException {
         int length = statusLine.length();
         int at = 0;
         int start = 0;
@@ -43,12 +43,12 @@ public class HTTPStatus {
                 ++start;
             }
             if (!"HTTP".equals(statusLine.substring(at, at += 4))) {
-                throw new IOException("Status-Line '" + statusLine + "' does not start with HTTP");
+                throw new ParseException("Status-Line '" + statusLine + "' does not start with HTTP", 0);
             }
             //handle the HTTP-Version
             at = statusLine.indexOf(" ", at);
             if (at <= 0) {
-                throw new IOException("Unable to parse HTTP-Version from the status line: '" + statusLine + "'");
+                throw new ParseException("Unable to parse HTTP-Version from the status line: '" + statusLine + "'", 0);
             }
             version = (statusLine.substring(start, at)).toUpperCase();
 
@@ -65,7 +65,7 @@ public class HTTPStatus {
             try {
                 code = Integer.parseInt(statusLine.substring(at, to));
             } catch (NumberFormatException e) {
-                throw new IOException("Unable to parse status code from status line: '" + statusLine + "'");
+                throw new ParseException("Unable to parse status code from status line: '" + statusLine + "'", 0);
             }
             //handle the Reason-Phrase
             at = to + 1;
@@ -75,7 +75,7 @@ public class HTTPStatus {
                 reason = "";
             }
         } catch (StringIndexOutOfBoundsException e) {
-            throw new IOException("Status-Line '" + statusLine + "' is not valid"); 
+            throw new ParseException("Status-Line '" + statusLine + "' is not valid", 0); 
         }
         return new HTTPStatus(version, reason, code, statusLine); 
     }
