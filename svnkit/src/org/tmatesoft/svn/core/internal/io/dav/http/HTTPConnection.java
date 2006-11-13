@@ -275,6 +275,7 @@ class HTTPConnection implements IHTTPConnection {
                 request.dispatch(method, path, header, ok1, ok2, context);
                 status = request.getStatus();
             } catch (SSLHandshakeException ssl) {
+                myRepository.getDebugLog().info(ssl);
                 if (sslManager != null) {
                     SVNSSLAuthentication sslAuth = sslManager.getClientAuthentication();
                     if (sslAuth != null) {
@@ -287,6 +288,7 @@ class HTTPConnection implements IHTTPConnection {
                 }
                 err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, ssl.getMessage());
             } catch (IOException e) {
+                myRepository.getDebugLog().info(e);
                 if (e instanceof SocketTimeoutException) {
                     err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "timed out waiting for server");
                 } else {
@@ -303,6 +305,7 @@ class HTTPConnection implements IHTTPConnection {
                     err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e.getMessage());
                 }
             } catch (SVNException e) {
+                myRepository.getDebugLog().info(e);
                 // force connection close on SVNException 
                 // (could be thrown by user's auth manager methods).
                 close();
@@ -340,6 +343,7 @@ class HTTPConnection implements IHTTPConnection {
                 try {
                     myProxyAuthentication = HTTPAuthentication.parseAuthParameters(proxyAuthHeaders, myProxyAuthentication); 
                 } catch (SVNException svne) {
+                    myRepository.getDebugLog().info(svne);
                     err = svne.getErrorMessage(); 
                     break;
                 }
@@ -490,6 +494,9 @@ class HTTPConnection implements IHTTPConnection {
             SVNErrorManager.error(err);
         }
         // err2 is another default context...
+        myRepository.getDebugLog().info(err.getMessage());
+        myRepository.getDebugLog().info(new Exception());
+        
         SVNErrorMessage err2 = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "{0} request failed on ''{1}''", new Object[] {method, path});
         SVNErrorManager.error(err2, err);
         return null;
