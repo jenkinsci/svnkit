@@ -15,7 +15,8 @@
 <meta name="keywords" content="Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development" />   
 <meta name="description" content="Pure Java Subversion Library. Open Source, provided by TMate Software" />
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-<link rel="stylesheet" type="text/css" media="screen" href="/svn/css/home.css"></link>
+<link rel="stylesheet" type="text/css" media="screen" href="/css/home.css"></link>
+<link rel="shortcut icon" href="/img/favicon.ico"/>
 </head>
 <body>
 <table bgcolor="white" width="900" cellpadding="0" align="center" style="height: 100%;"  border="0" cellspacing="0" >

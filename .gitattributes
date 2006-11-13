@@ -164,6 +164,7 @@ www/feed/rss.php eol=lf
 www/feed/rss_util.php eol=lf
 www/img/arrow.gif -text
 www/img/bullet00.gif -text
+www/img/favicon.ico -text
 www/img/file.gif -text
 www/img/folder.gif -text
 www/img/leftbg.gif -text
