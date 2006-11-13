@@ -76,20 +76,7 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  */
 public class SVNAdminClient extends SVNBasicClient {
 
-/*    public static final String DUMPFILE_MAGIC_HEADER = "SVN-fs-dump-format-version";
-    public static final String DUMPFILE_REVISION_NUMBER = "Revision-number";
-    public static final String DUMPFILE_NODE_PATH = "Node-path";
-    public static final String DUMPFILE_NODE_KIND = "Node-kind";
-    public static final String DUMPFILE_NODE_ACTION = "Node-action";
-    public static final String DUMPFILE_NODE_COPYFROM_REVISION = "Node-copyfrom-rev";
-    public static final String DUMPFILE_NODE_COPYFROM_PATH = "Node-copyfrom-path";
-    public static final String DUMPFILE_TEXT_CONTENT_LENGTH = "Text-content-length";
-
-    private static final int DUMPFILE_FORMAT_VERSION = 3;
-*/
-    
     private ISVNLogEntryHandler mySyncHandler;
-//    private ISVNLoadHandler myLoadHandler;
     
     /**
      * Creates a new admin client.
@@ -124,11 +111,6 @@ public class SVNAdminClient extends SVNBasicClient {
     public void setReplayHandler(ISVNLogEntryHandler handler) {
         mySyncHandler = handler;
     }
-
-/*    public void setLoadHandler(ISVNLoadHandler handler) {
-        myLoadHandler = handler;
-    }
-*/
 
     /**
      * Creates an FSFS-type repository.
@@ -386,129 +368,6 @@ public class SVNAdminClient extends SVNBasicClient {
             throw error2;
         }
     }
-
-/*    public void load(File repositoryRoot, InputStream dumpStream, boolean usePreCommitHook, boolean usePostCommitHook, String parentDir) throws SVNException {
-        FSFS fsfs = openRepository(repositoryRoot);
-        ISVNLoadHandler handler = getLoadHandler(usePreCommitHook, usePostCommitHook, parentDir);
-        
-        String line = null;
-        StringBuffer buffer = new StringBuffer();
-        try {
-            line = SVNFileUtil.readLineFromStream(dumpStream, buffer);
-            if (line == null) {
-                generateIncompleteDataError();
-            }
-            
-            //parse format
-            if (!line.startsWith(DUMPFILE_MAGIC_HEADER + ":")) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Malformed dumpfile header");
-                SVNErrorManager.error(err);
-            }
-            try {
-                int version = Integer.parseInt(line.substring(DUMPFILE_MAGIC_HEADER.length() + 1));
-                if (version > DUMPFILE_FORMAT_VERSION) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Unsupported dumpfile version: {0,number,integer}", new Integer(version));
-                    SVNErrorManager.error(err);
-                }
-            } catch (NumberFormatException nfe) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Malformed dumpfile header");
-                SVNErrorManager.error(err);
-            }
-            
-
-            while (true) {
-                checkCancelled();
-
-                boolean foundNode = false;
-                
-                //skip empty lines
-                buffer.setLength(0);
-                line = SVNFileUtil.readLineFromStream(dumpStream, buffer);
-                if (line == null) {
-                    if (buffer.length() > 0) {
-                        generateIncompleteDataError();
-                    } else {
-                        break;
-                    }
-                } 
-                
-                line = line.trim();
-                if (line.length() == 0) {
-                    continue;
-                }
-                
-                Map headers = readHeaderBlock(dumpStream, line);
-                if (headers.containsKey(DUMPFILE_REVISION_NUMBER)) {
-                    handler.closeRevision();
-                    handler.openRevision(headers);
-                } else if (headers.containsKey(DUMPFILE_NODE_PATH)) {
-                    handler.openNode(headers);
-                    foundNode = true;
-                }
-                
-            }
-        } catch (IOException ioe) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-            SVNErrorManager.error(err, ioe);
-        }
-    }
-*/
-    
-/*    private ISVNLoadHandler getLoadHandler(boolean usePreCommitHook, boolean usePostCommitHook, String parentDir) {
-        if (myLoadHandler == null) {
-            myLoadHandler = new DefaultLoadHandler(false, false, parentDir);
-        }
-        return myLoadHandler;
-    }
-    
-    private Map readHeaderBlock(InputStream dumpStream, String firstHeader) throws SVNException, IOException {
-        Map headers = new HashMap();
-        StringBuffer buffer = new StringBuffer();
-        while (true) {
-            String header = null;
-            buffer.setLength(0);
-            if (firstHeader != null) {
-                header = firstHeader;
-                firstHeader = null;
-            } else {
-                header = SVNFileUtil.readLineFromStream(dumpStream, buffer);
-            }
-            
-            if (header == null && buffer.length() > 0) {
-                generateIncompleteDataError();
-            } else if (buffer.length() == 0) {
-                break;
-            }
-            
-            int colonInd = header.indexOf(':');
-            if (colonInd == -1) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Dump stream contains a malformed header (with no '':'') at ''{0}''", header.length() > 20 ? header.substring(0, 19) : header);
-                SVNErrorManager.error(err);
-            }
-            
-            String name = header.substring(0, colonInd);
-            if (colonInd + 2 > header.length()) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Dump stream contains a malformed header (with no value) at ''{0}''", header.length() > 20 ? header.substring(0, 19) : header);
-                SVNErrorManager.error(err);
-            }
-            String value = header.substring(colonInd + 2);
-            headers.put(name, value);
-        }
-        
-        return headers;
-    }
-    
-    private void generateIncompleteDataError() throws SVNException {
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, "Premature end of content data in dumpstream");
-        SVNErrorManager.error(err);
-    }
-    
-    private FSFS openRepository(File reposRootPath) throws SVNException {
-        FSFS fsfs = new FSFS(reposRootPath);
-        fsfs.open();
-        return fsfs;
-    }
-*/
     
     private void copyRevisionProperties(SVNRepository fromRepository, SVNRepository toRepository, long revision, boolean sync) throws SVNException {
         Map existingRevProps = null;
