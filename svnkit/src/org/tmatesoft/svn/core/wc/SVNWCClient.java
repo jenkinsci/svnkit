@@ -356,6 +356,7 @@ public class SVNWCClient extends SVNBasicClient {
             adminArea.cleanup();
         } finally {
             wcAccess.close();
+            sleepForTimeStamp();
         }
     }
     
