@@ -88,6 +88,28 @@ repository is not removed and a new repository creation fails with an [http://sv
 If a repository is successfully created the ''createLocalRepository(...)'' method returns a ''file:///'' url of the 
 repository root location.
 
+<p>
+Also you may create an FSFS-type repository with [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/wc/SVNAdminClient.html SVNAdminClient] - 
+the class belonging to high-level API. Actually this admin client class uses [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepositoryFactory.html SVNRepositoryFactory]
+to do the same job.
+
+<java>
+import org.tmatesoft.svn.core.wc.SVNAdminClient;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNException;
+
+...
+
+    try {
+        String tgtPath = "C:/repos/root/path";
+        SVNURL tgtURL = SVNRepositoryFactory.doCreateRepository(new File(tgtPath), null, true, false);
+    } catch(SVNException e) {
+        //handle exception
+    }
+
+...
+</java>
+
 == Accessing a repository ==
 There are two ways of accessing a Subversion repository: 
 * over a network

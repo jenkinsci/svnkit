@@ -23,7 +23,7 @@ specific realizations, each one for each protocol. The following table matches a
 |}
 
 === Instructions on initializing SVNKit ===
-<font color=red>Prior to using the library</font> you must set up an appropriate '''SVNRepositoryFactory''' realization for a 
+<font color=red>Prior to using the library</font> you must set up an appropriate [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepositoryFactory.html SVNRepositoryFactory] realization for a 
 particular protocol. For example, if you would like to work with a repository via the ''svn://'' protocol, you must 
 register the following factory:
 <java>
@@ -34,7 +34,7 @@ register the following factory:
             //handle exception       		
        }
 </java>
-After this step '''SVNRepositoryFactory''' knows how to create '''SVNRepository''' drivers specific for the ''svn://'' protocol since
+After this step [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepositoryFactory.html SVNRepositoryFactory] knows how to create [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html SVNRepository] drivers specific for the ''svn://'' protocol since
 it contains your registered factory. And further you create a driver itself:
 <java>
        try {
@@ -50,14 +50,14 @@ In '''SVNKit''' all repository urls are represented by the [http://svnkit.com/kb
 class. If a path string is not ''UTF-8'' encoded yet, use the '''SVNURL''''s [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/SVNURL.html#parseURIDecoded(java.lang.String) parseURIDecoded()] 
 method to create a new url representation (it will be encoded if necessary).
 <br />
-Then you pass the url representation to the '''SVNRepositoryFactory''' to create a new '''SVNRepository''' driver. So, 
+Then you pass the url representation to the [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepositoryFactory.html SVNRepositoryFactory] to create a new [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html SVNRepository] driver. So, 
 this way you can bind your driver to any repository location you would like. 
 
 [[Image:SVNRepository_connection2.png]]
 
 The diagram above illustrates how different drivers are created for different repository paths: one for the repository 
 root (''svn://host/path_to_root''), one for a directory (''svn://host/path_to_root/dirA'') and one for a file 
-(''svn://host/path_to_root/dirB/fileB1''). Most operations which '''SVNRepository''' driver can perform against a 
+(''svn://host/path_to_root/dirB/fileB1''). Most operations which [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html SVNRepository] driver can perform against a 
 repository, accept a repository path which may be one of two types:
 * path that does not start with ''"/"'' - is always relative to the location the driver is bound to
 * path that does start with ''"/"'' - is always absolute to the repository root (always starts at the top of the repository tree)
@@ -67,7 +67,7 @@ repository, accept a repository path which may be one of two types:
 == Using high-level layer ==
 When you use '''SVNKit''' for managing Working Copies you also should set up appropriate factory classes since 
 the high-level layer uses the low-level one for working with a repository. If you miss this initialization step 
-you may get an exception saying that '''SVNKit''' could not create an '''SVNRepository''' object for the provided 
+you may get an exception saying that '''SVNKit''' could not create an [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html SVNRepository] object for the provided 
 url.
 === SVN*Client classes ===
 All high-level operations for managing Working Copies are logically divided to [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/wc/package-summary.html SVN*Client] 

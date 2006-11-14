@@ -17,7 +17,7 @@ public class DisplayRepositoryTree {
 </java>
 We need a URL of the repository and credentials (here we use some dummy ones since we think an Apache will let us 
 read repository contents, but you may change them to some valid credentials to observe repositories closed to 
-unregistered persons). Having these parameters we create an '''SVNRepository''' driver for the selected location:
+unregistered persons). Having these parameters we create an [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html SVNRepository] driver for the selected location:
 <java>
         ...
         String url = "http://svn.svnkit.com/repos/svnkit/trunk/doc";
@@ -101,35 +101,20 @@ At the end of the program we can finish with printing the latest revision of our
 </java>
 And finally we run the program and have the following output in our console:
 
- /javadoc-files (author: 'sa'; revision: 1985; date: Sat Jan 14 23:04:00 NOVT 2006)
- /javadoc-files/overview.html (author: 'sa'; revision: 1985; date: Sat Jan 14 23:04:00 NOVT 2006)
- /javadoc-files/info.png (author: 'sa'; revision: 1287; date: Mon Aug 08 18:27:37 NOVST 2005)
- /javadoc-files/javadoc.css (author: 'sa'; revision: 1294; date: Tue Aug 09 02:46:29 NOVST 2005)
- /javadoc-files/SVNKit_API_Packages.jpg (author: 'sa'; revision: 1027; date: Fri Jul 08 22:33:09 NOVST 2005)
- /examples (author: 'sa'; revision: 2412; date: Thu Apr 27 00:36:08 NOVST 2006)
- /examples/svnkit-examples.iml (author: 'alex'; revision: 1012; date: Wed Jul 06 17:27:11 NOVST 2005)
- /examples/src (author: 'sa'; revision: 2412; date: Thu Apr 27 00:36:08 NOVST 2006)
- /examples/src/org (author: 'sa'; revision: 2412; date: Thu Apr 27 00:36:08 NOVST 2006)
- /examples/src/org/tmatesoft (author: 'sa'; revision: 2412; date: Thu Apr 27 00:36:08 NOVST 2006)
- /examples/src/org/tmatesoft/svn (author: 'sa'; revision: 2412; date: Thu Apr 27 00:36:08 NOVST 2006)
- /examples/src/org/tmatesoft/svn/examples (author: 'sa'; revision: 2412; date: Thu Apr 27 00:36:08 NOVST 2006)
- /examples/src/org/tmatesoft/svn/examples/wc (author: 'sa'; revision: 2408; date: Wed Apr 26 03:22:53 NOVST 2006)
- /examples/src/org/tmatesoft/svn/examples/wc/UpdateEventHandler.java (author: 'sa'; revision: 1987; date: Sun Jan 15 00:07:44 NOVT 2006)
- /examples/src/org/tmatesoft/svn/examples/wc/WCEventHandler.java (author: 'sa'; revision: 1987; date: Sun Jan 15 00:07:44 NOVT 2006)
- /examples/src/org/tmatesoft/svn/examples/wc/WorkingCopy.java (author: 'sa'; revision: 2408; date: Wed Apr 26 03:22:53 NOVST 2006)
- /examples/src/org/tmatesoft/svn/examples/wc/InfoHandler.java (author: 'sa'; revision: 1987; date: Sun Jan 15 00:07:44 NOVT 2006)
- /examples/src/org/tmatesoft/svn/examples/wc/CommitEventHandler.java (author: 'sa'; revision: 1987; date: Sun Jan 15 00:07:44 NOVT 2006)
- /examples/src/org/tmatesoft/svn/examples/wc/StatusHandler.java (author: 'sa'; revision: 1987; date: Sun Jan 15 00:07:44 NOVT 2006)
- /examples/src/org/tmatesoft/svn/examples/repository (author: 'sa'; revision: 2412; date: Thu Apr 27 00:36:08 NOVST 2006)
- /examples/src/org/tmatesoft/svn/examples/repository/Commit.java (author: 'sa'; revision: 2408; date: Wed Apr 26 03:22:53 NOVST 2006)
- /examples/src/org/tmatesoft/svn/examples/repository/DisplayFile.java (author: 'sa'; revision: 2408; date: Wed Apr 26 03:22:53 NOVST 2006)
- /examples/src/org/tmatesoft/svn/examples/repository/DisplayRepositoryTree.java (author: 'sa'; revision: 2412; date: Thu Apr 27 00:36:08 NOVST 2006)
- /examples/src/org/tmatesoft/svn/examples/repository/Replicate.java (author: 'sa'; revision: 2412; date: Thu Apr 27 00:36:08 NOVST 2006)
- /examples/src/org/tmatesoft/svn/examples/repository/History.java (author: 'sa'; revision: 2412; date: Thu Apr 27 00:36:08 NOVST 2006)
- /examples/src/org/tmatesoft/svn/examples/repository/Export.java (author: 'sa'; revision: 2412; date: Thu Apr 27 00:36:08 NOVST 2006)
-
+ Repository Root: http://svn.svnkit.com/repos/svnkit
+ Repository UUID: 0a862816-5deb-0310-9199-c792c6ae6c6e
+ 
+ /examples (author: 'sa'; revision: 2794; date: Tue Nov 14 03:21:11 NOVT 2006)
+ /examples/svnkit-examples.iml (author: 'alex'; revision: 2775; date: Fri Nov 10 02:08:45 NOVT 2006)
+ /examples/src (author: 'sa'; revision: 2794; date: Tue Nov 14 03:21:11 NOVT 2006)
+ /examples/src/org (author: 'sa'; revision: 2794; date: Tue Nov 14 03:21:11 NOVT 2006)
+ /examples/src/org/tmatesoft (author: 'sa'; revision: 2794; date: Tue Nov 14 03:21:11 NOVT 2006)
+ /examples/src/org/tmatesoft/svn (author: 'sa'; revision: 2794; date: Tue Nov 14 03:21:11 NOVT 2006)
+ /examples/src/org/tmatesoft/svn/examples (author: 'sa'; revision: 2794; date: Tue Nov 14 03:21:11 NOVT 2006)
+ /examples/src/org/tmatesoft/svn/examples/wc (author: 'alex'; revision: 2776; date: Fri Nov 10 02:25:08 NOVT 2006)
+ ......................................................
  ---------------------------------------------
- Repository latest revision: 2505
+ Repository latest revision: 2802
 
 ----
 Download the [http://svn.svnkit.com/repos/svnkit/trunk/doc/examples/src/org/tmatesoft/svn/examples/repository/DisplayRepositoryTree.java example program source code].

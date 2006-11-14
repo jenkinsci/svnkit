@@ -3,18 +3,39 @@
 <br />
 
 == Replicating an existing repository ==
+On the one hand SVNKit ver. 1.1 supports the Subversion ver. 1.4 feature of synchronizing two repositories. On a low-level 
+the [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html SVNRepository] class provides 
+a user [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html#replay(long,%20long,%20boolean,%20org.tmatesoft.svn.core.io.ISVNEditor) replay()] 
+method which accepts a client's commit editor to commit all changes made in a particular revision of the source 
+repository to a target one: 
+
+<java>
+    public abstract void replay(long lowRevision, long revision, boolean sendDeltas, ISVNEditor editor) throws SVNException;
+</java>
+
+<p>
+SVNKit ver. 1.1 also brings a high-level API to do synchronization just as the Subversion's '''svnsync''' utility does.
+[http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/wc/SVNAdminClient.java SVNAdminClient] provides such API methods as
+* [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/wc/SVNAdminClient.html#doInitialize(org.tmatesoft.svn.core.SVNURL,%20org.tmatesoft.svn.core.SVNURL) doInitialize()], similar to <code>svnsync initialize</code> command
+* [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/wc/SVNAdminClient.html#doSynchronize(org.tmatesoft.svn.core.SVNURL) doSynchronize()], similar to <code>svnsync synchronize</code> command
+* [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/wc/SVNAdminClient.html#doCopyRevisionProperties(org.tmatesoft.svn.core.SVNURL,%20long) doCopyRevisionProperties()], similar to <code>svnsync copy-revprops</code> command
+For repositories accessible through the ''file://'' protocol or running under servers which support the '''replay''' functionality, this way of synchronizing two repositories should work well. But what if we would like to 
+replicate a repository that is running under '''Apache''' or '''svnserve''' which don't support this functionality. In this case SVNKit provides its own feature that can replicate 
+repositories running under older servers - repository replicator.
+
+<p>
 The [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/replicator/package-summary.html repository replicator] is a tool 
 that gives you an ability to create clones of existing repositories. That is, the replicator copies revisions of existing 
 repositories to other clean repositories what results in two separate repositories containing the same versioned data.
 
 <p>
-The replicator is represented by the class [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/replicator/SVNRepositoryReplicator.html SVNRepositoryReplicator]. 
+The replicator is represented by the class [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/replicator/SVNRepositoryReplicator.html SVNRepositoryReplicator]. 
 Here's a lite class diagram demonstrating relationships between the replicator and other components which are involved by 
 the replicator:
 
 [[Image:Replicator_Diagram.png]]
 
-== Replicating a range of source repository revisions ==
+=== Repository replicator: replicating a range of source repository revisions ===
 There are two ways you can replicate repositories. The first one corresponds to using the replicator's 
 <java>
     public long replicateRepository(SVNRepository src, SVNRepository dst, long fromRevision, long toRevision) throws SVNException 
@@ -22,7 +43,7 @@ There are two ways you can replicate repositories. The first one corresponds to 
 method. 
 
 <p>
-Both source (<code>src</code>) and destination (<code>dst</code>) '''SVNRepository''' drivers must be created for 
+Both source (<code>src</code>) and destination (<code>dst</code>) [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html SVNRepository] drivers must be created for 
 the root locations of the source and destination repositories respectively. That is, only entire repository trees can be 
 replicated, but not sub-trees. A destination repository must be either completely clean (be at revision 0) or must already 
 contain all source repository revisions in the range starting from revision 1 and up to <code>fromRevision - 1</code> inclusvely. 
@@ -34,7 +55,7 @@ point of repository life start and doesn't contain any user valuable data. In al
 not in this range - <code>toRevision > 0</code> and <code>toRevision < </code> source repository latest revision - it 
 automatically defaults to the source repository latest revision.
 
-== Replicating a source repository incrementally ==
+=== Repository replicator: Replicating a source repository incrementally ===
 This way of replicator usage corresponds to using the replicator's 
 <java>
     public long replicateRepository(SVNRepository src, SVNRepository dst, boolean incremental) throws SVNException 
@@ -53,7 +74,7 @@ repository, you perform an incremental copy - copy those missing revisions. In f
 That is, if you set <code>incremental</code> to <code>false</code> the whole source repository is replicated. Otherwise 
 the source repository is incrementally copied up to the latest revision.
 
-== Replicating principles ==
+=== Repository replicator: replicating principles ===
 Starting with the first revision to copy the replicator obtains information about all changed paths in the particular 
 revision of the source repository. This information is analysed for the presence of paths copied in that revision. Then 
 the replicator obtains a [[Editing Operation Commit|commit editor]] for the destination repository. This editor is 
@@ -69,7 +90,7 @@ replication process. At the start of each replication iteration the replicator c
 <java>
     public void checkCancelled() throws SVNCancelException
 </java>
-To stop the replication process it's enough for the handler to throw an [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/SVNCancelException.html SVNCancelException] 
+To stop the replication process it's enough for the handler to throw an [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/SVNCancelException.html SVNCancelException] 
 exception. <code>replicateRepository(...)</code> method will throw it upper.
 
 <p>
@@ -99,9 +120,11 @@ You can use different repository access [[SVNKit Architecture|protocols supporte
 destination repositories. This provides you an ability to make a local back-up of a repository located on the server 
 machine.
 
-== Example: replicator in usage ==
-In this example we will replicate a local source repository to a local destination one. First we need to create and 
-populate a source repository with some data. Here's a function which populates a repository with some dummy data.
+== Example: synchronizing/replicating a repository ==
+In this example we will replicate a source repository to a local destination one. Our program should be able 
+to receive two args: first one is the url of the source repository and the second one is the path of the target 
+repository. If no args are provided, we create a local FSFS-type repository and fill it with some data. 
+Here's a function which populates a repository with some dummy data.
 <java>
     private static void populateSourceRepository(SVNRepository srcRepository) throws SVNException {
         /*
@@ -179,34 +202,86 @@ populate a source repository with some data. Here's a function which populates a
         System.out.println(info);
     }
 </java>
-And this function replicates the whole source repository to a target one:
-<java>
-    private static long replicateRepository(SVNRepository srcRepository, SVNRepository tgtRepository) throws SVNException {
-        long latestRevision = srcRepository.getLatestRevision();
-        SVNRepositoryReplicator replicator = SVNRepositoryReplicator.newInstance();
-        return replicator.replicateRepository(srcRepository, tgtRepository, 1, latestRevision);
-    }
-</java>
-And this is the main program:
+However if args are provided we must do some checks: 
+* if the source url is a ''file://'' url and there's no repository at this place, we also create a new one and fill it up with some data
+* if the source url is a ''file://'' url and there's already a repository at this place and its latest revision is 0, we fill it with some data
+* in all other cases (non ''file;//'' access and empty repositories accessible through ''file://'') we use the data from the source repository
+
 <java>
 public class Replicate {
 
     public static void main(String[] args) {
-        FSRepositoryFactory.setup();
-
         /*
+         * Default values:
          * source and target repository paths
          */
         String srcPath = "srcRepository";
         String tgtPath = "tgtRepository";
-        
+        String srcUrl = null;
+        /*
+         * Initializes the library (it must be done before ever using the
+         * library itself)
+         */
+        setupLibrary();
+
+        if (args != null) {
+            /*
+             * a source repository url
+             */
+            srcUrl = (args.length >= 1) ? args[0] : srcUrl;
+            /*
+             * a target repository path
+             */
+            tgtPath = (args.length >= 2) ? args[1] : tgtPath;
+        }
+
         SVNURL srcURL = null;
         SVNURL tgtURL = null;
         SVNRepository srcRepository = null;
         SVNRepository tgtRepository = null;
-        
+        boolean createSrcRepos = false;
+        boolean populateSrcRepos = false;
         try {
-            srcURL = SVNRepositoryFactory.createLocalRepository(new File(srcPath), false, false);
+            if (srcUrl != null) {
+                /*
+                 * If a source url was provided, using it as a source repository
+                 */
+                srcURL = SVNURL.parseURIDecoded(srcUrl);
+                if ("file".equals(srcURL.getProtocol())) {
+                    File srcReposDir = new File(srcURL.getPath());
+                    if (!srcReposDir.exists()) {
+                        /*
+                         * it's a local access scheme and src path does not exist - 
+                         * we'll need to create something
+                         */
+                        createSrcRepos = true;
+                        populateSrcRepos = true;
+                        srcPath = srcURL.getPath();
+                    } else {
+                        srcRepository = SVNRepositoryFactory.create(srcURL);
+                        if (srcRepository.getLatestRevision() == 0) {
+                            /*
+                             * it's a local access scheme, src path already
+                             * exists, but seems to be an empty repository - 
+                             * we'll need to create something in it
+                             */
+                            populateSrcRepos = true;
+                        }
+                    }
+                }
+            } else {
+                createSrcRepos = true;
+                populateSrcRepos = true;
+            }
+
+            if (createSrcRepos) {
+                srcURL = SVNRepositoryFactory.createLocalRepository(new File(srcPath), false, false);
+            }
+            
+            /*
+             * For the target repository we need to enable revision property 
+             * changes. 
+             */
             tgtURL = SVNRepositoryFactory.createLocalRepository(new File(tgtPath), true, false);
             
             srcRepository = SVNRepositoryFactory.create(srcURL);
@@ -220,36 +295,138 @@ public class Replicate {
             System.exit(1);
         }
 
+        /*
+         * Deault auth manager is used to cache a username in the 
+         * default Subversion credentials storage area.
+         */
         srcRepository.setAuthenticationManager(SVNWCUtil.createDefaultAuthenticationManager());
         tgtRepository.setAuthenticationManager(SVNWCUtil.createDefaultAuthenticationManager());
         
         try{
-            /*
-             * Fills up the source repository with some data.
-             */
-            populateSourceRepository(srcRepository);
+            if (populateSrcRepos) {
+                /*
+                 * Fills up the source repository with some data.
+                 */
+                populateSourceRepository(srcRepository);
+            }
             System.out.println();
             long srcLatestRevision = srcRepository.getLatestRevision();
             System.out.println("The latest source revision: " + srcLatestRevision);
             System.out.println();
             System.out.println("'" + srcURL + "' repository tree:");
             System.out.println();
-
             /*
              * Using the DisplayRepositoryTree example to show the source 
              * repository tree in the latest revision. 
              */
             DisplayRepositoryTree.listEntries(srcRepository, "");
-        }catch(SVNException svne){
+            System.out.println();
+        } catch(SVNException svne) {
             System.err.println("An error occurred while accessing source repository: " + svne.getErrorMessage().getFullMessage());
             System.exit(1);
         }
+        ...
+</java>
+First, we will try [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html#replay(long,%20long,%20boolean,%20org.tmatesoft.svn.core.io.ISVNEditor) replay()] 
+functionality for replicating the source repository. We'll use a simple initialization function that copies revision props 
+from revision 0 of the source repository to the same revision of the target one:
+<java>
+    private static void initializeRepository(SVNRepository fromRepos, SVNRepository toRepos) throws SVNException {
+        /*
+         * Initialization means we need to set necessary svn:sync- properties
+         * on revision 0 of the destination repository. But since our program
+         * is just an example, we copy only revision properties from the 
+         * source repository to the destination one.
+         */
+        copyRevisionProperties(fromRepos, toRepos, 0);
+    }
+</java>
+The routine for copying revision properties:
+<java>
+    private static void copyRevisionProperties(SVNRepository fromRepository, SVNRepository toRepository, long revision) throws SVNException {
+        Map revProps = fromRepository.getRevisionProperties(revision, null);
+        for (Iterator propNames = revProps.keySet().iterator(); propNames.hasNext();) {
+            String propName = (String) propNames.next();
+            String propValue = (String) revProps.get(propName);
+            toRepository.setRevisionPropertyValue(revision, propName, propValue);
+        }
+    }
+</java>
+And synchronization itself:
+<java>
+    private static long synchronizeRepository(SVNRepository fromRepos, SVNRepository toRepos) throws SVNException {
+        long lastMergedRevision = 0;
+        long fromLatestRevision = fromRepos.getLatestRevision();
+        long count = 0;
+        for (long currentRev = lastMergedRevision + 1; currentRev <= fromLatestRevision; currentRev++) {
+            ISVNEditor commitEditor = toRepos.getCommitEditor("", null);
+            fromRepos.replay(0, currentRev, true, commitEditor);
+            SVNCommitInfo info = commitEditor.closeEdit();
+                
+            if (info.getNewRevision() != currentRev) {
+                System.err.println("Commit created rev " + info.getNewRevision() + " but should have created " + currentRev);
+                System.exit(1);
+            }
+            System.out.println("Committed revision " + info.getNewRevision());
+            copyRevisionProperties(fromRepos, toRepos, currentRev);
+            count++;
+        }
+        return count;
+    }
+</java>
+If we can't replicate the source repository in case a server does not support '''replay''' functionality 
+we would like to use [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/replicator/SVNRepositoryReplicator.html SVNRepositoryReplicator]: 
+<java>
+    private static long replicateRepository(SVNRepository srcRepository, SVNRepository tgtRepository) throws SVNException {
+        long latestRevision = srcRepository.getLatestRevision();
+        SVNRepositoryReplicator replicator = SVNRepositoryReplicator.newInstance();
+        //use this handler to print out progress information on commits
+        replicator.setReplicationHandler(new ISVNReplicationHandler() {
 
+            public void revisionReplicated(SVNRepositoryReplicator source, SVNCommitInfo commitInfo) throws SVNException {
+                System.out.println("Committed revision " + commitInfo.getNewRevision());
+            }
+            
+            public void revisionReplicating(SVNRepositoryReplicator source, SVNLogEntry logEntry) throws SVNException {
+            }
+            
+            public void checkCancelled() throws SVNCancelException {
+            }
+        });
+        
+        return replicator.replicateRepository(srcRepository, tgtRepository, 1, latestRevision);
+    }
+</java>
+In the main program we call this routines:
+<java>
+        ...
+        
         try{
             /*
-             * Replicates the source repository to the target one.
+             * First let's try the standard replay way.
              */
-            long replicatedRevisions = replicateRepository(srcRepository, tgtRepository);
+            long replicatedRevisions = 0;
+            try {
+                initializeRepository(srcRepository, tgtRepository);
+                replicatedRevisions = synchronizeRepository(srcRepository, tgtRepository);
+            } catch (SVNException svne) {
+                if (svne.getErrorMessage().getErrorCode() != SVNErrorCode.RA_NOT_IMPLEMENTED) {
+                    throw svne;
+                }
+
+                //...else the server does not support replay functionality
+                tgtRepository = SVNRepositoryFactory.create(tgtURL);
+                replicatedRevisions = replicateRepository(srcRepository, tgtRepository);
+            }
+            
+            ...
+</java>
+If the server doe not support '''replay''' we get [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/SVNErrorCode.html#RA_NOT_IMPLEMENTED SVNErrorCode.RA_NOT_IMPLEMENTED] and 
+invoke our replicator. <code>tgtRepository is reinstantiated</code> since it may be locked by its [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html#getCommitEditor(java.lang.String,%20java.util.Map,%20boolean,%20org.tmatesoft.svn.core.io.ISVNWorkspaceMediator) getCommitEditor()] 
+method. At the end we print out the number of replicated revisions and the target repository tree:
+<java>
+            ...
+            
             System.out.println();
             System.out.println("Number of replicated revisions: " + replicatedRevisions);
             System.out.println();
@@ -264,6 +441,7 @@ public class Replicate {
             System.exit(1);
         }
     }
+}
 </java>
 Running a program:
  r1 by 'me' at Wed Apr 26 02:10:14 NOVST 2006
@@ -280,6 +458,11 @@ Running a program:
  /dirA/dirB/fileB.txt (author: 'me'; revision: 4; date: Wed Apr 26 02:10:15 NOVST 2006)
  /dirA/fileA.txt (author: 'me'; revision: 2; date: Wed Apr 26 02:10:14 NOVST 2006)
    
+ Committed revision 1
+ Committed revision 2
+ Committed revision 3
+ Committed revision 4
+ 
  Number of replicated revisions: 4
  
  'file:///G:/tgtRepository' repository tree:

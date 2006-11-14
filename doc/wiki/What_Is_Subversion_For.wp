@@ -69,6 +69,5 @@ an engine to speak to a Subversion repository on a repository access protocol la
 * implement model-dependent version control formats for local data;
 * replicate existing repositories;
 
-
 <br />
 [[Setting Up A Subversion Repository|>>]]

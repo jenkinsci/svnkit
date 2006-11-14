@@ -73,28 +73,25 @@ print its contents. We also print out versioned file properties.
         ...
 </java>
 And finally we run the program and have the following output in our console:
- File property: svn:eol-style=LF File property: svn:entry:revision=645 
- File property: svn:entry:checksum=6b55de2c879b135fec9657309f5c9769 
- File property: svn:wc:ra_dav:version-url=/svn/jsvn/!svn/ver/301/trunk/www/usage.html 
- File property: svn:entry:last-author=alex 
- File property: svn:entry:committed-date=2005-02-19T23:03:10.978491Z 
- File property: svn:entry:committed-rev=301 
- File contents: 
+ File property: svn:entry:revision=2802
+ File property: svn:entry:checksum=435f2f0d33d12907ddb6dfd611825ec9
+ File property: svn:wc:ra_dav:version-url=/repos/svnkit/!svn/ver/2795/trunk/www/license.html
+ File property: svn:entry:last-author=alex
+ File property: svn:entry:committed-date=2006-11-13T21:34:27.908657Z
+ File property: svn:entry:committed-rev=2795
+ File contents:
  
- <html><head><title>How to Use :: Documentation :: Pure Java Subversion (SVN) Client Library</title>
-
- <meta name="keywords" content="Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development">   
- <meta name="description" content="Pure Java Subversion Library. Open Source, provided by TMate Software">
-
- <style>
- html body {
-     margin: 0px;
-     padding: 0px;
-     padding-top: 0.2em;
-     margin-left: 1em;
+ <html>
+ <head>
+ <link rel="shortcut icon" href="img/favicon.ico"/>
+ <title>SVNKit&nbsp;::&nbsp;License</title>
+ </head>
+ <body>
+ <h1>The TMate Open Source License.</h1>
+ <pre>
  ......................................
- --------------------------------------------- 
- Repository latest revision: 645
+ ---------------------------------------------
+ Repository latest revision: 2802
 
 ----
 Download the [http://svn.svnkit.com/repos/svnkit/trunk/doc/examples/src/org/tmatesoft/svn/examples/repository/DisplayFile.java example program source code].
