@@ -4,9 +4,6 @@ contrib/javahl/bin
 contrib/sequence/bin
 contrib/sequence/bin-test
 doc/examples/bin
-javasvn-test/bin
-javasvn-test/python-tests-log.xml
-javasvn-test/test.properties
 /javasvn.iws
 /lib
 svnkit-eclipse/bin

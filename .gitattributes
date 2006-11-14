@@ -74,15 +74,6 @@ doc/wiki/main.vm -text
 doc/wiki/repository_tree.png -text
 doc/wiki/svnkit_architecture.png -text
 doc/wiki/svnrepository_connection.png -text
-javasvn-test/apache/python.template.conf eol=lf
-javasvn-test/apache/users eol=lf
-javasvn-test/logging.properties -text
-javasvn-test/src/org/tmatesoft/svn/core/internal/io/fs/test/PropertyHandler.java -text
-javasvn-test/src/org/tmatesoft/svn/core/internal/io/fs/test/SVNRepositoryReplicationTest.java -text
-javasvn-test/src/org/tmatesoft/svn/core/test/SpecialTest.java -text
-javasvn-test/test.mac.properties eol=lf
-javasvn-test/test.unix.properties eol=lf
-javasvn-test/test.windows.properties eol=crlf
 svnkit-eclipse/org.tmatesoft.svnkit.feature/feature.properties eol=lf
 svnkit-eclipse/org.tmatesoft.svnkit.feature/feature.xml eol=lf
 svnkit-eclipse/org.tmatesoft.svnkit/.options eol=lf
