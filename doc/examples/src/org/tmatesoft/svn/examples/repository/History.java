@@ -37,27 +37,24 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
  * As an example here's a part of one of the program layouts (for the default
  * values):
  * 
- * --------------------------------------------- 
- * revision: 733 
+ * ---------------------------------------------
+ * revision: 1240
  * author: alex
- * date: Thu Jun 09 20:57:16 NOVST 2005 
- * log message: "jorunal" branch renamed to more meaningful name.
- * 
- * 
- * changed paths: 
- * A /branches/0.9.0 (from /branches/jorunal revision 732) 
- * D /branches/jorunal 
- * --------------------------------------------- 
- * revision: 739
- * author: sa 
- * date: Fri Jun 10 16:26:07 NOVST 2005 
- * log message: export example
- * 
- * changed paths: 
- * M /branches/0.9.0/doc/examples/src/org/tmatesoft/svn/examples/repository/Commit.java
- * M /branches/0.9.0/doc/examples/src/org/tmatesoft/svn/examples/repository/DisplayFile.java
- * A /branches/0.9.0/doc/examples/src/org/tmatesoft/svn/examples/repository/Export.java
- * 
+ * date: Tue Aug 02 19:52:49 NOVST 2005
+ * log message: 0.9.0 is now trunk
+ *
+ * changed paths:
+ *  A  /trunk (from /branches/0.9.0 revision 1239)
+ * ---------------------------------------------
+ * revision: 1263
+ * author: sa
+ * date: Wed Aug 03 21:19:55 NOVST 2005
+ * log message: updated examples, javadoc files
+ *
+ * changed paths:
+ *  M  /trunk/doc/javadoc-files/javadoc.css
+ *  M  /trunk/doc/javadoc-files/overview.html
+ *  M  /trunk/doc/examples/src/org/tmatesoft/svn/examples/wc/StatusHandler.java
  * ...
  * 
  */

@@ -20,7 +20,7 @@ import org.tmatesoft.svn.core.SVNException;
  * 
  * @version 1.1.0
  * @author  TMate Software Ltd.
- * @since   1.1, new in SVN 1.4
+ * @since   1.1
  */
 public interface ISVNDiffStatusHandler {
     

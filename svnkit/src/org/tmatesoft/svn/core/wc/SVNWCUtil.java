@@ -263,7 +263,8 @@ public class SVNWCUtil {
      *                                  <code>versionedDir</code> is versioned and the WC root
      *                                  (or the root of externals if <code>considerExternalAsRoot</code>
      *                                  is <span class="javakeyword">true</span>), otherwise <span class="javakeyword">false</span>
-     * @throws SVNException                                  
+     * @throws SVNException          
+     * @since                           1.1                        
      */
     public static boolean isWorkingCopyRoot(final File versionedDir) throws SVNException {
         SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);

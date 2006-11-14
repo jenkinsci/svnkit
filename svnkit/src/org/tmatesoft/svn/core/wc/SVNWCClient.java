@@ -939,6 +939,8 @@ public class SVNWCClient extends SVNBasicClient {
      *                                     <li><code>path</code> doesn't exist and
      *                                     <code>mkdir</code> is <span class="javakeyword">false</span>
      *                                     <li><code>path</code> is the root directory of the Working Copy
+     *                                     </ul>
+     * @since                              1.1
      */
     public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, boolean recursive, boolean includeIgnored) throws SVNException {
         path = new File(SVNPathUtil.validateFilePath(path.getAbsolutePath()));

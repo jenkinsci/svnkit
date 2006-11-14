@@ -29,7 +29,7 @@ In other words we want to:
 * add /nodeB/nodeD
 
 Now we'll discuss how to do these changes using a commit editor. We'll assume that we are working with a local 
-repository. First of all we should obtain such an editor to carry out our plans. We create an '''SVNRepository''' driver 
+repository. First of all we should obtain such an editor to carry out our plans. We create an [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html SVNRepository] driver 
 bounded to the node ''/nodeB'' (since all our planned changes will be performed under this node):
 <java>
     ...
@@ -47,7 +47,7 @@ commit editor:
     ISVNEditor editor = repository.getCommitEditor(logMessage, null/*locks*/, true/*keepLocks*/, null/*mediator*/);
     ...
 </java>
-Now when we have got an editor we can not call any reposiotory access methods of our '''SVNRepository''' driver till we 
+Now when we have got an editor we can not call any reposiotory access methods of our [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html SVNRepository] driver till we 
 call the editor's [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html#closeEdit() closeEdit()] 
 method. The following code snippet demonstrates how to prepare our planned changes in a single transaction. Main steps 
 of the editing a repository tree process are numbered to the left of the code:
@@ -135,7 +135,7 @@ not match, checksums must also be different:
     editor.closeDir();
 </java>
 In the step 5 we are adding a new item, not copying an existing one. But we could copy it, for example, if we had an 
-item, say, ''itemX''. In this case, if the copy ancestor is located under the same directory which our '''SVNRepository''' 
+item, say, ''itemX''. In this case, if the copy ancestor is located under the same directory which our [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html SVNRepository] 
 is bound to, we may pass a relative path, for example, ''itemX'' or ''nodeC/itemX''. But If the ancestor is not under 
 ''/nodeB'' we must pass an absolute in-repository path, like ''/nodeX/itemX''. If you would like only to copy an item 
 (file) without changes, you don't need to apply any delta - Subversion effectively creates copies of items making an actual 
@@ -163,7 +163,7 @@ wrong. When we've got an exception from the editor we should abort it to purge t
         editor.abortEdit();
     }
 </java>
-After we have closed the editor we may go on using our '''SVNRepository''' driver. The following diagram illustrates our 
+After we have closed the editor we may go on using our [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html SVNRepository] driver. The following diagram illustrates our 
 changes step by step. Numbers in the diagram correspond to numbers of our steps in 
 the code:
 

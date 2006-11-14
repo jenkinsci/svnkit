@@ -30,9 +30,9 @@ Let's imagine we have got the following Working Copy tree:
 [[Image:Update_Tree1.png]]
 
 A user performs a recursive update to the latest (HEAD) revision on the root of the Working Copy. How does '''SVNKit''' make a report of local 
-revisions in this case? First of all, reports are provided to an '''SVNRepository''' driver through an 
+revisions in this case? First of all, reports are provided to an [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html SVNRepository] driver through an 
 [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/ISVNReporterBaton.html ISVNReporterBaton] implementation. 
-When you pass it to an update method of '''SVNRepository''' the latter one calls the baton's [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/ISVNReporterBaton.html#report(org.tmatesoft.svn.core.io.ISVNReporter) report()] 
+When you pass it to an update method of [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html SVNRepository] the latter one calls the baton's [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/ISVNReporterBaton.html#report(org.tmatesoft.svn.core.io.ISVNReporter) report()] 
 method passing it an '''ISVNReporter''' object.
 
 <p>
@@ -185,7 +185,7 @@ If any method of '''ISVNReporter''' throws an exception you should abort the reo
 </java>
 
 == Receiving changes from a server-side ==
-Now we know that when you call an update method of an '''SVNRepository''' driver, the driver first invokes you reporter 
+Now we know that when you call an update method of an [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html SVNRepository] driver, the driver first invokes you reporter 
 baton to get a client's report of a local tree state:
 <java>
     ...

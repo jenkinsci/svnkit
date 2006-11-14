@@ -222,7 +222,6 @@ public class Replicate {
         }
 
         try{
-            
             /*
              * First let's try the standard replay way.
              */
@@ -239,6 +238,13 @@ public class Replicate {
                  * replication engine. It could have happened if we used http:// or
                  * svn:// access protocols, and the server had binaries younger than the 
                  * Subversion 1.4.0   
+                 */
+                
+                /*
+                 * Create a new SVNRepository for the target url, since the one we
+                 * used may be locked by a commit editor it provides for committing, in
+                 * this case we'll get an SVNException saying that '..methods of SVNRepository
+                 * are not reenterable'.
                  */
                 tgtRepository = SVNRepositoryFactory.create(tgtURL);
                 replicatedRevisions = replicateRepository(srcRepository, tgtRepository);

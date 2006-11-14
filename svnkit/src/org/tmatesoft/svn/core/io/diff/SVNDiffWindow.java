@@ -49,7 +49,8 @@ public class SVNDiffWindow {
     public static final byte[] SVN_HEADER = new byte[] {'S', 'V', 'N', '\0'};
 
     /**
-     * Bytes of the delta header of a compressed diff window. 
+     * Bytes of the delta header of a compressed diff window.
+     * @since 1.1, new in Subversion 1.4 
      */
     public static final byte[] SVN1_HEADER = new byte[] {'S', 'V', 'N', '\1'};
     
@@ -447,6 +448,7 @@ public class SVNDiffWindow {
      *                        non-compressed window is written with {@link #SVN_HEADER} 
      *                        (again if <code>writeHeader</code> is <span class="javakeyword">true</span>) 
      * @throws IOException
+     * @since                 1.1
      */
     public void writeTo(OutputStream os, boolean writeHeader, boolean compress) throws IOException {
         if (writeHeader) {

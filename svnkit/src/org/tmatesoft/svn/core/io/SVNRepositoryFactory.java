@@ -208,6 +208,7 @@ public abstract class SVNRepositoryFactory {
      *                                       created repository
      * @throws SVNException
      * @see                                  #createLocalRepository(File, String, boolean, boolean)
+     * @since                                1.1
      */
     public static SVNURL createLocalRepository(File path, boolean enableRevisionProperties, boolean force) throws SVNException {
         return createLocalRepository(path, null, enableRevisionProperties, force);
@@ -243,6 +244,7 @@ public abstract class SVNRepositoryFactory {
      *                                       created repository
      * @throws SVNException
      * @see                                  #createLocalRepository(File, boolean, boolean)
+     * @since                                1.1
      */
     public static SVNURL createLocalRepository(File path, String uuid, boolean enableRevisionProperties, boolean force) throws SVNException {
         SVNFileType fType = SVNFileType.getType(path);
