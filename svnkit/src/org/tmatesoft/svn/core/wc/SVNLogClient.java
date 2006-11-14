@@ -168,10 +168,11 @@ public class SVNLogClient extends SVNBasicClient {
      * @param  startRevision  a revision for an operation to start from
      * @param  endRevision    a revision for an operation to stop at
      * @param  force          forces operation to run (all files to be treated as 
-     *                        text, no matter what svn has inferred from the mime-type 
+     *                        text, no matter what SVNKit has inferred from the mime-type 
      *                        property) 
      * @param  handler        a caller's handler to process annotation information
      * @throws SVNException
+     * @since                 1.1
      */
     public void doAnnotate(File path, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean force, ISVNAnnotateHandler handler) throws SVNException {
         if (startRevision == null || !startRevision.isValid()) {
@@ -265,11 +266,12 @@ public class SVNLogClient extends SVNBasicClient {
      * @param  startRevision  a revision for an operation to start from
      * @param  endRevision    a revision for an operation to stop at
      * @param  force          forces operation to run (all files to be treated as 
-     *                        text, no matter what svn has inferred from the mime-type 
+     *                        text, no matter what SVNKit has inferred from the mime-type 
      *                        property) 
      * @param  handler        a caller's handler to process annotation information
      * @param  inputEncoding  a desired character set (encoding) of text lines
      * @throws SVNException
+     * @since                 1.1
      */
 	public void doAnnotate(SVNURL url, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean force, ISVNAnnotateHandler handler, String inputEncoding) throws SVNException {
 	    if (startRevision == null || !startRevision.isValid()) {
@@ -528,6 +530,7 @@ public class SVNLogClient extends SVNBasicClient {
      * @param  handler         a caller's log entry handler
      * @throws SVNException
      * @see                    #doLog(File[], SVNRevision, SVNRevision, boolean, boolean, long, ISVNLogEntryHandler)
+     * @since                  1.1, new in Subversion 1.4
      */
     public void doLog(SVNURL url, String[] paths, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean reportPaths, long limit, final ISVNLogEntryHandler handler) throws SVNException {
         if (startRevision.isValid() && !endRevision.isValid()) {

@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.SVNURL;
  * 
  * @version 1.1.0
  * @author  TMate Software Ltd.
+ * @since   1.1
  */
 public class SVNDiffStatus {
     

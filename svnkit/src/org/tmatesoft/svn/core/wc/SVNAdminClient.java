@@ -135,6 +135,7 @@ public class SVNAdminClient extends SVNBasicClient {
      * @param force                       forces operation to run
      * @return                            a local URL (file:///) of a newly created repository
      * @throws SVNException
+     * @since                             1.1 
      */
     public SVNURL doCreateRepository(File path, String uuid, boolean enableRevisionProperties, boolean force) throws SVNException {
         return SVNRepositoryFactory.createLocalRepository(path, uuid, enableRevisionProperties, force);
@@ -154,6 +155,7 @@ public class SVNAdminClient extends SVNBasicClient {
      * @param  revision       a particular revision of the source repository to copy revision properties
      *                        from 
      * @throws SVNException   
+     * @since                 1.1, new in Subversion 1.4
      */
     public void doCopyRevisionProperties(SVNURL toURL, long revision) throws SVNException {
         SVNRepository toRepos = createRepository(toURL, true);
@@ -198,6 +200,7 @@ public class SVNAdminClient extends SVNBasicClient {
      * @param  fromURL         a source repository url
      * @param  toURL           a destination repository url
      * @throws SVNException   
+     * @since                  1.1, new in Subversion 1.4
      */
     public void doInitialize(SVNURL fromURL, SVNURL toURL) throws SVNException {
         SVNRepository toRepos = createRepository(toURL, true);
@@ -260,6 +263,7 @@ public class SVNAdminClient extends SVNBasicClient {
      * @param  fromURL        a url of a repository to copy from     
      * @param  toURL          a destination repository url
      * @throws SVNException
+     * @since                 1.1
      */
     public void doCompleteSynchronize(SVNURL fromURL, SVNURL toURL) throws SVNException {
         try {
@@ -289,6 +293,7 @@ public class SVNAdminClient extends SVNBasicClient {
      * 
      * @param  toURL          a destination repository url
      * @throws SVNException
+     * @since                 1.1, new in Subversion 1.4
      */
     public void doSynchronize(SVNURL toURL) throws SVNException {
         SVNRepository toRepos = createRepository(toURL, true);

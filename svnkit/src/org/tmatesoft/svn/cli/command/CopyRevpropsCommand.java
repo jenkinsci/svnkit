@@ -25,6 +25,7 @@ import org.tmatesoft.svn.util.SVNDebugLog;
 /**
  * @version 1.1.0
  * @author  TMate Software Ltd.
+ * @since   1.1
  */
 public class CopyRevpropsCommand extends SVNCommand {
 

@@ -90,21 +90,25 @@ public class SVNProperty {
     
     /**
      * <span class="javastring">"has-props"</span> SVN untweakable metaproperty.
+     * @since 1.1, new in Subversion 1.4
      */
     public static final String HAS_PROPS = "has-props";
 
     /**
      * <span class="javastring">"has-prop-mods"</span> SVN untweakable metaproperty.
+     * @since 1.1, new in Subversion 1.4
      */
     public static final String HAS_PROP_MODS = "has-prop-mods";
 
     /**
      * <span class="javastring">"cachable-props"</span> SVN untweakable metaproperty.
+     * @since 1.1, new in Subversion 1.4
      */
     public static final String CACHABLE_PROPS = "cachable-props";
 
     /**
      * <span class="javastring">"present-props"</span> SVN untweakable metaproperty.
+     * @since 1.1, new in Subversion 1.4
      */
     public static final String PRESENT_PROPS = "present-props";
     
@@ -466,7 +470,8 @@ public class SVNProperty {
      * @param  propName a property name
      * @return          the property value <span class="javastring">"*"</span>, or 
      *                  <span class="javakeyword">null</span> if the property is not boolean
-     * @see             #isBooleanProperty(String) 
+     * @see             #isBooleanProperty(String)
+     * @since           1.1
      */
     public static String getValueOfBooleanProperty(String propName) {
         if (SVNProperty.EXECUTABLE.equals(propName) || SVNProperty.NEEDS_LOCK.equals(propName) || SVNProperty.SPECIAL.equals(propName)) {
@@ -481,6 +486,7 @@ public class SVNProperty {
      * @param  propName  a property name
      * @return           <span class="javakeyword">true</span> if boolean, 
      *                   otherwise <span class="javakeyword">false</span>
+     * @since            1.1
      */
     public static boolean isBooleanProperty(String propName) {
         return SVNProperty.EXECUTABLE.equals(propName) || SVNProperty.SPECIAL.equals(propName) || SVNProperty.NEEDS_LOCK.equals(propName);

@@ -70,27 +70,32 @@ public class SVNRevisionProperty {
     public static final String DATE = "svn:date";
     
     /**
-     * <span class="javastring">"svn:sync-lock"</span> revision property. 
+     * <span class="javastring">"svn:sync-lock"</span> revision property.
+     * @since 1.1, new in Subversion 1.4 
      */
     public static final String LOCK = "svn:sync-lock";
     
     /**
-     * <span class="javastring">"svn:sync-from-url"</span> revision property. 
+     * <span class="javastring">"svn:sync-from-url"</span> revision property.
+     * @since 1.1, new in Subversion 1.4 
      */
     public static final String FROM_URL = "svn:sync-from-url";
 
     /**
-     * <span class="javastring">"svn:sync-from-uuid"</span> revision property. 
+     * <span class="javastring">"svn:sync-from-uuid"</span> revision property.
+     * @since 1.1, new in Subversion 1.4 
      */
     public static final String FROM_UUID = "svn:sync-from-uuid";
     
     /**
-     * <span class="javastring">"svn:sync-last-merged-rev"</span> revision property. 
+     * <span class="javastring">"svn:sync-last-merged-rev"</span> revision property.
+     * @since 1.1, new in Subversion 1.4 
      */
     public static final String LAST_MERGED_REVISION = "svn:sync-last-merged-rev";
 
     /**
-     * <span class="javastring">"svn:sync-currently-copying"</span> revision property. 
+     * <span class="javastring">"svn:sync-currently-copying"</span> revision property.
+     * @since 1.1, new in Subversion 1.4 
      */
     public static final String CURRENTLY_COPYING = "svn:sync-currently-copying";
     

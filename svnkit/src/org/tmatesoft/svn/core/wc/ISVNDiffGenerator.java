@@ -192,6 +192,7 @@ public interface ISVNDiffGenerator {
      * @param  rev1           the first diff revision
      * @param  rev2           the second diff revision
      * @throws SVNException   
+     * @since                 1.1
      */
     public void displayDeletedDirectory(String path, String rev1, String rev2) throws SVNException;
 
@@ -202,6 +203,7 @@ public interface ISVNDiffGenerator {
      * @param  rev1           the first diff revision
      * @param  rev2           the second diff revision
      * @throws SVNException
+     * @since                 1.1
      */
     public void displayAddedDirectory(String path, String rev1, String rev2) throws SVNException;
 }

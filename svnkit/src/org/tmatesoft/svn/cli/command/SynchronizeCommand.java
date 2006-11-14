@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.wc.SVNClientManager;
 /**
  * @version 1.1.0
  * @author  TMate Software Ltd.
+ * @since   1.1
  */
 public class SynchronizeCommand extends SVNCommand {
 

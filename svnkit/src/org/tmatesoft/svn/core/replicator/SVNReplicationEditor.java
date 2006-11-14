@@ -49,6 +49,7 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  * @version 1.1.0
  * @author  TMate Software Ltd.
  * @see     org.tmatesoft.svn.core.io.SVNRepository
+ * @since   1.1
  */
 public class SVNReplicationEditor implements ISVNEditor {
 
