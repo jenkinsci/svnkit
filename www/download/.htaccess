@@ -1,7 +1,7 @@
 AddHandler server-parsed .html
 AddType application/octet-stream .jar
-Action rss /svn/download/rss.php
-Action rss2 /svn/download/rss2.php
+Action rss /download/rss.php
+Action rss2 /download/rss2.php
 
 <FilesMatch (rss.xml)>
 ForceType rss

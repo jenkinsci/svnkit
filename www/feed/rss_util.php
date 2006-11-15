@@ -52,7 +52,7 @@ if (preg_match_all("/<li><a href=\"(.*)\/\">(.*\..*\..*)(<\/a>)<\/li>/", $conten
        $standalone_name = "org.tmatesoft.svn_" . $build . ".standalone.zip";
        $eclipse_name = "org.tmatesoft.svn_" . $build . ".eclipse.zip";
        $src_name = "org.tmatesoft.svn_" . $build . ".src.zip";
-       $standalone_file = $_SERVER["DOCUMENT_ROOT"] . "/svn/" . $standalone_name;
+       $standalone_file = $_SERVER["DOCUMENT_ROOT"] . "/" . $standalone_name;
 
        if (!file_exists($standalone_file)) {
           continue;  
@@ -83,11 +83,10 @@ if (preg_match_all("/<li><a href=\"(.*)\/\">(.*\..*\..*)(<\/a>)<\/li>/", $conten
        $html_description  = "<tr><td colspan=\"2\">&nbsp;" . $date_string . ", version <b>" . $build . "</b></td></tr>";
        $html_description .= "<tr><td colspan=\"2\">&nbsp;Changelog:</td></tr>";
        $html_description .= "<tr><td colspan=\"2\"><pre>" . $changelog_str . "</pre>";
-       $python_tests_url  = "/svn/download/test-results.php?fileurl=" . $test_results_xml_url . "&build=" . $build;
+       $python_tests_url  = "/download/test-results.php?fileurl=" . $test_results_xml_url . "&build=" . $build;
 
        $html_description .= "<a href=\"" . $changelog_url . "\">full changelog up to this build</a>&nbsp;&nbsp;<a href=\"" . $python_tests_url . "\">tests results</a></td></tr>";
        
-//       $html_description .= "<tr bgcolor=\"#EAEAEA\"><td>&nbsp;Python Tests Results&nbsp;</td><td><a href=\"/svn/download/test-results.php?fileurl=" . $test_results_xml_url . "&build=" . $build . "\">" . $build. "-tests" . "</a></td></tr>";
        $html_description .= "<tr bgcolor=\"#EAEAEA\"><td>&nbsp;Standalone Version&nbsp;</td><td><a href=\"" . $standalone_link . "\">" . $standalone_name . "</a></td></tr>";
        $html_description .= "<tr bgcolor=\"#EAEAEA\"><td>&nbsp;Source Code Archive&nbsp;</td><td><a href=\"" . $src_url . "\">" . $src_name . " </a></td></tr>";
        $html_description .= "<tr bgcolor=\"#EAEAEA\"><td>&nbsp;Eclipse Update Site Archive&nbsp;</td><td><a href=\"" . $eclipse_url . "\">" . $eclipse_name . "</a></td></tr>";
@@ -132,7 +131,7 @@ function read_contents($url) {
 
 function emergency_html() {
 // Open a known directory, and proceed to read its contents
-$dir = $_SERVER["DOCUMENT_ROOT"] . "/svn/";
+$dir = $_SERVER["DOCUMENT_ROOT"] . "/";
 $result = "";
 if (is_dir($dir)) {
    if ($dh = opendir($dir)) {
