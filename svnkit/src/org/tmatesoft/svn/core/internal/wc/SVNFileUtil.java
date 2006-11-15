@@ -47,6 +47,12 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  */
 public class SVNFileUtil {
 
+    private static final String ID_COMMAND;
+    private static final String LN_COMMAND;
+    private static final String LS_COMMAND;
+    private static final String CHMOD_COMMAND;
+    private static final String ATTRIB_COMMAND;
+
     public final static boolean isWindows;
     
     public final static OutputStream DUMMY_OUT = new OutputStream() {
@@ -68,12 +74,33 @@ public class SVNFileUtil {
 
     static {
         String osName = System.getProperty("os.name");
-        boolean windows = osName != null
-                && osName.toLowerCase().indexOf("windows") >= 0;
+        boolean windows = osName != null && osName.toLowerCase().indexOf("windows") >= 0;
         if (!windows && osName != null) {
             windows = osName.toLowerCase().indexOf("os/2") >= 0;
         }
         isWindows = windows;
+        
+        String prefix = "svnkit.program.";
+
+        Properties props = new Properties();
+        InputStream is = SVNFileUtil.class.getClassLoader().getResourceAsStream("svnkit.runtime.properties");
+        if (is != null) {
+            try {
+                props.load(is);
+            } catch (IOException e) {
+            } finally {
+                try {
+                    is.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+
+        ID_COMMAND = props.getProperty(prefix + "id", "id");
+        LN_COMMAND = props.getProperty(prefix + "ln", "ln");
+        LS_COMMAND = props.getProperty(prefix + "ls", "ls");
+        CHMOD_COMMAND = props.getProperty(prefix + "chmod", "chmod");
+        ATTRIB_COMMAND = props.getProperty(prefix + "attrib", "attrib");
     }
 
     public static String getBasePath(File file) {
@@ -184,10 +211,10 @@ public class SVNFileUtil {
                 deleteFile(tmp);
             } else {
                 if (isWindows) {
-                    Process p = Runtime.getRuntime().exec("attrib -R \"" + file.getAbsolutePath() + "\"");
+                    Process p = Runtime.getRuntime().exec(ATTRIB_COMMAND + " -R \"" + file.getAbsolutePath() + "\"");
                     p.waitFor();
                 } else {
-                    execCommand(new String[] { "chmod", "ugo+w", file.getAbsolutePath() });
+                    execCommand(new String[] { CHMOD_COMMAND, "ugo+w", file.getAbsolutePath() });
                 }
             }
         } catch (Throwable th) {
@@ -202,7 +229,7 @@ public class SVNFileUtil {
             return;
         }
         try {
-            execCommand(new String[] { "chmod", executable ? "ugo+x" : "ugo-x", file.getAbsolutePath() });
+            execCommand(new String[] { CHMOD_COMMAND, executable ? "ugo+x" : "ugo-x", file.getAbsolutePath() });
         } catch (Throwable th) {
             SVNDebugLog.getDefaultLog().info(th);
         }
@@ -231,7 +258,7 @@ public class SVNFileUtil {
         if (isWindows || file == null) {
             return false;
         }
-        String line = execCommand(new String[] { "ls", "-ld", file.getAbsolutePath() });
+        String line = execCommand(new String[] { LS_COMMAND, "-ld", file.getAbsolutePath() });
         return line != null && line.startsWith("l");
     }
 
@@ -337,7 +364,7 @@ public class SVNFileUtil {
     }
 
     public static boolean createSymlink(File link, String linkName) {
-        execCommand(new String[] { "ln", "-s", linkName, link.getAbsolutePath() });
+        execCommand(new String[] { LN_COMMAND, "-s", linkName, link.getAbsolutePath() });
         return isSymlink(link);
     }
 
@@ -368,7 +395,7 @@ public class SVNFileUtil {
         if (isWindows || link == null) {
             return null;
         }
-        String ls = execCommand(new String[] { "ls", "-ld", link.getAbsolutePath() });
+        String ls = execCommand(new String[] { LS_COMMAND, "-ld", link.getAbsolutePath() });
         if (ls == null || ls.lastIndexOf(" -> ") < 0) {
             return null;
         }
@@ -702,7 +729,7 @@ public class SVNFileUtil {
         if (isWindows) {
             return false;
         }
-        String[] commandLine = new String[] { "ls", "-ln",
+        String[] commandLine = new String[] { LS_COMMAND, "-ln",
                 file.getAbsolutePath() };
         String line = execCommand(commandLine);
         if (line == null || line.indexOf(' ') < 0) {
@@ -979,7 +1006,7 @@ public class SVNFileUtil {
             return System.getProperty("user.name");
         }
         if (ourUserID == null) {
-            ourUserID = execCommand(new String[] { "id", "-u" });
+            ourUserID = execCommand(new String[] { ID_COMMAND, "-u" });
             if (ourUserID == null) {
                 ourUserID = "0";
             }
@@ -992,7 +1019,7 @@ public class SVNFileUtil {
             return System.getProperty("user.name");
         }
         if (ourGroupID == null) {
-            ourGroupID = execCommand(new String[] { "id", "-g" });
+            ourGroupID = execCommand(new String[] { ID_COMMAND, "-g" });
             if (ourGroupID == null) {
                 ourGroupID = "0";
             }
