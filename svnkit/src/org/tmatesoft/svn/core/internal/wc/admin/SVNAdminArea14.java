@@ -1536,7 +1536,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
                     File tmpFile2 = SVNFileUtil.createUniqueFile(tmpFile.getParentFile(), fileName, ".tmp");
                     try {
                         String tmpFile2Path = SVNFileUtil.getBasePath(tmpFile2);
-                        SVNTranslator.translate(this, fileName, fileName, tmpFile2Path, false, false);
+                        SVNTranslator.translate(this, fileName, fileName, tmpFile2Path, false);
                         modified = !SVNFileUtil.compareFiles(tmpFile, tmpFile2, null);
                     } catch (SVNException svne) {
                         SVNErrorMessage err = SVNErrorMessage.create(errorCode, "Error comparing ''{0}'' and ''{1}''", new Object[] {workingFile, tmpFile});
@@ -1599,11 +1599,10 @@ public class SVNAdminArea14 extends SVNAdminArea {
                 if (SVNFileUtil.isWindows || !special) {
                     if (fileType == SVNFileType.FILE) {
                         SVNTranslator.translate(this, fileName, 
-                                SVNFileUtil.getBasePath(tmpFile), SVNFileUtil.getBasePath(tmpFile2), true, false);
+                                SVNFileUtil.getBasePath(tmpFile), SVNFileUtil.getBasePath(tmpFile2), true);
                     } else {
                         SVNTranslator.translate(this, fileName, fileName,
-                                SVNFileUtil.getBasePath(tmpFile2), true,
-                                false);
+                                SVNFileUtil.getBasePath(tmpFile2), true);
                     }
                     if (!SVNFileUtil.compareFiles(tmpFile2, wcFile, null)) {
                         SVNFileUtil.copyFile(tmpFile2, wcFile, true);

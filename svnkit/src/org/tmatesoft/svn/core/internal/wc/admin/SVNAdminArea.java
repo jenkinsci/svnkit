@@ -195,7 +195,7 @@ public abstract class SVNAdminArea {
                     } else {
                         String tmpPath = SVNAdminUtil.getTextBasePath(text.getName(), true);
                         tmpFile = getFile(tmpPath);
-                        SVNTranslator.translate(this, text.getName(), text.getName(), tmpPath, false, false);
+                        SVNTranslator.translate(this, text.getName(), text.getName(), tmpPath, false);
                         textStream = SVNFileUtil.openFileForReading(getFile(tmpPath));
                     }
                 } else if (needsTranslation) {
@@ -359,7 +359,7 @@ public abstract class SVNAdminArea {
 
         File src = getBaseFile(name, false);
         File dst = getFile(name);
-        SVNTranslator.translate(this, name, SVNFileUtil.getBasePath(src), SVNFileUtil.getBasePath(dst), true, true);
+        SVNTranslator.translate(this, name, SVNFileUtil.getBasePath(src), SVNFileUtil.getBasePath(dst), true);
 
         boolean executable = props.getPropertyValue(SVNProperty.EXECUTABLE) != null;
         boolean needsLock = props.getPropertyValue(SVNProperty.NEEDS_LOCK) != null;
@@ -548,7 +548,7 @@ public abstract class SVNAdminArea {
             // text
             // 1. destranslate local
             File localTmpFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, ".tmp");
-            SVNTranslator.translate(this, localPath, localPath, SVNFileUtil.getBasePath(localTmpFile), false, false);
+            SVNTranslator.translate(this, localPath, localPath, SVNFileUtil.getBasePath(localTmpFile), false);
             // 2. run merge between all files we have :)
             OutputStream result = null;
             File resultFile = dryRun ? null : SVNFileUtil.createUniqueFile(getRoot(), localPath, ".result");
@@ -568,7 +568,7 @@ public abstract class SVNAdminArea {
                 }
             } else {
                 if (status != SVNStatusType.CONFLICTED) {
-                    SVNTranslator.translate(this, localPath, SVNFileUtil.getBasePath(resultFile), localPath, true, false);
+                    SVNTranslator.translate(this, localPath, SVNFileUtil.getBasePath(resultFile), localPath, true);
                 } else {
                     // copy all to wc.
                     File mineFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, localLabel);
@@ -579,11 +579,11 @@ public abstract class SVNAdminArea {
                     File newFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, latestLabel);
                     String newPath = SVNFileUtil.getBasePath(newFile);
                     
-                    SVNTranslator.translate(this, localPath, base, oldFile, true, false);
-                    SVNTranslator.translate(this, localPath, latest, newFile, true, false);
+                    SVNTranslator.translate(this, localPath, base, oldFile, true);
+                    SVNTranslator.translate(this, localPath, latest, newFile, true);
                     // translate result to local
                     if (!leaveConflict) {
-                        SVNTranslator.translate(this, localPath, SVNFileUtil.getBasePath(resultFile), localPath, true, false);
+                        SVNTranslator.translate(this, localPath, SVNFileUtil.getBasePath(resultFile), localPath, true);
                     }
         
                     entry.setConflictNew(newPath);

@@ -346,7 +346,7 @@ public class SVNProperties {
         if (isEmpty()) {
             SVNFileUtil.deleteFile(destination.getFile());
         } else {
-            SVNFileUtil.copyFile(getFile(), destination.getFile(), true);
+            SVNFileUtil.copyFile(getFile(), destination.getFile(), false);
         }
     }
 

@@ -1411,9 +1411,8 @@ public class SVNDiffClient extends SVNBasicClient {
     }
     
     private File loadFile(SVNURL url, File path, SVNRevision revision, Map properties, SVNAdminAreaInfo info, long[] revNumber) throws SVNException {
-        String name = info.getTargetName();        
         File tmpDir = info.getAnchor().getRoot();
-        File result = SVNFileUtil.createUniqueFile(tmpDir, name, ".tmp");
+        File result = SVNFileUtil.createUniqueFile(tmpDir, ".merge", ".tmp");
         SVNFileUtil.createEmptyFile(result);
         
         SVNRepository repository = createRepository(url, true);

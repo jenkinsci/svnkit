@@ -185,7 +185,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         myCurrentFile = new SVNFileInfo(path, true);
         myCurrentFile.myBaseProperties = Collections.EMPTY_MAP;
-        myCurrentFile.myBaseFile = SVNFileUtil.createUniqueFile(getTempDirectory(), "diff", ".tmp");
+        myCurrentFile.myBaseFile = SVNFileUtil.createUniqueFile(getTempDirectory(), ".diff", ".tmp");
         SVNFileUtil.createEmptyFile(myCurrentFile.myBaseFile);
     }
 
@@ -331,7 +331,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             myTempFiles.add(tmpFile);
             return tmpFile;
         }
-        return SVNFileUtil.createUniqueFile(getTempDirectory(), name, ".tmp");
+        return SVNFileUtil.createUniqueFile(getTempDirectory(), ".diff", ".tmp");
         
     }
 
@@ -370,7 +370,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
         }
 
         public void loadFromRepository() throws SVNException {
-            myBaseFile = SVNFileUtil.createUniqueFile(getTempDirectory(), "diff", ".tmp");
+            myBaseFile = SVNFileUtil.createUniqueFile(getTempDirectory(), ".diff", ".tmp");
             OutputStream os = null;
             myBaseProperties = new HashMap();
             try {

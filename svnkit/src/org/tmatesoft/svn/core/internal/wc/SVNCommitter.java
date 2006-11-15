@@ -152,7 +152,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
 
             File tmpFile = dir.getBaseFile(name, true);
             myTmpFiles.add(tmpFile);
-            SVNTranslator.translate(dir, name, name, SVNFileUtil.getBasePath(tmpFile), false, false);
+            SVNTranslator.translate(dir, name, name, SVNFileUtil.getBasePath(tmpFile), false);
 
             String checksum = null;
             if (!item.isAdded()) {

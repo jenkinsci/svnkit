@@ -263,7 +263,7 @@ public class SVNFileUtil {
         File tmpDst = dst;
         if (dst.exists()) {
             if (safe) {
-                tmpDst = createUniqueFile(dst.getParentFile(), dst.getName(), ".tmp");
+                tmpDst = createUniqueFile(dst.getParentFile(), ".copy", ".tmp");
             } else {
                 dst.delete();
             }

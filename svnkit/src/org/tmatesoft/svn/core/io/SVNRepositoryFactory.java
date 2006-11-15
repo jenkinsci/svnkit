@@ -262,7 +262,7 @@ public abstract class SVNRepositoryFactory {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "No repository template found; should be part of SVNKit library jar");
             SVNErrorManager.error(err);
         }
-        File jarFile = SVNFileUtil.createUniqueFile(path, "template.", ".jar");
+        File jarFile = SVNFileUtil.createUniqueFile(path, ".template", ".jar");
         OutputStream uuidOS = null; 
         try {
             copyToFile(is, jarFile);
@@ -402,7 +402,7 @@ public abstract class SVNRepositoryFactory {
             File child = children[i];
             File tmpChild = null;
             try {
-                tmpChild = SVNFileUtil.createUniqueFile(directory, child.getName() + ".", ".tmp");
+                tmpChild = SVNFileUtil.createUniqueFile(directory, ".repos", ".tmp");
                 if (child.isFile()) {
                     SVNTranslator.translate(child, tmpChild, eol, null, false, true);
                 }

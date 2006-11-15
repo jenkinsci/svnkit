@@ -640,33 +640,36 @@ public class SVNUpdateClient extends SVNBasicClient {
             }
             Map properties = new HashMap();
             OutputStream os = null;
-            File tmpFile = SVNFileUtil.createUniqueFile(dstPath.getParentFile(), dstPath.getName(), ".tmp");
-            os = SVNFileUtil.openFileForWriting(tmpFile);
+            File tmpFile = SVNFileUtil.createUniqueFile(dstPath.getParentFile(), ".export", ".tmp");
             try {
-                repository.getFile("", revNumber, properties, new SVNCancellableOutputStream(os, this));
+                os = SVNFileUtil.openFileForWriting(tmpFile);
+                try {
+                    repository.getFile("", revNumber, properties, new SVNCancellableOutputStream(os, this));
+                } finally {
+                    SVNFileUtil.closeFile(os);
+                }
+                if (force && dstPath.exists()) {
+                    SVNFileUtil.deleteAll(dstPath, this);
+                }
+                boolean binary = SVNProperty.isBinaryMimeType((String) properties.get(SVNProperty.MIME_TYPE));
+                Map keywords = SVNTranslator.computeKeywords((String) properties.get(SVNProperty.KEYWORDS), url,
+                                (String) properties.get(SVNProperty.LAST_AUTHOR),
+                                (String) properties.get(SVNProperty.COMMITTED_DATE),
+                                (String) properties.get(SVNProperty.COMMITTED_REVISION));
+                byte[] eols = null;
+                if (SVNProperty.EOL_STYLE_NATIVE.equals(properties.get(SVNProperty.EOL_STYLE))) {
+                    eols = SVNTranslator.getWorkingEOL(eolStyle != null ? eolStyle : (String) properties.get(SVNProperty.EOL_STYLE));
+                } else if (properties.containsKey(SVNProperty.EOL_STYLE)) {
+                    eols = SVNTranslator.getWorkingEOL((String) properties.get(SVNProperty.EOL_STYLE));
+                }
+                if (binary) {
+                    eols = null;
+                    keywords = null;
+                }
+                SVNTranslator.translate(tmpFile, dstPath, eols, keywords, properties.get(SVNProperty.SPECIAL) != null, true);
             } finally {
-                SVNFileUtil.closeFile(os);
+                SVNFileUtil.deleteFile(tmpFile);
             }
-            if (force && dstPath.exists()) {
-                SVNFileUtil.deleteAll(dstPath, this);
-            }
-            boolean binary = SVNProperty.isBinaryMimeType((String) properties.get(SVNProperty.MIME_TYPE));
-            Map keywords = SVNTranslator.computeKeywords((String) properties.get(SVNProperty.KEYWORDS), url,
-                            (String) properties.get(SVNProperty.LAST_AUTHOR),
-                            (String) properties.get(SVNProperty.COMMITTED_DATE),
-                            (String) properties.get(SVNProperty.COMMITTED_REVISION));
-            byte[] eols = null;
-            if (SVNProperty.EOL_STYLE_NATIVE.equals(properties.get(SVNProperty.EOL_STYLE))) {
-                eols = SVNTranslator.getWorkingEOL(eolStyle != null ? eolStyle : (String) properties.get(SVNProperty.EOL_STYLE));
-            } else if (properties.containsKey(SVNProperty.EOL_STYLE)) {
-                eols = SVNTranslator.getWorkingEOL((String) properties.get(SVNProperty.EOL_STYLE));
-            }
-            if (binary) {
-                eols = null;
-                keywords = null;
-            }
-            SVNTranslator.translate(tmpFile, dstPath, eols, keywords, properties.get(SVNProperty.SPECIAL) != null, true);
-            tmpFile.delete();
             if (properties.get(SVNProperty.EXECUTABLE) != null) {
                 SVNFileUtil.setExecutable(dstPath, true);
             }

@@ -236,7 +236,7 @@ public class SVNLogRunner {
             File dst = adminArea.getFile(dstName);
             try {
                 try {
-                    SVNTranslator.translate(adminArea, dstName, fileName, dstName, true, false);
+                    SVNTranslator.translate(adminArea, dstName, fileName, dstName, true);
                 } catch (SVNException svne) {
                     if (src.exists()) {
                         throw svne;
@@ -259,7 +259,7 @@ public class SVNLogRunner {
         } else if (SVNLog.COPY_AND_DETRANSLATE.equals(name)) {
             String dstName = (String) attributes.get(SVNLog.DEST_ATTR);
             try {
-                SVNTranslator.translate(adminArea, fileName, fileName, dstName, false, true);
+                SVNTranslator.translate(adminArea, fileName, fileName, dstName, false);
             } catch (SVNException svne) {
                 error = svne;
             }
@@ -267,7 +267,7 @@ public class SVNLogRunner {
             File src = adminArea.getFile(fileName);
             File dst = adminArea.getFile((String) attributes.get(SVNLog.DEST_ATTR));
             try {
-                SVNFileUtil.copy(src, dst, true, true);
+                SVNFileUtil.copy(src, dst, true, false);
             } catch (SVNException svne) {
                 error = svne;
             }

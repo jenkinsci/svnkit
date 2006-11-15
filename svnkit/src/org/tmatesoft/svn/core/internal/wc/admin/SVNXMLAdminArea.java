@@ -539,7 +539,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             baseTmpFile.getParentFile().mkdirs();
         }
         File versionedFile = getFile(name);
-        SVNTranslator.translate(this, name, name, SVNFileUtil.getBasePath(baseTmpFile), false, false);
+        SVNTranslator.translate(this, name, name, SVNFileUtil.getBasePath(baseTmpFile), false);
 
         // now compare file and get base file checksum (when forced)
         MessageDigest digest;
@@ -809,7 +809,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                 File tmpFile2 = SVNFileUtil.createUniqueFile(tmpFile.getParentFile(), fileName, ".tmp");
                 try {
                     String tmpFile2Path = SVNFileUtil.getBasePath(tmpFile2);
-                    SVNTranslator.translate(this, fileName, fileName, tmpFile2Path, false, false);
+                    SVNTranslator.translate(this, fileName, fileName, tmpFile2Path, false);
                     modified = !SVNFileUtil.compareFiles(tmpFile, tmpFile2, null);
                 } catch (SVNException svne) {
                     SVNErrorMessage err = SVNErrorMessage.create(errorCode, "Error comparing ''{0}'' and ''{1}''", new Object[] {workingFile, tmpFile});
@@ -880,11 +880,10 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                 if (SVNFileUtil.isWindows || !special) {
                     if (fileType == SVNFileType.FILE) {
                         SVNTranslator.translate(this, fileName, 
-                                SVNFileUtil.getBasePath(tmpFile), SVNFileUtil.getBasePath(tmpFile2), true, false);
+                                SVNFileUtil.getBasePath(tmpFile), SVNFileUtil.getBasePath(tmpFile2), true);
                     } else {
                         SVNTranslator.translate(this, fileName, fileName,
-                                SVNFileUtil.getBasePath(tmpFile2), true,
-                                false);
+                                SVNFileUtil.getBasePath(tmpFile2), true);
                     }
                     if (!SVNFileUtil.compareFiles(tmpFile2, wcFile, null)) {
                         SVNFileUtil.copyFile(tmpFile2, wcFile, true);
