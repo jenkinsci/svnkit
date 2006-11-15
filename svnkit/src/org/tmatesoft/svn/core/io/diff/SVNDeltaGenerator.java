@@ -188,6 +188,10 @@ public class SVNDeltaGenerator {
         return SVNFileUtil.toHexDigest(digest);
     }
 
+    public void sendDelta(String path, byte[] target, int targetLength, ISVNDeltaConsumer consumer) throws SVNException {
+        sendDelta(path, null, 0, 0, target, targetLength, consumer);
+    }
+
     public void sendDelta(String path, byte[] source, int sourceLength, long sourceOffset, byte[] target, int targetLength, ISVNDeltaConsumer consumer) throws SVNException {
         if (targetLength == 0 || target == null) {
             // send empty window, needed to create empty file. 
