@@ -258,6 +258,10 @@ public class FSHooks {
                     hook, ie.getLocalizedMessage()
             });
             SVNErrorManager.error(err, ie);
+        } finally {
+            errorGobbler.close();
+            inputGobbler.close();
+            hookProcess.destroy();
         }
 
         if (errorGobbler.getError() != null) {
@@ -284,10 +288,16 @@ public class FSHooks {
         InputStream is;
         StringBuffer result;
         IOException error;
+        private boolean myIsClosed;
 
         StreamGobbler(InputStream is) {
             this.is = is;
             result = new StringBuffer();
+        }
+        
+        public void close() {
+            myIsClosed = true;
+            SVNFileUtil.closeFile(is);
         }
 
         public void run() {
@@ -297,9 +307,13 @@ public class FSHooks {
                     result.append((char) (r & 0xFF));
                 }
             } catch (IOException ioe) {
-                error = ioe;
+                if (!myIsClosed) {
+                    error = ioe;
+                }
             } finally {
-                SVNFileUtil.closeFile(is);
+                if (!myIsClosed) {
+                    SVNFileUtil.closeFile(is);
+                }
             }
         }
 

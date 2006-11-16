@@ -210,7 +210,6 @@ class SVNConnection {
                 byte[] malfored = new byte[1024];
                 try {
                     // could it hang here for timeout?
-                    System.out.println("reading malformed data");
                     getInputStream().read(malfored);
                 } catch (IOException e1) {
                     // ignore.
