@@ -198,6 +198,7 @@ public class SVNURL {
         }
         if ("file".equals(myProtocol)) {
             String normalizedPath = norlmalizeURLPath(url, url.substring("file://".length()));
+            
             URL testURL = null;
             try {
                 testURL = new URL(myProtocol + "://" + normalizedPath);
@@ -470,6 +471,9 @@ public class SVNURL {
         if (port >= 0) {
             url.append(":");
             url.append(port);
+        }
+        if (path != null && !path.startsWith("/")) {
+            path = '/' + path;
         }
         url.append(path);
         return url.toString();
