@@ -181,37 +181,7 @@ public class FSCommitEditor implements ISVNEditor {
                 SVNErrorManager.error(FSErrors.errorOutOfDate(dirBaton.getPath(), myTxnRoot.getTxnID()));
             }
         }
-        changeNodeProperty(dirBaton.getPath(), name, value);
-    }
-
-    private void changeNodeProperty(String path, String propName, String propValue) throws SVNException {
-        if (!SVNProperty.isRegularProperty(propName)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS,
-                    "Storage of non-regular property ''{0}'' is disallowed through the repository interface, and could indicate a bug in your client", propName);
-            SVNErrorManager.error(err);
-        }
-
-        FSParentPath parentPath = myTxnRoot.openPath(path, true, true);
-
-        if ((myTxnRoot.getTxnFlags() & FSTransactionRoot.SVN_FS_TXN_CHECK_LOCKS) != 0) {
-            FSCommitter.allowLockedOperation(myFSFS, path, myAuthor, myLockTokens, false, false);
-        }
-
-        myCommitter.makePathMutable(parentPath, path);
-        Map properties = parentPath.getRevNode().getProperties(myFSFS);
-
-        if (properties.isEmpty() && propValue == null) {
-            return;
-        }
-
-        if (propValue == null) {
-            properties.remove(propName);
-        } else {
-            properties.put(propName, propValue);
-        }
-
-        myTxnRoot.setProplist(parentPath.getRevNode(), properties);
-        myCommitter.addChange(path, parentPath.getRevNode().getId(), FSPathChangeKind.FS_PATH_CHANGE_MODIFY, false, true, FSRepository.SVN_INVALID_REVNUM, null);
+        myCommitter.changeNodeProperty(dirBaton.getPath(), name, value);
     }
 
     private void changeNodeProperties(String path, Map propNamesToValues) throws SVNException {

@@ -456,6 +456,25 @@ public class FSFS {
         return myTransactionsRoot;
     }
     
+    public void setUUID(String uuid) throws SVNException {
+        File uuidFile = new File(myDBRoot, "uuid");
+        File uniqueFile = SVNFileUtil.createUniqueFile(myDBRoot, "uuid", ".tmp");
+        uuid += '\n';
+
+        OutputStream uuidOS = null;
+        try {
+            uuidOS = SVNFileUtil.openFileForWriting(uniqueFile);
+            uuidOS.write(uuid.getBytes("US-ASCII"));
+        } catch (IOException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Error writing repository UUID to ''{0}''", uuidFile);
+            err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
+            SVNErrorManager.error(err);
+        } finally {
+            SVNFileUtil.closeFile(uuidOS);
+        }
+        SVNFileUtil.rename(uniqueFile, uuidFile);
+    }
+    
     protected FSFile getTransactionChangesFile(String txnID) {
         File file = new File(getTransactionDir(txnID), "changes");
         return new FSFile(file);
