@@ -48,8 +48,24 @@ public class FSHooks {
     private static final String[] winExtensions = {
             ".exe", ".bat", ".cmd"
     };
+    
+    private static Boolean ourIsHooksEnabled;
+    
+    public static void setHooksEnabled(boolean enabled) {
+        ourIsHooksEnabled = enabled ? Boolean.TRUE : Boolean.FALSE;
+    }
+    
+    public static boolean isHooksEnabled() {
+        if (ourIsHooksEnabled == null) {
+            ourIsHooksEnabled = Boolean.valueOf(System.getProperty("svnkit.hooksEnabled", System.getProperty("javasvn.hooksEnabled", "true")));
+        }
+        return ourIsHooksEnabled.booleanValue();
+    }
 
     public static File getHookFile(File reposRootDir, String hookName) throws SVNException {
+        if (!isHooksEnabled()) {
+            return null;
+        }
         File hookFile = null;
         if (SVNFileUtil.isWindows) {
             for (int i = 0; i < winExtensions.length; i++) {
