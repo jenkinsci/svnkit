@@ -52,6 +52,7 @@ public class SVNFileUtil {
     private static final String LS_COMMAND;
     private static final String CHMOD_COMMAND;
     private static final String ATTRIB_COMMAND;
+    private static final String ENV_COMMAND;
 
     public final static boolean isWindows;
     
@@ -101,6 +102,7 @@ public class SVNFileUtil {
         LS_COMMAND = props.getProperty(prefix + "ls", "ls");
         CHMOD_COMMAND = props.getProperty(prefix + "chmod", "chmod");
         ATTRIB_COMMAND = props.getProperty(prefix + "attrib", "attrib");
+        ENV_COMMAND = props.getProperty(prefix + "env", "env");
     }
 
     public static String getBasePath(File file) {
@@ -209,7 +211,7 @@ public class SVNFileUtil {
                 copyFile(file, tmp, false);
                 copyFile(tmp, file, false);
                 deleteFile(tmp);
-            } else {
+            } else if (file.canWrite()) {
                 if (isWindows) {
                     Process p = Runtime.getRuntime().exec(ATTRIB_COMMAND + " -R \"" + file.getAbsolutePath() + "\"");
                     p.waitFor();
@@ -229,7 +231,9 @@ public class SVNFileUtil {
             return;
         }
         try {
-            execCommand(new String[] { CHMOD_COMMAND, executable ? "ugo+x" : "ugo-x", file.getAbsolutePath() });
+            if (file.canWrite()) {
+                execCommand(new String[] { CHMOD_COMMAND, executable ? "ugo+x" : "ugo-x", file.getAbsolutePath() });
+            }
         } catch (Throwable th) {
             SVNDebugLog.getDefaultLog().info(th);
         }
@@ -258,7 +262,15 @@ public class SVNFileUtil {
         if (isWindows || file == null) {
             return false;
         }
-        String line = execCommand(new String[] { LS_COMMAND, "-ld", file.getAbsolutePath() });
+        String line = null;
+        try {
+            if (file.canRead()) {
+                line = execCommand(new String[] { LS_COMMAND, "-ld", file.getAbsolutePath() });
+            }
+        } catch (Throwable th) {
+            SVNDebugLog.getDefaultLog().info(th);
+        }
+
         return line != null && line.startsWith("l");
     }
 
@@ -364,7 +376,14 @@ public class SVNFileUtil {
     }
 
     public static boolean createSymlink(File link, String linkName) {
-        execCommand(new String[] { LN_COMMAND, "-s", linkName, link.getAbsolutePath() });
+        try {
+            File source = new File(linkName);
+            if (source.canRead() && link.canWrite()) {
+                execCommand(new String[] { LN_COMMAND, "-s", linkName, link.getAbsolutePath() });
+            }
+        } catch (Throwable th) {
+            SVNDebugLog.getDefaultLog().info(th);
+        }
         return isSymlink(link);
     }
 
@@ -395,7 +414,14 @@ public class SVNFileUtil {
         if (isWindows || link == null) {
             return null;
         }
-        String ls = execCommand(new String[] { LS_COMMAND, "-ld", link.getAbsolutePath() });
+        String ls = null;
+        try {
+            if (link.canRead()) {
+                ls = execCommand(new String[] { LS_COMMAND, "-ld", link.getAbsolutePath() });
+            }
+        } catch (Throwable th) {
+            SVNDebugLog.getDefaultLog().info(th);
+        }
         if (ls == null || ls.lastIndexOf(" -> ") < 0) {
             return null;
         }
@@ -731,7 +757,14 @@ public class SVNFileUtil {
         }
         String[] commandLine = new String[] { LS_COMMAND, "-ln",
                 file.getAbsolutePath() };
-        String line = execCommand(commandLine);
+        String line = null;
+        try {
+            if (file.canRead()) {
+                line = execCommand(commandLine);
+            }
+        } catch (Throwable th) {
+            SVNDebugLog.getDefaultLog().info(th);
+        }
         if (line == null || line.indexOf(' ') < 0) {
             return false;
         }
@@ -1111,7 +1144,7 @@ public class SVNFileUtil {
             else
                 p = r.exec( "cmd.exe /c set" );
         } else {
-            p = r.exec( "env" );
+            p = r.exec( ENV_COMMAND );
         }
         if (p != null) {
             BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
