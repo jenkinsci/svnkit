@@ -1003,9 +1003,9 @@ public class SVNUpdateClient extends SVNBasicClient {
                     SVNErrorManager.error(err);
                 }
                 String validatedUUID = (String) validatedURLs.get(validatedURL);
-                if (validatedUUID != null && !validatedUUID.equals(expectedUUID)) {
+                if (expectedUUID != null && !expectedUUID.equals(validatedUUID)) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_INVALID_RELOCATION, "The repository at ''{0}'' has uuid ''{1}'', but the WC has ''{2}''",
-                            new Object[] {validatedURL, validatedUUID, expectedUUID});
+                            new Object[] {validatedURL, expectedUUID, validatedUUID});
                     SVNErrorManager.error(err);
                 }
                 return validatedURLs;
@@ -1019,9 +1019,9 @@ public class SVNUpdateClient extends SVNBasicClient {
         }
 
         String actualUUID = repos.getRepositoryUUID(true);
-        if (actualUUID == null || !actualUUID.equals(expectedUUID)) {
+        if (expectedUUID != null && !expectedUUID.equals(actualUUID)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_INVALID_RELOCATION, "The repository at ''{0}'' has uuid ''{1}'', but the WC has ''{2}''",
-                    new Object[] {targetURL, actualUUID, expectedUUID});
+                    new Object[] {targetURL, expectedUUID, actualUUID});
             SVNErrorManager.error(err);
         }
         validatedURLs.put(targetURL, actualUUID);
