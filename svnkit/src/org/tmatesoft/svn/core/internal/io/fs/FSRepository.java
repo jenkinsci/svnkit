@@ -233,9 +233,13 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             } else {
                 action = FSHooks.REVPROP_MODIFY;
             }
-            FSHooks.runPreRevPropChangeHook(myReposRootDir, propertyName, propertyValue, userName, revision, action);
+            if (FSHooks.isHooksEnabled()) {
+                FSHooks.runPreRevPropChangeHook(myReposRootDir, propertyName, propertyValue, userName, revision, action);
+            }
             myFSFS.setRevisionProperty(revision, propertyName, propertyValue);
-            FSHooks.runPostRevPropChangeHook(myReposRootDir, propertyName, propertyValue, userName, revision, action);
+            if (FSHooks.isHooksEnabled()) {
+                FSHooks.runPostRevPropChangeHook(myReposRootDir, propertyName, propertyValue, userName, revision, action);
+            }
         } finally {
             closeRepository();
         }
