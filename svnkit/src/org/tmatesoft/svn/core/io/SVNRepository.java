@@ -127,7 +127,7 @@ public abstract class SVNRepository {
         
     protected String myRepositoryUUID;
     protected SVNURL myRepositoryRoot;
-    private SVNURL myLocation;
+    protected SVNURL myLocation;
     
     private int myLockCount;
     private Thread myLocker;

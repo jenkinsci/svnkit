@@ -17,6 +17,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -31,8 +32,10 @@ import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
+import ch.ethz.ssh2.ChannelCondition;
 import ch.ethz.ssh2.Connection;
 import ch.ethz.ssh2.InteractiveCallback;
+import ch.ethz.ssh2.Session;
 import ch.ethz.ssh2.crypto.PEMDecoder;
 
 /**
@@ -42,8 +45,8 @@ import ch.ethz.ssh2.crypto.PEMDecoder;
 public class SVNGanymedSession {
 
     private static Map ourConnectionsPool = new Hashtable();
-    private static Map ourUsersPool = new Hashtable();
     private static boolean ourIsUsePersistentConnection;
+    private static Map ourSessionsMap = new Hashtable();
     private static Object ourRequestor;
     
     static {
@@ -63,6 +66,8 @@ public class SVNGanymedSession {
                 port = 22;
             }
             String key = credentials.getUserName() + ":" + location.getHost() + ":" + port;
+            // find connection with this key that has less then 10 open channels.
+            // if there is no such connection - open new one.
             Connection connection = isUsePersistentConnection() ? (Connection) ourConnectionsPool.get(key) : null;
             
             if (connection == null) {
@@ -136,9 +141,85 @@ public class SVNGanymedSession {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Cannot connect to ''{0}'': {1}", new Object[] {location.setPath("", false), e.getLocalizedMessage()});
                     SVNErrorManager.error(err, e);
                 } 
+            } else {
+                purgeSessions();
             }
             return connection;
         } finally {
+            unlock();
+        }
+    }
+
+    private static void purgeSessions() {
+        Collection toClose = new ArrayList();
+        for(Iterator sessions = ourSessionsMap.keySet().iterator(); sessions.hasNext();) {
+            Session session = (Session) sessions.next();
+            if (ourSessionsMap.get(session) == Boolean.FALSE) {
+                toClose.add(session);
+            }
+        }
+        if (toClose.size() > 1) {
+            for (Iterator sessions = toClose.iterator(); sessions.hasNext();) {
+                Session session = (Session) sessions.next();
+                if (ourSessionsMap.remove(session) != null) {
+                    session.close();
+                    session.waitForCondition(ChannelCondition.CLOSED, 0);
+                }
+            }
+        }
+    }
+    
+    static boolean occupySession(Session session) {
+        lock(Thread.currentThread());
+        try {   
+            if (session != null && ourSessionsMap.containsKey(session)) { 
+                ourSessionsMap.put(session, Boolean.TRUE);
+                return true;
+            } 
+            return false;
+        } finally {
+            purgeSessions();
+            unlock();
+        }
+    }
+
+    static boolean addSession(Session session) {
+        lock(Thread.currentThread());
+        try {   
+            if (session != null) { 
+                ourSessionsMap.put(session, Boolean.TRUE);
+                return true;
+            } 
+            return false;
+        } finally {
+            purgeSessions();
+            unlock();
+        }
+    }
+
+    static boolean disposeSession(Session session) {
+        lock(Thread.currentThread());
+        try {
+            if (session != null) {
+                return ourSessionsMap.remove(session) != null;
+            }
+        } finally {
+            synchronized (ourSessionsMap) {
+                ourSessionsMap.notifyAll();
+            }
+            unlock();
+        }
+        return false;
+    }
+
+    static void freeSession(Session session) {        
+        lock(Thread.currentThread());
+        try {
+            if (session != null && ourSessionsMap.containsKey(session)) {
+                ourSessionsMap.put(session, Boolean.FALSE);
+            }
+        } finally {
+            purgeSessions();
             unlock();
         }
     }
@@ -196,14 +277,6 @@ public class SVNGanymedSession {
 
     private static void doCloseConnection(Connection connection) {
         if (connection != null) {
-            Collection users = (Collection) ourUsersPool.get(connection);
-            if (users != null) {
-                users.remove(Thread.currentThread());
-                if (!users.isEmpty()) {
-                    return;
-                }
-            }
-            ourUsersPool.remove(connection);
             connection.close();
             if (!isUsePersistentConnection()) {
                 return;
@@ -244,5 +317,14 @@ public class SVNGanymedSession {
     
     public static void setUsePersistentConnection(boolean usePersistent) {
         ourIsUsePersistentConnection = usePersistent;
+    }
+
+    public static void waitForFreeChannel() {
+        synchronized (ourSessionsMap) {
+            try {
+                ourSessionsMap.wait();
+            } catch (InterruptedException e) {
+            }
+        }
     }
 }

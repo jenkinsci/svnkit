@@ -73,9 +73,14 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     
     public void setLocation(SVNURL url, boolean forceReconnect) throws SVNException {
         // attempt to use reparent.
-        if (reparent(url)) {
-            super.setLocation(url, false);
-            return;
+        try {
+            openConnection();
+            if (reparent(url)) {
+                myLocation = url;
+                return;
+            }
+        } finally {
+            unlock();
         }
         super.setLocation(url, true);
         myRealm = null;
@@ -86,7 +91,6 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             if (getLocation().equals(url)) {
                 return true;
             }
-            lock();
             try {
                 Object[] buffer = new Object[] {"reparent", url.toString()};
                 write("(w(s))", buffer);
@@ -98,10 +102,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 if (e instanceof SVNCancelException || e instanceof SVNAuthenticationException) {
                     throw e;
                 }
-            } finally {
-                unlock();
-            }
-            
+            }    
         }
         return false;
     }
@@ -957,13 +958,15 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     }
 
     private void openConnection() throws SVNException {
+        lock();
         if (myConnection != null) {
             // attempt to reparent, close connection if reparent failed.
+            myConnection.occupy();
             if (reparent(getLocation())) {
                 return;
             }
+            myConnection.free();
         }
-        lock();
         ISVNConnector connector = SVNRepositoryFactoryImpl.getConnectorFactory().createConnector(this);
         myConnection = new SVNConnection(connector, this);
         try {
@@ -985,6 +988,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     }
 
     private void closeConnection() {
+        if (myConnection != null) {
+            myConnection.free();
+        }
         unlock();
     }
 

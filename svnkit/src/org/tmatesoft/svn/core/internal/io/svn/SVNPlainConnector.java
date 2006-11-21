@@ -78,4 +78,11 @@ public class SVNPlainConnector implements ISVNConnector {
         }
         return myOutputStream;
     }
+
+    public void free() {
+    }
+
+    public boolean occupy() {
+        return true;
+    }
 }

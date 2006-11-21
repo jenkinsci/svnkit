@@ -145,4 +145,11 @@ public class SVNTunnelConnector implements ISVNConnector {
         return tunnelSpec;
     }
 
+    public void free() {
+    }
+
+    public boolean occupy() {
+        return true;
+    }
+
 }

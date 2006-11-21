@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
+import ch.ethz.ssh2.ChannelCondition;
 import ch.ethz.ssh2.Connection;
 import ch.ethz.ssh2.Session;
 import ch.ethz.ssh2.StreamGobbler;
@@ -78,6 +79,8 @@ public class SVNGanymedConnector implements ISVNConnector {
             }
             try {
                 mySession = connection.openSession();
+                SVNGanymedSession.addSession(mySession);
+                // session will be marked as 'unused' when operation is performed.
                 SVNAuthentication author = authManager.getFirstAuthentication(ISVNAuthenticationManager.USERNAME, realm, repository.getLocation());
                 if (author == null) {
                     SVNErrorManager.cancel("authentication cancelled");
@@ -103,6 +106,12 @@ public class SVNGanymedConnector implements ISVNConnector {
                 } 
                 return;
             } catch (IOException e) {
+                if (e.getMessage().indexOf("SSH_OPEN_ADMINISTRATIVELY_PROHIBITED") >= 0) {
+                    close(repository);
+                    // try to open channel again.
+                    SVNGanymedSession.waitForFreeChannel();
+                    continue;
+                }
                 reconnect--;
                 if (reconnect >= 0) {
                     // try again, but close session first.
@@ -110,19 +119,31 @@ public class SVNGanymedConnector implements ISVNConnector {
                     connection = null;
                     continue;
                 }
+                e.printStackTrace();
                 repository.getDebugLog().info(e);
                 close(repository);
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Cannot connect to ''{0}'': {1}", new Object[] {repository.getLocation().setPath("", false), e.getLocalizedMessage()});
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Cannot connect to ''{0}'': {1}", new Object[] {repository.getLocation().setPath("", false), e.getMessage()});
                 SVNErrorManager.error(err, e);
             }
         }
+    }
+    
+    public void free() {
+        SVNGanymedSession.freeSession(mySession);
+    }
+
+    public boolean occupy() {
+        return SVNGanymedSession.occupySession(mySession);
     }
 
     public void close(SVNRepositoryImpl repository) throws SVNException {
         SVNFileUtil.closeFile(myOutputStream);
         SVNFileUtil.closeFile(myInputStream);
         if (mySession != null) {
-            mySession.close();
+            if (SVNGanymedSession.disposeSession(mySession)) {
+                mySession.close();
+                mySession.waitForCondition(ChannelCondition.CLOSED, 0);
+            }
         }
         if (!SVNGanymedSession.isUsePersistentConnection() && myConnection != null) {
             SVNGanymedSession.closeConnection(myConnection);
