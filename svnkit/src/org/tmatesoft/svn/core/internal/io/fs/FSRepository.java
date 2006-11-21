@@ -135,10 +135,6 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         return myFSFS.getReposFormat();
     }
 
-    public int getDBFormat() {
-        return myFSFS.getDBFormat();
-    }
-
     public long getLatestRevision() throws SVNException {
         try {
             openRepository();

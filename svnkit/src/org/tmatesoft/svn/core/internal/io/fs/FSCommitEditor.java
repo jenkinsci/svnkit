@@ -11,7 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Date;
@@ -28,13 +27,11 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
-import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.ISVNEditor;
-import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  
 /**
@@ -54,8 +51,7 @@ public class FSCommitEditor implements ISVNEditor {
     private FSFS myFSFS;
     private FSRepository myRepository;
     private Stack myDirsStack;
-    private FSOutputStream myTargetStream;
-    private SVNDeltaProcessor myDeltaProcessor;
+    private FSDeltaConsumer myDeltaConsumer;
     private Map myCurrentFileProps;
     private String myCurrentFilePath;
     private FSCommitter myCommitter;
@@ -268,56 +264,27 @@ public class FSCommitEditor implements ISVNEditor {
 
     public void applyTextDelta(String path, String baseChecksum) throws SVNException {
         flushPendingProperties();
-
-        String fullPath = SVNPathUtil.concatToAbs(myBasePath, path);
-        FSParentPath parentPath = myTxnRoot.openPath(fullPath, true, true);
-
-        if ((myTxnRoot.getTxnFlags() & FSTransactionRoot.SVN_FS_TXN_CHECK_LOCKS) != 0) {
-            FSCommitter.allowLockedOperation(myFSFS, fullPath, myAuthor, myLockTokens, false, false);
-        }
-
-        myCommitter.makePathMutable(parentPath, fullPath);
-        FSRevisionNode node = parentPath.getRevNode();
-        if (baseChecksum != null) {
-            String md5HexChecksum = node.getFileChecksum();
-            if (md5HexChecksum != null && !md5HexChecksum.equals(baseChecksum)) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH, "Base checksum mismatch on ''{0}'':\n   expected:  {1}\n     actual:  {2}\n", new Object[] {
-                        path, baseChecksum, md5HexChecksum
-                });
-                SVNErrorManager.error(err);
-            }
-        }
-
-        InputStream sourceStream = null;
-        OutputStream targetStream = null;
-        
-        int dbFormat = myRepository.getDBFormat();
-        
-        try {
-            sourceStream = FSInputStream.createDeltaStream(new SVNDeltaCombiner(), node, myFSFS);
-            targetStream = FSOutputStream.createStream(node, myTxnRoot, myTargetStream, dbFormat >= 2);
-            if (myDeltaProcessor == null) {
-                myDeltaProcessor = new SVNDeltaProcessor();
-            }
-            myDeltaProcessor.applyTextDelta(sourceStream, targetStream, false);
-        } catch (SVNException svne) {
-            SVNFileUtil.closeFile(sourceStream);
-            throw svne;
-        } finally {
-            myTargetStream = (FSOutputStream) targetStream;
-        }
-
-        myCommitter.addChange(fullPath, node.getId(), FSPathChangeKind.FS_PATH_CHANGE_MODIFY, true, false, FSRepository.SVN_INVALID_REVNUM, null);
+        ISVNDeltaConsumer fsfsConsumer = getDeltaConsumer();
+        fsfsConsumer.applyTextDelta(path, baseChecksum);
     }
 
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
-        return myDeltaProcessor.textDeltaChunk(diffWindow);
+        ISVNDeltaConsumer fsfsConsumer = getDeltaConsumer();
+        return fsfsConsumer.textDeltaChunk(path, diffWindow);
     }
 
     public void textDeltaEnd(String path) throws SVNException {
-        myDeltaProcessor.textDeltaEnd();
+        ISVNDeltaConsumer fsfsConsumer = getDeltaConsumer();
+        fsfsConsumer.textDeltaEnd(path);
     }
 
+    private FSDeltaConsumer getDeltaConsumer() {
+        if (myDeltaConsumer == null) {
+            myDeltaConsumer = new FSDeltaConsumer(myBasePath, myTxnRoot, myFSFS, myCommitter, myAuthor, myLockTokens);
+        }
+        return myDeltaConsumer;
+    }
+    
     public void changeFileProperty(String path, String name, String value) throws SVNException {
         String fullPath = SVNPathUtil.concatToAbs(myBasePath, path);
         Map props = getFilePropertiesStorage();
@@ -413,9 +380,10 @@ public class FSCommitEditor implements ISVNEditor {
     }
 
     public void abortEdit() throws SVNException {
-        if (myTargetStream != null) {
-            myTargetStream.closeStreams();
+        if (myDeltaConsumer != null) {
+            myDeltaConsumer.abort();
         }
+
         if (myTxn == null || !isTxnOwner) {
             myRepository.closeRepository();
             return;

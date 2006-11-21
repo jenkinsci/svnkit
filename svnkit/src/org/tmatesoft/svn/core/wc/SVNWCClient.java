@@ -1095,6 +1095,16 @@ public class SVNWCClient extends SVNBasicClient {
         SVNWCAccess wcAccess = createWCAccess();
         try {
             SVNAdminAreaInfo info = wcAccess.openAnchor(path, true, recursive ? SVNWCAccess.INFINITE_DEPTH : 0);
+            SVNEntry entry = wcAccess.getEntry(path, false);
+            if (entry != null && entry.isDirectory() && entry.isScheduledForAddition()) {
+                if (!recursive) {
+                    getDebugLog().info("Forcing revert on path '" + path + "' to recurse");
+                    recursive = true;
+                    wcAccess.close();
+                    info = wcAccess.openAnchor(path, true, SVNWCAccess.INFINITE_DEPTH);
+                }
+            }
+            
             boolean useCommitTimes = getOptions().isUseCommitTimes();
             doRevert(path, info.getAnchor(), recursive, useCommitTimes);            
         } catch (SVNException e) {
