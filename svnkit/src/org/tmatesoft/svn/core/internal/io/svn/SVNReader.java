@@ -404,6 +404,7 @@ class SVNReader {
             InputStream in = (InputStream) result;
             OutputStream out = (OutputStream) target[index];
             byte[] buffer = new byte[2048];
+            boolean cancelled = false;
             try {
                 while (true) {
                     int read = in.read(buffer);
@@ -415,13 +416,15 @@ class SVNReader {
                 }
                 out.flush();
             } catch (IOException e) {
+                cancelled = true;
                 if (e instanceof SVNCancellableOutputStream.IOCancelException) {
                     SVNErrorManager.cancel(e.getMessage());
                 }
                 //
             } finally {
+                // no need to do that if operation was cancelled!
                 try {
-                    while (in.read(buffer) > 0) {
+                    while (!cancelled && in.read(buffer) > 0) {
                     }
                 } catch (IOException e1) {
                     //
