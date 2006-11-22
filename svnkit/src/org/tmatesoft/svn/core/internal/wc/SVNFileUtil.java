@@ -375,9 +375,7 @@ public class SVNFileUtil {
     public static boolean createSymlink(File link, String linkName) {
         try {
             File source = new File(linkName);
-            if (source.canRead() && link.canWrite()) {
-                execCommand(new String[] { LN_COMMAND, "-s", linkName, link.getAbsolutePath() });
-            }
+            execCommand(new String[] { LN_COMMAND, "-s", linkName, link.getAbsolutePath() });
         } catch (Throwable th) {
             SVNDebugLog.getDefaultLog().info(th);
         }
