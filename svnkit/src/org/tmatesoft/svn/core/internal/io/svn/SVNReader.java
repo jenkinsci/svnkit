@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
+import org.tmatesoft.svn.core.SVNAuthenticationException;
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -33,6 +35,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNCancellableOutputStream;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.util.SVNDebugLog;
@@ -341,7 +344,7 @@ class SVNReader {
                     targetIndex++;
                 }
             } catch (SVNException e) {
-                if (unconditionalThrow) {
+                if (unconditionalThrow || e instanceof SVNCancelException || e instanceof SVNAuthenticationException) {
                     throw e;
                 }
                 try {
@@ -412,6 +415,9 @@ class SVNReader {
                 }
                 out.flush();
             } catch (IOException e) {
+                if (e instanceof SVNCancellableOutputStream.IOCancelException) {
+                    SVNErrorManager.cancel(e.getMessage());
+                }
                 //
             } finally {
                 try {

@@ -45,6 +45,7 @@ import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVErrorHandler;
 import org.tmatesoft.svn.core.internal.util.SVNSocketFactory;
+import org.tmatesoft.svn.core.internal.wc.SVNCancellableOutputStream;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -300,6 +301,8 @@ class HTTPConnection implements IHTTPConnection {
                 myRepository.getDebugLog().info(e);
                 if (e instanceof SocketTimeoutException) {
                     err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "timed out waiting for server");
+                } else if (e instanceof SVNCancellableOutputStream.IOCancelException) {
+                    SVNErrorManager.cancel(e.getMessage());
                 } else {
                     if (sslManager != null && sslManager.isClientCertPromptRequired()) {
                         SVNSSLAuthentication sslAuth = sslManager.getClientAuthentication();

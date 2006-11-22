@@ -37,12 +37,7 @@ public class SVNCancellableOutputStream extends FilterOutputStream {
             try {
                 myEventHandler.checkCancelled();
             } catch (final SVNCancelException e) {
-                IOException ioe = new IOException("operation cancelled") {
-                    public Throwable getCause() {
-                        return e;
-                    }
-                };
-                throw ioe;
+                throw new IOCancelException(e.getMessage());
             }
         }
         out.write(b, off, len);
@@ -53,14 +48,16 @@ public class SVNCancellableOutputStream extends FilterOutputStream {
             try {
                 myEventHandler.checkCancelled();
             } catch (final SVNCancelException e) {
-                IOException ioe = new IOException("operation cancelled") {
-                    public Throwable getCause() {
-                        return e;
-                    }
-                };
-                throw ioe;
+                throw new IOCancelException(e.getMessage());
             }
         }
         out.write(b);
+    }
+    
+    public static class IOCancelException extends IOException {
+
+        public IOCancelException(String message) {
+            super(message);
+        }
     }
 }

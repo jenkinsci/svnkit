@@ -2425,6 +2425,9 @@ public class SVNWCClient extends SVNBasicClient {
                 }
                 dst.flush();
             } catch (IOException e) {
+                if (e instanceof SVNCancellableOutputStream.IOCancelException) {
+                    SVNErrorManager.cancel(e.getMessage());
+                }
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()));
             }
         } finally {
