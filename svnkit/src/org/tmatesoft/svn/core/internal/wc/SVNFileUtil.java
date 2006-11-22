@@ -264,13 +264,10 @@ public class SVNFileUtil {
         }
         String line = null;
         try {
-            if (file.canRead()) {
-                line = execCommand(new String[] { LS_COMMAND, "-ld", file.getAbsolutePath() });
-            }
+            line = execCommand(new String[] { LS_COMMAND, "-ld", file.getAbsolutePath() });
         } catch (Throwable th) {
             SVNDebugLog.getDefaultLog().info(th);
         }
-
         return line != null && line.startsWith("l");
     }
 
@@ -416,9 +413,7 @@ public class SVNFileUtil {
         }
         String ls = null;
         try {
-            if (link.canRead()) {
-                ls = execCommand(new String[] { LS_COMMAND, "-ld", link.getAbsolutePath() });
-            }
+            ls = execCommand(new String[] { LS_COMMAND, "-ld", link.getAbsolutePath() });
         } catch (Throwable th) {
             SVNDebugLog.getDefaultLog().info(th);
         }
