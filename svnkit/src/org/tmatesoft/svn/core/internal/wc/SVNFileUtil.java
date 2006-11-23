@@ -129,8 +129,11 @@ public class SVNFileUtil {
     
     public static boolean createEmptyFile(File file) throws SVNException {
         boolean created;
+        if (file != null && file.getParentFile() != null && !file.getParentFile().exists()) {
+            file.getParentFile().mkdirs();
+        }
         try {
-            created = file.createNewFile();
+            created = file != null ? file.createNewFile() : false;
         } catch (IOException e) {
             created = false;
         }
@@ -374,7 +377,6 @@ public class SVNFileUtil {
 
     public static boolean createSymlink(File link, String linkName) {
         try {
-            File source = new File(linkName);
             execCommand(new String[] { LN_COMMAND, "-s", linkName, link.getAbsolutePath() });
         } catch (Throwable th) {
             SVNDebugLog.getDefaultLog().info(th);
