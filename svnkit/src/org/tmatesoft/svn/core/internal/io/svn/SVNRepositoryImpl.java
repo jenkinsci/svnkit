@@ -66,6 +66,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     public void testConnection() throws SVNException {
         try {
             openConnection();
+        } catch (SVNException e) {
+            closeSession();
+            throw e;
         } finally {
             closeConnection();
         }
