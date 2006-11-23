@@ -70,7 +70,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             closeConnection();
         }
     }
-    
+
     public void setLocation(SVNURL url, boolean forceReconnect) throws SVNException {
         // attempt to use reparent.
         try {
@@ -96,6 +96,14 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 write("(w(s))", buffer);
                 authenticate();
                 read("[()]", null, true);
+
+                String newLocation = url.toString();
+                String rootLocation = myRepositoryRoot.toString();
+
+                if (!(newLocation.startsWith(rootLocation) && (newLocation.length() == rootLocation.length() || (newLocation.length() > rootLocation.length() && newLocation.charAt(rootLocation.length()) == '/')))) {
+                    return false;
+                }            
+
                 return true;
             } catch (SVNException e) {
                 closeSession();
@@ -925,7 +933,6 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         }
     }
 
-
     public SVNDirEntry info(String path, long revision) throws SVNException {
         try {
             openConnection();
@@ -976,7 +983,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             myRealm = myConnection.getRealm();
         }
     }
-
+    
     public String getRealm() {
         return myRealm;
     }
