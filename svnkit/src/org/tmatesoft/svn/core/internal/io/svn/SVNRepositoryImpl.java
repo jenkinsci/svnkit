@@ -84,6 +84,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             }
         } catch (SVNException e) {
             closeSession();
+            if (e instanceof SVNCancelException || e instanceof SVNAuthenticationException) {
+                throw e;
+            }
         } finally {
             unlock();
         }
