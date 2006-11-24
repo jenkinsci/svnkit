@@ -82,6 +82,8 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 myLocation = url;
                 return;
             }
+        } catch (SVNException e) {
+            closeSession();
         } finally {
             unlock();
         }
@@ -102,7 +104,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
 
                 String newLocation = url.toString();
                 String rootLocation = myRepositoryRoot.toString();
-
+                
                 if (!(newLocation.startsWith(rootLocation) && (newLocation.length() == rootLocation.length() || (newLocation.length() > rootLocation.length() && newLocation.charAt(rootLocation.length()) == '/')))) {
                     return false;
                 }            
