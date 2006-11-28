@@ -48,8 +48,8 @@ public class DefaultSVNDebugLogger extends SVNDebugLogAdapter {
     }
 
     public void log(String message, byte[] data) {
-        if (getLogger().isLoggable(Level.FINER)) {
-            getLogger().log(Level.FINER, message + "\n" + new String(data));
+        if (getLogger().isLoggable(Level.FINEST)) {
+            getLogger().log(Level.FINEST, message + "\n" + new String(data));
         }
     }
 
