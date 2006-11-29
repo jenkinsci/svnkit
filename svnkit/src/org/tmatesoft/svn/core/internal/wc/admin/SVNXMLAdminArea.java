@@ -412,10 +412,11 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             writer.write("<entry");
             for (Iterator names = entryAttrs.keySet().iterator(); names.hasNext();) {
                 String propName = (String) names.next();
-                String propValue = (String) entryAttrs.get(propName);
-                if (propValue == null) {
+                Object value = entryAttrs.get(propName);
+                if (!(value instanceof String)) {
                     continue;
                 }
+                String propValue = (String) value;
                 if (BOOLEAN_PROPERTIES.contains(propName) && !Boolean.TRUE.toString().equals(propValue)) {
                     continue;
                 }
