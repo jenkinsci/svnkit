@@ -43,6 +43,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.1.0
@@ -1405,6 +1406,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         File logFile = adminArea.getAdminFile("log");
         SVNFileType type = SVNFileType.getType(logFile);
         if (type == SVNFileType.FILE) {
+            SVNDebugLog.getDefaultLog().info("Upgrade failed: found a log file at '" + logFile + "'");
             return adminArea;
         }
 
