@@ -1755,7 +1755,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         }
         return false;
     }
-    
+
     public boolean isLocked() throws SVNException {
         if (!myWasLocked) {
             return false;
@@ -1775,5 +1775,9 @@ public class SVNAdminArea14 extends SVNAdminArea {
     protected int getFormatVersion() {
         return WC_FORMAT;
     }
-    
+
+    protected boolean isEntryPropertyApplicable(String name) {
+        return true;
+    }
+
 }

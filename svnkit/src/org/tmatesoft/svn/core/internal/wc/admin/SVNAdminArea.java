@@ -69,6 +69,8 @@ public abstract class SVNAdminArea {
 
     public abstract boolean isVersioned();
 
+    protected abstract boolean isEntryPropertyApplicable(String name);
+    
     public abstract boolean lock(boolean stealLock) throws SVNException;
 
     public abstract boolean unlock() throws SVNException;
@@ -931,8 +933,10 @@ public abstract class SVNAdminArea {
                     if (entry.getUUID() == null && !entry.isScheduledForAddition() && !entry.isScheduledForReplacement()) {
                         entry.setUUID(rootEntry.getUUID());
                     }
-                    if (entry.getCachableProperties() == null) {
-                        entry.setCachableProperties(rootEntry.getCachableProperties());
+                    if (isEntryPropertyApplicable(SVNProperty.CACHABLE_PROPS)) {
+                        if (entry.getCachableProperties() == null) {
+                            entry.setCachableProperties(rootEntry.getCachableProperties());
+                        }
                     }
                 }
             }

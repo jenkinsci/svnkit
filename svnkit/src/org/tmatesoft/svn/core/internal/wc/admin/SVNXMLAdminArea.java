@@ -1000,4 +1000,10 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         }
     }
 
+    protected boolean isEntryPropertyApplicable(String propName) {
+        return propName != null && !SVNProperty.CACHABLE_PROPS.equals(propName) && 
+               !SVNProperty.PRESENT_PROPS.equals(propName) && !SVNProperty.HAS_PROP_MODS.equals(propName) && 
+               !SVNProperty.HAS_PROPS.equals(propName);
+    }
+
 }
