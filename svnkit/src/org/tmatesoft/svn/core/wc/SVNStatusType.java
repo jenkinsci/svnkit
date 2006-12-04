@@ -342,4 +342,16 @@ public class SVNStatusType {
      * externals definitions. 
      */
     public static final SVNStatusType STATUS_EXTERNAL = new SVNStatusType(13, "external", 'X');
+    
+    /**
+     * In a status operation denotes that the item in the Working Copy being 
+     * currently processed was merged - that is it was applied the differences
+     * (delta) between two sources in a merge operation.
+     * 
+     * @deprecated this status is never reported by 'status' operation 
+     * in this version, 'update' and 'merge' uses {@link SVNStatusType#MERGED} instead. 
+     *  
+     */
+    public static final SVNStatusType STATUS_MERGED = new SVNStatusType(8, "merged", 'G');
+
 }
