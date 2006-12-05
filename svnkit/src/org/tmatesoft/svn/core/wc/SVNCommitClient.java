@@ -486,8 +486,8 @@ public class SVNCommitClient extends SVNBasicClient {
             for (int i = newPaths.size() - 1; i >= 0; i--) {
                 newDirPath = newDirPath == null ? (String) newPaths.get(i) : SVNPathUtil.append(newDirPath, (String) newPaths.get(i));
                 commitEditor.addDir(newDirPath, null, -1);
-                changed = true;
             }
+            changed = newPaths.size() > 0;
             SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
             if (srcKind == SVNFileType.DIRECTORY) {
                 changed |= importDir(deltaGenerator, path, path, newDirPath, useGlobalIgnores, recursive, commitEditor);

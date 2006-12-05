@@ -544,7 +544,16 @@ public class SVNCommitUtil {
         boolean textConflicts = false;
         SVNAdminArea entries = null;
         if (entry.getKind() == SVNNodeKind.DIR) {
-            SVNAdminArea childDir = dir.getWCAccess().retrieve(dir.getFile(entry.getName()));
+            SVNAdminArea childDir = null;
+            try {
+                childDir = dir.getWCAccess().retrieve(dir.getFile(entry.getName()));
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
+                    childDir = null;
+                } else {
+                    throw e;
+                }
+            }
             if (childDir != null && childDir.entries(true) != null) {
                 entries = childDir;
                 if (entries.getEntry("", false) != null) {
@@ -769,7 +778,17 @@ public class SVNCommitUtil {
                 lockTokens.put(entry.getURL(), entry.getLockToken());
             }
             if (!adminArea.getThisDirName().equals(entry.getName()) && entry.isDirectory()) {
-                SVNAdminArea child = adminArea.getWCAccess().retrieve(adminArea.getFile(entry.getName()));
+                
+                SVNAdminArea child;
+                try {
+                    child = adminArea.getWCAccess().retrieve(adminArea.getFile(entry.getName()));
+                } catch (SVNException e) {
+                    if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
+                        child = null;
+                    } else {
+                        throw e;
+                    }
+                }
                 if (child != null) {
                     collectLocks(child, lockTokens);
                 }
