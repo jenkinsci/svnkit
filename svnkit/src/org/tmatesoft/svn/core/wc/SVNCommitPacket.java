@@ -11,7 +11,6 @@
  */
 package org.tmatesoft.svn.core.wc;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;

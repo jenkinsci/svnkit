@@ -180,7 +180,7 @@ public class FSReplayPathHandler implements ISVNCommitPathHandler {
                     
                     FSRevisionNode node = myRoot.getRevisionNode(absPath);
                     Map newProps = node.getProperties(myOwner);
-                    Map propDiff = FSRepository.getPropsDiffs(oldProps, newProps);
+                    Map propDiff = FSRepositoryUtil.getPropsDiffs(oldProps, newProps);
                     for (Iterator propNames = propDiff.keySet().iterator(); propNames.hasNext();) {
                         String propName = (String) propNames.next();
                         String propValue = (String) propDiff.get(propName);

@@ -386,7 +386,7 @@ public class FSUpdateContext {
             if (isIgnoreAncestry()) {
                 changed = checkFilesDifferent(sourceRoot, sourcePath, getTargetRoot(), targetPath);
             } else {
-                changed = myRepository.areFileContentsChanged(sourceRoot, sourcePath, getTargetRoot(), targetPath);
+                changed = FSRepositoryUtil.areFileContentsChanged(sourceRoot, sourcePath, getTargetRoot(), targetPath);
             }
             if (!changed) {
                 return;
@@ -419,7 +419,7 @@ public class FSUpdateContext {
     }
 
     private boolean checkFilesDifferent(FSRoot root1, String path1, FSRoot root2, String path2) throws SVNException {
-        boolean changed = myRepository.areFileContentsChanged(root1, path1, root2, path2);
+        boolean changed = FSRepositoryUtil.areFileContentsChanged(root1, path1, root2, path2);
         if (!changed) {
             return false;
         }
@@ -568,7 +568,7 @@ public class FSUpdateContext {
         if (sourcePath != null) {
             FSRevisionRoot sourceRoot = getSourceRoot(sourceRevision);
             FSRevisionNode sourceNode = sourceRoot.getRevisionNode(sourcePath);
-            boolean propsChanged = !myRepository.arePropertiesEqual(sourceNode, targetNode);
+            boolean propsChanged = !FSRepositoryUtil.arePropertiesEqual(sourceNode, targetNode);
             if (!propsChanged) {
                 return;
             }
@@ -578,7 +578,7 @@ public class FSUpdateContext {
         }
 
         Map targetProps = targetNode.getProperties(myFSFS);
-        Map propsDiffs = FSRepository.getPropsDiffs(sourceProps, targetProps);
+        Map propsDiffs = FSRepositoryUtil.getPropsDiffs(sourceProps, targetProps);
         Object[] names = propsDiffs.keySet().toArray();
         for (int i = 0; i < names.length; i++) {
             String propName = (String) names[i];

@@ -11,11 +11,14 @@
  */
 package org.tmatesoft.svn.core.wc;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -30,8 +33,12 @@ import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
+import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryUtil;
+import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
+import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
+import org.tmatesoft.svn.core.internal.wc.SVNDumpEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNSynchronizeEditor;
@@ -379,6 +386,44 @@ public class SVNAdminClient extends SVNBasicClient {
         }
     }
 
+    public void doVerify(File repositoryRoot) throws SVNException {
+        FSFS fsfs = openRepository(repositoryRoot);
+        long youngestRevision = fsfs.getYoungestRevision();
+        try {
+            dump(fsfs, SVNFileUtil.DUMMY_OUT, 0, youngestRevision, false, false);
+        } catch (IOException ioe) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
+            SVNErrorManager.error(err, ioe);
+        }
+    }
+    
+    public void doDump(File repositoryRoot, OutputStream dumpStream, SVNRevision startRevision, SVNRevision endRevision, boolean isIncremental, boolean useDeltas) throws SVNException {
+        FSFS fsfs = openRepository(repositoryRoot);
+        long youngestRevision = fsfs.getYoungestRevision();
+        
+        long lowerR = getRevisionNumber(startRevision, youngestRevision, fsfs);
+        long upperR = getRevisionNumber(endRevision, youngestRevision, fsfs);
+        
+        if (!SVNRevision.isValidRevisionNumber(lowerR)) {
+            lowerR = 0;
+            upperR = youngestRevision;
+        } else if (!SVNRevision.isValidRevisionNumber(upperR)) {
+            upperR = lowerR; 
+        }
+        
+        if (lowerR > upperR) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "First revision cannot be higher than second");
+            SVNErrorManager.error(err);
+        }
+        
+        try {
+            dump(fsfs, dumpStream, lowerR, upperR, isIncremental, useDeltas);
+        } catch (IOException ioe) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
+            SVNErrorManager.error(err, ioe);
+        }
+    }
+    
     public void doLoad(File repositoryRoot, InputStream dumpStream) throws SVNException {
         doLoad(repositoryRoot, dumpStream, false, false, SVNUUIDAction.DEFAULT, null);
     }
@@ -567,6 +612,126 @@ public class SVNAdminClient extends SVNBasicClient {
         }
     }
 
+    private void dump(FSFS fsfs, OutputStream dumpStream, long start, long end, boolean isIncremental, boolean useDeltas) throws SVNException, IOException {
+        boolean isDumping = dumpStream != null;
+        long youngestRevision = fsfs.getYoungestRevision();
+
+        if (!SVNRevision.isValidRevisionNumber(start)) {
+            start = 0;
+        }
+        
+        if (!SVNRevision.isValidRevisionNumber(end)) {
+            end = youngestRevision;
+        }
+        
+        if (dumpStream == null) {
+            dumpStream = SVNFileUtil.DUMMY_OUT;
+        }
+        
+        if (start > end) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS, "Start revision {0,number,integer} is greater than end revision {1,number,integer}", new Object[]{new Long(start), new Long(end)});
+            SVNErrorManager.error(err);
+        }
+        
+        if (end > youngestRevision) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS, "End revision {0,number,integer} is invalid (youngest revision is {1,number,integer})", new Object[]{new Long(end), new Long(youngestRevision)});
+            SVNErrorManager.error(err);
+        }
+        
+        if (start == 0 && isIncremental) {
+            isIncremental = false;
+        }
+        
+        String uuid = fsfs.getUUID();
+        int version = SVNAdminUtil.DUMPFILE_FORMAT_VERSION;
+        
+        if (!useDeltas) {
+            //for compatibility with SVN 1.0.x
+            version--;
+        }
+        
+        writeDumpData(dumpStream, SVNAdminUtil.DUMPFILE_MAGIC_HEADER + ": " + version + "\n\n");
+        writeDumpData(dumpStream, SVNAdminUtil.DUMPFILE_UUID + ": " + uuid + "\n\n");
+
+        for (long i = start; i <= end; i++) {
+            long fromRev, toRev;
+                
+            checkCancelled();
+
+            if (i == start && !isIncremental) {
+                if (i == 0) {
+                    writeRevisionRecord(dumpStream, fsfs, 0);
+                    toRev = 0;
+                    SVNDebugLog.getDefaultLog().info((isDumping ? "* Dumped" : "* Verified") + " revision " + toRev + ".\n");
+                    continue;
+                }
+                
+                fromRev = 0;
+                toRev = i;
+            } else {
+                fromRev = i - 1;
+                toRev = i;
+            }
+            
+            writeRevisionRecord(dumpStream, fsfs, toRev);
+            boolean useDeltasForRevision = useDeltas && (isIncremental || i != start);
+            FSRevisionRoot toRoot = fsfs.createRevisionRoot(toRev);
+            ISVNEditor dumpEditor = new SVNDumpEditor(fsfs, toRoot, toRev, start, "/", dumpStream, useDeltasForRevision);
+
+            if (i == start && !isIncremental) {
+                FSRevisionRoot fromRoot = fsfs.createRevisionRoot(fromRev);
+                SVNAdminUtil.deltifyDir(fsfs, fromRoot, "/", "", toRoot, "/", dumpEditor);
+            } else {
+                FSRepositoryUtil.replay(fsfs, toRoot, "", -1, false, dumpEditor);
+            }
+            SVNDebugLog.getDefaultLog().info((isDumping ? "* Dumped" : "* Verified") + " revision " + toRev + ".\n");
+        }
+    }
+    
+    private void writeRevisionRecord(OutputStream dumpStream, FSFS fsfs, long revision) throws SVNException, IOException {
+        Map revProps = fsfs.getRevisionProperties(revision);
+        
+        String revisionDate = (String) revProps.get(SVNRevisionProperty.DATE);
+        if (revisionDate != null) {
+            Date date = SVNTimeUtil.parseDateString(revisionDate);
+            revProps.put(SVNRevisionProperty.DATE, SVNTimeUtil.formatDate(date));
+        }
+        
+        ByteArrayOutputStream encodedProps = new ByteArrayOutputStream();
+        SVNAdminUtil.writeProperties(revProps, null, encodedProps);
+
+        writeDumpData(dumpStream, SVNAdminUtil.DUMPFILE_REVISION_NUMBER + ": " + revision + "\n");
+        String propContents = new String(encodedProps.toByteArray(), "UTF-8");
+        writeDumpData(dumpStream, SVNAdminUtil.DUMPFILE_PROP_CONTENT_LENGTH + ": " + propContents.length() + "\n");
+        writeDumpData(dumpStream, SVNAdminUtil.DUMPFILE_CONTENT_LENGTH + ": " + propContents.length() + "\n");
+        writeDumpData(dumpStream, propContents);
+        dumpStream.write('\n');
+    }
+    
+    private void writeDumpData(OutputStream out, String data) throws IOException {
+        out.write(data.getBytes("UTF-8"));
+    }
+    
+    private long getRevisionNumber(SVNRevision revision, long youngestRevision, FSFS fsfs) throws SVNException {
+        long revNumber = -1;
+        if (revision.getNumber() >= 0) {
+            revNumber = revision.getNumber();
+        } else if (revision == SVNRevision.HEAD) {
+            revNumber = youngestRevision;
+        } else if (revision.getDate() != null) {
+            revNumber = fsfs.getDatedRevision(revision.getDate());
+        } else if (revision != SVNRevision.UNDEFINED) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Invalid revision specifier");
+            SVNErrorManager.error(err);
+        }
+        
+        if (revNumber > youngestRevision) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Revisions must not be greater than the youngest revision ({0,number,integer})", new Long(youngestRevision));
+            SVNErrorManager.error(err);
+        }
+        return revNumber;
+    }
+    
     private ISVNLoadHandler getLoadHandler(File repositoryRoot, boolean usePreCommitHook, boolean usePostCommitHook, SVNUUIDAction uuidAction, String parentDir) throws SVNException {
         if (myLoadHandler == null) {
             FSFS fsfs = openRepository(repositoryRoot);

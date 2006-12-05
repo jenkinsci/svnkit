@@ -153,18 +153,18 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
         
         myCurrentNodeBaton = createNodeBaton(headers);
         switch (myCurrentNodeBaton.myAction) {
-            case NodeBaton.NODE_ACTION_CHANGE:
+            case SVNAdminUtil.NODE_ACTION_CHANGE:
                 SVNDebugLog.getDefaultLog().info("     * editing path : " + myCurrentNodeBaton.myPath + " ...");
                 break;
-            case NodeBaton.NODE_ACTION_DELETE:
+            case SVNAdminUtil.NODE_ACTION_DELETE:
                 SVNDebugLog.getDefaultLog().info("     * deleting path : " + myCurrentNodeBaton.myPath + " ...");
                 myCurrentRevisionBaton.getCommitter().deleteNode(myCurrentNodeBaton.myPath);
                 break;
-            case NodeBaton.NODE_ACTION_ADD:
+            case SVNAdminUtil.NODE_ACTION_ADD:
                 SVNDebugLog.getDefaultLog().info("     * adding path : " + myCurrentNodeBaton.myPath + " ...");
                 maybeAddWithHistory(myCurrentNodeBaton);
                 break;
-            case NodeBaton.NODE_ACTION_REPLACE:
+            case SVNAdminUtil.NODE_ACTION_REPLACE:
                 SVNDebugLog.getDefaultLog().info("     * replacing path : " + myCurrentNodeBaton.myPath + " ...");
                 myCurrentRevisionBaton.getCommitter().deleteNode(myCurrentNodeBaton.myPath);
                 maybeAddWithHistory(myCurrentNodeBaton);
@@ -430,17 +430,17 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
             baton.myKind = SVNNodeKind.parseKind((String) headers.get(SVNAdminUtil.DUMPFILE_NODE_KIND));
         }
         
-        baton.myAction = NodeBaton.NODE_ACTION_UNKNOWN;
+        baton.myAction = SVNAdminUtil.NODE_ACTION_UNKNOWN;
         if (headers.containsKey(SVNAdminUtil.DUMPFILE_NODE_ACTION)) {
             String action = (String) headers.get(SVNAdminUtil.DUMPFILE_NODE_ACTION);
             if ("change".equals(action)) {
-                baton.myAction = NodeBaton.NODE_ACTION_CHANGE;
+                baton.myAction = SVNAdminUtil.NODE_ACTION_CHANGE;
             } else if ("add".equals(action)) {
-                baton.myAction = NodeBaton.NODE_ACTION_ADD;
+                baton.myAction = SVNAdminUtil.NODE_ACTION_ADD;
             } else if ("delete".equals(action)) {
-                baton.myAction = NodeBaton.NODE_ACTION_DELETE;
+                baton.myAction = SVNAdminUtil.NODE_ACTION_DELETE;
             } else if ("replace".equals(action)) {
-                baton.myAction = NodeBaton.NODE_ACTION_REPLACE;
+                baton.myAction = SVNAdminUtil.NODE_ACTION_REPLACE;
             }
         }
         
@@ -495,12 +495,6 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
     }
     
     private class NodeBaton {
-        public static final int NODE_ACTION_UNKNOWN = -1;
-        public static final int NODE_ACTION_CHANGE = 0;
-        public static final int NODE_ACTION_ADD = 1;
-        public static final int NODE_ACTION_DELETE = 2;
-        public static final int NODE_ACTION_REPLACE = 3;
-
         String myPath;
         SVNNodeKind myKind;
         int myAction;

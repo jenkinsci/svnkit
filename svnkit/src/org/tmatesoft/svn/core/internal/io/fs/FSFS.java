@@ -170,6 +170,42 @@ public class FSFS {
         return myWriteLockFile;
     }
     
+    public long getDatedRevision(Date date) throws SVNException {
+        long latest = getYoungestRevision();
+        long top = latest;
+        long bottom = 0;
+        long middle;
+        Date currentTime = null;
+
+        while (bottom <= top) {
+            middle = (top + bottom) / 2;
+            currentTime = getRevisionTime(middle);
+            if (currentTime.compareTo(date) > 0) {
+                if ((middle - 1) < 0) {
+                    return 0;
+                }
+                Date prevTime = getRevisionTime(middle - 1);
+                if (prevTime.compareTo(date) < 0) {
+                    return middle - 1;
+                }
+                top = middle - 1;
+            } else if (currentTime.compareTo(date) < 0) {
+                if ((middle + 1) > latest) {
+                    return latest;
+                }
+                Date nextTime = getRevisionTime(middle + 1);
+                if (nextTime.compareTo(date) > 0) {
+                    return middle + 1;
+                }
+                bottom = middle + 1;
+            } else {
+                return middle;
+            }
+        }
+        return 0;
+    
+    }
+
     public long getYoungestRevision() throws SVNException {
         FSFile file = new FSFile(getCurrentFile());
         try {
@@ -188,13 +224,6 @@ public class FSFS {
         return - 1;
     }
     
-    protected File getCurrentFile(){
-        if(myCurrentFile == null){
-            myCurrentFile = new File(myDBRoot, "current"); 
-        }
-        return myCurrentFile;
-    }
-    
     public File getDBRoot(){
         return myDBRoot;
     }
@@ -206,11 +235,6 @@ public class FSFS {
         } finally {
             file.close();
         }
-    }
-
-    protected FSFile getTransactionRevisionNodePropertiesFile(FSID id) {
-        File revNodePropsFile = new File(getTransactionDir(id.getTxnID()), PATH_PREFIX_NODE + id.getNodeID() + "." + id.getCopyID() + TXN_PATH_EXT_PROPS);
-        return new FSFile(revNodePropsFile);
     }
 
     public FSRevisionRoot createRevisionRoot(long revision) {
@@ -303,46 +327,6 @@ public class FSFS {
         return new HashMap();// returns an empty map, must not be null!!
     }
 
-    private Map parsePlainRepresentation(Map entries, boolean mayContainNulls) throws SVNException {
-        Map representationMap = new HashMap();
-        Object[] names = entries.keySet().toArray();
-        for (int i = 0; i < names.length; i++) {
-            String name = (String) names[i];
-            String unparsedEntry = (String) entries.get(names[i]);
-            
-            if(unparsedEntry == null && mayContainNulls){
-                continue;
-            }
-            
-            FSEntry nextRepEntry = parseRepEntryValue(name, unparsedEntry);
-            if (nextRepEntry == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Directory entry corrupt");
-                SVNErrorManager.error(err);
-            }
-            representationMap.put(name, nextRepEntry);
-        }
-        return representationMap;
-    }
-
-    private FSEntry parseRepEntryValue(String name, String value) {
-        if (value == null) {
-            return null;
-        }
-        int spaceInd = value.indexOf(' ');
-        if (spaceInd == -1) {
-            return null;
-        }
-        String kind = value.substring(0, spaceInd);
-        String rawID = value.substring(spaceInd + 1);
-        
-        SVNNodeKind type = SVNNodeKind.parseKind(kind);
-        FSID id = FSID.fromString(rawID);
-        if ((type != SVNNodeKind.DIR && type != SVNNodeKind.FILE) || id == null) {
-            return null;
-        }
-        return new FSEntry(id, type, name);
-    }
-
     public Map getProperties(FSRevisionNode revNode) throws SVNException {
         if (revNode.getPropsRepresentation() != null && revNode.getPropsRepresentation().isTxn()) {
             FSFile propsFile = null;
@@ -421,15 +405,6 @@ public class FSFS {
         return ids;
     }
 
-    protected FSFile getRevisionFile(long revision)  throws SVNException {
-        File revisionFile = new File(myRevisionsRoot, String.valueOf(revision));
-        if (!revisionFile.exists()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision {0,number,integer}", new Long(revision));
-            SVNErrorManager.error(err);
-        }
-        return new FSFile(revisionFile);
-    }
-
     public File getNewRevisionFile(long revision) throws SVNException {
         File revFile = new File(myRevisionsRoot, String.valueOf(revision));
         if (revFile.exists()) {
@@ -475,16 +450,6 @@ public class FSFS {
         SVNFileUtil.rename(uniqueFile, uuidFile);
     }
     
-    protected FSFile getTransactionChangesFile(String txnID) {
-        File file = new File(getTransactionDir(txnID), "changes");
-        return new FSFile(file);
-    }
-
-    protected FSFile getTransactionRevisionNodeChildrenFile(FSID txnID) {
-        File childrenFile = new File(getTransactionDir(txnID.getTxnID()), PATH_PREFIX_NODE + txnID.getNodeID() + "." + txnID.getCopyID() + TXN_PATH_EXT_CHILDREN);
-        return new FSFile(childrenFile);
-    }
-    
     public File getRevisionPropertiesFile(long revision) throws SVNException {
         File file = new File(myRevisionPropertiesRoot, String.valueOf(revision));
         if (!file.exists()) {
@@ -494,11 +459,6 @@ public class FSFS {
         return file;
     }
     
-    protected FSFile getTransactionRevisionPrototypeFile(String txnID) {
-        File revFile = new File(getTransactionDir(txnID), TXN_PATH_REV);
-        return new FSFile(revFile);
-    }
-
     public File getRepositoryRoot(){
         return myRepositoryRoot;
     }
@@ -508,18 +468,6 @@ public class FSFS {
             return openAndSeekRevision(rep.getRevision(), rep.getOffset());
         }
         return openAndSeekTransaction(rep);
-    }
-
-    private FSFile openAndSeekTransaction(FSRepresentation rep) {
-        FSFile file = getTransactionRevisionPrototypeFile(rep.getTxnId());
-        file.seek(rep.getOffset());
-        return file;
-    }
-
-    private FSFile openAndSeekRevision(long revision, long offset) throws SVNException {
-        FSFile file = getRevisionFile(revision);
-        file.seek(offset);
-        return file;
     }
 
     public File getNextIDsFile(String txnID) {
@@ -681,63 +629,6 @@ public class FSFS {
         }
     }
 
-    private boolean ensureDirExists(File dir, boolean create) {
-        if (!dir.exists() && create == true) {
-            return dir.mkdirs();
-        } else if (!dir.exists()) {
-            return false;
-        }
-        return true;
-    }
-
-    private void writeDigestLockFile(SVNLock lock, Collection children, String repositoryPath) throws SVNException {
-        if (!ensureDirExists(myLocksRoot, true)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Can't create a directory at ''{0}''", myLocksRoot);
-            SVNErrorManager.error(err);
-        }
-        
-        File digestLockFile = getDigestFileFromRepositoryPath(repositoryPath);
-        String digest = getDigestFromRepositoryPath(repositoryPath);
-        File lockDigestSubdir = new File(myLocksRoot, digest.substring(0, FSFS.DIGEST_SUBDIR_LEN));//FSRepositoryUtil.getDigestSubdirectoryFromDigest(, reposRootDir);
-
-        if (!ensureDirExists(lockDigestSubdir, true)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Can't create a directory at ''{0}''", lockDigestSubdir);
-            SVNErrorManager.error(err);
-        }
-        
-        Map props = new HashMap();
-        
-        if (lock != null) {
-            props.put(FSFS.PATH_LOCK_KEY, lock.getPath());
-            props.put(FSFS.OWNER_LOCK_KEY, lock.getOwner());
-            props.put(FSFS.TOKEN_LOCK_KEY, lock.getID());
-            props.put(FSFS.IS_DAV_COMMENT_LOCK_KEY, "0");
-            if (lock.getComment() != null) {
-                props.put(FSFS.COMMENT_LOCK_KEY, lock.getComment());
-            }
-            if (lock.getCreationDate() != null) {
-                props.put(FSFS.CREATION_DATE_LOCK_KEY, SVNTimeUtil.formatDate(lock.getCreationDate()));
-            }
-            if (lock.getExpirationDate() != null) {
-                props.put(FSFS.EXPIRATION_DATE_LOCK_KEY, SVNTimeUtil.formatDate(lock.getExpirationDate()));
-            }
-        }
-        if (children != null && children.size() > 0) {
-            Object[] digests = children.toArray();
-            StringBuffer value = new StringBuffer();
-            for (int i = 0; i < digests.length; i++) {
-                value.append(digests[i]);
-                value.append('\n');
-            }
-            props.put(FSFS.CHILDREN_LOCK_KEY, value.toString());
-        }
-        try {
-            SVNProperties.setProperties(props, digestLockFile, SVNFileUtil.createUniqueFile(digestLockFile.getParentFile(), digestLockFile.getName(), ".tmp"), SVNProperties.SVN_HASH_TERMINATOR);
-        } catch (SVNException svne) {
-            SVNErrorMessage err = svne.getErrorMessage().wrap("Cannot write lock/entries hashfile ''{0}''", digestLockFile);
-            SVNErrorManager.error(err, svne);
-        }
-    }
 
     public void walkDigestFiles(File digestFile, ISVNLockHandler getLocksHandler, boolean haveWriteLock) throws SVNException {
         Collection children = new LinkedList();
@@ -886,6 +777,104 @@ public class FSFS {
         }
     }
 
+    public SVNLock lockPath(String path, String token, String username, String comment, Date expirationDate, long currentRevision, boolean stealLock) throws SVNException {
+        String[] paths = {path};
+        
+        if (username == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_USER, "Cannot lock path ''{0}'', no authenticated username available.", path);
+            SVNErrorManager.error(err);
+        }
+
+        FSHooks.runPreLockHook(myRepositoryRoot, path, username);
+        SVNLock lock = null;
+        
+        FSWriteLock writeLock = FSWriteLock.getWriteLock(this);
+
+        synchronized (writeLock) {
+            try {
+                writeLock.lock();
+                lock = lock(path, token, username, comment, expirationDate, currentRevision, stealLock);
+            } finally {
+                writeLock.unlock();
+                FSWriteLock.realease(writeLock);
+            }
+        }
+
+        try {
+            FSHooks.runPostLockHook(myRepositoryRoot, paths, username);
+        } catch (SVNException svne) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_POST_LOCK_HOOK_FAILED, "Lock succeeded, but post-lock hook failed");
+            err.setChildErrorMessage(svne.getErrorMessage());
+            SVNErrorManager.error(err, svne);
+        }
+        return lock;
+    }
+    
+    public Map compoundMetaProperties(long revision) throws SVNException {
+        Map metaProps = new HashMap();
+        Map revProps = getRevisionProperties(revision);
+        String author = (String) revProps.get(SVNRevisionProperty.AUTHOR);
+        String date = (String) revProps.get(SVNRevisionProperty.DATE);
+        String uuid = getUUID();
+        String rev = String.valueOf(revision);
+
+        metaProps.put(SVNProperty.LAST_AUTHOR, author);
+        metaProps.put(SVNProperty.COMMITTED_DATE, date);
+        metaProps.put(SVNProperty.COMMITTED_REVISION, rev);
+        metaProps.put(SVNProperty.UUID, uuid);
+        return metaProps;
+    }
+
+    public static File findRepositoryRoot(File path) {
+        if (path == null) {
+            path = new File("");
+        }
+        File rootPath = path;
+        while (!isRepositoryRoot(rootPath)) {
+            rootPath = rootPath.getParentFile();
+            if (rootPath == null) {
+                return null;
+            }
+        }
+        return rootPath;
+    }
+
+    protected FSFile getTransactionRevisionPrototypeFile(String txnID) {
+        File revFile = new File(getTransactionDir(txnID), TXN_PATH_REV);
+        return new FSFile(revFile);
+    }
+
+    protected FSFile getTransactionChangesFile(String txnID) {
+        File file = new File(getTransactionDir(txnID), "changes");
+        return new FSFile(file);
+    }
+
+    protected FSFile getTransactionRevisionNodeChildrenFile(FSID txnID) {
+        File childrenFile = new File(getTransactionDir(txnID.getTxnID()), PATH_PREFIX_NODE + txnID.getNodeID() + "." + txnID.getCopyID() + TXN_PATH_EXT_CHILDREN);
+        return new FSFile(childrenFile);
+    }
+    
+    protected FSFile getRevisionFile(long revision)  throws SVNException {
+        File revisionFile = new File(myRevisionsRoot, String.valueOf(revision));
+        if (!revisionFile.exists()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision {0,number,integer}", new Long(revision));
+            SVNErrorManager.error(err);
+        }
+        return new FSFile(revisionFile);
+    }
+
+    protected FSFile getTransactionRevisionNodePropertiesFile(FSID id) {
+        File revNodePropsFile = new File(getTransactionDir(id.getTxnID()), PATH_PREFIX_NODE + id.getNodeID() + "." + id.getCopyID() + TXN_PATH_EXT_PROPS);
+        return new FSFile(revNodePropsFile);
+    }
+    
+    protected File getCurrentFile(){
+        if(myCurrentFile == null){
+            myCurrentFile = new File(myDBRoot, "current"); 
+        }
+        return myCurrentFile;
+    }
+
     private void unlock(String path, String token, String username, boolean breakLock) throws SVNException {
         SVNLock lock = getLock(path, true);
         if (!breakLock) {
@@ -953,40 +942,7 @@ public class FSFS {
         setLock(lock);
         return lock;
     }
-    
-    public SVNLock lockPath(String path, String token, String username, String comment, Date expirationDate, long currentRevision, boolean stealLock) throws SVNException {
-        String[] paths = {path};
-        
-        if (username == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_USER, "Cannot lock path ''{0}'', no authenticated username available.", path);
-            SVNErrorManager.error(err);
-        }
 
-        FSHooks.runPreLockHook(myRepositoryRoot, path, username);
-        SVNLock lock = null;
-        
-        FSWriteLock writeLock = FSWriteLock.getWriteLock(this);
-
-        synchronized (writeLock) {
-            try {
-                writeLock.lock();
-                lock = lock(path, token, username, comment, expirationDate, currentRevision, stealLock);
-            } finally {
-                writeLock.unlock();
-                FSWriteLock.realease(writeLock);
-            }
-        }
-
-        try {
-            FSHooks.runPostLockHook(myRepositoryRoot, paths, username);
-        } catch (SVNException svne) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_POST_LOCK_HOOK_FAILED, "Lock succeeded, but post-lock hook failed");
-            err.setChildErrorMessage(svne.getErrorMessage());
-            SVNErrorManager.error(err, svne);
-        }
-        return lock;
-    }
-    
     private void setLock(SVNLock lock) throws SVNException {
         if (lock == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "FATAL error: attempted to set a null lock");
@@ -1024,33 +980,124 @@ public class FSFS {
         }
     }
 
-    public Map compoundMetaProperties(long revision) throws SVNException {
-        Map metaProps = new HashMap();
-        Map revProps = getRevisionProperties(revision);
-        String author = (String) revProps.get(SVNRevisionProperty.AUTHOR);
-        String date = (String) revProps.get(SVNRevisionProperty.DATE);
-        String uuid = getUUID();
-        String rev = String.valueOf(revision);
-
-        metaProps.put(SVNProperty.LAST_AUTHOR, author);
-        metaProps.put(SVNProperty.COMMITTED_DATE, date);
-        metaProps.put(SVNProperty.COMMITTED_REVISION, rev);
-        metaProps.put(SVNProperty.UUID, uuid);
-        return metaProps;
+    private boolean ensureDirExists(File dir, boolean create) {
+        if (!dir.exists() && create == true) {
+            return dir.mkdirs();
+        } else if (!dir.exists()) {
+            return false;
+        }
+        return true;
     }
 
-    public static File findRepositoryRoot(File path) {
-        if (path == null) {
-            path = new File("");
+    private void writeDigestLockFile(SVNLock lock, Collection children, String repositoryPath) throws SVNException {
+        if (!ensureDirExists(myLocksRoot, true)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Can't create a directory at ''{0}''", myLocksRoot);
+            SVNErrorManager.error(err);
         }
-        File rootPath = path;
-        while (!isRepositoryRoot(rootPath)) {
-            rootPath = rootPath.getParentFile();
-            if (rootPath == null) {
-                return null;
+        
+        File digestLockFile = getDigestFileFromRepositoryPath(repositoryPath);
+        String digest = getDigestFromRepositoryPath(repositoryPath);
+        File lockDigestSubdir = new File(myLocksRoot, digest.substring(0, FSFS.DIGEST_SUBDIR_LEN));
+
+        if (!ensureDirExists(lockDigestSubdir, true)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Can't create a directory at ''{0}''", lockDigestSubdir);
+            SVNErrorManager.error(err);
+        }
+        
+        Map props = new HashMap();
+        
+        if (lock != null) {
+            props.put(FSFS.PATH_LOCK_KEY, lock.getPath());
+            props.put(FSFS.OWNER_LOCK_KEY, lock.getOwner());
+            props.put(FSFS.TOKEN_LOCK_KEY, lock.getID());
+            props.put(FSFS.IS_DAV_COMMENT_LOCK_KEY, "0");
+            if (lock.getComment() != null) {
+                props.put(FSFS.COMMENT_LOCK_KEY, lock.getComment());
+            }
+            if (lock.getCreationDate() != null) {
+                props.put(FSFS.CREATION_DATE_LOCK_KEY, SVNTimeUtil.formatDate(lock.getCreationDate()));
+            }
+            if (lock.getExpirationDate() != null) {
+                props.put(FSFS.EXPIRATION_DATE_LOCK_KEY, SVNTimeUtil.formatDate(lock.getExpirationDate()));
             }
         }
-        return rootPath;
+        if (children != null && children.size() > 0) {
+            Object[] digests = children.toArray();
+            StringBuffer value = new StringBuffer();
+            for (int i = 0; i < digests.length; i++) {
+                value.append(digests[i]);
+                value.append('\n');
+            }
+            props.put(FSFS.CHILDREN_LOCK_KEY, value.toString());
+        }
+        try {
+            SVNProperties.setProperties(props, digestLockFile, SVNFileUtil.createUniqueFile(digestLockFile.getParentFile(), digestLockFile.getName(), ".tmp"), SVNProperties.SVN_HASH_TERMINATOR);
+        } catch (SVNException svne) {
+            SVNErrorMessage err = svne.getErrorMessage().wrap("Cannot write lock/entries hashfile ''{0}''", digestLockFile);
+            SVNErrorManager.error(err, svne);
+        }
+    }
+
+    private FSFile openAndSeekTransaction(FSRepresentation rep) {
+        FSFile file = getTransactionRevisionPrototypeFile(rep.getTxnId());
+        file.seek(rep.getOffset());
+        return file;
+    }
+
+    private FSFile openAndSeekRevision(long revision, long offset) throws SVNException {
+        FSFile file = getRevisionFile(revision);
+        file.seek(offset);
+        return file;
+    }
+
+    private Map parsePlainRepresentation(Map entries, boolean mayContainNulls) throws SVNException {
+        Map representationMap = new HashMap();
+        Object[] names = entries.keySet().toArray();
+        for (int i = 0; i < names.length; i++) {
+            String name = (String) names[i];
+            String unparsedEntry = (String) entries.get(names[i]);
+            
+            if(unparsedEntry == null && mayContainNulls){
+                continue;
+            }
+            
+            FSEntry nextRepEntry = parseRepEntryValue(name, unparsedEntry);
+            if (nextRepEntry == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Directory entry corrupt");
+                SVNErrorManager.error(err);
+            }
+            representationMap.put(name, nextRepEntry);
+        }
+        return representationMap;
+    }
+
+    private FSEntry parseRepEntryValue(String name, String value) {
+        if (value == null) {
+            return null;
+        }
+        int spaceInd = value.indexOf(' ');
+        if (spaceInd == -1) {
+            return null;
+        }
+        String kind = value.substring(0, spaceInd);
+        String rawID = value.substring(spaceInd + 1);
+        
+        SVNNodeKind type = SVNNodeKind.parseKind(kind);
+        FSID id = FSID.fromString(rawID);
+        if ((type != SVNNodeKind.DIR && type != SVNNodeKind.FILE) || id == null) {
+            return null;
+        }
+        return new FSEntry(id, type, name);
+    }
+    
+    private Date getRevisionTime(long revision) throws SVNException {
+        Map revisionProperties = getRevisionProperties(revision);
+        String timeString = (String) revisionProperties.get(SVNRevisionProperty.DATE);
+        if (timeString == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_GENERAL, "Failed to find time on revision {0,number,integer}", new Long(revision));
+            SVNErrorManager.error(err);
+        }
+        return SVNTimeUtil.parseDateString(timeString);
     }
 
     private static boolean isRepositoryRoot(File candidatePath) {

@@ -402,7 +402,6 @@ public class SVNProperties {
         }
     }
     
-    //only for commit txns
     public static void appendPropertyDeleted(String name, OutputStream target) throws SVNException {
         if(name == null){
             return;

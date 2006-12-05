@@ -12,13 +12,11 @@
 package org.tmatesoft.svn.core.internal.io.fs;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -46,8 +44,6 @@ import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
-import org.tmatesoft.svn.core.internal.wc.ISVNCommitPathHandler;
-import org.tmatesoft.svn.core.internal.wc.SVNCommitUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -148,53 +144,13 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         if (date == null) {
             return getLatestRevision();
         }
+        
         try {
             openRepository();
-            long latest = myFSFS.getYoungestRevision();
-            long top = latest;
-            long bottom = 0;
-            long middle;
-            Date currentTime = null;
-
-            while (bottom <= top) {
-                middle = (top + bottom) / 2;
-                currentTime = getRevisionTime(middle);
-                if (currentTime.compareTo(date) > 0) {
-                    if ((middle - 1) < 0) {
-                        return 0;
-                    }
-                    Date prevTime = getRevisionTime(middle - 1);
-                    if (prevTime.compareTo(date) < 0) {
-                        return middle - 1;
-                    }
-                    top = middle - 1;
-                } else if (currentTime.compareTo(date) < 0) {
-                    if ((middle + 1) > latest) {
-                        return latest;
-                    }
-                    Date nextTime = getRevisionTime(middle + 1);
-                    if (nextTime.compareTo(date) > 0) {
-                        return middle + 1;
-                    }
-                    bottom = middle + 1;
-                } else {
-                    return middle;
-                }
-            }
-            return 0;
+            return myFSFS.getDatedRevision(date);
         } finally {
             closeRepository();
         }
-    }
-
-    private Date getRevisionTime(long revision) throws SVNException {
-        Map revisionProperties = myFSFS.getRevisionProperties(revision);
-        String timeString = (String) revisionProperties.get(SVNRevisionProperty.DATE);
-        if (timeString == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_GENERAL, "Failed to find time on revision {0,number,integer}", new Long(revision));
-            SVNErrorManager.error(err);
-        }
-        return SVNTimeUtil.parseDateString(timeString);
     }
 
     public Map getRevisionProperties(long revision, Map properties) throws SVNException {
@@ -282,19 +238,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                 InputStream fileStream = null;
                 try {
                     fileStream = root.getFileStreamForPath(new SVNDeltaCombiner(), repositoryPath);
-                    byte[] buffer = new byte[102400];
-                    while (true) {
-                        int length = fileStream.read(buffer);
-                        if (length > 0) {
-                            contents.write(buffer, 0, length);
-                        }
-                        if (length != 102400) {
-                            break;
-                        }
-                    }
-                } catch (IOException ioe) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-                    SVNErrorManager.error(err, ioe);
+                    FSRepositoryUtil.copy(fileStream, contents);
                 } finally {
                     SVNFileUtil.closeFile(fileStream);
                 }
@@ -469,10 +413,10 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
 
                 FSRevisionNode fileNode = root.getRevisionNode(revPath);
                 Map props = fileNode.getProperties(myFSFS);
-                Map propDiffs = getPropsDiffs(props, lastProps);
+                Map propDiffs = FSRepositoryUtil.getPropsDiffs(props, lastProps);
                 boolean contentsChanged = false;
                 if (lastRoot != null) {
-                    contentsChanged = areFileContentsChanged(lastRoot, lastPath, root, revPath);
+                    contentsChanged = FSRepositoryUtil.areFileContentsChanged(lastRoot, lastPath, root, revPath);
                 } else {
                     contentsChanged = true;
                 }
@@ -784,36 +728,8 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         try {
             openRepository();
             FSRevisionRoot root = myFSFS.createRevisionRoot(highRevision);
-            Map fsChanges = root.getChangedPaths();
             String basePath = getRepositoryPath("");
-
-            basePath = basePath.startsWith("/") ? basePath.substring(1) : basePath;
-            Collection interestingPaths = new LinkedList();
-            Map changedPaths = new HashMap();
-            for (Iterator paths = fsChanges.keySet().iterator(); paths.hasNext();) {
-                String path = (String) paths.next();
-                FSPathChange change = (FSPathChange) fsChanges.get(path);  
-
-                path = path.startsWith("/") ? path.substring(1) : path;
-                if ("".equals(basePath) || (path.startsWith(basePath) && (path.charAt(basePath.length()) == '/' || path.length() == basePath.length()))) {
-                    path = path.startsWith("/") ? path.substring(1) : path;
-                    interestingPaths.add(path);
-                    changedPaths.put(path, change);
-                }
-            }
-            if (isInvalidRevision(lowRevision)) {
-                lowRevision = 0;
-            }
-            
-            FSRoot compareRoot = null;
-            if (sendDeltas) {
-                compareRoot = myFSFS.createRevisionRoot(root.getRevision() - 1);
-            }
-            
-            editor.targetRevision(root.getRevision());
-            
-            ISVNCommitPathHandler handler = new FSReplayPathHandler(myFSFS, root, compareRoot, changedPaths, basePath, lowRevision);
-            SVNCommitUtil.driveCommitEditor(handler, interestingPaths, editor, -1);
+            FSRepositoryUtil.replay(myFSFS, root, basePath, lowRevision, sendDeltas, editor);
         } finally {
             closeRepository();
         }
@@ -1110,67 +1026,6 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         if(myReporterContext != null){
             myReporterContext.dispose();
         }
-    }
-
-    public boolean arePropertiesEqual(FSRevisionNode revNode1, FSRevisionNode revNode2) {
-        return areRepresentationsEqual(revNode1, revNode2, true);
-    }
-
-    private boolean areRepresentationsEqual(FSRevisionNode revNode1, FSRevisionNode revNode2, boolean forProperties) {
-        if(revNode1 == revNode2){
-            return true;
-        }else if(revNode1 == null || revNode2 == null){
-            return false;
-        }
-        return FSRepresentation.compareRepresentations(forProperties ? revNode1.getPropsRepresentation() : revNode1.getTextRepresentation(), forProperties ? revNode2.getPropsRepresentation() : revNode2.getTextRepresentation());
-    }
-
-    public boolean areFileContentsChanged(FSRoot root1, String path1, FSRoot root2, String path2) throws SVNException {
-        if (root1.checkNodeKind(path1) != SVNNodeKind.FILE) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_GENERAL, "''{0}'' is not a file", path1);
-            SVNErrorManager.error(err);
-        }
-        if (root2.checkNodeKind(path2) != SVNNodeKind.FILE) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_GENERAL, "''{0}'' is not a file", path2);
-            SVNErrorManager.error(err);
-        }
-        FSRevisionNode revNode1 = root1.getRevisionNode(path1);
-        FSRevisionNode revNode2 = root2.getRevisionNode(path2);
-        return !areRepresentationsEqual(revNode1, revNode2, false);
-    }
-
-    public static Map getPropsDiffs(Map sourceProps, Map targetProps){
-        Map result = new HashMap();
-        
-        if(sourceProps == null){
-            sourceProps = Collections.EMPTY_MAP;
-        }
-        
-        if(targetProps == null){
-            targetProps = Collections.EMPTY_MAP;
-        }
-
-        for(Iterator names = sourceProps.keySet().iterator(); names.hasNext();){
-            String propName = (String)names.next();
-            String srcPropVal = (String)sourceProps.get(propName);
-            String targetPropVal = (String)targetProps.get(propName);
-
-            if(targetPropVal == null){
-                result.put(propName, null);
-            }else if(!targetPropVal.equals(srcPropVal)){
-                result.put(propName, targetPropVal);
-            }
-        }
-
-        for(Iterator names = targetProps.keySet().iterator(); names.hasNext();){
-            String propName = (String)names.next();
-            String targetPropVal = (String)targetProps.get(propName);
-            if(sourceProps.get(propName) == null){
-                result.put(propName, targetPropVal);
-            }
-        }        
-
-        return result;
     }
 
     public static boolean isInvalidRevision(long revision) {
