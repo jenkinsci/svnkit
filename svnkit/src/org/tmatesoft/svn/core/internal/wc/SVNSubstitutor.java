@@ -71,9 +71,10 @@ public class SVNSubstitutor {
                             myEOLBuffer, myEOLBufferLength, myIsRepair);
                     myEOLBufferLength = 0;
                 } else if (myKeywordBufferLength > 0 && p == '$') {
-                    myKeywordBuffer[myKeywordBufferLength++] = src.get();
+                    myKeywordBuffer[myKeywordBufferLength++] = src.get();                    
                     byte[] keywordName = matchKeyword(myKeywordBuffer, 0, myKeywordBufferLength);
                     if (keywordName == null) {
+                        System.out.println("no match");
                         myKeywordBufferLength--;
                         unread(src, 1);
                     }
@@ -173,7 +174,7 @@ public class SVNSubstitutor {
             }
             name = new String(src, offset + 1, len, "ASCII");
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+            //
         } 
         if (name != null && myKeywords.containsKey(name)) {
             byte[] nameBytes = new byte[len];
@@ -191,11 +192,10 @@ public class SVNSubstitutor {
         try {
             nameStr = new String(name, "ASCII");
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
             return -1;
         }
         byte[] value = (byte[]) myKeywords.get(nameStr);
-        if (value != null) {
+        if (myKeywords.containsKey(nameStr)) {
             if (!myIsExpand) {
                 value = null;
             }
