@@ -191,8 +191,9 @@
                 <include name="**" />
             </fileset>
         </copy>
-        <chmod file="build/lib/svn" perm="ugo+rx" />
-        <chmod file="build/lib/svnsync" perm="ugo+rx" />
+        <chmod file="build/lib/jsvn" perm="ugo+rx" />
+        <chmod file="build/lib/jsvnsync" perm="ugo+rx" />
+        <chmod file="build/lib/jsvnsync" perm="ugo+rx" />
     </target>
 
     <target name="build-src">
@@ -315,10 +316,14 @@
     <target name="deploy-library" depends="init-environment,build-library,build-cli,build-src,build-doc">
         <zip destfile="build/org.tmatesoft.svn_${svnkit.version}.standalone.zip">
             <zipfileset dir="build/lib" prefix="svnkit-${svnkit.version}">
-                <exclude name="svn" />
+                <exclude name="jsvn" />
+                <exclude name="jsvnadmin" />
+                <exclude name="jsvnsync" />
             </zipfileset>
-            <zipfileset file="build/lib/svn" filemode="555" prefix="svnkit-${svnkit.version}" />
-            <zipfileset dir="build/doc" prefix="svnkit-${svnkit.version}/doc" />
+            <zipfileset file="build/lib/jsvn" filemode="555" prefix="svnkit-${svnkit.version}" />
+            <zipfileset file="build/lib/jsvnadmin" filemode="555" prefix="svnkit-${svnkit.version}" />
+            <zipfileset file="build/lib/jsvnsync" filemode="555" prefix="svnkit-${svnkit.version}" />
+        	<zipfileset dir="build/doc" prefix="svnkit-${svnkit.version}/doc" />
         </zip>
     </target>
 
