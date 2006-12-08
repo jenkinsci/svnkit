@@ -13,6 +13,7 @@
 package org.tmatesoft.svn.cli.command;
 
 import java.io.File;
+import java.io.InputStream;
 import java.io.PrintStream;
 
 import org.tmatesoft.svn.cli.SVNArgument;
@@ -27,6 +28,10 @@ import org.tmatesoft.svn.core.wc.SVNUpdateClient;
  * @author  TMate Software Ltd.
  */
 public class SwitchCommand extends SVNCommand {
+
+    public void run(InputStream in, PrintStream out, PrintStream err) throws SVNException {
+        run(out, err);
+    }
 
     public void run(final PrintStream out, final PrintStream err) throws SVNException {
         String url = getCommandLine().getURL(0);

@@ -13,6 +13,7 @@
 package org.tmatesoft.svn.cli.command;
 
 import java.io.File;
+import java.io.InputStream;
 import java.io.PrintStream;
 
 import org.tmatesoft.svn.cli.SVNArgument;
@@ -30,6 +31,10 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
  * @author  TMate Software Ltd.
  */
 public class MergeCommand extends SVNCommand {
+
+    public void run(InputStream in, PrintStream out, PrintStream err) throws SVNException {
+        run(out, err);
+    }
 
 	public void run(final PrintStream out, PrintStream err) throws SVNException {
         boolean useAncestry = !getCommandLine().hasArgument(SVNArgument.IGNORE_ANCESTRY);

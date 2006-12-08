@@ -13,6 +13,7 @@
 package org.tmatesoft.svn.cli.command;
 
 import java.io.File;
+import java.io.InputStream;
 import java.io.PrintStream;
 
 import org.tmatesoft.svn.cli.SVNArgument;
@@ -48,4 +49,9 @@ public class AddCommand extends SVNCommand {
             wcClient.doAdd(new File(absolutePath), force, false, false, recursive, noIgnore);
         }
     }
+    
+    public void run(InputStream in, PrintStream out, PrintStream err) throws SVNException {
+        run(out, err);
+    }
+
 }

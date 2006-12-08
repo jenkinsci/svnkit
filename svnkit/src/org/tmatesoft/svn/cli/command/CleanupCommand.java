@@ -13,6 +13,7 @@
 package org.tmatesoft.svn.cli.command;
 
 import java.io.File;
+import java.io.InputStream;
 import java.io.PrintStream;
 
 import org.tmatesoft.svn.cli.SVNCommand;
@@ -24,6 +25,10 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
  * @author  TMate Software Ltd.
  */
 public class CleanupCommand extends SVNCommand {
+
+    public void run(InputStream in, PrintStream out, PrintStream err) throws SVNException {
+        run(out, err);
+    }
 
     public void run(final PrintStream out, final PrintStream err) throws SVNException {
         String path = getCommandLine().getPathAt(0);

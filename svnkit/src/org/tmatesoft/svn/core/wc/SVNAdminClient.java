@@ -32,6 +32,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.io.fs.FSCommitter;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryUtil;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
@@ -386,18 +387,49 @@ public class SVNAdminClient extends SVNBasicClient {
         }
     }
 
-    public void doVerify(File repositoryRoot) throws SVNException {
+    public void doListTransactions(File repositoryRoot, ISVNTransactionListHandler handler) throws SVNException {
+        FSFS fsfs = openRepository(repositoryRoot);
+        Map txns = fsfs.listTransactions();
+
+        for(Iterator names = txns.keySet().iterator(); names.hasNext();) {
+            String txnName = (String) names.next();
+            File txnDir = (File) txns.get(txnName);
+            SVNDebugLog.getDefaultLog().info(txnName + "\n");            
+            if (handler != null) {
+                handler.handleTransaction(txnName, txnDir);
+            }
+        }
+    }
+    
+    public void doRemoveTransactions(File repositoryRoot, String[] transactions, ISVNTransactionListHandler handler) throws SVNException {
+        if (transactions == null) {
+            return;
+        }
+
+        FSFS fsfs = openRepository(repositoryRoot);
+        for (int i = 0; i < transactions.length; i++) {
+            String txnName = transactions[i];
+            fsfs.openTxn(txnName);
+            FSCommitter.purgeTxn(fsfs, txnName);
+            SVNDebugLog.getDefaultLog().info("Transaction '" + txnName + "' removed.\n");
+            if (handler != null) {
+                handler.handleRemoveTransaction(txnName, fsfs.getTransactionDir(txnName));
+            }
+        }
+    }
+    
+    public void doVerify(File repositoryRoot, ISVNDumpHandler handler) throws SVNException {
         FSFS fsfs = openRepository(repositoryRoot);
         long youngestRevision = fsfs.getYoungestRevision();
         try {
-            dump(fsfs, SVNFileUtil.DUMMY_OUT, 0, youngestRevision, false, false);
+            dump(fsfs, SVNFileUtil.DUMMY_OUT, 0, youngestRevision, false, false, handler);
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
             SVNErrorManager.error(err, ioe);
         }
     }
     
-    public void doDump(File repositoryRoot, OutputStream dumpStream, SVNRevision startRevision, SVNRevision endRevision, boolean isIncremental, boolean useDeltas) throws SVNException {
+    public void doDump(File repositoryRoot, OutputStream dumpStream, SVNRevision startRevision, SVNRevision endRevision, boolean isIncremental, boolean useDeltas, ISVNDumpHandler handler) throws SVNException {
         FSFS fsfs = openRepository(repositoryRoot);
         long youngestRevision = fsfs.getYoungestRevision();
         
@@ -417,19 +449,19 @@ public class SVNAdminClient extends SVNBasicClient {
         }
         
         try {
-            dump(fsfs, dumpStream, lowerR, upperR, isIncremental, useDeltas);
+            dump(fsfs, dumpStream, lowerR, upperR, isIncremental, useDeltas, handler);
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
             SVNErrorManager.error(err, ioe);
         }
     }
     
-    public void doLoad(File repositoryRoot, InputStream dumpStream) throws SVNException {
-        doLoad(repositoryRoot, dumpStream, false, false, SVNUUIDAction.DEFAULT, null);
+    public void doLoad(File repositoryRoot, InputStream dumpStream, ISVNDumpHandler progressHandler) throws SVNException {
+        doLoad(repositoryRoot, dumpStream, false, false, SVNUUIDAction.DEFAULT, null, progressHandler);
     }
 
-    public void doLoad(File repositoryRoot, InputStream dumpStream, boolean usePreCommitHook, boolean usePostCommitHook, SVNUUIDAction uuidAction, String parentDir) throws SVNException {
-        ISVNLoadHandler handler = getLoadHandler(repositoryRoot, usePreCommitHook, usePostCommitHook, uuidAction, parentDir);
+    public void doLoad(File repositoryRoot, InputStream dumpStream, boolean usePreCommitHook, boolean usePostCommitHook, SVNUUIDAction uuidAction, String parentDir, ISVNDumpHandler progressHandler) throws SVNException {
+        ISVNLoadHandler handler = getLoadHandler(repositoryRoot, usePreCommitHook, usePostCommitHook, uuidAction, parentDir, progressHandler);
     
         String line = null;
         int version = -1;
@@ -447,7 +479,9 @@ public class SVNAdminClient extends SVNBasicClient {
             }
             
             try {
-                version = Integer.parseInt(line.substring(SVNAdminUtil.DUMPFILE_MAGIC_HEADER.length() + 1));
+                line = line.substring(SVNAdminUtil.DUMPFILE_MAGIC_HEADER.length() + 1);
+                line = line.trim();
+                version = Integer.parseInt(line);
                 if (version > SVNAdminUtil.DUMPFILE_FORMAT_VERSION) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Unsupported dumpfile version: {0,number,integer}", new Integer(version));
                     SVNErrorManager.error(err);
@@ -612,7 +646,7 @@ public class SVNAdminClient extends SVNBasicClient {
         }
     }
 
-    private void dump(FSFS fsfs, OutputStream dumpStream, long start, long end, boolean isIncremental, boolean useDeltas) throws SVNException, IOException {
+    private void dump(FSFS fsfs, OutputStream dumpStream, long start, long end, boolean isIncremental, boolean useDeltas, ISVNDumpHandler handler) throws SVNException, IOException {
         boolean isDumping = dumpStream != null;
         long youngestRevision = fsfs.getYoungestRevision();
 
@@ -663,6 +697,9 @@ public class SVNAdminClient extends SVNBasicClient {
                     writeRevisionRecord(dumpStream, fsfs, 0);
                     toRev = 0;
                     SVNDebugLog.getDefaultLog().info((isDumping ? "* Dumped" : "* Verified") + " revision " + toRev + ".\n");
+                    if (handler != null) {
+                        handler.handleDumpRevision(toRev);
+                    }
                     continue;
                 }
                 
@@ -685,6 +722,9 @@ public class SVNAdminClient extends SVNBasicClient {
                 FSRepositoryUtil.replay(fsfs, toRoot, "", -1, false, dumpEditor);
             }
             SVNDebugLog.getDefaultLog().info((isDumping ? "* Dumped" : "* Verified") + " revision " + toRev + ".\n");
+            if (handler != null) {
+                handler.handleDumpRevision(toRev);
+            }
         }
     }
     
@@ -703,7 +743,7 @@ public class SVNAdminClient extends SVNBasicClient {
         writeDumpData(dumpStream, SVNAdminUtil.DUMPFILE_REVISION_NUMBER + ": " + revision + "\n");
         String propContents = new String(encodedProps.toByteArray(), "UTF-8");
         writeDumpData(dumpStream, SVNAdminUtil.DUMPFILE_PROP_CONTENT_LENGTH + ": " + propContents.length() + "\n");
-        writeDumpData(dumpStream, SVNAdminUtil.DUMPFILE_CONTENT_LENGTH + ": " + propContents.length() + "\n");
+        writeDumpData(dumpStream, SVNAdminUtil.DUMPFILE_CONTENT_LENGTH + ": " + propContents.length() + "\n\n");
         writeDumpData(dumpStream, propContents);
         dumpStream.write('\n');
     }
@@ -732,10 +772,10 @@ public class SVNAdminClient extends SVNBasicClient {
         return revNumber;
     }
     
-    private ISVNLoadHandler getLoadHandler(File repositoryRoot, boolean usePreCommitHook, boolean usePostCommitHook, SVNUUIDAction uuidAction, String parentDir) throws SVNException {
+    private ISVNLoadHandler getLoadHandler(File repositoryRoot, boolean usePreCommitHook, boolean usePostCommitHook, SVNUUIDAction uuidAction, String parentDir, ISVNDumpHandler progressHandler) throws SVNException {
         if (myLoadHandler == null) {
             FSFS fsfs = openRepository(repositoryRoot);
-            DefaultLoadHandler handler = new DefaultLoadHandler(usePreCommitHook, usePostCommitHook, uuidAction, parentDir);
+            DefaultLoadHandler handler = new DefaultLoadHandler(usePreCommitHook, usePostCommitHook, uuidAction, parentDir, progressHandler);
             handler.setFSFS(fsfs);
             myLoadHandler = handler;
         } else {
@@ -761,12 +801,11 @@ public class SVNAdminClient extends SVNBasicClient {
                 firstHeader = null;
             } else {
                 header = SVNFileUtil.readLineFromStream(dumpStream, buffer);
-            }
-        
-            if (header == null && buffer.length() > 0) {
-                SVNAdminUtil.generateIncompleteDataError();
-            } else if (buffer.length() == 0) {
-                break;
+                if (header == null && buffer.length() > 0) {
+                    SVNAdminUtil.generateIncompleteDataError();
+                } else if (buffer.length() == 0) {
+                    break;
+                }
             }
         
             int colonInd = header.indexOf(':');

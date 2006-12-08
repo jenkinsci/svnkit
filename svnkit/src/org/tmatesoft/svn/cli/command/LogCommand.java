@@ -14,6 +14,7 @@ package org.tmatesoft.svn.cli.command;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -50,6 +51,10 @@ public class LogCommand extends SVNCommand implements ISVNLogEntryHandler {
     private boolean myIsQuiet;
     private boolean myHasLogEntries;
 
+    public void run(InputStream in, PrintStream out, PrintStream err) throws SVNException {
+        run(out, err);
+    }
+    
     public void run(PrintStream out, PrintStream err) throws SVNException {
         String revStr = (String) getCommandLine().getArgumentValue(SVNArgument.REVISION);
         SVNRevision startRevision = SVNRevision.UNDEFINED;

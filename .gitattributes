@@ -91,6 +91,8 @@ svnkit-test/test.windows.properties eol=crlf
 svnkit/cli/logging.properties.disabled -text
 svnkit/cli/svn eol=lf
 svnkit/cli/svn.bat eol=crlf
+svnkit/cli/svnadmin -text
+svnkit/cli/svnadmin.bat -text
 svnkit/cli/svnsync -text
 svnkit/cli/svnsync.bat -text
 svnkit/src/org/tigris/subversion/javahl/SVNClient.java -text

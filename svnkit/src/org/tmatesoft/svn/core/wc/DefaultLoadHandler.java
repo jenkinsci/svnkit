@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.wc;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -34,6 +35,7 @@ import org.tmatesoft.svn.core.internal.io.fs.FSTransactionRoot;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 
@@ -52,8 +54,11 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
     private String myParentDir;
     private SVNUUIDAction myUUIDAction;
     private SVNDeltaReader myDeltaReader;
+    private SVNDeltaGenerator myDeltaGenerator;
+    private ISVNDumpHandler myProgressHandler;
     
-    public DefaultLoadHandler(boolean usePreCommitHook, boolean usePostCommitHook, SVNUUIDAction uuidAction, String parentDir) {
+    public DefaultLoadHandler(boolean usePreCommitHook, boolean usePostCommitHook, SVNUUIDAction uuidAction, String parentDir, ISVNDumpHandler progressHandler) {
+        myProgressHandler = progressHandler;
         myIsUsePreCommitHook = usePreCommitHook;
         myIsUsePostCommitHook = usePostCommitHook;
         myUUIDAction = uuidAction;
@@ -118,6 +123,10 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                 SVNDebugLog.getDefaultLog().info("\n------- Committed revision " + newRevision + " >>>\n\n");
             } else {
                 SVNDebugLog.getDefaultLog().info("\n------- Committed new rev " + newRevision + " (loaded from original rev " + baton.myRevision + ") >>>\n\n");
+            }
+            
+            if (myProgressHandler != null) {
+                myProgressHandler.handleLoadRevision(newRevision, baton.myRevision);
             }
         }
     }
@@ -215,11 +224,9 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                 setFullText();
             }
             
-            SVNDeltaReader deltaReader = getDeltaReader();
             byte[] buffer = null;
             if (contentLength == 0) {
-                buffer = new byte[0];
-                deltaReader.nextWindow(buffer, 0, 0, myCurrentNodeBaton.myPath, myCurrentRevisionBaton.getConsumer());
+                getDeltaGenerator().sendDelta(myCurrentNodeBaton.myPath, SVNFileUtil.DUMMY_IN, myCurrentRevisionBaton.getConsumer(), false);
             } else {
                 buffer = new byte[SVNAdminUtil.STREAM_CHUNK_SIZE];
                 try {
@@ -231,16 +238,23 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                             SVNAdminUtil.generateIncompleteDataError();
                         }
                         
+                        if (isDelta) {
+                            SVNDeltaReader deltaReader = getDeltaReader();
+                            deltaReader.nextWindow(buffer, 0, numRead, myCurrentNodeBaton.myPath, myCurrentRevisionBaton.getConsumer());
+                        } else {
+                            ByteArrayInputStream contents = new ByteArrayInputStream(buffer, 0, numRead); 
+                            getDeltaGenerator().sendDelta(myCurrentNodeBaton.myPath, contents, myCurrentRevisionBaton.getConsumer(), false);
+                        }
                         contentLength -= numRead;
-                        deltaReader.nextWindow(buffer, 0, numRead, myCurrentNodeBaton.myPath, myCurrentRevisionBaton.getConsumer());
                     }
                 } catch (IOException ioe) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
                     SVNErrorManager.error(err, ioe);
                 }
             }
-            
-            fsConsumer.textDeltaEnd(myCurrentNodeBaton.myPath); 
+            if (isDelta) {
+                fsConsumer.textDeltaEnd(myCurrentNodeBaton.myPath);
+            } 
         } catch (SVNException svne) {
             fsConsumer.abort(); 
         }
@@ -385,6 +399,13 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
             myDeltaReader = new SVNDeltaReader();
         } 
         return myDeltaReader;
+    }
+
+    private SVNDeltaGenerator getDeltaGenerator() {
+        if (myDeltaGenerator == null) {
+            myDeltaGenerator = new SVNDeltaGenerator();
+        }
+        return myDeltaGenerator;
     }
 
     private void maybeAddWithHistory(NodeBaton nodeBaton) throws SVNException {

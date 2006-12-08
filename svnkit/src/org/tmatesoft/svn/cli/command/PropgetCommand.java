@@ -13,6 +13,7 @@
 package org.tmatesoft.svn.cli.command;
 
 import java.io.File;
+import java.io.InputStream;
 import java.io.PrintStream;
 
 import org.tmatesoft.svn.cli.SVNArgument;
@@ -34,6 +35,10 @@ public class PropgetCommand extends SVNCommand implements ISVNPropertyHandler {
     private boolean myIsStrict;
     private boolean myIsRecursive;
     private PrintStream myOut;
+
+    public void run(InputStream in, PrintStream out, PrintStream err) throws SVNException {
+        run(out, err);
+    }
 
     public final void run(final PrintStream out, PrintStream err) throws SVNException {
         String propertyName = getCommandLine().getPathAt(0);

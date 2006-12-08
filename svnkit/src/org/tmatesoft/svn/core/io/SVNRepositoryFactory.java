@@ -247,6 +247,10 @@ public abstract class SVNRepositoryFactory {
      * @since                                1.1
      */
     public static SVNURL createLocalRepository(File path, String uuid, boolean enableRevisionProperties, boolean force) throws SVNException {
+        return createLocalRepository(path, uuid, enableRevisionProperties, force, false);
+    }
+
+    public static SVNURL createLocalRepository(File path, String uuid, boolean enableRevisionProperties, boolean force, boolean pre14Compatible) throws SVNException {
         SVNFileType fType = SVNFileType.getType(path);
         if (!force && fType != SVNFileType.NONE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "''{0}'' already exists; use ''force'' to overwrite existing files", path);
@@ -264,6 +268,8 @@ public abstract class SVNRepositoryFactory {
         }
         File jarFile = SVNFileUtil.createUniqueFile(path, ".template", ".jar");
         OutputStream uuidOS = null; 
+        OutputStream reposFormatOS = null;
+        OutputStream fsFormatOS = null;
         try {
             copyToFile(is, jarFile);
             extract(jarFile, path);
@@ -309,8 +315,32 @@ public abstract class SVNRepositoryFactory {
                 err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
                 SVNErrorManager.error(err);
             }
+            
+            if (pre14Compatible) {
+                File reposFormatFile = new File(path, "format");
+                try {
+                    reposFormatOS = SVNFileUtil.openFileForWriting(reposFormatFile);
+                    reposFormatOS.write("5\n".getBytes("US-ASCII"));
+                } catch (IOException e) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Error writing repository format to ''{0}''", reposFormatFile);
+                    err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
+                    SVNErrorManager.error(err);
+                }
+                
+                File fsFormatFile = new File(path, "db/format");
+                try {
+                    fsFormatOS = SVNFileUtil.openFileForWriting(fsFormatFile);
+                    fsFormatOS.write("1\n".getBytes("US-ASCII"));
+                } catch (IOException e) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Error writing fs format to ''{0}''", fsFormatFile);
+                    err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
+                    SVNErrorManager.error(err);
+                }
+            }
         } finally {
             SVNFileUtil.closeFile(uuidOS);
+            SVNFileUtil.closeFile(reposFormatOS);
+            SVNFileUtil.closeFile(fsFormatOS);
             SVNFileUtil.deleteFile(jarFile);
         }
         return SVNURL.fromFile(path);

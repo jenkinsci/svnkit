@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNCommitClient;
 
 import java.io.File;
+import java.io.InputStream;
 import java.io.PrintStream;
 
 /**
@@ -29,6 +30,10 @@ import java.io.PrintStream;
  */
 public class CommitCommand extends SVNCommand {
 
+    public void run(InputStream in, PrintStream out, PrintStream err) throws SVNException {
+        run(out, err);
+    }
+    
     public void run(final PrintStream out, PrintStream err) throws SVNException {
         checkEditorCommand();
         final boolean recursive = !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE);

@@ -254,6 +254,18 @@ public class FSFS {
         return new FSTransactionRoot(this, txnId, flags);
     }
 
+    public FSTransactionInfo openTxn(String txnName) throws SVNException {
+        SVNFileType kind = SVNFileType.getType(getTransactionDir(txnName));
+        if (kind != SVNFileType.DIRECTORY) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_TRANSACTION, "No such transaction");
+            SVNErrorManager.error(err);
+        }
+        
+        FSTransactionRoot txnRoot = new FSTransactionRoot(this, txnName, 0);
+        FSTransactionInfo localTxn = txnRoot.getTxn();
+        return new FSTransactionInfo(localTxn.getBaseRevision(), txnName);
+    }
+    
     public FSRevisionNode getRevisionNode(FSID id) throws SVNException  {
         FSFile revisionFile = null;
 
@@ -405,6 +417,22 @@ public class FSFS {
         return ids;
     }
 
+    public Map listTransactions() {
+        Map result = new HashMap(); 
+        File txnsDir = getTransactionsParentDir();
+
+        File[] entries = txnsDir.listFiles();
+        for (int i = 0; i < entries.length; i++) {
+            File entry = entries[i];
+            if (entry.getName().length() <= TXN_PATH_EXT.length() || !entry.getName().endsWith(TXN_PATH_EXT)) {
+                continue;
+            }
+            String txnName = entry.getName().substring(0, entry.getName().lastIndexOf(TXN_PATH_EXT));
+            result.put(txnName, entry);
+        }
+        return result;
+    }
+    
     public File getNewRevisionFile(long revision) throws SVNException {
         File revFile = new File(myRevisionsRoot, String.valueOf(revision));
         if (revFile.exists()) {
@@ -424,7 +452,7 @@ public class FSFS {
     }
 
     public File getTransactionDir(String txnID) {
-        return new File(myTransactionsRoot, txnID + TXN_PATH_EXT);
+        return new File(getTransactionsParentDir(), txnID + TXN_PATH_EXT);
     }
     
     public File getTransactionsParentDir(){

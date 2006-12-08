@@ -39,8 +39,8 @@ public class SVNCommandLine {
     private List myPegRevisions;
     private List myPegPathRevisions;
 
-    public SVNCommandLine(String[] commandLine) throws SVNException {
-        init(commandLine);
+    public SVNCommandLine(String[] commandLine, Set validArguments) throws SVNException {
+        init(commandLine, validArguments);
     }
 
     public boolean hasArgument(SVNArgument argument) {
@@ -119,7 +119,7 @@ public class SVNCommandLine {
         }
     }
 
-    protected void init(String[] arguments) throws SVNException {
+    protected void init(String[] arguments, Set validArguments) throws SVNException {
         myUnaryArguments = new HashSet();
         myBinaryArguments = new HashMap();
         myPaths = new ArrayList();
@@ -151,7 +151,7 @@ public class SVNCommandLine {
 
             if (argument.startsWith("--")) {
                 // long argument (--no-ignore)
-                SVNArgument svnArgument = SVNArgument.findArgument(argument);
+                SVNArgument svnArgument = SVNArgument.findArgument(argument, validArguments);
                 if (svnArgument != null) {
                     if (svnArgument.hasValue()) {
                         previousArgument = svnArgument;
@@ -167,7 +167,7 @@ public class SVNCommandLine {
                 for (int j = 1; j < argument.length(); j++) {
                     String name = "-" + argument.charAt(j);
 
-                    SVNArgument svnArgument = SVNArgument.findArgument(name);
+                    SVNArgument svnArgument = SVNArgument.findArgument(name, validArguments);
                     if (svnArgument != null) {
                         if (svnArgument.hasValue()) {
                             if (j + 1 < argument.length()) {

@@ -339,7 +339,7 @@ public class SVNDumpEditor implements ISVNEditor {
                 }
             }
             
-            writeDumpData(SVNAdminUtil.DUMPFILE_CONTENT_LENGTH + ": " + contentLength + "\n");
+            writeDumpData(SVNAdminUtil.DUMPFILE_CONTENT_LENGTH + ": " + contentLength + "\n\n");
             
             if (mustDumpProps) {
                 writeDumpData(propContents);

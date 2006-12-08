@@ -4,7 +4,7 @@
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
- * are also available at http://svnkit.com/license.html
+ * are also available at http://svnkit.com/license.html.
  * If newer versions of this license are posted there, you may use a
  * newer version instead, at your option.
  * ====================================================================
@@ -25,32 +25,43 @@ import org.tmatesoft.svn.util.SVNDebugLog;
 
 
 /**
- * @version 1.1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
- * @since   1.1
  */
-public class SVNSync {
+public class SVNAdmin {
     private static Set ourArguments;
     private static Map ourCommands;
 
     static {
         ourArguments = new HashSet();
-        ourArguments.add(SVNArgument.NON_INTERACTIVE);
-        ourArguments.add(SVNArgument.NO_AUTH_CACHE);
-        ourArguments.add(SVNArgument.PASSWORD);
-        ourArguments.add(SVNArgument.USERNAME);
         ourArguments.add(SVNArgument.CONFIG_DIR);
-        
+        ourArguments.add(SVNArgument.FS_TYPE);
+        ourArguments.add(SVNArgument.PRE_14_COMPATIBLE);
+        ourArguments.add(SVNArgument.DELTAS);
+        ourArguments.add(SVNArgument.QUIET);
+        ourArguments.add(SVNArgument.REVISION);
+        ourArguments.add(SVNArgument.INCREMENTAL);
+        ourArguments.add(SVNArgument.IGNORE_UUID);
+        ourArguments.add(SVNArgument.FORCE_UUID);
+        ourArguments.add(SVNArgument.USE_POSTCOMMIT_HOOK);
+        ourArguments.add(SVNArgument.USE_PRECOMMIT_HOOK);
+        ourArguments.add(SVNArgument.PARENT_DIR);
+        ourArguments.add(SVNArgument.BDB_TXN_NOSYNC);
+        ourArguments.add(SVNArgument.BDB_LOG_KEEP);
+
         Locale.setDefault(Locale.ENGLISH);
         ourCommands = new HashMap();
-        ourCommands.put(new String[] { "initialize", "init" }, "org.tmatesoft.svn.cli.command.InitCommand");
-        ourCommands.put(new String[] { "synchronize", "sync" }, "org.tmatesoft.svn.cli.command.SynchronizeCommand");
-        ourCommands.put(new String[] { "copy-revprops" }, "org.tmatesoft.svn.cli.command.CopyRevpropsCommand");
+        ourCommands.put(new String[] { "create"}, "org.tmatesoft.svn.cli.command.CreateCommand");
+        ourCommands.put(new String[] { "dump" }, "org.tmatesoft.svn.cli.command.DumpCommand");
+        ourCommands.put(new String[] { "load" }, "org.tmatesoft.svn.cli.command.LoadCommand");
+        ourCommands.put(new String[] { "lstxns" }, "org.tmatesoft.svn.cli.command.ListTransactionsCommand");
+        ourCommands.put(new String[] { "rmtxns" }, "org.tmatesoft.svn.cli.command.RemoveTransactionsCommand");
+        
     }
 
     public static void main(String[] args) {
         if (args == null || args.length < 1) {
-            System.err.println("general usage: svnsync SUBCOMMAND DEST_URL  [ARGS & OPTIONS ...]\n");
+            System.err.println("general usage: svnadmin SUBCOMMAND REPOS_PATH  [ARGS & OPTIONS ...]\n");
             System.exit(0);
         }
 
@@ -79,7 +90,7 @@ public class SVNSync {
     
                 command.setCommandLine(commandLine);
                 try {
-                    command.run(System.out, System.err);
+                    command.run(System.in, System.out, System.err);
                 } catch (SVNException e) {
                     System.err.println(e.getMessage());
                     SVNDebugLog.getDefaultLog().info(e);
@@ -97,6 +108,6 @@ public class SVNSync {
             System.exit(-1);
         }   
         System.exit(0);
-    
     }
+
 }

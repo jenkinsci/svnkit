@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.cli.command;
 
+import java.io.InputStream;
 import java.io.PrintStream;
 
 import org.tmatesoft.svn.cli.SVNCommand;
@@ -26,6 +27,10 @@ import org.tmatesoft.svn.core.wc.SVNClientManager;
  * @since   1.1
  */
 public class InitCommand extends SVNCommand {
+
+    public void run(InputStream in, PrintStream out, PrintStream err) throws SVNException {
+        run(out, err);
+    }
 
     public void run(PrintStream out, PrintStream err) throws SVNException {
         if (getCommandLine().hasURLs()) {

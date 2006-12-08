@@ -14,6 +14,7 @@ package org.tmatesoft.svn.cli.command;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.Date;
 
@@ -38,6 +39,10 @@ public class AnnotateCommand extends SVNCommand implements ISVNAnnotateHandler {
 
     private boolean myIsVerbose;
     private PrintStream myPrintStream;
+
+    public void run(InputStream in, PrintStream out, PrintStream err) throws SVNException {
+        run(out, err);
+    }
 
     public void run(PrintStream out, PrintStream err) throws SVNException {
         SVNLogClient logClient = getClientManager().getLogClient();

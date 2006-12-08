@@ -14,6 +14,7 @@ package org.tmatesoft.svn.cli.command;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -44,6 +45,10 @@ public class InfoCommand extends SVNCommand implements ISVNInfoHandler {
 
     private PrintStream myOut;
     private File myBaseFile;
+
+    public void run(InputStream in, PrintStream out, PrintStream err) throws SVNException {
+        run(out, err);
+    }
 
     public final void run(final PrintStream out, PrintStream err) throws SVNException {
         final boolean recursive = getCommandLine().hasArgument(SVNArgument.RECURSIVE);

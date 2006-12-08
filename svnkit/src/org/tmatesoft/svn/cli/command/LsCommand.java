@@ -14,6 +14,7 @@ package org.tmatesoft.svn.cli.command;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -49,6 +50,10 @@ public class LsCommand extends SVNCommand implements ISVNDirEntryHandler {
         LONG_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
     }
     
+    public void run(InputStream in, PrintStream out, PrintStream err) throws SVNException {
+        run(out, err);
+    }
+
     public void run(PrintStream out, PrintStream err) throws SVNException {
         boolean recursive = getCommandLine().hasArgument(SVNArgument.RECURSIVE);
         myIsVerbose = getCommandLine().hasArgument(SVNArgument.VERBOSE);

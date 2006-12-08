@@ -16,6 +16,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -65,6 +66,8 @@ public abstract class SVNCommand {
     }
 
     public abstract void run(PrintStream out, PrintStream err) throws SVNException;
+
+    public abstract void run(InputStream in, PrintStream out, PrintStream err) throws SVNException;
 
     private ISVNOptions getOptions() {
         String dir = (String) getCommandLine().getArgumentValue(SVNArgument.CONFIG_DIR);
@@ -137,15 +140,19 @@ public abstract class SVNCommand {
     }
 
     public static SVNCommand getCommand(String name) {
+        return getCommand(name, ourCommands);
+    }
+
+    public static SVNCommand getCommand(String name, Map commands) {
         if (name == null) {
             return null;
         }
         String className = null;
-        for (Iterator keys = ourCommands.keySet().iterator(); keys.hasNext();) {
+        for (Iterator keys = commands.keySet().iterator(); keys.hasNext();) {
             String[] names = (String[]) keys.next();
             for (int i = 0; i < names.length; i++) {
                 if (name.equals(names[i])) {
-                    className = (String) ourCommands.get(names);
+                    className = (String) commands.get(names);
                     break;
                 }
             }
@@ -272,9 +279,6 @@ public abstract class SVNCommand {
         ourCommands.put(new String[] { "lock" }, "org.tmatesoft.svn.cli.command.LockCommand");
         ourCommands.put(new String[] { "unlock" }, "org.tmatesoft.svn.cli.command.UnlockCommand");
         ourCommands.put(new String[] { "annotate", "blame", "praise", "ann" }, "org.tmatesoft.svn.cli.command.AnnotateCommand");
-        ourCommands.put(new String[] { "initialize", "init" }, "org.tmatesoft.svn.cli.command.InitCommand");
-        ourCommands.put(new String[] { "synchronize", "sync" }, "org.tmatesoft.svn.cli.command.SynchronizeCommand");
-        ourCommands.put(new String[] { "copy-revprops" }, "org.tmatesoft.svn.cli.command.CopyRevpropsCommand");
         
         ourPegCommands = new HashSet();
         ourPegCommands.addAll(Arrays.asList(new String[] {"cat", "annotate", "checkout", "diff", "export", "info", "ls", "merge", "propget", "proplist", "log"}));

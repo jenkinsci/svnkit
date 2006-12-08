@@ -16,6 +16,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
 
 import org.tmatesoft.svn.cli.SVNArgument;
@@ -35,6 +36,10 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
  * @author  TMate Software Ltd.
  */
 public class PropsetCommand extends SVNCommand {
+
+    public void run(InputStream in, PrintStream out, PrintStream err) throws SVNException {
+        run(out, err);
+    }
 
     public final void run(final PrintStream out, PrintStream err) throws SVNException {
         final String propertyName = getCommandLine().getPathAt(0);

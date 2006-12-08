@@ -181,7 +181,9 @@ public class SVNCommandEventProcessor implements ISVNEventHandler {
                         SVNCommand.println(myPrintStream, "Updated to revision " + event.getRevision() + ".");
                     }
                 } else {
-                    if (myIsExport ) {
+                    if (myIsCheckout) {
+                        SVNCommand.println(myPrintStream, "Checked out revision " + event.getRevision() + ".");
+                    } else if (myIsExport) {
                         SVNCommand.println(myPrintStream, "Export complete.");
                     } else {
                         SVNCommand.println(myPrintStream, "At revision " + event.getRevision() + ".");

@@ -13,6 +13,7 @@
 package org.tmatesoft.svn.cli.command;
 
 import java.io.File;
+import java.io.InputStream;
 import java.io.PrintStream;
 
 import org.tmatesoft.svn.cli.SVNArgument;
@@ -35,6 +36,10 @@ public class ProplistCommand extends SVNCommand implements ISVNPropertyHandler {
     private boolean myIsRecursive;
     private PrintStream myOut;
     private boolean myIsRevProp;
+
+    public void run(InputStream in, PrintStream out, PrintStream err) throws SVNException {
+        run(out, err);
+    }
 
     public final void run(final PrintStream out, PrintStream err) throws SVNException {
         myIsRecursive = getCommandLine().hasArgument(SVNArgument.RECURSIVE);

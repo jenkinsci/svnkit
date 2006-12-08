@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
+import java.io.InputStream;
 import java.io.PrintStream;
 
 /**
@@ -27,6 +28,10 @@ import java.io.PrintStream;
  * @author  TMate Software Ltd.
  */
 public class CatCommand extends SVNCommand {
+
+    public void run(InputStream in, PrintStream out, PrintStream err) throws SVNException {
+        run(out, err);
+    }
 
     public void run(PrintStream out, PrintStream err) throws SVNException {
         SVNWCClient wcClient = getClientManager().getWCClient();

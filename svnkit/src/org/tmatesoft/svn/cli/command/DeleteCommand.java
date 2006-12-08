@@ -13,6 +13,7 @@
 package org.tmatesoft.svn.cli.command;
 
 import java.io.File;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -32,6 +33,10 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
  * @author  TMate Software Ltd.
  */
 public class DeleteCommand extends SVNCommand {
+
+    public void run(InputStream in, PrintStream out, PrintStream err) throws SVNException {
+        run(out, err);
+    }
 
     public void run(PrintStream out, PrintStream err) throws SVNException {
         if (getCommandLine().hasURLs()) {

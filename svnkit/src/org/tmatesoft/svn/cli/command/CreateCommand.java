@@ -4,12 +4,11 @@
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
- * are also available at http://svnkit.com/license.html
+ * are also available at http://svnkit.com/license.html.
  * If newer versions of this license are posted there, you may use a
  * newer version instead, at your option.
  * ====================================================================
  */
-
 package org.tmatesoft.svn.cli.command;
 
 import java.io.File;
@@ -19,34 +18,34 @@ import java.io.PrintStream;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
+
 
 /**
- * @version 1.1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  */
-public class ResolvedCommand extends SVNCommand {
+public class CreateCommand extends SVNCommand {
 
     public void run(InputStream in, PrintStream out, PrintStream err) throws SVNException {
         run(out, err);
     }
 
-    public void run(final PrintStream out, PrintStream err) throws SVNException {
-        final boolean recursive = getCommandLine().hasArgument(SVNArgument.RECURSIVE);
-        getClientManager().setEventHandler(new SVNCommandEventProcessor(out, err, false));
-        SVNWCClient wcClient  = getClientManager().getWCClient();
-        boolean error = false;
-        for (int i = 0; i < getCommandLine().getPathCount(); i++) {
-            final String absolutePath = getCommandLine().getPathAt(i);
-            try {
-                wcClient.doResolve(new File(absolutePath), recursive);
-            } catch (SVNException e) {
-                err.println(e.getMessage());
-                error = true;
-            }
-        }
-        if (error) {
+    public void run(PrintStream out, PrintStream err) throws SVNException {
+        String fsType = (String) getCommandLine().getArgumentValue(SVNArgument.FS_TYPE);
+        if (fsType != null && !"fsfs".equals(fsType)) {
+            SVNCommand.println(out, "Unsupported repository type '" + fsType + "'");
             System.exit(1);
         }
+        
+        boolean isOldFormat = getCommandLine().hasArgument(SVNArgument.PRE_14_COMPATIBLE);
+        if (!getCommandLine().hasPaths()) {
+            SVNCommand.println(out, "svnadmin: Repository argument required");
+            System.exit(1);
+        }
+        
+        String absolutePath = getCommandLine().getPathAt(0);
+        SVNRepositoryFactory.createLocalRepository(new File(absolutePath), null, false, true, isOldFormat);
     }
+
 }
