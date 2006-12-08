@@ -193,7 +193,7 @@
             </fileset>
         </copy>
         <chmod file="build/lib/jsvn" perm="ugo+rx" />
-        <chmod file="build/lib/jsvnsync" perm="ugo+rx" />
+        <chmod file="build/lib/jsvnadmin" perm="ugo+rx" />
         <chmod file="build/lib/jsvnsync" perm="ugo+rx" />
     </target>
 
