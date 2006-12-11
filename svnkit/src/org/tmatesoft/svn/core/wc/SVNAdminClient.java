@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
@@ -36,6 +37,7 @@ import org.tmatesoft.svn.core.internal.io.fs.FSCommitter;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryUtil;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
+import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
@@ -418,6 +420,38 @@ public class SVNAdminClient extends SVNBasicClient {
         }
     }
     
+    public SVNLogEntry doInfo(File repositoryRoot, SVNRevision revision) throws SVNException {
+        if (revision == null || !revision.isValid()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Invalid revision number supplied");
+            SVNErrorManager.error(err);
+        }
+        
+        FSFS fsfs = openRepository(repositoryRoot);
+        long revNum = getRevisionNumber(revision, fsfs.getYoungestRevision(), fsfs);
+        Map revProps = fsfs.getRevisionProperties(revNum);
+        String date = (String) revProps.get(SVNRevisionProperty.DATE);
+        String author = (String) revProps.get(SVNRevisionProperty.AUTHOR);
+        String logMessage = (String) revProps.get(SVNRevisionProperty.LOG);
+        return new SVNLogEntry(null, revNum, author, SVNTimeUtil.parseDateString(date), logMessage); 
+    }
+
+    public SVNLogEntry doInfo(File repositoryRoot, String transactionName) throws SVNException {
+        if (transactionName == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Invalid transaction name supplied");
+            SVNErrorManager.error(err);
+        }
+
+        FSFS fsfs = openRepository(repositoryRoot);
+        FSTransactionInfo txn = fsfs.openTxn(transactionName);
+        
+        Map txnProps = fsfs.getTransactionProperties(txn.getTxnId());
+        
+        String date = (String) txnProps.get(SVNRevisionProperty.DATE);
+        String author = (String) txnProps.get(SVNRevisionProperty.AUTHOR);
+        String logMessage = (String) txnProps.get(SVNRevisionProperty.LOG);
+        return new SVNLogEntry(null, -1, author, SVNTimeUtil.parseDateString(date), logMessage); 
+    }
+
     public void doVerify(File repositoryRoot, ISVNDumpHandler handler) throws SVNException {
         FSFS fsfs = openRepository(repositoryRoot);
         long youngestRevision = fsfs.getYoungestRevision();

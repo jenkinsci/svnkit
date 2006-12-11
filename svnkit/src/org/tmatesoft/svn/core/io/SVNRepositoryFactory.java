@@ -253,8 +253,16 @@ public abstract class SVNRepositoryFactory {
     public static SVNURL createLocalRepository(File path, String uuid, boolean enableRevisionProperties, boolean force, boolean pre14Compatible) throws SVNException {
         SVNFileType fType = SVNFileType.getType(path);
         if (!force && fType != SVNFileType.NONE) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "''{0}'' already exists; use ''force'' to overwrite existing files", path);
-            SVNErrorManager.error(err);
+            if (fType == SVNFileType.DIRECTORY) {
+                File[] children = path.listFiles();
+                if (children != null && children.length != 0) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "''{0}'' already exists; use ''force'' to overwrite existing files", path);
+                    SVNErrorManager.error(err);
+                }
+            } else {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "''{0}'' already exists; use ''force'' to overwrite existing files", path);
+                SVNErrorManager.error(err);
+            }
         }
         SVNFileUtil.deleteAll(path, true);
         if (!path.mkdirs()) {

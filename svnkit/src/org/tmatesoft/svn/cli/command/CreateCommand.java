@@ -45,7 +45,7 @@ public class CreateCommand extends SVNCommand {
         }
         
         String absolutePath = getCommandLine().getPathAt(0);
-        SVNRepositoryFactory.createLocalRepository(new File(absolutePath), null, false, true, isOldFormat);
+        SVNRepositoryFactory.createLocalRepository(new File(absolutePath), null, false, false, isOldFormat);
     }
 
 }

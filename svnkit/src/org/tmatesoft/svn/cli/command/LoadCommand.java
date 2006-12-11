@@ -41,7 +41,7 @@ public class LoadCommand extends SVNCommand {
         File reposRoot = new File(getCommandLine().getPathAt(0));  
 
         boolean ignoreUUID = getCommandLine().hasArgument(SVNArgument.IGNORE_UUID);
-        boolean forceUUID = getCommandLine().hasArgument(SVNArgument.DELTAS);
+        boolean forceUUID = getCommandLine().hasArgument(SVNArgument.FORCE_UUID);
         SVNUUIDAction uuidAction = null;
         if (!ignoreUUID && !forceUUID) {
             uuidAction = SVNUUIDAction.DEFAULT;
