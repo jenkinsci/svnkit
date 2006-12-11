@@ -252,20 +252,28 @@ public abstract class SVNRepositoryFactory {
 
     public static SVNURL createLocalRepository(File path, String uuid, boolean enableRevisionProperties, boolean force, boolean pre14Compatible) throws SVNException {
         SVNFileType fType = SVNFileType.getType(path);
-        if (!force && fType != SVNFileType.NONE) {
+        if (fType != SVNFileType.NONE) {
             if (fType == SVNFileType.DIRECTORY) {
                 File[] children = path.listFiles();
-                if (children != null && children.length != 0) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "''{0}'' already exists; use ''force'' to overwrite existing files", path);
-                    SVNErrorManager.error(err);
+                if ( children != null && children.length != 0) {
+                    if (!force) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "''{0}'' already exists; use ''force'' to overwrite existing files", path);
+                        SVNErrorManager.error(err);
+                    } else {
+                        SVNFileUtil.deleteAll(path, true);
+                    }
                 }
             } else {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "''{0}'' already exists; use ''force'' to overwrite existing files", path);
-                SVNErrorManager.error(err);
+                if (!force) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "''{0}'' already exists; use ''force'' to overwrite existing files", path);
+                    SVNErrorManager.error(err);
+                } else {
+                    SVNFileUtil.deleteAll(path, true);
+                }
             }
         }
-        SVNFileUtil.deleteAll(path, true);
-        if (!path.mkdirs()) {
+        //SVNFileUtil.deleteAll(path, true);
+        if (!path.mkdirs() && !path.exists()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not create directory ''{0}''", path);
             SVNErrorManager.error(err);
         }
@@ -439,15 +447,15 @@ public abstract class SVNRepositoryFactory {
         for (int i = 0; children != null && i < children.length; i++) {
             File child = children[i];
             File tmpChild = null;
-            try {
-                tmpChild = SVNFileUtil.createUniqueFile(directory, ".repos", ".tmp");
-                if (child.isFile()) {
-                    SVNTranslator.translate(child, tmpChild, eol, null, false, true);
+            if (child.isFile()) {
+                try {
+                    tmpChild = SVNFileUtil.createUniqueFile(directory, ".repos", ".tmp");
+                        SVNTranslator.translate(child, tmpChild, eol, null, false, true);
+                    SVNFileUtil.deleteFile(child);
+                    SVNFileUtil.rename(tmpChild, child);
+                } finally {
+                    SVNFileUtil.deleteFile(tmpChild);
                 }
-                SVNFileUtil.deleteFile(child);
-                SVNFileUtil.rename(tmpChild, child);
-            } finally {
-                SVNFileUtil.deleteFile(tmpChild);
             }
         }
     }
