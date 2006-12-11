@@ -74,7 +74,6 @@ public class SVNSubstitutor {
                     myKeywordBuffer[myKeywordBufferLength++] = src.get();                    
                     byte[] keywordName = matchKeyword(myKeywordBuffer, 0, myKeywordBufferLength);
                     if (keywordName == null) {
-                        System.out.println("no match");
                         myKeywordBufferLength--;
                         unread(src, 1);
                     }
