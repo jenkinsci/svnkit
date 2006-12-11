@@ -1,11 +1,14 @@
-package org.tmatesoft.svn.core.internal.wc;
+package org.tmatesoft.svn.core.test;
 
-import java.io.*;
-import junit.framework.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
-import de.regnis.q.sequence.line.*;
+import junit.framework.TestCase;
 
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.internal.wc.FSMergerBySequence;
+import org.tmatesoft.svn.core.wc.SVNDiffOptions;
+
+import de.regnis.q.sequence.line.QSequenceLineRAByteData;
 
 /**
  * @author Marc Strapetz
