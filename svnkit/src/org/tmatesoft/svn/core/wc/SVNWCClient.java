@@ -2192,10 +2192,19 @@ public class SVNWCClient extends SVNBasicClient {
                 }
             }
         }
+        
         for(Iterator entries = area.entries(false); entries.hasNext();) {
             SVNEntry entry = (SVNEntry) entries.next();
             if (entry.getKind() == SVNNodeKind.DIR && !"".equals(entry.getName())) {
-                SVNAdminArea childArea = area.getWCAccess().retrieve(area.getFile(entry.getName()));
+                SVNAdminArea childArea = null;
+                try {
+                    childArea = area.getWCAccess().retrieve(area.getFile(entry.getName()));
+                } catch (SVNException e) {
+                    if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
+                        continue;
+                    }
+                    throw e;
+                }
                 if (childArea != null) {
                     doGetLocalProperty(childArea, propName, base, handler);
                 }
