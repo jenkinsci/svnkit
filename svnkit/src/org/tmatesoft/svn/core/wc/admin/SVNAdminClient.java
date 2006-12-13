@@ -37,6 +37,7 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryUtil;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
+import org.tmatesoft.svn.core.internal.wc.SVNAdminHelper;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNDumpEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -392,7 +393,7 @@ public class SVNAdminClient extends SVNBasicClient {
     }
 
     public void doListTransactions(File repositoryRoot, ISVNTransactionListHandler handler) throws SVNException {
-        FSFS fsfs = SVNAdminUtil.openRepository(repositoryRoot);
+        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
         Map txns = fsfs.listTransactions();
 
         for(Iterator names = txns.keySet().iterator(); names.hasNext();) {
@@ -410,7 +411,7 @@ public class SVNAdminClient extends SVNBasicClient {
             return;
         }
 
-        FSFS fsfs = SVNAdminUtil.openRepository(repositoryRoot);
+        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
         for (int i = 0; i < transactions.length; i++) {
             String txnName = transactions[i];
             fsfs.openTxn(txnName);
@@ -423,7 +424,7 @@ public class SVNAdminClient extends SVNBasicClient {
     }
 
     public void doVerify(File repositoryRoot, ISVNDumpHandler handler) throws SVNException {
-        FSFS fsfs = SVNAdminUtil.openRepository(repositoryRoot);
+        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
         long youngestRevision = fsfs.getYoungestRevision();
         try {
             dump(fsfs, SVNFileUtil.DUMMY_OUT, 0, youngestRevision, false, false, handler);
@@ -434,11 +435,11 @@ public class SVNAdminClient extends SVNBasicClient {
     }
     
     public void doDump(File repositoryRoot, OutputStream dumpStream, SVNRevision startRevision, SVNRevision endRevision, boolean isIncremental, boolean useDeltas, ISVNDumpHandler handler) throws SVNException {
-        FSFS fsfs = SVNAdminUtil.openRepository(repositoryRoot);
+        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
         long youngestRevision = fsfs.getYoungestRevision();
         
-        long lowerR = SVNAdminUtil.getRevisionNumber(startRevision, youngestRevision, fsfs);
-        long upperR = SVNAdminUtil.getRevisionNumber(endRevision, youngestRevision, fsfs);
+        long lowerR = SVNAdminHelper.getRevisionNumber(startRevision, youngestRevision, fsfs);
+        long upperR = SVNAdminHelper.getRevisionNumber(endRevision, youngestRevision, fsfs);
         
         if (!SVNRevision.isValidRevisionNumber(lowerR)) {
             lowerR = 0;
@@ -473,20 +474,20 @@ public class SVNAdminClient extends SVNBasicClient {
         try {
             line = SVNFileUtil.readLineFromStream(dumpStream, buffer);
             if (line == null) {
-                SVNAdminUtil.generateIncompleteDataError();
+                SVNAdminHelper.generateIncompleteDataError();
             }
 
             //parse format
-            if (!line.startsWith(SVNAdminUtil.DUMPFILE_MAGIC_HEADER + ":")) {
+            if (!line.startsWith(SVNAdminHelper.DUMPFILE_MAGIC_HEADER + ":")) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Malformed dumpfile header");
                 SVNErrorManager.error(err);
             }
             
             try {
-                line = line.substring(SVNAdminUtil.DUMPFILE_MAGIC_HEADER.length() + 1);
+                line = line.substring(SVNAdminHelper.DUMPFILE_MAGIC_HEADER.length() + 1);
                 line = line.trim();
                 version = Integer.parseInt(line);
-                if (version > SVNAdminUtil.DUMPFILE_FORMAT_VERSION) {
+                if (version > SVNAdminHelper.DUMPFILE_FORMAT_VERSION) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Unsupported dumpfile version: {0,number,integer}", new Integer(version));
                     SVNErrorManager.error(err);
                 }
@@ -504,7 +505,7 @@ public class SVNAdminClient extends SVNBasicClient {
                 line = SVNFileUtil.readLineFromStream(dumpStream, buffer);
                 if (line == null) {
                     if (buffer.length() > 0) {
-                        SVNAdminUtil.generateIncompleteDataError();
+                        SVNAdminHelper.generateIncompleteDataError();
                     } else {
                         break;
                     }
@@ -515,18 +516,18 @@ public class SVNAdminClient extends SVNBasicClient {
                 }
             
                 Map headers = readHeaderBlock(dumpStream, line);
-                if (headers.containsKey(SVNAdminUtil.DUMPFILE_REVISION_NUMBER)) {
+                if (headers.containsKey(SVNAdminHelper.DUMPFILE_REVISION_NUMBER)) {
                     handler.closeRevision();
                     handler.openRevision(headers);
-                } else if (headers.containsKey(SVNAdminUtil.DUMPFILE_NODE_PATH)) {
+                } else if (headers.containsKey(SVNAdminHelper.DUMPFILE_NODE_PATH)) {
                     handler.openNode(headers);
                     foundNode = true;
-                } else if (headers.containsKey(SVNAdminUtil.DUMPFILE_UUID)) {
-                    String uuid = (String) headers.get(SVNAdminUtil.DUMPFILE_UUID);
+                } else if (headers.containsKey(SVNAdminHelper.DUMPFILE_UUID)) {
+                    String uuid = (String) headers.get(SVNAdminHelper.DUMPFILE_UUID);
                     handler.parseUUID(uuid);
-                } else if (headers.containsKey(SVNAdminUtil.DUMPFILE_MAGIC_HEADER)) {
+                } else if (headers.containsKey(SVNAdminHelper.DUMPFILE_MAGIC_HEADER)) {
                     try {
-                        version = Integer.parseInt((String) headers.get(SVNAdminUtil.DUMPFILE_MAGIC_HEADER));    
+                        version = Integer.parseInt((String) headers.get(SVNAdminHelper.DUMPFILE_MAGIC_HEADER));    
                     } catch (NumberFormatException nfe) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Malformed dumpfile header");
                         SVNErrorManager.error(err, nfe);
@@ -536,14 +537,14 @@ public class SVNAdminClient extends SVNBasicClient {
                     SVNErrorManager.error(err);
                 }
                 
-                String contentLength = (String) headers.get(SVNAdminUtil.DUMPFILE_CONTENT_LENGTH);
-                String propContentLength = (String) headers.get(SVNAdminUtil.DUMPFILE_PROP_CONTENT_LENGTH);
-                String textContentLength = (String) headers.get(SVNAdminUtil.DUMPFILE_TEXT_CONTENT_LENGTH);
+                String contentLength = (String) headers.get(SVNAdminHelper.DUMPFILE_CONTENT_LENGTH);
+                String propContentLength = (String) headers.get(SVNAdminHelper.DUMPFILE_PROP_CONTENT_LENGTH);
+                String textContentLength = (String) headers.get(SVNAdminHelper.DUMPFILE_TEXT_CONTENT_LENGTH);
                 
                 boolean isOldVersion = version == 1 && contentLength != null && propContentLength == null && textContentLength == null;
                 int actualPropLength = 0;
                 if (propContentLength != null || isOldVersion) {
-                    String delta = (String) headers.get(SVNAdminUtil.DUMPFILE_PROP_DELTA);
+                    String delta = (String) headers.get(SVNAdminHelper.DUMPFILE_PROP_DELTA);
                     boolean isDelta = delta != null && "true".equals(delta);
                     
                     if (foundNode && !isDelta) {
@@ -561,7 +562,7 @@ public class SVNAdminClient extends SVNBasicClient {
                 }
                 
                 if (textContentLength != null) {
-                    String delta = (String) headers.get(SVNAdminUtil.DUMPFILE_TEXT_DELTA);
+                    String delta = (String) headers.get(SVNAdminHelper.DUMPFILE_TEXT_DELTA);
                     boolean isDelta = delta != null && "true".equals(delta);
                     int length = 0;
                     try {
@@ -582,7 +583,7 @@ public class SVNAdminClient extends SVNBasicClient {
                     
                     length -= actualPropLength;
                     
-                    if (length > 0 || SVNNodeKind.parseKind((String)headers.get(SVNAdminUtil.DUMPFILE_NODE_KIND)) == SVNNodeKind.FILE) {
+                    if (length > 0 || SVNNodeKind.parseKind((String)headers.get(SVNAdminHelper.DUMPFILE_NODE_KIND)) == SVNNodeKind.FILE) {
                         handler.parseTextBlock(dumpStream, length, false);
                     }
                 }
@@ -623,14 +624,14 @@ public class SVNAdminClient extends SVNBasicClient {
                         SVNErrorManager.error(err);
                     }
                     
-                    byte buf[] = new byte[SVNAdminUtil.STREAM_CHUNK_SIZE];
+                    byte buf[] = new byte[SVNAdminHelper.STREAM_CHUNK_SIZE];
                     while (remaining > 0) {
-                        int numToRead = remaining >= SVNAdminUtil.STREAM_CHUNK_SIZE ? SVNAdminUtil.STREAM_CHUNK_SIZE : remaining;
+                        int numToRead = remaining >= SVNAdminHelper.STREAM_CHUNK_SIZE ? SVNAdminHelper.STREAM_CHUNK_SIZE : remaining;
                         int numRead = dumpStream.read(buf, 0, numToRead);
                         
                         remaining -= numRead;
                         if (numRead != numToRead) {
-                            SVNAdminUtil.generateIncompleteDataError();
+                            SVNAdminHelper.generateIncompleteDataError();
                         }
                     }
                 }
@@ -680,15 +681,15 @@ public class SVNAdminClient extends SVNBasicClient {
         }
         
         String uuid = fsfs.getUUID();
-        int version = SVNAdminUtil.DUMPFILE_FORMAT_VERSION;
+        int version = SVNAdminHelper.DUMPFILE_FORMAT_VERSION;
         
         if (!useDeltas) {
             //for compatibility with SVN 1.0.x
             version--;
         }
         
-        writeDumpData(dumpStream, SVNAdminUtil.DUMPFILE_MAGIC_HEADER + ": " + version + "\n\n");
-        writeDumpData(dumpStream, SVNAdminUtil.DUMPFILE_UUID + ": " + uuid + "\n\n");
+        writeDumpData(dumpStream, SVNAdminHelper.DUMPFILE_MAGIC_HEADER + ": " + version + "\n\n");
+        writeDumpData(dumpStream, SVNAdminHelper.DUMPFILE_UUID + ": " + uuid + "\n\n");
 
         for (long i = start; i <= end; i++) {
             long fromRev, toRev;
@@ -720,7 +721,7 @@ public class SVNAdminClient extends SVNBasicClient {
 
             if (i == start && !isIncremental) {
                 FSRevisionRoot fromRoot = fsfs.createRevisionRoot(fromRev);
-                SVNAdminUtil.deltifyDir(fsfs, fromRoot, "/", "", toRoot, "/", dumpEditor);
+                SVNAdminHelper.deltifyDir(fsfs, fromRoot, "/", "", toRoot, "/", dumpEditor);
             } else {
                 FSRepositoryUtil.replay(fsfs, toRoot, "", -1, false, dumpEditor);
             }
@@ -741,12 +742,12 @@ public class SVNAdminClient extends SVNBasicClient {
         }
         
         ByteArrayOutputStream encodedProps = new ByteArrayOutputStream();
-        SVNAdminUtil.writeProperties(revProps, null, encodedProps);
+        SVNAdminHelper.writeProperties(revProps, null, encodedProps);
         
-        writeDumpData(dumpStream, SVNAdminUtil.DUMPFILE_REVISION_NUMBER + ": " + revision + "\n");
+        writeDumpData(dumpStream, SVNAdminHelper.DUMPFILE_REVISION_NUMBER + ": " + revision + "\n");
         String propContents = new String(encodedProps.toByteArray(), "UTF-8");
-        writeDumpData(dumpStream, SVNAdminUtil.DUMPFILE_PROP_CONTENT_LENGTH + ": " + propContents.length() + "\n");
-        writeDumpData(dumpStream, SVNAdminUtil.DUMPFILE_CONTENT_LENGTH + ": " + propContents.length() + "\n\n");
+        writeDumpData(dumpStream, SVNAdminHelper.DUMPFILE_PROP_CONTENT_LENGTH + ": " + propContents.length() + "\n");
+        writeDumpData(dumpStream, SVNAdminHelper.DUMPFILE_CONTENT_LENGTH + ": " + propContents.length() + "\n\n");
         writeDumpData(dumpStream, propContents);
         dumpStream.write('\n');
     }
@@ -757,7 +758,7 @@ public class SVNAdminClient extends SVNBasicClient {
     
     private ISVNLoadHandler getLoadHandler(File repositoryRoot, boolean usePreCommitHook, boolean usePostCommitHook, SVNUUIDAction uuidAction, String parentDir, ISVNDumpHandler progressHandler) throws SVNException {
         if (myLoadHandler == null) {
-            FSFS fsfs = SVNAdminUtil.openRepository(repositoryRoot);
+            FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
             DefaultLoadHandler handler = new DefaultLoadHandler(usePreCommitHook, usePostCommitHook, uuidAction, parentDir, progressHandler);
             handler.setFSFS(fsfs);
             myLoadHandler = handler;
@@ -785,7 +786,7 @@ public class SVNAdminClient extends SVNBasicClient {
             } else {
                 header = SVNFileUtil.readLineFromStream(dumpStream, buffer);
                 if (header == null && buffer.length() > 0) {
-                    SVNAdminUtil.generateIncompleteDataError();
+                    SVNAdminHelper.generateIncompleteDataError();
                 } else if (buffer.length() == 0) {
                     break;
                 }

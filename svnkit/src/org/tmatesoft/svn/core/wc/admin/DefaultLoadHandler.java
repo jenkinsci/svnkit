@@ -33,6 +33,7 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionRoot;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNAdminHelper;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
@@ -136,11 +137,11 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
     public void openRevision(Map headers) throws SVNException {
         myCurrentRevisionBaton = new RevisionBaton();
         long revision = -1;
-        if (headers.containsKey(SVNAdminUtil.DUMPFILE_REVISION_NUMBER)) {
+        if (headers.containsKey(SVNAdminHelper.DUMPFILE_REVISION_NUMBER)) {
             try {
-                revision = Long.parseLong((String) headers.get(SVNAdminUtil.DUMPFILE_REVISION_NUMBER)); 
+                revision = Long.parseLong((String) headers.get(SVNAdminHelper.DUMPFILE_REVISION_NUMBER)); 
             } catch (NumberFormatException nfe) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Cannot parse revision ({0}) in dump file", headers.get(SVNAdminUtil.DUMPFILE_REVISION_NUMBER));
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Cannot parse revision ({0}) in dump file", headers.get(SVNAdminHelper.DUMPFILE_REVISION_NUMBER));
                 SVNErrorManager.error(err);
             }
         }
@@ -164,18 +165,18 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
         
         myCurrentNodeBaton = createNodeBaton(headers);
         switch (myCurrentNodeBaton.myAction) {
-            case SVNAdminUtil.NODE_ACTION_CHANGE:
+            case SVNAdminHelper.NODE_ACTION_CHANGE:
                 SVNDebugLog.getDefaultLog().info("     * editing path : " + myCurrentNodeBaton.myPath + " ...");
                 break;
-            case SVNAdminUtil.NODE_ACTION_DELETE:
+            case SVNAdminHelper.NODE_ACTION_DELETE:
                 SVNDebugLog.getDefaultLog().info("     * deleting path : " + myCurrentNodeBaton.myPath + " ...");
                 myCurrentRevisionBaton.getCommitter().deleteNode(myCurrentNodeBaton.myPath);
                 break;
-            case SVNAdminUtil.NODE_ACTION_ADD:
+            case SVNAdminHelper.NODE_ACTION_ADD:
                 SVNDebugLog.getDefaultLog().info("     * adding path : " + myCurrentNodeBaton.myPath + " ...");
                 maybeAddWithHistory(myCurrentNodeBaton);
                 break;
-            case SVNAdminUtil.NODE_ACTION_REPLACE:
+            case SVNAdminHelper.NODE_ACTION_REPLACE:
                 SVNDebugLog.getDefaultLog().info("     * replacing path : " + myCurrentNodeBaton.myPath + " ...");
                 myCurrentRevisionBaton.getCommitter().deleteNode(myCurrentNodeBaton.myPath);
                 maybeAddWithHistory(myCurrentNodeBaton);
@@ -230,14 +231,14 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
             if (contentLength == 0) {
                 getDeltaGenerator().sendDelta(myCurrentNodeBaton.myPath, SVNFileUtil.DUMMY_IN, myCurrentRevisionBaton.getConsumer(), false);
             } else {
-                buffer = new byte[SVNAdminUtil.STREAM_CHUNK_SIZE];
+                buffer = new byte[SVNAdminHelper.STREAM_CHUNK_SIZE];
                 try {
                     while (contentLength > 0) {
-                        int numToRead = contentLength > SVNAdminUtil.STREAM_CHUNK_SIZE ? SVNAdminUtil.STREAM_CHUNK_SIZE : contentLength;
+                        int numToRead = contentLength > SVNAdminHelper.STREAM_CHUNK_SIZE ? SVNAdminHelper.STREAM_CHUNK_SIZE : contentLength;
                         int numRead = dumpStream.read(buffer, 0, numToRead);
                         
                         if (numRead != numToRead) {
-                            SVNAdminUtil.generateIncompleteDataError();
+                            SVNAdminHelper.generateIncompleteDataError();
                         }
                         
                         if (isDelta) {
@@ -291,13 +292,13 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                     }
                     
                     byte[] buff = new byte[len];
-                    actualLength += SVNAdminUtil.readKeyOrValue(dumpStream, buff, len);
+                    actualLength += SVNAdminHelper.readKeyOrValue(dumpStream, buff, len);
                     String propName = new String(buff, "UTF-8");
                     
                     buffer.setLength(0);
                     line = SVNFileUtil.readLineFromStream(dumpStream, buffer);
                     if (line == null) {
-                        SVNAdminUtil.generateIncompleteDataError();
+                        SVNAdminHelper.generateIncompleteDataError();
                     }
                     
                     //including '\n'
@@ -311,7 +312,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                         }
     
                         buff = new byte[len];
-                        actualLength += SVNAdminUtil.readKeyOrValue(dumpStream, buff, len);
+                        actualLength += SVNAdminHelper.readKeyOrValue(dumpStream, buff, len);
                         String propValue = new String(buff, "UTF-8");
                         if (isNode) {
                             setNodeProperty(propName, propValue);
@@ -319,7 +320,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                             setRevisionProperty(propName, propValue);
                         }
                     } else {
-                        SVNAdminUtil.generateStreamMalformedError();
+                        SVNAdminHelper.generateStreamMalformedError();
                     }
                 } else if (line.charAt(0) == 'D' && line.charAt(1) == ' ') {
                     int len = 0;
@@ -331,16 +332,16 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                     }
                     
                     byte[] buff = new byte[len];
-                    actualLength += SVNAdminUtil.readKeyOrValue(dumpStream, buff, len);
+                    actualLength += SVNAdminHelper.readKeyOrValue(dumpStream, buff, len);
                     
                     if (!isNode) {
-                        SVNAdminUtil.generateStreamMalformedError();
+                        SVNAdminHelper.generateStreamMalformedError();
                     }
                     
                     String propName = new String(buff, "UTF-8");
                     setNodeProperty(propName, null);
                 } else {
-                    SVNAdminUtil.generateStreamMalformedError();
+                    SVNAdminHelper.generateStreamMalformedError();
                 }
             }
         } catch (IOException ioe) {
@@ -440,8 +441,8 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
     private NodeBaton createNodeBaton(Map headers) throws SVNException {
         NodeBaton baton = new NodeBaton();
         baton.myKind = SVNNodeKind.UNKNOWN;
-        if (headers.containsKey(SVNAdminUtil.DUMPFILE_NODE_PATH)) {
-            String nodePath = (String) headers.get(SVNAdminUtil.DUMPFILE_NODE_PATH); 
+        if (headers.containsKey(SVNAdminHelper.DUMPFILE_NODE_PATH)) {
+            String nodePath = (String) headers.get(SVNAdminHelper.DUMPFILE_NODE_PATH); 
             if (myParentDir != null) {
                 baton.myPath = SVNPathUtil.concatToAbs(myParentDir, nodePath.startsWith("/") ? nodePath.substring(1) : nodePath);
             } else {
@@ -449,36 +450,36 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
             }
         }
         
-        if (headers.containsKey(SVNAdminUtil.DUMPFILE_NODE_KIND)) {
-            baton.myKind = SVNNodeKind.parseKind((String) headers.get(SVNAdminUtil.DUMPFILE_NODE_KIND));
+        if (headers.containsKey(SVNAdminHelper.DUMPFILE_NODE_KIND)) {
+            baton.myKind = SVNNodeKind.parseKind((String) headers.get(SVNAdminHelper.DUMPFILE_NODE_KIND));
         }
         
-        baton.myAction = SVNAdminUtil.NODE_ACTION_UNKNOWN;
-        if (headers.containsKey(SVNAdminUtil.DUMPFILE_NODE_ACTION)) {
-            String action = (String) headers.get(SVNAdminUtil.DUMPFILE_NODE_ACTION);
+        baton.myAction = SVNAdminHelper.NODE_ACTION_UNKNOWN;
+        if (headers.containsKey(SVNAdminHelper.DUMPFILE_NODE_ACTION)) {
+            String action = (String) headers.get(SVNAdminHelper.DUMPFILE_NODE_ACTION);
             if ("change".equals(action)) {
-                baton.myAction = SVNAdminUtil.NODE_ACTION_CHANGE;
+                baton.myAction = SVNAdminHelper.NODE_ACTION_CHANGE;
             } else if ("add".equals(action)) {
-                baton.myAction = SVNAdminUtil.NODE_ACTION_ADD;
+                baton.myAction = SVNAdminHelper.NODE_ACTION_ADD;
             } else if ("delete".equals(action)) {
-                baton.myAction = SVNAdminUtil.NODE_ACTION_DELETE;
+                baton.myAction = SVNAdminHelper.NODE_ACTION_DELETE;
             } else if ("replace".equals(action)) {
-                baton.myAction = SVNAdminUtil.NODE_ACTION_REPLACE;
+                baton.myAction = SVNAdminHelper.NODE_ACTION_REPLACE;
             }
         }
         
         baton.myCopyFromRevision = -1;
-        if (headers.containsKey(SVNAdminUtil.DUMPFILE_NODE_COPYFROM_REVISION)) {
+        if (headers.containsKey(SVNAdminHelper.DUMPFILE_NODE_COPYFROM_REVISION)) {
             try {
-                baton.myCopyFromRevision = Long.parseLong((String) headers.get(SVNAdminUtil.DUMPFILE_NODE_COPYFROM_REVISION)); 
+                baton.myCopyFromRevision = Long.parseLong((String) headers.get(SVNAdminHelper.DUMPFILE_NODE_COPYFROM_REVISION)); 
             } catch (NumberFormatException nfe) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Cannot parse revision ({0}) in dump file", headers.get(SVNAdminUtil.DUMPFILE_NODE_COPYFROM_REVISION));
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Cannot parse revision ({0}) in dump file", headers.get(SVNAdminHelper.DUMPFILE_NODE_COPYFROM_REVISION));
                 SVNErrorManager.error(err);
             }
         }
         
-        if (headers.containsKey(SVNAdminUtil.DUMPFILE_NODE_COPYFROM_PATH)) {
-            String copyFromPath = (String) headers.get(SVNAdminUtil.DUMPFILE_NODE_COPYFROM_PATH);
+        if (headers.containsKey(SVNAdminHelper.DUMPFILE_NODE_COPYFROM_PATH)) {
+            String copyFromPath = (String) headers.get(SVNAdminHelper.DUMPFILE_NODE_COPYFROM_PATH);
             if (myParentDir != null) {
                 baton.myCopyFromPath = SVNPathUtil.concatToAbs(myParentDir, copyFromPath.startsWith("/") ? copyFromPath.substring(1) : copyFromPath);
             } else {
@@ -486,8 +487,8 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
             }
         }
         
-        if (headers.containsKey(SVNAdminUtil.DUMPFILE_TEXT_CONTENT_LENGTH)) {
-            baton.myTextChecksum = (String) headers.get(SVNAdminUtil.DUMPFILE_TEXT_CONTENT_LENGTH);
+        if (headers.containsKey(SVNAdminHelper.DUMPFILE_TEXT_CONTENT_LENGTH)) {
+            baton.myTextChecksum = (String) headers.get(SVNAdminHelper.DUMPFILE_TEXT_CONTENT_LENGTH);
         }        
         return baton;
     }

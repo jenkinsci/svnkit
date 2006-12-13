@@ -26,6 +26,7 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNAdminHelper;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNRepositoryPool;
@@ -49,7 +50,7 @@ public class SVNLookClient extends SVNBasicClient {
 
     public SVNLogEntry doGetInfo(File repositoryRoot, SVNRevision revision) throws SVNException {
         FSFS fsfs = open(repositoryRoot, revision);
-        long revNum = SVNAdminUtil.getRevisionNumber(revision, fsfs.getYoungestRevision(), fsfs);
+        long revNum = SVNAdminHelper.getRevisionNumber(revision, fsfs.getYoungestRevision(), fsfs);
         Map revProps = fsfs.getRevisionProperties(revNum);
         String date = (String) revProps.get(SVNRevisionProperty.DATE);
         String author = (String) revProps.get(SVNRevisionProperty.AUTHOR);
@@ -69,18 +70,18 @@ public class SVNLookClient extends SVNBasicClient {
     }
 
     public long doGetYoungestRevision(File repositoryRoot) throws SVNException {
-        FSFS fsfs = SVNAdminUtil.openRepository(repositoryRoot);
+        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
         return fsfs.getYoungestRevision();
     }
     
     public String doGetUUID(File repositoryRoot) throws SVNException {
-        FSFS fsfs = SVNAdminUtil.openRepository(repositoryRoot);
+        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
         return fsfs.getUUID();
     }
     
     public String doGetAuthor(File repositoryRoot, SVNRevision revision) throws SVNException {
         FSFS fsfs = open(repositoryRoot, revision);
-        long revNum = SVNAdminUtil.getRevisionNumber(revision, fsfs.getYoungestRevision(), fsfs);
+        long revNum = SVNAdminHelper.getRevisionNumber(revision, fsfs.getYoungestRevision(), fsfs);
         Map revProps = fsfs.getRevisionProperties(revNum);
         return (String) revProps.get(SVNRevisionProperty.AUTHOR);
     }
@@ -99,7 +100,7 @@ public class SVNLookClient extends SVNBasicClient {
         }
 
         FSFS fsfs = open(repositoryRoot, revision);
-        long revNum = SVNAdminUtil.getRevisionNumber(revision, fsfs.getYoungestRevision(), fsfs);
+        long revNum = SVNAdminHelper.getRevisionNumber(revision, fsfs.getYoungestRevision(), fsfs);
         FSRevisionRoot root = fsfs.createRevisionRoot(revNum);
         
         SVNNodeKind kind = verifyPath(root, path);
@@ -126,7 +127,7 @@ public class SVNLookClient extends SVNBasicClient {
             SVNErrorManager.error(err);
         }
         
-        FSFS fsfs = SVNAdminUtil.openRepository(repositoryRoot);
+        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
         return fsfs;
     }
     
@@ -136,6 +137,6 @@ public class SVNLookClient extends SVNBasicClient {
             SVNErrorManager.error(err);
         }
 
-        return SVNAdminUtil.openRepository(repositoryRoot);
+        return SVNAdminHelper.openRepository(repositoryRoot);
     }
 }

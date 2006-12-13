@@ -9,7 +9,7 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.core.wc.admin;
+package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,8 +33,6 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryUtil;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionNode;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -44,7 +42,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
  * @version 1.1
  * @author  TMate Software Ltd.
  */
-public class SVNAdminUtil {
+public class SVNAdminHelper {
     
     public static FSFS openRepository(File reposRootPath) throws SVNException {
         FSFS fsfs = new FSFS(reposRootPath);
@@ -206,16 +204,16 @@ public class SVNAdminUtil {
         int r = dumpStream.read(buffer);
         
         if (r != len) {
-            SVNAdminUtil.generateIncompleteDataError();
+            SVNAdminHelper.generateIncompleteDataError();
         }
         
         int readLength = r;
         
         r = dumpStream.read();
         if (r == -1) {
-            SVNAdminUtil.generateIncompleteDataError();
+            SVNAdminHelper.generateIncompleteDataError();
         } else if (r != '\n') {
-            SVNAdminUtil.generateStreamMalformedError();
+            SVNAdminHelper.generateStreamMalformedError();
         }
         
         return ++readLength;

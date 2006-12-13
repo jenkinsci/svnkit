@@ -39,7 +39,6 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.admin.SVNAdminUtil;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 
@@ -84,7 +83,7 @@ public class SVNDumpEditor implements ISVNEditor {
         myCurrentDirInfo = createDirectoryInfo(path, copyFromPath, copyFromRevision, true, parent);
         boolean isDeleted = parent.myDeletedEntries.contains(path);
         boolean isCopy = copyFromPath != null && SVNRevision.isValidRevisionNumber(copyFromRevision);
-        dumpNode(path, SVNNodeKind.DIR, isDeleted ? SVNAdminUtil.NODE_ACTION_REPLACE : SVNAdminUtil.NODE_ACTION_ADD, isCopy, isCopy ? copyFromPath : null, isCopy ? copyFromRevision : -1);
+        dumpNode(path, SVNNodeKind.DIR, isDeleted ? SVNAdminHelper.NODE_ACTION_REPLACE : SVNAdminHelper.NODE_ACTION_ADD, isCopy, isCopy ? copyFromPath : null, isCopy ? copyFromRevision : -1);
         if (isDeleted) {
             parent.myDeletedEntries.remove(path);
         }
@@ -94,7 +93,7 @@ public class SVNDumpEditor implements ISVNEditor {
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         boolean isCopy = copyFromPath != null && SVNRevision.isValidRevisionNumber(copyFromRevision);
         boolean isDeleted = myCurrentDirInfo.myDeletedEntries.contains(path);
-        dumpNode(path, SVNNodeKind.FILE, isDeleted ? SVNAdminUtil.NODE_ACTION_REPLACE : SVNAdminUtil.NODE_ACTION_ADD, isCopy, isCopy ? copyFromPath : null, isCopy ? copyFromRevision : -1);
+        dumpNode(path, SVNNodeKind.FILE, isDeleted ? SVNAdminHelper.NODE_ACTION_REPLACE : SVNAdminHelper.NODE_ACTION_ADD, isCopy, isCopy ? copyFromPath : null, isCopy ? copyFromRevision : -1);
         if (isDeleted) {
             myCurrentDirInfo.myDeletedEntries.remove(path);
         }
@@ -102,7 +101,7 @@ public class SVNDumpEditor implements ISVNEditor {
 
     public void changeDirProperty(String name, String value) throws SVNException {
         if (!myCurrentDirInfo.myIsWrittenOut) {
-            dumpNode(myCurrentDirInfo.myFullPath, SVNNodeKind.DIR, SVNAdminUtil.NODE_ACTION_CHANGE, false, myCurrentDirInfo.myComparePath, myCurrentDirInfo.myCompareRevision);
+            dumpNode(myCurrentDirInfo.myFullPath, SVNNodeKind.DIR, SVNAdminHelper.NODE_ACTION_CHANGE, false, myCurrentDirInfo.myComparePath, myCurrentDirInfo.myCompareRevision);
             myCurrentDirInfo.myIsWrittenOut = true;
         }
     }
@@ -113,7 +112,7 @@ public class SVNDumpEditor implements ISVNEditor {
     public void closeDir() throws SVNException {
         for (Iterator entries = myCurrentDirInfo.myDeletedEntries.iterator(); entries.hasNext();) {
             String path = (String) entries.next();
-            dumpNode(path, SVNNodeKind.UNKNOWN, SVNAdminUtil.NODE_ACTION_DELETE, false, null, -1);
+            dumpNode(path, SVNNodeKind.UNKNOWN, SVNAdminHelper.NODE_ACTION_DELETE, false, null, -1);
         }
         myCurrentDirInfo = myCurrentDirInfo.myParentInfo;
     }
@@ -147,7 +146,7 @@ public class SVNDumpEditor implements ISVNEditor {
             cmpPath = SVNPathUtil.append(myCurrentDirInfo.myComparePath, SVNPathUtil.tail(path));
             cmpRev = myCurrentDirInfo.myCompareRevision;
         }
-        dumpNode(path, SVNNodeKind.FILE, SVNAdminUtil.NODE_ACTION_CHANGE, false, cmpPath, cmpRev);
+        dumpNode(path, SVNNodeKind.FILE, SVNAdminHelper.NODE_ACTION_CHANGE, false, cmpPath, cmpRev);
         
     }
 
@@ -170,12 +169,12 @@ public class SVNDumpEditor implements ISVNEditor {
 
     private void dumpNode(String path, SVNNodeKind kind, int nodeAction, boolean isCopy, String cmpPath, long cmpRev) throws SVNException {
         try {
-            writeDumpData(SVNAdminUtil.DUMPFILE_NODE_PATH + ": " + (path.startsWith("/") ? path.substring(1) : path) + "\n");
+            writeDumpData(SVNAdminHelper.DUMPFILE_NODE_PATH + ": " + (path.startsWith("/") ? path.substring(1) : path) + "\n");
             
             if (kind == SVNNodeKind.FILE) {
-                writeDumpData(SVNAdminUtil.DUMPFILE_NODE_KIND + ": file\n");
+                writeDumpData(SVNAdminHelper.DUMPFILE_NODE_KIND + ": file\n");
             } else if (kind == SVNNodeKind.DIR) {
-                writeDumpData(SVNAdminUtil.DUMPFILE_NODE_KIND + ": dir\n");
+                writeDumpData(SVNAdminHelper.DUMPFILE_NODE_KIND + ": dir\n");
             }
             
             if (cmpPath != null) {
@@ -195,35 +194,35 @@ public class SVNDumpEditor implements ISVNEditor {
             boolean mustDumpText = false;
             String canonicalPath = SVNPathUtil.canonicalizeAbsPath(path);
             switch(nodeAction) {
-                case SVNAdminUtil.NODE_ACTION_CHANGE:
-                    writeDumpData(SVNAdminUtil.DUMPFILE_NODE_ACTION + ": change\n");
+                case SVNAdminHelper.NODE_ACTION_CHANGE:
+                    writeDumpData(SVNAdminHelper.DUMPFILE_NODE_ACTION + ": change\n");
                     compareRoot = myFSFS.createRevisionRoot(compareRevision);
                     mustDumpProps = FSRepositoryUtil.arePropertiesChanged(compareRoot, comparePath, myRoot, canonicalPath); 
                     if (kind == SVNNodeKind.FILE) {
                         mustDumpText = FSRepositoryUtil.areFileContentsChanged(compareRoot, comparePath, myRoot, canonicalPath);
                     }
                     break;
-                case SVNAdminUtil.NODE_ACTION_REPLACE:
+                case SVNAdminHelper.NODE_ACTION_REPLACE:
                     if (!isCopy) {
-                        writeDumpData(SVNAdminUtil.DUMPFILE_NODE_ACTION + ": replace\n");
+                        writeDumpData(SVNAdminHelper.DUMPFILE_NODE_ACTION + ": replace\n");
                         if (kind == SVNNodeKind.FILE) {
                             mustDumpText = true;
                         }
                         mustDumpProps = true;
                     } else {
-                        writeDumpData(SVNAdminUtil.DUMPFILE_NODE_ACTION + ": delete\n\n");
-                        dumpNode(path, kind, SVNAdminUtil.NODE_ACTION_ADD, isCopy, comparePath, compareRevision);
+                        writeDumpData(SVNAdminHelper.DUMPFILE_NODE_ACTION + ": delete\n\n");
+                        dumpNode(path, kind, SVNAdminHelper.NODE_ACTION_ADD, isCopy, comparePath, compareRevision);
                         mustDumpText = false;
                         mustDumpProps = false;
                     }
                     break;
-                case SVNAdminUtil.NODE_ACTION_DELETE:
-                    writeDumpData(SVNAdminUtil.DUMPFILE_NODE_ACTION + ": delete\n");
+                case SVNAdminHelper.NODE_ACTION_DELETE:
+                    writeDumpData(SVNAdminHelper.DUMPFILE_NODE_ACTION + ": delete\n");
                     mustDumpText = false;
                     mustDumpProps = false;
                     break;
-                case SVNAdminUtil.NODE_ACTION_ADD:
-                    writeDumpData(SVNAdminUtil.DUMPFILE_NODE_ACTION + ": add\n");
+                case SVNAdminHelper.NODE_ACTION_ADD:
+                    writeDumpData(SVNAdminHelper.DUMPFILE_NODE_ACTION + ": add\n");
                     if (!isCopy) {
                         if (kind == SVNNodeKind.FILE) {
                             mustDumpText = true;
@@ -234,8 +233,8 @@ public class SVNDumpEditor implements ISVNEditor {
                             SVNDebugLog.getDefaultLog().info("WARNING: Referencing data in revision " + cmpRev + ", which is older than the oldest\nWARNING: dumped revision (" + myOldestDumpedRevision + ").  Loading this dump into an empty repository\nWARNING: will fail.\n");
                         }
  
-                        writeDumpData(SVNAdminUtil.DUMPFILE_NODE_COPYFROM_REVISION + ": " + cmpRev + "\n");
-                        writeDumpData(SVNAdminUtil.DUMPFILE_NODE_COPYFROM_PATH + ": " + cmpPath + "\n");
+                        writeDumpData(SVNAdminHelper.DUMPFILE_NODE_COPYFROM_REVISION + ": " + cmpRev + "\n");
+                        writeDumpData(SVNAdminHelper.DUMPFILE_NODE_COPYFROM_PATH + ": " + cmpPath + "\n");
                         compareRoot = myFSFS.createRevisionRoot(compareRevision);
                         mustDumpProps = FSRepositoryUtil.arePropertiesChanged(compareRoot, comparePath, myRoot, canonicalPath);
                         if (kind == SVNNodeKind.FILE) {
@@ -259,14 +258,14 @@ public class SVNDumpEditor implements ISVNEditor {
                 if (myUseDeltas && compareRoot != null) {
                     FSRevisionNode cmpNode = myRoot.getRevisionNode(comparePath);
                     oldProps = cmpNode.getProperties(myFSFS);
-                    writeDumpData(SVNAdminUtil.DUMPFILE_PROP_DELTA + ": true\n");
+                    writeDumpData(SVNAdminHelper.DUMPFILE_PROP_DELTA + ": true\n");
                 }
 
                 ByteArrayOutputStream encodedProps = new ByteArrayOutputStream();
-                SVNAdminUtil.writeProperties(props, oldProps, encodedProps);
+                SVNAdminHelper.writeProperties(props, oldProps, encodedProps);
                 propContents = new String(encodedProps.toByteArray(), "UTF-8");
                 contentLength += propContents.length();
-                writeDumpData(SVNAdminUtil.DUMPFILE_PROP_CONTENT_LENGTH + ": " + propContents.length() + "\n");
+                writeDumpData(SVNAdminHelper.DUMPFILE_PROP_CONTENT_LENGTH + ": " + propContents.length() + "\n");
             }
             
             File tmpFile = null;
@@ -326,20 +325,20 @@ public class SVNDumpEditor implements ISVNEditor {
                         SVNFileUtil.closeFile(targetStream);
                         SVNFileUtil.closeFile(tmpStream);
                     }
-                    writeDumpData(SVNAdminUtil.DUMPFILE_TEXT_DELTA + ": true\n");
+                    writeDumpData(SVNAdminHelper.DUMPFILE_TEXT_DELTA + ": true\n");
                 } else {
                     txtLength = node.getFileLength(); 
                 }
                 
                 contentLength += txtLength;
-                writeDumpData(SVNAdminUtil.DUMPFILE_TEXT_CONTENT_LENGTH + ": " + txtLength + "\n");
+                writeDumpData(SVNAdminHelper.DUMPFILE_TEXT_CONTENT_LENGTH + ": " + txtLength + "\n");
                 String checksum = node.getFileChecksum();
                 if (checksum != null) {
-                    writeDumpData(SVNAdminUtil.DUMPFILE_TEXT_CONTENT_CHECKSUM + ": " + checksum + "\n");
+                    writeDumpData(SVNAdminHelper.DUMPFILE_TEXT_CONTENT_CHECKSUM + ": " + checksum + "\n");
                 }
             }
             
-            writeDumpData(SVNAdminUtil.DUMPFILE_CONTENT_LENGTH + ": " + contentLength + "\n\n");
+            writeDumpData(SVNAdminHelper.DUMPFILE_CONTENT_LENGTH + ": " + contentLength + "\n\n");
             
             if (mustDumpProps) {
                 writeDumpData(propContents);
