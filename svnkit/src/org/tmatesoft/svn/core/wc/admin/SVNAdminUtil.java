@@ -9,11 +9,15 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.core.wc;
+package org.tmatesoft.svn.core.wc.admin;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -22,6 +26,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.io.fs.FSEntry;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryUtil;
@@ -32,6 +37,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 
 
 /**
@@ -39,12 +45,57 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  * @author  TMate Software Ltd.
  */
 public class SVNAdminUtil {
-
+    
+    public static FSFS openRepository(File reposRootPath) throws SVNException {
+        FSFS fsfs = new FSFS(reposRootPath);
+        fsfs.open();
+        return fsfs;
+    }
+    
+    public static long getRevisionNumber(SVNRevision revision, long youngestRevision, FSFS fsfs) throws SVNException {
+        long revNumber = -1;
+        if (revision.getNumber() >= 0) {
+            revNumber = revision.getNumber();
+        } else if (revision == SVNRevision.HEAD) {
+            revNumber = youngestRevision;
+        } else if (revision.getDate() != null) {
+            revNumber = fsfs.getDatedRevision(revision.getDate());
+        } else if (revision != SVNRevision.UNDEFINED) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Invalid revision specifier");
+            SVNErrorManager.error(err);
+        }
+        
+        if (revNumber > youngestRevision) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Revisions must not be greater than the youngest revision ({0,number,integer})", new Long(youngestRevision));
+            SVNErrorManager.error(err);
+        }
+        return revNumber;
+    }
+    
     public static void writeProperties(Map props, Map oldProps, OutputStream dumpStream) throws SVNException {
-        for(Iterator propNames = props.keySet().iterator(); propNames.hasNext();) {
-            String propName = (String) propNames.next();
+        String[] names = (String[]) new ArrayList(props.keySet()).toArray(new String[props.size()]);
+        Arrays.sort(names, new Comparator() {
+            public int compare(Object o1, Object o2) {
+                String e1 = (String) o1;
+                String e2 = (String) o2;
+                if (!e1.equals(e2)) {
+                    if (SVNRevisionProperty.LOG.equals(e1)) {
+                        return -1;
+                    } else if (SVNRevisionProperty.LOG.equals(e2)) {
+                        return 1;
+                    } else if (SVNRevisionProperty.AUTHOR.equals(e1)) {
+                        return -1;
+                    } else if (SVNRevisionProperty.AUTHOR.equals(e2)) {
+                        return 1;
+                    }
+                }
+                return e1.compareTo(e2);
+            }
+        });
+
+        for(int i = 0; i < names.length; i++) {
+            String propName = names[i];
             String propValue = (String) props.get(propName); 
-            
             if (oldProps != null) {
                 String oldValue = (String) oldProps.get(propName);
                 if (oldValue != null && oldValue.equals(propValue)) {

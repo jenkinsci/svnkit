@@ -9,7 +9,7 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.core.wc;
+package org.tmatesoft.svn.core.wc.admin;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -36,6 +36,8 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNUUIDAction;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 

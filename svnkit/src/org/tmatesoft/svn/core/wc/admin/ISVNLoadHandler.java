@@ -9,12 +9,13 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.core.wc;
+package org.tmatesoft.svn.core.wc.admin;
 
 import java.io.InputStream;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.wc.SVNUUIDAction;
 
 
 /**

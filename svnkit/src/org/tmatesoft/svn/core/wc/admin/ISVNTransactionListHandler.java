@@ -9,7 +9,9 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.core.wc;
+package org.tmatesoft.svn.core.wc.admin;
+
+import java.io.File;
 
 import org.tmatesoft.svn.core.SVNException;
 
@@ -18,10 +20,10 @@ import org.tmatesoft.svn.core.SVNException;
  * @version 1.1
  * @author  TMate Software Ltd.
  */
-public interface ISVNDumpHandler {
-
-    public void handleDumpRevision(long revision) throws SVNException;
-
-    public void handleLoadRevision(long newRevision, long originalRevision) throws SVNException;
+public interface ISVNTransactionListHandler {
+    
+    public void handleTransaction(String txnName, File txnDir) throws SVNException;
+    
+    public void handleRemoveTransaction(String txnName, File txnDir) throws SVNException;
 
 }

@@ -18,9 +18,9 @@ import java.io.PrintStream;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.ISVNDumpHandler;
-import org.tmatesoft.svn.core.wc.SVNAdminClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.admin.ISVNDumpHandler;
+import org.tmatesoft.svn.core.wc.admin.SVNAdminClient;
 
 /**
  * @version 1.1

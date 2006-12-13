@@ -101,7 +101,11 @@ public class SVNCommitUtil {
             if (closeDir) {
                 lastPath = commitPath;
             } else {
-                lastPath = SVNPathUtil.removeTail(commitPath);
+                if (index + 1 < pathsArray.length) {
+                    lastPath = SVNPathUtil.removeTail(commitPath);
+                } else {
+                    lastPath = commitPath;
+                }
             }
         }
         while (lastPath != null && !"".equals(lastPath)) {

@@ -9,7 +9,7 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.core.wc;
+package org.tmatesoft.svn.core.wc.admin;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -18,7 +18,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -27,7 +26,6 @@ import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
@@ -37,8 +35,7 @@ import org.tmatesoft.svn.core.internal.io.fs.FSCommitter;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryUtil;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
-import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNDumpEditor;
@@ -49,6 +46,11 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.replicator.SVNRepositoryReplicator;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.wc.ISVNRepositoryPool;
+import org.tmatesoft.svn.core.wc.SVNBasicClient;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNUUIDAction;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
@@ -104,7 +106,7 @@ public class SVNAdminClient extends SVNBasicClient {
      * @param repositoryPool a repository pool 
      * @param options        an options driver
      */
-    protected SVNAdminClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
+    public SVNAdminClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
         super(repositoryPool, options);
     }
 
@@ -390,7 +392,7 @@ public class SVNAdminClient extends SVNBasicClient {
     }
 
     public void doListTransactions(File repositoryRoot, ISVNTransactionListHandler handler) throws SVNException {
-        FSFS fsfs = openRepository(repositoryRoot);
+        FSFS fsfs = SVNAdminUtil.openRepository(repositoryRoot);
         Map txns = fsfs.listTransactions();
 
         for(Iterator names = txns.keySet().iterator(); names.hasNext();) {
@@ -408,7 +410,7 @@ public class SVNAdminClient extends SVNBasicClient {
             return;
         }
 
-        FSFS fsfs = openRepository(repositoryRoot);
+        FSFS fsfs = SVNAdminUtil.openRepository(repositoryRoot);
         for (int i = 0; i < transactions.length; i++) {
             String txnName = transactions[i];
             fsfs.openTxn(txnName);
@@ -419,41 +421,9 @@ public class SVNAdminClient extends SVNBasicClient {
             }
         }
     }
-    
-    public SVNLogEntry doInfo(File repositoryRoot, SVNRevision revision) throws SVNException {
-        if (revision == null || !revision.isValid()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Invalid revision number supplied");
-            SVNErrorManager.error(err);
-        }
-        
-        FSFS fsfs = openRepository(repositoryRoot);
-        long revNum = getRevisionNumber(revision, fsfs.getYoungestRevision(), fsfs);
-        Map revProps = fsfs.getRevisionProperties(revNum);
-        String date = (String) revProps.get(SVNRevisionProperty.DATE);
-        String author = (String) revProps.get(SVNRevisionProperty.AUTHOR);
-        String logMessage = (String) revProps.get(SVNRevisionProperty.LOG);
-        return new SVNLogEntry(null, revNum, author, SVNTimeUtil.parseDateString(date), logMessage); 
-    }
-
-    public SVNLogEntry doInfo(File repositoryRoot, String transactionName) throws SVNException {
-        if (transactionName == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Invalid transaction name supplied");
-            SVNErrorManager.error(err);
-        }
-
-        FSFS fsfs = openRepository(repositoryRoot);
-        FSTransactionInfo txn = fsfs.openTxn(transactionName);
-        
-        Map txnProps = fsfs.getTransactionProperties(txn.getTxnId());
-        
-        String date = (String) txnProps.get(SVNRevisionProperty.DATE);
-        String author = (String) txnProps.get(SVNRevisionProperty.AUTHOR);
-        String logMessage = (String) txnProps.get(SVNRevisionProperty.LOG);
-        return new SVNLogEntry(null, -1, author, SVNTimeUtil.parseDateString(date), logMessage); 
-    }
 
     public void doVerify(File repositoryRoot, ISVNDumpHandler handler) throws SVNException {
-        FSFS fsfs = openRepository(repositoryRoot);
+        FSFS fsfs = SVNAdminUtil.openRepository(repositoryRoot);
         long youngestRevision = fsfs.getYoungestRevision();
         try {
             dump(fsfs, SVNFileUtil.DUMMY_OUT, 0, youngestRevision, false, false, handler);
@@ -464,11 +434,11 @@ public class SVNAdminClient extends SVNBasicClient {
     }
     
     public void doDump(File repositoryRoot, OutputStream dumpStream, SVNRevision startRevision, SVNRevision endRevision, boolean isIncremental, boolean useDeltas, ISVNDumpHandler handler) throws SVNException {
-        FSFS fsfs = openRepository(repositoryRoot);
+        FSFS fsfs = SVNAdminUtil.openRepository(repositoryRoot);
         long youngestRevision = fsfs.getYoungestRevision();
         
-        long lowerR = getRevisionNumber(startRevision, youngestRevision, fsfs);
-        long upperR = getRevisionNumber(endRevision, youngestRevision, fsfs);
+        long lowerR = SVNAdminUtil.getRevisionNumber(startRevision, youngestRevision, fsfs);
+        long upperR = SVNAdminUtil.getRevisionNumber(endRevision, youngestRevision, fsfs);
         
         if (!SVNRevision.isValidRevisionNumber(lowerR)) {
             lowerR = 0;
@@ -540,7 +510,6 @@ public class SVNAdminClient extends SVNBasicClient {
                     }
                 } 
 
-                line = line.trim();
                 if (line.length() == 0) {
                     continue;
                 }
@@ -767,13 +736,13 @@ public class SVNAdminClient extends SVNBasicClient {
         
         String revisionDate = (String) revProps.get(SVNRevisionProperty.DATE);
         if (revisionDate != null) {
-            Date date = SVNTimeUtil.parseDateString(revisionDate);
-            revProps.put(SVNRevisionProperty.DATE, SVNTimeUtil.formatDate(date));
+            SVNDate date = SVNDate.parseDatestamp(revisionDate);
+            revProps.put(SVNRevisionProperty.DATE, date.format());
         }
         
         ByteArrayOutputStream encodedProps = new ByteArrayOutputStream();
         SVNAdminUtil.writeProperties(revProps, null, encodedProps);
-
+        
         writeDumpData(dumpStream, SVNAdminUtil.DUMPFILE_REVISION_NUMBER + ": " + revision + "\n");
         String propContents = new String(encodedProps.toByteArray(), "UTF-8");
         writeDumpData(dumpStream, SVNAdminUtil.DUMPFILE_PROP_CONTENT_LENGTH + ": " + propContents.length() + "\n");
@@ -786,29 +755,9 @@ public class SVNAdminClient extends SVNBasicClient {
         out.write(data.getBytes("UTF-8"));
     }
     
-    private long getRevisionNumber(SVNRevision revision, long youngestRevision, FSFS fsfs) throws SVNException {
-        long revNumber = -1;
-        if (revision.getNumber() >= 0) {
-            revNumber = revision.getNumber();
-        } else if (revision == SVNRevision.HEAD) {
-            revNumber = youngestRevision;
-        } else if (revision.getDate() != null) {
-            revNumber = fsfs.getDatedRevision(revision.getDate());
-        } else if (revision != SVNRevision.UNDEFINED) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Invalid revision specifier");
-            SVNErrorManager.error(err);
-        }
-        
-        if (revNumber > youngestRevision) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Revisions must not be greater than the youngest revision ({0,number,integer})", new Long(youngestRevision));
-            SVNErrorManager.error(err);
-        }
-        return revNumber;
-    }
-    
     private ISVNLoadHandler getLoadHandler(File repositoryRoot, boolean usePreCommitHook, boolean usePostCommitHook, SVNUUIDAction uuidAction, String parentDir, ISVNDumpHandler progressHandler) throws SVNException {
         if (myLoadHandler == null) {
-            FSFS fsfs = openRepository(repositoryRoot);
+            FSFS fsfs = SVNAdminUtil.openRepository(repositoryRoot);
             DefaultLoadHandler handler = new DefaultLoadHandler(usePreCommitHook, usePostCommitHook, uuidAction, parentDir, progressHandler);
             handler.setFSFS(fsfs);
             myLoadHandler = handler;
@@ -860,12 +809,6 @@ public class SVNAdminClient extends SVNBasicClient {
         return headers;
     }
 
-    private FSFS openRepository(File reposRootPath) throws SVNException {
-        FSFS fsfs = new FSFS(reposRootPath);
-        fsfs.open();
-        return fsfs;
-    }
-    
     private void copyRevisionProperties(SVNRepository fromRepository, SVNRepository toRepository, long revision, boolean sync) throws SVNException {
         Map existingRevProps = null;
         if (sync) {
