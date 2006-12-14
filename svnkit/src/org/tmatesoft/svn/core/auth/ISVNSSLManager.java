@@ -16,7 +16,6 @@ import java.io.IOException;
 import javax.net.ssl.SSLContext;
 
 import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNURL;
 
 /**
  * The <b>ISVNSSLManager</b> interface is intended for 

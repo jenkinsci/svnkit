@@ -15,11 +15,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -71,28 +69,25 @@ public class SVNAdminHelper {
     }
     
     public static void writeProperties(Map props, Map oldProps, OutputStream dumpStream) throws SVNException {
-        String[] names = (String[]) new ArrayList(props.keySet()).toArray(new String[props.size()]);
-        Arrays.sort(names, new Comparator() {
-            public int compare(Object o1, Object o2) {
-                String e1 = (String) o1;
-                String e2 = (String) o2;
-                if (!e1.equals(e2)) {
-                    if (SVNRevisionProperty.LOG.equals(e1)) {
-                        return -1;
-                    } else if (SVNRevisionProperty.LOG.equals(e2)) {
-                        return 1;
-                    } else if (SVNRevisionProperty.AUTHOR.equals(e1)) {
-                        return -1;
-                    } else if (SVNRevisionProperty.AUTHOR.equals(e2)) {
-                        return 1;
-                    }
+        LinkedList propNames = new LinkedList();
+        for(Iterator names = props.keySet().iterator(); names.hasNext();) {
+            String propName = (String) names.next();
+            if (SVNRevisionProperty.LOG.equals(propName)) {
+                  propNames.addFirst(propName);
+            } else if (SVNRevisionProperty.AUTHOR.equals(propName)) {
+                if (propNames.contains(SVNRevisionProperty.LOG)) {
+                    int ind = propNames.indexOf(SVNRevisionProperty.LOG);
+                    propNames.add(ind + 1, propName);
+                } else {
+                    propNames.addFirst(propName);
                 }
-                return e1.compareTo(e2);
+            } else {
+                propNames.addLast(propName);
             }
-        });
-
-        for(int i = 0; i < names.length; i++) {
-            String propName = names[i];
+        }
+        
+        for(Iterator names = propNames.iterator(); names.hasNext();) {
+            String propName = (String) names.next();
             String propValue = (String) props.get(propName); 
             if (oldProps != null) {
                 String oldValue = (String) oldProps.get(propName);
@@ -105,8 +100,8 @@ public class SVNAdminHelper {
         }
         
         if (oldProps != null) {
-            for(Iterator propNames = oldProps.keySet().iterator(); propNames.hasNext();) {
-                String propName = (String) propNames.next();
+            for(Iterator names = oldProps.keySet().iterator(); names.hasNext();) {
+                String propName = (String) names.next();
                 if (props.containsKey(propName)) {
                     continue;
                 }

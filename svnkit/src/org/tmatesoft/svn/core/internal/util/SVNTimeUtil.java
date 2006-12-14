@@ -41,6 +41,12 @@ public class SVNTimeUtil {
     }
 
     public static void formatDate(Date date, StringBuffer buffer) {
+        if (date instanceof SVNDate) {
+            SVNDate extendedDate = (SVNDate) date;
+            buffer.append(extendedDate.format());
+            return;
+        }
+
         synchronized (ISO8601_FORMAT_OUT) {
             ISO8601_FORMAT_OUT.format(date, buffer, new FieldPosition(0));
         }
@@ -56,6 +62,12 @@ public class SVNTimeUtil {
         } else if (!formatZeroDate && date.getTime() == 0) {
             return null;
         }
+        
+        if (date instanceof SVNDate) {
+            SVNDate extendedDate = (SVNDate) date;
+            return extendedDate.format();
+        }
+        
         synchronized (ISO8601_FORMAT_OUT) {
             return ISO8601_FORMAT_OUT.format(date);
         }
@@ -74,12 +86,10 @@ public class SVNTimeUtil {
     }
 
     public static Date parseDateString(String str) throws SVNException {
-        if (str == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_DATE);
-            SVNErrorManager.error(err);
-        }
         try {
             return SVNDate.parseDatestamp(str);
+        } catch (SVNException svne) {
+            throw svne;
         } catch (Throwable th) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_DATE);
             SVNErrorManager.error(err, th);

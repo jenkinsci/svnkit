@@ -121,4 +121,61 @@ public class SVNDate extends Date {
         }
     }
 
+    public int hashCode() {
+        final int PRIME = 31;
+        int result = super.hashCode();
+        result = PRIME * result + myMicroSeconds;
+        return result;
+    }
+
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        } else if (this == obj) {
+            return true;
+        } else if (obj.getClass() == SVNDate.class) {
+            SVNDate date = (SVNDate) obj;
+            return getTime() == date.getTime() && myMicroSeconds == date.myMicroSeconds;
+        } else if (obj.getClass() == Date.class) {
+            Date date = (Date) obj;
+            return getTime() == date.getTime(); 
+        }
+        return false;
+    }
+
+    public boolean before(Date when) {
+        if (when instanceof SVNDate) {
+            SVNDate date = (SVNDate) when;
+            if (getTime() == date.getTime()) {
+                return myMicroSeconds < date.myMicroSeconds;
+            }
+            return getTime() < date.getTime();
+        }
+        return super.before(when);
+    }
+
+    public boolean after(Date when) {
+        if (when instanceof SVNDate) {
+            SVNDate date = (SVNDate) when;
+            if (getTime() == date.getTime()) {
+                return myMicroSeconds > date.myMicroSeconds;
+            }
+            return getTime() > date.getTime();
+        }
+        return super.after(when);
+    }
+
+    public int compareTo(Date anotherDate) {
+        if (anotherDate instanceof SVNDate) {
+            SVNDate date = (SVNDate) anotherDate;
+            long thisTime = getTime();
+            long anotherTime = date.getTime();
+            if (thisTime == anotherTime) {
+                return (myMicroSeconds < date.myMicroSeconds ? -1 : (myMicroSeconds == date.myMicroSeconds ? 0 : 1));
+            }
+            return (thisTime < anotherTime ? -1 : (thisTime == anotherTime ? 0 : 1));
+        }
+        return super.compareTo(anotherDate);
+    }
+    
 }
