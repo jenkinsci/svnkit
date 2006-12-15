@@ -37,7 +37,7 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
  */
 public class FSRepositoryUtil {
     
-    public static void replay(FSFS fsfs, FSRevisionRoot root, String basePath, long lowRevision, boolean sendDeltas, ISVNEditor editor) throws SVNException {
+    public static void replay(FSFS fsfs, FSRoot root, String basePath, long lowRevision, boolean sendDeltas, ISVNEditor editor) throws SVNException {
         Map fsChanges = root.getChangedPaths();
         basePath = basePath.startsWith("/") ? basePath.substring(1) : basePath;
         Collection interestingPaths = new LinkedList();
@@ -58,11 +58,15 @@ public class FSRepositoryUtil {
         }
         
         FSRoot compareRoot = null;
-        if (sendDeltas) {
-            compareRoot = fsfs.createRevisionRoot(root.getRevision() - 1);
+        if (sendDeltas && root instanceof FSRevisionRoot) {
+            FSRevisionRoot revRoot = (FSRevisionRoot) root;
+            compareRoot = fsfs.createRevisionRoot(revRoot.getRevision() - 1);
         }
         
-        editor.targetRevision(root.getRevision());
+        if (root instanceof FSRevisionRoot) {
+            FSRevisionRoot revRoot = (FSRevisionRoot) root;
+            editor.targetRevision(revRoot.getRevision());
+        }
         
         ISVNCommitPathHandler handler = new FSReplayPathHandler(fsfs, root, compareRoot, changedPaths, basePath, lowRevision);
         SVNCommitUtil.driveCommitEditor(handler, interestingPaths, editor, -1);
