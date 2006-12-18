@@ -523,7 +523,7 @@ public class SVNProperties {
                 i = 3;
             }
             String length = new String(buffer, 2, i - 2);
-            return Integer.parseInt(length);
+            return Integer.parseInt(length.trim());
         }
         throw new IOException("invalid properties file format");
     }
