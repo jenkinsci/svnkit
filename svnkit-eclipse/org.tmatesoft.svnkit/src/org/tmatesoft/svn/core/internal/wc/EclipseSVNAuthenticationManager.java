@@ -80,12 +80,13 @@ public class EclipseSVNAuthenticationManager extends DefaultSVNAuthenticationMan
                 if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
                     return new SVNPasswordAuthentication((String) info.get("username"), (String) info.get("password"), authMayBeStored);
                 } else if (ISVNAuthenticationManager.SSH.equals(kind)) {
-                    int port = url.getPort();
+                    int port = url.hasPort() ? url.getPort() : -1;
                     if (port < 0 && info.get("port") != null) {
                         port = Integer.parseInt((String) info.get("port"));
                     }
                     if (port < 0) {
-                        port = 22;
+                        // will give us default port.
+                        port = url.getPort();
                     }
                     if (info.get("key") != null) {
                         File keyPath = new File((String) info.get("key"));
