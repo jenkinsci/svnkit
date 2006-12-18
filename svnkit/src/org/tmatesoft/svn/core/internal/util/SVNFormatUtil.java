@@ -14,7 +14,11 @@ package org.tmatesoft.svn.core.internal.util;
 import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
+import java.util.Locale;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
 
@@ -34,6 +38,33 @@ public class SVNFormatUtil {
     
     static {
         SHORT_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
+        
+        String tzID = System.getProperty("svnkit.keyword.timezone", TimeZone.getDefault().getID());
+        TimeZone tz =  null;
+        if (tzID != null) {
+            tz = TimeZone.getTimeZone(tzID);
+        } 
+        if (tz == null) {
+            tz = TimeZone.getDefault();
+        }
+        String[] localeID = parseLocaleID(System.getProperty("svnkit.keyword.locale"));
+        Locale locale = null;
+        if (localeID != null) {
+            locale = new Locale(localeID[0], localeID[1], localeID[2]);
+        } 
+        if (locale == null) {
+            locale = Locale.getDefault();
+        }
+        setHumanTimeZone(tz, locale);
+    }
+    
+    public static void setHumanTimeZone(TimeZone zone, Locale locale) {
+        zone = zone == null ? TimeZone.getTimeZone("GMT") : zone;
+        locale = locale == null || !isAvailable(locale) ? Locale.getDefault() : locale; 
+        synchronized (SHORT_DATE_FORMAT) {
+            HUMAN_DATE_FORMAT.setTimeZone(zone);
+            HUMAN_DATE_FORMAT.setCalendar(Calendar.getInstance(zone, locale));
+        }
     }
     
     
@@ -111,5 +142,37 @@ public class SVNFormatUtil {
         int hi = (b >> 4) & 0xf;
         String hex = Integer.toHexString(hi) + Integer.toHexString(lo);
         return hex;
+    }
+    
+    private static String[] parseLocaleID(String locale) {
+        if (locale == null) {
+            return null;
+        }
+        List parts = new ArrayList();
+        for(StringTokenizer tokens = new StringTokenizer(locale, "_"); tokens.hasMoreTokens();) {
+            parts.add(tokens.nextToken());
+        }
+        if (parts.isEmpty() || "".equals(((String) parts.get(0)).trim())) {
+            return null;
+        }
+        String[] result = new String[] {"", "", ""};
+        result[0] = (String) parts.get(0);
+        if (parts.size() > 1) {
+            result[1] = (String) parts.get(1);
+            if (parts.size() > 2) {
+                result[2] = (String) parts.get(2);
+            }
+        }
+        return result;
+    }
+    
+    private static boolean isAvailable(Locale l) {
+        Locale[] available = Locale.getAvailableLocales();
+        for (int i = 0; i < available.length; i++) {
+            if (available[i].equals(l)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
