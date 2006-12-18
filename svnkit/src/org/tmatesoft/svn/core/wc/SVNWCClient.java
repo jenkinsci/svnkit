@@ -1193,7 +1193,7 @@ public class SVNWCClient extends SVNBasicClient {
                 if (dir.getThisDirName().equals(childEntry.getName())) {
                     continue;
                 }
-                File childPath = dir.getFile(childEntry.getName());
+                File childPath = new File(path, childEntry.getName());
                 doRevert(childPath, dir, true, useCommitTimes);
             }
         }
