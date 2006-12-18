@@ -495,13 +495,13 @@ public class SVNAdminArea14 extends SVNAdminArea {
                     } 
                     entries.put(entry.getName(), entry);
                 } catch (SVNException svne) {
-                    SVNErrorMessage err = svne.getErrorMessage().wrap("Error at entry {0,number,integer} in entries file for ''{1}'':", new Object[]{new Integer(entryNumber), getRoot()});
+                    SVNErrorMessage err = svne.getErrorMessage().wrap("Error at entry {0} in entries file for ''{1}'':", new Object[]{new Integer(entryNumber), getRoot()});
                     SVNErrorManager.error(err);
                 }
                 ++entryNumber;
             }
         } catch (IOException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot read entries file ''{0}'': {1}", new Object[] {myEntriesFile, e.getLocalizedMessage()});
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot read entries file ''{0}'': {1}", new Object[] {myEntriesFile, e.getMessage()});
             SVNErrorManager.error(err, e);
         } finally {
             SVNFileUtil.closeFile(reader);
