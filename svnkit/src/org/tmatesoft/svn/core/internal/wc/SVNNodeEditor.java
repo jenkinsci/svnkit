@@ -17,7 +17,9 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -171,11 +173,52 @@ public class SVNNodeEditor implements ISVNEditor {
 
     public void traverseTree(boolean includeCopyInfo, ISVNChangeEntryHandler handler) throws SVNException {
         if (myRootNode != null) {
-            traverseChangedTree(myRootNode, "/", includeCopyInfo, handler);
+            traverseChangedTreeImpl(myRootNode, "/", includeCopyInfo, handler);
         }
     }
     
-    private void traverseChangedTree(Node node, String path, boolean includeCopyInfo, ISVNChangeEntryHandler handler) throws SVNException {
+    public void traverseChangedDirs(ISVNDirEntryHandler handler) throws SVNException {
+        if (myRootNode != null) {
+            traverseChangedDirsImpl(myRootNode, "/", handler);
+        }
+    }
+
+    private void traverseChangedDirsImpl(Node node, String path, ISVNDirEntryHandler handler) throws SVNException {
+        if (myCancelHandler != null) {
+            myCancelHandler.checkCancelled();
+        }
+        
+        if (node == null || node.myKind != SVNNodeKind.DIR) {
+            return;
+        }
+
+        boolean proceed = node.myHasPropModifications;
+        if (!proceed && node.myChildren != null) {
+            for (Iterator children = node.myChildren.iterator(); children.hasNext() && !proceed;) {
+                Node child = (Node) children.next();
+                if (child.myKind == SVNNodeKind.FILE || child.myHasTextModifications || child.myAction == SVNChangeEntry.TYPE_ADDED || child.myAction == SVNChangeEntry.TYPE_DELETED) {
+                    proceed = true;
+                }
+            }
+        }
+        
+        if (proceed && handler != null) {
+            SVNDirEntry entry = new SVNDirEntry(null, node.myName, SVNNodeKind.DIR, -1, false, -1, null, null);
+            handler.handleDirEntry(entry);
+        }
+        
+        if (node.myChildren == null || node.myChildren.size() == 0) {
+            return;
+        }
+        
+        for (Iterator children = node.myChildren.iterator(); children.hasNext();) {
+            Node childNode = (Node) children.next();
+            String fullPath = SVNPathUtil.concatToAbs(path, childNode.myName);
+            traverseChangedDirsImpl(childNode, fullPath, handler);
+        }
+    }
+    
+    private void traverseChangedTreeImpl(Node node, String path, boolean includeCopyInfo, ISVNChangeEntryHandler handler) throws SVNException {
         if (myCancelHandler != null) {
             myCancelHandler.checkCancelled();
         }
@@ -208,7 +251,7 @@ public class SVNNodeEditor implements ISVNEditor {
         for (Iterator children = node.myChildren.iterator(); children.hasNext();) {
             Node childNode = (Node) children.next();
             String fullPath = SVNPathUtil.concatToAbs(path, childNode.myName);
-            traverseChangedTree(childNode, fullPath, includeCopyInfo, handler);
+            traverseChangedTreeImpl(childNode, fullPath, includeCopyInfo, handler);
         }
     }
     

@@ -18,6 +18,7 @@ import java.io.OutputStream;
 import java.util.Date;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -27,7 +28,9 @@ import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
+import org.tmatesoft.svn.core.internal.io.fs.FSNodeHistory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryUtil;
+import org.tmatesoft.svn.core.internal.io.fs.FSRevisionNode;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
@@ -166,7 +169,8 @@ public class SVNLookClient extends SVNBasicClient {
         long revNum = SVNAdminHelper.getRevisionNumber(revision, fsfs.getYoungestRevision(), fsfs);
         FSRoot root = fsfs.createRevisionRoot(revNum);
         long baseRevision = revNum - 1;
-        generateDeltaTree(fsfs, root, baseRevision, includeCopyInfo, handler);
+        SVNNodeEditor editor = generateDeltaTree(fsfs, root, baseRevision);
+        editor.traverseTree(includeCopyInfo, handler);
     }
 
     public void doGetChanged(File repositoryRoot, String transactionName, ISVNChangeEntryHandler handler, boolean includeCopyInfo) throws SVNException {
@@ -179,14 +183,89 @@ public class SVNLookClient extends SVNBasicClient {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Transaction ''{0}'' is not based on a revision; how odd", transactionName);
             SVNErrorManager.error(err);
         }
-        generateDeltaTree(fsfs, root, baseRevision, includeCopyInfo, handler);
+        SVNNodeEditor editor = generateDeltaTree(fsfs, root, baseRevision);
+        editor.traverseTree(includeCopyInfo, handler);
     }
     
-    private void generateDeltaTree(FSFS fsfs, FSRoot root, long baseRevision, boolean includeCopyInfo, ISVNChangeEntryHandler handler) throws SVNException {
+    public void doGetChangedDirectories(File repositoryRoot, SVNRevision revision, ISVNDirEntryHandler handler) throws SVNException {
+        FSFS fsfs = open(repositoryRoot, revision);
+        long revNum = SVNAdminHelper.getRevisionNumber(revision, fsfs.getYoungestRevision(), fsfs);
+        FSRoot root = fsfs.createRevisionRoot(revNum);
+        long baseRevision = revNum - 1;
+        SVNNodeEditor editor = generateDeltaTree(fsfs, root, baseRevision);
+        editor.traverseChangedDirs(handler);
+    }
+
+    public void doGetChangedDirectories(File repositoryRoot, String transactionName, ISVNDirEntryHandler handler) throws SVNException {
+        FSFS fsfs = open(repositoryRoot, transactionName);
+        FSTransactionInfo txn = fsfs.openTxn(transactionName);
+        FSRoot root = fsfs.createTransactionRoot(txn.getTxnId());
+        long baseRevision = txn.getBaseRevision(); 
+
+        if (!SVNRevision.isValidRevisionNumber(baseRevision)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Transaction ''{0}'' is not based on a revision; how odd", transactionName);
+            SVNErrorManager.error(err);
+        }
+        SVNNodeEditor editor = generateDeltaTree(fsfs, root, baseRevision);
+        editor.traverseChangedDirs(handler);
+    }
+    
+    public void doGetHistory(File repositoryRoot, String path, SVNRevision revision, boolean includeIDs, ISVNHistoryHandler handler) throws SVNException {
+        FSFS fsfs = open(repositoryRoot, revision);
+        long revNum = SVNAdminHelper.getRevisionNumber(revision, fsfs.getYoungestRevision(), fsfs);
+        path = path == null ? "/" : path;
+        getHistory(fsfs, path, 0, revNum, true, includeIDs, handler);
+    }
+    
+    private void getHistory(FSFS fsfs, String path, long start, long end, boolean crossCopies, boolean includeIDs, ISVNHistoryHandler handler) throws SVNException {
+        if (!SVNRevision.isValidRevisionNumber(start)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Invalid start revision {0,number,integer}", new Long(start));
+            SVNErrorManager.error(err);
+        }
+        if (!SVNRevision.isValidRevisionNumber(end)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Invalid end revision {0,number,integer}", new Long(end));
+            SVNErrorManager.error(err);
+        }
+        
+        if (start > end) {
+            long tmpRev = start;
+            start = end;
+            end = tmpRev;
+        }
+        
+        FSRevisionRoot root = fsfs.createRevisionRoot(end);
+        FSNodeHistory history = FSNodeHistory.getNodeHistory(root, path);
+        
+        do {
+            history = history.fsHistoryPrev(crossCopies, fsfs);
+            if (history == null) {
+                break;
+            }
+            
+            long revision = history.getHistoryEntry().getRevision();
+            if (revision < start) {
+                break;
+            }
+            
+            String id = null;
+            if (includeIDs) {
+                FSRevisionRoot revRoot = fsfs.createRevisionRoot(revision);
+                FSRevisionNode node = revRoot.getRevisionNode(history.getHistoryEntry().getPath());
+                id = node.getId().toString();
+            }
+
+            if (handler != null) {
+                handler.handleRevision(revision, history.getHistoryEntry().getPath(), id);
+            }
+        } while (history != null);
+
+    }
+    
+    private SVNNodeEditor generateDeltaTree(FSFS fsfs, FSRoot root, long baseRevision) throws SVNException {
         FSRevisionRoot baseRoot = fsfs.createRevisionRoot(baseRevision);
         SVNNodeEditor editor = new SVNNodeEditor(fsfs, baseRoot, this);
         FSRepositoryUtil.replay(fsfs, root, "", -1, false, editor);
-        editor.traverseTree(includeCopyInfo, handler);
+        return editor;
     }
     
     private void catFile(FSRoot root, String path, OutputStream out) throws SVNException {
