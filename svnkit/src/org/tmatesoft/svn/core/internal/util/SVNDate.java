@@ -38,39 +38,25 @@ public class SVNDate extends Date {
 
     private int myMicroSeconds;
     
-    public SVNDate(long time) {
-        super((time/1000)*1000);
-        myMicroSeconds = (int)((time%1000) * 1000);
-        if (myMicroSeconds < 0) {
-            myMicroSeconds = 1000000 + myMicroSeconds;     
-            super.setTime(((time/1000) - 1) * 1000);
-        }
-    }
-
-    public long getTime() {
-        long time = super.getTime();
-        return (time + (myMicroSeconds/1000));
-    }
-
-    public void setMicroseconds(int micros) {
-        myMicroSeconds += micros;
+    private SVNDate(long time, int micro) {
+        super(time + micro / 1000);
+        myMicroSeconds = micro > 0 ? Math.abs(micro) % 1000 : 1000 - (Math.abs(micro) % 1000);
     }
     
     public String format() {
         String formatted = null;
         synchronized (FORMAT) {
              formatted = FORMAT.format(this);
-             int micros = myMicroSeconds%1000;
-             int m1 = micros%10;
-             int m2 = (micros/10)%10;
-             int m3 = (micros)/100;
-             formatted += m3;
-             formatted += m2;
-             formatted += m1;
-             formatted += 'Z';
-             return formatted;
         }
-        
+        int micros = myMicroSeconds%1000;
+        int m1 = micros%10;
+        int m2 = (micros/10)%10;
+        int m3 = (micros)/100;
+        formatted += m3;
+        formatted += m2;
+        formatted += m1;
+        formatted += 'Z';
+        return formatted;
     }
     
     public static SVNDate parseDatestamp(String str) throws SVNException {
@@ -115,67 +101,45 @@ public class SVNDate extends Date {
             CALENDAR.clear();
             CALENDAR.set(year, month - 1, date, hour, min, sec);
             CALENDAR.set(Calendar.MILLISECOND, ms);
-            SVNDate extendedDate = new SVNDate(CALENDAR.getTimeInMillis());
-            extendedDate.setMicroseconds(microseconds);
-            return extendedDate;
+            return new SVNDate(CALENDAR.getTimeInMillis(), microseconds);
         }
     }
 
     public int hashCode() {
-        final int PRIME = 31;
-        int result = super.hashCode();
-        result = PRIME * result + myMicroSeconds;
-        return result;
+        return 31 * super.hashCode() + myMicroSeconds;
     }
 
     public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        } else if (this == obj) {
+        if (this == obj) {
             return true;
-        } else if (obj.getClass() == SVNDate.class) {
+        } else if (obj instanceof SVNDate) {
             SVNDate date = (SVNDate) obj;
             return getTime() == date.getTime() && myMicroSeconds == date.myMicroSeconds;
-        } else if (obj.getClass() == Date.class) {
-            Date date = (Date) obj;
-            return getTime() == date.getTime(); 
-        }
-        return false;
+        } 
+        return super.equals(obj);
     }
 
     public boolean before(Date when) {
-        if (when instanceof SVNDate) {
-            SVNDate date = (SVNDate) when;
-            if (getTime() == date.getTime()) {
-                return myMicroSeconds < date.myMicroSeconds;
-            }
-            return getTime() < date.getTime();
+        if (super.equals(when) && when instanceof SVNDate) {
+            return myMicroSeconds < ((SVNDate) when).myMicroSeconds;
         }
         return super.before(when);
     }
 
     public boolean after(Date when) {
-        if (when instanceof SVNDate) {
-            SVNDate date = (SVNDate) when;
-            if (getTime() == date.getTime()) {
-                return myMicroSeconds > date.myMicroSeconds;
-            }
-            return getTime() > date.getTime();
+        if (super.equals(when) && when instanceof SVNDate) {
+            return myMicroSeconds > ((SVNDate) when).myMicroSeconds;
         }
         return super.after(when);
     }
 
     public int compareTo(Date anotherDate) {
-        if (anotherDate instanceof SVNDate) {
+        int result = super.compareTo(anotherDate);
+        if (result == 0 && anotherDate instanceof SVNDate) {
             SVNDate date = (SVNDate) anotherDate;
-            long thisTime = getTime();
-            long anotherTime = date.getTime();
-            if (thisTime == anotherTime) {
-                return (myMicroSeconds < date.myMicroSeconds ? -1 : (myMicroSeconds == date.myMicroSeconds ? 0 : 1));
-            }
-            return (thisTime < anotherTime ? -1 : (thisTime == anotherTime ? 0 : 1));
+            return (myMicroSeconds < date.myMicroSeconds ? -1 : (myMicroSeconds == date.myMicroSeconds ? 0 : 1));
         }
-        return super.compareTo(anotherDate);
+        return result;
     }
     
 }
