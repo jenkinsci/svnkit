@@ -48,7 +48,7 @@ public class SVNDate extends Date {
         synchronized (FORMAT) {
              formatted = FORMAT.format(this);
         }
-        int micros = myMicroSeconds%1000;
+        int micros = myMicroSeconds;
         int m1 = micros%10;
         int m2 = (micros/10)%10;
         int m3 = (micros)/100;
