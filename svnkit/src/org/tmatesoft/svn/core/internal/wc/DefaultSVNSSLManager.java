@@ -42,6 +42,7 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.auth.ISVNSSLManager;
 import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 
 /**
@@ -280,7 +281,7 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
                 keyStore.load(is, passphrase);                    
             }
         } catch (Throwable th) {
-            // 
+            SVNDebugLog.getDefaultLog().info(th);
         } finally {
             SVNFileUtil.closeFile(is);
         }
@@ -293,7 +294,7 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
                     myKeyManagers = kmf.getKeyManagers();
                 }
             } catch (Throwable e) {
-                //
+                SVNDebugLog.getDefaultLog().info(e);
             } 
         }
         return myKeyManagers;

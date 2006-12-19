@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.1.0
@@ -80,7 +81,7 @@ public class SVNTimeUtil {
         try {
             return SVNDate.parseDatestamp(str);
         } catch (Throwable th) {
-            //
+            SVNDebugLog.getDefaultLog().info(th);
         }
         return NULL;        
     }

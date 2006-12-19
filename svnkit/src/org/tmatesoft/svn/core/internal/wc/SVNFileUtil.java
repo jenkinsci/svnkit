@@ -528,7 +528,7 @@ public class SVNFileUtil {
                     "attrib " + (hidden ? "+" : "-") + "H \""
                             + file.getAbsolutePath() + "\"");
         } catch (Throwable th) {
-            //
+            SVNDebugLog.getDefaultLog().info(th);
         }
     }
 
@@ -1123,6 +1123,8 @@ public class SVNFileUtil {
                 // a Properties object and get the variable from that
                 return getEnvironment().getProperty(name);
             } catch (Throwable e1) {
+                SVNDebugLog.getDefaultLog().info(e);
+                SVNDebugLog.getDefaultLog().info(e1);
                 return null;
             }
         }

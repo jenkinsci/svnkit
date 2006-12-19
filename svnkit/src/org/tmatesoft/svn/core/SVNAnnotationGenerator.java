@@ -264,7 +264,8 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
                 result.close();
             }
         } catch (Throwable e) {
-            throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE, e);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Exception while generating annotation: {0}", e.getMessage());
+            SVNErrorManager.error(err, e);
         } finally {
             if (left != null) {
                 try {

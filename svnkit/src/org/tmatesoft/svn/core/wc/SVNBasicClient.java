@@ -253,7 +253,14 @@ public class SVNBasicClient implements ISVNEventHandler {
                 path = SVNPathUtil.append(path, event.getPath());
                 event.setPath(path);
             }
-            myEventDispatcher.handleEvent(event, progress);
+            try {
+                myEventDispatcher.handleEvent(event, progress);
+            } catch (SVNException e) {
+                throw e;
+            } catch (Throwable th) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Error while dispatching event: {0}", th.getMessage());
+                SVNErrorManager.error(err, th);
+            }
         }
     }
     

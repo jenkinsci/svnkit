@@ -74,15 +74,19 @@ public class SVNWCAccess implements ISVNEventHandler {
         }
     }
 
-    public void handleEvent(SVNEvent event) {
+    public void handleEvent(SVNEvent event) throws SVNException {
         handleEvent(event, ISVNEventHandler.UNKNOWN);
     }
 
-    public void handleEvent(SVNEvent event, double progress) {
+    public void handleEvent(SVNEvent event, double progress) throws SVNException {
         if (myEventHandler != null) {
             try {
                 myEventHandler.handleEvent(event, progress);
+            } catch (SVNException e) {
+                throw e;
             } catch (Throwable th) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Error while dispatching event: {0}", th.getMessage());
+                SVNErrorManager.error(err, th);
             }
         }
     }
