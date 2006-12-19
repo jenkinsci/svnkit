@@ -522,7 +522,7 @@ public class SVNDiffEditor implements ISVNEditor {
         }
         byte[] eol = SVNTranslator.getEOL(eolStyle);
         File tmpFile = createTempFile();
-        Map keywordsMap = SVNTranslator.computeKeywords(keywords, null, null, null, null);
+        Map keywordsMap = SVNTranslator.computeKeywords(keywords, null, null, null, null, null);
         SVNTranslator.translate(dir.getFile(name), tmpFile, eol, keywordsMap, special, false);
         return tmpFile;
     }

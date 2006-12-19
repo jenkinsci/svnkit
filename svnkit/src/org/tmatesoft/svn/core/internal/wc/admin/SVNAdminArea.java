@@ -191,7 +191,7 @@ public abstract class SVNAdminArea {
                 }
                 if (compareTextBase && needsTranslation) {
                     if (!special) {
-                        Map keywordsMap = SVNTranslator.computeKeywords(keywords, null, entry.getAuthor(), entry.getCommittedDate(), entry.getRevision() + "");
+                        Map keywordsMap = SVNTranslator.computeKeywords(keywords, null, entry.getAuthor(), entry.getCommittedDate(), entry.getRevision() + "", getWCAccess().getOptions());
                         byte[] eols = SVNTranslator.getBaseEOL(eolStyle);
                         textStream = new SVNTranslatorInputStream(textStream, eols, false, keywordsMap, false);
                     } else {
@@ -201,7 +201,7 @@ public abstract class SVNAdminArea {
                         textStream = SVNFileUtil.openFileForReading(getFile(tmpPath));
                     }
                 } else if (needsTranslation) {
-                    Map keywordsMap = SVNTranslator.computeKeywords(keywords, entry.getURL(), entry.getAuthor(), entry.getCommittedDate(), entry.getRevision() + "");
+                    Map keywordsMap = SVNTranslator.computeKeywords(keywords, entry.getURL(), entry.getAuthor(), entry.getCommittedDate(), entry.getRevision() + "", getWCAccess().getOptions());
                     byte[] eols = SVNTranslator.getWorkingEOL(eolStyle);
                     baseStream = new SVNTranslatorInputStream(baseStream, eols, false, keywordsMap, true);                    
                 }

@@ -145,7 +145,7 @@ public class AnnotateCommand extends SVNCommand implements ISVNAnnotateHandler {
             result.append(author != null ? SVNFormatUtil.formatString(author, 10, false) : "         -");
             result.append(' ');
             if (date != null) {
-                result.append(SVNFormatUtil.formatDate(date, true));
+                result.append(SVNFormatUtil.formatHumanDate(date, getClientManager().getOptions()));
             } else {
                 result.append("                                           -");
             }

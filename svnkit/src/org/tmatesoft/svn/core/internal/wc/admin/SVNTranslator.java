@@ -33,6 +33,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
 
 
 /**
@@ -64,16 +65,17 @@ public class SVNTranslator {
         boolean special = props.getPropertyValue(SVNProperty.SPECIAL) != null;
         Map keywordsMap = null;
         byte[] eols;
-        if (keywords != null) {
+        if (keywords != null) {            
             if (expand) {
                 SVNEntry entry = adminArea.getEntry(name, true);
+                ISVNOptions options = adminArea.getWCAccess().getOptions();
                 String url = entry.getURL();
                 String author = entry.getAuthor();
                 String date = entry.getCommittedDate();
                 String rev = Long.toString(entry.getCommittedRevision());
-                keywordsMap = computeKeywords(keywords, url, author, date, rev);
+                keywordsMap = computeKeywords(keywords, url, author, date, rev, options);
             } else {
-                keywordsMap = computeKeywords(keywords, null, null, null, null);
+                keywordsMap = computeKeywords(keywords, null, null, null, null, null);
             }
         }
         if (!expand) {
@@ -307,7 +309,7 @@ public class SVNTranslator {
 
     }
 
-    public static Map computeKeywords(String keywords, String u, String a, String d, String r) {
+    public static Map computeKeywords(String keywords, String u, String a, String d, String r, ISVNOptions options) {
         if (keywords == null) {
             return Collections.EMPTY_MAP;
         }
@@ -327,7 +329,7 @@ public class SVNTranslator {
             for (StringTokenizer tokens = new StringTokenizer(keywords," \t\n\b\r\f"); tokens.hasMoreTokens();) {
                 String token = tokens.nextToken();
                 if ("LastChangedDate".equalsIgnoreCase(token) || "Date".equalsIgnoreCase(token)) {
-                    date = expand && date == null ? SVNFormatUtil.formatDate(jDate, true).getBytes("UTF-8") : date;
+                    date = expand && date == null ? SVNFormatUtil.formatHumanDate(jDate, options).getBytes("UTF-8") : date;
                     map.put("LastChangedDate", date);
                     map.put("Date", date);
                 } else if ("LastChangedRevision".equalsIgnoreCase(token) || "Revision".equalsIgnoreCase(token) || "Rev".equalsIgnoreCase(token)) {
@@ -346,7 +348,7 @@ public class SVNTranslator {
                 } else if ("Id".equalsIgnoreCase(token)) {
                     if (expand && id == null) {
                         rev = rev == null ? r.getBytes("UTF-8") : rev;
-                        idDate = idDate == null ? SVNFormatUtil.formatDate(jDate, false).getBytes("UTF-8") : idDate;
+                        idDate = idDate == null ? SVNFormatUtil.formatDate(jDate).getBytes("UTF-8") : idDate;
                         name = name == null ? SVNEncodingUtil.uriDecode(SVNPathUtil.tail(u)).getBytes("UTF-8") : name;
                         author = author == null ? (a == null ? new byte[0] : a.getBytes("UTF-8")) : author;
                         ByteArrayOutputStream bos = new ByteArrayOutputStream();

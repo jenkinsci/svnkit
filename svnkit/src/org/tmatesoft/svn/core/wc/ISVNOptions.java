@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
+import java.text.DateFormat;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.io.ISVNTunnelProvider;
@@ -374,4 +375,6 @@ public interface ISVNOptions extends ISVNTunnelProvider {
      *                         property is removed
      */
     public void setPropertyValue(String propertyName, String propertyValue);
+
+    public DateFormat getKeywordDateFormat();
 }

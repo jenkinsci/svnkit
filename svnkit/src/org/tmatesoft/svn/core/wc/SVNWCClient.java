@@ -239,7 +239,7 @@ public class SVNWCClient extends SVNBasicClient {
                     String cmtRev = (String) properties.get(SVNProperty.COMMITTED_REVISION);
                     String cmtDate = (String) properties.get(SVNProperty.COMMITTED_DATE);
                     String author = (String) properties.get(SVNProperty.LAST_AUTHOR);
-                    Map keywordsMap = SVNTranslator.computeKeywords(keywords, expandKeywords ? repos.getLocation().toString() : null, author, cmtDate, cmtRev);
+                    Map keywordsMap = SVNTranslator.computeKeywords(keywords, expandKeywords ? repos.getLocation().toString() : null, author, cmtDate, cmtRev, getOptions());
                     OutputStream translatingStream = new SVNTranslatorOutputStream(dst, SVNTranslator.getEOL(eol), false, keywordsMap, expandKeywords); 
                     repos.getFile("", revNumber, null, new SVNCancellableOutputStream(translatingStream, getEventDispatcher()));
                     try {
@@ -306,7 +306,7 @@ public class SVNWCClient extends SVNBasicClient {
                 String cmtRev = (String) properties.get(SVNProperty.COMMITTED_REVISION);
                 String cmtDate = (String) properties.get(SVNProperty.COMMITTED_DATE);
                 String author = (String) properties.get(SVNProperty.LAST_AUTHOR);
-                Map keywordsMap = SVNTranslator.computeKeywords(keywords, expandKeywords ? repos.getLocation().toString() : null, author, cmtDate, cmtRev);
+                Map keywordsMap = SVNTranslator.computeKeywords(keywords, expandKeywords ? repos.getLocation().toString() : null, author, cmtDate, cmtRev, getOptions());
                 OutputStream translatingStream = new SVNTranslatorOutputStream(dst, SVNTranslator.getEOL(eol), false, keywordsMap, expandKeywords); 
                 repos.getFile("", revNumber, null, new SVNCancellableOutputStream(translatingStream, getEventDispatcher()));
                 try {
@@ -2424,7 +2424,7 @@ public class SVNWCClient extends SVNBasicClient {
                 String url = entry.getURL();
                 String author = hasMods ? "(local)" : entry.getAuthor();
                 String rev = hasMods ? entry.getCommittedRevision() + "M" : entry.getCommittedRevision() + ""; 
-                keywordsMap = SVNTranslator.computeKeywords(keywords, expandKeywords ? url : null, author, time, rev);
+                keywordsMap = SVNTranslator.computeKeywords(keywords, expandKeywords ? url : null, author, time, rev, getOptions());
             }
             OutputStream translatingStream = eols != null || keywordsMap != null ? new SVNTranslatorOutputStream(dst, eols, false, keywordsMap, expandKeywords) : dst;
             try {
