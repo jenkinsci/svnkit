@@ -1001,7 +1001,6 @@ public class SVNWCClient extends SVNBasicClient {
             if (fileType == SVNFileType.DIRECTORY && recursive) {
                 addDirectory(path, dir, force, includeIgnored);
             } else if (fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) {
-                dir.getWCAccess().setEventHandler(null);
                 addFile(path, fileType, dir);
             } else {
                 SVNWCManager.add(path, dir, null, SVNRevision.UNDEFINED);
@@ -1057,7 +1056,11 @@ public class SVNWCClient extends SVNBasicClient {
     }
     
     private void addFile(File path, SVNFileType type, SVNAdminArea dir) throws SVNException {
+        ISVNEventHandler handler = dir.getWCAccess().getEventHandler(); 
+        dir.getWCAccess().setEventHandler(null);
         SVNWCManager.add(path, dir, null, SVNRevision.UNDEFINED);
+        dir.getWCAccess().setEventHandler(handler);
+
         String mimeType = null;
         if (type == SVNFileType.SYMLINK) {
             SVNPropertiesManager.setProperty(dir.getWCAccess(), path, SVNProperty.SPECIAL, 
@@ -1074,7 +1077,6 @@ public class SVNWCClient extends SVNBasicClient {
         SVNEvent event = SVNEventFactory.createAddedEvent(dir, path.getName(), SVNNodeKind.FILE, mimeType);
         dispatchEvent(event);
     }
-    
     
     /**
      * Reverts all local changes made to a Working Copy item(s) thus
