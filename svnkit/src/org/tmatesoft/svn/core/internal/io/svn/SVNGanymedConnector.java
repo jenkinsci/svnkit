@@ -119,7 +119,6 @@ public class SVNGanymedConnector implements ISVNConnector {
                     connection = null;
                     continue;
                 }
-                e.printStackTrace();
                 repository.getDebugLog().info(e);
                 close(repository);
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Cannot connect to ''{0}'': {1}", new Object[] {repository.getLocation().setPath("", false), e.getMessage()});

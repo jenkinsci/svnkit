@@ -815,7 +815,6 @@ public class SVNCommitClient extends SVNBasicClient {
             }
             return new SVNCommitPacket(wcAccess, commitItems, lockTokens);
         } catch (SVNException e) {
-            e.printStackTrace();
             wcAccess.close();
             if (e instanceof SVNCancelException) {
                 throw e;

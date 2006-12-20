@@ -13,10 +13,13 @@ package org.tmatesoft.svn.core.wc.xml;
 
 import java.io.File;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.util.ISVNDebugLog;
@@ -101,7 +104,9 @@ public class SVNXMLInfoHandler extends AbstractXMLHandler implements ISVNInfoHan
         try {
             sendToHandler(info);
         } catch (SAXException e) {
-            e.printStackTrace();
+            getDebugLog().error(e);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.XML_MALFORMED, e.getMessage());
+            SVNErrorManager.error(err, e);
         }
     }
 
