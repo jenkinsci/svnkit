@@ -214,7 +214,7 @@ public class SVNFileUtil {
                 copyFile(file, tmp, false);
                 copyFile(tmp, file, false);
                 deleteFile(tmp);
-            } else if (file.canWrite()) {
+            } else {
                 if (isWindows) {
                     Process p = Runtime.getRuntime().exec(ATTRIB_COMMAND + " -R \"" + file.getAbsolutePath() + "\"");
                     p.waitFor();
