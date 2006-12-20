@@ -159,7 +159,7 @@ public abstract class FSRoot {
         myRevNodesCache.delete(path);
     }
 
-    public FSRevisionNode fetchRevNodeFromCache(String path) throws SVNException {
+    protected FSRevisionNode fetchRevNodeFromCache(String path) throws SVNException {
         if (myRevNodesCache == null) {
             return null;
         }

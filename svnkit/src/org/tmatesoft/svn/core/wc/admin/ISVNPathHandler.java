@@ -18,7 +18,10 @@ import org.tmatesoft.svn.core.SVNException;
  * @version 1.1
  * @author  TMate Software Ltd.
  */
-public interface ISVNHistoryHandler {
+public interface ISVNPathHandler {
 
-    public void handleRevision(long revision, String path, String nodeID) throws SVNException;
+    public void handlePath(long revision, String path, String nodeID) throws SVNException;
+
+    public void handlePath(String path, String nodeID) throws SVNException;
+
 }
