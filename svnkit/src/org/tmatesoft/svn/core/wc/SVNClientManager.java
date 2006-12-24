@@ -17,6 +17,7 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminClient;
+import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
@@ -121,6 +122,7 @@ public class SVNClientManager implements ISVNRepositoryPool {
     private SVNUpdateClient myUpdateClient;
     private SVNWCClient myWCClient;
     private SVNAdminClient myAdminClient;
+    private SVNLookClient myLookClient;
     
     private ISVNEventHandler myEventHandler;
     private ISVNRepositoryPool myRepositoryPool;
@@ -305,6 +307,9 @@ public class SVNClientManager implements ISVNRepositoryPool {
         if (myAdminClient != null) {
             myAdminClient.setEventHandler(handler);
         }
+        if (myLookClient != null) {
+            myLookClient.setEventHandler(handler);
+        }
     }
     
     /**
@@ -347,6 +352,15 @@ public class SVNClientManager implements ISVNRepositoryPool {
             myAdminClient.setDebugLog(getDebugLog());
         }
         return myAdminClient;
+    }
+
+    public SVNLookClient getLookClient() {
+        if (myLookClient == null) {
+            myLookClient = new SVNLookClient(this, myOptions);
+            myLookClient.setEventHandler(myEventHandler);
+            myLookClient.setDebugLog(getDebugLog());
+        }
+        return myLookClient;
     }
     
     /**
@@ -548,6 +562,9 @@ public class SVNClientManager implements ISVNRepositoryPool {
         }
         if (myAdminClient != null) {
             myAdminClient.setDebugLog(log);
+        }
+        if (myLookClient != null) {
+            myLookClient.setDebugLog(log);
         }
     }
 }

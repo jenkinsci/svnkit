@@ -80,7 +80,7 @@ public class SVN {
 
     public static void main(String[] args) {
         if (args == null || args.length < 1) {
-            System.err.println("usage: svn commandName commandArguments");
+            System.err.println("usage: jsvn commandName commandArguments");
             System.exit(0);
         }
 

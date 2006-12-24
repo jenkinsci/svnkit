@@ -36,6 +36,8 @@ public abstract class SVNArgument {
     public static final SVNArgument RECURSIVE = createUnaryArgument(new String[] { "--recursive", "-R" });
     public static final SVNArgument VERBOSE = createUnaryArgument(new String[] { "--verbose", "-v" });
     public static final SVNArgument NO_DIFF_DELETED = createUnaryArgument(new String[] {"--no-diff-deleted"});
+    public static final SVNArgument NO_DIFF_ADDED = createUnaryArgument(new String[] {"--no-diff-added"});
+    public static final SVNArgument DIFF_COPY_FROM = createUnaryArgument(new String[] {"--diff-copy-from"});
     public static final SVNArgument USE_ANCESTRY = createUnaryArgument(new String[] {"--notice-ancestry"});
     public static final SVNArgument QUIET = createUnaryArgument(new String[] { "--quiet", "-q" });
     public static final SVNArgument SHOW_UPDATES = createUnaryArgument(new String[] { "--show-updates", "-u" });
@@ -77,6 +79,12 @@ public abstract class SVNArgument {
     public static final SVNArgument USE_PRECOMMIT_HOOK = createUnaryArgument(new String[] { "--use-pre-commit-hook" });
     public static final SVNArgument USE_POSTCOMMIT_HOOK = createUnaryArgument(new String[] { "--use-post-commit-hook" });
     public static final SVNArgument PARENT_DIR = createStringArgument(new String[] { "--parent-dir" });
+
+    public static final SVNArgument TRANSACTION = createStringArgument(new String[] { "--transaction", "-t" });
+    public static final SVNArgument COPY_INFO = createUnaryArgument(new String[] { "--copy-info" });
+    public static final SVNArgument SHOW_IDS = createUnaryArgument(new String[] { "--show-ids" });
+    public static final SVNArgument FULL_PATHS = createUnaryArgument(new String[] { "--full-paths" });
+    
     
     public static SVNArgument findArgument(String name, Set validArguments) {
         for (Iterator arguments = validArguments.iterator(); arguments.hasNext();) {

@@ -40,7 +40,7 @@ public abstract class FSRoot {
         myFSFS = owner;
     }
 
-    protected FSFS getOwner() {
+    public FSFS getOwner() {
         return myFSFS;
     }
 

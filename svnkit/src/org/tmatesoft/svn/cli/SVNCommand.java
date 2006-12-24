@@ -248,7 +248,7 @@ public abstract class SVNCommand {
     }
 
     static {
-        Locale.setDefault(Locale.ENGLISH);
+//        Locale.setDefault(Locale.ENGLISH);
 
         ourCommands = new HashMap();
         ourCommands.put(new String[] { "status", "st", "stat" }, "org.tmatesoft.svn.cli.command.StatusCommand");
@@ -292,7 +292,7 @@ public abstract class SVNCommand {
             return 1;
         }
         int count = 0;
-        for(StringTokenizer lines = new StringTokenizer(str, "\n"); lines.hasMoreTokens();) {
+        for(StringTokenizer lines = new StringTokenizer(str, "\r\n"); lines.hasMoreTokens();) {
             lines.nextToken();
             count++;
         }

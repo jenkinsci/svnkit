@@ -11,28 +11,38 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 
-import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.SVNCommitInfo;
-import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
+import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryUtil;
+import org.tmatesoft.svn.core.internal.io.fs.FSRevisionNode;
+import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
+import org.tmatesoft.svn.core.internal.io.fs.FSTransactionRoot;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.ISVNChangeEntryHandler;
+import org.tmatesoft.svn.core.wc.admin.ISVNGNUDiffGenerator;
+import org.tmatesoft.svn.core.wc.admin.ISVNPathHandler;
 import org.tmatesoft.svn.core.wc.admin.SVNChangeEntry;
 
 /**
@@ -48,6 +58,7 @@ public class SVNNodeEditor implements ISVNEditor {
     private FSFS myFSFS;
     private Map myFiles;
     private ISVNEventHandler myCancelHandler;
+    private File myTempDirectory;
     
     public SVNNodeEditor(FSFS fsfs, FSRoot baseRoot, ISVNEventHandler handler) {
         myBaseRoot = baseRoot;
@@ -171,19 +182,184 @@ public class SVNNodeEditor implements ISVNEditor {
     public void textDeltaEnd(String path) throws SVNException {
     }
 
+    public void diff(FSRoot root, long baseRevision, ISVNGNUDiffGenerator generator, OutputStream os) throws SVNException {
+        if (myRootNode != null) {
+            FSRevisionRoot baseRoot = root.getOwner().createRevisionRoot(baseRevision);
+            try {
+                diffImpl(root, baseRoot, "/", "/", myRootNode, generator, os);
+            } finally {
+                cleanup();
+            }
+        }
+    }
+    
     public void traverseTree(boolean includeCopyInfo, ISVNChangeEntryHandler handler) throws SVNException {
         if (myRootNode != null) {
             traverseChangedTreeImpl(myRootNode, "/", includeCopyInfo, handler);
         }
     }
     
-    public void traverseChangedDirs(ISVNDirEntryHandler handler) throws SVNException {
+    public void traverseChangedDirs(ISVNPathHandler handler) throws SVNException {
         if (myRootNode != null) {
             traverseChangedDirsImpl(myRootNode, "/", handler);
         }
     }
 
-    private void traverseChangedDirsImpl(Node node, String path, ISVNDirEntryHandler handler) throws SVNException {
+    private void diffImpl(FSRoot root, FSRevisionRoot baseRoot, String path, String basePath, Node node, ISVNGNUDiffGenerator generator, OutputStream os) throws SVNException {
+        if (myCancelHandler != null) {
+            myCancelHandler.checkCancelled();
+        }
+        
+        boolean isCopy = false;
+        boolean printedHeader = false;
+        if (SVNRevision.isValidRevisionNumber(node.myCopyFromRevision) && node.myCopyFromPath != null) {
+            basePath = node.myCopyFromPath;
+            generator.setFileCopied(path, basePath, node.myCopyFromRevision, os);
+            baseRoot = myFSFS.createRevisionRoot(node.myCopyFromRevision);
+            isCopy = true;
+            printedHeader = true;
+        }
+        
+        boolean doDiff = false;
+        boolean isOriginalEmpty = false;
+        DiffItem originalFile = null;
+        DiffItem newFile = null;
+        if (node.myKind == SVNNodeKind.FILE) {
+            if (node.myAction == SVNChangeEntry.TYPE_REPLACED && node.myHasTextModifications) {
+                doDiff = true;
+                originalFile = prepareTmpFile(baseRoot, basePath, generator);
+                newFile = prepareTmpFile(root, path, generator);
+            } else if (generator.isDiffCopied() && node.myAction == SVNChangeEntry.TYPE_ADDED && isCopy) {
+                if (node.myHasTextModifications) {
+                    doDiff = true;
+                    originalFile = prepareTmpFile(baseRoot, basePath, generator);
+                    newFile = prepareTmpFile(root, path, generator);
+                }
+            } else if (generator.isDiffAdded() && node.myAction == SVNChangeEntry.TYPE_ADDED) {
+                doDiff = true;
+                isOriginalEmpty = true;
+                originalFile = prepareTmpFile(null, basePath, generator);
+                newFile = prepareTmpFile(root, path, generator);
+            } else if (generator.isDiffDeleted() && node.myAction == SVNChangeEntry.TYPE_DELETED) {
+                doDiff = true;
+                originalFile = prepareTmpFile(null, basePath, generator);
+                newFile = prepareTmpFile(null, path, generator);
+            }
+            
+            if (!printedHeader && (node.myAction != SVNChangeEntry.TYPE_REPLACED || node.myHasTextModifications)) {
+                if (node.myAction == SVNChangeEntry.TYPE_ADDED) {
+                    generator.setFileAdded(path, os);
+                } else if (node.myAction == SVNChangeEntry.TYPE_DELETED) {
+                    generator.setFileDeleted(path, os);
+                } else if (node.myAction == SVNChangeEntry.TYPE_REPLACED) {
+                    generator.setFileModified(path, os);
+                }
+                printedHeader = true;
+            }
+        }
+        
+        if (doDiff) {
+            if (generator instanceof DefaultSVNGNUDiffGenerator) {
+                DefaultSVNGNUDiffGenerator defaultGenerator = (DefaultSVNGNUDiffGenerator) generator;
+                if (isOriginalEmpty) {
+                    defaultGenerator.setOriginalFile(null, path);
+                } else {
+                    defaultGenerator.setOriginalFile(baseRoot, basePath);
+                }
+                defaultGenerator.setNewFile(root, path);
+            }
+            String rev1 = isOriginalEmpty ? "(rev 0)" : "(rev " + baseRoot.getRevision() + ")";
+            String rev2 = null;
+            if (root instanceof FSRevisionRoot) {
+                FSRevisionRoot revRoot = (FSRevisionRoot) root;
+                rev2 = "(rev " + revRoot.getRevision() + ")";
+            } else {
+                FSTransactionRoot txnRoot = (FSTransactionRoot) root;
+                rev2 = "(txn " + txnRoot.getTxnID() + ")";
+            }
+            generator.displayFileDiff(path, originalFile.myTmpFile, newFile.myTmpFile, rev1, rev2, originalFile.myMimeType, newFile.myMimeType, os);
+        } else if (printedHeader) {
+            generator.displayNoFileDiff(path, os);
+        }
+        
+        if (node.myHasPropModifications && node.myAction != SVNChangeEntry.TYPE_DELETED) {
+            FSRevisionNode localNode = root.getRevisionNode(path);
+            Map props = localNode.getProperties(root.getOwner());
+            Map baseProps = null;
+            if (node.myAction != SVNChangeEntry.TYPE_ADDED) {
+                FSRevisionNode baseNode = baseRoot.getRevisionNode(basePath);
+                baseProps = baseNode.getProperties(baseRoot.getOwner());
+            }
+            Map propsDiff = FSRepositoryUtil.getPropsDiffs(baseProps, props);
+            if (propsDiff.size() > 0) {
+                generator.displayPropDiff(path, baseProps, propsDiff, os);
+            }
+        }
+        
+        if (node.myChildren == null || node.myChildren.size() == 0) {
+            return;
+        }
+        
+        for (Iterator children = node.myChildren.iterator(); children.hasNext();) {
+            Node childNode = (Node) children.next();
+            path = SVNPathUtil.concatToAbs(path, childNode.myName);
+            basePath = SVNPathUtil.concatToAbs(basePath, childNode.myName);
+            diffImpl(root, baseRoot, path, basePath, childNode, generator, os);
+        }
+    }
+
+    private DiffItem prepareTmpFile(FSRoot root, String path, ISVNDiffGenerator generator) throws SVNException {
+        String mimeType = null; 
+        if (root != null) {
+            FSRevisionNode node = root.getRevisionNode(path);
+            Map nodeProps = node.getProperties(root.getOwner());
+            mimeType = (String) nodeProps.get(SVNProperty.MIME_TYPE);
+            if (SVNProperty.isBinaryMimeType(mimeType) && !generator.isForcedBinaryDiff()) {
+                return new DiffItem(mimeType, null);
+            }
+        }
+        
+        File tmpFile = createTempFile(generator);
+        if (root != null) {
+            InputStream contents = null;
+            OutputStream tmpOS = null;
+            try {
+                contents = root.getFileStreamForPath(new SVNDeltaCombiner(), path);
+                FSRepositoryUtil.copy(contents, tmpOS);
+            } finally {
+                SVNFileUtil.closeFile(contents);
+                SVNFileUtil.closeFile(tmpOS);
+            }
+        }
+        return new DiffItem(mimeType, tmpFile);
+    }
+    
+    private File createTempFile(ISVNDiffGenerator generator) throws SVNException {
+        File tmpFile = null;
+        try {
+            return File.createTempFile("diff.", ".tmp", getTempDirectory(generator));
+        } catch (IOException e) {
+            SVNFileUtil.deleteFile(tmpFile);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
+            SVNErrorManager.error(err);
+        }
+        return null;
+    }
+    
+    private File getTempDirectory(ISVNDiffGenerator generator) throws SVNException {
+        if (myTempDirectory == null || !myTempDirectory.exists()) {
+            myTempDirectory = generator.createTempDirectory();
+        }
+        return myTempDirectory;
+    }
+
+    private void cleanup() {
+        if (myTempDirectory != null) {
+            SVNFileUtil.deleteAll(myTempDirectory, true);
+        }
+    }
+
+    private void traverseChangedDirsImpl(Node node, String path, ISVNPathHandler handler) throws SVNException {
         if (myCancelHandler != null) {
             myCancelHandler.checkCancelled();
         }
@@ -203,8 +379,7 @@ public class SVNNodeEditor implements ISVNEditor {
         }
         
         if (proceed && handler != null) {
-            SVNDirEntry entry = new SVNDirEntry(null, node.myName, SVNNodeKind.DIR, -1, false, -1, null, null);
-            handler.handleDirEntry(entry);
+            handler.handleDir(path);
         }
         
         if (node.myChildren == null || node.myChildren.size() == 0) {
@@ -295,5 +470,18 @@ public class SVNNodeEditor implements ISVNEditor {
         String myCopyFromPath;
         Node myParent;
         LinkedList myChildren;
+    }
+    
+    private class DiffItem {
+        String myMimeType;
+        File myTmpFile;
+        
+        public DiffItem() {
+        }
+
+        public DiffItem(String mimeType, File tmpFile) {
+            myMimeType = mimeType;
+            myTmpFile = tmpFile; 
+        }
     }
 }

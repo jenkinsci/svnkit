@@ -19,7 +19,6 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -40,6 +39,7 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNGNUDiffGenerator;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminHelper;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -54,6 +54,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
  * @author TMate Software Ltd.
  */
 public class SVNLookClient extends SVNBasicClient {
+    private ISVNGNUDiffGenerator myDiffGenerator;
 
     public SVNLookClient(ISVNAuthenticationManager authManager, ISVNOptions options) {
         super(authManager, options);
@@ -125,7 +126,10 @@ public class SVNLookClient extends SVNBasicClient {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, "Missing repository path argument");
             SVNErrorManager.error(err);
         }
-
+        if (path.startsWith("/")) {
+            path = SVNPathUtil.canonicalizeAbsPath(path);
+        }
+        
         FSFS fsfs = open(repositoryRoot, transactionName);
         FSTransactionInfo txn = fsfs.openTxn(transactionName);
         FSRoot root = fsfs.createTransactionRoot(txn.getTxnId());
@@ -191,7 +195,7 @@ public class SVNLookClient extends SVNBasicClient {
         editor.traverseTree(includeCopyInfo, handler);
     }
 
-    public void doGetChangedDirectories(File repositoryRoot, SVNRevision revision, ISVNDirEntryHandler handler) throws SVNException {
+    public void doGetChangedDirectories(File repositoryRoot, SVNRevision revision, ISVNPathHandler handler) throws SVNException {
         FSFS fsfs = open(repositoryRoot, revision);
         long revNum = SVNAdminHelper.getRevisionNumber(revision, fsfs.getYoungestRevision(), fsfs);
         FSRoot root = fsfs.createRevisionRoot(revNum);
@@ -200,7 +204,7 @@ public class SVNLookClient extends SVNBasicClient {
         editor.traverseChangedDirs(handler);
     }
 
-    public void doGetChangedDirectories(File repositoryRoot, String transactionName, ISVNDirEntryHandler handler) throws SVNException {
+    public void doGetChangedDirectories(File repositoryRoot, String transactionName, ISVNPathHandler handler) throws SVNException {
         FSFS fsfs = open(repositoryRoot, transactionName);
         FSTransactionInfo txn = fsfs.openTxn(transactionName);
         FSRoot root = fsfs.createTransactionRoot(txn.getTxnId());
@@ -252,6 +256,41 @@ public class SVNLookClient extends SVNBasicClient {
         getTree(fsfs, root, path, kind, id, includeIDs, handler);
     }
     
+    public void doGetDiff(File repositoryRoot, SVNRevision revision, boolean diffDeleted, boolean diffAdded, boolean diffCopyFrom, OutputStream os) throws SVNException {
+        FSFS fsfs = open(repositoryRoot, revision);
+        long revNum = SVNAdminHelper.getRevisionNumber(revision, fsfs.getYoungestRevision(), fsfs);
+        FSRoot root = fsfs.createRevisionRoot(revNum);
+        long baseRevision = revNum - 1;
+        if (!SVNRevision.isValidRevisionNumber(baseRevision)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Invalid base revision {0,number,integer}", new Long(baseRevision));
+            SVNErrorManager.error(err);
+        }
+        SVNNodeEditor editor = generateDeltaTree(fsfs, root, baseRevision);
+        ISVNGNUDiffGenerator generator = getDiffGenerator();
+        generator.setDiffAdded(diffAdded);
+        generator.setDiffCopied(diffCopyFrom);
+        generator.setDiffDeleted(diffDeleted);
+        editor.diff(root, baseRevision, generator, os);
+    }
+
+    public void doGetDiff(File repositoryRoot, String transactionName, boolean diffDeleted, boolean diffAdded, boolean diffCopyFrom, OutputStream os) throws SVNException {
+        FSFS fsfs = open(repositoryRoot, transactionName);
+        FSTransactionInfo txn = fsfs.openTxn(transactionName);
+        FSRoot root = fsfs.createTransactionRoot(txn.getTxnId());
+        long baseRevision = txn.getBaseRevision();
+
+        if (!SVNRevision.isValidRevisionNumber(baseRevision)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Transaction ''{0}'' is not based on a revision; how odd", transactionName);
+            SVNErrorManager.error(err);
+        }
+        SVNNodeEditor editor = generateDeltaTree(fsfs, root, baseRevision);
+        ISVNGNUDiffGenerator generator = getDiffGenerator();
+        generator.setDiffAdded(diffAdded);
+        generator.setDiffCopied(diffCopyFrom);
+        generator.setDiffDeleted(diffDeleted);
+        editor.diff(root, baseRevision, generator, os);
+    }
+
     public String doGetProperty(File repositoryRoot, String propName, String path, SVNRevision revision) throws SVNException {
         Map props = getProperties(repositoryRoot, propName, path, revision, null, true, false);
         return (String) props.get(propName);
@@ -288,6 +327,17 @@ public class SVNLookClient extends SVNBasicClient {
         return getProperties(repositoryRoot, null, null, null, transactionName, false, true);
     }
     
+    public void setDiffGenerator(ISVNGNUDiffGenerator diffGenerator) {
+        myDiffGenerator = diffGenerator;
+    }
+
+    public ISVNGNUDiffGenerator getDiffGenerator() {
+        if (myDiffGenerator == null) {
+            myDiffGenerator = new DefaultSVNGNUDiffGenerator();
+        }
+        return myDiffGenerator;
+    }
+
     private void getTree(FSFS fsfs, FSRoot root, String path, SVNNodeKind kind, FSID id, boolean includeIDs, ISVNPathHandler handler) throws SVNException {
         checkCancelled();
         if (handler != null) {

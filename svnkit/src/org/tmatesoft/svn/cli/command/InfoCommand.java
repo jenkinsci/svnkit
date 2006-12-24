@@ -19,6 +19,7 @@ import java.io.PrintStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
@@ -41,7 +42,7 @@ import org.tmatesoft.svn.core.wc.xml.SVNXMLSerializer;
  */
 public class InfoCommand extends SVNCommand implements ISVNInfoHandler {
 
-    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
+    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z (EE, d MMM yyyy)", Locale.getDefault());
 
     private PrintStream myOut;
     private File myBaseFile;

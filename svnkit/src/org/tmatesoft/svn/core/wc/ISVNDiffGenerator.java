@@ -107,6 +107,14 @@ public interface ISVNDiffGenerator {
      */
     public boolean isDiffDeleted();
     
+    public void setDiffAdded(boolean isDiffAdded);
+
+    public boolean isDiffAdded();
+
+    public void setDiffCopied(boolean isDiffCopied);
+
+    public boolean isDiffCopied();
+
     /**
      * Includes or not unversioned files into diff processing. 
      * 
@@ -206,4 +214,7 @@ public interface ISVNDiffGenerator {
      * @since                 1.1
      */
     public void displayAddedDirectory(String path, String rev1, String rev2) throws SVNException;
+
+    public boolean isForcedBinaryDiff();
+
 }

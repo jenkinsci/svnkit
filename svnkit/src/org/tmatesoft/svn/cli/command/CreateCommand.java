@@ -40,7 +40,7 @@ public class CreateCommand extends SVNCommand {
         
         boolean isOldFormat = getCommandLine().hasArgument(SVNArgument.PRE_14_COMPATIBLE);
         if (!getCommandLine().hasPaths()) {
-            SVNCommand.println(out, "svnadmin: Repository argument required");
+            SVNCommand.println(out, "jsvnadmin: Repository argument required");
             System.exit(1);
         }
         

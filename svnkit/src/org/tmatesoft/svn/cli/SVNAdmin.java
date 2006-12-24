@@ -49,7 +49,7 @@ public class SVNAdmin {
         ourArguments.add(SVNArgument.BDB_TXN_NOSYNC);
         ourArguments.add(SVNArgument.BDB_LOG_KEEP);
 
-        Locale.setDefault(Locale.ENGLISH);
+//        Locale.setDefault(Locale.ENGLISH);
         ourCommands = new HashMap();
         ourCommands.put(new String[] { "create"}, "org.tmatesoft.svn.cli.command.CreateCommand");
         ourCommands.put(new String[] { "dump" }, "org.tmatesoft.svn.cli.command.DumpCommand");
@@ -61,7 +61,7 @@ public class SVNAdmin {
 
     public static void main(String[] args) {
         if (args == null || args.length < 1) {
-            System.err.println("general usage: svnadmin SUBCOMMAND REPOS_PATH  [ARGS & OPTIONS ...]\n");
+            System.err.println("general usage: jsvnadmin SUBCOMMAND REPOS_PATH  [ARGS & OPTIONS ...]");
             System.exit(0);
         }
 

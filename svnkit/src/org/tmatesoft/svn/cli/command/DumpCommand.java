@@ -34,7 +34,7 @@ public class DumpCommand extends SVNCommand {
 
     public void run(PrintStream out, PrintStream err) throws SVNException {
         if (!getCommandLine().hasPaths()) {
-            SVNCommand.println(out, "svnadmin: Repository argument required");
+            SVNCommand.println(out, "jsvnadmin: Repository argument required");
             System.exit(1);
         }
         File reposRoot = new File(getCommandLine().getPathAt(0));  
