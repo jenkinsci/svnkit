@@ -18,6 +18,7 @@ import java.io.PrintStream;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.ISVNChangeEntryHandler;
 import org.tmatesoft.svn.core.wc.admin.SVNChangeEntry;
@@ -33,7 +34,7 @@ public class SVNLookChangedCommand extends SVNCommand implements ISVNChangeEntry
     
     public void run(PrintStream out, PrintStream err) throws SVNException {
         if (!getCommandLine().hasPaths()) {
-            SVNCommand.println(out, "jsvnlook: Repository argument required");
+            SVNCommand.println(err, "jsvnlook: Repository argument required");
             System.exit(1);
         }
         
@@ -55,24 +56,26 @@ public class SVNLookChangedCommand extends SVNCommand implements ISVNChangeEntry
     }
 
     public void run(InputStream in, PrintStream out, PrintStream err) throws SVNException {
+        run(out, err);
     }
 
     public void handleEntry(SVNChangeEntry entry) throws SVNException {
         String[] status = new String[3];
         status[0] = "" + entry.getType();
-        status[1] = entry.hasPropertyModifications() ? "" + SVNChangeEntry.TYPE_UPDATED : "";
-        status[2] = entry.getCopyFromPath() != null ? "+" : "";
-        String path = entry.getPath().endsWith("/") ? entry.getPath() : entry.getPath() + "/"; 
+        status[1] = entry.hasPropertyModifications() ? "" + SVNChangeEntry.TYPE_UPDATED : " ";
+        status[2] = entry.getCopyFromPath() != null ? "+" : " ";
+        String path = !entry.getPath().endsWith("/") && entry.getKind() == SVNNodeKind.DIR ? entry.getPath() + "/" : entry.getPath(); 
+        path = path.startsWith("/") ? path.substring(1) : path;
         SVNCommand.println(myOut, status[0] + status[1] + status[2] + " " + path);
         if (entry.getCopyFromPath() != null) {
             String copyFromPath = entry.getCopyFromPath();
             if (copyFromPath.startsWith("/")) {
                 copyFromPath = copyFromPath.substring(1);    
             }
-            if (!copyFromPath.endsWith("/")) {
+            if (!copyFromPath.endsWith("/") && entry.getKind() == SVNNodeKind.DIR) {
                 copyFromPath += "/";    
             }
-            SVNCommand.println(myOut, "    (from : " + copyFromPath + "r" + entry.getCopyFromRevision() + ")");
+            SVNCommand.println(myOut, "    (from " + copyFromPath + ":r" + entry.getCopyFromRevision() + ")");
         }
     }
 

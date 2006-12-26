@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.wc.admin;
 
+import org.tmatesoft.svn.core.SVNNodeKind;
+
 
 /**
  * @version 1.1
@@ -43,6 +45,7 @@ public class SVNChangeEntry {
     private long myCopyFromRevision;
     private boolean myHasTextModifications;
     private boolean myHasPropModifications;
+    private SVNNodeKind myKind;
     
     /**
      * @param path
@@ -52,8 +55,9 @@ public class SVNChangeEntry {
      * @param hasTextModifications
      * @param hasPropModifications
      */
-    public SVNChangeEntry(String path, char type, String copyFromPath, long copyFromRevision, boolean hasTextModifications, boolean hasPropModifications) {
+    public SVNChangeEntry(String path, SVNNodeKind kind, char type, String copyFromPath, long copyFromRevision, boolean hasTextModifications, boolean hasPropModifications) {
         myPath = path;
+        myKind = kind;
         myType = type;
         myCopyFromPath = copyFromPath;
         myCopyFromRevision = copyFromRevision;
@@ -85,4 +89,7 @@ public class SVNChangeEntry {
         return myHasTextModifications;
     }
 
+    public SVNNodeKind getKind() {
+        return myKind;
+    }
 }

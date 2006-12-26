@@ -43,9 +43,9 @@ public class SVNSync {
         
 //        Locale.setDefault(Locale.ENGLISH);
         ourCommands = new HashMap();
-        ourCommands.put(new String[] { "initialize", "init" }, "org.tmatesoft.svn.cli.command.InitCommand");
-        ourCommands.put(new String[] { "synchronize", "sync" }, "org.tmatesoft.svn.cli.command.SynchronizeCommand");
-        ourCommands.put(new String[] { "copy-revprops" }, "org.tmatesoft.svn.cli.command.CopyRevpropsCommand");
+        ourCommands.put(new String[] { "initialize", "init" }, "org.tmatesoft.svn.cli.command.SVNSyncInitCommand");
+        ourCommands.put(new String[] { "synchronize", "sync" }, "org.tmatesoft.svn.cli.command.SVNSyncSynchronizeCommand");
+        ourCommands.put(new String[] { "copy-revprops" }, "org.tmatesoft.svn.cli.command.SVNSyncCopyRevpropsCommand");
     }
 
     public static void main(String[] args) {

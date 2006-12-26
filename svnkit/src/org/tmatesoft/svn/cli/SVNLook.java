@@ -44,16 +44,24 @@ public class SVNLook {
         ourArguments.add(SVNArgument.REV_PROP);
         ourArguments.add(SVNArgument.VERBOSE);
         ourArguments.add(SVNArgument.FULL_PATHS);
-
         
 //        Locale.setDefault(Locale.ENGLISH);
         ourCommands = new HashMap();
-        ourCommands.put(new String[] { "create"}, "org.tmatesoft.svn.cli.command.CreateCommand");
-        ourCommands.put(new String[] { "dump" }, "org.tmatesoft.svn.cli.command.DumpCommand");
-        ourCommands.put(new String[] { "load" }, "org.tmatesoft.svn.cli.command.LoadCommand");
-        ourCommands.put(new String[] { "lstxns" }, "org.tmatesoft.svn.cli.command.ListTransactionsCommand");
-        ourCommands.put(new String[] { "rmtxns" }, "org.tmatesoft.svn.cli.command.RemoveTransactionsCommand");
-        
+        ourCommands.put(new String[] { "author"}, "org.tmatesoft.svn.cli.command.SVNLookAuthorCommand");
+        ourCommands.put(new String[] { "cat" }, "org.tmatesoft.svn.cli.command.SVNLookCatCommand");
+        ourCommands.put(new String[] { "changed" }, "org.tmatesoft.svn.cli.command.SVNLookChangedCommand");
+        ourCommands.put(new String[] { "date" }, "org.tmatesoft.svn.cli.command.SVNLookDateCommand");
+        ourCommands.put(new String[] { "diff" }, "org.tmatesoft.svn.cli.command.SVNLookDiffCommand");
+        ourCommands.put(new String[] { "dirs-changed" }, "org.tmatesoft.svn.cli.command.SVNLookDirsChangedCommand");
+        ourCommands.put(new String[] { "history" }, "org.tmatesoft.svn.cli.command.SVNLookHistoryCommand");
+        ourCommands.put(new String[] { "info" }, "org.tmatesoft.svn.cli.command.SVNLookInfoCommand");
+        ourCommands.put(new String[] { "lock" }, "org.tmatesoft.svn.cli.command.SVNLookLockCommand");
+        ourCommands.put(new String[] { "log" }, "org.tmatesoft.svn.cli.command.SVNLookLogCommand");
+        ourCommands.put(new String[] { "propget", "pget", "pg" }, "org.tmatesoft.svn.cli.command.SVNLookPropgetCommand");
+        ourCommands.put(new String[] { "proplist", "plist", "pl" }, "org.tmatesoft.svn.cli.command.SVNLookProplistCommand");
+        ourCommands.put(new String[] { "tree" }, "org.tmatesoft.svn.cli.command.SVNLookTreeCommand");
+        ourCommands.put(new String[] { "uuid" }, "org.tmatesoft.svn.cli.command.SVNLookUUIDCommand");
+        ourCommands.put(new String[] { "youngest" }, "org.tmatesoft.svn.cli.command.SVNLookYoungestCommand");
     }
 
     public static void main(String[] args) {
@@ -87,7 +95,7 @@ public class SVNLook {
     
                 command.setCommandLine(commandLine);
                 try {
-                    command.run(System.in, System.out, System.err);
+                    command.run(System.out, System.err);
                 } catch (SVNException e) {
                     System.err.println(e.getMessage());
                     SVNDebugLog.getDefaultLog().info(e);

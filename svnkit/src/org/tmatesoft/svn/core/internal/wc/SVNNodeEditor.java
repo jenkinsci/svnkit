@@ -292,7 +292,8 @@ public class SVNNodeEditor implements ISVNEditor {
             }
             Map propsDiff = FSRepositoryUtil.getPropsDiffs(baseProps, props);
             if (propsDiff.size() > 0) {
-                generator.displayPropDiff(path, baseProps, propsDiff, os);
+                String displayPath = path.startsWith("/") ? path.substring(1) : path;
+                generator.displayPropDiff(displayPath, baseProps, propsDiff, os);
             }
         }
         
@@ -325,6 +326,7 @@ public class SVNNodeEditor implements ISVNEditor {
             OutputStream tmpOS = null;
             try {
                 contents = root.getFileStreamForPath(new SVNDeltaCombiner(), path);
+                tmpOS = SVNFileUtil.openFileForWriting(tmpFile);
                 FSRepositoryUtil.copy(contents, tmpOS);
             } finally {
                 SVNFileUtil.closeFile(contents);
@@ -406,12 +408,12 @@ public class SVNNodeEditor implements ISVNEditor {
         if (node.myAction == SVNChangeEntry.TYPE_ADDED) {
             String copyFromPath = includeCopyInfo ? node.myCopyFromPath : null;
             long copyFromRevision = includeCopyInfo ? node.myCopyFromRevision : -1;
-            changeEntry = new SVNChangeEntry(path, node.myAction, copyFromPath, copyFromRevision, false, false);
+            changeEntry = new SVNChangeEntry(path, node.myKind, node.myAction, copyFromPath, copyFromRevision, false, false);
         } else if (node.myAction == SVNChangeEntry.TYPE_DELETED) {
-            changeEntry = new SVNChangeEntry(path, node.myAction, null, -1, false, false);
+            changeEntry = new SVNChangeEntry(path, node.myKind, node.myAction, null, -1, false, false);
         } else if (node.myAction == SVNChangeEntry.TYPE_REPLACED) {
             if (node.myHasPropModifications || node.myHasTextModifications) {
-                changeEntry = new SVNChangeEntry(path, SVNChangeEntry.TYPE_UPDATED, null, -1, node.myHasTextModifications, node.myHasPropModifications);
+                changeEntry = new SVNChangeEntry(path, node.myKind, SVNChangeEntry.TYPE_UPDATED, null, -1, node.myHasTextModifications, node.myHasPropModifications);
             }
         }
         

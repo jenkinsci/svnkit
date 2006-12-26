@@ -29,11 +29,11 @@ public class SVNLookLockCommand extends SVNCommand {
 
     public void run(PrintStream out, PrintStream err) throws SVNException {
         if (!getCommandLine().hasPaths()) {
-            SVNCommand.println(out, "jsvnlook: Repository argument required");
+            SVNCommand.println(err, "jsvnlook: Repository argument required");
             System.exit(1);
         }
         if (getCommandLine().getPathCount() < 2) {
-            SVNCommand.println(out, "jsvnlook: Missing path argument");
+            SVNCommand.println(err, "jsvnlook: Missing path argument");
             System.exit(1);
         }
         File reposRoot = new File(getCommandLine().getPathAt(0));  
@@ -63,6 +63,7 @@ public class SVNLookLockCommand extends SVNCommand {
     }
 
     public void run(InputStream in, PrintStream out, PrintStream err) throws SVNException {
+        run(out, err);
     }
 
 }

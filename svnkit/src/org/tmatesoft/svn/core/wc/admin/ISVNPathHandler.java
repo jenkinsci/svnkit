@@ -22,7 +22,7 @@ public interface ISVNPathHandler {
 
     public void handlePath(long revision, String path, String nodeID) throws SVNException;
 
-    public void handlePath(String path, String nodeID) throws SVNException;
+    public void handlePath(String path, String nodeID, int treeDepth, boolean isDir) throws SVNException;
 
     public void handleDir(String path) throws SVNException;
     

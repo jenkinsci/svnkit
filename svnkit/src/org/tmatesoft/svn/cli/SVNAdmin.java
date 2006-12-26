@@ -51,11 +51,11 @@ public class SVNAdmin {
 
 //        Locale.setDefault(Locale.ENGLISH);
         ourCommands = new HashMap();
-        ourCommands.put(new String[] { "create"}, "org.tmatesoft.svn.cli.command.CreateCommand");
-        ourCommands.put(new String[] { "dump" }, "org.tmatesoft.svn.cli.command.DumpCommand");
-        ourCommands.put(new String[] { "load" }, "org.tmatesoft.svn.cli.command.LoadCommand");
-        ourCommands.put(new String[] { "lstxns" }, "org.tmatesoft.svn.cli.command.ListTransactionsCommand");
-        ourCommands.put(new String[] { "rmtxns" }, "org.tmatesoft.svn.cli.command.RemoveTransactionsCommand");
+        ourCommands.put(new String[] { "create"}, "org.tmatesoft.svn.cli.command.SVNAdminCreateCommand");
+        ourCommands.put(new String[] { "dump" }, "org.tmatesoft.svn.cli.command.SVNAdminDumpCommand");
+        ourCommands.put(new String[] { "load" }, "org.tmatesoft.svn.cli.command.SVNAdminLoadCommand");
+        ourCommands.put(new String[] { "lstxns" }, "org.tmatesoft.svn.cli.command.SVNAdminListTransactionsCommand");
+        ourCommands.put(new String[] { "rmtxns" }, "org.tmatesoft.svn.cli.command.SVNAdminRemoveTransactionsCommand");
         
     }
 

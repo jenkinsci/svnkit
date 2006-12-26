@@ -15,44 +15,48 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.PrintStream;
 
-import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
+import org.tmatesoft.svn.core.wc.admin.ISVNTransactionListHandler;
+import org.tmatesoft.svn.core.wc.admin.SVNAdminClient;
 
 
 /**
  * @version 1.1
  * @author  TMate Software Ltd.
  */
-public class SVNLookCatCommand extends SVNCommand {
+public class SVNAdminListTransactionsCommand extends SVNCommand {
 
     public void run(PrintStream out, PrintStream err) throws SVNException {
         if (!getCommandLine().hasPaths()) {
-            SVNCommand.println(err, "jsvnlook: Repository argument required");
-            System.exit(1);
-        }
-        if (getCommandLine().getPathCount() < 2) {
-            SVNCommand.println(err, "jsvnlook: Missing repository path argument");
+            SVNCommand.println(out, "svnadmin: Repository argument required");
             System.exit(1);
         }
         File reposRoot = new File(getCommandLine().getPathAt(0));  
-        String path = getCommandLine().getPathAt(1);
-        
-        SVNRevision revision = SVNRevision.HEAD;
-        SVNLookClient lookClient = getClientManager().getLookClient();
-        if (getCommandLine().hasArgument(SVNArgument.TRANSACTION)) {
-            String transactionName = (String) getCommandLine().getArgumentValue(SVNArgument.TRANSACTION);
-            lookClient.doCat(reposRoot, path, transactionName, out);
-            return;
-        } else if (getCommandLine().hasArgument(SVNArgument.REVISION)) {
-            revision = SVNRevision.parse((String) getCommandLine().getArgumentValue(SVNArgument.REVISION));
-        } 
-        lookClient.doCat(reposRoot, path, revision, out);
+
+        ListTransactionHandler handler = new ListTransactionHandler(out);
+        SVNAdminClient adminClient = getClientManager().getAdminClient();
+        adminClient.doListTransactions(reposRoot, handler);
     }
 
     public void run(InputStream in, PrintStream out, PrintStream err) throws SVNException {
         run(out, err);
     }
+
+    private class ListTransactionHandler implements ISVNTransactionListHandler {
+
+        private PrintStream myOut;
+        
+        public ListTransactionHandler(PrintStream out) {
+            myOut = out;
+        }
+        
+        public void handleRemoveTransaction(String txnName, File txnDir) throws SVNException {
+        }
+        
+        public void handleTransaction(String txnName, File txnDir) throws SVNException {
+            SVNCommand.println(myOut, txnName);
+        }
+    }
+
 }
