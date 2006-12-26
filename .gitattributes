@@ -92,6 +92,8 @@ svnkit/cli/jsvn -text
 svnkit/cli/jsvn.bat -text
 svnkit/cli/jsvnadmin -text
 svnkit/cli/jsvnadmin.bat -text
+svnkit/cli/jsvnlook -text
+svnkit/cli/jsvnlook.bat -text
 svnkit/cli/jsvnsync -text
 svnkit/cli/jsvnsync.bat -text
 svnkit/cli/logging.properties.disabled -text

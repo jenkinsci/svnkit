@@ -117,7 +117,8 @@ except ImportError:
 svn_binary = os.path.abspath('../../../build/lib/jsvn' + _bat)
 #svnadmin_binary = 'svnadmin' + _exe
 svnadmin_binary = os.path.abspath('../../../build/lib/jsvnadmin' + _bat)
-svnlook_binary = 'svnlook' + _exe
+#svnlook_binary = 'svnlook' + _exe
+svnlook_binary = os.path.abspath('../../../build/lib/jsvnlook' + _bat)
 #svnsync_binary = 'svnsync' + _exe
 svnsync_binary = os.path.abspath('../../../build/lib/jsvnsync' + _bat)
 svnversion_binary = 'svnversion' + _exe

@@ -22,3 +22,4 @@ trans ALL
 update ALL
 svnsync ALL
 svnadmin ALL
+svnlook ALL
