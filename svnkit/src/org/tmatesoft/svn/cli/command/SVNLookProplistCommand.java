@@ -20,6 +20,7 @@ import java.util.Map;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
 
@@ -48,7 +49,7 @@ public class SVNLookProplistCommand extends SVNCommand {
             if (isRevProp) {
                 props = lookClient.doGetRevisionProperties(reposRoot, transactionName);
             } else {
-                String path = getCommandLine().getPathCount() < 2 ? null : getCommandLine().getPathAt(2);
+                String path = getCommandLine().getPathCount() < 2 ? null : SVNPathUtil.canonicalizeAbsPath(getCommandLine().getPathAt(2));
                 props = lookClient.doGetProperties(reposRoot, path, transactionName);
             }
             printProps(out, props, isVerbose);
@@ -61,7 +62,7 @@ public class SVNLookProplistCommand extends SVNCommand {
         if (isRevProp) {
             props = lookClient.doGetRevisionProperties(reposRoot, revision);
         } else {
-            String path = getCommandLine().getPathCount() < 2 ? null : getCommandLine().getPathAt(2);
+            String path = getCommandLine().getPathCount() < 2 ? null : SVNPathUtil.canonicalizeAbsPath(getCommandLine().getPathAt(2));
             props = lookClient.doGetProperties(reposRoot, path, revision);
         }
         printProps(out, props, isVerbose);

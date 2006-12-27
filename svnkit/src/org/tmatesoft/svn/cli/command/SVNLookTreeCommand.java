@@ -43,7 +43,7 @@ public class SVNLookTreeCommand extends SVNCommand implements ISVNPathHandler {
         myIsIncludeIDs = getCommandLine().hasArgument(SVNArgument.SHOW_IDS);
         myIsFullPaths = getCommandLine().hasArgument(SVNArgument.FULL_PATHS);
         File reposRoot = new File(getCommandLine().getPathAt(0));  
-        String path = getCommandLine().getPathCount() < 2 ? null : getCommandLine().getPathAt(1);
+        String path = getCommandLine().getPathCount() < 2 ? null : SVNPathUtil.canonicalizeAbsPath(getCommandLine().getPathAt(1));
         SVNRevision revision = SVNRevision.HEAD;
         SVNLookClient lookClient = getClientManager().getLookClient();
         if (getCommandLine().hasArgument(SVNArgument.TRANSACTION)) {

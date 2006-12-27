@@ -18,6 +18,7 @@ import java.io.PrintStream;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
 
@@ -38,7 +39,7 @@ public class SVNLookCatCommand extends SVNCommand {
             System.exit(1);
         }
         File reposRoot = new File(getCommandLine().getPathAt(0));  
-        String path = getCommandLine().getPathAt(1);
+        String path = SVNPathUtil.canonicalizeAbsPath(getCommandLine().getPathAt(1));
         
         SVNRevision revision = SVNRevision.HEAD;
         SVNLookClient lookClient = getClientManager().getLookClient();

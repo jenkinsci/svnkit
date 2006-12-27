@@ -18,6 +18,7 @@ import java.io.PrintStream;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.ISVNPathHandler;
 import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
@@ -45,7 +46,7 @@ public class SVNLookHistoryCommand extends SVNCommand implements ISVNPathHandler
         File reposRoot = new File(getCommandLine().getPathAt(0));  
         String path = null;
         if (getCommandLine().getPathCount() > 1) {
-            path = getCommandLine().getPathAt(1);
+            path = SVNPathUtil.canonicalizeAbsPath(getCommandLine().getPathAt(1));
         }
         myIsIncludeIDs = getCommandLine().hasArgument(SVNArgument.SHOW_IDS);
         

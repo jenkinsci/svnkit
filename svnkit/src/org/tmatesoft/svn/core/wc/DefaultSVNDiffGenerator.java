@@ -260,17 +260,10 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         rev2 = rev2 == null ? WC_REVISION_LABEL : rev2;
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         try {
-            if (displayHeader(bos, path, file2 == null)) {
-                bos.close();
-                bos.writeTo(result);
+            if (displayHeader(result, path, file2 == null)) {
                 return;
             }
         } catch (IOException e) {
-            try {
-                bos.close();
-                bos.writeTo(result);
-            } catch (IOException inner) {
-            }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
             SVNErrorManager.error(err, e);
         }

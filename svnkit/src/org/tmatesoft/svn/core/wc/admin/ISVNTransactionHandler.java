@@ -20,7 +20,7 @@ import org.tmatesoft.svn.core.SVNException;
  * @version 1.1
  * @author  TMate Software Ltd.
  */
-public interface ISVNTransactionListHandler {
+public interface ISVNTransactionHandler {
     
     public void handleTransaction(String txnName, File txnDir) throws SVNException;
     

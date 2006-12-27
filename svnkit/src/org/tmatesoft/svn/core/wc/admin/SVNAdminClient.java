@@ -392,7 +392,7 @@ public class SVNAdminClient extends SVNBasicClient {
         }
     }
 
-    public void doListTransactions(File repositoryRoot, ISVNTransactionListHandler handler) throws SVNException {
+    public void doListTransactions(File repositoryRoot, ISVNTransactionHandler handler) throws SVNException {
         FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
         Map txns = fsfs.listTransactions();
 
@@ -406,7 +406,7 @@ public class SVNAdminClient extends SVNBasicClient {
         }
     }
     
-    public void doRemoveTransactions(File repositoryRoot, String[] transactions, ISVNTransactionListHandler handler) throws SVNException {
+    public void doRemoveTransactions(File repositoryRoot, String[] transactions, ISVNTransactionHandler handler) throws SVNException {
         if (transactions == null) {
             return;
         }

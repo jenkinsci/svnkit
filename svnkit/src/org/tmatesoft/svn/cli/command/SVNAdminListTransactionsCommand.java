@@ -17,7 +17,7 @@ import java.io.PrintStream;
 
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.admin.ISVNTransactionListHandler;
+import org.tmatesoft.svn.core.wc.admin.ISVNTransactionHandler;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminClient;
 
 
@@ -43,7 +43,7 @@ public class SVNAdminListTransactionsCommand extends SVNCommand {
         run(out, err);
     }
 
-    private class ListTransactionHandler implements ISVNTransactionListHandler {
+    private class ListTransactionHandler implements ISVNTransactionHandler {
 
         private PrintStream myOut;
         

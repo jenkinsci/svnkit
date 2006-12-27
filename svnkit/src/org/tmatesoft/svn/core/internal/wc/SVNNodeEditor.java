@@ -123,6 +123,7 @@ public class SVNNodeEditor implements ISVNEditor {
         if (node == null) {
             if (myCurrentNode != null) {
                 node = new Node();
+                node.myName = name;
                 node.myParent = myCurrentNode;
 
                 if (myCurrentNode.myChildren == null) {

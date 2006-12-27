@@ -19,6 +19,7 @@ import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminHelper;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
@@ -49,7 +50,7 @@ public class SVNLookPropgetCommand extends SVNCommand {
             if (isRevProp) {
                 value = lookClient.doGetRevisionProperty(reposRoot, propertyName, transactionName);
             } else {
-                path = getCommandLine().getPathCount() < 3 ? null : getCommandLine().getPathAt(2);
+                path = getCommandLine().getPathCount() < 3 ? null : SVNPathUtil.canonicalizeAbsPath(getCommandLine().getPathAt(2));
                 value = lookClient.doGetProperty(reposRoot, propertyName, path, transactionName);
             }
             if (value == null) {
@@ -72,7 +73,7 @@ public class SVNLookPropgetCommand extends SVNCommand {
         if (isRevProp) {
             value = lookClient.doGetRevisionProperty(reposRoot, propertyName, revision);
         } else {
-            path = getCommandLine().getPathCount() < 3 ? null : getCommandLine().getPathAt(2);
+            path = getCommandLine().getPathCount() < 3 ? null : SVNPathUtil.canonicalizeAbsPath(getCommandLine().getPathAt(2));
             value = lookClient.doGetProperty(reposRoot, propertyName, path, revision);
         }
         if (value == null) {
