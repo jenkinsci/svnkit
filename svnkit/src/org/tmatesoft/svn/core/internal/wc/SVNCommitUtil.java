@@ -167,7 +167,7 @@ public class SVNCommitUtil {
                 if (!targetFile.equals(baseDir)) {
                     targetFile = targetFile.getParentFile();
                     targetPath = SVNPathUtil.removeTail(targetPath);
-                    while (!targetFile.equals(baseDir) && !dirsToLock.contains(targetPath)) {
+                    while (targetFile != null && !targetFile.equals(baseDir) && !dirsToLock.contains(targetPath)) {
                         dirsToLock.add(targetPath);
                         targetPath = SVNPathUtil.removeTail(targetPath);
                         targetFile = targetFile.getParentFile();
