@@ -1011,7 +1011,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 return validatedURLs;
             }
         }
-        SVNRepository repos = createRepository(targetURL, true);
+        SVNRepository repos = createRepository(targetURL, false);
         SVNURL actualRoot = repos.getRepositoryRoot(true);
         if (isRoot && !targetURL.equals(actualRoot)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_INVALID_RELOCATION, "''{0}'' is not the root of the repository", targetURL);
