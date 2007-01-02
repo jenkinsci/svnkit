@@ -23,14 +23,12 @@ import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
  */
 public interface ISVNGNUDiffGenerator extends ISVNDiffGenerator {
     
-    public void setFileAdded(String path, OutputStream result) throws SVNException;
-
-    public void setFileDeleted(String path, OutputStream result) throws SVNException;
+    public static final int ADDED = 0;
+    public static final int DELETED = 1;
+    public static final int MODIFIED = 2;
+    public static final int COPIED = 3;
+    public static final int NO_DIFF = 4;
     
-    public void setFileModified(String path, OutputStream result) throws SVNException;
-
-    public void setFileCopied(String path, String copyFromPath, long copyFromRevision, OutputStream result) throws SVNException;
-
-    public void displayNoFileDiff(String path, OutputStream result) throws SVNException;
-
+    public void displayHeader(int type, String path, String copyFromPath, long copyFromRevision, OutputStream result) throws SVNException; 
+    
 }

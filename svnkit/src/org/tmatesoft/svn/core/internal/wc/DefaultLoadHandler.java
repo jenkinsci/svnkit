@@ -9,7 +9,7 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.core.wc.admin;
+package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -33,12 +33,10 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionRoot;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNAdminHelper;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUUIDAction;
+import org.tmatesoft.svn.core.wc.admin.ISVNDumpHandler;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 
@@ -69,7 +67,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
         myRevisionsMap = new HashMap();
     }
     
-    protected void setFSFS(FSFS fsfs) {
+    public void setFSFS(FSFS fsfs) {
         myFSFS = fsfs;
     }
     

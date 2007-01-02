@@ -9,7 +9,7 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.core.wc.admin;
+package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.InputStream;
 import java.util.Map;

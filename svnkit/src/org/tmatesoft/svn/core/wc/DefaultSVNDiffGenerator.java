@@ -260,10 +260,21 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         rev2 = rev2 == null ? WC_REVISION_LABEL : rev2;
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         try {
-            if (displayHeader(result, path, file2 == null)) {
+            if (displayHeader(bos, path, file2 == null)) {
+                bos.close();
+                bos.writeTo(result);
                 return;
             }
+            if (isHeaderForced(file1, file2)) {
+                bos.writeTo(result);
+                bos.reset();
+            }
         } catch (IOException e) {
+            try {
+                bos.close();
+                bos.writeTo(result);
+            } catch (IOException inner) {
+            }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
             SVNErrorManager.error(err, e);
         }
@@ -474,5 +485,9 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         os.write("\t".getBytes(getEncoding()));
         os.write(rev2.getBytes(getEncoding()));
         os.write(EOL);
+    }
+    
+    protected boolean isHeaderForced(File file1, File file2) {
+        return file1 == null && file2 != null;
     }
 }

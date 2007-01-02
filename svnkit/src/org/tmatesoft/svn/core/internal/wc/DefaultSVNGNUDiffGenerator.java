@@ -41,6 +41,48 @@ public class DefaultSVNGNUDiffGenerator extends DefaultSVNDiffGenerator implemen
     private FSRoot myNewRoot;
     private String myNewPath;
 
+    public void displayHeader(int type, String path, String copyFromPath, long copyFromRevision, OutputStream result) throws SVNException {
+        switch (type) {
+            case ADDED:
+                if (!myIsHeaderWritten) {
+                    path = path.startsWith("/") ? path.substring(1) : path;
+                    myHeader = "Added: " + path;
+                    writeHeader(result);
+                }
+                break;
+            case DELETED:
+                if (!myIsHeaderWritten) {
+                    path = path.startsWith("/") ? path.substring(1) : path;
+                    myHeader = "Deleted: " + path;
+                    writeHeader(result);
+                }
+                break;
+            case MODIFIED:
+                if (!myIsHeaderWritten) {
+                    path = path.startsWith("/") ? path.substring(1) : path;
+                    myHeader = "Modified: " + path;
+                    writeHeader(result);
+                }
+                break;
+            case COPIED:
+                if (!myIsHeaderWritten) {
+                    path = path.startsWith("/") ? path.substring(1) : path;
+                    copyFromPath = copyFromPath.startsWith("/") ? copyFromPath.substring(1) : copyFromPath;
+                    myHeader = "Copied: " + path + " (from rev " + copyFromRevision + ", " + copyFromPath + ")";
+                    writeHeader(result);
+                }
+                break;
+            case NO_DIFF:
+                try {
+                    result.write(EOL);
+                } catch (IOException e) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+                    SVNErrorManager.error(err, e);
+                }
+                break;
+        }
+    }
+
     public void displayFileDiff(String path, File file1, File file2,
             String rev1, String rev2, String mimeType1, String mimeType2, OutputStream result) throws SVNException {
         super.displayFileDiff(path, file1, file2, rev1, rev2, mimeType1, mimeType2, result);
@@ -49,48 +91,6 @@ public class DefaultSVNGNUDiffGenerator extends DefaultSVNDiffGenerator implemen
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
             SVNErrorManager.error(err, e);
-        }
-    }
-
-    public void displayNoFileDiff(String path, OutputStream result) throws SVNException {
-        try {
-            result.write(EOL);
-        } catch (IOException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-            SVNErrorManager.error(err, e);
-        }
-    }
-
-    public void setFileAdded(String path, OutputStream result) throws SVNException {
-        if (!myIsHeaderWritten) {
-            path = path.startsWith("/") ? path.substring(1) : path;
-            myHeader = "Added: " + path;
-            writeHeader(result);
-        }
-    }
-
-    public void setFileDeleted(String path, OutputStream result) throws SVNException {
-        if (!myIsHeaderWritten) {
-            path = path.startsWith("/") ? path.substring(1) : path;
-            myHeader = "Deleted: " + path;
-            writeHeader(result);
-        }
-    }
-    
-    public void setFileModified(String path, OutputStream result) throws SVNException {
-        if (!myIsHeaderWritten) {
-            path = path.startsWith("/") ? path.substring(1) : path;
-            myHeader = "Modified: " + path;
-            writeHeader(result);
-        }
-    }
-
-    public void setFileCopied(String path, String copyFromPath, long copyFromRevision, OutputStream result) throws SVNException {
-        if (!myIsHeaderWritten) {
-            path = path.startsWith("/") ? path.substring(1) : path;
-            copyFromPath = copyFromPath.startsWith("/") ? copyFromPath.substring(1) : copyFromPath;
-            myHeader = "Copied: " + path + " (from rev " + copyFromRevision + ", " + copyFromPath + ")";
-            writeHeader(result);
         }
     }
 
@@ -183,4 +183,9 @@ public class DefaultSVNGNUDiffGenerator extends DefaultSVNDiffGenerator implemen
             SVNErrorManager.error(err, e);
         }
     }
+    
+    protected boolean isHeaderForced(File file1, File file2) {
+        return true;
+    }
+
 }

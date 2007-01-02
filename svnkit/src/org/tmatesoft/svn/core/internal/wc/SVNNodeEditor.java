@@ -215,7 +215,7 @@ public class SVNNodeEditor implements ISVNEditor {
         boolean printedHeader = false;
         if (SVNRevision.isValidRevisionNumber(node.myCopyFromRevision) && node.myCopyFromPath != null) {
             basePath = node.myCopyFromPath;
-            generator.setFileCopied(path, basePath, node.myCopyFromRevision, os);
+            generator.displayHeader(ISVNGNUDiffGenerator.COPIED, path, basePath, node.myCopyFromRevision, os);
             baseRoot = myFSFS.createRevisionRoot(node.myCopyFromRevision);
             isCopy = true;
             printedHeader = true;
@@ -249,11 +249,11 @@ public class SVNNodeEditor implements ISVNEditor {
             
             if (!printedHeader && (node.myAction != SVNChangeEntry.TYPE_REPLACED || node.myHasTextModifications)) {
                 if (node.myAction == SVNChangeEntry.TYPE_ADDED) {
-                    generator.setFileAdded(path, os);
+                    generator.displayHeader(ISVNGNUDiffGenerator.ADDED, path, null, -1, os);
                 } else if (node.myAction == SVNChangeEntry.TYPE_DELETED) {
-                    generator.setFileDeleted(path, os);
+                    generator.displayHeader(ISVNGNUDiffGenerator.DELETED, path, null, -1, os);
                 } else if (node.myAction == SVNChangeEntry.TYPE_REPLACED) {
-                    generator.setFileModified(path, os);
+                    generator.displayHeader(ISVNGNUDiffGenerator.MODIFIED, path, null, -1, os);
                 }
                 printedHeader = true;
             }
@@ -280,7 +280,7 @@ public class SVNNodeEditor implements ISVNEditor {
             }
             generator.displayFileDiff(path, originalFile.myTmpFile, newFile.myTmpFile, rev1, rev2, originalFile.myMimeType, newFile.myMimeType, os);
         } else if (printedHeader) {
-            generator.displayNoFileDiff(path, os);
+            generator.displayHeader(ISVNGNUDiffGenerator.NO_DIFF, path, null, -1, os);
         }
         
         if (node.myHasPropModifications && node.myAction != SVNChangeEntry.TYPE_DELETED) {
