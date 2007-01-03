@@ -466,7 +466,17 @@ public class SVNStatusEditor {
     }
     
     private boolean isExternal(String path) {
-        return myExternalsMap.containsKey(path);
+        if (!myExternalsMap.containsKey(path)) {
+            // check if path is external parent.            
+            for (Iterator paths = myExternalsMap.keySet().iterator(); paths.hasNext();) {
+                String externalPath = (String) paths.next();
+                if (externalPath.startsWith(path + "/")) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        return true;
     }
     
     public static Collection getIgnorePatterns(SVNAdminArea dir, Collection globalIgnores) throws SVNException {
