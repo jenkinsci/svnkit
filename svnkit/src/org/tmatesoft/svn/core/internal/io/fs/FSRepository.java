@@ -41,6 +41,7 @@ import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
+import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
@@ -1080,7 +1081,8 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                     if (userName == null || "".equals(userName.trim())) {
                         userName = System.getProperty("user.name");
                     }
-                    if (userName != null && !"".equals(userName.trim())) {
+                    auth = new SVNUserNameAuthentication(userName, auth.isStorageAllowed());
+                    if (userName != null && !"".equals(userName.trim())) {                        
                         authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.USERNAME, realm, null, auth);
                         return auth.getUserName();
                     }

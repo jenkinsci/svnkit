@@ -154,6 +154,12 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                 SVNErrorManager.cancel("authentication cancelled");
             }
         }
+        // end of probe. if we were asked for username for ssh and didn't find anything 
+        // report something default.
+        if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
+            // user auth shouldn't be null.
+            return new SVNUserNameAuthentication("", isAuthStorageEnabled());
+        }
         SVNErrorManager.authenticationFailed("Authentication required for ''{0}''", realm);
         return null;
     }
@@ -344,7 +350,11 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                     }
                     return new SVNPasswordAuthentication(myUserName, myPassword, myIsStore);
                 } else if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
-                    if (myUserName == null || "".equals(myUserName)) {                        
+                    if (myUserName == null || "".equals(myUserName)) {
+                        String userName = System.getProperty("svnkit.ssh2.author", System.getProperty("javasvn.ssh2.author"));
+                        if (userName != null) {
+                            new SVNUserNameAuthentication(userName, myIsStore);
+                        }
                         return null;
                     }
                     return new SVNUserNameAuthentication(myUserName, myIsStore);

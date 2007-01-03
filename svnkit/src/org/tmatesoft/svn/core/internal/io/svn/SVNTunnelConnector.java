@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
+import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
@@ -62,9 +63,15 @@ public class SVNTunnelConnector implements ISVNConnector {
             if (auth == null) {
                 SVNErrorManager.cancel("Authentication cancelled");
             }
+            String userName = auth.getUserName();
+            if (userName == null || "".equals(userName.trim())) {
+                userName = System.getProperty("user.name");
+            }
+            auth = new SVNUserNameAuthentication(userName, auth.isStorageAllowed());
             repository.getAuthenticationManager().acknowledgeAuthentication(true, ISVNAuthenticationManager.USERNAME, host, null, auth);
-            expandedTunnel += " --tunnel-user " + auth.getUserName();
-            repository.setExternalUserName(auth.getUserName());
+            expandedTunnel += " --tunnel-user " + userName;
+            
+            repository.setExternalUserName(userName);
         } 
         
         // 4. launch process.       

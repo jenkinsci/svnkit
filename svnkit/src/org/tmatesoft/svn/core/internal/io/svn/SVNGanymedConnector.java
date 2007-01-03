@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
+import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
@@ -85,13 +86,19 @@ public class SVNGanymedConnector implements ISVNConnector {
                 if (author == null) {
                     SVNErrorManager.cancel("authentication cancelled");
                 }
-                authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.USERNAME, realm, null, author);
+                String userName = author.getUserName();
+                if (userName == null || "".equals(userName.trim())) {
+                    userName = authentication.getUserName();
+                }
                 if (author.getUserName() == null || author.getUserName().equals(authentication.getUserName()) || 
                         "".equals(author.getUserName())) {
                     repository.setExternalUserName("");
                 } else {
                     repository.setExternalUserName(author.getUserName()); 
                 }
+                author = new SVNUserNameAuthentication(userName, author.isStorageAllowed());
+                authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.USERNAME, realm, null, author);
+
                 if ("".equals(repository.getExternalUserName())) {
                     mySession.execCommand(SVNSERVE_COMMAND);
                 } else {
