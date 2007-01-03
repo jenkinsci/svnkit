@@ -411,7 +411,7 @@ public class SVNWCManager {
                 doEraseFromWC(childPath, childDir, entry.getKind(), deleteFiles);
                 
             }
-            File[] children = path.listFiles();
+            File[] children = SVNFileListUtil.listFiles(path);
             for(int i = 0; children != null && i < children.length; i++) {
                 if (SVNFileUtil.getAdminDirectoryName().equals(children[i].getName())) {
                     continue;

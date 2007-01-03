@@ -37,6 +37,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
@@ -421,7 +422,7 @@ public class FSFS {
         Map result = new HashMap(); 
         File txnsDir = getTransactionsParentDir();
 
-        File[] entries = txnsDir.listFiles();
+        File[] entries = SVNFileListUtil.listFiles(txnsDir);
         for (int i = 0; i < entries.length; i++) {
             File entry = entries[i];
             if (entry.getName().length() <= TXN_PATH_EXT.length() || !entry.getName().endsWith(TXN_PATH_EXT)) {

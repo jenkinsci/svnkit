@@ -508,7 +508,7 @@ public class SVNStatusEditor {
     }
     
     private static Map getChildrenFiles(File parent) {
-        File[] children = parent.listFiles();
+        File[] children = SVNFileListUtil.listFiles(parent);
         if (children != null) {
             Map map = new HashMap();
             for (int i = 0; i < children.length; i++) {

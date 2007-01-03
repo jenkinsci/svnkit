@@ -43,6 +43,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNCancellableOutputStream;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
+import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
@@ -1029,7 +1030,7 @@ public class SVNWCClient extends SVNBasicClient {
         if (!noIgnore) {
             ignores = SVNStatusEditor.getIgnorePatterns(dir, SVNStatusEditor.getGlobalIgnores(getOptions()));
         }
-        File[] children = dir.getRoot().listFiles();
+        File[] children = SVNFileListUtil.listFiles(dir.getRoot());
         for(int i = 0; children != null && i < children.length; i++) {
             checkCancelled();
             if (SVNFileUtil.getAdminDirectoryName().equals(children[i].getName())) {

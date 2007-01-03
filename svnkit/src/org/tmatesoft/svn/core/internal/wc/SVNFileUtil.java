@@ -55,6 +55,7 @@ public class SVNFileUtil {
     private static final String ENV_COMMAND;
 
     public final static boolean isWindows;
+    public final static boolean isOSX;
     
     public final static OutputStream DUMMY_OUT = new OutputStream() {
         public void write(int b) throws IOException {
@@ -80,6 +81,7 @@ public class SVNFileUtil {
             windows = osName.toLowerCase().indexOf("os/2") >= 0;
         }
         isWindows = windows;
+        isOSX = !isWindows && osName != null && osName.toLowerCase().indexOf("mac") >= 0;
         
         String prefix = "svnkit.program.";
 
@@ -550,7 +552,7 @@ public class SVNFileUtil {
             return;
         }
         SVNFileType fileType = SVNFileType.getType(dir);
-        File[] children = fileType == SVNFileType.DIRECTORY ? dir.listFiles() : null;
+        File[] children = fileType == SVNFileType.DIRECTORY ? SVNFileListUtil.listFiles(dir) : null;
         if (children != null) {
             if (cancelBaton != null) {
                 cancelBaton.checkCancelled();
@@ -801,7 +803,7 @@ public class SVNFileUtil {
             dstDir.mkdirs();
             dstDir.setLastModified(srcDir.lastModified());
         }
-        File[] files = srcDir.listFiles();
+        File[] files = SVNFileListUtil.listFiles(srcDir);
         for (int i = 0; files != null && i < files.length; i++) {
             File file = files[i];
             if (file.getName().equals("..") || file.getName().equals(".")

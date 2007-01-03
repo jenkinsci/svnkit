@@ -80,7 +80,7 @@ public class SVNFileType {
                 return SVNFileType.SYMLINK;
             } else if (!canonPathCacheUsed || fastSymlinkResoution) {            
                 if (!file.exists()) {
-                    File[] children = file.getParentFile() != null ? file.getParentFile().listFiles() : null;
+                    File[] children = file.getParentFile() != null ? SVNFileListUtil.listFiles(file.getParentFile()) : null;
                     for (int i = 0; children != null && i < children.length; i++) {
                         File child = children[i];
                         if (child.getName().equals(file.getName())) {

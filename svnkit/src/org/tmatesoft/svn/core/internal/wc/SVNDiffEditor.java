@@ -460,7 +460,7 @@ public class SVNDiffEditor implements ISVNEditor {
     }
 
     private void diffUnversioned(File root, SVNAdminArea dir, boolean anchor, Set processedFiles) throws SVNException {
-        File[] allFiles = root.listFiles();
+        File[] allFiles = SVNFileListUtil.listFiles(root);
         for (int i = 0; allFiles != null && i < allFiles.length; i++) {
             File file = allFiles[i];
             if (SVNFileUtil.getAdminDirectoryName().equals(file.getName())) {

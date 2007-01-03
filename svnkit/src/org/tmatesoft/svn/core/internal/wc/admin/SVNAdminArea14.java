@@ -40,6 +40,7 @@ import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
@@ -1728,7 +1729,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         if (killMe) {
             return false;
         }
-        File[] logs = getAdminDirectory().listFiles();
+        File[] logs = SVNFileListUtil.listFiles(getAdminDirectory());
         for (int i = 0; logs != null && i < logs.length; i++) {
             File log = logs[i];
             if ("log".equals(log.getName()) || log.getName().startsWith("log.")) {

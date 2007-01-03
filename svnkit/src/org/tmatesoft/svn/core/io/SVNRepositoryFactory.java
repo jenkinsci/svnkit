@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
@@ -254,7 +255,7 @@ public abstract class SVNRepositoryFactory {
         SVNFileType fType = SVNFileType.getType(path);
         if (fType != SVNFileType.NONE) {
             if (fType == SVNFileType.DIRECTORY) {
-                File[] children = path.listFiles();
+                File[] children = SVNFileListUtil.listFiles(path);
                 if ( children != null && children.length != 0) {
                     if (!force) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "''{0}'' already exists; use ''force'' to overwrite existing files", path);
@@ -442,7 +443,7 @@ public abstract class SVNRepositoryFactory {
     }
     
     private static void translateFiles(File directory) throws SVNException {
-        File[] children = directory.listFiles();
+        File[] children = SVNFileListUtil.listFiles(directory);
         byte[] eol = new byte[] {'\n'};
         for (int i = 0; children != null && i < children.length; i++) {
             File child = children[i];

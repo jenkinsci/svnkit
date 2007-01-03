@@ -40,6 +40,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNCommitUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitter;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
+import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNImportMediator;
@@ -978,7 +979,7 @@ public class SVNCommitClient extends SVNBasicClient {
 
     private boolean importDir(SVNDeltaGenerator deltaGenerator, File rootFile, File dir, String importPath, boolean useGlobalIgnores, boolean recursive, ISVNEditor editor) throws SVNException {
         checkCancelled();
-        File[] children = dir.listFiles();
+        File[] children = SVNFileListUtil.listFiles(dir);
         boolean changed = false;
         for (int i = 0; children != null && i < children.length; i++) {
             File file = children[i];

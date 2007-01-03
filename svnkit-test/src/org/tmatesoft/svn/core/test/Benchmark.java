@@ -22,6 +22,7 @@ import org.tigris.subversion.javahl.Revision;
 import org.tigris.subversion.javahl.SVNClient;
 import org.tigris.subversion.javahl.SVNClientInterface;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.javahl.SVNClientImpl;
 
@@ -159,7 +160,7 @@ public class Benchmark {
         String dstPath = path + "/subversion/clients2";
         client.move(srcPath, dstPath, "", true);
         // modify files.
-        File[] files = new File(path + "/www").listFiles();
+        File[] files = SVNFileListUtil.listFiles(new File(path + "/www"));
         try {
             for (int i = 0; i < files.length; i++) {
                 if (files[i].isDirectory()) {
