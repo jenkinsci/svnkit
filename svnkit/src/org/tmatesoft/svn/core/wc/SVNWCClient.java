@@ -1627,7 +1627,7 @@ public class SVNWCClient extends SVNBasicClient {
                 depth = segments;
             }
         }
-        wcAccess.probeOpen(new File(commonParentPath), true, depth);
+        wcAccess.probeOpen(new File(commonParentPath).getAbsoluteFile(), true, depth);
         for (int i = 0; i < paths.length; i++) {
             File file = new File(commonParentPath, paths[i]);
             SVNEntry entry = wcAccess.getEntry(file, false);

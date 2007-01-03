@@ -234,18 +234,6 @@ public class SVNPathUtil {
         return protocol.toString();
     }
 
-    public static File getCommonFileAncestor(File file1, File file2) {
-        String path1 = file1.getAbsolutePath();
-        String path2 = file2.getAbsolutePath();
-        path1 = validateFilePath(path1);
-        path2 = validateFilePath(path2);
-        String commonPath = getCommonPathAncestor(path1, path2);
-        if (commonPath != null) {
-            return new File(commonPath);
-        }
-        return null;
-    }
-
     public static String condenceURLs(String[] urls, Collection condencedPaths,
             boolean removeRedundantURLs) {
         if (urls == null || urls.length == 0) {

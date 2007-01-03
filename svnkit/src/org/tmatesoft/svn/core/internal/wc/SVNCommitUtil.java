@@ -125,12 +125,8 @@ public class SVNCommitUtil {
         if (rootPath == null) {
             return null;
         }
-        if (SVNFileUtil.isWindows && rootPath.endsWith(":") && rootPath.indexOf('/') < 0) {
-            rootPath += "/";
-        } else if (!SVNFileUtil.isWindows && rootPath.equals("")) {
-            rootPath = "/";
-        }
-        File baseDir = new File(rootPath);
+        File baseDir = new File(rootPath).getAbsoluteFile();
+        rootPath = baseDir.getAbsolutePath().replace(File.separatorChar, '/');
         Collection dirsToLock = new HashSet(); // relative paths to lock.
         Collection dirsToLockRecursively = new HashSet(); 
         boolean lockAll = false;
