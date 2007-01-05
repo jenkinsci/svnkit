@@ -17,17 +17,23 @@ import java.io.PrintStream;
 
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.admin.ISVNDumpHandler;
+import org.tmatesoft.svn.core.wc.admin.ISVNAdminEventHandler;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminClient;
+import org.tmatesoft.svn.core.wc.admin.SVNAdminEvent;
+import org.tmatesoft.svn.core.wc.admin.SVNAdminEventAction;
 
 /**
  * @version 1.1
  * @author  TMate Software Ltd.
  */
-public class SVNAdminDumpCommand extends SVNCommand {
-
+public class SVNAdminDumpCommand extends SVNCommand implements ISVNAdminEventHandler {
+    private boolean myIsQuiet;
+    private PrintStream myOut;
+    
     public void run(InputStream in, PrintStream out, PrintStream err) throws SVNException {
         run(out, err);
     }
@@ -52,20 +58,24 @@ public class SVNAdminDumpCommand extends SVNCommand {
         boolean isIncremental = getCommandLine().hasArgument(SVNArgument.INCREMENTAL);
         boolean useDeltas = getCommandLine().hasArgument(SVNArgument.DELTAS);
         
-        SVNAdminClient adminClient = getClientManager().getAdminClient();
-        ISVNDumpHandler handler = null;
-        if (!getCommandLine().hasArgument(SVNArgument.QUIET)) {
-            final PrintStream output = err;
-            handler = new ISVNDumpHandler() {
-                public void handleDumpRevision(long rev) throws SVNException {
-                    output.println("* Dumped revision " + rev + ".");
-                }
+        myIsQuiet = getCommandLine().hasArgument(SVNArgument.QUIET); 
+        myOut = err;
 
-                public void handleLoadRevision(long rev, long original) throws SVNException {
-                }
-            };
-        }
-        adminClient.doDump(reposRoot, out, rStart, rEnd, isIncremental, useDeltas, handler);
+        SVNAdminClient adminClient = getClientManager().getAdminClient();
+        adminClient.setEventHandler(this);
+        adminClient.doDump(reposRoot, out, rStart, rEnd, isIncremental, useDeltas);
     }
 
+    public void handleAdminEvent(SVNAdminEvent event, double progress) throws SVNException {
+        if (!myIsQuiet && event != null && event.getAction() == SVNAdminEventAction.REVISION_DUMPED) {
+            long rev = event.getRevision();
+            myOut.println("* Dumped revision " + rev + ".");
+        }
+    }
+    
+    public void handleEvent(SVNEvent event, double progress) throws SVNException {
+    }    
+    
+    public void checkCancelled() throws SVNCancelException {
+    }
 }

@@ -55,7 +55,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
  */
 public class SVNLookClient extends SVNBasicClient {
     private ISVNGNUDiffGenerator myDiffGenerator;
-
+    
     public SVNLookClient(ISVNAuthenticationManager authManager, ISVNOptions options) {
         super(authManager, options);
     }

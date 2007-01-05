@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2006 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -11,19 +11,14 @@
  */
 package org.tmatesoft.svn.core.wc.admin;
 
-import java.io.File;
-
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 
 
 /**
  * @version 1.1
  * @author  TMate Software Ltd.
  */
-public interface ISVNTransactionHandler {
-    
-    public void handleTransaction(String txnName, File txnDir) throws SVNException;
-    
-    public void handleRemoveTransaction(String txnName, File txnDir) throws SVNException;
-
+public interface ISVNAdminEventHandler extends ISVNEventHandler {
+    public void handleAdminEvent(SVNAdminEvent event, double progress) throws SVNException;
 }

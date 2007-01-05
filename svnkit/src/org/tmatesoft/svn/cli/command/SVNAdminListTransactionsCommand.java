@@ -16,16 +16,21 @@ import java.io.InputStream;
 import java.io.PrintStream;
 
 import org.tmatesoft.svn.cli.SVNCommand;
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.admin.ISVNTransactionHandler;
+import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.admin.ISVNAdminEventHandler;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminClient;
+import org.tmatesoft.svn.core.wc.admin.SVNAdminEvent;
+import org.tmatesoft.svn.core.wc.admin.SVNAdminEventAction;
 
 
 /**
  * @version 1.1
  * @author  TMate Software Ltd.
  */
-public class SVNAdminListTransactionsCommand extends SVNCommand {
+public class SVNAdminListTransactionsCommand extends SVNCommand implements ISVNAdminEventHandler {
+    private PrintStream myOut;
 
     public void run(PrintStream out, PrintStream err) throws SVNException {
         if (!getCommandLine().hasPaths()) {
@@ -34,29 +39,27 @@ public class SVNAdminListTransactionsCommand extends SVNCommand {
         }
         File reposRoot = new File(getCommandLine().getPathAt(0));  
 
-        ListTransactionHandler handler = new ListTransactionHandler(out);
+        myOut = out;
         SVNAdminClient adminClient = getClientManager().getAdminClient();
-        adminClient.doListTransactions(reposRoot, handler);
+        adminClient.setEventHandler(this);
+        adminClient.doListTransactions(reposRoot);
     }
 
     public void run(InputStream in, PrintStream out, PrintStream err) throws SVNException {
         run(out, err);
     }
 
-    private class ListTransactionHandler implements ISVNTransactionHandler {
-
-        private PrintStream myOut;
-        
-        public ListTransactionHandler(PrintStream out) {
-            myOut = out;
-        }
-        
-        public void handleRemoveTransaction(String txnName, File txnDir) throws SVNException {
-        }
-        
-        public void handleTransaction(String txnName, File txnDir) throws SVNException {
+    public void handleAdminEvent(SVNAdminEvent event, double progress) throws SVNException {
+        if (event != null && event.getAction() == SVNAdminEventAction.TRANSACTION_LISTED) {
+            String txnName = event.getTxnName();
             SVNCommand.println(myOut, txnName);
         }
+    }
+    
+    public void handleEvent(SVNEvent event, double progress) throws SVNException {
+    }    
+    
+    public void checkCancelled() throws SVNCancelException {
     }
 
 }

@@ -34,9 +34,12 @@ import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionRoot;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUUIDAction;
-import org.tmatesoft.svn.core.wc.admin.ISVNDumpHandler;
+import org.tmatesoft.svn.core.wc.admin.ISVNAdminEventHandler;
+import org.tmatesoft.svn.core.wc.admin.SVNAdminEvent;
+import org.tmatesoft.svn.core.wc.admin.SVNAdminEventAction;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 
@@ -56,9 +59,9 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
     private SVNUUIDAction myUUIDAction;
     private SVNDeltaReader myDeltaReader;
     private SVNDeltaGenerator myDeltaGenerator;
-    private ISVNDumpHandler myProgressHandler;
+    private ISVNAdminEventHandler myProgressHandler;
     
-    public DefaultLoadHandler(boolean usePreCommitHook, boolean usePostCommitHook, SVNUUIDAction uuidAction, String parentDir, ISVNDumpHandler progressHandler) {
+    public DefaultLoadHandler(boolean usePreCommitHook, boolean usePostCommitHook, SVNUUIDAction uuidAction, String parentDir, ISVNAdminEventHandler progressHandler) {
         myProgressHandler = progressHandler;
         myIsUsePreCommitHook = usePreCommitHook;
         myIsUsePostCommitHook = usePostCommitHook;
@@ -127,7 +130,8 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
             }
             
             if (myProgressHandler != null) {
-                myProgressHandler.handleLoadRevision(newRevision, baton.myRevision);
+                SVNAdminEvent event = new SVNAdminEvent(newRevision, baton.myRevision, SVNAdminEventAction.REVISION_LOADED); 
+                myProgressHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
             }
         }
     }
