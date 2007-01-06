@@ -20,7 +20,7 @@ import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.admin.ISVNPathHandler;
+import org.tmatesoft.svn.core.wc.admin.ISVNHistoryHandler;
 import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
 
 
@@ -28,7 +28,7 @@ import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
  * @version 1.1
  * @author  TMate Software Ltd.
  */
-public class SVNLookHistoryCommand extends SVNCommand implements ISVNPathHandler {
+public class SVNLookHistoryCommand extends SVNCommand implements ISVNHistoryHandler {
     private PrintStream myOut;
     private boolean myIsIncludeIDs;
     
@@ -75,11 +75,5 @@ public class SVNLookHistoryCommand extends SVNCommand implements ISVNPathHandler
         } else {
             SVNCommand.println(myOut, revision + "   " + path);
         }
-    }
-
-    public void handleDir(String path) throws SVNException {
-    }
-    
-    public void handlePath(String path, String nodeID, int depth, boolean isDir) throws SVNException {
     }
 }

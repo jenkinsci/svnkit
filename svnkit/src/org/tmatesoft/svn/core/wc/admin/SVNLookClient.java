@@ -195,7 +195,7 @@ public class SVNLookClient extends SVNBasicClient {
         editor.traverseTree(includeCopyInfo, handler);
     }
 
-    public void doGetChangedDirectories(File repositoryRoot, SVNRevision revision, ISVNPathHandler handler) throws SVNException {
+    public void doGetChangedDirectories(File repositoryRoot, SVNRevision revision, ISVNChangedDirectoriesHandler handler) throws SVNException {
         FSFS fsfs = open(repositoryRoot, revision);
         long revNum = SVNAdminHelper.getRevisionNumber(revision, fsfs.getYoungestRevision(), fsfs);
         FSRoot root = fsfs.createRevisionRoot(revNum);
@@ -204,7 +204,7 @@ public class SVNLookClient extends SVNBasicClient {
         editor.traverseChangedDirs(handler);
     }
 
-    public void doGetChangedDirectories(File repositoryRoot, String transactionName, ISVNPathHandler handler) throws SVNException {
+    public void doGetChangedDirectories(File repositoryRoot, String transactionName, ISVNChangedDirectoriesHandler handler) throws SVNException {
         FSFS fsfs = open(repositoryRoot, transactionName);
         FSTransactionInfo txn = fsfs.openTxn(transactionName);
         FSRoot root = fsfs.createTransactionRoot(txn.getTxnId());
@@ -218,7 +218,7 @@ public class SVNLookClient extends SVNBasicClient {
         editor.traverseChangedDirs(handler);
     }
 
-    public void doGetHistory(File repositoryRoot, String path, SVNRevision revision, boolean includeIDs, ISVNPathHandler handler) throws SVNException {
+    public void doGetHistory(File repositoryRoot, String path, SVNRevision revision, boolean includeIDs, ISVNHistoryHandler handler) throws SVNException {
         FSFS fsfs = open(repositoryRoot, revision);
         long revNum = SVNAdminHelper.getRevisionNumber(revision, fsfs.getYoungestRevision(), fsfs);
         path = path == null ? "/" : path;
@@ -234,7 +234,7 @@ public class SVNLookClient extends SVNBasicClient {
         return fsfs.getLockHelper(path, false);
     }
 
-    public void doGetTree(File repositoryRoot, String path, SVNRevision revision, boolean includeIDs, ISVNPathHandler handler) throws SVNException {
+    public void doGetTree(File repositoryRoot, String path, SVNRevision revision, boolean includeIDs, ISVNTreeHandler handler) throws SVNException {
         FSFS fsfs = open(repositoryRoot, revision);
         long revNum = SVNAdminHelper.getRevisionNumber(revision, fsfs.getYoungestRevision(), fsfs);
         FSRoot root = fsfs.createRevisionRoot(revNum);
@@ -245,7 +245,7 @@ public class SVNLookClient extends SVNBasicClient {
         getTree(fsfs, root, path, kind, id, includeIDs, 0, handler);
     }
 
-    public void doGetTree(File repositoryRoot, String path, String transactionName, boolean includeIDs, ISVNPathHandler handler) throws SVNException {
+    public void doGetTree(File repositoryRoot, String path, String transactionName, boolean includeIDs, ISVNTreeHandler handler) throws SVNException {
         FSFS fsfs = open(repositoryRoot, transactionName);
         FSTransactionInfo txn = fsfs.openTxn(transactionName);
         FSRoot root = fsfs.createTransactionRoot(txn.getTxnId());
@@ -338,7 +338,7 @@ public class SVNLookClient extends SVNBasicClient {
         return myDiffGenerator;
     }
 
-    private void getTree(FSFS fsfs, FSRoot root, String path, SVNNodeKind kind, FSID id, boolean includeIDs, int depth, ISVNPathHandler handler) throws SVNException {
+    private void getTree(FSFS fsfs, FSRoot root, String path, SVNNodeKind kind, FSID id, boolean includeIDs, int depth, ISVNTreeHandler handler) throws SVNException {
         checkCancelled();
         if (handler != null) {
             handler.handlePath(path, includeIDs ? id.toString() : null, depth, kind == SVNNodeKind.DIR);
@@ -388,7 +388,7 @@ public class SVNLookClient extends SVNBasicClient {
         return node.getProperties(fsfs);
     }
 
-    private void getHistory(FSFS fsfs, String path, long start, long end, boolean crossCopies, boolean includeIDs, ISVNPathHandler handler) throws SVNException {
+    private void getHistory(FSFS fsfs, String path, long start, long end, boolean crossCopies, boolean includeIDs, ISVNHistoryHandler handler) throws SVNException {
         if (!SVNRevision.isValidRevisionNumber(start)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Invalid start revision {0,number,integer}", new Long(start));
             SVNErrorManager.error(err);

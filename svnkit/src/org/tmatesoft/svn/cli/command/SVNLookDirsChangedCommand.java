@@ -19,7 +19,7 @@ import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.admin.ISVNPathHandler;
+import org.tmatesoft.svn.core.wc.admin.ISVNChangedDirectoriesHandler;
 import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
 
 
@@ -27,7 +27,7 @@ import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
  * @version 1.1
  * @author  TMate Software Ltd.
  */
-public class SVNLookDirsChangedCommand extends SVNCommand implements ISVNPathHandler {
+public class SVNLookDirsChangedCommand extends SVNCommand implements ISVNChangedDirectoriesHandler {
     private PrintStream myOut;
     
     public void run(PrintStream out, PrintStream err) throws SVNException {
@@ -61,12 +61,6 @@ public class SVNLookDirsChangedCommand extends SVNCommand implements ISVNPathHan
             path += "/"; 
         }
         SVNCommand.println(myOut, path);
-    }
-    
-    public void handlePath(long revision, String path, String nodeID) throws SVNException {
-    }
-
-    public void handlePath(String path, String nodeID, int depth, boolean isDir) throws SVNException {
     }
 
 }

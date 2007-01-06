@@ -41,8 +41,8 @@ import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.ISVNChangeEntryHandler;
+import org.tmatesoft.svn.core.wc.admin.ISVNChangedDirectoriesHandler;
 import org.tmatesoft.svn.core.wc.admin.ISVNGNUDiffGenerator;
-import org.tmatesoft.svn.core.wc.admin.ISVNPathHandler;
 import org.tmatesoft.svn.core.wc.admin.SVNChangeEntry;
 
 /**
@@ -200,7 +200,7 @@ public class SVNNodeEditor implements ISVNEditor {
         }
     }
     
-    public void traverseChangedDirs(ISVNPathHandler handler) throws SVNException {
+    public void traverseChangedDirs(ISVNChangedDirectoriesHandler handler) throws SVNException {
         if (myRootNode != null) {
             traverseChangedDirsImpl(myRootNode, "/", handler);
         }
@@ -362,7 +362,7 @@ public class SVNNodeEditor implements ISVNEditor {
         }
     }
 
-    private void traverseChangedDirsImpl(Node node, String path, ISVNPathHandler handler) throws SVNException {
+    private void traverseChangedDirsImpl(Node node, String path, ISVNChangedDirectoriesHandler handler) throws SVNException {
         if (myCancelHandler != null) {
             myCancelHandler.checkCancelled();
         }
