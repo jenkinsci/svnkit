@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2006 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -21,12 +21,14 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.ISVNHistoryHandler;
+import org.tmatesoft.svn.core.wc.admin.SVNAdminPath;
 import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
 
 
 /**
- * @version 1.1
+ * @version 1.1.1
  * @author  TMate Software Ltd.
+ * @since   1.1.1
  */
 public class SVNLookHistoryCommand extends SVNCommand implements ISVNHistoryHandler {
     private PrintStream myOut;
@@ -69,11 +71,14 @@ public class SVNLookHistoryCommand extends SVNCommand implements ISVNHistoryHand
         run(out, err);
     }
         
-    public void handlePath(long revision, String path, String nodeID) throws SVNException {
-        if (myIsIncludeIDs) {
-            SVNCommand.println(myOut, revision + "   " + path + " <" + nodeID + ">");
-        } else {
-            SVNCommand.println(myOut, revision + "   " + path);
+    public void handlePath(SVNAdminPath path) throws SVNException {
+        if (path != null) {
+            if (myIsIncludeIDs) {
+                SVNCommand.println(myOut, path.getRevision() + "   " + path.getPath() + " <" + path.getNodeID() + ">");
+            } else {
+                SVNCommand.println(myOut, path.getRevision() + "   " + path.getPath());
+            }
         }
     }
+
 }

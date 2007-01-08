@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2006 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -21,12 +21,14 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.ISVNTreeHandler;
+import org.tmatesoft.svn.core.wc.admin.SVNAdminPath;
 import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
 
 
 /**
- * @version 1.1
+ * @version 1.1.1
  * @author  TMate Software Ltd.
+ * @since   1.1.1
  */
 public class SVNLookTreeCommand extends SVNCommand implements ISVNTreeHandler {
     private PrintStream myOut;
@@ -56,37 +58,40 @@ public class SVNLookTreeCommand extends SVNCommand implements ISVNTreeHandler {
         lookClient.doGetTree(reposRoot, path, revision, myIsIncludeIDs, this);
     }
 
-    public void handlePath(String path, String nodeID, int depth, boolean isDir) throws SVNException {
-        String indentation = null;
-        if (!myIsFullPaths) {
-            indentation = "";
-            for (int i = 0; i < depth; i++) {
-                indentation += " ";
-            }
-        } 
-        
-        if (myIsFullPaths) {
-            path = path.startsWith("/") && !"/".equals(path) ? path.substring(1) : path;
-            if (isDir && !"/".equals(path) && !path.endsWith("/")) {
-                path += "/";
-            }
-            SVNCommand.print(myOut, path);
-        } else {
-            path = !"/".equals(path) ? SVNPathUtil.tail(path) : path;
-            if (isDir && !"/".equals(path) && !path.endsWith("/")) {
-                path += "/";
-            }
-            SVNCommand.print(myOut, indentation + path);    
-        }
-
-        if (myIsIncludeIDs) {
-            SVNCommand.print(myOut, " <" + (nodeID != null ? nodeID.toString() : "unknown") + ">");    
-        }
-        SVNCommand.println(myOut, "");    
-    }
-
     public void run(InputStream in, PrintStream out, PrintStream err) throws SVNException {
         run(out, err);
+    }
+
+    public void handlePath(SVNAdminPath adminPath) throws SVNException {
+        if (adminPath != null) {
+            String indentation = null;
+            if (!myIsFullPaths) {
+                indentation = "";
+                for (int i = 0; i < adminPath.getTreeDepth(); i++) {
+                    indentation += " ";
+                }
+            } 
+            
+            String path = adminPath.getPath();
+            if (myIsFullPaths) {
+                path = path.startsWith("/") && !"/".equals(path) ? path.substring(1) : path;
+                if (adminPath.isDir() && !"/".equals(path) && !path.endsWith("/")) {
+                    path += "/";
+                }
+                SVNCommand.print(myOut, path);
+            } else {
+                path = !"/".equals(path) ? SVNPathUtil.tail(path) : path;
+                if (adminPath.isDir() && !"/".equals(path) && !path.endsWith("/")) {
+                    path += "/";
+                }
+                SVNCommand.print(myOut, indentation + path);    
+            }
+    
+            if (myIsIncludeIDs) {
+                SVNCommand.print(myOut, " <" + (adminPath.getNodeID() != null ? adminPath.getNodeID() : "unknown") + ">");    
+            }
+            SVNCommand.println(myOut, "");
+        }
     }
 
 }

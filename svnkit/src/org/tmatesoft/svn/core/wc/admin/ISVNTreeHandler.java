@@ -19,5 +19,5 @@ import org.tmatesoft.svn.core.SVNException;
  * @author  TMate Software Ltd.
  */
 public interface ISVNTreeHandler {
-    public void handlePath(String path, String nodeID, int treeDepth, boolean isDir) throws SVNException;
+    public void handlePath(SVNAdminPath path) throws SVNException;
 }

@@ -341,7 +341,7 @@ public class SVNLookClient extends SVNBasicClient {
     private void getTree(FSFS fsfs, FSRoot root, String path, SVNNodeKind kind, FSID id, boolean includeIDs, int depth, ISVNTreeHandler handler) throws SVNException {
         checkCancelled();
         if (handler != null) {
-            handler.handlePath(path, includeIDs ? id.toString() : null, depth, kind == SVNNodeKind.DIR);
+            handler.handlePath(new SVNAdminPath(path, includeIDs ? id.toString() : null, depth, kind == SVNNodeKind.DIR));
         }
         
         if (kind != SVNNodeKind.DIR) {
@@ -426,7 +426,7 @@ public class SVNLookClient extends SVNBasicClient {
             }
 
             if (handler != null) {
-                handler.handlePath(revision, history.getHistoryEntry().getPath(), id);
+                handler.handlePath(new SVNAdminPath(history.getHistoryEntry().getPath(), id, revision));
             }
         } while (history != null);
 
