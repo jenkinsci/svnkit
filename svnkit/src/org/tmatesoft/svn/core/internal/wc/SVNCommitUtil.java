@@ -226,6 +226,7 @@ public class SVNCommitUtil {
             for(int i = 0; i < paths.length; i++) {
                 statusClient.checkCancelled();
                 File path = new File(SVNPathUtil.validateFilePath(paths[i].getAbsolutePath()));
+                path = path.getAbsoluteFile();
                 try {
                     baseAccess.probeRetrieve(path);
                 } catch (SVNException e) {

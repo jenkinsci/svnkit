@@ -406,6 +406,9 @@ public class SVNWCAccess implements ISVNEventHandler {
     
     public boolean isWCRoot(File path) throws SVNException {
         SVNEntry entry = getEntry(path, false);
+        if (path.getParentFile() == null && entry != null) {
+            return true;
+        }
         SVNAdminArea parentArea = getAdminArea(path.getParentFile());
         if (parentArea == null) {
             try {
