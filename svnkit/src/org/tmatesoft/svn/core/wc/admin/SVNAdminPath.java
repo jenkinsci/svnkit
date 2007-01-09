@@ -15,6 +15,7 @@ package org.tmatesoft.svn.core.wc.admin;
 /**
  * @version 1.1.1
  * @author  TMate Software Ltd.
+ * @since   1.1.1
  */
 public class SVNAdminPath {
     private String myPath;

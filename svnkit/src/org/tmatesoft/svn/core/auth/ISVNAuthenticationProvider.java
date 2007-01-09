@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2006 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -29,7 +29,7 @@ import org.tmatesoft.svn.core.SVNURL;
  * that saves credentials in and retrieves them from the in-memory cache only during runtime (not on the disk); 
  * or the default one that uses the auth area cache (read the <a href="http://svnbook.red-bean.com/nightly/en/svn-book.html#svn.serverconfig.netmodel.credcache">Subversion book chapter</a>).    
  * 
- * @version 1.1.0
+ * @version 1.1.1
  * @author  TMate Software Ltd.
  * @see     ISVNAuthenticationManager
  * @see     org.tmatesoft.svn.core.io.SVNRepository

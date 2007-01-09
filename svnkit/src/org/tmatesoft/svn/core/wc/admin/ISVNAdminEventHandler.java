@@ -16,8 +16,9 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 
 
 /**
- * @version 1.1
+ * @version 1.1.1
  * @author  TMate Software Ltd.
+ * @since   1.1.1
  */
 public interface ISVNAdminEventHandler extends ISVNEventHandler {
     public void handleAdminEvent(SVNAdminEvent event, double progress) throws SVNException;

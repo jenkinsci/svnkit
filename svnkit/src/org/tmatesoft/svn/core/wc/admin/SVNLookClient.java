@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2006 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -50,8 +50,9 @@ import org.tmatesoft.svn.core.wc.SVNBasicClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 /**
- * @version 1.1
- * @author TMate Software Ltd.
+ * @version 1.1.1
+ * @author  TMate Software Ltd.
+ * @since   1.1.1
  */
 public class SVNLookClient extends SVNBasicClient {
     private ISVNGNUDiffGenerator myDiffGenerator;

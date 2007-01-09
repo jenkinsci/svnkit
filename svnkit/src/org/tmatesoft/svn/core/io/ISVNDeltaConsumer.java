@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2006 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -23,7 +23,7 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  * {@link org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator delta
  * generator} when generating a series of diff windows from sources (text/binary streams). 
  * 
- * @version 1.1.0
+ * @version 1.1.1
  * @author  TMate Software Ltd.
  */
 public interface ISVNDeltaConsumer {

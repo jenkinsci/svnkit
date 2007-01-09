@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2006 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -31,7 +31,7 @@ import org.xml.sax.SAXException;
  * This log handler implementation writes xml formatted information 
  * about the log entries it's passed to a specified <b>ContentHandler</b>. 
  * 
- * @version 1.1.0
+ * @version 1.1.1
  * @author  TMate Software Ltd.
  */
 public class SVNXMLLogHandler extends AbstractXMLHandler implements ISVNLogEntryHandler {

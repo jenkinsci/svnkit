@@ -15,8 +15,9 @@ import org.tmatesoft.svn.core.SVNException;
 
 
 /**
- * @version 1.1
+ * @version 1.1.1
  * @author  TMate Software Ltd.
+ * @since   1.1.1
  */
 public interface ISVNChangedDirectoriesHandler {
     public void handleDir(String path) throws SVNException;

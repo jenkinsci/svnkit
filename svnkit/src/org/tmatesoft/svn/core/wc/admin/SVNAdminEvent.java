@@ -15,8 +15,9 @@ import java.io.File;
 
 
 /**
- * @version 1.1
+ * @version 1.1.1
  * @author  TMate Software Ltd.
+ * @since   1.1.1
  */
 public class SVNAdminEvent {
     private String myTxnName;

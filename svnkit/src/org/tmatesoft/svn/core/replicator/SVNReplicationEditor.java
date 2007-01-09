@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2006 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -46,10 +46,10 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  * the calls of that driver to calls to a commit editor of the destination <b>SVNRepository</b> 
  * driver.   
  * 
- * @version 1.1.0
+ * @version 1.1.1
  * @author  TMate Software Ltd.
  * @see     org.tmatesoft.svn.core.io.SVNRepository
- * @since   1.1
+ * @since   1.1.0
  */
 public class SVNReplicationEditor implements ISVNEditor {
 
