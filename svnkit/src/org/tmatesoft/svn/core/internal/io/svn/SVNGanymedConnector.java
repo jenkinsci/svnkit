@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.io.svn;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -106,6 +107,7 @@ public class SVNGanymedConnector implements ISVNConnector {
                 }
     
                 myOutputStream = mySession.getStdin();
+                myOutputStream = new BufferedOutputStream(myOutputStream, 16*1024);
                 myInputStream = mySession.getStdout();
                 new StreamGobbler(mySession.getStderr());
                 if (!SVNGanymedSession.isUsePersistentConnection()) {
