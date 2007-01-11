@@ -398,7 +398,14 @@ class DAVRepository extends SVNRepository {
                         entry.setCommitMessage(message);
                     } else if (entry.getDate() != null) {
                         final SVNDirEntry currentEntry = entry;
-                        String commitMessage = DAVUtil.getPropertyValue(myConnection, vcc, label, logProperty);
+                        String commitMessage = null;
+                        try {
+                            commitMessage = DAVUtil.getPropertyValue(myConnection, vcc, label, logProperty);
+                        } catch (SVNException e) {
+                            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.RA_DAV_PROPS_NOT_FOUND) {
+                                throw e;
+                            }
+                        }
                         getOptions().saveCommitMessage(DAVRepository.this, currentEntry.getRevision(), commitMessage);
                         currentEntry.setCommitMessage(commitMessage);
                     }
