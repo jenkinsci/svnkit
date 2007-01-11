@@ -1,3 +1,9 @@
+= version 1.1.1
+
++ added support for svnlook features
++ added support for svnadmin dump/verify/load/rmtxns/lstxns features
++ bugfixes
+
 = version 1.1.0
 
 + command line application and API to perform svnsync.
