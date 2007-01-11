@@ -15,12 +15,20 @@ import org.tmatesoft.svn.core.SVNException;
 
 
 /**
+ * The <b>ISVNChangeEntryHandler</b> is the interface for handling changed paths 
+ * in <b>SVNLookClient</b>'s <code>doGetChanged()</code> methods.
+ * 
  * @version 1.1.1
  * @author  TMate Software Ltd.
  * @since   1.1.1
  */
 public interface ISVNChangeEntryHandler {
-    
+     /**
+      * Handles information on a changed path.
+      * 
+      * @param  entry            an object containing details of a path change
+      * @throws SVNException
+      */
     public void handleEntry(SVNChangeEntry entry) throws SVNException;
     
 }

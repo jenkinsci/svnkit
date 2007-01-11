@@ -15,10 +15,19 @@ import org.tmatesoft.svn.core.SVNException;
 
 
 /**
+ * The <b>ISVNHistoryHandler</b> is used in history retrieving 
+ * operations of <b>SVNLookClient</b>.
+ * 
  * @version 1.1.1
  * @author  TMate Software Ltd.
  * @since   1.1.1
  */
 public interface ISVNHistoryHandler {
+    /**
+     * Handles path information.
+     * 
+     * @param  path          repository path information
+     * @throws SVNException
+     */
     public void handlePath(SVNAdminPath path) throws SVNException;
 }

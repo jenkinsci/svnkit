@@ -36,10 +36,10 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNUUIDAction;
 import org.tmatesoft.svn.core.wc.admin.ISVNAdminEventHandler;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEvent;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEventAction;
+import org.tmatesoft.svn.core.wc.admin.SVNUUIDAction;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 

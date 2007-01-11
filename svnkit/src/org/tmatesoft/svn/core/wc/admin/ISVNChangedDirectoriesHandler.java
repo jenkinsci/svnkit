@@ -15,10 +15,18 @@ import org.tmatesoft.svn.core.SVNException;
 
 
 /**
+ * The <b>ISVNChangedDirectoriesHandler</b> is used to process changed 
+ * directory paths.
+ * 
  * @version 1.1.1
  * @author  TMate Software Ltd.
  * @since   1.1.1
  */
 public interface ISVNChangedDirectoriesHandler {
+    /**
+     * Handles changed directory path. <code>path</code> is always absolute.
+     * @param  path             a changed dir path
+     * @throws SVNException 
+     */
     public void handleDir(String path) throws SVNException;
 }

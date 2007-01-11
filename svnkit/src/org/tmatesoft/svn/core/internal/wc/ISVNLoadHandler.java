@@ -15,7 +15,7 @@ import java.io.InputStream;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.SVNUUIDAction;
+import org.tmatesoft.svn.core.wc.admin.SVNUUIDAction;
 
 
 

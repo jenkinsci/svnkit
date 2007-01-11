@@ -189,4 +189,8 @@ public class DefaultSVNGNUDiffGenerator extends DefaultSVNDiffGenerator implemen
         return true;
     }
 
+    protected boolean useLocalFileSeparatorChar() {
+        return false;
+    }
+
 }

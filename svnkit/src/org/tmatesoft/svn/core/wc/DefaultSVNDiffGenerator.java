@@ -184,7 +184,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         diff = new TreeMap(diff);
         try {
             bos.write(EOL);
-            bos.write(("Property changes on: " + path.replace('/', File.separatorChar)).getBytes(getEncoding()));
+            bos.write(("Property changes on: " + (useLocalFileSeparatorChar() ? path.replace('/', File.separatorChar) : path)).getBytes(getEncoding()));
             bos.write(EOL);
             bos.write(PROPERTIES_SEPARATOR);
             bos.write(EOL);
@@ -489,5 +489,9 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     
     protected boolean isHeaderForced(File file1, File file2) {
         return file1 == null && file2 != null;
+    }
+    
+    protected boolean useLocalFileSeparatorChar() {
+        return true;
     }
 }

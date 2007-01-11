@@ -13,6 +13,9 @@ package org.tmatesoft.svn.core.wc.admin;
 
 
 /**
+ * The <b>SVNAdminPath</b> is used to pass path information 
+ * to <b>ISVNHistoryHandler</b> and <b>ISVNTreeHandler</b> 
+ * 
  * @version 1.1.1
  * @author  TMate Software Ltd.
  * @since   1.1.1
@@ -25,51 +28,94 @@ public class SVNAdminPath {
     private boolean myIsDir;
     
     /**
-     * @param path
-     * @param nodeID
-     * @param revision
+     * Constructs a new instance of this class 
+     * that is intended for {@link ISVNHistoryHandler}. 
+     *  
+     * @param path        an absolute repository path
+     * @param nodeID      a node revision id (optional)
+     * @param revision    a revision
      */
     public SVNAdminPath(String path, String nodeID, long revision) {
-        super();
         myPath = path;
         myNodeID = nodeID;
         myRevision = revision;
+        myTreeDepth = -1;
     }
 
     /**
-     * @param path
-     * @param nodeID
-     * @param treeDepth
-     * @param isDir
+     * Constructs a new instance of this class 
+     * that is intended for {@link ISVNTreeHandler}.
+     *  
+     * @param path        an absolute repository path
+     * @param nodeID      a node revision id (optional)
+     * @param treeDepth   the depth at which <code>path</code> 
+     *                    is located in the tree   
+     * @param isDir       says whether <code>path</code> is 
+     *                    a directory or a file
      */
     public SVNAdminPath(String path, String nodeID, int treeDepth, boolean isDir) {
         myPath = path;
         myNodeID = nodeID;
         myTreeDepth = treeDepth;
         myIsDir = isDir;
+        myRevision = -1;
     }
 
-    
+    /**
+     * Says whether <code>path</code> is 
+     * a directory or a file. This information is 
+     * relevant only for {@link ISVNTreeHandler}.     
+     * 
+     * @return <span class="javakeyword">true</span> for 
+     *         a directory, <span class="javakeyword">false</span> 
+     *         for a file
+     */
     public boolean isDir() {
         return myIsDir;
     }
 
-    
+    /**
+     * Returns a node revision id.
+     * This information is relevant for both 
+     * {@link ISVNTreeHandler} and {@link ISVNHistoryHandler}.
+     * 
+     * @return a node revision id
+     */
     public String getNodeID() {
         return myNodeID;
     }
 
-    
+    /**
+     * Returns an absolute path. 
+     * 
+     * @return an absolute path that starts with <code>'/'</code> 
+     */
     public String getPath() {
         return myPath;
     }
 
-    
+    /**
+     * Returns a revision number.  
+     * This information is relevant only for 
+     * {@link ISVNHistoryHandler}.
+     * 
+     * @return a revision number
+     */
     public long getRevision() {
         return myRevision;
     }
 
-    
+    /**
+     * Returns a tree depth for this path.
+     * Repository root <code>"/"</code> starts 
+     * at depth 0. Depth is incremented with every 
+     * other segment of path.  
+     * <p>
+     * This information is relevant only for 
+     * {@link ISVNTreeHandler}.
+     * 
+     * @return a tree depth 
+     */
     public int getTreeDepth() {
         return myTreeDepth;
     }

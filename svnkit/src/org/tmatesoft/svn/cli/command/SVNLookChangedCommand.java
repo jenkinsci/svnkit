@@ -62,7 +62,7 @@ public class SVNLookChangedCommand extends SVNCommand implements ISVNChangeEntry
 
     public void handleEntry(SVNChangeEntry entry) throws SVNException {
         String[] status = new String[3];
-        status[0] = "" + entry.getType();
+        status[0] = entry.getType() == SVNChangeEntry.TYPE_UPDATED && !entry.hasTextModifications() ? "_" : "" + entry.getType();
         status[1] = entry.hasPropertyModifications() ? "" + SVNChangeEntry.TYPE_UPDATED : " ";
         status[2] = entry.getCopyFromPath() != null ? "+" : " ";
         String path = !entry.getPath().endsWith("/") && entry.getKind() == SVNNodeKind.DIR ? entry.getPath() + "/" : entry.getPath(); 

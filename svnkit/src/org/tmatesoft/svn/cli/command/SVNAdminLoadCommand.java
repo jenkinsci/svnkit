@@ -20,11 +20,11 @@ import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNUUIDAction;
 import org.tmatesoft.svn.core.wc.admin.ISVNAdminEventHandler;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminClient;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEvent;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEventAction;
+import org.tmatesoft.svn.core.wc.admin.SVNUUIDAction;
 
 
 /**

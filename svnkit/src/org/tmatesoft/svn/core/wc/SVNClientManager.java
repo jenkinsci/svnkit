@@ -334,7 +334,7 @@ public class SVNClientManager implements ISVNRepositoryPool {
     }
 
     /**
-     * Returns an instance of the {@link SVNAdminClient} class. 
+     * Returns an instance of the {@link org.tmatesoft.svn.core.wc.admin.SVNAdminClient} class. 
      * 
      * <p>
      * If it's the first time this method is being called the object is
@@ -354,6 +354,18 @@ public class SVNClientManager implements ISVNRepositoryPool {
         return myAdminClient;
     }
 
+    /**
+     * Returns an instance of the {@link org.tmatesoft.svn.core.wc.admin.SVNLookClient} class. 
+     * 
+     * <p>
+     * If it's the first time this method is being called the object is
+     * created, initialized and then returned. Further calls to this
+     * method will get the same object instantiated at that moment of 
+     * the first call. <b>SVNClientManager</b> does not reinstantiate
+     * its <b>SVN</b>*<b>Client</b> objects. 
+     * 
+     * @return an <b>SVNLookClient</b> instance
+     */
     public SVNLookClient getLookClient() {
         if (myLookClient == null) {
             myLookClient = new SVNLookClient(this, myOptions);

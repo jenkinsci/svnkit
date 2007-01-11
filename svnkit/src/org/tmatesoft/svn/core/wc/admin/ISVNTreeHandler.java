@@ -15,10 +15,19 @@ import org.tmatesoft.svn.core.SVNException;
 
 
 /**
+ * The <b>ISVNTreeHandler</b> is used in traversing tree 
+ * operations of <b>SVNLookClient</b>.
+ * 
  * @version 1.1.1
  * @author  TMate Software Ltd.
  * @since   1.1.1
  */
 public interface ISVNTreeHandler {
+    /**
+     * Handles path information.
+     * 
+     * @param  path          repository path information
+     * @throws SVNException
+     */
     public void handlePath(SVNAdminPath path) throws SVNException;
 }

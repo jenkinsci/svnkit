@@ -54,7 +54,6 @@ import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNRepositoryPool;
 import org.tmatesoft.svn.core.wc.SVNBasicClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNUUIDAction;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
@@ -68,7 +67,7 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  * 
  * <p>
  * Here's a list of the <b>SVNAdminClient</b>'s methods 
- * matched against corresponing commands of the Subversion svnsync command utility:
+ * matched against corresponing commands of the Subversion svnsync and svnadmin command-line utilities:
  * 
  * <table cellpadding="3" cellspacing="1" border="0" width="40%" bgcolor="#999933">
  * <tr bgcolor="#ADB8D9" align="left">
@@ -83,6 +82,21 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  * </tr>
  * <tr bgcolor="#EAEAEA" align="left">
  * <td>doCopyRevisionProperties()</td><td>'svnsync copy-revprops'</td>
+ * </tr>
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>doDump()</td><td>'svnadmin dump'</td>
+ * </tr>
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>doListTransactions()</td><td>'svnadmin lstxns'</td>
+ * </tr>
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>doLoad()</td><td>'svnadmin load'</td>
+ * </tr>
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>doRemoveTransactions()</td><td>'svnadmin rmtxns'</td>
+ * </tr>
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>doVerify()</td><td>'svnadmin verify'</td>
  * </tr>
  * </table>
  * 
@@ -129,10 +143,13 @@ public class SVNAdminClient extends SVNBasicClient {
         mySyncHandler = handler;
     }
 
-    public void setLoadHandler(ISVNLoadHandler handler) {
-        myLoadHandler = handler;
-    }
-
+    /**
+     * Sets an event handler for this object. 
+     * {@link ISVNAdminEventHandler} should be provided to <b>SVNAdminClent</b>
+     * via this method also.
+     * 
+     * @param handler an event handler
+     */
     public void setEventHandler(ISVNEventHandler handler) {
         super.setEventHandler(handler);
         if (handler instanceof ISVNAdminEventHandler) {
@@ -157,18 +174,54 @@ public class SVNAdminClient extends SVNBasicClient {
      * If <code>force</code> is <span class="javakeyword">true</span> and <code>path</code> already 
      * exists, deletes that path and creates a repository in its place.
      *  
-     * @param path                        a repository root dir path
-     * @param uuid                        a repository uuid
-     * @param enableRevisionProperties    enables/disables changes to revision properties
-     * @param force                       forces operation to run
-     * @return                            a local URL (file:///) of a newly created repository
+     * @param  path                        a repository root dir path
+     * @param  uuid                        a repository uuid
+     * @param  enableRevisionProperties    enables/disables changes to revision properties
+     * @param  force                       forces operation to run
+     * @return                             a local URL (file:///) of a newly created repository
      * @throws SVNException
-     * @since                             1.1 
+     * @see                                #doCreateRepository(File, String, boolean, boolean, boolean)
+     * @since                              1.1.0 
      */
     public SVNURL doCreateRepository(File path, String uuid, boolean enableRevisionProperties, boolean force) throws SVNException {
         return SVNRepositoryFactory.createLocalRepository(path, uuid, enableRevisionProperties, force);
     }
-    
+
+    /**
+     * Creates an FSFS-type repository.
+     * 
+     * This implementation uses {@link org.tmatesoft.svn.core.io.SVNRepositoryFactory#createLocalRepository(File, String, boolean, boolean)}}.
+     * <p>
+     * If <code>uuid</code> is <span class="javakeyword">null</span> a new uuid will be generated, otherwise 
+     * the specified will be used.
+     * 
+     * <p>
+     * If <code>enableRevisionProperties</code> is <span class="javakeyword">true</span>, an empty 
+     * pre-revprop-change hook will be placed into the repository /hooks subdir. This enables changes to 
+     * revision properties of the newly created repository. 
+     * 
+     * <p>
+     * If <code>force</code> is <span class="javakeyword">true</span> and <code>path</code> already 
+     * exists, deletes that path and creates a repository in its place.
+     * 
+     * <p>
+     * Set <code>pre14Compatible</code> to <span class="javakeyword">true</span> if you want a new repository 
+     * to be compatible with pre-1.4 servers.
+     * 
+     * @param  path                        a repository root dir path
+     * @param  uuid                        a repository uuid
+     * @param  enableRevisionProperties    enables/disables changes to revision properties
+     * @param  force                       forces operation to run
+     * @param  pre14Compatible             <span class="javakeyword">true</span> to 
+     *                                     create a repository with pre-1.4 format
+     * @return                             a local URL (file:///) of a newly created repository
+     * @throws SVNException
+     * @since                              1.1.1 
+     */
+    public SVNURL doCreateRepository(File path, String uuid, boolean enableRevisionProperties, boolean force, boolean pre14Compatible) throws SVNException {
+        return SVNRepositoryFactory.createLocalRepository(path, uuid, enableRevisionProperties, force, pre14Compatible);
+    }
+
     /**
      * Copies revision properties from the source repository that the destination one is synchronized with 
      * to the given revision of the destination repository itself.
@@ -402,6 +455,22 @@ public class SVNAdminClient extends SVNBasicClient {
         }
     }
 
+    /**
+     * Lists all uncommitted transactions.
+     * On each uncommetted transaction found this method fires an {@link SVNAdminEvent} 
+     * with action set to {@link SVNAdminEventAction#TRANSACTION_LISTED} to the registered 
+     * {@link ISVNAdminEventHandler} (if any). To register your <b>ISVNAdminEventHandler</b> 
+     * pass it to {@link #setEventHandler(ISVNEventHandler)}. For this operation the following 
+     * information can be retrieved out of {@link SVNAdminEvent}:
+     * <ul>
+     * <li>transaction name - use {@link SVNAdminEvent#getTxnName() SVNAdminEvent.getTxnName()} to get it</li>
+     * <li>transaction directory - use {@link SVNAdminEvent#getTxnDir() SVNAdminEvent.getTxnDir()} to get it</li>
+     * </ul>
+     * 
+     * @param  repositoryRoot   a repository root directory path
+     * @throws SVNException
+     * @since                   1.1.1
+     */
     public void doListTransactions(File repositoryRoot) throws SVNException {
         FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
         Map txns = fsfs.listTransactions();
@@ -417,6 +486,23 @@ public class SVNAdminClient extends SVNBasicClient {
         }
     }
     
+    /**
+     * Removes the specified outstanding transactions from a repository.
+     * On each transaction removed this method fires an {@link SVNAdminEvent} 
+     * with action set to {@link SVNAdminEventAction#TRANSACTION_REMOVED} to the registered 
+     * {@link ISVNAdminEventHandler} (if any). To register your <b>ISVNAdminEventHandler</b> 
+     * pass it to {@link #setEventHandler(ISVNEventHandler)}. For this operation the following 
+     * information can be retrieved out of {@link SVNAdminEvent}:
+     * <ul>
+     * <li>transaction name - use {@link SVNAdminEvent#getTxnName() SVNAdminEvent.getTxnName()} to get it</li>
+     * <li>transaction directory - use {@link SVNAdminEvent#getTxnDir() SVNAdminEvent.getTxnDir()} to get it</li>
+     * </ul>
+     * 
+     * @param  repositoryRoot   a repository root directory path
+     * @param  transactions     an array with transaction names
+     * @throws SVNException
+     * @since                   1.1.1
+     */
     public void doRemoveTransactions(File repositoryRoot, String[] transactions) throws SVNException {
         if (transactions == null) {
             return;
@@ -435,6 +521,16 @@ public class SVNAdminClient extends SVNBasicClient {
         }
     }
 
+    /**
+     * Verifies the data stored in the repository. This method uses the dump implementation 
+     * (non incremental, beginning with revision 0, ending at the latest one) 
+     * passing a dummy output stream to it. This allows to check the integrity of the 
+     * repository data. 
+     * 
+     * @param  repositoryRoot   a repository root directory path
+     * @throws SVNException     verification failed - a repository may be corrupted
+     * @since                   1.1.1
+     */
     public void doVerify(File repositoryRoot) throws SVNException {
         FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
         long youngestRevision = fsfs.getYoungestRevision();
@@ -446,6 +542,33 @@ public class SVNAdminClient extends SVNBasicClient {
         }
     }
     
+    /**
+     * Dumps contents of the repository to the provided output stream in a 
+     * 'dumpfile' portable format.
+     * 
+     * <p>
+     * On each revision dumped this method fires an {@link SVNAdminEvent} 
+     * with action set to {@link SVNAdminEventAction#REVISION_DUMPED} to the registered 
+     * {@link ISVNAdminEventHandler} (if any). To register your <b>ISVNAdminEventHandler</b> 
+     * pass it to {@link #setEventHandler(ISVNEventHandler)}. For this operation the following 
+     * information can be retrieved out of {@link SVNAdminEvent}:
+     * <ul>
+     * <li>dumped revision - use {@link SVNAdminEvent#getRevision() SVNAdminEvent.getRevision()} to get it</li>
+     * </ul>
+     * 
+     * @param  repositoryRoot   a repository root directory path
+     * @param  dumpStream       an output stream to write dumped contents to
+     * @param  startRevision    the first revision to start dumping from
+     * @param  endRevision      the last revision to end dumping at
+     * @param  isIncremental    if <span class="javakeyword">true</span> 
+     *                          then the first revision dumped will be a 
+     *                          diff against the previous revision; otherwise 
+     *                          the first revision is a fulltext. 
+     * @param  useDeltas        if <span class="javakeyword">true</span> 
+     *                          deltas will be written instead of fulltexts
+     * @throws SVNException
+     * @since                   1.1.1
+     */
     public void doDump(File repositoryRoot, OutputStream dumpStream, SVNRevision startRevision, SVNRevision endRevision, boolean isIncremental, boolean useDeltas) throws SVNException {
         FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
         long youngestRevision = fsfs.getYoungestRevision();
@@ -473,10 +596,62 @@ public class SVNAdminClient extends SVNBasicClient {
         }
     }
     
+    /**
+     * Reads the provided dump stream committing new revisions to a repository.
+     * 
+     * <p>
+     * On each revision loaded this method fires an {@link SVNAdminEvent} 
+     * with action set to {@link SVNAdminEventAction#REVISION_LOADED} to the registered 
+     * {@link ISVNAdminEventHandler} (if any). To register your <b>ISVNAdminEventHandler</b> 
+     * pass it to {@link #setEventHandler(ISVNEventHandler)}. For this operation the following 
+     * information can be retrieved out of {@link SVNAdminEvent}:
+     * <ul>
+     * <li>original revision - use {@link SVNAdminEvent#getOriginalRevision() SVNAdminEvent.getOriginalRevision()} to get it</li>
+     * <li>new committed revision - use {@link SVNAdminEvent#getRevision() SVNAdminEvent.getRevision()} to get it</li>
+     * </ul>
+     * 
+     * <p>
+     * A call to this method is equivalent to 
+     * <code>doLoad(repositoryRoot, dumpStream, false, false, SVNUUIDAction.DEFAULT, null)</code>.
+     * 
+     * @param  repositoryRoot   the root directory path of the repository where 
+     *                          new revisions will be committed
+     * @param  dumpStream       stream with dumped contents of a repository
+     * @throws SVNException
+     * @see                     #doLoad(File, InputStream, boolean, boolean, SVNUUIDAction, String)                     
+     * @since                   1.1.1
+     */
     public void doLoad(File repositoryRoot, InputStream dumpStream) throws SVNException {
         doLoad(repositoryRoot, dumpStream, false, false, SVNUUIDAction.DEFAULT, null);
     }
 
+    /**
+     * Reads the provided dump stream committing new revisions to a repository.
+     * 
+     * <p>
+     * On each revision loaded this method fires an {@link SVNAdminEvent} 
+     * with action set to {@link SVNAdminEventAction#REVISION_LOADED} to the registered 
+     * {@link ISVNAdminEventHandler} (if any). To register your <b>ISVNAdminEventHandler</b> 
+     * pass it to {@link #setEventHandler(ISVNEventHandler)}. For this operation the following 
+     * information can be retrieved out of {@link SVNAdminEvent}:
+     * <ul>
+     * <li>original revision - use {@link SVNAdminEvent#getOriginalRevision() SVNAdminEvent.getOriginalRevision()} to get it</li>
+     * <li>new committed revision - use {@link SVNAdminEvent#getRevision() SVNAdminEvent.getRevision()} to get it</li>
+     * </ul>
+     * 
+     * @param  repositoryRoot    the root directory path of the repository where 
+     *                           new revisions will be committed
+     * @param  dumpStream        stream with dumped contents of a repository
+     * @param  usePreCommitHook  if <span class="javakeyword">true</span> 
+     *                           then calls a pre-commit hook before committing 
+     * @param  usePostCommitHook if <span class="javakeyword">true</span> 
+     *                           then calls a post-commit hook after committing
+     * @param  uuidAction        one of the three possible ways to treat uuids 
+     * @param  parentDir         if not <span class="javakeyword">null</span> 
+     *                           then loads at this directory in the repository
+     * @throws SVNException
+     * @since                       1.1.1
+     */
     public void doLoad(File repositoryRoot, InputStream dumpStream, boolean usePreCommitHook, boolean usePostCommitHook, SVNUUIDAction uuidAction, String parentDir) throws SVNException {
         ISVNLoadHandler handler = getLoadHandler(repositoryRoot, usePreCommitHook, usePostCommitHook, uuidAction, parentDir);
     

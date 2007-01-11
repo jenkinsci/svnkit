@@ -52,6 +52,8 @@ import org.tmatesoft.svn.core.wc.admin.SVNChangeEntry;
  */
 public class SVNNodeEditor implements ISVNEditor {
 
+    private static final char TYPE_REPLACED = 'R';
+    
     private Node myCurrentNode;
     private Node myRootNode;
     private FSRoot myBaseRoot;
@@ -152,11 +154,11 @@ public class SVNNodeEditor implements ISVNEditor {
     }
 
     public void openDir(String path, long revision) throws SVNException {
-        myCurrentNode = addOrOpen(path, SVNChangeEntry.TYPE_REPLACED, SVNNodeKind.DIR, myCurrentNode, null, -1);
+        myCurrentNode = addOrOpen(path, TYPE_REPLACED, SVNNodeKind.DIR, myCurrentNode, null, -1);
     }
 
     public void openFile(String path, long revision) throws SVNException {
-        Node node = addOrOpen(path, SVNChangeEntry.TYPE_REPLACED, SVNNodeKind.FILE, myCurrentNode, null, -1);
+        Node node = addOrOpen(path, TYPE_REPLACED, SVNNodeKind.FILE, myCurrentNode, null, -1);
         myFiles.put(path, node);
     }
 
@@ -165,7 +167,7 @@ public class SVNNodeEditor implements ISVNEditor {
         myCurrentNode.myName = "";
         myCurrentNode.myParent = null;
         myCurrentNode.myKind = SVNNodeKind.DIR;
-        myCurrentNode.myAction = SVNChangeEntry.TYPE_REPLACED;
+        myCurrentNode.myAction = TYPE_REPLACED;
     }
 
     public void targetRevision(long revision) throws SVNException {
@@ -226,7 +228,7 @@ public class SVNNodeEditor implements ISVNEditor {
         DiffItem originalFile = null;
         DiffItem newFile = null;
         if (node.myKind == SVNNodeKind.FILE) {
-            if (node.myAction == SVNChangeEntry.TYPE_REPLACED && node.myHasTextModifications) {
+            if (node.myAction == TYPE_REPLACED && node.myHasTextModifications) {
                 doDiff = true;
                 originalFile = prepareTmpFile(baseRoot, basePath, generator);
                 newFile = prepareTmpFile(root, path, generator);
@@ -247,12 +249,12 @@ public class SVNNodeEditor implements ISVNEditor {
                 newFile = prepareTmpFile(null, path, generator);
             }
             
-            if (!printedHeader && (node.myAction != SVNChangeEntry.TYPE_REPLACED || node.myHasTextModifications)) {
+            if (!printedHeader && (node.myAction != TYPE_REPLACED || node.myHasTextModifications)) {
                 if (node.myAction == SVNChangeEntry.TYPE_ADDED) {
                     generator.displayHeader(ISVNGNUDiffGenerator.ADDED, path, null, -1, os);
                 } else if (node.myAction == SVNChangeEntry.TYPE_DELETED) {
                     generator.displayHeader(ISVNGNUDiffGenerator.DELETED, path, null, -1, os);
-                } else if (node.myAction == SVNChangeEntry.TYPE_REPLACED) {
+                } else if (node.myAction == TYPE_REPLACED) {
                     generator.displayHeader(ISVNGNUDiffGenerator.MODIFIED, path, null, -1, os);
                 }
                 printedHeader = true;
@@ -412,7 +414,7 @@ public class SVNNodeEditor implements ISVNEditor {
             changeEntry = new SVNChangeEntry(path, node.myKind, node.myAction, copyFromPath, copyFromRevision, false, false);
         } else if (node.myAction == SVNChangeEntry.TYPE_DELETED) {
             changeEntry = new SVNChangeEntry(path, node.myKind, node.myAction, null, -1, false, false);
-        } else if (node.myAction == SVNChangeEntry.TYPE_REPLACED) {
+        } else if (node.myAction == TYPE_REPLACED) {
             if (node.myHasPropModifications || node.myHasTextModifications) {
                 changeEntry = new SVNChangeEntry(path, node.myKind, SVNChangeEntry.TYPE_UPDATED, null, -1, node.myHasTextModifications, node.myHasPropModifications);
             }
