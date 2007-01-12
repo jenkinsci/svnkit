@@ -357,8 +357,10 @@ public class SVNMoveClient extends SVNBasicClient {
             }
             entry.setRepositoryRoot(reposRootURL);
             if (entry.isFile()) {
-                dir.getWCProperties(name).removeAll();
-                dir.saveWCProperties(false);
+                if (dir.getWCProperties(name) != null) {
+                    dir.getWCProperties(name).removeAll();
+                    dir.saveWCProperties(false);
+                }
                 if (copyFromURL != null) {
                     entry.setCopyFromURL(copyFromURL);
                     entry.setCopyFromRevision(copyFromRevision);

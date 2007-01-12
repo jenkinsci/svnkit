@@ -139,7 +139,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
             if (!enabledFactories.isEmpty()) {
                 SVNAdminAreaFactory newestFactory = (SVNAdminAreaFactory) enabledFactories.iterator().next();
                 SVNAdminArea newArea = newestFactory.doUpgrade(area);
-                if (newArea != area && newArea.getWCAccess() != null) {
+                if (newArea != null && newArea != area && newArea.getWCAccess() != null) {
                     SVNEvent event = SVNEventFactory.createUpgradeEvent(newArea);
                     newArea.getWCAccess().handleEvent(event, ISVNEventHandler.UNKNOWN);
                 }
