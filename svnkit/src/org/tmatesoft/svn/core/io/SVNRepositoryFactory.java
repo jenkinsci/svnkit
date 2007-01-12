@@ -378,7 +378,7 @@ public abstract class SVNRepositoryFactory {
                 File reposFormatFile = new File(path, "format");
                 try {
                     reposFormatOS = SVNFileUtil.openFileForWriting(reposFormatFile);
-                    reposFormatOS.write("5\n".getBytes("US-ASCII"));
+                    reposFormatOS.write("3\n".getBytes("US-ASCII"));
                 } catch (IOException e) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Error writing repository format to ''{0}''", reposFormatFile);
                     err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
