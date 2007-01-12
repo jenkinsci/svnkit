@@ -197,4 +197,8 @@ public class SVNEventFactory {
                         .getRevision(), null, null, null, null, null, null);
     }
 
+    public static SVNEvent createUpgradeEvent(SVNAdminArea adminArea) {
+        return new SVNEvent(null, adminArea.getRoot(), SVNEventAction.UPGRADE, SVNNodeKind.DIR, -1, null, null, null, null, null, null);
+    }
+
 }

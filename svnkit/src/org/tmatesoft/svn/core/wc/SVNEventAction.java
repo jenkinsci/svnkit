@@ -256,4 +256,6 @@ public class SVNEventAction {
      * method of {@link SVNWCClient}.
      */
     public static final SVNEventAction UNLOCK_FAILED = new SVNEventAction(24);
+    
+    public static final SVNEventAction UPGRADE = new SVNEventAction(-2);
 }

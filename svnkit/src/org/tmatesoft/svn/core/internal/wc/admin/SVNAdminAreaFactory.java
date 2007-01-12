@@ -21,7 +21,10 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.SVNEvent;
 
 
 /**
@@ -135,7 +138,12 @@ public abstract class SVNAdminAreaFactory implements Comparable {
             Collection enabledFactories = getSelector().getEnabledFactories(area.getRoot(), ourFactories, true);
             if (!enabledFactories.isEmpty()) {
                 SVNAdminAreaFactory newestFactory = (SVNAdminAreaFactory) enabledFactories.iterator().next();
-                area = newestFactory.doUpgrade(area);
+                SVNAdminArea newArea = newestFactory.doUpgrade(area);
+                if (newArea != area && newArea.getWCAccess() != null) {
+                    SVNEvent event = SVNEventFactory.createUpgradeEvent(newArea);
+                    newArea.getWCAccess().handleEvent(event, ISVNEventHandler.UNKNOWN);
+                }
+                area = newArea;
             }
         }
         return area;
