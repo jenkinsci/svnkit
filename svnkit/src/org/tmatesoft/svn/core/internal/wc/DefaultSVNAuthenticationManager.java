@@ -253,7 +253,11 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         String port = getOptionValue(sshProgram, sshProgram.toLowerCase().trim().startsWith("plink") ? "-p" : "-P");
         port = port == null ? System.getProperty("svnkit.ssh2.port", System.getProperty("javasvn.ssh2.port")) : port;
         if (port != null) {
-            return Integer.parseInt(port);
+            try {
+                return Integer.parseInt(port);
+            } catch (NumberFormatException e) {
+                //
+            }
         }
         return -1;
     }
@@ -282,7 +286,9 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         }
         int portNumber = -1;
         if (port != null) {
-            portNumber = Integer.parseInt(port);
+            try {
+                portNumber = Integer.parseInt(port);
+            } catch (NumberFormatException e) {}
         }
         
         if (userName != null && password != null) {
