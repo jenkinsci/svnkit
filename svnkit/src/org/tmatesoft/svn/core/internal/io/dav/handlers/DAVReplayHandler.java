@@ -141,7 +141,8 @@ public class DAVReplayHandler extends DAVEditorHandler {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Got close-file element without preceding add-file or open-file");
                 SVNErrorManager.error(err);
             } else {
-                myEditor.closeFile(myPath, null);
+                String checksum = attrs.getValue(CHECKSUM_ATTR);
+                myEditor.closeFile(myPath, checksum);
                 myIsDirectory = true;
             }
         } else if (element == CLOSE_DIRECTORY) {

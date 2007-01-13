@@ -58,9 +58,16 @@ public class FSRepositoryUtil {
         }
         
         FSRoot compareRoot = null;
-        if (sendDeltas && root instanceof FSRevisionRoot) {
-            FSRevisionRoot revRoot = (FSRevisionRoot) root;
-            compareRoot = fsfs.createRevisionRoot(revRoot.getRevision() - 1);
+        if (sendDeltas) {
+            long revision = -1;
+            if (root instanceof FSRevisionRoot) {
+                FSRevisionRoot revRoot = (FSRevisionRoot) root;
+                revision = revRoot.getRevision() - 1;
+            } else if (root instanceof FSTransactionRoot) {
+                FSTransactionRoot txnRoot = (FSTransactionRoot) root;
+                revision = txnRoot.getTxn().getBaseRevision();
+            }
+            compareRoot = fsfs.createRevisionRoot(revision);
         }
         
         if (root instanceof FSRevisionRoot) {

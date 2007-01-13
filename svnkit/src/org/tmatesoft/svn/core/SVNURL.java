@@ -414,6 +414,7 @@ public class SVNURL {
      * segment from the path component of this representation.  
      * 
      * @return  a new <b>SVNURL</b> representation
+     * @throws SVNException
      */
     public SVNURL removePathTail() throws SVNException {
         String newPath = SVNPathUtil.removeTail(myPath);
