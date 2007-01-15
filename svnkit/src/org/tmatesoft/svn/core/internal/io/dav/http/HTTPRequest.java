@@ -264,8 +264,11 @@ class HTTPRequest {
         sb.append(HTTPRequest.CRLF);
         sb.append("Host: ");
         sb.append(myConnection.getHost().getHost());
-        sb.append(":");
-        sb.append(myConnection.getHost().getPort());
+        // only append if URL has port indeed.
+        if (myConnection.getHost().hasPort()) {
+            sb.append(":");
+            sb.append(myConnection.getHost().getPort());
+        }
         sb.append(HTTPRequest.CRLF);
         sb.append("User-Agent: ");
         sb.append(Version.getVersionString());
