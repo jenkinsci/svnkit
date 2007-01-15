@@ -265,7 +265,8 @@ class HTTPRequest {
         sb.append("Host: ");
         sb.append(myConnection.getHost().getHost());
         // only append if URL has port indeed.
-        if (myConnection.getHost().hasPort()) {
+        int defaultPort = "https".equals(myConnection.getHost().getProtocol()) ? 443 : 80;
+        if (myConnection.getHost().getPort() != defaultPort) {
             sb.append(":");
             sb.append(myConnection.getHost().getPort());
         }
