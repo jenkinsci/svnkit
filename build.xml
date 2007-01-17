@@ -196,6 +196,10 @@
         <chmod file="build/lib/jsvnadmin" perm="ugo+rx" />
         <chmod file="build/lib/jsvnsync" perm="ugo+rx" />
     	<chmod file="build/lib/jsvnlook" perm="ugo+rx" />
+    	<chmod file="build/lib/jsvn.openvms" perm="ugo+rx" />
+    	<chmod file="build/lib/jsvnadmin.openvms" perm="ugo+rx" />
+    	<chmod file="build/lib/jsvnsync.openvms" perm="ugo+rx" />
+    	<chmod file="build/lib/jsvnlook.openvms" perm="ugo+rx" />
     </target>
 
     <target name="build-src">
@@ -322,11 +326,19 @@
                 <exclude name="jsvnadmin" />
                 <exclude name="jsvnsync" />
             	<exclude name="jsvnlook" />
+                <exclude name="jsvn.openvms" />
+                <exclude name="jsvnadmin.openvms" />
+                <exclude name="jsvnsync.openvms" />
+             	<exclude name="jsvnlook.openvms" />
             </zipfileset>
             <zipfileset file="build/lib/jsvn" filemode="555" prefix="svnkit-${svnkit.version}" />
             <zipfileset file="build/lib/jsvnadmin" filemode="555" prefix="svnkit-${svnkit.version}" />
             <zipfileset file="build/lib/jsvnsync" filemode="555" prefix="svnkit-${svnkit.version}" />
         	<zipfileset file="build/lib/jsvnlook" filemode="555" prefix="svnkit-${svnkit.version}" />
+        	<zipfileset file="build/lib/jsvn.openvms" filemode="555" prefix="svnkit-${svnkit.version}" />
+        	<zipfileset file="build/lib/jsvnadmin.openvms" filemode="555" prefix="svnkit-${svnkit.version}" />
+        	<zipfileset file="build/lib/jsvnsync.openvms" filemode="555" prefix="svnkit-${svnkit.version}" />
+        	<zipfileset file="build/lib/jsvnlook.openvms" filemode="555" prefix="svnkit-${svnkit.version}" />
         	<zipfileset dir="build/doc" prefix="svnkit-${svnkit.version}/doc" />
         </zip>
     </target>

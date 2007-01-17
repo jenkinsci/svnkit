@@ -257,5 +257,9 @@ public class SVNEventAction {
      */
     public static final SVNEventAction UNLOCK_FAILED = new SVNEventAction(24);
     
+    /**
+     * Denotes that the current format of the working copy administrative 
+     * area is upgraded to a newer one. 
+     */
     public static final SVNEventAction UPGRADE = new SVNEventAction(-2);
 }

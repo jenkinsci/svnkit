@@ -29,144 +29,157 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 
 /**
- * The <b>SVNWCUtil</b> is a utility class providing some common methods 
- * used by Working Copy API classes for such purposes as creating default
- * run-time configuration and authentication drivers and some others.
- *  
+ * The <b>SVNWCUtil</b> is a utility class providing some common methods used
+ * by Working Copy API classes for such purposes as creating default run-time
+ * configuration and authentication drivers and some others.
+ * 
  * 
  * @version 1.1.1
- * @author  TMate Software Ltd.
- * @see     ISVNOptions
- * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
+ * @author TMate Software Ltd., Peter Skoog
+ * @see ISVNOptions
+ * @see <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
  */
 public class SVNWCUtil {
-    
+
     private static final String ECLIPSE_AUTH_MANAGER_CLASSNAME = "org.tmatesoft.svn.core.internal.wc.EclipseSVNAuthenticationManager";
     private static Boolean ourIsEclipse;
 
     /**
-     * Gets the location of the default SVN's run-time configuration area
-     * on the current machine. The result path depends on the platform
-     * on which SVNKit is running:
+     * Gets the location of the default SVN's run-time configuration area on the
+     * current machine. The result path depends on the platform on which SVNKit
+     * is running:
      * <ul>
-     * <li>on <i>Windows</i> this path usually looks like <i>'Documents and Settings\UserName\Subversion'</i> 
-     * or simply <i>'%APPDATA%\Subversion'</i>.
+     * <li>on <i>Windows</i> this path usually looks like <i>'Documents and
+     * Settings\UserName\Subversion'</i> or simply <i>'%APPDATA%\Subversion'</i>.
      * <li>on a <i>Unix</i>-like platform - <i>'~/.subversion'</i>.
      * </ul>
      * 
-     * @return a {@link java.io.File} representation of the default
-     *         SVN's run-time configuration area location
+     * @return a {@link java.io.File} representation of the default SVN's
+     *         run-time configuration area location
      */
     public static File getDefaultConfigurationDirectory() {
         if (SVNFileUtil.isWindows) {
             return new File(SVNFileUtil.getApplicationDataPath(), "Subversion");
+        } else if (SVNFileUtil.isOpenVMS) {
+            return new File("sys$login", ".subversion");
         }
         return new File(System.getProperty("user.home"), ".subversion");
     }
-    
+
     /**
      * Creates a default authentication manager that uses the default SVN's
-     * <i>servers</i> configuration and authentication storage. Whether
-     * the default auth storage is used or not depends on the 'store-auth-creds'</i> 
-     * option that can be found in the SVN's <i>config</i> file under the 
+     * <i>servers</i> configuration and authentication storage. Whether the
+     * default auth storage is used or not depends on the 'store-auth-creds'</i>
+     * option that can be found in the SVN's <i>config</i> file under the
      * <i>[auth]</i> section.
      * 
-     * @return a default implementation of the credentials and servers 
+     * @return a default implementation of the credentials and servers
      *         configuration driver interface
-     * @see    #getDefaultConfigurationDirectory()
+     * @see #getDefaultConfigurationDirectory()
      */
     public static ISVNAuthenticationManager createDefaultAuthenticationManager() {
         return createDefaultAuthenticationManager(getDefaultConfigurationDirectory(), null, null);
     }
 
     /**
-     * Creates a default authentication manager that uses the <i>servers</i> 
+     * Creates a default authentication manager that uses the <i>servers</i>
      * configuration and authentication storage located in the provided
      * directory. The authentication storage is enabled.
      * 
-     * @param  configDir  a new location of the run-time configuration
-     *                    area  
-     * @return            a default implementation of the credentials 
-     *                    and servers configuration driver interface
+     * @param configDir
+     *            a new location of the run-time configuration area
+     * @return a default implementation of the credentials and servers
+     *         configuration driver interface
      */
     public static ISVNAuthenticationManager createDefaultAuthenticationManager(File configDir) {
         return createDefaultAuthenticationManager(configDir, null, null, true);
     }
-    
+
     /**
      * Creates a default authentication manager that uses the default SVN's
-     * <i>servers</i> configuration and provided user's credentials. 
-     * Whether the default auth storage is used or not depends on the 
-     * 'store-auth-creds'</i> option that can be found in the SVN's 
-     * <i>config</i> file under the <i>[auth]</i> section.
+     * <i>servers</i> configuration and provided user's credentials. Whether
+     * the default auth storage is used or not depends on the 'store-auth-creds'</i>
+     * option that can be found in the SVN's <i>config</i> file under the
+     * <i>[auth]</i> section.
      * 
-     * @param  userName   a user's name
-     * @param  password   a user's password
-     * @return            a default implementation of the credentials 
-     *                    and servers configuration driver interface
+     * @param userName
+     *            a user's name
+     * @param password
+     *            a user's password
+     * @return a default implementation of the credentials and servers
+     *         configuration driver interface
      */
     public static ISVNAuthenticationManager createDefaultAuthenticationManager(String userName, String password) {
         return createDefaultAuthenticationManager(null, userName, password);
     }
-    
+
     /**
      * Creates a default authentication manager that uses the provided
-     * configuration directory and user's credentials. Whether
-     * the default auth storage is used or not depends on the 'store-auth-creds'</i> 
-     * option that is looked up in the <i>config</i> file under the 
-     * <i>[auth]</i> section. Files <i>config</i> and <i>servers</i> will
-     * be created (if they still don't exist) in the specified directory 
-     * (they are the same as those ones you can find in the default SVN's 
-     * run-time configuration area).
+     * configuration directory and user's credentials. Whether the default auth
+     * storage is used or not depends on the 'store-auth-creds'</i> option that
+     * is looked up in the <i>config</i> file under the <i>[auth]</i> section.
+     * Files <i>config</i> and <i>servers</i> will be created (if they still
+     * don't exist) in the specified directory (they are the same as those ones
+     * you can find in the default SVN's run-time configuration area).
      * 
-     * @param  configDir  a new location of the run-time configuration
-     *                    area
-     * @param  userName   a user's name
-     * @param  password   a user's password
-     * @return            a default implementation of the credentials 
-     *                    and servers configuration driver interface
+     * @param configDir
+     *            a new location of the run-time configuration area
+     * @param userName
+     *            a user's name
+     * @param password
+     *            a user's password
+     * @return a default implementation of the credentials and servers
+     *         configuration driver interface
      */
     public static ISVNAuthenticationManager createDefaultAuthenticationManager(File configDir, String userName, String password) {
         ISVNOptions options = createDefaultOptions(configDir, true);
         boolean store = options.isAuthStorageEnabled();
         return createDefaultAuthenticationManager(configDir, userName, password, store);
     }
-    
+
     /**
      * Creates a default authentication manager that uses the provided
-     * configuration directory and user's credentials. The <code>storeAuth</code>
-     * parameter affects on using the auth storage. 
-     *  
-     *
-     * @param  configDir  a new location of the run-time configuration
-     *                    area
-     * @param  userName   a user's name
-     * @param  password   a user's password
-     * @param  storeAuth  if <span class="javakeyword">true</span> then
-     *                    the auth storage is enabled, otherwise disabled
-     * @return            a default implementation of the credentials 
-     *                    and servers configuration driver interface
+     * configuration directory and user's credentials. The
+     * <code>storeAuth</code> parameter affects on using the auth storage.
+     * 
+     * 
+     * @param configDir
+     *            a new location of the run-time configuration area
+     * @param userName
+     *            a user's name
+     * @param password
+     *            a user's password
+     * @param storeAuth
+     *            if <span class="javakeyword">true</span> then the auth
+     *            storage is enabled, otherwise disabled
+     * @return a default implementation of the credentials and servers
+     *         configuration driver interface
      */
     public static ISVNAuthenticationManager createDefaultAuthenticationManager(File configDir, String userName, String password, boolean storeAuth) {
         return createDefaultAuthenticationManager(configDir, userName, password, null, null, storeAuth);
     }
-    
+
     /**
      * Creates a default authentication manager that uses the provided
-     * configuration directory and user's credentials. The <code>storeAuth</code>
-     * parameter affects on using the auth storage.
-     *
-     *
-     * @param  configDir  a new location of the run-time configuration
-     *                    area
-     * @param  userName   a user's name
-     * @param  password   a user's password
-     * @param  privateKey a private key file for SSH session
-     * @param  passphrase a passphrase that goes with the key file
-     * @param  storeAuth  if <span class="javakeyword">true</span> then
-     *                    the auth storage is enabled, otherwise disabled
-     * @return            a default implementation of the credentials
-     *                    and servers configuration driver interface
+     * configuration directory and user's credentials. The
+     * <code>storeAuth</code> parameter affects on using the auth storage.
+     * 
+     * 
+     * @param configDir
+     *            a new location of the run-time configuration area
+     * @param userName
+     *            a user's name
+     * @param password
+     *            a user's password
+     * @param privateKey
+     *            a private key file for SSH session
+     * @param passphrase
+     *            a passphrase that goes with the key file
+     * @param storeAuth
+     *            if <span class="javakeyword">true</span> then the auth
+     *            storage is enabled, otherwise disabled
+     * @return a default implementation of the credentials and servers
+     *         configuration driver interface
      */
     public static ISVNAuthenticationManager createDefaultAuthenticationManager(File configDir, String userName, String password, File privateKey, String passphrase, boolean storeAuth) {
         // check whether we are running inside Eclipse.
@@ -175,65 +188,70 @@ public class SVNWCUtil {
             try {
                 Class managerClass = SVNWCUtil.class.getClassLoader().loadClass(ECLIPSE_AUTH_MANAGER_CLASSNAME);
                 if (managerClass != null) {
-                    Constructor method = managerClass.getConstructor(new Class[] {File.class, Boolean.TYPE, String.class, String.class, File.class, String.class});
+                    Constructor method = managerClass.getConstructor(new Class[] {
+                            File.class, Boolean.TYPE, String.class, String.class, File.class, String.class
+                    });
                     if (method != null) {
-                        return (ISVNAuthenticationManager) method.newInstance(new Object[] {configDir, storeAuth ? Boolean.TRUE : Boolean.FALSE, userName, password, privateKey, passphrase});
+                        return (ISVNAuthenticationManager) method.newInstance(new Object[] {
+                                configDir, storeAuth ? Boolean.TRUE : Boolean.FALSE, userName, password, privateKey, passphrase
+                        });
                     }
                 }
             } catch (Throwable e) {
-            } 
+            }
         }
         return new DefaultSVNAuthenticationManager(configDir, storeAuth, userName, password, privateKey, passphrase);
     }
 
     /**
-     * Creates a default run-time configuration options driver that uses
-     * the provided configuration directory.
+     * Creates a default run-time configuration options driver that uses the
+     * provided configuration directory.
      * 
      * <p>
-     * If <code>dir</code> is not <span class="javakeyword">null</span>
-     * then all necessary config files (in particular <i>config</i> and 
-     * <i>servers</i>) will be created in this directory if they still
-     * don't exist. Those files are the same as those ones you can find in 
-     * the default SVN's run-time configuration area.  
+     * If <code>dir</code> is not <span class="javakeyword">null</span> then
+     * all necessary config files (in particular <i>config</i> and <i>servers</i>)
+     * will be created in this directory if they still don't exist. Those files
+     * are the same as those ones you can find in the default SVN's run-time
+     * configuration area.
      * 
-     * @param  dir        a new location of the run-time configuration
-     *                    area  
-     * @param  readonly   if <span class="javakeyword">true</span> then
-     *                    run-time configuration options are available only
-     *                    for reading, if <span class="javakeyword">false</span>
-     *                    then those options are available for both reading
-     *                    and writing
-     * @return            a default implementation of the run-time 
-     *                    configuration options driver interface
+     * @param dir
+     *            a new location of the run-time configuration area
+     * @param readonly
+     *            if <span class="javakeyword">true</span> then run-time
+     *            configuration options are available only for reading, if <span
+     *            class="javakeyword">false</span> then those options are
+     *            available for both reading and writing
+     * @return a default implementation of the run-time configuration options
+     *         driver interface
      */
     public static ISVNOptions createDefaultOptions(File dir, boolean readonly) {
         return new DefaultSVNOptions(dir, readonly);
     }
-    
+
     /**
-     * Creates a default run-time configuration options driver that uses 
-     * the default SVN's run-time configuration area.
+     * Creates a default run-time configuration options driver that uses the
+     * default SVN's run-time configuration area.
      * 
-     * @param  readonly   if <span class="javakeyword">true</span> then
-     *                    run-time configuration options are available only
-     *                    for reading, if <span class="javakeyword">false</span>
-     *                    then those options are available for both reading
-     *                    and writing
-     * @return            a default implementation of the run-time 
-     *                    configuration options driver interface
-     * @see               #getDefaultConfigurationDirectory()         
+     * @param readonly
+     *            if <span class="javakeyword">true</span> then run-time
+     *            configuration options are available only for reading, if <span
+     *            class="javakeyword">false</span> then those options are
+     *            available for both reading and writing
+     * @return a default implementation of the run-time configuration options
+     *         driver interface
+     * @see #getDefaultConfigurationDirectory()
      */
     public static ISVNOptions createDefaultOptions(boolean readonly) {
         return new DefaultSVNOptions(null, readonly);
     }
-    
+
     /**
-     * Determines if a directory is under version control. 
+     * Determines if a directory is under version control.
      * 
-     * @param  dir  a directory to check 
-     * @return      <span class="javakeyword">true</span> if versioned,
-     *              otherwise <span class="javakeyword">false</span>
+     * @param dir
+     *            a directory to check
+     * @return <span class="javakeyword">true</span> if versioned, otherwise
+     *         <span class="javakeyword">false</span>
      */
     public static boolean isVersionedDirectory(File dir) {
         SVNFileType type = SVNFileType.getType(dir);
@@ -254,17 +272,19 @@ public class SVNWCUtil {
         }
         return true;
     }
-    
+
     /**
      * Determines if a directory is the root of the Working Copy.
      * 
-     * @param  versionedDir             a versioned directory to check
-     * @return                          <span class="javakeyword">true</span> if 
-     *                                  <code>versionedDir</code> is versioned and the WC root
-     *                                  (or the root of externals if <code>considerExternalAsRoot</code>
-     *                                  is <span class="javakeyword">true</span>), otherwise <span class="javakeyword">false</span>
-     * @throws SVNException          
-     * @since                           1.1                        
+     * @param versionedDir
+     *            a versioned directory to check
+     * @return <span class="javakeyword">true</span> if
+     *         <code>versionedDir</code> is versioned and the WC root (or the
+     *         root of externals if <code>considerExternalAsRoot</code> is
+     *         <span class="javakeyword">true</span>), otherwise <span
+     *         class="javakeyword">false</span>
+     * @throws SVNException
+     * @since 1.1
      */
     public static boolean isWorkingCopyRoot(final File versionedDir) throws SVNException {
         SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
@@ -277,58 +297,61 @@ public class SVNWCUtil {
             wcAccess.close();
         }
     }
-    
+
     /**
-     * @param  versionedDir             a versioned directory to check
+     * @param versionedDir
+     *            a versioned directory to check
      * @param externalIsRoot
-     * @return                          <span class="javakeyword">true</span> if 
-     *                                  <code>versionedDir</code> is versioned and the WC root
-     *                                  (or the root of externals if <code>considerExternalAsRoot</code>
-     *                                  is <span class="javakeyword">true</span>), otherwise <span class="javakeyword">false</span>
+     * @return <span class="javakeyword">true</span> if
+     *         <code>versionedDir</code> is versioned and the WC root (or the
+     *         root of externals if <code>considerExternalAsRoot</code> is
+     *         <span class="javakeyword">true</span>), otherwise <span
+     *         class="javakeyword">false</span>
      * @throws SVNException
-     * @deprecated                     use {@link #isWorkingCopyRoot(File)}} instead
+     * @deprecated use {@link #isWorkingCopyRoot(File)}} instead
      */
     public static boolean isWorkingCopyRoot(final File versionedDir, boolean externalIsRoot) throws SVNException {
         if (isWorkingCopyRoot(versionedDir)) {
             if (!externalIsRoot) {
                 return true;
-                
+
             }
             File root = getWorkingCopyRoot(versionedDir, false);
             return root.equals(versionedDir);
         }
         return false;
     }
-    
+
     /**
-     * Returns the Working Copy root directory given a versioned
-     * directory that belongs to the Working Copy.
+     * Returns the Working Copy root directory given a versioned directory that
+     * belongs to the Working Copy.
      * 
-     *  <p>
-     *  If both <span>versionedDir</span> and its parent directory are
-     *  not versioned this method returns <span class="javakeyword">null</span>.
+     * <p>
+     * If both <span>versionedDir</span> and its parent directory are not
+     * versioned this method returns <span class="javakeyword">null</span>.
      * 
-     * @param  versionedDir     a directory belonging to the WC which
-     *                          root is to be searched for
-     * @param  stopOnExtenrals  if <span class="javakeyword">true</span> then
-     *                          this method will stop at the directory on
-     *                          which any externals definitions are set
-     * @return                  the WC root directory (if it is found) or
-     *                          <span class="javakeyword">null</span>.
+     * @param versionedDir
+     *            a directory belonging to the WC which root is to be searched
+     *            for
+     * @param stopOnExtenrals
+     *            if <span class="javakeyword">true</span> then this method
+     *            will stop at the directory on which any externals definitions
+     *            are set
+     * @return the WC root directory (if it is found) or <span
+     *         class="javakeyword">null</span>.
      * @throws SVNException
      */
     public static File getWorkingCopyRoot(File versionedDir, boolean stopOnExtenrals) throws SVNException {
         versionedDir = versionedDir.getAbsoluteFile();
-        if (versionedDir == null
-                || (!isVersionedDirectory(versionedDir) && !isVersionedDirectory(versionedDir.getParentFile()))) {
+        if (versionedDir == null || (!isVersionedDirectory(versionedDir) && !isVersionedDirectory(versionedDir.getParentFile()))) {
             // both this dir and its parent are not versioned.
             return null;
         }
 
-	    File parent = versionedDir.getParentFile();
-		  if (parent == null) {
-			  return versionedDir;
-		  }
+        File parent = versionedDir.getParentFile();
+        if (parent == null) {
+            return versionedDir;
+        }
 
         if (isWorkingCopyRoot(versionedDir)) {
             // this is root.
@@ -372,9 +395,9 @@ public class SVNWCUtil {
             return versionedDir;
         }
 
-	    return getWorkingCopyRoot(parent, stopOnExtenrals);
+        return getWorkingCopyRoot(parent, stopOnExtenrals);
     }
-    
+
     private static boolean isEclipse() {
         if (ourIsEclipse == null) {
             try {

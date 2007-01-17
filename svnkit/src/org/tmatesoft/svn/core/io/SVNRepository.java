@@ -730,7 +730,7 @@ public abstract class SVNRepository {
      * 
      * <p>
      * If <code>limit</code> is > 0 then only the first <code>limit</code> log entries
-     * will be handled. Otherwise this number is ignored.
+     * will be handled. Otherwise (i.e. if <code>limit</code> is 0) this number is ignored.
      * 
      * <p>
      * Target paths can be both relative to the location of 

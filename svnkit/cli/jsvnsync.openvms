@@ -1,0 +1,33 @@
+$!
+$ if f$edit(p1, "upcase") .eqs. "DEFINE_SYMBOL" .or. -
+     f$type(svn) .eqs. "" .or. -
+     f$trnlnm("svnkit_home") .eqs. ""
+$ then
+$   env = f$env("PROCEDURE")
+$   tmp = env - f$parse(env,,,"type") - f$parse(env,,,"version")
+$   svn :== @'tmp'
+$   home = f$parse(env,,,"device") + f$parse(env,,,"directory")
+$   define/job/nolog svnkit_home 'home'
+$   define/job/nolog decc$argv_parse_style enable
+$   define/job/nolog decc$efs_case_preserve enable
+$   exit
+$ endif
+$!
+$ p = ""
+$ if p1 .nes. "" then p = p + " " + p1
+$ if p2 .nes. "" then p = p + " " + p2
+$ if p3 .nes. "" then p = p + " " + p3
+$ if p4 .nes. "" then p = p + " " + p4
+$ if p5 .nes. "" then p = p + " " + p5
+$ if p6 .nes. "" then p = p + " " + p6
+$ if p7 .nes. "" then p = p + " " + p7
+$ if p8 .nes. "" then p = p + " " + p8
+$!
+$ SVNKIT_CLASSPATH = """.:/svnkit_home/svnkit.jar:/svnkit_home/svnkit-cli.jar:/s
+vnkit_hom/eganymed.jar"""
+$ SVNKIT_MAINCLASS = """org.tmatesoft.svn.cli.SVNSync"""
+$!! SVNKIT_OPTIONS = """-Djava.util.logging.config.file=/svnkit_home/logging.pro
+perties"""
+$!
+$ java 'SVNKIT_OPTIONS' -cp 'SVNKIT_CLASSPATH' 'SVNKIT_MAINCLASS' 'p'
+$!

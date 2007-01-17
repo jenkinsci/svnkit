@@ -90,12 +90,16 @@ svnkit-test/test.unix.properties eol=lf
 svnkit-test/test.windows.properties eol=crlf
 svnkit/cli/jsvn -text
 svnkit/cli/jsvn.bat -text
+svnkit/cli/jsvn.openvms -text
 svnkit/cli/jsvnadmin -text
 svnkit/cli/jsvnadmin.bat -text
+svnkit/cli/jsvnadmin.openvms -text
 svnkit/cli/jsvnlook -text
 svnkit/cli/jsvnlook.bat -text
+svnkit/cli/jsvnlook.openvms -text
 svnkit/cli/jsvnsync -text
 svnkit/cli/jsvnsync.bat -text
+svnkit/cli/jsvnsync.openvms -text
 svnkit/cli/logging.properties.disabled -text
 svnkit/src/org/tigris/subversion/javahl/SVNClient.java -text
 svnkit/src/org/tmatesoft/svn/core/SVNURL.java -text
