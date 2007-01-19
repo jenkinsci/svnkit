@@ -283,9 +283,10 @@ public class SVNCopyClient extends SVNBasicClient {
             repository = createRepository(topURL, true);
         }
         
-        String srcPath = srcURL.equals(topURL) ? "" : srcURL.toString().substring(topURL.toString().length() + 1);
+        // substring one more char, because path always starts with /, and we need relative path.
+        String srcPath = srcURL.equals(topURL) ? "" : srcURL.getURIEncodedPath().substring(topURL.getURIEncodedPath().length() + 1);
         srcPath = SVNEncodingUtil.uriDecode(srcPath);
-        String dstPath = dstURL.equals(topURL) ? "" : dstURL.toString().substring(topURL.toString().length() + 1);
+        String dstPath = dstURL.equals(topURL) ? "" : dstURL.getURIEncodedPath().substring(topURL.getURIEncodedPath().length() + 1); 
         dstPath = SVNEncodingUtil.uriDecode(dstPath);
         
         if ("".equals(srcPath) && isMove) {
