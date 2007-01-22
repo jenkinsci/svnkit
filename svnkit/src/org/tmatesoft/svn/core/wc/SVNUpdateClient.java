@@ -297,10 +297,13 @@ public class SVNUpdateClient extends SVNBasicClient {
         if (!revision.isValid() && pegRevision.isValid()) {
             revision = pegRevision;
         }
+        
         if (!revision.isValid()) {
             revision = SVNRevision.HEAD;
         }
+        
         SVNRepository repos = createRepository(url, null, pegRevision, revision);
+        url = repos.getLocation();
         long revNumber = getRevisionNumber(revision, repos, null);
         SVNNodeKind targetNodeKind = repos.checkPath("", revNumber);
         if (targetNodeKind == SVNNodeKind.FILE) {
