@@ -677,6 +677,9 @@ public class SVNUpdateClient extends SVNBasicClient {
                 SVNFileUtil.setExecutable(dstPath, true);
             }
             dispatchEvent(SVNEventFactory.createExportAddedEvent(dstPath.getParentFile(), dstPath, SVNNodeKind.FILE));            
+        } else {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "URL ''{0}'' doesn't exist", repository.getLocation());
+            SVNErrorManager.error(err);
         }
         return revNumber;
     }
