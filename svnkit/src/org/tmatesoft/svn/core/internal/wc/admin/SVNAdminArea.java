@@ -320,28 +320,33 @@ public abstract class SVNAdminArea {
         if (entry == null) {
             return false;
         }
-        boolean modified = false;
+        boolean filesDeleted = false;
+        boolean updateEntry = false;
         if (text && entry.getConflictOld() != null) {
             File file = getFile(entry.getConflictOld());
-            modified |= file.isFile();
+            filesDeleted |= file.isFile();
+            updateEntry = true;
             SVNFileUtil.deleteFile(file);
         }
         if (text && entry.getConflictNew() != null) {
             File file = getFile(entry.getConflictNew());
-            modified |= file.isFile();
+            filesDeleted |= file.isFile();
+            updateEntry = true;
             SVNFileUtil.deleteFile(file);
         }
         if (text && entry.getConflictWorking() != null) {
             File file = getFile(entry.getConflictWorking());
-            modified |= file.isFile();
+            filesDeleted |= file.isFile();
+            updateEntry = true;
             SVNFileUtil.deleteFile(file);
         }
         if (props && entry.getPropRejectFile() != null) {
             File file = getFile(entry.getPropRejectFile());
-            modified |= file.isFile();
+            filesDeleted |= file.isFile();
+            updateEntry = true;
             SVNFileUtil.deleteFile(file);
         }
-        if (modified) {
+        if (updateEntry) {
             if (text) {
                 entry.setConflictOld(null);
                 entry.setConflictNew(null);
@@ -352,7 +357,7 @@ public abstract class SVNAdminArea {
             }
             saveEntries(false);
         }
-        return modified;
+        return filesDeleted;
     }
     
     public void restoreFile(String name) throws SVNException {
