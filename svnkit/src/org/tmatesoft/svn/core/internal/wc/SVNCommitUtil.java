@@ -567,15 +567,11 @@ public class SVNCommitUtil {
                     entry = entries.getEntry("", false);
                     dir = childDir;
                 }
-                propConflicts = entry.getPropRejectFile() != null;
-            } else {
-                propConflicts = entry.getPropRejectFile() != null;
-            }
+            } 
+            propConflicts = entries.hasPropConflict(entry.getName());
         } else {
-            propConflicts = entry.getPropRejectFile() != null;
-            textConflicts = entry.getConflictOld() != null
-                    || entry.getConflictNew() != null
-                    || entry.getConflictWorking() != null;
+            propConflicts = entries.hasPropConflict(entry.getName());
+            textConflicts = entries.hasTextConflict(entry.getName());
         }
         if (propConflicts || textConflicts) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT, "Aborting commit: ''{0}'' remains in conflict", path);                    
