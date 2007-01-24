@@ -568,10 +568,10 @@ public class SVNCommitUtil {
                     dir = childDir;
                 }
             } 
-            propConflicts = entries.hasPropConflict(entry.getName());
+            propConflicts = dir.hasPropConflict(entry.getName());
         } else {
-            propConflicts = entries.hasPropConflict(entry.getName());
-            textConflicts = entries.hasTextConflict(entry.getName());
+            propConflicts = dir.hasPropConflict(entry.getName());
+            textConflicts = dir.hasTextConflict(entry.getName());
         }
         if (propConflicts || textConflicts) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT, "Aborting commit: ''{0}'' remains in conflict", path);                    
