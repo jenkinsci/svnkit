@@ -429,12 +429,15 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             File authFile = new File(dir, fileName);
             if (authFile.exists()) {
                 SVNProperties props = new SVNProperties(authFile, "");
+                SVNPasswordChipher chipher = null;
                 try {
                     Map values = props.asMap();
                     String storedRealm = (String) values.get("svn:realmstring");
-                    if ("wincrypt".equals(values.get("passtype"))) {
+                    String chipherType = (String) values.get("passtype");
+                    if (chipherType != null && !SVNPasswordChipher.hasChipher(chipherType)) {
                         return null;
                     }
+                    chipher = SVNPasswordChipher.getInstance(chipherType);
                     if (storedRealm == null || !storedRealm.equals(realm)) {
                         return null;
                     }
@@ -443,8 +446,11 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                         return null;
                     }
                     String password = (String) values.get("password");
+                    password = chipher.decrypt(password);
+
                     String path = (String) values.get("key");
                     String passphrase = (String) values.get("passphrase");
+                    passphrase = chipher.decrypt(passphrase);
                     String port = (String) values.get("port");
                     port = port == null ? ("" + getDefaultSSHPortNumber()) : port;
                     if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
@@ -486,12 +492,17 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             Map values = new HashMap();
             values.put("svn:realmstring", realm);
             values.put("username", auth.getUserName());
+            String chipherType = SVNPasswordChipher.getDefaultChipherType();
+            SVNPasswordChipher chipher = SVNPasswordChipher.getInstance(chipherType);
+            if (chipherType != null) {
+                values.put("passtype", chipherType);
+            }
             if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
                 SVNPasswordAuthentication passwordAuth = (SVNPasswordAuthentication) auth;
-                values.put("password", passwordAuth.getPassword());
+                values.put("password", chipher.encrypt(passwordAuth.getPassword()));
             } else if (ISVNAuthenticationManager.SSH.equals(kind)) {
                 SVNSSHAuthentication sshAuth = (SVNSSHAuthentication) auth;
-                values.put("password", sshAuth.getPassword());
+                values.put("password", chipher.encrypt(sshAuth.getPassword()));
                 int port = sshAuth.getPortNumber();
                 if (sshAuth.getPortNumber() < 0) {
                     port = getDefaultSSHPortNumber() ;
@@ -499,7 +510,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                 values.put("port", Integer.toString(port));
                 if (sshAuth.getPrivateKeyFile() != null) { 
                     String path = SVNPathUtil.validateFilePath(sshAuth.getPrivateKeyFile().getAbsolutePath());
-                    values.put("passphrase", sshAuth.getPassphrase());
+                    values.put("passphrase", chipher.encrypt(sshAuth.getPassphrase()));
                     values.put("key", path);
                 }
             }
