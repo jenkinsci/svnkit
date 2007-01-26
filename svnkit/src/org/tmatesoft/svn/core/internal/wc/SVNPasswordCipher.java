@@ -23,37 +23,37 @@ import java.util.Map;
  * @version 1.0
  * @author  TMate Software Ltd.
  */
-public abstract class SVNPasswordChipher {
+public abstract class SVNPasswordCipher {
     
-    private static final SVNPasswordChipher EMPTY_CHIPHER = new CompositePasswordChiper(Collections.EMPTY_LIST);
+    private static final SVNPasswordCipher EMPTY_CIPHER = new CompositePasswordCipher(Collections.EMPTY_LIST);
     private static Map ourInstances = new HashMap();
     private static String ourDefaultType;
     
-    public static SVNPasswordChipher getInstance(String type) {
+    public static SVNPasswordCipher getInstance(String type) {
         if (type == null) {
-            return EMPTY_CHIPHER;
+            return EMPTY_CIPHER;
         }
         synchronized (ourInstances) {
             if (ourInstances.containsKey(type)) {
-                return (SVNPasswordChipher) ourInstances.get(type);
+                return (SVNPasswordCipher) ourInstances.get(type);
             }
         }
-        return EMPTY_CHIPHER;
+        return EMPTY_CIPHER;
     }
     
-    public static boolean hasChipher(String type) {
+    public static boolean hasCipher(String type) {
         synchronized (ourInstances) {
             return type != null && ourInstances.containsKey(type);
         }
     }
     
-    public static void setDefaultChipherType(String type) {
+    public static void setDefaultCipherType(String type) {
         synchronized (ourInstances) {
             ourDefaultType = type;
         }
     }
     
-    public static String getDefaultChipherType() {
+    public static String getDefaultCipherType() {
         synchronized (ourInstances) {
             if (ourDefaultType != null) {
                 return ourDefaultType;
@@ -65,54 +65,54 @@ public abstract class SVNPasswordChipher {
         return null;
     }
     
-    protected static void registerChipher(String type, SVNPasswordChipher chipher) {
-        if (type != null && chipher != null) {
+    protected static void registerCipher(String type, SVNPasswordCipher cipher) {
+        if (type != null && cipher != null) {
             synchronized (ourInstances) {
                 if (ourInstances.containsKey(type)) {
-                    ((CompositePasswordChiper) ourInstances.get(type)).addChipher(chipher);
+                    ((CompositePasswordCipher) ourInstances.get(type)).addCipher(cipher);
                 } else {
-                    chipher = new CompositePasswordChiper(chipher);
-                    ourInstances.put(type, chipher);
+                    cipher = new CompositePasswordCipher(cipher);
+                    ourInstances.put(type, cipher);
                 }
             }
         }
     }
     
-    protected SVNPasswordChipher() {
+    protected SVNPasswordCipher() {
     }
     
     public abstract String encrypt(String rawData);
 
     public abstract String decrypt(String encyrptedData);
 
-    private static class CompositePasswordChiper extends SVNPasswordChipher {
+    private static class CompositePasswordCipher extends SVNPasswordCipher {
         
-        private List myChiphers;
+        private List myCiphers;
 
-        private CompositePasswordChiper(List chiphers) {
-            myChiphers = chiphers;
+        private CompositePasswordCipher(List chiphers) {
+            myCiphers = chiphers;
         }
 
-        public CompositePasswordChiper(SVNPasswordChipher chipher) {
-            myChiphers = new ArrayList();
-            myChiphers.add(chipher);
+        public CompositePasswordCipher(SVNPasswordCipher chipher) {
+            myCiphers = new ArrayList();
+            myCiphers.add(chipher);
         }
 
-        public synchronized void addChipher(SVNPasswordChipher chipher) {
-            myChiphers.add(chipher);
+        public synchronized void addCipher(SVNPasswordCipher chipher) {
+            myCiphers.add(chipher);
         }
 
         public synchronized String decrypt(String encyrptedData) {
-            for (Iterator chiphers = myChiphers.iterator(); chiphers.hasNext();) {
-                SVNPasswordChipher chipher = (SVNPasswordChipher) chiphers.next();
+            for (Iterator chiphers = myCiphers.iterator(); chiphers.hasNext();) {
+                SVNPasswordCipher chipher = (SVNPasswordCipher) chiphers.next();
                 encyrptedData = chipher.decrypt(encyrptedData);
             }
             return encyrptedData;
         }
 
         public synchronized String encrypt(String rawData) {
-            for (Iterator chiphers = myChiphers.iterator(); chiphers.hasNext();) {
-                SVNPasswordChipher chipher = (SVNPasswordChipher) chiphers.next();
+            for (Iterator chiphers = myCiphers.iterator(); chiphers.hasNext();) {
+                SVNPasswordCipher chipher = (SVNPasswordCipher) chiphers.next();
                 rawData = chipher.encrypt(rawData);
             }
             return rawData;
