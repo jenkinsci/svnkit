@@ -52,7 +52,10 @@ public class SVNGanymedConnector implements ISVNConnector {
         String realm = repository.getLocation().getProtocol() + "://" + repository.getLocation().getHost();
         if (repository.getLocation().hasPort()) {
             realm += ":" + repository.getLocation().getPort();
-        }        
+        }
+        if (repository.getLocation().getUserInfo() != null && !"".equals(repository.getLocation().getUserInfo())) {
+            realm = repository.getLocation().getUserInfo() + "@" + realm;
+        }
 
         int reconnect = 1;
         while(true) {
