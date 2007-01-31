@@ -40,7 +40,7 @@ import org.xml.sax.Attributes;
  */
 public class DAVEditorHandler extends BasicDAVDeltaHandler {
 
-    public static StringBuffer generateEditorRequest(final DAVConnection connection, StringBuffer buffer, final String url, 
+    public static StringBuffer generateEditorRequest(final DAVConnection connection, StringBuffer buffer, String url, 
             long targetRevision, String target, String dstPath, boolean recurse,
             boolean ignoreAncestry, boolean resourceWalk, 
             boolean fetchContents, ISVNReporterBaton reporterBaton) throws SVNException {
@@ -48,6 +48,9 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
         buffer.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
         buffer.append("<S:update-report send-all=\"true\" xmlns:S=\"svn:\">\n");
         buffer.append("<S:src-path>");
+        if (url.endsWith("/")) {
+            url = url.substring(0, url.length() - 1);
+        }
         buffer.append(SVNEncodingUtil.xmlEncodeCDATA(url));
         buffer.append("</S:src-path>\n");
         if (targetRevision >= 0) {
