@@ -127,6 +127,7 @@ class DAVCommitEditor implements ISVNEditor {
 
         DAVResource newDir = new DAVResource(myCommitMediator, myConnection, path, -1, copyPath != null);
         newDir.setWorkingURL(SVNPathUtil.append(wPath, SVNPathUtil.tail(path)));
+        newDir.setAdded(true);
 
         myDirsStack.push(newDir);
         myPathsMap.put(newDir.getURL(), path);
@@ -201,7 +202,13 @@ class DAVCommitEditor implements ISVNEditor {
         path = SVNEncodingUtil.uriEncode(path);
         // checkout parent collection.
         DAVResource parentResource = (DAVResource) myDirsStack.peek();
-        if (parentResource.getWorkingURL() == null) {
+        checkoutResource(parentResource, true);
+        String wPath = parentResource.getWorkingURL();
+        // create child resource.
+        DAVResource newFile = new DAVResource(myCommitMediator, myConnection, path, -1, copyPath != null);
+        newFile.setWorkingURL(SVNPathUtil.append(wPath, SVNPathUtil.tail(path)));
+
+        if (!parentResource.isAdded() && !myPathsMap.containsKey(newFile.getURL())) {
         	String filePath = SVNPathUtil.append(parentResource.getURL(), SVNPathUtil.tail(path));
             SVNErrorMessage err = null;
             try {
@@ -219,15 +226,11 @@ class DAVCommitEditor implements ISVNEditor {
                 SVNErrorManager.error(err);
             } 
         }
-        checkoutResource(parentResource, true);
-        String wPath = parentResource.getWorkingURL();
-        // create child resource.
-        DAVResource newFile = new DAVResource(myCommitMediator, myConnection, path, -1, copyPath != null);
-        newFile.setWorkingURL(SVNPathUtil.append(wPath, SVNPathUtil.tail(path)));
         // put to have working URL to make PUT or PROPPATCH later (in closeFile())
         myPathsMap.put(newFile.getURL(), newFile.getPath());
         myFilesMap.put(originalPath, newFile);
 
+        newFile.setAdded(true);
         if (copyPath != null) {
             copyPath = myRepository.getFullPath(copyPath);
             copyPath = SVNEncodingUtil.uriEncode(copyPath);
@@ -237,10 +240,7 @@ class DAVCommitEditor implements ISVNEditor {
             // do "COPY" copyPath to parents working url ?
             wPath = myLocation.setPath(newFile.getWorkingURL(), true).toString();
             myConnection.doCopy(copyPath, wPath, 0);
-            newFile.setAdded(false);
-        } else {
-            newFile.setAdded(true);
-        }
+        } 
     }
 
     public void openFile(String path, long revision) throws SVNException {
