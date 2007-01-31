@@ -106,7 +106,7 @@ public class SVNGanymedConnector implements ISVNConnector {
                 if ("".equals(repository.getExternalUserName())) {
                     mySession.execCommand(SVNSERVE_COMMAND);
                 } else {
-                    mySession.execCommand(SVNSERVE_COMMAND_WITH_USER_NAME + repository.getExternalUserName());
+                    mySession.execCommand(SVNSERVE_COMMAND_WITH_USER_NAME + "\"" + repository.getExternalUserName() + "\"");
                 }
     
                 myOutputStream = mySession.getStdin();
