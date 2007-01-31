@@ -168,8 +168,8 @@ public class SVNWCAccess implements ISVNEventHandler {
                 throw svne;
             }
             
-            SVNURL parentURL = parentEntry.getSVNURL();
-            SVNURL targetURL = targetEntry.getSVNURL();
+            SVNURL parentURL = parentEntry != null ? parentEntry.getSVNURL() : null;
+            SVNURL targetURL = targetEntry != null ? targetEntry.getSVNURL() : null;
             String encodedName = SVNEncodingUtil.uriEncode(name);
             if (targetInParent == null || (parentURL != null && targetURL != null && 
                     (!parentURL.equals(targetURL.removePathTail()) || !encodedName.equals(SVNPathUtil.tail(targetURL.getPath()))))) {
