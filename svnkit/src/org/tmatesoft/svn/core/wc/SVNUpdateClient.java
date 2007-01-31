@@ -707,7 +707,15 @@ public class SVNUpdateClient extends SVNBasicClient {
         try {
             SVNAdminArea adminArea = wcAccess.probeOpen(dst, true, recursive ? SVNWCAccess.INFINITE_DEPTH : 0);
             String name = dst.equals(adminArea.getRoot()) ? adminArea.getThisDirName() : dst.getName();
-            doRelocate(adminArea, name, oldURL.toString(), newURL.toString(), recursive, new HashMap());
+            String from = oldURL.toString();
+            String to = newURL.toString();
+            if (from.endsWith("/")) {
+                from = from.substring(0, from.length() - 1);
+            } 
+            if (to.endsWith("/")) {
+                to = to.substring(0, to.length() - 1);
+            } 
+            doRelocate(adminArea, name, from, to, recursive, new HashMap());
         } finally {
             wcAccess.close();
         }
