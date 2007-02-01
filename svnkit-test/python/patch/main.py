@@ -135,7 +135,7 @@ wc_author2 = 'jconstant' # use the same password as wc_author
 verbose_mode = 0
 
 # Global variable indicating if we want test data cleaned up after success
-cleanup_mode = 0
+cleanup_mode = 1
 
 # Global URL to testing area.  Default to ra_local, current working dir.
 test_area_url = file_scheme_prefix + os.path.abspath(os.getcwd())
