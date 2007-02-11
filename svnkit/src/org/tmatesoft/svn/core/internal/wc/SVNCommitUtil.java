@@ -251,6 +251,10 @@ public class SVNCommitUtil {
                 for (int i = 0; i < lockedDirs.length; i++) {
                     statusClient.checkCancelled();
                     SVNAdminArea dir = lockedDirs[i];
+                    if (dir == null) {
+                        // could be null for missing, but known dir.
+                        continue;
+                    }
                     SVNEntry rootEntry = baseAccess.getEntry(dir.getRoot(), true);
                     if (rootEntry.getCopyFromURL() != null) {
                         File dirRoot = dir.getRoot();
