@@ -11,7 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -156,6 +155,10 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
         if (revision > 0) {
             myCurrentRevisionBaton.myTxn = FSTransactionRoot.beginTransaction(headRevision, 0, myFSFS);
             myCurrentRevisionBaton.myTxnRoot = myFSFS.createTransactionRoot(myCurrentRevisionBaton.myTxn.getTxnId()); 
+            if (myProgressHandler != null) {
+                SVNAdminEvent event = new SVNAdminEvent(revision, SVNAdminEventAction.REVISION_LOAD); 
+                myProgressHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
+            }
             SVNDebugLog.getDefaultLog().info("<<< Started new transaction, based on original revision " + revision + "\n");
         }
     }
@@ -169,17 +172,33 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
         myCurrentNodeBaton = createNodeBaton(headers);
         switch (myCurrentNodeBaton.myAction) {
             case SVNAdminHelper.NODE_ACTION_CHANGE:
+                if (myProgressHandler != null) {
+                    SVNAdminEvent event = new SVNAdminEvent(SVNAdminEventAction.REVISION_LOAD_EDIT_PATH, myCurrentNodeBaton.myPath); 
+                    myProgressHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
+                }
                 SVNDebugLog.getDefaultLog().info("     * editing path : " + myCurrentNodeBaton.myPath + " ...");
                 break;
             case SVNAdminHelper.NODE_ACTION_DELETE:
+                if (myProgressHandler != null) {
+                    SVNAdminEvent event = new SVNAdminEvent(SVNAdminEventAction.REVISION_LOAD_DELETE_PATH, myCurrentNodeBaton.myPath); 
+                    myProgressHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
+                }
                 SVNDebugLog.getDefaultLog().info("     * deleting path : " + myCurrentNodeBaton.myPath + " ...");
                 myCurrentRevisionBaton.getCommitter().deleteNode(myCurrentNodeBaton.myPath);
                 break;
             case SVNAdminHelper.NODE_ACTION_ADD:
+                if (myProgressHandler != null) {
+                    SVNAdminEvent event = new SVNAdminEvent(SVNAdminEventAction.REVISION_LOAD_ADD_PATH, myCurrentNodeBaton.myPath); 
+                    myProgressHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
+                }
                 SVNDebugLog.getDefaultLog().info("     * adding path : " + myCurrentNodeBaton.myPath + " ...");
                 maybeAddWithHistory(myCurrentNodeBaton);
                 break;
             case SVNAdminHelper.NODE_ACTION_REPLACE:
+                if (myProgressHandler != null) {
+                    SVNAdminEvent event = new SVNAdminEvent(SVNAdminEventAction.REVISION_LOAD_REPLACE_PATH, myCurrentNodeBaton.myPath); 
+                    myProgressHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
+                }
                 SVNDebugLog.getDefaultLog().info("     * replacing path : " + myCurrentNodeBaton.myPath + " ...");
                 myCurrentRevisionBaton.getCommitter().deleteNode(myCurrentNodeBaton.myPath);
                 maybeAddWithHistory(myCurrentNodeBaton);
@@ -232,7 +251,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
             
             byte[] buffer = null;
             if (contentLength == 0) {
-                getDeltaGenerator().sendDelta(myCurrentNodeBaton.myPath, SVNFileUtil.DUMMY_IN, myCurrentRevisionBaton.getConsumer(), false);
+                getDeltaGenerator().sendDelta(myCurrentNodeBaton.myPath, SVNFileUtil.DUMMY_IN, fsConsumer, false);
             } else {
                 buffer = new byte[SVNAdminHelper.STREAM_CHUNK_SIZE];
                 try {
@@ -246,10 +265,9 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                         
                         if (isDelta) {
                             SVNDeltaReader deltaReader = getDeltaReader();
-                            deltaReader.nextWindow(buffer, 0, numRead, myCurrentNodeBaton.myPath, myCurrentRevisionBaton.getConsumer());
+                            deltaReader.nextWindow(buffer, 0, numRead, myCurrentNodeBaton.myPath, fsConsumer);
                         } else {
-                            ByteArrayInputStream contents = new ByteArrayInputStream(buffer, 0, numRead); 
-                            getDeltaGenerator().sendDelta(myCurrentNodeBaton.myPath, contents, myCurrentRevisionBaton.getConsumer(), false);
+                            getDeltaGenerator().sendDelta(myCurrentNodeBaton.myPath, buffer, numRead, fsConsumer);
                         }
                         contentLength -= numRead;
                     }
@@ -258,9 +276,8 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                     SVNErrorManager.error(err, ioe);
                 }
             }
-            if (isDelta) {
-                fsConsumer.textDeltaEnd(myCurrentNodeBaton.myPath);
-            } 
+
+            fsConsumer.textDeltaEnd(myCurrentNodeBaton.myPath);
         } catch (SVNException svne) {
             fsConsumer.abort(); 
         }

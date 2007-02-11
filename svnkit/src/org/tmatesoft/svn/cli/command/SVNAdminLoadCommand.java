@@ -35,7 +35,8 @@ import org.tmatesoft.svn.core.wc.admin.SVNUUIDAction;
 public class SVNAdminLoadCommand extends SVNCommand implements ISVNAdminEventHandler {
     private boolean myIsQuiet;
     private PrintStream myOut;
-
+    private boolean myIsNodeOpened;
+    
     public void run(PrintStream out, PrintStream err) throws SVNException {
         run(System.in, out, err);
     }
@@ -71,13 +72,58 @@ public class SVNAdminLoadCommand extends SVNCommand implements ISVNAdminEventHan
     }
 
     public void handleAdminEvent(SVNAdminEvent event, double progress) throws SVNException {
-        if (!myIsQuiet && event != null && event.getAction() == SVNAdminEventAction.REVISION_LOADED) {
-            long rev = event.getRevision();
-            long originalRev = event.getOriginalRevision();
-            if (rev == originalRev) {
-                myOut.print("\n------- Committed revision " + rev + " >>>\n\n");
-            } else {
-                myOut.print("\n------- Committed new rev " + rev + " (loaded from original rev " + originalRev + ") >>>\n\n");
+        if (!myIsQuiet && event != null) {
+            if (event.getAction() == SVNAdminEventAction.REVISION_LOAD) {
+                myOut.println("<<< Started new transaction, based on original revision " + event.getOriginalRevision());
+            } else if (event.getAction() == SVNAdminEventAction.REVISION_LOAD_EDIT_PATH) {
+                if (myIsNodeOpened) {
+                    myOut.println(" done.");
+                }
+
+                String path = event.getPath().startsWith("/") ? event.getPath().substring(1) : event.getPath(); 
+                myOut.print("     * editing path : " + path + " ...");
+                myIsNodeOpened = true;
+            } else if (event.getAction() == SVNAdminEventAction.REVISION_LOAD_ADD_PATH) {
+                if (myIsNodeOpened) {
+                    myOut.println(" done.");
+                }
+
+                String path = event.getPath().startsWith("/") ? event.getPath().substring(1) : event.getPath(); 
+                myOut.print("     * adding path : " + path + " ...");
+                myIsNodeOpened = true;
+            } else if (event.getAction() == SVNAdminEventAction.REVISION_LOAD_DELETE_PATH) {
+                if (myIsNodeOpened) {
+                    myOut.println(" done.");
+                }
+                
+                String path = event.getPath().startsWith("/") ? event.getPath().substring(1) : event.getPath(); 
+                myOut.print("     * deleting path : " + path + " ...");
+                myIsNodeOpened = true;
+            } else if (event.getAction() == SVNAdminEventAction.REVISION_LOAD_REPLACE_PATH) {
+                if (myIsNodeOpened) {
+                    myOut.println(" done.");
+                }
+                
+                String path = event.getPath().startsWith("/") ? event.getPath().substring(1) : event.getPath(); 
+                myOut.print("     * replacing path : " + path + " ...");
+                myIsNodeOpened = true;
+            } else if (event.getAction() == SVNAdminEventAction.REVISION_LOADED) {
+                if (myIsNodeOpened) {
+                    myOut.println(" done.");
+                    myIsNodeOpened = false;
+                }
+
+                long rev = event.getRevision();
+                long originalRev = event.getOriginalRevision();
+                if (rev == originalRev) {
+                    myOut.println("");
+                    myOut.println("------- Committed revision " + rev + " >>>");
+                    myOut.println("");
+                } else {
+                    myOut.println("");
+                    myOut.println("------- Committed new rev " + rev + " (loaded from original rev " + originalRev + ") >>>");
+                    myOut.println("");
+                }
             }
         }
     }

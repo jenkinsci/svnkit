@@ -46,24 +46,48 @@ public class SVNAdminEventAction {
     }
 
     /**
-     * A 'next revision loaded' action.
+     * An action that denotes a next revision load is started.
      */
-    public static final SVNAdminEventAction REVISION_LOADED = new SVNAdminEventAction(0);
+    public static final SVNAdminEventAction REVISION_LOAD = new SVNAdminEventAction(0);
+    
+    /**
+     * An action that denotes a next revision load is completed.
+     */
+    public static final SVNAdminEventAction REVISION_LOADED = new SVNAdminEventAction(1);
 
+    /**
+     * An action that denotes editing a next path within the current revision being loaded.
+     */
+    public static final SVNAdminEventAction REVISION_LOAD_EDIT_PATH = new SVNAdminEventAction(2);
+
+    /**
+     * An action that denotes deleting a next path within the current revision being loaded.
+     */
+    public static final SVNAdminEventAction REVISION_LOAD_DELETE_PATH = new SVNAdminEventAction(3);
+    
+    /**
+     * An action that denotes adding a next path within the current revision being loaded.
+     */
+    public static final SVNAdminEventAction REVISION_LOAD_ADD_PATH = new SVNAdminEventAction(4);
+    
+    /**
+     * An action that denotes replacing a next path within the current revision being loaded.
+     */
+    public static final SVNAdminEventAction REVISION_LOAD_REPLACE_PATH = new SVNAdminEventAction(5);
+    
     /**
      * A 'next revision dumped' action.
      */
-    public static final SVNAdminEventAction REVISION_DUMPED = new SVNAdminEventAction(1);
+    public static final SVNAdminEventAction REVISION_DUMPED = new SVNAdminEventAction(6);
 
     /**
      * A 'next transaction listed' action.
      */
-    public static final SVNAdminEventAction TRANSACTION_LISTED = new SVNAdminEventAction(2);
+    public static final SVNAdminEventAction TRANSACTION_LISTED = new SVNAdminEventAction(7);
 
     /**
      * A 'next transaction removed' action.
      */
-    public static final SVNAdminEventAction TRANSACTION_REMOVED = new SVNAdminEventAction(3);
+    public static final SVNAdminEventAction TRANSACTION_REMOVED = new SVNAdminEventAction(8);
 
-    
 }

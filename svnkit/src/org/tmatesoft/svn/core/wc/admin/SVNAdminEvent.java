@@ -28,6 +28,7 @@ public class SVNAdminEvent {
     private long myRevision;
     private long myOriginalRevision;
     private SVNAdminEventAction myAction;
+    private String myPath; 
     
     /**
      * Creates a new event.
@@ -43,14 +44,33 @@ public class SVNAdminEvent {
     }
 
     /**
+     * Creates a new event to notify about a next path being changed
+     * withing the revision being currently loaded.  
+     * 
+     * @param action   a path change action
+     * @param path     repository path being changed 
+     */
+    public SVNAdminEvent(SVNAdminEventAction action, String path) {
+        myAction = action;
+        myPath = path;
+    }
+
+    /**
      * Creates a new event.
      * 
      * @param revision    a revision number
      * @param action      an event action
      */
     public SVNAdminEvent(long revision, SVNAdminEventAction action) {
-        myRevision = revision;
         myOriginalRevision = -1;
+        myRevision = -1;
+        
+        if (action == SVNAdminEventAction.REVISION_LOAD) {
+            myOriginalRevision = revision;    
+        } else {
+            myRevision = revision;            
+        }
+        
         myAction = action;
     }
 
@@ -129,5 +149,14 @@ public class SVNAdminEvent {
     public String getTxnName() {
         return myTxnName;
     }
-    
+
+    /**
+     * Returns an absolute repository path being changed withing 
+     * the current revision load iteration.
+     *  
+     * @return  repository path
+     */
+    public String getPath() {
+        return myPath;
+    }
 }

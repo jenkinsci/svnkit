@@ -698,7 +698,7 @@ public class SVNAdminClient extends SVNBasicClient {
                     }
                 } 
 
-                if (line.length() == 0) {
+                if (line.length() == 0 || Character.isWhitespace(line.charAt(0))) {
                     continue;
                 }
             

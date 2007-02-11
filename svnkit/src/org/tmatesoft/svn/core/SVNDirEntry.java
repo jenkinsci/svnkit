@@ -187,6 +187,19 @@ public class SVNDirEntry implements Comparable {
     /**
      * Returns the entry's path.
      * 
+     * <p>
+     * This method always returns the name of an entry (i.e. 
+     * a path relative to the parent folder) when an <b>SVNDirEntry</b> 
+     * object is provided by an {@link org.tmatesoft.svn.core.io.SVNRepository} 
+     * driver.
+     * 
+     * <p>
+     * This property (relative path) is longer than just an entry name only when 
+     * an <b>SVNDirEntry</b> object is obtained via a recursive call to 
+     * a <code>doList()</code> method of the {@link org.tmatesoft.svn.core.wc.SVNLogClient} class. 
+     * In that case an <b>SVNDirEntry</b> object located deep in the hierarchy 
+     * will return a path relative to the URL <code>doList()</code> was called for.
+     * 
      * @return a path relative to a repository location or 
      *         <span class="javakeyword">null</span> if no path is
      *         specified
