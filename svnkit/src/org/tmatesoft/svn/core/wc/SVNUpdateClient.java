@@ -890,7 +890,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 continue;
             }
             long revNumber = external.getNewRevision();
-            SVNRevision revision = revNumber >= 0 ? SVNRevision.create(revNumber) : SVNRevision.HEAD;
+            SVNRevision revision = revNumber >= 0 ? SVNRevision.create(revNumber) : getExternalRevision(external.getFile(), external.getNewURL());
             setEventPathPrefix(external.getPath());
             try {
                 if (external.getOldURL() == null) {
@@ -978,6 +978,13 @@ public class SVNUpdateClient extends SVNBasicClient {
                 setEventPathPrefix(null);
             }
         }
+    }
+
+    protected SVNRevision getExternalRevision(File file, SVNURL newURL) {
+        if (file == null || newURL == null) {
+            return SVNRevision.HEAD;
+        }
+        return SVNRevision.HEAD;
     }
 
     private void deleteExternal(SVNExternalInfo external) throws SVNException {
