@@ -24,9 +24,9 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 
@@ -225,6 +225,11 @@ public class SVNMoveClient extends SVNBasicClient {
                     SVNVersionedProperties srcProps = srcParentArea.getProperties(src.getName());
                     SVNVersionedProperties dstProps = dstParentArea.getProperties(dst.getName());
                     srcProps.copyTo(dstProps);
+                    File srcBaseFile = srcParentArea.getBaseFile(src.getName(), false);
+                    File dstBaseFile = dstParentArea.getBaseFile(dst.getName(), false);
+                    if (srcBaseFile.isFile()) {
+                        SVNFileUtil.copy(srcBaseFile, dstBaseFile, false, false);
+                    }
                     
                     if (srcEntry.isScheduledForAddition() && srcEntry.isCopied()) {
                         dstEntry.scheduleForAddition();
