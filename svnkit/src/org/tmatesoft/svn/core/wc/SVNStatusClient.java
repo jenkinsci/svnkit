@@ -357,7 +357,7 @@ public class SVNStatusClient extends SVNBasicClient {
                 }
             }
         };
-        doStatus(path, false, remote, true, true, collectParentExternals, handler);
+        doStatus(absPath, false, remote, true, true, collectParentExternals, handler);
         return result[0];
     }
 
