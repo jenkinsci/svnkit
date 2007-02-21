@@ -21,6 +21,9 @@ package org.tmatesoft.svn.core.wc.admin;
  */
 public class SVNUUIDAction {
 
+    private SVNUUIDAction() {
+    }
+    
     /**
      * A command to ignore any met uuid.
      */

@@ -275,9 +275,9 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
                     SVNErrorManager.error(err, ioe);
                 }
-            }
 
-            fsConsumer.textDeltaEnd(myCurrentNodeBaton.myPath);
+                fsConsumer.textDeltaEnd(myCurrentNodeBaton.myPath);
+            }
         } catch (SVNException svne) {
             fsConsumer.abort(); 
         }
