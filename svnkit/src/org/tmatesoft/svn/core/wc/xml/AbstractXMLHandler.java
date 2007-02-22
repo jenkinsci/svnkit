@@ -15,6 +15,7 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.xml.sax.ContentHandler;
+import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
@@ -27,7 +28,7 @@ import org.xml.sax.helpers.AttributesImpl;
  * @version 1.1.1
  * @author  TMate Software Ltd.
  */
-public abstract class AbstractXMLHandler {
+public abstract class AbstractXMLHandler implements Locator {
     
     private AttributesImpl mySharedAttributes;
     private ContentHandler myHandler;
@@ -48,6 +49,7 @@ public abstract class AbstractXMLHandler {
      */
     public void startDocument() {
         try {
+            getHandler().setDocumentLocator(this);
             getHandler().startDocument();
             openTag(getHeaderName());
         } catch (SAXException e) {
@@ -103,4 +105,16 @@ public abstract class AbstractXMLHandler {
         mySharedAttributes.addAttribute("", "", name, "CDATA", SVNEncodingUtil.xmlEncodeAttr(value));
     }
 
+    public int getColumnNumber() {
+        return 0;
+    }
+    public int getLineNumber() {
+        return 0;
+    }
+    public String getPublicId() {
+        return null;
+    }
+    public String getSystemId() {
+        return null;
+    }
 }
