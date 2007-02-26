@@ -61,7 +61,7 @@ public class SVNWCUtil {
         if (SVNFileUtil.isWindows) {
             return new File(SVNFileUtil.getApplicationDataPath(), "Subversion");
         } else if (SVNFileUtil.isOpenVMS) {
-            return new File("sys$login", ".subversion");
+            return new File("/sys$login", ".subversion").getAbsoluteFile();
         }
         return new File(System.getProperty("user.home"), ".subversion");
     }
