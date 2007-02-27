@@ -107,6 +107,10 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
         getConfigFile().setPropertyValue(AUTH_GROUP, STORE_AUTH_CREDS, storeAuth ? YES : NO, !myIsReadonly);
     }
 
+    public boolean isIgnored(File file) {
+        return file != null && isIgnored(file.getName());
+    }
+
     public boolean isIgnored(String name) {
         String[] patterns = getIgnorePatterns();
         for (int i = 0; patterns != null && i < patterns.length; i++) {

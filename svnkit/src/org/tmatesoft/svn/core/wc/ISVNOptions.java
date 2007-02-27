@@ -207,8 +207,26 @@ public interface ISVNOptions extends ISVNTunnelProvider {
      * @param  name  a file name
      * @return       <span class="javakeyword">true</span> if the file
      *               is ignored, otherwise <span class="javakeyword">false</span>
+     * @deprecated
      */
     public boolean isIgnored(String name);
+
+    /**
+     * Determines if a file is ignored according to the 
+     * global ignore patterns.
+     * 
+     * <p>
+     * The global ignore patterns describe the names of 
+     * files and directories that SVNKit should ignore during status, add and 
+     * import operations. Similar to the 
+     * <i>'global-ignores'</i> option that can be found in the SVN's <i>config</i> 
+     * file under the <i>[miscellany]</i> section.
+     * 
+     * @param  name  a file name
+     * @return       <span class="javakeyword">true</span> if the file
+     *               is ignored, otherwise <span class="javakeyword">false</span>
+     */
+    public boolean isIgnored(File file);
     
     /**
      * Returns all the global ignore patterns.
