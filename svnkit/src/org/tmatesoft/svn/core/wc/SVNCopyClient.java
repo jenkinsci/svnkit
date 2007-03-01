@@ -127,7 +127,7 @@ public class SVNCopyClient extends SVNBasicClient {
         super(authManager, options);
     }
 
-    protected SVNCopyClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
+    public SVNCopyClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
         super(repositoryPool, options);
     }
     

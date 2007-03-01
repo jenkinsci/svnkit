@@ -17,6 +17,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
@@ -107,7 +108,7 @@ public class SVN {
                     if (commandLine.hasArgument(SVNArgument.FILE)) {
                         File file = new File((String) commandLine.getArgumentValue(SVNArgument.FILE));
                         // check if it is a versioned file.
-                        SVNStatusClient stClient = new SVNStatusClient(null, null);
+                        SVNStatusClient stClient = new SVNStatusClient((ISVNAuthenticationManager) null, null);
                         try {
                             SVNStatus status = stClient.doStatus(file.getAbsoluteFile(), false);
                             if (status != null && status.getContentsStatus() != SVNStatusType.STATUS_UNVERSIONED &&

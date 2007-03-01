@@ -115,7 +115,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         super(authManager, options);
     }
 
-    protected SVNUpdateClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
+    public SVNUpdateClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
         super(repositoryPool, options);
     }
     

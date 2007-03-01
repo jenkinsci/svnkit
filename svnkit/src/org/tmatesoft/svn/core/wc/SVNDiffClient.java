@@ -105,7 +105,7 @@ public class SVNDiffClient extends SVNBasicClient {
         super(authManager, options);
     }
 
-    protected SVNDiffClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
+    public SVNDiffClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
         super(repositoryPool, options);
     }
     

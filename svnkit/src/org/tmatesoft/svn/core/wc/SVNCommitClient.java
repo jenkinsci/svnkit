@@ -120,7 +120,7 @@ public class SVNCommitClient extends SVNBasicClient {
         super(authManager, options);
     }
 
-    protected SVNCommitClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
+    public SVNCommitClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
         super(repositoryPool, options);
     }
 

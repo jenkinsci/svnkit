@@ -87,7 +87,7 @@ public class SVNMoveClient extends SVNBasicClient {
         myWCClient = new SVNWCClient(authManager, options);
     }
 
-    protected SVNMoveClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
+    public SVNMoveClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
         super(repositoryPool, options);
         myWCClient = new SVNWCClient(repositoryPool, options);
     }

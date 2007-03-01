@@ -727,7 +727,10 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             return new SVNCommitEditor(this, myConnection,
                     new SVNCommitEditor.ISVNCommitCallback() {
                         public void run(SVNException error) {
-                            closeConnection();
+                            try {
+                                closeConnection();
+                            } catch (SVNException e1) {
+                            }
                             if (error != null) {
                                 try {
                                     closeSession();
@@ -1010,11 +1013,14 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         }
     }
 
-    private void closeConnection() {
+    private void closeConnection() throws SVNException {
         if (myConnection != null) {
             myConnection.free();
         }
         unlock();
+        if (!getOptions().keepConnection(this)) {
+            closeSession();
+        }
     }
 
     private void write(String template, Object[] values) throws SVNException {

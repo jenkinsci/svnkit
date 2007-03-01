@@ -181,11 +181,7 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
      *                     the driver should keep a connection
      */
     public boolean keepConnection(SVNRepository repository) {
-        if (!ourAllowPersistentConnections) {
-            return false;
-        }
-        String protocol = repository.getLocation().getProtocol();
-        return myIsKeepConnections && !"svn".equalsIgnoreCase(protocol) && !"svn+ssh".equalsIgnoreCase(protocol);
+        return ourAllowPersistentConnections && myIsKeepConnections;
     }
     
     /**
