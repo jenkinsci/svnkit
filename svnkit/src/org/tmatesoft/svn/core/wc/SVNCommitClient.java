@@ -794,6 +794,10 @@ public class SVNCommitClient extends SVNBasicClient {
             }
         });
         SVNWCAccess wcAccess = SVNCommitUtil.createCommitWCAccess(paths, recursive, force, targets, statusClient);
+        SVNAdminArea[] areas = wcAccess.getAdminAreas();
+        for (int i = 0; i < areas.length; i++) {
+            areas[i].setCommitParameters(getCommitParameters());
+        }
         try {
             Map lockTokens = new HashMap();
             checkCancelled();
@@ -873,6 +877,10 @@ public class SVNCommitClient extends SVNBasicClient {
 
         for (int i = 0; i < wcAccesses.length; i++) {
             SVNWCAccess wcAccess = wcAccesses[i];
+            SVNAdminArea[] areas = wcAccess.getAdminAreas();
+            for (int j = 0; j < areas.length; j++) {
+                areas[i].setCommitParameters(getCommitParameters());
+            }
             Collection targetPaths = (Collection) targets.get(wcAccess);
             try {
                 checkCancelled();

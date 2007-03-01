@@ -48,4 +48,7 @@ public class DefaultSVNCommitParameters implements ISVNCommitParameters {
         return true;
     }
 
+    public boolean onFileDeletion(File directory) {
+        return true;
+    }
 }

@@ -66,9 +66,8 @@ public abstract class SVNAdminArea {
     private Map myRevertProperties;
     
     protected boolean myWasLocked;
-    protected static final byte[] KEEPME_VALUE = "keepme".getBytes();
-
-
+    private ISVNCommitParameters myCommitParameters;
+    
     public abstract boolean isLocked() throws SVNException;
 
     public abstract boolean isVersioned();
@@ -105,7 +104,7 @@ public abstract class SVNAdminArea {
     
     public abstract void postUpgradeFormat(int format) throws SVNException;
 
-    public abstract void postCommit(String fileName, long revisionNumber, boolean implicit, boolean keepMe, SVNErrorCode errorCode) throws SVNException;
+    public abstract void postCommit(String fileName, long revisionNumber, boolean implicit, SVNErrorCode errorCode) throws SVNException;
 
     public void updateURL(String rootURL, boolean recursive) throws SVNException {
         SVNWCAccess wcAccess = getWCAccess();
@@ -759,7 +758,7 @@ public abstract class SVNAdminArea {
                 if (textModified) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LEFT_LOCAL_MOD);
                     SVNErrorManager.error(err);
-                } else {
+                } else if (myCommitParameters == null || myCommitParameters.onFileDeletion(path)) {
                     SVNFileUtil.deleteFile(path);
                 }
             }
@@ -811,13 +810,15 @@ public abstract class SVNAdminArea {
             }
             destroyAdminArea();
             if (deleteWorkingFiles && !leftSomething) {
-                if (!getRoot().delete()) {
+                if ((myCommitParameters == null || myCommitParameters.onDirectoryDeletion(getRoot())) 
+                        && !getRoot().delete()) {
+                    // shouldn't throw exception when directory was intentionally left non-empty.
                     leftSomething = true;
                 }
             }
             
         }
-        if (leftSomething) {
+        if (leftSomething && myCommitParameters == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LEFT_LOCAL_MOD);
             SVNErrorManager.error(err);
         }
@@ -1029,14 +1030,7 @@ public abstract class SVNAdminArea {
             }
         }
         if (isKillMe()) {
-            File killMeFile = getAdminFile("KILLME");
-            boolean keepDir = killMeFile.length() > 0;
-            long dirTime = getRoot().lastModified();
-            removeFromRevisionControl(getThisDirName(), false, false);
-            if (keepDir) {
-                getRoot().mkdirs();
-                getRoot().setLastModified(dirTime);
-            }
+            removeFromRevisionControl(getThisDirName(), true, false);
         } else {
             runLogs();
         }
@@ -1290,9 +1284,6 @@ public abstract class SVNAdminArea {
         if (!explicitCommitPaths.contains(path)) {
             command.put("implicit", "true");
         }
-        if ("".equals(target)) {
-            command.put(SVNLog.KEEPME_ATTR, Boolean.toString(!params.onDirectoryDeletion(getRoot())));
-        }
         log.addCommand(SVNLog.COMMIT, command, false);
         command.clear();
         if (wcPropChanges != null && !wcPropChanges.isEmpty()) {
@@ -1332,5 +1323,7 @@ public abstract class SVNAdminArea {
         myWasLocked = locked;
     }
 
-
+    public void setCommitParameters(ISVNCommitParameters commitParameters) {
+        myCommitParameters = commitParameters;
+    }
 }

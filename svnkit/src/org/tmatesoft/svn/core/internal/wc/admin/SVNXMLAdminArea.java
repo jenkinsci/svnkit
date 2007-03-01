@@ -15,7 +15,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.security.MessageDigest;
@@ -758,7 +757,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
     public void postUpgradeFormat(int format) throws SVNException {
     }
 
-    public void postCommit(String fileName, long revisionNumber, boolean implicit, boolean keepMe, SVNErrorCode errorCode) throws SVNException {
+    public void postCommit(String fileName, long revisionNumber, boolean implicit, SVNErrorCode errorCode) throws SVNException {
         SVNEntry entry = getEntry(fileName, true);
         if (entry == null || (!getThisDirName().equals(fileName) && entry.getKind() != SVNNodeKind.FILE)) {
             SVNErrorMessage err = SVNErrorMessage.create(errorCode, "Log command for directory ''{0}'' is mislocated", getRoot()); 
@@ -771,19 +770,12 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                 entry.setKind(SVNNodeKind.DIR);
                 File killMe = getAdminFile("KILLME");
                 if (killMe.getParentFile().isDirectory()) {
-                    OutputStream os = null;
                     try {
                         killMe.createNewFile();
-                        if (keepMe) {
-                            os = SVNFileUtil.openFileForWriting(killMe);
-                            os.write(KEEPME_VALUE);
-                        }
                     } catch (IOException e) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create file ''{0}'': {1}", new Object[] {killMe, e.getLocalizedMessage()}); 
                         SVNErrorManager.error(err, e);
-                    } finally {
-                        SVNFileUtil.closeFile(os);
-                    }
+                    } 
                 }
             } else {
                 removeFromRevisionControl(fileName, false, false);
