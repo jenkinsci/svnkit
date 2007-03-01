@@ -85,6 +85,8 @@ public abstract class SVNLog {
 
     public static final String WC_TIMESTAMP = "working";
 
+    public static final Object KEEPME_ATTR = "keepme";
+
     protected Collection myCache;
     protected SVNAdminArea myAdminArea;
 

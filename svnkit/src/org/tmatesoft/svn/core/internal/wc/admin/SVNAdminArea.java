@@ -42,6 +42,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
+import org.tmatesoft.svn.core.wc.ISVNCommitParameters;
 import org.tmatesoft.svn.core.wc.ISVNMerger;
 import org.tmatesoft.svn.core.wc.ISVNMergerFactory;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
@@ -65,6 +66,8 @@ public abstract class SVNAdminArea {
     private Map myRevertProperties;
     
     protected boolean myWasLocked;
+    protected static final byte[] KEEPME_VALUE = "keepme".getBytes();
+
 
     public abstract boolean isLocked() throws SVNException;
 
@@ -102,7 +105,7 @@ public abstract class SVNAdminArea {
     
     public abstract void postUpgradeFormat(int format) throws SVNException;
 
-    public abstract void postCommit(String fileName, long revisionNumber, boolean implicit, SVNErrorCode errorCode) throws SVNException;
+    public abstract void postCommit(String fileName, long revisionNumber, boolean implicit, boolean keepMe, SVNErrorCode errorCode) throws SVNException;
 
     public void updateURL(String rootURL, boolean recursive) throws SVNException {
         SVNWCAccess wcAccess = getWCAccess();
@@ -1026,7 +1029,14 @@ public abstract class SVNAdminArea {
             }
         }
         if (isKillMe()) {
-            removeFromRevisionControl(getThisDirName(), true, false);
+            File killMeFile = getAdminFile("KILLME");
+            boolean keepDir = killMeFile.length() > 0;
+            long dirTime = getRoot().lastModified();
+            removeFromRevisionControl(getThisDirName(), false, false);
+            if (keepDir) {
+                getRoot().mkdirs();
+                getRoot().setLastModified(dirTime);
+            }
         } else {
             runLogs();
         }
@@ -1225,7 +1235,7 @@ public abstract class SVNAdminArea {
     }
     
     public void commit(String target, SVNCommitInfo info, Map wcPropChanges,
-            boolean removeLock, boolean recursive, Collection explicitCommitPaths) throws SVNException {
+            boolean removeLock, boolean recursive, Collection explicitCommitPaths, ISVNCommitParameters params) throws SVNException {
         
         SVNAdminArea anchor = getWCAccess().retrieve(getWCAccess().getAnchor());
         String path = getRelativePath(anchor);
@@ -1280,6 +1290,9 @@ public abstract class SVNAdminArea {
         if (!explicitCommitPaths.contains(path)) {
             command.put("implicit", "true");
         }
+        if ("".equals(target)) {
+            command.put(SVNLog.KEEPME_ATTR, Boolean.toString(!params.onDirectoryDeletion(getRoot())));
+        }
         log.addCommand(SVNLog.COMMIT, command, false);
         command.clear();
         if (wcPropChanges != null && !wcPropChanges.isEmpty()) {
@@ -1306,10 +1319,10 @@ public abstract class SVNAdminArea {
                     File childPath = getFile(entry.getName());
                     SVNAdminArea childDir = getWCAccess().retrieve(childPath);
                     if (childDir != null) {
-                        childDir.commit("", info, null, removeLock, true, explicitCommitPaths);
+                        childDir.commit("", info, null, removeLock, true, explicitCommitPaths, params);
                     }
                 } else {
-                    commit(entry.getName(), info, null, removeLock, false, explicitCommitPaths);
+                    commit(entry.getName(), info, null, removeLock, false, explicitCommitPaths, params);
                 }
             }
         }

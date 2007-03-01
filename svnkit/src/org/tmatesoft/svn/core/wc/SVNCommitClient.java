@@ -713,7 +713,7 @@ public class SVNCommitClient extends SVNBasicClient {
                     boolean removeLock = !keepLocks && item.isLocked();
                     // update entry in dir.
                     Map wcPropChanges = mediator.getWCProperties(item);
-                    dir.commit(target, info, wcPropChanges, removeLock, recurse, explicitCommitPaths);
+                    dir.commit(target, info, wcPropChanges, removeLock, recurse, explicitCommitPaths, getCommitParameters());
                     processedItems.add(path);
                 } 
                 needsSleepForTimeStamp = true;

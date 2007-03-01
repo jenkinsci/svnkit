@@ -70,6 +70,11 @@ public interface ISVNCommitParameters {
     public Action onMissingDirectory(File file);
     
     /**
+     * @return true if directory should be deleted after commit.
+     */
+    public boolean onDirectoryDeletion(File directory);
+    
+    /**
      * This class is simply used to define an action a commit 
      * operation should undertake in case of a missing file/directory. 
      * 

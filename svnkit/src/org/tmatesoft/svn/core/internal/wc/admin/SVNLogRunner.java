@@ -328,7 +328,8 @@ public class SVNLogRunner {
                 boolean implicit = attributes.get("implicit") != null && entry.isCopied();
                 setEntriesChanged(true);
                 long revisionNumber = Long.parseLong((String) attributes.get(SVNLog.REVISION_ATTR));
-                adminArea.postCommit(fileName, revisionNumber, implicit, code);
+                boolean keepMe = Boolean.valueOf((String) attributes.get(SVNLog.KEEPME_ATTR)).booleanValue();
+                adminArea.postCommit(fileName, revisionNumber, implicit, keepMe, code);
             } catch (SVNException svne) {
                 error = svne;
             }
@@ -382,8 +383,11 @@ public class SVNLogRunner {
             File dir = adminArea.getRoot();
             SVNWCAccess access = adminArea.getWCAccess(); 
             boolean isWCRoot = access.isWCRoot(adminArea.getRoot());
+            File killMeFile = adminArea.getAdminFile("KILLME");
+            boolean keepDir = killMeFile.length() > 0;
+            long dirTime = adminArea.getRoot().lastModified();
             try {
-                adminArea.removeFromRevisionControl(adminArea.getThisDirName(), true, false);
+                adminArea.removeFromRevisionControl(adminArea.getThisDirName(), false, false);
             } catch (SVNException svne) {
                 SVNDebugLog.getDefaultLog().info(svne);
                 if (svne.getErrorMessage().getErrorCode() != SVNErrorCode.WC_LEFT_LOCAL_MOD) {
@@ -402,6 +406,10 @@ public class SVNLogRunner {
                 entryInParent.setKind(SVNNodeKind.DIR);
                 entryInParent.setRevision(dirRevision);
                 parentArea.saveEntries(false);
+            }
+            if (keepDir) {
+                adminArea.getRoot().mkdirs();
+                adminArea.getRoot().setLastModified(dirTime);
             }
         }
         myIsEntriesChanged = false;
