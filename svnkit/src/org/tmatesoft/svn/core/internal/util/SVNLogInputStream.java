@@ -11,11 +11,11 @@
  */
 package org.tmatesoft.svn.core.internal.util;
 
-import java.io.ByteArrayOutputStream;
-import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 
 
@@ -23,54 +23,72 @@ import org.tmatesoft.svn.util.ISVNDebugLog;
  * @version 1.1.1
  * @author  TMate Software Ltd.
  */
-public class SVNLogInputStream extends FilterInputStream {
+public class SVNLogInputStream extends InputStream {
 
-    private ISVNDebugLog myLog;
-    private ByteArrayOutputStream myBuffer;
+    private OutputStream myLog;
+    private InputStream myIn;
 
     public SVNLogInputStream(InputStream in, ISVNDebugLog log) {
-        super(in);
-        myLog = log;
-        myBuffer = new ByteArrayOutputStream(2048);
+        myIn = in;
+        myLog = log.createInputLogStream();
+        if (myLog == null) {
+            myLog = SVNFileUtil.DUMMY_OUT;
+        }
     }
 
-    public int read() throws IOException {
-        int r = super.read();
-        if (r >= 0) {
-            log(new byte[] {(byte) r}, 0, 1);
-        }
-        return r;
-    }
-
-    public int read(byte[] b, int off, int len) throws IOException {
-        int read = super.read(b, off, len);
-        if (read > 0) {
-            log(b, off, read);
-        }
-        return read;
+    public long skip(long n) throws IOException {
+        return myIn.skip(n);
     }
 
     public void close() throws IOException {
-        super.close();
-        flushBuffer(true);
-    }
-    
-    private void log(byte[] data, int off, int len) {
-        if (myLog != null && len > 0 && off + len <= data.length && off < data.length) {
-            myBuffer.write(data, off, len);
-            flushBuffer(false);
+        try {
+            myIn.close();
+        } catch (IOException e) {
+            throw e;
+        } finally {
+            try {
+                myLog.close();
+            } catch (IOException e) {
+            }
         }
     }
-    
-    public void flushBuffer(boolean force) {
-        if (!force && myBuffer.size() < 1024) {
-            return;
-        }
-        if (myLog != null && myBuffer.size() > 0) {
-            myLog.log("READ", myBuffer.toByteArray());
-        }
-        myBuffer.reset();
+
+    public int read(byte[] b, int off, int len) throws IOException {
+        int read;
+        try {
+            read = myIn.read(b, off, len);
+            if (read > 0) {
+                try {
+                    myLog.write(b, off, read);
+                } catch (IOException e) {
+                }
+            }
+        } catch (IOException e) {
+            throw e;
+        } 
+        return read;
+    }
+
+    public int read() throws IOException {
+        int read;
+        try {
+            read = myIn.read();
+            try {
+                if (read >= 0) {
+                    myLog.write(read & 0xFF);
+                }
+            } catch (IOException e) {
+            }
+        } catch (IOException e) {
+            throw e;
+        } 
+        return read;
     }
     
-    
+    public void flushBuffer() {
+        try {
+            myLog.flush();            
+        } catch (IOException e) {
+        }
+    }
 }

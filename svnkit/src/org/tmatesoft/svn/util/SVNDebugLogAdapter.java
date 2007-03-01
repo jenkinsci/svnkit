@@ -16,6 +16,7 @@ import java.io.OutputStream;
 
 import org.tmatesoft.svn.core.internal.util.SVNLogInputStream;
 import org.tmatesoft.svn.core.internal.util.SVNLogOutputStream;
+import org.tmatesoft.svn.core.internal.util.SVNLogStream;
 
 /**
  * @version 1.1.1
@@ -41,10 +42,10 @@ public class SVNDebugLogAdapter implements ISVNDebugLog {
     public void flushStream(Object stream) {
         if (stream instanceof SVNLogInputStream) {
             SVNLogInputStream logStream = (SVNLogInputStream) stream;
-            logStream.flushBuffer(true);
+            logStream.flushBuffer();
         } else if (stream instanceof SVNLogOutputStream) {
             SVNLogOutputStream logStream = (SVNLogOutputStream) stream;
-            logStream.flushBuffer(true);
+            logStream.flushBuffer();
         }
     }
 
@@ -54,5 +55,13 @@ public class SVNDebugLogAdapter implements ISVNDebugLog {
 
     public OutputStream createLogStream(OutputStream os) {
         return new SVNLogOutputStream(os, this);
+    }
+
+    public OutputStream createInputLogStream() {
+        return new SVNLogStream(this, false);
+    }
+
+    public OutputStream createOutputLogStream() {
+        return new SVNLogStream(this, true);
     }
 }

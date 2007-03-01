@@ -34,7 +34,11 @@ public interface ISVNDebugLog {
     public void flushStream(Object stream);
     
     public InputStream createLogStream(InputStream is);
+    
+    public OutputStream createInputLogStream();
 
     public OutputStream createLogStream(OutputStream os);
+
+    public OutputStream createOutputLogStream();
 
 }

@@ -11,55 +11,85 @@
  */
 package org.tmatesoft.svn.core.internal.util;
 
-import java.io.ByteArrayOutputStream;
-import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 
 /**
  * @version 1.1.1
  * @author  TMate Software Ltd.
  */
-public class SVNLogOutputStream extends FilterOutputStream {
+public class SVNLogOutputStream extends OutputStream {
 
-    private ISVNDebugLog myLog;
-    private ByteArrayOutputStream myBuffer;
+    private OutputStream myOut;
+    private OutputStream myLog;
 
     public SVNLogOutputStream(OutputStream out, ISVNDebugLog log) {
-        super(out);
-        myLog = log;
-        myBuffer = new ByteArrayOutputStream(2048);
+        myOut = out;
+        myLog = log.createOutputLogStream();
+        if (myLog == null) {
+            myLog = SVNFileUtil.DUMMY_OUT;
+        }
     }
 
     public void close() throws IOException {
-        super.close();
-        flushBuffer(true);
+        try {
+            myOut.close();
+        } catch (IOException e) {
+            throw e;
+        } finally {
+            try {
+                myLog.close();
+            } catch (IOException e) {
+            }
+        }
     }
 
     public void flush() throws IOException {
-        super.flush();
-        flushBuffer(true);
+        try {
+            myOut.flush();
+        } catch (IOException e) {
+            throw e;
+        } finally {
+            try {
+                myLog.flush();
+            } catch (IOException e) {
+            }
+        }
+    }
+
+    public void write(byte[] b, int off, int len) throws IOException {
+        try {
+            myOut.write(b, off, len);
+        } catch (IOException e) {
+            throw e;
+        } finally {
+            try {
+                myLog.write(b, off, len);
+            } catch (IOException e) {
+            }
+        }
     }
 
     public void write(int b) throws IOException {
-        super.write(b);
-        if (myBuffer != null) {
-            myBuffer.write(b);
+        try {
+            myOut.write(b);
+        } catch (IOException e) {
+            throw e;
+        } finally {
+            try {
+                myLog.write(b);
+            } catch (IOException e) {
+            }
         }
-        flushBuffer(false);
     }
     
-    public void flushBuffer(boolean force) {
-        if (!force && myBuffer.size() < 1024) {
-            return;
+    public void flushBuffer() {
+        try {
+            myLog.flush();
+        } catch (IOException e) {
         }
-        if (myLog != null && myBuffer.size() > 0) {
-            myLog.log("SENT", myBuffer.toByteArray());
-        }
-        myBuffer.reset();
     }
-
-
 }
