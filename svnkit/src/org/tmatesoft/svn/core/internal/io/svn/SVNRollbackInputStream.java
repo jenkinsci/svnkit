@@ -78,7 +78,13 @@ public class SVNRollbackInputStream extends InputStream {
     }
 
     public synchronized void mark(int readlimit) {
+      if (readlimit < 0) { // drop the last mark
+        if (!myMarks.isEmpty()) {
+          myMarks.remove(myMarks.size() - 1);
+        }
+      } else {
         myMarks.add(new Mark(myPosition));
+      }
     }
 
     public synchronized void reset() throws IOException {

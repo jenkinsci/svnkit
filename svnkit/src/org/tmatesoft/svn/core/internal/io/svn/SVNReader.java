@@ -222,6 +222,7 @@ class SVNReader {
                     is.mark(0x100);
                     try {
                         value = readString(is);
+                        is.mark(-1); // drop the last mark
                     } catch (SVNException exception) {
                         try {
                             value = null;
@@ -240,6 +241,7 @@ class SVNReader {
                     is.mark(0x100);
                     try {
                         value = readString(is);
+                        is.mark(-1); // drop the last mark
                     } catch (SVNException exception) {
                         try {
                             value = null;
@@ -269,6 +271,7 @@ class SVNReader {
                                 is.mark(0x100);
                                 SVNErrorMessage err = readError(is);
                                 errorMessages.add(err);
+                                is.mark(-1); // drop the last mark
                             }
                         } catch (SVNException e) {
                             is.reset();
@@ -362,6 +365,7 @@ class SVNReader {
             } catch (IOException ioException) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, ioException.getMessage()));
             }
+            is.mark(-1); // drop the last mark
         }
         if (target == null) {
             target = new Object[0];
