@@ -262,6 +262,10 @@ public class SVNURL {
                 myPort = defaultPort != null ? defaultPort.intValue() : 0;
             } 
         }
+        if (myEncodedPath.equals("/")) {
+            myEncodedPath = "";
+            myPath = "";
+        }
     }
     
     /**
@@ -475,6 +479,9 @@ public class SVNURL {
         }
         if (path != null && !path.startsWith("/")) {
             path = '/' + path;
+        }
+        if ("/".equals(path)) {
+            path = "";
         }
         url.append(path);
         return url.toString();
