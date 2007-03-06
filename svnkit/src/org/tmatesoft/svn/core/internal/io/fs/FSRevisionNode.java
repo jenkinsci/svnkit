@@ -11,7 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -473,20 +473,13 @@ public class FSRevisionNode {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_DIRECTORY, "Can't get entries of non-directory");
             SVNErrorManager.error(err);
         }
-
-        Map entries = new HashMap();
         Map dirContents = getDirContents();
 
         if (dirContents == null) {
             dirContents = fsfsOwner.getDirContents(this);
             setDirContents(dirContents);
         }
-
-        if (dirContents != null) {
-            entries.putAll(dirContents);
-        }
-
-        return entries;
+        return Collections.unmodifiableMap(dirContents);
     }
 
     public Map getProperties(FSFS fsfsOwner) throws SVNException {

@@ -299,10 +299,11 @@ public class FSUpdateContext {
     private void diffDirs(long sourceRevision, String sourcePath, String targetPath, String editPath, boolean startEmpty) throws SVNException {
         diffProplists(sourceRevision, startEmpty == true ? null : sourcePath, editPath, targetPath, null, true);
         Map sourceEntries = null;
+        
         if (sourcePath != null && !startEmpty) {
             FSRevisionRoot sourceRoot = getSourceRoot(sourceRevision);
             FSRevisionNode sourceNode = sourceRoot.getRevisionNode(sourcePath);
-            sourceEntries = sourceNode.getDirEntries(myFSFS);
+            sourceEntries = new HashMap(sourceNode.getDirEntries(myFSFS));
         }
         FSRevisionNode targetNode = getTargetRoot().getRevisionNode(targetPath);
 
@@ -365,6 +366,7 @@ public class FSUpdateContext {
                 return e1.compareTo(e2);
             }
         });
+
         for (int i = 0; i < tgtEntries.length; i++) {
             FSEntry tgtEntry = tgtEntries[i];
             String entryEditPath = SVNPathUtil.append(editPath, tgtEntry.getName());

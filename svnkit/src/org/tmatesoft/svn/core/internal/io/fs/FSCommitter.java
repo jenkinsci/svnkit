@@ -18,8 +18,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -474,11 +476,12 @@ public class FSCommitter {
         Map sourceEntries = source.getDirEntries(myFSFS);
         Map targetEntries = target.getDirEntries(myFSFS);
         Map ancestorEntries = ancestor.getDirEntries(myFSFS);
+        Set removedEntries = new HashSet();
 
         for (Iterator ancestorEntryNames = ancestorEntries.keySet().iterator(); ancestorEntryNames.hasNext();) {
             String ancestorEntryName = (String) ancestorEntryNames.next();
             FSEntry ancestorEntry = (FSEntry) ancestorEntries.get(ancestorEntryName);
-            FSEntry sourceEntry = (FSEntry) sourceEntries.get(ancestorEntryName);
+            FSEntry sourceEntry = removedEntries.contains(ancestorEntryName) ? null : (FSEntry) sourceEntries.get(ancestorEntryName);
             FSEntry targetEntry = (FSEntry) targetEntries.get(ancestorEntryName);
             if (sourceEntry != null && ancestorEntry.getId().equals(sourceEntry.getId())) {
                 /*
@@ -512,7 +515,7 @@ public class FSCommitter {
                 merge(childTargetPath, targetEntryNode, sourceEntryNode, ancestorEntryNode, txnId);
             }
 
-            sourceEntries.remove(ancestorEntryName);
+            removedEntries.add(ancestorEntryName);
         }
 
         for (Iterator sourceEntryNames = sourceEntries.keySet().iterator(); sourceEntryNames.hasNext();) {
