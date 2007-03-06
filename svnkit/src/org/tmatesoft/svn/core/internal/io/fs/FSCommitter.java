@@ -362,7 +362,7 @@ public class FSCommitter {
         String curCopyId = curIds[1];
         String nextNodeId = FSTransactionRoot.generateNextKey(curNodeId);
         myFSFS.writeNextIDs(myTxnRoot.getTxnID(), nextNodeId, curCopyId);
-        return "_" + nextNodeId;
+        return "_" + curNodeId;
     }
 
     private long commit() throws SVNException {
