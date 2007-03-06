@@ -246,6 +246,12 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             }
             if (properties != null) {
                 FSRevisionNode revNode = root.getRevisionNode(repositoryPath);
+                if (revNode.getFileChecksum() != null) {
+                    properties.put(SVNProperty.CHECKSUM, revNode.getFileChecksum());
+                }
+                if (revision >= 0) {
+                    properties.put(SVNProperty.REVISION, Long.toString(revision));
+                }
                 properties.putAll(collectProperties(revNode));
             }
             return revision;
