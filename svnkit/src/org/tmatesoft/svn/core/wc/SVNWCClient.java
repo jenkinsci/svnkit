@@ -141,6 +141,15 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
  */
 public class SVNWCClient extends SVNBasicClient {
+    
+    public static ISVNAddParameters DEFAULT_ADD_PARAMETERS = new ISVNAddParameters() {
+        public Action onInconsistentEOLs(File file) {
+            return ISVNAddParameters.REPORT_ERROR;
+        }
+    };
+    
+    private ISVNAddParameters myAddParameters;
+
     /**
      * Constructs and initializes an <b>SVNWCClient</b> object
      * with the specified run-time configuration and authentication 
@@ -170,6 +179,18 @@ public class SVNWCClient extends SVNBasicClient {
 
     public SVNWCClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
         super(repositoryPool, options);
+    }
+    
+    public void setAddParameters(ISVNAddParameters addParameters) {
+        myAddParameters = addParameters;
+    }
+    
+    protected ISVNAddParameters getAddParameters() {
+        if (myAddParameters == null) {
+            return DEFAULT_ADD_PARAMETERS;
+        }
+        
+        return myAddParameters;
     }
     
     /**
@@ -1071,9 +1092,31 @@ public class SVNWCClient extends SVNBasicClient {
             for (Iterator names = props.keySet().iterator(); names.hasNext();) {
                 String propName = (String) names.next();
                 String propValue = (String) props.get(propName);
-                SVNPropertiesManager.setProperty(dir.getWCAccess(), path, propName, propValue, false);
+                try {
+                    SVNPropertiesManager.setProperty(dir.getWCAccess(), path, propName, propValue, false);
+                } catch (SVNException e) {
+                    if (SVNProperty.EOL_STYLE.equals(propName) && 
+                            e.getErrorMessage().getErrorCode() == SVNErrorCode.ILLEGAL_TARGET &&
+                            e.getErrorMessage().getMessage().indexOf("newlines") >= 0) {
+                        ISVNAddParameters.Action action = getAddParameters().onInconsistentEOLs(path);
+                        if (action == ISVNAddParameters.REPORT_ERROR) {
+                            throw e;
+                        } else if (action == ISVNAddParameters.ADD_AS_IS) {
+                            SVNPropertiesManager.setProperty(dir.getWCAccess(), path, propName, null, false);
+                        } else if (action == ISVNAddParameters.ADD_AS_BINARY) {
+                            SVNPropertiesManager.setProperty(dir.getWCAccess(), path, propName, null, false);
+                            mimeType = SVNFileUtil.BINARY_MIME_TYPE;
+                        }
+                    } else {
+                        throw e;
+                    }
+                }
             }
-            mimeType = (String) props.get(SVNProperty.MIME_TYPE);
+            if (mimeType != null) {
+                SVNPropertiesManager.setProperty(dir.getWCAccess(), path, SVNProperty.MIME_TYPE, mimeType, false);
+            } else {
+                mimeType = (String) props.get(SVNProperty.MIME_TYPE);
+            }
         }
         SVNEvent event = SVNEventFactory.createAddedEvent(dir, path.getName(), SVNNodeKind.FILE, mimeType);
         dispatchEvent(event);
@@ -2464,4 +2507,5 @@ public class SVNWCClient extends SVNBasicClient {
         private SVNRevision myRevision;
         private String myToken;
     }
+    
 }

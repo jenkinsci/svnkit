@@ -75,7 +75,8 @@ public class SVNFileUtil {
     private static String ourUserID;
     private static File ourAppDataPath;
     private static String ourAdminDirectoryName;
-    private static final String BINARY_MIME_TYPE = "application/octet-stream";
+    
+    public static final String BINARY_MIME_TYPE = "application/octet-stream";
 
     static {
         String osName = System.getProperty("os.name");
