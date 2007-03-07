@@ -30,6 +30,8 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
  */
 public class SVNPlainConnector implements ISVNConnector {
 
+    private static final int DEFAULT_SVN_TIMEOUT = 0;
+
     private Socket mySocket;
     private OutputStream myOutputStream;
     private InputStream myInputStream;
@@ -41,6 +43,7 @@ public class SVNPlainConnector implements ISVNConnector {
         SVNURL location = repository.getLocation();
         try {
             mySocket = SVNSocketFactory.createPlainSocket(location.getHost(), location.getPort());
+            mySocket.setSoTimeout(DEFAULT_SVN_TIMEOUT);
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getLocalizedMessage());
             SVNErrorManager.error(err, e);
