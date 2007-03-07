@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -642,17 +643,32 @@ public class FSUpdateContext {
         }
     }
 
+    private void writeSingleString(String s, OutputStream out) throws IOException {
+        if (s != null) {
+            byte[] b = s.getBytes("UTF-8");
+            out.write('+');
+            out.write(String.valueOf(b.length).getBytes("UTF-8"));
+            out.write(':');
+            out.write(b);
+        } else {
+            out.write('-');
+        }
+    }
+    
     public void writePathInfoToReportFile(String path, String linkPath, String lockToken, long revision, boolean startEmpty) throws SVNException {
         String anchorRelativePath = SVNPathUtil.append(getReportTarget(), path);
-        String linkPathRep = linkPath != null ? "+" + linkPath.length() + ":" + linkPath : "-";
-        String revisionRep = FSRepository.isValidRevision(revision) ? "+" + revision + ":" : "-";
-        String lockTokenRep = lockToken != null ? "+" + lockToken.length() + ":" + lockToken : "-";
-        String startEmptyRep = startEmpty ? "+" : "-";
-        String fullRepresentation = "+" + anchorRelativePath.length() + ":" + anchorRelativePath + linkPathRep + revisionRep + startEmptyRep + lockTokenRep;
-
+        String revisionRep = FSRepository.isValidRevision(revision) ? "+" + String.valueOf(revision) + ":" : "-";
         try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        
+            writeSingleString(anchorRelativePath, baos);
+            writeSingleString(linkPath, baos);
+            baos.write(revisionRep.getBytes("UTF-8"));
+            baos.write(startEmpty ? '+' : '-');
+            writeSingleString(lockToken, baos);
+
             OutputStream reportOS = getReportFileForWriting();
-            reportOS.write(fullRepresentation.getBytes("UTF-8"));
+            reportOS.write(baos.toByteArray());
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
             SVNErrorManager.error(err, ioe);
