@@ -307,7 +307,7 @@ public class FSUpdateContext {
         }
         FSRevisionNode targetNode = getTargetRoot().getRevisionNode(targetPath);
 
-        Map targetEntries = targetNode.getDirEntries(myFSFS);
+        Map targetEntries = new HashMap(targetNode.getDirEntries(myFSFS));
 
         while (true) {
             Object[] nextInfo = fetchPathInfo(editPath);
