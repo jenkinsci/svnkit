@@ -882,7 +882,7 @@ public class SVNWCClient extends SVNBasicClient {
         path = new File(SVNPathUtil.validateFilePath(path.getAbsolutePath())).getAbsoluteFile();
         try {
             if (!force) {
-                SVNWCManager.canDelete(path, false, getOptions());
+                SVNWCManager.canDelete(path, !deleteFiles, getOptions());
             }
             SVNAdminArea root = wcAccess.open(path.getParentFile(), true, 0); 
             if (!dryRun) {
