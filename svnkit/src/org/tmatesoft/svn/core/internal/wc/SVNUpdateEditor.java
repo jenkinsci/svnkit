@@ -111,6 +111,9 @@ public class SVNUpdateEditor implements ISVNEditor {
                 clearWCProperty(myCurrentDirectory.getAdminArea());
             }
             adminArea.saveEntries(false);
+        }  else if (mySwitchURL != null) {
+            SVNAdminArea targetArea = createDirectoryInfo(myCurrentDirectory, myTarget, false).getAdminArea();
+            clearWCProperty(targetArea);
         }
     }
 
@@ -347,7 +350,6 @@ public class SVNUpdateEditor implements ISVNEditor {
         if (!myIsTargetDeleted) {
             File targetFile = myTarget != null ? myAdminInfo.getAnchor().getFile(myTarget) : myAdminInfo.getAnchor().getRoot(); 
             SVNWCManager.updateCleanup(targetFile, myWCAccess, myIsRecursive, mySwitchURL, myRootURL, myTargetRevision, true);
-//            cleanupUpdate();
         }
         return null;
     }
