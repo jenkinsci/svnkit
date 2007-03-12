@@ -427,7 +427,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     }
     
     protected void displayBinary(OutputStream os, String mimeType1, String mimeType2) throws IOException {
-        os.write("Cannot display: file marked as binary type.".getBytes(getEncoding()));
+        os.write("Cannot display: file marked as a binary type.".getBytes(getEncoding()));
         os.write(EOL);
         if (SVNProperty.isBinaryMimeType(mimeType1)
                 && !SVNProperty.isBinaryMimeType(mimeType2)) {
