@@ -405,6 +405,14 @@ public class SVNAdminArea14 extends SVNAdminArea {
                         command.put(SVNLog.NAME_ATTR, name);
                         log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
                         command.clear();
+                        
+                        if (!hasPropModifications) {
+                            String workingPropsPath = getThisDirName().equals(name) ? "dir-props" : "props/" + name + ".svn-work";
+                            workingPropsPath = getAdminDirectory().getName() + "/" + workingPropsPath;
+                            command.put(SVNLog.NAME_ATTR, workingPropsPath);
+                            log.addCommand(SVNLog.DELETE, command, false);
+                            command.clear();
+                        }
                     }
                 
                     if (baseProps.isEmpty()) {
