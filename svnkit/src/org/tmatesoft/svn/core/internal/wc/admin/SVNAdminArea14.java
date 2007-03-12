@@ -398,7 +398,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
                             command.put(SVNProperty.PRESENT_PROPS, "");
                         }
                         
-                        command.put(SVNProperty.HAS_PROPS, SVNProperty.toString(props.isEmpty()));
+                        command.put(SVNProperty.HAS_PROPS, SVNProperty.toString(!props.isEmpty()));
                         SVNVersionedProperties propsDiff = baseProps.compareTo(props);
                         boolean hasPropModifications = !propsDiff.isEmpty();
                         command.put(SVNProperty.HAS_PROP_MODS, SVNProperty.toString(hasPropModifications));
