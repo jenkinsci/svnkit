@@ -191,8 +191,14 @@ public class SVNLogRunner {
                     SVNErrorManager.error(err);
                 }
                 Date time = SVNTimeUtil.parseDate(timestamp);
-                //TODO: what about special files?
-                file.setLastModified(time.getTime());
+                //TODO: what about special files (do not set for them).
+                if (!file.setLastModified(time.getTime())) {
+                    if (!file.canWrite() && file.isFile()) {
+                        SVNFileUtil.setReadonly(file, false);
+                        file.setLastModified(time.getTime());
+                        SVNFileUtil.setReadonly(file, true);
+                    }
+                }
             } catch (SVNException svne) {
                 error = svne;
             }
