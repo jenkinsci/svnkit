@@ -172,7 +172,7 @@ public class SVNWCAccess implements ISVNEventHandler {
             SVNURL targetURL = targetEntry != null ? targetEntry.getSVNURL() : null;
             String encodedName = SVNEncodingUtil.uriEncode(name);
             if (targetInParent == null || (parentURL != null && targetURL != null && 
-                    (!parentURL.equals(targetURL.removePathTail()) || !encodedName.equals(SVNPathUtil.tail(targetURL.getPath()))))) {
+                    (!parentURL.equals(targetURL.removePathTail()) || !encodedName.equals(SVNPathUtil.tail(targetURL.getURIEncodedPath()))))) {
                 if (myAdminAreas != null) {
                     myAdminAreas.remove(parent);
                 }
