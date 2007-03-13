@@ -552,6 +552,7 @@ public abstract class SVNAdminArea {
                 entry.setConflictNew(SVNFileUtil.getBasePath(newFile));
                 entry.setConflictOld(SVNFileUtil.getBasePath(oldFile));
                 entry.setConflictWorking(null);
+                saveEntries(false);
             } 
             status = SVNStatusType.CONFLICTED;
         } else {
