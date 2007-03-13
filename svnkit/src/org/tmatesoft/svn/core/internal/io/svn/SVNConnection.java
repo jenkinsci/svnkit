@@ -104,10 +104,10 @@ class SVNConnection {
         SVNPasswordAuthentication auth = null;
         if (repository.getExternalUserName() != null && mechs.contains("EXTERNAL")) {
             write("(w(s))", new Object[] { "EXTERNAL", repository.getExternalUserName() });
-            failureReason = readAuthResponse(repository);
+            failureReason = readAuthResponse();
         } else if (mechs.contains("ANONYMOUS")) {
             write("(w())", new Object[] { "ANONYMOUS" });
-            failureReason = readAuthResponse(repository);
+            failureReason = readAuthResponse();
         } else if (mechs.contains("CRAM-MD5")) {
             while (true) {
                 CramMD5 authenticator = new CramMD5();
@@ -118,13 +118,13 @@ class SVNConnection {
                             + location.getPort() + "> " + realm;
                 }
                 if (auth == null && authManager != null) {
-                    auth = (SVNPasswordAuthentication) authManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm, location);
+                    auth = (SVNPasswordAuthentication) authManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm, location);                    
                 } else if (authManager != null) {
                     authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, realm, failureReason, auth);
                     auth = (SVNPasswordAuthentication) authManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm, location);
                 }
                 if (auth == null || auth.getUserName() == null || auth.getPassword() == null) {
-                    failureReason = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication is required for ''{0}''", realm);
+                    failureReason = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Can't get password. Authentication is required for ''{0}''", realm);
                     break;
                 }
                 write("(w())", new Object[] { "CRAM-MD5" });
@@ -132,11 +132,11 @@ class SVNConnection {
                     authenticator.setUserCredentials(auth);
                     items = read("(W(?B))", null, true);
                     if (SUCCESS.equals(items[0])) {
-                        receiveRepositoryCredentials(repository);
                         authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.PASSWORD, realm, null, auth);
+                        receiveRepositoryCredentials(repository);
                         return;
                     } else if (FAILURE.equals(items[0])) {
-                        failureReason = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, new String((byte[]) items[1]));
+                        failureReason = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication error from server: {1}", new String((byte[]) items[1]));
                         break;
                     } else if (STEP.equals(items[0])) {
                         try {
@@ -150,54 +150,46 @@ class SVNConnection {
                 }
             }
         } else {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_UNKNOWN_AUTH));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Cannot negotiate authentication mechanism"));
         }
         if (failureReason == null) {
+            receiveRepositoryCredentials(repository);
             return;
         }
         SVNErrorManager.error(failureReason);
     }
 
     private void receiveRepositoryCredentials(SVNRepositoryImpl repository) throws SVNException {
-        if (!myIsCredentialsReceived) {
-            Object[] creds = read("[(S?S)]", null, true);
-            if (creds != null && creds.length == 2 && creds[0] != null && creds[1] != null) {
-                SVNURL rootURL = creds[1] != null ? SVNURL.parseURIEncoded((String) creds[1]) : null; 
+        if (myIsCredentialsReceived) {
+            return;
+        }
+        Object[] creds = read("[(S?S)]", null, true);
+        myIsCredentialsReceived = true;
+        if (creds != null && creds.length == 2 && creds[0] != null && creds[1] != null) {
+            SVNURL rootURL = creds[1] != null ? SVNURL.parseURIEncoded((String) creds[1]) : null;
+            if (rootURL != null && rootURL.toString().length() > repository.getLocation().toString().length()) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Impossibly long repository root from server"));
+            }
+            if (repository != null && repository.getRepositoryRoot(false) == null) {
                 repository.updateCredentials((String) creds[0], rootURL);
-                if (myRealm == null) {
-                    myRealm = (String) creds[0];
-                }
-                if (myRoot == null) {
-                    myRoot = (String) creds[1];
-                }
+            }                
+            if (myRealm == null) {
+                myRealm = (String) creds[0];
+            }
+            if (myRoot == null) {
+                myRoot = (String) creds[1];
             }
         }
-        myIsCredentialsReceived = true;
     }
 
-    private SVNErrorMessage readAuthResponse(SVNRepositoryImpl repository) throws SVNException {
+    private SVNErrorMessage readAuthResponse() throws SVNException {
         Object[] items = read("(W(?S))", null, true);
         if (SUCCESS.equals(items[0])) {
-            if (!myIsCredentialsReceived) {
-                Object[] creds = read("[(?S?S)]", null, true);
-                if (repository != null
-                        && repository.getRepositoryRoot(false) == null) {
-                    SVNURL rootURL = creds[1] != null ? SVNURL.parseURIEncoded((String) creds[1]) : null; 
-                    repository.updateCredentials((String) creds[0], rootURL);
-                }
-                if (myRealm == null) {
-                    myRealm = (String) creds[0];
-                }
-                if (myRoot == null) {
-                    myRoot = (String) creds[1];
-                }
-                myIsCredentialsReceived = true;
-            }
             return null;
         } else if (FAILURE.equals(items[0])) {
-            return SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, (String) items[1]);
+            return SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication error from server: {1}", items[1]);
         }
-        return SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "unexpected server response");
+        return SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Unexpected server response to authentication");
     }
     
     public void free() {
