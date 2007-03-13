@@ -97,8 +97,8 @@ public class SVNStatusType {
     private String myName;
     private char myCode;
 
-    private SVNStatusType(int id) {
-        this(id, null, ' ');
+    private SVNStatusType(int id, String name) {
+        this(id, name, ' ');
     }
 
     private SVNStatusType(int id, String name, char code) {
@@ -156,37 +156,37 @@ public class SVNStatusType {
      * }</pre> 
      *  
      */
-    public static final SVNStatusType INAPPLICABLE = new SVNStatusType(0);
+    public static final SVNStatusType INAPPLICABLE = new SVNStatusType(0, "inapplicable");
     
     /**
      * Denotes that the resultant status of the operation is for some
      * reason unknown.
      */
-    public static final SVNStatusType UNKNOWN = new SVNStatusType(1);
+    public static final SVNStatusType UNKNOWN = new SVNStatusType(1, "unknown");
     
     /**
      * During an operation denotes that file item contents or file/directory
      * item properties are not changed.  For example, in a Working Copy-to-URL copying.
      */
-    public static final SVNStatusType UNCHANGED = new SVNStatusType(2);
+    public static final SVNStatusType UNCHANGED = new SVNStatusType(2, "unchanged");
     
     /**
      * Denotes that the item is versioned but missing (deleted from the 
      * fylesystem).
      */
-    public static final SVNStatusType MISSING = new SVNStatusType(3);
+    public static final SVNStatusType MISSING = new SVNStatusType(3, "missing");
     
     /**
      * Denotes that the item has an unexpected kind or somehow damaged or
      * can not be managed by an operation.
      */
-    public static final SVNStatusType OBSTRUCTED = new SVNStatusType(4);
+    public static final SVNStatusType OBSTRUCTED = new SVNStatusType(4, "obstructed");
     
     /**
      * During an operation (like an update) denotes that the item contents
      * or item properties were changed.
      */
-    public static final SVNStatusType CHANGED = new SVNStatusType(5);
+    public static final SVNStatusType CHANGED = new SVNStatusType(5, "changed");
 
     /**
      * During an operation (like an update or merge) denotes that the file 
@@ -194,21 +194,21 @@ public class SVNStatusType {
      * with changes that came from the repository, so that local modifications 
      * and arrived ones do not overlap. 
      */
-    public static final SVNStatusType MERGED = new SVNStatusType(6);
+    public static final SVNStatusType MERGED = new SVNStatusType(6, "merged");
 
     /**
      * During an operation (like an update) denotes that the file item contents 
      * or file/directory item properties are in conflict with those changes that
      * came from the repository. 
      */
-    public static final SVNStatusType CONFLICTED = new SVNStatusType(7);
+    public static final SVNStatusType CONFLICTED = new SVNStatusType(7, "conflicted");
     
     /**
      * Denotes that the conflict state on the item is still unresolved.
      * For example, it can be set when trying to merge into a file that is
      * in conflict with the repository.  
      */
-    public static final SVNStatusType CONFLICTED_UNRESOLVED = new SVNStatusType(8);
+    public static final SVNStatusType CONFLICTED_UNRESOLVED = new SVNStatusType(8, "conflicted_unresolved");
     
     /**
      * During some operations denotes that lock status is inapplicable. 
@@ -227,35 +227,35 @@ public class SVNStatusType {
      * ...
      * }</pre> 
      */
-    public static final SVNStatusType LOCK_INAPPLICABLE = new SVNStatusType(0);
+    public static final SVNStatusType LOCK_INAPPLICABLE = new SVNStatusType(0, "lock_inapplicable");
     
     /**
      * No lock information is known.
      */
-    public static final SVNStatusType LOCK_UNKNOWN = new SVNStatusType(1);
+    public static final SVNStatusType LOCK_UNKNOWN = new SVNStatusType(1, "lock_unknown");
     
     /**
      * During an operation denotes that the lock status wasn't changed. For example, in a 
      * Working Copy-to-URL copying.
      */
-    public static final SVNStatusType LOCK_UNCHANGED = new SVNStatusType(2);
+    public static final SVNStatusType LOCK_UNCHANGED = new SVNStatusType(2, "lock_unchanged");
     
     /**
      * During an operation denotes that the file item's locked. 
      */
-    public static final SVNStatusType LOCK_LOCKED = new SVNStatusType(3);
+    public static final SVNStatusType LOCK_LOCKED = new SVNStatusType(3, "lock_locked");
     
     /**
      * During an operation (like an update) denotes that the file item's lock 
      * was broken in the repositry by some other user.
      */
-    public static final SVNStatusType LOCK_UNLOCKED = new SVNStatusType(4);
+    public static final SVNStatusType LOCK_UNLOCKED = new SVNStatusType(4, "lock_unlocked");
     
     /**
      * In a status operation denotes that no status type information is 
      * available. 
      */
-    public static final SVNStatusType STATUS_NONE = new SVNStatusType(0, "none", ' ');
+    public static final SVNStatusType STATUS_NONE = new SVNStatusType(0, "none");
 
     /**
      * In a status operation (if it's being running with an option to report
