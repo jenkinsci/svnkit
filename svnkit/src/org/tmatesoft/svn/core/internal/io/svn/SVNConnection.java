@@ -93,6 +93,7 @@ class SVNConnection {
         List mechs = SVNReader.getList(items, 0);
         myRealm = SVNReader.getString(items, 1);
         if (mechs == null || mechs.size() == 0) {
+            receiveRepositoryCredentials(repository);
             return;
         }
         ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
@@ -131,18 +132,7 @@ class SVNConnection {
                     authenticator.setUserCredentials(auth);
                     items = read("(W(?B))", null, true);
                     if (SUCCESS.equals(items[0])) {
-                        if (!myIsCredentialsReceived) {
-                            Object[] creds = read("[(S?S)]", null, true);
-                            if (creds != null && creds.length == 2
-                                    && creds[0] != null && creds[1] != null) {
-                                SVNURL rootURL = SVNURL.parseURIEncoded((String) creds[1]); 
-                                repository.updateCredentials((String) creds[0], rootURL);
-                                if (myRealm == null) {
-                                    myRealm = (String) creds[0];
-                                }
-                            }
-                            myIsCredentialsReceived = true;
-                        }
+                        receiveRepositoryCredentials(repository);
                         authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.PASSWORD, realm, null, auth);
                         return;
                     } else if (FAILURE.equals(items[0])) {
@@ -166,6 +156,20 @@ class SVNConnection {
             return;
         }
         SVNErrorManager.error(failureReason);
+    }
+
+    private void receiveRepositoryCredentials(SVNRepositoryImpl repository) throws SVNException {
+        if (!myIsCredentialsReceived) {
+            Object[] creds = read("[(S?S)]", null, true);
+            if (creds != null && creds.length == 2 && creds[0] != null && creds[1] != null) {
+                SVNURL rootURL = SVNURL.parseURIEncoded((String) creds[1]); 
+                repository.updateCredentials((String) creds[0], rootURL);
+                if (myRealm == null) {
+                    myRealm = (String) creds[0];
+                }
+            }
+        }
+        myIsCredentialsReceived = true;
     }
 
     private SVNErrorMessage readAuthResponse(SVNRepositoryImpl repository) throws SVNException {
