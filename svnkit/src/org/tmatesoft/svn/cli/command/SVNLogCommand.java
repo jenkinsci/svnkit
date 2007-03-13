@@ -76,11 +76,11 @@ public class SVNLogCommand extends SVNCommand implements ISVNLogEntryHandler {
             try {
                 limit = Long.parseLong(limitStr);
                 if (limit <= 0) {
-                    System.err.println("svn: Argument to --limit must be positive number");
+                    err.println("svn: Argument to --limit must be positive number");
                     return;
                 }
             } catch (NumberFormatException nfe) {
-                System.err.println("svn: Argument to --limit must be positive number");
+                err.println("svn: Argument to --limit must be positive number");
                 return;
             }
         }
@@ -88,7 +88,7 @@ public class SVNLogCommand extends SVNCommand implements ISVNLogEntryHandler {
         ISVNLogEntryHandler handler = this;
         SVNXMLSerializer serializer = null;
         if (getCommandLine().hasArgument(SVNArgument.XML)) {
-            serializer = new SVNXMLSerializer(System.out);
+            serializer = new SVNXMLSerializer(out);
             handler = new SVNXMLLogHandler(serializer);
             if (!getCommandLine().hasArgument(SVNArgument.INCREMENTAL)) {
                 ((AbstractXMLHandler) handler).startDocument();
