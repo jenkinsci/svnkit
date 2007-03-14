@@ -251,7 +251,10 @@ public class SVNURL {
                 SVNEncodingUtil.assertURISafe(myEncodedPath);
                 myPath = SVNEncodingUtil.uriDecode(myEncodedPath);
             } else {
-                myPath = httpPath;
+                // do not use httpPath. 
+                String originalPath = url.substring(index + "://".length());
+                originalPath = originalPath.substring(originalPath.indexOf("/") + 1);
+                myPath = originalPath;
                 myEncodedPath = SVNEncodingUtil.uriEncode(myPath);
             }
             myUserName = httpURL.getUserInfo();
