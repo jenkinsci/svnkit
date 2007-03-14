@@ -108,12 +108,15 @@ public class SVNUpdateEditor implements ISVNEditor {
             entry.setURL(myCurrentDirectory.URL);
             entry.setIncomplete(true);
             if (mySwitchURL != null) {
-                clearWCProperty(myCurrentDirectory.getAdminArea());
+                clearWCProperty(myCurrentDirectory.getAdminArea(), null);
             }
             adminArea.saveEntries(false);
         }  else if (mySwitchURL != null) {
-            SVNAdminArea targetArea = createDirectoryInfo(myCurrentDirectory, myTarget, false).getAdminArea();
-            clearWCProperty(targetArea);
+            if (myAdminInfo.getTarget() == myAdminInfo.getAnchor()) {
+                clearWCProperty(myAdminInfo.getTarget(), myTarget);
+            } else {
+                clearWCProperty(myAdminInfo.getTarget(), null);
+            }
         }
     }
 
@@ -245,7 +248,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             entry.setRepositoryRoot(myRootURL);
         }
         if (mySwitchURL != null) {
-            clearWCProperty(myCurrentDirectory.getAdminArea());
+            clearWCProperty(myCurrentDirectory.getAdminArea(), null);
         }
         adminArea.saveEntries(false);
     }
@@ -282,19 +285,27 @@ public class SVNUpdateEditor implements ISVNEditor {
         myCurrentDirectory.propertyChanged(name, value);
     }
 
-    private void clearWCProperty(SVNAdminArea adminArea) throws SVNException {
+    private void clearWCProperty(SVNAdminArea adminArea, String target) throws SVNException {
         if (adminArea == null) {
             return;
         }
         for (Iterator ents = adminArea.entries(false); ents.hasNext();) {
             SVNEntry entry = (SVNEntry) ents.next();
+            if (target != null) {
+                if (entry.isFile() && target.equals(entry.getName())) {
+                    SVNVersionedProperties props = adminArea.getWCProperties(entry.getName());
+                    props.setPropertyValue(SVNProperty.WC_URL, null);
+                    adminArea.saveWCProperties(false);
+                }
+                continue;
+            }
             if (entry.isFile() || adminArea.getThisDirName().equals(entry.getName())) {
                 SVNVersionedProperties props = adminArea.getWCProperties(entry.getName());
                 props.setPropertyValue(SVNProperty.WC_URL, null);
                 adminArea.saveWCProperties(false);
             } else {
-                SVNAdminArea childArea = myAdminInfo.getWCAccess().retrieve(adminArea.getFile(entry.getName()));
-                clearWCProperty(childArea);
+                SVNAdminArea childArea = myAdminInfo.getWCAccess().getAdminArea(adminArea.getFile(entry.getName()));
+                clearWCProperty(childArea, null);
             }
         }
     }
