@@ -242,7 +242,6 @@ public class SVNConfigFile {
 
     private String[] doLoad(File file) {
         if (!file.isFile() || !file.canRead()) {
-            // TODO try to save default text and reload.
             return new String[0];
         }
         BufferedReader reader = null;

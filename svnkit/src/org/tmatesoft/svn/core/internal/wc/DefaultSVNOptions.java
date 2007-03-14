@@ -62,7 +62,7 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
 
     private boolean myIsReadonly;
     private File myConfigDirectory;
-    private SVNConfigFile myConfigFile;
+    private SVNCompositeConfigFile myConfigFile;
     private ISVNMergerFactory myMergerFactory;
     
     private String myKeywordLocale = DEFAULT_LOCALE; 
@@ -286,10 +286,12 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
         getConfigFile().setPropertyValue(SVNKIT_GROUP, propertyName, propertyValue, !myIsReadonly);
     }
 
-    private SVNConfigFile getConfigFile() {
+    private SVNCompositeConfigFile getConfigFile() {
         if (myConfigFile == null) {
             SVNConfigFile.createDefaultConfiguration(myConfigDirectory);
-            myConfigFile = new SVNConfigFile(new File(myConfigDirectory, "config"));
+            SVNConfigFile userConfig = new SVNConfigFile(new File(myConfigDirectory, "config"));
+            SVNConfigFile systemConfig = new SVNConfigFile(new File(SVNFileUtil.getSystemConfigurationDirectory(), "config"));
+            myConfigFile = new SVNCompositeConfigFile(systemConfig, userConfig);
         }
         return myConfigFile;
     }

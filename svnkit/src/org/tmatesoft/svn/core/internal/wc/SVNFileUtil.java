@@ -75,6 +75,7 @@ public class SVNFileUtil {
     private static String ourUserID;
     private static File ourAppDataPath;
     private static String ourAdminDirectoryName;
+    private static File ourSystemAppDataPath;
     
     public static final String BINARY_MIME_TYPE = "application/octet-stream";
 
@@ -1141,6 +1142,19 @@ public class SVNFileUtil {
         return ourAppDataPath;
     }
 
+    public static File getSystemApplicationDataPath() {
+        if (ourSystemAppDataPath != null) {
+            return ourSystemAppDataPath;
+        }
+        String envAppData = getEnvironmentVariable("ALLUSERSPROFILE");
+        if (envAppData == null) {
+            ourSystemAppDataPath = new File(new File("C:/Documents and Settings/All Users"), "Application Data");
+        } else {
+            ourSystemAppDataPath = new File(envAppData, "Application Data");
+        }
+        return ourSystemAppDataPath;
+    }
+
     public static String getEnvironmentVariable(String name) {
         try {
             // pre-Java 1.5 this throws an Error. On Java 1.5 it
@@ -1223,5 +1237,14 @@ public class SVNFileUtil {
             SVNErrorManager.error(err, e);
         }
         return tmpFile;
+    }
+
+    public static File getSystemConfigurationDirectory() {
+        if (isWindows) {
+            return new File(getSystemApplicationDataPath(), "Subversion");
+        } else if (isOpenVMS) {
+            return new File("/sys$config", "subversion").getAbsoluteFile();
+        }
+        return new File("/etc/subversion");
     }
 }

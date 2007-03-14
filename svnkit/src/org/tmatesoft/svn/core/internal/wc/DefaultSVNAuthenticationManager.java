@@ -48,10 +48,10 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     
     private SVNAuthentication myPreviousAuthentication;
     private SVNErrorMessage myPreviousErrorMessage;
-    private SVNConfigFile myServersFile;
+    private SVNCompositeConfigFile myServersFile;
     private ISVNAuthenticationStorage myRuntimeAuthStorage;
     private int myLastProviderIndex;
-    private SVNConfigFile myConfigFile;
+    private SVNCompositeConfigFile myConfigFile;
     private boolean myIsAuthenticationForced;
 
     public DefaultSVNAuthenticationManager(File configDirectory, boolean storeAuth, String userName, String password) {
@@ -197,18 +197,22 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         ((CacheAuthenticationProvider) myProviders[1]).saveAuthentication(authentication, realm);
     }
     
-    protected SVNConfigFile getServersFile() {
+    protected SVNCompositeConfigFile getServersFile() {
         if (myServersFile == null) {
             SVNConfigFile.createDefaultConfiguration(myConfigDirectory);
-            myServersFile = new SVNConfigFile(new File(myConfigDirectory, "servers"));
+            SVNConfigFile userConfig = new SVNConfigFile(new File(myConfigDirectory, "servers"));
+            SVNConfigFile systemConfig = new SVNConfigFile(new File(SVNFileUtil.getSystemConfigurationDirectory(), "servers"));
+            myServersFile = new SVNCompositeConfigFile(systemConfig, userConfig);
         }
         return myServersFile;
     }
 
-    protected SVNConfigFile getConfigFile() {
+    protected SVNCompositeConfigFile getConfigFile() {
         if (myConfigFile == null) {
             SVNConfigFile.createDefaultConfiguration(myConfigDirectory);
-            myConfigFile = new SVNConfigFile(new File(myConfigDirectory, "config"));
+            SVNConfigFile userConfig = new SVNConfigFile(new File(myConfigDirectory, "config"));
+            SVNConfigFile systemConfig = new SVNConfigFile(new File(SVNFileUtil.getSystemConfigurationDirectory(), "config"));
+            myConfigFile = new SVNCompositeConfigFile(systemConfig, userConfig);
         }
         return myConfigFile;
     }
