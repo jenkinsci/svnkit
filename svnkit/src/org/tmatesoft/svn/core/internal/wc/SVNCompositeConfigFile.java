@@ -30,7 +30,7 @@ public class SVNCompositeConfigFile {
     
     public Map getProperties(String groupName) {
         Map system = mySystemFile.getProperties(groupName);
-        Map user = mySystemFile.getProperties(groupName);
+        Map user = myUserFile.getProperties(groupName);
         system.putAll(user);
         return system;
     }
