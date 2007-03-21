@@ -532,10 +532,21 @@ public class SVNAdminClient extends SVNBasicClient {
      * @since                   1.1.1
      */
     public void doVerify(File repositoryRoot) throws SVNException {
+        doVerify(repositoryRoot, SVNRevision.create(0), SVNRevision.HEAD);
+    }
+
+    public void doVerify(File repositoryRoot, SVNRevision startRevision, SVNRevision endRevision) throws SVNException {
         FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
-        long youngestRevision = fsfs.getYoungestRevision();
+        long startRev = startRevision.getNumber();
+        long endRev = endRevision.getNumber();
+        if (startRev < 0) {
+            startRev = 0;
+        }
+        if (endRev < 0) {
+            endRev = fsfs.getYoungestRevision();
+        }
         try {
-            dump(fsfs, SVNFileUtil.DUMMY_OUT, 0, youngestRevision, false, false);
+            dump(fsfs, SVNFileUtil.DUMMY_OUT, startRev, endRev, false, false);
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
             SVNErrorManager.error(err, ioe);

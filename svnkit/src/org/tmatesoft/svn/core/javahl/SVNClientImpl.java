@@ -1161,6 +1161,9 @@ public class SVNClientImpl implements SVNClientInterface {
         return Version.getMicroVersion();
     }
 
+    /**
+     * @deprecated
+     */
     protected Notify getNotify() {
         return myNotify;
     }
