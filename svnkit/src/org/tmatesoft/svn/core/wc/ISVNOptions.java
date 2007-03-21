@@ -222,7 +222,7 @@ public interface ISVNOptions extends ISVNTunnelProvider {
      * <i>'global-ignores'</i> option that can be found in the SVN's <i>config</i> 
      * file under the <i>[miscellany]</i> section.
      * 
-     * @param  name  a file name
+     * @param  file  a file
      * @return       <span class="javakeyword">true</span> if the file
      *               is ignored, otherwise <span class="javakeyword">false</span>
      */

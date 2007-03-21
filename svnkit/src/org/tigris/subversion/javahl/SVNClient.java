@@ -95,6 +95,9 @@ public class SVNClient implements SVNClientInterface {
         return myDelegate.checkout(moduleName, destPath, revision, recurse);
     }
 
+    /**
+     * @deprecated
+     */
     public void notification(Notify notify) {
         myDelegate.notification(notify);
     }
