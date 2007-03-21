@@ -30,6 +30,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -78,7 +79,13 @@ public abstract class SVNCommand {
     
     protected SVNClientManager getClientManager() {
         if (myClientManager == null) {
-            myClientManager = SVNClientManager.newInstance(getOptions(), myUserName, myPassword);
+            String dir = (String) getCommandLine().getArgumentValue(SVNArgument.CONFIG_DIR);
+            File dirFile = dir == null ? null : new File(dir);
+            ISVNAuthenticationManager authManager = SVNWCUtil.createDefaultAuthenticationManager(dirFile, myUserName, myPassword, getOptions().isAuthStorageEnabled());
+            if (!myCommandLine.hasArgument(SVNArgument.NON_INTERACTIVE)) {
+                authManager.setAuthenticationProvider(new SVNConsoleAuthenticationProvider());
+            }
+            myClientManager = SVNClientManager.newInstance(getOptions(), authManager);
         }
         return myClientManager;
     }
