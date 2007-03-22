@@ -15,9 +15,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.security.MessageDigest;
 import java.security.cert.X509Certificate;
-import java.util.Date;
 
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
@@ -28,6 +26,7 @@ import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
+import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
 
 
 /**
@@ -42,28 +41,13 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
         }
         String hostName = url.getHost();
         X509Certificate cert = (X509Certificate) certificate;
-        int failures = getServerCertificateFailures(cert, hostName);
-        String prompt = "Error validating server certificate for '" + realm + "':\n";
-        if ((failures & 8) != 0) {
-            prompt += " - The certificate is not issued by a trusted authority. Use the\n" +
-                      "   fingerprint to validate the certificate manually!\n";
-        }
-        if ((failures & 4) != 0) {
-            prompt += " - The certificate hostname does not match.\n";
-        }
-        if ((failures & 2) != 0) {
-            prompt += " - The certificate has expired.\n";
-        }
-        if ((failures & 1) != 0) {
-            prompt += " - The certificate is not yet valid.\n";
-        }
-        prompt += getServerCertificateInfo(cert);
+        StringBuffer prompt = SVNSSLUtil.getServerCertificatePrompt(cert, realm, hostName);
         if (resultMayBeStored) {
-            prompt += "(R)eject, accept (t)emporarily or accept (p)ermanently? "; 
+            prompt.append("\n(R)eject, accept (t)emporarily or accept (p)ermanently? "); 
         } else {
-            prompt += "(R)eject or accept (t)emporarily? "; 
+            prompt.append("\n(R)eject or accept (t)emporarily? "); 
         }
-        System.out.print(prompt);
+        System.out.print(prompt.toString());
         System.out.flush();
         int r = -1;
         while(true) {
@@ -191,73 +175,4 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
             return null;
         }
     }
-    
-    private static String getFingerprint(X509Certificate cert) {
-        StringBuffer s = new StringBuffer();
-        try  {
-           MessageDigest md = MessageDigest.getInstance("SHA1");
-           md.update(cert.getEncoded());
-           byte[] digest = md.digest();
-           for (int i= 0; i < digest.length; i++)  {
-              if (i != 0) {
-                  s.append(':');
-              }
-              int b = digest[i] & 0xFF;
-              String hex = Integer.toHexString(b);
-              if (hex.length() == 1) {
-                  s.append('0');
-              }
-              s.append(hex.toLowerCase());
-           }
-        } catch (Exception e)  {
-        } 
-        return s.toString();
-     }
-
-  private static String getServerCertificateInfo(X509Certificate cert) {
-      StringBuffer info = new StringBuffer();
-      info.append("Certificate information:");
-      info.append('\n');
-      info.append(" - Subject: ");
-      info.append(cert.getSubjectDN().getName());
-      info.append('\n');
-      info.append(" - Valid: ");
-      info.append("from " + cert.getNotBefore() + " until " + cert.getNotAfter());
-      info.append('\n');
-      info.append(" - Issuer: ");
-      info.append(cert.getIssuerDN().getName());
-      info.append('\n');
-      info.append(" - Fingerprint: ");
-      info.append(getFingerprint(cert));
-      info.append('\n');
-      return info.toString();
-  }
-
-  private static int getServerCertificateFailures(X509Certificate cert, String realHostName) {
-      int mask = 8;
-      Date time = new Date(System.currentTimeMillis());
-      if (time.before(cert.getNotBefore())) {
-          mask |= 1;
-      }
-      if (time.after(cert.getNotAfter())) {
-          mask |= 2;
-      }
-      String hostName = cert.getSubjectDN().getName();
-      int index = hostName.indexOf("CN=") + 3;
-      if (index >= 0) {
-          hostName = hostName.substring(index);
-          if (hostName.indexOf(' ') >= 0) {
-              hostName = hostName.substring(0, hostName.indexOf(' '));
-          }
-          if (hostName.indexOf(',') >= 0) {
-              hostName = hostName.substring(0, hostName.indexOf(','));
-          }
-      }
-      if (realHostName != null && !realHostName.equals(hostName)) {
-          mask |= 4;
-      }
-      return mask;
-  }
-
-
 }

@@ -12,7 +12,6 @@
 package org.tmatesoft.svn.core.javahl;
 
 import java.io.File;
-import java.security.MessageDigest;
 import java.security.cert.X509Certificate;
 
 import org.tigris.subversion.javahl.PromptUserPassword;
@@ -27,6 +26,7 @@ import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
+import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
 
 /**
  * @version 1.1.1
@@ -144,51 +144,13 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
         if (serverAuth != null && myPrompt instanceof PromptUserPassword2) {
             PromptUserPassword2 sslPrompt = (PromptUserPassword2) myPrompt;
             serverAuth = serverAuth instanceof X509Certificate ? 
-                    getServerCertificateInfo((X509Certificate) serverAuth) : serverAuth;
+                    SVNSSLUtil.getServerCertificatePrompt((X509Certificate) serverAuth, realm, url.getHost()) : serverAuth;
             if (serverAuth == null) {
-                serverAuth = "";
+                serverAuth = "Unsupported certificate type '" + (serverAuth != null ? serverAuth.getClass().getName() : "null") + "'";
             }
             return sslPrompt.askTrustSSLServer(serverAuth.toString(), resultMayBeStored);
         }
         return ACCEPTED;
-    }
-
-    private static String getFingerprint(X509Certificate cert) {
-          StringBuffer s = new StringBuffer();
-          try  {
-             MessageDigest md = MessageDigest.getInstance("SHA1");
-             md.update(cert.getEncoded());
-             byte[] digest = md.digest();
-             for (int i= 0; i < digest.length; i++)  {
-                if (i != 0) {
-                    s.append(':');
-                }
-                int b = digest[i] & 0xFF;
-                String hex = Integer.toHexString(b);
-                if (hex.length() == 1) {
-                    s.append('0');
-                }
-                s.append(hex.toLowerCase());
-             }
-          } catch (Exception e)  {
-          } 
-          return s.toString();
-       }
-
-    private static String getServerCertificateInfo(X509Certificate cert) {
-        StringBuffer info = new StringBuffer();
-        info.append(" - Subject: ");
-        info.append(cert.getSubjectDN().getName());
-        info.append('\n');
-        info.append(" - Valid: ");
-        info.append("from " + cert.getNotBefore() + " until " + cert.getNotAfter());
-        info.append('\n');
-        info.append(" - Issuer: ");
-        info.append(cert.getIssuerDN().getName());
-        info.append('\n');
-        info.append(" - Fingerprint: ");
-        info.append(getFingerprint(cert));
-        return info.toString();
     }
     
     private static String getUserName(String userName, SVNURL url) {
