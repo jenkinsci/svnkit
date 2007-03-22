@@ -192,12 +192,27 @@ public class SVNWCAccess implements ISVNEventHandler {
         
         if (parentArea != null) {
             if (parentError != null && targetArea != null) {
-                try {
-                    close();
-                } catch (SVNException svne) {
-                    //
+                if (parentError.getErrorMessage().getErrorCode() == SVNErrorCode.WC_LOCKED) {
+                    // try to work without 'anchor'
+                    try {
+                        doClose(parentArea, false);
+                    } catch (SVNException svne) {
+                        try {
+                            close();
+                        } catch (SVNException svne2) {
+                            //
+                        }
+                        throw svne;
+                    }
+                    parentArea = null;
+                } else {
+                    try {
+                        close();
+                    } catch (SVNException svne) {
+                        //
+                    }
+                    throw parentError;
                 }
-                throw parentError;
             }
         }
 
