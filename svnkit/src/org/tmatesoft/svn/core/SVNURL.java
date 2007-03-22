@@ -253,7 +253,11 @@ public class SVNURL {
             } else {
                 // do not use httpPath. 
                 String originalPath = url.substring(index + "://".length());
-                originalPath = originalPath.substring(originalPath.indexOf("/") + 1);
+                if (originalPath.indexOf("/") < 0) {
+                    originalPath = "";
+                } else {
+                    originalPath = originalPath.substring(originalPath.indexOf("/") + 1);
+                }
                 myPath = originalPath;
                 if(!myPath.startsWith("/")){
                     myPath = "/" + myPath;
