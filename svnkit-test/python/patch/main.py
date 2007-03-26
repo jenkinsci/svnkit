@@ -114,6 +114,7 @@ except ImportError:
 # The locations of the svn, svnadmin and svnlook binaries, relative to
 # the only scripts that import this file right now (they live in ../).
 #svn_binary = os.path.abspath('../../../clients/cmdline/svn' + _exe)
+#svn_binary = 'svn' + _exe
 svn_binary = os.path.abspath('../../../build/lib/jsvn' + _bat)
 #svnadmin_binary = 'svnadmin' + _exe
 svnadmin_binary = os.path.abspath('../../../build/lib/jsvnadmin' + _bat)
