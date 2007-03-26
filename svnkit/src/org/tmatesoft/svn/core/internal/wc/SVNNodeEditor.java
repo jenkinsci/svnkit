@@ -114,7 +114,7 @@ public class SVNNodeEditor implements ISVNEditor {
 
         if (myCurrentNode != null && myCurrentNode.myChildren != null) {
             for (Iterator children = myCurrentNode.myChildren.iterator(); children.hasNext();) {
-                Node child = (Node) children;
+                Node child = (Node) children.next();
                 if (child.myName.equals(name)) {
                     node = child;
                     break;
