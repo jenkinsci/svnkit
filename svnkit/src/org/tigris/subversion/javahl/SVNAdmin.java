@@ -15,11 +15,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.LinkedList;
 
-import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -32,10 +29,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.javahl.SVNClientImpl;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
-import org.tmatesoft.svn.core.wc.admin.ISVNAdminEventHandler;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminClient;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEvent;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEventAction;
@@ -385,7 +379,7 @@ public class SVNAdmin {
             public void handleAdminEvent(SVNAdminEvent event, double progress) throws SVNException {
                 if (event.getAction() == SVNAdminEventAction.LOCK_LISTED) {
                     SVNLock svnLock = event.getLock();
-                    Lock lock = new Lock(svnLock.getOwner(), svnLock.getPath(), svnLock.getID(), svnLock.getComment(), svnLock.getCreationDate().getTime(), svnLock.getExpirationDate().getTime());
+                    Lock lock = JavaHLObjectFactory.createLock(svnLock);
                     locks.add(lock);
                 }
             }

@@ -366,7 +366,7 @@ public class FSCommitEditor implements ISVNEditor {
                 String absPath = !path.startsWith("/") ? SVNPathUtil.concatToAbs(myBasePath, path) : path;
 
                 try {
-                    myFSFS.unlockPath(absPath, token, myAuthor, false);
+                    myFSFS.unlockPath(absPath, token, myAuthor, false, true);
                 } catch (SVNException svne) {
                     // ignore exceptions
                 }

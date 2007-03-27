@@ -464,13 +464,6 @@ public class SVNAdminClient extends SVNBasicClient {
             public void handleLock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
                 checkCancelled();
                 if (myEventHandler != null) {
-/*                    String message = null;
-                    if (lock != null) {
-                        String creationDate = SVNTimeUtil.formatDate(lock.getCreationDate());
-                        String expirationDate = lock.getExpirationDate() != null ? SVNTimeUtil.formatDate(lock.getExpirationDate()) : null;  
-                        String comment = lock.getComment();
-                    }
-*/                    
                     SVNAdminEvent event = new SVNAdminEvent(SVNAdminEventAction.LOCK_LISTED, lock, error, null);
                     myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
                 }
@@ -488,11 +481,6 @@ public class SVNAdminClient extends SVNBasicClient {
         }
         
         FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
-        String username = System.getProperty("user.name");
-        if (username == null) {
-            username = "administrator";
-        }
-        
         for (int i = 0; i < paths.length; i++) {
             String path = paths[i];
             if (path == null) {
@@ -511,7 +499,7 @@ public class SVNAdminClient extends SVNBasicClient {
                     continue;
                 }
                 
-                fsfs.unlockPath(path, lock.getID(), username, true);
+                fsfs.unlockPath(path, lock.getID(), null, true, false);
                 if (myEventHandler != null) {
                     SVNAdminEvent event = new SVNAdminEvent(SVNAdminEventAction.UNLOCKED, lock, null, "Removed lock on '" + path + "'.");
                     myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);

@@ -954,7 +954,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                 String reposPath = getRepositoryPath(path);
                 SVNErrorMessage error = null;
                 try {
-                    myFSFS.unlockPath(reposPath, token, getUserName(), force);
+                    myFSFS.unlockPath(reposPath, token, getUserName(), force, true);
                 } catch (SVNException svne) {
                     error = svne.getErrorMessage();
                     if (!FSErrors.isUnlockError(error)) {

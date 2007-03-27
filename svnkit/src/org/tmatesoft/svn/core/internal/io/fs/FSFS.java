@@ -775,7 +775,7 @@ public class FSFS {
         return SVNFileUtil.toHexDigest(digestFromPath); 
     }
 
-    public void unlockPath(String path, String token, String username, boolean breakLock) throws SVNException {
+    public void unlockPath(String path, String token, String username, boolean breakLock, boolean enableHooks) throws SVNException {
         String[] paths = {path};
 
         if (!breakLock && username == null) {
@@ -783,10 +783,11 @@ public class FSFS {
             SVNErrorManager.error(err);
         }
         
-        FSHooks.runPreUnlockHook(myRepositoryRoot, path, username);
+        if (enableHooks) {
+            FSHooks.runPreUnlockHook(myRepositoryRoot, path, username);
+        }
 
         FSWriteLock writeLock = FSWriteLock.getWriteLock(this);
-        
         synchronized (writeLock) {
             try {
                 writeLock.lock();
@@ -797,12 +798,14 @@ public class FSFS {
             }
         }
 
-        try {
-            FSHooks.runPostUnlockHook(myRepositoryRoot, paths, username);
-        } catch (SVNException svne) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_POST_UNLOCK_HOOK_FAILED, "Unlock succeeded, but post-unlock hook failed");
-            err.setChildErrorMessage(svne.getErrorMessage());
-            SVNErrorManager.error(err, svne);
+        if (enableHooks) {
+            try {
+                FSHooks.runPostUnlockHook(myRepositoryRoot, paths, username);
+            } catch (SVNException svne) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_POST_UNLOCK_HOOK_FAILED, "Unlock succeeded, but post-unlock hook failed");
+                err.setChildErrorMessage(svne.getErrorMessage());
+                SVNErrorManager.error(err, svne);
+            }
         }
     }
 
