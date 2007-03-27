@@ -122,7 +122,8 @@ svnadmin_binary = os.path.abspath('../../../build/lib/jsvnadmin' + _bat)
 svnlook_binary = os.path.abspath('../../../build/lib/jsvnlook' + _bat)
 #svnsync_binary = 'svnsync' + _exe
 svnsync_binary = os.path.abspath('../../../build/lib/jsvnsync' + _bat)
-svnversion_binary = 'svnversion' + _exe
+#svnversion_binary = 'svnversion' + _exe
+svnversion_binary = os.path.abspath('../../../build/lib/jsvnversion' + _bat)
 
 # Username and password used by the working copies
 wc_author = 'jrandom'

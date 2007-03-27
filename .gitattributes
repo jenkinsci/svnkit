@@ -122,6 +122,8 @@ svnkit/cli/jsvnlook.bat -text
 svnkit/cli/jsvnsetup.openvms -text
 svnkit/cli/jsvnsync -text
 svnkit/cli/jsvnsync.bat -text
+svnkit/cli/jsvnversion -text
+svnkit/cli/jsvnversion.bat -text
 svnkit/cli/logging.properties.disabled -text
 svnkit/src/org/tigris/subversion/javahl/SVNClient.java -text
 svnkit/src/org/tmatesoft/svn/core/SVNURL.java -text

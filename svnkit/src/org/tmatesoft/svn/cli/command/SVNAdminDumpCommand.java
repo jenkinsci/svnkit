@@ -69,8 +69,7 @@ public class SVNAdminDumpCommand extends SVNCommand implements ISVNAdminEventHan
 
     public void handleAdminEvent(SVNAdminEvent event, double progress) throws SVNException {
         if (!myIsQuiet && event != null && event.getAction() == SVNAdminEventAction.REVISION_DUMPED) {
-            long rev = event.getRevision();
-            myOut.println("* Dumped revision " + rev + ".");
+            myOut.println(event.getMessage());
         }
     }
     

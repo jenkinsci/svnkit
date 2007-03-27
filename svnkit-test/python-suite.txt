@@ -23,3 +23,4 @@ update ALL
 svnsync ALL
 svnadmin ALL
 svnlook ALL
+svnversion ALL

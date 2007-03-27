@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -24,14 +25,18 @@ import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.javahl.SVNClientImpl;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.core.wc.admin.ISVNAdminEventHandler;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminClient;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEvent;
+import org.tmatesoft.svn.core.wc.admin.SVNAdminEventAction;
+import org.tmatesoft.svn.core.wc.admin.SVNAdminEventAdapter;
 import org.tmatesoft.svn.core.wc.admin.SVNUUIDAction;
 
 
@@ -90,6 +95,9 @@ public class SVNAdmin {
         }
         try {
             SVNRepositoryFactory.createLocalRepository(new File(path), false, false);
+            if (configPath != null) {
+                
+            }
         } catch (SVNException e) {
             JavaHLObjectFactory.throwException(e, myDelegate);
         }
@@ -117,17 +125,33 @@ public class SVNAdmin {
      * @param incremental       the dump will be incremantal
      * @throws ClientException  throw in case of problem
      */
-    public void dump(String path, final OutputInterface dataOut, OutputInterface errorOut, Revision start, Revision end, boolean incremental) throws ClientException {
+    public void dump(String path, final OutputInterface dataOut, final OutputInterface errorOut, Revision start, Revision end, boolean incremental) throws ClientException {
         OutputStream os = createOutputStream(dataOut);
         try {
+            getAdminClient().setEventHandler(new SVNAdminEventAdapter() {
+                public void handleAdminEvent(SVNAdminEvent event, double progress) throws SVNException {
+                    if (errorOut != null && event.getAction() == SVNAdminEventAction.REVISION_DUMPED) {
+                        try {
+                            errorOut.write(event.getMessage().getBytes());
+                            errorOut.write(SVNTranslator.NATIVE);
+                        } catch (IOException e) {
+                        }
+                    }
+                }
+            });
             getAdminClient().doDump(new File(path).getAbsoluteFile(), os, JavaHLObjectFactory.getSVNRevision(start), JavaHLObjectFactory.getSVNRevision(end), incremental, false);
         } catch (SVNException e) {
             try {
-                errorOut.write(e.getErrorMessage().getFullMessage().getBytes("UTF-8"));
+                if (errorOut != null) {
+                    errorOut.write(e.getErrorMessage().getFullMessage().getBytes("UTF-8"));
+                    errorOut.write(SVNTranslator.NATIVE);
+                }
             } catch (IOException e1) {
                 //
             }
             JavaHLObjectFactory.throwException(e, myDelegate);
+        } finally {
+            getAdminClient().setEventHandler(null);
         }
     }
 
@@ -187,7 +211,7 @@ public class SVNAdmin {
      *                          in put optional.
      * @throws ClientException  throw in case of problem
      */
-    public void load(String path, InputInterface dataInput, OutputInterface messageOutput, boolean ignoreUUID, boolean forceUUID, String relativePath) throws ClientException {
+    public void load(String path, InputInterface dataInput, final OutputInterface messageOutput, boolean ignoreUUID, boolean forceUUID, String relativePath) throws ClientException {
         InputStream is = createInputStream(dataInput);
         try {
             SVNUUIDAction uuidAction = SVNUUIDAction.DEFAULT;
@@ -196,11 +220,54 @@ public class SVNAdmin {
             } else if (forceUUID) {
                 uuidAction = SVNUUIDAction.FORCE_UUID;
             }
+            getAdminClient().setEventHandler(new SVNAdminEventAdapter() {
+                
+                private boolean myIsNodeOpened;
+                
+                public void handleAdminEvent(SVNAdminEvent event, double progress) throws SVNException {
+                    if (messageOutput != null) {
+                        try {
+                            messageOutput.write(getLoadMessage(event).getBytes("UTF-8"));                        
+                        } catch (IOException e) {
+                        }
+                    }
+                }
+
+                protected String getLoadMessage(SVNAdminEvent event) {
+                    StringBuffer message = new StringBuffer();
+                    if (event.getAction() != SVNAdminEventAction.REVISION_LOAD && myIsNodeOpened) {
+                        message.append(" done.");
+                        message.append(SVNTranslator.NATIVE);
+                        myIsNodeOpened = false;
+                    }
+                    if (event.getAction() == SVNAdminEventAction.REVISION_LOADED) {
+                        message.append(SVNTranslator.NATIVE);
+                    }
+                    message.append(event.getMessage());
+                    message.append(SVNTranslator.NATIVE);
+                    if (event.getAction() == SVNAdminEventAction.REVISION_LOADED) {
+                        message.append(SVNTranslator.NATIVE);
+                    }
+                    myIsNodeOpened = event.getAction() != SVNAdminEventAction.REVISION_LOAD;
+                    return message.toString();
+                }
+            });
             getAdminClient().doLoad(new File(path).getAbsoluteFile(), is, false, false, uuidAction, relativePath);
         } catch (SVNException e) {
+            if (messageOutput != null) {
+                try {
+                    messageOutput.write(e.getErrorMessage().getFullMessage().getBytes("UTF-8"));
+                    messageOutput.write(SVNTranslator.NATIVE);
+                } catch (IOException e1) {
+                }
+            }
             JavaHLObjectFactory.throwException(e, myDelegate);
+        } finally {
+            getAdminClient().setEventHandler(null);
         }
+       
     }
+
 
     /**
      * list all open transactions in a repository
@@ -209,15 +276,11 @@ public class SVNAdmin {
      * @throws ClientException  throw in case of problem
      */
     public void lstxns(String path, final MessageReceiver receiver) throws ClientException {
-        getAdminClient().setEventHandler(new ISVNAdminEventHandler() {
+        getAdminClient().setEventHandler(new SVNAdminEventAdapter() {
             public void handleAdminEvent(SVNAdminEvent event, double progress) throws SVNException {
                 if (receiver != null && event.getTxnName() != null) {
                     receiver.receiveMessageLine(event.getTxnName());
                 }
-            }
-            public void checkCancelled() throws SVNCancelException {
-            }
-            public void handleEvent(SVNEvent event, double progress) throws SVNException {
             }
         });
         try {
@@ -278,16 +341,32 @@ public class SVNAdmin {
      * @param end               the last revision
      * @throws ClientException  throw in case of problem
      */
-    public void verify(String path,  OutputInterface messageOut,  Revision start, Revision end) throws ClientException {
+    public void verify(String path, final OutputInterface messageOut,  Revision start, Revision end) throws ClientException {
         try {
+            getAdminClient().setEventHandler(new SVNAdminEventAdapter() {
+                public void handleAdminEvent(SVNAdminEvent event, double progress) throws SVNException {
+                    if (messageOut != null && event.getAction() == SVNAdminEventAction.REVISION_DUMPED) {
+                        try {
+                            messageOut.write(event.getMessage().getBytes());
+                            messageOut.write(SVNTranslator.NATIVE);
+                        } catch (IOException e) {
+                        }
+                    }
+                }
+            });
             getAdminClient().doVerify(new File(path).getAbsoluteFile(), JavaHLObjectFactory.getSVNRevision(start), JavaHLObjectFactory.getSVNRevision(end));
         } catch (SVNException e) {
             try {
-                messageOut.write(e.getErrorMessage().getFullMessage().getBytes("UTF-8"));
+                if (messageOut != null) {
+                    messageOut.write(e.getErrorMessage().getFullMessage().getBytes("UTF-8"));
+                    messageOut.write(SVNTranslator.NATIVE);
+                }
             } catch (IOException e1) {
                 //
             }
             JavaHLObjectFactory.throwException(e, myDelegate);
+        } finally {
+            getAdminClient().setEventHandler(null);
         }
     }
 

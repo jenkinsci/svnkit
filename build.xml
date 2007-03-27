@@ -194,6 +194,7 @@
         </copy>
         <chmod file="build/lib/jsvn" perm="ugo+rx" />
         <chmod file="build/lib/jsvnadmin" perm="ugo+rx" />
+        <chmod file="build/lib/jsvnversion" perm="ugo+rx" />
         <chmod file="build/lib/jsvnsync" perm="ugo+rx" />
     	<chmod file="build/lib/jsvnlook" perm="ugo+rx" />
     </target>
@@ -320,11 +321,13 @@
             <zipfileset dir="build/lib" prefix="svnkit-${svnkit.version}">
                 <exclude name="jsvn" />
                 <exclude name="jsvnadmin" />
+                <exclude name="jsvnversion" />
                 <exclude name="jsvnsync" />
             	<exclude name="jsvnlook" />
             </zipfileset>
             <zipfileset file="build/lib/jsvn" filemode="555" prefix="svnkit-${svnkit.version}" />
             <zipfileset file="build/lib/jsvnadmin" filemode="555" prefix="svnkit-${svnkit.version}" />
+            <zipfileset file="build/lib/jsvnversion" filemode="555" prefix="svnkit-${svnkit.version}" />
             <zipfileset file="build/lib/jsvnsync" filemode="555" prefix="svnkit-${svnkit.version}" />
         	<zipfileset file="build/lib/jsvnlook" filemode="555" prefix="svnkit-${svnkit.version}" />
         	<zipfileset dir="build/doc" prefix="svnkit-${svnkit.version}/doc" />

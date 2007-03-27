@@ -49,10 +49,10 @@ public class SVNAdmin {
         ourArguments.add(SVNArgument.BDB_TXN_NOSYNC);
         ourArguments.add(SVNArgument.BDB_LOG_KEEP);
 
-//        Locale.setDefault(Locale.ENGLISH);
         ourCommands = new HashMap();
         ourCommands.put(new String[] { "create"}, "org.tmatesoft.svn.cli.command.SVNAdminCreateCommand");
         ourCommands.put(new String[] { "dump" }, "org.tmatesoft.svn.cli.command.SVNAdminDumpCommand");
+        ourCommands.put(new String[] { "verify" }, "org.tmatesoft.svn.cli.command.SVNAdminVeirfyCommand");
         ourCommands.put(new String[] { "load" }, "org.tmatesoft.svn.cli.command.SVNAdminLoadCommand");
         ourCommands.put(new String[] { "lstxns" }, "org.tmatesoft.svn.cli.command.SVNAdminListTransactionsCommand");
         ourCommands.put(new String[] { "rmtxns" }, "org.tmatesoft.svn.cli.command.SVNAdminRemoveTransactionsCommand");

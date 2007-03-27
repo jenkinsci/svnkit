@@ -20,71 +20,53 @@ import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.ISVNAdminEventHandler;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminClient;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEvent;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEventAction;
-import org.tmatesoft.svn.core.wc.admin.SVNUUIDAction;
-
 
 /**
  * @version 1.1.1
  * @author  TMate Software Ltd.
  * @since   1.1.1
  */
-public class SVNAdminLoadCommand extends SVNCommand implements ISVNAdminEventHandler {
+public class SVNAdminVerifyCommand extends SVNCommand implements ISVNAdminEventHandler {
     private boolean myIsQuiet;
     private PrintStream myOut;
-    private boolean myIsNodeOpened;
     
-    public void run(PrintStream out, PrintStream err) throws SVNException {
-        run(System.in, out, err);
+    public void run(InputStream in, PrintStream out, PrintStream err) throws SVNException {
+        run(out, err);
     }
 
-    public void run(InputStream in, PrintStream out, PrintStream err) throws SVNException {
+    public void run(PrintStream out, PrintStream err) throws SVNException {
         if (!getCommandLine().hasPaths()) {
             SVNCommand.println(out, "jsvnadmin: Repository argument required");
             System.exit(1);
         }
         File reposRoot = new File(getCommandLine().getPathAt(0));  
-
-        boolean ignoreUUID = getCommandLine().hasArgument(SVNArgument.IGNORE_UUID);
-        boolean forceUUID = getCommandLine().hasArgument(SVNArgument.FORCE_UUID);
-        SVNUUIDAction uuidAction = null;
-        if (!ignoreUUID && !forceUUID) {
-            uuidAction = SVNUUIDAction.DEFAULT;
-        } else if (ignoreUUID) {
-            uuidAction = SVNUUIDAction.IGNORE_UUID;
-        } else {
-            uuidAction = SVNUUIDAction.FORCE_UUID;
+        
+        SVNRevision rStart = SVNRevision.UNDEFINED;
+        SVNRevision rEnd = SVNRevision.UNDEFINED;
+        String revStr = (String) getCommandLine().getArgumentValue(SVNArgument.REVISION);
+        if (revStr != null && revStr.indexOf(':') > 0) {
+            rStart = SVNRevision.parse(revStr.substring(0, revStr.indexOf(':')));
+            rEnd = SVNRevision.parse(revStr.substring(revStr.indexOf(':') + 1));
+        } else if (revStr != null) {
+            rStart = SVNRevision.parse(revStr);
         }
         
-        boolean usePreCommitHook = getCommandLine().hasArgument(SVNArgument.USE_PRECOMMIT_HOOK);
-        boolean usePostCommitHook = getCommandLine().hasArgument(SVNArgument.USE_POSTCOMMIT_HOOK);
-        String parentDir = (String) getCommandLine().getArgumentValue(SVNArgument.PARENT_DIR);
-
         myIsQuiet = getCommandLine().hasArgument(SVNArgument.QUIET); 
-        myOut = out;
+        myOut = err;
 
         SVNAdminClient adminClient = getClientManager().getAdminClient();
         adminClient.setEventHandler(this);
-        adminClient.doLoad(reposRoot, in, usePreCommitHook, usePostCommitHook, uuidAction, parentDir);
+        adminClient.doVerify(reposRoot, rStart, rEnd);
     }
 
     public void handleAdminEvent(SVNAdminEvent event, double progress) throws SVNException {
-        if (!myIsQuiet && event != null) {
-            if (event.getAction() != SVNAdminEventAction.REVISION_LOAD && myIsNodeOpened) {
-                myOut.println(" done.");
-                myIsNodeOpened = false;
-            }
-            if (event.getAction() == SVNAdminEventAction.REVISION_LOADED) {
-                myOut.println();
-            }
+        if (!myIsQuiet && event != null && event.getAction() == SVNAdminEventAction.REVISION_DUMPED) {
             myOut.println(event.getMessage());
-            if (event.getAction() == SVNAdminEventAction.REVISION_LOADED) {
-                myOut.println();
-            }
-            myIsNodeOpened = event.getAction() != SVNAdminEventAction.REVISION_LOAD;
         }
     }
     
@@ -92,5 +74,5 @@ public class SVNAdminLoadCommand extends SVNCommand implements ISVNAdminEventHan
     }    
     
     public void checkCancelled() throws SVNCancelException {
-    }    
+    }
 }

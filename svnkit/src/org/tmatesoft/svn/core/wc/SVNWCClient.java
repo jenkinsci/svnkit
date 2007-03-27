@@ -2012,16 +2012,21 @@ public class SVNWCClient extends SVNBasicClient {
      *                         even exported
      */
     public String doGetWorkingCopyID(final File path, String trailURL) throws SVNException {
+        return doGetWorkingCopyID(path, trailURL, false);
+    }
+    
+    public String doGetWorkingCopyID(final File path, String trailURL, final boolean committed) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess();
         try {
-            wcAccess.probeOpen(path, false, 0);
+            wcAccess.open(path, false, 0);
         } catch (SVNException e) {            
             SVNFileType pathType = SVNFileType.getType(path);
             if (pathType == SVNFileType.DIRECTORY) {
                 return "exported";
-            } 
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "''{0}'' is not versioned and not exported", path);
-            SVNErrorManager.error(err);
+            } else if (pathType == SVNFileType.NONE) {
+                return null;
+            }
+            return "'" + path + "' is not versioned and not exported"; 
         } finally {
             wcAccess.close();
         }
@@ -2037,7 +2042,7 @@ public class SVNWCClient extends SVNBasicClient {
                     return;
                 }
                 if (status.getContentsStatus() != SVNStatusType.STATUS_ADDED) {
-                    SVNRevision revision = status.getRevision();
+                    SVNRevision revision = committed ? status.getCommittedRevision() : status.getRevision();
                     if (revision != null) {
                         if (minRevision[0] < 0 || minRevision[0] > revision.getNumber()) {
                             minRevision[0] = revision.getNumber();

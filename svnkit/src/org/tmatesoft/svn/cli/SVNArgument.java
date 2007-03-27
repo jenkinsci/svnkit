@@ -103,7 +103,7 @@ public abstract class SVNArgument {
         return new SVNStringArgument(names);
     }
 
-    private static SVNArgument createUnaryArgument(String[] names) {
+    static SVNArgument createUnaryArgument(String[] names) {
         return new SVNUnaryArgument(names);
     }
 

@@ -898,9 +898,9 @@ public class SVNAdminClient extends SVNBasicClient {
                 if (i == 0) {
                     writeRevisionRecord(dumpStream, fsfs, 0);
                     toRev = 0;
-                    SVNDebugLog.getDefaultLog().info((isDumping ? "* Dumped" : "* Verified") + " revision " + toRev + ".\n");
+                    String message = (isDumping ? "* Dumped" : "* Verified") + " revision " + toRev + ".";
                     if (myEventHandler != null) {
-                        SVNAdminEvent event = new SVNAdminEvent(toRev, SVNAdminEventAction.REVISION_DUMPED);
+                        SVNAdminEvent event = new SVNAdminEvent(toRev, SVNAdminEventAction.REVISION_DUMPED, message);
                         myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
                     }
                     continue;
@@ -924,9 +924,9 @@ public class SVNAdminClient extends SVNBasicClient {
             } else {
                 FSRepositoryUtil.replay(fsfs, toRoot, "", -1, false, dumpEditor);
             }
-            SVNDebugLog.getDefaultLog().info((isDumping ? "* Dumped" : "* Verified") + " revision " + toRev + ".\n");
+            String message = (isDumping ? "* Dumped" : "* Verified") + " revision " + toRev + ".";
             if (myEventHandler != null) {
-                SVNAdminEvent event = new SVNAdminEvent(toRev, SVNAdminEventAction.REVISION_DUMPED);
+                SVNAdminEvent event = new SVNAdminEvent(toRev, SVNAdminEventAction.REVISION_DUMPED, message);
                 myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
             }
         }
