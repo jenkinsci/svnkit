@@ -13,6 +13,9 @@ package org.tmatesoft.svn.core.wc.admin;
 
 import java.io.File;
 
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNLock;
+
 
 /**
  * The <b>SVNAdminEvent</b> is a type of an event used to notify callers' handlers 
@@ -30,6 +33,8 @@ public class SVNAdminEvent {
     private SVNAdminEventAction myAction;
     private String myPath;
     private String myMessage; 
+    private SVNLock myLock;
+    private SVNErrorMessage myError;
     
     /**
      * Creates a new event.
@@ -95,6 +100,13 @@ public class SVNAdminEvent {
         myRevision = -1;
         myOriginalRevision = -1;
         myAction = action;
+    }
+
+    public SVNAdminEvent(SVNAdminEventAction action, SVNLock lock, SVNErrorMessage error, String message) {
+        myError = error;
+        myMessage = message;
+        myAction = action;
+        myLock = lock;
     }
 
     /**
@@ -163,12 +175,20 @@ public class SVNAdminEvent {
     }
 
     /**
-     * Returns an absolute repository path being changed withing 
+     * Returns an absolute repository path being changed within 
      * the current revision load iteration.
      *  
      * @return  repository path
      */
     public String getPath() {
         return myPath;
+    }
+
+    public SVNLock getLock() {
+        return myLock;
+    }
+
+    public SVNErrorMessage getError() {
+        return myError;
     }
 }

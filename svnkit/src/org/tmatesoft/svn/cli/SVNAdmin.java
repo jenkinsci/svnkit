@@ -56,7 +56,8 @@ public class SVNAdmin {
         ourCommands.put(new String[] { "load" }, "org.tmatesoft.svn.cli.command.SVNAdminLoadCommand");
         ourCommands.put(new String[] { "lstxns" }, "org.tmatesoft.svn.cli.command.SVNAdminListTransactionsCommand");
         ourCommands.put(new String[] { "rmtxns" }, "org.tmatesoft.svn.cli.command.SVNAdminRemoveTransactionsCommand");
-        
+        ourCommands.put(new String[] { "lslocks" }, "org.tmatesoft.svn.cli.command.SVNAdminListLocksCommand");
+        ourCommands.put(new String[] { "rmlocks" }, "org.tmatesoft.svn.cli.command.SVNAdminRemoveLocksCommand");
     }
 
     public static void main(String[] args) {

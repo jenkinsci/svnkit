@@ -90,4 +90,11 @@ public class SVNAdminEventAction {
      */
     public static final SVNAdminEventAction TRANSACTION_REMOVED = new SVNAdminEventAction(8);
 
+    public static final SVNAdminEventAction UNLOCK_FAILED = new SVNAdminEventAction(9);
+    
+    public static final SVNAdminEventAction UNLOCKED = new SVNAdminEventAction(10);
+
+    public static final SVNAdminEventAction NOT_LOCKED = new SVNAdminEventAction(11);
+
+    public static final SVNAdminEventAction LOCK_LISTED = new SVNAdminEventAction(12);
 }

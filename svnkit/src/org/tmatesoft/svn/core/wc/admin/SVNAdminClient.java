@@ -26,6 +26,7 @@ import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
@@ -46,6 +47,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNSynchronizeEditor;
 import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.replicator.SVNRepositoryReplicator;
@@ -455,6 +457,74 @@ public class SVNAdminClient extends SVNBasicClient {
         }
     }
 
+    public void doListLocks(File repositoryRoot) throws SVNException {
+        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
+        File digestFile = fsfs.getDigestFileFromRepositoryPath("/");
+        ISVNLockHandler handler = new ISVNLockHandler() {
+            public void handleLock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
+                checkCancelled();
+                if (myEventHandler != null) {
+/*                    String message = null;
+                    if (lock != null) {
+                        String creationDate = SVNTimeUtil.formatDate(lock.getCreationDate());
+                        String expirationDate = lock.getExpirationDate() != null ? SVNTimeUtil.formatDate(lock.getExpirationDate()) : null;  
+                        String comment = lock.getComment();
+                    }
+*/                    
+                    SVNAdminEvent event = new SVNAdminEvent(SVNAdminEventAction.LOCK_LISTED, lock, error, null);
+                    myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
+                }
+                
+            }
+            public void handleUnlock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
+            }
+        };
+        fsfs.walkDigestFiles(digestFile, handler, false);
+    }
+
+    public void doRemoveLocks(File repositoryRoot, String[] paths) throws SVNException {
+        if (paths == null) {
+            return;
+        }
+        
+        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
+        String username = System.getProperty("user.name");
+        if (username == null) {
+            username = "administrator";
+        }
+        
+        for (int i = 0; i < paths.length; i++) {
+            String path = paths[i];
+            if (path == null) {
+                continue;
+            }
+            checkCancelled();
+            
+            SVNLock lock = null;
+            try {
+                lock = fsfs.getLockHelper(path, false);
+                if (lock == null) {
+                    if (myEventHandler != null) {
+                        SVNAdminEvent event = new SVNAdminEvent(SVNAdminEventAction.NOT_LOCKED, lock, null, "Path '" + path + "' isn't locked.");
+                        myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
+                    }
+                    continue;
+                }
+                
+                fsfs.unlockPath(path, lock.getID(), username, true);
+                if (myEventHandler != null) {
+                    SVNAdminEvent event = new SVNAdminEvent(SVNAdminEventAction.UNLOCKED, lock, null, "Removed lock on '" + path + "'.");
+                    myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
+                }
+            } catch (SVNException svne) {
+                if (myEventHandler != null) {
+                    SVNAdminEvent event = new SVNAdminEvent(SVNAdminEventAction.UNLOCK_FAILED, lock, svne.getErrorMessage(), "svnadmin: " + svne.getErrorMessage().getFullMessage());
+                    myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
+                }
+            }
+        }
+    }
+    
     /**
      * Lists all uncommitted transactions.
      * On each uncommetted transaction found this method fires an {@link SVNAdminEvent} 

@@ -126,6 +126,8 @@ svnkit/cli/jsvnversion -text
 svnkit/cli/jsvnversion.bat -text
 svnkit/cli/logging.properties.disabled -text
 svnkit/src/org/tigris/subversion/javahl/SVNClient.java -text
+svnkit/src/org/tmatesoft/svn/cli/command/SVNAdminListLocksCommand.java -text
+svnkit/src/org/tmatesoft/svn/cli/command/SVNAdminRemoveLocksCommand.java -text
 svnkit/src/org/tmatesoft/svn/core/SVNURL.java -text
 svnkit/src/org/tmatesoft/svn/core/auth/package.html -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/HTTPBodyInputStream.java -text

@@ -16,11 +16,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.LinkedList;
 
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
@@ -377,8 +380,26 @@ public class SVNAdmin {
      * @since 1.2
      */ 
     public Lock[] lslocks(String path) throws ClientException {
-        notImplementedYet();
-        return new Lock[0];
+        final ArrayList locks = new ArrayList();
+        getAdminClient().setEventHandler(new SVNAdminEventAdapter() {
+            public void handleAdminEvent(SVNAdminEvent event, double progress) throws SVNException {
+                if (event.getAction() == SVNAdminEventAction.LOCK_LISTED) {
+                    SVNLock svnLock = event.getLock();
+                    Lock lock = new Lock(svnLock.getOwner(), svnLock.getPath(), svnLock.getID(), svnLock.getComment(), svnLock.getCreationDate().getTime(), svnLock.getExpirationDate().getTime());
+                    locks.add(lock);
+                }
+            }
+        });
+        
+        try {
+            getAdminClient().doListLocks(new File(path).getAbsoluteFile());
+        } catch (SVNException e) {
+            JavaHLObjectFactory.throwException(e, myDelegate);
+        } finally {
+            getAdminClient().setEventHandler(null);
+        }
+        
+        return (Lock[]) locks.toArray(new Lock[locks.size()]);
     }
 
     /**
@@ -389,7 +410,13 @@ public class SVNAdmin {
      * @since 1.2
      */
     public void rmlocks(String path, String [] locks) throws ClientException {
-        notImplementedYet();
+        try {
+            getAdminClient().doRemoveLocks(new File(path).getAbsoluteFile(), locks);
+        } catch (SVNException e) {
+            JavaHLObjectFactory.throwException(e, myDelegate);
+        } finally {
+            getAdminClient().setEventHandler(null);
+        }
     }
     
     private void notImplementedYet() throws ClientException {
