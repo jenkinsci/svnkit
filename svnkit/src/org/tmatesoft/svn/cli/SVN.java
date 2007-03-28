@@ -33,7 +33,7 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  */
 public class SVN {
     private static Set ourArguments;
-    
+
     static {
         ourArguments = new HashSet();
         ourArguments.add(SVNArgument.PASSWORD);
@@ -82,14 +82,14 @@ public class SVN {
     public static void main(String[] args) {
         if (args == null || args.length < 1) {
             System.err.println("usage: jsvn commandName commandArguments");
-            System.exit(0);
+            System.exit(1);
         }
 
         StringBuffer commandLineString = new StringBuffer();
         for(int i = 0; i < args.length; i++) {
             commandLineString.append(args[i] + (i < args.length - 1 ? " " : ""));
         }
-        
+
         SVNCommandLine commandLine = null;
         try {
             try {
@@ -101,8 +101,8 @@ public class SVN {
             }
             String commandName = commandLine.getCommandName();
             SVNCommand command = SVNCommand.getCommand(commandName);
-            
-    
+
+
             if (command != null) {
                 if (SVNCommand.isForceLogCommand(commandName) && !commandLine.hasArgument(SVNArgument.FORCE_LOG)) {
                     if (commandLine.hasArgument(SVNArgument.FILE)) {
@@ -122,7 +122,7 @@ public class SVN {
                                 System.exit(1);
                             }
                         } catch (SVNException e) {}
-                    } 
+                    }
                     if (commandLine.hasArgument(SVNArgument.MESSAGE)) {
                         File file = new File((String) commandLine.getArgumentValue(SVNArgument.MESSAGE));
                         if (SVNFileType.getType(file) != SVNFileType.NONE) {
@@ -138,17 +138,22 @@ public class SVN {
                 DAVRepositoryFactory.setup();
                 SVNRepositoryFactoryImpl.setup();
                 FSRepositoryFactory.setup();
-    
+
                 command.setCommandLine(commandLine);
+                boolean isSuccess = true;
                 try {
                     command.run(System.out, System.err);
                 } catch (SVNException e) {
                     System.err.println(e.getMessage());
                     SVNDebugLog.getDefaultLog().info(e);
+                    isSuccess = false;
                 } finally {
                     if (command.getClientManager() != null) {
                         command.getClientManager().shutdownConnections(true);
                     }
+                }
+                if (!isSuccess) {
+                    System.exit(1);
                 }
             } else {
                 System.err.println("error: unknown command name '" + commandName + "'");
@@ -157,7 +162,7 @@ public class SVN {
         } catch (Throwable th) {
             SVNDebugLog.getDefaultLog().info(th);
             System.exit(-1);
-        }   
+        }
         System.exit(0);
     }
  }

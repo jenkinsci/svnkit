@@ -90,15 +90,20 @@ public class SVNAdmin {
                 FSRepositoryFactory.setup();
     
                 command.setCommandLine(commandLine);
+                boolean isSuccess = true;
                 try {
                     command.run(System.in, System.out, System.err);
                 } catch (SVNException e) {
+                    isSuccess = false;
                     System.err.println(e.getMessage());
                     SVNDebugLog.getDefaultLog().info(e);
                 } finally {
                     if (command.getClientManager() != null) {
                         command.getClientManager().shutdownConnections(true);
                     }
+                }
+                if (!isSuccess) {
+                    System.exit(1);
                 }
             } else {
                 System.err.println("error: unknown command name '" + commandName + "'");

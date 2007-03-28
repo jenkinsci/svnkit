@@ -67,7 +67,12 @@ public class SVNVersion {
                 }
             } else {
                 System.err.println("svn: '" + dir.getAbsolutePath() + "' does not exist");
+                System.exit(1);
             }
+        } catch (SVNException e) {
+            System.err.println(e.getMessage());
+            SVNDebugLog.getDefaultLog().info(e);
+            System.exit(1);
         } catch (Throwable th) {
             SVNDebugLog.getDefaultLog().info(th);
             System.exit(-1);

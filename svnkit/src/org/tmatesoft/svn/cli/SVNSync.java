@@ -39,8 +39,7 @@ public class SVNSync {
         ourArguments.add(SVNArgument.PASSWORD);
         ourArguments.add(SVNArgument.USERNAME);
         ourArguments.add(SVNArgument.CONFIG_DIR);
-        
-//        Locale.setDefault(Locale.ENGLISH);
+
         ourCommands = new HashMap();
         ourCommands.put(new String[] { "initialize", "init" }, "org.tmatesoft.svn.cli.command.SVNSyncInitCommand");
         ourCommands.put(new String[] { "synchronize", "sync" }, "org.tmatesoft.svn.cli.command.SVNSyncSynchronizeCommand");
@@ -77,15 +76,20 @@ public class SVNSync {
                 FSRepositoryFactory.setup();
     
                 command.setCommandLine(commandLine);
+                boolean isSuccess = true;
                 try {
                     command.run(System.out, System.err);
                 } catch (SVNException e) {
+                    isSuccess = false;
                     System.err.println(e.getMessage());
                     SVNDebugLog.getDefaultLog().info(e);
                 } finally {
                     if (command.getClientManager() != null) {
                         command.getClientManager().shutdownConnections(true);
                     }
+                }
+                if (!isSuccess) {
+                    System.exit(1);
                 }
             } else {
                 System.err.println("error: unknown command name '" + commandName + "'");

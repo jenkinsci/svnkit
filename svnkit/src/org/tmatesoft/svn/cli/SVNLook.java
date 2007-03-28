@@ -45,7 +45,6 @@ public class SVNLook {
         ourArguments.add(SVNArgument.VERBOSE);
         ourArguments.add(SVNArgument.FULL_PATHS);
         
-//        Locale.setDefault(Locale.ENGLISH);
         ourCommands = new HashMap();
         ourCommands.put(new String[] { "author"}, "org.tmatesoft.svn.cli.command.SVNLookAuthorCommand");
         ourCommands.put(new String[] { "cat" }, "org.tmatesoft.svn.cli.command.SVNLookCatCommand");
@@ -94,15 +93,20 @@ public class SVNLook {
                 FSRepositoryFactory.setup();
     
                 command.setCommandLine(commandLine);
+                boolean isSuccess = true;
                 try {
                     command.run(System.out, System.err);
                 } catch (SVNException e) {
+                    isSuccess = false;
                     System.err.println(e.getMessage());
                     SVNDebugLog.getDefaultLog().info(e);
                 } finally {
                     if (command.getClientManager() != null) {
                         command.getClientManager().shutdownConnections(true);
                     }
+                }
+                if (!isSuccess) {
+                    System.exit(1);
                 }
             } else {
                 System.err.println("error: unknown command name '" + commandName + "'");
