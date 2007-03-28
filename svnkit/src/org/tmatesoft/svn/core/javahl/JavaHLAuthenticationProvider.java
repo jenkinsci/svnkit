@@ -34,6 +34,8 @@ import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
  */
 class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
     
+    private static final String ADAPTER_DEFAULT_PROMPT_CLASS = 
+        "org.tigris.subversion.svnclientadapter.javahl.AbstractJhlClientAdapter$DefaultPromptUserPassword";
     private PromptUserPassword myPrompt;
     
     public JavaHLAuthenticationProvider(PromptUserPassword prompt){
@@ -113,6 +115,10 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
             } 
             if (myPrompt.prompt(realm, userName)) {
                 return new SVNUserNameAuthentication(myPrompt.getUsername(), false);
+            }
+            if (ADAPTER_DEFAULT_PROMPT_CLASS.equals(myPrompt.getClass().getName())) {
+                // return default username, despite prompt was 'cancelled'.
+                return new SVNUserNameAuthentication(userName, false);
             }
             return null;            
         } else if(!ISVNAuthenticationManager.PASSWORD.equals(kind)){
