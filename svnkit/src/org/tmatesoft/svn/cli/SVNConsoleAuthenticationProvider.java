@@ -133,8 +133,8 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
             String name = null;
             while(name == null) {
                 name = prompt(!"file".equals(url.getProtocol()) ? 
-                    "Author name [" + System.getProperty("user.name") + "]:" : 
-                    "Username [" + System.getProperty("user.name") + "]:");
+                    "Author name [" + System.getProperty("user.name") + "]" : 
+                    "Username [" + System.getProperty("user.name") + "]");
                 if ("".equals(name) || name == null) {
                     name = System.getProperty("user.name");
                 }
