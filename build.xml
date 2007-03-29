@@ -378,10 +378,6 @@
             <fileset dir="contrib/sequence" >
                 <include name="SEQUENCE-LICENSE" />
             </fileset>
-            <fileset dir="build/lib">
-                <include name="changelog.txt" />
-                <include name="README.txt" />
-            </fileset>
 		</jar>
 
 		<jar destfile="build/maven/svnkit-${svnkit.version}-sources.jar">
@@ -491,38 +487,6 @@
         />
     </target>
 
-	<target name="test-special" depends="init-environment,compile-tests">
-		<!-- remove wc --> 
-		<delete failonerror="false" includeemptydirs="true" dir="svnkit-test/wc">
-		</delete>
-		
-		<!-- and repository -->
-		<delete failonerror="false" includeemptydirs="true" dir="svnkit-test/repos/special">
-		</delete>
-		
-		<!-- create new repos with anon access -->
-                <mkdir dir="svnkit-test/repos" />
-		<exec executable="svnadmin">
-			<arg value="create"/>
-			<arg value="svnkit-test/repos/special"/>
-		</exec>
-		<echo append="true" file="svnkit-test/repos/special/conf/svnserve.conf" message="[general]${line.separator}anon-access=write${line.separator}" />
-		
-        <path id="test.classpath">
-            <pathelement path="contrib/junit/junit.jar" />
-            <pathelement path="svnkit/bin" />
-            <pathelement path="contrib/sequence/bin" />
-            <pathelement path="svnkit-test/bin" />
-            <pathelement path="contrib/sequence/bin-test" />
-        </path>
-        <java classpathref="test.classpath"
-              dir="svnkit-test"
-              fork="true"
-              classname="org.tmatesoft.svn.core.test.SpecialTest"
-           	  args="svn://localhost/repos/special wc"
-        />
-    </target>
-
     <target name="test-python" depends="init-environment,compile-tests,build-library,build-cli">
         <copy file="svnkit-test/test.${os}.properties"
               tofile="svnkit-test/test.properties"
@@ -578,101 +542,6 @@
             <fileset dir="build/lib">
             </fileset>
         </copy>
-    </target>
-    
-    <target name="benchmark"> 
-        <!-- build library with native SVNClient -->
-        <mkdir dir="svnkit/bin" />
-        <mkdir dir="contrib/javahl/bin" />
-        <mkdir dir="contrib/sequence/bin" />
-
-        <path id="library.classpath">
-            <pathelement location="contrib/ganymed/ganymed.jar" />
-            <pathelement path="contrib/javahl/bin" />
-            <pathelement path="contrib/sequence/bin" />
-        </path>
-
-        <javac debug="true" optimize="true" destdir="contrib/javahl/bin" srcdir="contrib/javahl/src">
-            <exclude name="org/tigris/subversion/javahl/tests/**" />
-        </javac>
-        <javac debug="true" optimize="true" destdir="contrib/sequence/bin" srcdir="contrib/sequence/src" />
-        <javac debug="true" optimize="true" 
-               destdir="svnkit/bin"
-               srcdir="svnkit/src"
-               classpathref="library.classpath"
-        >
-            <exclude name="org/tigris/subversion/javahl/SVNClient.java" />
-            <exclude name="org/tigris/subversion/javahl/SVNAdmin.java" />
-        </javac>
-        <!-- now we have native SVNClient and SVNKit's SVNClientImpl -->
-        <mkdir dir="contrib/sequence/bin-test" />
-        <mkdir dir="svnkit-test/bin" />
-        <path id="tests.classpath">
-            <pathelement location="contrib/ganymed/ganymed.jar" />
-            <pathelement location="contrib/junit/junit.jar" />
-            <pathelement path="contrib/javahl/bin" />
-            <pathelement path="contrib/sequence/bin" />
-            <pathelement path="contrib/sequence/bin-test" />
-            <pathelement path="svnkit/bin" />
-        </path>
-
-        <path id="sequence.tests.classpath">
-            <pathelement location="contrib/junit/junit.jar" />
-            <pathelement path="contrib/sequence/bin" />
-        </path>
-
-        <javac debug="true" optimize="true" 
-               destdir="contrib/sequence/bin-test"
-               srcdir="contrib/sequence/src-test"
-               classpathref="sequence.tests.classpath"
-        />
-        <javac debug="true" optimize="true" 
-               destdir="svnkit-test/bin"
-               srcdir="svnkit-test/src"
-               classpathref="tests.classpath"
-        />
-
-        <mkdir dir="build/lib" />
-        <jar destfile="build/lib/svnkit.jar" compress="false">
-            <fileset dir="svnkit/bin">
-                <exclude name="org/tmatesoft/svn/cli/**" />
-                <exclude name="org/tigris/subversion/javahl/SVNClient**" />
-                <exclude name="org/tigris/subversion/javahl/SVNAdmin**" />
-            </fileset>
-            <fileset dir="${basedir}" >
-                <include name="svnkit.build.properties" />
-                <include name="COPYING" />
-            </fileset>
-            <fileset dir="contrib/sequence">
-                <include name="SEQUENCE-LICENSE" />
-            </fileset>
-            <fileset dir="contrib/sequence/bin" />
-            <fileset dir="svnkit/src">
-                <include name="org/tmatesoft/svn/core/internal/wc/config/**" />
-                <include name="org/tmatesoft/svn/core/io/repository/**" />
-            </fileset>
-        </jar>
-        <jar destfile="build/lib/svnkit-javahl.jar"  >
-            <fileset dir="contrib/javahl/bin" >
-                <exclude name="org/tigris/subversion/javahl/tests/**" />
-            </fileset>
-            <fileset dir="contrib/javahl">
-                <include name="JAVAHL-LICENSE" />
-            </fileset>
-        </jar>
-        
-        <!-- run benchmark -->
-        <path id="benchmark.classpath">
-            <pathelement path="build/lib/svnkit.jar" />
-            <pathelement path="build/lib/svnkit-javahl.jar" />
-            <pathelement path="svnkit-test/bin" />
-        </path>
-        
-        <java classpathref="benchmark.classpath"
-              fork="true"
-              classname="org.tmatesoft.svn.core.test.Benchmark">        
-        </java>
-
     </target>
 
 </project>
