@@ -48,7 +48,6 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
 public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor, ISVNStatusHandler {
     
     private boolean myIsRootOpen;
-    private long myTargetRevision;
     private SVNStatus myAnchorStatus;
     
     private DirectoryInfo myDirectoryInfo;
@@ -56,7 +55,6 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
 
     public SVNRemoteStatusEditor(ISVNOptions options, SVNWCAccess wcAccess, SVNAdminAreaInfo info, boolean noIgnore, boolean reportAll, boolean descend, ISVNStatusHandler handler) throws SVNException {
         super(options, wcAccess, info, noIgnore, reportAll, descend, handler);
-        myTargetRevision = -1;
         myAnchorStatus = createStatus(info.getAnchor().getRoot());
     }
 
@@ -236,7 +234,7 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
         } else {
             super.closeEdit();
         }
-        return new SVNCommitInfo(myTargetRevision, null, null);
+        return new SVNCommitInfo(getTargetRevision(), null, null);
     }
 
     public void abortEdit() throws SVNException {
