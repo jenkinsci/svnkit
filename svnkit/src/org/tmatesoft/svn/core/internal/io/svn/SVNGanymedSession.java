@@ -66,6 +66,15 @@ public class SVNGanymedSession {
                 port = 22;
             }
             String key = credentials.getUserName() + ":" + location.getHost() + ":" + port;
+            if (credentials.getPrivateKeyFile() != null) {
+                key += ":" + credentials.getPrivateKeyFile().getAbsolutePath();
+            }
+            if (credentials.getPassphrase() != null) {
+                key += ":" + credentials.getPassphrase();
+            }
+            if (credentials.getPassword() != null) {
+                key += ":" + credentials.getPassword();
+            }
             // find connection with this key that has less then 10 open channels.
             // if there is no such connection - open new one.
             Connection connection = isUsePersistentConnection() ? (Connection) ourConnectionsPool.get(key) : null;
