@@ -545,7 +545,6 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     if (e instanceof SVNCancelException || e instanceof SVNAuthenticationException) {
                         throw e;
                     }
-                    getDebugLog().info(e);
                     read("x", buffer, true);
                     if (limit <= 0 || (limit > 0 && count <= limit)) {
                         read("[()]", buffer, true);
