@@ -24,10 +24,18 @@ import java.util.Map;
  * @author  TMate Software Ltd.
  */
 public abstract class SVNPasswordCipher {
+
+    public static final String SIMPLE_CIPHER_TYPE = "simple";
     
     private static final SVNPasswordCipher EMPTY_CIPHER = new CompositePasswordCipher(Collections.EMPTY_LIST);
+    private static final SVNPasswordCipher SIMPLE_CIPHER = new CompositePasswordCipher(Collections.EMPTY_LIST);
+    
     private static Map ourInstances = new HashMap();
-    private static String ourDefaultType;
+    private static String ourDefaultType = SIMPLE_CIPHER_TYPE;
+    
+    static {
+        ourInstances.put(SIMPLE_CIPHER_TYPE, SIMPLE_CIPHER);
+    }
     
     public static SVNPasswordCipher getInstance(String type) {
         if (type == null) {
@@ -62,7 +70,7 @@ public abstract class SVNPasswordCipher {
                 return ourDefaultType;
             }
         }
-        return null;
+        return SIMPLE_CIPHER_TYPE;
     }
     
     protected static void registerCipher(String type, SVNPasswordCipher cipher) {

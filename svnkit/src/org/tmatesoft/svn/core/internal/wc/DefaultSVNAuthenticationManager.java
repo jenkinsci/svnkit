@@ -499,7 +499,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             SVNPasswordCipher cipher = SVNPasswordCipher.getInstance(cipherType);
             if (cipherType != null) {
                 values.put("passtype", cipherType);
-            }
+            } 
             if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
                 SVNPasswordAuthentication passwordAuth = (SVNPasswordAuthentication) auth;
                 values.put("password", cipher.encrypt(passwordAuth.getPassword()));
