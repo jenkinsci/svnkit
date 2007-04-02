@@ -82,7 +82,7 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
 
     public boolean isUseCommitTimes() {
         String value = getConfigFile().getPropertyValue(MISCELLANY_GROUP, USE_COMMIT_TIMES);
-        return getBooleanValue(value, true);
+        return getBooleanValue(value, false);
     }
 
     public void setUseCommitTimes(boolean useCommitTimes) {

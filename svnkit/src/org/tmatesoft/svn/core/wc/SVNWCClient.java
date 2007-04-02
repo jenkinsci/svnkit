@@ -1331,6 +1331,11 @@ public class SVNWCClient extends SVNBasicClient {
                     command.put(SVNLog.TIMESTAMP_ATTR, entry.getCommittedDate());
                     log.addCommand(SVNLog.SET_TIMESTAMP, command, false);
                     command.clear();                    
+                } else {
+                    command.put(SVNLog.NAME_ATTR, name);
+                    command.put(SVNLog.TIMESTAMP_ATTR, SVNTimeUtil.formatDate(new Date(System.currentTimeMillis())));
+                    log.addCommand(SVNLog.SET_TIMESTAMP, command, false);
+                    command.clear();                    
                 }
                 command.put(SVNLog.NAME_ATTR, name);
                 command.put(SVNProperty.shortPropertyName(SVNProperty.TEXT_TIME), SVNLog.WC_TIMESTAMP);
