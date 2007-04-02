@@ -105,22 +105,18 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
                 if (prompt3.promptUser(realm, userName, authMayBeStored))  {
                     return new SVNUserNameAuthentication(prompt3.getUsername(), prompt3.userAllowedSave());
                 }
-                return null;
+                return getDefaultUserNameCredentials(userName);
             } else if (myPrompt instanceof PromptUserPassword3) {
                 PromptUserPassword3 prompt3 = (PromptUserPassword3) myPrompt;
                 if (prompt3.prompt(realm, userName, authMayBeStored))  {
                     return new SVNUserNameAuthentication(prompt3.getUsername(), prompt3.userAllowedSave());
                 }
-                return null;
+                return getDefaultUserNameCredentials(userName);
             } 
             if (myPrompt.prompt(realm, userName)) {
                 return new SVNUserNameAuthentication(myPrompt.getUsername(), false);
             }
-            if (ADAPTER_DEFAULT_PROMPT_CLASS.equals(myPrompt.getClass().getName())) {
-                // return default username, despite prompt was 'cancelled'.
-                return new SVNUserNameAuthentication(userName, false);
-            }
-            return null;            
+            return getDefaultUserNameCredentials(userName);
         } else if(!ISVNAuthenticationManager.PASSWORD.equals(kind)){
             return null;
         }
@@ -142,6 +138,14 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
                 } 
                 return new SVNPasswordAuthentication(myPrompt.getUsername(), myPrompt.getPassword(), true);
             }
+        }
+        return null;
+    }
+
+    private SVNAuthentication getDefaultUserNameCredentials(String userName) {
+        if (ADAPTER_DEFAULT_PROMPT_CLASS.equals(myPrompt.getClass().getName())) {
+            // return default username, despite prompt was 'cancelled'.
+            return new SVNUserNameAuthentication(userName, false);
         }
         return null;
     }
