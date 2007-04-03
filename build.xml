@@ -348,6 +348,7 @@
 
 	<target name="deploy-bundle" depends="init-environment,build-library">
 		<mkdir dir="build/maven"/>
+		<mkdir dir="svnkit-eclipse/bin"/>
 		<jar destfile="build/maven/svnkit-${svnkit.version}.jar">
 			<fileset dir="svnkit/bin">
                 <exclude name="org/tmatesoft/svn/cli/**" />
