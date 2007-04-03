@@ -299,7 +299,7 @@ public class SVNStatusClient extends SVNBasicClient {
                             throw e;
                         }
                     } finally {
-                        setEventPathPrefix(externalPath);
+                        setEventPathPrefix(null);
                     }
                 }
             }
