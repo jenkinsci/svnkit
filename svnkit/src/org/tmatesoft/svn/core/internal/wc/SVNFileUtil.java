@@ -627,7 +627,7 @@ public class SVNFileUtil {
         String line = null;
         InputStream is = null;
         try {
-            is = new BufferedInputStream(new FileInputStream(file));
+            is = new FileInputStream(file);
             reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
             line = reader.readLine();
         } finally {
@@ -722,32 +722,30 @@ public class SVNFileUtil {
         }
     }
 
-    // method that reads line until a LF ('\n') is met. all read bytes are
-    // appended to the passed buffer
-    // returns the resultant string collected in the buffer excluding an LF. if
-    // an eof is met returns null.
     public static String readLineFromStream(InputStream is, StringBuffer buffer, CharsetDecoder decoder) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream();
         int r = -1;
         while ((r = is.read()) != '\n') {
             if (r == -1) {
-                byte[] res = out.toByteArray();
-                for (int i = 0; i < res.length; i++) {
-                    buffer.append((char)res[i]);    
-                }
+                String out = decode(decoder, byteBuffer.toByteArray());
+                buffer.append(out);
                 return null;
             }
-            out.write(r);
+            byteBuffer.write(r);
             
         }
-        ByteBuffer inBuf = ByteBuffer.wrap(out.toByteArray());
-        CharBuffer outBuf = CharBuffer.allocate(inBuf.capacity());
+        String out = decode(decoder, byteBuffer.toByteArray());
+        buffer.append(out);
+        return out;
+    }
+
+    private static String decode(CharsetDecoder decoder, byte[] in) {
+        ByteBuffer inBuf = ByteBuffer.wrap(in);
+        CharBuffer outBuf = CharBuffer.allocate(inBuf.capacity()*Math.round(decoder.maxCharsPerByte() + 0.5f));
         decoder.decode(inBuf, outBuf, true);
         decoder.flush(outBuf);
-        outBuf.flip();
         decoder.reset();
-        buffer.append(outBuf.toString());
-        return buffer.toString();
+        return outBuf.flip().toString();
     }
 
     public static String detectMimeType(InputStream is) throws IOException {
