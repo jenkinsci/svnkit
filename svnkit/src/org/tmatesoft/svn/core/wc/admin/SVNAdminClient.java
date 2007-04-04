@@ -18,6 +18,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -722,13 +724,14 @@ public class SVNAdminClient extends SVNBasicClient {
      * @since                       1.1.1
      */
     public void doLoad(File repositoryRoot, InputStream dumpStream, boolean usePreCommitHook, boolean usePostCommitHook, SVNUUIDAction uuidAction, String parentDir) throws SVNException {
-        ISVNLoadHandler handler = getLoadHandler(repositoryRoot, usePreCommitHook, usePostCommitHook, uuidAction, parentDir);
-    
+        CharsetDecoder decoder = Charset.forName("UTF-8").newDecoder();
+        ISVNLoadHandler handler = getLoadHandler(repositoryRoot, usePreCommitHook, usePostCommitHook, uuidAction, parentDir, decoder);
+
         String line = null;
         int version = -1;
         StringBuffer buffer = new StringBuffer();
         try {
-            line = SVNFileUtil.readLineFromStream(dumpStream, buffer);
+            line = SVNFileUtil.readLineFromStream(dumpStream, buffer, decoder);
             if (line == null) {
                 SVNAdminHelper.generateIncompleteDataError();
             }
@@ -758,7 +761,7 @@ public class SVNAdminClient extends SVNBasicClient {
             
                 //skip empty lines
                 buffer.setLength(0);
-                line = SVNFileUtil.readLineFromStream(dumpStream, buffer);
+                line = SVNFileUtil.readLineFromStream(dumpStream, buffer, decoder);
                 if (line == null) {
                     if (buffer.length() > 0) {
                         SVNAdminHelper.generateIncompleteDataError();
@@ -771,7 +774,7 @@ public class SVNAdminClient extends SVNBasicClient {
                     continue;
                 }
             
-                Map headers = readHeaderBlock(dumpStream, line);
+                Map headers = readHeaderBlock(dumpStream, line, decoder);
                 if (headers.containsKey(SVNAdminHelper.DUMPFILE_REVISION_NUMBER)) {
                     handler.closeRevision();
                     handler.openRevision(headers);
@@ -1014,10 +1017,10 @@ public class SVNAdminClient extends SVNBasicClient {
         out.write(data.getBytes("UTF-8"));
     }
     
-    private ISVNLoadHandler getLoadHandler(File repositoryRoot, boolean usePreCommitHook, boolean usePostCommitHook, SVNUUIDAction uuidAction, String parentDir) throws SVNException {
+    private ISVNLoadHandler getLoadHandler(File repositoryRoot, boolean usePreCommitHook, boolean usePostCommitHook, SVNUUIDAction uuidAction, String parentDir, CharsetDecoder decoder) throws SVNException {
         if (myLoadHandler == null) {
             FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
-            DefaultLoadHandler handler = new DefaultLoadHandler(usePreCommitHook, usePostCommitHook, uuidAction, parentDir, myEventHandler);
+            DefaultLoadHandler handler = new DefaultLoadHandler(usePreCommitHook, usePostCommitHook, uuidAction, parentDir, myEventHandler, decoder);
             handler.setFSFS(fsfs);
             myLoadHandler = handler;
         } else {
@@ -1031,7 +1034,7 @@ public class SVNAdminClient extends SVNBasicClient {
     }
 
 
-    private Map readHeaderBlock(InputStream dumpStream, String firstHeader) throws SVNException, IOException {
+    private Map readHeaderBlock(InputStream dumpStream, String firstHeader, CharsetDecoder decoder) throws SVNException, IOException {
         Map headers = new HashMap();
         StringBuffer buffer = new StringBuffer();
     
@@ -1042,7 +1045,7 @@ public class SVNAdminClient extends SVNBasicClient {
                 header = firstHeader;
                 firstHeader = null;
             } else {
-                header = SVNFileUtil.readLineFromStream(dumpStream, buffer);
+                header = SVNFileUtil.readLineFromStream(dumpStream, buffer, decoder);
                 if (header == null && buffer.length() > 0) {
                     SVNAdminHelper.generateIncompleteDataError();
                 } else if (buffer.length() == 0) {
