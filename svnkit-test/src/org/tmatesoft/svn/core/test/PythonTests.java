@@ -394,7 +394,7 @@ public class PythonTests {
     
     private static void apache(Properties props, boolean start) throws Throwable {
         String[] command = null;
-        File configFile = File.createTempFile("svn", "test");
+        File configFile = File.createTempFile("jsvn.", ".apache.config.tmp");
         configFile.deleteOnExit();
         String path = configFile.getAbsolutePath().replace(File.separatorChar, '/');
         generateApacheConfig(configFile, props);
@@ -419,7 +419,7 @@ public class PythonTests {
         String path = getRepositoryRoot(props);
         config = config.replaceAll("%repository.root%", path);
         config = config.replaceAll("%passwd%", passwdFile.getAbsolutePath().replace(File.separatorChar, '/'));
-        config = config.replaceAll("%home%", System.getProperty("user.home"));
+        config = config.replaceAll("%home%", System.getProperty("user.home").replace(File.separatorChar, '/'));
         
         String pythonTests = new File(props.getProperty("python.tests")).getAbsolutePath().replace(File.separatorChar, '/');
         config = config.replaceAll("%python.tests%", pythonTests);
@@ -446,7 +446,14 @@ public class PythonTests {
                 if (wait) {
                     int code = process.waitFor();
                     if (code != 0) {
-                        throw new IOException("process '"  +  command[0] + "' exit code is not 0 : " + code);
+                        StringBuffer commandLine = new StringBuffer();
+                        for (int i = 0; i < command.length; i++) {
+                            commandLine.append(command[i]);
+                            if (i + 1 != command.length) {
+                                commandLine.append(' ');
+                            }
+                        }
+                        throw new IOException("process '"  +  commandLine + "' exit code is not 0 : " + code);
                     }
                 }
             } catch (InterruptedException e) {

@@ -513,8 +513,6 @@
             <pathelement path="svnkit-test/bin" />
         </path>
 
-        <delete dir="${user.home}/.svnkit" failonerror="false"/>
-        <mkdir dir="${user.home}/.svnkit"/>    
         <copy file="svnkit/cli/logging.properties.disabled" 
               overwrite="false"
               tofile="build/lib/logging.properties"
