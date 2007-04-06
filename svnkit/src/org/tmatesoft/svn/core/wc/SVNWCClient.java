@@ -1349,24 +1349,36 @@ public class SVNWCClient extends SVNBasicClient {
             log.addCommand(SVNLog.DELETE, command, false);
             command.clear();
             newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_NEW), null);
+            if (!reverted) {
+                reverted |= dir.getFile(entry.getConflictNew()).exists();
+            }
         }
         if (entry.getConflictOld() != null) {
             command.put(SVNLog.NAME_ATTR, entry.getConflictOld());
             log.addCommand(SVNLog.DELETE, command, false);
             command.clear();
             newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_OLD), null);
+            if (!reverted) {
+                reverted |= dir.getFile(entry.getConflictOld()).exists();
+            }
         }
         if (entry.getConflictWorking() != null) {
             command.put(SVNLog.NAME_ATTR, entry.getConflictWorking());
             log.addCommand(SVNLog.DELETE, command, false);
             command.clear();
             newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_WRK), null);
+            if (!reverted) {
+                reverted |= dir.getFile(entry.getConflictWorking()).exists();
+            }
         }
         if (entry.getPropRejectFile() != null) {
             command.put(SVNLog.NAME_ATTR, entry.getPropRejectFile());
             log.addCommand(SVNLog.DELETE, command, false);
             command.clear();
             newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.PROP_REJECT_FILE), null);
+            if (!reverted) {
+                reverted |= dir.getFile(entry.getPropRejectFile()).exists();
+            }
         }
         if (entry.getSchedule() != null) {
             newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE), null);
