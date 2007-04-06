@@ -107,8 +107,6 @@ public class SVNReporter implements ISVNReporterBaton {
                 reporter.abortReport();
             } catch (SVNException inner) {
                 myLog.info(inner);
-                SVNErrorMessage err = e.getErrorMessage().wrap("Error aborting report");
-                SVNErrorManager.error(err, e);
             }
             throw e;
         } catch (Throwable th) {
@@ -117,8 +115,6 @@ public class SVNReporter implements ISVNReporterBaton {
                 reporter.abortReport();
             } catch (SVNException e) {
                 myLog.info(e);
-                SVNErrorMessage err = e.getErrorMessage().wrap("Error aborting report");
-                SVNErrorManager.error(err, th);
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "WC report failed: {0}", th.getMessage());
             SVNErrorManager.error(err, th);

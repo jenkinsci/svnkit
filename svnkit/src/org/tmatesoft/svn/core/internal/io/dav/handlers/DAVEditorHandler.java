@@ -133,7 +133,6 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             public void finishReport() {
             }
             public void abortReport() throws SVNException {
-                SVNErrorManager.cancel("report aborted");
             }
         });
         buffer.append("</S:update-report>");
