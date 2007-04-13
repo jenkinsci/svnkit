@@ -33,10 +33,10 @@ public interface ISVNConnectorFactory {
             } else if (location.getProtocol().startsWith("svn+")) {
                 String name = location.getProtocol().substring("svn+".length());
                 if (repository.getTunnelProvider() != null) {
-                    String tunnel = repository.getTunnelProvider().getTunnelDefinition(name);
-                    if (tunnel != null) {
-                        return new SVNTunnelConnector(name, tunnel);
-                    }
+                    ISVNConnector connector = repository.getTunnelProvider().createTunnelConnector(location);
+	                  if (connector != null) {
+		                  return connector;
+	                  }
                 }
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.EXTERNAL_PROGRAM, "Cannot find tunnel specification for ''{0}''", name);
                 SVNErrorManager.error(err);

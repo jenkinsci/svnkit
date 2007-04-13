@@ -28,11 +28,13 @@ import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.regex.Pattern;
 
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.io.svn.ISVNConnector;
+import org.tmatesoft.svn.core.internal.io.svn.SVNTunnelConnector;
 import org.tmatesoft.svn.core.wc.ISVNMerger;
 import org.tmatesoft.svn.core.wc.ISVNMergerFactory;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
-
 
 /**
  * @version 1.1.1
@@ -358,12 +360,17 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
         return new DefaultSVNMerger(conflictStart, conflictSeparator, conflictEnd);
     }
 
-    public String getTunnelDefinition(String subProtocolName) {
+    public ISVNConnector createTunnelConnector(SVNURL url) {
+	    String subProtocolName = url.getProtocol().substring("svn+".length());
         if (subProtocolName == null) {
             return null;
         }
         Map tunnels = getConfigFile().getProperties("tunnels");
-        return (String) tunnels.get(subProtocolName);
+	    final String tunnel = (String)tunnels.get(subProtocolName);
+	    if (tunnel == null) {
+		    return null;
+	    }
+	    return new SVNTunnelConnector(subProtocolName, tunnel);
     }
 
     public DateFormat getKeywordDateFormat() {

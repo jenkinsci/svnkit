@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.io;
 
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.io.svn.ISVNConnector;
 
 /**
  * The <b>ISVNTunnelProvider</b> is the interface for 
@@ -52,10 +54,8 @@ public interface ISVNTunnelProvider {
      * Returns a tunnel comand line matching the given subprotocol 
      * name. 
      * 
-     * @param  subProtocolName an svn protocol extension 
-     *                         (like <code>ssh</code>) 
+     * @param location
      * @return                 a tunnel command line
      */
-    public String getTunnelDefinition(String subProtocolName);
-
+    public ISVNConnector createTunnelConnector(SVNURL location);
 }
