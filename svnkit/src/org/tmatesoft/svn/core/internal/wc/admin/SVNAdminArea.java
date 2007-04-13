@@ -1013,6 +1013,10 @@ public abstract class SVNAdminArea {
         return copy.iterator();
     }
     
+    public Map getEntries() throws SVNException {
+        return loadEntries();
+    }
+    
     public void cleanup() throws SVNException {        
         getWCAccess().checkCancelled();
         for(Iterator entries = entries(false); entries.hasNext();) {
