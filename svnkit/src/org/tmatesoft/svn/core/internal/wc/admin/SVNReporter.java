@@ -128,6 +128,7 @@ public class SVNReporter implements ISVNReporterBaton {
             externals[i].setOldExternal(externals[i].getNewURL(), externals[i].getNewRevision());
         }
 
+        String parentURL = adminArea.getEntry(adminArea.getThisDirName(), true).getURL();
         for (Iterator e = adminArea.entries(true); e.hasNext();) {
             SVNEntry entry = (SVNEntry) e.next();
             if (adminArea.getThisDirName().equals(entry.getName())) {
@@ -146,7 +147,6 @@ public class SVNReporter implements ISVNReporterBaton {
             File file = adminArea.getFile(entry.getName());
             SVNFileType fileType = SVNFileType.getType(file);
             boolean missing = fileType == SVNFileType.NONE;
-            String parentURL = adminArea.getEntry(adminArea.getThisDirName(), true).getURL();
             String expectedURL = SVNPathUtil.append(parentURL, SVNEncodingUtil.uriEncode(entry.getName()));
 
             if (entry.isFile()) {
