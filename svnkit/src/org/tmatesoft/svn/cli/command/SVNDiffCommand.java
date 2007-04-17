@@ -79,7 +79,11 @@ public class SVNDiffCommand extends SVNCommand implements ISVNDiffStatusHandler 
                 peg2 = SVNRevision.HEAD;
             }
 
-            differ.doDiff(url1, peg1, url2, peg2, recursive, useAncestry, out);
+            if (summarize) {
+                differ.doDiffStatus(url1, peg1, url2, peg2, recursive, useAncestry, this);
+            } else {
+                differ.doDiff(url1, peg1, url2, peg2, recursive, useAncestry, out);
+            }
         } else {
             SVNRevision rN = SVNRevision.UNDEFINED;
             SVNRevision rM = SVNRevision.UNDEFINED;
