@@ -136,7 +136,7 @@ class SVNConnection {
                         receiveRepositoryCredentials(repository);
                         return;
                     } else if (FAILURE.equals(items[0])) {
-                        failureReason = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication error from server: {1}", new String((byte[]) items[1]));
+                        failureReason = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication error from server: {0}", new String((byte[]) items[1]));
                         break;
                     } else if (STEP.equals(items[0])) {
                         try {
@@ -187,7 +187,7 @@ class SVNConnection {
         if (SUCCESS.equals(items[0])) {
             return null;
         } else if (FAILURE.equals(items[0])) {
-            return SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication error from server: {1}", items[1]);
+            return SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication error from server: {0}", items[1]);
         }
         return SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Unexpected server response to authentication");
     }
