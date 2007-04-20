@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.admin.ISVNCleanupHandler;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
@@ -42,7 +43,7 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
  * @version 1.1.1
  * @author  TMate Software Ltd.
  */
-public class SVNUpdateEditor implements ISVNEditor {
+public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
 
     private String mySwitchURL;
     private String myTarget;
@@ -101,6 +102,7 @@ public class SVNUpdateEditor implements ISVNEditor {
     public void openRoot(long revision) throws SVNException {
         myIsRootOpen = true;
         myCurrentDirectory = createDirectoryInfo(null, "", false);
+        myWCAccess.registerCleanupHandler(myCurrentDirectory.getAdminArea(), myCurrentDirectory);
         if (myTarget == null) {
             SVNAdminArea adminArea = myCurrentDirectory.getAdminArea();
             SVNEntry entry = adminArea.getEntry(adminArea.getThisDirName(), true);
@@ -233,13 +235,15 @@ public class SVNUpdateEditor implements ISVNEditor {
             // hack : remove created lock file.
             SVNFileUtil.deleteFile(new File(childDir, SVNFileUtil.getAdminDirectoryName() + "/lock"));
         }
-        myWCAccess.open(childDir, true, 0);
+        SVNAdminArea childArea = myWCAccess.open(childDir, true, 0);
+        myWCAccess.registerCleanupHandler(childArea, myCurrentDirectory);
         myWCAccess.handleEvent(SVNEventFactory.createUpdateAddEvent(myAdminInfo, parentArea, SVNNodeKind.DIR, entry));
     }
 
     public void openDir(String path, long revision) throws SVNException {
         myCurrentDirectory = createDirectoryInfo(myCurrentDirectory, path, false);
         SVNAdminArea adminArea = myCurrentDirectory.getAdminArea(); 
+        myWCAccess.registerCleanupHandler(adminArea, myCurrentDirectory);
         SVNEntry entry = adminArea.getEntry(adminArea.getThisDirName(), true);
         entry.setRevision(myTargetRevision);
         entry.setURL(myCurrentDirectory.URL);
@@ -352,6 +356,7 @@ public class SVNUpdateEditor implements ISVNEditor {
     public SVNCommitInfo closeEdit() throws SVNException {
         if (myTarget != null && myWCAccess.isMissing(myAdminInfo.getAnchor().getFile(myTarget))) {
             myCurrentDirectory = createDirectoryInfo(null, "", false);
+            myWCAccess.registerCleanupHandler(myCurrentDirectory.getAdminArea(), myCurrentDirectory);
             deleteEntry(myTarget, myTargetRevision);
         }
 
@@ -819,9 +824,10 @@ public class SVNUpdateEditor implements ISVNEditor {
         }
     }
 
-    private class SVNDirectoryInfo extends SVNEntryInfo {
+    private class SVNDirectoryInfo extends SVNEntryInfo implements ISVNCleanupHandler {
 
         public int RefCount;
+        public int LogCount;
 
         public SVNDirectoryInfo(String path) {
             super(path);
@@ -835,11 +841,24 @@ public class SVNUpdateEditor implements ISVNEditor {
 
         public SVNLog getLog() throws SVNException {
             SVNLog log = getAdminArea().getLog();
+            LogCount++;
             return log;
         }
 
         public void runLogs() throws SVNException {
+            LogCount = 0;
             getAdminArea().runLogs();
         }
+
+        public void cleanup(SVNAdminArea area) throws SVNException {
+            if (area != null && LogCount > 0) {
+                LogCount = 0;
+                area.runLogs();
+            }
+        }
+    }
+
+    public void cleanup(SVNAdminArea area) throws SVNException {
+        area.runLogs();
     }
 }

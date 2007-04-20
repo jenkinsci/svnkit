@@ -50,6 +50,7 @@ public class SVNWCAccess implements ISVNEventHandler {
     private ISVNEventHandler myEventHandler;
     private ISVNOptions myOptions;
     private Map myAdminAreas;
+    private Map myCleanupHandlers;
 
     private File myAnchor;
 
@@ -77,6 +78,16 @@ public class SVNWCAccess implements ISVNEventHandler {
 
     public void handleEvent(SVNEvent event) throws SVNException {
         handleEvent(event, ISVNEventHandler.UNKNOWN);
+    }
+    
+    public void registerCleanupHandler(SVNAdminArea area, ISVNCleanupHandler handler) {
+        if (area == null || handler == null) {
+            return;
+        }
+        if (myCleanupHandlers == null) {
+            myCleanupHandlers = new HashMap();
+        }
+        myCleanupHandlers.put(area, handler);
     }
 
     public void handleEvent(SVNEvent event, double progress) throws SVNException {
@@ -304,6 +315,7 @@ public class SVNWCAccess implements ISVNEventHandler {
             doClose(myAdminAreas, false);
             myAdminAreas.clear();
         }
+        myCleanupHandlers = null;
     }
     
     public void closeAdminArea(File path) throws SVNException {
@@ -388,6 +400,12 @@ public class SVNWCAccess implements ISVNEventHandler {
     private void doClose(SVNAdminArea adminArea, boolean preserveLocks) throws SVNException {
         if (adminArea == null) {
             return;
+        }
+        if (myCleanupHandlers != null) {
+            ISVNCleanupHandler handler = (ISVNCleanupHandler) myCleanupHandlers.remove(adminArea);
+            if (handler != null) {
+                handler.cleanup(adminArea);
+            }
         }
         if (!preserveLocks && adminArea.isLocked()) {
             adminArea.unlock();
