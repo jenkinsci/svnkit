@@ -66,6 +66,12 @@ class DAVRepository extends SVNRepository {
     private DAVConnection myConnection;
     private IHTTPConnectionFactory myConnectionFactory;
     
+    private static boolean ourIsKeepCredentials = Boolean.valueOf(System.getProperty("svnkit.http.keepCredentials", Boolean.TRUE.toString())).booleanValue();
+    
+    public static void setKeepCredentials(boolean keepCredentials) {
+        ourIsKeepCredentials = keepCredentials;
+    }
+    
     protected DAVRepository(IHTTPConnectionFactory connectionFactory, SVNURL location, ISVNSession options) {
         super(location, options);
         myConnectionFactory = connectionFactory;
@@ -523,7 +529,7 @@ class DAVRepository extends SVNRepository {
     }
 
     private void closeConnection() {
-        if (myConnection != null) {
+        if (myConnection != null && !ourIsKeepCredentials) {
             myConnection.clearAuthenticationCache();
         }
         if (getOptions().keepConnection(this)) {
