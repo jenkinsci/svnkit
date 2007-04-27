@@ -31,8 +31,9 @@ public class SVNSSHAuthentication extends SVNAuthentication {
 
     private String myPassword;
     private String myPassphrase;
-    private File myPrivateKey;
+    private File myPrivateKeyFile;
     private int myPortNumber;
+    private char[] myPrivateKeyValue;
     
     /**
      * Creates a user credential object for authenticating over an ssh tunnel. 
@@ -67,7 +68,27 @@ public class SVNSSHAuthentication extends SVNAuthentication {
      */
     public SVNSSHAuthentication(String userName, File keyFile, String passphrase, int portNumber, boolean storageAllowed) {
         super(ISVNAuthenticationManager.SSH, userName, storageAllowed);
-        myPrivateKey = keyFile;
+        myPrivateKeyFile = keyFile;
+        myPassphrase = passphrase;
+        myPortNumber = portNumber;
+    }
+
+    /**
+     * Creates a user credential object for authenticating over an ssh tunnel. 
+     * This kind of credentials is used when an ssh connection requires 
+     * an ssh private key.
+     * 
+     * @param userName         the name of a user to authenticate 
+     * @param privateKey       the user's ssh private key 
+     * @param passphrase       a password to the ssh private key
+     * @param portNumber       the number of a port to establish an ssh tunnel over  
+     * @param storageAllowed   if <span class="javakeyword">true</span> then
+     *                         this credential is allowed to be stored in the 
+     *                         global auth cache, otherwise not
+     */
+    public SVNSSHAuthentication(String userName, char[] privateKey, String passphrase, int portNumber, boolean storageAllowed) {
+        super(ISVNAuthenticationManager.SSH, userName, storageAllowed);
+        myPrivateKeyValue = privateKey;
         myPassphrase = passphrase;
         myPortNumber = portNumber;
     }
@@ -100,7 +121,17 @@ public class SVNSSHAuthentication extends SVNAuthentication {
      * @return the user's private key file
      */
     public File getPrivateKeyFile() {
-        return myPrivateKey;
+        return myPrivateKeyFile;
+    }
+    
+    /**
+     * Returns ssh private key. If the private key is encrypted with a 
+     * passphrase, it should have been provided to an appropriate constructor.
+     * 
+     * @return the user's private key file
+     */
+    public char[] getPrivateKey() {
+        return myPrivateKeyValue;
     }
     
     /**
@@ -111,5 +142,9 @@ public class SVNSSHAuthentication extends SVNAuthentication {
      */
     public int getPortNumber() {
         return myPortNumber;
+    }
+    
+    public boolean hasPrivateKey() {
+        return myPrivateKeyFile != null || myPrivateKeyValue != null;
     }
 }

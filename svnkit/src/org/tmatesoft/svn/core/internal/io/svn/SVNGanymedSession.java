@@ -80,7 +80,11 @@ public class SVNGanymedSession {
             Connection connection = isUsePersistentConnection() ? (Connection) ourConnectionsPool.get(key) : null;
             
             if (connection == null) {
-                File privateKey = credentials.getPrivateKeyFile();
+                File privateKeyFile = credentials.getPrivateKeyFile();
+                char[] privateKey = credentials.getPrivateKey();
+                if (privateKey == null && privateKeyFile != null) {
+                    privateKey = readPrivateKey(privateKeyFile);
+                }
                 String passphrase = credentials.getPassphrase();
                 String password = credentials.getPassword();
                 String userName = credentials.getUserName();
@@ -90,7 +94,7 @@ public class SVNGanymedSession {
                 
                 if (privateKey != null && !isValidPrivateKey(privateKey, passphrase)) {
                     if (password == null) {
-                        SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "File ''{0}'' is not valid OpenSSH DSA or RSA private key file", privateKey);
+                        SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "File ''{0}'' is not valid OpenSSH DSA or RSA private key file", privateKeyFile);
                         SVNErrorManager.error(error);
                     } 
                     privateKey = null;
@@ -233,9 +237,9 @@ public class SVNGanymedSession {
         }
     }
 
-    private static boolean isValidPrivateKey(File privateKey, String passphrase) {
-        if (!privateKey.exists() || !privateKey.isFile() || !privateKey.canRead()) {
-            return false;
+    private static char[] readPrivateKey(File privateKey) {
+        if (privateKey == null || !privateKey.exists() || !privateKey.isFile() || !privateKey.canRead()) {
+            return null;
         }
         Reader reader = null;
         StringWriter buffer = new StringWriter();
@@ -250,13 +254,16 @@ public class SVNGanymedSession {
                 buffer.write(ch);
             }
         } catch (IOException e) {
-            return false;
+            return null;
         } finally {
             SVNFileUtil.closeFile(reader);
         }
-        char[] key = buffer.toString().toCharArray();
+        return buffer.toString().toCharArray();
+    }
+    
+    private static boolean isValidPrivateKey(char[] privateKey, String passphrase) {
         try {
-            PEMDecoder.decode(key, passphrase);
+            PEMDecoder.decode(privateKey, passphrase);
         } catch (IOException e) {
             return false;
         }        
