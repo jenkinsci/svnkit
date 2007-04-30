@@ -153,16 +153,16 @@ class HTTPConnection implements IHTTPConnection {
     public void readHeader(HTTPRequest request) throws IOException {
         InputStream is = myRepository.getDebugLog().createLogStream(getInputStream());
         try {            
-            HTTPStatus status = HTTPParser.parseStatus(is);
-            HTTPHeader header = HTTPHeader.parseHeader(is);
+            HTTPStatus status = HTTPParser.parseStatus(is, myCharset);
+            HTTPHeader header = HTTPHeader.parseHeader(is, myCharset);
             request.setStatus(status);
             request.setResponseHeader(header);
         } catch (ParseException e) {
             // in case of parse exception:
             // try to read remaining and log it.
-            String line = HTTPParser.readLine(is);
+            String line = HTTPParser.readLine(is, myCharset);
             while(line != null && line.length() > 0) {
-                line = HTTPParser.readLine(is);
+                line = HTTPParser.readLine(is, myCharset);
             }
             throw new IOException(e.getMessage());
         } finally {

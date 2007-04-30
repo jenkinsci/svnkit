@@ -132,12 +132,12 @@ public class HTTPHeader {
         return myHeaders;
     }
 
-    public static HTTPHeader parseHeader(InputStream is) throws IOException, ParseException {
+    public static HTTPHeader parseHeader(InputStream is, String charset) throws IOException, ParseException {
         HTTPHeader headers = new HTTPHeader();
         String name = null;
         StringBuffer value = null;
         for (; ;) {
-            String line = HTTPParser.readLine(is);
+            String line = HTTPParser.readLine(is, charset);
             if ((line == null) || (line.trim().length() < 1)) {
                 break;
             }
