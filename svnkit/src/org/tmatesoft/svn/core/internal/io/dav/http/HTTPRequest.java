@@ -49,12 +49,12 @@ class HTTPRequest {
 
     private byte[] myRequestBody;
     private InputStream myRequestStream;
-
     private boolean myIsProxyAuthForced;
-
     private boolean myIsKeepAlive;
+    private String myCharset;
 
-    public HTTPRequest() {
+    public HTTPRequest(String charset) {
+        myCharset = charset;
     }
     
     public void reset() {
@@ -144,10 +144,9 @@ class HTTPRequest {
             length = ((ByteArrayInputStream) myRequestStream).available();
         } else if (header != null && header.hasHeader(HTTPHeader.CONTENT_LENGTH_HEADER)) {
             length = Long.parseLong(header.getFirstHeaderValue(HTTPHeader.CONTENT_LENGTH_HEADER));
-//            header.removeHeader(HTTPHeader.CONTENT_LENGTH_HEADER);
         }
         StringBuffer headerText = composeHTTPHeader(request, path, header, length, myIsKeepAlive);
-        myConnection.sendData(headerText.toString().getBytes());
+        myConnection.sendData(headerText.toString().getBytes(myCharset));
         if (myRequestBody != null && length > 0) {
             myConnection.sendData(myRequestBody);
         } else if (myRequestStream != null && length > 0) {

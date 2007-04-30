@@ -227,10 +227,9 @@ public class SVNProperties {
             byte[] bytes = os.toByteArray();
             try {
                 return new String(bytes, "UTF-8");
-            } catch (IOException e) {
-                //
+            } catch (UnsupportedEncodingException e) {
+                return new String(bytes);
             }
-            return new String(bytes);
         }
         return null;
     }
@@ -329,8 +328,7 @@ public class SVNProperties {
                 }
                 byte[] bytes = os.toByteArray();
                 try {
-                    locallyChangedProperties.put(name, new String(bytes,
-                            "UTF-8"));
+                    locallyChangedProperties.put(name, new String(bytes, "UTF-8"));
                 } catch (UnsupportedEncodingException e) {
                     locallyChangedProperties.put(name, new String(bytes));
                 }

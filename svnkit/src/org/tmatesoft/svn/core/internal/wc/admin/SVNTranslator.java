@@ -47,8 +47,7 @@ public class SVNTranslator {
 
     public static final byte[] CR = new byte[] { '\r' };
 
-    public static final byte[] NATIVE = System.getProperty("line.separator")
-            .getBytes();
+    public static final byte[] NATIVE = System.getProperty("line.separator").getBytes();
 
     
     public static void translate(SVNAdminArea adminArea, String name, String srcPath,

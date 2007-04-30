@@ -16,6 +16,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -136,7 +137,11 @@ class SVNConnection {
                         receiveRepositoryCredentials(repository);
                         return;
                     } else if (FAILURE.equals(items[0])) {
-                        failureReason = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication error from server: {0}", new String((byte[]) items[1]));
+                        try {
+                            failureReason = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication error from server: {0}", new String((byte[]) items[1], "UTF-8"));
+                        } catch (UnsupportedEncodingException e) {
+                            failureReason = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication error from server: {0}", new String((byte[]) items[1]));
+                        }
                         break;
                     } else if (STEP.equals(items[0])) {
                         try {

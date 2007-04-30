@@ -13,6 +13,7 @@ package org.tmatesoft.svn.core.internal.util;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -49,7 +50,11 @@ public class DefaultSVNDebugLogger extends SVNDebugLogAdapter {
 
     public void log(String message, byte[] data) {
         if (getLogger().isLoggable(Level.FINEST)) {
-            getLogger().log(Level.FINEST, message + "\n" + new String(data));
+            try {
+                getLogger().log(Level.FINEST, message + "\n" + new String(data, "UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+                getLogger().log(Level.FINEST, message + "\n" + new String(data));
+            }
         }
     }
 

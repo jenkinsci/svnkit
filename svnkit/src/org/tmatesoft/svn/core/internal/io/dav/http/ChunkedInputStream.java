@@ -25,9 +25,11 @@ class ChunkedInputStream extends InputStream {
     private InputStream mySource;
     private byte[] myBuffer;
     private int myPosition;
+    private String myCharset;
 
-    public ChunkedInputStream(InputStream source) {
+    public ChunkedInputStream(InputStream source, String charset) {
         mySource = source;
+        myCharset = charset;
     }
 
     public int read() throws IOException {
@@ -109,7 +111,7 @@ class ChunkedInputStream extends InputStream {
             }
         }
 
-        String dataString = new String(baos.toByteArray());
+        String dataString = new String(baos.toByteArray(), myCharset);
         int separator = dataString.indexOf(';');
         dataString = (separator > 0) ? dataString.substring(0, separator).trim() : dataString.trim();
         if (dataString.trim().length() == 0) {

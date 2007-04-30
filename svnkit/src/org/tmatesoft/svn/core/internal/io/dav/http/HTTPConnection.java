@@ -88,10 +88,12 @@ class HTTPConnection implements IHTTPConnection {
     private boolean myIsKeepAlive;
     private boolean myIsSpoolResponse;
     private ISVNSSLManager mySSLManager;
+    private String myCharset;
 
     
-    public HTTPConnection(SVNRepository repository) throws SVNException {
+    public HTTPConnection(SVNRepository repository, String charset) throws SVNException {
         myRepository = repository;
+        myCharset = charset;
         myHost = repository.getLocation().setPath("", false);
         myIsSecured = "https".equalsIgnoreCase(myHost.getProtocol());
         myIsKeepAlive = repository.getOptions().keepConnection(repository);
@@ -117,7 +119,7 @@ class HTTPConnection implements IHTTPConnection {
                 }
                 myIsProxied = true;
                 if (myIsSecured) {
-                    HTTPRequest connectRequest = new HTTPRequest();
+                    HTTPRequest connectRequest = new HTTPRequest(myCharset);
                     connectRequest.setConnection(this);
                     connectRequest.setProxyAuthentication(myProxyAuthentication.authenticate());
                     connectRequest.setForceProxyAuth(true);
@@ -251,14 +253,14 @@ class HTTPConnection implements IHTTPConnection {
         boolean isAuthForced = myRepository.getAuthenticationManager() != null ? myRepository.getAuthenticationManager().isAuthenticationForced() : false;
         if (httpAuth == null && isAuthForced) {
             httpAuth = myRepository.getAuthenticationManager().getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, sslRealm, null);
-            myChallengeCredentials = new HTTPBasicAuthentication((SVNPasswordAuthentication)httpAuth);
+            myChallengeCredentials = new HTTPBasicAuthentication((SVNPasswordAuthentication)httpAuth, myCharset);
             myChallengeCredentials.setChallengeParameter("methodname", method);
             myChallengeCredentials.setChallengeParameter("uri", path);
         } 
         String realm = null;
 
         // 2. create request instance.
-        HTTPRequest request = new HTTPRequest();
+        HTTPRequest request = new HTTPRequest(myCharset);
         request.setConnection(this);
         request.setKeepAlive(myIsKeepAlive);
         request.setRequestBody(body);
@@ -353,7 +355,7 @@ class HTTPConnection implements IHTTPConnection {
                 }
 
                 try {
-                    myProxyAuthentication = HTTPAuthentication.parseAuthParameters(proxyAuthHeaders, myProxyAuthentication); 
+                    myProxyAuthentication = HTTPAuthentication.parseAuthParameters(proxyAuthHeaders, myProxyAuthentication, myCharset); 
                 } catch (SVNException svne) {
                     myRepository.getDebugLog().info(svne);
                     err = svne.getErrorMessage(); 
@@ -408,7 +410,7 @@ class HTTPConnection implements IHTTPConnection {
                 }
                 
                 try {
-                    myChallengeCredentials = HTTPAuthentication.parseAuthParameters(authHeaderValues, myChallengeCredentials); 
+                    myChallengeCredentials = HTTPAuthentication.parseAuthParameters(authHeaderValues, myChallengeCredentials, myCharset); 
                 } catch (SVNException svne) {
                     err = svne.getErrorMessage(); 
                     break;
@@ -755,7 +757,7 @@ class HTTPConnection implements IHTTPConnection {
     
     private InputStream createInputStream(HTTPHeader readHeader, InputStream is) throws IOException {
         if ("chunked".equalsIgnoreCase(readHeader.getFirstHeaderValue(HTTPHeader.TRANSFER_ENCODING_HEADER))) {
-            is = new ChunkedInputStream(is);
+            is = new ChunkedInputStream(is, myCharset);
         } else if (readHeader.getFirstHeaderValue(HTTPHeader.CONTENT_LENGTH_HEADER) != null) {
             is = new FixedSizeInputStream(is, Long.parseLong(readHeader.getFirstHeaderValue(HTTPHeader.CONTENT_LENGTH_HEADER).toString()));
         } else if (!hasToCloseConnection(readHeader)) {

@@ -270,13 +270,9 @@ public class SVNProperty {
     public static final String SCHEDULE_REPLACE = "replace";
 
     private static final byte[] EOL_LF_BYTES = { '\n' };
-
     private static final byte[] EOL_CRLF_BYTES = { '\r', '\n' };
-
     private static final byte[] EOL_CR_BYTES = { '\r' };
-
-    private static final byte[] EOL_NATIVE_BYTES = System.getProperty(
-            "line.separator").getBytes();
+    private static final byte[] EOL_NATIVE_BYTES = System.getProperty("line.separator").getBytes();
 
     /**
      * Says if the given property name starts with the {@link #SVN_WC_PREFIX}
