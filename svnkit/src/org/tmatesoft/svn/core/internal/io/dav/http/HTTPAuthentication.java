@@ -128,7 +128,7 @@ abstract class HTTPAuthentication {
         
             source = source.substring(index).trim();
             if ("Basic".equalsIgnoreCase(method)) {
-                auth = new HTTPBasicAuthentication();
+                auth = new HTTPBasicAuthentication(charset);
                 
                 if (source.indexOf("realm=") >= 0) {
                     source = source.substring(source.indexOf("realm=") + "realm=".length());

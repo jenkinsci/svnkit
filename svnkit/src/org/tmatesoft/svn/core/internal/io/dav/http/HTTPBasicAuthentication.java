@@ -29,11 +29,13 @@ class HTTPBasicAuthentication extends HTTPAuthentication {
         myCharset = charset;
     }
 
-    protected HTTPBasicAuthentication (String name, String password) {
+    protected HTTPBasicAuthentication (String name, String password, String charset) {
         super(name, password);
+        myCharset = charset;
     }
 
-    protected HTTPBasicAuthentication () {
+    protected HTTPBasicAuthentication (String charset) {
+        myCharset = charset;
     }
 
     public String authenticate() {
