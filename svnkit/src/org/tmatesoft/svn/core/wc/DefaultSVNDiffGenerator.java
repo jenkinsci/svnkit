@@ -314,10 +314,10 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             SVNErrorManager.error(err, e);
         }
 
-	      String header;
+        String header;
         try {
             bos.close();
-            header = bos.toString();
+            header = bos.toString();            
         } catch (IOException inner) {
             header = "";
         }
@@ -488,7 +488,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     }
     
     protected boolean isHeaderForced(File file1, File file2) {
-        return file1 == null && file2 != null;
+        return (file1 == null && file2 != null) || (file1 != null && file2 != null);
     }
     
     protected boolean useLocalFileSeparatorChar() {
