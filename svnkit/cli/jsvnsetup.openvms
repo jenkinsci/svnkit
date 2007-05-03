@@ -8,13 +8,13 @@ $ define/job/nolog decc$efs_case_preserve enable
 $!
 $ CP = "/svnkit_home/svnkit.jar"
 $ CP = CP + ":/svnkit_home/svnkit-cli.jar"
-$ CP = CP + ":/svnkit_hom/eganymed.jar"
+$ CP = CP + ":/svnkit_home/ganymed.jar"
 $ OPT = ""
 $! OPT = "-Djava.util.logging.config.file=/svnkit_home/logging.properties"
 $!
 $ JV = f$edit(java,"collapse")
-$ jsvn ==      "''JV' ''OPT' -cp ''CP' org.tmatesoft.svn.cli.SVN"
-$ jsvnadmin == "''JV' ''OPT' -cp ''CP' org.tmatesoft.svn.cli.SVNAdmin"
-$ jsvnlook ==  "''JV' ''OPT' -cp ''CP' org.tmatesoft.svn.cli.SVNLook"
-$ jsvnsync ==  "''JV' ''OPT' -cp ''CP' org.tmatesoft.svn.cli.SVNSync"
+$ jsvn ==      "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli.SVN""
+$ jsvnadmin == "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli.SVNAdmin""
+$ jsvnlook ==  "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli.SVNLook""
+$ jsvnsync ==  "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli.SVNSync""
 $!
