@@ -1403,6 +1403,7 @@ public class SVNWCClient extends SVNBasicClient {
      * @throws SVNException    if <code>path</code> is not under version control
      */
     public void doResolve(File path, boolean recursive) throws SVNException {
+        path = path.getAbsoluteFile();
         SVNWCAccess wcAccess = createWCAccess();
         try {
             wcAccess.probeOpen(path, true, recursive ? SVNWCAccess.INFINITE_DEPTH : 0);
