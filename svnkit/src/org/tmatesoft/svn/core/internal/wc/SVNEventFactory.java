@@ -178,6 +178,12 @@ public class SVNEventFactory {
                 null, null, null, null, null, null);
     }
 
+    public static SVNEvent createResolvedEvent(SVNAdminAreaInfo info, SVNAdminArea adminArea, SVNEntry entry) {
+        return new SVNEvent(info, adminArea, entry.getName(),
+                SVNEventAction.RESOLVED, entry.getKind(), entry.getRevision(),
+                null, null, null, null, null, null);
+    }
+
     public static SVNEvent createRevertedEvent(SVNAdminArea dir, SVNEntry entry) {
         return new SVNEvent(null, dir, entry.getName(),
                 SVNEventAction.REVERT, entry.getKind(), entry.getRevision(),

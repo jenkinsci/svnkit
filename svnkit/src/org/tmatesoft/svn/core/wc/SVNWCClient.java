@@ -1431,7 +1431,7 @@ public class SVNWCClient extends SVNBasicClient {
         }
         SVNAdminArea dir = wcAccess.retrieve(dirPath);
         if (dir.markResolved(entry.getName(), true, true)) {
-            SVNEvent event = SVNEventFactory.createRestoredEvent(null, dir, entry);
+            SVNEvent event = SVNEventFactory.createResolvedEvent(null, dir, entry);
             dispatchEvent(event);
         }
     }
@@ -1444,7 +1444,7 @@ public class SVNWCClient extends SVNBasicClient {
             SVNAdminArea dir = access.retrieve(path);
             for (Iterator ents = dir.entries(false); ents.hasNext();) {
                 SVNEntry childEntry = (SVNEntry) ents.next();
-                if ("".equals(childEntry.getName())) {
+                if (dir.getThisDirName().equals(childEntry.getName())) {
                     continue;
                 }
                 resolveAll(access, dir.getFile(childEntry.getName()));
