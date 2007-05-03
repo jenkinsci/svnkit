@@ -24,7 +24,7 @@ import java.io.UnsupportedEncodingException;
  */
 public class XMLReader extends Reader {
     
-    public static final char COLON_REPLACEMENT = '\u0387'; // greek middle dot.
+    public static final char COLON_REPLACEMENT = '\u3007'; // ideografic char.
     
     private Reader mySource;
     private boolean myIsEscaping;
@@ -48,7 +48,7 @@ public class XMLReader extends Reader {
                 if (ch == ':') {
                     myColonCount++;
                     if (myColonCount > 1) {
-                        b[off + i] = COLON_REPLACEMENT; 
+                        b[off + i] = COLON_REPLACEMENT;
                     }
                 } else if (Character.isWhitespace(ch) || ch == '>') {
                     myIsEscaping = false;
