@@ -31,7 +31,6 @@ public abstract class BasicDAVDeltaHandler extends BasicDAVHandler {
     private boolean myIsDeltaProcessing;
     private SVNDeltaReader myDeltaReader;
     private StringBuffer myDeltaOutputStream;
-    private int eolCount;
 
     protected void setDeltaProcessing(boolean processing) throws SVNException {
         myIsDeltaProcessing = processing;
@@ -56,7 +55,6 @@ public abstract class BasicDAVDeltaHandler extends BasicDAVHandler {
             
             for(int i = start; i < start + length; i++) {
                 if (ch[i] == '\r' || ch[i] == '\n') {
-                    eolCount++;
                     myDeltaOutputStream.append(ch, offset, i - offset);
                     offset = i + 1;
                     if (i + 1 < (start + length) && ch[i + 1] == '\n') {
