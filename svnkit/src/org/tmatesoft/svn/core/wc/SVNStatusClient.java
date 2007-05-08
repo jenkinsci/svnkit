@@ -257,7 +257,8 @@ public class SVNStatusClient extends SVNBasicClient {
                 } else {
                     editor = new SVNRemoteStatusEditor(getOptions(), wcAccess, info, includeIgnored, reportAll, recursive, realHandler);
                     editor.setExternals(externals);
-                    SVNRepository locksRepos = createRepository(url, false);
+                    // session is closed in SVNStatusReporter.
+                    SVNRepository locksRepos = createRepository(url, false);                    
                     checkCancelled();
                     SVNReporter reporter = new SVNReporter(info, path, false, recursive, getDebugLog());
                     SVNStatusReporter statusReporter = new SVNStatusReporter(locksRepos, reporter, editor);

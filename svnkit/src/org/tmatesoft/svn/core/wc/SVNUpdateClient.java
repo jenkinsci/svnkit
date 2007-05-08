@@ -1039,21 +1039,24 @@ public class SVNUpdateClient extends SVNBasicClient {
                 return validatedURLs;
             }
         }
-        // TODO close session.
         SVNRepository repos = createRepository(targetURL, false);
-        SVNURL actualRoot = repos.getRepositoryRoot(true);
-        if (isRoot && !targetURL.equals(actualRoot)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_INVALID_RELOCATION, "''{0}'' is not the root of the repository", targetURL);
-            SVNErrorManager.error(err);
+        try {
+            SVNURL actualRoot = repos.getRepositoryRoot(true);
+            if (isRoot && !targetURL.equals(actualRoot)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_INVALID_RELOCATION, "''{0}'' is not the root of the repository", targetURL);
+                SVNErrorManager.error(err);
+            }
+    
+            String actualUUID = repos.getRepositoryUUID(true);
+            if (expectedUUID != null && !expectedUUID.equals(actualUUID)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_INVALID_RELOCATION, "The repository at ''{0}'' has uuid ''{1}'', but the WC has ''{2}''",
+                        new Object[] {targetURL, expectedUUID, actualUUID});
+                SVNErrorManager.error(err);
+            }
+            validatedURLs.put(targetURL, actualUUID);
+        } finally {
+            repos.closeSession();
         }
-
-        String actualUUID = repos.getRepositoryUUID(true);
-        if (expectedUUID != null && !expectedUUID.equals(actualUUID)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_INVALID_RELOCATION, "The repository at ''{0}'' has uuid ''{1}'', but the WC has ''{2}''",
-                    new Object[] {targetURL, expectedUUID, actualUUID});
-            SVNErrorManager.error(err);
-        }
-        validatedURLs.put(targetURL, actualUUID);
         return validatedURLs;
     }
     

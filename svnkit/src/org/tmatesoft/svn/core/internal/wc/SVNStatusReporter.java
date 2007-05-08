@@ -97,6 +97,8 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
             if (!(e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_IMPLEMENTED)) {
                 throw e;
             }
+        } finally {
+            myRepository.closeSession();
         }
         if (locks != null) {
             for (int i = 0; i < locks.length; i++) {

@@ -307,6 +307,7 @@ public class SVNAdminClient extends SVNBasicClient {
                 SVNErrorManager.error(err);
             }
 
+            // TODO close session.
             SVNRepository fromRepos = createRepository(fromURL, false);
             checkIfRepositoryIsAtRoot(fromRepos, fromURL);
 
@@ -363,6 +364,7 @@ public class SVNAdminClient extends SVNBasicClient {
 
         SVNRepositoryReplicator replicator = SVNRepositoryReplicator.newInstance();
         SVNRepository fromRepos = createRepository(fromURL, true);
+        // TODO close session
         SVNRepository toRepos = createRepository(toURL, false);
         replicator.replicateRepository(fromRepos, toRepos, 1, -1);
     }
@@ -1118,6 +1120,7 @@ public class SVNAdminClient extends SVNBasicClient {
         }
 
         SVNURL srcURL = SVNURL.parseURIDecoded(fromURL);
+        // TOOD close session.
         SVNRepository srcRepos = createRepository(srcURL, false);
 
         checkIfRepositoryIsAtRoot(srcRepos, srcURL);

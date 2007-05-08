@@ -760,21 +760,27 @@ public class SVNDiffClient extends SVNBasicClient {
         }
         SVNRepository repository1 = createRepository(url1, true);
         SVNRepository repository2 = createRepository(url2, false);
-        
+
         final long rev1 = getRevisionNumber(revision1, repository1, path1);
-        long rev2 = getRevisionNumber(revision2, repository2, path2);
-        
-        SVNNodeKind kind1 = repository1.checkPath("", rev1);
-        SVNNodeKind kind2 = repository2.checkPath("", rev2);
+        long rev2 = -1;
         String target1 = null;
-        if (kind1 == SVNNodeKind.NONE) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "''{0}'' was not found in the repository at revision {1}",
-                    new Object[] {url1, new Long(rev1)});
-            SVNErrorManager.error(err);
-        } else if (kind2 == SVNNodeKind.NONE) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "''{0}'' was not found in the repository at revision {1}",
-                    new Object[] {url2, new Long(rev2)});
-            SVNErrorManager.error(err);
+        SVNNodeKind kind1 = null;
+        SVNNodeKind kind2 = null;
+        try {
+            rev2 = getRevisionNumber(revision2, repository2, path2);            
+            kind1 = repository1.checkPath("", rev1);
+            kind2 = repository2.checkPath("", rev2);
+            if (kind1 == SVNNodeKind.NONE) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "''{0}'' was not found in the repository at revision {1}",
+                        new Object[] {url1, new Long(rev1)});
+                SVNErrorManager.error(err);
+            } else if (kind2 == SVNNodeKind.NONE) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "''{0}'' was not found in the repository at revision {1}",
+                        new Object[] {url2, new Long(rev2)});
+                SVNErrorManager.error(err);
+            }
+        } finally {
+            repository2.closeSession();
         }
         if (kind1 == SVNNodeKind.FILE || kind2 == SVNNodeKind.FILE) {
             target1 = SVNPathUtil.tail(url1.getPath());
@@ -801,6 +807,7 @@ public class SVNDiffClient extends SVNBasicClient {
             if (editor != null) {
                 editor.cleanup();
             }
+            repository2.closeSession();
         }
     }
 
@@ -827,27 +834,35 @@ public class SVNDiffClient extends SVNBasicClient {
         SVNRepository repository2 = createRepository(url2, false);
         
         final long rev1 = getRevisionNumber(revision1, repository1, path1);
-        long rev2 = getRevisionNumber(revision2, repository2, path2);
-        
-        SVNNodeKind kind1 = repository1.checkPath("", rev1);
-        SVNNodeKind kind2 = repository2.checkPath("", rev2);
+        long rev2 = -1;
+        SVNNodeKind kind1 = null;
+        SVNNodeKind kind2 = null;
         String target1 = null;
-        if (kind1 == SVNNodeKind.NONE) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "''{0}'' was not found in the repository at revision {1}",
-                    new Object[] {url1, new Long(rev1)});
-            SVNErrorManager.error(err);
-        } else if (kind2 == SVNNodeKind.NONE) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "''{0}'' was not found in the repository at revision {1}",
-                    new Object[] {url2, new Long(rev2)});
-            SVNErrorManager.error(err);
-        }
-        if (kind1 == SVNNodeKind.FILE || kind2 == SVNNodeKind.FILE) {
-            target1 = SVNPathUtil.tail(url1.getPath());
-            if (basePath != null) {
-                basePath = basePath.getParentFile();
+
+        try {
+            rev2 = getRevisionNumber(revision2, repository2, path2);
+            
+            kind1 = repository1.checkPath("", rev1);
+            kind2 = repository2.checkPath("", rev2);
+            if (kind1 == SVNNodeKind.NONE) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "''{0}'' was not found in the repository at revision {1}",
+                        new Object[] {url1, new Long(rev1)});
+                SVNErrorManager.error(err);
+            } else if (kind2 == SVNNodeKind.NONE) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "''{0}'' was not found in the repository at revision {1}",
+                        new Object[] {url2, new Long(rev2)});
+                SVNErrorManager.error(err);
             }
-            url1 = SVNURL.parseURIEncoded(SVNPathUtil.removeTail(url1.toString()));
-            repository1 = createRepository(url1, true);
+            if (kind1 == SVNNodeKind.FILE || kind2 == SVNNodeKind.FILE) {
+                target1 = SVNPathUtil.tail(url1.getPath());
+                if (basePath != null) {
+                    basePath = basePath.getParentFile();
+                }
+                url1 = SVNURL.parseURIEncoded(SVNPathUtil.removeTail(url1.toString()));
+                repository1 = createRepository(url1, true);
+            }
+        } finally {
+            repository2.closeSession();
         }
         repository2 = createRepository(url1, false); 
         File tmpFile = getDiffGenerator().createTempDirectory();
@@ -864,6 +879,7 @@ public class SVNDiffClient extends SVNBasicClient {
             if (tmpFile != null) {
                 SVNFileUtil.deleteAll(tmpFile, true, null);
             }
+            repository2.closeSession();
         }
     }
     
@@ -1357,6 +1373,7 @@ public class SVNDiffClient extends SVNBasicClient {
                     }, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
         } finally {
             editor.cleanup();
+            repository2.closeSession();
         }
         
     }
