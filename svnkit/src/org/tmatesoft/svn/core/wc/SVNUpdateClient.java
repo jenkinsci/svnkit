@@ -925,8 +925,15 @@ public class SVNUpdateClient extends SVNBasicClient {
                     doCheckout(external.getNewURL(), external.getFile(), revision, revision, true);
                 } else {
                     if (!external.getFile().isDirectory()) {
-                        external.getFile().mkdirs();
-                        doCheckout(external.getNewURL(), external.getFile(), revision, revision, true);
+                        boolean created = external.getFile().mkdirs();
+                        try {
+                            doCheckout(external.getNewURL(), external.getFile(), revision, revision, true);
+                        } catch (SVNException e) {
+                            if (created && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_ILLEGAL_URL) {
+                                SVNFileUtil.deleteAll(external.getFile(), true);
+                            }
+                            throw e;
+                        }
                     } else {
                         SVNWCAccess wcAccess = createWCAccess();
                         SVNAdminArea area = wcAccess.open(external.getFile(), true, 0);
@@ -1032,6 +1039,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 return validatedURLs;
             }
         }
+        // TODO close session.
         SVNRepository repos = createRepository(targetURL, false);
         SVNURL actualRoot = repos.getRepositoryRoot(true);
         if (isRoot && !targetURL.equals(actualRoot)) {
