@@ -19,7 +19,6 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.ISVNDebugLog;
@@ -105,16 +104,15 @@ public class SVNXMLLogHandler extends AbstractXMLHandler implements ISVNLogEntry
                 SVNLogEntryPath path = (SVNLogEntryPath) logEntry.getChangedPaths().get(key);
                 addAttribute(ACTION_ATTR, path.getType() + "");
                 if (path.getCopyPath() != null) {
-                    addAttribute(COPYFROM_PATH_ATTR, SVNEncodingUtil.xmlEncodeAttr(path.getCopyPath()));
+                    addAttribute(COPYFROM_PATH_ATTR, path.getCopyPath());
                     addAttribute(COPYFROM_REV_ATTR, path.getCopyRevision() + "");
                 } 
-                addTag(PATH_TAG, SVNEncodingUtil.xmlEncodeAttr(path.getPath()));
+                addTag(PATH_TAG, path.getPath());
             }
             closeTag(PATHS_TAG);
         }
         String message = logEntry.getMessage();
         message = message == null ? "" : message;
-        message = SVNEncodingUtil.xmlEncodeCDATA(message);
         addTag(MSG_TAG, message);
         closeTag(LOGENTRY_TAG);
     }

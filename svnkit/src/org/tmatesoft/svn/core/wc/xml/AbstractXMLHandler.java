@@ -11,7 +11,6 @@
  */
 package org.tmatesoft.svn.core.wc.xml;
 
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.xml.sax.ContentHandler;
@@ -93,7 +92,6 @@ public abstract class AbstractXMLHandler implements Locator {
         getHandler().startElement("", "", tagName, mySharedAttributes);
         mySharedAttributes.clear();
         value = value == null ? "" : value;
-        value = SVNEncodingUtil.xmlEncodeCDATA(value);
         getHandler().characters(value.toCharArray(), 0, value.length());
         getHandler().endElement("", "", tagName);
     }
@@ -102,7 +100,7 @@ public abstract class AbstractXMLHandler implements Locator {
         if (mySharedAttributes == null) {
             mySharedAttributes = new AttributesImpl();
         }
-        mySharedAttributes.addAttribute("", "", name, "CDATA", SVNEncodingUtil.xmlEncodeAttr(value));
+        mySharedAttributes.addAttribute("", "", name, "CDATA", value);
     }
 
     public int getColumnNumber() {

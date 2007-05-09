@@ -17,6 +17,7 @@ import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
@@ -87,7 +88,7 @@ public class SVNXMLSerializer implements ContentHandler {
                 myWriter.write("   ");
                 myWriter.write(atts.getQName(i));
                 myWriter.write("=\"");
-                myWriter.write(atts.getValue(i));
+                myWriter.write(SVNEncodingUtil.xmlEncodeAttr(atts.getValue(i)));
                 myWriter.write("\"");                    
             }
             if ("against".equals(qName)) {
@@ -103,7 +104,8 @@ public class SVNXMLSerializer implements ContentHandler {
     public void characters(char[] ch, int start, int length) throws SAXException {
         myCharacters = true;
         try {
-            myWriter.write(ch, start, length);
+            String cdata = SVNEncodingUtil.xmlEncodeCDATA(new String(ch, start, length));
+            myWriter.write(cdata);
         } catch (IOException e) {
             throw new SAXException(e);
         }
