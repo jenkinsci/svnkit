@@ -225,8 +225,8 @@
     </target>
 
     <target name="build-eclipse" depends="build-library,build-src,compile-eclipse" if="eclipse.present">
-        <property name="svnkit.plugin.name" value="plugins/org.tmatesoft.svnkit_${svnkit.version}" />
-        <property name="svnkit.feature.name" value="features/org.tmatesoft.svnkit_${svnkit.version}" />
+        <property name="svnkit.plugin.name" value="plugins/org.tmatesoft.svnkit_${build.number}" />
+        <property name="svnkit.feature.name" value="features/org.tmatesoft.svnkit_${build.number}" />
 
         <mkdir dir="build/eclipse/${svnkit.plugin.name}" />
         <mkdir dir="build/eclipse/${svnkit.feature.name}" />
@@ -271,7 +271,7 @@
         <copy file="svnkit-eclipse/site.xml" todir="build/eclipse/site"/>
 
         <!-- update versions -->
-        <replace dir="build/eclipse" includes="**/site.xml,**/plugin.xml,**/feature.xml" token="%svnkit.version%" value="${svnkit.version}"/>
+        <replace dir="build/eclipse" includes="**/site.xml,**/plugin.xml,**/feature.xml" token="%svnkit.version%" value="${build.number}"/>
         
         <!-- build jars for update site -->
         <zip destfile="build/eclipse/site/${svnkit.plugin.name}.jar" basedir="build/eclipse/${svnkit.plugin.name}"/>
@@ -329,27 +329,27 @@
     </target>
 
     <target name="deploy-library" depends="init-environment,build-library,build-cli,build-src,build-doc">
-        <zip destfile="build/org.tmatesoft.svn_${svnkit.version}.standalone.zip">
-            <zipfileset dir="build/lib" prefix="svnkit-${svnkit.version}">
+        <zip destfile="build/org.tmatesoft.svn_${build.number}.standalone.zip">
+            <zipfileset dir="build/lib" prefix="svnkit-${build.number}">
                 <exclude name="jsvn" />
                 <exclude name="jsvnadmin" />
                 <exclude name="jsvnversion" />
                 <exclude name="jsvnsync" />
             	<exclude name="jsvnlook" />
             </zipfileset>
-            <zipfileset file="build/lib/jsvn" filemode="555" prefix="svnkit-${svnkit.version}" />
-            <zipfileset file="build/lib/jsvnadmin" filemode="555" prefix="svnkit-${svnkit.version}" />
-            <zipfileset file="build/lib/jsvnversion" filemode="555" prefix="svnkit-${svnkit.version}" />
-            <zipfileset file="build/lib/jsvnsync" filemode="555" prefix="svnkit-${svnkit.version}" />
-        	<zipfileset file="build/lib/jsvnlook" filemode="555" prefix="svnkit-${svnkit.version}" />
-        	<zipfileset dir="build/doc" prefix="svnkit-${svnkit.version}/doc" />
+            <zipfileset file="build/lib/jsvn" filemode="555" prefix="svnkit-${build.number}" />
+            <zipfileset file="build/lib/jsvnadmin" filemode="555" prefix="svnkit-${build.number}" />
+            <zipfileset file="build/lib/jsvnversion" filemode="555" prefix="svnkit-${build.number}" />
+            <zipfileset file="build/lib/jsvnsync" filemode="555" prefix="svnkit-${build.number}" />
+        	<zipfileset file="build/lib/jsvnlook" filemode="555" prefix="svnkit-${build.number}" />
+        	<zipfileset dir="build/doc" prefix="svnkit-${build.number}/doc" />
         </zip>
     </target>
 
 	<target name="deploy-bundle" depends="init-environment,build-library">
 		<mkdir dir="build/maven"/>
 		<mkdir dir="svnkit-eclipse/bin"/>
-		<jar destfile="build/maven/svnkit-${svnkit.version}.jar">
+		<jar destfile="build/maven/svnkit-${build.number}.jar">
 			<fileset dir="svnkit/bin">
                 <exclude name="org/tmatesoft/svn/cli/**" />
 			</fileset>
@@ -381,7 +381,7 @@
             </fileset>
 		</jar>
 
-		<jar destfile="build/maven/svnkit-${svnkit.version}-sources.jar">
+		<jar destfile="build/maven/svnkit-${build.number}-sources.jar">
             <fileset dir="build/lib">
                 <include name="changelog.txt" />
                 <include name="README.txt" />
@@ -417,57 +417,57 @@
             </fileset>
 		</jar>
 		
-        <jar destfile="build/maven/svnkit-${svnkit.version}-bundle.jar">
+        <jar destfile="build/maven/svnkit-${build.number}-bundle.jar">
             <fileset dir=".">
                 <include name="pom.xml" />
             </fileset>
         	<fileset dir="build/maven">
-        		<include name="svnkit-${svnkit.version}.jar"/>
-        		<include name="svnkit-${svnkit.version}-sources.jar"/>
+        		<include name="svnkit-${build.number}.jar"/>
+        		<include name="svnkit-${build.number}-sources.jar"/>
 	        </fileset>
         </jar>
 		
-		<delete file="build/maven/svnkit-${svnkit.version}.jar"/>
-		<delete file="build/maven/svnkit-${svnkit.version}-sources.jar"/>
+		<delete file="build/maven/svnkit-${build.number}.jar"/>
+		<delete file="build/maven/svnkit-${build.number}-sources.jar"/>
     </target>
 
     <target name="deploy-eclipse"
             depends="init-environment,build-library,build-src,build-doc,build-eclipse"
             if="eclipse.present">
-    	<zip destfile="build/org.tmatesoft.svn_${svnkit.version}.eclipse.zip">
+    	<zip destfile="build/org.tmatesoft.svn_${build.number}.eclipse.zip">
             <zipfileset dir="build/eclipse/site/"/>
         </zip>
     </target>
 
     <target name="deploy-snapshot" depends="init-environment">
-        <zip destfile="build/org.tmatesoft.svn_${svnkit.version}.src.zip">
-            <zipfileset dir="svnkit" prefix="svnkit-src-${svnkit.version}/svnkit">
+        <zip destfile="build/org.tmatesoft.svn_${build.number}.src.zip">
+            <zipfileset dir="svnkit" prefix="svnkit-src-${build.number}/svnkit">
                 <exclude name="**/.svn" />
                 <exclude name="**/bin/**" />
                 <exclude name="bin/**" />
             </zipfileset>
-            <zipfileset dir="svnkit-eclipse" prefix="svnkit-src-${svnkit.version}/svnkit-eclipse">
+            <zipfileset dir="svnkit-eclipse" prefix="svnkit-src-${build.number}/svnkit-eclipse">
                 <exclude name="**/.svn" />
                 <exclude name="**/bin/**" />
                 <exclude name="bin/**" />
             </zipfileset>
-            <zipfileset dir="doc" prefix="svnkit-src-${svnkit.version}/doc">
+            <zipfileset dir="doc" prefix="svnkit-src-${build.number}/doc">
                 <include name="examples/**" />
                 <include name="javadoc-files/**" />
                 <exclude name="**/.svn" />
                 <exclude name="**/bin/**" />
                 <exclude name="bin/**" />
             </zipfileset>
-            <zipfileset dir="contrib" prefix="svnkit-src-${svnkit.version}/contrib">
+            <zipfileset dir="contrib" prefix="svnkit-src-${build.number}/contrib">
                 <exclude name="**/.svn" />
                 <exclude name="**/bin/**" />
                 <exclude name="bin/**" />
             </zipfileset>
-            <zipfileset dir="." prefix="svnkit-src-${svnkit.version}">
+            <zipfileset dir="." prefix="svnkit-src-${build.number}">
                 <include name=".settings/*" />
                 <include name="*.*" />
             </zipfileset>
-            <zipfileset dir="build/doc" prefix="svnkit-src-${svnkit.version}/doc" />
+            <zipfileset dir="build/doc" prefix="svnkit-src-${build.number}/doc" />
         </zip>
     </target>
 
