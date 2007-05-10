@@ -125,7 +125,7 @@ class SVNConnection {
                     auth = (SVNPasswordAuthentication) authManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm, location);
                 }
                 if (auth == null || auth.getUserName() == null || auth.getPassword() == null) {
-                    failureReason = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Can't get password. Authentication is required for ''{0}''", realm);
+                    failureReason = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Can''t get password. Authentication is required for ''{0}''", realm);
                     break;
                 }
                 write("(w())", new Object[] { "CRAM-MD5" });
