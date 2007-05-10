@@ -30,6 +30,14 @@ import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
+import javax.xml.transform.Templates;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
+
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
@@ -133,6 +141,23 @@ public class PythonTests {
         for (int i = 0; i < ourLoggers.length; i++) {
             ourLoggers[i].endTests(properties);
         }
+        // run xsl-transformation on xml log file.
+        String xmlFile = properties.getProperty("tests.xml.results", "python-tests-log.xml");        
+        String xsltFile = properties.getProperty("tests.xslt.results", "python.log.xsl");        
+        String htmlFile = properties.getProperty("tests.html.results", "python.log.html");
+        
+        TransformerFactory factory = TransformerFactory.newInstance();
+        try {
+            Templates transformation = factory.newTemplates(new StreamSource(new File(xsltFile)));
+            Transformer t = transformation.newTransformer();
+            t.transform(new StreamSource(new File(xmlFile)), new StreamResult(new File(htmlFile)));
+        } catch (TransformerConfigurationException e) {
+            e.printStackTrace();
+        } catch (TransformerException e) {
+            e.printStackTrace();
+        } 
+        
+
 	}
 
 	private static void runPythonTests(Properties properties, String defaultTestSuite, String url) throws IOException {

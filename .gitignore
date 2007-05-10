@@ -9,6 +9,7 @@ doc/examples/bin
 svnkit-eclipse/bin
 svnkit-test/bin
 svnkit-test/python-tests-log.xml
+svnkit-test/python.log.html
 svnkit-test/test.properties
 svnkit/bin
 svnkit/src/org/tmatesoft/svn/examples

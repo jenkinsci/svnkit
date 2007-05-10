@@ -532,6 +532,7 @@
               overwrite="true"
               failonerror="true"
         />
+    	<copy file="svnkit-test/python.log.html" tofile="build/test.log.html"/>
     </target>
 
     <!-- compatibility target -->
