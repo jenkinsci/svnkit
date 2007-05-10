@@ -98,9 +98,13 @@ public class SVNDiffWindowApplyBaton {
      */
     public String close() {
         SVNFileUtil.closeFile(mySourceStream);
+        mySourceStream = null;
         SVNFileUtil.closeFile(myTargetStream);
+        myTargetStream = null;
         if (myDigest != null) {
-            return SVNFileUtil.toHexDigest(myDigest);
+            MessageDigest d = myDigest;
+            myDigest = null;
+            return SVNFileUtil.toHexDigest(d);
         }
         return null;
     }
