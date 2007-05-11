@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="svnkit" default="deploy" basedir=".">
+	
+	<target name="init-revision" if="build.vcs.number.1">
+    	<replace file="build/lib/svnkit.build.properties" token="SNAPSHOT" value="${build.vcs.number.1}" ></replace>
+	</target>
 
     <target name="init-environment">
         <property environment="env" />
@@ -129,6 +133,9 @@
 
     <target name="build-library" depends="compile-library, compile-library-eclipse">
         <mkdir dir="build/lib" />
+    	<copy file="svnkit.build.properties" tofile="build/lib/svnkit.build.properties"></copy>
+    	<!-- update svnkit.build.properties here -->
+    	<antcall target="init-revision"></antcall>
 
         <jar destfile="build/lib/svnkit.jar">
             <fileset dir="svnkit/bin">
@@ -137,8 +144,10 @@
                 <exclude name="org/tigris/subversion/javahl/SVNAdmin**" />
             </fileset>
             <fileset dir="${basedir}" >
-                <include name="svnkit.build.properties" />
                 <include name="COPYING" />
+            </fileset>
+            <fileset dir="build/lib" >
+                <include name="svnkit.build.properties" />
             </fileset>
         	<fileset dir="contrib/sequence">
                 <include name="SEQUENCE-LICENSE" />
@@ -212,8 +221,10 @@
             </fileset>
             <fileset dir="contrib/sequence/src" />
             <fileset dir="${basedir}" >
-                <include name="svnkit.build.properties" />
                 <include name="COPYING" />
+            </fileset>
+            <fileset dir="build/lib" >
+                <include name="svnkit.build.properties" />
             </fileset>
             <fileset dir="contrib/javahl" >
                 <include name="JAVAHL-LICENSE" />
@@ -370,8 +381,10 @@
 				<include name="**"/>
 			</fileset>
             <fileset dir="${basedir}" >
-                <include name="svnkit.build.properties" />
                 <include name="COPYING" />
+            </fileset>
+            <fileset dir="build/lib" >
+                <include name="svnkit.build.properties" />
             </fileset>
             <fileset dir="contrib/javahl" >
                 <include name="JAVAHL-LICENSE" />
@@ -406,8 +419,10 @@
 				<exclude name=".svn/**"/>
 			</fileset>
             <fileset dir="${basedir}" >
-                <include name="svnkit.build.properties" />
                 <include name="COPYING" />
+            </fileset>
+            <fileset dir="build/lib" >
+                <include name="svnkit.build.properties" />
             </fileset>
             <fileset dir="contrib/javahl" >
                 <include name="JAVAHL-LICENSE" />

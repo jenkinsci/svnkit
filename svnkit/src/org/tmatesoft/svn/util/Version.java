@@ -29,11 +29,13 @@ public class Version {
     private static final String VERSION_MAJOR_PROPERTY = "svnkit.version.major";
     private static final String VERSION_MINOR_PROPERTY = "svnkit.version.minor";
     private static final String VERSION_MICRO_PROPERTY = "svnkit.version.micro";
+    private static final String VERSION_REVISION_PROPERTY = "svnkit.version.revision";
 
-    private static final String VERSION_STRING_DEFAULT = "SVNKit (http://svnkit.com/)";
+    private static final String VERSION_STRING_DEFAULT = "SVNKit (http://svnkit.com/) rSNAPSHOT";
     private static final String VERSION_MAJOR_DEFAULT = "0";
     private static final String VERSION_MINOR_DEFAULT = "0";
     private static final String VERSION_MICRO_DEFAULT = "0";
+    private static final String VERSION_REVISION_DEFAULT = "SNAPSHOT";
 
     private static Properties ourProperties;
 
@@ -74,6 +76,17 @@ public class Version {
             //
         }
         return 0;
+    }
+
+    public static long getRevisionNumber() {
+        loadProperties();
+        try {
+            return Long.parseLong(ourProperties.getProperty(
+                    VERSION_REVISION_PROPERTY, VERSION_REVISION_DEFAULT));
+        } catch (NumberFormatException nfe) {
+            //
+        }
+        return -1;
     }
 
     private static void loadProperties() {
