@@ -519,6 +519,10 @@
               tofile="build/lib/logging.properties"
               failonerror="false"
         />
+    	<replace token="%ant.dir%" file="build/lib/logging.properties" value="${basedir}"></replace>
+    	<replace token="${file.separator}" file="build/lib/logging.properties" value="/"></replace>
+    	<replace token="%ant.dir%" file="svnkit-test/logging.properties" value="${basedir}"></replace>
+    	<replace token="${file.separator}" file="svnkit-test/logging.properties" value="/"></replace>
 
         <java classpathref="python.classpath"
               dir="svnkit-test"
@@ -533,7 +537,9 @@
               overwrite="true"
               failonerror="true"
         />
+    	<!--
     	<delete file="build/lib/logging.properties" failonerror="false"></delete>
+    	-->
     	<delete failonerror="false">
     		<fileset dir="build">
     			<include name="*.lck"/>
