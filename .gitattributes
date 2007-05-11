@@ -106,8 +106,8 @@ svnkit-eclipse/org.tmatesoft.svnkit/plugin.xml eol=lf
 svnkit-eclipse/site.xml eol=lf
 svnkit-test/apache/python.template.conf eol=lf
 svnkit-test/apache/users eol=lf
+svnkit-test/logging.cli.properties -text
 svnkit-test/logging.properties -text
-svnkit-test/python.log.xsl -text
 svnkit-test/src/org/tmatesoft/svn/core/internal/io/fs/test/PropertyHandler.java -text
 svnkit-test/src/org/tmatesoft/svn/core/internal/io/fs/test/SVNRepositoryReplicationTest.java -text
 svnkit-test/src/org/tmatesoft/svn/core/test/SpecialTest.java -text

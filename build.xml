@@ -514,8 +514,8 @@
             <pathelement path="svnkit-test/bin" />
         </path>
 
-        <copy file="svnkit/cli/logging.properties.disabled" 
-              overwrite="false"
+        <copy file="svnkit-test/logging.cli.properties" 
+              overwrite="true"
               tofile="build/lib/logging.properties"
               failonerror="false"
         />
@@ -533,7 +533,12 @@
               overwrite="true"
               failonerror="true"
         />
-    	<copy file="svnkit-test/python.log.html" tofile="build/test.log.html"/>
+    	<delete file="build/lib/logging.properties" failonerror="false"></delete>
+    	<delete failonerror="false">
+    		<fileset dir="build">
+    			<include name="*.lck"/>
+    	    </fileset>
+    	</delete>
     </target>
 
     <!-- compatibility target -->
