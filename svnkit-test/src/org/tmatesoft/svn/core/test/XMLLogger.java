@@ -176,12 +176,13 @@ public class XMLLogger extends AbstractPythonTestLogger {
 		  
             if(line.startsWith("suite")){
                 String suiteName = line.substring(("suite"+currentServer).length());
-                 
                 Map statistics = (Map)myServers.get(currentServer);
 
-                SuiteStatistics stat = (SuiteStatistics)statistics.remove(suiteName);
-	            int failed = stat.suitesCount - stat.suitesPassed;
-	            line = "    <suite name=\"" + suiteName + "\" total=\"" + stat.suitesCount + "\" passed=\"" + stat.suitesPassed + "\" failed=\"" + failed + "\">";
+                if (statistics != null) {
+                    SuiteStatistics stat = (SuiteStatistics)statistics.remove(suiteName);
+    	            int failed = stat.suitesCount - stat.suitesPassed;
+    	            line = "    <suite name=\"" + suiteName + "\" total=\"" + stat.suitesCount + "\" passed=\"" + stat.suitesPassed + "\" failed=\"" + failed + "\">";
+                }
 	        }
 	        myWriter.println(line);
 		    myWriter.flush();
