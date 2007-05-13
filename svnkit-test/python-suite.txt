@@ -4,14 +4,14 @@ blame ALL
 cat ALL
 commit ALL
 copy ALL
-diff ALL
+diff ALL -35
 export ALL
 externals ALL 
 history ALL
 import ALL
 lock ALL
 log ALL -11
-merge ALL
+merge ALL -4
 prop ALL
 revert ALL
 schedule ALL
@@ -21,6 +21,6 @@ switch ALL
 trans ALL
 update ALL
 svnsync ALL
-svnadmin ALL
+svnadmin ALL -7 -8
 svnlook ALL
 svnversion ALL
