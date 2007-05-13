@@ -340,7 +340,8 @@
     </target>
 
     <target name="deploy-library" depends="init-environment,build-library,build-cli,build-src,build-doc">
-        <zip destfile="build/org.tmatesoft.svn_${build.number}.standalone.zip">
+    	<mkdir dir="build/deploy"/>
+        <zip destfile="build/deploy/org.tmatesoft.svn_${build.number}.standalone.zip">
             <zipfileset dir="build/lib" prefix="svnkit-${build.number}">
                 <exclude name="jsvn" />
                 <exclude name="jsvnadmin" />
@@ -432,16 +433,17 @@
             </fileset>
 		</jar>
 		
+		<copy file="pom.xml" tofile="build/maven/pom.xml"></copy>
+		<replace token="%svnkit.version%" value="${build.number}" file="build/maven/pom.xml"></replace>
         <jar destfile="build/maven/svnkit-${build.number}-bundle.jar">
-            <fileset dir=".">
-                <include name="pom.xml" />
-            </fileset>
         	<fileset dir="build/maven">
+                <include name="pom.xml" />
         		<include name="svnkit-${build.number}.jar"/>
         		<include name="svnkit-${build.number}-sources.jar"/>
 	        </fileset>
         </jar>
 		
+		<delete file="build/maven/pom.xml"/>
 		<delete file="build/maven/svnkit-${build.number}.jar"/>
 		<delete file="build/maven/svnkit-${build.number}-sources.jar"/>
     </target>
@@ -449,13 +451,15 @@
     <target name="deploy-eclipse"
             depends="init-environment,build-library,build-src,build-doc,build-eclipse"
             if="eclipse.present">
-    	<zip destfile="build/org.tmatesoft.svn_${build.number}.eclipse.zip">
+    	<mkdir dir="build/deploy"/>
+    	<zip destfile="build/deploy/org.tmatesoft.svn_${build.number}.eclipse.zip">
             <zipfileset dir="build/eclipse/site/"/>
         </zip>
     </target>
 
     <target name="deploy-snapshot" depends="init-environment">
-        <zip destfile="build/org.tmatesoft.svn_${build.number}.src.zip">
+    	<mkdir dir="build/deploy"/>
+        <zip destfile="build/deploy/org.tmatesoft.svn_${build.number}.src.zip">
             <zipfileset dir="svnkit" prefix="svnkit-src-${build.number}/svnkit">
                 <exclude name="**/.svn" />
                 <exclude name="**/bin/**" />
@@ -534,16 +538,28 @@
               tofile="build/lib/logging.properties"
               failonerror="false"
         />
+        <copy file="svnkit-test/logging.properties" 
+              overwrite="true"
+              tofile="build/lib/logging.python.properties"
+              failonerror="false"
+        />
     	<replace token="%ant.dir%" file="build/lib/logging.properties" value="${basedir}"></replace>
     	<replace token="${file.separator}" file="build/lib/logging.properties" value="/"></replace>
-    	<replace token="%ant.dir%" file="svnkit-test/logging.properties" value="${basedir}"></replace>
-    	<replace token="${file.separator}" file="svnkit-test/logging.properties" value="/"></replace>
+    	<replace token="%ant.dir%" file="build/lib/logging.python.properties" value="${basedir}"></replace>
+    	<replace token="${file.separator}" file="build/lib/logging.python.properties" value="/"></replace>
 
+    	<delete failonerror="false">
+    		<fileset dir="build/logs">
+    			<include name="**"/>
+    	    </fileset>
+        </delete>
+
+    	<mkdir dir="build/logs"/>
         <java classpathref="python.classpath"
               dir="svnkit-test"
               fork="true"
               classname="org.tmatesoft.svn.core.test.PythonTests">        
-         <jvmarg value="-Djava.util.logging.config.file=logging.properties" />
+         <jvmarg value="-Djava.util.logging.config.file=${basedir}/build/lib/logging.python.properties" />
          <arg line="test.properties" />
         </java>
 
@@ -552,9 +568,8 @@
               overwrite="true"
               failonerror="true"
         />
-    	<!--
     	<delete file="build/lib/logging.properties" failonerror="false"></delete>
-    	-->
+    	<delete file="build/lib/logging.python.properties" failonerror="false"></delete>
     	<delete failonerror="false">
     		<fileset dir="build">
     			<include name="*.lck"/>
