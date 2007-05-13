@@ -115,15 +115,15 @@ except ImportError:
 # the only scripts that import this file right now (they live in ../).
 #svn_binary = os.path.abspath('../../../clients/cmdline/svn' + _exe)
 #svn_binary = 'svn' + _exe
-svn_binary = os.path.abspath('../../../build/lib/jsvn' + _bat)
+svn_binary = os.path.abspath('%ant.dir%/build/lib/jsvn' + _bat)
 #svnadmin_binary = 'svnadmin' + _exe
-svnadmin_binary = os.path.abspath('../../../build/lib/jsvnadmin' + _bat)
+svnadmin_binary = os.path.abspath('%ant.dir%/build/lib/jsvnadmin' + _bat)
 #svnlook_binary = 'svnlook' + _exe
-svnlook_binary = os.path.abspath('../../../build/lib/jsvnlook' + _bat)
+svnlook_binary = os.path.abspath('%ant.dir%/build/lib/jsvnlook' + _bat)
 #svnsync_binary = 'svnsync' + _exe
-svnsync_binary = os.path.abspath('../../../build/lib/jsvnsync' + _bat)
+svnsync_binary = os.path.abspath('%ant.dir%/build/lib/jsvnsync' + _bat)
 #svnversion_binary = 'svnversion' + _exe
-svnversion_binary = os.path.abspath('../../../build/lib/jsvnversion' + _bat)
+svnversion_binary = os.path.abspath('%ant.dir%/build/lib/jsvnversion' + _bat)
 
 # Username and password used by the working copies
 wc_author = 'jrandom'
@@ -134,10 +134,10 @@ wc_passwd = 'rayjandom'
 wc_author2 = 'jconstant' # use the same password as wc_author
 
 # Global variable indicating if we want verbose output.
-verbose_mode = 0
+verbose_mode = 1
 
 # Global variable indicating if we want test data cleaned up after success
-cleanup_mode = 0
+cleanup_mode = 1
 
 # Global URL to testing area.  Default to ra_local, current working dir.
 test_area_url = file_scheme_prefix + os.path.abspath(os.getcwd())

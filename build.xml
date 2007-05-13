@@ -507,35 +507,56 @@
         />
     </target>
 	
-	<target name="init-tests" if="python.test.properties">
-		<!-- always use custom props if specified -->
-        <copy file="${python.test.properties}"
-              tofile="svnkit-test/test.properties"
-              failonerror="false"
-              overwrite="true"
-        />
+	<target name="init-test-properties" unless="python.test.properties">
+		<available file="svnkit-test/test.properties" property="python.test.properties" value="svnkit-test/test.properties"></available>
+		<available file="svnkit-test/test.${os}.properties" property="python.test.properties" value="svnkit-test/test.${os}.properties"></available>
 	</target>
 
-    <target name="test-python" depends="init-tests,init-environment,compile-tests,build-library,build-cli">
+    <target name="test-python" depends="init-test-properties,init-environment,compile-tests,build-library,build-cli">
+    	<property name="python.test.home" value="${basedir}/build/python"/>
+    	<mkdir dir="${python.test.home}"/>
+    	<delete includeemptydirs="true">
+			<fileset dir="${python.test.home}">
+    		  <include name="**/*"/>
+        	</fileset>
+		</delete>
+    	
         <property name="python.test.properties" value="svnkit-test/test.${os}.properties"/>
         <copy file="${python.test.properties}"
-              tofile="svnkit-test/test.properties"
-              failonerror="false"
-              overwrite="false"
+              tofile="${python.test.home}/test.properties"
+              failonerror="true"
+              overwrite="true"
         />
 
-        <copy file="svnkit-test/python/cmdline/svntest/main.py"
-              overwrite="true"
-              tofile="svnkit-test/python/cmdline/svntest/main.py.bak"
-              failonerror="true"
-        />
+    	<mkdir dir="${python.test.home}/python/cmdline"/>
+    	<copy todir="${python.test.home}/python/cmdline">
+    		<fileset dir="svnkit-test/python/cmdline">
+    			<exclude name=".svn"/>
+    			<exclude name=".svn/**"/>
+    			<exclude name="svn-test-work"/>
+    			<exclude name="svn-test-work/**"/>
+    		</fileset>
+        </copy>
+    	<copy todir="${python.test.home}">
+    		<fileset dir="svnkit-test">
+    			<include name="test.properties"/>
+    			<include name="python-suite.txt"/>
+    			<include name="apache/**"/>
+    			<exclude name=".svn"/>
+    			<exclude name=".svn/**"/>
+    		</fileset>
+        </copy>
         <copy file="svnkit-test/python/patch/main.py"
               overwrite="true"
-              tofile="svnkit-test/python/cmdline/svntest/main.py"
+              tofile="${python.test.home}/python/cmdline/svntest/main.py"
               failonerror="true"
         />
+    	<pathconvert targetos="unix" property="basedir.unix">
+    		<path location="${basedir}"></path>
+    	</pathconvert>
+    	<replace token="%ant.dir%" value="${basedir.unix}" file="${python.test.home}/python/cmdline/svntest/main.py"></replace>
 
-        <path id="python.classpath">
+    	<path id="python.classpath">
             <pathelement path="build/lib/svnkit.jar" />
             <pathelement path="build/lib/svnkit-cli.jar" />
             <pathelement path="contrib/junit/junit.jar" />
@@ -549,41 +570,38 @@
         />
         <copy file="svnkit-test/logging.properties" 
               overwrite="true"
-              tofile="build/lib/logging.python.properties"
+              tofile="${python.test.home}/logging.python.properties"
               failonerror="false"
         />
-    	<replace token="%ant.dir%" file="build/lib/logging.properties" value="${basedir}"></replace>
-    	<replace token="${file.separator}" file="build/lib/logging.properties" value="/"></replace>
-    	<replace token="%ant.dir%" file="build/lib/logging.python.properties" value="${basedir}"></replace>
-    	<replace token="${file.separator}" file="build/lib/logging.python.properties" value="/"></replace>
+    	<replace token="%ant.dir%" file="build/lib/logging.properties" value="${basedir.unix}"></replace>
+    	<replace token="%ant.dir%" file="${python.test.home}/logging.python.properties" value="${basedir.unix}"></replace>
 
+    	<mkdir dir="build/logs"/>
     	<delete failonerror="false">
     		<fileset dir="build/logs">
-    			<include name="**"/>
+    			<include name="**/*"/>
     	    </fileset>
         </delete>
 
-    	<mkdir dir="build/logs"/>
-        <java classpathref="python.classpath"
-              dir="svnkit-test"
+    	<java classpathref="python.classpath"
+              dir="${python.test.home}"
               fork="true"
               classname="org.tmatesoft.svn.core.test.PythonTests">        
-         <jvmarg value="-Djava.util.logging.config.file=${basedir}/build/lib/logging.python.properties" />
-         <arg line="test.properties" />
+         <jvmarg value="-Djava.util.logging.config.file=${python.test.home}/logging.python.properties" />
+         <arg line="${python.test.home}/test.properties" />
         </java>
-
-        <move file="svnkit-test/python/cmdline/svntest/main.py.bak"
-              tofile="svnkit-test/python/cmdline/svntest/main.py"
-              overwrite="true"
-              failonerror="true"
-        />
     	<delete file="build/lib/logging.properties" failonerror="false"></delete>
     	<delete file="build/lib/logging.python.properties" failonerror="false"></delete>
     	<delete failonerror="false">
     		<fileset dir="build">
-    			<include name="*.lck"/>
+    			<include name="**/*.lck"/>
     	    </fileset>
     	</delete>
+    	<delete includeemptydirs="true">
+			<fileset dir="${python.test.home}">
+    		  <include name="**/*"/>
+        	</fileset>
+		</delete>
     </target>
 
     <!-- compatibility target -->
