@@ -506,8 +506,17 @@
               classname="org.tmatesoft.svn.core.test.UnitTests"
         />
     </target>
+	
+	<target name="init-tests" if="python.test.properties">
+		<!-- always use custom props if specified -->
+        <copy file="${python.test.properties}"
+              tofile="svnkit-test/test.properties"
+              failonerror="false"
+              overwrite="true"
+        />
+	</target>
 
-    <target name="test-python" depends="init-environment,compile-tests,build-library,build-cli">
+    <target name="test-python" depends="init-tests,init-environment,compile-tests,build-library,build-cli">
         <property name="python.test.properties" value="svnkit-test/test.${os}.properties"/>
         <copy file="${python.test.properties}"
               tofile="svnkit-test/test.properties"
