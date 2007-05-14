@@ -4,7 +4,7 @@ blame ALL
 cat ALL
 commit ALL
 copy ALL
-diff ALL -35
+diff ALL
 export ALL
 externals ALL 
 history ALL

@@ -261,7 +261,11 @@ public class SVNDiffClient extends SVNBasicClient {
         path = new File(SVNPathUtil.validateFilePath(path.getAbsolutePath())).getAbsoluteFile();
         getDiffGenerator().init(path.getAbsolutePath(), path.getAbsolutePath());
         if (!(rM == SVNRevision.BASE || rM == SVNRevision.WORKING || rM == SVNRevision.COMMITTED)) {
-            doDiffURLURL(null, path, rN, null, path, rM, pegRevision, recursive, useAncestry, result);
+            if ((rN == SVNRevision.BASE || rN == SVNRevision.WORKING || rN == SVNRevision.COMMITTED)) {
+                doDiffURLWC(path, rM, pegRevision, path, rN, true, recursive, useAncestry, result);
+            } else {
+                doDiffURLURL(null, path, rN, null, path, rM, pegRevision, recursive, useAncestry, result);
+            }
         } else {
             // head, prev,date,number will go here.
             doDiffURLWC(path, rN, pegRevision, path, rM, false, recursive, useAncestry, result);
@@ -682,7 +686,11 @@ public class SVNDiffClient extends SVNBasicClient {
                 SVNRepositoryLocation[] locations = getLocations(null, path1, null, pegRevision, revision1, SVNRevision.UNDEFINED);
                 url1 = locations[0].getURL();
                 String anchorPath2 = SVNPathUtil.append(anchorURL.toString(), target == null ? "" : target);
-                getDiffGenerator().init(url1.toString(), anchorPath2);
+                if (!reverse) {
+                    getDiffGenerator().init(url1.toString(), anchorPath2);
+                } else {
+                    getDiffGenerator().init(anchorPath2, url1.toString());
+                }
             } else {
                 url1 = getURL(path1);
             }

@@ -192,7 +192,9 @@ public class SVNDiffCommand extends SVNCommand implements ISVNDiffStatusHandler 
                 SVNRevision r2 = rM;
                 r1 = r1 == SVNRevision.UNDEFINED ? SVNRevision.BASE : r1;
                 r2 = r2 == SVNRevision.UNDEFINED ? SVNRevision.WORKING : r2;
-                boolean peggedDiff = r1 != SVNRevision.WORKING && r1 != SVNRevision.BASE && r1 != SVNRevision.PREVIOUS;
+                boolean peggedDiff = 
+                    (r1 != SVNRevision.WORKING && r1 != SVNRevision.BASE && r1 != SVNRevision.PREVIOUS) ||
+                    (r2 != SVNRevision.WORKING && r2 != SVNRevision.BASE && r2 != SVNRevision.PREVIOUS);
                 peggedDiff &= !summarize;
                 
                 for(int i = 0; i < getCommandLine().getPathCount(); i++) {
