@@ -342,7 +342,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
     
     protected void delete(File path, boolean force, boolean dryRun) throws SVNException {
         if (!force) {
-            SVNWCManager.canDelete(path, false, getWCAccess().getOptions());
+            SVNWCManager.canDelete(path, getWCAccess().getOptions());
         }
         SVNAdminArea root = getWCAccess().retrieve(path.getParentFile()); 
         if (!dryRun) {

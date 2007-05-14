@@ -797,7 +797,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 
                 if (!force) {
                     try {
-                        SVNWCManager.canDelete(srcPath, false, getOptions());
+                        SVNWCManager.canDelete(srcPath, getOptions());
                     } catch (SVNException svne) {
                         SVNErrorMessage err = svne.getErrorMessage().wrap("Move will not be attempted unless forced");
                         SVNErrorManager.error(err, svne);

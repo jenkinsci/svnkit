@@ -282,9 +282,9 @@ public class SVNWCManager {
         return false;
     }
 
-    public static void canDelete(File path, boolean skipIgnored, ISVNOptions options) throws SVNException {
+    public static void canDelete(File path, ISVNOptions options) throws SVNException {
         SVNStatusClient statusClient = new SVNStatusClient((ISVNAuthenticationManager) null, options);
-        statusClient.doStatus(path, SVNRevision.UNDEFINED, true, false, false, !skipIgnored, false, new ISVNStatusHandler() {
+        statusClient.doStatus(path, SVNRevision.UNDEFINED, true, false, false, false, false, new ISVNStatusHandler() {
             public void handleStatus(SVNStatus status) throws SVNException {
                 if (status.getContentsStatus() == SVNStatusType.STATUS_OBSTRUCTED) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNEXPECTED_KIND, "''{0}'' is in the way of the resource actually under version control", status.getFile());
