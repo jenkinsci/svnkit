@@ -593,15 +593,10 @@
     	<delete file="build/lib/logging.properties" failonerror="false"></delete>
     	<delete file="build/lib/logging.python.properties" failonerror="false"></delete>
     	<delete failonerror="false">
-    		<fileset dir="build">
+    		<fileset dir="build/logs">
     			<include name="**/*.lck"/>
     	    </fileset>
     	</delete>
-    	<delete includeemptydirs="true">
-			<fileset dir="${python.test.home}">
-    		  <include name="**/*"/>
-        	</fileset>
-		</delete>
     </target>
 
     <!-- compatibility target -->

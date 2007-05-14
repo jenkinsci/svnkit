@@ -1139,6 +1139,7 @@ public class SVNWCClient extends SVNBasicClient {
     public void doRevert(File path, boolean recursive) throws SVNException {
         path = new File(SVNPathUtil.validateFilePath(path.getAbsolutePath()));
         SVNWCAccess wcAccess = createWCAccess();
+        boolean reverted = false;
         try {
             SVNAdminAreaInfo info = wcAccess.openAnchor(path, true, recursive ? SVNWCAccess.INFINITE_DEPTH : 0);
             SVNEntry entry = wcAccess.getEntry(path, false);
@@ -1152,8 +1153,9 @@ public class SVNWCClient extends SVNBasicClient {
             }
             
             boolean useCommitTimes = getOptions().isUseCommitTimes();
-            doRevert(path, info.getAnchor(), recursive, useCommitTimes);            
+            reverted = doRevert(path, info.getAnchor(), recursive, useCommitTimes);            
         } catch (SVNException e) {
+            reverted = true;
             SVNErrorCode code = e.getErrorMessage().getErrorCode();
             if (code == SVNErrorCode.ENTRY_NOT_FOUND || code == SVNErrorCode.UNVERSIONED_RESOURCE) {
                 SVNEvent event = SVNEventFactory.createSkipEvent(path.getParentFile(), path, SVNEventAction.SKIP, SVNEventAction.REVERT, null);
@@ -1162,10 +1164,13 @@ public class SVNWCClient extends SVNBasicClient {
             throw e;
         } finally {
             wcAccess.close();
+            if (reverted) {
+                sleepForTimeStamp();
+            }
         }
     }
     
-    private void doRevert(File path, SVNAdminArea parent, boolean recursive, boolean useCommitTimes) throws SVNException {
+    private boolean doRevert(File path, SVNAdminArea parent, boolean recursive, boolean useCommitTimes) throws SVNException {
         checkCancelled();
         SVNAdminArea dir = parent.getWCAccess().probeRetrieve(path);
         SVNEntry entry = dir.getWCAccess().getEntry(path, false);
@@ -1178,7 +1183,7 @@ public class SVNWCClient extends SVNBasicClient {
             if (fileType != SVNFileType.DIRECTORY && !entry.isScheduledForAddition()) {
                 SVNEvent event = SVNEventFactory.createNotRevertedEvent(dir, entry);
                 dispatchEvent(event);
-                return;
+                return false;
             }
         }
         if (entry.getKind() != SVNNodeKind.DIR && entry.getKind() != SVNNodeKind.FILE) {
@@ -1240,9 +1245,10 @@ public class SVNWCClient extends SVNBasicClient {
                     continue;
                 }
                 File childPath = new File(path, childEntry.getName());
-                doRevert(childPath, dir, true, useCommitTimes);
+                reverted |= doRevert(childPath, dir, true, useCommitTimes);
             }
         }
+        return reverted;
     }
     
     private boolean revert(SVNAdminArea dir, String name, SVNEntry entry, boolean useCommitTime) throws SVNException {
