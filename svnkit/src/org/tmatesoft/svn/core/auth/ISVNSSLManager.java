@@ -16,6 +16,7 @@ import java.io.IOException;
 import javax.net.ssl.SSLContext;
 
 import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
 
 /**
  * The <b>ISVNSSLManager</b> interface is intended for 
@@ -59,7 +60,7 @@ public interface ISVNSSLManager {
      * @return              an ssl context
      * @throws IOException  if an i/o error occurred
      */
-    public SSLContext getSSLContext() throws IOException;
+    public SSLContext getSSLContext() throws IOException, SVNException;
     
     /**
      * @return true if user should be prompted for client certificate

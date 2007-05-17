@@ -30,6 +30,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNSSLManager;
 import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 
@@ -56,7 +57,7 @@ public class SVNSocketFactory {
         return socket;
     }
 
-    public static Socket createSSLSocket(ISVNSSLManager manager, String host, int port) throws IOException {
+    public static Socket createSSLSocket(ISVNSSLManager manager, String host, int port) throws IOException, SVNException {
         manager = manager == null ? DEFAULT_SSL_MANAGER : manager;
         Socket sslSocket = manager.getSSLContext().getSocketFactory().createSocket(createAddres(host), port);
         sslSocket.setReuseAddress(true);
@@ -65,7 +66,7 @@ public class SVNSocketFactory {
         return sslSocket;
     }
 
-    public static Socket createSSLSocket(ISVNSSLManager manager, String host, int port, Socket socket) throws IOException {
+    public static Socket createSSLSocket(ISVNSSLManager manager, String host, int port, Socket socket) throws IOException, SVNException {
         manager = manager == null ? DEFAULT_SSL_MANAGER : manager;
         Socket sslSocket = manager.getSSLContext().getSocketFactory().createSocket(socket, host, port, true);
         sslSocket.setReuseAddress(true);
