@@ -36,13 +36,28 @@ public class Version {
     private static final String VERSION_MINOR_DEFAULT = "0";
     private static final String VERSION_MICRO_DEFAULT = "0";
     private static final String VERSION_REVISION_DEFAULT = "SNAPSHOT";
+    private static String ourUserAgent;
 
     private static Properties ourProperties;
+    
+    static {
+        ourUserAgent = System.getProperty("svnkit.http.userAgent");
+    }
 
     public static String getVersionString() {
         loadProperties();
-        return ourProperties.getProperty(VERSION_STRING_PROPERTY,
-                VERSION_STRING_DEFAULT);
+        return ourProperties.getProperty(VERSION_STRING_PROPERTY, VERSION_STRING_DEFAULT);
+    }
+    
+    public static void setUserAgent(String userAgent) {
+        ourUserAgent = userAgent;
+    }
+
+    public static String getUserAgent() {
+        if (ourUserAgent != null) {
+            return ourUserAgent;
+        }
+        return getVersionString();
     }
 
     public static int getMajorVersion() {

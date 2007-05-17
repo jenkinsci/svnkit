@@ -271,7 +271,7 @@ class HTTPRequest {
         }
         sb.append(HTTPRequest.CRLF);
         sb.append("User-Agent: ");
-        sb.append(Version.getVersionString());
+        sb.append(Version.getUserAgent());
         sb.append(HTTPRequest.CRLF);
         if (keepAlive) {
             sb.append("Keep-Alive:");
