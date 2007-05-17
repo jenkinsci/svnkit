@@ -171,6 +171,9 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             if (myProviders[i] == null) {
                 continue;
             }
+            if ((i == 1 || i == 2) && hasExplicitCredentials(kind)) {
+                continue;
+            }
             SVNAuthentication auth = myProviders[i].requestClientAuthentication(kind, url, realm, myPreviousErrorMessage, myPreviousAuthentication, myIsStoreAuth);
             if (auth != null) {
                 myPreviousAuthentication = auth;
@@ -194,7 +197,17 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         if (myIsStoreAuth && authentication.isStorageAllowed() && myProviders[2] instanceof IPersistentAuthenticationProvider) {
             ((IPersistentAuthenticationProvider) myProviders[2]).saveAuthentication(authentication, kind, realm);
         }
-        ((CacheAuthenticationProvider) myProviders[1]).saveAuthentication(authentication, realm);
+        if (!hasExplicitCredentials(kind)) {
+            // do not cache explicit credentials in runtime cache?
+            ((CacheAuthenticationProvider) myProviders[1]).saveAuthentication(authentication, realm);
+        }
+    }
+    
+    private boolean hasExplicitCredentials(String kind) {
+        if (ISVNAuthenticationManager.PASSWORD.equals(kind) || ISVNAuthenticationManager.USERNAME.equals(kind) || ISVNAuthenticationManager.SSH.equals(kind)) {
+            return myProviders[0] instanceof DumbAuthenticationProvider && ((DumbAuthenticationProvider) myProviders[0]).myUserName != null;
+        }
+        return false;
     }
     
     protected SVNCompositeConfigFile getServersFile() {

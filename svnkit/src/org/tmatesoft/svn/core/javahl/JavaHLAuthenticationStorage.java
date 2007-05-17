@@ -20,7 +20,7 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationStorage;
  * @version 1.1.1
  * @author  TMate Software Ltd.
  */
-class JavaHLAuthenticationStorage implements ISVNAuthenticationStorage {
+public class JavaHLAuthenticationStorage implements ISVNAuthenticationStorage {
 
     private Map myStorage = new Hashtable();
 
@@ -30,6 +30,10 @@ class JavaHLAuthenticationStorage implements ISVNAuthenticationStorage {
 
     public Object getData(String kind, String realm) {
         return myStorage.get(kind + "$" + realm);
+    }
+    
+    public void clear() {
+        myStorage.clear();
     }
 
 }

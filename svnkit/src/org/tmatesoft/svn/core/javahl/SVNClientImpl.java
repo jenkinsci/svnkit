@@ -111,7 +111,7 @@ public class SVNClientImpl implements SVNClientInterface {
     private SVNClientInterface myOwner;
     
     private ISVNAuthenticationManager myAuthenticationManager;
-    private static final ISVNAuthenticationStorage ourAuthStorage = new JavaHLAuthenticationStorage();
+    private static ISVNAuthenticationStorage ourAuthStorage = new JavaHLAuthenticationStorage();
 
     /**
      * @version 1.1.1
@@ -132,6 +132,14 @@ public class SVNClientImpl implements SVNClientInterface {
     public static SVNClientImpl newInstance(SVNClient owner, 
             IHTTPConnectionFactory httpConnectionFactory, ISVNConnectorFactory svnConnectorFactory) {
         return new SVNClientImpl(owner, httpConnectionFactory, svnConnectorFactory);
+    }
+    
+    public static ISVNAuthenticationStorage getRuntimeCredentialsStorage() {
+        return ourAuthStorage;
+    }
+
+    public static void setRuntimeCredentialsStorage(ISVNAuthenticationStorage storage) {
+        ourAuthStorage = storage == null ? new JavaHLAuthenticationStorage() : storage;
     }
 
     protected SVNClientImpl(SVNClient owner) {
