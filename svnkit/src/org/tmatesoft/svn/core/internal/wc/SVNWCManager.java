@@ -18,6 +18,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -33,6 +34,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
@@ -282,8 +284,17 @@ public class SVNWCManager {
         return false;
     }
 
-    public static void canDelete(File path, ISVNOptions options) throws SVNException {
+    public static void canDelete(File path, ISVNOptions options, final ISVNEventHandler eventHandler) throws SVNException {
         SVNStatusClient statusClient = new SVNStatusClient((ISVNAuthenticationManager) null, options);
+        if (eventHandler != null) {
+            statusClient.setEventHandler(new ISVNEventHandler() {
+                public void checkCancelled() throws SVNCancelException {                
+                    eventHandler.checkCancelled();
+                }
+                public void handleEvent(SVNEvent event, double progress) throws SVNException {
+                }
+            });
+        }
         statusClient.doStatus(path, SVNRevision.UNDEFINED, true, false, false, false, false, new ISVNStatusHandler() {
             public void handleStatus(SVNStatus status) throws SVNException {
                 if (status.getContentsStatus() == SVNStatusType.STATUS_OBSTRUCTED) {
