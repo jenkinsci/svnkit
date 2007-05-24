@@ -15,6 +15,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 import java.util.TimeZone;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -33,7 +34,7 @@ public class SVNDate extends Date {
     static {
         FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
     }
-    private static final Calendar CALENDAR = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+    private static final Calendar CALENDAR = Calendar.getInstance(TimeZone.getTimeZone("GMT"), new Locale("en", "US"));
     private static final char[] DATE_SEPARATORS = {'-','-','T',':',':','.','Z'}; 
 
     private int myMicroSeconds;
