@@ -579,6 +579,7 @@ class HTTPConnection implements IHTTPConnection {
                 try {
                     tmpFile = SVNFileUtil.createTempFile(".svnkit", ".spool");
                     dst = SVNFileUtil.openFileForWriting(tmpFile);
+                    dst = new SVNCancellableOutputStream(dst, myRepository.getCanceller());
                     // this will exhaust http stream anyway.
                     err = readData(request, dst);
                     closeStream |= err != null;

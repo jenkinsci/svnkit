@@ -11,7 +11,7 @@
  */
 package org.tmatesoft.svn.core.wc;
 
-import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.SVNException;
 
 /**
@@ -66,7 +66,7 @@ import org.tmatesoft.svn.core.SVNException;
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
  *
  */
-public interface ISVNEventHandler {
+public interface ISVNEventHandler extends ISVNCanceller {
     /**
      * Constant that is currently the value of the <code>progress</code>
      * parameter (in {@link #handleEvent(SVNEvent, double) handleEvnt()}) 
@@ -96,12 +96,4 @@ public interface ISVNEventHandler {
      */
     public void handleEvent(SVNEvent event, double progress) throws SVNException;
     
-    /**
-     * Checks if the current operation is cancelled (somehow interrupted)
-     * and should throw an <b>SVNCancelException</b>.
-     * 
-     * @throws SVNCancelException
-     */
-    public void checkCancelled() throws SVNCancelException;
-
 }

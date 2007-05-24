@@ -228,6 +228,7 @@ public class SVNBasicClient implements ISVNEventHandler {
             repository = myRepositoryPool.createRepository(url, mayReuse);
         }
         repository.setDebugLog(getDebugLog());
+        repository.setCanceller(getEventDispatcher());
         return repository;
     }
     

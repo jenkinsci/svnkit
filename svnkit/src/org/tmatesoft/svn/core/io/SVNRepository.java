@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNDirEntry;
@@ -135,6 +136,7 @@ public abstract class SVNRepository {
     private ISVNSession myOptions;
     private ISVNTunnelProvider myTunnelProvider;
     private ISVNDebugLog myDebugLog;
+    private ISVNCanceller myCanceller;
 
     protected SVNRepository(SVNURL location, ISVNSession options) {
         myLocation = location;
@@ -344,6 +346,14 @@ public abstract class SVNRepository {
      */
     public ISVNTunnelProvider getTunnelProvider() {
         return myTunnelProvider;
+    }
+    
+    public void setCanceller(ISVNCanceller canceller) {
+        myCanceller = canceller;
+    }
+    
+    public ISVNCanceller getCanceller() {
+        return myCanceller == null ? ISVNCanceller.NULL : myCanceller;
     }
     
     /**

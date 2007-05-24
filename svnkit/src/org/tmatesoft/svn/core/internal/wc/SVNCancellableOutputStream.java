@@ -15,8 +15,8 @@ import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 
 
 
@@ -26,9 +26,9 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
  */
 public class SVNCancellableOutputStream extends FilterOutputStream {
 
-    private ISVNEventHandler myEventHandler;
+    private ISVNCanceller myEventHandler;
 
-    public SVNCancellableOutputStream(OutputStream out, ISVNEventHandler eventHandler) {
+    public SVNCancellableOutputStream(OutputStream out, ISVNCanceller eventHandler) {
         super(out == null ? SVNFileUtil.DUMMY_OUT : out);
         myEventHandler = eventHandler;
     }
