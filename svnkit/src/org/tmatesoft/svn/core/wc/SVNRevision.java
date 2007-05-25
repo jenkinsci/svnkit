@@ -17,6 +17,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+
 /**
  * <b>SVNRevision</b> is a revision wrapper used for an abstract representation 
  * of revision information.
@@ -286,12 +288,18 @@ public class SVNRevision {
         if (value.startsWith("{") && value.endsWith("}")) {
             value = value.substring(1);
             value = value.substring(0, value.length() - 1);
-            try {
-                Date date = DateFormat.getDateInstance().parse(value);
-                return SVNRevision.create(date);
-            } catch (ParseException e) {
-                return SVNRevision.UNDEFINED;
-            }
+            
+            Date date = null;
+            if (value.indexOf('T') != -1) {
+                date = SVNTimeUtil.parseDate(value);    
+            } else {
+                try {
+                    date = DateFormat.getDateInstance().parse(value);
+                } catch (ParseException e) {
+                    return SVNRevision.UNDEFINED;
+                }
+            } 
+            return SVNRevision.create(date);
         }
         try {
             long number = Long.parseLong(value);

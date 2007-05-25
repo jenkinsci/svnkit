@@ -196,7 +196,7 @@ public class FSFS {
                 }
                 Date nextTime = getRevisionTime(middle + 1);
                 if (nextTime.compareTo(date) > 0) {
-                    return middle + 1;
+                    return middle;
                 }
                 bottom = middle + 1;
             } else {

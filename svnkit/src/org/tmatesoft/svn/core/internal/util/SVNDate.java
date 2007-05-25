@@ -71,8 +71,20 @@ public class SVNDate extends Date {
         int startIndex = 0;
         int[] result = new int[7];
         int microseconds = 0;
+        int timeZoneInd = -1;
         while(index < DATE_SEPARATORS.length && charIndex < str.length()) {
-            if (str.charAt(charIndex) == DATE_SEPARATORS[index]) {
+            if (str.charAt(charIndex) == '-') {
+                if (index > 1) {
+                    timeZoneInd = charIndex;
+                }
+            } else if (str.charAt(charIndex) == '+') {
+                timeZoneInd = charIndex;
+            }
+            if (str.charAt(charIndex) == DATE_SEPARATORS[index] || 
+                    (index == 5 && str.charAt(charIndex) == DATE_SEPARATORS[index + 1])) {
+                if (index == 5 && str.charAt(charIndex) == DATE_SEPARATORS[index + 1]) {
+                    index++;
+                }
                 String segment = str.substring(startIndex, charIndex);
                 if (segment.length() == 0) {
                     result[index] = 0;
@@ -89,6 +101,15 @@ public class SVNDate extends Date {
             }
             charIndex++;
         }
+        if (index < DATE_SEPARATORS.length) {
+            String segment = str.substring(startIndex);
+            if (segment.length() == 0) {
+                result[index] = 0;
+            } else {
+                result[index] = Integer.parseInt(segment);
+            }
+        }
+        
         int year = result[0];
         int month = result[1];
         int date = result[2];
@@ -98,11 +119,28 @@ public class SVNDate extends Date {
         int sec = result[5];
         int ms = result[6];
 
+        String timeZoneId = null;
+        if (timeZoneInd != -1 && timeZoneInd < str.length() - 1 && str.indexOf('Z') == -1 && str.indexOf('z') == -1) {
+            timeZoneId = "GMT" + str.substring(timeZoneInd);
+        }
         synchronized (CALENDAR) {
             CALENDAR.clear();
+            TimeZone oldTimeZone = null;
+            if (timeZoneId != null) {
+                oldTimeZone = CALENDAR.getTimeZone();
+                CALENDAR.setTimeZone(TimeZone.getTimeZone(timeZoneId));
+            } else if (str.indexOf('Z') == -1 && str.indexOf('z') == -1) {
+                oldTimeZone = CALENDAR.getTimeZone();
+                CALENDAR.setTimeZone(TimeZone.getDefault());
+            }
+
             CALENDAR.set(year, month - 1, date, hour, min, sec);
             CALENDAR.set(Calendar.MILLISECOND, ms);
-            return new SVNDate(CALENDAR.getTimeInMillis(), microseconds);
+            SVNDate resultDate = new SVNDate(CALENDAR.getTimeInMillis(), microseconds);
+            if (oldTimeZone != null) {
+                CALENDAR.setTimeZone(oldTimeZone);
+            }
+            return resultDate;
         }
     }
 

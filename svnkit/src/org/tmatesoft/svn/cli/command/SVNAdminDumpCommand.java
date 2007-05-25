@@ -46,15 +46,9 @@ public class SVNAdminDumpCommand extends SVNCommand implements ISVNAdminEventHan
         }
         File reposRoot = new File(getCommandLine().getPathAt(0));  
         
-        SVNRevision rStart = SVNRevision.UNDEFINED;
-        SVNRevision rEnd = SVNRevision.UNDEFINED;
-        String revStr = (String) getCommandLine().getArgumentValue(SVNArgument.REVISION);
-        if (revStr != null && revStr.indexOf(':') > 0) {
-            rStart = SVNRevision.parse(revStr.substring(0, revStr.indexOf(':')));
-            rEnd = SVNRevision.parse(revStr.substring(revStr.indexOf(':') + 1));
-        } else if (revStr != null) {
-            rStart = SVNRevision.parse(revStr);
-        }
+        SVNRevision[] revRange = getStartEndRevisions();
+        SVNRevision rStart = revRange[0];
+        SVNRevision rEnd = revRange[1];
 
         boolean isIncremental = getCommandLine().hasArgument(SVNArgument.INCREMENTAL);
         boolean useDeltas = getCommandLine().hasArgument(SVNArgument.DELTAS);

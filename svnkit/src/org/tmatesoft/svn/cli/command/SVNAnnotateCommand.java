@@ -54,16 +54,10 @@ public class SVNAnnotateCommand extends SVNCommand implements ISVNAnnotateHandle
         }
         myIsVerbose = getCommandLine().hasArgument(SVNArgument.VERBOSE);
         myPrintStream = out;
-        SVNRevision startRevision = SVNRevision.UNDEFINED;
-        SVNRevision endRevision = SVNRevision.UNDEFINED;
-        String revStr = (String) getCommandLine().getArgumentValue(SVNArgument.REVISION);
+        SVNRevision[] revRange = getStartEndRevisions();
+        SVNRevision startRevision = revRange[0];
+        SVNRevision endRevision = revRange[1];
         boolean force = getCommandLine().hasArgument(SVNArgument.FORCE);
-        if (revStr != null && revStr.indexOf(':') > 0) {
-            startRevision = SVNRevision.parse(revStr.substring(0, revStr.indexOf(':')));
-            endRevision = SVNRevision.parse(revStr.substring(revStr.indexOf(':') + 1));
-        } else if (revStr != null) {
-            endRevision = SVNRevision.parse(revStr);
-        }
         ISVNAnnotateHandler handler = this;
         SVNXMLSerializer serializer = null;
         if (getCommandLine().hasArgument(SVNArgument.XML)) {

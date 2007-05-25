@@ -67,12 +67,14 @@ public class SVNMergeCommand extends SVNCommand {
                     rN = SVNRevision.create(-changeRev);
                     rM = SVNRevision.create((-changeRev) - 1);
                 }
-            }else if (revStr.indexOf(':') <= 0) {
+            } else if (revStr.indexOf(':') <= 0 || (revStr.indexOf('{') != -1 && 
+                    revStr.indexOf("}:") == -1 && revStr.indexOf(":{") == -1)) {
                 println(err, "svn: merge needs both source and target revisions to be specified");
                 return;
             } else {
-                rN = SVNRevision.parse(revStr.substring(0, revStr.indexOf(':')));
-                rM = SVNRevision.parse(revStr.substring(revStr.indexOf(':') + 1));
+                SVNRevision[] revRange = getStartEndRevisions();
+                rN = revRange[0];
+                rM = revRange[1];
             }
             if (!rN.isValid() || !rM.isValid() || rN == SVNRevision.WORKING || rM == SVNRevision.WORKING) {
                 println(err, "svn: merge needs both source and target revisions to be specified");

@@ -304,4 +304,21 @@ public abstract class SVNCommand {
         }
         return count;
     }
+
+    protected SVNRevision[] getStartEndRevisions() {
+        String revStr = (String) getCommandLine().getArgumentValue(SVNArgument.REVISION);
+        SVNRevision startRevision = SVNRevision.UNDEFINED;
+        SVNRevision endRevision = SVNRevision.UNDEFINED;
+        if (revStr != null && revStr.indexOf("}:{") > 0) {
+            startRevision = SVNRevision.parse(revStr.substring(0, revStr.indexOf("}:{") + 1));
+            endRevision = SVNRevision.parse(revStr.substring(revStr.indexOf("}:{") +2));
+        } else if (revStr != null && revStr.indexOf(':') > 0 && revStr.indexOf('{') < 0 && revStr.indexOf('}') < 0 ) {
+            startRevision = SVNRevision.parse(revStr.substring(0, revStr.indexOf(':')));
+            endRevision = SVNRevision.parse(revStr.substring(revStr.indexOf(':') + 1));
+        } else if (revStr != null) {
+            startRevision = SVNRevision.parse(revStr);
+        }
+        return new SVNRevision[] {startRevision, endRevision};
+    }
+
 }
