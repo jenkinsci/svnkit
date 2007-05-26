@@ -111,7 +111,12 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
             myDirectoryInfo.myIsPropertiesChanged = true;
         }
         if (SVNProperty.COMMITTED_REVISION.equals(name) && value != null) {
-            myDirectoryInfo.myRemoteRevision = SVNRevision.parse(value);
+            try {
+                long number = Long.parseLong(value);
+                myDirectoryInfo.myRemoteRevision = SVNRevision.create(number);
+            } catch (NumberFormatException nfe) {
+                myDirectoryInfo.myRemoteRevision = SVNRevision.UNDEFINED;
+            }
         } else if (SVNProperty.COMMITTED_DATE.equals(name) && value != null) {
             myDirectoryInfo.myRemoteDate = SVNTimeUtil.parseDate(value);
         } else if (SVNProperty.LAST_AUTHOR.equals(name)) {
@@ -189,7 +194,12 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
             myFileInfo.myIsPropertiesChanged = true;
         }
         if (SVNProperty.COMMITTED_REVISION.equals(name) && value != null) {
-            myFileInfo.myRemoteRevision = SVNRevision.parse(value);
+            try {
+                long number = Long.parseLong(value);
+                myFileInfo.myRemoteRevision = SVNRevision.create(number);
+            } catch (NumberFormatException nfe) {
+                myFileInfo.myRemoteRevision = SVNRevision.UNDEFINED;
+            }
         } else if (SVNProperty.COMMITTED_DATE.equals(name) && value != null) {
             myFileInfo.myRemoteDate = SVNTimeUtil.parseDate(value);
         } else if (SVNProperty.LAST_AUTHOR.equals(name)) {

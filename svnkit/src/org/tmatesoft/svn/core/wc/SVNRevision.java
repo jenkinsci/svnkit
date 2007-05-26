@@ -13,9 +13,13 @@ package org.tmatesoft.svn.core.wc;
 
 import java.text.DateFormat;
 import java.text.ParseException;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimeZone;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 
@@ -289,17 +293,69 @@ public class SVNRevision {
             value = value.substring(1);
             value = value.substring(0, value.length() - 1);
             
-            Date date = null;
-            if (value.indexOf('T') != -1) {
-                date = SVNTimeUtil.parseDate(value);    
-            } else {
-                try {
-                    date = DateFormat.getDateInstance().parse(value);
-                } catch (ParseException e) {
-                    return SVNRevision.UNDEFINED;
+            try {
+                Pattern datePattern = Pattern.compile("(\\d{4}-?\\d{2}-?\\d{2})?(?:[T ])?(\\d{2}:?\\d{2}(?::?\\d{2})?(?:\\.\\d+)?)?(?:[Z ]|(?:\\+|-)\\d{2}:?\\d{2})?");
+                Matcher matcher = datePattern.matcher(value);
+                String[] dateSplit = null;
+                Calendar date = Calendar.getInstance();
+                if(matcher.matches()) {
+                    int groupCount = matcher.groupCount();
+                    for(int i = 1 ; i <= groupCount ; i++) {
+                        String capturedString = matcher.group(i);
+                        
+                        switch(capturedString.length()) {
+                        case 10:
+                            dateSplit = capturedString.split("-");
+                            date.set(Integer.parseInt(dateSplit[0]), Integer.parseInt(dateSplit[1])-1, 
+                                    Integer.parseInt(dateSplit[2]), 0, 0, 0);
+                            break;
+                        case 8:
+                            dateSplit = capturedString.split(":");
+                            if(dateSplit.length == 0) {
+                                date.set(Integer.parseInt(capturedString.substring(0, 3)), 
+                                        Integer.parseInt(capturedString.substring(4, 5)),
+                                        Integer.parseInt(capturedString.substring(6, 7)), 0, 0 ,0);
+                            } else {
+                                date.set(Calendar.HOUR_OF_DAY, Integer.parseInt(dateSplit[0]));
+                                date.set(Calendar.MINUTE, Integer.parseInt(dateSplit[1]));
+                                date.set(Calendar.SECOND, Integer.parseInt(dateSplit[2]));
+                            }
+                            break;
+                        case 6:
+                            dateSplit = capturedString.split(":");
+                            if(dateSplit.length == 0) {
+                                date.set(Calendar.HOUR_OF_DAY, Integer.parseInt(capturedString.substring(0, 1)));
+                                date.set(Calendar.MINUTE, Integer.parseInt(capturedString.substring(2, 3)));
+                                date.set(Calendar.SECOND, Integer.parseInt(capturedString.substring(4, 5)));
+                            } else {
+                                // Is Time Zone
+                                
+                                date.setTimeZone(TimeZone.getTimeZone("GMT" + dateSplit[0] + dateSplit[1]));
+                            }
+                            break;
+                        case 5:
+                            dateSplit = capturedString.split(":");
+                            if(dateSplit.length == 0) {
+                                // Is Time Zone
+                                date.setTimeZone(TimeZone.getTimeZone("GMT" + capturedString));
+                            } else {
+                                date.set(Calendar.HOUR, Integer.parseInt(dateSplit[0]));
+                                date.set(Calendar.MINUTE, Integer.parseInt(dateSplit[1]));
+                                date.set(Calendar.SECOND, 0);
+                            }
+                            break;
+                        case 4:
+                            date.set(Calendar.HOUR, Integer.parseInt(capturedString.substring(0, 1)));
+                            date.set(Calendar.MINUTE, Integer.parseInt(capturedString.substring(2, 3)));
+                            date.set(Calendar.SECOND, 0);
+                            break;
+                        }
+                    }
                 }
-            } 
-            return SVNRevision.create(date);
+                return SVNRevision.create(date.getTime());
+            } catch (NumberFormatException e) {
+                return SVNRevision.UNDEFINED;
+            }
         }
         try {
             long number = Long.parseLong(value);
