@@ -89,14 +89,18 @@ class HTTPConnection implements IHTTPConnection {
     private boolean myIsSpoolResponse;
     private ISVNSSLManager mySSLManager;
     private String myCharset;
+    private boolean myIsSpoolAll;
+    private File mySpoolDirectory;
 
     
-    public HTTPConnection(SVNRepository repository, String charset) throws SVNException {
+    public HTTPConnection(SVNRepository repository, String charset, File spoolDirectory, boolean spoolAll) throws SVNException {
         myRepository = repository;
         myCharset = charset;
         myHost = repository.getLocation().setPath("", false);
         myIsSecured = "https".equalsIgnoreCase(myHost.getProtocol());
         myIsKeepAlive = repository.getOptions().keepConnection(repository);
+        myIsSpoolAll = spoolAll;
+        mySpoolDirectory = spoolDirectory;
     }
     
     public SVNURL getHost() {
@@ -570,26 +574,22 @@ class HTTPConnection implements IHTTPConnection {
     
     public SVNErrorMessage readData(HTTPRequest request, String method, String path, DefaultHandler handler) throws IOException {
         InputStream is = null; 
-        File tmpFile = null; 
+        SpoolFile tmpFile = null; 
         SVNErrorMessage err = null;
-        boolean closeStream = myIsSpoolResponse;
         try {
-            if (myIsSpoolResponse) {
+            if (myIsSpoolResponse || myIsSpoolAll) {
                 OutputStream dst = null;
                 try {
-                    tmpFile = SVNFileUtil.createTempFile(".svnkit", ".spool");
-                    dst = SVNFileUtil.openFileForWriting(tmpFile);
+                    tmpFile = new SpoolFile(mySpoolDirectory);
+                    dst = tmpFile.openForWriting();
                     dst = new SVNCancellableOutputStream(dst, myRepository.getCanceller());
                     // this will exhaust http stream anyway.
                     err = readData(request, dst);
-                    closeStream |= err != null;
                     if (err != null) {
                         return err;
                     }
                     // this stream always have to be closed.
-                    is = SVNFileUtil.openFileForReading(tmpFile);
-                } catch (SVNException e) {
-                    return e.getErrorMessage();
+                    is = tmpFile.openForReading();
                 } finally {
                     SVNFileUtil.closeFile(dst);
                 }
@@ -598,12 +598,10 @@ class HTTPConnection implements IHTTPConnection {
             }
             // this will not close is stream.
             err = readData(is, method, path, handler);
-            closeStream |= err != null;
         } catch (IOException e) {
-            closeStream = true;
             throw e;
         } finally {
-            if (myIsSpoolResponse) {
+            if (myIsSpoolResponse || myIsSpoolAll) {
                 // always close spooled stream.
                 SVNFileUtil.closeFile(is);
             } else if (err == null && !hasToCloseConnection(request.getResponseHeader())) {
@@ -612,7 +610,7 @@ class HTTPConnection implements IHTTPConnection {
             }
             if (tmpFile != null) {
                 try {
-                    SVNFileUtil.deleteFile(tmpFile);
+                    tmpFile.delete();
                 } catch (SVNException e) {
                     throw new IOException(e.getMessage());
                 }

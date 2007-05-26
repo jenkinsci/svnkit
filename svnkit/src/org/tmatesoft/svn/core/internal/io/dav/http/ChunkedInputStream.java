@@ -18,63 +18,93 @@ import java.io.InputStream;
 
 /**
  * @version 1.1.1
- * @author  TMate Software Ltd.
+ * @author TMate Software Ltd.
  */
 class ChunkedInputStream extends InputStream {
-    
-    private InputStream mySource;
-    private byte[] myBuffer;
-    private int myPosition;
-    private String myCharset;
 
-    public ChunkedInputStream(InputStream source, String charset) {
-        mySource = source;
+    private String myCharset;
+    private InputStream myInputStream;
+    private int myChunkSize;
+    private int myPosition;
+    private boolean myIsBOF = true;
+    private boolean myIsEOF = false;
+    private boolean myIsClosed = false;
+
+    public ChunkedInputStream(final InputStream in, String charset) {
+        myInputStream = in;
+        myPosition = 0;
         myCharset = charset;
     }
-
     public int read() throws IOException {
-        if (mySource == null) {
-            return -1;
+        if (myIsClosed) {
+            throw new IOException("Attempted read from closed stream.");
         }
-        if (myBuffer == null || myPosition >= myBuffer.length) {
-            int length = readChunkLength();
-            if (length == 0) {
-                mySource = null;
+        if (myIsEOF) {
+            return -1;
+        } 
+        if (myPosition >= myChunkSize) {
+            nextChunk();
+            if (myIsEOF) { 
                 return -1;
             }
-            myBuffer = new byte[length];
-            int offset = 0;
-            while(length > 0) {
-                int count = mySource.read(myBuffer, offset, length);
-                if (count < 0) {
-                    mySource = null;
-                    throw new IOException("Cannot read chunk of data, connection is closed by the server or end of stream reached");
-                }
-                length -= count;
-                offset += count;
+        }
+        myPosition++;
+        return myInputStream.read();
+    }
+
+    public int read (byte[] b, int off, int len) throws IOException {
+        if (myIsClosed) {
+            throw new IOException("Attempted read from closed stream.");
+        }
+        if (myIsEOF) { 
+            return -1;
+        }
+        if (myPosition >= myChunkSize) {
+            nextChunk();
+            if (myIsEOF) { 
+                return -1;
             }
-            myPosition = 0;
         }
-        return myBuffer[myPosition++] & 0xff;
+        len = Math.min(len, myChunkSize - myPosition);
+        int count = myInputStream.read(b, off, len);
+        myPosition += count;
+        return count;
     }
 
-    public void close() throws IOException {
-        if (mySource != null) {
-            try {
-                FixedSizeInputStream.consumeRemaining(this);
-            } catch (IOException e) {}
-            mySource = null;
+    public int read (byte[] b) throws IOException {
+        return read(b, 0, b.length);
+    }
+
+    private void readCRLF() throws IOException {
+        int cr = myInputStream.read();
+        int lf = myInputStream.read();
+        if ((cr != '\r') || (lf != '\n')) { 
+            throw new IOException(
+                "CRLF expected at end of chunk: " + cr + "/" + lf);
         }
     }
 
-    private int readChunkLength() throws IOException {
-        
+    private void nextChunk() throws IOException {
+        if (!myIsBOF) {
+            readCRLF();
+        }
+        myChunkSize = getChunkSizeFromInputStream(myInputStream, myCharset);
+        myIsBOF = false;
+        myPosition = 0;
+        if (myChunkSize == 0) {
+            myIsEOF = true;
+        }
+    }
+
+    private static int getChunkSizeFromInputStream(final InputStream in, String charset) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        // States: 0=normal, 1=\r was scanned, 2=inside quoted string,
+        // -1=end
         int state = 0; 
         while (state != -1) {
-            int b = mySource.read();
+        int b = in.read();
             if (b == -1) { 
-                throw new IOException("Chunked stream ended unexpectedly");
+                throw new IOException("chunked stream ended unexpectedly");
             }
             switch (state) {
                 case 0: 
@@ -84,39 +114,43 @@ class ChunkedInputStream extends InputStream {
                             break;
                         case '\"':
                             state = 2;
+                            /* fall through */
                         default:
                             baos.write(b);
                     }
                     break;
+
                 case 1:
                     if (b == '\n') {
                         state = -1;
                     } else {
-                        throw new IOException("Protocol violation: Unexpected single newline character in chunk size");
+                        // this was not CRLF
+                        throw new IOException("Protocol violation: Unexpected"
+                            + " single newline character in chunk size");
                     }
                     break;
+
                 case 2:
                     switch (b) {
                         case '\\':
-                            b = mySource.read();
+                            b = in.read();
                             baos.write(b);
                             break;
                         case '\"':
                             state = 0;
+                            /* fall through */
                         default:
                             baos.write(b);
                     }
                     break;
-                default: throw new IOException("Assertion failed while reading chunk length");
+                default: throw new RuntimeException("assertion failed");
             }
         }
 
-        String dataString = new String(baos.toByteArray(), myCharset);
+        // parse data
+        String dataString = new String(baos.toByteArray(), charset);
         int separator = dataString.indexOf(';');
         dataString = (separator > 0) ? dataString.substring(0, separator).trim() : dataString.trim();
-        if (dataString.trim().length() == 0) {
-            return readChunkLength();
-        }
 
         int result;
         try {
@@ -126,4 +160,18 @@ class ChunkedInputStream extends InputStream {
         }
         return result;
     }
+
+    public void close() throws IOException {
+        if (!myIsClosed) {
+            try {
+                if (!myIsEOF) {
+                    FixedSizeInputStream.consumeRemaining(this);
+                }
+            } finally {
+                myIsEOF = true;
+                myIsClosed = true;
+            }
+        }
+    }
 }
+

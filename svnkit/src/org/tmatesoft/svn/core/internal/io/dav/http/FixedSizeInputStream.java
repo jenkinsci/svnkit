@@ -49,7 +49,7 @@ class FixedSizeInputStream extends InputStream {
     
     static void consumeRemaining(InputStream is) throws IOException {
         byte[] buffer = new byte[1024];
-        while(is.read(buffer) > 0);
+        while(is.read(buffer) >= 0);
     }
 
 }
