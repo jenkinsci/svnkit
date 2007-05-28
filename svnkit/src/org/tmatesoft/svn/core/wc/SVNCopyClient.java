@@ -842,7 +842,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 copyAccess.close();
             }
             if (isMove) {
-                SVNWCManager.delete(srcParentArea.getWCAccess(), srcParentArea, srcPath, true);
+                SVNWCManager.delete(srcParentArea.getWCAccess(), srcParentArea, srcPath, true, false);
             }
         } finally {
             wcAccess.close();

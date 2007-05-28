@@ -189,6 +189,71 @@ public class SVNWCManager {
         }
         dir.saveEntries(false);
     }
+
+    public static void markTreeCancellable(SVNAdminArea dir, String schedule, boolean copied, int flags) throws SVNException {
+        Map attributes = new HashMap();
+        Map recurseMap = new HashMap();
+        for(Iterator entries = dir.entries(false); entries.hasNext();) {
+            SVNEntry entry = (SVNEntry) entries.next();
+            if (dir.getThisDirName().equals(entry.getName())) {
+                continue;
+            }
+            File path = dir.getFile(entry.getName());
+            if (entry.getKind() == SVNNodeKind.DIR) {
+                SVNAdminArea childDir = dir.getWCAccess().retrieve(path);
+                // leave for recursion, do not set anything on 'dir' entry.
+                recurseMap.put(entry.getName(), childDir);
+                continue;
+            }
+            if ((flags & SCHEDULE) != 0) {
+                attributes.put(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE), schedule);
+            }
+            if ((flags & COPIED) != 0) {
+                attributes.put(SVNProperty.shortPropertyName(SVNProperty.COPIED), copied ? Boolean.TRUE.toString() : null);
+            }
+            dir.modifyEntry(entry.getName(), attributes, true, false);
+            attributes.clear();
+            if (SVNProperty.SCHEDULE_DELETE.equals(schedule)) {
+                SVNEvent event = SVNEventFactory.createDeletedEvent(dir, entry.getName());
+                dir.getWCAccess().handleEvent(event);
+            }
+        }
+        SVNEntry dirEntry = dir.getEntry(dir.getThisDirName(), false);
+        if (!(dirEntry.isScheduledForAddition() && SVNProperty.SCHEDULE_DELETE.equals(schedule))) {
+            if ((flags & SCHEDULE) != 0) {
+                attributes.put(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE), schedule);
+            }
+            if ((flags & COPIED) != 0) {
+                attributes.put(SVNProperty.shortPropertyName(SVNProperty.COPIED), copied ? Boolean.TRUE.toString() : null);
+            }
+            dir.modifyEntry(dir.getThisDirName(), attributes, true, false);
+            attributes.clear();
+        }
+        dir.saveEntries(false);
+        // could check for cancellation - entries file saved.
+        dir.getWCAccess().checkCancelled();
+
+        // recurse.
+        for (Iterator dirs = recurseMap.keySet().iterator(); dirs.hasNext();) {
+            String entryName = (String) dirs.next();
+            SVNAdminArea childDir = (SVNAdminArea) recurseMap.get(entryName);
+            // update 'dir' entry, save entries file again, then enter recursion.
+            if ((flags & SCHEDULE) != 0) {
+                attributes.put(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE), schedule);
+            }
+            if ((flags & COPIED) != 0) {
+                attributes.put(SVNProperty.shortPropertyName(SVNProperty.COPIED), copied ? Boolean.TRUE.toString() : null);
+            }
+            dir.modifyEntry(entryName, attributes, true, false);
+            attributes.clear();
+            if (SVNProperty.SCHEDULE_DELETE.equals(schedule)) {
+                SVNEvent event = SVNEventFactory.createDeletedEvent(dir, entryName);
+                dir.getWCAccess().handleEvent(event);
+            }
+            dir.saveEntries(false);
+            markTree(childDir, schedule, copied, flags);
+        }
+    }
     
     public static void updateCleanup(File path, SVNWCAccess wcAccess, boolean recursive, String baseURL, String rootURL,
             long newRevision, boolean removeMissingDirs) throws SVNException {
@@ -315,7 +380,7 @@ public class SVNWCManager {
         });
     }
 
-    public static void delete(SVNWCAccess wcAccess, SVNAdminArea root, File path, boolean deleteFiles) throws SVNException {
+    public static void delete(SVNWCAccess wcAccess, SVNAdminArea root, File path, boolean deleteFiles, boolean cancellable) throws SVNException {
         SVNAdminArea dir = wcAccess.probeTry(path, true, SVNWCAccess.INFINITE_DEPTH);
         SVNEntry entry = null;
         if (dir != null) {
@@ -347,7 +412,11 @@ public class SVNWCManager {
                 }
             } else {
                 if (dir != root) {
-                    markTree(dir, SVNProperty.SCHEDULE_DELETE, false, SCHEDULE);
+                    if (cancellable) {
+                        markTreeCancellable(dir, SVNProperty.SCHEDULE_DELETE, false, SCHEDULE);
+                    } else {
+                        markTree(dir, SVNProperty.SCHEDULE_DELETE, false, SCHEDULE);
+                    }
                 }
             }
         }

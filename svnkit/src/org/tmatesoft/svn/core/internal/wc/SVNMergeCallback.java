@@ -346,7 +346,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
         }
         SVNAdminArea root = getWCAccess().retrieve(path.getParentFile()); 
         if (!dryRun) {
-            SVNWCManager.delete(getWCAccess(), root, path, true);
+            SVNWCManager.delete(getWCAccess(), root, path, true, false);
         }
     }
 

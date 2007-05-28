@@ -886,7 +886,7 @@ public class SVNWCClient extends SVNBasicClient {
             }
             SVNAdminArea root = wcAccess.open(path.getParentFile(), true, 0); 
             if (!dryRun) {
-                SVNWCManager.delete(wcAccess, root, path, deleteFiles);
+                SVNWCManager.delete(wcAccess, root, path, deleteFiles, true);
             }
         } finally {
             wcAccess.close();
