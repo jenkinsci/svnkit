@@ -56,6 +56,7 @@ public class SVNErrorMessage implements Serializable {
     private SVNErrorCode myErrorCode;
     private int myType;
     private SVNErrorMessage myChildErrorMessage;
+    private Throwable myThrowable;
     
     private static final Object[] EMPTY_ARRAY = new Object[0];
     
@@ -84,6 +85,20 @@ public class SVNErrorMessage implements Serializable {
      */
     public static SVNErrorMessage create(SVNErrorCode code, String message) {
         return create(code, message, TYPE_ERROR);
+    }
+
+    /**
+     * Creates an error message given an error code and cause.
+     * 
+     * @param  code      an error code
+     * @param  cause     cause of the error   
+     * @return           a new error message
+     */
+    public static SVNErrorMessage create(SVNErrorCode code, Throwable cause) {
+        if (cause != null) {
+            return new SVNErrorMessage(code, cause.getMessage(), new Object[0], cause, TYPE_ERROR);
+        }
+        return create(code);
     }
 
     /**
@@ -126,7 +141,7 @@ public class SVNErrorMessage implements Serializable {
      * @return            a new error message
      */
     public static SVNErrorMessage create(SVNErrorCode code, String message, int type) {
-        return new SVNErrorMessage(code, message, EMPTY_ARRAY, type);
+        return new SVNErrorMessage(code, message, EMPTY_ARRAY, null, type);
     }
     
     /**
@@ -144,7 +159,7 @@ public class SVNErrorMessage implements Serializable {
      */
     public static SVNErrorMessage create(SVNErrorCode code, String message, Object object, int type) {
         return new SVNErrorMessage(code == null ? SVNErrorCode.BASE : code, message == null ? "" : message, 
-                object == null ? new Object[] {"NULL"} : new Object[] {object}, type);
+                object == null ? new Object[] {"NULL"} : new Object[] {object}, null, type);
     }
     
     /**
@@ -162,10 +177,10 @@ public class SVNErrorMessage implements Serializable {
      */
     public static SVNErrorMessage create(SVNErrorCode code, String message, Object[] objects, int type) {
         return new SVNErrorMessage(code == null ? SVNErrorCode.BASE : code, message == null ? "" : message, 
-                objects == null ? EMPTY_ARRAY : objects, type);
+                objects == null ? EMPTY_ARRAY : objects, null, type);
     }
     
-    protected SVNErrorMessage(SVNErrorCode code, String message, Object[] relatedObjects, int type) {
+    protected SVNErrorMessage(SVNErrorCode code, String message, Object[] relatedObjects, Throwable th, int type) {
         myErrorCode = code;
         if (message != null && message.startsWith("svn: ")) {
             message = message.substring("svn: ".length());
@@ -173,6 +188,7 @@ public class SVNErrorMessage implements Serializable {
         myMessage = message;
         myObjects = relatedObjects;
         myType = type;
+        myThrowable = th;
     }
     
     /**
@@ -267,6 +283,15 @@ public class SVNErrorMessage implements Serializable {
      */
     public boolean hasChildErrorMessage() {
         return myChildErrorMessage != null;
+    }
+    
+    /**
+     * Returns throwable that is cause of the error if any.
+     * 
+     * @return throwable that caused error or null if not applicable or not known.
+     */
+    public Throwable getCause() {
+        return myThrowable;
     }
     
     /**

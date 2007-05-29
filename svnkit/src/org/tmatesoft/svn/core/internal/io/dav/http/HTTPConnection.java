@@ -302,7 +302,7 @@ class HTTPConnection implements IHTTPConnection {
                         continue;
                     }
                 }
-                err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, ssl.getMessage());
+                err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, ssl);
             } catch (IOException e) {
                 myRepository.getDebugLog().info(e);
                 if (e instanceof SocketTimeoutException) {
