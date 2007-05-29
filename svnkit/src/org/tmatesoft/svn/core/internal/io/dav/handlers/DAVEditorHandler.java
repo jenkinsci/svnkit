@@ -12,6 +12,7 @@
 
 package org.tmatesoft.svn.core.internal.io.dav.handlers;
 
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -31,6 +32,7 @@ import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
+import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.xml.sax.Attributes;
 
 
@@ -168,10 +170,21 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
     protected boolean myIsDirectory;
     private String myChecksum;
     private String myEncoding;
+    private ISVNDeltaConsumer myDeltaConsumer;
 
     public DAVEditorHandler(ISVNEditor editor, boolean fetchContent) {
-        myIsFetchContent = fetchContent; 
         myEditor = editor;
+        myDeltaConsumer = fetchContent ? (ISVNDeltaConsumer) editor : new ISVNDeltaConsumer() {
+            public void applyTextDelta(String path, String baseChecksum) throws SVNException {
+                myEditor.applyTextDelta(path, baseChecksum);
+            }
+            public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
+                return null;
+            }
+            public void textDeltaEnd(String path) throws SVNException {
+                myEditor.textDeltaEnd(path);
+            }
+        };
 		init();
 	}
 	
@@ -245,9 +258,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "'update' response format used by the server is not supported; element ''{0}'' was not expected", element.toString());
             SVNErrorManager.error(err);
         } else if (element == TX_DELTA) {
-            if (myIsFetchContent) {
-                setDeltaProcessing(true);
-            }
+            setDeltaProcessing(true);
             myEditor.applyTextDelta(myPath, myChecksum);
         }
 	}
@@ -292,7 +303,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             }
             myPropertyName = null;
             myEncoding = null;
-        } else if (element == TX_DELTA && myIsFetchContent) {
+        } else if (element == TX_DELTA) {
             setDeltaProcessing(false);
         }
 	}
@@ -302,7 +313,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
     }
     
     protected ISVNDeltaConsumer getDeltaConsumer() {
-        return myEditor;
+        return myDeltaConsumer;
     }
     
     private static String computeWCPropertyName(DAVElement element) {
