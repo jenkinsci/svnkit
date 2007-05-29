@@ -166,7 +166,6 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
     protected ISVNEditor myEditor;
     protected String myPath;
     protected String myPropertyName;
-    protected boolean myIsFetchContent;
     protected boolean myIsDirectory;
     private String myChecksum;
     private String myEncoding;
