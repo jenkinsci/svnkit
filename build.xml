@@ -12,7 +12,7 @@
         <property file="svnkit.build.properties"/>
     		
     	<condition property="eclipse.present">
-        	<available file="${eclipse.home}/startup.jar" property="eclipse.ini"/>
+        	<available file="${eclipse.home}/eclipse.ini" property="eclipse.ini"/>
         </condition>
     	
     	<condition property="os" value="windows">
