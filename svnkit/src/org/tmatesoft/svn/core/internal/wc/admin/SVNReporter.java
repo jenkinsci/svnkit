@@ -170,6 +170,11 @@ public class SVNReporter implements ISVNReporterBaton {
                 }
             } else if (entry.isDirectory() && recursive) {
                 if (missing) {
+                    if (myIsRestore && entry.isScheduledForDeletion() || entry.isScheduledForReplacement()) {
+                        // remove dir schedule if it is 'scheduled for deletion' but missing.
+                        entry.setSchedule(null);
+                        adminArea.saveEntries(false);
+                    }
                     if (!reportAll) {
                         reporter.deletePath(path);
                     }

@@ -1259,9 +1259,18 @@ public class SVNWCClient extends SVNBasicClient {
             if (entry.getKind() == SVNNodeKind.FILE) {
                 reverted = revert(parent, entry.getName(), entry, useCommitTimes);
             } else if (entry.getKind() == SVNNodeKind.DIR) {
-                reverted = revert(dir, dir.getThisDirName(), entry, useCommitTimes);
+                boolean notScheduled = entry.getSchedule() == null;
+                reverted = revert(dir, dir.getThisDirName(), entry, useCommitTimes);                
                 if (entry.isScheduledForReplacement()) {
                     recursive = true;
+                }
+                // check parent entry for schedule.
+                if (parent != dir) {
+                    SVNEntry entryInParent = parent.getEntry(path.getName(), false);
+                    if (entryInParent.getSchedule() != null && notScheduled) {
+                        entryInParent.setSchedule(null);
+                        parent.saveEntries(false);
+                    }
                 }
             }
         }
