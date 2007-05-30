@@ -326,7 +326,7 @@ public class SVNMoveClient extends SVNBasicClient {
                         log.save();
                         dstArea.runLogs();
 
-                        updateCopiedDirectory(dstArea, dstArea.getThisDirName(), dstURL, repositoryRootURL, srcURL, -1);
+                        updateCopiedDirectory(dstArea, dstArea.getThisDirName(), dstURL, repositoryRootURL, null, -1);
                         dstArea.saveEntries(true);
                         dstParentArea.saveEntries(true);
 
@@ -368,12 +368,7 @@ public class SVNMoveClient extends SVNBasicClient {
                 }
                 if (copyFromURL != null) {
                     entry.setCopyFromURL(copyFromURL);
-                    if (copyFromRevision >= 0) {
-                        entry.setCopyFromRevision(copyFromRevision);
-                    } else {
-                        // just set original revision.
-                        entry.setCopyFromRevision(entry.getRevision());
-                    }
+                    entry.setCopyFromRevision(copyFromRevision);
                 }
             }
             boolean deleted = false;
@@ -385,8 +380,6 @@ public class SVNMoveClient extends SVNBasicClient {
                 if (entry.isDirectory()) {
                     entry.setKind(SVNNodeKind.FILE);
                 }
-            } else {
-                entry.scheduleForAddition();
             }
             if (entry.getLockToken() != null && newURL != null) {
                 entry.setLockToken(null);
