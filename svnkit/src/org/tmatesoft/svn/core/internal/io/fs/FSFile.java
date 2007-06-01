@@ -19,6 +19,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
+import java.nio.charset.MalformedInputException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
@@ -191,7 +192,14 @@ public class FSFile {
                 read(myReadLineBuffer);
                 myReadLineBuffer.flip();
                 myReadLineBuffer.limit(myReadLineBuffer.limit() - 1);
-                String key = myDecoder.decode(myReadLineBuffer).toString();
+                int pos = myReadLineBuffer.position();
+                int limit = myReadLineBuffer.limit();
+                String key = null;
+                try {
+                    key = myDecoder.decode(myReadLineBuffer).toString();
+                } catch (MalformedInputException mfi) {
+                    key = new String(myReadLineBuffer.array(), myReadLineBuffer.arrayOffset() + pos, limit - pos);
+                }
                 if (kind == 'D') {
                     map.put(key, null);
                     continue;
@@ -215,7 +223,14 @@ public class FSFile {
                 read(myReadLineBuffer);
                 myReadLineBuffer.flip();
                 myReadLineBuffer.limit(myReadLineBuffer.limit() - 1);
-                String value = myDecoder.decode(myReadLineBuffer).toString();
+                String value = null;
+                pos = myReadLineBuffer.position();
+                limit = myReadLineBuffer.limit();
+                try {
+                    value = myDecoder.decode(myReadLineBuffer).toString();
+                } catch (MalformedInputException mfi) {
+                    value = new String(myReadLineBuffer.array(), myReadLineBuffer.arrayOffset() + pos, limit - pos);
+                }
                 map.put(key, value);
             }
         } catch (IOException e) {
