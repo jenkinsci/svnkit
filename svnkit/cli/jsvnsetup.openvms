@@ -1,4 +1,9 @@
 $!
+$ if f$type(java) .nes. "STRING" .or. "''java'" .eqs. ""
+$  then
+$   write SYS$OUTPUT "You must have the JAVA symbol properly set before using this command"
+$   exit
+$  endif
 $ env = f$env("PROCEDURE")
 $ home = f$parse(env,,,"device") + f$parse(env,,,"directory")
 $ define/job/nolog svnkit_home 'home'
@@ -13,9 +18,9 @@ $ OPT = ""
 $! OPT = "-Djava.util.logging.config.file=/svnkit_home/logging.properties"
 $!
 $ JV = f$edit(java,"collapse")
-$ jsvn ==      "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli.SVN""
-$ jsvnadmin == "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli.SVNAdmin""
-$ jsvnlook ==  "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli.SVNLook""
-$ jsvnsync ==  "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli.SVNSync""
-$ jsvnversion ==  "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli.SVNVersion""
+$ jsvn ==      "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli.SVN"""
+$ jsvnadmin == "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli.SVNAdmin"""
+$ jsvnlook ==  "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli.SVNLook"""
+$ jsvnsync ==  "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli.SVNSync"""
+$ jsvnversion ==  "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli.SVNVersion"""
 $!
