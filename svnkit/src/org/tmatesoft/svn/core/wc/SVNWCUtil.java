@@ -182,6 +182,10 @@ public class SVNWCUtil {
      *         configuration driver interface
      */
     public static ISVNAuthenticationManager createDefaultAuthenticationManager(File configDir, String userName, String password, File privateKey, String passphrase, boolean storeAuth) {
+        return createDefaultAuthenticationManager(configDir, userName, password, privateKey, passphrase, storeAuth, true);
+    }
+
+    public static ISVNAuthenticationManager createDefaultAuthenticationManager(File configDir, String userName, String password, File privateKey, String passphrase, boolean storeAuth, boolean encrypt) {
         // check whether we are running inside Eclipse.
         if (isEclipse()) {
             // use reflection to allow compilation when there is no Eclipse.
@@ -200,9 +204,9 @@ public class SVNWCUtil {
             } catch (Throwable e) {
             }
         }
-        return new DefaultSVNAuthenticationManager(configDir, storeAuth, userName, password, privateKey, passphrase);
+        return new DefaultSVNAuthenticationManager(configDir, storeAuth, userName, password, privateKey, passphrase, encrypt);
     }
-
+    
     /**
      * Creates a default run-time configuration options driver that uses the
      * provided configuration directory.

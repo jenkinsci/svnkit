@@ -12,7 +12,6 @@
 package org.tmatesoft.svn.core.wc;
 
 import java.text.DateFormat;
-import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -21,7 +20,6 @@ import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 
 /**
  * <b>SVNRevision</b> is a revision wrapper used for an abstract representation 

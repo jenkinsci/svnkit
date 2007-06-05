@@ -26,15 +26,18 @@ import java.util.Map;
 public abstract class SVNPasswordCipher {
 
     public static final String SIMPLE_CIPHER_TYPE = "simple";
+    public static final String WINCRYPT_CIPHER_TYPE = "wincrypt";
     
-    private static final SVNPasswordCipher EMPTY_CIPHER = new CompositePasswordCipher(Collections.EMPTY_LIST);
-    private static final SVNPasswordCipher SIMPLE_CIPHER = new CompositePasswordCipher(Collections.EMPTY_LIST);
+    private static final SVNPasswordCipher EMPTY_CIPHER = new CompositePasswordCipher(Collections.EMPTY_LIST, SIMPLE_CIPHER_TYPE);
+    private static final SVNPasswordCipher SIMPLE_CIPHER = new CompositePasswordCipher(Collections.EMPTY_LIST, SIMPLE_CIPHER_TYPE);
+    private static final SVNPasswordCipher WINCRYPT_CIPHER = new SVNWinCryptPasswordCipher();
     
     private static Map ourInstances = new HashMap();
     private static String ourDefaultType = SIMPLE_CIPHER_TYPE;
     
     static {
         ourInstances.put(SIMPLE_CIPHER_TYPE, SIMPLE_CIPHER);
+        ourInstances.put(WINCRYPT_CIPHER_TYPE, WINCRYPT_CIPHER);
     }
     
     public static SVNPasswordCipher getInstance(String type) {
@@ -93,12 +96,16 @@ public abstract class SVNPasswordCipher {
 
     public abstract String decrypt(String encyrptedData);
 
+    public abstract String getCipherType();
+
     private static class CompositePasswordCipher extends SVNPasswordCipher {
         
         private List myCiphers;
-
-        private CompositePasswordCipher(List chiphers) {
+        private String myCipherType;
+        
+        private CompositePasswordCipher(List chiphers, String cipherType) {
             myCiphers = chiphers;
+            myCipherType = cipherType;
         }
 
         public CompositePasswordCipher(SVNPasswordCipher chipher) {
@@ -125,6 +132,10 @@ public abstract class SVNPasswordCipher {
             }
             return rawData;
         }
+
+        public String getCipherType() {
+            return myCipherType;
+        }
     }
-    
+
 }

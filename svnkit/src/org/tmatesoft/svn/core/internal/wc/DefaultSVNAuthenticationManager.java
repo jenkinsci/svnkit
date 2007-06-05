@@ -43,6 +43,7 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
 public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManager {
 
     private boolean myIsStoreAuth;
+    private boolean myIsEncryptionAllowed;
     private ISVNAuthenticationProvider[] myProviders;
     private File myConfigDirectory;
     
@@ -59,6 +60,10 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     }
 
     public DefaultSVNAuthenticationManager(File configDirectory, boolean storeAuth, String userName, String password, File privateKey, String passphrase) {
+        this(configDirectory, storeAuth, userName, password, privateKey, passphrase, true);
+    }
+
+    public DefaultSVNAuthenticationManager(File configDirectory, boolean storeAuth, String userName, String password, File privateKey, String passphrase, boolean encrypt) {
         password = password == null ? "" : password;
 
         myIsStoreAuth = storeAuth;
@@ -71,8 +76,9 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         myProviders[0] = createDefaultAuthenticationProvider(userName, password, privateKey, passphrase, myIsStoreAuth);
         myProviders[1] = createRuntimeAuthenticationProvider();
         myProviders[2] = createCacheAuthenticationProvider(new File(myConfigDirectory, "auth"));
+        myIsEncryptionAllowed = encrypt;
     }
-
+    
     public void setAuthenticationProvider(ISVNAuthenticationProvider provider) {
         // add provider to list
         myProviders[3] = provider; 
@@ -508,8 +514,14 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             Map values = new HashMap();
             values.put("svn:realmstring", realm);
             values.put("username", auth.getUserName());
-            String cipherType = SVNPasswordCipher.getDefaultCipherType();
+            String cipherType = null;
+            if (myIsEncryptionAllowed && SVNFileUtil.isWindows) {
+                cipherType = SVNPasswordCipher.WINCRYPT_CIPHER_TYPE;    
+            } else {
+                cipherType = SVNPasswordCipher.getDefaultCipherType(); 
+            }
             SVNPasswordCipher cipher = SVNPasswordCipher.getInstance(cipherType);
+
             if (cipherType != null) {
                 values.put("passtype", cipherType);
             } 
