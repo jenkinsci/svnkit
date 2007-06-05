@@ -37,7 +37,10 @@ public abstract class SVNPasswordCipher {
     
     static {
         ourInstances.put(SIMPLE_CIPHER_TYPE, SIMPLE_CIPHER);
-        ourInstances.put(WINCRYPT_CIPHER_TYPE, WINCRYPT_CIPHER);
+        if (SVNWinCryptPasswordCipher.isEnabled()) {
+            ourInstances.put(WINCRYPT_CIPHER_TYPE, WINCRYPT_CIPHER);
+            ourDefaultType = WINCRYPT_CIPHER_TYPE;
+        }
     }
     
     public static SVNPasswordCipher getInstance(String type) {

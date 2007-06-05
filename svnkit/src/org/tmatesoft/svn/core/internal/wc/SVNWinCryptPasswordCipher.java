@@ -19,9 +19,20 @@ import org.tmatesoft.svn.core.internal.util.SVNBase64;
  * @author  TMate Software Ltd.
  */
 public class SVNWinCryptPasswordCipher extends SVNPasswordCipher {
+    
+    private static boolean ourIsLibraryLoaded;
 
     static {
-        System.loadLibrary("SVNKitWinCryptHelper");
+        try {
+            System.loadLibrary("SVNKitWinCryptHelper");
+            ourIsLibraryLoaded = true;
+        } catch (Throwable th) {
+            ourIsLibraryLoaded = false;
+        }
+    }
+    
+    public static boolean isEnabled() {
+        return ourIsLibraryLoaded;
     }
     
     public String decrypt(String encryptedData) {

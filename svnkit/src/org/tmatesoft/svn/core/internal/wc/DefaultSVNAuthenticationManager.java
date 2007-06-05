@@ -43,7 +43,6 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
 public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManager {
 
     private boolean myIsStoreAuth;
-    private boolean myIsEncryptionAllowed;
     private ISVNAuthenticationProvider[] myProviders;
     private File myConfigDirectory;
     
@@ -54,16 +53,13 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     private int myLastProviderIndex;
     private SVNCompositeConfigFile myConfigFile;
     private boolean myIsAuthenticationForced;
+    private SVNAuthentication myLastLoadedAuth;
 
     public DefaultSVNAuthenticationManager(File configDirectory, boolean storeAuth, String userName, String password) {
         this(configDirectory, storeAuth, userName, password, null, null);
     }
 
     public DefaultSVNAuthenticationManager(File configDirectory, boolean storeAuth, String userName, String password, File privateKey, String passphrase) {
-        this(configDirectory, storeAuth, userName, password, privateKey, passphrase, true);
-    }
-
-    public DefaultSVNAuthenticationManager(File configDirectory, boolean storeAuth, String userName, String password, File privateKey, String passphrase, boolean encrypt) {
         password = password == null ? "" : password;
 
         myIsStoreAuth = storeAuth;
@@ -76,7 +72,6 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         myProviders[0] = createDefaultAuthenticationProvider(userName, password, privateKey, passphrase, myIsStoreAuth);
         myProviders[1] = createRuntimeAuthenticationProvider();
         myProviders[2] = createCacheAuthenticationProvider(new File(myConfigDirectory, "auth"));
-        myIsEncryptionAllowed = encrypt;
     }
     
     public void setAuthenticationProvider(ISVNAuthenticationProvider provider) {
@@ -146,6 +141,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         myPreviousAuthentication = null;
         myPreviousErrorMessage = null;
         myLastProviderIndex = 0;
+        myLastLoadedAuth = null;
         // iterate over providers and ask for auth till it is found.
         for (int i = 0; i < myProviders.length; i++) {
             if (myProviders[i] == null) {
@@ -153,6 +149,9 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             }
             SVNAuthentication auth = myProviders[i].requestClientAuthentication(kind, url, realm, null, null, myIsStoreAuth);
             if (auth != null) {
+                if (i == 2) {
+                    myLastLoadedAuth = auth;
+                }
                 myPreviousAuthentication = auth;
                 myLastProviderIndex = i;
                 return auth;
@@ -182,6 +181,9 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             }
             SVNAuthentication auth = myProviders[i].requestClientAuthentication(kind, url, realm, myPreviousErrorMessage, myPreviousAuthentication, myIsStoreAuth);
             if (auth != null) {
+                if (i == 2) {
+                    myLastLoadedAuth = auth;
+                }
                 myPreviousAuthentication = auth;
                 myLastProviderIndex = i;
                 return auth;
@@ -198,11 +200,16 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         if (!accepted) {
             myPreviousErrorMessage = errorMessage;
             myPreviousAuthentication = authentication;
+            myLastLoadedAuth = null;
             return;
         }
         if (myIsStoreAuth && authentication.isStorageAllowed() && myProviders[2] instanceof IPersistentAuthenticationProvider) {
-            ((IPersistentAuthenticationProvider) myProviders[2]).saveAuthentication(authentication, kind, realm);
+            // compare this authentication with last loaded from provider[2].
+            if (myLastLoadedAuth == null || myLastLoadedAuth != authentication) {
+                ((IPersistentAuthenticationProvider) myProviders[2]).saveAuthentication(authentication, kind, realm);
+            }
         }
+        myLastLoadedAuth = null;
         if (!hasExplicitCredentials(kind)) {
             // do not cache explicit credentials in runtime cache?
             ((CacheAuthenticationProvider) myProviders[1]).saveAuthentication(authentication, realm);
@@ -514,12 +521,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             Map values = new HashMap();
             values.put("svn:realmstring", realm);
             values.put("username", auth.getUserName());
-            String cipherType = null;
-            if (myIsEncryptionAllowed && SVNFileUtil.isWindows) {
-                cipherType = SVNPasswordCipher.WINCRYPT_CIPHER_TYPE;    
-            } else {
-                cipherType = SVNPasswordCipher.getDefaultCipherType(); 
-            }
+            String cipherType = SVNPasswordCipher.getDefaultCipherType();
             SVNPasswordCipher cipher = SVNPasswordCipher.getInstance(cipherType);
 
             if (cipherType != null) {
