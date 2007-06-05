@@ -17,4 +17,5 @@ $ jsvn ==      "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli.SVN""
 $ jsvnadmin == "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli.SVNAdmin""
 $ jsvnlook ==  "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli.SVNLook""
 $ jsvnsync ==  "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli.SVNSync""
+$ jsvnversion ==  "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli.SVNVersion""
 $!
