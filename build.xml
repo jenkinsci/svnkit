@@ -176,7 +176,7 @@
             </fileset>
         </jar>
         <copy file="contrib/ganymed/ganymed.jar" todir="build/lib" />
-        <copy file="svnkit/native/SVNKitWinCryptHelper.dll" todir="build/lib" />
+        <copy file="svnkit/native/jsvncrypt.dll" todir="build/lib" />
     	<!-- copy licences and changelog -->
         <copy todir="build/lib" flatten="true">
             <fileset dir=".">

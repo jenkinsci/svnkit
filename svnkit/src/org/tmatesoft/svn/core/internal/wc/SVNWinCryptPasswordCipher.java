@@ -24,7 +24,7 @@ public class SVNWinCryptPasswordCipher extends SVNPasswordCipher {
 
     static {
         try {
-            System.loadLibrary("SVNKitWinCryptHelper");
+            System.loadLibrary("jsvncrypt");
             ourIsLibraryLoaded = true;
         } catch (Throwable th) {
             ourIsLibraryLoaded = false;
