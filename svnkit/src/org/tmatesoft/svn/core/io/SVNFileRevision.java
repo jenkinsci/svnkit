@@ -55,8 +55,7 @@ public class SVNFileRevision implements Comparable {
     }
     
     /**
-     * Gets the file path (relative to a repository location - that URL
-     * used to create an <b>SVNRepository</b> to access a repository).
+     * Gets the file path (relative to a repository root URL).
      *  
      * @return	the path of the file
      * @see     SVNRepository
