@@ -158,10 +158,10 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
                 File targetPath = getAnchor().getFile(getAdminAreaInfo().getTargetName());
                 SVNStatus tgtStatus = (SVNStatus) myDirectoryInfo.myChildrenStatuses.get(targetPath);
                 if (tgtStatus != null) {
-                    if (isDescend() && tgtStatus.getKind() == SVNNodeKind.DIR) {
+                    if (tgtStatus.getKind() == SVNNodeKind.DIR) {
                         SVNAdminArea dir = getWCAccess().retrieve(targetPath);
-                        getDirStatus(null, dir, null, true, isReportAll(), isNoIgnore(), null, true, getDefaultHandler());
-                    }
+                        getDirStatus(null, dir, null, isDescend(), isReportAll(), isNoIgnore(), null, true, getDefaultHandler());
+                    } 
                     if (isSendableStatus(tgtStatus)) {
                         getDefaultHandler().handleStatus(tgtStatus);
                     }
