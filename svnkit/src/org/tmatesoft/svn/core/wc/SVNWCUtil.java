@@ -186,7 +186,11 @@ public class SVNWCUtil {
         if (isEclipse()) {
             // use reflection to allow compilation when there is no Eclipse.
             try {
-                Class managerClass = SVNWCUtil.class.getClassLoader().loadClass(ECLIPSE_AUTH_MANAGER_CLASSNAME);
+                ClassLoader loader = SVNWCUtil.class.getClassLoader();
+                if (loader == null) {
+                    loader = ClassLoader.getSystemClassLoader();
+                }
+                Class managerClass = loader.loadClass(ECLIPSE_AUTH_MANAGER_CLASSNAME);
                 if (managerClass != null) {
                     Constructor method = managerClass.getConstructor(new Class[] {
                             File.class, Boolean.TYPE, String.class, String.class, File.class, String.class
@@ -401,7 +405,11 @@ public class SVNWCUtil {
     private static boolean isEclipse() {
         if (ourIsEclipse == null) {
             try {
-                Class platform = SVNWCUtil.class.getClassLoader().loadClass("org.eclipse.core.runtime.Platform");
+                ClassLoader loader = SVNWCUtil.class.getClassLoader();
+                if (loader == null) {
+                    loader = ClassLoader.getSystemClassLoader();
+                }
+                Class platform = loader.loadClass("org.eclipse.core.runtime.Platform");
                 Method isRunning = platform.getMethod("isRunning", new Class[0]);
                 Object result = isRunning.invoke(null, new Object[0]);
                 if (result != null && Boolean.TRUE.equals(result)) {

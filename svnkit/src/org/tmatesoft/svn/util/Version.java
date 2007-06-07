@@ -23,7 +23,7 @@ import java.util.Properties;
  */
 public class Version {
 
-    private static String PROPERTIES_PATH = "svnkit.build.properties";
+    private static String PROPERTIES_PATH = "/svnkit.build.properties";
 
     private static final String VERSION_STRING_PROPERTY = "svnkit.version.string";
     private static final String VERSION_MAJOR_PROPERTY = "svnkit.version.major";
@@ -108,8 +108,7 @@ public class Version {
         if (ourProperties != null) {
             return;
         }
-        InputStream is = Version.class.getClassLoader().getResourceAsStream(
-                PROPERTIES_PATH);
+        InputStream is = Version.class.getResourceAsStream(PROPERTIES_PATH);
         ourProperties = new Properties();
         if (is == null) {
             return;

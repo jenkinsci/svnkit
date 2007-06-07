@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -28,12 +29,15 @@ import java.util.regex.Pattern;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 
 /**
@@ -93,7 +97,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 public abstract class SVNRepositoryFactory {
     
     private static final Map myFactoriesMap = new HashMap();
-    private static final String REPOSITORY_TEMPLATE_PATH = "org/tmatesoft/svn/core/io/repository/template.jar";
+    private static final String REPOSITORY_TEMPLATE_PATH = "/org/tmatesoft/svn/core/io/repository/template.jar";
     
     protected static void registerRepositoryFactory(String protocol, SVNRepositoryFactory factory) {
         if (protocol != null && factory != null) {
@@ -319,7 +323,7 @@ public abstract class SVNRepositoryFactory {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not create directory ''{0}''", path);
             SVNErrorManager.error(err);
         }
-        InputStream is = SVNRepositoryFactory.class.getClassLoader().getResourceAsStream(REPOSITORY_TEMPLATE_PATH);
+        InputStream is = SVNRepositoryFactory.class.getResourceAsStream(REPOSITORY_TEMPLATE_PATH);
         if (is == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "No repository template found; should be part of SVNKit library jar");
             SVNErrorManager.error(err);
@@ -395,6 +399,11 @@ public abstract class SVNRepositoryFactory {
                     SVNErrorManager.error(err);
                 }
             }
+            // set creation date.
+            File rev0File = new File(path, "db/revprops/0");
+            SVNProperties props = new SVNProperties(rev0File, null);
+            String date = SVNTimeUtil.formatDate(new Date(System.currentTimeMillis()), true);
+            props.setPropertyValue(SVNRevisionProperty.DATE, date);
         } finally {
             SVNFileUtil.closeFile(uuidOS);
             SVNFileUtil.closeFile(reposFormatOS);
