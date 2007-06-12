@@ -26,10 +26,10 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNCleanupHandler;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -389,8 +389,9 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         SVNAdminArea adminArea = myCurrentFile.getAdminArea();
         SVNEntry entry = adminArea.getEntry(myCurrentFile.Name, false);
         boolean replaced = entry != null && entry.isScheduledForReplacement();
+        boolean useRevertBase = replaced && entry.getCopyFromURL() != null;
 
-        File baseFile = replaced ? adminArea.getFile(SVNAdminUtil.getTextRevertPath(myCurrentFile.Name, false)) : adminArea.getBaseFile(myCurrentFile.Name, false);
+        File baseFile = useRevertBase ? adminArea.getFile(SVNAdminUtil.getTextRevertPath(myCurrentFile.Name, false)) : adminArea.getBaseFile(myCurrentFile.Name, false);
         
         if (entry != null && entry.getChecksum() != null) {
             String realChecksum = SVNFileUtil.computeChecksum(baseFile);
@@ -410,7 +411,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 SVNErrorManager.error(err);
             }
         }
-        File baseTmpFile = replaced ? adminArea.getFile(SVNAdminUtil.getTextRevertPath(myCurrentFile.Name, true)) : adminArea.getBaseFile(myCurrentFile.Name, true);
+        File baseTmpFile = useRevertBase ? adminArea.getFile(SVNAdminUtil.getTextRevertPath(myCurrentFile.Name, true)) : adminArea.getBaseFile(myCurrentFile.Name, true);
         myCurrentFile.TextUpdated = true;
         myDeltaProcessor.applyTextDelta(baseFile, baseTmpFile, true);
     }
@@ -478,18 +479,24 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
 
         boolean isLocallyModified = !myCurrentFile.IsAdded && adminArea.hasTextModifications(name, false);
         boolean isReplaced = false;
+        boolean useRevertBase = false;
         if (!isLocallyModified) {
             SVNEntry entry = adminArea.getEntry(name, false);
             if (entry != null && entry.isScheduledForReplacement()) {
                 isReplaced = true;
             }
-        }
+            if (isReplaced && entry.getCopyFromURL() != null) {
+                useRevertBase = true;
+            }
+        } 
         
         //merge contents.
         String adminDir = SVNFileUtil.getAdminDirectoryName();
-        File textTmpBase = adminArea.getBaseFile(name, true);
-        if (isReplaced) {
+        File textTmpBase;
+        if (useRevertBase) {
             textTmpBase = adminArea.getFile(SVNAdminUtil.getTextRevertPath(name, true));
+        } else {
+            textTmpBase = adminArea.getBaseFile(name, true);;
         }
         File workingFile = adminArea.getFile(name);
         String tmpPath = null;

@@ -233,7 +233,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                 SVNStatusType mergeResult = dir.mergeText(name, file1, file2, localLabel, baseLabel, latestLabel, false, myIsDryRun, myDiffOptions);
                 if (mergeResult == SVNStatusType.CONFLICTED || mergeResult == SVNStatusType.CONFLICTED_UNRESOLVED) {
                     result[0] = mergeResult;
-                } else if (textModified) {
+                } else if (textModified && mergeResult != SVNStatusType.UNCHANGED) {
                     result[0] = SVNStatusType.MERGED;
                 } else if (mergeResult == SVNStatusType.MERGED) {
                     result[0] = SVNStatusType.CHANGED;
