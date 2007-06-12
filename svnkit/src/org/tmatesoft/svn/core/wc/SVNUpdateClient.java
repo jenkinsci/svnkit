@@ -918,11 +918,6 @@ public class SVNUpdateClient extends SVNBasicClient {
                     if (error != null && error.getErrorMessage().getErrorCode() != SVNErrorCode.WC_LEFT_LOCAL_MOD) {
                         throw error;
                     }
-                } else if (external.isModified()) {
-                    deleteExternal(external);
-                    external.getFile().mkdirs();
-                    dispatchEvent(SVNEventFactory.createUpdateExternalEvent(info, ""));
-                    doCheckout(external.getNewURL(), external.getFile(), revision, revision, true);
                 } else {
                     if (!external.getFile().isDirectory()) {
                         boolean created = external.getFile().mkdirs();
