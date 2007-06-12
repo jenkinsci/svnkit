@@ -43,6 +43,7 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -97,27 +98,27 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     private void openRepositoryRoot() throws SVNException {
         lock();
         
-        if (!"".equals(getLocation().getHost()) && !getLocation().getHost().equalsIgnoreCase("localhost")) {
+        String hostName = getLocation().getHost(); 
+        boolean hasCustomHostName = !"".equals(hostName) && 
+                                    !"localhost".equalsIgnoreCase(hostName); 
+
+        if (!SVNFileUtil.isWindows && hasCustomHostName) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Local URL ''{0}'' contains unsupported hostname", getLocation().toDecodedString());
             SVNErrorManager.error(err);
         }
         
-        myReposRootDir = FSFS.findRepositoryRoot(new File(getLocation().getPath()));
-
-        if (myReposRootDir == null) {
+        String startPath = SVNEncodingUtil.uriDecode(getLocation().getURIEncodedPath());
+        String rootPath = FSFS.findRepositoryRoot(hasCustomHostName ? hostName : null, startPath);
+        if (rootPath == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_LOCAL_REPOS_OPEN_FAILED, "Unable to open repository ''{0}''", getLocation().toDecodedString());
             SVNErrorManager.error(err);
         }
-        
+
+        myReposRootDir = hasCustomHostName ? new File("\\\\" + hostName, rootPath).getAbsoluteFile() : 
+                                             new File(rootPath).getAbsoluteFile();
         myFSFS = new FSFS(myReposRootDir);
         myFSFS.open();
-        
-        String rootDir = myReposRootDir.getPath();
-        rootDir = rootDir.replace(File.separatorChar, '/');
-        if (!rootDir.startsWith("/")) {
-            rootDir = "/" + rootDir;
-        }
-        setRepositoryCredentials(myFSFS.getUUID(), getLocation().setPath(rootDir, false));
+        setRepositoryCredentials(myFSFS.getUUID(), getLocation().setPath(rootPath, false));
     }
 
     void closeRepository() {

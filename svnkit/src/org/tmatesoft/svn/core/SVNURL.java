@@ -198,6 +198,19 @@ public class SVNURL {
         }
         if ("file".equals(myProtocol)) {
             String normalizedPath = norlmalizeURLPath(url, url.substring("file://".length()));
+            int slashInd = normalizedPath.indexOf('/');
+            if (slashInd == -1) {
+                //no path, only host - follow subversion behaviour
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Local URL ''{0}'' contains only a hostname, no path", url);
+                SVNErrorManager.error(err);
+            }
+            
+            myPath = normalizedPath.substring(slashInd);
+            if (normalizedPath.equals(myPath)) {
+                myHost = "";
+            } else {
+                myHost = normalizedPath.substring(0, slashInd);
+            }
             
             URL testURL = null;
             try {
@@ -207,29 +220,22 @@ public class SVNURL {
                 SVNErrorManager.error(err, e);
                 return;
             }
-            String testPath = getPath(testURL);
-            if(testPath == null || "".equals(testPath)){
-                //no path, only host - follow subversion behaviour
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Local URL ''{0}'' contains only a hostname, no path", url);
-                SVNErrorManager.error(err);
-                return;
-            }
-            myHost = testURL.getHost() == null ? "" : testURL.getHost();
+            
             if (uriEncoded) {
                 // autoencode it.
-                myEncodedPath = SVNEncodingUtil.autoURIEncode(testPath);
+                myEncodedPath = SVNEncodingUtil.autoURIEncode(myPath);
                 SVNEncodingUtil.assertURISafe(myEncodedPath);
                 myPath = SVNEncodingUtil.uriDecode(myEncodedPath);
-                myPath = myPath.replace(File.separatorChar, '/');
+                myPath = myPath.replace('\\', '/');
                 if(!myPath.startsWith("/")){
                     myPath = "/" + myPath;
                 }
             } else {
-                myPath = testPath;
+                myEncodedPath = SVNEncodingUtil.uriEncode(myPath);
+                myPath = myPath.replace('\\', '/');
                 if(!myPath.startsWith("/")){
                     myPath = "/" + myPath;
                 }
-                myEncodedPath = SVNEncodingUtil.uriEncode(myPath);
             }
             myUserName = testURL.getUserInfo();
             myPort = testURL.getPort();
@@ -498,7 +504,6 @@ public class SVNURL {
     }
     
     private static String norlmalizeURLPath(String url, String path) throws SVNException {
-        path = path.replace('\\', '/');
         StringBuffer result = new StringBuffer(path.length());
         for(StringTokenizer tokens = new StringTokenizer(path, "/"); tokens.hasMoreTokens();) {
             String token = tokens.nextToken();

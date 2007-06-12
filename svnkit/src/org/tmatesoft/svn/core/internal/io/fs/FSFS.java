@@ -871,6 +871,37 @@ public class FSFS {
         return rootPath;
     }
 
+    public static String findRepositoryRoot(String host, String path) {
+        if (path == null) {
+            path = "";
+        }
+
+        String testPath = host != null ? SVNPathUtil.append("\\\\" + host, path) : path;
+        File rootPath = new File(testPath).getAbsoluteFile();
+        while (!isRepositoryRoot(rootPath)) {
+            if (rootPath.getParentFile() == null) {
+                return null;
+            }
+            String name = rootPath.getName();
+            path = path.substring(0, path.length() - name.length());
+            while (path.endsWith("/") || path.endsWith("\\")) {
+                path = path.substring(0, path.length() - 1);
+            }
+            if ("".equals(path)) {
+                return null;
+            }
+            testPath = host != null ? SVNPathUtil.append("\\\\" + host, path) : path;
+            rootPath = new File(testPath).getAbsoluteFile();
+        }
+        while (path.endsWith("/")) {
+            path = path.substring(0, path.length() - 1);
+        }
+        while (path.endsWith("\\")) {
+            path = path.substring(0, path.length() - 1);
+        }
+        return path;
+    }
+
     protected FSFile getTransactionRevisionPrototypeFile(String txnID) {
         File revFile = new File(getTransactionDir(txnID), TXN_PATH_REV);
         return new FSFile(revFile);
