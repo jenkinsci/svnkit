@@ -129,10 +129,12 @@ public class SVNDeltaCombiner {
         int realDataLength = 0;
         int compressedLength = instructionsLength - (myReadWindowBuffer.position() - originalPosition);
         if (realInstructionsLength == compressedLength) {
-            myReadWindowBuffer.get(instructionsData, 0, realInstructionsLength);
+            System.arraycopy(myReadWindowBuffer.array(), myReadWindowBuffer.arrayOffset() + myReadWindowBuffer.position(), instructionsData, 0, realInstructionsLength);
+            myReadWindowBuffer.position(myReadWindowBuffer.position() + realInstructionsLength);
         } else {
             byte[] compressedData = new byte[compressedLength];
-            myReadWindowBuffer.get(compressedData, 0, compressedLength);
+            System.arraycopy(myReadWindowBuffer.array(), myReadWindowBuffer.arrayOffset() + myReadWindowBuffer.position(), compressedData, 0, compressedLength);
+            myReadWindowBuffer.position(myReadWindowBuffer.position() + compressedLength);
             InflaterInputStream is = new InflaterInputStream(new ByteArrayInputStream(compressedData));
             int read = 0;
             while(read < realInstructionsLength) {
@@ -145,10 +147,12 @@ public class SVNDeltaCombiner {
             compressedLength = dataLength - (myReadWindowBuffer.position() - originalPosition);
             data = new byte[realDataLength];
             if (compressedLength == realDataLength) {
-                myReadWindowBuffer.get(data, 0, realDataLength);
+                System.arraycopy(myReadWindowBuffer.array(), myReadWindowBuffer.arrayOffset() + myReadWindowBuffer.position(), data, 0, realDataLength);
+                myReadWindowBuffer.position(myReadWindowBuffer.position() + realDataLength);
             } else {
                 byte[] compressedData = new byte[compressedLength];
-                myReadWindowBuffer.get(compressedData, 0, compressedLength);
+                System.arraycopy(myReadWindowBuffer.array(), myReadWindowBuffer.arrayOffset() + myReadWindowBuffer.position(), compressedData, 0, compressedLength);
+                myReadWindowBuffer.position(myReadWindowBuffer.position() + compressedLength);
                 InflaterInputStream is = new InflaterInputStream(new ByteArrayInputStream(compressedData));
                 int read = 0;
                 while(read < realDataLength) {
