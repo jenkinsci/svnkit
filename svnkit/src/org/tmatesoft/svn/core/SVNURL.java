@@ -498,6 +498,7 @@ public class SVNURL {
     }
     
     private static String norlmalizeURLPath(String url, String path) throws SVNException {
+        path = path.replace('\\', '/');
         StringBuffer result = new StringBuffer(path.length());
         for(StringTokenizer tokens = new StringTokenizer(path, "/"); tokens.hasMoreTokens();) {
             String token = tokens.nextToken();
