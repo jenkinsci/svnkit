@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -28,6 +29,7 @@ import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.1.1
@@ -44,6 +46,8 @@ public class FSInputStream extends InputStream {
     private MessageDigest myDigest;
     private ByteBuffer myBuffer;
     private SVNDeltaCombiner myCombiner;
+    //TODO: remove debug info
+    private ByteArrayOutputStream myDebugLogContents;
 
     private FSInputStream(SVNDeltaCombiner combiner, FSRepresentation representation, FSFS owner) throws SVNException {
         myCombiner = combiner;
@@ -52,6 +56,7 @@ public class FSInputStream extends InputStream {
         myHexChecksum = representation.getHexDigest();
         myOffset = 0;
         myLength = representation.getExpandedSize();
+        myDebugLogContents = new ByteArrayOutputStream();
         try {
             myDigest = MessageDigest.getInstance("MD5");
         } catch (NoSuchAlgorithmException nsae) {
@@ -111,7 +116,7 @@ public class FSInputStream extends InputStream {
 
     private int readContents(byte[] buf, int offset, int length) throws SVNException {
         length = getContents(buf, offset, length);
-
+        myDebugLogContents.write(buf, offset, length);
         if (!isChecksumFinalized) {
             myDigest.update(buf, offset, length);
             myOffset += length;
@@ -121,6 +126,7 @@ public class FSInputStream extends InputStream {
                 String hexDigest = SVNFileUtil.toHexDigest(myDigest);
 
                 if (!myHexChecksum.equals(hexDigest)) {
+                    SVNDebugLog.getDefaultLog().info(myDebugLogContents.toString());
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Checksum mismatch while reading representation:\n   expected:  {0}\n     actual:  {1}", new Object[] {
                             myHexChecksum, hexDigest
                     });
