@@ -111,6 +111,9 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                 }
                 throw svne;
             }
+            if (baton.myDatestamp == null) {
+                myFSFS.setRevisionProperty(baton.myRevision, SVNRevisionProperty.DATE, null);
+            }
             
             if (myIsUsePostCommitHook) {
                 try {
