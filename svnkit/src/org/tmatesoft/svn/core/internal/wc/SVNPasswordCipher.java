@@ -79,7 +79,7 @@ public abstract class SVNPasswordCipher {
         return SIMPLE_CIPHER_TYPE;
     }
     
-    protected static void registerCipher(String type, SVNPasswordCipher cipher) {
+    public static void registerCipher(String type, SVNPasswordCipher cipher) {
         if (type != null && cipher != null) {
             synchronized (ourInstances) {
                 if (ourInstances.containsKey(type)) {
