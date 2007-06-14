@@ -72,18 +72,19 @@ class DAVResource {
         return myPath;
     }
     
-    public String getVersionURL() throws SVNException {
-        if (myVURL == null) {
-            if (myMediator != null) {
-                myVURL = myMediator.getWorkspaceProperty(SVNEncodingUtil.uriDecode(myPath), "svn:wc:ra_dav:version-url");
-            }
-        }
+    public String getVersionURL() {
         return myVURL;
     }    
     
     public void fetchVersionURL(boolean force) throws SVNException {
         if (!force && getVersionURL() != null) {
             return;
+        }
+        if (!force && myMediator != null) {
+            myVURL = myMediator.getWorkspaceProperty(SVNEncodingUtil.uriDecode(myPath), "svn:wc:ra_dav:version-url");
+            if (myVURL != null) {
+                return;
+            }
         }
         // now from server.
         String path = myURL;

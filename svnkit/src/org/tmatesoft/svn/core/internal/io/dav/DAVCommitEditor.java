@@ -170,7 +170,7 @@ class DAVCommitEditor implements ISVNEditor {
         // do nothing,
         DAVResource parent = myDirsStack.peek() != null ? (DAVResource) myDirsStack.peek() : null;
         DAVResource directory = new DAVResource(myCommitMediator, myConnection, path, revision, parent == null ? false : parent.isCopy());
-        if (parent != null && parent.isCopy()) {
+        if (parent != null && parent.getVersionURL() == null) {
             // part of copied structure -> derive wurl
             directory.setWorkingURL(SVNPathUtil.append(parent.getWorkingURL(), SVNPathUtil.tail(path)));
         } else {
@@ -248,7 +248,7 @@ class DAVCommitEditor implements ISVNEditor {
         path = SVNEncodingUtil.uriEncode(path);
         DAVResource file = new DAVResource(myCommitMediator, myConnection, path, revision);
         DAVResource parent = (DAVResource) myDirsStack.peek();
-        if (parent.isCopy()) {
+        if (parent.getVersionURL() == null) {
             // part of copied structure -> derive wurl
             file.setWorkingURL(SVNPathUtil.append(parent.getWorkingURL(), SVNPathUtil.tail(path)));
         } else {
