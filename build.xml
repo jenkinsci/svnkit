@@ -517,7 +517,7 @@
     	<property name="python.test.home" value="${basedir}/build/python"/>
     	<mkdir dir="${python.test.home}"/>
     	<delete includeemptydirs="true">
-			<fileset dir="${python.test.home}">
+			<fileset dir="${python.test.home}" defaultexcludes="no">
     		  <include name="**/*"/>
         	</fileset>
 		</delete>
