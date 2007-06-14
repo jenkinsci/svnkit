@@ -54,6 +54,7 @@ public class SVNSocketFactory {
         socket.setReuseAddress(true);
         socket.setTcpNoDelay(true);
         socket.setKeepAlive(true);
+        socket.setSoLinger(true, 0);
         return socket;
     }
 
@@ -63,6 +64,7 @@ public class SVNSocketFactory {
         sslSocket.setReuseAddress(true);
         sslSocket.setTcpNoDelay(true);
         sslSocket.setKeepAlive(true);
+        sslSocket.setSoLinger(true, 0);
         return sslSocket;
     }
 
@@ -72,6 +74,7 @@ public class SVNSocketFactory {
         sslSocket.setReuseAddress(true);
         sslSocket.setTcpNoDelay(true);
         sslSocket.setKeepAlive(true);
+        sslSocket.setSoLinger(true, 0);
         return sslSocket;
     }
 
