@@ -312,7 +312,7 @@ public class SVNErrorMessage implements Serializable {
             line.append("svn: ");
         }
         if ("".equals(myMessage)) {
-            line.append(myErrorCode.toString());
+            line.append(myErrorCode.getDescription());
         } else {
             line.append(myObjects.length > 0 ? MessageFormat.format(myMessage, myObjects) : myMessage);
         }

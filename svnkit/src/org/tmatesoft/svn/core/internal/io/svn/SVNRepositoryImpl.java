@@ -36,6 +36,7 @@ import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaReader;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
@@ -535,11 +536,11 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                         long revision = SVNReader.getLong(buffer, 0);
                         String author = SVNReader.getString(buffer, 1);
                         Date date = SVNReader.getDate(buffer, 2);
+                        if (date == SVNTimeUtil.NULL) {
+                            date = null;
+                        }
                         String message = SVNReader.getString(buffer, 3);
-                        // remove all
-                            handler.handleLogEntry(new SVNLogEntry(
-                                    changedPathsMap, revision, author, date,
-                                    message));
+                        handler.handleLogEntry(new SVNLogEntry(changedPathsMap, revision, author, date, message));
                     }
                 } catch (SVNException e) {
                     if (e instanceof SVNCancelException || e instanceof SVNAuthenticationException) {

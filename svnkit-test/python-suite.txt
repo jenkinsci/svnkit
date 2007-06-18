@@ -1,3 +1,4 @@
+authz ALL
 autoprop ALL
 basic ALL
 blame ALL

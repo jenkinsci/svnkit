@@ -49,6 +49,8 @@ public class SVNEditModeReader {
         COMMANDS_MAP.put("close-edit", "()");
         COMMANDS_MAP.put("abort-edit", "()");
         COMMANDS_MAP.put("finish-replay", "()");
+        COMMANDS_MAP.put("absent-dir", "(SS)");
+        COMMANDS_MAP.put("absent-file", "(SS)");
     }
 
     private ISVNEditor myEditor;
@@ -113,6 +115,10 @@ public class SVNEditModeReader {
             myEditor.closeEdit();
         } else if ("abort-edit".equals(commandName)) {
             myEditor.abortEdit();
+        } else if ("absent-dir".equals(commandName)) {
+            myEditor.absentDir((String) items[0]);
+        } else if ("absent-file".equals(commandName)) {
+            myEditor.absentFile((String) items[0]);
         }
         return !last;
     }

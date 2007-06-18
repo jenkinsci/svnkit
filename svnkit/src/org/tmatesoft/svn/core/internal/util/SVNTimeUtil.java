@@ -35,7 +35,7 @@ public class SVNTimeUtil {
             "yyyy-MM-dd'T'HH:mm:ss.SSS'000Z'");
 
     private static final Calendar CALENDAR = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
-    private static final Date NULL = new Date(0);
+    public static final Date NULL = new Date(0);
 
     static {
         ISO8601_FORMAT_OUT.setTimeZone(TimeZone.getTimeZone("GMT"));

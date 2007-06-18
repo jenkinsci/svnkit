@@ -351,7 +351,7 @@ public class SVNCopyClient extends SVNBasicClient {
             }
             SVNErrorMessage nestedErr = e.getErrorMessage();
             SVNErrorMessage err = SVNErrorMessage.create(nestedErr.getErrorCode(), "Commit failed (details follow):");
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e.getErrorMessage());
         }
         if (result != null && result.getNewRevision() >= 0) { 
             dispatchEvent(SVNEventFactory.createCommitCompletedEvent(null, result.getNewRevision()), ISVNEventHandler.UNKNOWN);
