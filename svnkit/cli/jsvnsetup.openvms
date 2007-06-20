@@ -18,7 +18,8 @@ $    write sys$output "JSVNSETUP: DECC$EFS_CASE_SPECIAL defined! Please deassign
 $    write sys$output " "
 $ endif
 $!
-$!$ CP = "/svnkit_home/svnkit.jar"
+$!
+$ CP = "/svnkit_home/svnkit.jar"
 $ CP = CP + ":/svnkit_home/svnkit-cli.jar"
 $ CP = CP + ":/svnkit_home/ganymed.jar"
 $ OPT = ""
