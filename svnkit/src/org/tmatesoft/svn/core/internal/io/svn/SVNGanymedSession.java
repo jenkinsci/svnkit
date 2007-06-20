@@ -336,10 +336,12 @@ public class SVNGanymedSession {
     }
 
     public static void waitForFreeChannel() {
-        synchronized (ourSessionsMap) {
-            try {
-                ourSessionsMap.wait();
-            } catch (InterruptedException e) {
+        while(true) {
+            synchronized (ourSessionsMap) {
+                try {
+                    ourSessionsMap.wait();
+                } catch (InterruptedException e) {
+                }
             }
         }
     }
