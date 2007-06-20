@@ -275,7 +275,7 @@ public class SVNRangeTree {
                 left = root.left;
                 root = node;
                 //node = root.left;
-                prevNode.right = null;
+                prevNode.right = root.left;
                 right.left = null;
                 root.left = left;
                 root.right = right;
