@@ -296,6 +296,7 @@ public class SVNRevision {
                 Matcher matcher = datePattern.matcher(value);
                 String[] dateSplit = null;
                 Calendar date = Calendar.getInstance();
+                date.clear();
                 if(matcher.matches()) {
                     int groupCount = matcher.groupCount();
                     for(int i = 1 ; i <= groupCount ; i++) {
