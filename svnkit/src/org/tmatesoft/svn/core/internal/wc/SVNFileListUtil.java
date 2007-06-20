@@ -44,19 +44,40 @@ public class SVNFileListUtil {
      * This method is a replacement for file.listFiles(), which composes decomposed file names (e.g. umlauts in file names on the Mac).
      */
     public static File[] listFiles(File directory) {
-        if (!SVNFileUtil.isOSX) {
-            return directory.listFiles();
+        if (SVNFileUtil.isOSX) {
+            final String[] fileNames = list(directory);
+            if (fileNames == null) {
+                return null;
+            }
+    
+            File[] files = new File[fileNames.length];
+            for (int i = 0; i < files.length; i++) {
+                files[i] = new File(directory.getPath(), fileNames[i]);
+            }
+            return files;
+        } else if (SVNFileUtil.isOpenVMS) {
+            File[] files = directory.listFiles();
+            if (files == null || files.length == 0) {
+                return files;
+            }
+            File[] processed = new File[files.length];
+            for (int i = 0; i < files.length; i++) {
+                File file = files[i];
+                String name = file.getName();
+                if (file.isFile() && name.endsWith(".")) {
+                    // chances there is a file without extension and '.' added by openVMS.
+                    name = name.substring(0, name.lastIndexOf('.'));
+                    file = new File(directory, name);
+                    if (file.exists() && file.isFile()) {
+                        processed[i] = file;
+                        continue;
+                    }
+                } 
+                processed[i] = file;
+            }
+            return processed;
         }
-        final String[] fileNames = list(directory);
-        if (fileNames == null) {
-            return null;
-        }
-
-        File[] files = new File[fileNames.length];
-        for (int i = 0; i < files.length; i++) {
-            files[i] = new File(directory.getPath(), fileNames[i]);
-        }
-        return files;
+        return directory.listFiles();
     }
 
     

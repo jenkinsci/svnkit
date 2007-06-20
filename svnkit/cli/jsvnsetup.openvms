@@ -11,7 +11,14 @@ $!
 $ define/job/nolog decc$argv_parse_style enable
 $ define/job/nolog decc$efs_case_preserve enable
 $!
-$ CP = "/svnkit_home/svnkit.jar"
+$ if f$edit(f$trnlnm("DECC$EFS_CASE_SPECIAL"),"UPCASE") .eqs. "ENABLE"
+$ then
+$    write sys$output " "
+$    write sys$output "JSVNSETUP: DECC$EFS_CASE_SPECIAL defined! Please deassign logical otherwise jsvn might not function properly!"
+$    write sys$output " "
+$ endif
+$!
+$!$ CP = "/svnkit_home/svnkit.jar"
 $ CP = CP + ":/svnkit_home/svnkit-cli.jar"
 $ CP = CP + ":/svnkit_home/ganymed.jar"
 $ OPT = ""

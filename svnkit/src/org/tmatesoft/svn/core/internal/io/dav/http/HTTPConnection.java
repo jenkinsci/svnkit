@@ -585,6 +585,8 @@ class HTTPConnection implements IHTTPConnection {
                     dst = new SVNCancellableOutputStream(dst, myRepository.getCanceller());
                     // this will exhaust http stream anyway.
                     err = readData(request, dst);
+                    SVNFileUtil.closeFile(dst);
+                    dst = null;
                     if (err != null) {
                         return err;
                     }
