@@ -15,7 +15,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
@@ -31,7 +30,6 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 
 /**
@@ -51,8 +49,6 @@ public class FSFile {
     private ByteBuffer myReadLineBuffer;
     private CharsetDecoder myDecoder;
     private MessageDigest myDigest;
-    //TODO: remove debug info
-    private ByteArrayOutputStream myDebugLogContents;
     
     public FSFile(File file) {
         myFile = file;
@@ -61,7 +57,6 @@ public class FSFile {
         myBuffer = ByteBuffer.allocate(4096);
         myReadLineBuffer = ByteBuffer.allocate(4096);
         myDecoder = Charset.forName("UTF-8").newDecoder();
-        myDebugLogContents = new ByteArrayOutputStream(); 
     }
     
     public void seek(long position) {
@@ -159,9 +154,6 @@ public class FSFile {
     }
 
     public Map readProperties(boolean allowEOF) throws SVNException {
-        myDebugLogContents.reset();
-        PrintWriter logWriter = new PrintWriter(myDebugLogContents); 
-            
         Map map = new HashMap();
         String line = null;
         try {
@@ -178,10 +170,8 @@ public class FSFile {
                 if (line == null || "".equals(line)) {
                     break;
                 } else if (!allowEOF && "END".equals(line)) {
-                    logWriter.println(line);
                     break;
                 }
-                logWriter.println(line);
                 char kind = line.charAt(0);
                 int length = -1;
                 if ((kind != 'K' && kind != 'D') || line.length() < 3 || line.charAt(1) != ' ' || line.length() < 3) {
@@ -215,7 +205,6 @@ public class FSFile {
                     continue;
                 }
                 line = readLine(160);
-                logWriter.println(line);
                 if (line == null || line.length() < 3 || line.charAt(0) != 'V' || line.charAt(1) != ' ') {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MALFORMED_FILE);
                     SVNErrorManager.error(err);
@@ -248,8 +237,6 @@ public class FSFile {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MALFORMED_FILE);
             SVNErrorManager.error(err, e);
         }
-        logWriter.flush();
-        SVNDebugLog.getDefaultLog().info(myDebugLogContents.toString());
         return map;
     }
     
