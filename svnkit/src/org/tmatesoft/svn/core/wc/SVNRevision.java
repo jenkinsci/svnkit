@@ -13,10 +13,12 @@ package org.tmatesoft.svn.core.wc;
 
 import java.text.DateFormat;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
-import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -89,6 +91,29 @@ public class SVNRevision {
         ourValidRevisions.put(COMMITTED.getName(), COMMITTED);
     }
 
+    private static Pattern ISO_8601_EXTENDED_DATE_ONLY_PATTERN = Pattern.compile("(\\d{4})-(\\d{1,2})-(\\d{1,2})"); 
+    private static Pattern ISO_8601_EXTENDED_UTC_PATTERN = Pattern.compile("(\\d{4})-(\\d{1,2})-(\\d{1,2})T(\\d{1,2}):(\\d{2})(:(\\d{2})([.,](\\d{1,6}))?)?(?:Z)?"); 
+    private static Pattern ISO_8601_EXTENDED_OFFSET_PATTERN = Pattern.compile("(\\d{4})-(\\d{1,2})-(\\d{1,2})T(\\d{1,2}):(\\d{2})(:(\\d{2})([.,](\\d{1,6}))?)?([+-])(\\d{2})(:(\\d{2}))?"); 
+    private static Pattern ISO_8601_BASIC_DATE_ONLY_PATTERN = Pattern.compile("(\\d{4})(\\d{2})(\\d{2})"); 
+    private static Pattern ISO_8601_BASIC_UTC_PATTERN = Pattern.compile("(\\d{4})(\\d{2})(\\d{2})T(\\d{2})(\\d{2})((\\d{2})([.,](\\d{1,6}))?)?(?:Z)?"); 
+    private static Pattern ISO_8601_BASIC_OFFSET_PATTERN = Pattern.compile("(\\d{4})(\\d{2})(\\d{2})T(\\d{2})(\\d{2})((\\d{2})([.,](\\d{1,6}))?)?([+-])(\\d{2})((\\d{2}))?"); 
+    private static Pattern ISO_8601_GNU_FORMAT_PATTERN = Pattern.compile("(\\d{4})-(\\d{1,2})-(\\d{1,2})T(\\d{1,2}):(\\d{2})(:(\\d{2})([.,](\\d{1,6}))?)?([+-])(\\d{2})((\\d{2}))?"); 
+    private static Pattern SVN_LOG_DATE_FORMAT_PATTERN = Pattern.compile("(\\d{4})-(\\d{1,2})-(\\d{1,2}) (\\d{1,2}):(\\d{2})(:(\\d{2})([.,](\\d{1,6}))?)?( ([+-])(\\d{2})(\\d{2})?)?"); 
+    private static Pattern TIME_ONLY_PATTERN = Pattern.compile("(\\d{1,2}):(\\d{2})(:(\\d{2})([.,](\\d{1,6}))?)?"); 
+    private static final Collection ourTimeFormatPatterns = new LinkedList();
+    
+    static {
+        ourTimeFormatPatterns.add(ISO_8601_EXTENDED_DATE_ONLY_PATTERN);
+        ourTimeFormatPatterns.add(ISO_8601_EXTENDED_UTC_PATTERN);
+        ourTimeFormatPatterns.add(ISO_8601_EXTENDED_OFFSET_PATTERN);
+        ourTimeFormatPatterns.add(ISO_8601_BASIC_DATE_ONLY_PATTERN);
+        ourTimeFormatPatterns.add(ISO_8601_BASIC_UTC_PATTERN);
+        ourTimeFormatPatterns.add(ISO_8601_BASIC_OFFSET_PATTERN);
+        ourTimeFormatPatterns.add(SVN_LOG_DATE_FORMAT_PATTERN);
+        ourTimeFormatPatterns.add(ISO_8601_GNU_FORMAT_PATTERN);
+        ourTimeFormatPatterns.add(TIME_ONLY_PATTERN);
+    }
+    
     private long myRevision;
 
     private String myName;
@@ -292,66 +317,84 @@ public class SVNRevision {
             value = value.substring(0, value.length() - 1);
             
             try {
-                Pattern datePattern = Pattern.compile("(\\d{4}-?\\d{2}-?\\d{2})?(?:[T ])?(\\d{2}:?\\d{2}(?::?\\d{2})?(?:\\.\\d+)?)?(?:[Z ]|(?:\\+|-)\\d{2}:?\\d{2})?");
-                Matcher matcher = datePattern.matcher(value);
-                String[] dateSplit = null;
                 Calendar date = Calendar.getInstance();
-                date.clear();
-                if(matcher.matches()) {
-                    int groupCount = matcher.groupCount();
-                    for(int i = 1 ; i <= groupCount ; i++) {
-                        String capturedString = matcher.group(i);
-                        
-                        switch(capturedString.length()) {
-                        case 10:
-                            dateSplit = capturedString.split("-");
-                            date.set(Integer.parseInt(dateSplit[0]), Integer.parseInt(dateSplit[1])-1, 
-                                    Integer.parseInt(dateSplit[2]), 0, 0, 0);
-                            break;
-                        case 8:
-                            dateSplit = capturedString.split(":");
-                            if(dateSplit.length == 0) {
-                                date.set(Integer.parseInt(capturedString.substring(0, 3)), 
-                                        Integer.parseInt(capturedString.substring(4, 5)),
-                                        Integer.parseInt(capturedString.substring(6, 7)), 0, 0 ,0);
-                            } else {
-                                date.set(Calendar.HOUR_OF_DAY, Integer.parseInt(dateSplit[0]));
-                                date.set(Calendar.MINUTE, Integer.parseInt(dateSplit[1]));
-                                date.set(Calendar.SECOND, Integer.parseInt(dateSplit[2]));
+                for (Iterator patterns = ourTimeFormatPatterns.iterator(); patterns.hasNext();) {
+                    Pattern pattern = (Pattern) patterns.next();
+                    Matcher matcher = pattern.matcher(value);
+                    if (matcher.matches()) {
+                        if (pattern == ISO_8601_EXTENDED_DATE_ONLY_PATTERN || 
+                                pattern == ISO_8601_BASIC_DATE_ONLY_PATTERN) {
+                            int year = Integer.parseInt(matcher.group(1));
+                            int month = Integer.parseInt(matcher.group(2));
+                            int day = Integer.parseInt(matcher.group(3));
+                            date.clear();
+                            date.set(year, month - 1, day);
+                        } else if (pattern == ISO_8601_EXTENDED_UTC_PATTERN || 
+                                pattern == ISO_8601_EXTENDED_OFFSET_PATTERN ||
+                                pattern == ISO_8601_BASIC_UTC_PATTERN ||
+                                pattern == ISO_8601_BASIC_OFFSET_PATTERN || 
+                                pattern == ISO_8601_GNU_FORMAT_PATTERN ||
+                                pattern == SVN_LOG_DATE_FORMAT_PATTERN) {
+                            int year = Integer.parseInt(matcher.group(1));
+                            int month = Integer.parseInt(matcher.group(2));
+                            int day = Integer.parseInt(matcher.group(3));
+                            int hours = Integer.parseInt(matcher.group(4));
+                            int minutes = Integer.parseInt(matcher.group(5));
+                            int seconds = 0;
+                            int milliseconds = 0;
+                            if (matcher.group(6) != null) {
+                                seconds = Integer.parseInt(matcher.group(7));
+                                if (matcher.group(8) != null) {
+                                    String millis = matcher.group(9);
+                                    millis = millis.length() <= 3 ? millis : millis.substring(0, 3);
+                                    milliseconds = Integer.parseInt(millis);
+                                }
                             }
-                            break;
-                        case 6:
-                            dateSplit = capturedString.split(":");
-                            if(dateSplit.length == 0) {
-                                date.set(Calendar.HOUR_OF_DAY, Integer.parseInt(capturedString.substring(0, 1)));
-                                date.set(Calendar.MINUTE, Integer.parseInt(capturedString.substring(2, 3)));
-                                date.set(Calendar.SECOND, Integer.parseInt(capturedString.substring(4, 5)));
-                            } else {
-                                // Is Time Zone
-                                
-                                date.setTimeZone(TimeZone.getTimeZone("GMT" + dateSplit[0] + dateSplit[1]));
+                            date.clear();
+                            date.set(year, month - 1, day, hours, minutes, seconds);
+                            date.set(Calendar.MILLISECOND, milliseconds);
+                            
+                            if (pattern == ISO_8601_EXTENDED_OFFSET_PATTERN || 
+                                    pattern == ISO_8601_BASIC_OFFSET_PATTERN || 
+                                    pattern == ISO_8601_GNU_FORMAT_PATTERN) {
+                                int zoneOffsetInMillis = "+".equals(matcher.group(10)) ? +1 : -1;
+                                int hoursOffset = Integer.parseInt(matcher.group(11));
+                                int minutesOffset = matcher.group(12) != null ? 
+                                                    Integer.parseInt(matcher.group(13)) : 0;
+                                zoneOffsetInMillis = zoneOffsetInMillis * ((hoursOffset*3600 + 
+                                                     minutesOffset*60)*1000);
+                                date.set(Calendar.ZONE_OFFSET, zoneOffsetInMillis);
+                            } else if (pattern == SVN_LOG_DATE_FORMAT_PATTERN && matcher.group(10) != null) {
+                                int zoneOffsetInMillis = "+".equals(matcher.group(11)) ? +1 : -1;
+                                int hoursOffset = Integer.parseInt(matcher.group(12));
+                                int minutesOffset = matcher.group(13) != null ? 
+                                                    Integer.parseInt(matcher.group(13)) : 0;
+                                zoneOffsetInMillis = zoneOffsetInMillis * ((hoursOffset*3600 + 
+                                                     minutesOffset*60)*1000);
+                                date.set(Calendar.ZONE_OFFSET, zoneOffsetInMillis);
                             }
-                            break;
-                        case 5:
-                            dateSplit = capturedString.split(":");
-                            if(dateSplit.length == 0) {
-                                // Is Time Zone
-                                date.setTimeZone(TimeZone.getTimeZone("GMT" + capturedString));
-                            } else {
-                                date.set(Calendar.HOUR, Integer.parseInt(dateSplit[0]));
-                                date.set(Calendar.MINUTE, Integer.parseInt(dateSplit[1]));
-                                date.set(Calendar.SECOND, 0);
+                        } else if (pattern == TIME_ONLY_PATTERN) {
+                            int hours = Integer.parseInt(matcher.group(1));
+                            int minutes = Integer.parseInt(matcher.group(2));
+                            int seconds = 0;
+                            int milliseconds = 0;
+                            if (matcher.group(3) != null) {
+                                seconds = Integer.parseInt(matcher.group(4));
+                                if (matcher.group(5) != null) {
+                                    String millis = matcher.group(6);
+                                    millis = millis.length() <= 3 ? millis : millis.substring(0, 3);
+                                    milliseconds = Integer.parseInt(millis);
+                                }
                             }
-                            break;
-                        case 4:
-                            date.set(Calendar.HOUR, Integer.parseInt(capturedString.substring(0, 1)));
-                            date.set(Calendar.MINUTE, Integer.parseInt(capturedString.substring(2, 3)));
-                            date.set(Calendar.SECOND, 0);
-                            break;
+                            date.set(Calendar.HOUR_OF_DAY, hours);
+                            date.set(Calendar.MINUTE, minutes);
+                            date.set(Calendar.SECOND, seconds);
+                            date.set(Calendar.MILLISECOND, milliseconds);
                         }
+                        return SVNRevision.create(date.getTime());
                     }
                 }
-                return SVNRevision.create(date.getTime());
+                return SVNRevision.UNDEFINED;
             } catch (NumberFormatException e) {
                 return SVNRevision.UNDEFINED;
             }
