@@ -275,7 +275,7 @@ class DAVCommitEditor implements ISVNEditor {
         // save window, create temp file.
         try {
             if (myCurrentDelta == null) {
-                myDeltaFile = SVNFileUtil.createTempFile(".jasvsvn.", ".tmp");
+                myDeltaFile = SVNFileUtil.createTempFile("svnkit", ".tmp");
                 myCurrentDelta = SVNFileUtil.openFileForWriting(myDeltaFile);
             }
             diffWindow.writeTo(myCurrentDelta, myIsFirstWindow);
