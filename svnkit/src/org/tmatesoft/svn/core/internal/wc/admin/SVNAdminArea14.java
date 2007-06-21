@@ -858,14 +858,17 @@ public class SVNAdminArea14 extends SVNAdminArea {
             entryAttrs.put(SVNProperty.LOCK_CREATION_DATE, lockCreationDate);
         }
 
-        line = reader.readLine();
-        if (line == null || line.length() != 1) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Missing entry terminator");
-            SVNErrorManager.error(err);
-        } else if (line.length() == 1 && line.charAt(0) != '\f') {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Invalid entry terminator");
-            SVNErrorManager.error(err);
-        }
+        do {
+            line = reader.readLine();
+            if (line == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Missing entry terminator");
+                SVNErrorManager.error(err);
+            } else if (line.length() == 1 && line.charAt(0) != '\f') {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Invalid entry terminator");
+                SVNErrorManager.error(err);
+            }
+        } while (line != null);
+
         return entry;
     }
     
