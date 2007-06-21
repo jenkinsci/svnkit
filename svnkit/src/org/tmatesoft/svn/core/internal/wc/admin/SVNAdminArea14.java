@@ -863,9 +863,11 @@ public class SVNAdminArea14 extends SVNAdminArea {
             if (line == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Missing entry terminator");
                 SVNErrorManager.error(err);
-            } else if (line.length() == 1 && line.charAt(0) != '\f') {
+            } else if (line.length() == 1 && line.charAt(0) != '\f') {                
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Invalid entry terminator");
                 SVNErrorManager.error(err);
+            } else if (line.length() == 1 && line.charAt(0) == '\f') {
+                break;
             }
         } while (line != null);
 
