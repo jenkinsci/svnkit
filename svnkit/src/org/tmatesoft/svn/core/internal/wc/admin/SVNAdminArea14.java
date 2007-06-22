@@ -11,8 +11,10 @@
  */
 package org.tmatesoft.svn.core.internal.wc.admin;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -69,10 +71,16 @@ public class SVNAdminArea14 extends SVNAdminArea {
     private File myLockFile;
     private File myEntriesFile;
 
+    private static boolean ourIsOptimizedWritingEnabled;
+
     public SVNAdminArea14(File dir) {
         super(dir);
         myLockFile = new File(getAdminDirectory(), "lock");
         myEntriesFile = new File(getAdminDirectory(), "entries");
+    }
+    
+    public static void setOptimizedWritingEnabled(boolean enabled) {
+        ourIsOptimizedWritingEnabled = enabled;
     }
 
     public static String[] getCachableProperties() {
@@ -462,23 +470,48 @@ public class SVNAdminArea14 extends SVNAdminArea {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Entry ''{0}'' has inconsistent repository root and url", getThisDirName());
                 SVNErrorManager.error(err);
             }
-    
-            File tmpFile = new File(getAdminDirectory(), "tmp/entries");
-            Writer os = null;
-            try {
-                os = new OutputStreamWriter(SVNFileUtil.openFileForWriting(tmpFile), "UTF-8");
-                writeEntries(os);
-            } catch (IOException e) {
-                SVNFileUtil.closeFile(os);
-                SVNFileUtil.deleteFile(tmpFile);
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot wrtie entries file ''{0}'': {1}", new Object[] {myEntriesFile, e.getLocalizedMessage()});
-                SVNErrorManager.error(err, e);
-            } finally {
-                SVNFileUtil.closeFile(os);
-            }
             
-            SVNFileUtil.rename(tmpFile, myEntriesFile);
-            SVNFileUtil.setReadonly(myEntriesFile, true);
+            if (ourIsOptimizedWritingEnabled) {
+                File tmpFile = new File(getAdminDirectory(), "tmp/entries");
+                boolean renamed = myEntriesFile.renameTo(tmpFile);
+                if (!renamed) {
+                    myEntriesFile.delete();
+                    tmpFile = null;
+                }
+                Writer os = null;
+                try {
+                    os = new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(myEntriesFile)), "UTF-8");
+                    writeEntries(os);
+                } catch (IOException e) {
+                    SVNFileUtil.closeFile(os);
+                    if (tmpFile != null) {
+                        tmpFile.renameTo(myEntriesFile);
+                    }
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot wrtie entries file ''{0}'': {1}", new Object[] {myEntriesFile, e.getLocalizedMessage()});
+                    SVNErrorManager.error(err, e);
+                } finally {
+                    SVNFileUtil.closeFile(os);
+                    SVNFileUtil.deleteFile(tmpFile);
+                }
+                myEntriesFile.setReadOnly();
+            } else {
+                File tmpFile = new File(getAdminDirectory(), "tmp/entries");
+                Writer os = null;
+                try {
+                    os = new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(tmpFile)), "UTF-8");
+                    writeEntries(os);
+                } catch (IOException e) {
+                    SVNFileUtil.closeFile(os);
+                    SVNFileUtil.deleteFile(tmpFile);
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot wrtie entries file ''{0}'': {1}", new Object[] {myEntriesFile, e.getLocalizedMessage()});
+                    SVNErrorManager.error(err, e);
+                } finally {
+                    SVNFileUtil.closeFile(os);
+                }
+                
+                SVNFileUtil.rename(tmpFile, myEntriesFile);
+                SVNFileUtil.setReadonly(myEntriesFile, true);
+            }
             if (close) {
                 closeEntries();
             }
