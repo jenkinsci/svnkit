@@ -496,7 +496,7 @@
     </suite>
   </server>
   <server name="svnserve" url="svn://localhost:41101">
-suitesvnserveauthz
+    <suite name="authz">
       <test name="authz issue #2486 - open root" id="1" result="PASSED"></test>
       <test name="broken authz files cause errors" id="3" result="PASSED"></test>
       <test name="test authz for read operations" id="4" result="PASSED"></test>
@@ -508,7 +508,7 @@ suitesvnserveauthz
       <test name="test the authz validation rules" id="10" result="PASSED"></test>
       <test name="test authz for locking" id="11" result="PASSED"></test>
     </suite>
-suitesvnserveautoprop
+    <suite name="autoprop">
       <test name="add: config=no,  commandline=none" id="1" result="PASSED"></test>
       <test name="add: config=yes, commandline=none" id="2" result="PASSED"></test>
       <test name="add: config=no,  commandline=yes" id="3" result="PASSED"></test>
@@ -524,7 +524,7 @@ suitesvnserveautoprop
       <test name="add directory" id="13" result="PASSED"></test>
       <test name="import directory" id="14" result="PASSED"></test>
     </suite>
-suitesvnservebasic
+    <suite name="basic">
       <test name="basic checkout of a wc" id="1" result="PASSED"></test>
       <test name="basic status command" id="2" result="PASSED"></test>
       <test name="basic commit command" id="3" result="PASSED"></test>
@@ -559,7 +559,7 @@ suitesvnservebasic
       <test name="checkout with peg revision" id="32" result="PASSED"></test>
       <test name="basic ls of repos with space in name" id="33" result="PASSED"></test>
     </suite>
-suitesvnserveblame
+    <suite name="blame">
       <test name="annotate a file whose name contains a space" id="1" result="PASSED"></test>
       <test name="annotate a binary file" id="2" result="PASSED"></test>
       <test name="annotating a directory not allowed" id="3" result="PASSED"></test>
@@ -570,14 +570,14 @@ suitesvnserveblame
       <test name="ignore whitespace when blaming" id="8" result="PASSED"></test>
       <test name="ignore eol styles when blaming" id="9" result="PASSED"></test>
     </suite>
-suitesvnservecat
+    <suite name="cat">
       <test name="cat a local directory" id="1" result="PASSED"></test>
       <test name="cat a remote directory" id="2" result="PASSED"></test>
       <test name="cat a file at revision BASE" id="3" result="PASSED"></test>
       <test name="cat a nonexistent file" id="4" result="PASSED"></test>
       <test name="cat should skip uncattable resources" id="5" result="PASSED"></test>
     </suite>
-suitesvnservecommit
+    <suite name="commit">
       <test name="commit one file" id="1" result="PASSED"></test>
       <test name="commit one newly added file" id="2" result="PASSED"></test>
       <test name="commit one newly added binary file" id="3" result="PASSED"></test>
@@ -613,7 +613,7 @@ suitesvnservecommit
       <test name="post commit hook failure case testing" id="34" result="PASSED"></test>
       <test name="commit two targets, both the same folder" id="35" result="PASSED"></test>
     </suite>
-suitesvnservecopy
+    <suite name="copy">
       <test name="basic copy and move commands -- on files only" id="1" result="PASSED"></test>
       <test name="receive a copied directory during update" id="2" result="PASSED"></test>
       <test name="resurrect a deleted directory" id="3" result="PASSED"></test>
@@ -652,7 +652,7 @@ suitesvnservecopy
       <test name="'move --force' should not lose local mods" id="36" result="PASSED"></test>
       <test name="copy a deleted dir to a prefix of its old path" id="37" result="PASSED"></test>
     </suite>
-suitesvnservediff
+    <suite name="diff">
       <test name="update a file" id="1" result="PASSED"></test>
       <test name="add a file" id="2" result="PASSED"></test>
       <test name="add a file in an added directory" id="3" result="PASSED"></test>
@@ -694,7 +694,7 @@ suitesvnservediff
       <test name="ignore eol styles when diffing" id="40" result="PASSED"></test>
       <test name="diff a revision of a file in a renamed folder" id="41" result="PASSED"></test>
     </suite>
-suitesvnserveexport
+    <suite name="export">
       <test name="export an empty directory" id="1" result="PASSED"></test>
       <test name="export the greek tree" id="2" result="PASSED"></test>
       <test name="attempt to export a nonexistent URL" id="3" result="PASSED"></test>
@@ -712,7 +712,7 @@ suitesvnserveexport
       <test name="export with state deleted=true" id="15" result="PASSED"></test>
       <test name="export and create some intermediate folders" id="16" result="PASSED"></test>
     </suite>
-suitesvnserveexternals
+    <suite name="externals">
       <test name="test checkouts with externals" id="1" result="PASSED"></test>
       <test name="update to receive a new external module" id="2" result="PASSED"></test>
       <test name="update to lose an external module" id="3" result="PASSED"></test>
@@ -723,18 +723,18 @@ suitesvnserveexternals
       <test name="error if external target dir involves '.' or '..'" id="8" result="PASSED"></test>
       <test name="test exports with externals" id="9" result="PASSED"></test>
     </suite>
-suitesvnservehistory
+    <suite name="history">
       <test name="verify that 'svn cat' traces renames" id="1" result="PASSED"></test>
       <test name="verify that 'svn cat' avoids false identities" id="2" result="PASSED"></test>
     </suite>
-suitesvnserveimport
+    <suite name="import">
       <test name="import of executable files" id="1" result="PASSED"></test>
       <test name="do not import ignored files in imported dirs" id="2" result="PASSED"></test>
       <test name="avoid creating empty revisions with import" id="3" result="PASSED"></test>
       <test name="import ignored files in imported dirs" id="4" result="PASSED"></test>
       <test name="import should honor the eol-style property" id="5" result="PASSED"></test>
     </suite>
-suitesvnservelock
+    <suite name="lock">
       <test name="lock a file and verify that it's locked" id="1" result="PASSED"></test>
       <test name="commit a file and keep lock" id="2" result="PASSED"></test>
       <test name="commit a file and release lock" id="3" result="PASSED"></test>
@@ -769,7 +769,7 @@ suitesvnservelock
       <test name="veriy unlocking with wrong lock token" id="32" result="PASSED"></test>
       <test name="verify recursive info shows lock info" id="33" result="PASSED"></test>
     </suite>
-suitesvnservelog
+    <suite name="log">
       <test name="'svn log', no args, top of wc" id="1" result="PASSED"></test>
       <test name="'svn commit -F foo' when foo is a versioned file" id="2" result="PASSED"></test>
       <test name="'svn log' on an empty repository" id="3" result="PASSED"></test>
@@ -784,7 +784,7 @@ suitesvnservelog
       <test name="svn log --limit" id="13" result="PASSED"></test>
       <test name="run log on an @BASE target" id="14" result="PASSED"></test>
     </suite>
-suitesvnservemerge
+    <suite name="merge">
       <test name="performing a merge, with mixed results" id="1" result="PASSED"></test>
       <test name="merge and add new files/dirs with history" id="2" result="PASSED"></test>
       <test name="merge that deletes items" id="3" result="PASSED"></test>
@@ -820,7 +820,7 @@ suitesvnservemerge
       <test name="ignore eolstyle when merging" id="35" result="PASSED"></test>
       <test name="conflict from merge of add over versioned file" id="36" result="PASSED"></test>
     </suite>
-suitesvnserveprop
+    <suite name="prop">
       <test name="write/read props in wc only (ps, pl, pdel)" id="1" result="PASSED"></test>
       <test name="commit properties" id="2" result="PASSED"></test>
       <test name="receive properties via update" id="3" result="PASSED"></test>
@@ -838,7 +838,7 @@ suitesvnserveprop
       <test name="property operations on an URL" id="15" result="PASSED"></test>
       <test name="removal of schedule added file with properties" id="16" result="PASSED"></test>
     </suite>
-suitesvnserverevert
+    <suite name="revert">
       <test name="revert relative to wc root" id="1" result="PASSED"></test>
       <test name="revert reexpands manually contracted keyword" id="2" result="PASSED"></test>
       <test name="revert a replaced file with no properties" id="3" result="PASSED"></test>
@@ -853,7 +853,7 @@ suitesvnserverevert
       <test name="revert a simple propdel on a dir" id="13" result="PASSED"></test>
       <test name="revert a simple propdel on a file" id="14" result="PASSED"></test>
     </suite>
-suitesvnserveschedule
+    <suite name="schedule">
       <test name="revert: add some files" id="1" result="PASSED"></test>
       <test name="revert: add some directories" id="2" result="PASSED"></test>
       <test name="revert: add some nested files and directories" id="3" result="PASSED"></test>
@@ -868,7 +868,7 @@ suitesvnserveschedule
       <test name="'svn mkdir' should clean up after itself on error" id="12" result="PASSED"></test>
       <test name="'svn rm non-existent' should exit with an error" id="13" result="PASSED"></test>
     </suite>
-suitesvnservespecial
+    <suite name="special">
       <test name="general symlink handling" id="1" result="PASSED"></test>
       <test name="replace a normal file with a special file" id="2" result="PASSED"></test>
       <test name="import and export a symlink" id="3" result="PASSED"></test>
@@ -876,7 +876,7 @@ suitesvnservespecial
       <test name="replace a special file with a non-special file" id="5" result="PASSED"></test>
       <test name="remove a symlink" id="6" result="PASSED"></test>
     </suite>
-suitesvnservestat
+    <suite name="stat">
       <test name="status on unversioned file in current directory" id="1" result="PASSED"></test>
       <test name="run 'status -u' when nested additions are pending" id="2" result="PASSED"></test>
       <test name="status -vN shows all items in current directory" id="3" result="PASSED"></test>
@@ -902,7 +902,7 @@ suitesvnservestat
       <test name="run 'status -u' variations w/ incoming propchanges" id="23" result="PASSED"></test>
       <test name="run 'status -uv' w/ incoming propchanges" id="24" result="PASSED"></test>
     </suite>
-suitesvnserveswitch
+    <suite name="switch">
       <test name="test some basic switching operations" id="1" result="PASSED"></test>
       <test name="commits after some basic switching operations" id="2" result="PASSED"></test>
       <test name="update wc that contains switched things" id="3" result="PASSED"></test>
@@ -921,7 +921,7 @@ suitesvnserveswitch
       <test name="refresh the WC file system read-only attribute " id="17" result="PASSED"></test>
       <test name="switch shouldn't allow changing repos root" id="18" result="PASSED"></test>
     </suite>
-suitesvnservetrans
+    <suite name="trans">
       <test name="commit new files with keywords active from birth" id="1" result="PASSED"></test>
       <test name="update modified file with eol-style 'native'" id="2" result="PASSED"></test>
       <test name="committing eol-style change forces text send" id="3" result="PASSED"></test>
@@ -931,7 +931,7 @@ suitesvnservetrans
       <test name="propset, commit, check out into another wc" id="7" result="PASSED"></test>
       <test name="propset, revert" id="8" result="PASSED"></test>
     </suite>
-suitesvnserveupdate
+    <suite name="update">
       <test name="update a locally-modified binary file" id="1" result="PASSED"></test>
       <test name="update to an old revision of a binary files" id="2" result="PASSED"></test>
       <test name="update should not munge adds or replaces" id="3" result="PASSED"></test>
@@ -962,7 +962,7 @@ suitesvnserveupdate
       <test name="conflict markers should match the file's eol style" id="28" result="PASSED"></test>
       <test name="update wc containing a replaced-with-history file" id="29" result="PASSED"></test>
     </suite>
-suitesvnservesvnsync
+    <suite name="svnsync">
       <test name="copy and modify" id="1" result="PASSED"></test>
       <test name="copy from previous version and modify" id="2" result="PASSED"></test>
       <test name="copy from previous version" id="3" result="PASSED"></test>
@@ -983,7 +983,7 @@ suitesvnservesvnsync
       <test name="test url encoding issues" id="18" result="PASSED"></test>
       <test name="test copying revs with no svn:author revprops" id="19" result="PASSED"></test>
     </suite>
-suitesvnservesvnadmin
+    <suite name="svnadmin">
       <test name="loading of dumpstream with extra headers" id="1" result="PASSED"></test>
       <test name="load success on oversized Content-length" id="2" result="PASSED"></test>
       <test name="load failure on undersized Content-length" id="3" result="PASSED"></test>
@@ -992,17 +992,18 @@ suitesvnservesvnadmin
       <test name="'svnadmin dump' on modified child of copied dir" id="6" result="PASSED"></test>
       <test name="'svnadmin dump --quiet'" id="7" result="PASSED"></test>
     </suite>
-suitesvnservesvnlook
+    <suite name="svnlook">
       <test name="test miscellaneous svnlook features" id="1" result="PASSED"></test>
       <test name="delete file in moved dir" id="2" result="PASSED"></test>
       <test name="test the printing of property diffs" id="3" result="PASSED"></test>
       <test name="svnlook info must allow inconsistent newlines" id="4" result="PASSED"></test>
       <test name="test --copy-info flag on the changed command" id="5" result="PASSED"></test>
     </suite>
-suitesvnservesvnversion
+    <suite name="svnversion">
       <test name="test 'svnversion' on wc and other dirs" id="1" result="PASSED"></test>
       <test name="test 'svnversion' with svn:externals" id="2" result="PASSED"></test>
     </suite>
+  </server>
   <server name="apache" url="http://localhost:36190">
     <suite name="authz" total="10" passed="10" failed="0">
       <test name="authz issue #2486 - open root" id="1" result="PASSED"></test>
