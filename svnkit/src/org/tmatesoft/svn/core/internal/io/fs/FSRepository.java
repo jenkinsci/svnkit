@@ -425,7 +425,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
 
                 FSRevisionNode fileNode = root.getRevisionNode(revPath);
                 Map props = fileNode.getProperties(myFSFS);
-                Map propDiffs = FSRepositoryUtil.getPropsDiffs(props, lastProps);
+                Map propDiffs = FSRepositoryUtil.getPropsDiffs(lastProps, props);
                 boolean contentsChanged = false;
                 if (lastRoot != null) {
                     contentsChanged = FSRepositoryUtil.areFileContentsChanged(lastRoot, lastPath, root, revPath);
