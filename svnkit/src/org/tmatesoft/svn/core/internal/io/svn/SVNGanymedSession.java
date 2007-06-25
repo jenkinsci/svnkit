@@ -340,6 +340,7 @@ public class SVNGanymedSession {
             synchronized (ourSessionsMap) {
                 try {
                     ourSessionsMap.wait();
+                    return;
                 } catch (InterruptedException e) {
                 }
             }
