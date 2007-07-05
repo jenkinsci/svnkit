@@ -722,9 +722,11 @@ public abstract class SVNAdminArea {
         runner.logCompleted(this);
         // delete all logs, there shoudn't be left unprocessed.
         File[] logsFiles = getAdminDirectory().listFiles();
-        for (int i = 0; i < logsFiles.length; i++) {
-            if (logsFiles[i].getName().startsWith("log") && logsFiles[i].isFile()) {
-                SVNFileUtil.deleteFile(logsFiles[i]);
+        if (logsFiles != null) {
+            for (int i = 0; i < logsFiles.length; i++) {
+                if (logsFiles[i].getName().startsWith("log") && logsFiles[i].isFile()) {
+                    SVNFileUtil.deleteFile(logsFiles[i]);
+                }
             }
         }
     }
