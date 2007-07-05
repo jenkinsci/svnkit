@@ -695,8 +695,6 @@ public abstract class SVNAdminArea {
     public void runLogs() throws SVNException {
         SVNLogRunner runner = new SVNLogRunner();
         int index = 0;
-        Collection processedLogs = new ArrayList();
-        // find first, not yet executed log file.
         SVNLog log = null;
         try {
             File logFile = null;
@@ -708,32 +706,32 @@ public abstract class SVNAdminArea {
                 log = new SVNLogImpl(logFile, null, this);
                 if (log.exists()) {
                     log.run(runner);
-                    processedLogs.add(log);
+                    markLogProcessed(logFile);
                     index++;
                     continue;
                 }
                 break;
             }
-        } catch (SVNException e) {
-            // to save modifications made to .svn/entries
+        } catch (Throwable e) {
             runner.logFailed(this);
-            deleteLogs(processedLogs);
-            int newIndex = 0;
-            while (true && index != 0) {
-                File logFile = getAdminFile("log." + index);
-                if (logFile.exists()) {
-                    File newFile = getAdminFile(newIndex == 0 ? "log" : "log." + newIndex);
-                    SVNFileUtil.rename(logFile, newFile);
-                    newIndex++;
-                    index++;
-                    continue;
-                }
-                break;
+            if (e instanceof SVNException) {
+                throw (SVNException) e;
             }
-            throw e;
+            throw new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN), e);
         }
         runner.logCompleted(this);
-        deleteLogs(processedLogs);
+        // delete all logs, there shoudn't be left unprocessed.
+        File[] logsFiles = getAdminDirectory().listFiles();
+        for (int i = 0; i < logsFiles.length; i++) {
+            if (logsFiles[i].getName().startsWith("log") && logsFiles[i].isFile()) {
+                SVNFileUtil.deleteFile(logsFiles[i]);
+            }
+        }
+    }
+    
+    private static void markLogProcessed(File logFile) throws SVNException {
+        SVNFileUtil.deleteFile(logFile);
+        SVNFileUtil.createEmptyFile(logFile);
     }
 
     public void removeFromRevisionControl(String name, boolean deleteWorkingFiles, boolean reportInstantError) throws SVNException {
@@ -1224,13 +1222,6 @@ public abstract class SVNAdminArea {
         }
         SVNFileUtil.deleteAll(getAdminDirectory(), getWCAccess());
         getWCAccess().closeAdminArea(getRoot());
-    }
-
-    private static void deleteLogs(Collection logsList) throws SVNException {
-        for (Iterator logs = logsList.iterator(); logs.hasNext();) {
-            SVNLog log = (SVNLog) logs.next();
-            log.delete();
-        }
     }
     
     public void commit(String target, SVNCommitInfo info, Map wcPropChanges,
