@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.net.UnknownHostException;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -44,6 +45,9 @@ public class SVNPlainConnector implements ISVNConnector {
         try {
             mySocket = SVNSocketFactory.createPlainSocket(location.getHost(), location.getPort());
             mySocket.setSoTimeout(DEFAULT_SVN_TIMEOUT);
+        } catch (UnknownHostException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, "Unknown host " + e.getMessage());
+            SVNErrorManager.error(err, e);
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getLocalizedMessage());
             SVNErrorManager.error(err, e);
