@@ -38,7 +38,7 @@ class FixedSizeInputStream extends InputStream {
     }
     
     public void close() {
-        // just read remainging data.
+        // just read remaining data.
         if (myLength > 0) {
             try {
                 consumeRemaining(this);

@@ -716,6 +716,8 @@ public abstract class SVNAdminArea {
             runner.logFailed(this);
             if (e instanceof SVNException) {
                 throw (SVNException) e;
+            } else if (e instanceof Error) {
+                throw (Error) e;
             }
             throw new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN), e);
         }
