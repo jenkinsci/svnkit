@@ -93,6 +93,8 @@ import org.tmatesoft.svn.util.Version;
  * @author  TMate Software Ltd.
  */
 public class SVNClientImpl implements SVNClientInterface {
+    
+    private static int ourInstanceCount;
 
     private String myConfigDir;
     private PromptUserPassword myPrompt;
@@ -153,6 +155,9 @@ public class SVNClientImpl implements SVNClientInterface {
         FSRepositoryFactory.setup();
         myConfigDir = SVNWCUtil.getDefaultConfigurationDirectory().getAbsolutePath();
         myOwner = owner == null ? (SVNClientInterface) this : (SVNClientInterface) owner;
+        synchronized (SVNClientImpl.class) {
+            ourInstanceCount++;
+        }
     }
 
     public String getLastPath() {
@@ -1034,8 +1039,14 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public void dispose() {
-        SVNGanymedSession.shutdown();
-        new DefaultSVNRepositoryPool(null, null).shutdownConnections(true);
+        synchronized (SVNClientImpl.class) {
+            ourInstanceCount--;
+            if (ourInstanceCount <= 0) {
+                ourInstanceCount = 0;
+                SVNGanymedSession.shutdown();
+                new DefaultSVNRepositoryPool(null, null).shutdownConnections(true);
+            }
+        }
     }
 
     public void setConfigDirectory(String configDir) throws ClientException {
