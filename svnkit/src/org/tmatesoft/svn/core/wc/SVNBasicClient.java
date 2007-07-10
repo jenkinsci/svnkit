@@ -67,15 +67,28 @@ public class SVNBasicClient implements ISVNEventHandler {
     private boolean myIsIgnoreExternals;
     private boolean myIsLeaveConflictsUnresolved;
     private ISVNDebugLog myDebugLog;
+    private boolean myIsStandaloneClient;
 
     protected SVNBasicClient(final ISVNAuthenticationManager authManager, ISVNOptions options) {
         this(new DefaultSVNRepositoryPool(authManager == null ? SVNWCUtil.createDefaultAuthenticationManager() : authManager, options), options);
+        myIsStandaloneClient = true;
     }
 
     protected SVNBasicClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
         myRepositoryPool = repositoryPool;
         setOptions(options);
         myPathPrefixesStack = new LinkedList();
+    }
+    
+    /**
+     * In case instance of this class was obtained NOT from {@link SVNClientManager}, this
+     * method will make sure that all cached connections are closed.
+     *  
+     */
+    public void dispose() {
+        if (myIsStandaloneClient && myRepositoryPool != null) {
+            myRepositoryPool.dispose();
+        }
     }
     
     /**
