@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.wc;
 
+import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
@@ -248,8 +249,13 @@ public class SVNClientManager implements ISVNRepositoryPool {
 
     public void shutdownConnections(boolean shutdownAll) {
         if (myRepositoryPool != null) {
-            myRepositoryPool.shutdownConnections(shutdownAll);
-            
+            myRepositoryPool.dispose();
+        }
+    }
+
+    public void dispose() {
+        if (myRepositoryPool != null) {
+            myRepositoryPool.dispose();
         }
     }
     
@@ -280,6 +286,7 @@ public class SVNClientManager implements ISVNRepositoryPool {
      */
     public void setEventHandler(ISVNEventHandler handler) {
         myEventHandler = handler;
+        setCanceller(handler);
         if (myCommitClient != null) {
             myCommitClient.setEventHandler(handler);
         }
@@ -309,6 +316,40 @@ public class SVNClientManager implements ISVNRepositoryPool {
         }
         if (myLookClient != null) {
             myLookClient.setEventHandler(handler);
+        }
+    }
+
+    public void setOptions(ISVNOptions options) {
+        myOptions = options;
+        if (myCommitClient != null) {
+            myCommitClient.setOptions(options);
+        }
+        if (myCopyClient != null) {
+            myCopyClient.setOptions(options);
+        }
+        if (myDiffClient != null) {
+            myDiffClient.setOptions(options);
+        }
+        if (myLogClient != null) {
+            myLogClient.setOptions(options);
+        }
+        if (myMoveClient != null) {
+            myMoveClient.setOptions(options);
+        }
+        if (myStatusClient != null) {
+            myStatusClient.setOptions(options);
+        }
+        if (myUpdateClient != null) {
+            myUpdateClient.setOptions(options);
+        }
+        if (myWCClient != null) {
+            myWCClient.setOptions(options);
+        }
+        if (myAdminClient != null) {
+            myAdminClient.setOptions(options);
+        }
+        if (myLookClient != null) {
+            myLookClient.setOptions(options);
         }
     }
     
@@ -577,6 +618,21 @@ public class SVNClientManager implements ISVNRepositoryPool {
         }
         if (myLookClient != null) {
             myLookClient.setDebugLog(log);
+        }
+        if (myRepositoryPool != null) {
+            myRepositoryPool.setDebugLog(log);
+        }
+    }
+
+    public void setAuthenticationManager(ISVNAuthenticationManager authManager) {
+        if (myRepositoryPool != null) {
+            myRepositoryPool.setAuthenticationManager(authManager);
+        }
+    }
+
+    public void setCanceller(ISVNCanceller canceller) {
+        if (myRepositoryPool != null) {
+            myRepositoryPool.setCanceller(canceller);
         }
     }
 }

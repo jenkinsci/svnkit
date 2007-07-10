@@ -15,6 +15,8 @@ import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 
@@ -137,10 +139,12 @@ public abstract class SVNRepository {
     private ISVNTunnelProvider myTunnelProvider;
     private ISVNDebugLog myDebugLog;
     private ISVNCanceller myCanceller;
+    private Collection myConnectionListeners;
 
     protected SVNRepository(SVNURL location, ISVNSession options) {
         myLocation = location;
         myOptions = options;
+        myConnectionListeners = new HashSet();
     }
 	
     /**
@@ -201,7 +205,6 @@ public abstract class SVNRepository {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "SVNRepository URL could not be changed from ''{0}'' to ''{1}''; create new SVNRepository instance instead", new Object[] {myLocation, url});
                 SVNErrorManager.error(err);
             }
-            
             if (forceReconnect) {
                 closeSession();
                 myRepositoryRoot = null;
@@ -1772,7 +1775,7 @@ public abstract class SVNRepository {
      *                      and the name of the user who tries to unlock a path does not match
      *                      the lock owner
      *                      <li>a lock token is incorrect for a path
-     *                      <li>a failure occured while connecting to a repository 
+     *                      <li>a failure occurred while connecting to a repository 
      *                      <li>the user authentication failed 
      *                      (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
      *                      </ul>
@@ -1792,7 +1795,7 @@ public abstract class SVNRepository {
      * 
      * @throws SVNException  if some i/o error has occurred
      */
-    public abstract void closeSession() throws SVNException;
+    public abstract void closeSession();
     
     /**
      * Returns the session options object this driver is using.
@@ -1806,6 +1809,28 @@ public abstract class SVNRepository {
             myOptions = ISVNSession.DEFAULT;
         }
         return myOptions;
+    }
+    
+    public void addConnectionListener(ISVNConnectionListener listener) {
+        myConnectionListeners.add(listener);
+    }
+
+    public void removeConnectionListener(ISVNConnectionListener listener) {
+        myConnectionListeners.remove(listener);
+    }
+    
+    protected void fireConnectionOpened() {
+        for (Iterator listeners = myConnectionListeners.iterator(); listeners.hasNext();) {
+            ISVNConnectionListener listener = (ISVNConnectionListener) listeners.next();
+            listener.connectionOpened(this);
+        }
+    }
+
+    protected void fireConnectionClosed() {
+        for (Iterator listeners = myConnectionListeners.iterator(); listeners.hasNext();) {
+            ISVNConnectionListener listener = (ISVNConnectionListener) listeners.next();
+            listener.connectionClosed(this);
+        }
     }
     
     protected synchronized void lock() {
@@ -1830,7 +1855,7 @@ public abstract class SVNRepository {
             if (--myLockCount <= 0) {
                 myLockCount = 0;
                 myLocker = null;
-                notifyAll();
+                notify();
             }
         }
     }

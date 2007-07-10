@@ -11,9 +11,12 @@
  */
 package org.tmatesoft.svn.core.wc;
 
+import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.ISVNDebugLog;
 
 /**
  * The <b>ISVNRepositoryPool</b> interface is used by 
@@ -32,6 +35,25 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  * @see     DefaultSVNRepositoryPool
  */
 public interface ISVNRepositoryPool {
+    
+    /**
+     * Updates authentication manager instance referenced by SVNRepository objects 
+     * currently in the pool.
+     */
+    public void setAuthenticationManager(ISVNAuthenticationManager authManager);
+    
+    /**
+     * Updates canceller instance referenced by SVNRepository objects 
+     * currently in the pool.
+     */
+    public void setCanceller(ISVNCanceller canceller);
+
+    /**
+     * Updates debug log instance referenced by SVNRepository objects 
+     * currently in the pool.
+     */
+    public void setDebugLog(ISVNDebugLog log);
+    
     /**
      * Creates a low-level SVN protocol driver to access a repository.
      * 
@@ -79,6 +101,10 @@ public interface ISVNRepositoryPool {
      *                    of only some part of <b>SVNRepository</b> objects (for example,
      *                    those, that are not needed anymore)
      * @see               DefaultSVNRepositoryPool
+     * 
+     * @deprecated use {@link #dispose()} method instead.
      */
     public void shutdownConnections(boolean shutdownAll);
+    
+    public void dispose();
 }

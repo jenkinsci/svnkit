@@ -11,18 +11,22 @@
  */
 package org.tmatesoft.svn.core.wc;
 
-import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
+import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.io.ISVNConnectionListener;
 import org.tmatesoft.svn.core.io.ISVNSession;
 import org.tmatesoft.svn.core.io.ISVNTunnelProvider;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
+import org.tmatesoft.svn.util.ISVNDebugLog;
 
 
 /**
@@ -53,51 +57,57 @@ import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
  * @version 1.1.1
  * @author  TMate Software Ltd.
  */
-public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession {
+public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession, ISVNConnectionListener {
+    
     /**
      * Defines a common shared objects pool. All objects that will be 
-     * created by different threads will be stored in this common pool.  
+     * created by different threads will be stored in this common pool.
+     * 
+     * @deprecated  
      */
     public static final int RUNTIME_POOL = 1;
+    
     /**
      * Defines a private pool. All objects that will be created by 
      * different threads will be stored only within this pool object.
      * This allows to have more than one separate pools. 
      */
     public static final int INSTANCE_POOL = 2;
+    
     /**
      * Defines a without-pool configuration. Objects that are created
      * by this <b>DefaultSVNRepositoryPool</b> object are not cached,
      * the pool feature is disabled.
+     * 
+     * @deprecated
      */
     public static final int NO_POOL = 4;
+
+    private static final long DEFAULT_IDLE_TIMEOUT = 60*1000;
+    private static Timer ourTimer = new Timer(true);
     
     private ISVNAuthenticationManager myAuthManager;
     private ISVNTunnelProvider myTunnelProvider;
-    private boolean myIsKeepConnections;
-    private int myPoolMode;
-    
     private Map myPool;
-    private static Map ourPool;
-    private static Object ourPoolMonitor = new Object();
-    
-    private static final boolean ourAllowPersistentConnections = "true".equalsIgnoreCase(
-            System.getProperty("svnkit.http.keepAlive", System.getProperty("javasvn.http.keepAlive", "true")));
+    private long myTimeout;
+    private Map myInactiveRepositories = new HashMap();
+    private Timer myTimer;
     
     /**
      * Constructs a <b>DefaultSVNRepositoryPool</b> instance
      * that represents {@link #RUNTIME_POOL} objects pool. 
      * <b>SVNRepository</b> objects created by this instance will
      * use a single socket connection.
-     * <p> 
-     * This constructor is equivalent to 
-     * <code>DefaultSVNRepositoryPool(authManager, <span class="javakeyword">true</span>, RUNTIME_POOL)</code>.
      * 
      * @param authManager      an authentication driver
      * @param tunnelProvider   a tunnel provider
      */
     public DefaultSVNRepositoryPool(ISVNAuthenticationManager authManager, ISVNTunnelProvider tunnelProvider) {
-        this(authManager, tunnelProvider, true, RUNTIME_POOL);
+        myAuthManager = authManager;
+        myTunnelProvider = tunnelProvider;
+        myTimeout = DEFAULT_IDLE_TIMEOUT;
+        myTimer = ourTimer;
+        ourTimer.schedule(new TimeoutTask(), 10000);
     }
     
     /**
@@ -112,12 +122,10 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
      *                            a new connection per each repository access operation
      * @param poolMode            a mode of this object represented by
      *                            one of the constant fields of <b>DefaultSVNRepositoryPool</b>
+     * @deprecated
      */
     public DefaultSVNRepositoryPool(ISVNAuthenticationManager authManager, ISVNTunnelProvider tunnelProvider, boolean keepConnections, int poolMode) {
-        myAuthManager = authManager;
-        myIsKeepConnections = keepConnections;
-        myPoolMode = poolMode;
-        myTunnelProvider = tunnelProvider;
+        this(authManager, tunnelProvider);
     }
     
     /**
@@ -155,18 +163,30 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
             return repos;
         }
         
-        repos = retriveRepository(pool, url.getProtocol());
+        repos = (SVNRepository) pool.get(url.getProtocol());
         if (repos != null) {
             repos.setLocation(url, false);
         } else {
             repos = SVNRepositoryFactory.create(url, this);
-            saveRepository(pool, repos, url.getProtocol());
+            // add listener.
+            repos.addConnectionListener(this);
+            pool.put(url.getProtocol(), repos);
         }         
         repos.setAuthenticationManager(myAuthManager);
         repos.setTunnelProvider(myTunnelProvider);
-        
         return repos;
     }
+    
+    public void setAuthenticationManager(ISVNAuthenticationManager authManager) {
+        myAuthManager = authManager;
+        Map pool = getPool();
+        for (Iterator protocols = pool.keySet().iterator(); protocols.hasNext();) {
+            String key = (String) protocols.next();
+            SVNRepository repository = (SVNRepository) pool.get(key);
+            repository.setAuthenticationManager(myAuthManager);
+        }
+    }
+    
     /**
      * Says if the given <b>SVNRepository</b> driver object should
      * keep a connection opened. If this object was created with
@@ -181,7 +201,7 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
      *                     the driver should keep a connection
      */
     public boolean keepConnection(SVNRepository repository) {
-        return ourAllowPersistentConnections && myIsKeepConnections;
+        return true;
     }
     
     /**
@@ -194,36 +214,28 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
      * @see               org.tmatesoft.svn.core.io.SVNRepository                                    
      */
     public synchronized void shutdownConnections(boolean shutdownAll) {
-        Map pool = null;
-        if (myPoolMode == INSTANCE_POOL) {
-            pool = myPool;
-        } else if (myPoolMode == RUNTIME_POOL){
-            pool = ourPool;
+        dispose();
+    }
+    
+    public void dispose() {
+        synchronized (myInactiveRepositories) {
+            myInactiveRepositories.clear();
+            myTimer = null;
         }
-        if (pool != null) {
-            synchronized (ourPoolMonitor) {
-                clearPool(pool, shutdownAll);
-            }
+        
+        Map pool = getPool();
+        for (Iterator protocols = pool.keySet().iterator(); protocols.hasNext();) {
+            String key = (String) protocols.next();
+            SVNRepository repository = (SVNRepository) pool.get(key);
+            repository.closeSession();
         }
     }
     
     private Map getPool() {
-        switch (myPoolMode) {
-            case INSTANCE_POOL:
-                if (myPool == null) {
-                    myPool = new HashMap();
-                }
-                return myPool;
-            case RUNTIME_POOL:
-                synchronized (ourPoolMonitor) {
-                    if (ourPool == null) {
-                        ourPool = new HashMap();
-                    }
-                    return ourPool;
-                }
-            default:
+        if (myPool == null) {
+            myPool = new HashMap();
         }
-        return null;
+        return myPool;
     }
 
     // no caching in this class
@@ -263,56 +275,59 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
     public boolean hasCommitMessage(SVNRepository repository, long revision) {
         return false;
     }
-    
-    private static void clearPool(Map pool, boolean force) {
-        for (Iterator references = pool.keySet().iterator(); references.hasNext();) {
-            WeakReference reference = (WeakReference) references.next();
-            if (force || reference.get() == null) {
-                Map repositoriesMap = (Map) pool.get(reference);
-                for (Iterator repos = repositoriesMap.values().iterator(); repos.hasNext();) {
-                    SVNRepository repo = (SVNRepository) repos.next();
-                    try {
-                        repo.closeSession();
-                    } catch (SVNException e) {
-                    }
-                    repos.remove();
-                }
-                references.remove();
-            }
-        }
-    }
-    
-    private static SVNRepository retriveRepository(Map pool, String protocol) {
-        synchronized (ourPoolMonitor) {
-            clearPool(pool, false);
-            for (Iterator references = pool.keySet().iterator(); references.hasNext();) {
-                WeakReference reference = (WeakReference) references.next();
-                if (reference.get() == Thread.currentThread()) {
-                    Map repositoriesMap = (Map) pool.get(reference);
-                    if (repositoriesMap.containsKey(protocol)) {
-                        return (SVNRepository) repositoriesMap.get(protocol);
-                    }
-                    return null;
-                } 
-            }
-            return null;
+
+    public void connectionClosed(final SVNRepository repository) {
+        // start inactivity timer.
+        synchronized (myInactiveRepositories) {
+            myInactiveRepositories.put(repository, new Long(System.currentTimeMillis()));
+            // schedule timeout cleanup.
         }
     }
 
-    private static void saveRepository(Map pool, SVNRepository repository, String protocol) {
-        synchronized (ourPoolMonitor) {
-            clearPool(pool, false);
-            for (Iterator references = pool.keySet().iterator(); references.hasNext();) {
-                WeakReference reference = (WeakReference) references.next();
-                if (reference.get() == Thread.currentThread()) {
-                    Map repositoriesMap = (Map) pool.get(reference);
-                    repositoriesMap.put(protocol, repository);
-                    return;
-                } 
+    public void connectionOpened(SVNRepository repository) {
+        synchronized (myInactiveRepositories) {
+            myInactiveRepositories.remove(repository);
+        }
+    }
+    
+    private long getTimeout() {
+        return myTimeout;
+    }
+
+    public void setCanceller(ISVNCanceller canceller) {
+        Map pool = getPool();
+        for (Iterator protocols = pool.keySet().iterator(); protocols.hasNext();) {
+            String key = (String) protocols.next();
+            SVNRepository repository = (SVNRepository) pool.get(key);
+            repository.setCanceller(canceller);
+        }
+    }
+
+    public void setDebugLog(ISVNDebugLog log) {
+        Map pool = getPool();
+        for (Iterator protocols = pool.keySet().iterator(); protocols.hasNext();) {
+            String key = (String) protocols.next();
+            SVNRepository repository = (SVNRepository) pool.get(key);
+            repository.setDebugLog(log);
+        }
+    }
+    
+    private class TimeoutTask extends TimerTask {
+        public void run() {
+            long currentTime = System.currentTimeMillis();
+            synchronized (myInactiveRepositories) {
+                for (Iterator repositories = myInactiveRepositories.keySet().iterator(); repositories.hasNext();) {
+                    SVNRepository repos = (SVNRepository) repositories.next();
+                    long time = ((Long) myInactiveRepositories.get(repos)).longValue();
+                    if (currentTime - time >= getTimeout()) {
+                        repositories.remove();
+                        repos.closeSession();
+                    }
+                }
+                if (myTimer != null) {
+                    myTimer.schedule(new TimeoutTask(), 10000);
+                }
             }
-            Map map = new HashMap();
-            map.put(protocol, repository);
-            pool.put(new WeakReference(Thread.currentThread()), map);
         }
     }
 }

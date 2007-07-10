@@ -80,10 +80,10 @@ class DAVRepository extends SVNRepository {
     public void testConnection() throws SVNException {
         try {
             openConnection();
-            if (myConnection != null) {
-                myConnection.fetchRepositoryUUID(this);
-                myConnection.fetchRepositoryRoot(this);
-            }
+            myRepositoryRoot = null;
+            myRepositoryUUID = null;
+            myConnection.fetchRepositoryUUID(this);
+            myConnection.fetchRepositoryRoot(this);
         } finally {
             closeConnection();
         }
@@ -105,35 +105,38 @@ class DAVRepository extends SVNRepository {
         myRepositoryRoot = root;
     }
     
-    public SVNURL getRepositoryRoot(boolean forceConnection) throws SVNException { 
-        if (myRepositoryRoot == null) {
-            if (myConnection != null) {
+    public SVNURL getRepositoryRoot(boolean forceConnection) throws SVNException {
+        if (myRepositoryRoot != null && !forceConnection) {
+            return myRepositoryRoot;
+        }
+        if (forceConnection) {
+            myRepositoryRoot = null;
+        }
+        try {
+            openConnection();
+            if (myRepositoryRoot == null) {
                 myConnection.fetchRepositoryRoot(this);
-            } else if (forceConnection) {
-                openConnection();
-                try {
-                    myConnection.fetchRepositoryRoot(this);
-                } finally {
-                    closeConnection();
-                }
             }
+        } finally {
+            closeConnection();
         }
         return myRepositoryRoot;
     }
 
     public String getRepositoryUUID(boolean forceConnection) throws SVNException {
-        if (myRepositoryUUID == null) {
-            if (myConnection != null) {
+        if (myRepositoryUUID != null && !forceConnection) {
+            return myRepositoryUUID;
+        }
+        if (forceConnection) {
+            myRepositoryUUID = null;
+        }
+        try {
+            openConnection();
+            if (myRepositoryUUID == null) {
                 myConnection.fetchRepositoryUUID(this);
-            } else if (forceConnection) {
-               openConnection();
-               try {
-                   myConnection.fetchRepositoryUUID(this);
-                   
-               } finally {
-                   closeConnection();
-               }
             }
+        } finally {
+            closeConnection();
         }
         return myRepositoryUUID;
     }
@@ -517,30 +520,21 @@ class DAVRepository extends SVNRepository {
         return davHandler.getEntriesCount();
     }
     
-    private void openConnection() throws SVNException {
+    protected void openConnection() throws SVNException {
         lock();
-        if (myConnection != null && getOptions().keepConnection(this)) {
-            return;
-        }
+        fireConnectionOpened();
         if (myConnection == null) {
             myConnection = new DAVConnection(myConnectionFactory, this);
+            myConnection.open(this);
         }
-        myConnection.open(this);
     }
 
-    private void closeConnection() {
+    protected void closeConnection() {
         if (myConnection != null && !ourIsKeepCredentials) {
             myConnection.clearAuthenticationCache();
         }
-        if (getOptions().keepConnection(this)) {
-            unlock();
-            return;
-        }
-        if (myConnection != null) {
-            myConnection.close();
-            myConnection = null;
-        }
         unlock();
+        fireConnectionClosed();
     }
     
     public int getLocations(String path, long pegRevision, long[] revisions, ISVNLocationEntryHandler handler) throws SVNException {
@@ -881,10 +875,15 @@ class DAVRepository extends SVNRepository {
         return null;
     }
 
-    public void closeSession() throws SVNException {
-        if (myConnection != null) {
-            myConnection.close();
-            myConnection = null;
+    public void closeSession() {
+        lock();
+        try {
+            if (myConnection != null) {
+                myConnection.close();
+                myConnection = null;
+            }
+        } finally {
+            unlock();
         }
     }
     

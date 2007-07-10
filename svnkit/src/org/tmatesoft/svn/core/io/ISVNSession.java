@@ -68,6 +68,8 @@ public interface ISVNSession {
      *          should use a single socket connection during the whole runtime, 
      *          <span class="javakeyword">false</span> - to open/close a new
      *          connection for each repository access operation
+     *          
+     * @deprecated
      */
     public boolean keepConnection(SVNRepository repository);
     

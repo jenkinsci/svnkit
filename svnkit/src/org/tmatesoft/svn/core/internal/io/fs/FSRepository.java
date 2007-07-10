@@ -993,11 +993,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         handler.handleLogEntry(new SVNLogEntry(changedPaths, revNum, author, date, message));
     }
 
-    public void closeSession() throws SVNException {
-    }
-
-    public void setLocation(SVNURL url, boolean forceReconnect) throws SVNException {
-        super.setLocation(url, forceReconnect);
+    public void closeSession() {
     }
 
     public void setPath(String path, String lockToken, long revision, boolean startEmpty) throws SVNException {

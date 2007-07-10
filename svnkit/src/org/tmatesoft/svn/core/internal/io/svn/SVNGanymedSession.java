@@ -164,7 +164,7 @@ public class SVNGanymedSession {
     public static void shutdown() {
         lock(Thread.currentThread());
         try {
-            for(Iterator lists = ourConnectionsPool.entrySet().iterator(); lists.hasNext();) {
+            for(Iterator lists = ourConnectionsPool.values().iterator(); lists.hasNext();) {
                 LinkedList list = (LinkedList) lists.next();
                 for (Iterator infos = list.iterator(); infos.hasNext();) {
                     SSHConnectionInfo info = (SSHConnectionInfo) infos.next();

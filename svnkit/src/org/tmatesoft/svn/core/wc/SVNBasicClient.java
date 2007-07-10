@@ -69,16 +69,12 @@ public class SVNBasicClient implements ISVNEventHandler {
     private ISVNDebugLog myDebugLog;
 
     protected SVNBasicClient(final ISVNAuthenticationManager authManager, ISVNOptions options) {
-        this(new DefaultSVNRepositoryPool(authManager == null ? SVNWCUtil.createDefaultAuthenticationManager() : authManager, options, 
-                true, DefaultSVNRepositoryPool.RUNTIME_POOL), options);
+        this(new DefaultSVNRepositoryPool(authManager == null ? SVNWCUtil.createDefaultAuthenticationManager() : authManager, options), options);
     }
 
     protected SVNBasicClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
         myRepositoryPool = repositoryPool;
-        myOptions = options;
-        if (myOptions == null) {
-            myOptions = SVNWCUtil.createDefaultOptions(true);
-        }
+        setOptions(options);
         myPathPrefixesStack = new LinkedList();
     }
     
@@ -89,6 +85,13 @@ public class SVNBasicClient implements ISVNEventHandler {
      */
     public ISVNOptions getOptions() {
         return myOptions;
+    }
+    
+    public void setOptions(ISVNOptions options) {
+        myOptions = options;
+        if (myOptions == null) {
+            myOptions = SVNWCUtil.createDefaultOptions(true);
+        }
     }
     
     /**

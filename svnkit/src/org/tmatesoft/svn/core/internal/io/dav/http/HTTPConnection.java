@@ -85,7 +85,6 @@ class HTTPConnection implements IHTTPConnection {
     private SVNAuthentication myLastValidAuth;
     private HTTPAuthentication myChallengeCredentials;
     private HTTPAuthentication myProxyAuthentication;
-    private boolean myIsKeepAlive;
     private boolean myIsSpoolResponse;
     private ISVNSSLManager mySSLManager;
     private String myCharset;
@@ -98,7 +97,6 @@ class HTTPConnection implements IHTTPConnection {
         myCharset = charset;
         myHost = repository.getLocation().setPath("", false);
         myIsSecured = "https".equalsIgnoreCase(myHost.getProtocol());
-        myIsKeepAlive = repository.getOptions().keepConnection(repository);
         myIsSpoolAll = spoolAll;
         mySpoolDirectory = spoolDirectory;
     }
@@ -266,7 +264,7 @@ class HTTPConnection implements IHTTPConnection {
         // 2. create request instance.
         HTTPRequest request = new HTTPRequest(myCharset);
         request.setConnection(this);
-        request.setKeepAlive(myIsKeepAlive);
+        request.setKeepAlive(true);
         request.setRequestBody(body);
         request.setResponseHandler(handler);
         request.setResponseStream(dst);
