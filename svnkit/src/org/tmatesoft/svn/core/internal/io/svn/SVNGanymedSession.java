@@ -351,7 +351,7 @@ public class SVNGanymedSession {
         }
     }
     
-    public static class SSHConnectionInfo extends TimerTask {
+    public static class SSHConnectionInfo {
 
         private Connection myConnection;
         private int mySessionCount;
@@ -437,7 +437,11 @@ public class SVNGanymedSession {
                         }
                         // start timeout count down (10 seconds).
                         myTimer = new Timer(false);
-                        myTimer.schedule(this, ourTimeout);
+                        myTimer.schedule(new TimerTask() {
+                            public void run() {
+                                runTimeout();
+                            }
+                        }, ourTimeout);
                     }
                 }
             } finally {
@@ -479,7 +483,7 @@ public class SVNGanymedSession {
             }
         }
 
-        public void run() {
+        public void runTimeout() {
             lock(Thread.currentThread());
             try {                
                 if (mySessionCount > 0) {
