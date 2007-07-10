@@ -640,13 +640,13 @@ public class SVNCommitClient extends SVNBasicClient {
                 SVNRepository repository = createRepository(SVNURL.parseURIEncoded(baseURL), true);
                 SVNCommitMediator mediator = new SVNCommitMediator(commitables);
                 tmpFiles = mediator.getTmpFiles();
+                String repositoryRoot = repository.getRepositoryRoot(true).getPath();
                 commitEditor = repository.getCommitEditor(commitMessage, lockTokens, keepLocks, mediator);
                 // commit.
                 // set event handler for each wc access.
                 for (int i = 0; i < commitPacket.getCommitItems().length; i++) {
                     commitPacket.getCommitItems()[i].getWCAccess().setEventHandler(getEventDispatcher());
                 }
-                String repositoryRoot = repository.getRepositoryRoot(true).getPath();
                 info = SVNCommitter.commit(mediator.getTmpFiles(), commitables, repositoryRoot, commitEditor);
                 // update wc.
                 Collection processedItems = new HashSet();

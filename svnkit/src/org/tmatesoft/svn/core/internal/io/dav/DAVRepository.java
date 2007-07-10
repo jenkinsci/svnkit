@@ -109,16 +109,13 @@ class DAVRepository extends SVNRepository {
         if (myRepositoryRoot != null && !forceConnection) {
             return myRepositoryRoot;
         }
-        if (forceConnection) {
-            myRepositoryRoot = null;
-        }
-        try {
-            openConnection();
-            if (myRepositoryRoot == null) {
+        if (myRepositoryRoot == null) {
+            try {
+                openConnection();
                 myConnection.fetchRepositoryRoot(this);
+            } finally {
+                closeConnection();
             }
-        } finally {
-            closeConnection();
         }
         return myRepositoryRoot;
     }
@@ -127,16 +124,13 @@ class DAVRepository extends SVNRepository {
         if (myRepositoryUUID != null && !forceConnection) {
             return myRepositoryUUID;
         }
-        if (forceConnection) {
-            myRepositoryUUID = null;
-        }
-        try {
-            openConnection();
-            if (myRepositoryUUID == null) {
+        if (myRepositoryUUID == null) {
+            try {
+                openConnection();
                 myConnection.fetchRepositoryUUID(this);
+            } finally {
+                closeConnection();
             }
-        } finally {
-            closeConnection();
         }
         return myRepositoryUUID;
     }
@@ -542,7 +536,8 @@ class DAVRepository extends SVNRepository {
             openConnection();
             if (path.startsWith("/")) {
                 // (root + path), relative to location
-                path = SVNPathUtil.append(getRepositoryRoot(true).getPath(), path);
+                myConnection.fetchRepositoryRoot(this);
+                path = SVNPathUtil.append(myRepositoryRoot.getPath(), path);
                 if (path.equals(getLocation().getPath())) {
                     path = "";
                 } else {
@@ -719,7 +714,8 @@ class DAVRepository extends SVNRepository {
             Map translatedLocks = null;
             if (locks != null) {
                 translatedLocks = new HashMap(locks.size());
-                String root = getRepositoryRoot(true).getPath();
+                myConnection.fetchRepositoryRoot(this);
+                String root = myRepositoryRoot.getPath();
                 root = SVNEncodingUtil.uriEncode(root);
                 for (Iterator paths = locks.keySet().iterator(); paths.hasNext();) {
                     String path = (String) paths.next();
