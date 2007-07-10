@@ -876,7 +876,7 @@ class DAVRepository extends SVNRepository {
     }
 
     public void closeSession() {
-        lock();
+        lock(true);
         try {
             if (myConnection != null) {
                 myConnection.close();

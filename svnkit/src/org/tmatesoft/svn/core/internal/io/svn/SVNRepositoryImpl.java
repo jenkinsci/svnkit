@@ -1072,7 +1072,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     }
 
     public void closeSession() {
-        lock();
+        lock(true);
         try {
             if (myConnection != null) {
                 try {

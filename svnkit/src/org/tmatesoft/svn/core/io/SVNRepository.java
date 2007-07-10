@@ -1832,18 +1832,26 @@ public abstract class SVNRepository {
             listener.connectionClosed(this);
         }
     }
-    
+
     protected synchronized void lock() {
+        lock(false);
+    }
+    
+    protected synchronized void lock(boolean force) {
         try {
             synchronized(this) {
-                while ((myLockCount > 0) || (myLocker != null)) {
-                    if (Thread.currentThread() == myLocker) {
+                if (Thread.currentThread() == myLocker) {
+                    if (!force) {
                         throw new Error("SVNRepository methods are not reenterable");
-                    }
+                    } 
+                    myLockCount++;
+                    return;
+                }
+                while (myLocker != null) {
                     wait();
                 }
                 myLocker = Thread.currentThread();
-                myLockCount = 1;
+                myLockCount++;
             }
     	} catch (InterruptedException e) {
     	    throw new Error("Interrupted attempt to aquire write lock");
