@@ -25,10 +25,6 @@ public interface ISVNConnector {
     
     public void open(SVNRepositoryImpl repository) throws SVNException;
     
-    public void free();
-    
-    public boolean occupy();
-    
     public boolean isConnected(SVNRepositoryImpl repository) throws SVNException;
 
     public void close(SVNRepositoryImpl repository) throws SVNException;

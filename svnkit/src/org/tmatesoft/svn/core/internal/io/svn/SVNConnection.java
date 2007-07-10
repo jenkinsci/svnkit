@@ -196,18 +196,6 @@ class SVNConnection {
         }
         return SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Unexpected server response to authentication");
     }
-    
-    public void free() {
-        myConnector.free();
-    }
-    
-    public void occupy() throws SVNException {
-        if (!myConnector.occupy()) {
-            close();
-            open(myRepository);
-            authenticate(myRepository);
-        }
-    }
 
     public void close() throws SVNException {
         myInputStream = null;

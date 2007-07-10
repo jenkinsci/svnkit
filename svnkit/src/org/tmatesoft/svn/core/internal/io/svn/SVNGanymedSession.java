@@ -17,12 +17,12 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 import ch.ethz.ssh2.ChannelCondition;
 import ch.ethz.ssh2.Connection;
@@ -43,18 +44,33 @@ import ch.ethz.ssh2.crypto.PEMDecoder;
  * @author  TMate Software Ltd.
  */
 public class SVNGanymedSession {
+    
+    private static final int MAX_SESSIONS_PER_CONNECTION = 8;
+    private static final long DEFAULT_CONNECTION_TIMEOUT = 1000*10*60; // ten minutes
 
     private static Map ourConnectionsPool = new Hashtable();
     private static boolean ourIsUsePersistentConnection;
-    private static Map ourSessionsMap = new Hashtable();
     private static Object ourRequestor;
+    private static long ourTimeout;
+
+    private static int ourLockLevel;
     
     static {
         String persistent = System.getProperty("svnkit.ssh2.persistent", System.getProperty("javasvn.ssh2.persistent", Boolean.TRUE.toString()));
         ourIsUsePersistentConnection = Boolean.TRUE.toString().equals(persistent);
+        String timeout = System.getProperty("svnkit.ssh2.persistent.timeout", System.getProperty("javasvn.ssh2.persistent.timeout"));
+        long value = DEFAULT_CONNECTION_TIMEOUT;
+        if (timeout != null) {
+            try {
+                value = Long.parseLong(timeout);
+                value = value*1000;
+            } catch (NumberFormatException nfe) {
+            }
+        } 
+        ourTimeout = value;
     }
 
-    static Connection getConnection(SVNURL location, SVNSSHAuthentication credentials) throws SVNException {
+    public static SSHConnectionInfo getConnection(SVNURL location, SVNSSHAuthentication credentials) throws SVNException {
         lock(Thread.currentThread());
         try {
             if ("".equals(credentials.getUserName()) || credentials.getUserName() == null) {
@@ -64,6 +80,10 @@ public class SVNGanymedSession {
             int port = location.hasPort() ? location.getPort() : credentials.getPortNumber();
             if (port < 0) {
                 port = 22;
+            }
+            if (!isUsePersistentConnection()) {
+                Connection connection = openConnection(location, credentials, port);
+                return new SSHConnectionInfo(null, connection, false);
             }
             String key = credentials.getUserName() + ":" + location.getHost() + ":" + port;
             if (credentials.getPrivateKeyFile() != null) {
@@ -75,166 +95,174 @@ public class SVNGanymedSession {
             if (credentials.getPassword() != null) {
                 key += ":" + credentials.getPassword();
             }
-            // find connection with this key that has less then 10 open channels.
-            // if there is no such connection - open new one.
-            Connection connection = isUsePersistentConnection() ? (Connection) ourConnectionsPool.get(key) : null;
-            
-            if (connection == null) {
-                File privateKeyFile = credentials.getPrivateKeyFile();
-                char[] privateKey = credentials.getPrivateKey();
-                if (privateKey == null && privateKeyFile != null) {
-                    privateKey = readPrivateKey(privateKeyFile);
-                }
-                String passphrase = credentials.getPassphrase();
-                String password = credentials.getPassword();
-                String userName = credentials.getUserName();
-                
-                password = "".equals(password) && privateKey != null ? null : password;
-                passphrase = "".equals(passphrase) ? null : passphrase;
-                
-                if (privateKey != null && !isValidPrivateKey(privateKey, passphrase)) {
-                    if (password == null) {
-                        SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "File ''{0}'' is not valid OpenSSH DSA or RSA private key file", privateKeyFile);
-                        SVNErrorManager.error(error);
-                    } 
-                    privateKey = null;
-                }
-                if (privateKey == null && password == null) {
-                    SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Either password or private key should be provided to establish SSH connection");
-                    SVNErrorManager.error(error);
-                }
-                
-                connection = new Connection(location.getHost(), port);
-                try {
-                    connection.connect();
-                    boolean authenticated = false;
-                    if (privateKey != null) {
-                        authenticated = connection.authenticateWithPublicKey(userName, privateKey, passphrase);
-                    } else if (password != null) {
-                        String[] methods = connection.getRemainingAuthMethods(userName);
-                        authenticated = false;
-                        for (int i = 0; i < methods.length; i++) {
-                            if ("password".equals(methods[i])) {
-                                authenticated = connection.authenticateWithPassword(userName, password);                    
-                            } else if ("keyboard-interactive".equals(methods[i])) {
-                                final String p = password;
-                                authenticated = connection.authenticateWithKeyboardInteractive(userName, new InteractiveCallback() {
-                                    public String[] replyToChallenge(String name, String instruction, int numPrompts, String[] prompt, boolean[] echo) throws Exception {
-                                        String[] reply = new String[numPrompts];
-                                        for (int i = 0; i < reply.length; i++) {
-                                            reply[i] = p;
-                                        }
-                                        return reply;
-                                    }
-                                });
-                            }
-                            if (authenticated) {
-                                break;
-                            }
-                        }
-                    } else {
-                        SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Either password or private key should be provided to establish SSH connection");
-                        SVNErrorManager.error(error);
-                    }
-                    if (authenticated) {
-                        if (isUsePersistentConnection()) {
-                            ourConnectionsPool.put(key, connection);
-                        }
-                    } else {
-                        SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "SSH server rejects provided credentials");
-                        SVNErrorManager.error(error);
-                    }
-                } catch (IOException e) {
-                    if (connection != null) {
-                        connection.close();
-                        if (isUsePersistentConnection()) {
-                            ourConnectionsPool.remove(key);
-                        }
-                    }
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Cannot connect to ''{0}'': {1}", new Object[] {location.setPath("", false), e.getLocalizedMessage()});
-                    SVNErrorManager.error(err, e);
-                } 
-            } else {
-                purgeSessions();
+            SSHConnectionInfo connectionInfo = null;
+            LinkedList connectionsList = (LinkedList) ourConnectionsPool.get(key);
+            if (connectionsList == null) {
+                connectionsList = new LinkedList();
+                ourConnectionsPool.put(key, connectionsList);
             }
-            return connection;
+            SVNDebugLog.getDefaultLog().info(ourRequestor + ": EXISTING CONNECTIONS COUNT: " + connectionsList.size());
+            for (Iterator infos = connectionsList.iterator(); infos.hasNext();) {
+                SSHConnectionInfo info = (SSHConnectionInfo) infos.next();
+                if (info.getSessionCount() < MAX_SESSIONS_PER_CONNECTION) {
+                    info.resetTimeout();
+                    SVNDebugLog.getDefaultLog().info(ourRequestor + ": REUSING ONE WITH " + info.getSessionCount() + " SESSIONS");
+                    return info;
+                }
+            }
+            SVNDebugLog.getDefaultLog().info(ourRequestor + ": OPENING NEW CONNECTION");
+            Connection connection = openConnection(location, credentials, port);
+            connectionInfo = new SSHConnectionInfo(key, connection, true);
+            connectionsList.add(connectionInfo);
+            SVNDebugLog.getDefaultLog().info(ourRequestor + ": NEW CONNECTION OPENED, TOTAL: " + connectionsList.size());
+            return connectionInfo;
         } finally {
             unlock();
         }
     }
 
-    private static void purgeSessions() {
-        Collection toClose = new ArrayList();
-        for(Iterator sessions = ourSessionsMap.keySet().iterator(); sessions.hasNext();) {
-            Session session = (Session) sessions.next();
-            if (ourSessionsMap.get(session) == Boolean.FALSE) {
-                toClose.add(session);
+    static void closeConnection(SSHConnectionInfo connectionInfo) {
+        lock(Thread.currentThread());
+        try {
+            if (!connectionInfo.isPersistent()) {
+                SVNDebugLog.getDefaultLog().info(ourRequestor + ": CLOSED, NOT PERSISTENT: " + connectionInfo.getKey());
+                connectionInfo.dispose();
+                return;
             }
+            // close whole connection only if there are others usable left.
+            LinkedList connectionsList = (LinkedList) ourConnectionsPool.get(connectionInfo.getKey());
+            if (connectionsList.size() <= 1) {
+                connectionInfo.startTimeout();
+                SVNDebugLog.getDefaultLog().info(ourRequestor + ": NOT CLOSED, SINGLE PERSISTENT: " + connectionInfo.getKey());
+                // start inactivity timeout for it.
+                return;
+            }
+            int usable = 0;
+            for (Iterator infos = connectionsList.iterator(); infos.hasNext();) {
+                SSHConnectionInfo info = (SSHConnectionInfo) infos.next();
+                if (info == connectionInfo) {
+                    continue;
+                } else if (info.getSessionCount() >= MAX_SESSIONS_PER_CONNECTION) {
+                    continue;
+                } 
+                usable++;
+            }
+            if (usable > 0) {
+                connectionInfo.dispose();
+                connectionsList.remove(connectionInfo);
+                SVNDebugLog.getDefaultLog().info(ourRequestor + ": CONNECTION CLOSED: " + connectionInfo.getKey());
+            } else {
+                // start inactivity timeout for it.
+                connectionInfo.startTimeout();
+                SVNDebugLog.getDefaultLog().info(ourRequestor + ": CONNECTION NOT CLOSED: " + connectionInfo.getKey() + ", usable left: " + usable + ", total " + connectionsList.size());
+            }
+        } finally {
+            unlock();
         }
-        if (toClose.size() > 1) {
-            for (Iterator sessions = toClose.iterator(); sessions.hasNext();) {
-                Session session = (Session) sessions.next();
-                if (ourSessionsMap.remove(session) != null) {
-                    session.close();
-                    session.waitForCondition(ChannelCondition.CLOSED, 0);
+    }
+
+    public static void shutdown() {
+        lock(Thread.currentThread());
+        try {
+            for(Iterator lists = ourConnectionsPool.entrySet().iterator(); lists.hasNext();) {
+                LinkedList list = (LinkedList) lists.next();
+                for (Iterator infos = list.iterator(); infos.hasNext();) {
+                    SSHConnectionInfo info = (SSHConnectionInfo) infos.next();
+                    info.dispose();
                 }
             }
+            ourConnectionsPool.clear();
+        } finally {
+            unlock();
         }
     }
     
-    static boolean occupySession(Session session) {
-        lock(Thread.currentThread());
-        try {   
-            if (session != null && ourSessionsMap.containsKey(session)) { 
-                ourSessionsMap.put(session, Boolean.TRUE);
-                return true;
-            } 
-            return false;
-        } finally {
-            purgeSessions();
-            unlock();
-        }
-    }
-
-    static boolean addSession(Session session) {
-        lock(Thread.currentThread());
-        try {   
-            if (session != null) { 
-                ourSessionsMap.put(session, Boolean.TRUE);
-                return true;
-            } 
-            return false;
-        } finally {
-            purgeSessions();
-            unlock();
-        }
-    }
-
-    static boolean disposeSession(Session session) {
+    public static int getConnectionsCount() {
         lock(Thread.currentThread());
         try {
-            if (session != null) {
-                return ourSessionsMap.remove(session) != null;
+            int count = 0;
+            for (Iterator keys = ourConnectionsPool.keySet().iterator(); keys.hasNext();) {
+                String key = (String) keys.next();
+                LinkedList list = (LinkedList) ourConnectionsPool.get(key);
+                count += list.size();
             }
+            return count;
         } finally {
-            synchronized (ourSessionsMap) {
-                ourSessionsMap.notifyAll();
-            }
             unlock();
         }
-        return false;
     }
 
-    static void freeSession(Session session) {        
-        lock(Thread.currentThread());
-        try {
-            if (session != null && ourSessionsMap.containsKey(session)) {
-                ourSessionsMap.put(session, Boolean.FALSE);
-            }
-        } finally {
-            purgeSessions();
-            unlock();
+    private static Connection openConnection(SVNURL location, SVNSSHAuthentication credentials, int port) throws SVNException {
+        // open and add to the list.
+        File privateKeyFile = credentials.getPrivateKeyFile();
+        char[] privateKey = credentials.getPrivateKey();
+        if (privateKey == null && privateKeyFile != null) {
+            privateKey = readPrivateKey(privateKeyFile);
         }
+        String passphrase = credentials.getPassphrase();
+        String password = credentials.getPassword();
+        String userName = credentials.getUserName();
+        
+        password = "".equals(password) && privateKey != null ? null : password;
+        passphrase = "".equals(passphrase) ? null : passphrase;
+        
+        if (privateKey != null && !isValidPrivateKey(privateKey, passphrase)) {
+            if (password == null) {
+                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "File ''{0}'' is not valid OpenSSH DSA or RSA private key file", privateKeyFile);
+                SVNErrorManager.error(error);
+            } 
+            privateKey = null;
+        }
+        if (privateKey == null && password == null) {
+            SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Either password or private key should be provided to establish SSH connection");
+            SVNErrorManager.error(error);
+        }
+        
+        Connection connection = new Connection(location.getHost(), port);
+        try {
+            connection.connect();
+            boolean authenticated = false;
+            if (privateKey != null) {
+                authenticated = connection.authenticateWithPublicKey(userName, privateKey, passphrase);
+            } else if (password != null) {
+                String[] methods = connection.getRemainingAuthMethods(userName);
+                authenticated = false;
+                for (int i = 0; i < methods.length; i++) {
+                    if ("password".equals(methods[i])) {
+                        authenticated = connection.authenticateWithPassword(userName, password);                    
+                    } else if ("keyboard-interactive".equals(methods[i])) {
+                        final String p = password;
+                        authenticated = connection.authenticateWithKeyboardInteractive(userName, new InteractiveCallback() {
+                            public String[] replyToChallenge(String name, String instruction, int numPrompts, String[] prompt, boolean[] echo) throws Exception {
+                                String[] reply = new String[numPrompts];
+                                for (int i = 0; i < reply.length; i++) {
+                                    reply[i] = p;
+                                }
+                                return reply;
+                            }
+                        });
+                    }
+                    if (authenticated) {
+                        break;
+                    }
+                }
+            } else {
+                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Either password or private key should be provided to establish SSH connection");
+                SVNErrorManager.error(error);
+            }
+            if (!authenticated) {
+                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "SSH server rejects provided credentials");
+                SVNErrorManager.error(error);
+            }
+            return connection;
+        } catch (IOException e) {
+            if (connection != null) {
+                connection.close();
+            }
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Cannot connect to ''{0}'': {1}", new Object[] {location.setPath("", false), e.getLocalizedMessage()});
+            SVNErrorManager.error(err, e);
+        }
+        return null;
     }
 
     private static char[] readPrivateKey(File privateKey) {
@@ -269,80 +297,205 @@ public class SVNGanymedSession {
         }        
         return true;
     }
-
-    public static void shutdown() {
-        lock(Thread.currentThread());
-        try {
-            for (Iterator e = ourConnectionsPool.values().iterator(); e.hasNext();) {
-                Connection connection = (Connection) (e.next());
-                doCloseConnection(connection);
-            }
-        } finally {
-            unlock();
-        }
-    }
-
-    static void closeConnection(Connection connection) {
-        lock(Thread.currentThread());
-        try {
-            doCloseConnection(connection);
-        } finally {
-            unlock();
-        }
-    }
-
-    private static void doCloseConnection(Connection connection) {
-        if (connection != null) {
-            connection.close();
-            if (!isUsePersistentConnection()) {
+    
+    static void lock(Object requestor) {
+        synchronized(ourConnectionsPool) {
+            if (ourRequestor == requestor) {
+                ourLockLevel++;
                 return;
             }
-            for (Iterator connections = ourConnectionsPool.entrySet().iterator(); connections.hasNext();) {
-                Entry current = (Entry) connections.next();
-                if (current.getValue() == connection) {
-                    connections.remove();
-                    return;
-                }
-            }
-        }
-    }
-    
-    
-    private static void lock(Object requestor) {
-        synchronized(ourConnectionsPool) {
-            while(ourRequestor != null && ourRequestor != requestor) {
+            while(ourRequestor != null) {
                 try {
                     ourConnectionsPool.wait();
                 } catch (InterruptedException e) {
                 }
             }
+            ourLockLevel++;
             ourRequestor = requestor;
+            SVNDebugLog.getDefaultLog().info(ourRequestor + ": LOCKED");
         }
     }
     
-    private static void unlock() {
+    static void unlock() {
         synchronized (ourConnectionsPool) {
-            ourRequestor = null;
-            ourConnectionsPool.notifyAll();
+            ourLockLevel--;
+            if (ourLockLevel <= 0) {
+                Object requestor = ourRequestor;
+                ourLockLevel = 0;
+                ourRequestor = null;
+                ourConnectionsPool.notify();
+                SVNDebugLog.getDefaultLog().info(requestor + ": UNLOCKED");
+            }
         }
+    }
+    
+    static long getTimeout() {
+        return ourTimeout;
     }
     
     public static boolean isUsePersistentConnection() {
-        return ourIsUsePersistentConnection;
+        lock(Thread.currentThread());
+        try {
+            return ourIsUsePersistentConnection;
+        } finally {
+            unlock();
+        }
     }
     
     public static void setUsePersistentConnection(boolean usePersistent) {
-        ourIsUsePersistentConnection = usePersistent;
+        lock(Thread.currentThread());
+        try {
+            ourIsUsePersistentConnection = usePersistent;
+        } finally {
+            unlock();
+        }
     }
+    
+    public static class SSHConnectionInfo extends TimerTask {
 
-    public static void waitForFreeChannel() {
-        while(true) {
-            synchronized (ourSessionsMap) {
-                try {
-                    ourSessionsMap.wait();
-                    return;
-                } catch (InterruptedException e) {
+        private Connection myConnection;
+        private int mySessionCount;
+        private boolean myIsPersistent;
+        private String myKey;
+        private Timer myTimer;
+        
+        public SSHConnectionInfo(String key, Connection connection, boolean persistent) {
+            myConnection = connection;
+            myIsPersistent = persistent;
+            myKey = key;
+            SVNDebugLog.getDefaultLog().info(ourRequestor + ": CONNECTION CREATED: " + key);
+        }
+        
+        public void dispose() {
+            lock(Thread.currentThread());
+            try {
+                if (myTimer != null) {
+                    myTimer.cancel();
+                    myTimer = null;
                 }
+                if (myConnection != null) {
+                    myConnection.close();
+                    myConnection = null;
+                }
+            } finally {
+                unlock();
+            }
+        }
+
+        public boolean isPersistent() {
+            lock(Thread.currentThread());
+            try {
+                return myIsPersistent;
+            } finally {
+                unlock();
+            }
+        }
+        
+        public String getKey() {
+            lock(Thread.currentThread());
+            try {
+                return myKey;
+            } finally {
+                unlock();
+            }
+        }
+        
+        public int getSessionCount() {
+            lock(Thread.currentThread()); 
+            try {
+                return mySessionCount;
+            } finally {
+                unlock();
+            }
+        }
+        
+        public Session openSession() throws IOException {
+            lock(Thread.currentThread());
+            try {
+                Session session = myConnection.openSession();
+                if (session != null) {
+                    mySessionCount++;
+                }
+                SVNDebugLog.getDefaultLog().info(ourRequestor + ": SESSION OPENED: " + myKey + "." + mySessionCount);
+                return session;
+            } finally {
+                unlock();
+            }
+        }
+        
+        public void startTimeout() {
+            lock(Thread.currentThread());
+            try {
+                if (ourTimeout <= 0) {
+                    return;
+                }
+                if (mySessionCount <= 0) {
+                    mySessionCount = 0;
+                    if (isPersistent()) {
+                        if (myTimer != null) {
+                            myTimer.cancel();
+                        }
+                        // start timeout count down (10 seconds).
+                        myTimer = new Timer(false);
+                        myTimer.schedule(this, ourTimeout);
+                    }
+                }
+            } finally {
+                unlock();
+            }
+        }
+
+        public void resetTimeout() {
+            lock(Thread.currentThread());
+            try {
+                if (myTimer != null) {
+                    myTimer.cancel();
+                    myTimer = null;
+                }
+            } finally {
+                unlock();
+            }
+        }
+        
+        public boolean closeSession(Session session) {
+            lock(Thread.currentThread()); 
+            try {
+                if (session == null) {
+                    return false;
+                }
+                try {
+                    session.close();
+                    session.waitForCondition(ChannelCondition.CLOSED, 0);
+                } finally {
+                    mySessionCount--;
+                    SVNDebugLog.getDefaultLog().info(ourRequestor + ": SESSION CLOSED: " + myKey + "." + mySessionCount);
+                }
+                if (mySessionCount <= 0) {
+                    mySessionCount = 0;
+                }
+                return mySessionCount <= 0;
+            } finally {
+                unlock();
+            }
+        }
+
+        public void run() {
+            lock(Thread.currentThread());
+            try {                
+                if (mySessionCount > 0) {
+                    return;
+                }
+                SVNDebugLog.getDefaultLog().info(ourRequestor + ": CLOSING BY TIMEOUT: " + myKey);
+                LinkedList list = (LinkedList) ourConnectionsPool.get(myKey);
+                if (list != null && list.contains(this)) {
+                    list.remove(this);
+                }
+                if (list.isEmpty()) {
+                    ourConnectionsPool.remove(myKey);
+                }
+                dispose();
+            } finally {
+                unlock();
             }
         }
     }

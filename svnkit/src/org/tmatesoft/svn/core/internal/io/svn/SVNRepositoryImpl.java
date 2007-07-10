@@ -76,12 +76,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     }
 
     public void setLocation(SVNURL url, boolean forceReconnect) throws SVNException {
-        // attempt to use reparent.
         try {
             lock();
             if (myConnection != null) {
-                // attempt to reparent, close connection if reparent failed.
-                myConnection.occupy();
                 if (reparent(url)) {
                     myLocation = url;
                     return;
@@ -93,9 +90,6 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 throw e;
             }
         } finally {
-            if (myConnection != null) {
-                myConnection.free();
-            }
             unlock();
         }
         super.setLocation(url, true);
@@ -986,12 +980,10 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     private void openConnection() throws SVNException {
         lock();
         if (myConnection != null) {
-            // attempt to reparent, close connection if reparent failed.
-            myConnection.occupy();
             if (reparent(getLocation())) {
                 return;
             }
-            myConnection.free();
+            myConnection.close();
         }
         ISVNConnector connector = SVNRepositoryFactoryImpl.getConnectorFactory().createConnector(this);
         myConnection = new SVNConnection(connector, this);
@@ -1014,9 +1006,6 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     }
 
     private void closeConnection() throws SVNException {
-        if (myConnection != null) {
-            myConnection.free();
-        }
         unlock();
         if (!getOptions().keepConnection(this)) {
             closeSession();
