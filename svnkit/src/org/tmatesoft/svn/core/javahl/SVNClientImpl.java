@@ -113,7 +113,9 @@ public class SVNClientImpl implements SVNClientInterface {
     private SVNClientInterface myOwner;
     
     private ISVNAuthenticationManager myAuthenticationManager;
-    private static ISVNAuthenticationStorage ourAuthStorage = new JavaHLAuthenticationStorage();
+
+    private ISVNAuthenticationStorage myAuthStorage;
+    private static ISVNAuthenticationStorage ourAuthStorage;
 
     /**
      * @version 1.1.1
@@ -146,11 +148,30 @@ public class SVNClientImpl implements SVNClientInterface {
     }
     
     public static ISVNAuthenticationStorage getRuntimeCredentialsStorage() {
-        return ourAuthStorage;
+        synchronized (SVNClientImpl.class) {
+            if (ourAuthStorage == null) {
+                ourAuthStorage = new JavaHLAuthenticationStorage();
+            }
+            return ourAuthStorage;
+        }
     }
 
     public static void setRuntimeCredentialsStorage(ISVNAuthenticationStorage storage) {
-        ourAuthStorage = storage == null ? new JavaHLAuthenticationStorage() : storage;
+        synchronized (SVNClientImpl.class) {
+            ourAuthStorage = storage == null ? new JavaHLAuthenticationStorage() : storage;
+        }        
+    }
+
+    public ISVNAuthenticationStorage getClientCredentialsStorage() {
+        if (myAuthStorage != null) {
+            return myAuthStorage;
+        }
+        return getRuntimeCredentialsStorage();
+    }
+
+    public void setClientCredentialsStorage(ISVNAuthenticationStorage storage) {
+        myAuthStorage = storage;
+        updateClientManager();
     }
 
     protected SVNClientImpl(SVNClient owner) {
@@ -276,7 +297,7 @@ public class SVNClientImpl implements SVNClientInterface {
         } else {
             myAuthenticationManager.setAuthenticationProvider(null);
         }
-        myAuthenticationManager.setRuntimeStorage(ourAuthStorage);
+        myAuthenticationManager.setRuntimeStorage(getClientCredentialsStorage());
         if (myClientManager != null) {
             myClientManager.shutdownConnections(true);
             myClientManager.setAuthenticationManager(myAuthenticationManager);
