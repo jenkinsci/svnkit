@@ -362,11 +362,19 @@ public class SVNReplicationEditor implements ISVNEditor {
 
     public SVNCommitInfo closeEdit() throws SVNException {
         myCommitInfo = myCommitEditor.closeEdit();
+        if (mySourceRepository != null) {
+            mySourceRepository.closeSession();
+            mySourceRepository = null;
+        }
         return myCommitInfo;
         
     }
 
     public void abortEdit() throws SVNException {
+        if (mySourceRepository != null) {
+            mySourceRepository.closeSession();
+            mySourceRepository = null;
+        }
         myCommitEditor.abortEdit();
     }
     
@@ -384,6 +392,9 @@ public class SVNReplicationEditor implements ISVNEditor {
         if (mySourceRepository == null) {
             mySourceRepository = SVNRepositoryFactory.create(myRepos.getLocation());
             mySourceRepository.setAuthenticationManager(myRepos.getAuthenticationManager());
+            mySourceRepository.setDebugLog(myRepos.getDebugLog());
+            mySourceRepository.setTunnelProvider(myRepos.getTunnelProvider());
+            mySourceRepository.setCanceller(myRepos.getCanceller());
         }
         return mySourceRepository;
 
