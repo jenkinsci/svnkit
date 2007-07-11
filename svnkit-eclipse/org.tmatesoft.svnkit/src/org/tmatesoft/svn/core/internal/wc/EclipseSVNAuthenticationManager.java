@@ -53,10 +53,7 @@ public class EclipseSVNAuthenticationManager extends DefaultSVNAuthenticationMan
     }
 
     protected ISVNAuthenticationProvider createDefaultAuthenticationProvider(String userName, String password, File privateKey, String passphrase, boolean allowSave) {
-        return new ISVNAuthenticationProvider() {
-            public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
-                return null;
-            }
+        return new DumbAuthenticationProvider(userName, password, privateKey, passphrase, allowSave) {
             public int acceptServerAuthentication(SVNURL url, String realm, Object certificate, boolean resultMayBeStored) {
                 return ACCEPTED;
             }

@@ -218,7 +218,10 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     
     private boolean hasExplicitCredentials(String kind) {
         if (ISVNAuthenticationManager.PASSWORD.equals(kind) || ISVNAuthenticationManager.USERNAME.equals(kind) || ISVNAuthenticationManager.SSH.equals(kind)) {
-            return myProviders[0] instanceof DumbAuthenticationProvider && ((DumbAuthenticationProvider) myProviders[0]).myUserName != null;
+            return 
+                myProviders[0] instanceof DumbAuthenticationProvider && 
+                ((DumbAuthenticationProvider) myProviders[0]).myUserName != null &&
+                !"".equals(((DumbAuthenticationProvider) myProviders[0]).myUserName);
         }
         return false;
     }
@@ -355,7 +358,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     }
     
     
-    private class DumbAuthenticationProvider implements ISVNAuthenticationProvider {
+    protected class DumbAuthenticationProvider implements ISVNAuthenticationProvider {
         
         private String myUserName;
         private String myPassword;
