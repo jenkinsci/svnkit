@@ -133,7 +133,7 @@ class DAVCommitEditor implements ISVNEditor {
         myPathsMap.put(newDir.getURL(), path);
         if (copyPath != null) {
             // convert to full path?
-            copyPath = myRepository.getFullPath(copyPath);
+            copyPath = myRepository.doGetFullPath(copyPath);
             copyPath = SVNEncodingUtil.uriEncode(copyPath);
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, myRepository, copyPath, copyRevision, false, false, null);
             copyPath = SVNPathUtil.append(info.baselineBase, info.baselinePath);
@@ -232,7 +232,7 @@ class DAVCommitEditor implements ISVNEditor {
 
         newFile.setAdded(true);
         if (copyPath != null) {
-            copyPath = myRepository.getFullPath(copyPath);
+            copyPath = myRepository.doGetFullPath(copyPath);
             copyPath = SVNEncodingUtil.uriEncode(copyPath);
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, myRepository, copyPath, copyRevision, false, false, null);
             copyPath = SVNPathUtil.append(info.baselineBase, info.baselinePath);

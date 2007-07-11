@@ -181,7 +181,7 @@ class DAVRepository extends SVNRepository {
         SVNNodeKind kind = SVNNodeKind.NONE;
         try {
             openConnection();
-            path = getFullPath(path);
+            path = doGetFullPath(path);
             path = SVNEncodingUtil.uriEncode(path);
             info = DAVUtil.getBaselineInfo(myConnection, this, path, revision, true, false, info);
             kind = info.isDirectory ? SVNNodeKind.DIR : SVNNodeKind.FILE;
@@ -227,7 +227,7 @@ class DAVRepository extends SVNRepository {
         long fileRevision = revision;
         try {
             openConnection();
-            path = getFullPath(path);
+            path = doGetFullPath(path);
             path = SVNEncodingUtil.uriEncode(path);
             if (revision != -2) {
                 DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, this, path, revision, false, true, null);
@@ -266,7 +266,7 @@ class DAVRepository extends SVNRepository {
         long dirRevision = revision;
         try {
             openConnection();
-            path = getFullPath(path);
+            path = doGetFullPath(path);
             path = SVNEncodingUtil.uriEncode(path);
             final String fullPath = path;
             if (revision != -2) {
@@ -340,7 +340,7 @@ class DAVRepository extends SVNRepository {
         final String[] parentVCC = new String[1];
         try {
             openConnection();
-            path = getFullPath(path);
+            path = doGetFullPath(path);
             path = SVNEncodingUtil.uriEncode(path);
             final String fullPath = path;
             if (revision >= 0) {
@@ -432,7 +432,7 @@ class DAVRepository extends SVNRepository {
         bcPath = SVNEncodingUtil.uriEncode(bcPath);
 		try {
             openConnection();
-            path = "".equals(path) ? "" : getRepositoryPath(path);
+            path = "".equals(path) ? "" : doGetRepositoryPath(path);
             DAVFileRevisionHandler davHandler = new DAVFileRevisionHandler(handler);
             StringBuffer request = DAVFileRevisionHandler.generateFileRevisionsRequest(null, startRevision, endRevision, path);
 			long revision = -1;
@@ -487,7 +487,7 @@ class DAVRepository extends SVNRepository {
 			String[] fullPaths = new String[targetPaths.length];
 			
 			for (int i = 0; i < targetPaths.length; i++) {
-				fullPaths[i] = getFullPath(targetPaths[i]);
+				fullPaths[i] = doGetFullPath(targetPaths[i]);
             }
             Collection relativePaths = new HashSet();
             String path = SVNPathUtil.condencePaths(fullPaths, relativePaths, false);
@@ -724,7 +724,7 @@ class DAVRepository extends SVNRepository {
                     if (path.startsWith("/")) {
                         path = SVNPathUtil.append(root, SVNEncodingUtil.uriEncode(path));
                     } else {
-                        path = getFullPath(path);
+                        path = doGetFullPath(path);
                         path = SVNEncodingUtil.uriEncode(path);
                     }
                     translatedLocks.put(path, lock);
@@ -750,7 +750,7 @@ class DAVRepository extends SVNRepository {
     public SVNLock getLock(String path) throws SVNException {
         try {
             openConnection();
-            path = getFullPath(path);
+            path = doGetFullPath(path);
             path = SVNEncodingUtil.uriEncode(path);
             return myConnection.doGetLock(path, this);
         } finally {
@@ -761,7 +761,7 @@ class DAVRepository extends SVNRepository {
     public SVNLock[] getLocks(String path) throws SVNException {
         try {
             openConnection();
-            path = getFullPath(path);
+            path = doGetFullPath(path);
             path = SVNEncodingUtil.uriEncode(path);
             return myConnection.doGetLocks(path);
         } finally {
@@ -775,8 +775,8 @@ class DAVRepository extends SVNRepository {
             for(Iterator paths = pathsToRevisions.keySet().iterator(); paths.hasNext();) {
                 String path = (String) paths.next();
                 Long revision = (Long) pathsToRevisions.get(path);
-                String repositoryPath = getRepositoryPath(path);
-                path = getFullPath(path);
+                String repositoryPath = doGetRepositoryPath(path);
+                path = doGetFullPath(path);
                 path = SVNEncodingUtil.uriEncode(path);
                 SVNLock lock = null;
                 SVNErrorMessage error = null;
@@ -811,8 +811,8 @@ class DAVRepository extends SVNRepository {
                 String path = (String) paths.next();
                 String shortPath = path;
                 String id = (String) pathToTokens.get(path);
-                String repositoryPath = getRepositoryPath(path);
-                path = getFullPath(path);
+                String repositoryPath = doGetRepositoryPath(path);
+                path = doGetFullPath(path);
                 path = SVNEncodingUtil.uriEncode(path);
                 SVNErrorMessage error = null;
                 try {
@@ -838,7 +838,7 @@ class DAVRepository extends SVNRepository {
     public SVNDirEntry info(String path, long revision) throws SVNException {
         try {
             openConnection();
-            path = getFullPath(path);
+            path = doGetFullPath(path);
             path = SVNEncodingUtil.uriEncode(path);
             final String fullPath = path;
             if (revision >= 0) {
@@ -882,6 +882,40 @@ class DAVRepository extends SVNRepository {
             unlock();
         }
     }
+
+    protected String doGetFullPath(String relativeOrRepositoryPath) throws SVNException {
+        if (relativeOrRepositoryPath == null) {
+            return doGetFullPath("/");
+        }
+        String fullPath;
+        if (relativeOrRepositoryPath.length() > 0 && relativeOrRepositoryPath.charAt(0) == '/') {
+            myConnection.fetchRepositoryRoot(this);
+            fullPath = SVNPathUtil.append(myRepositoryRoot.getPath(), relativeOrRepositoryPath);
+        } else {
+            fullPath = SVNPathUtil.append(getLocation().getPath(), relativeOrRepositoryPath);
+        }
+        if (!fullPath.startsWith("/")) {
+            fullPath = "/" + fullPath;
+        }
+        return fullPath;
+    }
+    
+    protected String doGetRepositoryPath(String relativePath) throws SVNException {
+        if (relativePath == null) {
+            return "/";
+        }
+        if (relativePath.length() > 0 && relativePath.charAt(0) == '/') {
+            return relativePath;
+        }
+        String fullPath = SVNPathUtil.append(getLocation().getPath(), relativePath);
+        myConnection.fetchRepositoryRoot(this);
+        String repositoryPath = fullPath.substring(myRepositoryRoot.getPath().length());
+        if ("".equals(repositoryPath)) {
+            return "/";
+        }
+        return repositoryPath;
+    }
+
     
     private SVNDirEntry createDirEntry(String fullPath, DAVProperties child) throws SVNException {
         String href = child.getURL();

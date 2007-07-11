@@ -502,8 +502,9 @@ public class SVNCopyClient extends SVNBasicClient {
             tmpFiles = mediator.getTmpFiles();
 
             commitMessage = SVNCommitClient.validateCommitMessage(commitMessage);
+            SVNURL root = repository.getRepositoryRoot(true);
             commitEditor = repository.getCommitEditor(commitMessage, null, false, mediator);
-            info = SVNCommitter.commit(tmpFiles, commitables, repository.getRepositoryRoot(true).getPath(), commitEditor);
+            info = SVNCommitter.commit(tmpFiles, commitables, root.getPath(), commitEditor);
             commitEditor = null;
         } finally {
             if (tmpFiles != null) {
