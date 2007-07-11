@@ -975,6 +975,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     }
     
     protected void closeConnection() {
+        if (!getOptions().keepConnection(this)) {
+            closeSession();
+        }
         unlock();
         fireConnectionClosed();
     }

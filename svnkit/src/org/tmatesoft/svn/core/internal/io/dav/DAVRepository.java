@@ -527,6 +527,9 @@ class DAVRepository extends SVNRepository {
         if (myConnection != null && !ourIsKeepCredentials) {
             myConnection.clearAuthenticationCache();
         }
+        if (!getOptions().keepConnection(this)) {
+            closeSession();
+        }
         unlock();
         fireConnectionClosed();
     }

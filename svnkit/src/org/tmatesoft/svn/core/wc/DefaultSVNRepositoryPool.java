@@ -92,6 +92,8 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
     private long myTimeout;
     private Map myInactiveRepositories = new HashMap();
     private Timer myTimer;
+
+    private boolean myIsKeepConnection;
     
     /**
      * Constructs a <b>DefaultSVNRepositoryPool</b> instance
@@ -103,11 +105,30 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
      * @param tunnelProvider   a tunnel provider
      */
     public DefaultSVNRepositoryPool(ISVNAuthenticationManager authManager, ISVNTunnelProvider tunnelProvider) {
+        this(authManager, tunnelProvider, DEFAULT_IDLE_TIMEOUT, true);
+    }
+
+    /**
+     * Constructs a <b>DefaultSVNRepositoryPool</b> instance
+     * that represents {@link #RUNTIME_POOL} objects pool. 
+     * <b>SVNRepository</b> objects created by this instance will
+     * use a single socket connection.
+     * 
+     * @param authManager      an authentication driver
+     * @param tunnelProvider   a tunnel provider
+     * @param timeout          inactivity timeout after which open connections should be closed 
+     * @param keepConnection   whether to left connection open 
+     */
+    public DefaultSVNRepositoryPool(ISVNAuthenticationManager authManager, ISVNTunnelProvider tunnelProvider, long timeout, boolean keepConnection) {
         myAuthManager = authManager;
         myTunnelProvider = tunnelProvider;
-        myTimeout = DEFAULT_IDLE_TIMEOUT;
+        myTimeout = timeout > 0 ? timeout : DEFAULT_IDLE_TIMEOUT;
         myTimer = ourTimer;
-        ourTimer.schedule(new TimeoutTask(), 10000);
+        myIsKeepConnection = keepConnection;
+        myTimeout = timeout;
+        if (myIsKeepConnection) {
+            ourTimer.schedule(new TimeoutTask(), 10000);
+        }
     }
     
     /**
@@ -169,7 +190,9 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
         } else {
             repos = SVNRepositoryFactory.create(url, this);
             // add listener.
-            repos.addConnectionListener(this);
+            if (myIsKeepConnection) {
+                repos.addConnectionListener(this);
+            }
             pool.put(url.getProtocol(), repos);
         }         
         repos.setAuthenticationManager(myAuthManager);
@@ -201,7 +224,7 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
      *                     the driver should keep a connection
      */
     public boolean keepConnection(SVNRepository repository) {
-        return true;
+        return myIsKeepConnection;
     }
     
     /**
