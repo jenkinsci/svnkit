@@ -1,10 +1,10 @@
+/*.iws
 /bin
 /build
 contrib/javahl/bin
 contrib/sequence/bin
 contrib/sequence/bin-test
 doc/examples/bin
-/javasvn.iws
 /lib
 svnkit-eclipse/bin
 svnkit-test/bin
