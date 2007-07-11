@@ -98,29 +98,11 @@ public class XMLLogger extends AbstractPythonTestLogger {
     }
 
     private String validateTestName(String text) {
-        String validatedText = text;
-        
-        int ind = text.indexOf('&'); 
-        if (ind != -1) {
-            validatedText = validatedText.replaceAll("&", "&amp;");
-        }
-
-        ind = text.indexOf('"'); 
-        if (ind != -1) {
-            validatedText = validatedText.replaceAll("\"", "&quot;");
-        }
-
-        ind = text.indexOf('>'); 
-        if (ind != -1) {
-            validatedText = validatedText.replaceAll(">", "&gt;");
-        }
-
-        ind = text.indexOf('<'); 
-        if (ind != -1) {
-            validatedText = validatedText.replaceAll("<", "&lt;");
-        }
-
-        return validatedText;
+        text = text.replaceAll("&", "&amp;");
+        text = text.replaceAll("\"", "&quot;");
+        text = text.replaceAll(">", "&gt;");
+        text = text.replaceAll("<", "&lt;");
+        return text;
     }
     
     public void endSuite(String suiteName) {
@@ -144,46 +126,35 @@ public class XMLLogger extends AbstractPythonTestLogger {
 	    
         String currentServer = null;
 	    String line = null;
-	    while(true){
-		    if(!myResults.isEmpty()){
-		        line = (String)myResults.removeLast();
-		    }else{
-		        break;
-		    }
-		    if(line.startsWith("PythonTests")){
+	    while (!myResults.isEmpty()) {
+	        line = (String) myResults.removeLast();
+		    if (line.startsWith("PythonTests")) {
 			    DateFormat simpleDateFormat = new SimpleDateFormat("yyyy.MM.dd  'at' HH:mm:ss z"); 
 		        long elapsed = endTimeMillis - startTimeMillis;
-			    int hours = (int)elapsed/3600000;
-			    int minutes = (int)(elapsed - hours*3600000)/60000;
-			    int seconds = (int)(elapsed - hours*3600000 - minutes*60000)/1000;
+			    int hours = (int) elapsed/3600000;
+			    int minutes = (int) (elapsed - hours*3600000)/60000;
+			    int seconds = (int) (elapsed - hours*3600000 - minutes*60000)/1000;
 			    String elapsedTimeString = null;
-			    if(hours == 0 && minutes == 0){
+			    if (hours == 0 && minutes == 0) {
 			        elapsedTimeString = seconds + " seconds";
-			    }else if(hours == 0){
+			    } else if(hours == 0) {
 			        elapsedTimeString = minutes + " minutes " + seconds + " seconds";
-			    }else{
+			    } else {
 			        elapsedTimeString = hours + " hours " + minutes + " minutes " + seconds + " seconds";
 			    }
-			    
 			    line = "<PythonTests start=\"" + simpleDateFormat.format(new Date(startTimeMillis)) + "\" elapsed=\"" + elapsedTimeString + "\">";
-		    }
-		    
-            if(line.startsWith("server")){
-                
+		    } else if (line.startsWith("server")) {
                 currentServer = line.substring("server".length());
                 line = "  <server name=\"" + currentServer + "\" url=\"" + myServersToURLs.get(currentServer) + "\">";
-            }
-		  
-            if(line.startsWith("suite")){
-                String suiteName = line.substring(("suite"+currentServer).length());
-                Map statistics = (Map)myServers.get(currentServer);
-
+            } else if (line.startsWith("suite")) {
+                String suiteName = line.substring(("suite" + currentServer).length());
+                Map statistics = (Map) myServers.get(currentServer);
                 if (statistics != null) {
                     SuiteStatistics stat = (SuiteStatistics)statistics.remove(suiteName);
     	            int failed = stat.suitesCount - stat.suitesPassed;
     	            line = "    <suite name=\"" + suiteName + "\" total=\"" + stat.suitesCount + "\" passed=\"" + stat.suitesPassed + "\" failed=\"" + failed + "\">";
                 }
-	        }
+	        } 
 	        myWriter.println(line);
 		    myWriter.flush();
 	    }

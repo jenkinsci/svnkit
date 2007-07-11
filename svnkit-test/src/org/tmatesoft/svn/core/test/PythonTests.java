@@ -104,7 +104,7 @@ public class PythonTests {
                 for (int i = 0; i < ourLoggers.length; i++) {
                     ourLoggers[i].startServer("svnserve", url);
                 }
-                started = false;
+                started = true;
 				runPythonTests(properties, defaultTestSuite, url);
 			} catch (Throwable th) {
 				th.printStackTrace();
