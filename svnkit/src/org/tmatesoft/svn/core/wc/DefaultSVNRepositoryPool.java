@@ -70,7 +70,9 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
     /**
      * Defines a private pool. All objects that will be created by 
      * different threads will be stored only within this pool object.
-     * This allows to have more than one separate pools. 
+     * This allows to have more than one separate pools.
+     *  
+     * @deprecated  
      */
     public static final int INSTANCE_POOL = 2;
     
@@ -123,10 +125,10 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
         myAuthManager = authManager;
         myTunnelProvider = tunnelProvider;
         myTimeout = timeout > 0 ? timeout : DEFAULT_IDLE_TIMEOUT;
-        myTimer = ourTimer;
         myIsKeepConnection = keepConnection;
         myTimeout = timeout;
         if (myIsKeepConnection) {
+            myTimer = ourTimer;
             ourTimer.schedule(new TimeoutTask(), 10000);
         }
     }
@@ -175,6 +177,11 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
      * 
      */
     public synchronized SVNRepository createRepository(SVNURL url, boolean mayReuse) throws SVNException {
+        if (myIsKeepConnection && myTimer == null && ourTimer != null) {
+            myTimer = ourTimer;
+            ourTimer.schedule(new TimeoutTask(), 10000);
+        }
+        
         SVNRepository repos = null;
         Map pool = getPool();
         if (!mayReuse || pool == null) {            
@@ -252,6 +259,7 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
             SVNRepository repository = (SVNRepository) pool.get(key);
             repository.closeSession();
         }
+        myPool = null;
     }
     
     private Map getPool() {
