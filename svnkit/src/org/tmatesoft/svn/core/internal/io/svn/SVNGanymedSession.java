@@ -83,9 +83,10 @@ public class SVNGanymedSession {
             }
             if (!isUsePersistentConnection()) {
                 Connection connection = openConnection(location, credentials, port);
-                return new SSHConnectionInfo(null, connection, false);
+                return new SSHConnectionInfo(null, "unpersistent", connection, false);
             }
             String key = credentials.getUserName() + ":" + location.getHost() + ":" + port;
+            String id = credentials.getUserName() + ":" + location.getHost() + ":" + port;
             if (credentials.getPrivateKeyFile() != null) {
                 key += ":" + credentials.getPrivateKeyFile().getAbsolutePath();
             }
@@ -112,7 +113,7 @@ public class SVNGanymedSession {
             }
             SVNDebugLog.getDefaultLog().info(ourRequestor + ": OPENING NEW CONNECTION");
             Connection connection = openConnection(location, credentials, port);
-            connectionInfo = new SSHConnectionInfo(key, connection, true);
+            connectionInfo = new SSHConnectionInfo(key, id, connection, true);
             connectionsList.add(connectionInfo);
             SVNDebugLog.getDefaultLog().info(ourRequestor + ": NEW CONNECTION OPENED, TOTAL: " + connectionsList.size());
             return connectionInfo;
@@ -125,7 +126,7 @@ public class SVNGanymedSession {
         lock(Thread.currentThread());
         try {
             if (!connectionInfo.isPersistent()) {
-                SVNDebugLog.getDefaultLog().info(ourRequestor + ": CLOSED, NOT PERSISTENT: " + connectionInfo.getKey());
+                SVNDebugLog.getDefaultLog().info(ourRequestor + ": CLOSED, NOT PERSISTENT: " + connectionInfo);
                 connectionInfo.dispose();
                 return;
             }
@@ -133,7 +134,7 @@ public class SVNGanymedSession {
             LinkedList connectionsList = (LinkedList) ourConnectionsPool.get(connectionInfo.getKey());
             if (connectionsList.size() <= 1) {
                 connectionInfo.startTimeout();
-                SVNDebugLog.getDefaultLog().info(ourRequestor + ": NOT CLOSED, SINGLE PERSISTENT: " + connectionInfo.getKey());
+                SVNDebugLog.getDefaultLog().info(ourRequestor + ": NOT CLOSED, SINGLE PERSISTENT: " + connectionInfo);
                 // start inactivity timeout for it.
                 return;
             }
@@ -150,11 +151,11 @@ public class SVNGanymedSession {
             if (usable > 0) {
                 connectionInfo.dispose();
                 connectionsList.remove(connectionInfo);
-                SVNDebugLog.getDefaultLog().info(ourRequestor + ": CONNECTION CLOSED: " + connectionInfo.getKey());
+                SVNDebugLog.getDefaultLog().info(ourRequestor + ": CONNECTION CLOSED: " + connectionInfo);
             } else {
                 // start inactivity timeout for it.
                 connectionInfo.startTimeout();
-                SVNDebugLog.getDefaultLog().info(ourRequestor + ": CONNECTION NOT CLOSED: " + connectionInfo.getKey() + ", usable left: " + usable + ", total " + connectionsList.size());
+                SVNDebugLog.getDefaultLog().info(ourRequestor + ": CONNECTION NOT CLOSED: " + connectionInfo + ", usable left: " + usable + ", total " + connectionsList.size());
             }
         } finally {
             unlock();
@@ -358,12 +359,14 @@ public class SVNGanymedSession {
         private boolean myIsPersistent;
         private String myKey;
         private Timer myTimer;
+        private String myID;
         
-        public SSHConnectionInfo(String key, Connection connection, boolean persistent) {
+        public SSHConnectionInfo(String key, String id, Connection connection, boolean persistent) {
             myConnection = connection;
             myIsPersistent = persistent;
             myKey = key;
-            SVNDebugLog.getDefaultLog().info(ourRequestor + ": CONNECTION CREATED: " + key);
+            myID = id;
+            SVNDebugLog.getDefaultLog().info(ourRequestor + ": CONNECTION CREATED: " + this);
         }
         
         public void dispose() {
@@ -416,7 +419,7 @@ public class SVNGanymedSession {
                 if (session != null) {
                     mySessionCount++;
                 }
-                SVNDebugLog.getDefaultLog().info(ourRequestor + ": SESSION OPENED: " + myKey + "." + mySessionCount);
+                SVNDebugLog.getDefaultLog().info(ourRequestor + ": SESSION OPENED: " + this + "." + mySessionCount);
                 return session;
             } finally {
                 unlock();
@@ -472,7 +475,7 @@ public class SVNGanymedSession {
                     session.waitForCondition(ChannelCondition.CLOSED, 0);
                 } finally {
                     mySessionCount--;
-                    SVNDebugLog.getDefaultLog().info(ourRequestor + ": SESSION CLOSED: " + myKey + "." + mySessionCount);
+                    SVNDebugLog.getDefaultLog().info(ourRequestor + ": SESSION CLOSED: " + this + "." + mySessionCount);
                 }
                 if (mySessionCount <= 0) {
                     mySessionCount = 0;
@@ -489,7 +492,7 @@ public class SVNGanymedSession {
                 if (mySessionCount > 0) {
                     return;
                 }
-                SVNDebugLog.getDefaultLog().info(ourRequestor + ": CLOSING BY TIMEOUT: " + myKey);
+                SVNDebugLog.getDefaultLog().info(ourRequestor + ": CLOSING BY TIMEOUT: " + this);
                 LinkedList list = (LinkedList) ourConnectionsPool.get(myKey);
                 if (list != null && list.contains(this)) {
                     list.remove(this);
@@ -501,6 +504,10 @@ public class SVNGanymedSession {
             } finally {
                 unlock();
             }
+        }
+        
+        public String toString() {
+            return myID + " [" + hashCode() + "]";
         }
     }
 }
