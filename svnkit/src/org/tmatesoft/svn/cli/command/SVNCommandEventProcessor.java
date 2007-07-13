@@ -231,6 +231,10 @@ public class SVNCommandEventProcessor implements ISVNEventHandler {
             SVNCommand.println(myPrintStream,     "D         " + SVNFormatUtil.formatPath(event.getFile()));
         } else if (event.getAction() == SVNEventAction.SKIP) {
             SVNCommand.println(myPrintStream, "Skipped '" + SVNFormatUtil.formatPath(event.getFile()) + "'");
+            if (myIsExternal && event.getExpectedAction() == SVNEventAction.UPDATE_EXTERNAL) {
+                myIsExternal = false;
+                myIsExternalChanged = false;
+            }
         } else if (event.getAction() == SVNEventAction.RESOLVED) {
             SVNCommand.println(myPrintStream, "Resolved conflicted state of '" + SVNFormatUtil.formatPath(event.getFile()) + "'");
         } else if (event.getAction() == SVNEventAction.STATUS_COMPLETED) {
