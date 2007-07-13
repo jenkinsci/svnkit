@@ -83,7 +83,7 @@ public class SVNGanymedConnector implements ISVNConnector {
                 if (authentication == null) {
                     SVNErrorManager.cancel("authentication cancelled");
                 } else if (connection == null) {
-                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Can not establish connection with to ''{0}''", realm));
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Can not establish connection to ''{0}''", realm));
                 }
                 try {
                     mySession = connection.openSession();
