@@ -187,8 +187,8 @@ public class SVNMoveClient extends SVNBasicClient {
                 File dstWCRoot = SVNWCUtil.getWorkingCopyRoot(dst, true);
                 boolean sameWC = srcWCRoot != null && srcWCRoot.equals(dstWCRoot);
                 if (sameWC && dstEntry != null
-                        && (dstEntry.isScheduledForDeletion() || dstEntry.getKind() != srcEntry
-                                .getKind())) {
+                        && (dstEntry.isScheduledForDeletion() || dstEntry.getKind() != srcEntry.getKind())) {
+                    wcAccess.close();
                     // attempt replace.
                     SVNFileUtil.copy(src, dst, false, false);
                     try {
@@ -206,6 +206,7 @@ public class SVNMoveClient extends SVNBasicClient {
                 // 3. update dst dir and dst entry in parent.
                 if (!sameWC) {
                     // just add dst (at least try to add, files already there).
+                    wcAccess.close();
                     try {
                         myWCClient.doAdd(dst, false, false, false, true, false);
                     } catch (SVNException e) {
@@ -336,6 +337,7 @@ public class SVNMoveClient extends SVNBasicClient {
                         dstParentArea.saveEntries(true);
                         SVNFileUtil.deleteAll(dst, this);
                         SVNFileUtil.copy(src, dst, false, false);
+                        wcAccess.close();
                         myWCClient.doAdd(dst, false, false, false, true, false);
                     }
                 }
