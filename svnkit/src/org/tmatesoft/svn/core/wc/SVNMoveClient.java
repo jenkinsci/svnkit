@@ -278,12 +278,14 @@ public class SVNMoveClient extends SVNBasicClient {
                     long srcRevision = srcEntry.getRevision();
                     long srcCFRevision = srcEntry.getCopyFromRevision();
 
-                    dstURL = SVNPathUtil
-                            .append(dstURL, SVNEncodingUtil.uriEncode(dst.getName()));
+                    dstURL = SVNPathUtil.append(dstURL, SVNEncodingUtil.uriEncode(dst.getName()));
                     if (srcEntry.isScheduledForAddition() && srcEntry.isCopied()) {
                         srcProps.copyTo(dstProps);
                         dstEntry.scheduleForAddition();
                         dstEntry.setKind(SVNNodeKind.DIR);
+                        dstEntry.setCopied(true);
+                        dstEntry.setCopyFromRevision(srcCFRevision);
+                        dstEntry.setCopyFromURL(srcCFURL);
 
                         SVNEntry dstThisEntry = dstArea.getEntry(dstArea.getThisDirName(), false);
                         dstThisEntry.scheduleForAddition();
@@ -302,12 +304,14 @@ public class SVNMoveClient extends SVNBasicClient {
                         // update URL in children.
                         dstArea.updateURL(dstURL, true);
                         dstParentArea.saveEntries(true);
-                    } else if (!srcEntry.isCopied()
-                            && !srcEntry.isScheduledForAddition()) {
+                    } else if (!srcEntry.isCopied() && !srcEntry.isScheduledForAddition()) {
                         // versioned (deleted, replaced, or normal).
                         srcProps.copyTo(dstProps);
                         dstEntry.scheduleForAddition();
                         dstEntry.setKind(SVNNodeKind.DIR);
+                        dstEntry.setCopied(true);
+                        dstEntry.setCopyFromRevision(srcRevision);
+                        dstEntry.setCopyFromURL(srcURL);
 
                         // update URL, CF-URL and CF-REV in children.
                         SVNEntry dstThisEntry = dstArea.getEntry(dstArea.getThisDirName(), false);
