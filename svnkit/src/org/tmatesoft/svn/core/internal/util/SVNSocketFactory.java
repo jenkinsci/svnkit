@@ -136,6 +136,9 @@ public class SVNSocketFactory {
         public SVNSSLAuthentication getClientAuthentication() {
             return null;
         }
+        public Throwable getClientCertLoadingError() {
+            return null;
+        }
     };
 
     public static boolean isSocketStale(Socket socket) throws IOException {

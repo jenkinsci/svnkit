@@ -81,6 +81,11 @@ public interface ISVNSSLManager {
      * @return client authentication
      */
     public SVNSSLAuthentication getClientAuthentication();
+
+    /**
+     * @return error occured during loading of client certificate or null.
+     */
+    public Throwable getClientCertLoadingError();
     
     /**
      * Accepts this SSL context if authentication has succeeded or 

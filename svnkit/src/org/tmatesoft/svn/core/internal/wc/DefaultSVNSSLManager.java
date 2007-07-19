@@ -66,6 +66,7 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
     private File[] myServerCertFiles;
     private boolean myIsPromptForClientCert;
     private SVNSSLAuthentication myClientAuthentication;
+    private Throwable myClientCertError;
 
     public DefaultSVNSSLManager(File authDir, SVNURL url, 
             File[] serverCertFiles, boolean useKeyStore, File clientFile, String clientPassword,
@@ -80,6 +81,10 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
         myAuthManager = authManager;
         myIsUseKeyStore = useKeyStore;
         myServerCertFiles = serverCertFiles;
+    }
+    
+    public Throwable getClientCertLoadingError() {
+        return myClientCertError;
     }
 
     private void init() {
@@ -191,6 +196,7 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
     public void acknowledgeSSLContext(boolean accepted, SVNErrorMessage errorMessage) {
         if (!accepted) {
             myIsKeyManagerCreated = false;
+            myClientCertError = null;
             myKeyManagers = null;
             myTrustedCerts = null;
         }
@@ -265,6 +271,11 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
         if (myClientCertFile == null) {
             return null;
         }
+        myKeyManagers = loadClientCertificate();
+        return myKeyManagers;
+    }
+    
+    private KeyManager[] loadClientCertificate() {
         char[] passphrase = null;
         if (myClientCertPassword != null) {
             passphrase = myClientCertPassword.toCharArray();
@@ -274,6 +285,7 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
         try {
             is = SVNFileUtil.openFileForReading(myClientCertFile);
         } catch (SVNException e1) {
+            myClientCertError = e1;
             return null;
         }
         try {
@@ -283,22 +295,26 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
             }
         } catch (Throwable th) {
             SVNDebugLog.getDefaultLog().info(th);
+            myClientCertError = th;
+            return null;
         } finally {
             SVNFileUtil.closeFile(is);
         }
         KeyManagerFactory kmf = null;
+        KeyManager[] result = null;
         if (keyStore != null) {
             try {
                 kmf = KeyManagerFactory.getInstance("SunX509");
                 if (kmf != null) {
                     kmf.init(keyStore, passphrase);
-                    myKeyManagers = kmf.getKeyManagers();
+                    result = kmf.getKeyManagers();
                 }
             } catch (Throwable e) {
+                myClientCertError = e;
                 SVNDebugLog.getDefaultLog().info(e);
             } 
         }
-        return myKeyManagers;
+        return result;
     }
 
     private static X509Certificate loadCertificate(File pemFile) {
@@ -331,6 +347,9 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
             myClientCertPassword = null;
         }
         myClientAuthentication = sslAuthentication;
+        // load here.
+        myKeyManagers = loadClientCertificate();
+        myIsKeyManagerCreated = true;
     } 
     
     public SVNSSLAuthentication getClientAuthentication() {
