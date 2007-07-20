@@ -86,7 +86,7 @@ public class SVNStatusCommand extends SVNCommand {
             getClientManager().setEventHandler(new SVNCommandEventProcessor(out, err, false));
         }
         SVNStatusClient stClient = getClientManager().getStatusClient();
-        ISVNStatusHandler handler = new SVNCommandStatusHandler(System.out, reportAll || showUpdates, reportAll, quiet, showUpdates);
+        ISVNStatusHandler handler = new SVNCommandStatusHandler(out, reportAll || showUpdates, reportAll, quiet, showUpdates);
         SVNXMLSerializer serializer;
         serializer = getCommandLine().hasArgument(SVNArgument.XML) ? new SVNXMLSerializer(System.out) : null;
         if (serializer != null) {
