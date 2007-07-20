@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.svn.ISVNConnector;
@@ -315,7 +316,11 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
         if (pattern == null || fileName == null) {
             return false;
         }
-        return compileNamePatter(pattern).matcher(fileName).matches();
+        Pattern compiled = compileNamePatter(pattern);
+        if (compiled != null) {
+            return compiled.matcher(fileName).matches();
+        }
+        return false;
     }
 
     private static Pattern compileNamePatter(String wildcard) {
@@ -353,7 +358,11 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
                 result.append(ch);
             }
         }
-        return Pattern.compile(result.toString());
+        try {
+            return Pattern.compile(result.toString());
+        } catch (PatternSyntaxException e) {
+            return null;
+        }
     }
 
     public ISVNMerger createMerger(byte[] conflictStart, byte[] conflictSeparator, byte[] conflictEnd) {
