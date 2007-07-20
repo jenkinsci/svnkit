@@ -81,6 +81,10 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
         myAuthManager = authManager;
         myIsUseKeyStore = useKeyStore;
         myServerCertFiles = serverCertFiles;
+        if (myClientCertFile != null) {
+            // force cert load.
+            getKeyManagers();
+        }
     }
     
     public Throwable getClientCertLoadingError() {
