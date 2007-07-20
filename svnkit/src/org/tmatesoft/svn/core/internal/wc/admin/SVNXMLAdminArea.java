@@ -300,7 +300,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             } catch (IOException e) {
                 SVNFileUtil.closeFile(os);
                 SVNFileUtil.deleteFile(tmpFile);
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot wrtie entries file ''{0}'': {1}", new Object[] {myEntriesFile, e.getLocalizedMessage()});
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot write entries file ''{0}'': {1}", new Object[] {myEntriesFile, e.getLocalizedMessage()});
                 SVNErrorManager.error(err, e);
             } finally {
                 SVNFileUtil.closeFile(os);

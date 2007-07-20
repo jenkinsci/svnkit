@@ -306,9 +306,9 @@ public class SVNNodeEditor implements ISVNEditor {
         
         for (Iterator children = node.myChildren.iterator(); children.hasNext();) {
             Node childNode = (Node) children.next();
-            path = SVNPathUtil.concatToAbs(path, childNode.myName);
-            basePath = SVNPathUtil.concatToAbs(basePath, childNode.myName);
-            diffImpl(root, baseRoot, path, basePath, childNode, generator, os);
+            String childPath = SVNPathUtil.concatToAbs(path, childNode.myName);
+            String childBasePath = SVNPathUtil.concatToAbs(basePath, childNode.myName);
+            diffImpl(root, baseRoot, childPath, childBasePath, childNode, generator, os);
         }
     }
 

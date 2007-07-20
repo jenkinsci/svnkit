@@ -919,6 +919,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                         throw error;
                     }
                 } else {
+                    dispatchEvent(SVNEventFactory.createUpdateExternalEvent(info, ""));
                     if (!external.getFile().isDirectory()) {
                         boolean created = external.getFile().mkdirs();
                         try {
@@ -938,7 +939,6 @@ public class SVNUpdateClient extends SVNBasicClient {
                         
                         if (entry != null && entry.getURL() != null) {
                             if (external.getNewURL().toString().equals(url)) {
-                                dispatchEvent(SVNEventFactory.createUpdateExternalEvent(info, ""));
                                 doUpdate(external.getFile(), revision, true);
                                 continue;
                             } else if (entry.getRepositoryRoot() != null) {
@@ -952,7 +952,6 @@ public class SVNUpdateClient extends SVNBasicClient {
                                                 svne.getErrorMessage().getErrorCode() == SVNErrorCode.CLIENT_INVALID_RELOCATION) {
                                             deleteExternal(external);
                                             external.getFile().mkdirs();
-                                            dispatchEvent(SVNEventFactory.createUpdateExternalEvent(info, ""));
                                             doCheckout(external.getNewURL(), external.getFile(), revision, revision, true);
                                             continue;
                                         } 
@@ -963,10 +962,8 @@ public class SVNUpdateClient extends SVNBasicClient {
                                 continue;
                             }
                         }
-
                         deleteExternal(external);
                         external.getFile().mkdirs();
-                        dispatchEvent(SVNEventFactory.createUpdateExternalEvent(info, ""));
                         doCheckout(external.getNewURL(), external.getFile(), revision, revision, true);
                     }
                 }
@@ -974,8 +971,11 @@ public class SVNUpdateClient extends SVNBasicClient {
                 if (th instanceof SVNCancelException) {
                     throw th;
                 }
-                dispatchEvent(new SVNEvent(th.getErrorMessage()));
                 getDebugLog().info(th);
+                File file = external.getFile();
+                SVNEvent event = SVNEventFactory.createSkipEvent(file, file, SVNEventAction.SKIP, SVNEventAction.UPDATE_EXTERNAL, SVNNodeKind.DIR);
+                event.setErrorMessage(th.getErrorMessage());
+                dispatchEvent(event);
             } finally {
                 setEventPathPrefix(null);
             }

@@ -527,17 +527,28 @@ class HTTPConnection implements IHTTPConnection {
         if (myIsSecured) {
             sslManager = authManager != null ? authManager.getSSLManager(location) : null;
         }
-        if (authManager != null && sslManager != null && sslManager.isClientCertPromptRequired()) {
-            if (firstAuth) {
-                sslAuth = (SVNSSLAuthentication) authManager.getFirstAuthentication(ISVNAuthenticationManager.SSL, sslRealm, location);
-            } else {
-                sslAuth = (SVNSSLAuthentication) authManager.getNextAuthentication(ISVNAuthenticationManager.SSL, sslRealm, location);
+        if (authManager != null && sslManager != null && 
+                (sslManager.isClientCertPromptRequired() || (firstAuth && sslManager.getClientCertLoadingError() != null))) {
+            // prompt if there is error or prompt has been forced.
+            while(true) {
+                if (firstAuth) {
+                    sslAuth = (SVNSSLAuthentication) authManager.getFirstAuthentication(ISVNAuthenticationManager.SSL, sslRealm, location);
+                } else {
+                    sslAuth = (SVNSSLAuthentication) authManager.getNextAuthentication(ISVNAuthenticationManager.SSL, sslRealm, location);
+                }
+                if (sslAuth == null) {
+                    SVNErrorManager.cancel("SSL authentication with client certificate cancelled");
+                }
+                // this will set error.
+                sslManager.setClientAuthentication(sslAuth);
+                if (sslManager.getClientCertLoadingError() != null) {
+                    sslManager.acknowledgeSSLContext(false, SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, sslManager.getClientCertLoadingError().getMessage()));
+                    // prompt again.
+                    continue;
+                }
+                break;
             }
-            if (sslAuth == null) {
-                SVNErrorManager.cancel("SSL authentication with client certificate cancelled");
-            }
-            sslManager.setClientAuthentication(sslAuth);
-        }
+        } 
         return sslManager;
     }
 

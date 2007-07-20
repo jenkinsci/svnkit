@@ -83,7 +83,7 @@ public class SVNGanymedConnector implements ISVNConnector {
                 if (authentication == null) {
                     SVNErrorManager.cancel("authentication cancelled");
                 } else if (connection == null) {
-                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Can not establish connection with to ''{0}''", realm));
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Can not establish connection to ''{0}''", realm));
                 }
                 try {
                     mySession = connection.openSession();
@@ -141,12 +141,12 @@ public class SVNGanymedConnector implements ISVNConnector {
             // close session and close owning connection if necessary.
             // close session and connection in atomic way.
             SVNGanymedSession.lock(Thread.currentThread());
-            SVNDebugLog.getDefaultLog().info(Thread.currentThread() + ": ABOUT TO CLOSE SESSION IN : " + myConnection.getKey());
+            SVNDebugLog.getDefaultLog().info(Thread.currentThread() + ": ABOUT TO CLOSE SESSION IN : " + myConnection);
             try {
                 if (myConnection.closeSession(mySession)) {
                     // no sessions left in connection, close it.
                     // SVNGanymedSession will make sure that connection is disposed if necessary.
-                    SVNDebugLog.getDefaultLog().info(Thread.currentThread() + ": ABOUT TO CLOSE CONNECTION: " + myConnection.getKey());
+                    SVNDebugLog.getDefaultLog().info(Thread.currentThread() + ": ABOUT TO CLOSE CONNECTION: " + myConnection);
                     SVNGanymedSession.closeConnection(myConnection);
                     myConnection = null;
                 }

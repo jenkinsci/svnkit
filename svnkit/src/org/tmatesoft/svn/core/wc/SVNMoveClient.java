@@ -187,8 +187,14 @@ public class SVNMoveClient extends SVNBasicClient {
                 File dstWCRoot = SVNWCUtil.getWorkingCopyRoot(dst, true);
                 boolean sameWC = srcWCRoot != null && srcWCRoot.equals(dstWCRoot);
                 if (sameWC && dstEntry != null
-                        && (dstEntry.isScheduledForDeletion() || dstEntry.getKind() != srcEntry
-                                .getKind())) {
+                        && (dstEntry.isScheduledForDeletion() || dstEntry.getKind() != srcEntry.getKind())) {
+                    wcAccess.close();
+                    if (srcEntry.getKind() == dstEntry.getKind() && srcEntry.getSchedule() == null && srcEntry.isFile()) {
+                        // make normal move to keep history (R+).
+                        SVNCopyClient copyClient = new SVNCopyClient((ISVNAuthenticationManager) null, null);
+                        copyClient.doCopy(src, SVNRevision.WORKING, dst, true, true);
+                        return;
+                    }
                     // attempt replace.
                     SVNFileUtil.copy(src, dst, false, false);
                     try {
@@ -206,6 +212,7 @@ public class SVNMoveClient extends SVNBasicClient {
                 // 3. update dst dir and dst entry in parent.
                 if (!sameWC) {
                     // just add dst (at least try to add, files already there).
+                    wcAccess.close();
                     try {
                         myWCClient.doAdd(dst, false, false, false, true, false);
                     } catch (SVNException e) {
@@ -277,12 +284,14 @@ public class SVNMoveClient extends SVNBasicClient {
                     long srcRevision = srcEntry.getRevision();
                     long srcCFRevision = srcEntry.getCopyFromRevision();
 
-                    dstURL = SVNPathUtil
-                            .append(dstURL, SVNEncodingUtil.uriEncode(dst.getName()));
+                    dstURL = SVNPathUtil.append(dstURL, SVNEncodingUtil.uriEncode(dst.getName()));
                     if (srcEntry.isScheduledForAddition() && srcEntry.isCopied()) {
                         srcProps.copyTo(dstProps);
                         dstEntry.scheduleForAddition();
                         dstEntry.setKind(SVNNodeKind.DIR);
+                        dstEntry.setCopied(true);
+                        dstEntry.setCopyFromRevision(srcCFRevision);
+                        dstEntry.setCopyFromURL(srcCFURL);
 
                         SVNEntry dstThisEntry = dstArea.getEntry(dstArea.getThisDirName(), false);
                         dstThisEntry.scheduleForAddition();
@@ -301,12 +310,14 @@ public class SVNMoveClient extends SVNBasicClient {
                         // update URL in children.
                         dstArea.updateURL(dstURL, true);
                         dstParentArea.saveEntries(true);
-                    } else if (!srcEntry.isCopied()
-                            && !srcEntry.isScheduledForAddition()) {
+                    } else if (!srcEntry.isCopied() && !srcEntry.isScheduledForAddition()) {
                         // versioned (deleted, replaced, or normal).
                         srcProps.copyTo(dstProps);
                         dstEntry.scheduleForAddition();
                         dstEntry.setKind(SVNNodeKind.DIR);
+                        dstEntry.setCopied(true);
+                        dstEntry.setCopyFromRevision(srcRevision);
+                        dstEntry.setCopyFromURL(srcURL);
 
                         // update URL, CF-URL and CF-REV in children.
                         SVNEntry dstThisEntry = dstArea.getEntry(dstArea.getThisDirName(), false);
@@ -336,6 +347,7 @@ public class SVNMoveClient extends SVNBasicClient {
                         dstParentArea.saveEntries(true);
                         SVNFileUtil.deleteAll(dst, this);
                         SVNFileUtil.copy(src, dst, false, false);
+                        wcAccess.close();
                         myWCClient.doAdd(dst, false, false, false, true, false);
                     }
                 }

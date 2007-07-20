@@ -359,6 +359,10 @@ public class SVNEvent {
         return myErrorMessage;
     }
     
+    public void setErrorMessage(SVNErrorMessage errorMessage) {
+        myErrorMessage = errorMessage;
+    }
+    
     /**
      * Gets the file item's lock information (if any) represented by an 
      * <b>SVNLock</b> object.
