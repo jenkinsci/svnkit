@@ -77,6 +77,13 @@ public class SVNEventFactory {
                 SVNStatusType.LOCK_INAPPLICABLE, null, null);
     }
 
+    public static SVNEvent createSkipEvent(SVNAdminAreaInfo info, SVNAdminArea dir,
+            String name, SVNEventAction action, SVNEventAction expectedAction, SVNNodeKind kind, 
+            long revision, SVNStatusType cstatus, SVNStatusType pstatus) {
+        return new SVNEvent(info, dir, name, action, expectedAction, kind, revision, null,
+                cstatus, pstatus, SVNStatusType.LOCK_INAPPLICABLE, null, null);
+    }
+
     public static SVNEvent createLockEvent(SVNAdminArea dir, String path,
             SVNEventAction action, SVNLock lock, SVNErrorMessage message) {
         SVNEvent event = new SVNEvent(null, dir, SVNPathUtil.tail(path), action, SVNNodeKind.FILE, -1, null, null, null, null, lock, message);
@@ -207,4 +214,12 @@ public class SVNEventFactory {
         return new SVNEvent(null, adminArea.getRoot(), SVNEventAction.UPGRADE, SVNNodeKind.DIR, -1, null, null, null, null, null, null);
     }
 
+    public static SVNEvent createChangelistEvent(File path, SVNAdminArea adminArea, String changelistName, 
+            SVNEventAction action, SVNErrorMessage message) {
+        SVNEvent event = new SVNEvent(null, adminArea, path.getName(), action, null, -1, null, null, null, null, null, message);
+        event.setPath(path.getAbsolutePath().replace(File.separatorChar, '/'));
+        event.setChangelistName(changelistName);
+        return event;
+    }
+    
 }

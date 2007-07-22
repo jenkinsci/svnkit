@@ -1077,13 +1077,13 @@ public class SVNLookClient extends SVNBasicClient {
             InputStream contents = null;
             try {
                 contents = root.getFileStreamForPath(new SVNDeltaCombiner(), path);
-                byte[] buffer = new byte[SVNAdminHelper.STREAM_CHUNK_SIZE];
+                byte[] buffer = new byte[SVNFileUtil.STREAM_CHUNK_SIZE];
                 int len = 0;
                 do {
                     checkCancelled();
                     len = contents.read(buffer);
                     out.write(buffer, 0, len);
-                } while (len == SVNAdminHelper.STREAM_CHUNK_SIZE);
+                } while (len == SVNFileUtil.STREAM_CHUNK_SIZE);
             } catch (IOException ioe) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
                 SVNErrorManager.error(err, ioe);

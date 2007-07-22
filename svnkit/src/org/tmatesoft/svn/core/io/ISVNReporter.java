@@ -12,6 +12,7 @@
 
 package org.tmatesoft.svn.core.io;
 
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 
@@ -80,6 +81,8 @@ public interface ISVNReporter {
      */
 	public void setPath(String path, String lockToken, long revision, boolean startEmpty) throws SVNException;
 
+    public void setPath(String path, String lockToken, long revision, SVNDepth depth, boolean startEmpty) throws SVNException;
+
 	/**
      * 
      * Describes a working copy <code>path</code> as deleted or missing.
@@ -113,8 +116,9 @@ public interface ISVNReporter {
      *                      directory, then means there're no entries yet
      * @throws SVNException 
      */
-
     public void linkPath(SVNURL url, String path, String lockToken, long revison, boolean startEmpty) throws SVNException;
+
+    public void linkPath(SVNURL url, String path, String lockToken, long revison, SVNDepth depth, boolean startEmpty) throws SVNException;
     
     /**
      * Finalizes the report. Must be called when having traversed a local 

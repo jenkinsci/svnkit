@@ -113,6 +113,20 @@ public class SVNCommandEventProcessor implements ISVNEventHandler {
             SVNCommand.println(myErrStream, "error: " + event.getErrorMessage());
         } else if (event.getAction() == SVNEventAction.LOCK_FAILED) {
             SVNCommand.println(myErrStream, "error: " + event.getErrorMessage());
+        } else if (event.getAction() == SVNEventAction.CHANGELIST_SET) {
+            String path = event.getPath();
+            if (event.getFile() != null) {
+                path = SVNFormatUtil.formatPath(event.getFile());
+            }
+            SVNCommand.println(myPrintStream, "Path '" + path + "' is now a member of changelist '" + event.getChangelistName() + "'.");
+        } else if (event.getAction() == SVNEventAction.CHANGELIST_CLEAR) {
+            String path = event.getPath();
+            if (event.getFile() != null) {
+                path = SVNFormatUtil.formatPath(event.getFile());
+            }
+            SVNCommand.println(myPrintStream, "Path '" + path + "' is no longer a member of a changelist.");
+        } else if (event.getAction() == SVNEventAction.CHANGELIST_FAILED) {
+            SVNCommand.println(myErrStream, "error: " + event.getErrorMessage());
         } else if (event.getAction() == SVNEventAction.UPDATE_ADD) {
             if (myIsExternal) {
                 myIsExternalChanged = true;
@@ -123,6 +137,42 @@ public class SVNCommandEventProcessor implements ISVNEventHandler {
                 SVNCommand.println(myPrintStream, "C    " + SVNFormatUtil.formatPath(event.getFile()));
             } else {
                 SVNCommand.println(myPrintStream, "A    " + SVNFormatUtil.formatPath(event.getFile()));
+            }
+        } else if (event.getAction() == SVNEventAction.UPDATE_EXISTS) {
+            StringBuffer sb = new StringBuffer();
+            if (event.getNodeKind() == SVNNodeKind.DIR) {
+                sb.append("E");
+            } else {
+                if (event.getContentsStatus() == SVNStatusType.CONFLICTED) {
+                    sb.append("C");
+                } else {
+                    sb.append("E");
+                }
+            }
+            
+            if (event.getPropertiesStatus() == SVNStatusType.CHANGED) {
+                sb.append("U");
+            } else if (event.getPropertiesStatus() == SVNStatusType.CONFLICTED) {
+                sb.append("C");
+            } else if (event.getPropertiesStatus() == SVNStatusType.MERGED) {
+                sb.append("G");
+            } else {
+                sb.append(" ");
+            }
+            if (sb.toString().trim().length() != 0) {
+                if (myIsExternal) {
+                    myIsExternalChanged = true;
+                } else {
+                    myIsChanged = true;
+                }
+            }
+            if (event.getLockStatus() == SVNStatusType.LOCK_UNLOCKED) {
+                sb.append("B");
+            } else {
+                sb.append(" ");
+            }
+            if (sb.toString().trim().length() > 0) {
+                SVNCommand.println(myPrintStream, sb.toString() + "  " + SVNFormatUtil.formatPath(event.getFile()));
             }
         } else if (event.getAction() == SVNEventAction.UPDATE_DELETE) {
             if (myIsExternal) {

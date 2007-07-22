@@ -357,7 +357,6 @@ public class SVNAdminHelper {
     public static final String DUMPFILE_TEXT_DELTA             = "Text-delta";
     public static final String DUMPFILE_UUID                   = "UUID";
     public static final String DUMPFILE_TEXT_CONTENT_CHECKSUM  = "Text-content-md5";    
-    public static final int STREAM_CHUNK_SIZE                  = 16384;
     public static final int DUMPFILE_FORMAT_VERSION            = 3;
 
     public static final int NODE_ACTION_ADD     = 1;

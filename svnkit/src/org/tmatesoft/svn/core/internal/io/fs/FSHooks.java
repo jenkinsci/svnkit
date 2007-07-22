@@ -13,12 +13,12 @@ package org.tmatesoft.svn.core.internal.io.fs;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.SVNStreamGobbler;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -136,7 +136,7 @@ public class FSHooks {
         try {
             String executableName = hookFile.getName().toLowerCase();
             if ((executableName.endsWith(".bat") || executableName.endsWith(".cmd")) && SVNFileUtil.isWindows) {
-                String cmd = "cmd /C \"" + "\"" + hookFile.getAbsolutePath() + "\" " + "\"" + reposPath + "\" " + (path != null ? "\"" + path + "\" " : "") + "\"" + username + "\"";
+                String cmd = "cmd /C " + "\"" + hookFile.getAbsolutePath() + "\" " + "\"" + reposPath + "\" " + (path != null ? "\"" + path + "\" " : "") + "\"" + username + "\"";
                 hookProc = Runtime.getRuntime().exec(cmd);
             } else {
                 if (path != null) {
@@ -261,8 +261,8 @@ public class FSHooks {
             }
         }
 
-        StreamGobbler inputGobbler = new StreamGobbler(hookProcess.getInputStream());
-        StreamGobbler errorGobbler = new StreamGobbler(hookProcess.getErrorStream());
+        SVNStreamGobbler inputGobbler = new SVNStreamGobbler(hookProcess.getInputStream());
+        SVNStreamGobbler errorGobbler = new SVNStreamGobbler(hookProcess.getErrorStream());
         inputGobbler.start();
         errorGobbler.start();
 
@@ -280,65 +280,22 @@ public class FSHooks {
             hookProcess.destroy();
         }
 
-        if (errorGobbler.getError() != null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, errorGobbler.getError().getLocalizedMessage());
-            SVNErrorManager.error(err, errorGobbler.getError());
-        }
-
-        if (rc != 0) {
-            if (!readErrorStream) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "''{0}'' hook failed; no error output available", hookName);
-                SVNErrorManager.error(err);
+        if (rc == 0 ) {
+            if (errorGobbler.getError() != null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "''{0}'' hook succeeded, but error output could not be read", hookName);
+                SVNErrorManager.error(err, errorGobbler.getError());
+            }
+        } else {
+            String stdErrMessage = errorGobbler.getError() != null ? "[Error output could not be read.]" : errorGobbler.getResult();
+            String errorMessage = "''{0}'' hook failed (exited with a non-zero exitcode of {1,number,integer}).  ";
+            if (stdErrMessage != null && stdErrMessage.length() > 0) {
+                errorMessage += "The following error output was produced by the hook:\n" + stdErrMessage;
             } else {
-                String errString = errorGobbler.getResult();
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "''{0}'' hook failed with error output:\n{1}", new Object[] {
-                        hookName, errString
-                });
-                SVNErrorManager.error(err);
+                errorMessage += "No error output was produced by the hook.";
             }
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, errorMessage, new Object[] {hookName, new Integer(rc)});
+            SVNErrorManager.error(err);
         }
     }
 
-    private static class StreamGobbler extends Thread {
-
-        InputStream is;
-        StringBuffer result;
-        IOException error;
-        private boolean myIsClosed;
-
-        StreamGobbler(InputStream is) {
-            this.is = is;
-            result = new StringBuffer();
-        }
-        
-        public void close() {
-            myIsClosed = true;
-            SVNFileUtil.closeFile(is);
-        }
-
-        public void run() {
-            try {
-                int r;
-                while ((r = is.read()) >= 0) {
-                    result.append((char) (r & 0xFF));
-                }
-            } catch (IOException ioe) {
-                if (!myIsClosed) {
-                    error = ioe;
-                }
-            } finally {
-                if (!myIsClosed) {
-                    SVNFileUtil.closeFile(is);
-                }
-            }
-        }
-
-        public String getResult() {
-            return result.toString();
-        }
-
-        public IOException getError() {
-            return error;
-        }
-    }
 }

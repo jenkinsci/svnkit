@@ -31,11 +31,12 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  */
 public class SVNTimeUtil {
 
+//    private static final Date NULL = new Date(0);
+
     private static final DateFormat ISO8601_FORMAT_OUT = new SimpleDateFormat(
             "yyyy-MM-dd'T'HH:mm:ss.SSS'000Z'");
 
     private static final Calendar CALENDAR = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
-    public static final Date NULL = new Date(0);
 
     static {
         ISO8601_FORMAT_OUT.setTimeZone(TimeZone.getTimeZone("GMT"));
@@ -76,14 +77,14 @@ public class SVNTimeUtil {
 
     public static Date parseDate(String str) {
         if (str == null) {
-            return NULL;
+            return SVNDate.NULL;
         }
         try {
             return SVNDate.parseDatestamp(str);
         } catch (Throwable th) {
             SVNDebugLog.getDefaultLog().info(th);
         }
-        return NULL;        
+        return SVNDate.NULL;        
     }
 
     public static Date parseDateString(String str) throws SVNException {
@@ -95,7 +96,7 @@ public class SVNTimeUtil {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_DATE);
             SVNErrorManager.error(err, th);
         }
-        return NULL;        
+        return SVNDate.NULL;        
     }
     
     private static final char[] DATE_SEPARATORS = {'-','-','T',':',':','.','Z'}; 

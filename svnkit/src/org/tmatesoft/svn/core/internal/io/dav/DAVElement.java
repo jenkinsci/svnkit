@@ -90,9 +90,14 @@ public class DAVElement {
     public static final DAVElement BASELINE_RELATIVE_PATH = getElement(SVN_DAV_PROPERTY_NAMESPACE, "baseline-relative-path");
     public static final DAVElement REPOSITORY_UUID = getElement(SVN_DAV_PROPERTY_NAMESPACE, "repository-uuid");
     public static final DAVElement MD5_CHECKSUM = getElement(SVN_DAV_PROPERTY_NAMESPACE, "md5-checksum");
+    public static final DAVElement DEADPROP_COUNT = getElement(SVN_DAV_PROPERTY_NAMESPACE, "deadprop-count");
 
     public static final DAVElement AUTO_VERSION = getElement(DAV_NAMESPACE, "auto-version");
-    
+
+    public static final DAVElement MERGE_INFO_ITEM = getElement(SVN_NAMESPACE, "mergeinfo-item");
+    public static final DAVElement MERGE_INFO_PATH = getElement(SVN_NAMESPACE, "mergeinfo-path");
+    public static final DAVElement MERGE_INFO_INFO = getElement(SVN_NAMESPACE, "mergeinfo-info");
+
     public static final DAVElement[] STARTING_PROPERTIES = {VERSION_CONTROLLED_CONFIGURATION, RESOURCE_TYPE, BASELINE_RELATIVE_PATH, REPOSITORY_UUID};
     public static final DAVElement[] BASELINE_PROPERTIES = {BASELINE_COLLECTION, VERSION_NAME};
     

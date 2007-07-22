@@ -31,4 +31,12 @@ public class SVNDebugLog {
         }
         return ourDefaultLog;
     }
+
+    public static void assertCondition(boolean condition, String message) {
+        if (!condition) {
+            getDefaultLog().error(message);
+            getDefaultLog().error(new Exception(message));
+        }
+    }
+
 }

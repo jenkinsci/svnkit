@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
+import org.tmatesoft.svn.core.SVNDepth;
+
 /**
  * @version 1.1.1
  * @author  TMate Software Ltd.
@@ -22,13 +24,15 @@ public class PathInfo {
     String myLockToken;
     long myRevision;
     boolean startEmpty;
-
-    public PathInfo(String path, String linkPath, String lockToken, long revision, boolean empty) {
+    SVNDepth myDepth;
+    
+    public PathInfo(String path, String linkPath, String lockToken, long revision, SVNDepth depth, boolean empty) {
         myPath = path;
         myLinkPath = linkPath;
         myLockToken = lockToken;
         myRevision = revision;
         startEmpty = empty;
+        myDepth = depth;
     }
 
     public String getLinkPath() {
@@ -54,6 +58,10 @@ public class PathInfo {
     public static boolean isRelevant(PathInfo pathInfo, String prefix) {
         /* Return true if pathInfo's path is a child of prefix. */
         return pathInfo != null && pathInfo.getPath().startsWith(prefix) && ("".equals(prefix) || pathInfo.getPath().charAt(prefix.length()) == '/');
+    }
+
+    public SVNDepth getDepth() {
+        return myDepth;
     }
 
 }

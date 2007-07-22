@@ -19,6 +19,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 
 
 
@@ -190,4 +191,29 @@ public class SVNAdminUtil {
         }
         return buffer.toString();
     }
+    
+    /**
+     * Creates "tempfile[.n].tmp" in admin area's /tmp dir
+     *  
+     * @param adminArea
+     * @return
+     * @throws SVNException
+     */
+    public static File createTmpFile(SVNAdminArea adminArea) throws SVNException {
+        return createTmpFile(adminArea, "tempfile", ".tmp", true);
+    }
+    
+    public static File createTmpFile(SVNAdminArea adminArea, String prefix, String suffix, boolean tmp) throws SVNException {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(SVNFileUtil.getAdminDirectoryName());
+        buffer.append('/');
+        if (tmp) {
+            buffer.append(TMP_DIR_NAME);
+            buffer.append('/');
+        }
+        String adminPath = buffer.toString();
+        File dir = adminArea.getFile(adminPath);
+        return SVNFileUtil.createUniqueFile(dir, prefix, suffix);
+    }
+
 }

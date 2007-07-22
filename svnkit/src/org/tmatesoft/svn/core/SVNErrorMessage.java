@@ -358,7 +358,7 @@ public class SVNErrorMessage implements Serializable {
         parentError.setChildErrorMessage(this);
         return parentError;
     }
-    
+
     public SVNErrorMessage wrap(String parentMessage, Object[] relatedObjects){
         SVNErrorMessage parentError = SVNErrorMessage.create(this.getErrorCode(), parentMessage, relatedObjects);
         parentError.setChildErrorMessage(this);
@@ -368,10 +368,35 @@ public class SVNErrorMessage implements Serializable {
     /**
      * Returns true if this message is a warning message, not error one.
      * 
-     * @return true or false
+     * @return <span class="javakeyword">true</span> if this error message 
+     *         is of type {@link #TYPE_WARNING}} and <span class="javakeyword">false</span>
+     *         otherwise
      */
     public boolean isWarning() {
         return myType == TYPE_WARNING;
+    }
+    
+    /**
+     * Sets the type of this error message.
+     * 
+     * <p>
+     * <code>type</code> must be either {@link #TYPE_ERROR} or {@link #TYPE_WARNING}.
+     * This method is intended for inner (within internals) purposes only and 
+     * must not be used by API users.
+     * 
+     * @return <span class="javakeyword">true</span> if the type of this 
+     *          error message is changed, <span class="javakeyword">false</span> if 
+     *          the type passed is not recognized and thus ignored
+     */
+    public boolean setType(int type) {
+        if (type == TYPE_ERROR) {
+            myType = TYPE_ERROR;
+            return true;
+        } else if (type == TYPE_WARNING) {
+            myType = TYPE_WARNING;
+            return true;
+        }
+        return false;
     }
     
 }

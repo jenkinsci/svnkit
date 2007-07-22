@@ -161,7 +161,7 @@ public class FSReplayPathHandler implements ISVNCommitPathHandler {
                 CopyInfo info = (CopyInfo) myCopies.getLast();
                 if (info.myCopyFromPath != null) {
                     srcRoot = myOwner.createRevisionRoot(info.myCopyFromRevision);
-                    srcPath = SVNPathUtil.append(info.myCopyFromPath, SVNPathUtil.pathIsChild(info.myPath, path));
+                    srcPath = SVNPathUtil.append(info.myCopyFromPath, SVNPathUtil.getPathAsChild(info.myPath, path));
                 } else {
                     srcRoot = null;
                     srcPath = null;

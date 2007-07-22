@@ -29,6 +29,9 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
  * @author  TMate Software Ltd.
  */
 public class SVNDate extends Date {
+    
+    public static final SVNDate NULL = new SVNDate(0,0);
+    
     private static final DateFormat FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
 
     static {
@@ -40,8 +43,8 @@ public class SVNDate extends Date {
     private int myMicroSeconds;
     
     private SVNDate(long time, int micro) {
-        super(time + micro / 1000);
-        myMicroSeconds = micro > 0 ? Math.abs(micro) % 1000 : 1000 - (Math.abs(micro) % 1000);
+        super((1000*time + micro)/1000);
+        myMicroSeconds = micro >= 0 ? micro % 1000 : 1000 + (micro % 1000);
     }
     
     public String format() {

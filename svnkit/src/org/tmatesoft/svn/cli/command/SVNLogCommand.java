@@ -21,17 +21,24 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.TreeMap;
 
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.wc.SVNChangeList;
+import org.tmatesoft.svn.core.wc.SVNCompositePathList;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
+import org.tmatesoft.svn.core.wc.SVNPathList;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.xml.AbstractXMLHandler;
 import org.tmatesoft.svn.core.wc.xml.SVNXMLLogHandler;
@@ -56,6 +63,19 @@ public class SVNLogCommand extends SVNCommand implements ISVNLogEntryHandler {
     }
     
     public void run(PrintStream out, PrintStream err) throws SVNException {
+        String changelistName = (String) getCommandLine().getArgumentValue(SVNArgument.CHANGELIST); 
+        SVNChangeList changelist = null;
+        if (changelistName != null) {
+            changelist = SVNChangeList.create(changelistName, new File(".").getAbsoluteFile());
+            changelist.setOptions(getClientManager().getOptions());
+            changelist.setRepositoryPool(getClientManager().getRepositoryPool());
+            if (changelist.getPaths() == null || changelist.getPathsCount() == 0) {
+                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+                                    "no such changelist ''{0}''", changelistName); 
+                SVNErrorManager.error(error);
+            }
+        }
+        
         SVNRevision[] revRange = getStartEndRevisions();
         SVNRevision startRevision = revRange[0];
         SVNRevision endRevision = revRange[1];
@@ -89,23 +109,48 @@ public class SVNLogCommand extends SVNCommand implements ISVNLogEntryHandler {
             }                
         }
         if (getCommandLine().hasURLs()) {
+            if (getCommandLine().getURLCount() > 1) {
+                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Only relative paths can be specified after a URL");
+                SVNErrorManager.error(error);
+            }
             String url = getCommandLine().getURL(0);
             SVNRevision pegRevision = getCommandLine().getPegRevision(0);
-            Collection targets = new ArrayList();
+            Collection targets = new LinkedList();
             for(int i = 0; i < getCommandLine().getPathCount(); i++) {
                 targets.add(getCommandLine().getPathAt(i));
+            }
+            if (changelist != null) {
+                File[] paths = changelist.getPaths();
+                String thisPath = new File(".").getAbsolutePath().replace(File.separatorChar, '/');
+                for (int i = 0; i < changelist.getPathsCount(); i++) {
+                    String path = paths[i].getAbsolutePath().replace(File.separatorChar, '/');
+                    String relativePath = path.substring(thisPath.length());
+                    relativePath = relativePath.startsWith("/") ? relativePath.substring(1) : relativePath;
+                    targets.add(relativePath);
+                }
             }
             String[] paths = (String[]) targets.toArray(new String[targets.size()]);
             logClient.doLog(SVNURL.parseURIEncoded(url), paths, pegRevision, startRevision ,endRevision, stopOnCopy, myReportPaths, limit, handler);
         } else if (getCommandLine().hasPaths()) {
-            Collection targets = new ArrayList();
-            SVNRevision[] pegRevisions = new SVNRevision[getCommandLine().getPathCount()];
+            if (getCommandLine().getPathCount() > 1) {
+                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "When specifying working copy paths, only one target may be given");
+                SVNErrorManager.error(error);
+            }
+            Collection targets = new ArrayList(getCommandLine().getPathCount());
+            SVNRevision pegRevision = null;
             for(int i = 0; i < getCommandLine().getPathCount(); i++) {
                 targets.add(new File(getCommandLine().getPathAt(i)).getAbsoluteFile());
-                pegRevisions[i] = getCommandLine().getPathPegRevision(i);
+                if (i == 0) {
+                    pegRevision = getCommandLine().getPathPegRevision(i);
+                    if (changelist != null) {
+                        changelist.setPegRevision(pegRevision);
+                    }
+                }
             }
             File[] paths = (File[]) targets.toArray(new File[targets.size()]);
-            logClient.doLog(paths, pegRevisions[0], startRevision ,endRevision, stopOnCopy, myReportPaths, limit, handler);
+            SVNPathList pathList = SVNPathList.create(paths, pegRevision);
+            SVNCompositePathList combinedPathList = SVNCompositePathList.create(pathList, changelist, false);
+            logClient.doLog(combinedPathList, startRevision ,endRevision, stopOnCopy, myReportPaths, limit, handler);
         }
         if (getCommandLine().hasArgument(SVNArgument.XML)) {
             if (!getCommandLine().hasArgument(SVNArgument.INCREMENTAL)) {

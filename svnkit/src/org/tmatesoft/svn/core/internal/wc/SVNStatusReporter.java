@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.wc;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
@@ -112,5 +113,17 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
 
     public void abortReport() throws SVNException {
         myReporter.abortReport();
+    }
+
+    public void linkPath(SVNURL url, String path, String lockToken, long revison, SVNDepth depth, boolean startEmpty) throws SVNException {
+        String rootURL = SVNPathUtil.getCommonURLAncestor(url.toString(), myRepositoryLocation);
+        if (rootURL.length() < myRepositoryLocation.length()) {
+            myRepositoryLocation = rootURL;
+        }
+        myReporter.linkPath(url, path, lockToken, revison, depth, startEmpty);
+    }
+
+    public void setPath(String path, String lockToken, long revision, SVNDepth depth, boolean startEmpty) throws SVNException {
+        myReporter.setPath(path, lockToken, revision, depth, startEmpty);
     }
 }

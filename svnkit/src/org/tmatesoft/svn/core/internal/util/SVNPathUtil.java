@@ -200,7 +200,7 @@ public class SVNPathUtil {
         for (int i = 0; i < path.length(); i++) {
             char ch = path.charAt(i);
             if (SVNEncodingUtil.isASCIIControlChar(ch)) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_PATH_SYNTAX, "Invalid control character ''{0}'' in path ''{1}''", new String[] {"''0x" + SVNFormatUtil.getHexNumberFromByte((byte)ch) + "''", path});
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_PATH_SYNTAX, "Invalid control character ''{0}'' in path ''{1}''", new String[] {"0x" + SVNFormatUtil.getHexNumberFromByte((byte)ch), path});
                 SVNErrorManager.error(err);
             }
         }
@@ -477,12 +477,30 @@ public class SVNPathUtil {
         }
         
         if (ancestorPath.startsWith(parentPath)) {
-            return parentPath.length() == ancestorPath.length() || parentPath.endsWith("/") || ancestorPath.charAt(parentPath.length()) == '/';
+            if (parentPath.length() != ancestorPath.length() && !parentPath.endsWith("/") &&
+                ancestorPath.charAt(parentPath.length()) != '/') {
+                if (parentPath.startsWith("file://") && ancestorPath.startsWith("file://")) {
+                    //maybe encoded back slashes (UNC path)?
+                    String encodedSlash = SVNEncodingUtil.uriEncode("\\");
+                    return parentPath.endsWith(encodedSlash) || 
+                           ancestorPath.substring(parentPath.length()).startsWith(encodedSlash);
+                }
+                return false;
+            }
+            return true; 
         }
+        
         return false;
     }
 
-    public static String pathIsChild(String path, String pathChild){
+    /**
+     * Former pathIsChild. 
+     * 
+     * @param path
+     * @param pathChild
+     * @return
+     */
+    public static String getPathAsChild(String path, String pathChild){
     	if(path == null || pathChild == null){
     		return null;
     	}

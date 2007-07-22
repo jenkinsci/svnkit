@@ -18,6 +18,7 @@ import java.io.PrintStream;
 
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -34,6 +35,18 @@ public class SVNExportCommand extends SVNCommand {
     }
 
     public void run(final PrintStream out, final PrintStream err) throws SVNException {
+        SVNDepth depth = SVNDepth.UNKNOWN;
+        if (getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE)) {
+            depth = SVNDepth.fromRecurse(false);
+        }
+        String depthStr = (String) getCommandLine().getArgumentValue(SVNArgument.DEPTH);
+        if (depthStr != null) {
+            depth = SVNDepth.fromString(depthStr);
+        }
+        if (depth == SVNDepth.UNKNOWN) {
+            depth = SVNDepth.INFINITY;
+        }
+        
         String path = getCommandLine().getPathAt(0);
         String url = null;
         if (getCommandLine().hasURLs()) {
@@ -54,13 +67,13 @@ public class SVNExportCommand extends SVNCommand {
                 revision = SVNRevision.HEAD;
             }
             updater.doExport(SVNURL.parseURIEncoded(url), new File(path).getAbsoluteFile(), revision, revision, eol, 
-                    getCommandLine().hasArgument(SVNArgument.FORCE), !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
+                    getCommandLine().hasArgument(SVNArgument.FORCE), depth);
         } else if (srcPath != null) {
             if (revision == SVNRevision.UNDEFINED) {
                 revision = SVNRevision.WORKING;
             }
             updater.doExport(new File(srcPath).getAbsoluteFile(), new File(path).getAbsoluteFile(), SVNRevision.UNDEFINED, revision, eol, 
-                    getCommandLine().hasArgument(SVNArgument.FORCE), !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
+                    getCommandLine().hasArgument(SVNArgument.FORCE), depth);
         }
     }
 }

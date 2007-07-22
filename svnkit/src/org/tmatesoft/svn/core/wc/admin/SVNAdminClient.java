@@ -892,9 +892,9 @@ public class SVNAdminClient extends SVNBasicClient {
                         SVNErrorManager.error(err);
                     }
                     
-                    byte buf[] = new byte[SVNAdminHelper.STREAM_CHUNK_SIZE];
+                    byte buf[] = new byte[SVNFileUtil.STREAM_CHUNK_SIZE];
                     while (remaining > 0) {
-                        int numToRead = remaining >= SVNAdminHelper.STREAM_CHUNK_SIZE ? SVNAdminHelper.STREAM_CHUNK_SIZE : remaining;
+                        int numToRead = remaining >= SVNFileUtil.STREAM_CHUNK_SIZE ? SVNFileUtil.STREAM_CHUNK_SIZE : remaining;
                         int numRead = dumpStream.read(buf, 0, numToRead);
                         
                         remaining -= numRead;

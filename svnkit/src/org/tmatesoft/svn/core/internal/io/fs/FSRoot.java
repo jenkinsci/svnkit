@@ -259,7 +259,7 @@ public abstract class FSRoot {
                     if (change.getPath().equals(hashKeyPath)) {
                         continue;
                     }
-                    if (SVNPathUtil.pathIsChild(change.getPath(), hashKeyPath) != null) {
+                    if (SVNPathUtil.getPathAsChild(change.getPath(), hashKeyPath) != null) {
                         curIter.remove();
                     }
                 }

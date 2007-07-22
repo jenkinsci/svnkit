@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaAlgorithm;
 import org.tmatesoft.svn.core.internal.delta.SVNVDeltaAlgorithm;
 import org.tmatesoft.svn.core.internal.delta.SVNXDeltaAlgorithm;
+import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
@@ -150,6 +151,8 @@ public class SVNDeltaGenerator {
             int sourceLength;
             try {
                 targetLength = target.read(myTargetBuffer, 0, myTargetBuffer.length);
+            } catch (IOExceptionWrapper ioew) {
+                throw ioew.getOriginalException();
             } catch (IOException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
                 SVNErrorManager.error(err, e);
@@ -165,6 +168,8 @@ public class SVNDeltaGenerator {
             } 
             try {
                 sourceLength = source.read(mySourceBuffer, 0, mySourceBuffer.length);
+            } catch (IOExceptionWrapper ioew) {
+                throw ioew.getOriginalException();
             } catch (IOException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
                 SVNErrorManager.error(err, e);

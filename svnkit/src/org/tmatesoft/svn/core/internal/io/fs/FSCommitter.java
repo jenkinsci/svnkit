@@ -34,6 +34,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNMergeInfoManager;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 
 
@@ -95,6 +96,13 @@ public class FSCommitter {
             return;
         }
 
+        if (propName.equals(SVNProperty.MERGE_INFO)) {
+            String canonicalPath = SVNPathUtil.canonicalizeAbsPath(path);
+            myTxnRoot.setTxnMergeInfo(canonicalPath, propValue);
+            myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNProperty.TXN_CONTAINS_MERGEINFO, 
+                                          SVNProperty.toString(true));
+        }
+        
         if (propValue == null) {
             properties.remove(propName);
         } else {
@@ -404,6 +412,7 @@ public class FSCommitter {
         }
 
         Map txnProps = myFSFS.getTransactionProperties(myTxn.getTxnId());
+        Map txnMergeInfo = null;
         if (txnProps != null && !txnProps.isEmpty()) {
             if (txnProps.get(SVNProperty.TXN_CHECK_OUT_OF_DATENESS) != null) {
                 myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNProperty.TXN_CHECK_OUT_OF_DATENESS, null);
@@ -411,8 +420,12 @@ public class FSCommitter {
             if (txnProps.get(SVNProperty.TXN_CHECK_LOCKS) != null) {
                 myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNProperty.TXN_CHECK_LOCKS, null);
             }
+            if (txnProps.get(SVNProperty.TXN_CONTAINS_MERGEINFO) != null) {
+                txnMergeInfo = myFSFS.getTransactionMergeInfo(myTxn.getTxnId());
+                myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNProperty.TXN_CONTAINS_MERGEINFO, null);
+            }
         }
-
+        
         File dstRevFile = myFSFS.getNewRevisionFile(newRevision);
         SVNFileUtil.rename(revisionPrototypeFile, dstRevFile);
 
@@ -423,6 +436,9 @@ public class FSCommitter {
         File dstRevPropsFile = myFSFS.getNewRevisionPropertiesFile(newRevision);
         SVNFileUtil.rename(txnPropsFile, dstRevPropsFile);
 
+        SVNMergeInfoManager mergeInfoManager = SVNMergeInfoManager.createMergeInfoManager(null);
+        mergeInfoManager.updateIndex(myFSFS.getDBRoot(), newRevision, txnMergeInfo);
+        
         try {
             myTxnRoot.writeFinalCurrentFile(newRevision, startNodeId, startCopyId);
         } catch (IOException ioe) {
@@ -552,7 +568,7 @@ public class FSCommitter {
             String changedPath = (String) changedPaths[i];
             boolean recurse = true;
 
-            if (lastRecursedPath != null && SVNPathUtil.pathIsChild(lastRecursedPath, changedPath) != null) {
+            if (lastRecursedPath != null && SVNPathUtil.getPathAsChild(lastRecursedPath, changedPath) != null) {
                 continue;
             }
 

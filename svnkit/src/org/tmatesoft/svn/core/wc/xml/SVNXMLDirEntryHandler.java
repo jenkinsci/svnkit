@@ -119,6 +119,11 @@ public class SVNXMLDirEntryHandler extends AbstractXMLHandler implements ISVNDir
     }
     
     private void sendToHandler(SVNDirEntry entry) throws SAXException {
+        if ("".equals(entry.getRelativePath())) {
+            if (entry.getKind() == SVNNodeKind.DIR) {
+                return;
+            }
+        }
         openTag(ENTRY_TAG);
         addTag(NAME_TAG, entry.getRelativePath());
         if (entry.getKind() == SVNNodeKind.FILE) {

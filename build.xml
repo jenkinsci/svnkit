@@ -30,9 +30,11 @@
         <mkdir dir="svnkit/bin" />
         <mkdir dir="contrib/javahl/bin" />
         <mkdir dir="contrib/sequence/bin" />
+        <mkdir dir="contrib/sqlite/bin" />
 
         <path id="library.classpath">
             <pathelement location="contrib/ganymed/ganymed.jar" />
+            <pathelement location="contrib/sqlite/sqlitejdbc.jar" />
             <pathelement path="contrib/javahl/bin" />
             <pathelement path="contrib/sequence/bin" />
         </path>
@@ -43,6 +45,9 @@
             <exclude name="org/tigris/subversion/javahl/tests/**" />
         </javac>
         <javac debug="true" destdir="contrib/sequence/bin" srcdir="contrib/sequence/src" />
+        <javac debug="true" destdir="contrib/sqlite/bin" 
+        	                srcdir="contrib/sqlite/src" 
+        	                classpathref="library.classpath" />
         <javac debug="true"
                destdir="svnkit/bin"
                srcdir="svnkit/src"
@@ -56,8 +61,10 @@
 	<target name="compile-library-eclipse" depends="init-environment" if="eclipse.present"> 
         <path id="library-eclipse.classpath">
             <pathelement location="contrib/ganymed/ganymed.jar" />
+            <pathelement location="contrib/sqlite/sqlitejdbc.jar" />
             <pathelement path="contrib/javahl/bin" />
             <pathelement path="contrib/sequence/bin" />
+            <pathelement path="contrib/sqlite/bin" />
         	<fileset dir="${eclipse.home}/plugins">
     	        <include name="**/*.jar"/>
 	        </fileset>
@@ -88,6 +95,7 @@
         <path id="eclipse.classpath">
             <pathelement path="build/lib/svnkit.jar" />
             <pathelement path="build/lib/ganymed.jar" />
+            <pathelement path="build/lib/sqlitejdbc.jar" />
         	<fileset dir="${eclipse.home}/plugins">
     	        <include name="**/*.jar"/>
 	        </fileset>
@@ -107,9 +115,11 @@
         <mkdir dir="svnkit-test/bin" />
         <path id="tests.classpath">
             <pathelement location="contrib/ganymed/ganymed.jar" />
+            <pathelement location="contrib/sqlite/sqlitejdbc.jar" />
             <pathelement location="contrib/junit/junit.jar" />
             <pathelement path="contrib/javahl/bin" />
             <pathelement path="contrib/sequence/bin" />
+            <pathelement path="contrib/sqlite/bin" />
             <pathelement path="contrib/sequence/bin-test" />
             <pathelement path="svnkit/bin" />
         </path>
@@ -153,6 +163,10 @@
                 <include name="SEQUENCE-LICENSE" />
         	</fileset>
             <fileset dir="contrib/sequence/bin" />
+          	<fileset dir="contrib/sqlite">
+          		<include name="SQLITEJDBC-LICENSE" />
+           	</fileset>
+        	<fileset dir="contrib/sqlite/bin" />
             <fileset dir="svnkit/src">
                 <include name="org/tmatesoft/svn/core/internal/wc/config/**" />
                 <include name="org/tmatesoft/svn/core/io/repository/**" />
@@ -176,7 +190,8 @@
             </fileset>
         </jar>
         <copy file="contrib/ganymed/ganymed.jar" todir="build/lib" />
-        <copy file="svnkit/native/jsvncrypt.dll" todir="build/lib" />
+        <copy file="contrib/sqlite/sqlitejdbc.jar" todir="build/lib" />
+    	<copy file="svnkit/native/jsvncrypt.dll" todir="build/lib" />
     	<!-- copy licences and changelog -->
         <copy todir="build/lib" flatten="true">
             <fileset dir=".">
@@ -186,6 +201,7 @@
                 <include name="contrib/javahl/JAVAHL-LICENSE" />
                 <include name="contrib/sequence/SEQUENCE-LICENSE" />
                 <include name="contrib/ganymed/GANYMED-LICENSE" />
+                <include name="contrib/sqlite/SQLITEJDBC-LICENSE" />
             </fileset>
         </copy>
     </target>
@@ -233,6 +249,10 @@
             <fileset dir="contrib/sequence" >
                 <include name="SEQUENCE-LICENSE" />
             </fileset>
+            <fileset dir="contrib/sqlite/src" />
+            <fileset dir="contrib/sqlite" >
+                <include name="SQLITEJDBC-LICENSE" />
+            </fileset>
         </zip>
     </target>
 
@@ -261,6 +281,7 @@
                 <include name="GANYMED-LICENSE" />
                 <include name="SEQUENCE-LICENSE" />
                 <include name="JAVAHL-LICENSE" />
+                <include name="SQLITEJDBC-LICENSE" />
             </fileset>
             <fileset dir="svnkit-eclipse/org.tmatesoft.svnkit">
                 <include name="plugin.xml" />
@@ -333,6 +354,7 @@
                 <include name="contrib/javahl/bin/**" />
                 <include name="contrib/sequence/bin/**" />
                 <include name="contrib/sequence/bin-test/**" />
+                <include name="contrib/sqlite/bin/**" />
                 <include name="svnkit/bin/**" />
                 <include name="svnkit-eclipse/bin/**" />
                 <include name="svnkit-test/bin/**" />
@@ -394,6 +416,9 @@
             <fileset dir="contrib/sequence" >
                 <include name="SEQUENCE-LICENSE" />
             </fileset>
+            <fileset dir="contrib/sqlite" >
+                <include name="SQLITEJDBC-LICENSE" />
+            </fileset>
 		</jar>
 
 		<jar destfile="build/maven/svnkit-${build.number}-sources.jar">
@@ -420,7 +445,11 @@
 				<exclude name=".svn"/>
 				<exclude name=".svn/**"/>
 			</fileset>
-            <fileset dir="${basedir}" >
+    		<fileset dir="contrib/sqlite/src">
+    			<exclude name=".svn"/>
+    			<exclude name=".svn/**"/>
+    		</fileset>
+			<fileset dir="${basedir}" >
                 <include name="COPYING" />
             </fileset>
             <fileset dir="build/lib" >
@@ -431,6 +460,9 @@
             </fileset>
             <fileset dir="contrib/sequence" >
                 <include name="SEQUENCE-LICENSE" />
+            </fileset>
+            <fileset dir="contrib/sqlite" >
+                <include name="SQLITEJDBC-LICENSE" />
             </fileset>
 		</jar>
 		
@@ -583,7 +615,6 @@
     			<include name="**/*"/>
     	    </fileset>
         </delete>
-
     	<java classpathref="python.classpath"
               dir="${python.test.home}"
               fork="true"

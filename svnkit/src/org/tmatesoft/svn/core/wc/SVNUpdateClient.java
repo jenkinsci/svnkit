@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -138,13 +139,55 @@ public class SVNUpdateClient extends SVNBasicClient {
      * @throws SVNException 
      */
     public long doUpdate(File file, SVNRevision revision, boolean recursive) throws SVNException {
+        return doUpdate(file, revision, recursive, false);
+    }
+    
+    public long doUpdate(File file, SVNRevision revision, boolean recursive, boolean force) throws SVNException {
+        return doUpdate(file, revision, SVNDepth.fromRecurse(recursive), force);
+    }    
+    
+    public void doUpdate(ISVNPathList pathList, SVNRevision revision, SVNDepth depth, boolean force) throws SVNException {
+        if (pathList == null) {
+            return;
+        }
+        
+        for (Iterator paths = pathList.getPathsIterator(); paths.hasNext();) {
+            checkCancelled();
+            File path = (File) paths.next();
+            try {
+                doUpdate(path, revision, depth, force);
+            } catch (SVNException svne) {
+                if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
+                    SVNEvent skipEvent = SVNEventFactory.createSkipEvent(path.getParentFile(), 
+                                                                         path, 
+                                                                         SVNEventAction.SKIP, 
+                                                                         SVNEventAction.UPDATE_COMPLETED, 
+                                                                         null);
+                    dispatchEvent(skipEvent);
+                } else {
+                    dispatchEvent(new SVNEvent(svne.getErrorMessage()));
+                }
+                continue;
+            }
+        }
+    }
+    
+    /* TODO(sd): "In the SVNDepth.DEPTH_IMMEDIATES case, shouldn't we update
+     * the presence/absence of subdirs, even though we don't update
+     * inside the subdirs themselves?"
+     */
+    public long doUpdate(File file, SVNRevision revision, SVNDepth depth, boolean force) throws SVNException {
+        depth = depth == null ? SVNDepth.UNKNOWN : depth;
         file = new File(SVNPathUtil.validateFilePath(file.getAbsolutePath()));
         SVNWCAccess wcAccess = createWCAccess();
         SVNAdminAreaInfo adminInfo = null;
+        int admOpenDepth = SVNWCAccess.INFINITE_DEPTH;
+        if (depth == SVNDepth.EMPTY || depth == SVNDepth.FILES) {
+            admOpenDepth = 0;
+        }
         try {
-            adminInfo = wcAccess.openAnchor(file, true, recursive ? SVNWCAccess.INFINITE_DEPTH : 0);
+            adminInfo = wcAccess.openAnchor(file, true, admOpenDepth);
             SVNAdminArea anchorArea = adminInfo.getAnchor();
-            final SVNReporter reporter = new SVNReporter(adminInfo, file, true, recursive, getDebugLog());
 
             SVNEntry entry = anchorArea.getEntry(anchorArea.getThisDirName(), false);
             SVNURL url = entry.getSVNURL();
@@ -152,17 +195,21 @@ public class SVNUpdateClient extends SVNBasicClient {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "Entry ''{0}'' has no URL", anchorArea.getRoot());
                 SVNErrorManager.error(err);
             }
-            SVNUpdateEditor editor = new SVNUpdateEditor(adminInfo, null, recursive, isLeaveConflictsUnresolved());
+  
+            final SVNReporter reporter = new SVNReporter(adminInfo, file, true, depth, getDebugLog());
+            String[] preservedExts = getOptions().getPreservedConflictFileExtensions();
+            SVNUpdateEditor editor = new SVNUpdateEditor(adminInfo, null, isLeaveConflictsUnresolved(), force, depth, preservedExts);
             SVNRepository repos = createRepository(url, true);
             
             String target = "".equals(adminInfo.getTargetName()) ? null : adminInfo.getTargetName();
             long revNumber = getRevisionNumber(revision, repos, file);
             SVNURL reposRoot = repos.getRepositoryRoot(true);
             wcAccess.setRepositoryRoot(file, reposRoot);
-            repos.update(revNumber, target, recursive, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
+            repos.update(revNumber, target, depth, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
 
             if (editor.getTargetRevision() >= 0) {
-                if (recursive && !isIgnoreExternals()) {
+                if ((depth == SVNDepth.INFINITY || depth == SVNDepth.UNKNOWN) 
+                     && !isIgnoreExternals()) {
                     handleExternals(adminInfo);
                 }
                 dispatchEvent(SVNEventFactory.createUpdateCompletedEvent(adminInfo, editor.getTargetRevision()));
@@ -223,16 +270,23 @@ public class SVNUpdateClient extends SVNBasicClient {
      * @throws SVNException
      */
     public long doSwitch(File file, SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive) throws SVNException {
+        return doSwitch(file, url, pegRevision, revision, recursive, false);
+    }
+    
+    public long doSwitch(File file, SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive, boolean force) throws SVNException {
+        return doSwitch(file, url, pegRevision, revision, SVNDepth.fromRecurse(recursive), force);
+    }    
+    
+    /* TODO(sd): "But, I think the svn_depth_immediates behavior is not
+     * actually implemented yet."
+     */
+    public long doSwitch(File file, SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, boolean force) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess();
         try {
             SVNAdminAreaInfo info = wcAccess.openAnchor(file, true, SVNWCAccess.INFINITE_DEPTH);
-            final SVNReporter reporter = new SVNReporter(info, file, true, recursive, getDebugLog());
+            final SVNReporter reporter = new SVNReporter(info, file, true, depth, getDebugLog());
             SVNAdminArea anchorArea = info.getAnchor();
-            SVNEntry entry = anchorArea.getEntry(anchorArea.getThisDirName(), false);
-            if (entry == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", anchorArea.getRoot());
-                SVNErrorManager.error(err);
-            }
+            SVNEntry entry = anchorArea.getVersionedEntry(anchorArea.getThisDirName(), false);
             SVNURL sourceURL = entry.getSVNURL();
             if (sourceURL == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "Directory ''{0}'' has no URL", anchorArea.getRoot());
@@ -245,14 +299,48 @@ public class SVNUpdateClient extends SVNBasicClient {
                 url = locs[0].getURL();
             }
 
-            SVNUpdateEditor editor = new SVNUpdateEditor(info, url.toString(), recursive, isLeaveConflictsUnresolved());
-            String target = "".equals(info.getTargetName()) ? null : info.getTargetName();
-            repository.update(url, revNumber, target, recursive, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
+            SVNURL sourceRoot = repository.getRepositoryRoot(true);
+            if (!SVNPathUtil.isAncestor(sourceRoot.toString(), url.toString())) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_SWITCH, "''{0}''\nis not the same repository as\n''{1}''",
+                        new Object[] {url.toString(), sourceRoot.toString()});
+                SVNErrorManager.error(err);
+            }
+            repository = createRepository(sourceRoot, true);
+            SVNNodeKind targetKind = repository.checkPath(SVNPathUtil.getPathAsChild(sourceRoot.toDecodedString(), url.toDecodedString()), revNumber);
+            if (targetKind == SVNNodeKind.NONE) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_SWITCH, "Destination does not exist: ''{0}''", url.toString());
+                SVNErrorManager.error(err);
+            }
+            repository = createRepository(sourceURL, true);
 
-            if (editor.getTargetRevision() >= 0 && recursive && !isIgnoreExternals()) {
+            String[] preservedExts = getOptions().getPreservedConflictFileExtensions();
+            SVNUpdateEditor editor = new SVNUpdateEditor(info, url.toString(), isLeaveConflictsUnresolved(), force, depth, preservedExts);
+            String target = "".equals(info.getTargetName()) ? null : info.getTargetName();
+            repository.update(url, revNumber, target, depth, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
+
+            if (editor.getTargetRevision() >= 0 && depth == SVNDepth.INFINITY && !isIgnoreExternals()) {
                 handleExternals(info);
                 dispatchEvent(SVNEventFactory.createUpdateCompletedEvent(info, editor.getTargetRevision()));
             }
+            
+            SVNAdminArea pathAdminArea = wcAccess.probeRetrieve(file);
+            Map childrenMergeInfo = null;
+            try {
+                childrenMergeInfo = SVNPropertiesManager.getWorkingCopyPropertyValues(pathAdminArea, 
+                                                                                      file.equals(pathAdminArea.getRoot()) ? 
+                                                                                      pathAdminArea.getThisDirName() :
+                                                                                      file.getName(), 
+                                                                                      SVNProperty.MERGE_INFO, 
+                                                                                      true, false);
+            } catch (SVNException svne) {
+                if (svne.getErrorMessage().getErrorCode() != SVNErrorCode.UNVERSIONED_RESOURCE) {
+                    throw svne;
+                }
+                return editor.getTargetRevision();
+            }
+            
+            elideMergeInfoForTree(wcAccess, childrenMergeInfo);
+            
             return editor.getTargetRevision();
         } finally {
             wcAccess.close();
@@ -288,6 +376,14 @@ public class SVNUpdateClient extends SVNBasicClient {
      * 						against which the directory is controlled)  
      */
     public long doCheckout(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, boolean recursive) throws SVNException {
+        return doCheckout(url, dstPath, pegRevision, revision, recursive, false);
+    }
+
+    public long doCheckout(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, boolean recursive, boolean force) throws SVNException {
+        return doCheckout(url, dstPath, pegRevision, revision, SVNDepth.fromRecurse(recursive), force);
+    }
+    
+    public long doCheckout(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, boolean force) throws SVNException {
         if (dstPath == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_FILENAME, "Checkout destination path can not be NULL");
             SVNErrorManager.error(err);
@@ -317,12 +413,14 @@ public class SVNUpdateClient extends SVNBasicClient {
         SVNURL repositoryRoot = repos.getRepositoryRoot(true);
 
         long result = -1;
+        depth = depth == null ? SVNDepth.UNKNOWN : depth;
         try {
             SVNWCAccess wcAccess = createWCAccess();
             SVNFileType kind = SVNFileType.getType(dstPath);
             if (kind == SVNFileType.NONE) {
-                SVNAdminAreaFactory.createVersionedDirectory(dstPath, url, repositoryRoot, uuid, revNumber);
-                result = doUpdate(dstPath, revision, recursive);
+                depth = depth == SVNDepth.UNKNOWN ? SVNDepth.INFINITY : depth;
+                SVNAdminAreaFactory.createVersionedDirectory(dstPath, url, repositoryRoot, uuid, revNumber, depth);
+                result = doUpdate(dstPath, revision, depth, force);
             } else if (kind == SVNFileType.DIRECTORY) {
                 int formatVersion = SVNAdminAreaFactory.checkWC(dstPath, true);
                 if (formatVersion != 0) {
@@ -330,7 +428,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                     SVNEntry rootEntry = adminArea.getEntry(adminArea.getThisDirName(), false);
                     wcAccess.closeAdminArea(dstPath);
                     if (rootEntry.getSVNURL() != null && url.equals(rootEntry.getSVNURL())) {
-                        result = doUpdate(dstPath, revision, recursive);
+                        result = doUpdate(dstPath, revision, depth, force);
                     } else {
                         String message = "''{0}'' is already a working copy for a different URL";
                         if (rootEntry.isIncomplete()) {
@@ -340,8 +438,9 @@ public class SVNUpdateClient extends SVNBasicClient {
                         SVNErrorManager.error(err);
                     }
                 } else {
-                    SVNAdminAreaFactory.createVersionedDirectory(dstPath, url, repositoryRoot, uuid, revNumber);
-                    result = doUpdate(dstPath, revision, recursive);
+                    depth = depth == SVNDepth.UNKNOWN ? SVNDepth.INFINITY : depth;
+                    SVNAdminAreaFactory.createVersionedDirectory(dstPath, url, repositoryRoot, uuid, revNumber, depth);
+                    result = doUpdate(dstPath, revision, depth, force);
                 }
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NODE_KIND_CHANGE, "''{0}'' already exists and is not a directory", dstPath);
@@ -392,9 +491,13 @@ public class SVNUpdateClient extends SVNBasicClient {
      * @throws SVNException
      */
     public long doExport(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, String eolStyle, boolean force, boolean recursive) throws SVNException {
+        return doExport(url, dstPath, pegRevision, revision, eolStyle, force, SVNDepth.fromRecurse(recursive));
+    }
+    
+    public long doExport(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, String eolStyle, boolean force, SVNDepth depth) throws SVNException {
         SVNRepository repository = createRepository(url, null, pegRevision, revision);
         long revisionNumber = getRevisionNumber(revision, repository, null);
-        long exportedRevision = doRemoteExport(repository, revisionNumber, dstPath, eolStyle, force, recursive);
+        long exportedRevision = doRemoteExport(repository, revisionNumber, dstPath, eolStyle, force, depth);
         dispatchEvent(SVNEventFactory.createUpdateCompletedEvent((SVNAdminAreaInfo)null, exportedRevision));
         return exportedRevision;
     }
@@ -452,30 +555,36 @@ public class SVNUpdateClient extends SVNBasicClient {
      */
     public long doExport(File srcPath, final File dstPath, SVNRevision pegRevision, SVNRevision revision, String eolStyle,
             final boolean force, boolean recursive) throws SVNException {
+        return doExport(srcPath, dstPath, pegRevision, revision, eolStyle, force, SVNDepth.fromRecurse(recursive));
+    }
+    
+    public long doExport(File srcPath, final File dstPath, SVNRevision pegRevision, SVNRevision revision, String eolStyle,
+            final boolean force, SVNDepth depth) throws SVNException {
         long exportedRevision = -1;
         if (revision != SVNRevision.BASE && revision != SVNRevision.WORKING && revision != SVNRevision.COMMITTED && revision != SVNRevision.UNDEFINED) {
             SVNRepository repository = createRepository(null, srcPath, pegRevision, revision);
             long revisionNumber = getRevisionNumber(revision, repository, srcPath);
-            exportedRevision = doRemoteExport(repository, revisionNumber, dstPath, eolStyle, force, recursive); 
+            exportedRevision = doRemoteExport(repository, revisionNumber, dstPath, eolStyle, force, depth); 
         } else {
             if (revision == SVNRevision.UNDEFINED) {
                 revision = SVNRevision.WORKING;
             }
-            copyVersionedDir(srcPath, dstPath, revision, eolStyle, force, recursive);
+            copyVersionedDir(srcPath, dstPath, revision, eolStyle, force, depth);
         }
         dispatchEvent(SVNEventFactory.createUpdateCompletedEvent((SVNAdminAreaInfo)null, exportedRevision));
         return exportedRevision;
     }
     
-    private void copyVersionedDir(File from, File to, SVNRevision revision, String eolStyle, boolean force, boolean recursive) throws SVNException {
+    private void copyVersionedDir(File from, File to, SVNRevision revision, String eolStyle, boolean force, SVNDepth depth) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess();
         SVNAdminArea adminArea = wcAccess.probeOpen(from, false, 0);
-        SVNEntry entry = wcAccess.getEntry(from, false);
-        if (entry == null) {
+        
+        SVNEntry entry = null;
+        try {
+            entry = wcAccess.getVersionedEntry(from, false);
+        } catch (SVNException svne) {
             wcAccess.close();
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control or doesn''t exist", from,
-                    SVNErrorMessage.TYPE_WARNING);
-            SVNErrorManager.error(err);
+            throw svne;
         }
         
         if (revision == SVNRevision.WORKING && entry.isScheduledForDeletion()) {
@@ -501,10 +610,10 @@ public class SVNUpdateClient extends SVNBasicClient {
                 if (childEntry.isDirectory()) {
                     if (adminArea.getThisDirName().equals(childEntry.getName())) {
                         continue;
-                    } else if (recursive) {
+                    } else if (depth == SVNDepth.INFINITY) {
                         File childTo = new File(to, childEntry.getName());
                         File childFrom = new File(from, childEntry.getName());
-                        copyVersionedDir(childFrom, childTo, revision, eolStyle, force, recursive);
+                        copyVersionedDir(childFrom, childTo, revision, eolStyle, force, depth);
                     }
                 } else if (childEntry.isFile()) {
                     File childTo = new File(to, childEntry.getName());
@@ -582,13 +691,13 @@ public class SVNUpdateClient extends SVNBasicClient {
         }
     }
 
-    private long doRemoteExport(SVNRepository repository, final long revNumber, File dstPath, String eolStyle, boolean force, boolean recursive) throws SVNException {
+    private long doRemoteExport(SVNRepository repository, final long revNumber, File dstPath, String eolStyle, boolean force, SVNDepth depth) throws SVNException {
         SVNNodeKind dstKind = repository.checkPath("", revNumber);
         if (dstKind == SVNNodeKind.DIR) {
             SVNExportEditor editor = new SVNExportEditor(this, repository.getLocation().toString(), dstPath,  force, eolStyle, getOptions());
-            repository.update(revNumber, null, recursive, new ISVNReporterBaton() {
+            repository.update(revNumber, null, depth, new ISVNReporterBaton() {
                 public void report(ISVNReporter reporter) throws SVNException {
-                    reporter.setPath("", null, revNumber, true);
+                    reporter.setPath("", null, revNumber, SVNDepth.INFINITY, true);
                     reporter.finishReport();
                 }
             }, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
@@ -597,7 +706,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             if (fileType == SVNFileType.NONE) {
                 editor.openRoot(revNumber);
             }
-            if (!isIgnoreExternals() && recursive) {
+            if (!isIgnoreExternals() && depth == SVNDepth.INFINITY) {
                 Map externals = editor.getCollectedExternals();
                 for (Iterator files = externals.keySet().iterator(); files.hasNext();) {
                     File rootFile = (File) files.next();
@@ -616,7 +725,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                         dispatchEvent(SVNEventFactory.createUpdateExternalEvent((SVNAdminAreaInfo)null, relativePath));
                         try {
                             setEventPathPrefix(relativePath);
-                            doExport(srcURL, targetDir, srcRevision, srcRevision, eolStyle, force, recursive);
+                            doExport(srcURL, targetDir, srcRevision, srcRevision, eolStyle, force, depth);
                         } catch (SVNException e) {
                             if (e instanceof SVNCancelException) {
                                 throw e;
@@ -701,6 +810,9 @@ public class SVNUpdateClient extends SVNBasicClient {
      * 							a directory then the entire tree will be relocated, otherwise if 
      * 							<span class="javakeyword">false</span> - only <code>dst</code> itself
      * @throws SVNException
+     */
+    /* TODO(sd): "I don't see any reason to change this recurse parameter
+     * to a depth, but making a note to re-check this logic later."
      */
     public void doRelocate(File dst, SVNURL oldURL, SVNURL newURL, boolean recursive) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess();
@@ -896,7 +1008,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 if (external.getOldURL() == null) {
                     external.getFile().mkdirs();
                     dispatchEvent(SVNEventFactory.createUpdateExternalEvent(info, ""));
-                    doCheckout(external.getNewURL(), external.getFile(), revision, revision, true);
+                    doCheckout(external.getNewURL(), external.getFile(), revision, revision, SVNDepth.INFINITY, false);
                 } else if (external.getNewURL() == null) {
                     SVNWCAccess wcAccess = createWCAccess();
                     SVNAdminArea area = wcAccess.open(external.getFile(), true, SVNWCAccess.INFINITE_DEPTH);
@@ -939,7 +1051,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                         
                         if (entry != null && entry.getURL() != null) {
                             if (external.getNewURL().toString().equals(url)) {
-                                doUpdate(external.getFile(), revision, true);
+                                doUpdate(external.getFile(), revision, SVNDepth.UNKNOWN, true);
                                 continue;
                             } else if (entry.getRepositoryRoot() != null) {
                                 if (!SVNPathUtil.isAncestor(entry.getRepositoryRoot(), external.getNewURL().toString())) {
@@ -952,19 +1064,19 @@ public class SVNUpdateClient extends SVNBasicClient {
                                                 svne.getErrorMessage().getErrorCode() == SVNErrorCode.CLIENT_INVALID_RELOCATION) {
                                             deleteExternal(external);
                                             external.getFile().mkdirs();
-                                            doCheckout(external.getNewURL(), external.getFile(), revision, revision, true);
+                                            doCheckout(external.getNewURL(), external.getFile(), revision, revision, SVNDepth.INFINITY, false);
                                             continue;
                                         } 
                                         throw svne;
                                     }
                                 }
-                                doSwitch(external.getFile(), external.getNewURL(), revision, true);
+                                doSwitch(external.getFile(), external.getNewURL(), SVNRevision.UNDEFINED, revision, SVNDepth.INFINITY, false);
                                 continue;
                             }
                         }
                         deleteExternal(external);
                         external.getFile().mkdirs();
-                        doCheckout(external.getNewURL(), external.getFile(), revision, revision, true);
+                        doCheckout(external.getNewURL(), external.getFile(), revision, revision, SVNDepth.INFINITY, false);
                     }
                 }
             } catch (SVNException th) {

@@ -232,6 +232,10 @@ public class SVNErrorCode implements Serializable {
     public static final SVNErrorCode WC_INVALID_SCHEDULE = new SVNErrorCode(WC_CATEGORY, 23, "Invalid schedule");
     public static final SVNErrorCode WC_INVALID_RELOCATION = new SVNErrorCode(WC_CATEGORY, 24, "Invalid relocation");
     public static final SVNErrorCode WC_INVALID_SWITCH = new SVNErrorCode(WC_CATEGORY, 25, "Invalid switch");
+    /**
+     * @since SVN 1.5
+     */
+    public static final SVNErrorCode WC_MISMATCHED_CHANGELIST = new SVNErrorCode(WC_CATEGORY, 26, "Changelist doesn't match");
     
     public static final SVNErrorCode FS_GENERAL = new SVNErrorCode(FS_CATEGORY, 0, "General filesystem error");
     public static final SVNErrorCode FS_CLEANUP = new SVNErrorCode(FS_CATEGORY, 1, "Error closing filesystem");
@@ -276,7 +280,8 @@ public class SVNErrorCode implements Serializable {
     public static final SVNErrorCode FS_NO_SUCH_LOCK = new SVNErrorCode(FS_CATEGORY, 40, "Filesystem has no such lock");
     public static final SVNErrorCode FS_LOCK_EXPIRED = new SVNErrorCode(FS_CATEGORY, 41, "Lock has expired");
     public static final SVNErrorCode FS_OUT_OF_DATE = new SVNErrorCode(FS_CATEGORY, 42, "Item is out of date");
-    public static final SVNErrorCode FS_UNSUPPORTED_FORMAT = new SVNErrorCode(FS_CATEGORY, 43, "Unsupported FS format");
+    public static final SVNErrorCode FS_SQLITE_ERROR = new SVNErrorCode(FS_CATEGORY, 43, "SQLite error");
+    public static final SVNErrorCode FS_UNSUPPORTED_FORMAT = new SVNErrorCode(FS_CATEGORY, 44, "Unsupported FS format");
     
     public static final SVNErrorCode REPOS_LOCKED = new SVNErrorCode(REPOS_CATEGORY, 0, "The repository is locked, perhaps for db recovery");
     public static final SVNErrorCode REPOS_HOOK_FAILURE = new SVNErrorCode(REPOS_CATEGORY, 1, "A repository hook failed");
@@ -358,6 +363,11 @@ public class SVNErrorCode implements Serializable {
     public static final SVNErrorCode CLIENT_PROPERTY_NAME = new SVNErrorCode(CLIENT_CATEGORY, 11, "Bad property name");
     public static final SVNErrorCode CLIENT_UNRELATED_RESOURCES = new SVNErrorCode(CLIENT_CATEGORY, 12, "Two versioned resources are unrelated");
     public static final SVNErrorCode CLIENT_MISSING_LOCK_TOKEN = new SVNErrorCode(CLIENT_CATEGORY, 13, "Path has no lock token");
+    /**
+     * @since SVN 1.5
+     */
+    public static final SVNErrorCode CLIENT_MULTIPLE_SOURCES_DISALLOWED = new SVNErrorCode(CLIENT_CATEGORY, 14, "Operation does not support multiple sources");
+    public static final SVNErrorCode CLIENT_NO_VERSIONED_PARENT = new SVNErrorCode(CLIENT_CATEGORY, 15, "No versioned parent directories");
     
     public static final SVNErrorCode BASE = new SVNErrorCode(MISC_CATEGORY, 0, "A problem occurred; see later errors for details");
     public static final SVNErrorCode PLUGIN_LOAD_FAILURE = new SVNErrorCode(MISC_CATEGORY, 1, "Failure loading plugin");    
@@ -379,6 +389,10 @@ public class SVNErrorCode implements Serializable {
     public static final SVNErrorCode PROPERTY_NOT_FOUND = new SVNErrorCode(MISC_CATEGORY, 17, "Property not found");
     public static final SVNErrorCode NO_AUTH_FILE_PATH = new SVNErrorCode(MISC_CATEGORY, 18, "No auth file path available");
     public static final SVNErrorCode VERSION_MISMATCH = new SVNErrorCode(MISC_CATEGORY, 19, "Incompatible library version");
+    /**
+     * @since SVN 1.5
+     */
+    public static final SVNErrorCode MERGE_INFO_PARSE_ERROR = new SVNErrorCode(MISC_CATEGORY, 20, "Merge info parse error");
     
     public static final SVNErrorCode CL_ARG_PARSING_ERROR = new SVNErrorCode(CL_CATEGORY, 0, "Client error in parsing arguments");
     public static final SVNErrorCode CL_INSUFFICIENT_ARGS = new SVNErrorCode(CL_CATEGORY, 1, "Not enough args provided");

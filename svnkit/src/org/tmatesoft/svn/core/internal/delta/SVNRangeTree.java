@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.internal.delta;
 
+import org.tmatesoft.svn.util.SVNDebugLog;
+
 
 
 /**
@@ -191,7 +193,7 @@ public class SVNRangeTree {
                 }
             }
         }
-        SVNDeltaCombiner.assertCondition(false, "assert #6");
+        SVNDebugLog.assertCondition(false, "assert #6");
         return tail;
     }
 
@@ -260,7 +262,7 @@ public class SVNRangeTree {
             if (root.left.right == null) {
                 SVNRangeTreeNode node = root.left;
                 root.left = node.right;
-                SVNDeltaCombiner.assertCondition(root.left == null, "not null I");
+                SVNDebugLog.assertCondition(root.left == null, "not null I");
                 node.right = root;
                 root = node;
             } else {
@@ -282,7 +284,7 @@ public class SVNRangeTree {
             }
         }
         myRoot = root;
-        SVNDeltaCombiner.assertCondition((offset >= root.offset) || (root.left == null && root.prev == null), "assert #4");
+        SVNDebugLog.assertCondition((offset >= root.offset) || (root.left == null && root.prev == null), "assert #4");
     }
     
     public void insert(int offset, int limit, int targetOffset) {
@@ -320,7 +322,7 @@ public class SVNRangeTree {
                 cleanTree(limit);
             }   
         } else if (offset < myRoot.offset) {
-            SVNDeltaCombiner.assertCondition(myRoot.left == null, "assert #5");
+            SVNDebugLog.assertCondition(myRoot.left == null, "assert #5");
             SVNRangeTreeNode node = allocateTreeNode(offset, limit, targetOffset);
             
             node.left = node.prev = null;

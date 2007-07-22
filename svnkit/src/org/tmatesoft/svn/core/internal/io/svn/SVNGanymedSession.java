@@ -439,7 +439,7 @@ public class SVNGanymedSession {
                             myTimer.cancel();
                         }
                         // start timeout count down (10 seconds).
-                        myTimer = new Timer(false);
+                        myTimer = new Timer(true);
                         myTimer.schedule(new TimerTask() {
                             public void run() {
                                 runTimeout();

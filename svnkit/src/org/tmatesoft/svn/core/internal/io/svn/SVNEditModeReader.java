@@ -93,15 +93,13 @@ public class SVNEditModeReader {
         } else if ("close-dir".equals(commandName)) {
             myEditor.closeDir();
         } else if ("add-file".equals(commandName)) {
-            myEditor.addFile((String) items[0], (String) items[3], SVNReader
-                    .getLong(items, 4));
+            myEditor.addFile((String) items[0], (String) items[3], SVNReader.getLong(items, 4));
             myFilePath = (String) items[0];
         } else if ("open-file".equals(commandName)) {
             myEditor.openFile((String) items[0], SVNReader.getLong(items, 3));
             myFilePath = (String) items[0];
         } else if ("change-file-prop".equals(commandName)) {
-            myEditor.changeFileProperty(myFilePath, (String) items[1],
-                    (String) items[2]);
+            myEditor.changeFileProperty(myFilePath, (String) items[1], (String) items[2]);
         } else if ("close-file".equals(commandName)) {
             myEditor.closeFile(myFilePath, (String) items[1]);
         } else if ("apply-textdelta".equals(commandName)) {

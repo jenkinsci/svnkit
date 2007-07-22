@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
@@ -29,6 +30,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.javahl.SVNClientImpl;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
+import org.tmatesoft.svn.core.wc.SVNDiffStatus;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNInfo;
@@ -112,6 +114,11 @@ public class JavaHLObjectFactory {
         ACTION_CONVERSION_MAP.put(SVNEventAction.UPDATE_EXTERNAL, new Integer(NotifyAction.update_external));
         ACTION_CONVERSION_MAP.put(SVNEventAction.UPDATE_UPDATE, new Integer(NotifyAction.update_update));
         ACTION_CONVERSION_MAP.put(SVNEventAction.UPDATE_NONE, new Integer(NotifyAction.update_update));
+        ACTION_CONVERSION_MAP.put(SVNEventAction.UPDATE_EXISTS, new Integer(NotifyAction.exists));
+        ACTION_CONVERSION_MAP.put(SVNEventAction.CHANGELIST_SET, new Integer(NotifyAction.changelist_set));
+        ACTION_CONVERSION_MAP.put(SVNEventAction.CHANGELIST_CLEAR, new Integer(NotifyAction.changelist_clear));
+        ACTION_CONVERSION_MAP.put(SVNEventAction.CHANGELIST_FAILED, new Integer(NotifyAction.changelist_failed));
+        
         // undocumented thing.
         ACTION_CONVERSION_MAP.put(SVNEventAction.COMMIT_COMPLETED, new Integer(-11));
     }
@@ -188,7 +195,7 @@ public class JavaHLObjectFactory {
                 repositoryTextStatus, repositoryPropStatus, locked, copied, conflictOld, conflictNew, conflictWorking, urlCopiedFrom, revisionCopiedFrom,
                 switched, lockToken, lockOwner, lockComment, lockCreationDate, reposLock,
                 /* remote: rev, date, kind, author */
-                reposRev, reposDate, reposKind, reposAuthor);
+                reposRev, reposDate, reposKind, reposAuthor, status.getChangelistName());
         return st;
     }
 
@@ -205,6 +212,38 @@ public class JavaHLObjectFactory {
         return (SVNRevision)REVISION_KIND_CONVERSION_MAP.get(new Integer(r.getKind()));
     }
 
+    public static SVNDepth getSVNDepth(int depth) {
+        switch (depth) {
+            case Depth.empty:
+                return SVNDepth.EMPTY;
+            case Depth.exclude:
+                return SVNDepth.EXCLUDE;
+            case Depth.files:
+                return SVNDepth.FILES;
+            case Depth.immediates:
+                return SVNDepth.IMMEDIATES;
+            case Depth.infinity:
+                return SVNDepth.INFINITY;
+            default:
+                return SVNDepth.UNKNOWN;
+        }
+    }
+    
+    public static DiffSummary createDiffSummary(SVNDiffStatus status) {
+        int diffStatus = -1;
+        if (status.getModificationType() == SVNStatusType.STATUS_NORMAL || 
+                status.getModificationType() == SVNStatusType.STATUS_NONE) {
+            diffStatus = 0;
+        } else if (status.getModificationType() == SVNStatusType.STATUS_ADDED) {
+            diffStatus = 1;
+        } else if (status.getModificationType() == SVNStatusType.STATUS_MODIFIED) {
+            diffStatus = 2;
+        } else if (status.getModificationType() == SVNStatusType.STATUS_DELETED) {
+            diffStatus = 3;
+        }
+        return new DiffSummary(status.getPath(), diffStatus, status.isPropertiesModified(), getNodeKind(status.getKind()));
+    }
+    
     public static int getNodeKind(SVNNodeKind svnKind){
         if(svnKind == SVNNodeKind.DIR ){
             return NodeKind.dir;
@@ -244,7 +283,9 @@ public class JavaHLObjectFactory {
         if(dirEntry == null){
             return null;
         }
+        //TODO: what should we pass here in the 2nd parameter - a real abs path??? 
         return new DirEntry(
+                dirEntry.getRelativePath(),
                 dirEntry.getRelativePath(),
                 getNodeKind(dirEntry.getKind()),
                 dirEntry.getSize(),
@@ -274,8 +315,30 @@ public class JavaHLObjectFactory {
             }
             cp = (ChangePath[]) clientChangePaths.toArray(new ChangePath[clientChangePaths.size()]);
         }
-        return new LogMessage(logEntry.getMessage(), logEntry.getDate(),
-                logEntry.getRevision(), logEntry.getAuthor(), cp);
+        return new LogMessage(cp, logEntry.getRevision(), logEntry.getAuthor(), logEntry.getDate(),
+                logEntry.getMessage());
+    }
+
+    public static void handleLogMessage(SVNLogEntry logEntry, LogMessageCallback handler) {
+        if(logEntry == null || handler == null) {
+            return;
+        }
+        Map cpaths = logEntry.getChangedPaths();
+        ChangePath[] cp = null;
+        if (cpaths == null) {
+            cp = new ChangePath[]{};
+        } else {
+            Collection clientChangePaths = new ArrayList();
+            for (Iterator iter = cpaths.keySet().iterator(); iter.hasNext();) {
+                String path = (String) iter.next();
+                SVNLogEntryPath entryPath = (SVNLogEntryPath)cpaths.get(path);
+                if(entryPath != null){
+                    clientChangePaths.add(new ChangePath(path, entryPath.getCopyRevision(), entryPath.getCopyPath(), entryPath.getType()));
+                }
+            }
+            cp = (ChangePath[]) clientChangePaths.toArray(new ChangePath[clientChangePaths.size()]);
+        }
+        handler.singleMessage(cp, logEntry.getRevision(), logEntry.getAuthor(), logEntry.getDate().getTime() * 1000, logEntry.getMessage(), 0);//TODO: FIXME
     }
 
     public static CommitItem[] getCommitItems(SVNCommitItem[] commitables) {
@@ -396,7 +459,8 @@ public class JavaHLObjectFactory {
                 info.getConflictOldFile() != null ? info.getConflictOldFile().getName() : null,
                 info.getConflictNewFile() != null ? info.getConflictNewFile().getName() : null,
                 info.getConflictWrkFile() != null ? info.getConflictWrkFile().getName() : null,
-                info.getPropConflictFile() != null ? info.getPropConflictFile().getName() : null
+                info.getPropConflictFile() != null ? info.getPropConflictFile().getName() : null,
+                info.getChangelistName(), info.getWorkingSize(), info.getRepositorySize()
                 );
     }
     
@@ -423,7 +487,9 @@ public class JavaHLObjectFactory {
                 JavaHLObjectFactory.getStatusValue(event.getContentsStatus()),
                 JavaHLObjectFactory.getStatusValue(event.getPropertiesStatus()),
                 JavaHLObjectFactory.getLockStatusValue(event.getLockStatus()),
-                event.getRevision()
+                event.getRevision(),
+                event.getChangelistName(),
+                null//TODO: FIXME
                 );
     }
 

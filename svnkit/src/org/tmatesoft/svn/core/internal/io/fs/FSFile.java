@@ -25,6 +25,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -87,19 +88,13 @@ public class FSFile {
         return digest;
     }
     
-    public int readInt() throws SVNException {
+    public int readInt() throws SVNException, NumberFormatException {
         String line = readLine(80);
         if (line == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_VERSION_FILE_FORMAT, "First line of ''{0}'' contains non-digit", myFile);
             SVNErrorManager.error(err);
         }
-        try {
-            return Integer.parseInt(line);
-        } catch (NumberFormatException nfe) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_VERSION_FILE_FORMAT, "First line of ''{0}'' contains non-digit", myFile);
-            SVNErrorManager.error(err);
-        }
-        return -1;
+        return Integer.parseInt(line);
     }
     
     public String readLine(int limit) throws SVNException {
@@ -372,7 +367,7 @@ public class FSFile {
         return myChannel;
     }
     
-    public PathInfo readPathInfoFromReportFile() throws IOException {
+    public PathInfo readPathInfoFromReportFile() throws IOException, SVNException {
         int firstByte = read();
         if (firstByte == -1 || firstByte == '-') {
             return null;
@@ -380,9 +375,28 @@ public class FSFile {
         String path = readStringFromReportFile();
         String linkPath = read() == '+' ? readStringFromReportFile() : null;
         long revision = readRevisionFromReportFile();
+        SVNDepth depth = SVNDepth.INFINITY;
+        if (read() == '+') {
+            int id = readNumberFromReportFile();
+            switch(id) {
+                case 0:
+                    depth = SVNDepth.EMPTY;
+                    break;
+                case 1:
+                    depth = SVNDepth.FILES;
+                    break;
+                case 2:
+                    depth = SVNDepth.IMMEDIATES;
+                    break;
+                default: {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_REVISION_REPORT, "Invalid depth ({0,number,integer}) for path ''{1}''", new Object[]{new Integer(id), path});
+                    SVNErrorManager.error(err);
+                }
+            }
+        }
         boolean startEmpty = read() == '+' ? true : false;
         String lockToken = read() == '+' ? readStringFromReportFile() : null;
-        return new PathInfo(path, linkPath, lockToken, revision, startEmpty);
+        return new PathInfo(path, linkPath, lockToken, revision, depth, startEmpty);
     }
 
     private String readStringFromReportFile() throws IOException {

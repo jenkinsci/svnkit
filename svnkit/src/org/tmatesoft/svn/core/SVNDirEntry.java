@@ -33,6 +33,15 @@ import java.util.Date;
  */
 public class SVNDirEntry implements Comparable {
 
+    public static final int DIRENT_KIND = 0x00001;
+    public static final int DIRENT_SIZE = 0x00002;
+    public static final int DIRENT_HAS_PROPERTIES = 0x00004;
+    public static final int DIRENT_CREATED_REVISION = 0x00008;
+    public static final int DIRENT_TIME = 0x00010;
+    public static final int DIRENT_LAST_AUTHOR = 0x00020;
+    public static final int DIRENT_COMMIT_MESSAGE = 0x00040;
+    public static final int DIRENT_ALL = ~0;
+
     private String myName;
     private SVNNodeKind myKind;
     private long mySize;
@@ -185,24 +194,17 @@ public class SVNDirEntry implements Comparable {
     }
 
     /**
-     * Returns the entry's path.
+     * Returns the entry's path relative to the target directory.
      * 
      * <p>
-     * This method always returns the name of an entry (i.e. 
-     * a path relative to the parent folder) when an <b>SVNDirEntry</b> 
-     * object is provided by an {@link org.tmatesoft.svn.core.io.SVNRepository} 
-     * driver.
+     * This method is guaranteed to return a non-<span class="javakeyword">null</span> path only 
+     * for {@link org.tmatesoft.svn.core.wc.SVNLogClient#doList(java.io.File, org.tmatesoft.svn.core.wc.SVNRevision, org.tmatesoft.svn.core.wc.SVNRevision, boolean, SVNDepth, ISVNDirEntryHandler) list} 
+     * operations. It always returns a path relative to the target location which a list 
+     * operation is launched on. When listing a directory the relative path for the target 
+     * directory itself is <code>""</code>, for its children - just their names, for deeper 
+     * directories (when listing recursively) - paths relative to the target directory path.   
      * 
-     * <p>
-     * This property (relative path) is longer than just an entry name only when 
-     * an <b>SVNDirEntry</b> object is obtained via a recursive call to 
-     * a <code>doList()</code> method of the {@link org.tmatesoft.svn.core.wc.SVNLogClient} class. 
-     * In that case an <b>SVNDirEntry</b> object located deep in the hierarchy 
-     * will return a path relative to the URL <code>doList()</code> was called for.
-     * 
-     * @return a path relative to a repository location or 
-     *         <span class="javakeyword">null</span> if no path is
-     *         specified
+     * @return path relative to the target directory  
      */
     public String getRelativePath() {
         return myPath == null ? getName() : myPath;

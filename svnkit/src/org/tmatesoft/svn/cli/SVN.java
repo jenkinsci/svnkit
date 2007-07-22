@@ -77,6 +77,15 @@ public class SVN {
         ourArguments.add(SVNArgument.IGNORE_ALL_WS);
         ourArguments.add(SVNArgument.IGNORE_EOL_STYLE);
         ourArguments.add(SVNArgument.IGNORE_WS_CHANGE);
+        ourArguments.add(SVNArgument.KEEP_LOCAL);
+        ourArguments.add(SVNArgument.DEPTH);
+        ourArguments.add(SVNArgument.WITH_REVPROP);
+        ourArguments.add(SVNArgument.ENCODING);
+        ourArguments.add(SVNArgument.PARENTS);
+        ourArguments.add(SVNArgument.CHANGELIST);
+        ourArguments.add(SVNArgument.KEEP_CHANGELIST);
+        ourArguments.add(SVNArgument.REMOVE);
+        ourArguments.add(SVNArgument.ACCEPT);
     }
 
     public static void main(String[] args) {

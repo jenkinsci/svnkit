@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -136,7 +137,9 @@ public class SVNRevision {
 
     private SVNRevision(Date date) {
         this(-1);
-        myDate = date;
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        calendar.setTime(date);
+        myDate = calendar.getTime();
         myID = 20;
     }
     

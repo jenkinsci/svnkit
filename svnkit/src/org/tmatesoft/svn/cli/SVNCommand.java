@@ -271,6 +271,7 @@ public abstract class SVNCommand {
         ourCommands.put(new String[] { "propset", "pset", "ps" }, "org.tmatesoft.svn.cli.command.SVNPropsetCommand");
         ourCommands.put(new String[] { "propdel", "pdel", "pd" }, "org.tmatesoft.svn.cli.command.SVNPropdelCommand");
         ourCommands.put(new String[] { "propget", "pget", "pg" }, "org.tmatesoft.svn.cli.command.SVNPropgetCommand");
+        ourCommands.put(new String[] { "propedit", "pedit", "pe" }, "org.tmatesoft.svn.cli.command.SVNPropeditCommand");
         ourCommands.put(new String[] { "proplist", "plist", "pl" }, "org.tmatesoft.svn.cli.command.SVNProplistCommand");
         ourCommands.put(new String[] { "info" }, "org.tmatesoft.svn.cli.command.SVNInfoCommand");
         ourCommands.put(new String[] { "resolved" }, "org.tmatesoft.svn.cli.command.SVNResolvedCommand");
@@ -285,9 +286,10 @@ public abstract class SVNCommand {
         ourCommands.put(new String[] { "lock" }, "org.tmatesoft.svn.cli.command.SVNLockCommand");
         ourCommands.put(new String[] { "unlock" }, "org.tmatesoft.svn.cli.command.SVNUnlockCommand");
         ourCommands.put(new String[] { "annotate", "blame", "praise", "ann" }, "org.tmatesoft.svn.cli.command.SVNAnnotateCommand");
+        ourCommands.put(new String[] { "changelist", "cl" }, "org.tmatesoft.svn.cli.command.SVNChangelistCommand");
         
         ourPegCommands = new HashSet();
-        ourPegCommands.addAll(Arrays.asList(new String[] {"cat", "annotate", "checkout", "diff", "export", "info", "ls", "merge", "propget", "proplist", "log"}));
+        ourPegCommands.addAll(Arrays.asList(new String[] {"cat", "annotate", "checkout", "diff", "export", "info", "ls", "merge", "propget", "proplist", "log", "copy"}));
 
         ourForceLogCommands = new HashSet();
         ourForceLogCommands.addAll(Arrays.asList(new String[] {"commit", "copy", "delete", "import", "mkdir", "move", "lock"}));

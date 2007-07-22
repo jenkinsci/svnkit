@@ -14,12 +14,15 @@ package org.tmatesoft.svn.core.internal.io.fs;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Random;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -43,6 +46,9 @@ public class FSTransactionRoot extends FSRoot {
     public static final int SVN_FS_TXN_CHECK_LOCKS = 0x00002;
     private static final int MAX_KEY_SIZE = 200;
 
+    private static long CURRENT_SEED = System.currentTimeMillis();
+    private static Object ourSeedLock = new Object();
+    
     private String myTxnID;
     private int myTxnFlags;
     private File myTxnChangesFile;
@@ -184,11 +190,52 @@ public class FSTransactionRoot extends FSRoot {
     private static String createTxnDir(long revision, FSFS owner) throws SVNException {
         File parent = owner.getTransactionsParentDir();
         File uniquePath = null;
+        String hostName = null;
+        try {
+            hostName = InetAddress.getLocalHost().getHostName();
+        } catch (UnknownHostException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can't get local hostname");
+            SVNErrorManager.error(err, e);
+        }
+        if (hostName.length() > 256) {
+            hostName = hostName.substring(0, 256);
+        }
+        hostName.replace('.', '-');
+        
+        StringBuffer txnDirName = new StringBuffer();
+        txnDirName.append(hostName);
+        txnDirName.append('-');
+        
+        byte[] fakePIDBytes = new byte[5]; 
+        Random randomizer = null;
+        synchronized (ourSeedLock) {
+            randomizer = new Random(CURRENT_SEED++);
+        }
+        randomizer.nextBytes(fakePIDBytes);        
+        StringBuffer fakePID = new StringBuffer(); 
+        int digit = (fakePIDBytes[0] & 0xFF);
+        fakePID.append(Integer.toString(digit % 10)); 
+        digit = (fakePIDBytes[1] & 0xFF);
+        fakePID.append(Integer.toString(digit % 10)); 
+        digit = (fakePIDBytes[2] & 0xFF);
+        fakePID.append(Integer.toString(digit % 10)); 
+        digit = (fakePIDBytes[3] & 0xFF);
+        fakePID.append(Integer.toString(digit % 10)); 
+        digit = (fakePIDBytes[4] & 0xFF);
+        fakePID.append(Integer.toString(digit % 10)); 
 
+        txnDirName.append(fakePID.toString());
+        txnDirName.append('-');
+        txnDirName.append(Long.toString(System.currentTimeMillis()));
+        txnDirName.append('-');
+        String prefix = txnDirName.toString();
         for (int i = 1; i < 99999; i++) {
-            uniquePath = new File(parent, revision + "-" + i + FSFS.TXN_PATH_EXT);
+//            uniquePath = new File(parent, revision + "-" + i + FSFS.TXN_PATH_EXT);
+            uniquePath = new File(parent, prefix + i + FSFS.TXN_PATH_EXT);
+
             if (!uniquePath.exists() && uniquePath.mkdirs()) {
-                return revision + "-" + i;
+//                return revision + "-" + i;
+                return prefix + i;
             }
         }
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_UNIQUE_NAMES_EXHAUSTED, "Unable to create transaction directory in ''{0}'' for revision {1,number,integer}", new Object[] {
@@ -280,6 +327,17 @@ public class FSTransactionRoot extends FSRoot {
         }
     }
 
+    public void setTxnMergeInfo(String name, String value) throws SVNException {
+        FSFS fs = getOwner(); 
+        Map txnMergeInfo = fs.getTransactionMergeInfo(myTxnID);
+        txnMergeInfo.put(name, value);
+        File txnMergeInfoFile = fs.getTransactionMergeInfoFile(myTxnID);
+        SVNProperties.setProperties(txnMergeInfo, txnMergeInfoFile, 
+                                    SVNFileUtil.createUniqueFile(txnMergeInfoFile.getParentFile(), 
+                                                                 "mergeinfo", ".tmp"), 
+                                    SVNProperties.SVN_HASH_TERMINATOR);
+    }
+    
     public FSID createSuccessor(FSID oldId, FSRevisionNode newRevNode, String copyId) throws SVNException {
         if (copyId == null) {
             copyId = oldId.getCopyID();

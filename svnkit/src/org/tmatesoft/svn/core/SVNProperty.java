@@ -41,6 +41,8 @@ public class SVNProperty {
      */
     public static final String TXN_CHECK_OUT_OF_DATENESS = SVN_PREFIX + "check-ood";
 
+    public static final String TXN_CONTAINS_MERGEINFO = SVN_PREFIX + "contains-mergeinfo";
+
     /**
      * An <span class="javastring">"svn:entry:"</span> prefix.
      */
@@ -73,6 +75,12 @@ public class SVNProperty {
      * An <span class="javastring">"svn:special"</span> SVN special property.
      */
     public static final String SPECIAL = SVN_PREFIX + "special";
+    
+    /**
+     * @since SVN 1.5
+     */
+    public static final String MERGE_INFO = SVN_PREFIX + "mergeinfo";
+
     /**
      * An <span class="javastring">"svn:entry:revision"</span> SVN untweakable metaproperty.
      */
@@ -92,25 +100,33 @@ public class SVNProperty {
      * <span class="javastring">"has-props"</span> SVN untweakable metaproperty.
      * @since 1.1, new in Subversion 1.4
      */
-    public static final String HAS_PROPS = "has-props";
+    public static final String HAS_PROPS = SVN_ENTRY_PREFIX + "has-props";
 
     /**
      * <span class="javastring">"has-prop-mods"</span> SVN untweakable metaproperty.
      * @since 1.1, new in Subversion 1.4
      */
-    public static final String HAS_PROP_MODS = "has-prop-mods";
+    public static final String HAS_PROP_MODS = SVN_ENTRY_PREFIX + "has-prop-mods";
 
     /**
      * <span class="javastring">"cachable-props"</span> SVN untweakable metaproperty.
      * @since 1.1, new in Subversion 1.4
      */
-    public static final String CACHABLE_PROPS = "cachable-props";
+    public static final String CACHABLE_PROPS = SVN_ENTRY_PREFIX + "cachable-props";
 
     /**
      * <span class="javastring">"present-props"</span> SVN untweakable metaproperty.
      * @since 1.1, new in Subversion 1.4
      */
-    public static final String PRESENT_PROPS = "present-props";
+    public static final String PRESENT_PROPS = SVN_ENTRY_PREFIX + "present-props";
+    
+    public static final String KEEP_LOCAL = SVN_ENTRY_PREFIX + "keep-local";
+
+    public static final String CHANGELIST = SVN_ENTRY_PREFIX + "changelist";
+
+    public static final String WORKING_SIZE = SVN_ENTRY_PREFIX + "working-size";
+
+    public static final String DEPTH = SVN_ENTRY_PREFIX + "depth";
     
     /**
      * An <span class="javastring">"svn:entry:checksum"</span> SVN untweakable metaproperty.
@@ -269,6 +285,8 @@ public class SVNProperty {
      */
     public static final String SCHEDULE_REPLACE = "replace";
 
+    public static final long WORKING_SIZE_UNKNOWN = -1;
+    
     private static final byte[] EOL_LF_BYTES = { '\n' };
     private static final byte[] EOL_CRLF_BYTES = { '\r', '\n' };
     private static final byte[] EOL_CR_BYTES = { '\r' };

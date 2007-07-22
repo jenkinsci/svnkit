@@ -15,13 +15,22 @@ package org.tmatesoft.svn.cli.command;
 import java.io.File;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
+import org.tmatesoft.svn.core.wc.SVNChangeList;
+import org.tmatesoft.svn.core.wc.SVNCompositePathList;
+import org.tmatesoft.svn.core.wc.SVNPathList;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
@@ -42,7 +51,33 @@ public class SVNPropgetCommand extends SVNCommand implements ISVNPropertyHandler
 
     public final void run(final PrintStream out, PrintStream err) throws SVNException {
         String propertyName = getCommandLine().getPathAt(0);
-        myIsRecursive = getCommandLine().hasArgument(SVNArgument.RECURSIVE);
+        
+        String changelistName = (String) getCommandLine().getArgumentValue(SVNArgument.CHANGELIST); 
+        SVNChangeList changelist = null;
+        if (changelistName != null) {
+            changelist = SVNChangeList.create(changelistName, new File(".").getAbsoluteFile());
+            changelist.setOptions(getClientManager().getOptions());
+            changelist.setRepositoryPool(getClientManager().getRepositoryPool());
+            if (changelist.getPaths() == null || changelist.getPathsCount() == 0) {
+                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+                                    "no such changelist ''{0}''", changelistName); 
+                SVNErrorManager.error(error);
+            }
+        }
+        
+        SVNDepth depth = SVNDepth.UNKNOWN;
+        if (getCommandLine().hasArgument(SVNArgument.RECURSIVE)) {
+            depth = SVNDepth.fromRecurse(true);
+        }
+        String depthStr = (String) getCommandLine().getArgumentValue(SVNArgument.DEPTH);
+        if (depthStr != null) {
+            depth = SVNDepth.fromString(depthStr);
+        }
+        if (depth == SVNDepth.UNKNOWN) {
+            depth = SVNDepth.EMPTY;
+        }
+        
+        myIsRecursive = SVNDepth.recurseFromDepth(depth);
         boolean revProp = getCommandLine().hasArgument(SVNArgument.REV_PROP);
         myIsStrict = getCommandLine().hasArgument(SVNArgument.STRICT);
         myOut = out;
@@ -51,22 +86,39 @@ public class SVNPropgetCommand extends SVNCommand implements ISVNPropertyHandler
         if (getCommandLine().hasArgument(SVNArgument.REVISION)) {
             revision = SVNRevision.parse((String) getCommandLine().getArgumentValue(SVNArgument.REVISION));
         }
+        
+        Map targets = new HashMap();
+        for (int i = 1; i < getCommandLine().getPathCount(); i++) {
+            targets.put(new File(getCommandLine().getPathAt(i)).getAbsoluteFile(), getCommandLine().getPathPegRevision(i));
+        }
+        if (targets.size() == 0 && (changelist == null || changelist.getPathsCount() == 0) && 
+                !getCommandLine().hasURLs()) {
+            targets.put(new File(".").getAbsoluteFile(), SVNRevision.UNDEFINED);
+        }
+        File[] paths = (File[]) targets.keySet().toArray(new File[targets.size()]);
+        SVNRevision[] pegRevs = (SVNRevision[]) targets.values().toArray(new SVNRevision[targets.size()]);
+        SVNPathList pathList = SVNPathList.create(paths, pegRevs);
+        SVNCompositePathList combinedPathList = SVNCompositePathList.create(pathList, changelist, false);
+        
         SVNWCClient wcClient = getClientManager().getWCClient();
-        if (getCommandLine().hasURLs()) {
-            String url = getCommandLine().getURL(0);
-            if (revProp) {
+        if (revProp) {
+            if (getCommandLine().hasURLs()) {
+                String url = getCommandLine().getURL(0);
                 wcClient.doGetRevisionProperty(SVNURL.parseURIEncoded(url), propertyName, revision, this);
             } else {
-                SVNRevision pegRevision = getCommandLine().getPegRevision(0);
-                wcClient.doGetProperty(SVNURL.parseURIEncoded(url), propertyName, pegRevision, revision, myIsRecursive, this);
+                File[] combinedPaths = combinedPathList.getPaths(); 
+                File path = combinedPaths[0];
+                wcClient.doGetRevisionProperty(path, propertyName, revision, this);
             }
-        } else if (getCommandLine().getPathCount() > 1) {
-            String path = getCommandLine().getPathAt(1);
-            SVNRevision pegRevision = getCommandLine().getPathPegRevision(1);
-            if (revProp) {
-                wcClient.doGetRevisionProperty(new File(path), propertyName, revision, this);
+        } else {
+            if (getCommandLine().hasURLs()) {
+                for (int i = 0; i < getCommandLine().getURLCount(); i++) {
+                    String url = getCommandLine().getURL(i);
+                    SVNRevision pegRevision = getCommandLine().getPegRevision(i);
+                    wcClient.doGetProperty(SVNURL.parseURIEncoded(url), propertyName, pegRevision, revision, myIsRecursive, this);
+                }
             } else {
-                wcClient.doGetProperty(new File(path), propertyName, pegRevision, revision, myIsRecursive, this);
+                wcClient.doGetProperty(combinedPathList, propertyName, revision, depth, this);
             }
         }
     }

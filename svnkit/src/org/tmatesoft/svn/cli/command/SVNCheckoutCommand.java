@@ -18,6 +18,7 @@ import java.io.PrintStream;
 
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
@@ -36,7 +37,16 @@ public class SVNCheckoutCommand extends SVNCommand {
     }
 
     public void run(final PrintStream out, final PrintStream err) throws SVNException {
-		final String url = getCommandLine().getURL(0);
+        SVNDepth depth = SVNDepth.UNKNOWN;
+        if (getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE)) {
+            depth = SVNDepth.fromRecurse(false);
+        }
+        String depthStr = (String) getCommandLine().getArgumentValue(SVNArgument.DEPTH);
+        if (depthStr != null) {
+            depth = SVNDepth.fromString(depthStr);
+        }
+
+        final String url = getCommandLine().getURL(0);
 
 		String path;
         if (getCommandLine().getPathCount() > 0) {
@@ -48,15 +58,16 @@ public class SVNCheckoutCommand extends SVNCommand {
         SVNRevision revision = parseRevision(getCommandLine());
         getClientManager().setEventHandler(new SVNCommandEventProcessor(out, err, true));
         SVNUpdateClient updater = getClientManager().getUpdateClient();
+        boolean force = getCommandLine().hasArgument(SVNArgument.FORCE);
         if (getCommandLine().getURLCount() == 1) {
             SVNRevision pegRevision = getCommandLine().getPegRevision(0);
-            updater.doCheckout(SVNURL.parseURIEncoded(url), new File(path), pegRevision, revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
+            updater.doCheckout(SVNURL.parseURIEncoded(url), new File(path), pegRevision, revision, depth, force);
         } else {
             for(int i = 0; i < getCommandLine().getURLCount(); i++) {
                 String curl = getCommandLine().getURL(i);
                 File dstPath = new File(path, SVNEncodingUtil.uriDecode(SVNPathUtil.tail(curl)));
                 SVNRevision pegRevision = getCommandLine().getPegRevision(i);
-                updater.doCheckout(SVNURL.parseURIEncoded(url), dstPath, pegRevision, revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
+                updater.doCheckout(SVNURL.parseURIEncoded(url), dstPath, pegRevision, revision, depth, force);
             }
         }
 	}

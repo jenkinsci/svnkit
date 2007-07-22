@@ -260,10 +260,10 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
             if (contentLength == 0) {
                 getDeltaGenerator().sendDelta(myCurrentNodeBaton.myPath, SVNFileUtil.DUMMY_IN, fsConsumer, false);
             } else {
-                buffer = new byte[SVNAdminHelper.STREAM_CHUNK_SIZE];
+                buffer = new byte[SVNFileUtil.STREAM_CHUNK_SIZE];
                 try {
                     while (contentLength > 0) {
-                        int numToRead = contentLength > SVNAdminHelper.STREAM_CHUNK_SIZE ? SVNAdminHelper.STREAM_CHUNK_SIZE : contentLength;
+                        int numToRead = contentLength > SVNFileUtil.STREAM_CHUNK_SIZE ? SVNFileUtil.STREAM_CHUNK_SIZE : contentLength;
                         int numRead = dumpStream.read(buffer, 0, numToRead);
                         
                         if (numRead != numToRead) {

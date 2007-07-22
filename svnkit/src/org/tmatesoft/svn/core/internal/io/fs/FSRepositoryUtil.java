@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
 import org.tmatesoft.svn.core.internal.wc.ISVNCommitPathHandler;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -91,6 +92,8 @@ public class FSRepositoryUtil {
                     break;
                 }
             }
+        } catch (IOExceptionWrapper ioew) {
+            throw ioew.getOriginalException();
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
             SVNErrorManager.error(err, ioe);

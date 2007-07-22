@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.wc.admin.ISVNEntryHandler;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
@@ -56,11 +57,7 @@ public class SVNPropertiesManager {
     }
 
     public static void setWCProperty(SVNWCAccess access, File path, String propName, String propValue, boolean write) throws SVNException {
-        SVNEntry entry = access.getEntry(path, false);
-        if (entry == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", path);
-            SVNErrorManager.error(err);
-        }
+        SVNEntry entry = access.getVersionedEntry(path, false);
         SVNAdminArea dir = entry.getKind() == SVNNodeKind.DIR ? access.retrieve(path) : access.retrieve(path.getParentFile());
         dir.getWCProperties(entry.getName()).setPropertyValue(propName, propValue);
         if (write) {
@@ -141,12 +138,8 @@ public class SVNPropertiesManager {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_PROP_KIND, "Property ''{0}'' is an entry property", propName);
             SVNErrorManager.error(err);
         }
-        SVNEntry entry = access.getEntry(path, false);
-        if (entry == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", path);
-            SVNErrorManager.error(err);
-        }
-        SVNAdminArea dir = entry.getKind() == SVNNodeKind.DIR ? access.retrieve(path) : access.retrieve(path.getParentFile());
+        SVNEntry entry = access.getVersionedEntry(path, false);
+        SVNAdminArea dir = entry.getAdminArea();
         boolean updateTimeStamp = SVNProperty.EOL_STYLE.equals(propName);
         if (propValue != null) {
             validatePropertyName(path, propName, entry.getKind());
@@ -161,7 +154,7 @@ public class SVNPropertiesManager {
                     propValue += "\n";
                 }
                 if (SVNProperty.EXTERNALS.equals(propName)) {
-                    // TODO validate
+                    SVNWCAccess.parseExternals("", propValue);
                 }
             } else if (SVNProperty.KEYWORDS.equals(propName)) {
                 propValue = propValue.trim();
@@ -203,11 +196,7 @@ public class SVNPropertiesManager {
     }
     
     public static SVNStatusType mergeProperties(SVNWCAccess wcAccess, File path, Map baseProperties, Map diff, boolean baseMerge, boolean dryRun) throws SVNException {
-        SVNEntry entry = wcAccess.getEntry(path, false);
-        if (entry == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", path);
-            SVNErrorManager.error(err);
-        }
+        SVNEntry entry = wcAccess.getVersionedEntry(path, false);
         File parent = null;
         String name = null;
         if (entry.isDirectory()) {
@@ -250,6 +239,49 @@ public class SVNPropertiesManager {
         return properties;
     }
     
+    public static Map getWorkingCopyPropertyValues(SVNAdminArea adminArea, String entryName, final String propName, boolean recursive, final boolean base) throws SVNException {
+        final Map pathsToPropValues = new HashMap();
+        
+        ISVNEntryHandler handler = new ISVNEntryHandler() {
+            public void handleEntry(File path, SVNEntry entry, SVNAdminArea adminArea) throws SVNException {
+                if (entry.isDirectory() && !entry.getName().equals(adminArea.getThisDirName())) {
+                    return;
+                }
+                
+                if ((entry.isScheduledForAddition() && base) ||
+                    (entry.isScheduledForDeletion() && !base)) {
+                    return;
+                }
+                
+                String propValue = null;
+                if (base) {
+                    SVNVersionedProperties baseProps = adminArea.getBaseProperties(entry.getName());
+                    propValue = baseProps.getPropertyValue(propName);
+                } else {
+                    SVNVersionedProperties workingProps = adminArea.getProperties(entry.getName());
+                    propValue = workingProps.getPropertyValue(propName);
+                }
+                
+                if (propValue != null) {
+                    pathsToPropValues.put(path, propValue);
+                }
+            }
+            
+            public void handleError(File path, SVNErrorMessage error) throws SVNException {
+                while (error.hasChildErrorMessage()) {
+                    error = error.getChildErrorMessage();
+                }
+                if (error.getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
+                    return;
+                }
+                SVNErrorManager.error(error);
+            }
+        };
+        
+        adminArea.walkEntries(entryName, handler, false, recursive);
+        return pathsToPropValues;
+    }
+
     private static void validatePropertyName(File path, String name, SVNNodeKind kind) throws SVNException {
         SVNErrorMessage err = null;
         if (kind == SVNNodeKind.DIR) {

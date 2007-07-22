@@ -14,7 +14,9 @@ package org.tmatesoft.svn.core.wc;
 import java.io.File;
 import java.util.Date;
 
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNDirEntry;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -95,7 +97,10 @@ public class SVNInfo {
     private File myConflictNewFile;
     private File myConflictWrkFile;
     private File myPropConflictFile;
-
+    private SVNDepth myDepth;
+    private String myChangelistName;
+    private SVNErrorMessage myError;
+    
     static SVNInfo createInfo(File file, SVNEntry entry) throws SVNException {
         if (entry == null) {
             return null;
@@ -113,7 +118,8 @@ public class SVNInfo {
                         .getCopyFromRevision(), entry.getTextTime(), entry
                         .getPropTime(), entry.getChecksum(), entry
                         .getConflictOld(), entry.getConflictNew(), entry
-                        .getConflictWorking(), entry.getPropRejectFile(), lock);
+                        .getConflictWorking(), entry.getPropRejectFile(), lock, 
+                        entry.getDepth(), entry.getChangelistName());
     }
 
     static SVNInfo createInfo(String path, SVNURL reposRootURL, String uuid,
@@ -123,15 +129,25 @@ public class SVNInfo {
         }
         return new SVNInfo(path, url, revision, dirEntry.getKind(), uuid,
                 reposRootURL, dirEntry.getRevision(), dirEntry.getDate(),
-                dirEntry.getAuthor(), lock);
+                dirEntry.getAuthor(), lock, SVNDepth.UNKNOWN);
     }
 
+    static SVNInfo createInfo(File file, SVNErrorMessage error) {
+        return new SVNInfo(file, error);
+    }
+    
+    protected SVNInfo(File file, SVNErrorMessage error) {
+        myFile = file;
+        myError = error;
+    }
+    
     protected SVNInfo(File file, SVNURL url, SVNURL rootURL, long revision, SVNNodeKind kind,
             String uuid, long committedRevision, String committedDate,
             String author, String schedule, SVNURL copyFromURL,
             long copyFromRevision, String textTime, String propTime,
             String checksum, String conflictOld, String conflictNew,
-            String conflictWorking, String propRejectFile, SVNLock lock) {
+            String conflictWorking, String propRejectFile, SVNLock lock, 
+            SVNDepth depth, String changelistName) {
         myFile = file;
         myURL = url;
         myRevision = SVNRevision.create(revision);
@@ -153,7 +169,8 @@ public class SVNInfo {
         myCopyFromRevision = SVNRevision.create(copyFromRevision);
 
         myLock = lock;
-
+        myChangelistName = changelistName;
+        
         if (file != null) {
             if (conflictOld != null) {
                 myConflictOldFile = new File(file.getParentFile(), conflictOld);
@@ -172,11 +189,13 @@ public class SVNInfo {
         }
 
         myIsRemote = false;
+        myDepth = depth;
     }
 
     protected SVNInfo(String path, SVNURL url, SVNRevision revision,
             SVNNodeKind kind, String uuid, SVNURL reposRootURL,
-            long comittedRevision, Date date, String author, SVNLock lock) {
+            long comittedRevision, Date date, String author, SVNLock lock, 
+            SVNDepth depth) {
         myIsRemote = true;
         myURL = url;
         myRevision = revision;
@@ -190,6 +209,7 @@ public class SVNInfo {
 
         myLock = lock;
         myPath = path;
+        myDepth = depth;
     }
     
     /**
@@ -448,6 +468,28 @@ public class SVNInfo {
      */
     public SVNURL getURL() {
         return myURL;
+    }
+
+    public SVNDepth getDepth() {
+        return myDepth;
+    }
+
+    public String getChangelistName() {
+        return myChangelistName;
+    }
+
+    //TODO:implement
+    public long getWorkingSize() {
+        return 0;
+    }
+
+    //TODO:implement
+    public long getRepositorySize() {
+        return 0;
+    }
+
+    public SVNErrorMessage getError() {
+        return myError;
     }
 
 }

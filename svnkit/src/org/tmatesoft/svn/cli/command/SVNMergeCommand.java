@@ -18,6 +18,7 @@ import java.io.PrintStream;
 
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
@@ -37,8 +38,16 @@ public class SVNMergeCommand extends SVNCommand {
     }
 
 	public void run(final PrintStream out, PrintStream err) throws SVNException {
+        SVNDepth depth = SVNDepth.UNKNOWN;
+        if (getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE)) {
+            depth = SVNDepth.fromRecurse(false);
+        }
+        String depthStr = (String) getCommandLine().getArgumentValue(SVNArgument.DEPTH);
+        if (depthStr != null) {
+            depth = SVNDepth.fromString(depthStr);
+        }
+        
         boolean useAncestry = !getCommandLine().hasArgument(SVNArgument.IGNORE_ANCESTRY);
-        boolean recursive = !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE);
         boolean force = getCommandLine().hasArgument(SVNArgument.FORCE);
         boolean dryRun = getCommandLine().hasArgument(SVNArgument.DRY_RUN);
 
@@ -97,7 +106,7 @@ public class SVNMergeCommand extends SVNCommand {
                     pegRev = SVNRevision.HEAD;
                 }
                 SVNURL svnURL = SVNURL.parseURIEncoded(url);
-                differ.doMerge(svnURL, pegRev, rN, rM, dstPath, recursive, useAncestry, force, dryRun);
+                differ.doMerge(svnURL, pegRev, rN, rM, dstPath, depth, useAncestry, force, dryRun);
             } else if (getCommandLine().hasPaths()){
                 File srcPath = new File(getCommandLine().getPathAt(0));
                 SVNRevision pegRevision = getCommandLine().getPathPegRevision(0);
@@ -108,7 +117,7 @@ public class SVNMergeCommand extends SVNCommand {
                 if (getCommandLine().getPathCount() > 1) {
                     dstPath = new File(getCommandLine().getPathAt(1));
                 } 
-                differ.doMerge(srcPath, pegRevision, rN, rM, dstPath, recursive, useAncestry, force, dryRun);
+                differ.doMerge(srcPath, pegRevision, rN, rM, dstPath, depth, useAncestry, force, dryRun);
             }
         } else if (getCommandLine().getURLCount() == 2) {
             // merge url1@r url2@r wcPath
@@ -139,7 +148,7 @@ public class SVNMergeCommand extends SVNCommand {
             SVNURL svnURL1 = SVNURL.parseURIEncoded(url1);
             SVNURL svnURL2 = SVNURL.parseURIEncoded(url2);
 
-            differ.doMerge(svnURL1, rN, svnURL2, rM, dstPath, recursive, useAncestry, force, dryRun);
+            differ.doMerge(svnURL1, rN, svnURL2, rM, dstPath, depth, useAncestry, force, dryRun);
         } else if (getCommandLine().getPathCount() >= 2){
             // merge wcPath1@r wcPath2@r wcPath
             File path1 = new File(getCommandLine().getPathAt(0));
@@ -156,7 +165,7 @@ public class SVNMergeCommand extends SVNCommand {
             if (getCommandLine().getPathCount() > 2) {
                 dstPath = new File(getCommandLine().getPathAt(2));
             }
-            differ.doMerge(path1, rN, path2, rM, dstPath, recursive, useAncestry, force, dryRun);
+            differ.doMerge(path1, rN, path2, rM, dstPath, depth, useAncestry, force, dryRun);
         } else {
             println(err, "svn: unsupported merge call format");
         }

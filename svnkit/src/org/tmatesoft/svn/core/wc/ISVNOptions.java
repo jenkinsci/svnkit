@@ -395,4 +395,8 @@ public interface ISVNOptions extends ISVNTunnelProvider {
     public void setPropertyValue(String propertyName, String propertyValue);
 
     public DateFormat getKeywordDateFormat();
+    
+    public String[] getPreservedConflictFileExtensions();
+    
+    public String getEditor();
 }

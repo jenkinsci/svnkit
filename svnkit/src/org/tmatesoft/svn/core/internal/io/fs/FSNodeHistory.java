@@ -168,7 +168,7 @@ public class FSNodeHistory {
             if (path.equals(copyDst)) {
                 reminder = "";
             } else {
-                reminder = SVNPathUtil.pathIsChild(copyDst, path);
+                reminder = SVNPathUtil.getPathAsChild(copyDst, path);
             }
             if (reminder != null) {
                 String copySrc = revNode.getCopyFromPath();

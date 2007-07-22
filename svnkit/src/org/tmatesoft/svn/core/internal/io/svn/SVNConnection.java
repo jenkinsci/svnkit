@@ -40,6 +40,8 @@ class SVNConnection {
     private InputStream myInputStream;
     private SVNRepositoryImpl myRepository;
     private boolean myIsSVNDiff1;
+    private boolean myIsCommitRevprops;
+    private boolean myIsMergeInfo;
 
     private static final String SUCCESS = "success";
     private static final String FAILURE = "failure";
@@ -47,6 +49,8 @@ class SVNConnection {
     private static final String EDIT_PIPELINE = "edit-pipeline";
     private static final String SVNDIFF1 = "svndiff1";
     private static final String ABSENT_ENTRIES = "absent-entries";
+    private static final String COMMIT_REVPROPS = "commit-revprops";
+    private static final String MERGE_INFO = "merge-info";
 
     public SVNConnection(ISVNConnector connector, SVNRepositoryImpl repository) {
         myConnector = connector;
@@ -73,16 +77,32 @@ class SVNConnection {
         return myIsSVNDiff1;
     }
 
+    public boolean isCommitRevprops() {
+        return myIsCommitRevprops;
+    }
+
+    public boolean isMergeInfo() {
+        return myIsMergeInfo;
+    }
+
     protected void handshake(SVNRepositoryImpl repository) throws SVNException {
         Object[] items = read("[(*N(*W)(*W))]", null, true);
-        if (!SVNReader.hasValue(items, 0, 2)) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_BAD_VERSION, "Only protocol of version '2' or older is supported"));
-        } else if (!SVNReader.hasValue(items, 2, EDIT_PIPELINE)) {
+        List versions = SVNReader.getList(items, 0);
+        Long minVer = (Long) versions.get(0);
+        Long maxVer = (Long) versions.get(1);
+        if (minVer.longValue() > 2) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_BAD_VERSION, "Server requires minimum version {0,number,integer}", minVer));
+        } else if (maxVer.longValue() < 2) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_BAD_VERSION, "Server requires maximum version {0,number,integer}", maxVer));
+        }
+        if (!SVNReader.hasValue(items, 2, EDIT_PIPELINE)) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_BAD_VERSION, "Only servers with 'edit-pipeline' capability is supported"));
         }
         myIsSVNDiff1 = SVNReader.hasValue(items, 2, SVNDIFF1);
-        write("(n(www)s)", new Object[] { "2", EDIT_PIPELINE, SVNDIFF1, ABSENT_ENTRIES, 
-                repository.getLocation().toString() });
+        myIsCommitRevprops = SVNReader.hasValue(items, 2, COMMIT_REVPROPS);
+        myIsMergeInfo = SVNReader.hasValue(items, 2, MERGE_INFO);
+        write("(n(wwww)s)", new Object[] { "2", EDIT_PIPELINE, SVNDIFF1, ABSENT_ENTRIES, 
+                MERGE_INFO, repository.getLocation().toString() });
     }
 
     private boolean myIsCredentialsReceived = false;

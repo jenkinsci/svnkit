@@ -45,6 +45,7 @@ import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVErrorHandler;
 import org.tmatesoft.svn.core.internal.util.SVNSocketFactory;
+import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableOutputStream;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -568,6 +569,10 @@ class HTTPConnection implements IHTTPConnection {
             }
         } catch (IOException e) {
             willCloseConnection = true;
+            if (e instanceof IOExceptionWrapper) {
+                IOExceptionWrapper wrappedException = (IOExceptionWrapper) e; 
+                return wrappedException.getOriginalException().getErrorMessage();
+            }
             if (e.getCause() instanceof SVNException) {
                 return ((SVNException) e.getCause()).getErrorMessage();
             }
