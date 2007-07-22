@@ -294,7 +294,7 @@ public class SVNDiffEditor implements ISVNEditor {
     }
 
     public void applyTextDelta(String path, String baseChecksum) throws SVNException {
-        SVNEntry entry = myWCAccess.getEntry(myAdminInfo.getAnchor().getFile(path), false);
+        SVNEntry entry = myWCAccess.getEntry(myAdminInfo.getAnchor().getFile(myCurrentFile.myPath), false);
         if (entry != null && entry.isCopied()) {
             myCurrentFile.myIsAdded = false;
         }
