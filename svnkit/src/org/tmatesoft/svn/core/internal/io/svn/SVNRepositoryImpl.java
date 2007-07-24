@@ -520,9 +520,12 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         return -1;
     }
 
-    public long log(String[] targetPaths, long startRevision, long endRevision,
-            boolean changedPaths, boolean strictNode, long limit,
-            ISVNLogEntryHandler handler) throws SVNException {
+    //TODO: FIXME
+    public long log(String[] targetPaths, long startRevision, long endRevision, 
+                    boolean changedPaths, boolean strictNode, long limit, 
+                    boolean includeMergedRevisions, boolean omitLogText, 
+                    ISVNLogEntryHandler handler) throws SVNException {
+        
         long count = 0;
         
         long latestRev = -1;

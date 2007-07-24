@@ -21,7 +21,10 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.io.SVNLocationEntry;
+import org.tmatesoft.svn.core.io.SVNRepository;
 
 
 /**
@@ -57,6 +60,44 @@ public class FSRevisionRoot extends FSRoot {
 
     public FSCopyInheritance getCopyInheritance(FSParentPath child) throws SVNException{
         return null;
+    }
+    
+    public FSNodeHistory getNodeHistory(String path) throws SVNException {
+        SVNNodeKind kind = checkNodeKind(path);
+        if (kind == SVNNodeKind.NONE) {
+            SVNErrorManager.error(FSErrors.errorNotFound(this, path));
+        }
+        return new FSNodeHistory(new SVNLocationEntry(getRevision(), path), 
+                                 false, 
+                                 new SVNLocationEntry(SVNRepository.INVALID_REVISION, null),
+                                 getOwner());
+    }
+
+    public FSClosestCopy getClosestCopy(String path) throws SVNException {
+        FSParentPath parentPath = openPath(path, true, true);
+        SVNLocationEntry copyDstEntry = FSNodeHistory.findYoungestCopyroot(getOwner().getRepositoryRoot(), 
+                                                                           parentPath);
+        if (copyDstEntry == null || copyDstEntry.getRevision() == 0) {
+            return null;
+        }
+
+        FSRevisionRoot copyDstRoot = getOwner().createRevisionRoot(copyDstEntry.getRevision());
+        if (copyDstRoot.checkNodeKind(path) == SVNNodeKind.NONE) {
+            return null;
+        }
+        FSParentPath copyDstParentPath = copyDstRoot.openPath(path, true, true);
+        FSRevisionNode copyDstNode = copyDstParentPath.getRevNode();
+        if (!copyDstNode.getId().isRelated(parentPath.getRevNode().getId())) {
+            return null;
+        }
+
+        long createdRev = copyDstNode.getId().getRevision();
+        if (createdRev == copyDstEntry.getRevision()) {
+            if (copyDstNode.getPredecessorId() == null) {
+                return null;
+            }
+        }
+        return new FSClosestCopy(copyDstRoot, copyDstEntry.getPath());
     }
 
     public FSRevisionNode getRootRevisionNode() throws SVNException {

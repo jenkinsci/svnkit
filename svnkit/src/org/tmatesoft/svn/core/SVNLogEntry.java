@@ -36,6 +36,7 @@ public class SVNLogEntry implements Serializable {
     private Date myDate;
     private String myMessage;
     private Map myChangedPaths;
+    private long myNumberOfChildren;
     
     /**
      * Constructs an <b>SVNLogEntry</b> object. 
@@ -57,7 +58,11 @@ public class SVNLogEntry implements Serializable {
         myMessage = message;
         myChangedPaths = changedPaths;
     }
-    
+
+    public void setNumberOfChildren(long numberOfChildren) {
+        myNumberOfChildren = numberOfChildren;
+    }
+
     /**
      * Gets a map containing all the paths that were changed in the 
      * revision that this object represents.
@@ -176,6 +181,10 @@ public class SVNLogEntry implements Serializable {
         return result.toString();
     }
     
+    public long getNumberOfChildren() {
+        return myNumberOfChildren;
+    }
+
     /**
      * Compares two objects.
      * 
@@ -191,4 +200,5 @@ public class SVNLogEntry implements Serializable {
         } 
         return o1.equals(o2);
     }
+
 }

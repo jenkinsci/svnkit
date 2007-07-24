@@ -781,9 +781,16 @@ public abstract class SVNRepository {
      * @see                     org.tmatesoft.svn.core.SVNLogEntry
      * @see                     org.tmatesoft.svn.core.SVNLogEntryPath
      */
-    public abstract long log(String[] targetPaths, long startRevision, long endRevision, boolean changedPath, boolean strictNode, long limit,
-            ISVNLogEntryHandler handler) throws SVNException;
+    public long log(String[] targetPaths, long startRevision, long endRevision, boolean changedPath, boolean strictNode, long limit,
+            ISVNLogEntryHandler handler) throws SVNException {
+        return log(targetPaths, startRevision, endRevision, changedPath, strictNode, limit, false, false, handler);
+    }
     
+    public abstract long log(String[] targetPaths, long startRevision, long endRevision, 
+                             boolean changedPath, boolean strictNode, long limit, 
+                             boolean includeMergedRevisions, boolean omitLogText,
+                             ISVNLogEntryHandler handler) throws SVNException;
+
     /**
 	 * Gets entry locations in time. The location of an entry in a repository
      * may change from revision to revision. This method allows to trace entry locations 

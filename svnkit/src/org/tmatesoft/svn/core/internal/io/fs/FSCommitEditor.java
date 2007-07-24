@@ -33,6 +33,7 @@ import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  
 /**
@@ -179,7 +180,7 @@ public class FSCommitEditor implements ISVNEditor {
             myCommitter.makeDir(fullPath);
         }
 
-        DirBaton dirBaton = new DirBaton(FSRepository.SVN_INVALID_REVNUM, fullPath, isCopied);
+        DirBaton dirBaton = new DirBaton(SVNRepository.INVALID_REVISION, fullPath, isCopied);
         myDirsStack.push(dirBaton);
     }
 
@@ -243,7 +244,7 @@ public class FSCommitEditor implements ISVNEditor {
 
         if (haveRealChanges) {
             myTxnRoot.setProplist(parentPath.getRevNode(), properties);
-            myCommitter.addChange(path, parentPath.getRevNode().getId(), FSPathChangeKind.FS_PATH_CHANGE_MODIFY, false, true, FSRepository.SVN_INVALID_REVNUM, null);
+            myCommitter.addChange(path, parentPath.getRevNode().getId(), FSPathChangeKind.FS_PATH_CHANGE_MODIFY, false, true, SVNRepository.INVALID_REVISION, null);
         }
     }
     

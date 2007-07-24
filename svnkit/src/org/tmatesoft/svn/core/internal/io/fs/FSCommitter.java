@@ -36,6 +36,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNMergeInfoManager;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
+import org.tmatesoft.svn.core.io.SVNRepository;
 
 
 /**
@@ -73,7 +74,7 @@ public class FSCommitter {
         makePathMutable(parentPath.getParent(), path);
         myTxnRoot.deleteEntry(parentPath.getParent().getRevNode(), parentPath.getNameEntry());
         myTxnRoot.removeRevNodeFromCache(parentPath.getAbsPath());
-        addChange(path, parentPath.getRevNode().getId(), FSPathChangeKind.FS_PATH_CHANGE_DELETE, false, false, FSRepository.SVN_INVALID_REVNUM, null);
+        addChange(path, parentPath.getRevNode().getId(), FSPathChangeKind.FS_PATH_CHANGE_DELETE, false, false, SVNRepository.INVALID_REVISION, null);
     }
 
     public void changeNodeProperty(String path, String propName, String propValue) throws SVNException {
@@ -110,7 +111,7 @@ public class FSCommitter {
         }
 
         myTxnRoot.setProplist(parentPath.getRevNode(), properties);
-        addChange(path, parentPath.getRevNode().getId(), FSPathChangeKind.FS_PATH_CHANGE_MODIFY, false, true, FSRepository.SVN_INVALID_REVNUM, null);
+        addChange(path, parentPath.getRevNode().getId(), FSPathChangeKind.FS_PATH_CHANGE_MODIFY, false, true, SVNRepository.INVALID_REVISION, null);
     }
 
     public void makeCopy(FSRevisionRoot fromRoot, String fromPath, String toPath, boolean preserveHistory) throws SVNException {
@@ -162,7 +163,7 @@ public class FSCommitter {
         FSRevisionNode childNode = makeEntry(parentPath.getParent().getRevNode(), parentPath.getParent().getAbsPath(), parentPath.getNameEntry(), false, txnId);
 
         myTxnRoot.putRevNodeToCache(parentPath.getAbsPath(), childNode);
-        addChange(path, childNode.getId(), FSPathChangeKind.FS_PATH_CHANGE_ADD, false, false, FSRepository.SVN_INVALID_REVNUM, null);
+        addChange(path, childNode.getId(), FSPathChangeKind.FS_PATH_CHANGE_ADD, false, false, SVNRepository.INVALID_REVISION, null);
     }
 
     public void makeDir(String path) throws SVNException {
@@ -182,7 +183,7 @@ public class FSCommitter {
         FSRevisionNode subDirNode = makeEntry(parentPath.getParent().getRevNode(), parentPath.getParent().getAbsPath(), parentPath.getNameEntry(), true, txnId);
 
         myTxnRoot.putRevNodeToCache(parentPath.getAbsPath(), subDirNode);
-        addChange(path, subDirNode.getId(), FSPathChangeKind.FS_PATH_CHANGE_ADD, false, false, FSRepository.SVN_INVALID_REVNUM, null);
+        addChange(path, subDirNode.getId(), FSPathChangeKind.FS_PATH_CHANGE_ADD, false, false, SVNRepository.INVALID_REVISION, null);
     }
 
     public FSRevisionNode makeEntry(FSRevisionNode parent, String parentPath, String entryName, boolean isDir, String txnId) throws SVNException {
@@ -206,7 +207,7 @@ public class FSCommitter {
         newRevNode.setCreatedPath(SVNPathUtil.concatToAbs(parentPath, entryName));
         newRevNode.setCopyRootPath(parent.getCopyRootPath());
         newRevNode.setCopyRootRevision(parent.getCopyRootRevision());
-        newRevNode.setCopyFromRevision(FSRepository.SVN_INVALID_REVNUM);
+        newRevNode.setCopyFromRevision(SVNRepository.INVALID_REVISION);
         newRevNode.setCopyFromPath(null);
         FSID newNodeId = createNode(newRevNode, parent.getId().getCopyID(), txnId);
 
@@ -231,7 +232,7 @@ public class FSCommitter {
     }
 
     public long commitTxn() throws SVNException {
-        long newRevision = FSRepository.SVN_INVALID_REVNUM;
+        long newRevision = SVNRepository.INVALID_REVISION;
 
         while (true) {
             long youngishRev = myFSFS.getYoungestRevision();

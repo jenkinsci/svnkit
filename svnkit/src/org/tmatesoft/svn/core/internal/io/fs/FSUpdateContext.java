@@ -35,6 +35,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 
 
@@ -571,7 +572,7 @@ public class FSUpdateContext {
             if (related) {
                 getEditor().openDir(editPath, sourceRevision);
             } else {
-                getEditor().addDir(editPath, null, FSRepository.SVN_INVALID_REVNUM);
+                getEditor().addDir(editPath, null, SVNRepository.INVALID_REVISION);
             }
             diffDirs(sourceRevision, sourcePath, targetPath, editPath, pathInfo != null ? pathInfo.isStartEmpty() : false, wcDepth, requestedDepth);
             getEditor().closeDir();
@@ -579,7 +580,7 @@ public class FSUpdateContext {
             if (related) {
                 getEditor().openFile(editPath, sourceRevision);
             } else {
-                getEditor().addFile(editPath, null, FSRepository.SVN_INVALID_REVNUM);
+                getEditor().addFile(editPath, null, SVNRepository.INVALID_REVISION);
             }
             diffFiles(sourceRevision, sourcePath, targetPath, editPath, pathInfo != null ? pathInfo.getLockToken() : null);
             FSRevisionNode targetNode = getTargetRoot().getRevisionNode(targetPath);

@@ -57,7 +57,8 @@ public class SVNLogCommand extends SVNCommand implements ISVNLogEntryHandler {
     private boolean myReportPaths;
     private boolean myIsQuiet;
     private boolean myHasLogEntries;
-
+    private LinkedList myMergeStack;
+    
     public void run(InputStream in, PrintStream out, PrintStream err) throws SVNException {
         run(out, err);
     }
@@ -83,6 +84,7 @@ public class SVNLogCommand extends SVNCommand implements ISVNLogEntryHandler {
         boolean stopOnCopy = getCommandLine().hasArgument(SVNArgument.STOP_ON_COPY);
         myReportPaths = getCommandLine().hasArgument(SVNArgument.VERBOSE);
         myIsQuiet = getCommandLine().hasArgument(SVNArgument.QUIET);
+        boolean useMergeHistory = getCommandLine().hasArgument(SVNArgument.USE_MERGE_INFO);
         String limitStr = (String) getCommandLine().getArgumentValue(SVNArgument.LIMIT);
         myPrintStream = out;
         long limit = 0;
@@ -130,7 +132,9 @@ public class SVNLogCommand extends SVNCommand implements ISVNLogEntryHandler {
                 }
             }
             String[] paths = (String[]) targets.toArray(new String[targets.size()]);
-            logClient.doLog(SVNURL.parseURIEncoded(url), paths, pegRevision, startRevision ,endRevision, stopOnCopy, myReportPaths, limit, handler);
+            logClient.doLog(SVNURL.parseURIEncoded(url), paths, pegRevision, startRevision, 
+                            endRevision, stopOnCopy, myReportPaths, useMergeHistory, myIsQuiet, 
+                            limit, handler);
         } else if (getCommandLine().hasPaths()) {
             if (getCommandLine().getPathCount() > 1) {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "When specifying working copy paths, only one target may be given");
@@ -150,7 +154,8 @@ public class SVNLogCommand extends SVNCommand implements ISVNLogEntryHandler {
             File[] paths = (File[]) targets.toArray(new File[targets.size()]);
             SVNPathList pathList = SVNPathList.create(paths, pegRevision);
             SVNCompositePathList combinedPathList = SVNCompositePathList.create(pathList, changelist, false);
-            logClient.doLog(combinedPathList, startRevision ,endRevision, stopOnCopy, myReportPaths, limit, handler);
+            logClient.doLog(combinedPathList, startRevision, endRevision, stopOnCopy, 
+                            myReportPaths, useMergeHistory, myIsQuiet, limit, handler);
         }
         if (getCommandLine().hasArgument(SVNArgument.XML)) {
             if (!getCommandLine().hasArgument(SVNArgument.INCREMENTAL)) {
@@ -198,10 +203,52 @@ public class SVNLogCommand extends SVNCommand implements ISVNLogEntryHandler {
                 result.append("\n");
             }
         }
+        
+        if (myMergeStack != null && !myMergeStack.isEmpty()) {
+            result.append("Result of a merge from:");
+            MergeFrame frame = (MergeFrame) myMergeStack.getLast();
+            for (Iterator frames = myMergeStack.iterator(); frames.hasNext();) {
+                MergeFrame outputFrame = (MergeFrame) frames.next();
+                result.append(" r");
+                result.append(outputFrame.myMergeRevision);
+                if (frames.hasNext()) {
+                    result.append(',');
+                } else {
+                    result.append('\n');
+                }
+            }
+            frame.myNumberOfChildrenRemaining--;
+        }
+        
         if (!myIsQuiet) {
             result.append("\n" + message + "\n");
+        }
+        
+        if (logEntry.getNumberOfChildren() > 0) {
+            MergeFrame frame = new MergeFrame();
+            frame.myMergeRevision = logEntry.getRevision();
+            frame.myNumberOfChildrenRemaining = logEntry.getNumberOfChildren();
+            if (myMergeStack == null) {
+                myMergeStack = new LinkedList();
+            }
+            myMergeStack.addLast(frame);
+        } else {
+            while(myMergeStack != null && !myMergeStack.isEmpty()) {
+                MergeFrame frame = (MergeFrame) myMergeStack.getLast();
+                if (frame.myNumberOfChildrenRemaining == 0) {
+                    myMergeStack.removeLast();
+                } else {
+                    break;
+                }
+            }
         }
         myPrintStream.print(result.toString());
         myPrintStream.flush();
     }
+    
+    private class MergeFrame {
+        private long myMergeRevision;
+        private long myNumberOfChildrenRemaining;
+    }
+    
 }

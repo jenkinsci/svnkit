@@ -42,7 +42,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
-import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
@@ -640,7 +639,7 @@ public class FSFS {
         revNode.setPredecessorId(sourceNode.getId());
         revNode.setCount(revNode.getCount() + 1);
         revNode.setCopyFromPath(null);
-        revNode.setCopyFromRevision(FSRepository.SVN_INVALID_REVNUM);
+        revNode.setCopyFromRevision(SVNRepository.INVALID_REVISION);
         revNode.setId(FSID.createTxnId(sourceNode.getId().getNodeID(), sourceNode.getId().getCopyID(), txnID));
         putTxnRevisionNode(revNode.getId(), revNode);
     }
@@ -990,7 +989,7 @@ public class FSFS {
         if (endNode != null) {
             FSID endNodeId = endNode.getId();
             if (startNodeId.compareTo(endNodeId) != -1) {
-                FSClosestCopy closestCopy = getClosestCopy(endRoot, path);
+                FSClosestCopy closestCopy = endRoot.getClosestCopy(path);
                 if (closestCopy == null || closestCopy.getRevisionRoot() == null ||
                         closestCopy.getRevisionRoot().getRevision() <= startRev) {
                     return SVNRepository.INVALID_REVISION;
@@ -1016,7 +1015,7 @@ public class FSFS {
             if (node != null) {
                 FSID currentNodeId = node.getId();
                 int nodeRelationship = startNodeId.compareTo(currentNodeId);
-                FSClosestCopy closestCopy = getClosestCopy(root, path);
+                FSClosestCopy closestCopy = root.getClosestCopy(path);
                 if (nodeRelationship == -1 || (closestCopy != null && 
                     closestCopy.getRevisionRoot() != null && 
                     closestCopy.getRevisionRoot().getRevision() > startRev)) {
@@ -1083,32 +1082,6 @@ public class FSFS {
     
     public static void setDefaultMaxFilesPerDirectory(long maxFilesPerDirectory) {
         DEFAULT_MAX_FILES_PER_DIRECTORY = maxFilesPerDirectory;
-    }
-
-    public FSClosestCopy getClosestCopy(FSRevisionRoot root, String path) throws SVNException {
-        FSParentPath parentPath = root.openPath(path, true, true);
-        SVNLocationEntry copyDstEntry = FSNodeHistory.findYoungestCopyroot(myRepositoryRoot, parentPath);
-        if (copyDstEntry == null || copyDstEntry.getRevision() == 0) {
-            return null;
-        }
-
-        FSRevisionRoot copyDstRoot = createRevisionRoot(copyDstEntry.getRevision());
-        if (copyDstRoot.checkNodeKind(path) == SVNNodeKind.NONE) {
-            return null;
-        }
-        FSParentPath copyDstParentPath = copyDstRoot.openPath(path, true, true);
-        FSRevisionNode copyDstNode = copyDstParentPath.getRevNode();
-        if (!copyDstNode.getId().isRelated(parentPath.getRevNode().getId())) {
-            return null;
-        }
-
-        long createdRev = copyDstNode.getId().getRevision();
-        if (createdRev == copyDstEntry.getRevision()) {
-            if (copyDstNode.getPredecessorId() == null) {
-                return null;
-    }
-        }
-        return new FSClosestCopy(copyDstRoot, copyDstEntry.getPath());
     }
 
     protected FSFile getTransactionRevisionPrototypeFile(String txnID) {

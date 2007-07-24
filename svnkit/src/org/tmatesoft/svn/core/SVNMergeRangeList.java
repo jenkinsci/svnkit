@@ -13,7 +13,11 @@ package org.tmatesoft.svn.core;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNDebugLog;
@@ -140,6 +144,58 @@ public class SVNMergeRangeList {
      */
     public SVNMergeRangeList diff(SVNMergeRangeList rangeList) {
         return removeOrIntersect(rangeList, true);
+    }
+    
+    public long countRevisions() {
+        long revCount = 0;
+        for (int i = 0; i < myRanges.length; i++) {
+            SVNMergeRange range = myRanges[i];
+            revCount += range.getEndRevision() - range.getStartRevision() + 1;
+        }
+        return revCount;
+    }
+    
+    public long[] toRevisionsArray() {
+        List revs = new LinkedList();
+        for (int i = 0; i < myRanges.length; i++) {
+            SVNMergeRange range = myRanges[i];
+            for (long rev = range.getStartRevision(); rev <= range.getEndRevision(); rev ++) {
+                revs.add(new Long(rev));
+            }
+        }
+
+        Collections.sort(revs, new Comparator() {
+            public int compare(Object o1, Object o2) {
+                Long rO1 = (Long) o1;
+                Long rO2 = (Long) o2;
+                
+                long r1 = rO1.longValue();
+                long r2 = rO2.longValue();
+                
+                if (r1 == r2) {
+                    return 0;
+                }
+                return r1 < r2 ? 1 : -1;
+            }
+        });
+        
+        long[] revisionsArray = new long[revs.size()];
+        int i = 0;
+        for (Iterator revsIter = revs.iterator(); revsIter.hasNext();) {
+            Long revisionObject = (Long) revsIter.next();
+            revisionsArray[i++] = revisionObject.longValue();
+        }
+        return revisionsArray; 
+    }
+    
+    public boolean includes(long revision) {
+        for (int i = 0; i < myRanges.length; i++) {
+            SVNMergeRange range = myRanges[i];
+            if (revision >= range.getStartRevision() && revision <= range.getEndRevision()) {
+                return true;
+            }
+        }
+        return false;
     }
     
     private SVNMergeRangeList removeOrIntersect(SVNMergeRangeList rangeList, boolean remove) {

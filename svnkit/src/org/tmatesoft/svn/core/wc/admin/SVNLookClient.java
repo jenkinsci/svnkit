@@ -1032,10 +1032,10 @@ public class SVNLookClient extends SVNBasicClient {
         }
 
         FSRevisionRoot root = fsfs.createRevisionRoot(end);
-        FSNodeHistory history = FSNodeHistory.getNodeHistory(root, path);
+        FSNodeHistory history = root.getNodeHistory(path);
 
         do {
-            history = history.fsHistoryPrev(crossCopies, fsfs);
+            history = history.getPreviousHistory(crossCopies);
             if (history == null) {
                 break;
             }

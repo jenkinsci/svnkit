@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
  * @version 1.1.1
@@ -280,7 +281,7 @@ public class FSRevisionNode {
         String copyfrom = (String) headers.get(FSRevisionNode.HEADER_COPYFROM);
         if (copyfrom == null) {
             revNode.setCopyFromPath(null);
-            revNode.setCopyFromRevision(FSRepository.SVN_INVALID_REVNUM);
+            revNode.setCopyFromRevision(SVNRepository.INVALID_REVISION);
         } else {
             parseCopyFrom(copyfrom, revNode);
         }

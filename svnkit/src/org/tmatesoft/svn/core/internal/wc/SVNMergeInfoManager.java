@@ -78,17 +78,27 @@ public class SVNMergeInfoManager {
         return mergeInfo == null ? new TreeMap() : mergeInfo;
     }
     
-    public Map getMergeInfoForTree(String[] paths, FSRevisionRoot root) throws SVNException {
+    public Map getMergeInfoForTree(String[] paths, FSRevisionRoot root, ISVNMergeInfoFilter filter) throws SVNException {
         Map pathsToMergeInfos = null; 
         try {
             myDBProcessor.openDB(root.getOwner().getDBRoot());
+
             pathsToMergeInfos = getMergeInfoImpl(paths, root, SVNMergeInfoInheritance.INHERITED);
             long revision = root.getRevision();
             for (int i = 0; i < paths.length; i++) {
                 String path = paths[i];
                 SVNMergeInfo mergeInfo = (SVNMergeInfo) pathsToMergeInfos.get(path); 
-                Map srcsToRangeLists = mergeInfo != null ? mergeInfo.getMergeSourcesToMergeLists() : null;
-                srcsToRangeLists = myDBProcessor.getMergeInfoForChildren(path, revision, srcsToRangeLists);
+                Map srcsToRangeLists = mergeInfo != null ? mergeInfo.getMergeSourcesToMergeLists() 
+                                                         : new TreeMap();
+                if (filter != null && filter.omitMergeInfo(path, srcsToRangeLists)) {
+                    pathsToMergeInfos.remove(path);
+                    continue;
+                }
+                
+                srcsToRangeLists = myDBProcessor.getMergeInfoForChildren(path, 
+                                                                         revision, 
+                                                                         srcsToRangeLists, 
+                                                                         filter);
                 if (mergeInfo == null) {
                     mergeInfo = new SVNMergeInfo(path, srcsToRangeLists);
                     pathsToMergeInfos.put(path, mergeInfo);
@@ -97,6 +107,7 @@ public class SVNMergeInfoManager {
         } finally {
             myDBProcessor.closeDB();
         }
+
         return pathsToMergeInfos == null ? new TreeMap() : pathsToMergeInfos;
     }
     
@@ -210,8 +221,8 @@ public class SVNMergeInfoManager {
     public static Map mergeMergeInfos(Map originalSrcsToRangeLists, Map changedSrcsToRangeLists) {
         originalSrcsToRangeLists = originalSrcsToRangeLists == null ? new TreeMap() : originalSrcsToRangeLists;
         changedSrcsToRangeLists = changedSrcsToRangeLists == null ? Collections.EMPTY_MAP : changedSrcsToRangeLists;
-        String[] paths1 = (String[]) originalSrcsToRangeLists.keySet().toArray();
-        String[] paths2 = (String[]) changedSrcsToRangeLists.keySet().toArray();
+        String[] paths1 = (String[]) originalSrcsToRangeLists.keySet().toArray(new String[originalSrcsToRangeLists.size()]);
+        String[] paths2 = (String[]) changedSrcsToRangeLists.keySet().toArray(new String[changedSrcsToRangeLists.size()]);
         int i = 0;
         int j = 0;
         while (i < paths1.length && j < paths2.length) {
@@ -423,6 +434,17 @@ public class SVNMergeInfoManager {
             return deleted.isEmpty() && added.isEmpty();
         }
         return false;
+    }
+    
+    public static String findMergeSource(long revision, Map mergeInfo) {
+        for (Iterator paths = mergeInfo.keySet().iterator(); paths.hasNext();) {
+            String path = (String) paths.next();
+            SVNMergeRangeList rangeList = (SVNMergeRangeList) mergeInfo.get(path);
+            if (rangeList.includes(revision)) {
+                return path;
+            }
+        }
+        return null;
     }
     
     private static void fillEmptyRangeListsUniqueToChild(Map emptyRangeMergeInfo, 

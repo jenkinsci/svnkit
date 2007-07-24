@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 
@@ -199,7 +200,7 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
             rep.setSize(offset - myDeltaStart);
             rep.setExpandedSize(myRepSize);
             rep.setTxnId(myRevNode.getId().getTxnID());
-            rep.setRevision(FSRepository.SVN_INVALID_REVNUM);
+            rep.setRevision(SVNRepository.INVALID_REVISION);
 
             rep.setHexDigest(SVNFileUtil.toHexDigest(myDigest));
 

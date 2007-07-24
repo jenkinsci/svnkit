@@ -96,6 +96,7 @@ public class SVNSQLiteDBProcessor implements ISVNDBProcessor {
         if (myConnection != null) {
             try {
                 myConnection.close();
+                myConnection = null;
                 dispose();
             } catch (SQLException sqle) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_SQLITE_ERROR, sqle.getLocalizedMessage());
@@ -160,7 +161,8 @@ public class SVNSQLiteDBProcessor implements ISVNDBProcessor {
         return result;
     }
 
-    public Map getMergeInfoForChildren(String parentPath, long revision, Map parentMergeInfo) throws SVNException {
+    public Map getMergeInfoForChildren(String parentPath, long revision, Map parentMergeInfo, 
+                                       ISVNMergeInfoFilter filter) throws SVNException {
         parentMergeInfo = parentMergeInfo == null ? new TreeMap() : parentMergeInfo;
         PreparedStatement statement = createPathLikeSelectFromMergeInfoChangedStatement();
         try {
@@ -172,7 +174,12 @@ public class SVNSQLiteDBProcessor implements ISVNDBProcessor {
                 String path = result.getString(2);
                 if (lastMergedRevision > 0) {
                     Map srcsToRangeLists = parseMergeInfoFromDB(path, lastMergedRevision);
-                    SVNMergeInfoManager.mergeMergeInfos(parentMergeInfo, srcsToRangeLists);
+                    boolean omitMergeInfo = filter != null && filter.omitMergeInfo(path, 
+                                                                                   srcsToRangeLists); 
+                    if (!omitMergeInfo) {
+                        parentMergeInfo = SVNMergeInfoManager.mergeMergeInfos(parentMergeInfo, 
+                                                                              srcsToRangeLists);
+                    }
                 }
             }
         } catch (SQLException sqle) {

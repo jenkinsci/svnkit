@@ -35,7 +35,6 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
-import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -69,7 +68,6 @@ import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
  * @author  TMate Software Ltd.
  */
 public class FSRepository extends SVNRepository implements ISVNReporter {
-    public static final int SVN_INVALID_REVNUM = -1;
 
     private File myReposRootDir;
     private FSUpdateContext myReporterContext;
@@ -297,10 +295,10 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             }
             LinkedList locationEntries = new LinkedList();
 
-            FSNodeHistory history = FSNodeHistory.getNodeHistory(root, path);
+            FSNodeHistory history = root.getNodeHistory(path);
 
             while (true) {
-                history = history.fsHistoryPrev(true, myFSFS);
+                history = history.getPreviousHistory(true);
                 if (history == null) {
                     break;
                 }
@@ -374,11 +372,14 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
     }
 
-    public long log(String[] targetPaths, long startRevision, long endRevision, boolean discoverChangedPaths, boolean strictNode, long limit, ISVNLogEntryHandler handler) throws SVNException {
+    public long log(String[] targetPaths, long startRevision, long endRevision, boolean 
+                    discoverChangedPaths, boolean strictNode, long limit, 
+                    boolean includeMergedRevisions, boolean omitLogText, 
+                    ISVNLogEntryHandler handler) throws SVNException {
         try {
             openRepository();
             if (targetPaths == null || targetPaths.length == 0) {
-                targetPaths = new String[] {""};
+                targetPaths = new String[] {"/"};
             }
             String[] absPaths = new String[targetPaths.length];
             for (int i = 0; i < targetPaths.length; i++) {
@@ -405,89 +406,22 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                 SVNErrorManager.error(err);
             }
 
-            if (startRevision > endRevision) {
+            boolean isDescendingOrder = startRevision >= endRevision;
+            if (isDescendingOrder) {
                 histStart = endRevision;
                 histEnd = startRevision;
             }
 
-            long sendCount = 0;
-            if (absPaths.length == 1 && "/".equals(absPaths[0])) {
-                sendCount = histEnd - histStart + 1;
-                if (limit != 0 && sendCount > limit) {
-                    sendCount = limit;
-                }
-                for (int i = 0; i < sendCount; i++) {
-                    long rev = histStart + i;
-                    if (startRevision > endRevision) {
-                        rev = histEnd - i;
-                    }
-                    if (handler != null) {
-                        sendChanges(rev, discoverChangedPaths, handler);
-                    }
-                }
-                return sendCount;
-            }
-
-            LinkedList histories = new LinkedList();
-            FSRevisionRoot root = myFSFS.createRevisionRoot(histEnd);
-            for (int i = 0; i < absPaths.length; i++) {
-                String path = absPaths[i];
-                FSNodeHistory hist = FSNodeHistory.getNodeHistory(root, path);
-                LogPathInfo info = new LogPathInfo(hist);
-                info.pickUpNextHistory(strictNode, histStart);
-                histories.addLast(info);
-            }
-
-            LinkedList revisions = null;
-            boolean anyHistoriesLeft = true;
-            for (long currentRev = histEnd; currentRev >= histStart && anyHistoriesLeft; currentRev = getNextHistoryRevision(histories)) {
-                boolean changed = false;
-                anyHistoriesLeft = false;
-                for (ListIterator infoes = histories.listIterator(); infoes.hasNext();) {
-                    LogPathInfo info = (LogPathInfo) infoes.next();
-
-                    if (info.checkHistory(currentRev, strictNode, histStart)) {
-                        changed = true;
-                    }
-                    
-                    if (info.getHistory() != null) {
-                        anyHistoriesLeft = true;
-                    }
-                }
-
-                if (changed) {
-                    if (startRevision > endRevision) {
-                        if (handler != null) {
-                            sendChanges(currentRev, discoverChangedPaths, handler);
-                        }
-                        if (limit != 0 && ++sendCount >= limit) {
-                            break;
-                        }
-                    } else {
-                        if (revisions == null) {
-                            revisions = new LinkedList();
-                        }
-                        revisions.addFirst(new Long(currentRev));
-                    }
-                }
-            }
-
-            if (revisions != null) {
-                int i = 0;
-                for (ListIterator revs = revisions.listIterator(); revs.hasNext();) {
-                    sendChanges(((Long) revs.next()).longValue(), discoverChangedPaths, handler);
-                    if (limit != 0 && ++i >= limit) {
-                        break;
-                    }
-                }
-                return i;
-            }
-            return sendCount;
+            FSLog logDriver = new FSLog(myFSFS, absPaths, limit, histStart, histEnd, 
+                                        isDescendingOrder, discoverChangedPaths, strictNode, 
+                                        includeMergedRevisions, omitLogText, handler);
+            
+            return logDriver.runLog();
         } finally {
             closeRepository();
         }
     }
-
+    
     public int getLocations(String path, long pegRevision, long[] revisions, ISVNLocationEntryHandler handler) throws SVNException {
         assertValidRevision(pegRevision);
         for (int i = 0; i < revisions.length; i++) {
@@ -523,7 +457,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             FSRevisionRoot root = null;
             while (count < revisions.length) {
                 root = myFSFS.createRevisionRoot(revision);
-                FSClosestCopy tempClCopy = myFSFS.getClosestCopy(root, path);
+                FSClosestCopy tempClCopy = root.getClosestCopy(path);
                 if (tempClCopy == null) {
                     break;
                 }
@@ -750,7 +684,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     }
 
     public void deletePath(String path) throws SVNException {
-        myReporterContext.writePathInfoToReportFile(path, null, null, FSRepository.SVN_INVALID_REVNUM, false, SVNDepth.INFINITY);
+        myReporterContext.writePathInfoToReportFile(path, null, null, SVNRepository.INVALID_REVISION, false, SVNDepth.INFINITY);
     }
 
     public void linkPath(SVNURL url, String path, String lockToken, long revision, boolean startEmpty) throws SVNException {
@@ -835,12 +769,10 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             closeRepository();
         }
     }
-
     
     void closeRepository() {
         unlock();
     }
-    
     
     protected ISVNEditor getCommitEditorInternal(Map locks, boolean keepLocks, Map revProps, ISVNWorkspaceMediator mediator) throws SVNException {
         try {
@@ -955,7 +887,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         String lastAuthor = null;
         String log = null;
         Date lastCommitDate = null;
-        long revision = SVN_INVALID_REVNUM;
+        long revision = SVNRepository.INVALID_REVISION;
         if ((entryFields & SVNDirEntry.DIRENT_TIME) != 0 || 
                 (entryFields & SVNDirEntry.DIRENT_LAST_AUTHOR) != 0 ||
                 (entryFields & SVNDirEntry.DIRENT_CREATED_REVISION) != 0 || 
@@ -967,39 +899,15 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                 log = (String) revProps.get(SVNRevisionProperty.LOG);
                 String timeString = (String) revProps.get(SVNRevisionProperty.DATE);
                 lastCommitDate = timeString != null ? SVNTimeUtil.parseDateString(timeString) : null;
+            }
         }
-    }
 
         SVNURL entryURL = parentURL.appendPath(repEntry.getName(), false);
         SVNDirEntry dirEntry = new SVNDirEntry(entryURL, repEntry.getName(), kind, size, hasProps, revision, lastCommitDate, lastAuthor, log);
         dirEntry.setRelativePath(repEntry.getName());
         return dirEntry;
-        }
-    
-
-    private void sendChanges(long revNum, boolean discoverChangedPaths, ISVNLogEntryHandler handler) throws SVNException {
-        Map revisionProps = myFSFS.getRevisionProperties(revNum);
-        Map changedPaths = null;
-        String author = null;
-        Date date = null;
-        String message = null;
-        
-        if (revisionProps != null) {
-            author = (String) revisionProps.get(SVNRevisionProperty.AUTHOR);
-            String datestamp = (String) revisionProps.get(SVNRevisionProperty.DATE);
-            message = (String) revisionProps.get(SVNRevisionProperty.LOG);
-            date = datestamp != null ? SVNTimeUtil.parseDateString(datestamp) : null;
-    }
-
-        if (revNum > 0 && discoverChangedPaths) {
-            FSRevisionRoot root = myFSFS.createRevisionRoot(revNum);
-            changedPaths = root.detectChanged();
-        }
-        changedPaths = changedPaths == null ? new HashMap() : changedPaths;
-        handler.handleLogEntry(new SVNLogEntry(changedPaths, revNum, author, date, message));
     }
     
-
     private void makeReporterContext(long targetRevision, String target, SVNURL switchURL, SVNDepth depth, boolean ignoreAncestry, boolean textDeltas, ISVNEditor editor) throws SVNException {
         target = target == null ? "" : target;
 
@@ -1035,21 +943,6 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             myReporterContext.reset(this, myFSFS, targetRevision, SVNFileUtil.createTempFile("report", ".tmp"), target, fullTargetPath, switchURL == null ? false : true, depth, ignoreAncestry, textDeltas, editor);
             }
         }
-
-    private long getNextHistoryRevision(LinkedList histories) {
-        long nextRevision = FSRepository.SVN_INVALID_REVNUM;
-        for (ListIterator infoes = histories.listIterator(); infoes.hasNext();) {
-            LogPathInfo info = (LogPathInfo) infoes.next();
-            if (info.getHistory() == null) {
-                continue;
-            }
-            long historyRevision = info.getHistoryRevision();
-            if (historyRevision > nextRevision) {
-                nextRevision = historyRevision;
-            }
-        }
-        return nextRevision;
-    }
 
     private String getUserName() throws SVNException {
         if (getLocation().getUserInfo() != null && getLocation().getUserInfo().trim().length() > 0) {
@@ -1087,54 +980,6 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             }
         }
         return System.getProperty("user.name");
-    }
-
-    private class LogPathInfo {
-
-        private FSNodeHistory myHistory;
-
-        private LogPathInfo(FSNodeHistory hist) {
-            myHistory = hist;
-        }
-
-        public FSNodeHistory getHistory() {
-            return myHistory;
-        }
-
-        public long getHistoryRevision() {
-            return myHistory == null ? FSRepository.SVN_INVALID_REVNUM : myHistory.getHistoryEntry().getRevision();
-        }
-
-        public void pickUpNextHistory(boolean strict, long start) throws SVNException {
-            if (myHistory == null) {
-                return;
-    }
-            FSNodeHistory tempHist = myHistory.fsHistoryPrev(strict ? false : true, myFSFS);
-            if (tempHist == null) {
-                myHistory = null;
-                return;
-            }
-            
-            myHistory = tempHist;
-
-            if (myHistory.getHistoryEntry().getRevision() < start) {
-                myHistory = null;
-                return;
-            }
-        }
-
-        public boolean checkHistory(long currentRev, boolean strict, long start) throws SVNException {
-            if (myHistory == null) {
-                return false;
-            }
-
-            if (getHistoryRevision() < currentRev) {
-                return false;
-            }
-
-            pickUpNextHistory(strict, start);
-            return true;
-        }
     }
 
 }

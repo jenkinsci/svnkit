@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.io.SVNRepository;
 
 
 /**
@@ -422,7 +423,7 @@ public class FSFile {
         if (read() == '+') {
             return readNumberFromReportFile();
         }
-        return FSRepository.SVN_INVALID_REVNUM;
+        return SVNRepository.INVALID_REVISION;
     }
     
 }

@@ -32,7 +32,7 @@ public interface ISVNDBProcessor {
 
     public Map parseMergeInfoFromDB(String path, long lastMergedRevision) throws SVNException;
 
-    public Map getMergeInfoForChildren(String path, long revision, Map mergeInfo) throws SVNException;
+    public Map getMergeInfoForChildren(String path, long revision, Map mergeInfo, ISVNMergeInfoFilter filter) throws SVNException;
         
     public void beginTransaction() throws SVNException;
     

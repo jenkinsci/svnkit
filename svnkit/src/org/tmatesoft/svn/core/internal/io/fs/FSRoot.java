@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
  * @version 1.1.1
@@ -45,8 +46,7 @@ public abstract class FSRoot {
     }
 
     public FSRevisionNode getRevisionNode(String path) throws SVNException {
-        String canonPath = path;
-        FSRevisionNode node = fetchRevNodeFromCache(canonPath);
+        FSRevisionNode node = fetchRevNodeFromCache(path);
         if (node == null) {
             FSParentPath parentPath = openPath(path, true, false);
             node = parentPath.getRevNode();
@@ -177,7 +177,7 @@ public abstract class FSRoot {
         mapChanges = mapChanges != null ? mapChanges : new HashMap();
         FSPathChange newChange = null;
         String copyfromPath = null;
-        long copyfromRevision = FSRepository.SVN_INVALID_REVNUM;
+        long copyfromRevision = SVNRepository.INVALID_REVISION;
 
         FSPathChange oldChange = (FSPathChange) mapChanges.get(change.getPath());
         if (oldChange != null) {
@@ -225,12 +225,12 @@ public abstract class FSRoot {
                 }
 
                 copyfromPath = null;
-                copyfromRevision = FSRepository.SVN_INVALID_REVNUM;
+                copyfromRevision = SVNRepository.INVALID_REVISION;
 
             } else if (FSPathChangeKind.FS_PATH_CHANGE_RESET == change.getChangeKind()) {
                 oldChange = null;
                 copyfromPath = null;
-                copyfromRevision = FSRepository.SVN_INVALID_REVNUM;
+                copyfromRevision = SVNRepository.INVALID_REVISION;
                 mapChanges.remove(change.getPath());
             }
 
