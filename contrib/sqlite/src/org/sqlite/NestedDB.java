@@ -1,6 +1,7 @@
 package org.sqlite;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.SQLException;
 
@@ -34,12 +35,20 @@ final class NestedDB extends DB implements Runtime.CallJavaCB
         File file = new File(filename);
         File root = file.getParentFile();
         filename = "/" + file.getName();
+        
+        File tmpDir;
+        try {
+            tmpDir = new File(System.getProperty("java.io.tmpdir")).getCanonicalFile();
+        } catch (IOException e1) {
+            tmpDir = new File(System.getProperty("java.io.tmpdir")).getAbsoluteFile();
+        }
 
-        // start the nestedvm runtime
         try {
             rt = (Runtime)Class.forName("org.sqlite.SQLite").newInstance();
             GlobalState gs = new UnixRuntime.GlobalState(255, false);
             gs.addMount("/", new UnixRuntime.HostFS(root));
+            gs.addMount("/tmp", new UnixRuntime.HostFS(tmpDir));
+            gs.addMount("/dev", new UnixRuntime.DevFS());
             ((UnixRuntime) rt).setGlobalState(gs);
             rt.start();
         } catch (Exception e) {

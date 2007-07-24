@@ -30,6 +30,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 
 /**
@@ -95,9 +96,11 @@ public class SVNSQLiteDBProcessor implements ISVNDBProcessor {
     public void closeDB() throws SVNException {
         if (myConnection != null) {
             try {
-                myConnection.close();
-                myConnection = null;
                 dispose();
+                SVNDebugLog.getDefaultLog().info("statements disposed");
+                myConnection.close();
+                SVNDebugLog.getDefaultLog().info("connection closed");
+                myConnection = null;
             } catch (SQLException sqle) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_SQLITE_ERROR, sqle.getLocalizedMessage());
                 SVNErrorManager.error(err, sqle);
@@ -127,6 +130,8 @@ public class SVNSQLiteDBProcessor implements ISVNDBProcessor {
         try {
             statement.setString(1, path);
             statement.setLong(2, lastMergedRevision);
+            SVNDebugLog.getDefaultLog().info("statement about to execute: " + path + "," + lastMergedRevision);
+            SVNDebugLog.getDefaultLog().info("connection: " + statement.getConnection());
             ResultSet rows = statement.executeQuery();
             if (!rows.isBeforeFirst()) {
                 return result;
@@ -406,10 +411,13 @@ public class SVNSQLiteDBProcessor implements ISVNDBProcessor {
         if (myConnection == null) {
             try {
                 myConnection = DriverManager.getConnection("jdbc:sqlite:" + myDBPath);
+                SVNDebugLog.getDefaultLog().info("connection created: " + myDBPath);
             } catch (SQLException sqle) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_SQLITE_ERROR, sqle.getLocalizedMessage());
                 SVNErrorManager.error(err, sqle);
             }
+        } else {
+            SVNDebugLog.getDefaultLog().info("connection already exists");
         }
         return myConnection;
     }

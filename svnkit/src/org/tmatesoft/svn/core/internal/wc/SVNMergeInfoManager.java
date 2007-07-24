@@ -201,7 +201,7 @@ public class SVNMergeInfoManager {
     }
     
     private Map combineRanges(Map srcPathsToRangeLists) {
-        String[] paths = (String[]) srcPathsToRangeLists.keySet().toArray();
+        String[] paths = (String[]) srcPathsToRangeLists.keySet().toArray(new String[srcPathsToRangeLists.keySet().size()]);
         for (int i = 0; i < paths.length; i++) {
             String path = paths[i];
             SVNMergeRangeList rangeList = (SVNMergeRangeList) srcPathsToRangeLists.get(path);
