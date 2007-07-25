@@ -7,6 +7,10 @@ import org.xml.sax.Attributes;
 
 public class DAVPropertiesHandler extends BasicDAVHandler {
 
+    public static void generatePropertiesResponse(StringBuffer body, DAVElement[] properties){
+
+    }
+
     protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
     }
 

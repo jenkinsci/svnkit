@@ -23,6 +23,7 @@ contrib/sequence/src/de/regnis/q/sequence/line/QSequenceLineRAFileData.java -tex
 contrib/sequence/src/de/regnis/q/sequence/line/QSequenceLineRAFileDataStream.java -text
 contrib/sequence/src/de/regnis/q/sequence/line/QSequenceLineResult.java -text
 contrib/sequence/src/de/regnis/q/sequence/media/QSequenceIntMedia.java -text
+contrib/servlet-api/servlet-api-2.3src.zip -text
 contrib/servlet-api/servlet-api.jar -text
 contrib/sqlite/SQLITEJDBC-LICENSE -text
 contrib/sqlite/sqlitejdbc.jar -text

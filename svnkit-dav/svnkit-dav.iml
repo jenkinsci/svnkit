@@ -19,7 +19,9 @@
           <root url="jar://$MODULE_DIR$/../contrib/servlet-api/servlet-api.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/../contrib/servlet-api/servlet-api-2.3src.zip!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntryProperties />
@@ -61,6 +63,11 @@
       <attribute name="method" value="0" />
       <attribute name="URI" value="&lt;N/A&gt;" />
       <url>jar://$MODULE_DIR$/../contrib/servlet-api/servlet-api.jar!/</url>
+    </containerElement>
+    <containerElement type="library" level="module">
+      <attribute name="method" value="0" />
+      <attribute name="URI" value="/WEB-INF/lib/sqlitejdbc.jar" />
+      <url>jar://$MODULE_DIR$/../contrib/sqlite/sqlitejdbc.jar!/</url>
     </containerElement>
     <deploymentDescriptor name="web.xml" url="file://$MODULE_DIR$/WEB-INF/web.xml" optional="false" version="2.4" />
     <webroots>
