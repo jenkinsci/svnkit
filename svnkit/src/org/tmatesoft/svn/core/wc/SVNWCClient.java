@@ -908,8 +908,10 @@ public class SVNWCClient extends SVNBasicClient {
      * @param  path                        a path to be put under version 
      *                                     control (will be added to a repository
      *                                     in next commit)
-     * @param  force                       <span class="javakeyword">true</span> to
-     *                                     force the operation to run
+     * @param  force                       when <span class="javakeyword">true</span> forces the operation 
+     *                                     to run on already versioned files or directories without reporting 
+     *                                     error. When ran recursively, all unversioned files and directories 
+     *                                     in a tree will be scheduled for addition.
      * @param  mkdir                       if <span class="javakeyword">true</span> - 
      *                                     creates a new directory and schedules it for
      *                                     addition
@@ -942,8 +944,10 @@ public class SVNWCClient extends SVNBasicClient {
      * @param  path                        a path to be put under version 
      *                                     control (will be added to a repository
      *                                     in next commit)
-     * @param  force                       <span class="javakeyword">true</span> to
-     *                                     force the operation to run
+     * @param  force                       when <span class="javakeyword">true</span> forces the operation 
+     *                                     to run on already versioned files or directories without reporting 
+     *                                     error. When ran recursively, all unversioned files and directories 
+     *                                     in a tree will be scheduled for addition.
      * @param  mkdir                       if <span class="javakeyword">true</span> - 
      *                                     creates a new directory and schedules it for
      *                                     addition
@@ -1126,7 +1130,7 @@ public class SVNWCClient extends SVNBasicClient {
      * Reverts all local changes made to a Working Copy item(s) thus
      * bringing it to a 'pristine' state.
      * 
-     * @param  paths           a WC paths to perform a revert on
+     * @param  path            a WC path to perform a revert on
      * @param  recursive       <span class="javakeyword">true</span> to
      *                         descend recursively (relevant for directories)
      * @throws SVNException    if one of the following is true:
