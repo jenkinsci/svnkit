@@ -7,6 +7,7 @@ contrib/sequence/bin-test
 contrib/sqlite/bin
 doc/examples/bin
 /lib
+svnkit-dav/bin
 svnkit-eclipse/bin
 svnkit-test/bin
 svnkit-test/python-tests-log.xml

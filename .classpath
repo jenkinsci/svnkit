@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" output="svnkit/bin" path="svnkit/src"/>
+	<classpathentry kind="src" output="svnkit-dav/bin" path="svnkit-dav/src"/>
 	<classpathentry kind="src" output="doc/examples/bin" path="doc/examples/src"/>
 	<classpathentry kind="src" output="svnkit-eclipse/bin" path="svnkit-eclipse/org.tmatesoft.svnkit/src"/>
 	<classpathentry kind="src" output="svnkit-test/bin" path="svnkit-test/src"/>
@@ -13,5 +14,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="lib" path="contrib/sqlite/sqlitejdbc.jar" sourcepath="C:/test/sqlite-nested/src"/>
+	<classpathentry kind="lib" path="contrib/servlet-api/servlet-api.jar"/>
 	<classpathentry kind="output" path="svnkit/bin"/>
 </classpath>

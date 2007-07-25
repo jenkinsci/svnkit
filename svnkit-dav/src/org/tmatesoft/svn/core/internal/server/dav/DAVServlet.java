@@ -12,6 +12,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 
 public class DAVServlet extends HttpServlet {
 
@@ -21,7 +22,7 @@ public class DAVServlet extends HttpServlet {
         String SVNPath = servletConfig.getInitParameter("SVNPath");
         FSRepositoryFactory.setup();
         try {
-            myRepository = FSRepositoryFactory.create(SVNURL.parseURIEncoded(SVNPath));
+            myRepository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(SVNPath));
         } catch (SVNException svne) {
             throw new ServletException(svne);
         }
