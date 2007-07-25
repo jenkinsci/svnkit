@@ -1645,6 +1645,9 @@ public abstract class UnixRuntime extends Runtime implements Cloneable {
         
         public void unlink(UnixRuntime r, String path) throws ErrnoException {
             File f = hostFile(path);
+            if ("mergeinfo.db".equals(f.getName())) {
+                return;
+            }
             if(r.sm != null && !r.sm.allowUnlink(f)) throw new ErrnoException(EPERM);
             if(!f.exists()) throw new ErrnoException(ENOENT);
             if(!f.delete()) {
