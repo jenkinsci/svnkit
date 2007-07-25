@@ -64,7 +64,7 @@ public abstract class SVNArgument {
     public static final SVNArgument DRY_RUN = createUnaryArgument(new String[] { "--dry-run" });
     public static final SVNArgument INCREMENTAL = createUnaryArgument(new String[] { "--incremental" });
     public static final SVNArgument XML = createUnaryArgument(new String[] { "--xml" });
-    public static final SVNArgument LIMIT = createStringArgument(new String[] { "--limit" });
+    public static final SVNArgument LIMIT = createStringArgument(new String[] { "--limit", "-l" });
     public static final SVNArgument NON_INTERACTIVE = createUnaryArgument(new String[] { "--non-interactive" });
     public static final SVNArgument CHANGE = createStringArgument(new String[] { "--change", "-c" });
     public static final SVNArgument SUMMARIZE = createUnaryArgument(new String[] { "--summarize" });
