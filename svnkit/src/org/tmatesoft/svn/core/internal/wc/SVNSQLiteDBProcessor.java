@@ -110,18 +110,19 @@ public class SVNSQLiteDBProcessor implements ISVNDBProcessor {
 
     public long getMaxRevisionForPathFromMergeInfoChangedTable(String path, long upperRevision) throws SVNException {
         PreparedStatement statement = createSinglePathSelectFromMergeInfoChangedStatement();
+        long maxRev = 0;
         try {
             statement.setString(1, path);
             statement.setLong(2, upperRevision);
             ResultSet result = statement.executeQuery();
             if (result.next()) {
-                return result.getLong(1);
+                maxRev = result.getLong(1);
             }
         } catch (SQLException sqle) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_SQLITE_ERROR, sqle.getLocalizedMessage());
             SVNErrorManager.error(err, sqle);
-        }
-        return 0;
+        } 
+        return maxRev;
     }
 
     public Map parseMergeInfoFromDB(String path, long lastMergedRevision) throws SVNException {
@@ -235,8 +236,6 @@ public class SVNSQLiteDBProcessor implements ISVNDBProcessor {
     public void insertMergeInfo(long revision, String mergedFrom, String mergedTo, 
                                 SVNMergeRange[] ranges) throws SVNException {
         PreparedStatement insertIntoMergeInfoTableStmt = createInsertToMergeInfoTableStatement();
-        PreparedStatement insertIntoMergeInfoChangedTableStmt = 
-                                                     createInsertToMergeInfoChangedTableStatement(); 
         try {
             insertIntoMergeInfoTableStmt.setLong(1, revision);
             insertIntoMergeInfoTableStmt.setString(2, mergedFrom);
@@ -248,9 +247,6 @@ public class SVNSQLiteDBProcessor implements ISVNDBProcessor {
                 insertIntoMergeInfoTableStmt.execute();
             }
             
-            insertIntoMergeInfoChangedTableStmt.setLong(1, revision);
-            insertIntoMergeInfoChangedTableStmt.setString(2, mergedTo);
-            insertIntoMergeInfoChangedTableStmt.execute();
         } catch (SQLException sqle) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_SQLITE_ERROR, 
                                                          sqle.getLocalizedMessage());
@@ -258,6 +254,20 @@ public class SVNSQLiteDBProcessor implements ISVNDBProcessor {
         }
     }
 
+    public void updateMergeInfoChanges(long newRevision, String path) throws SVNException {
+        PreparedStatement insertIntoMergeInfoChangedTableStmt = 
+                                                     createInsertToMergeInfoChangedTableStatement(); 
+        try {
+            insertIntoMergeInfoChangedTableStmt.setLong(1, newRevision);
+            insertIntoMergeInfoChangedTableStmt.setString(2, path);
+            insertIntoMergeInfoChangedTableStmt.execute();
+        } catch (SQLException sqle) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_SQLITE_ERROR, 
+                                                         sqle.getLocalizedMessage());
+            SVNErrorManager.error(err, sqle);
+        }
+    }
+    
     private void dispose() throws SVNException {
         try {
             if (mySinglePathSelectFromMergeInfoChangedStatement != null) {

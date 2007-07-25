@@ -42,4 +42,6 @@ public interface ISVNDBProcessor {
 
     public void insertMergeInfo(long revision, String mergedFrom, String mergedTo, SVNMergeRange[] ranges) throws SVNException;
     
+    public void updateMergeInfoChanges(long newRevision, String path) throws SVNException;
+    
 }

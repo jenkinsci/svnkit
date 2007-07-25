@@ -37,4 +37,7 @@ public class SVNMergeInfo {
         return myMergeSrcPathsToRangeLists;
     }
 
+    public void setMergeSourcesToMergeLists(Map srcsToMergeLists) {
+        myMergeSrcPathsToRangeLists = srcsToMergeLists;
+    }
 }

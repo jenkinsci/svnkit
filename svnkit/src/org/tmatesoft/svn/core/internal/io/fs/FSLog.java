@@ -212,7 +212,7 @@ public class FSLog {
             for (int i = 0; i < revs.length; i++) {
                 long rev = revs[i];
                 String mergeSource = SVNMergeInfoManager.findMergeSource(rev, mergeInfo);
-                LogTreeNode subTree = doMergedLog(mergeSource, revision);
+                LogTreeNode subTree = doMergedLog(mergeSource, rev);
                 if (subTree != null) {
                     treeNode.myChildren.add(subTree);
                 }

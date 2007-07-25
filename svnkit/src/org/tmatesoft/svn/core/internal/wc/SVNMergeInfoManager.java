@@ -102,6 +102,8 @@ public class SVNMergeInfoManager {
                 if (mergeInfo == null) {
                     mergeInfo = new SVNMergeInfo(path, srcsToRangeLists);
                     pathsToMergeInfos.put(path, mergeInfo);
+                } else {
+                    mergeInfo.setMergeSourcesToMergeLists(srcsToRangeLists);
                 }
             }
         } finally {
@@ -137,6 +139,7 @@ public class SVNMergeInfoManager {
                                                           : (SVNMergeRangeList) mergeInfo.get(srcMergePath);
             myDBProcessor.insertMergeInfo(revision, srcMergePath, path, rangeList.getRanges());
         }
+        myDBProcessor.updateMergeInfoChanges(revision, path);
     }
 
     private Map getMergeInfoImpl(String[] paths, FSRevisionRoot root, SVNMergeInfoInheritance inherit) throws SVNException {
@@ -316,24 +319,27 @@ public class SVNMergeInfoManager {
         if (mergeInfo.length() == 0) {
             return srcPathsToRangeLists;
         }
+
+        while (mergeInfo.length() > 0) {
+            int ind = mergeInfo.indexOf(":");
+            if (ind == -1) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, "Pathname not terminated by ':'");
+                SVNErrorManager.error(err);
+            }
+            String path = mergeInfo.substring(0, ind);
+            mergeInfo = mergeInfo.delete(0, ind + 1);
+            SVNMergeRange[] ranges = parseRanges(mergeInfo);
+            if (mergeInfo.length() != 0 && mergeInfo.charAt(0) != '\n') {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, "Could not find end of line in range list line in ''{0}''", mergeInfo);
+                SVNErrorManager.error(err);
+            }
+            if (mergeInfo.length() > 0) {
+                mergeInfo = mergeInfo.deleteCharAt(0);
+            }
+            Arrays.sort(ranges);
+            srcPathsToRangeLists.put(path, new SVNMergeRangeList(ranges));
+        }
         
-        int ind = mergeInfo.indexOf(":");
-        if (ind == -1) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, "Pathname not terminated by ':'");
-            SVNErrorManager.error(err);
-        }
-        String path = mergeInfo.substring(0, ind);
-        mergeInfo = mergeInfo.delete(0, ind + 1);
-        SVNMergeRange[] ranges = parseRanges(mergeInfo);
-        if (mergeInfo.length() != 0 && mergeInfo.charAt(0) != '\n') {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, "Could not find end of line in range list line in ''{0}''", mergeInfo);
-            SVNErrorManager.error(err);
-        }
-        if (mergeInfo.length() > 0) {
-            mergeInfo = mergeInfo.deleteCharAt(0);
-        }
-        Arrays.sort(ranges);
-        srcPathsToRangeLists.put(path, new SVNMergeRangeList(ranges));
         return srcPathsToRangeLists;
     }
 

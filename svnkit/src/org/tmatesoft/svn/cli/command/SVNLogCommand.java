@@ -56,7 +56,6 @@ public class SVNLogCommand extends SVNCommand implements ISVNLogEntryHandler {
     private PrintStream myPrintStream;
     private boolean myReportPaths;
     private boolean myIsQuiet;
-    private boolean myHasLogEntries;
     private LinkedList myMergeStack;
     
     public void run(InputStream in, PrintStream out, PrintStream err) throws SVNException {
@@ -165,7 +164,7 @@ public class SVNLogCommand extends SVNCommand implements ISVNLogEntryHandler {
                 serializer.flush();
             } catch (IOException e) {
             }
-        } else if (myHasLogEntries) {
+        } else if (!getCommandLine().hasArgument(SVNArgument.INCREMENTAL)) {
             myPrintStream.print(SEPARATOR);
             myPrintStream.flush();
         }
@@ -175,7 +174,6 @@ public class SVNLogCommand extends SVNCommand implements ISVNLogEntryHandler {
         if (logEntry == null || (logEntry.getMessage() == null && logEntry.getRevision() == 0)) {
             return;
         }
-        myHasLogEntries = true;
         StringBuffer result = new StringBuffer();
         String author = logEntry.getAuthor() == null ? "(no author)" : logEntry.getAuthor();
         String date = logEntry.getDate() == null ? "(no date)" : DATE_FORMAT.format(logEntry.getDate());

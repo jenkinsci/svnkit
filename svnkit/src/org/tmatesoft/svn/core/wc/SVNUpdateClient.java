@@ -318,7 +318,8 @@ public class SVNUpdateClient extends SVNBasicClient {
             String target = "".equals(info.getTargetName()) ? null : info.getTargetName();
             repository.update(url, revNumber, target, depth, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
 
-            if (editor.getTargetRevision() >= 0 && depth == SVNDepth.INFINITY && !isIgnoreExternals()) {
+            if (editor.getTargetRevision() >= 0 && !isIgnoreExternals() &&
+                (depth == SVNDepth.INFINITY || depth == SVNDepth.UNKNOWN)) {
                 handleExternals(info);
                 dispatchEvent(SVNEventFactory.createUpdateCompletedEvent(info, editor.getTargetRevision()));
             }

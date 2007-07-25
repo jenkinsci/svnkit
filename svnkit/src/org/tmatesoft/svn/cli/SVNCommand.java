@@ -304,6 +304,9 @@ public abstract class SVNCommand {
             lines.nextToken();
             count++;
         }
+        if (count == 1) {
+            return str.indexOf('\r') != -1 || str.indexOf('\n') != -1 ? ++count : count; 
+        }
         return count;
     }
 
