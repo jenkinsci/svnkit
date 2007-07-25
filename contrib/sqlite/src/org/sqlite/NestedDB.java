@@ -47,7 +47,7 @@ final class NestedDB extends DB implements Runtime.CallJavaCB
             rt = (Runtime)Class.forName("org.sqlite.SQLite").newInstance();
             GlobalState gs = new UnixRuntime.GlobalState(255, false);
             gs.addMount("/", new UnixRuntime.HostFS(root));
-            gs.addMount("/tmp", new UnixRuntime.HostFS(tmpDir));
+            gs.addMount("/tmp", new UnixRuntime.HostFS(tmpDir));            
             gs.addMount("/dev", new UnixRuntime.DevFS());
             ((UnixRuntime) rt).setGlobalState(gs);
             rt.start();
