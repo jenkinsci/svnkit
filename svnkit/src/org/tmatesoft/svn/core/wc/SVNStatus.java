@@ -469,9 +469,8 @@ public class SVNStatus {
      * remote status invocation. 
      * 
      * @return the latest repository revision when the item was changed; 
-     *         <span class="javakeyword">null</span> or 
-     *         {@link SVNRevision#UNDEFINED} if the repository revision is 
-     *         unavailable
+     *         <span class="javakeyword">null</span> if there are no incoming
+     *         changes for this file or directory. 
      */
     public SVNRevision getRemoteRevision() {
         return myRemoteRevision;
