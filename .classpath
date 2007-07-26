@@ -14,6 +14,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="lib" path="contrib/sqlite/sqlitejdbc.jar" sourcepath="C:/test/sqlite-nested/src"/>
-	<classpathentry kind="lib" path="contrib/servlet-api/servlet-api.jar"/>
+	<classpathentry kind="lib" path="contrib/servlet-api/servlet-api.jar" sourcepath="contrib/servlet-api/servlet-api-2.3src.zip"/>
 	<classpathentry kind="output" path="svnkit/bin"/>
 </classpath>
