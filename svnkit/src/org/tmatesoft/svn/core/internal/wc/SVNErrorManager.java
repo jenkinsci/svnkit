@@ -35,12 +35,18 @@ public class SVNErrorManager {
         SVNDebugLog.getDefaultLog().info(err.getMessage());
         throw new SVNAuthenticationException(err);
     }
-    
+
     public static void error(SVNErrorMessage err) throws SVNException {
+        error(err, true);
+    }
+    
+    public static void error(SVNErrorMessage err, boolean log) throws SVNException {
         if (err == null) {
             err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN);
         }
-        SVNDebugLog.getDefaultLog().info(err.getFullMessage());
+        if (log) {
+            SVNDebugLog.getDefaultLog().info(err.getFullMessage());
+        }
         if (err.getErrorCode() == SVNErrorCode.CANCELLED) {
             throw new SVNCancelException(err);
         } else if (err.getErrorCode().isAuthentication()) {

@@ -501,7 +501,7 @@ class SVNReader {
         if (ch == ':') {
             return length;
         }
-        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Malformed network data, string length expected"));
+        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Malformed network data, string length expected"), false);
         return -1;
     }
 
@@ -516,7 +516,7 @@ class SVNReader {
         if (Character.isWhitespace(ch)) {
             return length;
         }
-        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Malformed network data, number expected"));
+        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Malformed network data, number expected"), false);
         return -1;
     }
 
@@ -529,10 +529,10 @@ class SVNReader {
                 break;
             }
             if (count == 0 && !Character.isLetter(ch)) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Malformed network data"));
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Malformed network data"), false);
             } else if (count > 0
                     && !(Character.isLetterOrDigit(ch) || ch == '-')) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Malformed network data"));
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Malformed network data"), false);
             }
             buffer.append(ch);
             count++;
@@ -548,7 +548,7 @@ class SVNReader {
         } else if ("false".equalsIgnoreCase(word)) {
             return false;
         }
-        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Malformed network data, 'true' or 'false' expected"));
+        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Malformed network data, 'true' or 'false' expected"), false);
         return false;
     }
 
@@ -558,7 +558,7 @@ class SVNReader {
             if (ch < 0 || ch == Character.MAX_VALUE) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED));
             }
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Malformed network data"));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Malformed network data"), false);
         }
     }
 
