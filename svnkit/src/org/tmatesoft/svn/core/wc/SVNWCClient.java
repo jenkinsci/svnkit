@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -59,6 +60,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * The <b>SVNWCClient</b> class combines a number of version control 
@@ -376,6 +378,14 @@ public class SVNWCClient extends SVNBasicClient {
         try {
             SVNAdminArea adminArea = wcAccess.open(path, true, true, 0);
             adminArea.cleanup();
+        } catch (SVNException e) {
+            if (e instanceof SVNCancelException) {
+                throw e;
+            } else if (!SVNAdminArea.isSafeCleanup()) {
+                throw e;
+            }
+            SVNDebugLog.getDefaultLog().info("CLEANUP FAILED for " + path);
+            SVNDebugLog.getDefaultLog().info(e);
         } finally {
             wcAccess.close();
             sleepForTimeStamp();
