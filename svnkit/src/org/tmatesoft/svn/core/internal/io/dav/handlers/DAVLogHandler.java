@@ -32,7 +32,8 @@ import org.xml.sax.Attributes;
 public class DAVLogHandler extends BasicDAVHandler {
 	
 	public static StringBuffer generateLogRequest(StringBuffer buffer, long startRevision, long endRevision,
-			boolean includeChangedPaths, boolean strictNodes, long limit, String[] paths) {
+			boolean includeChangedPaths, boolean strictNodes, boolean includeMergedRevisions, 
+            boolean omitLogText, long limit, String[] paths) {
 		buffer = buffer == null ? new StringBuffer() : buffer;
         buffer.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
         buffer.append("<S:log-report xmlns:S=\"svn:\">");
@@ -51,6 +52,12 @@ public class DAVLogHandler extends BasicDAVHandler {
         if (strictNodes) {
             buffer.append("<S:strict-node-history />");
         }
+        if (includeMergedRevisions) {
+            buffer.append("<S:include-merged-revisions />");
+        }
+        if (omitLogText) {
+            buffer.append("<S:omit-log-text />");
+        }
         for (int i = 0; i < paths.length; i++) {
             buffer.append("<S:path>"  + paths[i] + "</S:path>");
 		}
@@ -64,6 +71,7 @@ public class DAVLogHandler extends BasicDAVHandler {
 	private static final DAVElement DELETED_PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "deleted-path");
 	private static final DAVElement MODIFIED_PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "modified-path");
 	private static final DAVElement REPLACED_PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "replaced-path");
+    private static final DAVElement NUMBER_OF_CHILDREN = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "nbr-children");
 	
 	private ISVNLogEntryHandler myLogEntryHandler;
 	private long myRevision;
@@ -72,7 +80,7 @@ public class DAVLogHandler extends BasicDAVHandler {
 	private Date myDate;
 	private String myComment;
 	private SVNLogEntryPath myPath;
-
+	private long myNumberOfChildren;
 	private int myCount;
     private long myLimit;
 
@@ -83,6 +91,7 @@ public class DAVLogHandler extends BasicDAVHandler {
 		myRevision = -1;
 		myCount = 0;
         myLimit = limit;
+        myNumberOfChildren = 0;
 		init();
 	}
     
@@ -124,7 +133,10 @@ public class DAVLogHandler extends BasicDAVHandler {
     					myPaths = new HashMap();
     				}
     				SVNLogEntry logEntry = new SVNLogEntry(myPaths, myRevision, myAuthor, myDate, myComment);
-    				myLogEntryHandler.handleLogEntry(logEntry);
+    				if (myNumberOfChildren > 0) {
+                        logEntry.setNumberOfChildren(myNumberOfChildren);
+                    }
+                    myLogEntryHandler.handleLogEntry(logEntry);
     			}
             } else if (myLimit < myCount) {
                 myIsCompatibleMode = true;
@@ -134,9 +146,12 @@ public class DAVLogHandler extends BasicDAVHandler {
 			myAuthor = null;
 			myDate = null;
 			myComment = null;
+            myNumberOfChildren = 0;
 		} else if (element == DAVElement.VERSION_NAME && cdata != null) {
 			myRevision = Long.parseLong(cdata.toString());
-		} else if (element == DAVElement.CREATOR_DISPLAY_NAME && cdata != null) {
+        } else if (element == NUMBER_OF_CHILDREN && cdata != null) {
+            myNumberOfChildren = Long.parseLong(cdata.toString());
+        } else if (element == DAVElement.CREATOR_DISPLAY_NAME && cdata != null) {
 			myAuthor = cdata.toString();
 		} else if (element == DAVElement.COMMENT && cdata != null) {
 			myComment = cdata.toString();

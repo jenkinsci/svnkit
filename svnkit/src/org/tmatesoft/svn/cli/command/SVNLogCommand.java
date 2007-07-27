@@ -104,7 +104,9 @@ public class SVNLogCommand extends SVNCommand implements ISVNLogEntryHandler {
         SVNXMLSerializer serializer = null;
         if (getCommandLine().hasArgument(SVNArgument.XML)) {
             serializer = new SVNXMLSerializer(out);
-            handler = new SVNXMLLogHandler(serializer);
+            SVNXMLLogHandler xmlLogHandler = new SVNXMLLogHandler(serializer);
+            xmlLogHandler.setOmitLogMessage(myIsQuiet);
+            handler = xmlLogHandler;
             if (!getCommandLine().hasArgument(SVNArgument.INCREMENTAL)) {
                 ((AbstractXMLHandler) handler).startDocument();
             }                

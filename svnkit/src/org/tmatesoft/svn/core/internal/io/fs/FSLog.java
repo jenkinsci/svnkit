@@ -72,24 +72,24 @@ public class FSLog {
     }
     
     public long runLog() throws SVNException {
+        long count = 0;
         long sendCount = 0;
-        
         if (myPaths.length == 1 && "/".equals(myPaths[0])) {
-            sendCount = myEndRevision - myStartRevision + 1;
-            if (myLimit != 0 && sendCount > myLimit) {
-                sendCount = myLimit;
+            count = myEndRevision - myStartRevision + 1;
+            if (myLimit != 0 && count > myLimit) {
+                count = myLimit;
             }
         
-            for (int i = 0; i < sendCount; i++) {
+            for (int i = 0; i < count; i++) {
                 long rev = myStartRevision + i;
                 if (myIsDescending) {
                     rev = myEndRevision - i;
                 }
                 LogTreeNode tree = buildLogTree(myPaths, rev, myIsIncludeMergedRevisions);
-                sendLogTree(tree);
+                sendCount += sendLogTree(tree);
             }
             
-            return sendCount;
+            return count;
         }
 
         return doLogs();
@@ -121,8 +121,8 @@ public class FSLog {
             if (changed) {
                 if (myIsDescending) {
                     LogTreeNode tree = buildLogTree(myPaths, currentRev, myIsIncludeMergedRevisions);
-                    sendLogTree(tree);
-                    if (myLimit != 0 && ++sendCount >= myLimit) {
+                    sendCount += sendLogTree(tree);
+                    if (myLimit != 0 && sendCount >= myLimit) {
                         break;
                     }
                 } else {
@@ -138,8 +138,8 @@ public class FSLog {
             for (ListIterator revs = revisions.listIterator(); revs.hasNext();) {
                 long nextRev = ((Long) revs.next()).longValue(); 
                 LogTreeNode tree = buildLogTree(myPaths, nextRev, myIsIncludeMergedRevisions);
-                sendLogTree(tree);
-                if (myLimit != 0 && ++sendCount >= myLimit) {
+                sendCount += sendLogTree(tree);
+                if (myLimit != 0 && sendCount >= myLimit) {
                     break;
                 }
             }
@@ -292,17 +292,21 @@ public class FSLog {
         return mergeInfo;
     }
     
-    private void sendLogTree(LogTreeNode treeNode) throws SVNException {
+    private long sendLogTree(LogTreeNode treeNode) throws SVNException {
+        long ret = 0;
+        treeNode.myLogEntry.setNumberOfChildren(treeNode.myChildren.size());
         if (myHandler != null) {
-            treeNode.myLogEntry.setNumberOfChildren(treeNode.myChildren.size());
+            ++ret;
             myHandler.handleLogEntry(treeNode.myLogEntry);
-            for (Iterator childrent = treeNode.myChildren.iterator(); childrent.hasNext();) {
-                LogTreeNode subTree = (LogTreeNode) childrent.next();
-                sendLogTree(subTree);
-            }
         }
+
+        for (Iterator childrent = treeNode.myChildren.iterator(); childrent.hasNext();) {
+            LogTreeNode subTree = (LogTreeNode) childrent.next();
+            ret += sendLogTree(subTree);
+        }
+        return ret;
     }
-    
+
     private SVNMergeInfoManager getMergeInfoManager() {
         if (myMergeInfoManager == null) {
             myMergeInfoManager = SVNMergeInfoManager.createMergeInfoManager(null);

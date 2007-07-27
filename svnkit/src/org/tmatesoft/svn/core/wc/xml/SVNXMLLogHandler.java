@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.wc.xml;
 
 import java.util.Iterator;
+import java.util.LinkedList;
 
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -47,6 +48,9 @@ public class SVNXMLLogHandler extends AbstractXMLHandler implements ISVNLogEntry
     public static final String LOGENTRY_TAG = "logentry";
     public static final String LOG_TAG = "log";
     
+    private boolean myIsOmitLogMessage;
+    private LinkedList myMergeStack;
+
     /**
      * Creates a new log handler.
      * 
@@ -85,6 +89,10 @@ public class SVNXMLLogHandler extends AbstractXMLHandler implements ISVNLogEntry
         }
     }
     
+    public void setOmitLogMessage(boolean omitLogMessage) {
+        myIsOmitLogMessage = omitLogMessage;
+    }
+    
     private void sendToHandler(SVNLogEntry logEntry) throws SAXException {
         if (logEntry.getRevision() == 0 && logEntry.getMessage() == null) {
             return;
@@ -111,10 +119,41 @@ public class SVNXMLLogHandler extends AbstractXMLHandler implements ISVNLogEntry
             }
             closeTag(PATHS_TAG);
         }
-        String message = logEntry.getMessage();
-        message = message == null ? "" : message;
-        addTag(MSG_TAG, message);
-        closeTag(LOGENTRY_TAG);
+        
+        if (!myIsOmitLogMessage) {
+            String message = logEntry.getMessage();
+            message = message == null ? "" : message;
+            addTag(MSG_TAG, message);
+        }
+        
+        if (myMergeStack != null && !myMergeStack.isEmpty()) {
+            MergeFrame frame = (MergeFrame) myMergeStack.getLast();
+            frame.myNumberOfChildrenRemaining--;
+        }
+        
+        if (logEntry.getNumberOfChildren() > 0) {
+            MergeFrame frame = new MergeFrame();
+            frame.myNumberOfChildrenRemaining = logEntry.getNumberOfChildren();
+            if (myMergeStack == null) {
+                myMergeStack = new LinkedList();
+            }
+            myMergeStack.addLast(frame);
+        } else {
+            while(myMergeStack != null && !myMergeStack.isEmpty()) {
+                MergeFrame frame = (MergeFrame) myMergeStack.getLast();
+                if (frame.myNumberOfChildrenRemaining == 0) {
+                    closeTag(LOGENTRY_TAG);
+                    myMergeStack.removeLast();
+                } else {
+                    break;
+                }
+            }
+            closeTag(LOGENTRY_TAG);
+        }
     }
     
+    private class MergeFrame {
+        private long myNumberOfChildrenRemaining;
+    }
+
 }

@@ -575,8 +575,15 @@ class DAVRepository extends SVNRepository {
             }
             fullPaths = (String[]) relativePaths.toArray(new String[relativePaths.size()]);
             
-            StringBuffer request = DAVLogHandler.generateLogRequest(null, startRevision, endRevision,
-                    changedPath, strictNode, limit, fullPaths);
+            StringBuffer request = DAVLogHandler.generateLogRequest(null, 
+                                                                    startRevision, 
+                                                                    endRevision,
+                                                                    changedPath, 
+                                                                    strictNode, 
+                                                                    includeMergedRevisions, 
+                                                                    omitLogText,
+                                                                    limit, 
+                                                                    fullPaths);
             
             davHandler = new DAVLogHandler(cachingHandler, limit); 
             long revision = Math.max(startRevision, endRevision);

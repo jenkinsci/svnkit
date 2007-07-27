@@ -57,6 +57,7 @@ public class SVNLogEntry implements Serializable {
         myDate = date;
         myMessage = message;
         myChangedPaths = changedPaths;
+        myNumberOfChildren = 0;
     }
 
     public void setNumberOfChildren(long numberOfChildren) {

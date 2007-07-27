@@ -24,7 +24,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -300,12 +299,18 @@ public abstract class SVNCommand {
             return 1;
         }
         int count = 0;
-        for(StringTokenizer lines = new StringTokenizer(str, "\r\n"); lines.hasMoreTokens();) {
-            lines.nextToken();
-            count++;
+        for (int i = 0; i < str.length(); i++) {
+            if (str.charAt(i) == '\r') {
+                count++;
+                if (i < str.length() - 1 && str.charAt(i + 1) == '\n') {
+                    i++;
+                }
+            } else if (str.charAt(i) == '\n') {
+                count++;
+            }
         }
-        if (count == 1) {
-            return str.indexOf('\r') != -1 || str.indexOf('\n') != -1 ? ++count : count; 
+        if (count == 0) {
+            count++;
         }
         return count;
     }

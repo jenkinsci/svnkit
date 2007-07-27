@@ -520,7 +520,6 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         return -1;
     }
 
-    //TODO: FIXME
     public long log(String[] targetPaths, long startRevision, long endRevision, 
                     boolean changedPaths, boolean strictNode, long limit, 
                     boolean includeMergedRevisions, boolean omitLogText, 
@@ -547,8 +546,10 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     getRevisionObject(startRevision),
                     getRevisionObject(endRevision),
                     Boolean.valueOf(changedPaths), Boolean.valueOf(strictNode),
-                    limit > 0 ? new Long(limit) : null };
-            write("(w((*s)(n)(n)wwn))", buffer);
+                    limit > 0 ? new Long(limit) : null,
+                    Boolean.valueOf(includeMergedRevisions), 
+                    Boolean.valueOf(omitLogText)};
+            write("(w((*s)(n)(n)wwnww))", buffer);
             authenticate();
             while (true) {
                 try {
@@ -565,6 +566,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                                         String type = SVNReader.getString(buffer, 1);
                                         String copyPath = SVNReader.getString(buffer, 2);
                                         long copyRev = SVNReader.getLong(buffer, 3);
+                                        
                                         changedPathsMap.put(path, new SVNLogEntryPath(path, type.charAt(0), copyPath, copyRev));
                                     }
                                 }
@@ -573,7 +575,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                             }
                         }
                     }
-                    read(")N(?S)(?S)(?S))", buffer, false);
+                    read(")N(?S)(?S)(?S)?N)", buffer, false);
                     count++;
                     if (handler != null && (limit <= 0 || count <= limit)) {
                         long revision = SVNReader.getLong(buffer, 0);
@@ -583,7 +585,12 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                             date = null;
                         }
                         String message = SVNReader.getString(buffer, 3);
-                        handler.handleLogEntry(new SVNLogEntry(changedPathsMap, revision, author, date, message));
+                        long numberOfChildren = SVNReader.getLong(buffer, 4);
+                        SVNLogEntry logEntry = new SVNLogEntry(changedPathsMap, revision, author, date, message);
+                        if (numberOfChildren > 0) {
+                            logEntry.setNumberOfChildren(numberOfChildren);
+                        }
+                        handler.handleLogEntry(logEntry);
                     }
                 } catch (SVNException e) {
                     if (e instanceof SVNCancelException || e instanceof SVNAuthenticationException) {
