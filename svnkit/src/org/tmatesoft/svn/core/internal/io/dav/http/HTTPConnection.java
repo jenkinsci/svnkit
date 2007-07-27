@@ -249,7 +249,7 @@ class HTTPConnection implements IHTTPConnection {
         }
         
         // 1. prompt for ssl client cert if needed, if cancelled - throw cancellation exception.
-        ISVNSSLManager sslManager = mySSLManager != null ? mySSLManager : promptSSLClientCertificate(true);
+        ISVNSSLManager sslManager = mySSLManager != null ? mySSLManager : promptSSLClientCertificate(true, false);
         String sslRealm = "<" + myHost.getProtocol() + "://" + myHost.getHost() + ":" + myHost.getPort() + ">";
         SVNAuthentication httpAuth = myLastValidAuth;
         boolean isAuthForced = myRepository.getAuthenticationManager() != null ? myRepository.getAuthenticationManager().isAuthenticationForced() : false;
@@ -291,14 +291,14 @@ class HTTPConnection implements IHTTPConnection {
             } catch (SSLHandshakeException ssl) {
                 myRepository.getDebugLog().info(ssl);
                 if (sslManager != null) {
+                    close();
                     SVNSSLAuthentication sslAuth = sslManager.getClientAuthentication();
                     if (sslAuth != null) {
-                        close();
                         SVNErrorMessage sslErr = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "SSL handshake failed: ''{0}''", ssl.getMessage());
                         myRepository.getAuthenticationManager().acknowledgeAuthentication(false, ISVNAuthenticationManager.SSL, sslRealm, sslErr, sslAuth);
-                        sslManager = promptSSLClientCertificate(false);
-                        continue;
                     }
+                    sslManager = promptSSLClientCertificate(sslAuth == null, true);
+                    continue;
                 }
                 err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, ssl);
             } catch (IOException e) {
@@ -308,15 +308,15 @@ class HTTPConnection implements IHTTPConnection {
                 } else if (e instanceof SVNCancellableOutputStream.IOCancelException) {
                     SVNErrorManager.cancel(e.getMessage());
                 } else {
-                    if (sslManager != null && sslManager.isClientCertPromptRequired()) {
+                    if (sslManager != null) {
+                        close();
                         SVNSSLAuthentication sslAuth = sslManager.getClientAuthentication();
                         if (sslAuth != null) {
-                            close();
                             SVNErrorMessage sslErr = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "SSL handshake failed: ''{0}''", e.getMessage());
                             myRepository.getAuthenticationManager().acknowledgeAuthentication(false, ISVNAuthenticationManager.SSL, sslRealm, sslErr, sslAuth);
-                            sslManager = promptSSLClientCertificate(false);
-                            continue;
                         }
+                        sslManager = promptSSLClientCertificate(sslAuth == null, true);
+                        continue;
                     }
                     err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e.getMessage());
                 }
@@ -518,7 +518,7 @@ class HTTPConnection implements IHTTPConnection {
         return null;
     }
 
-    private ISVNSSLManager promptSSLClientCertificate(boolean firstAuth) throws SVNException {
+    private ISVNSSLManager promptSSLClientCertificate(boolean firstAuth, boolean onError) throws SVNException {
         SVNURL location = myRepository.getLocation();
         ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
         ISVNSSLManager sslManager = null;
@@ -528,7 +528,7 @@ class HTTPConnection implements IHTTPConnection {
             sslManager = authManager != null ? authManager.getSSLManager(location) : null;
         }
         if (authManager != null && sslManager != null && 
-                (sslManager.isClientCertPromptRequired() || (firstAuth && sslManager.getClientCertLoadingError() != null))) {
+                (onError || sslManager.isClientCertPromptRequired() || (firstAuth && sslManager.getClientCertLoadingError() != null))) {
             // prompt if there is error or prompt has been forced.
             while(true) {
                 if (firstAuth) {
