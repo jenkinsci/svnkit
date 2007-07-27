@@ -1,14 +1,14 @@
 package org.tmatesoft.svn.core.internal.server.dav;
 
-public class URI {
+public class DAVResource {
     private String myURI;
     private String myPath;
-    private URIKind myURIKind;
+    private DAVResourceKind myDAVResourceKind;
     private String myParameter;
 
-    public URI(String path, URIKind kind, String parameter) {
+    public DAVResource(String path, DAVResourceKind kind, String parameter) {
         myPath = path;
-        myURIKind = kind;
+        myDAVResourceKind = kind;
         myParameter = parameter;
         StringBuffer uri = new StringBuffer();
         uri.append(path).append("/");
@@ -25,8 +25,8 @@ public class URI {
         return myPath;
     }
 
-    public URIKind getURIKind() {
-        return myURIKind;
+    public DAVResourceKind getURIKind() {
+        return myDAVResourceKind;
     }
 
     public String getParamter() {
