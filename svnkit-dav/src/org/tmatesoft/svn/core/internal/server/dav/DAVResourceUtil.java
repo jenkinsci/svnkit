@@ -1,8 +1,8 @@
 package org.tmatesoft.svn.core.internal.server.dav;
 
 public class DAVResourceUtil {
-    private static String specURI = "!svn";
-    private static String defaultVCCName = "default";
+    public static String SPECIAL_URI = "!svn";
+    private static String DEDAULT_VCC_NAME = "default";
 
     public static String buildURI(String repositoryPath, DAVResourceKind davResourceKind, long revision, String uri, boolean addHrefTag) {
         String hrefOpen = addHrefTag ? "<D:href>" : "";
@@ -11,39 +11,42 @@ public class DAVResourceUtil {
         resultURI.append(hrefOpen);
         resultURI.append(repositoryPath).append("/");
         if (davResourceKind == DAVResourceKind.ACT_COLLECTION) {
-            resultURI.append(specURI).append("/");
+            resultURI.append(SPECIAL_URI).append("/");
             resultURI.append(davResourceKind.toString());
         } else if (davResourceKind == DAVResourceKind.BASELINE || davResourceKind == DAVResourceKind.BASELINE_COLL) {
-            resultURI.append(specURI).append("/");
+            resultURI.append(SPECIAL_URI).append("/");
             resultURI.append(davResourceKind.toString()).append("/");
             resultURI.append(String.valueOf(revision));
         } else if (davResourceKind == DAVResourceKind.PUBLIC) {
             resultURI.append(uri).append("/");
         } else if (davResourceKind == DAVResourceKind.VERSION) {
-            resultURI.append(specURI).append("/");
+            resultURI.append(SPECIAL_URI).append("/");
             resultURI.append(davResourceKind.toString()).append("/");
             resultURI.append(String.valueOf(revision));
             resultURI.append(uri).append("/");
         } else if (davResourceKind == DAVResourceKind.VCC) {
-            resultURI.append(specURI).append("/");
+            resultURI.append(SPECIAL_URI).append("/");
             resultURI.append(davResourceKind.toString()).append("/");
-            resultURI.append(defaultVCCName);
+            resultURI.append(DEDAULT_VCC_NAME);
         }
         resultURI.append(hrefClose);
         return resultURI.toString();
     }
 
-    public static DAVResource parseURI(String uri) {
-        int specURIIndex = uri.indexOf(specURI);
+    public static DAVResource parseURI(String uri, DAVResource resource) {
+        int specURIIndex = uri.indexOf(SPECIAL_URI);
         if (specURIIndex == -1) {
             return new DAVResource(uri, DAVResourceKind.PUBLIC, "");
         } else {
             String path = uri.substring(0, specURIIndex);
-            String specialPart = uri.substring(specURIIndex + ("/" + specURI + "/").length(), uri.length() - 1);
+            String specialPart = uri.substring(specURIIndex + ("/" + SPECIAL_URI + "/").length(), uri.length() - 1);
             DAVResourceKind kind = DAVResourceKind.parseKind(specialPart.substring(0, specialPart.indexOf("/")));
             String parameter = specialPart.substring(specialPart.indexOf("/"), specialPart.length() - 1);
             return new DAVResource(path, kind, parameter);
         }
     }
 
+    public static String getRepositoryName(String uri) {
+        return uri.substring(0, uri.indexOf("/", 1 ));
+    }
 }

@@ -9,7 +9,6 @@ import javax.xml.parsers.SAXParser;
 
 
 public class DAVUtil {
-
     public static int DEPTH_ZERO = 0;
     public static int DEPTH_ONE = 1;
     public static int DEPTH_INFINITE = -1;

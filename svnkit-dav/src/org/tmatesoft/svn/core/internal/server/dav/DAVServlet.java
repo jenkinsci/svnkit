@@ -14,12 +14,8 @@ import javax.xml.parsers.SAXParserFactory;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVPropertiesHandler;
-import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
+import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.xml.sax.SAXNotSupportedException;
 import org.xml.sax.SAXNotRecognizedException;
 import org.xml.sax.SAXException;
@@ -28,31 +24,15 @@ import org.xml.sax.InputSource;
 import org.xml.sax.helpers.DefaultHandler;
 
 public class DAVServlet extends HttpServlet {
-    //TODO: Move SVNRepository to FSRepositoryConnector
-    private SVNRepository myRepository = null;
-    private FSRepositoryConnector myRC = null;
+
+    private FSRepositoryConnector myRepositoryConnector = null;
     private static SAXParserFactory mySAXParserFactory;
     private SAXParser mySAXParser;
 
-    private String getLocation() {
-        if (myRepository == null) {
-            return null;
-        }
-        return myRepository.getLocation().getURIEncodedPath();
-    }
-
-    private boolean isRepositoryLocation(String path) {
-        return getLocation().equals(path);
-    }
 
     public void init(ServletConfig servletConfig) throws ServletException {
-        String SVNPath = servletConfig.getInitParameter("SVNPath");
-        FSRepositoryFactory.setup();
-        try {
-            myRepository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(SVNPath));
-        } catch (SVNException svne) {
-            throw new ServletException(svne);
-        }
+        myRepositoryConnector = FSRepositoryConnector.getInstance();
+        myRepositoryConnector.init(servletConfig);
     }
 
     public ServletConfig getServletConfig() {
@@ -60,7 +40,7 @@ public class DAVServlet extends HttpServlet {
     }
 
     public void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        //TODO: Common for all methods. Specify exception type.       
+        //TODO: common for all methods: to specify exception type.       
         if ("PROPFIND".equals(request.getMethod())) {
             doPropfind(request, response);
         }
@@ -68,7 +48,8 @@ public class DAVServlet extends HttpServlet {
 
     private void doPropfind(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         DAVResource resource = null;
-        myRC.getDAVResource(request, resource, true, false);
+        String label = request.getHeader("label");
+        myRepositoryConnector.getDAVResource(request, resource, label, false);
         try {
             getDepth(request, DAVUtil.DEPTH_INFINITE);
             //TODO: native subversion examine if DEPTH_INFINITE is allowed
@@ -78,8 +59,19 @@ public class DAVServlet extends HttpServlet {
         DAVPropertiesHandler propHandler = new DAVPropertiesHandler();
         Collection result = new LinkedList();
         propHandler.setDAVPropetries(result);
-        parseInput(request.getInputStream(), "PROPFIND", propHandler);
+        parseInput(request.getInputStream(), propHandler);
+        StringBuffer body = new StringBuffer();
+        startMultistatus(body);
+        DAVPropertiesHandler.generatePropertiesResponse(body, (DAVElement[]) result.toArray(), resource );
+        finishMultiStatus(body);
+        response.getOutputStream().write(body.toString().getBytes());
+    }
 
+    private void startMultistatus(StringBuffer body) {
+        body.append("write header");
+    }
+    private void finishMultiStatus(StringBuffer body) {
+        body.append("write footer");
     }
 
     public String getServletInfo() {
@@ -89,7 +81,7 @@ public class DAVServlet extends HttpServlet {
     public void destroy() {
     }
 
-    private void parseInput(InputStream is, String method, DefaultHandler handler) {
+    private void parseInput(InputStream is, DefaultHandler handler) {
         if (mySAXParser == null) {
             try {
                 mySAXParser = getSAXParserFactory().newSAXParser();
