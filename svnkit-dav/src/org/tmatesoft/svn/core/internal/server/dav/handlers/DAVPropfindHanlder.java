@@ -83,7 +83,7 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         String label = getRequestHeader(LABEL_HEADER);
         DAVResource resource = getRepositoryManager().createDAVResource(getRequestURI(), label, false);
 
-        getRequestDepth(DAVDepth.DEPTH_INFINITE);
+        getRequestDepth(DAVDepth.DEPTH_INFINITY);
         //TODO: native subversion examine if DEPTH_INFINITE is allowed
         
         parseInput(getRequestInputStream());

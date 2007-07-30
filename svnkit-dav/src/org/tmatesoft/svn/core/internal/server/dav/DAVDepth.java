@@ -20,7 +20,7 @@ public class DAVDepth {
     
     public static final DAVDepth DEPTH_ZERO = new DAVDepth(0, "0");
     public static final DAVDepth DEPTH_ONE = new DAVDepth(1, "1");
-    public static final DAVDepth DEPTH_INFINITE = new DAVDepth(-1, "Infinity");
+    public static final DAVDepth DEPTH_INFINITY = new DAVDepth(-1, "Infinity");
     
     private int myID;
     private String myName;
@@ -39,8 +39,8 @@ public class DAVDepth {
     }
     
     public static DAVDepth parseDepth(String depth) {
-        if (DAVDepth.DEPTH_INFINITE.toString().equals(depth)) {
-            return DAVDepth.DEPTH_INFINITE;
+        if (DAVDepth.DEPTH_INFINITY.toString().equals(depth)) {
+            return DAVDepth.DEPTH_INFINITY;
         } else if (DAVDepth.DEPTH_ZERO.toString().equals(depth)) {
             return DAVDepth.DEPTH_ZERO;
         } else if (DAVDepth.DEPTH_ONE.toString().equals(depth)) {
