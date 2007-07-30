@@ -112,7 +112,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         myResponse.setContentType("text/xml; charset=UTF-8");
     }
     
-    protected void parseInput(InputStream is) {
+    protected void readInput(InputStream is) throws SVNException {
         if (mySAXParser == null) {
             try {
                 mySAXParser = getSAXParserFactory().newSAXParser();
@@ -123,8 +123,11 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
                 reader.setEntityResolver(this);
                 reader.parse(new InputSource(is));
             } catch (ParserConfigurationException e) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
             } catch (SAXException e) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
             } catch (IOException e) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
             }
         }
     }

@@ -86,7 +86,7 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         getRequestDepth(DAVDepth.DEPTH_INFINITY);
         //TODO: native subversion examine if DEPTH_INFINITE is allowed
         
-        parseInput(getRequestInputStream());
+        readInput(getRequestInputStream());
 
         StringBuffer body = new StringBuffer();
 
@@ -98,7 +98,7 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         try {
             getResponseWriter().write(body.toString());
         } catch (IOException e) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
         }
     }
 
