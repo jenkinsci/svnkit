@@ -5,8 +5,8 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 
 public class DAVResource {
 
-    public static String SPECIAL_URI = "!svn";
-    private static String DEDAULT_VCC_NAME = "default";
+    public static final String SPECIAL_URI = "!svn";
+    public static final String DEDAULT_VCC_NAME = "default";
 
     public static final int DAV_RESOURCE_TYPE_WORKING = -2;
     public static final int DAV_RESOURCE_TYPE_PRIVATE = 1;
