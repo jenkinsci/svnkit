@@ -799,7 +799,10 @@ public class SVNUpdateClient extends SVNBasicClient {
                 }
             }
             save |= canonicalizeEntry(entry, omitDefaultPort);
-            adminArea.getWCProperties(entry.getName()).setPropertyValue(SVNProperty.WC_URL, null);
+            SVNVersionedProperties properties = adminArea.getWCProperties(entry.getName());
+            if (properties != null) {
+                properties.setPropertyValue(SVNProperty.WC_URL, null);
+            }
         }
         if (save) {
             adminArea.saveEntries(true);
