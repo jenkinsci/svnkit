@@ -3,18 +3,29 @@ package org.tmatesoft.svn.core.internal.server.dav;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 public class DAVResource {
+
+    public static final int DAV_RESOURCE_TYPE_WORKING = -2;
+    public static final int DAV_RESOURCE_TYPE_PRIVATE = 1;
+    public static final int DAV_RESOURCE_TYPE_REGULAR = 0;
+    public static final int DAV_RESOURCE_TYPE_VERSION = -1;
+    public static final int DAV_RESOURCE_TYPE_ACTIVITY = 2;
+    public static final int DAV_RESOURCE_TYPE_HISTORY = 3;
+
     private String myURI;
     private String myRepositoryName;
     private SVNRepository myRepository;
     private String myUser;
+    private int myType;
     private DAVResourceKind myKind;
     private String myPath;
-    private long myRevisionNumber;
+    private long myRevision;
     private String myParameterPath;
+    private String myActivityID;
     private boolean myExist;
-    private Boolean myIsCollection;
+    private boolean myIsCollection;
     private boolean myIsVersioned;
     private boolean myIsBaseLined;
+    private boolean myIsWorking;
 
 
     public DAVResource() {
@@ -64,6 +75,14 @@ public class DAVResource {
         myUser = user;
     }
 
+    public int getType() {
+        return myType;
+    }
+
+    public void setType(int type) {
+        myType = type;
+    }
+
     public DAVResourceKind getKind() {
         return myKind;
     }
@@ -80,12 +99,12 @@ public class DAVResource {
         myPath = path;
     }
 
-    public long getRevisionNumber() {
-        return myRevisionNumber;
+    public long getRevision() {
+        return myRevision;
     }
 
-    public void setRevisionNumber(long revisionNumber) {
-        myRevisionNumber = revisionNumber;
+    public void setRevision(long revisionNumber) {
+        myRevision = revisionNumber;
     }
 
     public String getParameterPath() {
@@ -96,6 +115,14 @@ public class DAVResource {
         myParameterPath = parameterPath;
     }
 
+    public String getActivityID() {
+        return myActivityID;
+    }
+
+    public void setActivityID(String activityID) {
+        myActivityID = activityID;
+    }
+
     public boolean isExist() {
         return myExist;
     }
@@ -104,11 +131,11 @@ public class DAVResource {
         myExist = isExist;
     }
 
-    public Boolean isCollection() {
+    public boolean isCollection() {
         return myIsCollection;
     }
 
-    public void setCollection(Boolean isCollection) {
+    public void setCollection(boolean isCollection) {
         myIsCollection = isCollection;
     }
 
@@ -126,5 +153,13 @@ public class DAVResource {
 
     public void setBaseLined(boolean isBaseLined) {
         myIsBaseLined = isBaseLined;
+    }
+
+    public boolean isWorking() {
+        return myIsWorking;
+    }
+
+    public void setWorking(boolean isWorking) {
+        myIsWorking = isWorking;
     }
 }

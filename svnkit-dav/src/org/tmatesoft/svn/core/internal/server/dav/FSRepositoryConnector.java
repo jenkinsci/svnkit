@@ -1,6 +1,5 @@
 package org.tmatesoft.svn.core.internal.server.dav;
 
-import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 import javax.servlet.http.HttpServletRequest;
@@ -27,8 +26,10 @@ public class FSRepositoryConnector {
             resource = new DAVResource();
         }
         String requestURI = request.getRequestURI();
-        DAVResourceUtil.parseURI(requestURI, resource);
+        resource.setURI(requestURI);
+        DAVResourceUtil.parseURI(resource, label, useCheckedIn);
         resource.setRepository((SVNRepository) myRepositories.get(resource.getRepositoryName()));
+        
         //TODO: check params from uri, user per directory access, locks, etc.
     }
 
