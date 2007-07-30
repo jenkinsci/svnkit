@@ -13,7 +13,7 @@ package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.Writer;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -83,9 +83,9 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         myResponse.setHeader(name, value);
     }
 
-    protected OutputStream getResponseOutputStream() throws SVNException {
+    protected Writer getResponseWriter() throws SVNException {
         try {
-            myResponse.getOutputStream();
+            myResponse.getWriter();
         } catch (IOException e) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
         }
@@ -106,6 +106,10 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Invalid depth ''{0}''", depth));
         }
         return result;
+    }
+    
+    protected void setDefaultResponseHeaders() {
+        myResponse.setContentType("text/xml; charset=UTF-8");
     }
     
     protected void parseInput(InputStream is) {

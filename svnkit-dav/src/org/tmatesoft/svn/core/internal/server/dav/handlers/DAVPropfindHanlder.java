@@ -89,14 +89,14 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         parseInput(getRequestInputStream());
 
         StringBuffer body = new StringBuffer();
+
         startMultistatus(body);
-        
-        DAVPropfindHanlder.generatePropertiesResponse(body, (DAVElement[]) getDAVPropetries().toArray(new DAVElement[getDAVPropetries().size()]), resource );
-        
+        generatePropertiesResponse(body, resource );
         finishMultiStatus(body);
         
+        setDefaultResponseHeaders();
         try {
-            getResponseOutputStream().write(body.toString().getBytes());
+            getResponseWriter().write(body.toString());
         } catch (IOException e) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED));
         }
@@ -110,7 +110,7 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         body.append("write footer");
     }
     
-    private static void generatePropertiesResponse(StringBuffer body, DAVElement[] properties, DAVResource resourse) {
+    private void generatePropertiesResponse(StringBuffer body, DAVResource resourse) {
     }
 
 }
