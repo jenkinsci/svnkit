@@ -105,6 +105,9 @@ doc/wiki/main.vm -text
 doc/wiki/repository_tree.png -text
 doc/wiki/svnkit_architecture.png -text
 doc/wiki/svnrepository_connection.png -text
+svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVDepth.java -text
+svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVHandlerFactory.java -text
+svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/ServletDAVHandler.java -text
 svnkit-eclipse/org.tmatesoft.svnkit.feature/feature.properties eol=lf
 svnkit-eclipse/org.tmatesoft.svnkit.feature/feature.xml eol=lf
 svnkit-eclipse/org.tmatesoft.svnkit/.options eol=lf
