@@ -291,7 +291,13 @@ class DAVRepository extends SVNRepository {
                     String name = SVNEncodingUtil.uriDecode(SVNPathUtil.tail(href));
                     SVNNodeKind kind = SVNNodeKind.FILE;
                     Object revisionStr = child.getPropertyValue(DAVElement.VERSION_NAME);
-                    long lastRevision = Long.parseLong(revisionStr.toString());
+                    long lastRevision = -1;
+                    try {
+                        lastRevision = Long.parseLong(revisionStr.toString());
+                    } catch (NumberFormatException nfe) {
+                        // most probably something went wrong on the server side.
+                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Server reports malformed revision: ''{0}''; check your server configuration.", revisionStr));
+                    }
                     String sizeStr = child.getPropertyValue(DAVElement.GET_CONTENT_LENGTH);
                     long size = sizeStr == null ? 0 : Long.parseLong(sizeStr);
                     if (child.isCollection()) {
