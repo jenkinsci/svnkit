@@ -61,7 +61,7 @@ public class SVNAnnotateCommand extends SVNCommand implements ISVNAnnotateHandle
         ISVNAnnotateHandler handler = this;
         SVNXMLSerializer serializer = null;
         if (getCommandLine().hasArgument(SVNArgument.XML)) {
-            serializer = new SVNXMLSerializer(System.out);
+            serializer = new SVNXMLSerializer(out);
             handler = new SVNXMLAnnotateHandler(serializer);
             if (!getCommandLine().hasArgument(SVNArgument.INCREMENTAL)) {
                 ((AbstractXMLHandler) handler).startDocument();
