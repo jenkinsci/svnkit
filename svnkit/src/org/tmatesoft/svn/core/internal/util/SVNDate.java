@@ -184,4 +184,8 @@ public class SVNDate extends Date {
         return result;
     }
     
+    public long getTimeInMicros() {
+        return 1000*getTime() + myMicroSeconds;
+    }
+    
 }

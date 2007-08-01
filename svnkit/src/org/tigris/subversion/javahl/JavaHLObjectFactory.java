@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.javahl.SVNClientImpl;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
@@ -315,8 +316,14 @@ public class JavaHLObjectFactory {
             }
             cp = (ChangePath[]) clientChangePaths.toArray(new ChangePath[clientChangePaths.size()]);
         }
-        return new LogMessage(cp, logEntry.getRevision(), logEntry.getAuthor(), logEntry.getDate(),
-                logEntry.getMessage());
+        long time = 0;
+        if (logEntry.getDate() != null) {
+            time = logEntry.getDate().getTime()*1000;
+            if (logEntry.getDate() instanceof SVNDate) {
+                time = ((SVNDate) logEntry.getDate()).getTimeInMicros();
+            }
+        }
+        return new LogMessage(cp, logEntry.getRevision(), logEntry.getAuthor(), time, logEntry.getMessage());
     }
 
     public static void handleLogMessage(SVNLogEntry logEntry, LogMessageCallback handler) {
