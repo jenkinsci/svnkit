@@ -1491,23 +1491,18 @@ public class SVNWCClient extends SVNBasicClient {
                 attributes.put(SVNProperty.KIND, entry.getKind().toString());
                 attributes.put(SVNProperty.DELETED, Boolean.TRUE.toString());
                 parent.modifyEntry(path.getName(), attributes, true, false);
-                }
+            }
         } else if (entry.getSchedule() == null || entry.isScheduledForDeletion() || entry.isScheduledForReplacement()) {
             if (entry.getKind() == SVNNodeKind.FILE) {
                 reverted = revert(parent, entry.getName(), entry, useCommitTimes);
             } else if (entry.getKind() == SVNNodeKind.DIR) {
-                boolean notScheduled = entry.getSchedule() == null;
-                reverted = revert(dir, dir.getThisDirName(), entry, useCommitTimes);                
+                reverted = revert(dir, dir.getThisDirName(), entry, useCommitTimes);
+                if (reverted && parent != dir) {
+                    SVNEntry entryInParent = parent.getEntry(path.getName(), false);
+                    revert(parent, path.getName(), entryInParent, useCommitTimes);
+                }
                 if (entry.isScheduledForReplacement()) {
                     recursive = true;
-                }
-                // check parent entry for schedule.
-                if (parent != dir) {
-                    SVNEntry entryInParent = parent.getEntry(path.getName(), false);
-                    if (entryInParent.getSchedule() != null && notScheduled) {
-                        entryInParent.setSchedule(null);
-                        parent.saveEntries(false);
-                    }
                 }
             }
         }
@@ -1547,9 +1542,9 @@ public class SVNWCClient extends SVNBasicClient {
             if (exists) {
                 baseProperties = revertBase ? dir.getRevertProperties(name) : dir.getBaseProperties(name);
                 if (revertBase) {
-                command.put(SVNLog.NAME_ATTR, propRevertPath);
-                log.addCommand(SVNLog.DELETE, command, false);
-                command.clear();
+                    command.put(SVNLog.NAME_ATTR, propRevertPath);
+                    log.addCommand(SVNLog.DELETE, command, false);
+                    command.clear();
                 }
                 reverted = true;
             }
