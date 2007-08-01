@@ -61,18 +61,14 @@ public class SVNResolvedCommand extends SVNCommand {
         }
         getClientManager().setEventHandler(new SVNCommandEventProcessor(out, err, false));
         SVNWCClient wcClient  = getClientManager().getWCClient();
-        boolean error = false;
         for (int i = 0; i < getCommandLine().getPathCount(); i++) {
             final String absolutePath = getCommandLine().getPathAt(i);
             try {
                 wcClient.doResolve(new File(absolutePath), recursive, accept);
             } catch (SVNException e) {
+                e.getErrorMessage().setType(SVNErrorMessage.TYPE_WARNING);
                 err.println(e.getMessage());
-                error = true;
             }
-        }
-        if (error) {
-            System.exit(1);
         }
     }
 }

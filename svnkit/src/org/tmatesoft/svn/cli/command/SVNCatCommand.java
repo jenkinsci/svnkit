@@ -14,6 +14,7 @@ package org.tmatesoft.svn.cli.command;
 
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -46,8 +47,7 @@ public class SVNCatCommand extends SVNCommand {
             try {
                 wcClient.doGetFileContents(new File(absolutePath), pegRevision, revision, true, out);
             } catch (SVNException e) {
-                String message = e.getMessage();
-                err.println(message);                
+                handleWarning(e.getErrorMessage(), new SVNErrorCode[] {SVNErrorCode.UNVERSIONED_RESOURCE, SVNErrorCode.ENTRY_NOT_FOUND, SVNErrorCode.CLIENT_IS_DIRECTORY}, err);
             }
             out.flush();
         }
@@ -62,8 +62,7 @@ public class SVNCatCommand extends SVNCommand {
             try {
                 wcClient.doGetFileContents(SVNURL.parseURIEncoded(url), pegRevision, revision, true, out);
             } catch (SVNException e) {
-                String message = e.getMessage();
-                err.println(message);                
+                handleWarning(e.getErrorMessage(), new SVNErrorCode[] {SVNErrorCode.UNVERSIONED_RESOURCE, SVNErrorCode.ENTRY_NOT_FOUND, SVNErrorCode.CLIENT_IS_DIRECTORY}, err);
             }
             out.flush();
         }

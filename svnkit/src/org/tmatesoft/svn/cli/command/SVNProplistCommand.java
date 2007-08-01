@@ -106,21 +106,21 @@ public class SVNProplistCommand extends SVNCommand implements ISVNPropertyHandle
         }
         SVNWCClient wcClient = getClientManager().getWCClient();
         if (myIsRevProp) {
-        if (getCommandLine().hasURLs()) {
-            String url = getCommandLine().getURL(0);
+            if (getCommandLine().hasURLs()) {
+                String url = getCommandLine().getURL(0);
                 wcClient.doGetRevisionProperty(SVNURL.parseURIEncoded(url), null, revision, this);
             } else {
                 File[] combinedPaths = combinedPathList.getPaths(); 
                 File path = combinedPaths[0];
                 wcClient.doGetRevisionProperty(path, null, revision, this);
             }
-            } else {
+        } else {
             if (getCommandLine().hasURLs()) {
                 for (int i = 0; i < getCommandLine().getURLCount(); i++) {
                     String url = getCommandLine().getURL(i);
                     SVNRevision pegRevision = getCommandLine().getPegRevision(i);
-                wcClient.doGetProperty(SVNURL.parseURIEncoded(url), null, pegRevision, revision, myIsRecursive, this);
-            }
+                    wcClient.doGetProperty(SVNURL.parseURIEncoded(url), null, pegRevision, revision, myIsRecursive, this);
+                }
             } else {
                 wcClient.doGetProperty(combinedPathList, null, revision, depth, this);
             }
@@ -158,8 +158,8 @@ public class SVNProplistCommand extends SVNCommand implements ISVNPropertyHandle
     }
 
     public void handleEvent(SVNEvent event, double progress) throws SVNException {
-        if (event.getErrorMessage() != null && event.getErrorMessage().isWarning()) {
-            SVNCommand.println(myErrStream, event.getErrorMessage().toString());
+        if (event.getErrorMessage() != null) {
+            handleWarning(event.getErrorMessage(), new SVNErrorCode[] {SVNErrorCode.UNVERSIONED_RESOURCE, SVNErrorCode.ENTRY_NOT_FOUND}, myErrStream);
         }
     }
     

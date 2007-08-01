@@ -265,7 +265,6 @@ public class SVNWCClient extends SVNBasicClient {
      * @see                       #doGetFileContents(SVNURL, SVNRevision, SVNRevision, boolean, OutputStream)                           
      */
     public void doGetFileContents(File path, SVNRevision pegRevision, SVNRevision revision, boolean expandKeywords, OutputStream dst) throws SVNException {
-        try {
         if (dst == null) {
             return;
         }
@@ -325,14 +324,6 @@ public class SVNWCClient extends SVNBasicClient {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()));
             }
         }
-        } catch (SVNException svne) {
-            SVNErrorCode errCode = svne.getErrorMessage().getErrorCode();
-            if (errCode == SVNErrorCode.UNVERSIONED_RESOURCE || errCode == SVNErrorCode.ENTRY_NOT_FOUND
-                    || errCode == SVNErrorCode.CLIENT_IS_DIRECTORY) {
-                svne.getErrorMessage().setType(SVNErrorMessage.TYPE_WARNING);
-    }
-            throw svne;
-        }
     }
     
     /**
@@ -356,7 +347,6 @@ public class SVNWCClient extends SVNBasicClient {
      * @see                       #doGetFileContents(File, SVNRevision, SVNRevision, boolean, OutputStream)                           
      */
     public void doGetFileContents(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean expandKeywords, OutputStream dst) throws SVNException {
-        try {
         revision = revision == null || !revision.isValid() ? SVNRevision.HEAD : revision;
         // now get contents from URL.
         SVNRepository repos = createRepository(url, null, pegRevision, revision);
@@ -366,7 +356,7 @@ public class SVNWCClient extends SVNBasicClient {
         SVNNodeKind nodeKind = repos.checkPath("", revNumber);
         checkCancelled();
         if (nodeKind == SVNNodeKind.DIR) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_IS_DIRECTORY, "URL ''{0}'' refers to a directory", url, SVNErrorMessage.TYPE_WARNING);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_IS_DIRECTORY, "URL ''{0}'' refers to a directory", url);
             SVNErrorManager.error(err);
         }
         checkCancelled();
@@ -401,14 +391,6 @@ public class SVNWCClient extends SVNBasicClient {
             dst.flush();
         } catch (IOException e) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()));
-            }
-        } catch (SVNException svne) {
-            SVNErrorCode errCode = svne.getErrorMessage().getErrorCode();
-            if (errCode == SVNErrorCode.UNVERSIONED_RESOURCE || errCode == SVNErrorCode.ENTRY_NOT_FOUND
-                    || errCode == SVNErrorCode.CLIENT_IS_DIRECTORY) {
-                svne.getErrorMessage().setType(SVNErrorMessage.TYPE_WARNING);
-            }
-            throw svne;
         }
     }
     
@@ -499,12 +481,6 @@ public class SVNWCClient extends SVNBasicClient {
             SVNAdminArea area = wcAccess.probeOpen(path, true, recursive ? SVNWCAccess.INFINITE_DEPTH : 1);
             SVNEntry entry = wcAccess.getVersionedEntry(path, false);
             doSetLocalProperty(area, entry.isDirectory() ? area.getThisDirName() : entry.getName(), propName, propValue, force, recursive, true, handler);
-        } catch (SVNException svne) {
-            SVNErrorCode errCode = svne.getErrorMessage().getErrorCode();
-            if (errCode == SVNErrorCode.ENTRY_NOT_FOUND || errCode == SVNErrorCode.UNVERSIONED_RESOURCE) {
-                svne.getErrorMessage().setType(SVNErrorMessage.TYPE_WARNING);
-            }
-            throw svne;
         } finally {
             wcAccess.close();
         }
@@ -903,12 +879,6 @@ public class SVNWCClient extends SVNBasicClient {
                     }
                 }
             }
-        } catch (SVNException svne) {
-            SVNErrorCode errCode = svne.getErrorMessage().getErrorCode();
-            if (errCode == SVNErrorCode.UNVERSIONED_RESOURCE || errCode == SVNErrorCode.ENTRY_NOT_FOUND) {
-                svne.getErrorMessage().setType(SVNErrorMessage.TYPE_WARNING);
-            }
-            throw svne;
         } finally {
             wcAccess.close();
         }
@@ -1210,7 +1180,6 @@ public class SVNWCClient extends SVNBasicClient {
      * for now."
      */
     public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, boolean recursive, boolean includeIgnored, boolean makeParents) throws SVNException {
-        try {
         path = new File(SVNPathUtil.validateFilePath(path.getAbsolutePath()));
         if (!mkdir && climbUnversionedParents && path.getParentFile() != null) {
             // check if parent is versioned. if not, add it.
@@ -1288,13 +1257,6 @@ public class SVNWCClient extends SVNBasicClient {
             }
         } finally {        
             wcAccess.close();
-        }
-        } catch (SVNException svne) {
-            SVNErrorCode errCode = svne.getErrorMessage().getErrorCode();
-            if (errCode == SVNErrorCode.ENTRY_EXISTS || errCode == SVNErrorCode.WC_PATH_NOT_FOUND) {
-                svne.getErrorMessage().setType(SVNErrorMessage.TYPE_WARNING);
-    }
-            throw svne;
         }
     }
     
@@ -2823,7 +2785,7 @@ public class SVNWCClient extends SVNBasicClient {
             SVNAdminArea area = wcAccess.open(path.getParentFile(), false, 0);
             SVNEntry entry = wcAccess.getVersionedEntry(path, false);
             if (entry.getKind() != SVNNodeKind.FILE) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' refers to a directory", path, SVNErrorMessage.TYPE_WARNING);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' refers to a directory", path);
                 SVNErrorManager.error(err);
             }
             String name = path.getName();

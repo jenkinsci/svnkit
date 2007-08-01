@@ -148,8 +148,7 @@ public class SVNPropsetCommand extends SVNCommand implements ISVNEventHandler {
             PropertyHandler handler = new PropertyHandler(out, propertyName);
             wcClient.doSetProperty(combinedPathList, propertyName, propertyValue, force, myIsRecursive, handler);             
             handler.handlePendingFile();
-            if ((combinedPathList == null || combinedPathList.getPathsCount() == 0) && 
-                    getCommandLine().hasURLs()) {
+            if ((combinedPathList == null || combinedPathList.getPathsCount() == 0) && getCommandLine().hasURLs()) {
                 err.println("Setting property on non-local target '" + getCommandLine().getURL(0) + "' is not supported");
                 System.exit(1);
             }
@@ -160,8 +159,8 @@ public class SVNPropsetCommand extends SVNCommand implements ISVNEventHandler {
     }
 
     public void handleEvent(SVNEvent event, double progress) throws SVNException {
-        if (event.getErrorMessage() != null && event.getErrorMessage().isWarning()) {
-            SVNCommand.println(myErrStream, event.getErrorMessage().toString());
+        if (event.getErrorMessage() != null) {
+            handleWarning(event.getErrorMessage(), new SVNErrorCode[] {SVNErrorCode.UNVERSIONED_RESOURCE, SVNErrorCode.ENTRY_NOT_FOUND}, myErrStream);
         }
     }
 

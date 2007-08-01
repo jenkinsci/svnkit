@@ -126,8 +126,8 @@ public class SVNPropdelCommand extends SVNCommand implements ISVNEventHandler {
     }
 
     public void handleEvent(SVNEvent event, double progress) throws SVNException {
-        if (event.getErrorMessage() != null && event.getErrorMessage().isWarning()) {
-            SVNCommand.println(myErrStream, event.getErrorMessage().toString());
+        if (event.getErrorMessage() != null) {
+            handleWarning(event.getErrorMessage(), new SVNErrorCode[] {SVNErrorCode.UNVERSIONED_RESOURCE, SVNErrorCode.ENTRY_NOT_FOUND}, myErrStream);
         }
     }
     

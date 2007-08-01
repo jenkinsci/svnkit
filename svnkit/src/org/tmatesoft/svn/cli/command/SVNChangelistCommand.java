@@ -49,8 +49,6 @@ public class SVNChangelistCommand extends SVNCommand {
         }
         
         boolean removeChangelist = getCommandLine().hasArgument(SVNArgument.REMOVE);
-        boolean quiet = getCommandLine().hasArgument(SVNArgument.QUIET);
-
         int targetsNum = changelistTargets != null ? changelistTargets.size() + getCommandLine().getPathCount() : getCommandLine().getPathCount(); 
 
         try {
@@ -66,8 +64,7 @@ public class SVNChangelistCommand extends SVNCommand {
                                             new File(getCommandLine().getPathAt(i)).getAbsolutePath())); 
                 }
                 if (changelistTargets != null) {
-                    for (Iterator changelistTargetsIter = 
-                             changelistTargets.iterator(); changelistTargetsIter.hasNext();) {
+                    for (Iterator changelistTargetsIter = changelistTargets.iterator(); changelistTargetsIter.hasNext();) {
                         paths[k++] = (File) changelistTargetsIter.next();
                     }
                 }
@@ -81,27 +78,17 @@ public class SVNChangelistCommand extends SVNCommand {
                File[] paths = new File[targetsNum - 1];
                int k = 0;
                for (int i = 1; i < getCommandLine().getPathCount(); i++) {
-                   paths[k++] = new File(SVNPathUtil.validateFilePath(
-                                           new File(getCommandLine().getPathAt(i)).getAbsolutePath())); 
+                   paths[k++] = new File(SVNPathUtil.validateFilePath(new File(getCommandLine().getPathAt(i)).getAbsolutePath())); 
                }
                if (changelistTargets != null) {
-                   for (Iterator changelistTargetsIter = 
-                            changelistTargets.iterator(); changelistTargetsIter.hasNext();) {
+                   for (Iterator changelistTargetsIter = changelistTargets.iterator(); changelistTargetsIter.hasNext();) {
                        paths[k++] = (File) changelistTargetsIter.next();
                    }
                }
                client.addToChangelist(paths, changelistName);
             }
         } catch (SVNException e) {
-            SVNErrorCode code = e.getErrorMessage().getErrorCode(); 
-            if (code == SVNErrorCode.UNVERSIONED_RESOURCE || code == SVNErrorCode.WC_PATH_NOT_FOUND) {
-                e.getErrorMessage().setType(SVNErrorMessage.TYPE_WARNING);
-                if (!quiet) {
-                    throw e;
-                }
-            } else {
-                throw e;
-            }
+            handleWarning(e.getErrorMessage(), new SVNErrorCode[] {SVNErrorCode.UNVERSIONED_RESOURCE, SVNErrorCode.WC_PATH_NOT_FOUND}, err);
         }
     }
 

@@ -333,5 +333,22 @@ public abstract class SVNCommand {
         }
         return new SVNRevision[] {startRevision, endRevision};
     }
+    
+    protected boolean handleWarning(SVNErrorMessage err, SVNErrorCode[] warningCodes, PrintStream errStream) throws SVNException {
+        if (err == null) {
+            return true; 
+        }
+        SVNErrorCode code = err.getErrorCode();
+        for (int i = 0; i < warningCodes.length; i++) {
+            if (code == warningCodes[i]) {
+                if (!getCommandLine().hasArgument(SVNArgument.QUIET)) {
+                    err.setType(SVNErrorMessage.TYPE_WARNING);
+                    errStream.println(err.getFullMessage());
+                }
+                return false;
+            }
+        }
+        throw new SVNException(err);
+    }
 
 }

@@ -344,10 +344,6 @@ public class SVNStatusClient extends SVNBasicClient {
                 }
             }
         } catch (SVNException svne) {
-            SVNErrorCode errCode = svne.getErrorMessage().getErrorCode();
-            if (errCode == SVNErrorCode.WC_NOT_DIRECTORY) {
-                svne.getErrorMessage().setType(SVNErrorMessage.TYPE_WARNING);
-            }
             throw svne;
         } finally {
             wcAccess.close();

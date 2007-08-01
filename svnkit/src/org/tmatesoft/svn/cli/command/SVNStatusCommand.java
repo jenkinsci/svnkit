@@ -79,8 +79,7 @@ public class SVNStatusCommand extends SVNCommand implements ISVNStatusHandler, I
             changelist.setOptions(getClientManager().getOptions());
             changelist.setRepositoryPool(getClientManager().getRepositoryPool());
             if (changelist.getPaths() == null || changelist.getPathsCount() == 0) {
-                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                                    "no such changelist ''{0}''", changelistName); 
+                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "no such changelist ''{0}''", changelistName); 
                 SVNErrorManager.error(error);
             }
         }
@@ -92,13 +91,11 @@ public class SVNStatusCommand extends SVNCommand implements ISVNStatusHandler, I
         for(int i = 0; i < paths.length; i++) {
             String path = paths[i];
             File validatedPath = new File(SVNPathUtil.validateFilePath(new File(path).getAbsolutePath()));
-            if (SVNFileType.getType(validatedPath) == SVNFileType.DIRECTORY && !SVNWCUtil.isVersionedDirectory(validatedPath) &&
-                    !SVNWCUtil.isVersionedDirectory(validatedPath.getParentFile())) {
+            if (SVNFileType.getType(validatedPath) == SVNFileType.DIRECTORY && !SVNWCUtil.isVersionedDirectory(validatedPath) && !SVNWCUtil.isVersionedDirectory(validatedPath.getParentFile())) {
                 err.println("svn: warning: '" + path + "' is not a working copy");
                 paths[i] = null;
                 continue;
-            } else if (SVNFileType.getType(validatedPath) == SVNFileType.DIRECTORY && !SVNWCUtil.isVersionedDirectory(validatedPath) &&
-                    "..".equals(path)) { 
+            } else if (SVNFileType.getType(validatedPath) == SVNFileType.DIRECTORY && !SVNWCUtil.isVersionedDirectory(validatedPath) && "..".equals(path)) { 
                 err.println("svn: warning: '" + path + "' is not a working copy");
                 paths[i] = null;
                 continue;
@@ -114,8 +111,7 @@ public class SVNStatusCommand extends SVNCommand implements ISVNStatusHandler, I
         for (int i = 0; i < paths.length; i++) {
             targets.add(new File(paths[i]));
         }
-        if (targets.size() == 0 && (changelist == null || changelist.getPathsCount() == 0) && 
-                !getCommandLine().hasURLs()) {
+        if (targets.size() == 0 && (changelist == null || changelist.getPathsCount() == 0) &&  !getCommandLine().hasURLs()) {
             targets.add(new File(".").getAbsoluteFile());
         }
         File[] files = (File[]) targets.toArray(new File[targets.size()]);
@@ -171,8 +167,8 @@ public class SVNStatusCommand extends SVNCommand implements ISVNStatusHandler, I
             for (Iterator statusesIter = statuses.iterator(); statusesIter.hasNext();) {
                 SVNStatus status = (SVNStatus) statusesIter.next();
                 handler.handleStatus(status);
-              }
-              }
+            }
+        }
         
         if (myIsXML) {
             if (!getCommandLine().hasArgument(SVNArgument.INCREMENTAL)) {
@@ -203,13 +199,9 @@ public class SVNStatusCommand extends SVNCommand implements ISVNStatusHandler, I
 
     public void handleEvent(SVNEvent event, double progress) throws SVNException {
         if (event.getErrorMessage() != null) {
-            if (event.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
-                SVNErrorMessage error = event.getErrorMessage(); 
-                error.setType(SVNErrorMessage.TYPE_WARNING);
-                if (!myIsQuiet) {
-                    myErrorOutput.println(event.getErrorMessage());
-                }
-            } else {
+            try {
+                handleWarning(event.getErrorMessage(), new SVNErrorCode[] {SVNErrorCode.WC_NOT_DIRECTORY}, myErrorOutput);
+            } catch (SVNException e) {
                 myDebugLog.info(event.getErrorMessage().getFullMessage());
                 myErrorOutput.println(event.getErrorMessage());
                 myHasErrors = true;

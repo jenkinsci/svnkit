@@ -17,6 +17,7 @@ import java.io.PrintStream;
 
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -110,9 +111,11 @@ public class SVNCommandEventProcessor implements ISVNEventHandler {
             }
             SVNCommand.println(myPrintStream, "'" + path + "' unlocked.");
         } else if (event.getAction() == SVNEventAction.UNLOCK_FAILED) {
-            SVNCommand.println(myErrStream, "error: " + event.getErrorMessage());
+            event.getErrorMessage().setType(SVNErrorMessage.TYPE_WARNING);
+            SVNCommand.println(myErrStream, event.getErrorMessage().toString());
         } else if (event.getAction() == SVNEventAction.LOCK_FAILED) {
-            SVNCommand.println(myErrStream, "error: " + event.getErrorMessage());
+            event.getErrorMessage().setType(SVNErrorMessage.TYPE_WARNING);
+            SVNCommand.println(myErrStream, event.getErrorMessage().toString());
         } else if (event.getAction() == SVNEventAction.CHANGELIST_SET) {
             String path = event.getPath();
             if (event.getFile() != null) {
@@ -126,7 +129,8 @@ public class SVNCommandEventProcessor implements ISVNEventHandler {
             }
             SVNCommand.println(myPrintStream, "Path '" + path + "' is no longer a member of a changelist.");
         } else if (event.getAction() == SVNEventAction.CHANGELIST_FAILED) {
-            SVNCommand.println(myErrStream, "error: " + event.getErrorMessage());
+            event.getErrorMessage().setType(SVNErrorMessage.TYPE_WARNING);
+            SVNCommand.println(myErrStream, event.getErrorMessage().toString());
         } else if (event.getAction() == SVNEventAction.UPDATE_ADD) {
             if (myIsExternal) {
                 myIsExternalChanged = true;

@@ -19,6 +19,7 @@ import java.io.PrintStream;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
@@ -59,7 +60,11 @@ public class SVNAddCommand extends SVNCommand {
         for (int i = 0; i < getCommandLine().getPathCount(); i++) {
             final String absolutePath = getCommandLine().getPathAt(i);
             matchTabsInPath(absolutePath, err);
-            wcClient.doAdd(new File(absolutePath), force, false, addParents, recursive, noIgnore);
+            try {
+                wcClient.doAdd(new File(absolutePath), force, false, addParents, recursive, noIgnore);
+            } catch (SVNException e) {
+                handleWarning(e.getErrorMessage(), new SVNErrorCode[] {SVNErrorCode.ENTRY_EXISTS, SVNErrorCode.WC_PATH_NOT_FOUND}, err);
+            }
         }
     }
     
