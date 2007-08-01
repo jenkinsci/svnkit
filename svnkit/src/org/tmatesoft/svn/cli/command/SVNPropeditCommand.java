@@ -214,16 +214,16 @@ public class SVNPropeditCommand extends SVNCommand implements ISVNPropertyHandle
 
     private String editPropertyExternally(String editorCmd, boolean needsTranslation, String propValue, String encoding, String prefix) throws SVNException {
         if (editorCmd == null) {
-            editorCmd = System.getenv("SVN_EDITOR");
+            editorCmd = SVNFileUtil.getEnvironmentVariable("SVN_EDITOR");
         }
         if (editorCmd == null) {
             editorCmd = getClientManager().getOptions().getEditor();
         }
         if (editorCmd == null) {
-            editorCmd = System.getenv("VISUAL");
+            editorCmd = SVNFileUtil.getEnvironmentVariable("VISUAL");
         }
         if (editorCmd == null) {
-            editorCmd = System.getenv("EDITOR");
+            editorCmd = SVNFileUtil.getEnvironmentVariable("EDITOR");
         }
         if (editorCmd == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_NO_EXTERNAL_EDITOR, "None of the environment variables SVN_EDITOR, VISUAL or EDITOR is set, and no 'editor-cmd' run-time configuration option was found");
