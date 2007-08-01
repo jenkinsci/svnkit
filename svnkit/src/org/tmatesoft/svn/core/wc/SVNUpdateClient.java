@@ -51,6 +51,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * This class provides methods which allow to check out, update, switch and relocate a
@@ -619,6 +620,27 @@ public class SVNUpdateClient extends SVNBasicClient {
                 } else if (childEntry.isFile()) {
                     File childTo = new File(to, childEntry.getName());
                     copyVersionedFile(childTo, adminArea, childEntry.getName(), revision, eolStyle);
+                }
+            }
+            if (!isIgnoreExternals() && depth == SVNDepth.INFINITY && entry.getDepth() == SVNDepth.INFINITY) {
+                SVNVersionedProperties properties = adminArea.getProperties(adminArea.getThisDirName());
+                String externalsValue = properties.getPropertyValue(SVNProperty.EXTERNALS);
+                if (externalsValue != null) {
+                    SVNExternalInfo[] externals = SVNWCAccess.parseExternals("", externalsValue);
+                    for (int i = 0; i < externals.length; i++) {
+                        SVNExternalInfo info = externals[i];
+                        File srcPath = new File(adminArea.getRoot(), info.getPath());
+                        File dstPath = new File(to, info.getPath());
+                        SVNDebugLog.getDefaultLog().info("ext path: " + info.getPath());
+                        SVNDebugLog.getDefaultLog().info("src path: " + srcPath);
+                        SVNDebugLog.getDefaultLog().info("dst path: " + dstPath);
+                        if (SVNPathUtil.getSegmentsCount(info.getPath()) > 1) {
+                            if (!dstPath.getParentFile().exists() && !dstPath.getParentFile().mkdirs()) {
+                                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CLIENT_IS_DIRECTORY, "Could not create directory ''{0}''", dstPath.getParentFile()));
+                            }
+                        }
+                        copyVersionedDir(srcPath, dstPath, revision, eolStyle, force, SVNDepth.INFINITY);
+                    }
                 }
             }
         } else if (entry.isFile()) {

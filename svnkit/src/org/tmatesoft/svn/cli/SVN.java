@@ -87,6 +87,7 @@ public class SVN {
         ourArguments.add(SVNArgument.REMOVE);
         ourArguments.add(SVNArgument.ACCEPT);
         ourArguments.add(SVNArgument.USE_MERGE_INFO);
+        ourArguments.add(SVNArgument.IGNORE_EXTERNALS);
     }
 
     public static void main(String[] args) {

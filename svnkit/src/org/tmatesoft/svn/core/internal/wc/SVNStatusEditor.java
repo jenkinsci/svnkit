@@ -144,7 +144,7 @@ public class SVNStatusEditor {
         Map childrenFiles = getChildrenFiles(dir.getRoot());
         SVNEntry dirEntry = myWCAccess.getEntry(dir.getRoot(), false);
 
-        String externals = dir.getProperties("").getPropertyValue(SVNProperty.EXTERNALS);
+        String externals = dir.getProperties(dir.getThisDirName()).getPropertyValue(SVNProperty.EXTERNALS);
         if (externals != null) {
             SVNExternalInfo[] externalsInfo = SVNWCAccess.parseExternals(dir.getRelativePath(myAdminInfo.getAnchor()), externals);
             for (int i = 0; i < externalsInfo.length; i++) {

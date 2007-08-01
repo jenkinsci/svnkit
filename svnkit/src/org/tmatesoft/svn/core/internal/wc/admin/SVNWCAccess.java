@@ -587,8 +587,7 @@ public class SVNWCAccess implements ISVNEventHandler {
             String path;
             long rev = -1;
             List parts = new ArrayList(4);
-            for (StringTokenizer tokens = new StringTokenizer(line, " \t"); tokens
-                    .hasMoreTokens();) {
+            for (StringTokenizer tokens = new StringTokenizer(line, " \t"); tokens.hasMoreTokens();) {
                 String token = tokens.nextToken().trim();
                 parts.add(token);
             }

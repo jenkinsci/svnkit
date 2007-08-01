@@ -85,6 +85,9 @@ public abstract class SVNCommand {
                 authManager.setAuthenticationProvider(new SVNConsoleAuthenticationProvider());
             }
             myClientManager = SVNClientManager.newInstance(getOptions(), authManager);
+            if (getCommandLine().hasArgument(SVNArgument.IGNORE_EXTERNALS)) {
+                myClientManager.setIgnoreExternals(true);
+            }
         }
         return myClientManager;
     }
