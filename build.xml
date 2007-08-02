@@ -211,6 +211,9 @@
             <fileset dir="svnkit/bin">
                 <include name="org/tmatesoft/svn/cli/**" />
             </fileset>
+            <fileset dir="svnkit-cli/bin">
+                <include name="org/tmatesoft/svn/cli2/**" />
+            </fileset>
             <fileset dir="${basedir}">
                 <include name="COPYING" />
             </fileset>
@@ -358,6 +361,8 @@
                 <include name="svnkit/bin/**" />
                 <include name="svnkit-eclipse/bin/**" />
                 <include name="svnkit-test/bin/**" />
+                <include name="svnkit-cli/bin/**" />
+			    <include name="svnkit-dav/bin/**" />
             </fileset>
         </delete>
     </target>

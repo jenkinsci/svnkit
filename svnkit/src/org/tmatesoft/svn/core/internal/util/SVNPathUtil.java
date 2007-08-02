@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 
 /**
@@ -521,6 +522,59 @@ public class SVNPathUtil {
             }
         }
     	return null;
+    }
+
+    public static String canonicalizePath(String path) {
+        StringBuffer result = new StringBuffer();
+        int i = 0;
+        for(;i < path.length(); i++) {
+            if (path.charAt(i) == '/' || path.charAt(i) == ':') {
+                break;
+            }
+        }
+        String scheme = null;
+        int index = 0;
+        if (i > 0 && i + 2 < path.length() && path.charAt(i) == ':' && path.charAt(i + 1) == '/' && path.charAt(i + 2) == '/') {
+            scheme = path.substring(0, i + 3);
+            result.append(scheme);
+            index = i + 3;
+        }
+        if (index < path.length() && path.charAt(index) == '/') {
+            result.append('/');
+            index++;
+            if (SVNFileUtil.isWindows && scheme == null && index < path.length() && path.charAt(index) == '/') {
+                result.append('/');
+                index++;
+            }
+        }
+        int segmentCount = 0;
+        while(index < path.length()) {
+            int nextIndex = index;
+            while(nextIndex < path.length() && path.charAt(nextIndex) != '/') {
+                nextIndex++;
+            }
+            int segmentLength = nextIndex - index;
+            if (segmentLength == 0 || (segmentLength == 1 && path.charAt(index) == '.')) {
+                
+            } else {
+                if (nextIndex < path.length()) {
+                    segmentLength++;
+                }
+                result.append(path.substring(index, index + segmentLength));
+                segmentCount++;
+            }
+            index = nextIndex;
+            if (index < path.length()) {
+                index++;
+            }
+        }
+        if ((segmentCount > 0 || scheme != null) && result.charAt(result.length() - 1) == '/') {
+            result = result.delete(result.length() - 1, result.length());
+        }
+        if (SVNFileUtil.isWindows && segmentCount < 2 && result.length() >= 2 && result.charAt(0) == '/' && result.charAt(1) == '/') {
+            result = result.delete(0, 1);
+        }
+        return result.toString();
     }
     
 }

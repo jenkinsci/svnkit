@@ -111,6 +111,10 @@ public class SVN {
                 System.exit(1);
             }
             String commandName = commandLine.getCommandName();
+            if ("status".equals(commandName) || "stat".equals(commandName) || "st".equals(commandName)) {
+                org.tmatesoft.svn.cli2.SVN.main(args);
+                return;
+            }
             SVNCommand command = SVNCommand.getCommand(commandName);
 
 
