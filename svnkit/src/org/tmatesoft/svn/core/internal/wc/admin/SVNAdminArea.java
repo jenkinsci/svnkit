@@ -1358,7 +1358,46 @@ public abstract class SVNAdminArea {
             return myEntries;
         }
         myEntries = fetchEntries();
+        if (myEntries != null) {
+            resolveDefaults(myEntries);
+        }
         return myEntries;
+    }
+    
+    private static void resolveDefaults(Map entries) throws SVNException {
+        SVNEntry defaultEntry = (SVNEntry) entries.get("");
+        if (defaultEntry == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "Missing default entry");
+            SVNErrorManager.error(err);
+        }
+        if (defaultEntry.getRevision() < 0) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_REVISION, "Default entry has no revision number");
+            SVNErrorManager.error(err);
+        }
+        if (defaultEntry.getURL() == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "Default entry is missing no URL");
+            SVNErrorManager.error(err);
+        }
+        for(Iterator names = entries.keySet().iterator(); names.hasNext();) {
+            String name = (String) names.next();
+            SVNEntry entry = (SVNEntry) entries.get(name);
+            if (entry == null || entry == defaultEntry || entry.isDirectory()) {
+                continue;
+            } else if (entry.isFile()) {
+                if (entry.getRevision() < 0) {
+                    entry.setRevision(defaultEntry.getRevision());
+                }
+                if (entry.getURL() == null) {
+                    entry.setURL(SVNPathUtil.append(defaultEntry.getURL(), SVNEncodingUtil.uriEncode(entry.getName())));
+                }
+                if (entry.getUUID() == null && !(entry.isScheduledForAddition() || entry.isScheduledForReplacement())) {
+                    entry.setUUID(defaultEntry.getUUID());
+                }
+                if (entry.getCachableProperties() == null) {
+                    entry.setCachableProperties(defaultEntry.getCachableProperties());
+                }
+            }
+        }
     }
 
     protected Map getBasePropertiesStorage(boolean create) {

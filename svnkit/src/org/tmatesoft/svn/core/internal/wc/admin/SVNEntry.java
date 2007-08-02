@@ -22,8 +22,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
@@ -79,18 +77,7 @@ public class SVNEntry implements Comparable {
     }
 
     public String getURL() {
-        String url = (String)myAttributes.get(SVNProperty.URL);
-        if (url == null && myAdminArea != null && !myAdminArea.getThisDirName().equals(myName)) {
-            SVNEntry rootEntry = null; 
-            try {    
-                rootEntry = myAdminArea.getEntry(myAdminArea.getThisDirName(), true); 
-            } catch (SVNException svne) {
-                return url;
-            }
-            url = rootEntry.getURL();
-            url = SVNPathUtil.append(url, SVNEncodingUtil.uriEncode(myName));
-        }
-        return url;
+        return (String) myAttributes.get(SVNProperty.URL);
     }
     
     public SVNURL getSVNURL() throws SVNException {
@@ -111,15 +98,6 @@ public class SVNEntry implements Comparable {
 
     public long getRevision() {
         String revStr = (String)myAttributes.get(SVNProperty.REVISION);
-        if (revStr == null && myAdminArea != null && !myAdminArea.getThisDirName().equals(myName)) {
-            SVNEntry rootEntry = null;
-            try {
-                rootEntry = myAdminArea.getEntry(myAdminArea.getThisDirName(), true);
-            } catch (SVNException svne) {
-                return SVNRepository.INVALID_REVISION;
-            }
-            return rootEntry.getRevision();
-        }
         return revStr != null ? Long.parseLong(revStr) : SVNRepository.INVALID_REVISION;
     }
 
@@ -136,8 +114,7 @@ public class SVNEntry implements Comparable {
     }
 
     public boolean isHidden() {
-        return (isDeleted() || isAbsent()) && !isScheduledForAddition()
-                && !isScheduledForReplacement();
+        return (isDeleted() || isAbsent()) && !isScheduledForAddition() && !isScheduledForReplacement();
     }
 
     public boolean isFile() {
@@ -384,11 +361,11 @@ public class SVNEntry implements Comparable {
     }
 
     public String getUUID() {
-        return (String)myAttributes.get(SVNProperty.UUID);
+        return (String) myAttributes.get(SVNProperty.UUID);
     }
 
     public String getRepositoryRoot() {
-        return (String)myAttributes.get(SVNProperty.REPOS);
+        return (String) myAttributes.get(SVNProperty.REPOS);
     }
 
     public SVNURL getRepositoryRootURL() throws SVNException {
@@ -450,11 +427,11 @@ public class SVNEntry implements Comparable {
     }
 
     public String[] getCachableProperties() {
-        return (String[])myAttributes.get(SVNProperty.CACHABLE_PROPS);
+        return (String[]) myAttributes.get(SVNProperty.CACHABLE_PROPS);
     }
 
     public String[] getPresentProperties() {
-        return (String[])myAttributes.get(SVNProperty.PRESENT_PROPS);
+        return (String[]) myAttributes.get(SVNProperty.PRESENT_PROPS);
     }
 
     public Map asMap() {

@@ -31,9 +31,7 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNPathList;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
@@ -45,7 +43,6 @@ import org.tmatesoft.svn.core.wc.SVNPathList;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusClient;
-import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.core.wc.xml.SVNXMLSerializer;
 import org.tmatesoft.svn.core.wc.xml.SVNXMLStatusHandler;
 import org.tmatesoft.svn.util.ISVNDebugLog;
@@ -70,6 +67,7 @@ public class SVNStatusCommand extends SVNCommand implements ISVNStatusHandler, I
     }
 
     public void run(PrintStream out, PrintStream err) throws SVNException {
+        myErrorOutput = err;
         SVNCommandLine line = getCommandLine();
 
         String changelistName = (String) line.getArgumentValue(SVNArgument.CHANGELIST); 
@@ -88,6 +86,7 @@ public class SVNStatusCommand extends SVNCommand implements ISVNStatusHandler, I
         for(int i = 0; i < line.getPathCount(); i++) {
             paths[i] = line.getPathAt(i).trim();
         }
+        /*
         for(int i = 0; i < paths.length; i++) {
             String path = paths[i];
             File validatedPath = new File(SVNPathUtil.validateFilePath(new File(path).getAbsolutePath()));
@@ -95,7 +94,7 @@ public class SVNStatusCommand extends SVNCommand implements ISVNStatusHandler, I
                 err.println("svn: warning: '" + path + "' is not a working copy");
                 paths[i] = null;
                 continue;
-            } else if (SVNFileType.getType(validatedPath) == SVNFileType.DIRECTORY && !SVNWCUtil.isVersionedDirectory(validatedPath) && "..".equals(path)) { 
+            if (SVNFileType.getType(validatedPath) == SVNFileType.DIRECTORY && !SVNWCUtil.isVersionedDirectory(validatedPath) && "..".equals(path)) { 
                 err.println("svn: warning: '" + path + "' is not a working copy");
                 paths[i] = null;
                 continue;
@@ -105,11 +104,13 @@ public class SVNStatusCommand extends SVNCommand implements ISVNStatusHandler, I
                 continue;
             }
             paths[i] = validatedPath.getAbsolutePath();
-        }
+        }*/
         
         Collection targets = new LinkedList();
         for (int i = 0; i < paths.length; i++) {
-            targets.add(new File(paths[i]));
+            if (paths[i] != null) {
+                targets.add(new File(paths[i]).getAbsoluteFile());
+            }
         }
         if (targets.size() == 0 && (changelist == null || changelist.getPathsCount() == 0) &&  !getCommandLine().hasURLs()) {
             targets.add(new File(".").getAbsoluteFile());

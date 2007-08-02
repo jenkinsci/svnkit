@@ -59,7 +59,7 @@ public class SVNCommandStatusHandler implements ISVNStatusHandler {
         } else {
             String wcRevision;
             char remoteStatus;
-            if (status.getURL() == null) {
+            if (status.getEntry() == null) {
                 wcRevision = "";
             } else if (!status.getRevision().isValid()) {
                 wcRevision = " ? ";

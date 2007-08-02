@@ -343,8 +343,8 @@ public abstract class SVNCommand {
             if (code == warningCodes[i]) {
                 if (!getCommandLine().hasArgument(SVNArgument.QUIET)) {
                     err.setType(SVNErrorMessage.TYPE_WARNING);
-                    errStream.println(err.getFullMessage());
-                }
+                    errStream.println(err.getMessage());
+                } 
                 return false;
             }
         }
