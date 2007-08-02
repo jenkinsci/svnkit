@@ -263,7 +263,7 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
             File path = (File) paths.next();
             SVNStatus status = (SVNStatus) hash.get(path);
             
-            if (status.getContentsStatus() != SVNStatusType.OBSTRUCTED &&
+            if (status.getContentsStatus() != SVNStatusType.STATUS_OBSTRUCTED &&
                 status.getContentsStatus() != SVNStatusType.STATUS_MISSING &&
                 status.getEntry() != null && status.getKind() == SVNNodeKind.DIR && 
                 (depth == SVNDepth.UNKNOWN || depth == SVNDepth.IMMEDIATES || 
