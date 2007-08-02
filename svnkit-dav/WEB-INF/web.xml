@@ -9,7 +9,7 @@
         <servlet-class>org.tmatesoft.svn.core.internal.server.dav.DAVServlet</servlet-class>
         <init-param>
             <param-name>SVNPath</param-name>
-            <param-value>/var/svn/repository/svnkit</param-value>
+            <param-value>/var/svn/repository/repoview/</param-value>
         </init-param>
     </servlet>
     <servlet-mapping>

@@ -11,16 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Writer;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -34,42 +24,53 @@ import org.xml.sax.SAXNotRecognizedException;
 import org.xml.sax.SAXNotSupportedException;
 import org.xml.sax.XMLReader;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Writer;
+
 
 /**
+ * @author TMate Software Ltd.
  * @version 1.1.2
- * @author  TMate Software Ltd.
  */
 public abstract class ServletDAVHandler extends BasicDAVHandler {
-    
+
 
     protected static final String LABEL_HEADER = "label";
     private static final String DEPTH_HEADER = "Depth";
 
+    protected static final String XML_HEADER = "<?xml version=\"1.0\" encoding=\"utf-8\"?>";
+
 
     private static SAXParserFactory ourSAXParserFactory;
     private SAXParser mySAXParser;
-    
-    private DAVRepositoryManager myRepositoryConnector = null;
+
+    private DAVRepositoryManager myRepositoryManager = null;
     private HttpServletRequest myRequest;
     private HttpServletResponse myResponse;
-    
+
     protected ServletDAVHandler(DAVRepositoryManager connector, HttpServletRequest request, HttpServletResponse response) {
         init();
-        myRepositoryConnector = connector;
+        myRepositoryManager = connector;
         myRequest = request;
-        myResponse = response;        
+        myResponse = response;
     }
-    
+
     public abstract void execute() throws SVNException;
-    
+
     protected String getRequestURI() {
         return myRequest.getRequestURI();
     }
-    
+
     protected String getRequestHeader(String name) {
         return myRequest.getHeader(name);
     }
-    
+
     protected InputStream getRequestInputStream() throws SVNException {
         try {
             return myRequest.getInputStream();
@@ -78,14 +79,14 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         }
         return null;
     }
-    
+
     protected void setResponseHeader(String name, String value) {
         myResponse.setHeader(name, value);
     }
 
     protected Writer getResponseWriter() throws SVNException {
         try {
-            myResponse.getWriter();
+            return myResponse.getWriter();
         } catch (IOException e) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
         }
@@ -93,7 +94,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     }
 
     protected DAVRepositoryManager getRepositoryManager() {
-        return myRepositoryConnector;
+        return myRepositoryManager;
     }
 
     protected DAVDepth getRequestDepth(DAVDepth defaultDepth) throws SVNException {
@@ -107,11 +108,12 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         }
         return result;
     }
-    
+
     protected void setDefaultResponseHeaders() {
         myResponse.setContentType("text/xml; charset=UTF-8");
+        myResponse.setHeader("Accept-Ranges", "bytes");
     }
-    
+
     protected void readInput(InputStream is) throws SVNException {
         if (mySAXParser == null) {
             try {
@@ -158,8 +160,6 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         }
         return ourSAXParserFactory;
     }
-
-
 
 
 }
