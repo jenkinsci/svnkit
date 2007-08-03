@@ -717,7 +717,7 @@ public class SVNCommitUtil {
                     currentCFURL = SVNPathUtil.append(currentCFURL, SVNEncodingUtil.uriEncode(currentEntry.getName()));
                 }
                 String currentURL = currentEntry.getURL();
-                if (copyMode || entry.getURL() == null) {
+                if (copyMode || currentEntry.getURL() == null) {
                     currentURL = SVNPathUtil.append(url, SVNEncodingUtil.uriEncode(currentEntry.getName()));
                 }
                 File currentFile = dir.getFile(currentEntry.getName());
