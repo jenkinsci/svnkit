@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 
 import org.tmatesoft.svn.cli.SVNConsoleAuthenticationProvider;
 import org.tmatesoft.svn.cli2.command.SVNStatusCommand;
@@ -29,12 +30,16 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 
@@ -70,14 +75,21 @@ public class SVNCommandEnvironment {
     private PrintStream myOut;
     private SVNClientManager myClientManager;
     private SVNOperatingPath myOperatingPath;
-    private String[] myArguments;
+    private List myArguments;
     private boolean myIsNoIgnore;
+    private boolean myIsRevprop;
+    private boolean myIsStrict;
+    private SVNRevision myStartRevision;
+    private SVNRevision myEndRevision;
     
     public SVNCommandEnvironment(PrintStream out, PrintStream err, InputStream in) {
         myIsDescend = true;
         myOut = out;
         myErr = err;
         myIn = in;
+        myDepth = SVNDepth.UNKNOWN;
+        myStartRevision = SVNRevision.UNDEFINED;
+        myEndRevision = SVNRevision.UNDEFINED;
     }
     
     public String getProgramName() {
@@ -129,11 +141,53 @@ public class SVNCommandEnvironment {
     }
     
     protected void initOptions(SVNCommandLine commandLine) throws SVNException {
+        if (commandLine.hasOption(SVNOption.CHANGE)) {
+            if (commandLine.hasOption(SVNOption.REVISION)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Multiple revision argument encountered; " +
+                        "can't specify -r and c");
+                SVNErrorManager.error(err);
+            }
+            String chValue = commandLine.getOptionValue(SVNOption.CHANGE);
+            long change = 0;
+            try {
+                change = Long.parseLong(chValue);
+            } catch (NumberFormatException nfe) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Non-numeric change argument given to -c");
+                SVNErrorManager.error(err);
+            }
+            if (change == 0) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "There is no change 0");
+                SVNErrorManager.error(err);
+            } else if (change > 0) {
+                myStartRevision = SVNRevision.create(change - 1);
+                myEndRevision = SVNRevision.create(change);
+            } else {
+                change = -change;
+                myStartRevision = SVNRevision.create(change);
+                myEndRevision = SVNRevision.create(change - 1);
+            }
+        }
+        if (commandLine.hasOption(SVNOption.REVISION)) {
+            if (commandLine.hasOption(SVNOption.CHANGE)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Multiple revision argument encountered; " +
+                		"can't specify -r and c");
+                SVNErrorManager.error(err);
+            }
+            String revStr = commandLine.getOptionValue(SVNOption.REVISION);
+            if (!parseRevision(revStr)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Syntax error in revision argument ''{0}''", revStr);
+                SVNErrorManager.error(err);
+            }
+        }
         myIsVerbose = commandLine.hasOption(SVNOption.VERBOSE);
         myIsUpdate = commandLine.hasOption(SVNOption.UPDATE);
         myIsHelp = commandLine.hasOption(SVNOption.HELP) || commandLine.hasOption(SVNOption.QUESTION);
         myIsQuiet = commandLine.hasOption(SVNOption.QUIET);
         myIsIncremental = commandLine.hasOption(SVNOption.INCREMENTAL);
+        myIsRevprop = commandLine.hasOption(SVNOption.REVPROP);
+        if (commandLine.hasOption(SVNOption.RECURSIVE)) {
+            myDepth = SVNDepth.fromRecurse(true);
+        }
         if (commandLine.hasOption(SVNOption.NON_RECURSIVE)) {
             myIsDescend = false;
         }
@@ -161,6 +215,7 @@ public class SVNCommandEnvironment {
             myPassword = commandLine.getOptionValue(SVNOption.PASSWORD);
         }
         myIsXML = commandLine.hasOption(SVNOption.XML);
+        myIsStrict = commandLine.hasOption(SVNOption.STRICT);
         myIsNoAuthCache = commandLine.hasOption(SVNOption.NO_AUTH_CACHE);
         myIsNonInteractive = commandLine.hasOption(SVNOption.NON_INTERACTIVE);
         if (commandLine.hasOption(SVNOption.CONFIG_DIR)) {
@@ -170,13 +225,13 @@ public class SVNCommandEnvironment {
             myChangelist = commandLine.getOptionValue(SVNOption.CHANGELIST);
         }
         myIsNoIgnore = commandLine.hasOption(SVNOption.NO_IGNORE);
-        myArguments = commandLine.getArguments();
+        myArguments = new LinkedList(commandLine.getArguments());
     }
     
     protected void initCommand(SVNCommandLine commandLine) throws SVNException {
         myCommandName = commandLine.getCommandName();
         if (myIsHelp) {
-            myArguments = myCommandName != null ? new String[] {myCommandName} : new String[0];
+            myArguments = myCommandName != null ? Collections.singletonList(myCommandName) : Collections.EMPTY_LIST;
             myCommandName = "help";
         } 
         if (myCommandName == null) {
@@ -223,6 +278,31 @@ public class SVNCommandEnvironment {
             }
         }
     }
+    
+    protected boolean parseRevision(String revStr) {
+        int colon = revStr.indexOf(':');
+        if (colon > 0) {
+            if (colon + 1 >= revStr.length()) {
+                return false;
+            }
+            String rev1 = revStr.substring(0, colon);
+            String rev2 = revStr.substring(colon);
+            SVNRevision r1 = SVNRevision.parse(rev1);
+            SVNRevision r2 = SVNRevision.parse(rev2);
+            if (r1 == SVNRevision.UNDEFINED || r2 == SVNRevision.UNDEFINED) {
+                return false;
+            }
+            myStartRevision = r1;
+            myEndRevision = r2;
+        } else {
+            SVNRevision r1 = SVNRevision.parse(revStr);
+            if (r1 == SVNRevision.UNDEFINED) {
+                return false;
+            }
+            myStartRevision = r1;
+        }
+        return true;
+    }
 
     public String getChangelist() {
         return myChangelist;
@@ -247,11 +327,15 @@ public class SVNCommandEnvironment {
         return path.getAbsolutePath();
     }
 
-    public Collection getArguments() {
-        if (myArguments != null) {
-            return Arrays.asList(myArguments);
+    public List getArguments() {
+        return myArguments;
+    }
+    
+    public String popArgument() {
+        if (myArguments.isEmpty()) {
+            return null;
         }
-        return Collections.EMPTY_LIST;
+        return (String) myArguments.remove(0);
     }
     
     public Collection combineTargets(Collection targets) {
@@ -310,6 +394,22 @@ public class SVNCommandEnvironment {
         return myIsIncremental;
     }
     
+    public boolean isRevprop() {
+        return myIsRevprop;
+    }
+    
+    public boolean isStrict() {
+        return myIsStrict;
+    }
+    
+    public SVNRevision getStartRevision() {
+        return myStartRevision;
+    }
+
+    public SVNRevision getEndRevision() {
+        return myEndRevision;
+    }
+    
     public boolean isXML() {
         return myIsXML;
     }
@@ -363,4 +463,25 @@ public class SVNCommandEnvironment {
         }
         throw new SVNException(err);
     }
+
+    public SVNURL getURLFromTarget(String target) throws SVNException {
+        if (SVNCommandUtil.isURL(target)) {
+            return SVNURL.parseURIEncoded(target);
+        }
+        SVNWCAccess wcAccess = null;
+        File path = new File(target).getAbsoluteFile();
+        setOperatingPath(target, path);
+        try {
+            wcAccess = SVNWCAccess.newInstance(null);
+            wcAccess.probeOpen(path, false, 0);
+            SVNEntry entry = wcAccess.getVersionedEntry(path, false);
+            if (entry != null) {
+                return entry.getSVNURL();
+            }
+        } finally {
+            wcAccess.close();
+        }
+        return null;
+    }
+
 }

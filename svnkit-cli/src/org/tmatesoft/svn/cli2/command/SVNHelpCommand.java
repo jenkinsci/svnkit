@@ -40,7 +40,7 @@ public class SVNHelpCommand extends SVNCommand {
     }
     
     public static void printBasicUsage(String programName) {
-        System.out.println(MessageFormat.format("Type ''{0} help'' for usage.", new Object[] {programName}));
+        System.err.println(MessageFormat.format("Type ''{0} help'' for usage.", new Object[] {programName}));
     }
 
     public void run() throws SVNException {

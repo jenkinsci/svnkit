@@ -89,7 +89,12 @@ public class SVNCommandLine {
                     continue;
                 }
                 result.add(arg);
-            } else if (arg.startsWith("-")) {
+            } else if ((arg.startsWith("-c") || arg.startsWith("-r")) && arg.length() > 2) {
+                // -r or -c
+                result.add(arg.substring(0, 2));
+                // N or N:M
+                result.add(arg.substring(2));
+            } else if (arg.startsWith("-")) {                
                 if (arg.length() <= 2) {
                     result.add(arg);
                     continue;
@@ -130,8 +135,8 @@ public class SVNCommandLine {
         return myCommand;
     }
     
-    public String[] getArguments() {
-        return (String[]) myArguments.toArray(new String[myArguments.size()]);
+    public Collection getArguments() {
+        return myArguments;
     }
 
 }

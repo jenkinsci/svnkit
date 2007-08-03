@@ -44,4 +44,14 @@ public class SVNCommandUtil {
         }
         return formatted.toString();
     }
+
+    public static boolean isURL(String pathOrUrl){
+        pathOrUrl = pathOrUrl != null ? pathOrUrl.toLowerCase() : null;
+        return pathOrUrl != null
+                && (pathOrUrl.startsWith("http://")
+                        || pathOrUrl.startsWith("https://")
+                        || pathOrUrl.startsWith("svn://") 
+                        || (pathOrUrl.startsWith("svn+") && pathOrUrl.indexOf("://") > 4)
+                        || pathOrUrl.startsWith("file://"));
+    }
 }

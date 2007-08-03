@@ -39,6 +39,12 @@ public class SVNOption {
     public static final SVNOption HELP = new SVNOption("help", "h");
     public static final SVNOption QUESTION = new SVNOption(null, "?");
     public static final SVNOption VERSION = new SVNOption("version");
+
+    public static final SVNOption RECURSIVE = new SVNOption("recursive", "R");
+    public static final SVNOption REVISION = new SVNOption("revision", "r", false);
+    public static final SVNOption CHANGE = new SVNOption("change", "c", false);
+    public static final SVNOption REVPROP = new SVNOption("revprop");
+    public static final SVNOption STRICT = new SVNOption("strict");
     
     // auth options.
     public static final SVNOption USERNAME = new SVNOption("username", false);
@@ -100,15 +106,19 @@ public class SVNOption {
             bundle = null;
         }
         if (bundle != null) {
-            try {
-                return bundle.getString(getName());
-            } catch (MissingResourceException missing) {
-                
+            if (getName() != null) {
+                try {
+                    return bundle.getString(getName());
+                } catch (MissingResourceException missing) {
+                    
+                }
             }
-            try {
-                return bundle.getString(getAlias());
-            } catch (MissingResourceException missing) {
-                
+            if (getAlias() != null) {
+                try {
+                    return bundle.getString(getAlias());
+                } catch (MissingResourceException missing) {
+                    
+                }
             }
         }
         return MessageFormat.format("No description has been found for ''{0}'' option.", new Object[] {getName()});
