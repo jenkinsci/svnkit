@@ -56,8 +56,20 @@
             <exclude name="org/tmatesoft/svn/util/SVNTest.java" />
             <exclude name="org/tmatesoft/svn/core/internal/wc/FSMergerBySequenceTest.java" />
         </javac>
-        	
     </target>
+
+	<target name="compile-dav" depends="init-environment,compile-library" if="eclipse.present"> 
+        <mkdir dir="svnkit-dav/bin" />
+        <path id="library-dav.classpath">
+            <pathelement location="contrib/servlet-api/servlet-api.jar" />
+            <pathelement path="svnkit/bin"/>
+        </path>
+        <javac debug="true"
+               destdir="svnkit-dav/bin"
+               srcdir="svnkit-dav/src"
+               classpathref="library-dav.classpath">
+        </javac>
+	</target>
 
 	<target name="compile-library-eclipse" depends="init-environment" if="eclipse.present"> 
         <path id="library-eclipse.classpath">
@@ -206,6 +218,16 @@
             </fileset>
         </copy>
     </target>
+
+	<target name="build-dav" depends="compile-dav,build-library">
+		<war destfile="build/lib/svnkit.war" webxml="svnkit-dav/WEB-INF/web.xml">
+			<classes dir="svnkit-dav/bin"/>
+			<lib dir="build/lib">
+				<include name="svnkit.jar"/>
+				<include name="sqlitejdbc.jar"/>
+			</lib>
+		</war>
+	</target>
 
     <target name="build-cli" depends="build-library">
         <jar destfile="build/lib/svnkit-cli.jar">
@@ -530,7 +552,10 @@
         </zip>
     </target>
 
-    <target name="deploy" depends="clean,deploy-library,deploy-eclipse,deploy-snapshot,deploy-bundle" />
+	<target name="deploy-dav" depends="build-dav">
+	</target>
+
+    <target name="deploy" depends="clean,deploy-library,deploy-eclipse,deploy-snapshot,deploy-dav,deploy-bundle" />
 
     <target name="test-java" depends="init-environment,compile-tests">
         <path id="test.classpath">
