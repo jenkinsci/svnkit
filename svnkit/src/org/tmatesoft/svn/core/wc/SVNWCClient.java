@@ -1009,7 +1009,7 @@ public class SVNWCClient extends SVNBasicClient {
      * @see                     #doGetRevisionProperty(File, String, SVNRevision, ISVNPropertyHandler)
      * @see                     #doSetRevisionProperty(SVNURL, SVNRevision, String, String, boolean, ISVNPropertyHandler)
      */
-    public void doGetRevisionProperty(SVNURL url, String propName, SVNRevision revision, ISVNPropertyHandler handler) throws SVNException {
+    public long doGetRevisionProperty(SVNURL url, String propName, SVNRevision revision, ISVNPropertyHandler handler) throws SVNException {
         if (propName != null && propName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, "''{0}'' is a wcprop , thus not accessible to clients", propName);
             SVNErrorManager.error(err);
@@ -1021,6 +1021,7 @@ public class SVNWCClient extends SVNBasicClient {
         SVNRepository repos = createRepository(url, true);
         long revNumber = getRevisionNumber(revision, repos, null);
         doGetRevisionProperty(repos, propName, revNumber, handler);
+        return revNumber;
     }
 
     private void doGetRevisionProperty(SVNRepository repos, String propName, long revNumber, ISVNPropertyHandler handler) throws SVNException {
