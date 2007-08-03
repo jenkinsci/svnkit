@@ -28,6 +28,7 @@
 
     <target name="compile-library">
         <mkdir dir="svnkit/bin" />
+        <mkdir dir="svnkit-cli/bin" />
         <mkdir dir="contrib/javahl/bin" />
         <mkdir dir="contrib/sequence/bin" />
         <mkdir dir="contrib/sqlite/bin" />
@@ -50,7 +51,7 @@
         	                classpathref="library.classpath" />
         <javac debug="true"
                destdir="svnkit/bin"
-               srcdir="svnkit/src"
+               srcdir="svnkit/src:svnkit-cli/src"
                classpathref="library.classpath">
             <exclude name="org/tmatesoft/svn/util/SVNTest.java" />
             <exclude name="org/tmatesoft/svn/core/internal/wc/FSMergerBySequenceTest.java" />
@@ -210,6 +211,7 @@
         <jar destfile="build/lib/svnkit-cli.jar">
             <fileset dir="svnkit/bin">
                 <include name="org/tmatesoft/svn/cli/**" />
+                <include name="org/tmatesoft/svn/cli2/**" />
             </fileset>
             <fileset dir="svnkit-cli/bin">
                 <include name="org/tmatesoft/svn/cli2/**" />
