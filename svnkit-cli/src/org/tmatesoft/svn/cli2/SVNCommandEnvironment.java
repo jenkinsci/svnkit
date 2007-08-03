@@ -193,7 +193,7 @@ public class SVNCommandEnvironment {
         }
         if (!myIsDescend) {
             if (myCommand instanceof SVNStatusCommand) {
-                myDepth = SVNDepth.fromRecurse(myIsDescend);
+                myDepth = SVNDepth.IMMEDIATES;
             } else {
                 myDepth = SVNDepth.fromRecurse(myIsDescend);
             }

@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.cli2;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -46,6 +47,7 @@ public class SVNCommandLine {
     }
 
     public void init(String[] args) throws SVNException {
+        args = expandArgs(args);
         for (int i = 0; i < args.length; i++) {
            String value = args[i];
            if (ourOptions.containsKey(value)) {
@@ -67,6 +69,42 @@ public class SVNCommandLine {
                myArguments.add(value);
            }
         }
+    }
+    
+    private static String[] expandArgs(String[] args) {
+        Collection result = new ArrayList();
+        for (int i = 0; i < args.length; i++) {
+            String arg = args[i];
+            if (arg.startsWith("--")) {
+                int index = arg.indexOf('=');
+                if (index > 0) {
+                    result.add(arg.substring(0, index));
+                    if (index + 1 < arg.length()) {
+                        result.add(arg.substring(index + 1));
+                    }
+                    continue;
+                }
+                result.add(arg);
+            } else if (arg.startsWith("-")) {
+                if (arg.length() <= 2) {
+                    result.add(arg);
+                    continue;
+                } 
+                try {
+                    long l = Long.parseLong(arg);
+                    if (l < 0) {
+                        result.add(arg);
+                        continue;
+                    }
+                } catch (NumberFormatException nfe) {}
+                for(int j = 1; j < arg.length(); j++) {
+                    result.add("-" + arg.charAt(j));
+                }
+            }  else {
+                result.add(arg);
+            }
+        }
+        return (String[]) result.toArray(new String[result.size()]);
     }
 
     public boolean hasOption(SVNOption option) {
