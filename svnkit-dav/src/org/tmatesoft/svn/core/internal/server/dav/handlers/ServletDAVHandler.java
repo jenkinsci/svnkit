@@ -42,6 +42,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
 
 
     protected static final int SC_MULTISTATUS = 207;
+    protected static final int SC_NOT_FOUND = 404;
 
     protected static final String LABEL_HEADER = "label";
     private static final String DEPTH_HEADER = "Depth";

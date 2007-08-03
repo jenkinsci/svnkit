@@ -52,6 +52,7 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
     private Collection myDAVElements;
     private Map myNamespaces;
     private String myCurrentNamespace;
+    private int myCurrentStatus;
 
     static {
         PROP_ELEMENTS.add(DAVElement.HREF);
@@ -70,7 +71,6 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         PROP_ELEMENTS.add(DAVElement.RESOURCE_TYPE);
         PROP_ELEMENTS.add(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
     }
-
 
     public DAVPropfindHanlder(DAVRepositoryManager connector, HttpServletRequest request, HttpServletResponse response) {
         super(connector, request, response);
@@ -135,6 +135,15 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         myCurrentNamespace = currentNamspace;
     }
 
+
+    public int getCurrentStatus() {
+        return myCurrentStatus;
+    }
+
+    public void setCurrentStatus(int currentStatus) {
+        myCurrentStatus = currentStatus;
+    }
+
     public void execute() throws SVNException {
         String label = getRequestHeader(LABEL_HEADER);
         DAVResource resource = getRepositoryManager().createDAVResource(getRequestContext(), getRequestURI(), label, false);
@@ -146,14 +155,13 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
 
         StringBuffer body = new StringBuffer();
 
-        generatePropertiesResponse(body, resource);
-
-        setResponseStatus(SC_MULTISTATUS);
-        setDefaultResponseHeaders();
-        setResponseHeaders(resource);
-
         try {
+            generatePropertiesResponse(body, resource);
+            setResponseStatus(SC_MULTISTATUS);
+            setDefaultResponseHeaders();
+            setResponseHeaders(resource);
             getResponseWriter().write(body.toString());
+        } catch (SVNException svne) {
         } catch (IOException e) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
         }
@@ -169,7 +177,7 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
 
     private void generatePropertiesResponse(StringBuffer body, DAVResource resource) throws SVNException {
         startMultistatus(body);
-        startResponseTag(body,resource.getContext(), resource.getURI());
+        startResponseTag(body, resource.getContext(), resource.getURI());
         startPropstat(body);
         Iterator iterator = getDAVProperties().iterator();
         while (iterator.hasNext()) {
@@ -208,7 +216,7 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         body.append("</D:multistatus>");
     }
 
-    private void startResponseTag(StringBuffer body,String context, String uri) {
+    private void startResponseTag(StringBuffer body, String context, String uri) {
         body.append("<D:response");
         Iterator iterator = getNamespaces().keySet().iterator();
         while (iterator.hasNext()) {
@@ -245,7 +253,8 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
 
     private String getPropertyValue(DAVResource resource, DAVElement element) throws SVNException {
         if (!resource.exists() && (element != DAVElement.VERSION_CONTROLLED_CONFIGURATION || element != DAVElement.BASELINE_RELATIVE_PATH)) {
-            return null;
+            setResponseStatus(SC_NOT_FOUND);
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PATH_NOT_FOUND, "Invalid path ''{0}''", resource.getContext() + resource.getURI()));
         }
 
         if (element == DAVElement.VERSION_CONTROLLED_CONFIGURATION) {
