@@ -44,6 +44,7 @@ public class DAVResource {
     private DAVResourceKind myKind;
     private String myPath;
     private long myRevision;
+    private long myCreatedRevision;
     private String myParameterPath;
     private String myActivityID;
     private boolean myIsExists;
@@ -52,10 +53,15 @@ public class DAVResource {
     private boolean myIsBaseLined;
     private boolean myIsWorking;
 
-    public DAVResource(String requestContext, String uri, String label, boolean useCheckedIn) {
+    public DAVResource(SVNRepository repository, String requestContext, String uri, String label, boolean useCheckedIn) throws SVNException {
+        myRepository = repository;
         myContext = requestContext;
         myURI = uri;
+        myRevision = INVALID_REVISION;
+        //TODO: need to remember checksum if any
+        //TODO: need to remembe User Agent if any
         parseURI(label, useCheckedIn);
+        prepare();
     }
 
     public DAVResource(String path, DAVResourceKind kind, String parameter) {
@@ -138,6 +144,14 @@ public class DAVResource {
         myRevision = revisionNumber;
     }
 
+    public long getCreatedRevision() {
+        return myCreatedRevision;
+    }
+
+    public void setCreatedRevision(long createdRevision) {
+        myCreatedRevision = createdRevision;
+    }
+
     public String getParameterPath() {
         return myParameterPath;
     }
@@ -203,20 +217,18 @@ public class DAVResource {
         if (uri.startsWith("/")) {
             uri = uri.substring("/".length());
         }
-        String repositoryName = SVNPathUtil.head(uri);
-        setRepositoryName(repositoryName);
-        String uriInRepository = SVNPathUtil.removeHead(uri);
-        int specialURIIndex = uriInRepository.indexOf(SPECIAL_URI);
+        int specialURIIndex = uri.indexOf(SPECIAL_URI);
         int specialURILength = SPECIAL_URI.length();
         if (specialURIIndex == -1) {
             setKind(DAVResourceKind.PUBLIC);
             setType(DAVResource.DAV_RESOURCE_TYPE_REGULAR);
-            setPath("".equals(uriInRepository) ? "/" : uriInRepository);
+            setPath("".equals(uri) ? "/" : uri);
             setParameterPath(getPath());
+            setVersioned(true);
         } else {
-            String path = uriInRepository.substring(0, specialURIIndex);
+            String path = uri.substring(0, specialURIIndex);
             setPath("".equals(path) ? "/" : path);
-            String specialPart = uriInRepository.substring(specialURIIndex + specialURILength);
+            String specialPart = uri.substring(specialURIIndex + specialURILength);
             if ("".equals(specialPart)) {
                 // root/!svn
                 setType(DAVResource.DAV_RESOURCE_TYPE_PRIVATE);
@@ -269,8 +281,7 @@ public class DAVResource {
             setActivityID(parameter);
             setParameterPath("/");
         } else {
-            String activityID = parameter.substring(0, slashIndex);
-            setActivityID(activityID);
+            setActivityID(parameter.substring(0, slashIndex));
             setParameterPath(parameter.substring(slashIndex));
         }
     }
@@ -285,8 +296,7 @@ public class DAVResource {
         if (slashIndex == -1 || slashIndex == 0) {
             //TODO: handle uri format mismatch
         }
-        String activityID = parameter.substring(0, slashIndex);
-        setActivityID(activityID);
+        setActivityID(parameter.substring(0, slashIndex));
         long revision = Long.parseLong(parameter.substring(slashIndex + "/".length()));
         setRevision(revision);
     }
@@ -318,7 +328,6 @@ public class DAVResource {
         setVersioned(true);
         setRevision(revision);
         setParameterPath(parameterPath);
-
     }
 
     private void parseBaseline(String parameter) {
@@ -341,8 +350,7 @@ public class DAVResource {
             //Requested URI ends with double slash
         } else {
             setRevision(Long.parseLong(parameter.substring(0, slashIndex)));
-            String parameterPath = parameter.substring(slashIndex);
-            setParameterPath(parameterPath);
+            setParameterPath(parameter.substring(slashIndex));
         }
     }
 
@@ -364,6 +372,7 @@ public class DAVResource {
             setRevision(revision);
             setVersioned(true);
             setBaseLined(true);
+            setParameterPath(null);
         }
 
     }
@@ -379,18 +388,15 @@ public class DAVResource {
             setCollection(currentNodeKind == SVNNodeKind.DIR);
         } else if (getType() == DAVResource.DAV_RESOURCE_TYPE_VERSION) {
             setRevision(latestRevision);
-            if (getParameterPath() == null) {
-                //TODO:complete
-            }
             setExists(true);
-            setURI(DAVResourceUtil.buildURI(getContext(), getRepositoryName(), getPath(), DAVResourceKind.BASELINE, getRevision(), "", false));
+            setURI(DAVResourceUtil.buildURI(getContext(), getPath(), DAVResourceKind.BASELINE, getRevision(), "", false));
         } else if (getType() == DAVResource.DAV_RESOURCE_TYPE_WORKING) {
             //TODO: Define filename for ACTIVITY_ID under the repository
             if (isBaseLined()) {
                 setExists(true);
                 return;
             }
-
+            
             SVNNodeKind currentNodeKind = getRepository().checkPath(getParameterPath(), getRevision());
             setExists(currentNodeKind != SVNNodeKind.NONE);
             setCollection(currentNodeKind == SVNNodeKind.DIR);

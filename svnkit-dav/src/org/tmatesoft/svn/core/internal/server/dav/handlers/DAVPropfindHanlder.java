@@ -169,7 +169,7 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
 
     private void generatePropertiesResponse(StringBuffer body, DAVResource resource) throws SVNException {
         startMultistatus(body);
-        startResponseTag(body, resource.getURI());
+        startResponseTag(body,resource.getContext(), resource.getURI());
         startPropstat(body);
         Iterator iterator = getDAVProperties().iterator();
         while (iterator.hasNext()) {
@@ -208,7 +208,7 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         body.append("</D:multistatus>");
     }
 
-    private void startResponseTag(StringBuffer body, String uri) {
+    private void startResponseTag(StringBuffer body,String context, String uri) {
         body.append("<D:response");
         Iterator iterator = getNamespaces().keySet().iterator();
         while (iterator.hasNext()) {
@@ -221,6 +221,7 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         }
         body.append(">\n");
         body.append("<D:href>");
+        body.append(context);
         if (!uri.endsWith("/")) {
             uri = uri + "/";
         }
@@ -250,11 +251,11 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         if (element == DAVElement.VERSION_CONTROLLED_CONFIGURATION) {
             if (resource.getType() != DAVResource.DAV_RESOURCE_TYPE_REGULAR) {
                 //prop not supported
-                return null;
+//                return null;
             }
 
             //Method doesn't use revision parameter at this moment
-            return DAVResourceUtil.buildURI(resource.getContext(), resource.getRepositoryName(), resource.getPath(), DAVResourceKind.VCC, -1, resource.getParameterPath(), true);
+            return DAVResourceUtil.buildURI(resource.getContext(), resource.getPath(), DAVResourceKind.VCC, -1, resource.getParameterPath(), true);
 
         } else if (element == DAVElement.RESOURCE_TYPE) {
 
@@ -276,7 +277,7 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         } else if (element == DAVElement.CHECKED_IN) {
             if (resource.getType() == DAVResource.DAV_RESOURCE_TYPE_PRIVATE && resource.getKind() == DAVResourceKind.VCC) {
                 long latestRevision = resource.getRepository().getLatestRevision();
-                return DAVResourceUtil.buildURI(resource.getContext(), resource.getRepositoryName(), resource.getPath(), DAVResourceKind.BASELINE, latestRevision, null, true);
+                return DAVResourceUtil.buildURI(resource.getContext(), resource.getPath(), DAVResourceKind.BASELINE, latestRevision, null, true);
             } else if (resource.getType() != DAVResource.DAV_RESOURCE_TYPE_REGULAR) {
                 //prop not supported
                 return null;
@@ -302,7 +303,7 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
                 //prop not supported
                 return null;
             }
-            return DAVResourceUtil.buildURI(resource.getContext(), resource.getRepositoryName(), resource.getPath(), DAVResourceKind.BASELINE_COLL, resource.getRevision(), null, true);
+            return DAVResourceUtil.buildURI(resource.getContext(), resource.getPath(), DAVResourceKind.BASELINE_COLL, resource.getRevision(), null, true);
         }
         return null;
     }

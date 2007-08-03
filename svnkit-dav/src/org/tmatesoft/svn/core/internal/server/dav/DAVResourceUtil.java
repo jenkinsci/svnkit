@@ -17,14 +17,12 @@ package org.tmatesoft.svn.core.internal.server.dav;
  */
 public class DAVResourceUtil {
 
-    public static String buildURI(String context, String repositoryName, String repositoryPath, DAVResourceKind davResourceKind, long revision, String uri, boolean addHrefTag) {
+    public static String buildURI(String context, String repositoryPath, DAVResourceKind davResourceKind, long revision, String uri, boolean addHrefTag) {
         String hrefOpen = addHrefTag ? "<D:href>" : "";
         String hrefClose = addHrefTag ? "</D:href>" : "";
         StringBuffer resultURI = new StringBuffer();
         resultURI.append(hrefOpen);
         resultURI.append(context);        
-        resultURI.append("/");
-        resultURI.append(repositoryName);
         resultURI.append(repositoryPath.startsWith("/") ? "" : "/");
         resultURI.append(repositoryPath);
         resultURI.append(("".equals(repositoryPath) || repositoryPath.endsWith("/")) ? "" : "/");

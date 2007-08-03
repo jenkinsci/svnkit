@@ -31,28 +31,16 @@ import java.util.Map;
  */
 public class DAVRepositoryManager {
 
-    private Map myRepositories;
+    private SVNRepository myRepository;
 
     public DAVRepositoryManager(ServletConfig config) throws SVNException {
-        myRepositories = new HashMap();
         String repositoryPath = "file://" + config.getInitParameter("SVNPath");
-        String repositoryName = SVNPathUtil.tail(repositoryPath);
-
         FSRepositoryFactory.setup();
-        SVNRepository repository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(repositoryPath));
-
-        myRepositories.put(repositoryName, repository);
+        myRepository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(repositoryPath));
     }
 
     public DAVResource createDAVResource(String requestContext, String requestURI, String label, boolean useCheckedIn) throws SVNException {
         requestURI = requestURI.substring(requestContext.length());
-        DAVResource resource = new DAVResource(requestContext, requestURI, label, useCheckedIn);
-        SVNRepository repository = (SVNRepository) myRepositories.get(resource.getRepositoryName());
-        if (repository == null) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Invalid URI ''{0}'' ", requestURI));
-        }
-        resource.setRepository((SVNRepository) myRepositories.get(resource.getRepositoryName()));
-        resource.prepare();
-        return resource;
+        return new DAVResource(myRepository, requestContext, requestURI, label, useCheckedIn);
     }
 }
