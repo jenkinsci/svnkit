@@ -90,15 +90,15 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             myRepositoryUUID = null;
             return;
         }
-        openConnection();
         try {
+            openConnection();
             if (reparent(url)) {
                 myLocation = url;
                 return;
             }
             setLocation(url, true);
         } catch (SVNException e) {
-            // thrown by reparent.
+            // thrown by reparent or open connection.
             closeSession();
             throw e;
         } finally {
@@ -970,7 +970,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             myConnection.open(this);
             authenticate();
         } finally {
-            myRealm = myConnection.getRealm();
+            if (myConnection != null) {
+                myRealm = myConnection.getRealm();
+            }
         }
     }
     
