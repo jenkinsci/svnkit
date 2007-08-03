@@ -37,7 +37,8 @@ public class SVNOption {
     public static final SVNOption IGNORE_EXTERNALS = new SVNOption("ignore-externals");
     public static final SVNOption CHANGELIST = new SVNOption("changelist", false);
     public static final SVNOption HELP = new SVNOption("help", "h");
-    public static final SVNOption QUESTION = new SVNOption("?");
+    public static final SVNOption QUESTION = new SVNOption(null, "?");
+    public static final SVNOption VERSION = new SVNOption("version");
     
     // auth options.
     public static final SVNOption USERNAME = new SVNOption("username", false);
@@ -100,12 +101,12 @@ public class SVNOption {
         }
         if (bundle != null) {
             try {
-                return bundle.getString(getName() + ".description");
+                return bundle.getString(getName());
             } catch (MissingResourceException missing) {
                 
             }
             try {
-                return bundle.getString(getAlias() + ".description");
+                return bundle.getString(getAlias());
             } catch (MissingResourceException missing) {
                 
             }

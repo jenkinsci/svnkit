@@ -14,10 +14,13 @@ package org.tmatesoft.svn.cli2;
 import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import java.util.TreeSet;
 
 import org.tmatesoft.svn.core.SVNException;
 
@@ -28,7 +31,7 @@ import org.tmatesoft.svn.core.SVNException;
  */
 public abstract class SVNCommand {
     
-    private static final String COMMANDS_RESOURCE_BUNDLE = "org.tmatesoft.cli2.commands";
+    private static final String COMMANDS_RESOURCE_BUNDLE = "org.tmatesoft.svn.cli2.commands";
     private static Map ourCommands = new HashMap();
 
     private String myName;
@@ -38,6 +41,18 @@ public abstract class SVNCommand {
     
     public static SVNCommand getCommand(String nameOrAlias) {
         return (SVNCommand) ourCommands.get(nameOrAlias);
+    }
+    
+    public static Iterator availableCommands() {
+        TreeSet sortedList = new TreeSet(new Comparator() {
+            public int compare(Object o1, Object o2) {
+                SVNCommand c1 = (SVNCommand) o1;
+                SVNCommand c2 = (SVNCommand) o2;
+                return c1.getName().compareTo(c2.getName());
+            }
+        });
+        sortedList.addAll(ourCommands.values());
+        return sortedList.iterator();
     }
 
     protected SVNCommand(String name, String[] aliases) {
@@ -49,8 +64,8 @@ public abstract class SVNCommand {
         }
         
         ourCommands.put(name, this);
-        for (int i = 0; i < aliases.length; i++) {
-            ourCommands.put(aliases[i], this);
+        for (int i = 0; i < myAliases.length; i++) {
+            ourCommands.put(myAliases[i], this);
         }
     }
 
@@ -62,11 +77,11 @@ public abstract class SVNCommand {
         return myName;
     }
     
-    protected String[] getAliases() {
+    public String[] getAliases() {
         return myAliases;
     }
     
-    protected Collection getSupportedOptions() {
+    public Collection getSupportedOptions() {
         return myOptions;
     }
     
@@ -86,7 +101,9 @@ public abstract class SVNCommand {
             bundle = null;
         }
         if (bundle != null) {
-            bundle.getString(getName() + ".description");
+            try {
+                return bundle.getString(getName() + ".description");
+            } catch (MissingResourceException missing) {}
         }
         return MessageFormat.format("No description has been found for ''{0}'' command.", new Object[] {getName()});
     }

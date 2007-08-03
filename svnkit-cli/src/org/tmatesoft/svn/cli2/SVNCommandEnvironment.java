@@ -52,6 +52,7 @@ public class SVNCommandEnvironment {
     private boolean myIsHelp;
     private boolean myIsIgnoreExternals;
     private boolean myIsXML;
+    private boolean myIsVersion;
     private String myChangelist;
     
     private boolean myIsNonInteractive;
@@ -77,6 +78,10 @@ public class SVNCommandEnvironment {
         myOut = out;
         myErr = err;
         myIn = in;
+    }
+    
+    public String getProgramName() {
+        return "jsvn";
     }
     
     public void init(SVNCommandLine commandLine) throws SVNException {
@@ -148,6 +153,7 @@ public class SVNCommandEnvironment {
                 SVNErrorManager.error(err);
             }
         }
+        myIsVersion = commandLine.hasOption(SVNOption.VERSION);
         if (commandLine.hasOption(SVNOption.USERNAME)) {
             myUserName = commandLine.getOptionValue(SVNOption.USERNAME);
         }
@@ -168,8 +174,25 @@ public class SVNCommandEnvironment {
     }
     
     protected void initCommand(SVNCommandLine commandLine) throws SVNException {
-        myCommandName = myIsHelp ? "help" : commandLine.getCommandName();
+        myCommandName = commandLine.getCommandName();
+        if (myIsHelp) {
+            myArguments = myCommandName != null ? new String[] {myCommandName} : new String[0];
+            myCommandName = "help";
+        } 
         if (myCommandName == null) {
+            if (isVersion()) {
+                myCommand = new SVNCommand("--version", null) {
+                    protected Collection createSupportedOptions() {
+                        return Arrays.asList(new SVNOption[] {SVNOption.VERSION, SVNOption.CONFIG_DIR, SVNOption.QUIET});
+                    }
+                    public void run() throws SVNException {
+                        SVNCommand helpCommand = SVNCommand.getCommand("help");
+                        helpCommand.init(SVNCommandEnvironment.this);
+                        helpCommand.run();
+                    }
+                };
+                return;
+            }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, "Subcommand argument required");
             SVNErrorManager.error(err);
         }
@@ -180,15 +203,16 @@ public class SVNCommandEnvironment {
         }
     }
     
-    protected void validateOptions(SVNCommandLine commandLine) throws SVNException {
+    protected void validateOptions(SVNCommandLine commandLine) {
         for(Iterator options = commandLine.optionValues(); options.hasNext();) {
             SVNOptionValue optionValue = (SVNOptionValue) options.next();
             if (optionValue.getOption() == SVNOption.HELP || optionValue.getOption() == SVNOption.QUESTION) {
                 continue;
             } else if (!myCommand.isOptionSupported(optionValue.getOption())) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                        "Subcommand ''{0}'' doesn''t accept option ''{1}''", new Object[] {myCommandName, optionValue.getName()});
-                SVNErrorManager.error(err);
+                String message = MessageFormat.format("Subcommand ''{0}'' doesn''t accept option ''{1}''", new Object[] {myCommand.getName(), optionValue.getName()});
+                getErr().println(message);
+                getErr().println("Type '" + getProgramName() + " help " + myCommand.getName() + "' for usage.");
+                SVN.failure();
             }
         }
         if (!myIsDescend) {
@@ -288,6 +312,10 @@ public class SVNCommandEnvironment {
     
     public boolean isXML() {
         return myIsXML;
+    }
+
+    public boolean isVersion() {
+        return myIsVersion;
     }
     
     public void handleError(SVNErrorMessage err) {

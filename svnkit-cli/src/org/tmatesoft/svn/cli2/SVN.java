@@ -52,6 +52,7 @@ public class SVN {
             SVNHelpCommand.printBasicUsage("jsvn");
             failure();
         }
+
         env.initClientManager();
         if (!env.run()) {
             failure();

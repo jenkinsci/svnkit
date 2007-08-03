@@ -33,8 +33,12 @@ public class SVNCommandLine {
     private static final Map ourOptions = new HashMap();
     
     public static void registerOption(SVNOption option) {
-        ourOptions.put("--" + option.getName(), option);
-        ourOptions.put("-" + option.getAlias(), option);
+        if (option.getName() != null) {
+            ourOptions.put("--" + option.getName(), option);
+        } 
+        if (option.getAlias() != null) {
+            ourOptions.put("-" + option.getAlias(), option);
+        }
     }
 
     private String myCommand;

@@ -14,7 +14,6 @@ package org.tmatesoft.svn.cli2.command;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -50,22 +49,23 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
     }
     
     protected Collection createSupportedOptions() {
-        Collection options = new HashSet();
+        Collection options = new ArrayList();
 
         options.add(SVNOption.UPDATE);
         options.add(SVNOption.VERBOSE);
         options.add(SVNOption.NON_RECURSIVE);
-        options.add(SVNOption.DEPTH);
         options.add(SVNOption.QUIET);
+        options.add(SVNOption.DEPTH);
         options.add(SVNOption.NO_IGNORE);
         options.add(SVNOption.INCREMENTAL);
         options.add(SVNOption.XML);
 
+        options = SVNOption.addAuthOptions(options);
+
         options.add(SVNOption.CONFIG_DIR);
         options.add(SVNOption.IGNORE_EXTERNALS);
         options.add(SVNOption.CHANGELIST);
-
-        return SVNOption.addAuthOptions(options);
+        return options;
     }
 
     public void run() throws SVNException {
