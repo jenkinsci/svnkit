@@ -13,10 +13,8 @@ package org.tmatesoft.svn.cli2.command;
 
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.cli2.SVNCommandEnvironment;
-import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-
 
 /**
  * @version 1.1.2
@@ -49,9 +47,6 @@ public class SVNStatusPrinter {
                 wcRevision = "-";
             } else {
                 wcRevision = Long.toString(status.getRevision().getNumber());
-                if (status.getKind() == SVNNodeKind.DIR && status.getContentsStatus() == SVNStatusType.STATUS_MISSING) {
-                    wcRevision = " ? ";
-                }
             }
             if (status.getRemotePropertiesStatus() != SVNStatusType.STATUS_NONE || status.getRemoteContentsStatus() != SVNStatusType.STATUS_NONE) {
                 remoteStatus = '*';
@@ -78,14 +73,14 @@ public class SVNStatusPrinter {
                 String commitRevision = "";
                 String commitAuthor = "";
 
-                if (status.getURL() != null && status.getCommittedRevision().isValid()) {
+                if (status.getEntry() != null && status.getCommittedRevision().isValid()) {
                     commitRevision = status.getCommittedRevision().toString();
-                } else if (status.getURL() != null) {
+                } else if (status.getEntry() != null) {
                     commitRevision = " ? ";
                 }
-                if (status.getURL() != null && status.getAuthor() != null) {
+                if (status.getEntry() != null && status.getAuthor() != null) {
                     commitAuthor = status.getAuthor();
-                } else if (status.getURL() != null) {
+                } else if (status.getEntry() != null) {
                     commitAuthor = " ? ";
                 }
                 result.append(status.getContentsStatus().getCode());
