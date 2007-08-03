@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
@@ -383,7 +384,16 @@ public class DAVResource {
             if (getRevision() == INVALID_REVISION) {
                 setRevision(latestRevision);
             }
-            SVNNodeKind currentNodeKind = getRepository().checkPath(getParameterPath(), getRevision());
+            SVNNodeKind currentNodeKind = null;
+            try {
+                getRepository().checkPath(getParameterPath(), getRevision());
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_DIRECTORY) {
+                    currentNodeKind = SVNNodeKind.NONE;
+                } else {
+                    throw e;
+                }
+            }
             setExists(currentNodeKind != SVNNodeKind.NONE);
             setCollection(currentNodeKind == SVNNodeKind.DIR);
         } else if (getType() == DAVResource.DAV_RESOURCE_TYPE_VERSION) {
