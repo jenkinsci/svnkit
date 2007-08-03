@@ -105,6 +105,7 @@ doc/wiki/main.vm -text
 doc/wiki/repository_tree.png -text
 doc/wiki/svnkit_architecture.png -text
 doc/wiki/svnrepository_connection.png -text
+svnkit-cli/src/org/tmatesoft/svn/cli2/SVNXMLCommand.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/commands.properties eol=lf
 svnkit-cli/src/org/tmatesoft/svn/cli2/options.properties eol=lf
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVDepth.java -text
