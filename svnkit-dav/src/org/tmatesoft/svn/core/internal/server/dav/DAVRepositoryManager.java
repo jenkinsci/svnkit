@@ -32,7 +32,6 @@ import java.util.Map;
 public class DAVRepositoryManager {
 
     private Map myRepositories;
-    private String myURIBase = "/svnkit-dav";
 
     public DAVRepositoryManager(ServletConfig config) throws SVNException {
         myRepositories = new HashMap();
@@ -45,9 +44,9 @@ public class DAVRepositoryManager {
         myRepositories.put(repositoryName, repository);
     }
 
-    public DAVResource createDAVResource(String requestURI, String label, boolean useCheckedIn) throws SVNException {
-        requestURI = requestURI.substring(myURIBase.length());
-        DAVResource resource = new DAVResource(requestURI, label, useCheckedIn);
+    public DAVResource createDAVResource(String requestContext, String requestURI, String label, boolean useCheckedIn) throws SVNException {
+        requestURI = requestURI.substring(requestContext.length());
+        DAVResource resource = new DAVResource(requestContext, requestURI, label, useCheckedIn);
         SVNRepository repository = (SVNRepository) myRepositories.get(resource.getRepositoryName());
         if (repository == null) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Invalid URI ''{0}'' ", requestURI));

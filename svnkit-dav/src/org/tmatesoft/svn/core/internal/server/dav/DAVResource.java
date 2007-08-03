@@ -35,6 +35,7 @@ public class DAVResource {
     public static final int DAV_RESOURCE_TYPE_ACTIVITY = 2;
     public static final int DAV_RESOURCE_TYPE_HISTORY = 3;
 
+    private String myContext;
     private String myURI;
     private String myRepositoryName;
     private SVNRepository myRepository;
@@ -51,7 +52,8 @@ public class DAVResource {
     private boolean myIsBaseLined;
     private boolean myIsWorking;
 
-    public DAVResource(String uri, String label, boolean useCheckedIn) {
+    public DAVResource(String requestContext, String uri, String label, boolean useCheckedIn) {
+        myContext = requestContext;
         myURI = uri;
         parseURI(label, useCheckedIn);
     }
@@ -67,6 +69,10 @@ public class DAVResource {
         myURI = uri.toString();
     }
 
+
+    public String getContext() {
+        return myContext;
+    }
 
     public String getURI() {
         return myURI;
@@ -372,16 +378,14 @@ public class DAVResource {
             setExists(currentNodeKind != SVNNodeKind.NONE);
             setCollection(currentNodeKind == SVNNodeKind.DIR);
         } else if (getType() == DAVResource.DAV_RESOURCE_TYPE_VERSION) {
-//            setRevision(latestRevision);
+            setRevision(latestRevision);
             if (getParameterPath() == null) {
-                //TODO: check if it's right:
-//                setParameterPath(getRepository().getRepositoryRoot(false).getURIEncodedPath());
+                //TODO:complete
             }
             setExists(true);
-            setURI(DAVResourceUtil.buildURI(getRepositoryName(), getPath(), DAVResourceKind.BASELINE, getRevision(), "", false));
+            setURI(DAVResourceUtil.buildURI(getContext(), getRepositoryName(), getPath(), DAVResourceKind.BASELINE, getRevision(), "", false));
         } else if (getType() == DAVResource.DAV_RESOURCE_TYPE_WORKING) {
             //TODO: Define filename for ACTIVITY_ID under the repository
-
             if (isBaseLined()) {
                 setExists(true);
                 return;
@@ -395,15 +399,6 @@ public class DAVResource {
             //TODO: Define filename for ACTIVITY_ID under the repository
         }
     }
-
-//    public Date getLastModified() throws SVNException {
-//        if (lacksETagPotential()) {
-//        }
-//        if (getNodeKind() == SVNNodeKind.DIR)
-//            return getDirEntry().getDate();
-//        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PATH_NOT_FOUND, "Requested path ''{0}'' doesn't exist", getURI()));
-//        return null;
-//    }
 
     public String getETag() {
         if (lacksETagPotential()) {

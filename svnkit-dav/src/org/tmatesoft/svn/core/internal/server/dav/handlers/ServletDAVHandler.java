@@ -41,10 +41,12 @@ import java.io.Writer;
 public abstract class ServletDAVHandler extends BasicDAVHandler {
 
 
+    protected static final int SC_MULTISTATUS = 207;
+
     protected static final String LABEL_HEADER = "label";
     private static final String DEPTH_HEADER = "Depth";
 
-    protected static final String XML_HEADER = "<?xml version=\"1.0\" encoding=\"utf-8\"?>";
+    protected static final String XML_HEADER = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
 
 
     private static SAXParserFactory ourSAXParserFactory;
@@ -67,6 +69,10 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return myRequest.getRequestURI();
     }
 
+    protected String getRequestContext(){
+        return myRequest.getContextPath();       
+    }
+
     protected String getRequestHeader(String name) {
         return myRequest.getHeader(name);
     }
@@ -82,6 +88,10 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
 
     protected void setResponseHeader(String name, String value) {
         myResponse.setHeader(name, value);
+    }
+
+    protected void setResponseStatus(int statusCode){
+        myResponse.setStatus(statusCode);        
     }
 
     protected Writer getResponseWriter() throws SVNException {
