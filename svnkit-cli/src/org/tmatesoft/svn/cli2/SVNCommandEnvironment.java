@@ -74,7 +74,7 @@ public class SVNCommandEnvironment {
     private PrintStream myErr;
     private PrintStream myOut;
     private SVNClientManager myClientManager;
-    private SVNOperatingPath myOperatingPath;
+    private SVNCommandTarget myCurrentTarget;
     private List myArguments;
     private boolean myIsNoIgnore;
     private boolean myIsRevprop;
@@ -312,17 +312,17 @@ public class SVNCommandEnvironment {
         return myClientManager;
     }
     
-    public void setOperatingPath(String path, File file) {
-        myOperatingPath = new SVNOperatingPath(path, file);
+    public void setCurrentTarget(SVNCommandTarget target) {
+        myCurrentTarget = target;
     }
 
-    public File getOperatingFile() {
-        return myOperatingPath.getFile();
+    public File getCurrentTargetFile() {
+        return myCurrentTarget.getFile();
     }
     
-    public String getRelativePath(File path) {
-        if (myOperatingPath != null) {
-            return myOperatingPath.getPath(path);
+    public String getCurrentTargetRelativePath(File path) {
+        if (myCurrentTarget != null) {
+            return myCurrentTarget.getPath(path);
         }
         return path.getAbsolutePath();
     }
@@ -427,11 +427,11 @@ public class SVNCommandEnvironment {
             }
             codes.add(err.getErrorCode());
             Object[] objects = err.getRelatedObjects();
-            if (objects != null && myOperatingPath != null) {
+            if (objects != null && myCurrentTarget != null) {
                 String template = err.getMessageTemplate();
                 for (int i = 0; objects != null && i < objects.length; i++) {
                     if (objects[i] instanceof File) {
-                        objects[i] = SVNCommandUtil.getLocalPath(getRelativePath((File) objects[i]));
+                        objects[i] = SVNCommandUtil.getLocalPath(getCurrentTargetRelativePath((File) objects[i]));
                     }
                 }
                 if (err.getType() == SVNErrorMessage.TYPE_WARNING) {
@@ -469,12 +469,11 @@ public class SVNCommandEnvironment {
             return SVNURL.parseURIEncoded(target);
         }
         SVNWCAccess wcAccess = null;
-        File path = new File(target).getAbsoluteFile();
-        setOperatingPath(target, path);
+        setCurrentTarget(new SVNCommandTarget(target));
         try {
             wcAccess = SVNWCAccess.newInstance(null);
-            wcAccess.probeOpen(path, false, 0);
-            SVNEntry entry = wcAccess.getVersionedEntry(path, false);
+            wcAccess.probeOpen(getCurrentTargetFile(), false, 0);
+            SVNEntry entry = wcAccess.getVersionedEntry(getCurrentTargetFile(), false);
             if (entry != null) {
                 return entry.getSVNURL();
             }

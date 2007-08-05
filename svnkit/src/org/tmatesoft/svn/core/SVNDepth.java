@@ -45,6 +45,10 @@ public class SVNDepth implements Comparable {
         return getName();
     }
     
+    public boolean isRecursive() {
+        return this == INFINITY || this == UNKNOWN;
+    }
+    
     public int compareTo(Object o) {
         if (o == null || o.getClass() != SVNDepth.class) {
             return -1;
