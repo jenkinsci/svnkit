@@ -40,8 +40,6 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
-import sun.reflect.ReflectionFactory.GetReflectionFactoryAction;
-
 /**
  * @version 1.1.1
  * @author  TMate Software Ltd.
