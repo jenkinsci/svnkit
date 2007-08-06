@@ -133,9 +133,15 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return result;
     }
 
-    protected void setDefaultResponseHeaders(DAVResource resource) {
+    protected void setDefaultResponseHeaders(DAVResource resource) throws SVNException {
         myResponse.setContentType("text/xml; charset=UTF-8");
-        myResponse.setHeader("Accept-Ranges", "bytes");
+        setResponseHeader("Accept-Ranges", "bytes");
+        if (resource.getLastModified() != null) {
+            setResponseHeader("Last-Modified", resource.getLastModified().toString());
+        }
+        if (resource.getETag() != null){
+        setResponseHeader("ETag", resource.getETag());
+        }
     }
 
     protected StringBuffer appendXMLHeader(String prefix, String header, Set namespaces, StringBuffer target) {
@@ -227,7 +233,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         if (style == XML_STYLE_SELF_CLOSING) {
             target.append("/");
         }
-        target.append(">");       
+        target.append(">");
         return target;
     }
 
@@ -241,7 +247,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return target;
     }
 
-    protected String addHrefTags(String uri){
+    protected String addHrefTags(String uri) {
         StringBuffer tmpBuffer = new StringBuffer();
         openXMLTag(DAV_NAMESPACE_PREFIX, "href", XML_STYLE_NORMAL, null, tmpBuffer);
         tmpBuffer.append(uri);

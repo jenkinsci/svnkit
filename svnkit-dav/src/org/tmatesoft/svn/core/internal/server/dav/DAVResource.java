@@ -11,12 +11,17 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav;
 
+import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
+
+import java.util.Date;
+import java.util.Map;
 
 /**
  * @author TMate Software Ltd.
@@ -48,11 +53,15 @@ public class DAVResource {
     private long myCreatedRevision;
     private String myParameterPath;
     private String myActivityID;
-    private boolean myIsExists;
+    private boolean myIsExists = false;
     private boolean myIsCollection;
-    private boolean myIsVersioned;
-    private boolean myIsBaseLined;
-    private boolean myIsWorking;
+    private boolean myIsVersioned = false;
+    private boolean myIsBaseLined = false;
+    private boolean myIsWorking = false;
+
+    private Map mySVNProperties;
+    private SVNDirEntry myDirEntry;
+
 
     public DAVResource(SVNRepository repository, String requestContext, String uri, String label, boolean useCheckedIn) throws SVNException {
         myRepository = repository;
@@ -64,18 +73,6 @@ public class DAVResource {
         parseURI(label, useCheckedIn);
         prepare();
     }
-
-    public DAVResource(String path, DAVResourceKind kind, String parameter) {
-        myPath = path;
-        myKind = kind;
-        myParameterPath = parameter;
-        StringBuffer uri = new StringBuffer();
-        uri.append(path).append("/");
-        uri.append(kind.toString()).append("/");
-        uri.append(parameter);
-        myURI = uri.toString();
-    }
-
 
     public String getContext() {
         return myContext;
@@ -93,11 +90,7 @@ public class DAVResource {
         return myRepositoryName;
     }
 
-    private void setRepositoryName(String repositoryName) {
-        myRepositoryName = repositoryName;
-    }
-
-    public SVNRepository getRepository() {
+    private SVNRepository getRepository() {
         return myRepository;
     }
 
@@ -209,8 +202,12 @@ public class DAVResource {
         myIsWorking = isWorking;
     }
 
-    public boolean lacksETagPotential() {
-        return (!exists() || (getType() != DAVResource.DAV_RESOURCE_TYPE_REGULAR && getType() != DAVResource.DAV_RESOURCE_TYPE_VERSION) || getType() == DAVResource.DAV_RESOURCE_TYPE_VERSION && isBaseLined());
+    public SVNDirEntry getDirEntry() {
+        return myDirEntry;
+    }
+
+    public void setDirEntry(SVNDirEntry dirEntry) {
+        myDirEntry = dirEntry;
     }
 
     private void parseURI(String label, boolean useCheckedIn) {
@@ -379,14 +376,14 @@ public class DAVResource {
     }
 
     public void prepare() throws SVNException {
-        long latestRevision = getRepository().getLatestRevision();
+        long latestRevision = getLatestRevision();
         if (getType() == DAVResource.DAV_RESOURCE_TYPE_REGULAR) {
             if (getRevision() == INVALID_REVISION) {
                 setRevision(latestRevision);
             }
             SVNNodeKind currentNodeKind = null;
             try {
-                getRepository().checkPath(getParameterPath(), getRevision());
+                currentNodeKind = getRepository().checkPath(getParameterPath(), getRevision());
             } catch (SVNException e) {
                 if (e.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_DIRECTORY) {
                     currentNodeKind = SVNNodeKind.NONE;
@@ -396,6 +393,8 @@ public class DAVResource {
             }
             setExists(currentNodeKind != SVNNodeKind.NONE);
             setCollection(currentNodeKind == SVNNodeKind.DIR);
+            setDirEntry(getRepository().getDir(getParameterPath(), getRevision(), false, null));
+
         } else if (getType() == DAVResource.DAV_RESOURCE_TYPE_VERSION) {
             setRevision(latestRevision);
             setExists(true);
@@ -406,7 +405,7 @@ public class DAVResource {
                 setExists(true);
                 return;
             }
-            
+
             SVNNodeKind currentNodeKind = getRepository().checkPath(getParameterPath(), getRevision());
             setExists(currentNodeKind != SVNNodeKind.NONE);
             setCollection(currentNodeKind == SVNNodeKind.DIR);
@@ -416,16 +415,39 @@ public class DAVResource {
         }
     }
 
+    public boolean lacksETagPotential() {
+        return (!exists() || (getType() != DAVResource.DAV_RESOURCE_TYPE_REGULAR && getType() != DAVResource.DAV_RESOURCE_TYPE_VERSION) || getType() == DAVResource.DAV_RESOURCE_TYPE_VERSION && isBaseLined());
+    }
+
+
+    public Date getLastModified() {
+        if (lacksETagPotential()) {
+            return null;
+        }
+        return getDirEntry().getDate();
+    }
+
     public String getETag() {
         if (lacksETagPotential()) {
-            return "";
+            return null;
         }
         StringBuffer eTag = new StringBuffer();
         eTag.append(isCollection() ? "W/" : "");
         eTag.append(getRevision());
         eTag.append("/");
-        //TODO: replace '"' with &quote, < with &lt etc;
-        eTag.append(getParameterPath());
+        eTag.append(SVNEncodingUtil.uriEncode(getParameterPath()));
         return eTag.toString();
+    }
+
+    public long getLatestRevision() throws SVNException {
+        return getRepository().getLatestRevision();
+    }
+
+    public String getRepositoryUUID(boolean b) throws SVNException {
+        return getRepository().getRepositoryUUID(false);
+    }
+
+    public String getAuthor() {        
+        return getDirEntry().getAuthor();       
     }
 }

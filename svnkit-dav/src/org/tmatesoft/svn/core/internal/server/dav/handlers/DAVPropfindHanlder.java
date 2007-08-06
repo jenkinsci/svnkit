@@ -20,8 +20,8 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.xml.sax.Attributes;
 
 import javax.servlet.http.HttpServletRequest;
@@ -136,12 +136,6 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         }
     }
 
-    protected void setDefaultResponseHeaders(DAVResource resource) {
-        super.setDefaultResponseHeaders(resource);
-        //TODO: Specify all headers for propfind
-    }
-
-
     private void generatePropertiesResponse(StringBuffer xmlBuffer, DAVResource resource) throws SVNException {
         appendXMLHeader(DAV_NAMESPACE_PREFIX, "multistatus", getNamespaces().keySet(), xmlBuffer);
         openNamespaceTag(DAV_NAMESPACE_PREFIX, "response", XML_STYLE_NORMAL, getNamespaces(), xmlBuffer);
@@ -186,7 +180,7 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
             }
 
             //Method doesn't use revision parameter at this moment
-            String uri = SVNEncodingUtil.xmlEncodeCDATA(DAVResourceUtil.buildURI(resource.getContext(), resource.getPath(), DAVResourceKind.VCC, -1, resource.getParameterPath()));
+            String uri = SVNEncodingUtil.uriEncode(DAVResourceUtil.buildURI(resource.getContext(), resource.getPath(), DAVResourceKind.VCC, -1, resource.getParameterPath()));
             return addHrefTags(uri);
 
         } else if (element == DAVElement.RESOURCE_TYPE) {
@@ -205,17 +199,17 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
             }
             return parameterPath;
         } else if (element == DAVElement.REPOSITORY_UUID) {
-            return SVNEncodingUtil.xmlEncodeCDATA(resource.getRepository().getRepositoryUUID(true));
+            return SVNEncodingUtil.xmlEncodeCDATA(resource.getRepositoryUUID(true));
         } else if (element == DAVElement.CHECKED_IN) {
             if (resource.getType() == DAVResource.DAV_RESOURCE_TYPE_PRIVATE && resource.getKind() == DAVResourceKind.VCC) {
-                long latestRevision = resource.getRepository().getLatestRevision();
-                String uri = SVNEncodingUtil.xmlEncodeCDATA(DAVResourceUtil.buildURI(resource.getContext(), resource.getPath(), DAVResourceKind.BASELINE, latestRevision, null));
+                long latestRevision = resource.getLatestRevision();
+                String uri = SVNEncodingUtil.uriEncode(DAVResourceUtil.buildURI(resource.getContext(), resource.getPath(), DAVResourceKind.BASELINE, latestRevision, null));
                 return addHrefTags(uri);
             } else if (resource.getType() != DAVResource.DAV_RESOURCE_TYPE_REGULAR) {
                 //prop not supported
                 return null;
             } else {
-                //TODO: get file created revision
+                resource.getDirEntry();
             }
         } else if (element == DAVElement.VERSION_NAME) {
             if ((resource.getType() != DAVResource.DAV_RESOURCE_TYPE_VERSION) && !resource.isVersioned()) {
@@ -236,12 +230,15 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
                 //prop not supported
                 return null;
             }
-            String uri = SVNEncodingUtil.xmlEncodeCDATA(DAVResourceUtil.buildURI(resource.getContext(), resource.getPath(), DAVResourceKind.BASELINE_COLL, resource.getRevision(), null));
+            String uri = SVNEncodingUtil.uriEncode(DAVResourceUtil.buildURI(resource.getContext(), resource.getPath(), DAVResourceKind.BASELINE_COLL, resource.getRevision(), null));
             return addHrefTags(uri);
+        } else if (element == DAVElement.CREATOR_DISPLAY_NAME) {
+            return resource.getAuthor();
+        } else if (element == DAVElement.DEADPROP_COUNT){
+            //TODO: implement this.            
+        } else if ( element == DAVElement.MD5_CHECKSUM){
+            //TODO: implement this.                        
         }
         return null;
     }
-
-    
-
 }
