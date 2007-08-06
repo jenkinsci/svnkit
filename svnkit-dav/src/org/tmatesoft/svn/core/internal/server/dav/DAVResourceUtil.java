@@ -17,12 +17,9 @@ package org.tmatesoft.svn.core.internal.server.dav;
  */
 public class DAVResourceUtil {
 
-    public static String buildURI(String context, String repositoryPath, DAVResourceKind davResourceKind, long revision, String uri, boolean addHrefTag) {
-        String hrefOpen = addHrefTag ? "<D:href>" : "";
-        String hrefClose = addHrefTag ? "</D:href>" : "";
+    public static String buildURI(String context, String repositoryPath, DAVResourceKind davResourceKind, long revision, String uri) {
         StringBuffer resultURI = new StringBuffer();
-        resultURI.append(hrefOpen);
-        resultURI.append(context);        
+        resultURI.append(context);
         resultURI.append(repositoryPath.startsWith("/") ? "" : "/");
         resultURI.append(repositoryPath);
         resultURI.append(("".equals(repositoryPath) || repositoryPath.endsWith("/")) ? "" : "/");
@@ -45,7 +42,6 @@ public class DAVResourceUtil {
             resultURI.append(davResourceKind.toString()).append("/");
             resultURI.append(DAVResource.DEDAULT_VCC_NAME);
         }
-        resultURI.append(hrefClose);
         return resultURI.toString();
     }
 }

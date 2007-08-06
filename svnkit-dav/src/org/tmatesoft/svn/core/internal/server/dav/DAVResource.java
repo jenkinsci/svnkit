@@ -399,7 +399,7 @@ public class DAVResource {
         } else if (getType() == DAVResource.DAV_RESOURCE_TYPE_VERSION) {
             setRevision(latestRevision);
             setExists(true);
-            setURI(DAVResourceUtil.buildURI(getContext(), getPath(), DAVResourceKind.BASELINE, getRevision(), "", false));
+            setURI(DAVResourceUtil.buildURI(getContext(), getPath(), DAVResourceKind.BASELINE, getRevision(), ""));
         } else if (getType() == DAVResource.DAV_RESOURCE_TYPE_WORKING) {
             //TODO: Define filename for ACTIVITY_ID under the repository
             if (isBaseLined()) {
