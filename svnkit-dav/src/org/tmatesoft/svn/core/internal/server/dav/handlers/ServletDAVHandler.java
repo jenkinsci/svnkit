@@ -133,14 +133,14 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return result;
     }
 
-    protected void setDefaultResponseHeaders(DAVResource resource) throws SVNException {
+    protected void setDefaultResponseHeaders(DAVResource resource) {
         myResponse.setContentType("text/xml; charset=UTF-8");
         setResponseHeader("Accept-Ranges", "bytes");
         if (resource.getLastModified() != null) {
             setResponseHeader("Last-Modified", resource.getLastModified().toString());
         }
         if (resource.getETag() != null){
-        setResponseHeader("ETag", resource.getETag());
+            setResponseHeader("ETag", resource.getETag());
         }
     }
 
@@ -168,7 +168,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return target;
     }
 
-    protected StringBuffer appendXMLFooter(String prefix, String header, int style, StringBuffer target) {
+    protected StringBuffer appendXMLFooter(String prefix, String header, StringBuffer target) {
         target.append("</");
         target.append(prefix);
         target.append(":");

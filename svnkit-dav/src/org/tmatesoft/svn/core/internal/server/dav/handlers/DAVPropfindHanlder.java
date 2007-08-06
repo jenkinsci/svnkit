@@ -222,9 +222,8 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
             }
             if (resource.isBaseLined()) {
                 return String.valueOf(resource.getRevision());
-            } else {
-                //TODO: get file created revision
             }
+            //TODO: get file created revision
         } else if (element == DAVElement.BASELINE_COLLECTION) {
             if (resource.getType() == DAVResource.DAV_RESOURCE_TYPE_VERSION || resource.isBaseLined()) {
                 //prop not supported

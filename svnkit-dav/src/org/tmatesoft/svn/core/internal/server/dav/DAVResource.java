@@ -11,17 +11,15 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav;
 
+import java.util.Date;
+
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
-
-import java.util.Date;
-import java.util.Map;
 
 /**
  * @author TMate Software Ltd.
@@ -29,7 +27,7 @@ import java.util.Map;
  */
 public class DAVResource {
 
-    private static final long INVALID_REVISION = FSRepository.INVALID_REVISION;
+    private static final long INVALID_REVISION = SVNRepository.INVALID_REVISION;
 
     public static final String SPECIAL_URI = "!svn";
     public static final String DEDAULT_VCC_NAME = "default";
@@ -59,7 +57,6 @@ public class DAVResource {
     private boolean myIsBaseLined = false;
     private boolean myIsWorking = false;
 
-    private Map mySVNProperties;
     private SVNDirEntry myDirEntry;
 
 
@@ -100,10 +97,6 @@ public class DAVResource {
 
     public String getUser() {
         return myUser;
-    }
-
-    private void setUser(String user) {
-        myUser = user;
     }
 
     public int getType() {
@@ -443,8 +436,8 @@ public class DAVResource {
         return getRepository().getLatestRevision();
     }
 
-    public String getRepositoryUUID(boolean b) throws SVNException {
-        return getRepository().getRepositoryUUID(false);
+    public String getRepositoryUUID(boolean forceConnect) throws SVNException {
+        return getRepository().getRepositoryUUID(forceConnect);
     }
 
     public String getAuthor() {        
