@@ -45,12 +45,18 @@ public class SVNOption {
     public static final SVNOption CHANGE = new SVNOption("change", "c", false);
     public static final SVNOption REVPROP = new SVNOption("revprop");
     public static final SVNOption STRICT = new SVNOption("strict");
+
+    public static final SVNOption FILE = new SVNOption("file", "F", false);
+    public static final SVNOption ENCODING = new SVNOption("encoding", false);
+    public static final SVNOption TARGETS = new SVNOption("targets", false);
+    public static final SVNOption FORCE = new SVNOption("force");
     
     // auth options.
     public static final SVNOption USERNAME = new SVNOption("username", false);
     public static final SVNOption PASSWORD = new SVNOption("password", false);
     public static final SVNOption NO_AUTH_CACHE = new SVNOption("no-auth-cache");
     public static final SVNOption NON_INTERACTIVE = new SVNOption("non-interactive");
+
     
     public static Collection addAuthOptions(Collection target) {
         if (target != null) {
@@ -98,7 +104,7 @@ public class SVNOption {
         return myIsUnary;
     }
     
-    public String getDescription() {
+    public String getDescription(SVNCommand context) {
         ResourceBundle bundle = null;
         try {
             bundle = ResourceBundle.getBundle(OPTIONS_RESOURCE_BUNDLE);
@@ -106,18 +112,18 @@ public class SVNOption {
             bundle = null;
         }
         if (bundle != null) {
-            if (getName() != null) {
-                try {
-                    return bundle.getString(getName());
-                } catch (MissingResourceException missing) {
-                    
+            String[] keys = 
+                context != null ? 
+                    new String[] {getName() + "." + context.getName(), getAlias() + "." + context.getName(), getName(), getAlias()} :
+                    new String[] {getName(), getAlias()};
+            for (int i = 0; i < keys.length; i++) {
+                String key = keys[i];
+                if (key == null) {
+                    continue;
                 }
-            }
-            if (getAlias() != null) {
                 try {
-                    return bundle.getString(getAlias());
+                    return bundle.getString(key);
                 } catch (MissingResourceException missing) {
-                    
                 }
             }
         }

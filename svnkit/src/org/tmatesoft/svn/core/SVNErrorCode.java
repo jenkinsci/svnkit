@@ -177,6 +177,7 @@ public class SVNErrorCode implements Serializable {
     public static final SVNErrorCode BAD_URL = new SVNErrorCode(BAD_CATEGORY, 2, "Bogus URL");
     public static final SVNErrorCode BAD_DATE = new SVNErrorCode(BAD_CATEGORY, 3, "Bogus date");
     public static final SVNErrorCode BAD_MIME_TYPE = new SVNErrorCode(BAD_CATEGORY, 4, "Bogus mime-type");
+    public static final SVNErrorCode BAD_PROPERTY_VALUE = new SVNErrorCode(BAD_CATEGORY, 5, "Wrong or unexpected property value");
     public static final SVNErrorCode BAD_VERSION_FILE_FORMAT = new SVNErrorCode(BAD_CATEGORY, 6, "Version file format not correct");
     
     public static final SVNErrorCode XML_ATTRIB_NOT_FOUND = new SVNErrorCode(XML_CATEGORY, 0, "No such XML tag attribute");

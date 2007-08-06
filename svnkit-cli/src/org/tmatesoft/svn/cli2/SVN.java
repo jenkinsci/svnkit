@@ -12,8 +12,10 @@
 package org.tmatesoft.svn.cli2;
 
 import org.tmatesoft.svn.cli2.command.SVNHelpCommand;
+import org.tmatesoft.svn.cli2.command.SVNPropDelCommand;
 import org.tmatesoft.svn.cli2.command.SVNPropGetCommand;
 import org.tmatesoft.svn.cli2.command.SVNPropListCommand;
+import org.tmatesoft.svn.cli2.command.SVNPropSetCommand;
 import org.tmatesoft.svn.cli2.command.SVNStatusCommand;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
@@ -28,8 +30,10 @@ public class SVN {
     
     static {
         new SVNHelpCommand();
+        new SVNPropDelCommand();
         new SVNPropGetCommand();
         new SVNPropListCommand();
+        new SVNPropSetCommand();
         new SVNStatusCommand();
     }
 

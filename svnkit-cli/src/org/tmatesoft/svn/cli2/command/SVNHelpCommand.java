@@ -107,7 +107,7 @@ public class SVNHelpCommand extends SVNCommand {
                 }
                 help.append(SVNCommandUtil.formatString(optionDesc, 24, true));
                 help.append(" : ");
-                help.append(option.getDescription());
+                help.append(option.getDescription(command));
                 help.append("\n");
             }
         }

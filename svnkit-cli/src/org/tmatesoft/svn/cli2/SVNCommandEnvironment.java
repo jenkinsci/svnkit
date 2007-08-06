@@ -11,9 +11,12 @@
  */
 package org.tmatesoft.svn.cli2;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -81,6 +84,10 @@ public class SVNCommandEnvironment {
     private boolean myIsStrict;
     private SVNRevision myStartRevision;
     private SVNRevision myEndRevision;
+    private boolean myIsForce;
+    private byte[] myFileData;
+    private List myTargets;
+    private String myEncoding;
     
     public SVNCommandEnvironment(PrintStream out, PrintStream err, InputStream in) {
         myIsDescend = true;
@@ -184,6 +191,28 @@ public class SVNCommandEnvironment {
         myIsHelp = commandLine.hasOption(SVNOption.HELP) || commandLine.hasOption(SVNOption.QUESTION);
         myIsQuiet = commandLine.hasOption(SVNOption.QUIET);
         myIsIncremental = commandLine.hasOption(SVNOption.INCREMENTAL);
+        if (commandLine.hasOption(SVNOption.FILE)) {
+            // read bytes from file.
+            String fileName = commandLine.getOptionValue(SVNOption.FILE);
+            myFileData = readFromFile(new File(fileName));
+        }
+        if (commandLine.hasOption(SVNOption.TARGETS)) {
+            String fileName = commandLine.getOptionValue(SVNOption.TARGETS);
+            byte[] data = readFromFile(new File(fileName));
+            try {
+                String[] targets = new String(data, "UTF-8").split("\n\r");
+                myTargets = new LinkedList();
+                for (int i = 0; i < targets.length; i++) {
+                    if (targets[i].trim().length() > 0) {
+                        myTargets.add(targets[i].trim());
+                    }
+                }
+            } catch (UnsupportedEncodingException e) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
+                SVNErrorManager.error(err);
+            }
+        }
+        myIsForce = commandLine.hasOption(SVNOption.FORCE);
         myIsRevprop = commandLine.hasOption(SVNOption.REVPROP);
         if (commandLine.hasOption(SVNOption.RECURSIVE)) {
             myDepth = SVNDepth.fromRecurse(true);
@@ -213,6 +242,9 @@ public class SVNCommandEnvironment {
         }
         if (commandLine.hasOption(SVNOption.PASSWORD)) {
             myPassword = commandLine.getOptionValue(SVNOption.PASSWORD);
+        }
+        if (commandLine.hasOption(SVNOption.ENCODING)) {
+            myEncoding = commandLine.getOptionValue(SVNOption.ENCODING);
         }
         myIsXML = commandLine.hasOption(SVNOption.XML);
         myIsStrict = commandLine.hasOption(SVNOption.STRICT);
@@ -302,6 +334,29 @@ public class SVNCommandEnvironment {
             myStartRevision = r1;
         }
         return true;
+    }
+    
+    protected byte[] readFromFile(File file) throws SVNException {
+        InputStream is = null;
+        ByteArrayOutputStream bos = null;
+        try {
+            is = SVNFileUtil.openFileForReading(file);
+            bos = new ByteArrayOutputStream();
+            byte[] buffer = new byte[2048];
+            while(true) {
+                int read = is.read(buffer);
+                if (read <= 0) {
+                    break;
+                }
+                bos.write(buffer, 0, read);
+            }
+        } catch (IOException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
+            SVNErrorManager.error(err);
+        } finally {
+            SVNFileUtil.closeFile(is);
+        }
+        return bos != null ? bos.toByteArray() : null;
     }
 
     public String getChangelist() {
@@ -416,6 +471,22 @@ public class SVNCommandEnvironment {
 
     public boolean isVersion() {
         return myIsVersion;
+    }
+    
+    public boolean isForce() {
+        return myIsForce;
+    }
+    
+    public String getEncoding() {
+        return myEncoding;
+    }
+    
+    public byte[] getFileData() {
+        return myFileData;
+    }
+
+    public List getTargets() {
+        return myTargets;
     }
     
     public void handleError(SVNErrorMessage err) {
