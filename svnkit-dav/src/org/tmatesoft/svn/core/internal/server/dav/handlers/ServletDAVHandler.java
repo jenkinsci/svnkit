@@ -48,9 +48,8 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
 
 
     protected static final int SC_MULTISTATUS = 207;
-    protected static final int SC_NOT_FOUND = 404;
-
-    protected static final String HTTP_STATUS_OK_STRING = "HTTP/1.1 200 OK";
+    
+    protected static final String HTTP_STATUS_OK_LINE = "HTTP/1.1 200 OK";
 
     protected static final int XML_STYLE_NORMAL = 1;
     protected static final int XML_STYLE_PROTECT_PCDATA = 2;

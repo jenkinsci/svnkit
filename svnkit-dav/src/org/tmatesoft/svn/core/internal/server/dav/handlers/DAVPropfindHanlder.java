@@ -130,7 +130,6 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
             setResponseStatus(SC_MULTISTATUS);
             setDefaultResponseHeaders(resource);
             getResponseWriter().write(body.toString());
-        } catch (SVNException svne) {
         } catch (IOException e) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
         }
@@ -162,7 +161,7 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
             }
         }
         closeXMLTag(DAV_NAMESPACE_PREFIX, "prop", xmlBuffer);
-        openCDataTag(DAV_NAMESPACE_PREFIX, "status", HTTP_STATUS_OK_STRING, xmlBuffer);
+        openCDataTag(DAV_NAMESPACE_PREFIX, "status", HTTP_STATUS_OK_LINE, xmlBuffer);
         closeXMLTag(DAV_NAMESPACE_PREFIX, "propstat", xmlBuffer);
         closeXMLTag(DAV_NAMESPACE_PREFIX, "response", xmlBuffer);
         closeXMLTag(DAV_NAMESPACE_PREFIX, "multistatus", xmlBuffer);
@@ -178,7 +177,6 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
                 //prop not supported
                 return null;
             }
-
             //Method doesn't use revision parameter at this moment
             String uri = SVNEncodingUtil.uriEncode(DAVResourceUtil.buildURI(resource.getContext(), resource.getPath(), DAVResourceKind.VCC, -1, resource.getParameterPath()));
             return addHrefTags(uri);
@@ -233,9 +231,9 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
             return addHrefTags(uri);
         } else if (element == DAVElement.CREATOR_DISPLAY_NAME) {
             return resource.getAuthor();
-        } else if (element == DAVElement.DEADPROP_COUNT){
+        } else if (element == DAVElement.DEADPROP_COUNT) {
             //TODO: implement this.            
-        } else if ( element == DAVElement.MD5_CHECKSUM){
+        } else if (element == DAVElement.MD5_CHECKSUM) {
             //TODO: implement this.                        
         }
         return null;
