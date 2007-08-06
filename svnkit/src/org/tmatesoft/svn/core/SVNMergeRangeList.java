@@ -142,8 +142,12 @@ public class SVNMergeRangeList {
      * Returns ranges which present in this range list but not in the 
      * argument range list. 
      */
-    public SVNMergeRangeList diff(SVNMergeRangeList rangeList) {
-        return removeOrIntersect(rangeList, true);
+    public SVNMergeRangeList diff(SVNMergeRangeList eraserRangeList) {
+        return removeOrIntersect(eraserRangeList, true);
+    }
+    
+    public SVNMergeRangeList intersect(SVNMergeRangeList eraserRangeList) {
+        return removeOrIntersect(eraserRangeList, false);
     }
     
     public long countRevisions() {
@@ -196,6 +200,20 @@ public class SVNMergeRangeList {
             }
         }
         return false;
+    }
+    
+    public SVNMergeRangeList reverse() {
+        for (int i = 0; i < myRanges.length/2; i++) {
+            int swapInex =  myRanges.length - i - 1;
+            SVNMergeRange range = myRanges[i];
+            myRanges[i] = myRanges[swapInex].swapEndPoints();
+            myRanges[swapInex] = range.swapEndPoints();
+        }
+        
+        if (myRanges.length % 2 != 1) {
+            myRanges[myRanges.length/2].swapEndPoints();
+        }
+        return this;
     }
     
     private SVNMergeRangeList removeOrIntersect(SVNMergeRangeList rangeList, boolean remove) {

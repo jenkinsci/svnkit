@@ -11,18 +11,14 @@
  */
 package org.tmatesoft.svn.core.internal.wc.admin;
 
-import java.io.File;
 import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 
@@ -35,7 +31,6 @@ public class SVNEntry implements Comparable {
     private Map myAttributes;
     private SVNAdminArea myAdminArea;
     private String myName;
-    private File myPath;
 
     public SVNEntry(Map attributes, SVNAdminArea adminArea, String name) {
         myAttributes = attributes;
@@ -441,44 +436,5 @@ public class SVNEntry implements Comparable {
     public SVNAdminArea getAdminArea() {
         return myAdminArea;
     }
-    
-    public boolean isSwitched() throws SVNException {
-        File thisPath = getPath(); 
-        File parent = thisPath.getParentFile();
-        if (parent == null) {
-            return false;
-        }
-        
-        SVNWCAccess access = SVNWCAccess.newInstance(myAdminArea.getWCAccess());
-        SVNAdminArea parentAdminArea = null;
-        SVNEntry parentEntry = null;
-        try {
-            parentAdminArea = access.open(parent, false, 0);
-            parentEntry = parentAdminArea.getVersionedEntry(parentAdminArea.getThisDirName(), false);
-        } catch (SVNException svne) {
-            if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
-                return false;
-            } 
-            throw svne;
-        } finally {
-            access.close();
-        }
-        
-        SVNURL parentSVNURL = parentEntry.getSVNURL();
-        SVNURL thisSVNURL = getSVNURL(); 
-        if (parentSVNURL == null || thisSVNURL == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "Cannot find a URL for ''{0}''", parentSVNURL == null ? parent : thisPath);
-            SVNErrorManager.error(err);
-        }
-        
-        SVNURL expectedSVNURL = parentSVNURL.appendPath(myName, false);
-        return !thisSVNURL.equals(expectedSVNURL);
-    }
-    
-    private File getPath() {
-        if (myPath == null) {
-            myPath = myAdminArea.getFile(myName);
-        }
-        return myPath;
-    }
+   
 }

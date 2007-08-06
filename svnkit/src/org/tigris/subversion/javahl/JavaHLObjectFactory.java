@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.javahl.SVNClientImpl;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNDiffStatus;
@@ -38,6 +39,8 @@ import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+
+import sun.reflect.ReflectionFactory.GetReflectionFactoryAction;
 
 /**
  * @version 1.1.1
@@ -119,6 +122,7 @@ public class JavaHLObjectFactory {
         ACTION_CONVERSION_MAP.put(SVNEventAction.CHANGELIST_SET, new Integer(NotifyAction.changelist_set));
         ACTION_CONVERSION_MAP.put(SVNEventAction.CHANGELIST_CLEAR, new Integer(NotifyAction.changelist_clear));
         ACTION_CONVERSION_MAP.put(SVNEventAction.CHANGELIST_FAILED, new Integer(NotifyAction.changelist_failed));
+        ACTION_CONVERSION_MAP.put(SVNEventAction.MERGE_BEGIN, new Integer(NotifyAction.merge_begin));
         
         // undocumented thing.
         ACTION_CONVERSION_MAP.put(SVNEventAction.COMMIT_COMPLETED, new Integer(-11));
@@ -500,6 +504,11 @@ public class JavaHLObjectFactory {
                 event.getChangelistName(),
                 null//TODO: FIXME
                 );
+    }
+    
+    public static CopySource createCopySource(SVNLocationEntry location) {
+        return new CopySource(location.getPath(), Revision.getInstance(location.getRevision()), 
+                              null);
     }
 
     public static void throwException(SVNException e, SVNClientImpl svnClient) throws ClientException {

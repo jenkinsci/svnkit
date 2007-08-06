@@ -35,6 +35,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
@@ -497,9 +498,8 @@ public abstract class SVNAdminArea {
                             Map addedMergeInfo = new TreeMap();
                             SVNMergeInfoManager.diffMergeInfoProperties(null, addedMergeInfo, fromValue, null, toValue, null);
                             toValue = SVNMergeInfoManager.formatMergeInfoToString(addedMergeInfo);
-                            //TODO: ?
-//                            working.setPropertyValue(propName, toValue);
-//                            result = result != SVNStatusType.CONFLICTED && isNormal ? SVNStatusType.MERGED : result;
+                            working.setPropertyValue(propName, toValue);
+                            result = result != SVNStatusType.CONFLICTED && isNormal ? SVNStatusType.MERGED : result;
                         } else {
                             result = isNormal ? SVNStatusType.CONFLICTED : result;                            
                             conflicts.add(MessageFormat.format("Trying to change property ''{0}'' from ''{1}'' to ''{2}'',\n" +
@@ -511,19 +511,10 @@ public abstract class SVNAdminArea {
                 } else {
                     if (workingValue.equals(fromValue)) {
                         working.setPropertyValue(propName, toValue);
-                    } else if (toValue == null && !workingValue.equals(fromValue)) {
-                        if (SVNProperty.MERGE_INFO.equals(propName)) {
-                            Map addedMergeInfo = new TreeMap();
-                            SVNMergeInfoManager.diffMergeInfoProperties(null, addedMergeInfo, fromValue, null, workingValue, null);
-                            toValue = SVNMergeInfoManager.formatMergeInfoToString(addedMergeInfo);
-                            //TODO: ?
-//                            working.setPropertyValue(propName, toValue);
-//                            result = result != SVNStatusType.CONFLICTED && isNormal ? SVNStatusType.MERGED : result;
-                        } else {
-                            result = isNormal ? SVNStatusType.CONFLICTED : result;
-                            conflicts.add(MessageFormat.format("Trying to delete property ''{0}'' but value has been modified from ''{1}'' to ''{2}''.",
-                                     new Object[] { propName, fromValue, workingValue }));
-                        }
+                    } else if (toValue == null) {
+                        result = isNormal ? SVNStatusType.CONFLICTED : result;
+                        conflicts.add(MessageFormat.format("Trying to delete property ''{0}'' but value has been modified from ''{1}'' to ''{2}''.",
+                                                           new Object[] { propName, fromValue, workingValue }));
                     } else if (workingValue.equals(toValue)) {
                         result = result != SVNStatusType.CONFLICTED && isNormal ? SVNStatusType.MERGED : result;
                     } else {
@@ -604,7 +595,7 @@ public abstract class SVNAdminArea {
             String latestLabel, Map propChanges, boolean leaveConflict, boolean dryRun, SVNDiffOptions options, SVNLog log) throws SVNException {
         SVNEntry entry = getEntry(localPath, false);
         if (entry == null) {
-            return SVNStatusType.UNCHANGED;
+            return SVNStatusType.MISSING;
         }
 
         boolean saveLog = log == null;
@@ -1279,6 +1270,10 @@ public abstract class SVNAdminArea {
         return myDirectory;
     }
 
+    public File getAdminTempDirectory() {
+        return getAdminFile("tmp");
+    }
+
     public File getAdminDirectory() {
         return myAdminRoot;
     }
@@ -1599,6 +1594,39 @@ public abstract class SVNAdminArea {
         }
     }
     
+    public boolean isEntrySwitched(SVNEntry entry) throws SVNException {
+        File entryPath = getFile(entry.getName()); 
+        File parent = entryPath.getParentFile();
+        if (parent == null) {
+            return false;
+        }
+        
+        SVNWCAccess access = SVNWCAccess.newInstance(getWCAccess());
+        SVNAdminArea parentAdminArea = null;
+        SVNEntry parentEntry = null;
+        try {
+            parentAdminArea = access.open(parent, false, 0);
+            parentEntry = parentAdminArea.getVersionedEntry(parentAdminArea.getThisDirName(), false);
+        } catch (SVNException svne) {
+            if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
+                return false;
+            } 
+            throw svne;
+        } finally {
+            access.close();
+        }
+        
+        SVNURL parentSVNURL = parentEntry.getSVNURL();
+        SVNURL thisSVNURL = entry.getSVNURL(); 
+        if (parentSVNURL == null || thisSVNURL == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "Cannot find a URL for ''{0}''", parentSVNURL == null ? parent : entryPath);
+            SVNErrorManager.error(err);
+        }
+        
+        SVNURL expectedSVNURL = parentSVNURL.appendPath(entry.getName(), false);
+        return !thisSVNURL.equals(expectedSVNURL);
+    }
+
     private void walkThisDirectory(ISVNEntryHandler handler, boolean showHidden, boolean recursive) throws SVNException {
         File thisDir = getFile("");
         
@@ -1672,4 +1700,5 @@ public abstract class SVNAdminArea {
             command.clear();
         }
     }
+    
 }

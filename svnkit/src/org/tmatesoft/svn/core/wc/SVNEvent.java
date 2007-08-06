@@ -15,6 +15,7 @@ import java.io.File;
 
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNLock;
+import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
@@ -118,7 +119,8 @@ public class SVNEvent {
     private File myRootFile;
     private SVNEventAction myExpectedAction;
     private String myChangelistName;
-    
+    private SVNMergeRange myRange;
+
     /**
      * Constructs an <b>SVNEvent</b> object given
      * an error message for a filed operation. 
@@ -274,6 +276,17 @@ public class SVNEvent {
             SVNStatusType cstatus, SVNStatusType pstatus,
             SVNStatusType lstatus, SVNLock lock, SVNErrorMessage error) {
         this(rootFile, file, action, null, kind, revision, mimetype, cstatus, pstatus, lstatus, lock, error);
+    }
+
+    public SVNEvent(File rootFile, File file, SVNEventAction action, 
+                    SVNNodeKind kind, long revision, String mimetype,
+                    SVNStatusType cstatus, SVNStatusType pstatus,
+                    SVNStatusType lstatus, SVNLock lock, 
+                    SVNMergeRange range, SVNErrorMessage error) {
+                        
+        this(rootFile, file, action, kind, revision, mimetype, cstatus, pstatus, lstatus, lock, 
+             error);
+        myRange = range;
     }
     
     /**
@@ -462,6 +475,10 @@ public class SVNEvent {
     
     public String getChangelistName() {
         return myChangelistName;
+    }
+    
+    public SVNMergeRange getMergeRange() {
+        return myRange;
     }
     
 }

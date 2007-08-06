@@ -100,6 +100,7 @@ public abstract class SVNArgument {
     public static final SVNArgument ACCEPT = createStringArgument(new String[] { "--accept" });
     public static final SVNArgument USE_MERGE_INFO = createUnaryArgument(new String[] { "--use-merge-history", "-g" });
     public static final SVNArgument IGNORE_EXTERNALS = createUnaryArgument(new String[] { "--ignore-externals" });
+    public static final SVNArgument RECORD_ONLY = createUnaryArgument(new String[] { "--record-only" });
     
     public static SVNArgument findArgument(String name, Set validArguments) {
         for (Iterator arguments = validArguments.iterator(); arguments.hasNext();) {

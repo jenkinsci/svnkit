@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core;
 
+import java.io.File;
 import java.util.Map;
 
 /**
@@ -19,6 +20,7 @@ import java.util.Map;
  */
 public class SVNMergeInfo {
     private String myPath;
+    private File myFile;
     private Map myMergeSrcPathsToRangeLists;
 
     public SVNMergeInfo(String path, Map srcsToRangeLists) {
@@ -26,8 +28,17 @@ public class SVNMergeInfo {
         myMergeSrcPathsToRangeLists = srcsToRangeLists;
     }
 
+    public SVNMergeInfo(File file, Map srcsToRangeLists) {
+        myFile = file;
+        myMergeSrcPathsToRangeLists = srcsToRangeLists;
+    }
+
     public String getPath() {
         return myPath;
+    }
+
+    public File getFile() {
+        return myFile;
     }
     
     /**

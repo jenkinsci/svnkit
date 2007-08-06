@@ -913,7 +913,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
 
         if (!isValidRevision(targetRevision)) {
             targetRevision = myFSFS.getYoungestRevision();
-    }
+        }
 
         String switchPath = null;
 
@@ -925,24 +925,24 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                         switchURL, getRepositoryRoot(false)
                 });
                 SVNErrorManager.error(err);
-        }
+            }
             
             switchPath = switchURL.toDecodedString().substring(reposRootURL.toDecodedString().length());
 
             if ("".equals(switchPath)) {
                 switchPath = "/";
-        }
+            }
         }
         
         String anchor = getRepositoryPath("");
         String fullTargetPath = switchPath != null ? switchPath : SVNPathUtil.concatToAbs(anchor, target);
 
-        if(myReporterContext == null){
+        if (myReporterContext == null) {
             myReporterContext = new FSUpdateContext(this, myFSFS, targetRevision, SVNFileUtil.createTempFile("report", ".tmp"), target, fullTargetPath, switchURL == null ? false : true, depth, ignoreAncestry, textDeltas, editor);    
-        }else{
+        } else {
             myReporterContext.reset(this, myFSFS, targetRevision, SVNFileUtil.createTempFile("report", ".tmp"), target, fullTargetPath, switchURL == null ? false : true, depth, ignoreAncestry, textDeltas, editor);
-            }
         }
+    }
 
     private String getUserName() throws SVNException {
         if (getLocation().getUserInfo() != null && getLocation().getUserInfo().trim().length() > 0) {

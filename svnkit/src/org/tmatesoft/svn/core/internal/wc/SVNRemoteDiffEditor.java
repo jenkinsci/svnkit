@@ -63,8 +63,8 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     private Collection myTempFiles;
 
     public SVNRemoteDiffEditor(SVNAdminAreaInfo info, File target, AbstractDiffCallback callback,
-            SVNRepository repos, long revision1, long revision2, boolean dryRun, ISVNEventHandler handler,
-            ISVNEventHandler cancelHandler) {
+                               SVNRepository repos, long revision1, long revision2, boolean dryRun, 
+                               ISVNEventHandler handler, ISVNEventHandler cancelHandler) {
         myAdminInfo = info;
         myTarget = target;
         myDiffCallback = callback;
@@ -77,6 +77,11 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
         myIsDryRun = dryRun;
     }
 
+    public void reset(long revision1, long revision2) {
+        myRevision1 = revision1;
+        myRevision2 = revision2;
+    }
+    
     public void targetRevision(long revision) throws SVNException {
         myRevision2 = revision;
     }

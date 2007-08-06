@@ -481,7 +481,7 @@ public class SVNPathUtil {
             if (parentPath.length() != ancestorPath.length() && !parentPath.endsWith("/") &&
                 ancestorPath.charAt(parentPath.length()) != '/') {
                 if (parentPath.startsWith("file://") && ancestorPath.startsWith("file://")) {
-                    //maybe encoded back slashes (UNC path)?
+                    //HACK: maybe encoded back slashes (UNC path)?
                     String encodedSlash = SVNEncodingUtil.uriEncode("\\");
                     return parentPath.endsWith(encodedSlash) || 
                            ancestorPath.substring(parentPath.length()).startsWith(encodedSlash);

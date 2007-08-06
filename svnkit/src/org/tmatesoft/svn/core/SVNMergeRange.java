@@ -88,4 +88,10 @@ public class SVNMergeRange implements Comparable {
                range.myStartRevision <= myEndRevision;
     }
     
+    public SVNMergeRange swapEndPoints() {
+        long tmp = myStartRevision;
+        myStartRevision = myEndRevision;
+        myEndRevision = tmp;
+        return this;
+    }
 }

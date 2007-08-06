@@ -50,6 +50,7 @@ public class SVNMergeCommand extends SVNCommand {
         boolean useAncestry = !getCommandLine().hasArgument(SVNArgument.IGNORE_ANCESTRY);
         boolean force = getCommandLine().hasArgument(SVNArgument.FORCE);
         boolean dryRun = getCommandLine().hasArgument(SVNArgument.DRY_RUN);
+        boolean recordOnly = getCommandLine().hasArgument(SVNArgument.RECORD_ONLY);
 
         getClientManager().setEventHandler(new SVNCommandEventProcessor(out, err, false, false));
         SVNDiffClient differ = getClientManager().getDiffClient();
@@ -106,7 +107,7 @@ public class SVNMergeCommand extends SVNCommand {
                     pegRev = SVNRevision.HEAD;
                 }
                 SVNURL svnURL = SVNURL.parseURIEncoded(url);
-                differ.doMerge(svnURL, pegRev, rN, rM, dstPath, depth, useAncestry, force, dryRun);
+                differ.doMerge(svnURL, pegRev, rN, rM, dstPath, depth, useAncestry, force, dryRun, recordOnly);
             } else if (getCommandLine().hasPaths()){
                 File srcPath = new File(getCommandLine().getPathAt(0));
                 SVNRevision pegRevision = getCommandLine().getPathPegRevision(0);
@@ -117,7 +118,7 @@ public class SVNMergeCommand extends SVNCommand {
                 if (getCommandLine().getPathCount() > 1) {
                     dstPath = new File(getCommandLine().getPathAt(1));
                 } 
-                differ.doMerge(srcPath, pegRevision, rN, rM, dstPath, depth, useAncestry, force, dryRun);
+                differ.doMerge(srcPath, pegRevision, rN, rM, dstPath, depth, useAncestry, force, dryRun, recordOnly);
             }
         } else if (getCommandLine().getURLCount() == 2) {
             // merge url1@r url2@r wcPath
@@ -148,7 +149,7 @@ public class SVNMergeCommand extends SVNCommand {
             SVNURL svnURL1 = SVNURL.parseURIEncoded(url1);
             SVNURL svnURL2 = SVNURL.parseURIEncoded(url2);
 
-            differ.doMerge(svnURL1, rN, svnURL2, rM, dstPath, depth, useAncestry, force, dryRun);
+            differ.doMerge(svnURL1, rN, svnURL2, rM, dstPath, depth, useAncestry, force, dryRun, recordOnly);
         } else if (getCommandLine().getPathCount() >= 2){
             // merge wcPath1@r wcPath2@r wcPath
             File path1 = new File(getCommandLine().getPathAt(0));
@@ -165,7 +166,7 @@ public class SVNMergeCommand extends SVNCommand {
             if (getCommandLine().getPathCount() > 2) {
                 dstPath = new File(getCommandLine().getPathAt(2));
             }
-            differ.doMerge(path1, rN, path2, rM, dstPath, depth, useAncestry, force, dryRun);
+            differ.doMerge(path1, rN, path2, rM, dstPath, depth, useAncestry, force, dryRun, recordOnly);
         } else {
             println(err, "svn: unsupported merge call format");
         }

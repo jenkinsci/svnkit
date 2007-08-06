@@ -16,12 +16,14 @@ import java.io.File;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
+import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -161,6 +163,12 @@ public class SVNEventFactory {
                 contents, props, lock, null, null);
     }
 
+    public static SVNEvent createMergeBeginEvent(File path, SVNMergeRange range) {
+        return new SVNEvent(path.getParentFile(), path, SVNEventAction.MERGE_BEGIN, 
+                            SVNNodeKind.NONE, SVNRepository.INVALID_REVISION, null, 
+                            null, null, null, null, range, null);
+    }
+    
     public static SVNEvent createUpdateAddEvent(SVNAdminAreaInfo info,
             SVNAdminArea adminArea, SVNNodeKind kind, SVNEntry entry) {
         return new SVNEvent(info, adminArea, entry.getName(),

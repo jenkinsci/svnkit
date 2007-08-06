@@ -1499,23 +1499,7 @@ public class SVNCopyClient extends SVNBasicClient {
         }
         
         Map targetMergeInfo = new TreeMap();
-        long oldestRev = SVNRepository.INVALID_REVISION;
-        try {
-            final long[] rev = new long[1];
-            rev[0] = SVNRepository.INVALID_REVISION;
-            repository.log(new String[] {srcRelativePath}, 1, srcRevision, false, true, 1, new ISVNLogEntryHandler() {
-                public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
-                    rev[0] = logEntry.getRevision();
-                }
-            });
-            oldestRev = rev[0];
-        } catch (SVNException svne) {
-            SVNErrorCode errCode = svne.getErrorMessage().getErrorCode(); 
-            if (errCode != SVNErrorCode.FS_NOT_FOUND && 
-                errCode != SVNErrorCode.RA_DAV_REQUEST_FAILED) {
-                throw svne;
-            }
-        }
+        long oldestRev = getPathLastChangeRevision(srcRelativePath, srcRevision, repository);
         
         if (SVNRevision.isValidRevisionNumber(oldestRev)) {
             SVNMergeRange range = new SVNMergeRange(oldestRev, srcRevision);

@@ -13,10 +13,12 @@ package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
@@ -29,6 +31,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNLogEntry;
+import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
@@ -41,6 +44,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
+import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
@@ -595,6 +599,43 @@ public class SVNLogClient extends SVNBasicClient {
                   includeMergeInfo, omitLogText, wrappingHandler);
     }
     
+    public SVNLocationEntry getCopySource(File path, SVNRevision revision) throws SVNException {
+        SVNRepository repos = createRepository(null, path, revision, revision);
+        SVNWCAccess access = createWCAccess();
+        SVNLocationEntry copyFromEntry = null;
+        try {
+            access.probeOpen(path, false, 0);
+            SVNEntry entry = access.getVersionedEntry(path, false);
+            SVNURL url = entry.getSVNURL();
+            SVNURL reposRoot = entry.getRepositoryRootURL();
+            if (reposRoot == null) {
+                reposRoot = repos.getRepositoryRoot(true);
+            }
+            String targetPath = url.getPath().substring(reposRoot.getPath().length());
+            if (!targetPath.startsWith("/")) {
+                targetPath = "/" + targetPath;
+            }
+            
+            SVNRevision oldestRevision = SVNRevision.create(1);
+            CopyFromReceiver receiver = new CopyFromReceiver(targetPath); 
+            try {
+                doLog(new File[] {path}, revision, revision, oldestRevision, true, true, 0, receiver);
+                copyFromEntry = receiver.getCopyFromLocation();
+            } catch (SVNException e) {
+                SVNErrorCode errCode = e.getErrorMessage().getErrorCode();
+                if (errCode == SVNErrorCode.FS_NOT_FOUND || errCode == SVNErrorCode.RA_DAV_REQUEST_FAILED) {
+                    return new SVNLocationEntry(SVNRepository.INVALID_REVISION, null);
+                }
+                throw e;
+            }
+        } finally {
+            access.close();
+        }
+
+        return copyFromEntry == null ? new SVNLocationEntry(SVNRepository.INVALID_REVISION, null) 
+                                     : copyFromEntry;
+    }
+    
     /**
      * Browses directory entries from a repository (using Working 
      * Copy paths to get corresponding URLs) and uses the provided dir 
@@ -828,6 +869,51 @@ public class SVNLogClient extends SVNBasicClient {
             if (entry.getKind() == SVNNodeKind.DIR && entry.getDate() != null && depth == SVNDepth.INFINITY) {
                 list(repository, childPath, rev, depth, entryFields, handler);
             }
+        }
+    }
+    
+    private static class CopyFromReceiver implements ISVNLogEntryHandler {
+        private String myTargetPath;
+        private SVNLocationEntry myCopyFromLocation;
+        
+        public CopyFromReceiver(String targetPath) {
+            myTargetPath = targetPath;
+        }
+        
+        public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
+            if (myCopyFromLocation != null) {
+                return;
+            }
+            
+            Map changedPaths = logEntry.getChangedPaths();
+            if (changedPaths != null && !changedPaths.isEmpty()) {
+                TreeMap sortedChangedPaths = new TreeMap(Collections.reverseOrder());
+                sortedChangedPaths.putAll(changedPaths);
+                for (Iterator changedPathsIter = sortedChangedPaths.keySet().iterator(); changedPathsIter.hasNext();) {
+                    String changedPath = (String) changedPathsIter.next();
+                    SVNLogEntryPath logEntryPath = (SVNLogEntryPath) sortedChangedPaths.get(changedPath);
+                    if (logEntryPath.getCopyPath() != null && 
+                        SVNRevision.isValidRevisionNumber(logEntryPath.getCopyRevision()) && 
+                        SVNPathUtil.isAncestor(changedPath, myTargetPath)) {
+                        String copyFromPath = null;
+                        if (changedPath.equals(myTargetPath)) {
+                            copyFromPath = logEntryPath.getCopyPath();
+                        } else {
+                            String relPath = myTargetPath.substring(changedPath.length());
+                            if (relPath.startsWith("/")) {
+                                relPath = relPath.substring(1);
+                            }
+                            copyFromPath = SVNPathUtil.concatToAbs(logEntryPath.getCopyPath(), relPath);
+                        }
+                        myCopyFromLocation = new SVNLocationEntry(logEntryPath.getCopyRevision(), copyFromPath);
+                        break;
+                    }
+                }
+            }
+        } 
+
+        public SVNLocationEntry getCopyFromLocation() {
+            return myCopyFromLocation;
         }
     }
 

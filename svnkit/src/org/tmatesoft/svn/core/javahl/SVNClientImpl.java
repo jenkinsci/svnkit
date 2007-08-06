@@ -78,6 +78,7 @@ import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.wc.DefaultSVNRepositoryPool;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
@@ -1725,7 +1726,14 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public CopySource getCopySource(String path, Revision revision) throws SubversionException {
-        notImplementedYet();
+        SVNLogClient logClient = getSVNLogClient();
+        try {
+            SVNLocationEntry location = logClient.getCopySource(new File(path).getAbsoluteFile(), 
+                                                                JavaHLObjectFactory.getSVNRevision(revision));
+            return JavaHLObjectFactory.createCopySource(location);
+        } catch (SVNException e) {
+            throwException(e);
+        }
         return null;
     }
 
@@ -1803,25 +1811,26 @@ public class SVNClientImpl implements SVNClientInterface {
                 SVNURL url2 = SVNURL.parseURIEncoded(path2);
                 differ.doMerge(url1, JavaHLObjectFactory.getSVNRevision(revision1), url2,
                         JavaHLObjectFactory.getSVNRevision(revision2), new File(localPath).getAbsoluteFile(),
-                        JavaHLObjectFactory.getSVNDepth(depth), !ignoreAncestry, force, dryRun);
+                        JavaHLObjectFactory.getSVNDepth(depth), !ignoreAncestry, force, dryRun, false);
             } else if (isURL(path1)) {
                 SVNURL url1 = SVNURL.parseURIEncoded(path1);
                 File file2 = new File(path2).getAbsoluteFile();
                 differ.doMerge(url1, JavaHLObjectFactory.getSVNRevision(revision1), file2,
                         JavaHLObjectFactory.getSVNRevision(revision2), new File(localPath).getAbsoluteFile(),
-                        JavaHLObjectFactory.getSVNDepth(depth), !ignoreAncestry, force, dryRun);
+                        JavaHLObjectFactory.getSVNDepth(depth), !ignoreAncestry, force, dryRun, false);
             } else if (isURL(path2)) {
                 SVNURL url2 = SVNURL.parseURIEncoded(path2);
                 File file1 = new File(path1).getAbsoluteFile();
                 differ.doMerge(file1, JavaHLObjectFactory.getSVNRevision(revision1), url2,
                         JavaHLObjectFactory.getSVNRevision(revision2), new File(localPath).getAbsoluteFile(),
-                        JavaHLObjectFactory.getSVNDepth(depth), !ignoreAncestry, force, dryRun);
+                        JavaHLObjectFactory.getSVNDepth(depth), !ignoreAncestry, force, dryRun, false);
             } else{
                 File file1 = new File(path1).getAbsoluteFile();
                 File file2 = new File(path2).getAbsoluteFile();
                 differ.doMerge(file1, JavaHLObjectFactory.getSVNRevision(revision1), 
                         file2, JavaHLObjectFactory.getSVNRevision(revision2),
-                        new File(localPath).getAbsoluteFile(), JavaHLObjectFactory.getSVNDepth(depth), !ignoreAncestry, force, dryRun);
+                        new File(localPath).getAbsoluteFile(), JavaHLObjectFactory.getSVNDepth(depth), 
+                        !ignoreAncestry, force, dryRun, false);
             }
         } catch (SVNException e) {
             throwException(e);
@@ -1831,19 +1840,23 @@ public class SVNClientImpl implements SVNClientInterface {
     public void merge(String path, Revision pegRevision, Revision revision1, Revision revision2, String localPath, boolean force, int depth, boolean ignoreAncestry, boolean dryRun) throws ClientException {
         SVNDiffClient differ = getSVNDiffClient();
         try {
-            if(isURL(path)){
+            if (isURL(path)) {
                 SVNURL url = SVNURL.parseURIEncoded(path);
                 differ.doMerge(url, 
                         JavaHLObjectFactory.getSVNRevision(pegRevision),
                         JavaHLObjectFactory.getSVNRevision(revision1),
                         JavaHLObjectFactory.getSVNRevision(revision2),
-                        new File(localPath).getAbsoluteFile(), JavaHLObjectFactory.getSVNDepth(depth), !ignoreAncestry, force, dryRun);
-            }else{
+                        new File(localPath).getAbsoluteFile(), 
+                        JavaHLObjectFactory.getSVNDepth(depth), 
+                        !ignoreAncestry, force, dryRun, false);
+            } else {
                 differ.doMerge(new File(path).getAbsoluteFile(),
                         JavaHLObjectFactory.getSVNRevision(pegRevision),
                         JavaHLObjectFactory.getSVNRevision(revision1),
                         JavaHLObjectFactory.getSVNRevision(revision2),
-                        new File(localPath).getAbsoluteFile(), JavaHLObjectFactory.getSVNDepth(depth), !ignoreAncestry, force, dryRun);
+                        new File(localPath).getAbsoluteFile(), 
+                        JavaHLObjectFactory.getSVNDepth(depth), 
+                        !ignoreAncestry, force, dryRun, false);
             }
         } catch (SVNException e) {
             throwException(e);

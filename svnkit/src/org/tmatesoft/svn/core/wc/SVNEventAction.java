@@ -273,4 +273,6 @@ public class SVNEventAction {
 
     public static final SVNEventAction CHANGELIST_FAILED = new SVNEventAction(28, "changelist_failed");
     
+    public static final SVNEventAction MERGE_BEGIN = new SVNEventAction(29, "merge_begin");
+    
 }
