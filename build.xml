@@ -616,6 +616,11 @@
               tofile="${python.test.home}/python/cmdline/svntest/main.py"
               failonerror="true"
         />
+    	<chmod perm="ugo+x">
+    		<fileset dir="${python.test.home}/python/cmdline">
+    			<include name="**/*.py"/>
+			</fileset>
+    	</chmod>
     	<pathconvert targetos="unix" property="basedir.unix">
     		<path location="${basedir}"></path>
     	</pathconvert>
