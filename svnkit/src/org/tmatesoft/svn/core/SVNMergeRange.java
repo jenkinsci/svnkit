@@ -74,8 +74,8 @@ public class SVNMergeRange implements Comparable {
     }
     
     public boolean canCombine(SVNMergeRange range) {
-        return range != null && myStartRevision <= range.getEndRevision() + 1 &&
-               range.getStartRevision() <= myEndRevision + 1;
+        return range != null && myStartRevision <= range.getEndRevision() &&
+               range.getStartRevision() <= myEndRevision;
     }
     
     public boolean contains(SVNMergeRange range) {
@@ -84,8 +84,8 @@ public class SVNMergeRange implements Comparable {
     }
     
     public boolean intersects(SVNMergeRange range) {
-        return range != null && myStartRevision <= range.myEndRevision && 
-               range.myStartRevision <= myEndRevision;
+        return range != null && myStartRevision + 1 <= range.myEndRevision && 
+               range.myStartRevision + 1 <= myEndRevision;
     }
     
     public SVNMergeRange swapEndPoints() {

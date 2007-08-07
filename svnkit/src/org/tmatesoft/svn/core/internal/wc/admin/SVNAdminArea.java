@@ -1623,7 +1623,7 @@ public abstract class SVNAdminArea {
             SVNErrorManager.error(err);
         }
         
-        SVNURL expectedSVNURL = parentSVNURL.appendPath(entry.getName(), false);
+        SVNURL expectedSVNURL = parentSVNURL.appendPath(entryPath.getName(), false);
         return !thisSVNURL.equals(expectedSVNURL);
     }
 

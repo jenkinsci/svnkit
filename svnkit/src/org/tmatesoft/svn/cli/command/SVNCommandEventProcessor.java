@@ -19,6 +19,7 @@ import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNLock;
+import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
@@ -131,6 +132,20 @@ public class SVNCommandEventProcessor implements ISVNEventHandler {
         } else if (event.getAction() == SVNEventAction.CHANGELIST_FAILED) {
             event.getErrorMessage().setType(SVNErrorMessage.TYPE_WARNING);
             SVNCommand.println(myErrStream, event.getErrorMessage().toString());
+        } else if (event.getAction() == SVNEventAction.MERGE_BEGIN) {
+            SVNMergeRange range = event.getMergeRange();
+            if (range.getStartRevision() == range.getEndRevision() ||
+                range.getStartRevision() == range.getEndRevision() - 1) {
+                SVNCommand.println(myPrintStream, "--- Merging r" + range.getStartRevision() + ":");
+            } else if (range.getStartRevision() - 1 == range.getEndRevision()) {
+                SVNCommand.println(myPrintStream, "--- Undoing r" + range.getStartRevision() + ":");
+            } else if (range.getStartRevision() < range.getEndRevision()) {
+                SVNCommand.println(myPrintStream, "--- Merging r" + (range.getStartRevision() + 1) + 
+                                                  " through r" + range.getEndRevision() + ":");
+            } else {
+                SVNCommand.println(myPrintStream, "--- Undoing r" + range.getStartRevision() + 
+                                                  " through r" + (range.getEndRevision() + 1) + ":");
+            }
         } else if (event.getAction() == SVNEventAction.UPDATE_ADD) {
             if (myIsExternal) {
                 myIsExternalChanged = true;

@@ -1742,7 +1742,7 @@ public class SVNDiffClient extends SVNBasicClient {
                     suggestedSrc = suggestedSrc.substring(1);
                 }
                 srcURL = reposRoot.appendPath(suggestedSrc, false);
-            } else if (srcPath != null) {
+            } else if (srcURL == null && srcPath != null) {
                 srcURL = getURL(srcPath);
                 if (srcURL == null) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, 
@@ -2088,7 +2088,7 @@ public class SVNDiffClient extends SVNBasicClient {
                                 if (i == 0 && isIndirect) {
                                     String mergeInfoStr = null;
                                     if (!merges.isEmpty()) {
-                                        mergeInfoStr = SVNMergeInfoManager.formatMergeInfoToString(merges);
+                                        mergeInfoStr = SVNMergeInfoManager.formatMergeInfoToString(targetMergeInfo);
                                     }
                                     SVNPropertiesManager.setProperty(myWCAccess, dstPath, 
                                                                      SVNProperty.MERGE_INFO, 
@@ -2267,7 +2267,7 @@ public class SVNDiffClient extends SVNBasicClient {
                             if (i == 0 && isIndirect) {
                                 String mergeInfoStr = null;
                                 if (!merges.isEmpty()) {
-                                    mergeInfoStr = SVNMergeInfoManager.formatMergeInfoToString(merges);
+                                    mergeInfoStr = SVNMergeInfoManager.formatMergeInfoToString(targetMergeInfo);
                                 }
                                 SVNPropertiesManager.setProperty(myWCAccess, dstPath, 
                                                                  SVNProperty.MERGE_INFO, 

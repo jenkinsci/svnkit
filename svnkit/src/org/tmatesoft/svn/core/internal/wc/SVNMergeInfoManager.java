@@ -480,7 +480,7 @@ public class SVNMergeInfoManager {
             mergeInfo = mergeInfo.deleteCharAt(0);
         }
         if (mergeInfo.length() == 0 || mergeInfo.charAt(0) == '\n') {
-            return null;
+            return new SVNMergeRange[0];
         }
         
         SVNMergeRange lastRange = null;
@@ -494,7 +494,7 @@ public class SVNMergeInfoManager {
                 SVNErrorManager.error(err);
             }
             
-            SVNMergeRange range = new SVNMergeRange(startRev, startRev);
+            SVNMergeRange range = new SVNMergeRange(startRev - 1, startRev);
             if (mergeInfo.length() > 0 && mergeInfo.charAt(0) == '-') {
                 mergeInfo = mergeInfo.deleteCharAt(0);
                 long endRev = parseRevision(mergeInfo);

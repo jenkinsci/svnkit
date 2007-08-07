@@ -126,10 +126,10 @@ public class SVNMergeRangeList {
             SVNMergeRange range = myRanges[i];
             long startRev = range.getStartRevision();
             long endRev = range.getEndRevision();
-            if (startRev == endRev) {
-                output += String.valueOf(startRev);
+            if (startRev == endRev - 1) {
+                output += String.valueOf(endRev);
             } else {
-                output += String.valueOf(startRev) + "-" + String.valueOf(endRev);
+                output += String.valueOf(startRev + 1) + "-" + String.valueOf(endRev);
             }
             if (i < myRanges.length - 1) {
                 output += ',';
@@ -154,7 +154,7 @@ public class SVNMergeRangeList {
         long revCount = 0;
         for (int i = 0; i < myRanges.length; i++) {
             SVNMergeRange range = myRanges[i];
-            revCount += range.getEndRevision() - range.getStartRevision() + 1;
+            revCount += range.getEndRevision() - range.getStartRevision();
         }
         return revCount;
     }
@@ -163,7 +163,7 @@ public class SVNMergeRangeList {
         List revs = new LinkedList();
         for (int i = 0; i < myRanges.length; i++) {
             SVNMergeRange range = myRanges[i];
-            for (long rev = range.getStartRevision(); rev <= range.getEndRevision(); rev ++) {
+            for (long rev = range.getStartRevision() + 1; rev <= range.getEndRevision(); rev ++) {
                 revs.add(new Long(rev));
             }
         }
@@ -203,15 +203,17 @@ public class SVNMergeRangeList {
     }
     
     public SVNMergeRangeList reverse() {
-        for (int i = 0; i < myRanges.length/2; i++) {
-            int swapInex =  myRanges.length - i - 1;
-            SVNMergeRange range = myRanges[i];
-            myRanges[i] = myRanges[swapInex].swapEndPoints();
-            myRanges[swapInex] = range.swapEndPoints();
-        }
-        
-        if (myRanges.length % 2 != 1) {
-            myRanges[myRanges.length/2].swapEndPoints();
+        if (myRanges.length != 0) {
+            for (int i = 0; i < myRanges.length/2; i++) {
+                int swapInex =  myRanges.length - i - 1;
+                SVNMergeRange range = myRanges[i];
+                myRanges[i] = myRanges[swapInex].swapEndPoints();
+                myRanges[swapInex] = range.swapEndPoints();
+            }
+            
+            if (myRanges.length % 2 != 1) {
+                myRanges[myRanges.length/2].swapEndPoints();
+            }
         }
         return this;
     }
@@ -246,8 +248,14 @@ public class SVNMergeRangeList {
                 }
             } else if (range2.intersects(range1)) {
                 if (range1.getStartRevision() < range2.getStartRevision()) {
-                    SVNMergeRange tmpRange = remove ? new SVNMergeRange(range1.getStartRevision(), range2.getStartRevision() - 1)
-                                                    : new SVNMergeRange(range2.getStartRevision(), range1.getEndRevision());
+                    SVNMergeRange tmpRange = null;
+                    if (remove) {
+                        tmpRange = new SVNMergeRange(range1.getStartRevision(), 
+                                                     range2.getStartRevision());    
+                    } else {
+                        tmpRange = new SVNMergeRange(range2.getStartRevision(), 
+                                                     range1.getEndRevision());                        
+                    }
 
                     SVNMergeRange combinedRange = lastRange == null ? tmpRange : lastRange.combine(tmpRange, true);
                     if (combinedRange != lastRange) {
@@ -258,14 +266,15 @@ public class SVNMergeRangeList {
                 
                 if (range1.getEndRevision() > range2.getEndRevision()) {
                     if (!remove) {
-                        SVNMergeRange tmpRange = new SVNMergeRange(range1.getStartRevision(), range2.getEndRevision());
+                        SVNMergeRange tmpRange = new SVNMergeRange(range1.getStartRevision(), 
+                                                                   range2.getEndRevision());
                         SVNMergeRange combinedRange = lastRange == null ? tmpRange : lastRange.combine(tmpRange, true);
                         if (combinedRange != lastRange) {
                             lastRange = combinedRange;
                             ranges.add(lastRange);
                         }
                     }
-                    range1.setStartRevision(range2.getEndRevision() + 1);
+                    range1.setStartRevision(range2.getEndRevision());
                 } else {
                     i++;
                 }
