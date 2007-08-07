@@ -1094,7 +1094,7 @@ public class SVNFileUtil {
         return execCommand(commandLine, false);
     }
 
-    private static String execCommand(String[] commandLine, boolean waitAfterRead) {
+    public static String execCommand(String[] commandLine, boolean waitAfterRead) {
         InputStream is = null;
         StringBuffer result = new StringBuffer();
         try {

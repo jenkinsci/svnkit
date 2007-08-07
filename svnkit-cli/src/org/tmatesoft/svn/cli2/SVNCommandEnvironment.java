@@ -24,11 +24,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.tmatesoft.svn.cli.SVNConsoleAuthenticationProvider;
 import org.tmatesoft.svn.cli2.command.SVNStatusCommand;
+import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -37,11 +40,14 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
+import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
+import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
@@ -50,7 +56,9 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
  * @version 1.1.2
  * @author  TMate Software Ltd.
  */
-public class SVNCommandEnvironment {
+public class SVNCommandEnvironment implements ISVNCommitHandler {
+    
+    private static final String DEFAULT_LOG_MESSAGE_HEADER = "--This line, and those below, will be ignored--";
     
     private SVNDepth myDepth;
     private boolean myIsVerbose;
@@ -88,6 +96,11 @@ public class SVNCommandEnvironment {
     private byte[] myFileData;
     private List myTargets;
     private String myEncoding;
+    private String myMessage;
+    private boolean myIsForceLog;
+    private String myEditorCommand;
+    private Map myRevisionProperties;
+    private boolean myIsNoUnlock;
     
     public SVNCommandEnvironment(PrintStream out, PrintStream err, InputStream in) {
         myIsDescend = true;
@@ -148,6 +161,9 @@ public class SVNCommandEnvironment {
     }
     
     protected void initOptions(SVNCommandLine commandLine) throws SVNException {
+        if (commandLine.hasOption(SVNOption.MESSAGE)) {
+            myMessage = commandLine.getOptionValue(SVNOption.MESSAGE);
+        }
         if (commandLine.hasOption(SVNOption.CHANGE)) {
             if (commandLine.hasOption(SVNOption.REVISION)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Multiple revision argument encountered; " +
@@ -213,6 +229,7 @@ public class SVNCommandEnvironment {
             }
         }
         myIsForce = commandLine.hasOption(SVNOption.FORCE);
+        myIsForceLog = commandLine.hasOption(SVNOption.FORCE_LOG);
         myIsRevprop = commandLine.hasOption(SVNOption.REVPROP);
         if (commandLine.hasOption(SVNOption.RECURSIVE)) {
             myDepth = SVNDepth.fromRecurse(true);
@@ -250,13 +267,29 @@ public class SVNCommandEnvironment {
         myIsStrict = commandLine.hasOption(SVNOption.STRICT);
         myIsNoAuthCache = commandLine.hasOption(SVNOption.NO_AUTH_CACHE);
         myIsNonInteractive = commandLine.hasOption(SVNOption.NON_INTERACTIVE);
+        if (commandLine.hasOption(SVNOption.EDITOR_CMD)) {
+            myEditorCommand = commandLine.getOptionValue(SVNOption.EDITOR_CMD);
+        }
         if (commandLine.hasOption(SVNOption.CONFIG_DIR)) {
             myConfigDir = commandLine.getOptionValue(SVNOption.CONFIG_DIR);
         }
+        myIsNoUnlock = commandLine.hasOption(SVNOption.NO_UNLOCK);
         if (commandLine.hasOption(SVNOption.CHANGELIST)) {
             myChangelist = commandLine.getOptionValue(SVNOption.CHANGELIST);
         }
         myIsNoIgnore = commandLine.hasOption(SVNOption.NO_IGNORE);
+        if (commandLine.hasOption(SVNOption.WITH_REVPROP)) {
+            if (myRevisionProperties == null) {
+                myRevisionProperties = new LinkedHashMap();
+            }
+            String revProp = commandLine.getOptionValue(SVNOption.WITH_REVPROP);
+            int index = revProp.indexOf('='); 
+            if (index >= 0) {
+                myRevisionProperties.put(revProp.substring(0, index), revProp.substring(index + 1));
+            } else {
+                myRevisionProperties.put(revProp, "");
+            }
+        }
         myArguments = new LinkedList(commandLine.getArguments());
     }
     
@@ -290,7 +323,7 @@ public class SVNCommandEnvironment {
         }
     }
     
-    protected void validateOptions(SVNCommandLine commandLine) {
+    protected void validateOptions(SVNCommandLine commandLine) throws SVNException {
         for(Iterator options = commandLine.optionValues(); options.hasNext();) {
             SVNOptionValue optionValue = (SVNOptionValue) options.next();
             if (optionValue.getOption() == SVNOption.HELP || optionValue.getOption() == SVNOption.QUESTION) {
@@ -301,6 +334,26 @@ public class SVNCommandEnvironment {
                 getErr().println("Type '" + getProgramName() + " help " + myCommand.getName() + "' for usage.");
                 SVN.failure();
             }
+        }
+        if (!isForceLog() && myCommand.isCommitter()) {
+            if (commandLine.hasOption(SVNOption.FILE)) {
+                String filePath = commandLine.getOptionValue(SVNOption.FILE);
+                if (isVersioned(filePath)) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_LOG_MESSAGE_IS_VERSIONED_FILE, myCommand.getFileAmbigousErrorMessage());
+                    SVNErrorManager.error(err);
+                }
+            }
+            if (commandLine.hasOption(SVNOption.MESSAGE)) {
+                File file = new File(commandLine.getOptionValue(SVNOption.MESSAGE)).getAbsoluteFile();
+                if (SVNFileType.getType(file) != SVNFileType.NONE) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_LOG_MESSAGE_IS_PATHNAME, myCommand.getMessageAmbigousErrorMessage());
+                    SVNErrorManager.error(err);
+                }
+            }
+        }
+        if (!myCommand.acceptsRevisionRange() && getEndRevision() != SVNRevision.UNDEFINED) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_REVISION_RANGE);
+            SVNErrorManager.error(err);
         }
         if (!myIsDescend) {
             if (myCommand instanceof SVNStatusCommand) {
@@ -489,6 +542,23 @@ public class SVNCommandEnvironment {
         return myTargets;
     }
     
+    public boolean isForceLog() {
+        return myIsForceLog;
+    }
+    
+    public String getEditorCommand() {
+        return myEditorCommand;
+    }
+    
+    public String getMessage() {
+        return myMessage;
+    }
+    
+    public Map getRevisionProperties() {
+        return myRevisionProperties;
+    }
+
+    
     public void handleError(SVNErrorMessage err) {
         Collection codes = new HashSet();
         while(err != null) {
@@ -554,4 +624,142 @@ public class SVNCommandEnvironment {
         return null;
     }
 
+    public boolean isVersioned(String target) throws SVNException {
+        SVNCommandTarget oldTarget = myCurrentTarget;
+        SVNWCAccess wcAccess = null;
+        setCurrentTarget(new SVNCommandTarget(target));
+        try {
+            wcAccess = SVNWCAccess.newInstance(null);
+            wcAccess.probeOpen(getCurrentTargetFile(), false, 0);
+            SVNEntry entry = wcAccess.getVersionedEntry(getCurrentTargetFile(), false);
+            return entry != null;
+        } catch (SVNException e) {
+            //
+        } finally {
+            wcAccess.close();
+            setCurrentTarget(oldTarget);
+        }
+        return false;
+    }
+
+    public void printCommitInfo(SVNCommitInfo info) {
+        if (info != null) {
+            getOut().println("\nCommitted revision " + info.getNewRevision() + ".");
+            if (info.getErrorMessage() != null && info.getErrorMessage().isWarning()) {
+                getOut().println("\nWarning: " + info.getErrorMessage().getMessage());
+            }
+        }
+    }
+
+    public String getCommitMessage(String message, SVNCommitItem[] commitables) throws SVNException {
+        if (getMessage() != null) {
+            return getMessage();
+        } else if (getFileData() != null) {
+            try {
+                return new String(getFileData(), getEncoding() != null ? getEncoding() : "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()));
+            }
+        }
+        if (commitables == null || commitables.length == 0) {
+            return "";
+        }
+        // invoke editor (if non-interactive).
+        if (myIsNonInteractive) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, 
+                    "Cannot invoke editor to get log message when non-interactive");
+            SVNErrorManager.error(err);
+        }
+        message = null;
+        while(message == null) {
+            message = createCommitMessageTemplate(commitables);
+            byte[] messageData = null;
+            try {
+                messageData = SVNCommandUtil.runEditor(this, message, "svn-commit");
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() == SVNErrorCode.CL_NO_EXTERNAL_EDITOR) {
+                    SVNErrorMessage err = e.getErrorMessage().wrap(
+                            "Could not use external editor to fetch log message; " +
+                            "consider setting the $SVN_EDITOR environment variable " +
+                            "or using the --message (-m) or --file (-F) options");
+                    SVNErrorManager.error(err);
+                }
+                throw e;
+            }
+            if (messageData != null) {
+                String editedMessage = null;
+                try {
+                    editedMessage = getEncoding() != null ? new String(messageData, getEncoding()) : new String(messageData);
+                } catch (UnsupportedEncodingException e) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
+                    SVNErrorManager.error(err);
+                }
+                if (editedMessage.indexOf(DEFAULT_LOG_MESSAGE_HEADER) >= 0) {
+                    editedMessage = editedMessage.substring(0, editedMessage.indexOf(DEFAULT_LOG_MESSAGE_HEADER));
+                }
+                if (!"a".equals(editedMessage.trim())) {
+                    return editedMessage;
+                }
+            }
+            message = null;
+            getOut().println("\nLog message unchanged or not specified\n" +
+                    "a)bort, c)ontinue, e)dit");
+            try {
+                char c = (char) getIn().read();
+                if (c == 'a') {
+                    SVNErrorManager.cancel("");
+                } else if (c == 'c') {
+                    return "";
+                } else if (c == 'e') {
+                    continue;
+                }
+            } catch (IOException e) {
+            }
+        }
+        SVNErrorManager.cancel("");
+        return null;
+    }
+    
+    private String createCommitMessageTemplate(SVNCommitItem[] items) {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(System.getProperty("line.separator"));
+        buffer.append(DEFAULT_LOG_MESSAGE_HEADER);
+        buffer.append(System.getProperty("line.separator"));
+        for (int i = 0; i < items.length; i++) {
+            SVNCommitItem item = items[i];
+            String path = item.getFile() != null ? item.getPath() : item.getURL().toString();
+            if ("".equals(path)) {
+                path = ".";
+            }
+            if (item.isDeleted() && item.isAdded()) {
+                buffer.append('R');
+            } else if (item.isDeleted()) {
+                buffer.append('D');
+            } else if (item.isAdded()) {
+                buffer.append('A');
+            } else if (item.isContentsModified()) {
+                buffer.append('M');
+            } else {
+                buffer.append('_');
+            }
+            if (item.isPropertiesModified()) {
+                buffer.append('M');
+            } else {
+                buffer.append(' ');
+            }
+            if (!myIsNoUnlock && item.isLocked()) {
+                buffer.append('L');
+            } else {
+                buffer.append(' ');
+            }
+            if (item.isCopied()) {
+                buffer.append("+ ");
+            } else {
+                buffer.append("  ");
+            }
+            buffer.append(path);
+            buffer.append(System.getProperty("line.separator"));
+        }
+        return buffer.toString();
+    }
 }

@@ -25,7 +25,6 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNChangelistClient;
@@ -158,18 +157,6 @@ public class SVNPropSetCommand extends SVNPropertiesCommand {
         }
     }
     
-    protected void checkBooleanProperty(String name, String value) throws SVNException {
-        if (!SVNProperty.isBooleanProperty(name)) {
-            return;
-        }
-        value = value.trim();
-        if ("".equals(value) || "off".equalsIgnoreCase(value) || "no".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_PROPERTY_VALUE, "To turn off the {0} property, use ''svn propdel'';\n" +
-            		"setting the property to ''{1}'' will not turn it off.", new Object[] {name, value});
-            getEnvironment().handleWarning(err, new SVNErrorCode[] {SVNErrorCode.BAD_PROPERTY_VALUE});
-        }
-    }
-
     public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
         super.handleProperty(revision, property);
         if (!getEnvironment().isQuiet()) {

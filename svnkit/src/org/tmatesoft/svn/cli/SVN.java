@@ -33,6 +33,7 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  */
 public class SVN {
     private static Set ourArguments;
+    private static Set newCommands;
 
     static {
         ourArguments = new HashSet();
@@ -89,6 +90,26 @@ public class SVN {
         ourArguments.add(SVNArgument.USE_MERGE_INFO);
         ourArguments.add(SVNArgument.IGNORE_EXTERNALS);
         ourArguments.add(SVNArgument.RECORD_ONLY);
+
+        newCommands = new HashSet();
+        newCommands.add("status");
+        newCommands.add("stat");
+        newCommands.add("st");
+        newCommands.add("propedit");
+        newCommands.add("pedit");
+        newCommands.add("pe");
+        newCommands.add("propset");
+        newCommands.add("pset");
+        newCommands.add("ps");
+        newCommands.add("propdel");
+        newCommands.add("pdel");
+        newCommands.add("pd");
+        newCommands.add("proplist");
+        newCommands.add("plist");
+        newCommands.add("pl");
+        newCommands.add("propgrt");
+        newCommands.add("pget");
+        newCommands.add("pg");
     }
 
     public static void main(String[] args) {
@@ -112,7 +133,7 @@ public class SVN {
                 System.exit(1);
             }
             String commandName = commandLine.getCommandName();
-            if ("status".equals(commandName) || "stat".equals(commandName) || "st".equals(commandName)) {
+            if (newCommands.contains(commandName.toLowerCase().trim())) {
                 org.tmatesoft.svn.cli2.SVN.main(args);
                 return;
             }

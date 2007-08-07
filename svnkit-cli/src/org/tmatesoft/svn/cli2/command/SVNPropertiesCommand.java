@@ -22,6 +22,7 @@ import org.tmatesoft.svn.cli2.SVNXMLCommand;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
@@ -95,6 +96,20 @@ public abstract class SVNPropertiesCommand extends SVNXMLCommand implements ISVN
         return null;
     }
 
+    protected SVNPropertyData getPathProperty(File path) {
+        if (myPathProperties.containsKey(path)) {
+            return (SVNPropertyData) ((List) myPathProperties.get(path)).get(0);
+        }
+        return null;
+    }
+
+    protected SVNPropertyData getURLProperty(SVNURL url) {
+        if (myURLProperties.containsKey(url)) {
+            return (SVNPropertyData) ((List) myURLProperties.get(url)).get(0);
+        }
+        return null;
+    }
+
     protected Map getURLProperties() {
         return myURLProperties;
     }
@@ -105,5 +120,17 @@ public abstract class SVNPropertiesCommand extends SVNXMLCommand implements ISVN
 
     protected Map getRevisionProperties() {
         return myRevisionProperties;
+    }
+
+    protected void checkBooleanProperty(String name, String value) throws SVNException {
+        if (!SVNProperty.isBooleanProperty(name)) {
+            return;
+        }
+        value = value.trim();
+        if ("".equals(value) || "off".equalsIgnoreCase(value) || "no".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_PROPERTY_VALUE, "To turn off the {0} property, use ''svn propdel'';\n" +
+            		"setting the property to ''{1}'' will not turn it off.", new Object[] {name, value});
+            getEnvironment().handleWarning(err, new SVNErrorCode[] {SVNErrorCode.BAD_PROPERTY_VALUE});
+        }
     }
 }

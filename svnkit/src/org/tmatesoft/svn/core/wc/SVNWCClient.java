@@ -855,18 +855,29 @@ public class SVNWCClient extends SVNBasicClient {
                             SVNEntry childEntry = (SVNEntry) entries.next();
                             if (area.getThisDirName().equals(childEntry.getName())) {
                                 continue;
-                        }
+                            }
                             if (childEntry.isFile() || depth == SVNDepth.IMMEDIATES) {
                                 if ((base && childEntry.isScheduledForAddition()) || (!base && childEntry.isScheduledForDeletion())) {
-                                    return;
-                    }
-                }
-                            SVNVersionedProperties childProps = base ? area.getBaseProperties(childEntry.getName()) : area.getProperties(childEntry.getName());
+                                    continue;
+                                }
+                            }
+                            SVNVersionedProperties childProps = null; 
+                            if (depth == SVNDepth.IMMEDIATES && childEntry.isDirectory()) {
+                                SVNAdminArea childDir = wcAccess.getAdminArea(new File(area.getRoot(), childEntry.getName()));
+                                if (childDir == null) {
+                                    continue;
+                                }
+                                childProps = base ? childDir.getBaseProperties(childDir.getThisDirName()) : childDir.getProperties(childDir.getThisDirName());
+                            } else if (childEntry.isDirectory()) {
+                                continue;
+                            } else {
+                                childProps = base ? area.getBaseProperties(childEntry.getName()) : area.getProperties(childEntry.getName());
+                            }
                             if (propName != null) {
                                 String propValue = childProps.getPropertyValue(propName);
                                 if (propValue != null) {
                                     handler.handleProperty(area.getFile(childEntry.getName()), new SVNPropertyData(propName, propValue));
-            }
+                                }
                             } else {
                                 Map allProps = childProps.asMap();
                                 for(Iterator names = allProps.keySet().iterator(); names.hasNext();) {

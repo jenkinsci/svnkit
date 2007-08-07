@@ -50,12 +50,20 @@ public class SVNOption {
     public static final SVNOption ENCODING = new SVNOption("encoding", false);
     public static final SVNOption TARGETS = new SVNOption("targets", false);
     public static final SVNOption FORCE = new SVNOption("force");
+    public static final SVNOption FORCE_LOG = new SVNOption("force-log");
+    public static final SVNOption MESSAGE = new SVNOption("message", "m", false);
+    public static final SVNOption WITH_REVPROP = new SVNOption("with-revprop", false);
+    public static final SVNOption EDITOR_CMD = new SVNOption("editor-cmd", false);
+
+    public static final SVNOption NO_UNLOCK = new SVNOption("no-unlock");
     
     // auth options.
     public static final SVNOption USERNAME = new SVNOption("username", false);
     public static final SVNOption PASSWORD = new SVNOption("password", false);
     public static final SVNOption NO_AUTH_CACHE = new SVNOption("no-auth-cache");
     public static final SVNOption NON_INTERACTIVE = new SVNOption("non-interactive");
+    
+    
 
     
     public static Collection addAuthOptions(Collection target) {
@@ -64,6 +72,18 @@ public class SVNOption {
             target.add(PASSWORD);
             target.add(NO_AUTH_CACHE);
             target.add(NON_INTERACTIVE);
+        }
+        return target;
+    }
+    
+    public static Collection addLogMessageOptions(Collection target) {
+        if (target != null) {
+            target.add(MESSAGE);
+            target.add(FILE);
+            target.add(FORCE_LOG);
+            target.add(EDITOR_CMD);
+            target.add(ENCODING);
+            target.add(WITH_REVPROP);
         }
         return target;
     }

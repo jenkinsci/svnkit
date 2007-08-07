@@ -11,7 +11,17 @@
  */
 package org.tmatesoft.svn.cli2;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 
 /**
@@ -53,5 +63,90 @@ public class SVNCommandUtil {
                         || pathOrUrl.startsWith("svn://") 
                         || (pathOrUrl.startsWith("svn+") && pathOrUrl.indexOf("://") > 4)
                         || pathOrUrl.startsWith("file://"));
+    }
+    
+    public static byte[] runEditor(SVNCommandEnvironment env, String existingValue, String prefix) throws SVNException {
+        File tmpFile = SVNFileUtil.createTempFile(prefix, "");
+        OutputStream os = null;
+        try {
+            os = SVNFileUtil.openFileForWriting(tmpFile);
+            os.write(existingValue.getBytes("UTF-8"));
+        } catch (IOException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
+            SVNErrorManager.error(err);
+        } finally {
+            SVNFileUtil.closeFile(os);
+        }
+        tmpFile.setLastModified(System.currentTimeMillis() - 2000);
+        long timestamp = tmpFile.lastModified();
+        String editorCommand = getEditorCommand(env);
+        try {
+            if (SVNFileUtil.isWindows) {
+                String editor = editorCommand.trim().toLowerCase();
+                if (!(editor.endsWith(".exe") || editor.endsWith(".bat") || editor.endsWith(".cmd"))) {
+                    SVNFileUtil.execCommand(new String[] {"cmd.exe", "/C", editorCommand, tmpFile.getAbsolutePath()}, false);
+                } else {
+                    SVNFileUtil.execCommand(new String[] {editorCommand, tmpFile.getAbsolutePath()}, false);
+                }
+            } else {
+                SVNFileUtil.execCommand(new String[] {editorCommand, tmpFile.getAbsolutePath()}, false);
+            }
+            // now read from file.
+            if (timestamp == tmpFile.lastModified()) {
+                return null;
+            }
+            InputStream is = null;
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            byte[] buffer = new byte[2048];
+            try {
+                is = SVNFileUtil.openFileForReading(tmpFile);
+                while(true) {
+                    int read = is.read(buffer);
+                    if (read <= 0) {
+                        break;
+                    }
+                    bos.write(buffer, 0, read);
+                }
+            } catch (IOException e) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
+                SVNErrorManager.error(err);
+            } finally {
+                SVNFileUtil.closeFile(is);
+            }
+            return bos.toByteArray();
+        } finally {
+            SVNFileUtil.deleteFile(tmpFile);
+        }
+    }
+    
+    private static String getEditorCommand(SVNCommandEnvironment env) throws SVNException {
+        if (env.getEditorCommand() != null) {
+            return env.getEditorCommand();
+        } 
+        String command = SVNFileUtil.getEnvironmentVariable("SVN_EDITOR");
+        if (command == null) {
+            command = env.getClientManager().getOptions().getEditor();
+        }
+        if (command == null) {
+            command = SVNFileUtil.getEnvironmentVariable("VISUAL");
+        }
+        if (command == null) {
+            command = SVNFileUtil.getEnvironmentVariable("EDITOR");
+        }
+        String errorMessage = null;
+        if (command == null) {
+            errorMessage = 
+                "None of the environment variables SVN_EDITOR, VISUAL or EDITOR is " +
+                "set, and no 'editor-cmd' run-time configuration option was found"; 
+        } else if ("".equals(command.trim())) {
+            errorMessage = 
+                "The EDITOR, SVN_EDITOR or VISUAL environment variable or " +
+                "'editor-cmd' run-time configuration option is empty or " +
+                "consists solely of whitespace. Expected a shell command.";
+        }
+        if (errorMessage != null) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_NO_EXTERNAL_EDITOR, errorMessage));
+        }
+        return command;
     }
 }

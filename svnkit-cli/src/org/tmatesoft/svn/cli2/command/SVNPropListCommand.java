@@ -124,10 +124,10 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
                 SVNRevision pegRevision = target.getPegRevision();
                 try {
                     if (target.isURL()) {
-                        client.doGetProperty(target.getURL(), null, pegRevision, getEnvironment().getStartRevision(), depth.isRecursive(), this);
+                        client.doGetProperty(target.getURL(), null, pegRevision, getEnvironment().getStartRevision(), depth, this);
                     } else {
                         getEnvironment().setCurrentTarget(target);
-                        client.doGetProperty(target.getFile(), null, pegRevision, getEnvironment().getStartRevision(), depth.isRecursive(), this);
+                        client.doGetProperty(target.getFile(), null, pegRevision, getEnvironment().getStartRevision(), depth, this);
                     }
                 } catch (SVNException e) {
                     getEnvironment().handleWarning(e.getErrorMessage(), new SVNErrorCode[] {SVNErrorCode.UNVERSIONED_RESOURCE, SVNErrorCode.ENTRY_NOT_FOUND});

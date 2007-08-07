@@ -72,6 +72,22 @@ public abstract class SVNCommand {
     public abstract void run() throws SVNException;
 
     protected abstract Collection createSupportedOptions();
+    
+    public boolean acceptsRevisionRange() {
+        return false;
+    }
+
+    public boolean isCommitter() {
+        return false;
+    }
+    
+    public String getFileAmbigousErrorMessage() {
+        return "Log message file is a versioned file; use '--force-log' to override";
+    }
+
+    public String getMessageAmbigousErrorMessage() {
+        return "The log message is a path name (was -F intended?); use '--force-log' to override";
+    }
 
     public String getName() {
         return myName;
