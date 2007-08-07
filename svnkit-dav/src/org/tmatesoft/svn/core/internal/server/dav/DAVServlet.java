@@ -83,7 +83,7 @@ public class DAVServlet extends HttpServlet {
         return buffer.toString();
     }
 
-    private String generateErrorBody(String statusLine, String description) throws IOException {
+    private String generateErrorBody(String statusLine, String description) {
         StringBuffer buffer = new StringBuffer();
         buffer.append("<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\n<html><head>\n<title>");
         buffer.append(statusLine);
