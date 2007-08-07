@@ -16,12 +16,16 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author TMate Software Ltd.
@@ -57,7 +61,8 @@ public class DAVResource {
     private boolean myIsBaseLined = false;
     private boolean myIsWorking = false;
 
-    private SVNDirEntry myDirEntry;
+    private Map mySVNProperties;
+    private Collection myEntries;
 
 
     public DAVResource(SVNRepository repository, String requestContext, String uri, String label, boolean useCheckedIn) throws SVNException {
@@ -83,7 +88,7 @@ public class DAVResource {
         myURI = uri;
     }
 
-    private SVNRepository getRepository() {
+    public SVNRepository getRepository() {
         return myRepository;
     }
 
@@ -187,12 +192,18 @@ public class DAVResource {
         myIsWorking = isWorking;
     }
 
-    public SVNDirEntry getDirEntry() {
-        return myDirEntry;
+    private Map getSVNProperties() {
+        if (mySVNProperties == null) {
+            mySVNProperties = new HashMap();
+        }
+        return mySVNProperties;
     }
 
-    public void setDirEntry(SVNDirEntry dirEntry) {
-        myDirEntry = dirEntry;
+    public Collection getEntries() {
+        if (myEntries == null) {
+            myEntries = new ArrayList();
+        }
+        return myEntries;
     }
 
     private void parseURI(String label, boolean useCheckedIn) throws SVNException {
@@ -362,7 +373,7 @@ public class DAVResource {
 
     private void parseVCC(String parameter, String label, boolean useCheckedIn) throws SVNException {
         if (!DEDAULT_VCC_NAME.equals(parameter)) {
-            //Handle this
+            //TODO: Handle this
         }
         if (label == null && !useCheckedIn) {
             setType(DAVResource.DAV_RESOURCE_TYPE_PRIVATE);
@@ -388,16 +399,20 @@ public class DAVResource {
     }
 
     public void prepare() throws SVNException {
-        long latestRevision = getLatestRevision();
+        long latestRevision = getRepositoryLatestRevision();
         if (getType() == DAVResource.DAV_RESOURCE_TYPE_REGULAR) {
             if (getRevision() == INVALID_REVISION) {
                 setRevision(latestRevision);
             }
             SVNNodeKind currentNodeKind = getNodeKind();
-            setExists(currentNodeKind != SVNNodeKind.NONE);
+            //TODO: UNKNOWN <=> !exists() ???
+            setExists(currentNodeKind != SVNNodeKind.NONE && currentNodeKind != SVNNodeKind.UNKNOWN);
             setCollection(currentNodeKind == SVNNodeKind.DIR);
-            setDirEntry(getRepository().getDir(getParameterPath(), getRevision(), false, null));
-
+            if (isCollection()) {
+                getRepository().getDir(getParameterPath(), getRevision(), getSVNProperties(), getEntries());
+            } else {
+                getRepository().getFile(getParameterPath(), getRevision(), getSVNProperties(), null);
+            }
         } else if (getType() == DAVResource.DAV_RESOURCE_TYPE_VERSION) {
             setRevision(latestRevision);
             setExists(true);
@@ -419,6 +434,11 @@ public class DAVResource {
         }
     }
 
+
+    public boolean lacksETagPotential() {
+        return (!exists() || (getType() != DAVResource.DAV_RESOURCE_TYPE_REGULAR && getType() != DAVResource.DAV_RESOURCE_TYPE_VERSION) || getType() == DAVResource.DAV_RESOURCE_TYPE_VERSION && isBaseLined());
+    }
+
     private SVNNodeKind getNodeKind() throws SVNException {
         SVNNodeKind currentNodeKind = null;
         try {
@@ -433,16 +453,16 @@ public class DAVResource {
         return currentNodeKind;
     }
 
-    public boolean lacksETagPotential() {
-        return (!exists() || (getType() != DAVResource.DAV_RESOURCE_TYPE_REGULAR && getType() != DAVResource.DAV_RESOURCE_TYPE_VERSION) || getType() == DAVResource.DAV_RESOURCE_TYPE_VERSION && isBaseLined());
-    }
-
-
-    public Date getLastModified() {
+    public String getLastModified() {
         if (lacksETagPotential()) {
             return null;
         }
-        return getDirEntry().getDate();
+        return getSVNProperties().get(SVNProperty.COMMITTED_DATE).toString();
+    }
+
+    public String getLastModified(long revision) throws SVNException {
+        SVNDirEntry entry = getRepository().getDir(getParameterPath(), revision, false, null);
+        return entry.getDate().toString();
     }
 
     public String getETag() {
@@ -450,14 +470,15 @@ public class DAVResource {
             return null;
         }
         StringBuffer eTag = new StringBuffer();
-        eTag.append(isCollection() ? "W/" : "");
+        eTag.append(isCollection() ? "W/\"" : "\"");
         eTag.append(getRevision());
         eTag.append("/");
         eTag.append(SVNEncodingUtil.uriEncode(getParameterPath()));
+        eTag.append("\"");
         return eTag.toString();
     }
 
-    public long getLatestRevision() throws SVNException {
+    public long getRepositoryLatestRevision() throws SVNException {
         return getRepository().getLatestRevision();
     }
 
@@ -466,6 +487,34 @@ public class DAVResource {
     }
 
     public String getAuthor() {
-        return getDirEntry().getAuthor();
+        return getSVNProperties().get(SVNProperty.LAST_AUTHOR).toString();
+    }
+
+    public String getContentType() {
+        return getSVNProperties().get(SVNProperty.MIME_TYPE).toString();
+    }
+
+    public long getCommitedRevision() {
+        return SVNProperty.longValue(getSVNProperties().get(SVNProperty.COMMITTED_REVISION).toString());
+    }
+
+    public long getContentLength() throws SVNException {
+        if (isCollection()) {
+            return -1;
+        }
+        return getRepository().getDir(getParameterPath(), getRevision(), false, null).getSize();
+    }
+
+    public String getLastAuthor(long revision) throws SVNException {
+        SVNDirEntry entry = getRepository().getDir(getParameterPath(), revision, false, null);
+        return entry.getAuthor();
+    }
+
+    public String getMD5Checksum() {
+        return getSVNProperties().get(SVNProperty.CHECKSUM).toString();
+    }
+
+    public String getDeadpropCount() {
+        return null;
     }
 }

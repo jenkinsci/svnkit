@@ -11,33 +11,38 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+
 
 /**
+ * @author TMate Software Ltd.
  * @version 1.1.2
- * @author  TMate Software Ltd.
  */
 public class DAVDepth {
-    
+
     public static final DAVDepth DEPTH_ZERO = new DAVDepth(0, "0");
     public static final DAVDepth DEPTH_ONE = new DAVDepth(1, "1");
     public static final DAVDepth DEPTH_INFINITY = new DAVDepth(-1, "Infinity");
-    
+
     private int myID;
     private String myName;
-    
+
     private DAVDepth(int id, String name) {
         myID = id;
         myName = name;
     }
-    
+
     public int getID() {
         return myID;
     }
-    
+
     public String toString() {
         return myName;
     }
-    
+
     public static DAVDepth parseDepth(String depth) {
         if (DAVDepth.DEPTH_INFINITY.toString().equals(depth)) {
             return DAVDepth.DEPTH_INFINITY;
@@ -47,5 +52,16 @@ public class DAVDepth {
             return DAVDepth.DEPTH_ONE;
         }
         return null;
+    }
+
+    public static DAVDepth decreaseDepth(DAVDepth currentDepth) throws SVNException {
+        if (currentDepth == null) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Depth is not specified."));
+        }
+        if (currentDepth == DEPTH_ZERO || currentDepth == DEPTH_INFINITY) {
+            return currentDepth;
+        } else {
+            return DAVDepth.DEPTH_ZERO;
+        }
     }
 }

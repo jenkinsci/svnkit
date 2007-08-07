@@ -43,7 +43,6 @@ public class DAVServlet extends HttpServlet {
             SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
             if (errorCode == SVNErrorCode.RA_SVN_MALFORMED_DATA || errorCode == SVNErrorCode.FS_NOT_DIRECTORY
                     || errorCode == SVNErrorCode.FS_NOT_FOUND) {
-                response.setStatus(SC_NOT_FOUND);
                 errorBody = generateErrorBody(NOT_FOUND_STATUS_LINE, e.getErrorMessage().getFullMessage());
                 response.setStatus(SC_NOT_FOUND);
                 response.setContentType("text/html; charset=\"utf-8\"");

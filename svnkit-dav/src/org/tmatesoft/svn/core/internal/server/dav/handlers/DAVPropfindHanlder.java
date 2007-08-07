@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
+import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -46,17 +47,17 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
     private static final DAVElement PROPFIND = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "propfind");
     private static final DAVElement PROPNAME = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "propname");
     private static final DAVElement ALLPROP = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "allprop");
+    private static final DAVElement GET_CONTENT_TYPE = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "getcontenttype");
+    private static final DAVElement GET_LAST_MODIFIED = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "getlastmodified");
+    private static final DAVElement GET_ETAG = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "getetag");
+
+    private static final String DEFAULT_AUTOVERSION_STRING = "DAV:checkout-checkin";
 
     private Collection myDAVElements;
     private Map myNamespaces;
-    private int myCurrentStatus;
 
     static {
-        PROP_ELEMENTS.add(DAVElement.HREF);
-        PROP_ELEMENTS.add(DAVElement.STATUS);
-        PROP_ELEMENTS.add(DAVElement.BASELINE);
         PROP_ELEMENTS.add(DAVElement.BASELINE_COLLECTION);
-        PROP_ELEMENTS.add(DAVElement.COLLECTION);
         PROP_ELEMENTS.add(DAVElement.VERSION_NAME);
         PROP_ELEMENTS.add(DAVElement.GET_CONTENT_LENGTH);
         PROP_ELEMENTS.add(DAVElement.CREATION_DATE);
@@ -67,6 +68,10 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         PROP_ELEMENTS.add(DAVElement.CHECKED_IN);
         PROP_ELEMENTS.add(DAVElement.RESOURCE_TYPE);
         PROP_ELEMENTS.add(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
+        PROP_ELEMENTS.add(DAVElement.DEADPROP_COUNT);
+        PROP_ELEMENTS.add(GET_ETAG);
+        PROP_ELEMENTS.add(GET_LAST_MODIFIED);
+        PROP_ELEMENTS.add(GET_CONTENT_TYPE);
     }
 
     public DAVPropfindHanlder(DAVRepositoryManager connector, HttpServletRequest request, HttpServletResponse response) {
@@ -106,43 +111,65 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         return myNamespaces;
     }
 
-    public int getCurrentStatus() {
-        return myCurrentStatus;
-    }
-
-    public void setCurrentStatus(int currentStatus) {
-        myCurrentStatus = currentStatus;
-    }
-
     public void execute() throws SVNException {
         String label = getRequestHeader(LABEL_HEADER);
         DAVResource resource = getRepositoryManager().createDAVResource(getRequestContext(), getRequestURI(), label, false);
 
-        getRequestDepth(DAVDepth.DEPTH_INFINITY);
-        //TODO: native subversion examine if DEPTH_INFINITE is allowed
-
         readInput(getRequestInputStream());
 
         StringBuffer body = new StringBuffer();
+        DAVDepth depth = getRequestDepth(DAVDepth.DEPTH_INFINITY);
+
+        generatePropertiesResponse(body, resource, depth);
+        setResponseStatus(SC_MULTISTATUS);
+        setDefaultResponseHeaders(resource);
 
         try {
-            generatePropertiesResponse(body, resource);
-            setResponseStatus(SC_MULTISTATUS);
-            setDefaultResponseHeaders(resource);
             getResponseWriter().write(body.toString());
         } catch (IOException e) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
         }
     }
 
-    private void generatePropertiesResponse(StringBuffer xmlBuffer, DAVResource resource) throws SVNException {
+    private void generatePropertiesResponse(StringBuffer xmlBuffer, DAVResource resource, DAVDepth depth) throws SVNException {
         appendXMLHeader(DAV_NAMESPACE_PREFIX, "multistatus", getNamespaces().keySet(), xmlBuffer);
+        //TODO: Handling PROPNAME element
+        if (getDAVProperties().size() == 1 && getDAVProperties().contains(ALLPROP)) {
+            generateAllPropResponse(xmlBuffer, resource, depth);
+        } else {
+            generatePropResponse(xmlBuffer, resource, depth);
+            closeXMLTag(DAV_NAMESPACE_PREFIX, "multistatus", xmlBuffer);
+        }
+    }
+
+    private void generateAllPropResponse(StringBuffer xmlBuffer, DAVResource resource, DAVDepth depth) throws SVNException {
+        getDAVProperties().clear();
+        getDAVProperties().addAll(PROP_ELEMENTS);
+        generatePropResponse(xmlBuffer, resource, depth);
+    }
+
+
+    private void generatePropResponse(StringBuffer xmlBuffer, DAVResource resource, DAVDepth depth) throws SVNException {
+        addResponse(xmlBuffer, resource);
+        if (depth != DAVDepth.DEPTH_ZERO && resource.isCollection()) {
+            DAVDepth newDepth = DAVDepth.decreaseDepth(depth);
+            for (Iterator entriesIterator = resource.getEntries().iterator(); entriesIterator.hasNext();) {
+                SVNDirEntry entry = (SVNDirEntry) entriesIterator.next();
+                StringBuffer entryURI = new StringBuffer();
+                entryURI.append(resource.getURI());
+                entryURI.append(resource.getURI().endsWith("/") ? "" : "/");
+                entryURI.append(entry.getName());
+                DAVResource currentResource = new DAVResource(resource.getRepository(), resource.getContext(), entryURI.toString(), null, false);
+                generatePropResponse(xmlBuffer, currentResource, newDepth);
+            }
+        }
+    }
+
+    private void addResponse(StringBuffer xmlBuffer, DAVResource resource) throws SVNException {
+        String resultStatusCode = HTTP_STATUS_OK_LINE;
         openNamespaceTag(DAV_NAMESPACE_PREFIX, "response", XML_STYLE_NORMAL, getNamespaces(), xmlBuffer);
         openXMLTag(DAV_NAMESPACE_PREFIX, "href", XML_STYLE_NORMAL, null, xmlBuffer);
         String uri = resource.getContext() + resource.getURI();
-        if (!uri.endsWith("/")) {
-            uri = uri + "/";
-        }
         xmlBuffer.append(uri);
         closeXMLTag(DAV_NAMESPACE_PREFIX, "href", xmlBuffer);
         openXMLTag(DAV_NAMESPACE_PREFIX, "propstat", XML_STYLE_NORMAL, null, xmlBuffer);
@@ -152,90 +179,217 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
             String prefix = getNamespaces().get(element.getNamespace()).toString();
             String name = element.getName();
             String value = getPropertyValue(resource, element);
-            if (value == null || "".equals(value)) {
-                openXMLTag(prefix, name, XML_STYLE_SELF_CLOSING, null, xmlBuffer);
+            if (value != null) {
+                if ("".equals(value)) {
+                    openXMLTag(prefix, name, XML_STYLE_SELF_CLOSING, null, xmlBuffer);
+                } else {
+                    openXMLTag(prefix, name, XML_STYLE_NORMAL, null, xmlBuffer);
+                    xmlBuffer.append(value);
+                    closeXMLTag(prefix, name, xmlBuffer);
+                }
             } else {
-                openXMLTag(prefix, name, XML_STYLE_NORMAL, null, xmlBuffer);
-                xmlBuffer.append(value);
-                closeXMLTag(prefix, name, xmlBuffer);
+                resultStatusCode = HTTP_NOT_FOUND_LINE;
             }
         }
         closeXMLTag(DAV_NAMESPACE_PREFIX, "prop", xmlBuffer);
-        openCDataTag(DAV_NAMESPACE_PREFIX, "status", HTTP_STATUS_OK_LINE, xmlBuffer);
+        openCDataTag(DAV_NAMESPACE_PREFIX, "status", resultStatusCode, xmlBuffer);
         closeXMLTag(DAV_NAMESPACE_PREFIX, "propstat", xmlBuffer);
         closeXMLTag(DAV_NAMESPACE_PREFIX, "response", xmlBuffer);
-        closeXMLTag(DAV_NAMESPACE_PREFIX, "multistatus", xmlBuffer);
     }
 
     private String getPropertyValue(DAVResource resource, DAVElement element) throws SVNException {
         if (!resource.exists() && (element != DAVElement.VERSION_CONTROLLED_CONFIGURATION || element != DAVElement.BASELINE_RELATIVE_PATH)) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PATH_NOT_FOUND, "Invalid path ''{0}''", resource.getURI()));
         }
-
+        String value = null;
         if (element == DAVElement.VERSION_CONTROLLED_CONFIGURATION) {
-            if (resource.getType() != DAVResource.DAV_RESOURCE_TYPE_REGULAR) {
-                //prop not supported
-                return null;
-            }
-            //Method doesn't use revision parameter at this moment
-            String uri = SVNEncodingUtil.uriEncode(DAVResourceUtil.buildURI(resource.getContext(), resource.getPath(), DAVResourceKind.VCC, -1, resource.getParameterPath()));
-            return addHrefTags(uri);
-
+            value = getVersionControlConfigurationProp(resource);
         } else if (element == DAVElement.RESOURCE_TYPE) {
-
-            return resource.isCollection() ? "<D:collection/>" : null;
-
+            value = getResourceTypeProp(resource);
         } else if (element == DAVElement.BASELINE_RELATIVE_PATH) {
-            if (resource.getType() != DAVResource.DAV_RESOURCE_TYPE_REGULAR) {
-                //prop not supported
-                return null;
-            }
-            String parameterPath = resource.getParameterPath();
-            if (parameterPath.startsWith("/")) {
-                //path must be relative
-                parameterPath = parameterPath.substring("/".length());
-            }
-            return parameterPath;
+            value = getBaselineRelativePathProp(resource);
         } else if (element == DAVElement.REPOSITORY_UUID) {
-            return SVNEncodingUtil.xmlEncodeCDATA(resource.getRepositoryUUID(true));
+            value = getRepositoryUUIDProp(resource);
+        } else if (element == DAVElement.GET_CONTENT_LENGTH) {
+            value = getContentLengthProp(resource);
+        } else if (element == GET_CONTENT_TYPE) {
+            value = getContentTypeProp(resource);
         } else if (element == DAVElement.CHECKED_IN) {
-            if (resource.getType() == DAVResource.DAV_RESOURCE_TYPE_PRIVATE && resource.getKind() == DAVResourceKind.VCC) {
-                long latestRevision = resource.getLatestRevision();
-                String uri = SVNEncodingUtil.uriEncode(DAVResourceUtil.buildURI(resource.getContext(), resource.getPath(), DAVResourceKind.BASELINE, latestRevision, null));
-                return addHrefTags(uri);
-            } else if (resource.getType() != DAVResource.DAV_RESOURCE_TYPE_REGULAR) {
-                //prop not supported
-                return null;
-            } else {
-                resource.getDirEntry();
-            }
+            value = getCheckedInProp(resource);
         } else if (element == DAVElement.VERSION_NAME) {
-            if ((resource.getType() != DAVResource.DAV_RESOURCE_TYPE_VERSION) && !resource.isVersioned()) {
-                //prop not supported
-                return null;
-            }
-            if (resource.getType() == DAVResource.DAV_RESOURCE_TYPE_PRIVATE && resource.getKind() == DAVResourceKind.VCC) {
-                //prop not supported
-                return null;
-            }
-            if (resource.isBaseLined()) {
-                return String.valueOf(resource.getRevision());
-            }
-            //TODO: get file created revision
+            value = getVersionNameProp(resource);
         } else if (element == DAVElement.BASELINE_COLLECTION) {
-            if (resource.getType() == DAVResource.DAV_RESOURCE_TYPE_VERSION || resource.isBaseLined()) {
-                //prop not supported
-                return null;
-            }
-            String uri = SVNEncodingUtil.uriEncode(DAVResourceUtil.buildURI(resource.getContext(), resource.getPath(), DAVResourceKind.BASELINE_COLL, resource.getRevision(), null));
-            return addHrefTags(uri);
+            value = getBaselineCollectionProp(resource);
+        } else if (element == DAVElement.CREATION_DATE) {
+            value = getCreationDateProp(resource);
+        } else if (element == GET_LAST_MODIFIED) {
+            value = getLastModifiedProp(resource);
         } else if (element == DAVElement.CREATOR_DISPLAY_NAME) {
-            return resource.getAuthor();
+            value = getCreatorDisplayNameProp(resource);
         } else if (element == DAVElement.DEADPROP_COUNT) {
-            //TODO: implement this.            
+            value = getDeadpropCountProp(resource);
         } else if (element == DAVElement.MD5_CHECKSUM) {
-            //TODO: implement this.                        
+            value = getMD5ChecksumProp(resource);
+        } else if (element == GET_ETAG) {
+            value = getETag(resource);
+        } else if (element == DAVElement.AUTO_VERSION) {
+            value = getAutoVersionProp();
+        } else if (element == DAVElement.DEADPROP_COUNT) {
+            value = getDeadpropCountProp(resource);
+        }
+        return value;
+    }
+
+    private String getAutoVersionProp() {
+        return DEFAULT_AUTOVERSION_STRING;
+    }
+
+    private String getLastModifiedProp(DAVResource resource) throws SVNException {
+        if (resource.getType() == DAVResource.DAV_RESOURCE_TYPE_PRIVATE && resource.getKind() == DAVResourceKind.VCC) {
+            return null;
+        }
+        long revision;
+        if (resource.isBaseLined() && resource.getType() == DAVResource.DAV_RESOURCE_TYPE_VERSION) {
+            revision = resource.getRevision();
+        } else
+        if (resource.getType() == DAVResource.DAV_RESOURCE_TYPE_REGULAR || resource.getType() == DAVResource.DAV_RESOURCE_TYPE_WORKING
+                || resource.getType() == DAVResource.DAV_RESOURCE_TYPE_VERSION) {
+            revision = resource.getCommitedRevision();
+        } else {
+            return null;
+        }
+        return resource.getLastModified(revision);
+    }
+
+    private String getBaselineCollectionProp(DAVResource resource) {
+        if (resource.getType() != DAVResource.DAV_RESOURCE_TYPE_VERSION || !resource.isBaseLined()) {
+            return null;
+        }
+        String uri = SVNEncodingUtil.uriEncode(DAVResourceUtil.buildURI(resource.getContext(), resource.getPath(), DAVResourceKind.BASELINE_COLL, resource.getRevision(), null));
+        return addHrefTags(uri);
+    }
+
+    private String getVersionNameProp(DAVResource resource) {
+        if (resource.getType() != DAVResource.DAV_RESOURCE_TYPE_VERSION && !resource.isVersioned()) {
+            return null;
+        }
+        if (resource.getType() == DAVResource.DAV_RESOURCE_TYPE_PRIVATE && resource.getKind() == DAVResourceKind.VCC) {
+            return null;
+        }
+        if (resource.isBaseLined()) {
+            return String.valueOf(resource.getRevision());
+        } else {
+            return String.valueOf(resource.getCommitedRevision());
+        }
+    }
+
+    private String getContentLengthProp(DAVResource resource) throws SVNException {
+        if (resource.isCollection() || resource.isBaseLined()) {
+            return null;
+        }
+        long fileSize = resource.getContentLength();
+        return String.valueOf(fileSize);
+    }
+
+    private String getContentTypeProp(DAVResource resource) {
+        if (resource.isBaseLined() && resource.getType() == DAVResource.DAV_RESOURCE_TYPE_VERSION) {
+            return null;
+        }
+        if (resource.getType() == DAVResource.DAV_RESOURCE_TYPE_PRIVATE && resource.getKind() == DAVResourceKind.VCC) {
+            return null;
+        }
+        //TODO: native svn examine if client is not (?!) svn client to use request's header 'content type' 
+        if (resource.isCollection()) {
+            return DEFAULT_CONTENT_TYPE;
+        } else {
+            return resource.getContentType();
+        }
+    }
+
+    private String getCreationDateProp(DAVResource resource) throws SVNException {
+        if (resource.getType() == DAVResource.DAV_RESOURCE_TYPE_PRIVATE && resource.getKind() == DAVResourceKind.VCC) {
+            return null;
+        }
+        //TODO: Native svn acts this way, mb there's another one.
+        return getLastModifiedProp(resource);
+    }
+
+    private String getCreatorDisplayNameProp(DAVResource resource) throws SVNException {
+        if (resource.getType() == DAVResource.DAV_RESOURCE_TYPE_PRIVATE && resource.getKind() == DAVResourceKind.VCC) {
+            return null;
+        }
+        long revision;
+        if (resource.isBaseLined() && resource.getType() == DAVResource.DAV_RESOURCE_TYPE_VERSION) {
+            revision = resource.getRevision();
+        } else
+        if (resource.getType() == DAVResource.DAV_RESOURCE_TYPE_REGULAR || resource.getType() == DAVResource.DAV_RESOURCE_TYPE_WORKING
+                || resource.getType() == DAVResource.DAV_RESOURCE_TYPE_VERSION) {
+            revision = resource.getCommitedRevision();
+        } else {
+            return null;
+        }
+        return resource.getLastAuthor(revision);
+    }
+
+    private String getBaselineRelativePathProp(DAVResource resource) {
+        if (resource.getType() != DAVResource.DAV_RESOURCE_TYPE_REGULAR) {
+            return null;
+        }
+        String parameterPath = resource.getParameterPath();
+        if (parameterPath.startsWith("/")) {
+            //path must be relative
+            parameterPath = parameterPath.substring("/".length());
+        }
+        return parameterPath;
+    }
+
+    private String getMD5ChecksumProp(DAVResource resource) {
+        if (!resource.isCollection() && !resource.isBaseLined()
+                && (resource.getType() == DAVResource.DAV_RESOURCE_TYPE_REGULAR || resource.getType() == DAVResource.DAV_RESOURCE_TYPE_VERSION
+                || resource.getType() == DAVResource.DAV_RESOURCE_TYPE_WORKING)) {
+            return resource.getMD5Checksum();
         }
         return null;
+    }
+
+    private String getETag(DAVResource resource) {
+        if (resource.getType() == DAVResource.DAV_RESOURCE_TYPE_PRIVATE && resource.getKind() == DAVResourceKind.VCC) {
+            return null;
+        }
+        return resource.getETag();
+    }
+
+    private String getRepositoryUUIDProp(DAVResource resource) throws SVNException {
+        return resource.getRepositoryUUID(false);
+    }
+
+    private String getCheckedInProp(DAVResource resource) throws SVNException {
+        if (resource.getType() == DAVResource.DAV_RESOURCE_TYPE_PRIVATE && resource.getKind() == DAVResourceKind.VCC) {
+            long latestRevision = resource.getRepositoryLatestRevision();
+            String uri = SVNEncodingUtil.uriEncode(DAVResourceUtil.buildURI(resource.getContext(), resource.getPath(), DAVResourceKind.BASELINE, latestRevision, null));
+            return addHrefTags(uri);
+        } else if (resource.getType() != DAVResource.DAV_RESOURCE_TYPE_REGULAR) {
+            return null;
+        } else {
+            //TODO: complete.
+        }
+        return null;
+    }
+
+    private String getResourceTypeProp(DAVResource resource) {
+        return resource.isCollection() ? "<D:collection/>" : "";
+    }
+
+    private String getVersionControlConfigurationProp(DAVResource resource) {
+        if (resource.getType() != DAVResource.DAV_RESOURCE_TYPE_REGULAR) {
+            return null;
+        }
+        //Method doesn't use revision parameter at this moment
+        String uri = SVNEncodingUtil.uriEncode(DAVResourceUtil.buildURI(resource.getContext(), resource.getPath(), DAVResourceKind.VCC, -1, resource.getParameterPath()));
+        return addHrefTags(uri);
+    }
+
+    private String getDeadpropCountProp(DAVResource resource) {
+        return resource.getDeadpropCount();
     }
 }
