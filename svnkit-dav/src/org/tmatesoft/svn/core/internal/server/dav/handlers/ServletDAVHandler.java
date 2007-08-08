@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.server.dav.handlers;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.BasicDAVHandler;
 import org.tmatesoft.svn.core.internal.server.dav.DAVDepth;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
@@ -34,10 +35,11 @@ import javax.xml.parsers.SAXParserFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 
 /**
@@ -48,7 +50,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
 
 
     protected static final int SC_MULTISTATUS = 207;
-    
+
     protected static final String HTTP_STATUS_OK_LINE = "HTTP/1.1 200 OK";
     protected static final String HTTP_NOT_FOUND_LINE = "HTTP/1.1 404 NOT FOUND";
 
@@ -62,7 +64,11 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     private static final String DEPTH_HEADER = "Depth";
 
     protected static final String XML_HEADER = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
+
     protected static final String DAV_NAMESPACE_PREFIX = "D";
+    protected static final String SVN_DAV_PROPERTY_PREFIX = "V";
+    protected static final String SVN_CUSTOM_PROPERTY_PREFIX = "C";
+    protected static final String SVN_SVN_PROPERTY_PREFIX = "S";
 
 
     private static SAXParserFactory ourSAXParserFactory;
@@ -141,12 +147,12 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         if (resource.getLastModified() != null) {
             setResponseHeader("Last-Modified", resource.getLastModified());
         }
-        if (resource.getETag() != null){
+        if (resource.getETag() != null) {
             setResponseHeader("ETag", resource.getETag());
         }
     }
 
-    protected StringBuffer appendXMLHeader(String prefix, String header, Set namespaces, StringBuffer target) {
+    protected StringBuffer appendXMLHeader(String prefix, String header, Collection incomingDAVElements, StringBuffer target) {
         target.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
         target.append("<");
         target.append(prefix);
@@ -156,15 +162,21 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         target.append(DAV_NAMESPACE_PREFIX);
         target.append("=");
         target.append("\"DAV:\"");
-        if (namespaces != null) {
-            int i = 0;
-            for (Iterator iterator = namespaces.iterator(); iterator.hasNext(); i++) {
-                target.append(" xmlns:ns");
-                target.append(i);
-                target.append("=\"");
-                target.append(iterator.next().toString());
-                target.append("\"");
+        if (incomingDAVElements != null) {
+            Collection elementNamespaces = new ArrayList();
+            for (Iterator iterator = incomingDAVElements.iterator(); iterator.hasNext();) {
+                DAVElement currentElement = (DAVElement) iterator.next();
+                String currentNamespace = currentElement.getNamespace();
+                if (currentNamespace != null && currentNamespace.length() > 0 && !elementNamespaces.contains(currentNamespace)) {
+                    elementNamespaces.add(currentNamespace);
+                    target.append(" xmlns:ns");
+                    target.append(elementNamespaces.size());
+                    target.append("=\"");
+                    target.append(currentNamespace);
+                    target.append("\"");
+                }
             }
+            elementNamespaces.clear();
         }
         target.append(">\n");
         return target;
@@ -179,26 +191,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return target;
     }
 
-    protected StringBuffer openNamespaceTag(String prefix, String tagName, int style, Map namespaces, StringBuffer target) {
-        target = target == null ? new StringBuffer() : target;
-        target.append("<");
-        target.append(prefix);
-        target.append(":");
-        target.append(tagName);
-        for (Iterator iterator = namespaces.keySet().iterator(); iterator.hasNext();) {
-            String currentNamespace = iterator.next().toString();
-            target.append(" xmlns:");
-            target.append(namespaces.get(currentNamespace).toString());
-            target.append("=\"");
-            target.append(currentNamespace);
-            target.append("\"");
-        }
-        if (style == XML_STYLE_SELF_CLOSING) {
-            target.append("/");
-        }
-        target.append(">");
-        return target;
-    }
+    
 
     protected StringBuffer openCDataTag(String prefix, String tagName, String cdata, StringBuffer target) {
         if (cdata == null) {
