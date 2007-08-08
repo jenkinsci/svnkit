@@ -449,7 +449,7 @@ public class SVNDiffEditor implements ISVNEditor {
             if (entry.isFile()) {
                 reportModifiedFile(info, entry);
             } else if (entry.isDirectory()) {
-                if (anchor || myDepth == SVNDepth.INFINITY) {
+                if (anchor || myDepth == SVNDepth.INFINITY || myDepth == SVNDepth.UNKNOWN) {
                     SVNDirectoryInfo childInfo = createDirInfo(info, SVNPathUtil.append(info.myPath, entry.getName()), false);
                     localDirectoryDiff(childInfo);
                 }

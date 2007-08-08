@@ -49,13 +49,20 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  * @author  TMate Software Ltd.
  */
 public class FSFS {
-    public static final String SVN_REPOS_DB_DIR = "db";
+    public static final String DB_DIR = "db";
+    public static final String REVS_DIR = "revs";
+    public static final String TXN_CURRENT_FILE = "transaction-current";
+    public static final String REVISION_PROPERTIES_DIR = "revprops";
+    public static final String WRITE_LOCK_FILE = "write-lock";
+    public static final String LOCKS_DIR = "locks";
+    public static final String TRANSACTIONS_DIR = "transactions";
+    
     public static final String TXN_PATH_EXT = ".txn";
     public static final String TXN_MERGEINFO_PATH = "mergeinfo";
     public static final String TXN_PATH_EXT_CHILDREN = ".children";
     public static final String PATH_PREFIX_NODE = "node.";
     public static final String TXN_PATH_EXT_PROPS = ".props";
-    public static final int DIGEST_SUBDIR_LEN = 3;
+    public static final int    DIGEST_SUBDIR_LEN = 3;
     public static final String SVN_OPAQUE_LOCK_TOKEN = "opaquelocktoken:";
     public static final String TXN_PATH_REV = "rev";
     public static final String PATH_LOCK_KEY = "path";
@@ -72,6 +79,8 @@ public class FSFS {
     public static final int DB_FORMAT = 3;
     public static final int DB_FORMAT_LOW = 1;
     public static final int LAYOUT_FORMAT_OPTION_MINIMAL_FORMAT = 3;
+    public static final int MIN_CURRENT_TXN_FORMAT = 3;
+
     //TODO: we should be able to change this via some option
     private static long DEFAULT_MAX_FILES_PER_DIRECTORY = 1000;
     private static final String DB_TYPE = "fsfs";
@@ -89,16 +98,17 @@ public class FSFS {
     private File myDBRoot;
     private File myWriteLockFile;
     private File myCurrentFile;
+    private File myTransactionCurrentFile;
     private long myMaxFilesPerDirectory;
 
     public FSFS(File repositoryRoot) {
         myRepositoryRoot = repositoryRoot;
-        myDBRoot = new File(myRepositoryRoot, SVN_REPOS_DB_DIR);
-        myRevisionsRoot = new File(myDBRoot, "revs");
-        myRevisionPropertiesRoot = new File(myDBRoot, "revprops");
-        myTransactionsRoot = new File(myDBRoot, "transactions");
-        myWriteLockFile = new File(myDBRoot, "write-lock");
-        myLocksRoot = new File(myDBRoot, "locks");
+        myDBRoot = new File(myRepositoryRoot, DB_DIR);
+        myRevisionsRoot = new File(myDBRoot, REVS_DIR);
+        myRevisionPropertiesRoot = new File(myDBRoot, REVISION_PROPERTIES_DIR);
+        myTransactionsRoot = new File(myDBRoot, TRANSACTIONS_DIR);
+        myWriteLockFile = new File(myDBRoot, WRITE_LOCK_FILE);
+        myLocksRoot = new File(myDBRoot, LOCKS_DIR);
         myMaxFilesPerDirectory = 0;
     }
     
@@ -458,6 +468,45 @@ public class FSFS {
         ids[1] = copyID;
         return ids;
     }
+    
+    public String getAndIncrementTxnKey() throws SVNException {
+        FSWriteLock writeLock = FSWriteLock.getWriteLock(this);
+        synchronized (writeLock) {
+            try {
+                writeLock.lock();
+                File txnCurrentFile = getTransactionCurrentFile();
+                FSFile reader = new FSFile(txnCurrentFile);
+                String txnId = null;
+                try {
+                    txnId = reader.readLine(200);
+                } finally {
+                    reader.close();
+                }
+                
+                txnId = FSTransactionRoot.generateNextKey(txnId);
+
+                OutputStream txnCurrentOS = null;
+                File tmpFile = null;
+                try {
+                    tmpFile = SVNFileUtil.createUniqueFile(txnCurrentFile.getParentFile(),
+                                                           TXN_CURRENT_FILE, ".tmp");
+                    txnCurrentOS = SVNFileUtil.openFileForWriting(tmpFile);
+                    String txnIdString = txnId + "\n";
+                    txnCurrentOS.write(txnIdString.getBytes("UTF-8"));
+                } catch (IOException ioe) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
+                    SVNErrorManager.error(err, ioe);
+                } finally {
+                    SVNFileUtil.closeFile(txnCurrentOS);
+                }
+                SVNFileUtil.rename(tmpFile, txnCurrentFile);
+                return txnId;
+            } finally {
+                writeLock.unlock();
+                FSWriteLock.realease(writeLock);
+            }
+        }
+    }
 
     public Map listTransactions() {
         Map result = new HashMap(); 
@@ -590,8 +639,17 @@ public class FSFS {
     }
 
     public void setRevisionProperty(long revision, String propertyName, String propertyValue) throws SVNException {
-        SVNProperties revProps = new SVNProperties(getRevisionPropertiesFile(revision), null);
-        revProps.setPropertyValue(propertyName, propertyValue);
+        FSWriteLock writeLock = FSWriteLock.getWriteLock(this);
+        synchronized (writeLock) {
+            try {
+                writeLock.lock();
+                SVNProperties revProps = new SVNProperties(getRevisionPropertiesFile(revision), null);
+                revProps.setPropertyValue(propertyName, propertyValue);
+            } finally {
+                writeLock.unlock();
+                FSWriteLock.realease(writeLock);
+            }
+        }
     }
 
     public Map getTransactionProperties(String txnID) throws SVNException {
@@ -900,9 +958,7 @@ public class FSFS {
     }
 
     public SVNLock lockPath(String path, String token, String username, String comment, Date expirationDate, long currentRevision, boolean stealLock) throws SVNException {
-        String[] paths = {
-            path
-        };
+        String[] paths = { path };
         
         if (username == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_USER, "Cannot lock path ''{0}'', no authenticated username available.", path);
@@ -1125,6 +1181,13 @@ public class FSFS {
             myCurrentFile = new File(myDBRoot, "current"); 
         }
         return myCurrentFile;
+    }
+
+    protected File getTransactionCurrentFile(){
+        if(myTransactionCurrentFile == null){
+            myTransactionCurrentFile = new File(myDBRoot, TXN_CURRENT_FILE); 
+        }
+        return myTransactionCurrentFile;
     }
 
     public void readOptions(FSFile formatFile, int formatNumber) throws SVNException {
@@ -1395,7 +1458,7 @@ public class FSFS {
         if (fileType != SVNFileType.FILE) {
             return false;
         }
-        File dbFile = new File(candidatePath, SVN_REPOS_DB_DIR);
+        File dbFile = new File(candidatePath, DB_DIR);
         fileType = SVNFileType.getType(dbFile);
         if (fileType != SVNFileType.DIRECTORY && fileType != SVNFileType.SYMLINK) {
             return false;

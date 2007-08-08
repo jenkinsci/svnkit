@@ -338,6 +338,7 @@ public abstract class SVNRepositoryFactory {
         OutputStream uuidOS = null; 
         OutputStream reposFormatOS = null;
         OutputStream fsFormatOS = null;
+        OutputStream txnCurrentOS = null;
         try {
             copyToFile(is, jarFile);
             extract(jarFile, path);
@@ -449,6 +450,18 @@ public abstract class SVNRepositoryFactory {
                     SVNErrorManager.error(err);
                 }
             }
+            
+            if (fsFormat >= FSFS.MIN_CURRENT_TXN_FORMAT) {
+                File txnCurrentFile = new File(path, "db/transaction-current");
+                SVNFileUtil.createEmptyFile(txnCurrentFile);
+                txnCurrentOS = SVNFileUtil.openFileForWriting(txnCurrentFile);
+                try {
+                    txnCurrentOS.write("0\n".getBytes("US-ASCII"));
+                } catch (IOException e) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+                    SVNErrorManager.error(err);
+                }
+            }
 
             // set creation date.
             File rev0File = new File(path, maxFilesPerDir > 0 ? "db/revprops/0/0" : "db/revprops/0");
@@ -462,6 +475,7 @@ public abstract class SVNRepositoryFactory {
             SVNFileUtil.closeFile(uuidOS);
             SVNFileUtil.closeFile(reposFormatOS);
             SVNFileUtil.closeFile(fsFormatOS);
+            SVNFileUtil.closeFile(txnCurrentOS);
             SVNFileUtil.deleteFile(jarFile);
         }
         return SVNURL.fromFile(path);

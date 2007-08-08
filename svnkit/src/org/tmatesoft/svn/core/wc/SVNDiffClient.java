@@ -2023,8 +2023,8 @@ public class SVNDiffClient extends SVNBasicClient {
                     }
                 
                     SVNMergeRangeList requestedRangeList = calculateRequestedRanges(range, 
-                                                                                    url1, 
-                                                                                    entry);
+                                                                                    entry, 
+                                                                                    repository1);
                     remainingRangeList = calculateMergeRanges(reposPath, requestedRangeList, 
                                                               targetMergeInfo, isRollBack);
                 } else {
@@ -2193,8 +2193,10 @@ public class SVNDiffClient extends SVNBasicClient {
                         return;
                     }
                 }
-                SVNMergeRangeList requestedRangeList = calculateRequestedRanges(range, url1, 
-                                                                                entry);
+                
+                SVNMergeRangeList requestedRangeList = calculateRequestedRanges(range,  
+                                                                                entry, 
+                                                                                repository1);
                 remainingRangeList = calculateMergeRanges(reposPath, requestedRangeList, 
                                                           targetMergeInfo, isRollBack);
             } else {
@@ -2584,13 +2586,35 @@ public class SVNDiffClient extends SVNBasicClient {
         }
         
         private SVNMergeRangeList calculateRequestedRanges(SVNMergeRange unrefinedRange, 
-                                                           SVNURL srcURL, SVNEntry entry) throws SVNException {
-            SVNRevision revision = SVNRevision.create(Math.min(unrefinedRange.getStartRevision(), 
-                                                      unrefinedRange.getEndRevision()));
-            SVNMergeInfo startMergeInfo = getMergeInfo(srcURL, revision);
-            revision = SVNRevision.create(Math.max(unrefinedRange.getStartRevision(), 
-                                                   unrefinedRange.getEndRevision()));
-            SVNMergeInfo endMergeInfo = getMergeInfo(srcURL, revision);
+                                                           SVNEntry entry,
+                                                           SVNRepository repository) throws SVNException {
+            SVNURL reposRoot = entry.getRepositoryRootURL();
+            if (reposRoot == null) {
+                reposRoot = repository.getRepositoryRoot(true);
+            }
+            String reposPath = entry.getSVNURL().getPath().substring(reposRoot.getPath().length());
+            if (!reposPath.startsWith("/")) {
+                reposPath = "/" + reposPath;
+            }
+            
+            long minRevision = Math.min(unrefinedRange.getStartRevision(), 
+                                        unrefinedRange.getEndRevision());
+            
+            Map startMergeInfoMap = repository.getMergeInfo(new String[] {reposPath}, 
+                                                            minRevision, 
+                                                            SVNMergeInfoInheritance.INHERITED);
+            SVNMergeInfo startMergeInfo = startMergeInfoMap != null ? 
+                                          (SVNMergeInfo) startMergeInfoMap.get(reposPath) :
+                                          null;
+            long maxRevision = Math.max(unrefinedRange.getStartRevision(), 
+                                        unrefinedRange.getEndRevision());
+            
+            Map endMergeInfoMap = repository.getMergeInfo(new String[] {reposPath}, 
+                                                          maxRevision, 
+                                                          SVNMergeInfoInheritance.INHERITED);
+            SVNMergeInfo endMergeInfo = endMergeInfoMap != null ? 
+                                        (SVNMergeInfo) endMergeInfoMap.get(reposPath) : 
+                                        null;
             Map added = new HashMap();
             SVNMergeInfoManager.diffMergeInfo(null, added, 
                                               startMergeInfo != null ?     
@@ -2602,11 +2626,11 @@ public class SVNDiffClient extends SVNBasicClient {
 
             SVNMergeRangeList srcRangeListForTgt = null;
             if (!added.isEmpty()) {
-                String reposPath = entry.getSVNURL().getPath().substring(entry.getRepositoryRootURL().getPath().length());
-                if (!reposPath.startsWith("/")) {
-                    reposPath = "/" + reposPath;
+                String srcReposPath = entry.getSVNURL().getPath().substring(reposRoot.getPath().length());
+                if (!srcReposPath.startsWith("/")) {
+                    srcReposPath = "/" + srcReposPath;
                 }
-                srcRangeListForTgt = (SVNMergeRangeList) added.get(reposPath);
+                srcRangeListForTgt = (SVNMergeRangeList) added.get(srcReposPath);
             }
             
             SVNMergeRangeList requestedRangeList = new SVNMergeRangeList(new SVNMergeRange[] {unrefinedRange});

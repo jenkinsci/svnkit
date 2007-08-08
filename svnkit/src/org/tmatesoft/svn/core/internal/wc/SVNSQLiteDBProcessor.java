@@ -131,8 +131,6 @@ public class SVNSQLiteDBProcessor implements ISVNDBProcessor {
         try {
             statement.setString(1, path);
             statement.setLong(2, lastMergedRevision);
-            SVNDebugLog.getDefaultLog().info("statement about to execute: " + path + "," + lastMergedRevision);
-            SVNDebugLog.getDefaultLog().info("connection: " + statement.getConnection());
             ResultSet rows = statement.executeQuery();
             if (!rows.isBeforeFirst()) {
                 return result;
@@ -404,7 +402,7 @@ public class SVNSQLiteDBProcessor implements ISVNDBProcessor {
         if (mySelectMergeInfoStatement == null) {
             Connection connection = getConnection();
             try {
-                mySelectMergeInfoStatement = connection.prepareStatement("SELECT mergedfrom, mergedrevstart, mergedrevend FROM mergeinfo WHERE mergedto = ? AND revision = ? ORDER BY mergedfrom;");
+                mySelectMergeInfoStatement = connection.prepareStatement("SELECT mergedfrom, mergedrevstart, mergedrevend FROM mergeinfo WHERE mergedto = ? AND revision = ? ORDER BY mergedfrom, mergedrevstart;");
             } catch (SQLException sqle) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_SQLITE_ERROR, sqle.getLocalizedMessage());
                 SVNErrorManager.error(err, sqle);

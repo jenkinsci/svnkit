@@ -195,7 +195,7 @@ public class SVNMergeRangeList {
     public boolean includes(long revision) {
         for (int i = 0; i < myRanges.length; i++) {
             SVNMergeRange range = myRanges[i];
-            if (revision >= range.getStartRevision() && revision <= range.getEndRevision()) {
+            if (revision > range.getStartRevision() && revision <= range.getEndRevision()) {
                 return true;
             }
         }

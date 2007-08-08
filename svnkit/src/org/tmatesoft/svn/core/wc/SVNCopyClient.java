@@ -967,6 +967,11 @@ public class SVNCopyClient extends SVNBasicClient {
                 copyFromURL = copyFromEntry.getPath();
                 copyFromRevision = copyFromEntry.getRevision();
             }
+            if (dstEntry != null && copyFromRevision == dstEntry.getRevision() &&
+                dstEntry.getURL().equals(copyFromURL)) {
+                copyFromURL = null;
+                copyFromRevision = SVNRepository.INVALID_REVISION;
+            }
         } else {
             copyFromURL = srcEntry.getURL();
             copyFromRevision = srcEntry.getRevision();
@@ -1009,6 +1014,7 @@ public class SVNCopyClient extends SVNBasicClient {
             SVNAdminArea tmpDir = access.open(dstPath, true, SVNWCAccess.INFINITE_DEPTH);
             postCopyCleanup(tmpDir);
             if (srcEntry.isCopied()) {
+                SVNEntry dstEntry = access.getEntry(dstPath, false);
                 if (srcEntry.getCopyFromURL() != null) {
                     copyFromURL = srcEntry.getCopyFromURL();
                     copyFromRevision = srcEntry.getCopyFromRevision();
@@ -1017,6 +1023,12 @@ public class SVNCopyClient extends SVNBasicClient {
                     copyFromURL = copyFromEntry.getPath();
                     copyFromRevision = copyFromEntry.getRevision();
                 }
+                if (dstEntry != null && copyFromRevision == dstEntry.getRevision() &&
+                    dstEntry.getURL().equals(copyFromURL)) {
+                    copyFromURL = null;
+                    copyFromRevision = SVNRepository.INVALID_REVISION;
+                }
+
                 Map attributes = new HashMap();
                 attributes.put(SVNProperty.URL, copyFromURL);
                 tmpDir.modifyEntry(tmpDir.getThisDirName(), attributes, true, false);
@@ -1500,7 +1512,7 @@ public class SVNCopyClient extends SVNBasicClient {
         long oldestRev = getPathLastChangeRevision(srcRelativePath, srcRevision, repository);
         
         if (SVNRevision.isValidRevisionNumber(oldestRev)) {
-            SVNMergeRange range = new SVNMergeRange(oldestRev, srcRevision);
+            SVNMergeRange range = new SVNMergeRange(oldestRev - 1, srcRevision);
             targetMergeInfo.put(srcPath, new SVNMergeRangeList(new SVNMergeRange[] {range}));
         }
         
