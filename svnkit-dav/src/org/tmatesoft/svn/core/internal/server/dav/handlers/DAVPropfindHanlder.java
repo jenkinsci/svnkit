@@ -312,9 +312,8 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         }
         if (resource.isBaseLined()) {
             return String.valueOf(resource.getRevision());
-        } else {
-            return String.valueOf(resource.getCommitedRevision());
         }
+        return String.valueOf(resource.getCommitedRevision());
     }
 
     private String getContentLengthProp(DAVResource resource) throws SVNException {
@@ -335,9 +334,8 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         //TODO: native svn examine if client is not (?!) svn client to use request's header 'content type' 
         if (resource.isCollection()) {
             return DEFAULT_CONTENT_TYPE;
-        } else {
-            return resource.getContentType();
         }
+        return resource.getContentType();
     }
 
     private String getCreationDateProp(DAVResource resource) throws SVNException {

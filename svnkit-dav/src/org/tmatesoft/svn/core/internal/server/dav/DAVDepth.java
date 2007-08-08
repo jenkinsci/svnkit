@@ -60,8 +60,7 @@ public class DAVDepth {
         }
         if (currentDepth == DEPTH_ZERO || currentDepth == DEPTH_INFINITY) {
             return currentDepth;
-        } else {
-            return DAVDepth.DEPTH_ZERO;
         }
+        return DAVDepth.DEPTH_ZERO;
     }
 }
