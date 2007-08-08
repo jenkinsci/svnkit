@@ -43,11 +43,11 @@ public class SVNCommandLine {
 
     private String myCommand;
     private Collection myArguments;
-    private Map myOptions;
+    private Collection myOptions;
 
     public SVNCommandLine() {
         myArguments = new LinkedList();
-        myOptions = new HashMap();
+        myOptions = new LinkedList();
     }
 
     public void init(String[] args) throws SVNException {
@@ -66,7 +66,7 @@ public class SVNCommandLine {
                        SVNErrorManager.error(err);
                    }
                }
-               myOptions.put(option, new SVNOptionValue(option, value, parameter));
+               myOptions.add(new SVNOptionValue(option, value, parameter));
            } else if (myCommand == null) {
                myCommand = value;
            } else {
@@ -115,20 +115,9 @@ public class SVNCommandLine {
         }
         return (String[]) result.toArray(new String[result.size()]);
     }
-
-    public boolean hasOption(SVNOption option) {
-        return myOptions.containsKey(option);
-    }
-    
-    public String getOptionValue(SVNOption option) {
-        if (hasOption(option)) {
-            return ((SVNOptionValue) myOptions.get(option)).getValue();
-        }
-        return null;
-    }
     
     public Iterator optionValues() {
-        return myOptions.values().iterator();
+        return myOptions.iterator();
     }
 
     public String getCommandName() {

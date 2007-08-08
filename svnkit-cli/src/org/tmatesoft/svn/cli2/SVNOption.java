@@ -56,6 +56,11 @@ public class SVNOption {
     public static final SVNOption EDITOR_CMD = new SVNOption("editor-cmd", false);
 
     public static final SVNOption NO_UNLOCK = new SVNOption("no-unlock");
+    public static final SVNOption DRY_RUN = new SVNOption("dry-run");
+    public static final SVNOption RECORD_ONLY = new SVNOption("record-only");
+    public static final SVNOption USE_MERGE_HISTORY = new SVNOption("use-merge-history", "g");
+    public static final SVNOption EXTENSIONS = new SVNOption("extensions", "x", false);
+    public static final SVNOption IGNORE_ANCESTRY = new SVNOption("ignore-ancestry");
     
     // auth options.
     public static final SVNOption USERNAME = new SVNOption("username", false);

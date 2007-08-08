@@ -93,6 +93,7 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
     private SVNRevision myStartRevision;
     private SVNRevision myEndRevision;
     private boolean myIsForce;
+    private String myFilePath;
     private byte[] myFileData;
     private List myTargets;
     private String myEncoding;
@@ -101,12 +102,18 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
     private String myEditorCommand;
     private Map myRevisionProperties;
     private boolean myIsNoUnlock;
+    private boolean myIsDryRun;
+    private boolean myIsRecordOnly;
+    private boolean myIsUseMergeHistory;
+    private Collection myExtensions;
+    private boolean myIsIgnoreAncestry;
     
     public SVNCommandEnvironment(PrintStream out, PrintStream err, InputStream in) {
         myIsDescend = true;
         myOut = out;
         myErr = err;
         myIn = in;
+        myExtensions = new HashSet();
         myDepth = SVNDepth.UNKNOWN;
         myStartRevision = SVNRevision.UNDEFINED;
         myEndRevision = SVNRevision.UNDEFINED;
@@ -161,133 +168,150 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
     }
     
     protected void initOptions(SVNCommandLine commandLine) throws SVNException {
-        if (commandLine.hasOption(SVNOption.MESSAGE)) {
-            myMessage = commandLine.getOptionValue(SVNOption.MESSAGE);
-        }
-        if (commandLine.hasOption(SVNOption.CHANGE)) {
-            if (commandLine.hasOption(SVNOption.REVISION)) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Multiple revision argument encountered; " +
-                        "can't specify -r and c");
-                SVNErrorManager.error(err);
-            }
-            String chValue = commandLine.getOptionValue(SVNOption.CHANGE);
-            long change = 0;
-            try {
-                change = Long.parseLong(chValue);
-            } catch (NumberFormatException nfe) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Non-numeric change argument given to -c");
-                SVNErrorManager.error(err);
-            }
-            if (change == 0) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "There is no change 0");
-                SVNErrorManager.error(err);
-            } else if (change > 0) {
-                myStartRevision = SVNRevision.create(change - 1);
-                myEndRevision = SVNRevision.create(change);
-            } else {
-                change = -change;
-                myStartRevision = SVNRevision.create(change);
-                myEndRevision = SVNRevision.create(change - 1);
-            }
-        }
-        if (commandLine.hasOption(SVNOption.REVISION)) {
-            if (commandLine.hasOption(SVNOption.CHANGE)) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Multiple revision argument encountered; " +
-                		"can't specify -r and c");
-                SVNErrorManager.error(err);
-            }
-            String revStr = commandLine.getOptionValue(SVNOption.REVISION);
-            if (!parseRevision(revStr)) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Syntax error in revision argument ''{0}''", revStr);
-                SVNErrorManager.error(err);
-            }
-        }
-        myIsVerbose = commandLine.hasOption(SVNOption.VERBOSE);
-        myIsUpdate = commandLine.hasOption(SVNOption.UPDATE);
-        myIsHelp = commandLine.hasOption(SVNOption.HELP) || commandLine.hasOption(SVNOption.QUESTION);
-        myIsQuiet = commandLine.hasOption(SVNOption.QUIET);
-        myIsIncremental = commandLine.hasOption(SVNOption.INCREMENTAL);
-        if (commandLine.hasOption(SVNOption.FILE)) {
-            // read bytes from file.
-            String fileName = commandLine.getOptionValue(SVNOption.FILE);
-            myFileData = readFromFile(new File(fileName));
-        }
-        if (commandLine.hasOption(SVNOption.TARGETS)) {
-            String fileName = commandLine.getOptionValue(SVNOption.TARGETS);
-            byte[] data = readFromFile(new File(fileName));
-            try {
-                String[] targets = new String(data, "UTF-8").split("\n\r");
-                myTargets = new LinkedList();
-                for (int i = 0; i < targets.length; i++) {
-                    if (targets[i].trim().length() > 0) {
-                        myTargets.add(targets[i].trim());
-                    }
+        for (Iterator options = commandLine.optionValues(); options.hasNext();) {
+            SVNOptionValue optionValue = (SVNOptionValue) options.next();
+            SVNOption option = optionValue.getOption();
+            if (option == SVNOption.MESSAGE) {
+                myMessage = optionValue.getValue();
+            } else if (option == SVNOption.CHANGE) {
+                if (myStartRevision != SVNRevision.UNDEFINED) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Multiple revision argument encountered; " +
+                            "can't specify -c twice, or both -c and -r");
+                    SVNErrorManager.error(err);
                 }
-            } catch (UnsupportedEncodingException e) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
-                SVNErrorManager.error(err);
-            }
-        }
-        myIsForce = commandLine.hasOption(SVNOption.FORCE);
-        myIsForceLog = commandLine.hasOption(SVNOption.FORCE_LOG);
-        myIsRevprop = commandLine.hasOption(SVNOption.REVPROP);
-        if (commandLine.hasOption(SVNOption.RECURSIVE)) {
-            myDepth = SVNDepth.fromRecurse(true);
-        }
-        if (commandLine.hasOption(SVNOption.NON_RECURSIVE)) {
-            myIsDescend = false;
-        }
-        if (commandLine.hasOption(SVNOption.DEPTH)) {
-            String depth = commandLine.getOptionValue(SVNOption.DEPTH);
-            if (SVNDepth.EMPTY.getName().equals(depth)) {
-                myDepth = SVNDepth.EMPTY;
-            } else if (SVNDepth.FILES.getName().equals(depth)) {
-                myDepth = SVNDepth.FILES;
-            } else if (SVNDepth.IMMEDIATES.getName().equals(depth)) {
-                myDepth = SVNDepth.IMMEDIATES;
-            } else if (SVNDepth.INFINITY.getName().equals(depth)) {
-                myDepth = SVNDepth.INFINITY;
-            } else {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                        "''{0}'' is not a valid depth; try ''empty'', ''files'', ''immediates'', or ''infinit''", depth);
-                SVNErrorManager.error(err);
-            }
-        }
-        myIsVersion = commandLine.hasOption(SVNOption.VERSION);
-        if (commandLine.hasOption(SVNOption.USERNAME)) {
-            myUserName = commandLine.getOptionValue(SVNOption.USERNAME);
-        }
-        if (commandLine.hasOption(SVNOption.PASSWORD)) {
-            myPassword = commandLine.getOptionValue(SVNOption.PASSWORD);
-        }
-        if (commandLine.hasOption(SVNOption.ENCODING)) {
-            myEncoding = commandLine.getOptionValue(SVNOption.ENCODING);
-        }
-        myIsXML = commandLine.hasOption(SVNOption.XML);
-        myIsStrict = commandLine.hasOption(SVNOption.STRICT);
-        myIsNoAuthCache = commandLine.hasOption(SVNOption.NO_AUTH_CACHE);
-        myIsNonInteractive = commandLine.hasOption(SVNOption.NON_INTERACTIVE);
-        if (commandLine.hasOption(SVNOption.EDITOR_CMD)) {
-            myEditorCommand = commandLine.getOptionValue(SVNOption.EDITOR_CMD);
-        }
-        if (commandLine.hasOption(SVNOption.CONFIG_DIR)) {
-            myConfigDir = commandLine.getOptionValue(SVNOption.CONFIG_DIR);
-        }
-        myIsNoUnlock = commandLine.hasOption(SVNOption.NO_UNLOCK);
-        if (commandLine.hasOption(SVNOption.CHANGELIST)) {
-            myChangelist = commandLine.getOptionValue(SVNOption.CHANGELIST);
-        }
-        myIsNoIgnore = commandLine.hasOption(SVNOption.NO_IGNORE);
-        if (commandLine.hasOption(SVNOption.WITH_REVPROP)) {
-            if (myRevisionProperties == null) {
-                myRevisionProperties = new LinkedHashMap();
-            }
-            String revProp = commandLine.getOptionValue(SVNOption.WITH_REVPROP);
-            int index = revProp.indexOf('='); 
-            if (index >= 0) {
-                myRevisionProperties.put(revProp.substring(0, index), revProp.substring(index + 1));
-            } else {
-                myRevisionProperties.put(revProp, "");
+                String chValue = optionValue.getValue();
+                long change = 0;
+                try {
+                    change = Long.parseLong(chValue);
+                } catch (NumberFormatException nfe) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Non-numeric change argument given to -c");
+                    SVNErrorManager.error(err);
+                }
+                if (change == 0) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "There is no change 0");
+                    SVNErrorManager.error(err);
+                } else if (change > 0) {
+                    myStartRevision = SVNRevision.create(change - 1);
+                    myEndRevision = SVNRevision.create(change);
+                } else {
+                    change = -change;
+                    myStartRevision = SVNRevision.create(change);
+                    myEndRevision = SVNRevision.create(change - 1);
+                }
+            } else if (option == SVNOption.REVISION) {
+                if (myStartRevision != SVNRevision.UNDEFINED) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Multiple revision argument encountered; " +
+                            "can't specify -r and c, or try '-r N:M' instead of '-r N -r M'");
+                    SVNErrorManager.error(err);
+                }
+                String revStr = optionValue.getValue();
+                if (!parseRevision(revStr)) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Syntax error in revision argument ''{0}''", revStr);
+                    SVNErrorManager.error(err);
+                }
+            } else if (option == SVNOption.VERBOSE) {
+                myIsVerbose = true;
+            } else if (option == SVNOption.UPDATE) {
+                myIsUpdate = true;
+            } else if (option == SVNOption.HELP || option == SVNOption.QUESTION) {
+                myIsHelp = true;
+            } else if (option == SVNOption.QUIET) {
+                myIsQuiet = true;
+            } else if (option == SVNOption.INCREMENTAL) {
+                myIsIncremental = true;
+            } else if (option == SVNOption.FILE) {
+                String fileName = optionValue.getValue();
+                myFilePath = fileName;
+                myFileData = readFromFile(new File(fileName));
+            } else if (option == SVNOption.TARGETS) {
+                String fileName = optionValue.getValue();
+                byte[] data = readFromFile(new File(fileName));
+                try {
+                    String[] targets = new String(data, "UTF-8").split("\n\r");
+                    myTargets = new LinkedList();
+                    for (int i = 0; i < targets.length; i++) {
+                        if (targets[i].trim().length() > 0) {
+                            myTargets.add(targets[i].trim());
+                        }
+                    }
+                } catch (UnsupportedEncodingException e) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
+                    SVNErrorManager.error(err);
+                }
+            } else if (option == SVNOption.FORCE) {
+                myIsForce = true;
+            } else if (option == SVNOption.FORCE_LOG) {
+                myIsForceLog = true;
+            } else if (option == SVNOption.DRY_RUN) {
+                myIsDryRun = true;
+            } else if (option == SVNOption.REVPROP) {
+                myIsRevprop = true;
+            } else if (option == SVNOption.RECURSIVE) {
+                myDepth = SVNDepth.fromRecurse(true);
+            } else if (option == SVNOption.NON_RECURSIVE) {
+                myIsDescend = false;
+            } else if (option == SVNOption.DEPTH) {
+                String depth = optionValue.getValue();
+                if (SVNDepth.EMPTY.getName().equals(depth)) {
+                    myDepth = SVNDepth.EMPTY;
+                } else if (SVNDepth.FILES.getName().equals(depth)) {
+                    myDepth = SVNDepth.FILES;
+                } else if (SVNDepth.IMMEDIATES.getName().equals(depth)) {
+                    myDepth = SVNDepth.IMMEDIATES;
+                } else if (SVNDepth.INFINITY.getName().equals(depth)) {
+                    myDepth = SVNDepth.INFINITY;
+                } else {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+                            "''{0}'' is not a valid depth; try ''empty'', ''files'', ''immediates'', or ''infinit''", depth);
+                    SVNErrorManager.error(err);
+                }
+            } else if (option == SVNOption.VERSION) {
+                myIsVersion = true;
+            } else if (option == SVNOption.USERNAME) {
+                myUserName = optionValue.getValue();
+            } else if (option == SVNOption.PASSWORD) {
+                myPassword = optionValue.getValue();
+            } else if (option == SVNOption.ENCODING) {
+                myEncoding = optionValue.getValue();
+            } else if (option == SVNOption.XML) {
+                myIsXML = true;
+            } else if (option == SVNOption.STRICT) {
+                myIsStrict = true;
+            } else if (option == SVNOption.NO_AUTH_CACHE) {
+                myIsNoAuthCache = true;
+            } else if (option == SVNOption.NON_INTERACTIVE) {
+                myIsNonInteractive = true;
+            } else if (option == SVNOption.IGNORE_ANCESTRY) {
+                myIsIgnoreAncestry = true;
+            } else if (option == SVNOption.IGNORE_EXTERNALS) {
+                myIsIgnoreExternals = true;
+            } else if (option == SVNOption.EXTENSIONS) {
+                myExtensions.add(optionValue.getValue());
+            } else if (option == SVNOption.RECORD_ONLY) {
+                myIsRecordOnly = true;
+            } else if (option == SVNOption.EDITOR_CMD) {
+                myEditorCommand = optionValue.getValue();
+            } else if (option == SVNOption.CONFIG_DIR) {
+                myConfigDir = optionValue.getValue();
+            } else if (option == SVNOption.NO_UNLOCK) {
+                myIsNoUnlock = true;
+            } else if (option == SVNOption.CHANGELIST) {
+                myChangelist = optionValue.getValue();
+            } else if (option == SVNOption.NO_IGNORE) {
+                myIsNoIgnore = true;
+            } else if (option == SVNOption.WITH_REVPROP) {
+                if (myRevisionProperties == null) {
+                    myRevisionProperties = new LinkedHashMap();
+                }
+                String revProp = optionValue.getValue();
+                int index = revProp.indexOf('='); 
+                if (index >= 0) {
+                    myRevisionProperties.put(revProp.substring(0, index), revProp.substring(index + 1));
+                } else {
+                    myRevisionProperties.put(revProp, "");
+                }
+            } else if (option == SVNOption.USE_MERGE_HISTORY) {
+                myIsUseMergeHistory = true;
             }
         }
         myArguments = new LinkedList(commandLine.getArguments());
@@ -336,15 +360,14 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
             }
         }
         if (!isForceLog() && myCommand.isCommitter()) {
-            if (commandLine.hasOption(SVNOption.FILE)) {
-                String filePath = commandLine.getOptionValue(SVNOption.FILE);
-                if (isVersioned(filePath)) {
+            if (myFilePath != null) {
+                if (isVersioned(myFilePath)) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_LOG_MESSAGE_IS_VERSIONED_FILE, myCommand.getFileAmbigousErrorMessage());
                     SVNErrorManager.error(err);
                 }
             }
-            if (commandLine.hasOption(SVNOption.MESSAGE)) {
-                File file = new File(commandLine.getOptionValue(SVNOption.MESSAGE)).getAbsoluteFile();
+            if (myMessage != null) {
+                File file = new File(myMessage).getAbsoluteFile();
                 if (SVNFileType.getType(file) != SVNFileType.NONE) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_LOG_MESSAGE_IS_PATHNAME, myCommand.getMessageAmbigousErrorMessage());
                     SVNErrorManager.error(err);
@@ -556,6 +579,26 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
     
     public Map getRevisionProperties() {
         return myRevisionProperties;
+    }
+    
+    public boolean isDryRun() {
+        return myIsDryRun;
+    }
+    
+    public boolean isIgnoreAncestry() {
+        return myIsIgnoreAncestry;
+    }
+    
+    public boolean isUseMergeHistory() {
+        return myIsUseMergeHistory;
+    }
+    
+    public boolean isRecordOnly() {
+        return myIsRecordOnly;
+    }
+    
+    public Collection getExtensions() {
+        return myExtensions;
     }
 
     

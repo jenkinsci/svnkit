@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.cli2;
 
 import org.tmatesoft.svn.cli2.command.SVNHelpCommand;
+import org.tmatesoft.svn.cli2.command.SVNMergeCommand;
 import org.tmatesoft.svn.cli2.command.SVNPropDelCommand;
 import org.tmatesoft.svn.cli2.command.SVNPropEditCommand;
 import org.tmatesoft.svn.cli2.command.SVNPropGetCommand;
@@ -31,6 +32,7 @@ public class SVN {
     
     static {
         new SVNHelpCommand();
+        new SVNMergeCommand();
         new SVNPropDelCommand();
         new SVNPropEditCommand();
         new SVNPropGetCommand();
