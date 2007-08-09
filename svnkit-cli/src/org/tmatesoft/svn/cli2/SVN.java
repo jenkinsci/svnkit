@@ -19,6 +19,7 @@ import org.tmatesoft.svn.cli2.command.SVNPropGetCommand;
 import org.tmatesoft.svn.cli2.command.SVNPropListCommand;
 import org.tmatesoft.svn.cli2.command.SVNPropSetCommand;
 import org.tmatesoft.svn.cli2.command.SVNStatusCommand;
+import org.tmatesoft.svn.cli2.command.SVNUpdateCommand;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
@@ -39,6 +40,7 @@ public class SVN {
         new SVNPropListCommand();
         new SVNPropSetCommand();
         new SVNStatusCommand();
+        new SVNUpdateCommand();
     }
 
     public static void main(String[] args) {

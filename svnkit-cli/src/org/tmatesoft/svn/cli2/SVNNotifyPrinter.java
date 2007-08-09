@@ -32,9 +32,23 @@ import org.tmatesoft.svn.util.SVNDebugLog;
 public class SVNNotifyPrinter implements ISVNEventHandler {
     
     private SVNCommandEnvironment myEnvironment;
+    
+    private boolean myIsInExternal;
+    private boolean myIsChangesReceived;
+
+    private boolean myIsCheckout;
+    private boolean myIsExport;
+    private boolean myIsSuppressLastLine;
 
     public SVNNotifyPrinter(SVNCommandEnvironment env) {
+        this(env, false, false, false);
+    }
+
+    public SVNNotifyPrinter(SVNCommandEnvironment env, boolean isCheckout, boolean isExport, boolean suppressLastLine) {
         myEnvironment = env;
+        myIsCheckout = isCheckout;
+        myIsExport = isExport;
+        myIsSuppressLastLine = suppressLastLine;
     }
 
     public void handleEvent(SVNEvent event, double progress) throws SVNException {
@@ -57,17 +71,20 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
             if (event.getContentsStatus() == SVNStatusType.MISSING) {
                 buffer.append("Skipped missing target: '" + path + "'\n");
             } else {
-                buffer.append("Skipped: '" + path + "'\n");
+                buffer.append("Skipped '" + path + "'\n");
             }
         } else if (event.getAction() == SVNEventAction.UPDATE_DELETE) {
+            myIsChangesReceived = true;
             buffer.append("D    " + path + "\n");
         } else if (event.getAction() == SVNEventAction.UPDATE_ADD) {
+            myIsChangesReceived = true;
             if (event.getContentsStatus() == SVNStatusType.CONFLICTED) {
                 buffer.append("C    " + path + "\n");
             } else {
                 buffer.append("A    " + path + "\n");
             }
         } else if (event.getAction() == SVNEventAction.UPDATE_EXISTS) {
+            myIsChangesReceived = true;
             if (event.getContentsStatus() == SVNStatusType.CONFLICTED) {
                 buffer.append('C');
             } else {
@@ -109,6 +126,9 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
             } else {
                 buffer.append(' ');
             }
+            if (buffer.toString().trim().length() > 0) {
+                myIsChangesReceived = true;
+            }
             if (event.getLockStatus() == SVNStatusType.LOCK_UNLOCKED) {
                 buffer.append('B');
             } else {
@@ -130,6 +150,42 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
                 buffer.append("--- Merging r" + (start + 1) + " through r" + end + ":\n");
             } else {
                 buffer.append("--- Undoing r" + start + " through r" + (end + 1) + ":\n");
+            }
+        } else if (event.getAction() == SVNEventAction.RESTORE) {
+            buffer.append("Restored '" + path + "'\n");
+        } else if (event.getAction() == SVNEventAction.RESTORE) {
+            buffer.append("Restored '" + path + "'\n");
+        } else if (event.getAction() == SVNEventAction.UPDATE_EXTERNAL) {
+            myIsInExternal = true;
+            buffer.append("\nFetching external item into '" + path + "'\n");
+        } else if (event.getAction() == SVNEventAction.UPDATE_COMPLETED) {
+            if (!myIsSuppressLastLine) {
+                long rev = event.getRevision();
+                if (rev >= 0) {
+                    if (myIsExport) {
+                        buffer.append(myIsInExternal ? "Exported external at revision " + rev + ".\n" : "Exported revision " + rev + ".\n");
+                    } else if (myIsCheckout) {
+                        buffer.append(myIsInExternal ? "Checked out external at revision " + rev + ".\n" : "Checked out revision " + rev + ".\n");
+                    } else {
+                        if (myIsChangesReceived) {
+                            buffer.append(myIsInExternal ? "Updated external to revision " + rev + ".\n" : "Updated to revision " + rev + ".\n");
+                        } else {
+                            buffer.append(myIsInExternal ? "External at revision " + rev + ".\n" : "At revision " + rev + ".\n");
+                        }
+                    }
+                } else {
+                    if (myIsExport) {
+                        buffer.append(myIsInExternal ? "External export complete.\n" : "Export complete.\n");
+                    } else if (myIsCheckout) {
+                        buffer.append(myIsInExternal ? "External checkout complete.\n" : "Checkout complete.\n");
+                    } else {
+                        buffer.append(myIsInExternal ? "External update complete.\n" : "Update complete.\n");
+                    }
+                }
+            }
+            if (myIsInExternal) {
+                buffer.append('\n');
+                myIsInExternal = false;
             }
         }
         if (buffer.length() > 0) {

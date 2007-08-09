@@ -111,6 +111,8 @@ public class SVN {
         newCommands.add("pget");
         newCommands.add("pg");
         newCommands.add("merge");
+        newCommands.add("update");
+        newCommands.add("up");
     }
 
     public static void main(String[] args) {

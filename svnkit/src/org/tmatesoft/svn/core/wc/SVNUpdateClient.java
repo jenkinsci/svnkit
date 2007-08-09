@@ -13,8 +13,10 @@ package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
 import java.io.OutputStream;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.StringTokenizer;
 
@@ -147,16 +149,19 @@ public class SVNUpdateClient extends SVNBasicClient {
         return doUpdate(file, revision, SVNDepth.fromRecurse(recursive), force);
     }    
     
-    public void doUpdate(ISVNPathList pathList, SVNRevision revision, SVNDepth depth, boolean force) throws SVNException {
+    public long[] doUpdate(ISVNPathList pathList, SVNRevision revision, SVNDepth depth, boolean force) throws SVNException {
         if (pathList == null) {
-            return;
+            return new long[0];
         }
-        
+        Collection revisions = new LinkedList();
         for (Iterator paths = pathList.getPathsIterator(); paths.hasNext();) {
             checkCancelled();
             File path = (File) paths.next();
             try {
-                doUpdate(path, revision, depth, force);
+                setEventPathPrefix("");
+                handlePathListItem(path);
+                long rev = doUpdate(path, revision, depth, force);
+                revisions.add(new Long(rev));
             } catch (SVNException svne) {
                 if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
                     SVNEvent skipEvent = SVNEventFactory.createSkipEvent(path.getParentFile(), 
@@ -165,14 +170,24 @@ public class SVNUpdateClient extends SVNBasicClient {
                                                                          SVNEventAction.UPDATE_COMPLETED, 
                                                                          null);
                     dispatchEvent(skipEvent);
-                } else {
-                    dispatchEvent(new SVNEvent(svne.getErrorMessage()));
+                    revisions.add(new Long(-1));
+                    continue;
                 }
-                continue;
+                throw svne;
+            } finally {
+                setEventPathPrefix(null);
             }
         }
+        sleepForTimeStamp();
+        long[] result = new long[revisions.size()];
+        int i = 0;
+        for (Iterator revs = revisions.iterator(); revs.hasNext();) {
+            Long value = (Long) revs.next();
+            result[i++] = value.longValue();
+        }
+        return result;
     }
-    
+
     /* TODO(sd): "In the SVNDepth.DEPTH_IMMEDIATES case, shouldn't we update
      * the presence/absence of subdirs, even though we don't update
      * inside the subdirs themselves?"

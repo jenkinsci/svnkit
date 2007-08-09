@@ -76,6 +76,7 @@ public class SVNBasicClient implements ISVNEventHandler {
     private boolean myIsIgnoreExternals;
     private boolean myIsLeaveConflictsUnresolved;
     private ISVNDebugLog myDebugLog;
+    private ISVNPathListHandler myPathListHandler;
 
     protected SVNBasicClient(final ISVNAuthenticationManager authManager, ISVNOptions options) {
         this(new DefaultSVNRepositoryPool(authManager == null ? SVNWCUtil.createDefaultAuthenticationManager() : authManager, options, 0, false), options);
@@ -198,6 +199,10 @@ public class SVNBasicClient implements ISVNEventHandler {
      */
     public void setEventHandler(ISVNEventHandler dispatcher) {
         myEventDispatcher = dispatcher;
+    }
+
+    public void setPathListHandler(ISVNPathListHandler handler) {
+        myPathListHandler = handler;
     }
     
     /**
@@ -331,6 +336,14 @@ public class SVNBasicClient implements ISVNEventHandler {
     public void handleEvent(SVNEvent event, double progress) throws SVNException {
         dispatchEvent(event, progress);
     }
+    
+    
+    public void handlePathListItem(File path) throws SVNException {
+        if (myPathListHandler != null && path != null) {
+            myPathListHandler.handlePathListItem(path);
+        }
+    }
+
     
     /**
      * Redirects this call to the registered event handler (if any).
