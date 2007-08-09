@@ -17,6 +17,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -449,11 +450,11 @@ public class DAVResource {
         if (lacksETagPotential()) {
             return null;
         }
-        return getSVNProperties().get(SVNProperty.COMMITTED_DATE).toString();
+        return ((String) getSVNProperties().get(SVNProperty.COMMITTED_DATE));
     }
 
     public String getLastModified(long revision) throws SVNException {
-        return getRepository().getRevisionPropertyValue(revision, SVNProperty.COMMITTED_DATE);
+        return getRepository().getRevisionPropertyValue(revision, SVNRevisionProperty.DATE);
     }
 
     public String getETag() {
@@ -476,16 +477,13 @@ public class DAVResource {
         return getRepository().getRepositoryUUID(forceConnect);
     }
 
-    public String getAuthor() {
-        return getSVNProperties().get(SVNProperty.LAST_AUTHOR).toString();
-    }
-
     public String getContentType() {
-        return getSVNProperties().get(SVNProperty.MIME_TYPE).toString();
+        return ((String) getSVNProperties().get(SVNProperty.MIME_TYPE));
     }
 
     public long getCommitedRevision() {
-        return SVNProperty.longValue(getSVNProperties().get(SVNProperty.COMMITTED_REVISION).toString());
+        String commitedRevision = (String) getSVNProperties().get(SVNProperty.COMMITTED_REVISION);
+        return SVNProperty.longValue(commitedRevision);
     }
 
     public long getContentLength() throws SVNException {
@@ -493,12 +491,13 @@ public class DAVResource {
         return entry.getSize();
     }
 
+    //TODO: Correct this, if it's wrong.
     public String getLastAuthor(long revision) throws SVNException {
-        return getRepository().getRevisionPropertyValue(revision, SVNProperty.LAST_AUTHOR);
+        return getRepository().getRevisionPropertyValue(revision, SVNRevisionProperty.AUTHOR);
     }
 
     public String getMD5Checksum() {
-        return getSVNProperties().get(SVNProperty.CHECKSUM).toString();
+        return ((String) getSVNProperties().get(SVNProperty.CHECKSUM));
     }
 
     public String getDeadpropCount() {
@@ -506,23 +505,15 @@ public class DAVResource {
         return String.valueOf(0);
     }
 
-    public String getProperty(String namespace, String name) throws SVNException {
-        String propertyName = getPropertyName(namespace, name);
-        return getSVNProperties().get(propertyName).toString();
+    public String getLog(long revision) throws SVNException {
+        return getRepository().getRevisionPropertyValue(revision, SVNRevisionProperty.LOG);
     }
 
-    public String getProperty(String namespace, String name, long revision) throws SVNException {
-        String propertyName = getPropertyName(namespace, name);
+    public String getProperty(String propertyName) throws SVNException {
+        return ((String) getSVNProperties().get(propertyName));
+    }
+
+    public String getRevisionProperty(String propertyName, long revision) throws SVNException {
         return getRepository().getRevisionPropertyValue(revision, propertyName);
-    }
-
-    private String getPropertyName(String namespace, String name) throws SVNException {
-        if (DAVElement.SVN_SVN_PROPERTY_NAMESPACE.equals(namespace)) {
-            return SVNProperty.SVN_PREFIX + name;
-        } else if (DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE.equals(namespace)) {
-            return name;
-        }
-        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Unrecognized namespace ''{0}''", namespace));
-        return null;
     }
 }
