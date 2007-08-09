@@ -108,6 +108,10 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
     private boolean myIsUseMergeHistory;
     private Collection myExtensions;
     private boolean myIsIgnoreAncestry;
+
+    private String myNativeEOL;
+
+    private boolean myIsRelocate;
     
     public SVNCommandEnvironment(PrintStream out, PrintStream err, InputStream in) {
         myIsDescend = true;
@@ -252,6 +256,10 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
             } else if (option == SVNOption.NON_RECURSIVE) {
                 myIsDescend = false;
             } else if (option == SVNOption.DEPTH) {
+                if (myIsRelocate) {
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_MUTUALLY_EXCLUSIVE_ARGS, 
+                            "--relocate and --depth are mutually exclusive"));
+                }
                 String depth = optionValue.getValue();
                 if (SVNDepth.EMPTY.getName().equals(depth)) {
                     myDepth = SVNDepth.EMPTY;
@@ -286,6 +294,12 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
                 myIsIgnoreAncestry = true;
             } else if (option == SVNOption.IGNORE_EXTERNALS) {
                 myIsIgnoreExternals = true;
+            } else if (option == SVNOption.RELOCATE) {
+                if (myDepth != SVNDepth.UNKNOWN) {
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_MUTUALLY_EXCLUSIVE_ARGS, 
+                            "--depth and --relocate are mutually exclusive"));
+                }
+                myIsRelocate = true;
             } else if (option == SVNOption.EXTENSIONS) {
                 myExtensions.add(optionValue.getValue());
             } else if (option == SVNOption.RECORD_ONLY) {
@@ -294,6 +308,8 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
                 myEditorCommand = optionValue.getValue();
             } else if (option == SVNOption.CONFIG_DIR) {
                 myConfigDir = optionValue.getValue();
+            } else if (option == SVNOption.NATIVE_EOL) {
+                myNativeEOL = optionValue.getValue();
             } else if (option == SVNOption.NO_UNLOCK) {
                 myIsNoUnlock = true;
             } else if (option == SVNOption.CHANGELIST) {
@@ -600,6 +616,14 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
     
     public Collection getExtensions() {
         return myExtensions;
+    }
+    
+    public String getNativeEOL() {
+        return myNativeEOL;
+    }
+    
+    public boolean isRelocate() {
+        return myIsRelocate;
     }
     
     public SVNDiffOptions getDiffOptions() {

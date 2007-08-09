@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.cli2;
 
 import org.tmatesoft.svn.cli2.command.SVNCheckoutCommand;
+import org.tmatesoft.svn.cli2.command.SVNExportCommand;
 import org.tmatesoft.svn.cli2.command.SVNHelpCommand;
 import org.tmatesoft.svn.cli2.command.SVNMergeCommand;
 import org.tmatesoft.svn.cli2.command.SVNPropDelCommand;
@@ -20,6 +21,7 @@ import org.tmatesoft.svn.cli2.command.SVNPropGetCommand;
 import org.tmatesoft.svn.cli2.command.SVNPropListCommand;
 import org.tmatesoft.svn.cli2.command.SVNPropSetCommand;
 import org.tmatesoft.svn.cli2.command.SVNStatusCommand;
+import org.tmatesoft.svn.cli2.command.SVNSwitchCommand;
 import org.tmatesoft.svn.cli2.command.SVNUpdateCommand;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
@@ -34,6 +36,7 @@ public class SVN {
     
     static {
         new SVNCheckoutCommand();
+        new SVNExportCommand();
         new SVNHelpCommand();
         new SVNMergeCommand();
         new SVNPropDelCommand();
@@ -42,6 +45,7 @@ public class SVN {
         new SVNPropListCommand();
         new SVNPropSetCommand();
         new SVNStatusCommand();
+        new SVNSwitchCommand();
         new SVNUpdateCommand();
     }
 

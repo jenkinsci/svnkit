@@ -115,6 +115,12 @@ public class SVN {
         newCommands.add("up");
         newCommands.add("checkout");
         newCommands.add("co");
+        newCommands.add("export");
+        newCommands.add("switch");
+        newCommands.add("sw");
+        newCommands.add("help");
+        newCommands.add("h");
+        newCommands.add("?");
     }
 
     public static void main(String[] args) {

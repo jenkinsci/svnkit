@@ -61,6 +61,8 @@ public class SVNOption {
     public static final SVNOption USE_MERGE_HISTORY = new SVNOption("use-merge-history", "g");
     public static final SVNOption EXTENSIONS = new SVNOption("extensions", "x", false);
     public static final SVNOption IGNORE_ANCESTRY = new SVNOption("ignore-ancestry");
+    public static final SVNOption NATIVE_EOL = new SVNOption("native-eol", false);
+    public static final SVNOption RELOCATE = new SVNOption("relocate");
     
     // auth options.
     public static final SVNOption USERNAME = new SVNOption("username", false);
