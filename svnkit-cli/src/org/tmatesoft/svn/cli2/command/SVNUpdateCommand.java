@@ -77,16 +77,21 @@ public class SVNUpdateCommand extends SVNCommand {
         if (!getEnvironment().isQuiet()) {
             client.setEventHandler(new SVNNotifyPrinter(getEnvironment()));
         }
-        File[] files = new File[targets.size()];
-        int i = 0;
         final List updateTargets = new ArrayList(targets.size());
+        List files = new ArrayList(targets.size());
         for (Iterator ts = targets.iterator(); ts.hasNext();) {
             String targetName = (String) ts.next();
             SVNCommandTarget target = new SVNCommandTarget(targetName);
-            files[i++] = target.getFile();
+            if (!target.isFile()) {
+                // skip it.
+                getEnvironment().getOut().println("Skipped '" + targetName + "'");
+                continue;
+            }
             updateTargets.add(target);
+            files.add(target.getFile());
         }
-        ISVNPathList pathList = SVNPathList.create(files, SVNRevision.UNDEFINED);
+        File[] filesArray = (File[]) files.toArray(new File[files.size()]);
+        ISVNPathList pathList = SVNPathList.create(filesArray, SVNRevision.UNDEFINED);
         final int[] targetIndex = new int[] {0};
         client.setPathListHandler(new ISVNPathListHandler() {
             public void handlePathListItem(File path) throws SVNException {
