@@ -48,6 +48,7 @@ import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
+import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
@@ -394,7 +395,7 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
                 return false;
             }
             String rev1 = revStr.substring(0, colon);
-            String rev2 = revStr.substring(colon);
+            String rev2 = revStr.substring(colon + 1);
             SVNRevision r1 = SVNRevision.parse(rev1);
             SVNRevision r2 = SVNRevision.parse(rev2);
             if (r1 == SVNRevision.UNDEFINED || r2 == SVNRevision.UNDEFINED) {
@@ -599,6 +600,13 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
     
     public Collection getExtensions() {
         return myExtensions;
+    }
+    
+    public SVNDiffOptions getDiffOptions() {
+        boolean ignoreAllWS = myExtensions.contains("-w") || myExtensions.contains("--ignore-all-space");
+        boolean ignoreAmountOfWS = myExtensions.contains("-b") || myExtensions.contains("--ignore-space-change");
+        boolean ignoreEOLStyle = myExtensions.contains("--ignore-eol-style");
+        return new SVNDiffOptions(ignoreAllWS, ignoreAmountOfWS, ignoreEOLStyle);
     }
 
     

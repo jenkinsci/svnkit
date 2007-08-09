@@ -42,9 +42,12 @@ public class SVNCommandTarget {
         myHasPegRevision = hasPegRevision;
         if (myHasPegRevision) {
             parsePegRevision();
-        } else {
-            myTarget = SVNPathUtil.canonicalizePath(myTarget);
-        }
+        } 
+        myTarget = SVNPathUtil.canonicalizePath(myTarget);
+    }
+    
+    public String getTarget() {
+        return myTarget;
     }
 
     public boolean isURL() {
@@ -93,7 +96,6 @@ public class SVNCommandTarget {
         if (index > 0) {
             String revStr = myTarget.substring(index + 1);
             if (revStr.indexOf('/') >= 0) {
-                myTarget = SVNPathUtil.canonicalizePath(myTarget);
                 return;
             }
             if (revStr.length() == 0) {
@@ -107,12 +109,10 @@ public class SVNCommandTarget {
             if (revision != SVNRevision.UNDEFINED) {
                 myPegRevision = revision;
                 myTarget = myTarget.substring(0, index);
-                myTarget = SVNPathUtil.canonicalizePath(myTarget);
                 return;
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Syntax error parsing revision ''{0}''", myTarget.substring(index + 1));
             SVNErrorManager.error(err);
         }
-        myTarget = SVNPathUtil.canonicalizePath(myTarget);
     }
 }

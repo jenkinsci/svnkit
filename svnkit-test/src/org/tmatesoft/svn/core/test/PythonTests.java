@@ -314,10 +314,10 @@ public class PythonTests {
 
 			try {
 				tests.add(new Integer(first));
-			}
-			catch (NumberFormatException ex) {
-				System.err.println("ERROR: " + ex.getMessage());
-				ex.printStackTrace(System.err);
+			} catch (NumberFormatException ex) {
+			    continue;
+//				System.err.println("ERROR: " + ex.getMessage());
+//				ex.printStackTrace(System.err);
 			}
 		}
 		return tests;

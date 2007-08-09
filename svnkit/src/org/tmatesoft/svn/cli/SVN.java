@@ -110,6 +110,7 @@ public class SVN {
         newCommands.add("propgrt");
         newCommands.add("pget");
         newCommands.add("pg");
+        newCommands.add("merge");
     }
 
     public static void main(String[] args) {
