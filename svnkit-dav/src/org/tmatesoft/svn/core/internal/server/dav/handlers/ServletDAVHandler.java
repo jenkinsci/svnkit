@@ -60,8 +60,9 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     protected static final int XML_STYLE_PROTECT_PCDATA = 2;
     protected static final int XML_STYLE_SELF_CLOSING = 4;
 
-    protected static final String LABEL_HEADER = "label";
+    protected static final String LABEL_HEADER = "Label";
     private static final String DEPTH_HEADER = "Depth";
+    private static final String VARY_HEADER = "Vary";
 
     protected static final String XML_HEADER = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
 
@@ -149,6 +150,9 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         }
         if (resource.getETag() != null) {
             setResponseHeader("ETag", resource.getETag());
+        }
+        if (getRequestHeader(LABEL_HEADER) != null && getRequestHeader(LABEL_HEADER).length() > 0){
+            setResponseHeader(VARY_HEADER, LABEL_HEADER);            
         }
     }
 

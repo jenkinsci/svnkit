@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 import java.util.ArrayList;
@@ -52,7 +53,6 @@ public class DAVResource {
     private DAVResourceKind myKind;
     private String myPath;
     private long myRevision;
-    private long myCreatedRevision;
     private String myParameterPath;
     private String myActivityID;
     private boolean myIsExists = false;
@@ -126,14 +126,6 @@ public class DAVResource {
 
     private void setRevision(long revisionNumber) {
         myRevision = revisionNumber;
-    }
-
-    public long getCreatedRevision() {
-        return myCreatedRevision;
-    }
-
-    public void setCreatedRevision(long createdRevision) {
-        myCreatedRevision = createdRevision;
     }
 
     public String getParameterPath() {
@@ -399,7 +391,7 @@ public class DAVResource {
     }
 
     public void prepare() throws SVNException {
-        long latestRevision = getRepositoryLatestRevision();
+        long latestRevision = getLatestRevision();
         if (getType() == DAVResource.DAV_RESOURCE_TYPE_REGULAR) {
             if (getRevision() == INVALID_REVISION) {
                 setRevision(latestRevision);
@@ -461,8 +453,7 @@ public class DAVResource {
     }
 
     public String getLastModified(long revision) throws SVNException {
-        SVNDirEntry entry = getRepository().getDir(getParameterPath(), revision, false, null);
-        return entry.getDate().toString();
+        return getRepository().getRevisionPropertyValue(revision, SVNProperty.COMMITTED_DATE);
     }
 
     public String getETag() {
@@ -470,15 +461,14 @@ public class DAVResource {
             return null;
         }
         StringBuffer eTag = new StringBuffer();
-        eTag.append(isCollection() ? "W/\"" : "\"");
+        eTag.append(isCollection() ? "W/" : "");
         eTag.append(getRevision());
         eTag.append("/");
         eTag.append(SVNEncodingUtil.uriEncode(getParameterPath()));
-        eTag.append("\"");
         return eTag.toString();
     }
 
-    public long getRepositoryLatestRevision() throws SVNException {
+    public long getLatestRevision() throws SVNException {
         return getRepository().getLatestRevision();
     }
 
@@ -499,15 +489,12 @@ public class DAVResource {
     }
 
     public long getContentLength() throws SVNException {
-        if (isCollection()) {
-            return -1;
-        }
-        return getRepository().getDir(getParameterPath(), getRevision(), false, null).getSize();
+        SVNDirEntry entry = getRepository().getDir(getParameterPath(), getRevision(), false, null);
+        return entry.getSize();
     }
 
     public String getLastAuthor(long revision) throws SVNException {
-        SVNDirEntry entry = getRepository().getDir(getParameterPath(), revision, false, null);
-        return entry.getAuthor();
+        return getRepository().getRevisionPropertyValue(revision, SVNProperty.LAST_AUTHOR);
     }
 
     public String getMD5Checksum() {
@@ -515,6 +502,27 @@ public class DAVResource {
     }
 
     public String getDeadpropCount() {
+        //TODO: Implemnt this
+        return String.valueOf(0);
+    }
+
+    public String getProperty(String namespace, String name) throws SVNException {
+        String propertyName = getPropertyName(namespace, name);
+        return getSVNProperties().get(propertyName).toString();
+    }
+
+    public String getProperty(String namespace, String name, long revision) throws SVNException {
+        String propertyName = getPropertyName(namespace, name);
+        return getRepository().getRevisionPropertyValue(revision, propertyName);
+    }
+
+    private String getPropertyName(String namespace, String name) throws SVNException {
+        if (DAVElement.SVN_SVN_PROPERTY_NAMESPACE.equals(namespace)) {
+            return SVNProperty.SVN_PREFIX + name;
+        } else if (DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE.equals(namespace)) {
+            return name;
+        }
+        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Unrecognized namespace ''{0}''", namespace));
         return null;
     }
 }

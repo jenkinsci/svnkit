@@ -58,6 +58,7 @@ public class DAVServlet extends HttpServlet {
 
     private String generateStandardizedErrorBody(int errorID, String namespace, String tagName, String description) {
         StringBuffer buffer = new StringBuffer();
+        //TODO: wrap to multistatus.
         buffer.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
         buffer.append("<D:error xmlns:D=\"DAV:\"");
         buffer.append(" xmlns:m=\"http://apache.org/dav/xmlns\"");        
