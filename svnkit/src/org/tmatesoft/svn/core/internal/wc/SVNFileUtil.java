@@ -329,27 +329,28 @@ public class SVNFileUtil {
             }
         }
         boolean executable = isExecutable(src);
+        dst.getParentFile().mkdirs();
+        
         FileChannel srcChannel = null;
         FileChannel dstChannel = null;
         FileInputStream is = null;
         FileOutputStream os = null;
-        dst.getParentFile().mkdirs();
+        
+        SVNErrorMessage error = null;
         try {
             is = new FileInputStream(src);
             srcChannel = is.getChannel();
             os = new FileOutputStream(tmpDst);
             dstChannel = os.getChannel();
-            long copied = 0;
             long totalSize = srcChannel.size();
-            while (copied < totalSize) {
-                long toCopy = Math.min(1024 * 1024 * 1024, totalSize - copied);
-                copied += dstChannel.transferFrom(srcChannel, copied, toCopy);
+            long toCopy = totalSize;
+            while (toCopy > 0) {
+                toCopy -= dstChannel.transferFrom(srcChannel, totalSize - toCopy, toCopy);
             }
         } catch (IOException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot copy file ''{0}'' to ''{1}'': {2}", new Object[] {
+            error = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot copy file ''{0}'' to ''{1}'': {2}", new Object[] {
                     src, dst, e.getLocalizedMessage()
             });
-            SVNErrorManager.error(err, e);
         } finally {
             if (srcChannel != null) {
                 try {
@@ -367,6 +368,25 @@ public class SVNFileUtil {
             }
             SVNFileUtil.closeFile(is);
             SVNFileUtil.closeFile(os);
+        }
+        if (error != null) {
+            InputStream sis = null;
+            OutputStream dos = null;
+            try {
+                sis = SVNFileUtil.openFileForReading(src);
+                dos = SVNFileUtil.openFileForWriting(dst);
+                SVNTranslator.copy(sis, dos);
+            } catch (IOException e) { 
+                error = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot copy file ''{0}'' to ''{1}'': {2}", new Object[] {
+                        src, dst, e.getLocalizedMessage()
+                });
+            } finally {
+                SVNFileUtil.closeFile(dos);
+                SVNFileUtil.closeFile(sis);
+            }
+        }
+        if (error != null) {
+            SVNErrorManager.error(error);
         }
         if (safe && tmpDst != dst) {
             rename(tmpDst, dst);
@@ -938,29 +958,6 @@ public class SVNFileUtil {
         }
         try {
             return new BufferedInputStream(new FileInputStream(file));
-        } catch (FileNotFoundException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot read from to ''{0}'': {1}", new Object[] {
-                    file, e.getLocalizedMessage()
-            });
-            SVNErrorManager.error(err, e);
-        }
-        return null;
-    }
-
-    public static ISVNInputFile openSVNFileForReading(File file) throws SVNException {
-        if (file == null) {
-            return null;
-        }
-        if (!file.isFile() || !file.canRead()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot read from to ''{0}'': path refers to directory or read access is denied", file);
-            SVNErrorManager.error(err);
-        }
-        if (!file.exists()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "File ''{0}'' does not exist", file);
-            SVNErrorManager.error(err);
-        }
-        try {
-            return new SVNInputFileChannel(file);
         } catch (FileNotFoundException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot read from to ''{0}'': {1}", new Object[] {
                     file, e.getLocalizedMessage()
