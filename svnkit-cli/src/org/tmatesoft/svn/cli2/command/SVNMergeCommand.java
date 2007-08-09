@@ -23,6 +23,7 @@ import org.tmatesoft.svn.cli2.SVNOption;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -151,9 +152,9 @@ public class SVNMergeCommand extends SVNCommand {
                     target = decodedPathTarget;
                 }
             } 
-            if (target == null) {
-                target = new SVNCommandTarget("");
-            }
+        }
+        if (target == null) {
+            target = new SVNCommandTarget("");
         }
         SVNDiffClient client = getEnvironment().getClientManager().getDiffClient();
         if (!getEnvironment().isQuiet()) {
@@ -163,7 +164,10 @@ public class SVNMergeCommand extends SVNCommand {
             getEnvironment().setCurrentTarget(target);
             client.setMergeOptions(getEnvironment().getDiffOptions());
             if (isUseRevisionRange) {
-                if (source1.isURL()) {
+                if (source1 == null) {
+                    client.doMerge((SVNURL) null, pegRevision1, getEnvironment().getStartRevision(), getEnvironment().getEndRevision(), target.getFile(), 
+                            getEnvironment().getDepth(), !getEnvironment().isIgnoreAncestry(), getEnvironment().isForce(), getEnvironment().isDryRun(), getEnvironment().isRecordOnly());
+                } else if (source1.isURL()) {
                     client.doMerge(source1.getURL(), pegRevision1, getEnvironment().getStartRevision(), getEnvironment().getEndRevision(), target.getFile(), 
                             getEnvironment().getDepth(), !getEnvironment().isIgnoreAncestry(), getEnvironment().isForce(), getEnvironment().isDryRun(), getEnvironment().isRecordOnly());
                 } else {
