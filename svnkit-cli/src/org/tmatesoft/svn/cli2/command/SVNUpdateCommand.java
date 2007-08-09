@@ -69,7 +69,7 @@ public class SVNUpdateCommand extends SVNCommand {
                 SVNErrorManager.error(err);
             }
         }
-        targets = (List) getEnvironment().combineTargets(targets);
+        targets = getEnvironment().combineTargets(targets);
         if (targets.isEmpty()) {
             targets.add("");
         }

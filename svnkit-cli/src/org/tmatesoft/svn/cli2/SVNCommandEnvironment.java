@@ -470,13 +470,13 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
         return (String) myArguments.remove(0);
     }
     
-    public Collection combineTargets(Collection targets) {
-        Collection result = new LinkedList();
+    public List combineTargets(Collection targets) {
+        List result = new LinkedList();
         result.addAll(getArguments());
         if (targets != null) {
             result.addAll(targets);
         }
-        Collection canonical = new ArrayList(result.size());
+        List canonical = new ArrayList(result.size());
         for (Iterator iterator = result.iterator(); iterator.hasNext();) {
             String path = (String) iterator.next();
             path = path.replace(File.separatorChar, '/');

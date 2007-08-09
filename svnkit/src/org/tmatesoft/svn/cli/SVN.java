@@ -113,6 +113,8 @@ public class SVN {
         newCommands.add("merge");
         newCommands.add("update");
         newCommands.add("up");
+        newCommands.add("checkout");
+        newCommands.add("co");
     }
 
     public static void main(String[] args) {

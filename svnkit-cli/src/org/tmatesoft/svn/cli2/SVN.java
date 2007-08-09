@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.cli2;
 
+import org.tmatesoft.svn.cli2.command.SVNCheckoutCommand;
 import org.tmatesoft.svn.cli2.command.SVNHelpCommand;
 import org.tmatesoft.svn.cli2.command.SVNMergeCommand;
 import org.tmatesoft.svn.cli2.command.SVNPropDelCommand;
@@ -32,6 +33,7 @@ import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 public class SVN {
     
     static {
+        new SVNCheckoutCommand();
         new SVNHelpCommand();
         new SVNMergeCommand();
         new SVNPropDelCommand();
