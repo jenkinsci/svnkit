@@ -228,7 +228,8 @@ public class SVNUpdateClient extends SVNBasicClient {
                      && !isIgnoreExternals()) {
                     handleExternals(adminInfo);
                 }
-                dispatchEvent(SVNEventFactory.createUpdateCompletedEvent(adminInfo, editor.getTargetRevision()));
+                dispatchEvent(SVNEventFactory.createUpdateCompletedEvent(adminInfo.getTarget(), 
+                                                                         editor.getTargetRevision()));
             }
             return editor.getTargetRevision();
         } finally {
@@ -337,7 +338,8 @@ public class SVNUpdateClient extends SVNBasicClient {
             if (editor.getTargetRevision() >= 0 && !isIgnoreExternals() &&
                 (depth == SVNDepth.INFINITY || depth == SVNDepth.UNKNOWN)) {
                 handleExternals(info);
-                dispatchEvent(SVNEventFactory.createUpdateCompletedEvent(info, editor.getTargetRevision()));
+                dispatchEvent(SVNEventFactory.createUpdateCompletedEvent(info.getTarget(), 
+                                                                         editor.getTargetRevision()));
             }
             
             SVNAdminArea pathAdminArea = wcAccess.probeRetrieve(file);
@@ -515,7 +517,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         SVNRepository repository = createRepository(url, null, pegRevision, revision);
         long revisionNumber = getRevisionNumber(revision, repository, null);
         long exportedRevision = doRemoteExport(repository, revisionNumber, dstPath, eolStyle, force, depth);
-        dispatchEvent(SVNEventFactory.createUpdateCompletedEvent((SVNAdminAreaInfo)null, exportedRevision));
+        dispatchEvent(SVNEventFactory.createUpdateCompletedEvent(null, exportedRevision));
         return exportedRevision;
     }
 
@@ -588,7 +590,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             }
             copyVersionedDir(srcPath, dstPath, revision, eolStyle, force, depth);
         }
-        dispatchEvent(SVNEventFactory.createUpdateCompletedEvent((SVNAdminAreaInfo)null, exportedRevision));
+        dispatchEvent(SVNEventFactory.createUpdateCompletedEvent(null, exportedRevision));
         return exportedRevision;
     }
     
@@ -760,7 +762,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                         SVNRevision srcRevision = externalRevNumber >=0 ? SVNRevision.create(externalRevNumber) : SVNRevision.HEAD;
                         String relativePath =  targetDir.equals(dstPath) ? "" : targetDir.getAbsolutePath().substring(dstPath.getAbsolutePath().length() + 1);
                         relativePath = relativePath.replace(File.separatorChar, '/');
-                        dispatchEvent(SVNEventFactory.createUpdateExternalEvent((SVNAdminAreaInfo)null, relativePath));
+                        dispatchEvent(SVNEventFactory.createUpdateExternalEvent(null, relativePath));
                         try {
                             setEventPathPrefix(relativePath);
                             doExport(srcURL, targetDir, srcRevision, srcRevision, eolStyle, force, depth);
@@ -1045,7 +1047,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             try {
                 if (external.getOldURL() == null) {
                     external.getFile().mkdirs();
-                    dispatchEvent(SVNEventFactory.createUpdateExternalEvent(info, ""));
+                    dispatchEvent(SVNEventFactory.createUpdateExternalEvent(info.getAnchor(), ""));
                     doCheckout(external.getNewURL(), external.getFile(), revision, revision, SVNDepth.INFINITY, false);
                 } else if (external.getNewURL() == null) {
                     SVNWCAccess wcAccess = createWCAccess();
@@ -1069,7 +1071,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                         throw error;
                     }
                 } else {
-                    dispatchEvent(SVNEventFactory.createUpdateExternalEvent(info, ""));
+                    dispatchEvent(SVNEventFactory.createUpdateExternalEvent(info.getAnchor(), ""));
                     if (!external.getFile().isDirectory()) {
                         boolean created = external.getFile().mkdirs();
                         try {

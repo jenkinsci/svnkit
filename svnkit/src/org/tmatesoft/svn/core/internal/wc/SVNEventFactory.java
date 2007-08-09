@@ -21,7 +21,6 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNEvent;
@@ -35,26 +34,21 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
  */
 public class SVNEventFactory {
 
-    public static SVNEvent createMergeEvent(SVNAdminAreaInfo info, String path,
+    public static SVNEvent createMergeEvent(SVNAdminArea adminArea, String path,
             SVNEventAction action, SVNEventAction expectedAction, SVNStatusType cType, SVNStatusType pType, SVNNodeKind kind) {
-        SVNEvent event = new SVNEvent(info.getTarget().getRoot(), info.getTarget().getFile(path),
-                action, expectedAction, kind, -1, null, cType, pType, null, null, null);
+        SVNEvent event = new SVNEvent(adminArea.getRoot(), adminArea.getFile(path),
+                                      action, expectedAction, kind, -1, null, cType, 
+                                      pType, null, null, null);
         event.setPath(path);
         return event;
     }
 
-    public static SVNEvent createMergeEvent(SVNAdminAreaInfo info, File file,
-            SVNEventAction action, SVNEventAction expectedAction, SVNStatusType cType, SVNStatusType pType, SVNNodeKind kind) {
-        SVNEvent event = new SVNEvent(info.getTarget().getRoot(), file,
-                action, expectedAction, kind, -1, null, cType, pType, null, null, null);
-        return event;
-    }
-
-    public static SVNEvent createMergeEvent(SVNAdminAreaInfo info, SVNAdminArea dir, String path,
-            SVNEventAction action, SVNStatusType cType, SVNStatusType pType, SVNNodeKind kind) {
-        SVNEvent event = new SVNEvent(info, dir, SVNPathUtil.tail(path),
-                action, kind, -1, null, cType, pType, null, null, null);
-        event.setPath(path);
+    public static SVNEvent createMergeEvent(SVNAdminArea adminArea, File file, 
+                                            SVNEventAction action, SVNEventAction expectedAction, 
+                                            SVNStatusType cType, SVNStatusType pType, 
+                                            SVNNodeKind kind) {
+        SVNEvent event = new SVNEvent(adminArea.getRoot(), file, action, expectedAction, kind, -1, 
+                                      null, cType, pType, null, null, null);
         return event;
     }
 
@@ -79,88 +73,90 @@ public class SVNEventFactory {
                 SVNStatusType.LOCK_INAPPLICABLE, null, null);
     }
 
-    public static SVNEvent createSkipEvent(SVNAdminAreaInfo info, SVNAdminArea dir,
-            String name, SVNEventAction action, SVNEventAction expectedAction, SVNNodeKind kind, 
-            long revision, SVNStatusType cstatus, SVNStatusType pstatus) {
-        return new SVNEvent(info, dir, name, action, expectedAction, kind, revision, null,
-                cstatus, pstatus, SVNStatusType.LOCK_INAPPLICABLE, null, null);
+    public static SVNEvent createSkipEvent(SVNAdminArea dir, String name, SVNEventAction action, 
+                                           SVNEventAction expectedAction, SVNNodeKind kind, 
+                                           long revision, SVNStatusType cstatus, 
+                                           SVNStatusType pstatus) {
+        return new SVNEvent(dir, name, action, expectedAction, kind, revision, null,
+                            cstatus, pstatus, SVNStatusType.LOCK_INAPPLICABLE, null, null);
     }
 
-    public static SVNEvent createLockEvent(SVNAdminArea dir, String path,
-            SVNEventAction action, SVNLock lock, SVNErrorMessage message) {
-        SVNEvent event = new SVNEvent(null, dir, SVNPathUtil.tail(path), action, SVNNodeKind.FILE, -1, null, null, null, null, lock, message);
+    public static SVNEvent createLockEvent(SVNAdminArea dir, String path, SVNEventAction action, 
+                                           SVNLock lock, SVNErrorMessage message) {
+        SVNEvent event = new SVNEvent(dir, SVNPathUtil.tail(path), action, SVNNodeKind.FILE, -1, 
+                                      null, null, null, null, lock, message);
         event.setPath(path);
         return event;
     }
     
     public static SVNEvent createAnnotateEvent(String path, long revision) {
-        SVNEvent event = new SVNEvent(null, null, SVNPathUtil.tail(path), 
-                SVNEventAction.ANNOTATE, SVNNodeKind.NONE, revision, null, null, null, null, null, null);
+        SVNEvent event = new SVNEvent(null, SVNPathUtil.tail(path), SVNEventAction.ANNOTATE, 
+                                      SVNNodeKind.NONE, revision, null, null, null, null, null, 
+                                      null);
         event.setPath(path);
         return event;
     }
-    public static SVNEvent createAddedEvent(SVNAdminAreaInfo info, SVNAdminArea dir, SVNEntry entry) {
+    
+    public static SVNEvent createAddedEvent(SVNAdminArea dir, SVNEntry entry) {
         String mimeType = null;
         try {
             mimeType = dir.getProperties(entry.getName()).getPropertyValue(SVNProperty.MIME_TYPE);
         } catch (SVNException e) {
             //
         }
-        return new SVNEvent(info, dir, entry.getName(), SVNEventAction.ADD,
+        return new SVNEvent(dir, entry.getName(), SVNEventAction.ADD,
                 entry.getKind(), 0, mimeType, null, null, null, null, null);
 
     }
 
-    public static SVNEvent createAddedEvent(SVNAdminArea dir, String name, SVNNodeKind kind, String mimeType) {
-        return new SVNEvent(null, dir, name, SVNEventAction.ADD,
-                kind, 0, mimeType, null, null, null, null, null);
+    public static SVNEvent createAddedEvent(SVNAdminArea dir, String name, SVNNodeKind kind, 
+                                            String mimeType) {
+        return new SVNEvent(dir, name, SVNEventAction.ADD, kind, 0, mimeType, null, null, null, 
+                            null, null);
     }
 
     public static SVNEvent createDeletedEvent(SVNAdminArea dir, String name) {
-        return new SVNEvent(null, dir, name, SVNEventAction.DELETE, null, 0,
-                null, null, null, null, null, null);
+        return new SVNEvent(dir, name, SVNEventAction.DELETE, null, 0,
+                            null, null, null, null, null, null);
     }
 
-    public static SVNEvent createUpdateExternalEvent(SVNAdminAreaInfo info, String path) {
-        SVNEvent event = new SVNEvent(info, null, null,
-                SVNEventAction.UPDATE_EXTERNAL, SVNNodeKind.DIR, -1, null,
-                null, null, null, null, null);
+    public static SVNEvent createUpdateExternalEvent(SVNAdminArea adminArea, String path) {
+        SVNEvent event = new SVNEvent(adminArea, null, SVNEventAction.UPDATE_EXTERNAL, 
+                                      SVNNodeKind.DIR, -1, null,
+                                      null, null, null, null, null);
         event.setPath(path);
         return event;
     }
 
-    public static SVNEvent createStatusExternalEvent(SVNAdminAreaInfo info, String path) {
-        SVNEvent event = new SVNEvent(info, null, null,
-                SVNEventAction.STATUS_EXTERNAL, SVNNodeKind.DIR, -1, null, null, null,
-                null, null, null);
+    public static SVNEvent createStatusExternalEvent(SVNAdminArea adminArea, String path) {
+        SVNEvent event = new SVNEvent(adminArea, null, SVNEventAction.STATUS_EXTERNAL, 
+                                      SVNNodeKind.DIR, -1, null, null, null, null, null, null);
         event.setPath(path);
         return event;
     }
 
-    public static SVNEvent createUpdateCompletedEvent(SVNAdminAreaInfo info,
-            long revision) {
-        return new SVNEvent(info, info != null ? info.getTarget() : null,
-                "", SVNEventAction.UPDATE_COMPLETED, SVNNodeKind.NONE,
-                revision, null, null, null, null, null, null);
+    public static SVNEvent createUpdateCompletedEvent(SVNAdminArea adminArea, long revision) {
+        return new SVNEvent(adminArea, "", SVNEventAction.UPDATE_COMPLETED, SVNNodeKind.NONE,
+                            revision, null, null, null, null, null, null);
     }
 
-    public static SVNEvent createCommitCompletedEvent(SVNAdminAreaInfo info, long revision) {
-        return new SVNEvent(info, null,
-                "", SVNEventAction.COMMIT_COMPLETED, SVNNodeKind.NONE,
-                revision, null, null, null, null, null, null);
+    public static SVNEvent createCommitCompletedEvent(SVNAdminArea adminArea, long revision) {
+        return new SVNEvent(adminArea, "", SVNEventAction.COMMIT_COMPLETED, SVNNodeKind.NONE,
+                            revision, null, null, null, null, null, null);
     }
 
-    public static SVNEvent createStatusCompletedEvent(SVNAdminAreaInfo info, long revision) {
-        return new SVNEvent(info, info.getAnchor(), info.getTargetName(), SVNEventAction.STATUS_COMPLETED, SVNNodeKind.NONE, revision, null,
-                null, null, null, null, null);
+    public static SVNEvent createStatusCompletedEvent(SVNAdminArea adminArea, String name, 
+                                                      long revision) {
+        return new SVNEvent(adminArea, name, SVNEventAction.STATUS_COMPLETED, SVNNodeKind.NONE, 
+                            revision, null, null, null, null, null, null);
     }
 
-    public static SVNEvent createUpdateModifiedEvent(SVNAdminAreaInfo info,
-            SVNAdminArea adminArea, String name, SVNNodeKind kind,
-            SVNEventAction action, String mimeType, SVNStatusType contents,
-            SVNStatusType props, SVNStatusType lock) {
-        return new SVNEvent(info, adminArea, name, action, kind, -1, mimeType,
-                contents, props, lock, null, null);
+    public static SVNEvent createUpdateModifiedEvent(SVNAdminArea adminArea, String name, 
+                                                     SVNNodeKind kind, SVNEventAction action, 
+                                                     String mimeType, SVNStatusType contents,
+                                                     SVNStatusType props, SVNStatusType lock) {
+        return new SVNEvent(adminArea, name, action, kind, -1, mimeType,
+                            contents, props, lock, null, null);
     }
 
     public static SVNEvent createMergeBeginEvent(File path, SVNMergeRange range) {
@@ -169,11 +165,10 @@ public class SVNEventFactory {
                             null, null, null, null, range, null);
     }
     
-    public static SVNEvent createUpdateAddEvent(SVNAdminAreaInfo info,
-            SVNAdminArea adminArea, SVNNodeKind kind, SVNEntry entry) {
-        return new SVNEvent(info, adminArea, entry.getName(),
-                SVNEventAction.UPDATE_ADD, kind, entry.getRevision(), null,
-                null, null, null, null, null);
+    public static SVNEvent createUpdateAddEvent(SVNAdminArea adminArea, SVNNodeKind kind, 
+                                                SVNEntry entry) {
+        return new SVNEvent(adminArea, entry.getName(), SVNEventAction.UPDATE_ADD, kind, 
+                            entry.getRevision(), null, null, null, null, null, null);
     }
     
     public static SVNEvent createExportAddedEvent(File root, File file, SVNNodeKind kind) {
@@ -181,50 +176,47 @@ public class SVNEventFactory {
                 null, null, null, null, null, null);
     }
 
-    public static SVNEvent createUpdateDeleteEvent(SVNAdminAreaInfo info, 
-            SVNAdminArea adminArea, SVNNodeKind kind, String name) {
-        return new SVNEvent(info, adminArea, name, SVNEventAction.UPDATE_DELETE,
-                kind, -1, null, null, null, null, null, null);
+    public static SVNEvent createUpdateDeleteEvent(SVNAdminArea adminArea, SVNNodeKind kind, 
+                                                   String name) {
+        return new SVNEvent(adminArea, name, SVNEventAction.UPDATE_DELETE, kind, -1, null, null, 
+                            null, null, null, null);
     }
 
-    public static SVNEvent createRestoredEvent(SVNAdminAreaInfo info, SVNAdminArea adminArea, SVNEntry entry) {
-        return new SVNEvent(info, adminArea, entry.getName(),
-                SVNEventAction.RESTORE, entry.getKind(), entry.getRevision(),
-                null, null, null, null, null, null);
+    public static SVNEvent createRestoredEvent(SVNAdminArea adminArea, SVNEntry entry) {
+        return new SVNEvent(adminArea, entry.getName(), SVNEventAction.RESTORE, entry.getKind(), 
+                            entry.getRevision(), null, null, null, null, null, null);
     }
 
-    public static SVNEvent createResolvedEvent(SVNAdminAreaInfo info, SVNAdminArea adminArea, SVNEntry entry) {
-        return new SVNEvent(info, adminArea, entry.getName(),
-                SVNEventAction.RESOLVED, entry.getKind(), entry.getRevision(),
-                null, null, null, null, null, null);
+    public static SVNEvent createResolvedEvent(SVNAdminArea adminArea, SVNEntry entry) {
+        return new SVNEvent(adminArea, entry.getName(), SVNEventAction.RESOLVED, entry.getKind(), 
+                            entry.getRevision(), null, null, null, null, null, null);
     }
 
     public static SVNEvent createRevertedEvent(SVNAdminArea dir, SVNEntry entry) {
-        return new SVNEvent(null, dir, entry.getName(),
-                SVNEventAction.REVERT, entry.getKind(), entry.getRevision(),
-                null, null, null, null, null, null);
+        return new SVNEvent(dir, entry.getName(), SVNEventAction.REVERT, entry.getKind(), 
+                            entry.getRevision(), null, null, null, null, null, null);
     }
 
     public static SVNEvent createNotRevertedEvent(SVNAdminArea dir, SVNEntry entry) {
-        return new SVNEvent(null, dir, entry.getName(),
-                SVNEventAction.FAILED_REVERT, entry.getKind(), entry
-                        .getRevision(), null, null, null, null, null, null);
+        return new SVNEvent(dir, entry.getName(), SVNEventAction.FAILED_REVERT, entry.getKind(), 
+                            entry.getRevision(), null, null, null, null, null, null);
     }
 
-    public static SVNEvent createUpdateDeleteEvent(SVNAdminAreaInfo info,
-            SVNAdminArea adminArea, SVNEntry entry) {
-        return new SVNEvent(info, adminArea, entry.getName(),
-                SVNEventAction.UPDATE_DELETE, entry.getKind(), entry
-                        .getRevision(), null, null, null, null, null, null);
+    public static SVNEvent createUpdateDeleteEvent(SVNAdminArea adminArea, SVNEntry entry) {
+        return new SVNEvent(adminArea, entry.getName(), SVNEventAction.UPDATE_DELETE, 
+                            entry.getKind(), entry.getRevision(), null, null, null, null, 
+                            null, null);
     }
 
     public static SVNEvent createUpgradeEvent(SVNAdminArea adminArea) {
         return new SVNEvent(null, adminArea.getRoot(), SVNEventAction.UPGRADE, SVNNodeKind.DIR, -1, null, null, null, null, null, null);
     }
 
-    public static SVNEvent createChangelistEvent(File path, SVNAdminArea adminArea, String changelistName, 
-            SVNEventAction action, SVNErrorMessage message) {
-        SVNEvent event = new SVNEvent(null, adminArea, path.getName(), action, null, -1, null, null, null, null, null, message);
+    public static SVNEvent createChangelistEvent(File path, SVNAdminArea adminArea, 
+                                                 String changelistName, SVNEventAction action, 
+                                                 SVNErrorMessage message) {
+        SVNEvent event = new SVNEvent(adminArea, path.getName(), action, null, -1, null, null, 
+                                      null, null, null, message);
         event.setPath(path.getAbsolutePath().replace(File.separatorChar, '/'));
         event.setChangelistName(changelistName);
         return event;

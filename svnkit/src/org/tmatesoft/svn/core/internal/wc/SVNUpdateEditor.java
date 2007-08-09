@@ -189,7 +189,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             // notification.
             return;
         }
-        myWCAccess.handleEvent(SVNEventFactory.createUpdateDeleteEvent(myAdminInfo, myCurrentDirectory.getAdminArea(), kind, name));
+        myWCAccess.handleEvent(SVNEventFactory.createUpdateDeleteEvent(parentArea, kind, name));
     }
 
     private void handleLeftLocalModificationsError(SVNException originalError, SVNLog log, SVNAdminArea adminArea) throws SVNException {
@@ -302,11 +302,11 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         myWCAccess.registerCleanupHandler(childArea, myCurrentDirectory);
         if (!myCurrentDirectory.isAddExisted) {
             if (myCurrentDirectory.isExisted) {
-                SVNEvent event = new SVNEvent(myAdminInfo, parentArea, entry.getName(), SVNEventAction.UPDATE_EXISTS, 
+                SVNEvent event = new SVNEvent(parentArea, entry.getName(), SVNEventAction.UPDATE_EXISTS, 
                                               SVNNodeKind.DIR, entry.getRevision(), null, null, null, null, null, null);
                 myWCAccess.handleEvent(event);
             } else {
-		        myWCAccess.handleEvent(SVNEventFactory.createUpdateAddEvent(myAdminInfo, parentArea, SVNNodeKind.DIR, entry));
+		        myWCAccess.handleEvent(SVNEventFactory.createUpdateAddEvent(parentArea, SVNNodeKind.DIR, entry));
             }
         }
     }
@@ -323,7 +323,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 myCurrentDirectory.isSkipped = true;
                 Collection skippedPaths = getSkippedPaths();
                 skippedPaths.add(adminArea.getRoot());
-                SVNEvent event = SVNEventFactory.createSkipEvent(myAdminInfo, adminArea, "", SVNEventAction.SKIP, SVNEventAction.UPDATE_UPDATE, SVNNodeKind.DIR, -1, SVNStatusType.INAPPLICABLE, SVNStatusType.CONFLICTED);
+                SVNEvent event = SVNEventFactory.createSkipEvent(adminArea, "", SVNEventAction.SKIP, SVNEventAction.UPDATE_UPDATE, SVNNodeKind.DIR, -1, SVNStatusType.INAPPLICABLE, SVNStatusType.CONFLICTED);
                 myWCAccess.handleEvent(event);
                 return;
             }
@@ -441,7 +441,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 if (propStatus == SVNStatusType.UNKNOWN && action != SVNEventAction.UPDATE_EXISTS) {
                     action = SVNEventAction.UPDATE_NONE;
                 }
-                myWCAccess.handleEvent(SVNEventFactory.createUpdateModifiedEvent(myAdminInfo, adminArea, "", SVNNodeKind.DIR, action, null, SVNStatusType.UNKNOWN, propStatus, null));
+                myWCAccess.handleEvent(SVNEventFactory.createUpdateModifiedEvent(adminArea, "", SVNNodeKind.DIR, action, null, SVNStatusType.UNKNOWN, propStatus, null));
             }
         }
         myCurrentDirectory = myCurrentDirectory.Parent;
@@ -793,7 +793,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             } else if (myCurrentFile.IsAdded) {
                 action = SVNEventAction.UPDATE_ADD;
         }
-        myWCAccess.handleEvent(SVNEventFactory.createUpdateModifiedEvent(myAdminInfo, adminArea, myCurrentFile.Name, SVNNodeKind.FILE, action, null, textStatus, propStatus, lockStatus));
+        myWCAccess.handleEvent(SVNEventFactory.createUpdateModifiedEvent(adminArea, myCurrentFile.Name, SVNNodeKind.FILE, action, null, textStatus, propStatus, lockStatus));
         }
         
         myCurrentFile = null;
@@ -811,41 +811,41 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
 
             if (!dirInfo.isSkipped) {
                 if (dirInfo.Parent == null && myTarget != null) {
-                return;
-            }
+                    return;
+                }
                 SVNAdminArea adminArea = dirInfo.getAdminArea();
                 SVNEntry thisEntry = adminArea.getEntry(adminArea.getThisDirName(), true); 
                 if (thisEntry == null) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "No ''.'' entry found in ''{0}''", adminArea.getRoot());
-                SVNErrorManager.error(err);
-            }
-                thisEntry.setIncomplete(false);
+                    SVNErrorManager.error(err);
+                }
                 
+                thisEntry.setIncomplete(false);
                 if (myDepth == SVNDepth.INFINITY || (dirInfo.Parent == null && 
                         myDepth.compareTo(thisEntry.getDepth()) > 0)) {
                     thisEntry.setDepth(myDepth);
                 }
                 
-            for (Iterator ents = adminArea.entries(true); ents.hasNext();) {
-                SVNEntry entry = (SVNEntry) ents.next();
-                if (entry.isDeleted()) {
-                    if (!entry.isScheduledForAddition()) {
-                        adminArea.deleteEntry(entry.getName());
-                    } else {
+                for (Iterator ents = adminArea.entries(true); ents.hasNext();) {
+                    SVNEntry entry = (SVNEntry) ents.next();
+                    if (entry.isDeleted()) {
+                        if (!entry.isScheduledForAddition()) {
+                            adminArea.deleteEntry(entry.getName());
+                        } else {
                             Map attributes = new HashMap();
                             attributes.put(SVNProperty.DELETED, null);
                             adminArea.modifyEntry(entry.getName(), attributes, false, false);
-                    }
-                } else if (entry.isAbsent() && entry.getRevision() != myTargetRevision) {
-                    adminArea.deleteEntry(entry.getName());
-                } else if (entry.getKind() == SVNNodeKind.DIR) {
-                    if (myWCAccess.isMissing(adminArea.getFile(entry.getName())) && !entry.isAbsent() && !entry.isScheduledForAddition()) {
+                        }
+                    } else if (entry.isAbsent() && entry.getRevision() != myTargetRevision) {
                         adminArea.deleteEntry(entry.getName());
-                            myWCAccess.handleEvent(SVNEventFactory.createUpdateDeleteEvent(myAdminInfo, dirInfo.getAdminArea(), entry));
+                    } else if (entry.getKind() == SVNNodeKind.DIR) {
+                        if (myWCAccess.isMissing(adminArea.getFile(entry.getName())) && !entry.isAbsent() && !entry.isScheduledForAddition()) {
+                            adminArea.deleteEntry(entry.getName());
+                            myWCAccess.handleEvent(SVNEventFactory.createUpdateDeleteEvent(adminArea, entry));
+                        }
                     }
                 }
-            }
-            adminArea.saveEntries(true);
+                adminArea.saveEntries(true);
             }
             dirInfo = dirInfo.Parent;
         }
@@ -899,7 +899,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 Collection skippedPaths = getSkippedPaths();
                 File file = new File(myAdminInfo.getAnchor().getRoot(), path);
                 skippedPaths.add(file);
-                SVNEvent event = SVNEventFactory.createSkipEvent(myAdminInfo, adminArea, info.Name, SVNEventAction.SKIP, added ? SVNEventAction.UPDATE_ADD : SVNEventAction.UPDATE_UPDATE, SVNNodeKind.FILE, -1, hasTextConflicts ? SVNStatusType.CONFLICTED : SVNStatusType.UNKNOWN, hasPropConflicts ? SVNStatusType.CONFLICTED : SVNStatusType.UNKNOWN);
+                SVNEvent event = SVNEventFactory.createSkipEvent(adminArea, info.Name, SVNEventAction.SKIP, added ? SVNEventAction.UPDATE_ADD : SVNEventAction.UPDATE_UPDATE, SVNNodeKind.FILE, -1, hasTextConflicts ? SVNStatusType.CONFLICTED : SVNStatusType.UNKNOWN, hasPropConflicts ? SVNStatusType.CONFLICTED : SVNStatusType.UNKNOWN);
                 myWCAccess.handleEvent(event);
             }
             }

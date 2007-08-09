@@ -211,7 +211,7 @@ public class SVNMergeRangeList {
                 myRanges[swapInex] = range.swapEndPoints();
             }
             
-            if (myRanges.length % 2 != 1) {
+            if (myRanges.length % 2 == 1) {
                 myRanges[myRanges.length/2].swapEndPoints();
             }
         }

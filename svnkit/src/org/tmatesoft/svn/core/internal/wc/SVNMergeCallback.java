@@ -23,7 +23,6 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
@@ -48,8 +47,8 @@ public class SVNMergeCallback extends AbstractDiffCallback {
     private boolean myIsForce;
     private SVNDiffOptions myDiffOptions;
     
-    public SVNMergeCallback(SVNAdminAreaInfo info, SVNURL url, boolean force, boolean dryRun, SVNDiffOptions options) {
-        super(info);
+    public SVNMergeCallback(SVNAdminArea adminArea, SVNURL url, boolean force, boolean dryRun, SVNDiffOptions options) {
+        super(adminArea);
         myURL = url;
         myIsDryRun = dryRun;
         myIsForce = force;
@@ -176,7 +175,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                         return;
                     }
                     if (event.getAction() == SVNEventAction.DELETE) {
-                        event = SVNEventFactory.createMergeEvent(getAdminInfo(), event.getFile(), 
+                        event = SVNEventFactory.createMergeEvent(getAdminArea(), event.getFile(), 
                                 SVNEventAction.UPDATE_DELETE, SVNEventAction.UPDATE_DELETE, 
                                 SVNStatusType.UNKNOWN, SVNStatusType.UNKNOWN, event.getNodeKind());
                     }
@@ -340,15 +339,15 @@ public class SVNMergeCallback extends AbstractDiffCallback {
     }
     
     protected File getFile(String path) {
-        return getAdminInfo().getTarget().getFile(path);
+        return getAdminArea().getFile(path);
     }
     
     protected SVNAdminArea retrieve(File path, boolean lenient) throws SVNException {
-        if (getAdminInfo() == null) {
+        if (getAdminArea() == null) {
             return null;
         }
         try {
-            return getAdminInfo().getWCAccess().retrieve(path);
+            return getAdminArea().getWCAccess().retrieve(path);
         } catch (SVNException e) {
             if (lenient) {
                 return null;

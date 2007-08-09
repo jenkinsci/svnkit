@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
@@ -36,8 +36,8 @@ public class SVNDiffCallback extends AbstractDiffCallback {
     
     private static final SVNStatusType[] EMPTY_STATUS = {SVNStatusType.UNKNOWN, SVNStatusType.UNKNOWN};
 
-    public SVNDiffCallback(SVNAdminAreaInfo info, ISVNDiffGenerator generator, long rev1, long rev2, OutputStream result) {
-        super(info);
+    public SVNDiffCallback(SVNAdminArea adminArea, ISVNDiffGenerator generator, long rev1, long rev2, OutputStream result) {
+        super(adminArea);
         myGenerator = generator;
         myResult = result;
         myRevision1 = rev1;

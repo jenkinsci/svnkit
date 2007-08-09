@@ -28,7 +28,6 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
@@ -49,7 +48,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     private long myRevision1;
     private long myRevision2;
     private File myTarget;
-    private SVNAdminAreaInfo myAdminInfo;
+    private SVNAdminArea myAdminArea;
     private boolean myIsDryRun;
     
     private SVNDeltaProcessor myDeltaProcessor;
@@ -62,10 +61,10 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     private File myTempDirectory;
     private Collection myTempFiles;
 
-    public SVNRemoteDiffEditor(SVNAdminAreaInfo info, File target, AbstractDiffCallback callback,
+    public SVNRemoteDiffEditor(SVNAdminArea adminArea, File target, AbstractDiffCallback callback,
                                SVNRepository repos, long revision1, long revision2, boolean dryRun, 
                                ISVNEventHandler handler, ISVNEventHandler cancelHandler) {
-        myAdminInfo = info;
+        myAdminArea = adminArea;
         myTarget = target;
         myDiffCallback = callback;
         myRepos = repos;
@@ -99,7 +98,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
         SVNNodeKind nodeKind = myRepos.checkPath(path, myRevision1);
         SVNAdminArea dir = retrieve(myCurrentDirectory.myWCFile, true);
         
-        if (myAdminInfo == null || dir != null) {
+        if (myAdminArea == null || dir != null) {
             if (nodeKind == SVNNodeKind.FILE) {
                 SVNFileInfo file = new SVNFileInfo(path, false);
                 file.loadFromRepository();
@@ -116,7 +115,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             }
         }
         if (myEventHandler != null) {
-            SVNEvent event = SVNEventFactory.createMergeEvent(myAdminInfo, path, action, expectedAction, type, type, nodeKind);
+            SVNEvent event = SVNEventFactory.createMergeEvent(myAdminArea, path, action, expectedAction, type, type, nodeKind);
             myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
         }
     }
@@ -133,7 +132,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
                 action = SVNEventAction.SKIP; 
             }
             // TODO prop type?
-            SVNEvent event = SVNEventFactory.createMergeEvent(myAdminInfo, path, action, expectedAction, type, type, SVNNodeKind.DIR);
+            SVNEvent event = SVNEventFactory.createMergeEvent(myAdminArea, path, action, expectedAction, type, type, SVNNodeKind.DIR);
             myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
         }
     }
@@ -164,7 +163,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
                 if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
                     if (myEventHandler != null) {
                         action = SVNEventAction.SKIP;
-                        SVNEvent event = SVNEventFactory.createMergeEvent(myAdminInfo, myCurrentDirectory.myRepositoryPath, action, 
+                        SVNEvent event = SVNEventFactory.createMergeEvent(myAdminArea, myCurrentDirectory.myRepositoryPath, action, 
                                 expectedAction, SVNStatusType.MISSING, SVNStatusType.MISSING, SVNNodeKind.DIR);
                         myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
                     }
@@ -181,7 +180,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             if (type == SVNStatusType.UNKNOWN) {
                 action = SVNEventAction.UPDATE_NONE;
             }
-            SVNEvent event = SVNEventFactory.createMergeEvent(myAdminInfo, myCurrentDirectory.myRepositoryPath, action, 
+            SVNEvent event = SVNEventFactory.createMergeEvent(myAdminArea, myCurrentDirectory.myRepositoryPath, action, 
                     expectedAction, SVNStatusType.INAPPLICABLE, type, SVNNodeKind.DIR);
             myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
         }
@@ -234,7 +233,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
                 if (myEventHandler != null) {
                     action = SVNEventAction.SKIP;
-                    SVNEvent event = SVNEventFactory.createMergeEvent(myAdminInfo, commitPath, action, 
+                    SVNEvent event = SVNEventFactory.createMergeEvent(myAdminArea, commitPath, action, 
                             expectedAction, SVNStatusType.MISSING, SVNStatusType.UNKNOWN, SVNNodeKind.FILE);
                     myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
                 }
@@ -265,7 +264,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             } else {
                 action = SVNEventAction.UPDATE_UPDATE;
             }
-            SVNEvent event = SVNEventFactory.createMergeEvent(myAdminInfo, commitPath, action, 
+            SVNEvent event = SVNEventFactory.createMergeEvent(myAdminArea, commitPath, action, 
                     expectedAction, type[0], type[1], SVNNodeKind.FILE);
             myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
         }
@@ -297,11 +296,11 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     }
     
     protected SVNAdminArea retrieve(File path, boolean lenient) throws SVNException {
-        if (myAdminInfo == null) {
+        if (myAdminArea == null) {
             return null;
         }
         try {
-            return myAdminInfo.getWCAccess().retrieve(path);
+            return myAdminArea.getWCAccess().retrieve(path);
         } catch (SVNException e) {
             if (lenient) {
                 return null;
@@ -311,7 +310,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     }
 
     protected SVNAdminArea retrieveParent(File path, boolean lenient) throws SVNException {
-        if (myAdminInfo == null) {
+        if (myAdminArea == null) {
             return null;
         }
         return retrieve(path.getParentFile(), lenient);

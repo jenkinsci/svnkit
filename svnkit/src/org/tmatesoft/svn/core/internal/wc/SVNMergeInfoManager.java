@@ -382,6 +382,7 @@ public class SVNMergeInfoManager {
         boolean noElide = true;
         boolean elidePartially = false;
         boolean elideFull = false;
+        parentMergeInfo = parentMergeInfo == null ? Collections.EMPTY_MAP : parentMergeInfo;
         
         Map mergeInfo = parentMergeInfo;
         if (pathSuffix != null && !parentMergeInfo.isEmpty()) {

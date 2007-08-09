@@ -347,7 +347,7 @@ public class SVNWCManager {
                     if (removeMissingDirs && dir.getWCAccess().isMissing(path)) {
                         if (!entry.isScheduledForAddition() && !isExcluded) {
                             dir.deleteEntry(entry.getName());
-                            dir.getWCAccess().handleEvent(SVNEventFactory.createUpdateDeleteEvent(null, dir, entry));
+                            dir.getWCAccess().handleEvent(SVNEventFactory.createUpdateDeleteEvent(dir, entry));
                         }
                     } else {
                         SVNAdminArea childDir = dir.getWCAccess().retrieve(path);

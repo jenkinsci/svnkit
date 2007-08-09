@@ -227,7 +227,7 @@ public class SVNReporter implements ISVNReporterBaton {
         }
         adminArea.restoreFile(name);
         SVNEntry entry = adminArea.getEntry(name, true);
-        myInfo.getWCAccess().handleEvent(SVNEventFactory.createRestoredEvent(myInfo, adminArea, entry));
+        myInfo.getWCAccess().handleEvent(SVNEventFactory.createRestoredEvent(adminArea, entry));
     }
     
 }

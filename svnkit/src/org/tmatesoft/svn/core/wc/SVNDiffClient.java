@@ -882,8 +882,9 @@ public class SVNDiffClient extends SVNBasicClient {
             }
             SVNRepository repository = createRepository(anchorURL, true);
             long revNumber = getRevisionNumber(revision1, repository, null);
-            AbstractDiffCallback callback = new SVNDiffCallback(info, getDiffGenerator(), 
-                    reverse ? -1 : revNumber, reverse ? revNumber : -1, result);
+            AbstractDiffCallback callback = new SVNDiffCallback(info.getAnchor(), 
+                                                                getDiffGenerator(), 
+                                                                reverse ? -1 : revNumber, reverse ? revNumber : -1, result);
             SVNDiffEditor editor = new SVNDiffEditor(wcAccess, info, callback, 
                     useAncestry, reverse /* reverse */,
                     revision2 == SVNRevision.BASE  || revision2 == SVNRevision.COMMITTED  /* compare to base */, 
@@ -931,8 +932,9 @@ public class SVNDiffClient extends SVNBasicClient {
             }
             SVNRepository repository = createRepository(anchorURL, true);
             long revNumber = getRevisionNumber(revision1, repository, path1);
-            AbstractDiffCallback callback = new SVNDiffCallback(info, getDiffGenerator(), 
-                    reverse ? -1 : revNumber, reverse ? revNumber : -1, result);
+            AbstractDiffCallback callback = new SVNDiffCallback(info.getAnchor(), 
+                                                                getDiffGenerator(), 
+                                                                reverse ? -1 : revNumber, reverse ? revNumber : -1, result);
             SVNDiffEditor editor = new SVNDiffEditor(wcAccess, info, callback,
                     useAncestry, 
                     reverse /* reverse */, 
@@ -965,8 +967,9 @@ public class SVNDiffClient extends SVNBasicClient {
             SVNAdminAreaInfo info = wcAccess.openAnchor(path1, false, recursive ? SVNWCAccess.INFINITE_DEPTH: 0);
             wcAccess.getVersionedEntry(path1, false);
             long rev = getRevisionNumber(revision1, null, path1);
-            AbstractDiffCallback callback = new SVNDiffCallback(info, getDiffGenerator(), 
-                    rev, -1, result);
+            AbstractDiffCallback callback = new SVNDiffCallback(info.getAnchor(), 
+                                                                getDiffGenerator(), 
+                                                                rev, -1, result);
             SVNDiffEditor editor = new SVNDiffEditor(wcAccess, info, callback, useAncestry, false, false, SVNDepth.fromRecurse(recursive));
             try {
                 editor.closeEdit();
@@ -1535,122 +1538,6 @@ public class SVNDiffClient extends SVNBasicClient {
         return (SVNMergeInfo) mergeInfos.get(relPath);
     }
     
-/*    private void doMerge(SVNURL url1, File path1, SVNRevision revision1, SVNURL url2, File path2, SVNRevision revision2, SVNRevision pegRevision,
-            SVNAdminAreaInfo info, SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun) throws SVNException {
-        if (!revision1.isValid() || !revision2.isValid()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Both rN and rM revisions should be specified");            
-            SVNErrorManager.error(err);
-        }
-        if (pegRevision.isValid()) {
-            SVNRepositoryLocation[] locations = getLocations(url2, path2, null, pegRevision, revision1, revision2);
-            url1 = locations[0].getURL();
-            url2 = locations[1].getURL();
-            revision1 = SVNRevision.create(locations[0].getRevisionNumber());
-            revision2 = SVNRevision.create(locations[1].getRevisionNumber());
-            path1 = null;
-            path2 = null;
-        }
-        SVNRepository repository1 = createRepository(url1, true);
-        final long rev1 = getRevisionNumber(revision1, repository1, path1);
-        long rev2 = getRevisionNumber(revision2, repository1, path2);
-        SVNRepository repository2 = createRepository(url1, false);
-        
-        SVNMergeCallback callback = new SVNMergeCallback(info, url2, force, dryRun, getMergeOptions());
-        SVNRemoteDiffEditor editor = new SVNRemoteDiffEditor(info, info.getTarget().getRoot(), callback, repository2, rev1, rev2, dryRun, this, this);
-        final SVNDepth reportDepth = depth;
-        try {
-            repository1.diff(url2, rev2, rev1, null, !useAncestry, depth, true,
-                    new ISVNReporterBaton() {
-                        public void report(ISVNReporter reporter) throws SVNException {
-                            reporter.setPath("", null, rev1, reportDepth, false);
-                            reporter.finishReport();
-                        }
-                    }, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
-        } finally {
-            editor.cleanup();
-            repository2.closeSession();
-        }
-        
-    }
-*/    
-/*    private void doMergeFile(SVNURL url1, File path1, SVNRevision revision1, SVNURL url2, 
-                             File path2, SVNRevision revision2, File dstPath, 
-                             SVNRevision pegRevision, SVNAdminAreaInfo info, boolean force, 
-                             boolean recordOnly, boolean dryRun) throws SVNException {
-        SVNWCAccess wcAccess = info.getWCAccess();
-        SVNEntry entry = wcAccess.getVersionedEntry(dstPath, false);
-        SVNRepository repository = createRepository(url1, true);
-        SVNRevision[] assumedRevisions = getAssumedDefaultRevisionRange(revision1, 
-                                                                         revision2, 
-                                                                         repository); 
-        SVNRevision assumedRev1 = assumedRevisions[0];
-        SVNRevision assumedRev2 = assumedRevisions[1];
-        if (!assumedRev1.isValid() || !assumedRev2.isValid()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, 
-                                                         "Not all required revisions are specified");
-            SVNErrorManager.error(err);
-        }
-        
-        
-        if (pegRevision.isValid()) {
-            SVNRepositoryLocation[] locations = null;
-            try {
-                locations = getLocations(url2, path2, null, pegRevision, assumedRev1, assumedRev2);
-            } catch (SVNException svne) {
-                if (!recordOnly || svne.getErrorMessage().getErrorCode() != SVNErrorCode.CLIENT_UNRELATED_RESOURCES) {
-                    throw svne;
-                }
-            }
-            url1 = locations[0].getURL();
-            url2 = locations[1].getURL();
-            revision1 = SVNRevision.create(locations[0].getRevisionNumber());
-            revision2 = SVNRevision.create(locations[1].getRevisionNumber());
-            path1 = null;
-            path2 = null;
-        } else {
-            revision1 = assumedRev1;
-            revision2 = assumedRev2;
-        }
-        
-        long[] rev1 = new long[1];
-        long[] rev2 = new long[2];
-        Map props1 = new HashMap();
-        Map props2 = new HashMap();
-        File f1 = null;
-        File f2 = null;
-        String name = info.getTargetName();
-        String mimeType2;
-        String mimeType1;
-        SVNStatusType[] mergeResult;
-        try {
-            f1 = loadFile(url1, path1, revision1, props1, info, rev1);
-            f2 = loadFile(url2, path2, revision2, props2, info, rev2);
-
-            mimeType1 = (String) props1.get(SVNProperty.MIME_TYPE);
-            mimeType2 = (String) props2.get(SVNProperty.MIME_TYPE);
-            props1 = filterProperties(props1, true, false, false);
-            props2 = filterProperties(props2, true, false, false);
-            Map propsDiff = computePropsDiff(props1, props2);
-            // remove non wc props from props1.
-            for (Iterator names = props1.keySet().iterator(); names.hasNext();) {
-                String propertyName = (String) names.next();
-                if (propertyName.startsWith(SVNProperty.SVN_ENTRY_PREFIX) || propertyName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
-                    names.remove();
-                }
-            }
-            SVNMergeCallback callback = new SVNMergeCallback(info, url2, force, dryRun, getMergeOptions());
-            mergeResult = callback.fileChanged(name, f1, f2, rev1[0], rev2[0], mimeType1, mimeType2, props1, propsDiff);
-        } finally {
-            SVNFileUtil.deleteAll(f1, null);
-            SVNFileUtil.deleteAll(f2, null);
-        }
-        handleEvent(
-                SVNEventFactory.createUpdateModifiedEvent(info, info.getAnchor(), name, SVNNodeKind.FILE,
-                        SVNEventAction.UPDATE_UPDATE, mimeType2, mergeResult[0], mergeResult[1], SVNStatusType.LOCK_INAPPLICABLE),
-                ISVNEventHandler.UNKNOWN);
-    }
-*/
-    
     private SVNRevision[] getAssumedDefaultRevisionRange(SVNRevision revision1, 
                                                           SVNRevision revision2, 
                                                           SVNRepository repository) throws SVNException {
@@ -1683,27 +1570,6 @@ public class SVNDiffClient extends SVNBasicClient {
         return revs;
     }
     
-/*    private File loadFile(SVNURL url, File path, SVNRevision revision, Map properties, SVNAdminAreaInfo info, long[] revNumber) throws SVNException {
-        File tmpDir = info.getAnchor().getRoot();
-        File result = SVNFileUtil.createUniqueFile(tmpDir, ".merge", ".tmp");
-        SVNFileUtil.createEmptyFile(result);
-        
-        SVNRepository repository = createRepository(url, true);
-        long revisionNumber = getRevisionNumber(revision, repository, path);
-        OutputStream os = null;
-        try {
-            os = SVNFileUtil.openFileForWriting(result); 
-            repository.getFile("", revisionNumber, properties, new SVNCancellableOutputStream(os, this));
-        } finally {
-            SVNFileUtil.closeFile(os);
-        }
-        if (revNumber != null && revNumber.length > 0) {
-            revNumber[0] = revisionNumber;
-        }
-        return result;
-    }
-*/
-
     private void runPeggedMerge(SVNURL srcURL, File srcPath, SVNRevision pegRevision, 
                                 SVNRevision revision1, SVNRevision revision2, File dstPath, 
                                 SVNDepth depth, boolean dryRun, boolean force, boolean useAncestry, 
@@ -1713,7 +1579,10 @@ public class SVNDiffClient extends SVNBasicClient {
         dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath()));
         try {
             dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath()));
-            SVNAdminAreaInfo info = wcAccess.openAnchor(dstPath, !dryRun, 
+//            SVNAdminAreaInfo info = wcAccess.openAnchor(dstPath, !dryRun, 
+//                                                        SVNDepth.recurseFromDepth(depth) ? 
+//                                                        SVNWCAccess.INFINITE_DEPTH : 0);
+            SVNAdminArea adminArea = wcAccess.probeOpen(dstPath, !dryRun, 
                                                         SVNDepth.recurseFromDepth(depth) ? 
                                                         SVNWCAccess.INFINITE_DEPTH : 0);
             SVNEntry targetEntry = wcAccess.getVersionedEntry(dstPath, false);
@@ -1764,7 +1633,8 @@ public class SVNDiffClient extends SVNBasicClient {
             revision2 = SVNRevision.create(locations[1].getRevisionNumber());
             
             if (targetEntry.isFile()) {
-                merger.doMergeFile(url1, revision1, url1, revision2, dstPath, info, !useAncestry);
+                merger.doMergeFile(url1, revision1, url1, revision2, dstPath, adminArea, 
+                                   !useAncestry);
             } else if (targetEntry.isDirectory()) {
                 LinkedList childrenWithMergeInfo = null;
                 childrenWithMergeInfo = merger.discoverAndMergeChildren(targetEntry, 
@@ -1772,10 +1642,10 @@ public class SVNDiffClient extends SVNBasicClient {
                                                                         revision2, 
                                                                         depth, 
                                                                         url1, 
-                                                                        info, 
+                                                                        adminArea, 
                                                                         !useAncestry);
                 
-                merger.doMerge(url1, revision1, url2, revision2, dstPath, info, depth, 
+                merger.doMerge(url1, revision1, url2, revision2, dstPath, adminArea, depth, 
                                childrenWithMergeInfo, useAncestry);
                 
                 if (!dryRun) {
@@ -1797,8 +1667,12 @@ public class SVNDiffClient extends SVNBasicClient {
         dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath()));
         try {
             dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath()));
-            SVNAdminAreaInfo info = wcAccess.openAnchor(dstPath, !dryRun, 
-                                                        SVNDepth.recurseFromDepth(depth) ? SVNWCAccess.INFINITE_DEPTH : 0);
+//            SVNAdminAreaInfo info = wcAccess.openAnchor(dstPath, !dryRun, 
+//                                                        SVNDepth.recurseFromDepth(depth) ? SVNWCAccess.INFINITE_DEPTH : 0);
+            SVNAdminArea adminArea = wcAccess.probeOpen(dstPath, !dryRun, 
+                                                        SVNDepth.recurseFromDepth(depth) ? 
+                                                        SVNWCAccess.INFINITE_DEPTH : 0);
+
             SVNEntry targetEntry = wcAccess.getVersionedEntry(dstPath, false);
             if (depth == null || depth == SVNDepth.UNKNOWN) {
                 depth = targetEntry.getDepth();
@@ -1807,7 +1681,8 @@ public class SVNDiffClient extends SVNBasicClient {
             Merger merger = createMerger(url1, url2, targetEntry, dstPath, wcAccess, dryRun, force,  
                                          recordOnly);
             if (targetEntry.isFile()) {
-                merger.doMergeFile(url1, revision1, url2, revision2, dstPath, info, !useAncestry);
+                merger.doMergeFile(url1, revision1, url2, revision2, dstPath, adminArea, 
+                                   !useAncestry);
             } else if (targetEntry.isDirectory()) {
                 LinkedList childrenWithMergeInfo = null;
                 if (url1.equals(url2)) {
@@ -1816,11 +1691,11 @@ public class SVNDiffClient extends SVNBasicClient {
                                                                             revision2, 
                                                                             depth, 
                                                                             url1, 
-                                                                            info, 
+                                                                            adminArea, 
                                                                             !useAncestry);
                 }
                 
-                merger.doMerge(url1, revision1, url2, revision2, dstPath, info, depth, 
+                merger.doMerge(url1, revision1, url2, revision2, dstPath, adminArea, depth, 
                                childrenWithMergeInfo, useAncestry);
                 
                 if (!dryRun) {
@@ -1943,7 +1818,7 @@ public class SVNDiffClient extends SVNBasicClient {
         
         public void doMergeFile(SVNURL url1, SVNRevision revision1, SVNURL url2, 
                                 SVNRevision revision2, File dstPath, 
-                                SVNAdminAreaInfo info, boolean ignoreAncestry) throws SVNException {
+                                SVNAdminArea adminArea, boolean ignoreAncestry) throws SVNException {
 
             if (!revision1.isValid() || !revision2.isValid()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, 
@@ -2033,8 +1908,8 @@ public class SVNDiffClient extends SVNBasicClient {
                 }
     
                 SVNMergeRange[] remainingRanges = remainingRangeList.getRanges();
-                SVNMergeCallback callback = new SVNMergeCallback(info, myURL, myIsForce, 
-                        myIsDryRun, getMergeOptions());
+                SVNMergeCallback callback = new SVNMergeCallback(adminArea, myURL, myIsForce, 
+                                                                 myIsDryRun, getMergeOptions());
     
                 for (int i = 0; i < remainingRanges.length; i++) {
                     SVNMergeRange nextRange = remainingRanges[i];
@@ -2046,14 +1921,14 @@ public class SVNDiffClient extends SVNBasicClient {
                     File f1 = null;
                     File f2 = null;
     
-                    String name = info.getTargetName();
+                    String name = dstPath.getName();
                     String mimeType2;
                     String mimeType1;
                     SVNStatusType[] mergeResult;
     
                     try {
-                        f1 = loadFile(repository1, nextRange.getStartRevision(), props1, info);
-                        f2 = loadFile(repository2, nextRange.getEndRevision(), props2, info);
+                        f1 = loadFile(repository1, nextRange.getStartRevision(), props1, adminArea);
+                        f2 = loadFile(repository2, nextRange.getEndRevision(), props2, adminArea);
     
                         mimeType1 = (String) props1.get(SVNProperty.MIME_TYPE);
                         mimeType2 = (String) props2.get(SVNProperty.MIME_TYPE);
@@ -2065,21 +1940,21 @@ public class SVNDiffClient extends SVNBasicClient {
                         if (isReplace) {
                             SVNStatusType cstatus = callback.fileDeleted(name, f1, f2, mimeType1, 
                                                                          mimeType2, props1);
-                            notifyFileMerge(info, name, SVNEventAction.UPDATE_DELETE, cstatus, 
+                            notifyFileMerge(adminArea, name, SVNEventAction.UPDATE_DELETE, cstatus, 
                                             SVNStatusType.UNKNOWN, null);
                             
                             mergeResult = callback.fileAdded(name, f1, f2, nextRange.getStartRevision(), 
                                                              nextRange.getEndRevision(), mimeType1, mimeType2, 
                                                              props1, propsDiff);
                             
-                            notifyFileMerge(info, name, SVNEventAction.UPDATE_ADD, mergeResult[0], 
-                                            mergeResult[1], null);
+                            notifyFileMerge(adminArea, name, SVNEventAction.UPDATE_ADD, 
+                                            mergeResult[0], mergeResult[1], null);
                         } else {
                             mergeResult = callback.fileChanged(name, f1, f2, nextRange.getStartRevision(), 
                                                                nextRange.getEndRevision(), mimeType1, 
                                                                mimeType2, props1, propsDiff);
-                            notifyFileMerge(info, name, SVNEventAction.UPDATE_UPDATE, mergeResult[0], 
-                                            mergeResult[1], mimeType2);
+                            notifyFileMerge(adminArea, name, SVNEventAction.UPDATE_UPDATE, 
+                                            mergeResult[0], mergeResult[1], mimeType2);
                         }
                                 
                         if (myIsSameURLs) {
@@ -2132,7 +2007,7 @@ public class SVNDiffClient extends SVNBasicClient {
         }
     
         public void doMerge(SVNURL url1, SVNRevision revision1, SVNURL url2, SVNRevision revision2, 
-                             final File dstPath, SVNAdminAreaInfo info, 
+                             final File dstPath, SVNAdminArea adminArea, 
                              SVNDepth depth, final Collection childrenSwitchedOrWithMergeInfo, 
                              boolean useAncestry) throws SVNException {
             if (!revision1.isValid() || !revision2.isValid()) {
@@ -2205,7 +2080,7 @@ public class SVNDiffClient extends SVNBasicClient {
             }
 
             SVNMergeRange[] remainingRanges = remainingRangeList.getRanges();
-            SVNMergeCallback callback = new SVNMergeCallback(info, myURL, myIsForce, myIsDryRun, 
+            SVNMergeCallback callback = new SVNMergeCallback(adminArea, myURL, myIsForce, myIsDryRun, 
                                                              getMergeOptions());
 
             SVNRemoteDiffEditor editor = null; 
@@ -2221,7 +2096,7 @@ public class SVNDiffClient extends SVNBasicClient {
                     final long rev2 = nextRange.getEndRevision();
                     
                     if (editor == null) {
-                        editor = new SVNRemoteDiffEditor(info, info.getTarget().getRoot(), 
+                        editor = new SVNRemoteDiffEditor(adminArea, adminArea.getRoot(), 
                                                          callback, repository2, 
                                                          rev1, 
                                                          rev2, 
@@ -2306,7 +2181,7 @@ public class SVNDiffClient extends SVNBasicClient {
 
         public LinkedList discoverAndMergeChildren(SVNEntry parentEntry, SVNRevision revision1, 
                                                    SVNRevision revision2, SVNDepth depth,
-                                                   SVNURL parentURL, SVNAdminAreaInfo info,
+                                                   SVNURL parentURL, SVNAdminArea adminArea,
                                                    boolean ignoreAncestry) throws SVNException {
             
             LinkedList childrenSwitchedOrWithMergeInfo = getSwitchedOrWithMergeInfoChildren(parentEntry);
@@ -2325,9 +2200,10 @@ public class SVNDiffClient extends SVNBasicClient {
                 }
                 SVNURL childURL = parentURL.appendPath(relPath, false);
                 if (childEntry.isFile()) {
-                    doMergeFile(childURL, revision1, childURL, revision2, childFile, info, ignoreAncestry);
+                    doMergeFile(childURL, revision1, childURL, revision2, childFile, adminArea, 
+                                ignoreAncestry);
                 } else if (childEntry.isDirectory()) {
-                    doMerge(childURL, revision1, childURL, revision2, childFile, info, depth, 
+                    doMerge(childURL, revision1, childURL, revision2, childFile, adminArea, depth, 
                             childrenSwitchedOrWithMergeInfo, !ignoreAncestry);
                 }
             }
@@ -2457,13 +2333,10 @@ public class SVNDiffClient extends SVNBasicClient {
             return children;
         }
         
-        private void notifyFileMerge(SVNAdminAreaInfo info, String name, 
-                                     SVNEventAction action, 
-                                     SVNStatusType cstate, 
-                                     SVNStatusType pstate, 
-                                     String mimeType) throws SVNException {
+        private void notifyFileMerge(SVNAdminArea adminArea, String name, SVNEventAction action, 
+                                     SVNStatusType cstate, SVNStatusType pstate, String mimeType) throws SVNException {
             action = cstate == SVNStatusType.MISSING ? SVNEventAction.SKIP : action;
-            SVNEvent event = SVNEventFactory.createUpdateModifiedEvent(info, info.getAnchor(), name, 
+            SVNEvent event = SVNEventFactory.createUpdateModifiedEvent(adminArea, name, 
                                                                        SVNNodeKind.FILE, action,
                                                                        mimeType, cstate, pstate, 
                                                                        SVNStatusType.LOCK_INAPPLICABLE);
@@ -2668,8 +2541,8 @@ public class SVNDiffClient extends SVNBasicClient {
         }
         
         private File loadFile(SVNRepository repository, long revision, 
-                              Map properties, SVNAdminAreaInfo info) throws SVNException {
-            File tmpDir = info.getAnchor().getAdminTempDirectory();
+                              Map properties, SVNAdminArea adminArea) throws SVNException {
+            File tmpDir = adminArea.getAdminTempDirectory();
             File result = SVNFileUtil.createUniqueFile(tmpDir, ".merge", ".tmp");
             SVNFileUtil.createEmptyFile(result);
             

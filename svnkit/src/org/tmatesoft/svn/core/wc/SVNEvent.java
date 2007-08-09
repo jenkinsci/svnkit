@@ -18,7 +18,6 @@ import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 
 /**
  * The <b>SVNEvent</b> class is used to provide detailed information on 
@@ -112,7 +111,7 @@ public class SVNEvent {
     private SVNStatusType myPropertiesStatus;
     private SVNStatusType myLockStatus;
     private SVNLock myLock;
-    private SVNAdminAreaInfo myAdminAreaInfo;
+    private SVNAdminArea myAdminArea;
     private String myName;
     private String myPath;
     private File myRoot;
@@ -155,10 +154,10 @@ public class SVNEvent {
      * @param lock           the item's lock
      * @param error          an error message
      */
-    public SVNEvent(SVNAdminAreaInfo info, SVNAdminArea adminArea, String name,
-            SVNEventAction action, SVNEventAction expectedAction, SVNNodeKind kind, 
-            long revision, String mimetype, SVNStatusType cstatus, SVNStatusType pstatus,
-            SVNStatusType lstatus, SVNLock lock, SVNErrorMessage error) {
+    public SVNEvent(SVNAdminArea adminArea, String name, SVNEventAction action, 
+                    SVNEventAction expectedAction, SVNNodeKind kind, 
+                    long revision, String mimetype, SVNStatusType cstatus, SVNStatusType pstatus,
+                    SVNStatusType lstatus, SVNLock lock, SVNErrorMessage error) {
         myMimeType = mimetype;
         myErrorMessage = error;
         myExpectedAction = expectedAction != null ? expectedAction : action;
@@ -169,7 +168,7 @@ public class SVNEvent {
         myPropertiesStatus = pstatus == null ? SVNStatusType.INAPPLICABLE : pstatus;
         myLockStatus = lstatus == null ? SVNStatusType.INAPPLICABLE : lstatus;
         myLock = lock;
-        myAdminAreaInfo = info;
+        myAdminArea = adminArea;
         myRoot = adminArea != null ? adminArea.getRoot() : null;
         myName = name;
     }
@@ -180,7 +179,6 @@ public class SVNEvent {
      * Used by SVNKit internals to construct and initialize an 
      * <b>SVNEvent</b> object. It's not intended for users (from an API point of view).
      * 
-     * @param info       admin info
      * @param adminArea  admin area the item belongs to
      * @param name       the item's name
      * @param action     the type of action the item is exposed to
@@ -193,11 +191,11 @@ public class SVNEvent {
      * @param lock       the item's lock
      * @param error      an error message
      */
-    public SVNEvent(SVNAdminAreaInfo info, SVNAdminArea adminArea, String name,
-            SVNEventAction action, SVNNodeKind kind, long revision,
-            String mimetype, SVNStatusType cstatus, SVNStatusType pstatus,
-            SVNStatusType lstatus, SVNLock lock, SVNErrorMessage error) {
-        this(info, adminArea, name, action, null, kind, revision, mimetype, cstatus, pstatus, lstatus, lock, error);
+    public SVNEvent(SVNAdminArea adminArea, String name, SVNEventAction action, SVNNodeKind kind, 
+                    long revision, String mimetype, SVNStatusType cstatus, SVNStatusType pstatus,
+                    SVNStatusType lstatus, SVNLock lock, SVNErrorMessage error) {
+        this(adminArea, name, action, null, kind, revision, mimetype, cstatus, pstatus, lstatus, 
+             lock, error);
     }
     
     /**
@@ -298,11 +296,11 @@ public class SVNEvent {
         if (myPath != null) {
             return myPath;
         }
-        if (myAdminAreaInfo == null && myRootFile == null) {
+        if (myAdminArea == null && myRootFile == null) {
             return myName;
         }
         File file = getFile();
-        File root = myAdminAreaInfo != null ? myAdminAreaInfo.getAnchor().getRoot() : myRootFile;
+        File root = myAdminArea != null ? myAdminArea.getRoot() : myRootFile;
         String rootPath = root.getAbsolutePath().replace(File.separatorChar, '/');
         String filePath = file.getAbsolutePath().replace(File.separatorChar, '/');
         myPath = filePath.substring(rootPath.length());
@@ -320,8 +318,8 @@ public class SVNEvent {
     public File getFile() {
         if (myRoot != null) {
             return ("".equals(myName) || ".".equals(myName)) ? myRoot : new File(myRoot, myName);
-        } else if (myAdminAreaInfo != null && getPath() != null) {
-            return new File(myAdminAreaInfo.getAnchor().getRoot(), getPath());
+        } else if (myAdminArea != null && getPath() != null) {
+            return new File(myAdminArea.getRoot(), getPath());
         }
         return null;
     }

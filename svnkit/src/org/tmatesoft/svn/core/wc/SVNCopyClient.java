@@ -598,7 +598,7 @@ public class SVNCopyClient extends SVNBasicClient {
                                                             repository);
                 extendWCMergeInfo(dstPath, dstPath.getName(), srcMergeInfo, adminArea);
                 
-                dispatchEvent(SVNEventFactory.createAddedEvent(null, adminArea, dstAccess.getEntry(dstPath, false)));
+                dispatchEvent(SVNEventFactory.createAddedEvent(adminArea, dstAccess.getEntry(dstPath, false)));
                 revision = srcRevisionNumber;
                 sleepForTimeStamp();
             }

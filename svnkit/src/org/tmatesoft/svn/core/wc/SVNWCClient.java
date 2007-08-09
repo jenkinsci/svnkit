@@ -1743,7 +1743,7 @@ public class SVNWCClient extends SVNBasicClient {
         }
         SVNAdminArea dir = wcAccess.retrieve(dirPath);
         if (dir.markResolved(entry.getName(), true, true, accept)) {
-            SVNEvent event = SVNEventFactory.createResolvedEvent(null, dir, entry);
+            SVNEvent event = SVNEventFactory.createResolvedEvent(dir, entry);
             dispatchEvent(event);
         }
     }
