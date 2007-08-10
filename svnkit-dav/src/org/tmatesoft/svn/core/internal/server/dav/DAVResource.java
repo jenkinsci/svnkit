@@ -209,8 +209,8 @@ public class DAVResource {
         if (specialURIIndex == -1) {
             setKind(DAVResourceKind.PUBLIC);
             setType(DAVResource.DAV_RESOURCE_TYPE_REGULAR);
-            setPath("".equals(uri) ? "/" : uri);
-            setParameterPath(getPath());
+            setParameterPath("".equals(uri) ? "/" : uri);
+            setPath("/");
             setVersioned(true);
         } else {
             String path = uri.substring(0, specialURIIndex);
@@ -427,11 +427,6 @@ public class DAVResource {
         }
     }
 
-
-    public boolean lacksETagPotential() {
-        return (!exists() || (getType() != DAVResource.DAV_RESOURCE_TYPE_REGULAR && getType() != DAVResource.DAV_RESOURCE_TYPE_VERSION) || getType() == DAVResource.DAV_RESOURCE_TYPE_VERSION && isBaseLined());
-    }
-
     private SVNNodeKind getNodeKind() throws SVNException {
         SVNNodeKind currentNodeKind = null;
         try {
@@ -444,6 +439,11 @@ public class DAVResource {
             }
         }
         return currentNodeKind;
+    }
+
+    public boolean lacksETagPotential() {
+        return (!exists() || (getType() != DAVResource.DAV_RESOURCE_TYPE_REGULAR && getType() != DAVResource.DAV_RESOURCE_TYPE_VERSION)
+                || getType() == DAVResource.DAV_RESOURCE_TYPE_VERSION && isBaseLined());
     }
 
     public String getLastModified() {
