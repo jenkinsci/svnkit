@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 
@@ -32,9 +33,15 @@ public class SVNCommandTarget {
     private boolean myHasPegRevision;
     private String myTarget;
     private SVNRevision myPegRevision = SVNRevision.UNDEFINED;
+    private File myFile;
 
     public SVNCommandTarget(String target) throws SVNException {
         this(target, false);
+    }
+
+    public SVNCommandTarget(String target, File file) {
+        myTarget = SVNPathUtil.canonicalizePath(target);
+        myFile = file;
     }
 
     public SVNCommandTarget(String target, boolean hasPegRevision) throws SVNException {
@@ -59,7 +66,10 @@ public class SVNCommandTarget {
     }
     
     public File getFile() {
-        if (isFile()) {
+        if (myFile != null) {
+            return myFile;
+        }
+        if (isFile()) {            
             return new File(myTarget).getAbsoluteFile();
         }
         return null;
@@ -77,20 +87,27 @@ public class SVNCommandTarget {
     }
     
     public String getPath(File file) {
-        // convert all to '/'.
         String inPath = file.getAbsolutePath().replace(File.separatorChar, '/');
         String basePath = getFile().getAbsolutePath().replace(File.separatorChar, '/');
-        if (inPath.equals(basePath)) {
+        if (equals(inPath, basePath)) {
             return myTarget;
-        } else if (inPath.length() > basePath.length() && inPath.startsWith(basePath + "/")) {
+        } else if (inPath.length() > basePath.length() && startsWith(inPath, basePath + "/")) {
             if ("".equals(myTarget)) {
                 return inPath.substring(basePath.length() + 1);
             }
             return myTarget + inPath.substring(basePath.length());
         }
+        String commonRoot = getCommonAncestor(inPath, basePath);
+        if (commonRoot != null) {
+            if (inPath.length() == commonRoot.length()) {
+                return inPath;
+            } else if (startsWith(inPath, commonRoot + "/")) {
+                return inPath.substring(commonRoot.length() + 1);
+            }
+        }
         return inPath;
     }
-    
+
     private void parsePegRevision() throws SVNException {
         int index = myTarget.lastIndexOf('@');
         if (index > 0) {
@@ -114,5 +131,34 @@ public class SVNCommandTarget {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Syntax error parsing revision ''{0}''", myTarget.substring(index + 1));
             SVNErrorManager.error(err);
         }
+    }
+    
+    private static boolean startsWith(String p1, String p2) {
+        if (SVNFileUtil.isWindows || SVNFileUtil.isOpenVMS) {
+            return p1.toLowerCase().startsWith(p2.toLowerCase());
+        }
+        return p1.startsWith(p2);
+    }
+
+    private static boolean equals(String p1, String p2) {
+        if (SVNFileUtil.isWindows || SVNFileUtil.isOpenVMS) {
+            return p1.toLowerCase().equals(p2.toLowerCase());
+        }
+        return p1.equals(p2);
+    }
+
+    private static String getCommonAncestor(String p1, String p2) {
+        if (SVNFileUtil.isWindows || SVNFileUtil.isOpenVMS) {
+            String ancestor = SVNPathUtil.getCommonPathAncestor(p1.toLowerCase(), p2.toLowerCase());
+            if (equals(ancestor, p1)) {
+                return p1;
+            } else if (equals(ancestor, p2)) {
+                return p2;
+            } else if (startsWith(p1, ancestor)) {
+                return p1.substring(0, ancestor.length());
+            }
+            return ancestor;
+        }
+        return SVNPathUtil.getCommonPathAncestor(p1, p2);
     }
 }

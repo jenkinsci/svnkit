@@ -497,6 +497,7 @@ public class SVNCommitClient extends SVNBasicClient {
         items[0] = new SVNCommitItem(path, dstURL, null, srcKind == SVNFileType.DIRECTORY ? SVNNodeKind.DIR : 
                         SVNNodeKind.FILE, SVNRevision.UNDEFINED, SVNRevision.UNDEFINED,  
                         true, false, false, false, false, false);
+        items[0].setPath(path.getName());
         commitMessage = getCommitHandler().getCommitMessage(commitMessage, items);
         if (commitMessage == null) {
             return SVNCommitInfo.NULL;

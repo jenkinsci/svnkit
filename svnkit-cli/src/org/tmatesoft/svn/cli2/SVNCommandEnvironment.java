@@ -112,6 +112,12 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
     private String myNativeEOL;
 
     private boolean myIsRelocate;
+
+    private boolean myIsNoAutoProps;
+
+    private boolean myIsAutoProps;
+
+    private boolean myIsKeepChangelist;
     
     public SVNCommandEnvironment(PrintStream out, PrintStream err, InputStream in) {
         myIsDescend = true;
@@ -138,7 +144,15 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
         File configDir = myConfigDir != null ? new File(myConfigDir) : SVNWCUtil.getDefaultConfigurationDirectory();        
         ISVNOptions options = SVNWCUtil.createDefaultOptions(configDir, true);
         options.setAuthStorageEnabled(!myIsNoAuthCache);
-        
+        if (myIsAutoProps) {
+            options.setUseAutoProperties(true);
+        } 
+        if (myIsNoAutoProps) {
+            options.setUseAutoProperties(false);
+        }
+        if (myIsNoUnlock) {
+            options.setKeepLocks(true);
+        }
         ISVNAuthenticationManager authManager = SVNWCUtil.createDefaultAuthenticationManager(configDir, myUserName, myPassword, !myIsNoAuthCache);
         if (!myIsNonInteractive) {
             authManager.setAuthenticationProvider(new SVNConsoleAuthenticationProvider());
@@ -308,12 +322,26 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
                 myEditorCommand = optionValue.getValue();
             } else if (option == SVNOption.CONFIG_DIR) {
                 myConfigDir = optionValue.getValue();
+            } else if (option == SVNOption.AUTOPROPS) {
+                if (myIsNoAutoProps) {
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_MUTUALLY_EXCLUSIVE_ARGS, 
+                    "--auto-props and --no-auto-props are mutually exclusive"));
+                }
+                myIsAutoProps = true;
+            } else if (option == SVNOption.NO_AUTOPROPS) {
+                if (myIsAutoProps) {
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_MUTUALLY_EXCLUSIVE_ARGS, 
+                    "--auto-props and --no-auto-props are mutually exclusive"));
+                }
+                myIsNoAutoProps = true;
             } else if (option == SVNOption.NATIVE_EOL) {
                 myNativeEOL = optionValue.getValue();
             } else if (option == SVNOption.NO_UNLOCK) {
                 myIsNoUnlock = true;
             } else if (option == SVNOption.CHANGELIST) {
                 myChangelist = optionValue.getValue();
+            } else if (option == SVNOption.KEEP_CHANGELIST) {
+                myIsKeepChangelist = true;
             } else if (option == SVNOption.NO_IGNORE) {
                 myIsNoIgnore = true;
             } else if (option == SVNOption.WITH_REVPROP) {
@@ -626,6 +654,14 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
         return myIsRelocate;
     }
     
+    public boolean isNoUnlock() {
+        return myIsNoUnlock;
+    }
+    
+    public boolean isKeepChangelist() {
+        return myIsKeepChangelist;
+    }
+    
     public SVNDiffOptions getDiffOptions() {
         boolean ignoreAllWS = myExtensions.contains("-w") || myExtensions.contains("--ignore-all-space");
         boolean ignoreAmountOfWS = myExtensions.contains("-b") || myExtensions.contains("--ignore-space-change");
@@ -637,11 +673,13 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
     public void handleError(SVNErrorMessage err) {
         Collection codes = new HashSet();
         while(err != null) {
-            if (codes.contains(err.getErrorCode())) {
+            if ("".equals(err.getMessageTemplate()) && codes.contains(err.getErrorCode())) {
                 err = err.hasChildErrorMessage() ? err.getChildErrorMessage() : null;
                 continue;
             }
-            codes.add(err.getErrorCode());
+            if ("".equals(err.getMessageTemplate())) {
+                codes.add(err.getErrorCode());
+            }
             Object[] objects = err.getRelatedObjects();
             if (objects != null && myCurrentTarget != null) {
                 String template = err.getMessageTemplate();
@@ -650,10 +688,11 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
                         objects[i] = SVNCommandUtil.getLocalPath(getCurrentTargetRelativePath((File) objects[i]));
                     }
                 }
+                String message = (objects.length > 0 ? MessageFormat.format(template, objects) : template);
                 if (err.getType() == SVNErrorMessage.TYPE_WARNING) {
-                    getErr().println("svn: warning: " + MessageFormat.format(template, objects));
+                    getErr().println("svn: warning: " + message);
                 } else {
-                    getErr().println("svn: " + MessageFormat.format(template, objects));
+                    getErr().println("svn: " + message);
                 }
             } else {
                 getErr().println(err.getMessage());
@@ -718,23 +757,29 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
     }
 
     public void printCommitInfo(SVNCommitInfo info) {
-        if (info != null) {
+        if (info != null && info.getNewRevision() >= 0) {
             getOut().println("\nCommitted revision " + info.getNewRevision() + ".");
             if (info.getErrorMessage() != null && info.getErrorMessage().isWarning()) {
-                getOut().println("\nWarning: " + info.getErrorMessage().getMessage());
+                getOut().println("\n" + info.getErrorMessage().getMessage());
             }
         }
     }
 
     public String getCommitMessage(String message, SVNCommitItem[] commitables) throws SVNException {
-        if (getMessage() != null) {
-            return getMessage();
-        } else if (getFileData() != null) {
+        if (getFileData() != null) {
+            byte[] data = getFileData();
+            for (int i = 0; i < data.length; i++) {
+                if (data[i] == 0) {
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_BAD_LOG_MESSAGE, "Log message contains a zero byte"));
+                }
+            }
             try {
                 return new String(getFileData(), getEncoding() != null ? getEncoding() : "UTF-8");
             } catch (UnsupportedEncodingException e) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()));
             }
+        } else if (getMessage() != null) {
+            return getMessage();
         }
         if (commitables == null || commitables.length == 0) {
             return "";
@@ -800,10 +845,11 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
         buffer.append(System.getProperty("line.separator"));
         buffer.append(DEFAULT_LOG_MESSAGE_HEADER);
         buffer.append(System.getProperty("line.separator"));
+        buffer.append(System.getProperty("line.separator"));
         for (int i = 0; i < items.length; i++) {
             SVNCommitItem item = items[i];
-            String path = item.getFile() != null ? item.getPath() : item.getURL().toString();
-            if ("".equals(path)) {
+            String path = item.getPath() != null ? item.getPath() : item.getURL().toString();
+            if ("".equals(path) || path == null) {
                 path = ".";
             }
             if (item.isDeleted() && item.isAdded()) {

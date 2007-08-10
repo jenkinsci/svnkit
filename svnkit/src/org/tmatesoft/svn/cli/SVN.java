@@ -121,6 +121,9 @@ public class SVN {
         newCommands.add("help");
         newCommands.add("h");
         newCommands.add("?");
+        newCommands.add("import");
+        newCommands.add("commit");
+        newCommands.add("ci");
     }
 
     public static void main(String[] args) {

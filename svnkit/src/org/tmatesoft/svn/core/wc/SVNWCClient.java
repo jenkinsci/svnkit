@@ -533,9 +533,10 @@ public class SVNWCClient extends SVNBasicClient {
             SVNErrorManager.error(err);
         }
         Collection commitItems = new ArrayList(2);
-        commitItems.add(new SVNCommitItem(null, url, null, 
+        SVNCommitItem commitItem = new SVNCommitItem(null, url, null, 
                 kind, SVNRevision.create(revNumber), SVNRevision.UNDEFINED, 
-                false, false, true, false, false, false));
+                false, false, true, false, false, false);
+        commitItems.add(commitItem);
         commitMessage = getCommitHandler().getCommitMessage(commitMessage, (SVNCommitItem[]) commitItems.toArray(new SVNCommitItem[commitItems.size()]));                
         if (commitMessage == null) {
             return SVNCommitInfo.NULL;

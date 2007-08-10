@@ -368,8 +368,7 @@ public class SVNPathUtil {
         path = path.replace(File.separatorChar, '/');
         StringBuffer result = new StringBuffer();
         List segments = new LinkedList();
-        for (StringTokenizer tokens = new StringTokenizer(path, "/", false); tokens
-                .hasMoreTokens();) {
+        for (StringTokenizer tokens = new StringTokenizer(path, "/", false); tokens.hasMoreTokens();) {
             String segment = tokens.nextToken();
             if ("..".equals(segment)) {
                 if (!segments.isEmpty()) {

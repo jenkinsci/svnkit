@@ -57,6 +57,7 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
     private static final String KEYWORD_TIMEZONE = "keyword_timezone";
     private static final String KEYWORD_LOCALE = "keyword_locale";
     private static final String EDITOR_CMD = "editor-cmd";
+    private static final String NO_UNLOCK = "no-unlock";
     private static final String PRESERVED_CONFLICT_FILE_EXTENSIONS = "preserved-conflict-file-exts";
     
     private static final String DEFAULT_IGNORES = "*.o *.lo *.la #*# .*.rej *.rej .*~ *~ .#* .DS_Store";    
@@ -108,9 +109,18 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
         String value = getConfigFile().getPropertyValue(AUTH_GROUP, STORE_AUTH_CREDS);
         return getBooleanValue(value, true);
     }
+
+    public boolean isKeepLocks() {
+        String value = getConfigFile().getPropertyValue(MISCELLANY_GROUP, NO_UNLOCK);
+        return getBooleanValue(value, false);
+    }
     
     public void setAuthStorageEnabled(boolean storeAuth) {
         getConfigFile().setPropertyValue(AUTH_GROUP, STORE_AUTH_CREDS, storeAuth ? YES : NO, !myIsReadonly);
+    }
+
+    public void setKeepLocks(boolean keep) {
+        getConfigFile().setPropertyValue(MISCELLANY_GROUP, NO_UNLOCK, keep ? YES : NO, !myIsReadonly);
     }
 
     public boolean isIgnored(File file) {

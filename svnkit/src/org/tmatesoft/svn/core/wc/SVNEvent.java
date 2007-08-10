@@ -317,7 +317,7 @@ public class SVNEvent {
      */
     public File getFile() {
         if (myRoot != null) {
-            return ("".equals(myName) || ".".equals(myName)) ? myRoot : new File(myRoot, myName);
+            return ("".equals(myName) || ".".equals(myName) || myName == null) ? myRoot : new File(myRoot, myName);
         } else if (myAdminArea != null && getPath() != null) {
             return new File(myAdminArea.getRoot(), getPath());
         }

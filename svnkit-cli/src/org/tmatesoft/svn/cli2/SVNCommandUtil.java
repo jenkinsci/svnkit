@@ -66,7 +66,8 @@ public class SVNCommandUtil {
     }
     
     public static byte[] runEditor(SVNCommandEnvironment env, String existingValue, String prefix) throws SVNException {
-        File tmpFile = SVNFileUtil.createTempFile(prefix, "");
+        File tmpDir = new File(System.getProperty("java.io.tmpdir"));
+        File tmpFile = SVNFileUtil.createUniqueFile(tmpDir, prefix, ".tmp");
         OutputStream os = null;
         try {
             os = SVNFileUtil.openFileForWriting(tmpFile);
@@ -81,15 +82,20 @@ public class SVNCommandUtil {
         long timestamp = tmpFile.lastModified();
         String editorCommand = getEditorCommand(env);
         try {
+            String result = null;
             if (SVNFileUtil.isWindows) {
                 String editor = editorCommand.trim().toLowerCase();
                 if (!(editor.endsWith(".exe") || editor.endsWith(".bat") || editor.endsWith(".cmd"))) {
-                    SVNFileUtil.execCommand(new String[] {"cmd.exe", "/C", editorCommand, tmpFile.getAbsolutePath()}, false);
+                    result = SVNFileUtil.execCommand(new String[] {"cmd.exe", "/C", editorCommand, tmpFile.getAbsolutePath()}, false);
                 } else {
-                    SVNFileUtil.execCommand(new String[] {editorCommand, tmpFile.getAbsolutePath()}, false);
+                    result = SVNFileUtil.execCommand(new String[] {editorCommand, tmpFile.getAbsolutePath()}, false);
                 }
             } else {
-                SVNFileUtil.execCommand(new String[] {editorCommand, tmpFile.getAbsolutePath()}, false);
+                result = SVNFileUtil.execCommand(new String[] {editorCommand, tmpFile.getAbsolutePath()}, false);
+            }
+            if (result == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Editor command '" + editorCommand + " " + tmpFile.getAbsolutePath() + "' failed.");
+                SVNErrorManager.error(err);
             }
             // now read from file.
             if (timestamp == tmpFile.lastModified()) {

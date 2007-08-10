@@ -63,6 +63,9 @@ public class SVNOption {
     public static final SVNOption IGNORE_ANCESTRY = new SVNOption("ignore-ancestry");
     public static final SVNOption NATIVE_EOL = new SVNOption("native-eol", false);
     public static final SVNOption RELOCATE = new SVNOption("relocate");
+    public static final SVNOption AUTOPROPS = new SVNOption("auto-props");
+    public static final SVNOption NO_AUTOPROPS = new SVNOption("no-auto-props");
+    public static final SVNOption KEEP_CHANGELIST = new SVNOption("keep-changelist");
     
     // auth options.
     public static final SVNOption USERNAME = new SVNOption("username", false);

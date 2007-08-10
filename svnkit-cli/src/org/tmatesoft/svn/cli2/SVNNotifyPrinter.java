@@ -18,6 +18,7 @@ import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
@@ -35,6 +36,7 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
     
     private boolean myIsInExternal;
     private boolean myIsChangesReceived;
+    private boolean myIsDeltaSent;
 
     private boolean myIsCheckout;
     private boolean myIsExport;
@@ -187,6 +189,24 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
                 buffer.append('\n');
                 myIsInExternal = false;
             }
+        } else if (event.getAction() == SVNEventAction.COMMIT_MODIFIED) {
+            buffer.append("Sending        " + path + "\n");
+        } else if (event.getAction() == SVNEventAction.COMMIT_ADDED) {
+            if (SVNProperty.isBinaryMimeType(event.getMimeType())) {
+                buffer.append("Adding  (bin)  " + path + "\n");
+            } else {
+                buffer.append("Adding         " + path + "\n");
+            }
+        } else if (event.getAction() == SVNEventAction.COMMIT_DELETED) {
+            buffer.append("Deleting       " + path + "\n");
+        } else if (event.getAction() == SVNEventAction.COMMIT_REPLACED) {
+            buffer.append("Replacing      " + path + "\n");
+        } else if (event.getAction() == SVNEventAction.COMMIT_DELTA_SENT) {
+            if (!myIsDeltaSent) {
+                myIsDeltaSent = true;
+                buffer.append("Transmitting file data ");
+            }
+            buffer.append('.');
         }
         if (buffer.length() > 0) {
             SVNDebugLog.getDefaultLog().info(buffer.toString());
