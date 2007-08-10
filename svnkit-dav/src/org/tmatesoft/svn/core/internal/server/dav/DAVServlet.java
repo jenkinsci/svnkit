@@ -61,7 +61,7 @@ public class DAVServlet extends HttpServlet {
         //TODO: wrap to multistatus.
         buffer.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
         buffer.append("<D:error xmlns:D=\"DAV:\"");
-        buffer.append(" xmlns:m=\"http://apache.org/dav/xmlns\"");        
+        buffer.append(" xmlns:m=\"http://apache.org/dav/xmlns\"");
         if (namespace != null && !"".equals(namespace)) {
             buffer.append(" xmlns:C=\"");
             buffer.append(namespace);

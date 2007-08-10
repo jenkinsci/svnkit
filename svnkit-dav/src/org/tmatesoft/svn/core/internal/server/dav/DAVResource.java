@@ -21,12 +21,12 @@ import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -366,7 +366,7 @@ public class DAVResource {
 
     private void parseVCC(String parameter, String label, boolean useCheckedIn) throws SVNException {
         if (!DEDAULT_VCC_NAME.equals(parameter)) {
-            //TODO: Handle this
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Invalid VCC name ''{0}''", parameter));
         }
         if (label == null && !useCheckedIn) {
             setType(DAVResource.DAV_RESOURCE_TYPE_PRIVATE);
@@ -500,20 +500,28 @@ public class DAVResource {
         return ((String) getSVNProperties().get(SVNProperty.CHECKSUM));
     }
 
-    public String getDeadpropCount() {
-        //TODO: Implemnt this
-        return String.valueOf(0);
+    public Collection getDeadProperties() {
+        Collection deadProperties = new ArrayList();
+        for (Iterator iterator = getSVNProperties().keySet().iterator(); iterator.hasNext();) {
+            String propertyName = (String) iterator.next();
+            if (SVNProperty.isRegularProperty(propertyName)) {
+                deadProperties.add(propertyName);
+            }
+        }
+        return deadProperties;
     }
 
     public String getLog(long revision) throws SVNException {
         return getRepository().getRevisionPropertyValue(revision, SVNRevisionProperty.LOG);
     }
 
-    public String getProperty(String propertyName) throws SVNException {
+    public String getProperty(String namespace, String name) throws SVNException {
+        String propertyName = DAVResourceUtil.convertToSVNProperty(namespace, name);
         return ((String) getSVNProperties().get(propertyName));
     }
 
-    public String getRevisionProperty(String propertyName, long revision) throws SVNException {
+    public String getRevisionProperty(String namespace, String name, long revision) throws SVNException {
+        String propertyName = DAVResourceUtil.convertToSVNProperty(namespace, name);
         return getRepository().getRevisionPropertyValue(revision, propertyName);
     }
 }
