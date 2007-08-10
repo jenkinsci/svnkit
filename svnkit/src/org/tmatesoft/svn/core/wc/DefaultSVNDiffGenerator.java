@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,9 +28,11 @@ import java.util.TreeMap;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNMergeInfoManager;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 
 import de.regnis.q.sequence.line.diff.QDiffGenerator;
@@ -194,6 +197,10 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                 String newValue = (String) diff.get(name);
                 bos.write(("Name: " + name).getBytes(getEncoding()));
                 bos.write(EOL);
+                if (SVNProperty.MERGE_INFO.equals(name)) {
+                    displayMergeInfoDiff(bos, originalValue, newValue);
+                    continue;
+                }
                 if (originalValue != null) {
                     bos.write("   - ".getBytes(getEncoding()));
                     bos.write(originalValue.getBytes(getEncoding()));
@@ -493,5 +500,38 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     
     protected boolean useLocalFileSeparatorChar() {
         return true;
+    }
+    
+    private void displayMergeInfoDiff(ByteArrayOutputStream baos, String oldValue, String newValue) throws SVNException, UnsupportedEncodingException, IOException {
+        Map oldMergeInfo = null;
+        Map newMergeInfo = null;
+        if (oldValue != null) {
+            oldMergeInfo = SVNMergeInfoManager.parseMergeInfo(new StringBuffer(oldValue), 
+                                                              null);
+        }
+        if (newValue != null) {
+            newMergeInfo = SVNMergeInfoManager.parseMergeInfo(new StringBuffer(newValue), 
+                                                              null);
+        }
+        
+        Map deleted = new TreeMap();
+        Map added = new TreeMap();
+        SVNMergeInfoManager.diffMergeInfo(deleted, added, oldMergeInfo, newMergeInfo);
+
+        for (Iterator paths = deleted.keySet().iterator(); paths.hasNext();) {
+            String path = (String) paths.next();
+            SVNMergeRangeList rangeList = (SVNMergeRangeList) deleted.get(path);
+            baos.write(("   Reverted " + path + ":r").getBytes(getEncoding())); 
+            baos.write(rangeList.toString().getBytes(getEncoding()));
+            baos.write(EOL);
+        }
+        
+        for (Iterator paths = added.keySet().iterator(); paths.hasNext();) {
+            String path = (String) paths.next();
+            SVNMergeRangeList rangeList = (SVNMergeRangeList) added.get(path);
+            baos.write(("   Merged " + path + ":r").getBytes(getEncoding())); 
+            baos.write(rangeList.toString().getBytes(getEncoding()));
+            baos.write(EOL);
+        }
     }
 }

@@ -557,7 +557,9 @@ public class SVNWCAccess implements ISVNEventHandler {
             SVNFileType wcType = SVNFileType.getType(adminDir);
             
             if (type == SVNFileType.NONE) {
+                SVNErrorMessage childErr = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "Directory ''{0}'' is missing", path);
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Directory ''{0}'' is missing", path);
+                err.setChildErrorMessage(childErr);
                 SVNErrorManager.error(err);
             } else if (type == SVNFileType.DIRECTORY && wcType == SVNFileType.NONE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Directory ''{0}'' containing working copy admin area is missing", adminDir);

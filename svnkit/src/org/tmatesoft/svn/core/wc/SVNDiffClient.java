@@ -1892,9 +1892,9 @@ public class SVNDiffClient extends SVNBasicClient {
                                                              SVNProperty.MERGE_INFO, 
                                                              mergeInfoStr, true);
                                 
-                            updateWCMergeInfo(dstPath, reposPath, entry, merges, isRollBack);
-                            return;
                         }
+                        updateWCMergeInfo(dstPath, reposPath, entry, merges, isRollBack);
+                        return;
                     }
                 
                     SVNMergeRangeList requestedRangeList = calculateRequestedRanges(range, 
@@ -2064,9 +2064,9 @@ public class SVNDiffClient extends SVNBasicClient {
                                                          SVNProperty.MERGE_INFO, 
                                                          mergeInfoStr, true);
 
-                        updateWCMergeInfo(dstPath, reposPath, entry, merges, isRollBack);
-                        return;
                     }
+                    updateWCMergeInfo(dstPath, reposPath, entry, merges, isRollBack);
+                    return;
                 }
                 
                 SVNMergeRangeList requestedRangeList = calculateRequestedRanges(range,  
@@ -2324,9 +2324,13 @@ public class SVNDiffClient extends SVNBasicClient {
                 }
                 
                 public void handleError(File path, SVNErrorMessage error) throws SVNException {
-                    if (error.getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
-                        SVNErrorManager.error(error);
+                    while (error.hasChildErrorMessage()) {
+                        error = error.getChildErrorMessage();
                     }
+                    if (error.getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
+                        return;
+                    }
+                    SVNErrorManager.error(error);
                 }
             };
             adminArea.walkEntries(entry.getName(), handler, false, true);
