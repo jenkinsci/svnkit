@@ -44,11 +44,11 @@ public class DAVDepth {
     }
 
     public static DAVDepth parseDepth(String depth) {
-        if (DAVDepth.DEPTH_INFINITY.toString().equals(depth)) {
+        if (DAVDepth.DEPTH_INFINITY.toString().equalsIgnoreCase(depth)) {
             return DAVDepth.DEPTH_INFINITY;
-        } else if (DAVDepth.DEPTH_ZERO.toString().equals(depth)) {
+        } else if (DAVDepth.DEPTH_ZERO.toString().equalsIgnoreCase(depth)) {
             return DAVDepth.DEPTH_ZERO;
-        } else if (DAVDepth.DEPTH_ONE.toString().equals(depth)) {
+        } else if (DAVDepth.DEPTH_ONE.toString().equalsIgnoreCase(depth)) {
             return DAVDepth.DEPTH_ONE;
         }
         return null;
