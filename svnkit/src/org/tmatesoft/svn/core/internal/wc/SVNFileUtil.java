@@ -370,6 +370,7 @@ public class SVNFileUtil {
             SVNFileUtil.closeFile(os);
         }
         if (error != null) {
+            error = null;
             InputStream sis = null;
             OutputStream dos = null;
             try {
