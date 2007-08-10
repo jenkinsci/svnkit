@@ -88,7 +88,8 @@ public class SVNCommandTarget {
     
     public String getPath(File file) {
         String inPath = file.getAbsolutePath().replace(File.separatorChar, '/');
-        String basePath = getFile().getAbsolutePath().replace(File.separatorChar, '/');
+        String basePath = new File("").getAbsolutePath().replace(File.separatorChar, '/');
+        /*
         if (equals(inPath, basePath)) {
             return myTarget;
         } else if (inPath.length() > basePath.length() && startsWith(inPath, basePath + "/")) {
@@ -96,11 +97,11 @@ public class SVNCommandTarget {
                 return inPath.substring(basePath.length() + 1);
             }
             return myTarget + inPath.substring(basePath.length());
-        }
+        }*/
         String commonRoot = getCommonAncestor(inPath, basePath);
         if (commonRoot != null) {
-            if (inPath.length() == commonRoot.length()) {
-                return inPath;
+            if (equals(inPath , commonRoot)) {
+                return "";
             } else if (startsWith(inPath, commonRoot + "/")) {
                 return inPath.substring(commonRoot.length() + 1);
             }

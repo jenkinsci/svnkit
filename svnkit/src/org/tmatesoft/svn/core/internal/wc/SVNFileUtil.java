@@ -40,6 +40,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.util.SVNDebugLog;
@@ -116,6 +117,23 @@ public class SVNFileUtil {
         CHMOD_COMMAND = props.getProperty(prefix + "chmod", "chmod");
         ATTRIB_COMMAND = props.getProperty(prefix + "attrib", "attrib");
         ENV_COMMAND = props.getProperty(prefix + "env", "env");
+    }
+    
+    public static File getParentFile(File file) {
+        String path = file.getAbsolutePath();
+        path = path.replace(File.separatorChar, '/');
+        path = SVNPathUtil.canonicalizePath(path);
+        int up = 0;
+        while (path.endsWith("/..")) {
+            path = SVNPathUtil.removeTail(path);
+            up++;
+        } 
+        for(int i = 0; i < up; i++) {
+            path = SVNPathUtil.removeTail(path);
+        }
+        path = path.replace('/', File.separatorChar);
+        file = new File(path);
+        return file.getParentFile();
     }
 
     public static String readFile(File file) throws SVNException {

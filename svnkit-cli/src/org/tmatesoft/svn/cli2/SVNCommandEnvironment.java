@@ -108,16 +108,14 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
     private boolean myIsUseMergeHistory;
     private Collection myExtensions;
     private boolean myIsIgnoreAncestry;
-
     private String myNativeEOL;
-
     private boolean myIsRelocate;
-
     private boolean myIsNoAutoProps;
-
     private boolean myIsAutoProps;
-
     private boolean myIsKeepChangelist;
+    private boolean myIsParents;
+
+    private boolean myIsKeepLocal;
     
     public SVNCommandEnvironment(PrintStream out, PrintStream err, InputStream in) {
         myIsDescend = true;
@@ -342,6 +340,8 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
                 myChangelist = optionValue.getValue();
             } else if (option == SVNOption.KEEP_CHANGELIST) {
                 myIsKeepChangelist = true;
+            } else if (option == SVNOption.KEEP_LOCAL) {
+                myIsKeepLocal = true;
             } else if (option == SVNOption.NO_IGNORE) {
                 myIsNoIgnore = true;
             } else if (option == SVNOption.WITH_REVPROP) {
@@ -355,6 +355,8 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
                 } else {
                     myRevisionProperties.put(revProp, "");
                 }
+            } else if (option == SVNOption.PARENTS) {
+                myIsParents = true;
             } else if (option == SVNOption.USE_MERGE_HISTORY) {
                 myIsUseMergeHistory = true;
             }
@@ -661,6 +663,14 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
     public boolean isKeepChangelist() {
         return myIsKeepChangelist;
     }
+
+    public boolean isParents() {
+        return myIsParents;
+    }
+    
+    public boolean isKeepLocal() {
+        return myIsKeepLocal;
+    }
     
     public SVNDiffOptions getDiffOptions() {
         boolean ignoreAllWS = myExtensions.contains("-w") || myExtensions.contains("--ignore-all-space");
@@ -757,7 +767,7 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
     }
 
     public void printCommitInfo(SVNCommitInfo info) {
-        if (info != null && info.getNewRevision() >= 0) {
+        if (info != null && info.getNewRevision() >= 0 && info != SVNCommitInfo.NULL) {
             getOut().println("\nCommitted revision " + info.getNewRevision() + ".");
             if (info.getErrorMessage() != null && info.getErrorMessage().isWarning()) {
                 getOut().println("\n" + info.getErrorMessage().getMessage());

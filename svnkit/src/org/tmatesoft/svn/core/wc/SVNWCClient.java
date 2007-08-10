@@ -1194,19 +1194,19 @@ public class SVNWCClient extends SVNBasicClient {
      */
     public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, boolean recursive, boolean includeIgnored, boolean makeParents) throws SVNException {
         path = new File(SVNPathUtil.validateFilePath(path.getAbsolutePath()));
-        if (!mkdir && climbUnversionedParents && path.getParentFile() != null) {
+        if (!mkdir && (climbUnversionedParents || makeParents) && path.getParentFile() != null) {
             // check if parent is versioned. if not, add it.
             SVNWCAccess wcAccess = createWCAccess();
             try {
                 wcAccess.open(path.getParentFile(), false, 0);
             } catch (SVNException e) {
                 if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
-                        if (path.getParentFile() == null) {
-                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_NO_VERSIONED_PARENT);
-                            SVNErrorManager.error(err);
-                        } else {
-                    doAdd(path.getParentFile(), false, false, climbUnversionedParents, false);
-                        }
+                    if (path.getParentFile() == null) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_NO_VERSIONED_PARENT);
+                        SVNErrorManager.error(err);
+                    } else {
+                        doAdd(path.getParentFile(), false, false, climbUnversionedParents, false);
+                    }
                 } else {
                     throw e;
                 }
@@ -1216,17 +1216,17 @@ public class SVNWCClient extends SVNBasicClient {
         }
         if (force && mkdir && SVNFileType.getType(path) == SVNFileType.DIRECTORY) {
             // directory is already there.
-                doAdd(path, force, false, true, false, true, makeParents);
+            doAdd(path, force, false, true, false, true, makeParents);
             return;
         } else if (mkdir) {
             // attempt to create dir
             File parent = path;
             File firstCreated = path;
             while(parent != null && SVNFileType.getType(parent) == SVNFileType.NONE) {
-                    if (!parent.equals(path) && !makeParents) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create directoy ''{0}'' with non-existent parents", path);
-                        SVNErrorManager.error(err);
-                    }
+                if (!parent.equals(path) && !makeParents) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create directoy ''{0}'' with non-existent parents", path);
+                    SVNErrorManager.error(err);
+                }
                 firstCreated = parent;
                 parent = parent.getParentFile();
             }            
@@ -1241,7 +1241,7 @@ public class SVNWCClient extends SVNBasicClient {
                 SVNErrorManager.error(err);
             }
             try {
-                    doAdd(firstCreated, false, false, climbUnversionedParents, true, true, makeParents);
+                doAdd(firstCreated, false, false, climbUnversionedParents, true, true, makeParents);
             } catch (SVNException e) {
                 SVNFileUtil.deleteAll(firstCreated, true);
                 throw e;

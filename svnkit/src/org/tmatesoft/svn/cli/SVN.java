@@ -124,6 +124,12 @@ public class SVN {
         newCommands.add("import");
         newCommands.add("commit");
         newCommands.add("ci");
+        newCommands.add("mkdir");
+        newCommands.add("add");
+        newCommands.add("delete");
+        newCommands.add("del");
+        newCommands.add("remove");
+        newCommands.add("rm");
     }
 
     public static void main(String[] args) {

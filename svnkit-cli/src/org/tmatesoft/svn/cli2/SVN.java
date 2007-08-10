@@ -11,12 +11,15 @@
  */
 package org.tmatesoft.svn.cli2;
 
+import org.tmatesoft.svn.cli2.command.SVNAddCommand;
 import org.tmatesoft.svn.cli2.command.SVNCheckoutCommand;
 import org.tmatesoft.svn.cli2.command.SVNCommitCommand;
+import org.tmatesoft.svn.cli2.command.SVNDeleteCommand;
 import org.tmatesoft.svn.cli2.command.SVNExportCommand;
 import org.tmatesoft.svn.cli2.command.SVNHelpCommand;
 import org.tmatesoft.svn.cli2.command.SVNImportCommand;
 import org.tmatesoft.svn.cli2.command.SVNMergeCommand;
+import org.tmatesoft.svn.cli2.command.SVNMkDirCommand;
 import org.tmatesoft.svn.cli2.command.SVNPropDelCommand;
 import org.tmatesoft.svn.cli2.command.SVNPropEditCommand;
 import org.tmatesoft.svn.cli2.command.SVNPropGetCommand;
@@ -37,12 +40,15 @@ import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 public class SVN {
     
     static {
+        new SVNAddCommand();        
         new SVNCheckoutCommand();
         new SVNCommitCommand();
+        new SVNDeleteCommand();
         new SVNExportCommand();
         new SVNHelpCommand();
         new SVNImportCommand();
         new SVNMergeCommand();
+        new SVNMkDirCommand();
         new SVNPropDelCommand();
         new SVNPropEditCommand();
         new SVNPropGetCommand();

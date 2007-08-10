@@ -66,6 +66,8 @@ public class SVNOption {
     public static final SVNOption AUTOPROPS = new SVNOption("auto-props");
     public static final SVNOption NO_AUTOPROPS = new SVNOption("no-auto-props");
     public static final SVNOption KEEP_CHANGELIST = new SVNOption("keep-changelist");
+    public static final SVNOption PARENTS = new SVNOption("parents");
+    public static final SVNOption KEEP_LOCAL = new SVNOption("keep-local");
     
     // auth options.
     public static final SVNOption USERNAME = new SVNOption("username", false);
