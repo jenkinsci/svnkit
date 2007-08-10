@@ -85,8 +85,7 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
             getDAVProperties().add(ALLPROP);
         } else if (element == PROPNAME) {
             getDAVProperties().add(PROPNAME);
-        } else
-        if ((PROP_ELEMENTS.contains(element) || DAVElement.SVN_SVN_PROPERTY_NAMESPACE.equals(element.getNamespace())
+        } else if ((PROP_ELEMENTS.contains(element) || DAVElement.SVN_SVN_PROPERTY_NAMESPACE.equals(element.getNamespace())
                 || DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE.equals(element.getNamespace())) && parent == DAVElement.PROP) {
             getDAVProperties().add(element);
         }
@@ -492,7 +491,7 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         return addHrefTags(uri);
     }
 
-    private String getDeadpropCountProp(DAVResource resource) throws SVNException {
+    private String getDeadpropCountProp(DAVResource resource) {
         int deadPropertiesCount = resource.getDeadProperties().size();
         return String.valueOf(deadPropertiesCount);
     }

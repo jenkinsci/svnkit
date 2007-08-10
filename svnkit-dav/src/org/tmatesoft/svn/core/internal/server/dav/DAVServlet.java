@@ -41,7 +41,7 @@ public class DAVServlet extends HttpServlet {
         } catch (SVNException e) {
             String errorBody;
             SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
-            if (errorCode == SVNErrorCode.RA_SVN_MALFORMED_DATA || errorCode == SVNErrorCode.FS_NOT_DIRECTORY
+            if (errorCode == SVNErrorCode.RA_DAV_MALFORMED_DATA || errorCode == SVNErrorCode.FS_NOT_DIRECTORY
                     || errorCode == SVNErrorCode.FS_NOT_FOUND) {
                 errorBody = generateErrorBody(NOT_FOUND_STATUS_LINE, e.getErrorMessage().getFullMessage());
                 response.setStatus(SC_NOT_FOUND);
