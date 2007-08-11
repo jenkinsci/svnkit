@@ -413,7 +413,7 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
                     SVNErrorManager.error(err);
                 }
             }
-            if (myMessage != null) {
+            if (myMessage != null && !"".equals(myMessage)) {
                 File file = new File(myMessage).getAbsoluteFile();
                 if (SVNFileType.getType(file) != SVNFileType.NONE) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_LOG_MESSAGE_IS_PATHNAME, myCommand.getMessageAmbigousErrorMessage());
@@ -463,6 +463,7 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
         InputStream is = null;
         ByteArrayOutputStream bos = null;
         try {
+            file = file.getAbsoluteFile();
             is = SVNFileUtil.openFileForReading(file);
             bos = new ByteArrayOutputStream();
             byte[] buffer = new byte[2048];

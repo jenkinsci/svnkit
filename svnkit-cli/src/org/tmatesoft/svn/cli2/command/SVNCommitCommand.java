@@ -37,6 +37,10 @@ public class SVNCommitCommand extends SVNCommand {
     public SVNCommitCommand() {
         super("commit", new String[] {"ci"});
     }
+    
+    public boolean isCommitter() {
+        return true;
+    }
 
     protected Collection createSupportedOptions() {
         Collection options = new LinkedList();
