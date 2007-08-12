@@ -16,12 +16,15 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.io.dav.http.HTTPHeader;
 import org.tmatesoft.svn.core.internal.server.dav.DAVDepth;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceUtil;
+import org.tmatesoft.svn.core.internal.server.dav.TimeFormatUtil;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.xml.sax.Attributes;
 
@@ -30,6 +33,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -57,6 +61,7 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
     private Collection myDAVElements;
 
     static {
+        PROP_ELEMENTS.add(DAVElement.AUTO_VERSION);
         PROP_ELEMENTS.add(DAVElement.BASELINE_COLLECTION);
         PROP_ELEMENTS.add(DAVElement.VERSION_NAME);
         PROP_ELEMENTS.add(DAVElement.GET_CONTENT_LENGTH);
@@ -104,6 +109,7 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
     public void execute() throws SVNException {
         String label = getRequestHeader(LABEL_HEADER);
         DAVResource resource = getRepositoryManager().createDAVResource(getRequestContext(), getRequestURI(), label, false);
+        gatherRequestHeadersInformation(resource);
 
         readInput(getRequestInputStream());
 
@@ -121,6 +127,7 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         }
     }
 
+
     private void generatePropertiesResponse(StringBuffer xmlBuffer, DAVResource resource, DAVDepth depth) throws SVNException {
         appendXMLHeader(DAV_NAMESPACE_PREFIX, "multistatus", getDAVProperties(), xmlBuffer);
         if (getDAVProperties().size() == 1 && getDAVProperties().contains(ALLPROP)) {
@@ -132,6 +139,7 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
                 allProperties.add(DAVResourceUtil.convertToDAVElement(property));
             }
             allProperties.addAll(PROP_ELEMENTS);
+            allProperties.remove(DAVElement.AUTO_VERSION);
             if (resource.isCollection()){
                 allProperties.remove(DAVElement.MD5_CHECKSUM);
                 allProperties.remove(DAVElement.GET_CONTENT_LENGTH);
@@ -148,7 +156,7 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
 
     private void generateResponse(StringBuffer xmlBuffer, DAVResource resource, Collection properties, DAVDepth depth) throws SVNException {
         addResponse(xmlBuffer, resource, properties);
-        if (depth != DAVDepth.DEPTH_ZERO && resource.isCollection()) {
+        if (depth != DAVDepth.DEPTH_ZERO && resource.getType() == DAVResource.DAV_RESOURCE_TYPE_REGULAR && resource.isCollection()) {
             DAVDepth newDepth = DAVDepth.decreaseDepth(depth);
             for (Iterator entriesIterator = resource.getEntries().iterator(); entriesIterator.hasNext();) {
                 SVNDirEntry entry = (SVNDirEntry) entriesIterator.next();
@@ -156,7 +164,6 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
                 entryURI.append(resource.getURI());
                 entryURI.append(resource.getURI().endsWith("/") ? "" : "/");
                 entryURI.append(entry.getName());
-                //TODO: Check if native svn uses label = revision here
                 DAVResource newResource = new DAVResource(resource.getRepository(), resource.getContext(), entryURI.toString(), null, false);
                 generateResponse(xmlBuffer, newResource, properties, newDepth);
             }
@@ -245,7 +252,6 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
     }
 
     private boolean isDeadprop(String namespace) {
-        //TODO:SVN_DAV_PROPERTY_NAMESPACE equals some live properties namespace. Now we skip it, but native svn doesn't do it.
         return DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE.equals(namespace) || DAVElement.SVN_SVN_PROPERTY_NAMESPACE.equals(namespace);
     }
 
@@ -301,9 +307,9 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         } else if (element == DAVElement.BASELINE_COLLECTION) {
             value = getBaselineCollectionProp(resource);
         } else if (element == DAVElement.CREATION_DATE) {
-            value = getCreationDateProp(resource);
+            value = SVNTimeUtil.formatDate(getLastModifiedTime(resource));
         } else if (element == GET_LAST_MODIFIED) {
-            value = getLastModifiedProp(resource);
+            value = TimeFormatUtil.formatDate(getLastModifiedTime(resource));
         } else if (element == DAVElement.CREATOR_DISPLAY_NAME) {
             value = getCreatorDisplayNameProp(resource);
         } else if (element == DAVElement.DEADPROP_COUNT) {
@@ -332,7 +338,7 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         return DEFAULT_AUTOVERSION_LINE;
     }
 
-    private String getLastModifiedProp(DAVResource resource) throws SVNException {
+    private Date getLastModifiedTime(DAVResource resource) throws SVNException {
         if (resource.getType() == DAVResource.DAV_RESOURCE_TYPE_PRIVATE && resource.getKind() == DAVResourceKind.VCC) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Failed to determine property"));
             return null;
@@ -343,12 +349,12 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         } else
         if (resource.getType() == DAVResource.DAV_RESOURCE_TYPE_REGULAR || resource.getType() == DAVResource.DAV_RESOURCE_TYPE_WORKING
                 || resource.getType() == DAVResource.DAV_RESOURCE_TYPE_VERSION) {
-            revision = resource.getCommitedRevision();
+            revision = resource.getCreatedRevision();
         } else {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Failed to determine property"));
             return null;
         }
-        return resource.getLastModified(revision);
+        return resource.getRevisionDate(revision);
     }
 
     private String getBaselineCollectionProp(DAVResource resource) throws SVNException {
@@ -372,7 +378,7 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         if (resource.isBaseLined()) {
             return String.valueOf(resource.getRevision());
         }
-        return String.valueOf(resource.getCommitedRevision());
+        return String.valueOf(resource.getCreatedRevision());
     }
 
     private String getContentLengthProp(DAVResource resource) throws SVNException {
@@ -393,20 +399,19 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Failed to determine property"));
             return null;
         }
-        //TODO: native svn examine if client is not (?!) svn client to use request's header 'content type'.
-        //TODO: move this condition to DAVResource getContentType.
+        //Should we validate content type before returning it?
         if (resource.isCollection()) {
-            return DEFAULT_CONTENT_TYPE;
+            return DEFAULT_COLLECTION_CONTENT_TYPE;
         }
-        return resource.getContentType();
-    }
-
-    private String getCreationDateProp(DAVResource resource) throws SVNException {
-        if (resource.getType() == DAVResource.DAV_RESOURCE_TYPE_PRIVATE && resource.getKind() == DAVResourceKind.VCC) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Failed to determine property"));
-            return null;
+        String contentType = resource.getContentType();
+        if (contentType != null){
+            return contentType;
         }
-        return resource.getLastModified();
+        contentType = getRequestHeader(HTTPHeader.CONTENT_TYPE_HEADER);
+        if (resource.isSVNClient() && contentType != null){
+            return contentType;
+        }
+        return DEFAULT_FILE_CONTENT_TYPE;
     }
 
     private String getCreatorDisplayNameProp(DAVResource resource) throws SVNException {
@@ -419,12 +424,12 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         } else
         if (resource.getType() == DAVResource.DAV_RESOURCE_TYPE_REGULAR || resource.getType() == DAVResource.DAV_RESOURCE_TYPE_WORKING
                 || resource.getType() == DAVResource.DAV_RESOURCE_TYPE_VERSION) {
-            revision = resource.getCommitedRevision();
+            revision = resource.getCreatedRevision();
         } else {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Failed to determine property"));
             return null;
         }
-        return resource.getLastAuthor(revision);
+        return resource.getAuthor(revision);
     }
 
     private String getBaselineRelativePathProp(DAVResource resource) throws SVNException {

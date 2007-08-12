@@ -20,11 +20,13 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -54,6 +56,7 @@ public class DAVResource {
     private DAVResourceKind myKind;
     private String myPath;
     private long myRevision;
+    private long myCreatedRevision;
     private String myParameterPath;
     private String myActivityID;
     private boolean myIsExists = false;
@@ -61,6 +64,8 @@ public class DAVResource {
     private boolean myIsVersioned = false;
     private boolean myIsBaseLined = false;
     private boolean myIsWorking = false;
+
+    private boolean myIsSVNClient;
 
     private Map mySVNProperties;
     private Collection myEntries;
@@ -72,7 +77,6 @@ public class DAVResource {
         myURI = uri;
         myRevision = INVALID_REVISION;
         //TODO: need to remember checksum if any
-        //TODO: need to remember User Agent if any
         parseURI(label, useCheckedIn);
         prepare();
     }
@@ -129,6 +133,14 @@ public class DAVResource {
         myRevision = revisionNumber;
     }
 
+    public long getCreatedRevision() {
+        return myCreatedRevision;
+    }
+
+    public void setCreatedRevision(long revisionNumber) {
+        myCreatedRevision = revisionNumber;
+    }
+
     public String getParameterPath() {
         return myParameterPath;
     }
@@ -183,6 +195,15 @@ public class DAVResource {
 
     private void setWorking(boolean isWorking) {
         myIsWorking = isWorking;
+    }
+
+
+    public boolean isSVNClient() {
+        return myIsSVNClient;
+    }
+
+    public void setSVNClient(boolean isSVNClient) {
+        myIsSVNClient = isSVNClient;
     }
 
     private Map getSVNProperties() {
@@ -398,13 +419,13 @@ public class DAVResource {
                 setRevision(latestRevision);
             }
             SVNNodeKind currentNodeKind = getNodeKind();
-            //TODO: UNKNOWN <=> !exists() ???
             setExists(currentNodeKind != SVNNodeKind.NONE && currentNodeKind != SVNNodeKind.UNKNOWN);
             setCollection(currentNodeKind == SVNNodeKind.DIR);
             if (isCollection()) {
                 getRepository().getDir(getParameterPath(), getRevision(), getSVNProperties(), getEntries());
             } else {
-                getRepository().getFile(getParameterPath(), getRevision(), getSVNProperties(), null);
+                long createdRevision = getRepository().getFile(getParameterPath(), getRevision(), getSVNProperties(), null);
+                setCreatedRevision(createdRevision);
             }
         } else if (getType() == DAVResource.DAV_RESOURCE_TYPE_VERSION) {
             setRevision(latestRevision);
@@ -441,20 +462,21 @@ public class DAVResource {
         return currentNodeKind;
     }
 
-    public boolean lacksETagPotential() {
+    private boolean lacksETagPotential() {
         return (!exists() || (getType() != DAVResource.DAV_RESOURCE_TYPE_REGULAR && getType() != DAVResource.DAV_RESOURCE_TYPE_VERSION)
                 || getType() == DAVResource.DAV_RESOURCE_TYPE_VERSION && isBaseLined());
     }
 
-    public String getLastModified() {
+    public Date getLastModified() throws SVNException {
         if (lacksETagPotential()) {
             return null;
         }
-        return ((String) getSVNProperties().get(SVNProperty.COMMITTED_DATE));
+        return getRevisionDate(getCreatedRevision());
     }
 
-    public String getLastModified(long revision) throws SVNException {
-        return getRepository().getRevisionPropertyValue(revision, SVNRevisionProperty.DATE);
+
+    public Date getRevisionDate(long revision) throws SVNException {
+        return SVNTimeUtil.parseDate(getRepository().getRevisionPropertyValue(revision, SVNRevisionProperty.DATE));
     }
 
     public String getETag() {
@@ -462,15 +484,12 @@ public class DAVResource {
             return null;
         }
         StringBuffer eTag = new StringBuffer();
-        eTag.append(isCollection() ? "W/" : "");
-        eTag.append(getRevision());
+        eTag.append(isCollection() ? "W/\"" : "\"");
+        eTag.append(getCreatedRevision());
         eTag.append("/");
         eTag.append(SVNEncodingUtil.uriEncode(getParameterPath()));
+        eTag.append("\"");
         return eTag.toString();
-    }
-
-    public long getLatestRevision() throws SVNException {
-        return getRepository().getLatestRevision();
     }
 
     public String getRepositoryUUID(boolean forceConnect) throws SVNException {
@@ -479,6 +498,10 @@ public class DAVResource {
 
     public String getContentType() {
         return ((String) getSVNProperties().get(SVNProperty.MIME_TYPE));
+    }
+
+    public long getLatestRevision() throws SVNException {
+        return getRepository().getLatestRevision();
     }
 
     public long getCommitedRevision() {
@@ -491,8 +514,7 @@ public class DAVResource {
         return entry.getSize();
     }
 
-    //TODO: Correct this, if it's wrong.
-    public String getLastAuthor(long revision) throws SVNException {
+    public String getAuthor(long revision) throws SVNException {
         return getRepository().getRevisionPropertyValue(revision, SVNRevisionProperty.AUTHOR);
     }
 

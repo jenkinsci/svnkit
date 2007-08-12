@@ -48,7 +48,7 @@ public class DAVResourceUtil {
             resultURI.append(DAVResource.SPECIAL_URI).append("/");
             resultURI.append(davResourceKind.toString()).append("/");
             resultURI.append(String.valueOf(revision));
-            resultURI.append(parameterPath).append("/");
+            resultURI.append(parameterPath);
         } else if (davResourceKind == DAVResourceKind.VCC) {
             resultURI.append(DAVResource.SPECIAL_URI).append("/");
             resultURI.append(davResourceKind.toString()).append("/");
