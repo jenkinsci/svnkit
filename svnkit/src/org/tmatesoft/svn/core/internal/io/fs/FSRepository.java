@@ -186,6 +186,11 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             String repositoryPath = getRepositoryPath(path);
             FSRevisionRoot root = myFSFS.createRevisionRoot(revision);
             return root.checkNodeKind(repositoryPath); 
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_DIRECTORY) {
+                return SVNNodeKind.NONE;
+            }
+            throw e;
         } finally {
             closeRepository();
         }
