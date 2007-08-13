@@ -584,7 +584,8 @@ public class SVNWCManager {
                 command.clear();
             } else {
                 String emptyPropPath = SVNAdminUtil.getPropBasePath(fileName, SVNNodeKind.FILE, true);
-                SVNProperties.setProperties(Collections.EMPTY_MAP, null, dir.getFile(emptyPropPath), SVNProperties.SVN_HASH_TERMINATOR);
+                SVNProperties.setProperties(Collections.EMPTY_MAP, null, dir.getFile(emptyPropPath), 
+                                            SVNProperties.SVN_HASH_TERMINATOR);
                 command.put(SVNLog.NAME_ATTR, emptyPropPath);
                 command.put(SVNLog.DEST_ATTR, revertPropsPath);
                 log.addCommand(SVNLog.MOVE, command, false);

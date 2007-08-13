@@ -244,7 +244,9 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                 String localLabel = ".working";
                 String baseLabel = ".merge-left.r" + revision1;
                 String latestLabel = ".merge-right.r" + revision2;
-                SVNStatusType mergeResult = dir.mergeText(name, file1, file2, localLabel, baseLabel, latestLabel, null, false, myIsDryRun, myDiffOptions, null);
+                SVNStatusType mergeResult = dir.mergeText(name, file1, file2, localLabel, 
+                                                          baseLabel, latestLabel, diff, false, 
+                                                          myIsDryRun, myDiffOptions, null);
                 dir.runLogs();
                 if (mergeResult == SVNStatusType.CONFLICTED || mergeResult == SVNStatusType.CONFLICTED_UNRESOLVED) {
                     result[0] = mergeResult;

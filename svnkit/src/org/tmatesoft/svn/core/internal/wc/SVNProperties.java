@@ -356,7 +356,6 @@ public class SVNProperties {
     public static void setProperties(Map namesToValues, File target, File tmpFile, String terminator) throws SVNException {
         OutputStream dst = null;
         try {
-            //tmpFile = SVNFileUtil.createUniqueFile(target.getParentFile(), target.getName(), ".tmp");
             dst = SVNFileUtil.openFileForWriting(tmpFile);
             setProperties(namesToValues, dst, terminator);
         } finally {

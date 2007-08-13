@@ -1579,9 +1579,6 @@ public class SVNDiffClient extends SVNBasicClient {
         dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath()));
         try {
             dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath()));
-//            SVNAdminAreaInfo info = wcAccess.openAnchor(dstPath, !dryRun, 
-//                                                        SVNDepth.recurseFromDepth(depth) ? 
-//                                                        SVNWCAccess.INFINITE_DEPTH : 0);
             SVNAdminArea adminArea = wcAccess.probeOpen(dstPath, !dryRun, 
                                                         SVNDepth.recurseFromDepth(depth) ? 
                                                         SVNWCAccess.INFINITE_DEPTH : 0);
@@ -1642,7 +1639,6 @@ public class SVNDiffClient extends SVNBasicClient {
                                                                         revision2, 
                                                                         depth, 
                                                                         url1, 
-                                                                        adminArea, 
                                                                         !useAncestry);
                 
                 merger.doMerge(url1, revision1, url2, revision2, dstPath, adminArea, depth, 
@@ -1691,7 +1687,6 @@ public class SVNDiffClient extends SVNBasicClient {
                                                                             revision2, 
                                                                             depth, 
                                                                             url1, 
-                                                                            adminArea, 
                                                                             !useAncestry);
                 }
                 
@@ -2181,7 +2176,7 @@ public class SVNDiffClient extends SVNBasicClient {
 
         public LinkedList discoverAndMergeChildren(SVNEntry parentEntry, SVNRevision revision1, 
                                                    SVNRevision revision2, SVNDepth depth,
-                                                   SVNURL parentURL, SVNAdminArea adminArea,
+                                                   SVNURL parentURL, 
                                                    boolean ignoreAncestry) throws SVNException {
             
             LinkedList childrenSwitchedOrWithMergeInfo = getSwitchedOrWithMergeInfoChildren(parentEntry);
@@ -2199,6 +2194,7 @@ public class SVNDiffClient extends SVNBasicClient {
                     relPath = relPath.substring(1);
                 }
                 SVNURL childURL = parentURL.appendPath(relPath, false);
+                SVNAdminArea adminArea = childEntry.getAdminArea();
                 if (childEntry.isFile()) {
                     doMergeFile(childURL, revision1, childURL, revision2, childFile, adminArea, 
                                 ignoreAncestry);

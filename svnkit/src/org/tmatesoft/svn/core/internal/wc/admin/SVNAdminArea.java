@@ -451,12 +451,15 @@ public abstract class SVNAdminArea {
     }
 
     public SVNStatusType mergeProperties(String name, Map serverBaseProps, Map propDiff, boolean baseMerge, boolean dryRun, SVNLog log) throws SVNException {
-        serverBaseProps = serverBaseProps == null ? Collections.EMPTY_MAP : serverBaseProps;
+        //serverBaseProps = serverBaseProps == null ? Collections.EMPTY_MAP : serverBaseProps;
         propDiff = propDiff == null ? Collections.EMPTY_MAP : propDiff;
         
         SVNVersionedProperties working = getProperties(name);
         Map workingProps = working.asMap();
         SVNVersionedProperties base = getBaseProperties(name);
+        if (serverBaseProps == null) {
+            serverBaseProps = base.asMap();
+        }
 
         Collection conflicts = new ArrayList();
         SVNStatusType result = propDiff.isEmpty() ? SVNStatusType.UNCHANGED : SVNStatusType.CHANGED;
@@ -467,6 +470,7 @@ public abstract class SVNAdminArea {
             String toValue = (String) incomingEntry.getValue();
             String fromValue = (String) serverBaseProps.get(propName);
             String workingValue = (String) workingProps.get(propName);
+            String baseValue = base.getPropertyValue(propName);
             boolean isNormal = SVNProperty.isRegularProperty(propName); 
             if (baseMerge) {
                 base.setPropertyValue(propName, toValue);
@@ -474,7 +478,23 @@ public abstract class SVNAdminArea {
             
             result = isNormal ? SVNStatusType.CHANGED : result;
             if (fromValue == null) {
-                if (workingValue != null) {
+                if (baseValue != null) {
+                    if (workingValue != null) {
+                        if (workingValue.equals(toValue)) {
+                            result = result != SVNStatusType.CONFLICTED && isNormal ? SVNStatusType.MERGED : result;
+                        } else {
+                            result = isNormal ? SVNStatusType.CONFLICTED : result;                            
+                            conflicts.add(MessageFormat.format("Trying to create property ''{0}'' with value ''{1}'',\n" +
+                                                               "but it already exists.", 
+                                                               new Object[] { propName, toValue }));
+                        }                        
+                    } else {
+                        result = isNormal ? SVNStatusType.CONFLICTED : result;                            
+                        conflicts.add(MessageFormat.format("Trying to create property ''{0}'' with value ''{1}'',\n" +
+                                                           "but it has been locally deleted.", 
+                                                           new Object[] { propName, toValue }));
+                    }
+                } else if (workingValue != null) {
                     if (workingValue.equals(toValue)) {
                         result = result != SVNStatusType.CONFLICTED && isNormal ? SVNStatusType.MERGED : result;
                     } else {
@@ -485,49 +505,117 @@ public abstract class SVNAdminArea {
                         } else {
                             result = isNormal ? SVNStatusType.CONFLICTED : result;                            
                             conflicts.add(MessageFormat.format("Trying to add new property ''{0}'' with value ''{1}'',\n" +
-                                    "but property already exists with value ''{2}''.", new Object[] { propName, toValue, workingValue }));
+                                                               "but property already exists with value ''{2}''.", 
+                                                               new Object[] { propName, toValue, workingValue }));
                         }
                     }
                 } else {
                     working.setPropertyValue(propName, toValue);
                 }
-            } else {
-                if (workingValue == null) {
-                    if (toValue != null) {
-                        if (SVNProperty.MERGE_INFO.equals(propName)) {
-                            Map addedMergeInfo = new TreeMap();
-                            SVNMergeInfoManager.diffMergeInfoProperties(null, addedMergeInfo, fromValue, null, toValue, null);
-                            toValue = SVNMergeInfoManager.formatMergeInfoToString(addedMergeInfo);
+            } else if (toValue == null) {
+                if (baseValue == null) {
+                    if (workingValue != null) {
+                        working.setPropertyValue(propName, null);
+                    }
+                    result = result != SVNStatusType.CONFLICTED && isNormal ? SVNStatusType.MERGED : result;                    
+                } else if (baseValue.equals(fromValue)) {
+                    if (workingValue != null) {
+                        if (workingValue.equals(fromValue)) {
                             working.setPropertyValue(propName, toValue);
-                            result = result != SVNStatusType.CONFLICTED && isNormal ? SVNStatusType.MERGED : result;
                         } else {
-                            result = isNormal ? SVNStatusType.CONFLICTED : result;                            
-                            conflicts.add(MessageFormat.format("Trying to change property ''{0}'' from ''{1}'' to ''{2}'',\n" +
-                                    "but the property does not exist.", new Object[] { propName, fromValue, toValue }));
+                            result = isNormal ? SVNStatusType.CONFLICTED : result;
+                            conflicts.add(MessageFormat.format("Trying to delete property ''{0}'' with value ''{1}''\n " +
+                                                               "but it has been modified from ''{2}'' to ''{3}''.",
+                                                               new Object[] { propName, fromValue, baseValue, workingValue }));
                         }
                     } else {
                         result = result != SVNStatusType.CONFLICTED && isNormal ? SVNStatusType.MERGED : result;
                     }
                 } else {
-                    if (workingValue.equals(fromValue)) {
+                    result = isNormal ? SVNStatusType.CONFLICTED : result;
+                    conflicts.add(MessageFormat.format("Trying to delete property ''{0}'' with value ''{1}''\n " +
+                                                       "but the local value is ''{2}''.",
+                                                       new Object[] { propName, baseValue, workingValue }));
+                }
+            } else {
+                if ((workingValue != null && baseValue == null) ||
+                    (workingValue == null && baseValue != null) ||
+                    (workingValue != null && baseValue != null && !workingValue.equals(baseValue))) {
+                    if (workingValue != null) {
+                        if (workingValue.equals(toValue)) {
+                            result = result != SVNStatusType.CONFLICTED && isNormal ? SVNStatusType.MERGED : result;
+                        } else {
+                            if (SVNProperty.MERGE_INFO.equals(propName)) {
+                                toValue = SVNMergeInfoManager.combineForkedMergeInfoProperties(fromValue, 
+                                                                                               workingValue, 
+                                                                                               toValue);
+                                working.setPropertyValue(propName, toValue);
+                                result = result != SVNStatusType.CONFLICTED && isNormal ? SVNStatusType.MERGED : result;
+                            } else {
+                                result = isNormal ? SVNStatusType.CONFLICTED : result;
+                                if (baseValue != null) {
+                                    conflicts.add(MessageFormat.format("Trying to change property ''{0}'' from ''{1}'' to ''{2}'',\n" +
+                                                                       "but property has been locally changed from ''{3}'' to ''{4}''.", 
+                                                                       new Object[] { propName, 
+                                                                                      fromValue, 
+                                                                                      toValue, 
+                                                                                      baseValue, 
+                                                                                      workingValue }));
+                                } else {
+                                    conflicts.add(MessageFormat.format("Trying to change property ''{0}'' from ''{1}'' to ''{2}'',\n" +
+                                                                       "but property has been locally added with value ''{3}''", 
+                                                                       new Object[] { propName, 
+                                                                                      fromValue, 
+                                                                                      toValue, 
+                                                                                      workingValue }));
+                                }
+                            }
+                        }
+                    } else {
+                        result = isNormal ? SVNStatusType.CONFLICTED : result;                            
+                        conflicts.add(MessageFormat.format("Trying to change property ''{0}'' from ''{1}'' to ''{2}'',\n" +
+                                                           "but it has been locally deleted.", 
+                                                           new Object[] { propName, 
+                                                                          fromValue, 
+                                                                          toValue }));
+                    }
+                } else if (workingValue == null) {
+                    if (SVNProperty.MERGE_INFO.equals(propName)) {
+                        Map addedMergeInfo = new TreeMap();
+                        SVNMergeInfoManager.diffMergeInfoProperties(null, addedMergeInfo, fromValue, null, toValue, null);
+                        toValue = SVNMergeInfoManager.formatMergeInfoToString(addedMergeInfo);
                         working.setPropertyValue(propName, toValue);
-                    } else if (toValue == null) {
-                        result = isNormal ? SVNStatusType.CONFLICTED : result;
-                        conflicts.add(MessageFormat.format("Trying to delete property ''{0}'' but value has been modified from ''{1}'' to ''{2}''.",
-                                                           new Object[] { propName, fromValue, workingValue }));
-                    } else if (workingValue.equals(toValue)) {
                         result = result != SVNStatusType.CONFLICTED && isNormal ? SVNStatusType.MERGED : result;
                     } else {
+                        result = isNormal ? SVNStatusType.CONFLICTED : result;                            
+                        conflicts.add(MessageFormat.format("Trying to change property ''{0}'' from ''{1}'' to ''{2}'',\n" +
+                                                           "but the property does not exist.", 
+                                                           new Object[] { propName, 
+                                                                          fromValue, 
+                                                                          toValue }));
+                    }
+                    
+                } else {
+                    if (baseValue.equals(fromValue)) {
+                        working.setPropertyValue(propName, toValue);
+                    } else {
                         if (SVNProperty.MERGE_INFO.equals(propName)) {
-                            toValue = SVNMergeInfoManager.combineForkedMergeInfoProperties(fromValue, workingValue, toValue);
+                            toValue = SVNMergeInfoManager.combineForkedMergeInfoProperties(fromValue, 
+                                                                                           workingValue, 
+                                                                                           toValue);
                             working.setPropertyValue(propName, toValue);
                             result = result != SVNStatusType.CONFLICTED && isNormal ? SVNStatusType.MERGED : result;
                         } else {
                             result = isNormal ? SVNStatusType.CONFLICTED : result;
 
                             conflicts.add(MessageFormat.format("Trying to change property ''{0}'' from ''{1}'' to ''{2}'',\n" +
-                                    "but property already exists with value ''{3}''.", new Object[] { propName, fromValue, toValue, workingValue }));
+                                                               "but property already exists with value ''{3}''.", 
+                                                               new Object[] { propName, 
+                                                                              fromValue, 
+                                                                              toValue,
+                                                                              workingValue }));
                         }
+   
                     }
                 }
             }
@@ -565,6 +653,7 @@ public abstract class SVNAdminArea {
                     String line = (String) lines.next();
                     os.write(SVNEncodingUtil.fuzzyEscape(line).getBytes("UTF-8"));
                 }
+                os.write(SVNEncodingUtil.fuzzyEscape("\n").getBytes("UTF-8"));
             } catch (IOException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot write properties conflict file: {1}", e.getLocalizedMessage());
                 SVNErrorManager.error(err, e);
