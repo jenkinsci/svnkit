@@ -130,6 +130,7 @@ public class SVN {
         newCommands.add("del");
         newCommands.add("remove");
         newCommands.add("rm");
+        newCommands.add("revert");
     }
 
     public static void main(String[] args) {

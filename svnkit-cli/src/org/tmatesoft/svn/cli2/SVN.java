@@ -25,6 +25,7 @@ import org.tmatesoft.svn.cli2.command.SVNPropEditCommand;
 import org.tmatesoft.svn.cli2.command.SVNPropGetCommand;
 import org.tmatesoft.svn.cli2.command.SVNPropListCommand;
 import org.tmatesoft.svn.cli2.command.SVNPropSetCommand;
+import org.tmatesoft.svn.cli2.command.SVNRevertCommand;
 import org.tmatesoft.svn.cli2.command.SVNStatusCommand;
 import org.tmatesoft.svn.cli2.command.SVNSwitchCommand;
 import org.tmatesoft.svn.cli2.command.SVNUpdateCommand;
@@ -56,6 +57,7 @@ public class SVN {
         new SVNPropSetCommand();
         new SVNStatusCommand();
         new SVNSwitchCommand();
+        new SVNRevertCommand();
         new SVNUpdateCommand();
     }
 

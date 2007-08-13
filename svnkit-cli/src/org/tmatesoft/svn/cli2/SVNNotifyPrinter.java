@@ -215,6 +215,10 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
             }
         } else if (event.getAction() == SVNEventAction.DELETE) {
             buffer.append("D         " + path + "\n");
+        } else if (event.getAction() == SVNEventAction.REVERT) {
+            buffer.append("Reverted '" + path + "'\n");
+        } else if (event.getAction() == SVNEventAction.FAILED_REVERT) {
+            buffer.append("Failed to revert '" + path + "' -- try updating instead.\n");
         }
         if (buffer.length() > 0) {
             SVNDebugLog.getDefaultLog().info(buffer.toString());

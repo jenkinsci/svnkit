@@ -1437,10 +1437,9 @@ public class SVNWCClient extends SVNBasicClient {
                     if (code == SVNErrorCode.ENTRY_NOT_FOUND || code == SVNErrorCode.UNVERSIONED_RESOURCE) {
                         SVNEvent event = SVNEventFactory.createSkipEvent(path.getParentFile(), path, SVNEventAction.SKIP, SVNEventAction.REVERT, null);
                         dispatchEvent(event);
+                        continue;
                     }
-                    if (paths.length == 1) { 
-                        throw e;
-                    }
+                    throw e;
                 } finally {
                     wcAccess.close();
                 }
