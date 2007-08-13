@@ -26,6 +26,9 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.wc.SVNChangelistClient;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
@@ -77,8 +80,14 @@ public class SVNRevertCommand extends SVNCommand {
         for(int i = 0; i < targets.size(); i++) {
             SVNCommandTarget target = new SVNCommandTarget((String) targets.get(i));
             if (target.isFile()) {
+                if ("".equals(target.getTarget())) {
+                    if (isScheduledForAddition(target.getFile())) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_OP_ON_CWD, 
+                                "Cannot revert addition of current directory; please try again from the parent directory");
+                        SVNErrorManager.error(err);
+                    }
+                }
                 pathsList.add(target.getFile());
-                // check for reverting added directory inside it.
             }
         }
         File[] paths = (File[]) pathsList.toArray(new File[pathsList.size()]);
@@ -92,6 +101,27 @@ public class SVNRevertCommand extends SVNCommand {
             }
             SVNErrorManager.error(err);
         }
+    }
+    
+    private boolean isScheduledForAddition(File dir) {
+        if (SVNFileType.getType(dir) != SVNFileType.DIRECTORY) {
+            return false;
+        }
+        SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
+        try {
+            wcAccess.probeOpen(dir, false, 0);
+            SVNEntry entry = wcAccess.getVersionedEntry(dir, false);
+            if (entry != null && "".equals(entry.getName()) && entry.isScheduledForAddition()) {
+                return true;
+            }
+        } catch (SVNException e) {
+        } finally {
+            try {
+                wcAccess.close();
+            } catch (SVNException e) {
+            }
+        }
+        return false;
     }
 
 }
