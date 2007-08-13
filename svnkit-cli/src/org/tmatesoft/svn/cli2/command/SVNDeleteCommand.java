@@ -107,7 +107,6 @@ public class SVNDeleteCommand extends SVNCommand {
                 for (Iterator ts = targets.iterator(); ts.hasNext();) {
                     String targetName = (String) ts.next();
                     SVNCommandTarget target = new SVNCommandTarget(targetName);
-                    getEnvironment().setCurrentTarget(target);
                     client.doDelete(target.getFile(), getEnvironment().isForce(), !getEnvironment().isKeepLocal(), false);
                 }
             } catch (SVNException e) {

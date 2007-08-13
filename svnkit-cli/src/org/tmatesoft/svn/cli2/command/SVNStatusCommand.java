@@ -71,9 +71,9 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
     public void run() throws SVNException {
         Collection targets = new ArrayList(); 
         if (getEnvironment().getChangelist() != null) {
-            getEnvironment().setCurrentTarget(new SVNCommandTarget(""));
+            SVNCommandTarget target = new SVNCommandTarget("");
             SVNChangelistClient changelistClient = getEnvironment().getClientManager().getChangelistClient();
-            changelistClient.getChangelist(getEnvironment().getCurrentTargetFile(), getEnvironment().getChangelist(), targets);
+            changelistClient.getChangelist(target.getFile(), getEnvironment().getChangelist(), targets);
             if (targets.isEmpty()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "no such changelist ''{0}''", getEnvironment().getChangelist());
                 SVNErrorManager.error(err);
@@ -98,7 +98,7 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
         }
         for (Iterator ts = targets.iterator(); ts.hasNext();) {
             String target = (String) ts.next();
-            getEnvironment().setCurrentTarget(new SVNCommandTarget(target));
+            SVNCommandTarget commandTarget = new SVNCommandTarget(target);
 
             if (getEnvironment().isXML()) {
                 StringBuffer xmlBuffer = openXMLTag("target", XML_STYLE_NORMAL, "path", SVNCommandUtil.getLocalPath(target), null);
@@ -106,7 +106,7 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
             }
             
             try {
-                long rev = client.doStatus(getEnvironment().getCurrentTargetFile(), SVNRevision.HEAD,
+                long rev = client.doStatus(commandTarget.getFile(), SVNRevision.HEAD,
                         getEnvironment().getDepth(), getEnvironment().isUpdate(),
                         getEnvironment().isVerbose(), getEnvironment().isNoIgnore(),
                         false, this);
@@ -143,7 +143,7 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
     }
 
     public void handleStatus(SVNStatus status) throws SVNException {
-        String path = getEnvironment().getCurrentTargetRelativePath(status.getFile());
+        String path = getEnvironment().getRelativePath(status.getFile());
         path = SVNCommandUtil.getLocalPath(path);
         if (status != null && status.getChangelistName() != null) {
             if (myStatusCache == null) {

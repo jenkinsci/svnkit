@@ -139,7 +139,6 @@ public class SVNMergeCommand extends SVNCommand {
                 if (name1.equals(name2)) {
                     String decodedPath = SVNEncodingUtil.uriDecode(name1);
                     SVNCommandTarget decodedPathTarget = new SVNCommandTarget(decodedPath); 
-                    getEnvironment().setCurrentTarget(decodedPathTarget);
                     if (SVNFileType.getType(decodedPathTarget.getFile()) == SVNFileType.FILE) {
                         target = decodedPathTarget;
                     }
@@ -147,7 +146,6 @@ public class SVNMergeCommand extends SVNCommand {
             } else if (source1.equals(source2)) {
                 String decodedPath = SVNEncodingUtil.uriDecode(source1.getTarget());
                 SVNCommandTarget decodedPathTarget = new SVNCommandTarget(decodedPath); 
-                getEnvironment().setCurrentTarget(decodedPathTarget);
                 if (SVNFileType.getType(decodedPathTarget.getFile()) == SVNFileType.FILE) {
                     target = decodedPathTarget;
                 }
@@ -161,7 +159,6 @@ public class SVNMergeCommand extends SVNCommand {
             client.setEventHandler(new SVNNotifyPrinter(getEnvironment()));
         }
         try {
-            getEnvironment().setCurrentTarget(target);
             client.setMergeOptions(getEnvironment().getDiffOptions());
             if (isUseRevisionRange) {
                 if (source1 == null) {

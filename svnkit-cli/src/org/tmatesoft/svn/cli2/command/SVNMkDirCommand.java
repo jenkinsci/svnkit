@@ -108,7 +108,6 @@ public class SVNMkDirCommand extends SVNCommand {
                 for (Iterator ts = targets.iterator(); ts.hasNext();) {
                     String targetName = (String) ts.next();
                     SVNCommandTarget target = new SVNCommandTarget(targetName);
-                    getEnvironment().setCurrentTarget(target);
                     client.doAdd(target.getFile(), false, true, false, true, false, getEnvironment().isParents());
                 }
             } catch (SVNException e) {

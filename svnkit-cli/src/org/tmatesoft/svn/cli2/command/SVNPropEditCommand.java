@@ -107,7 +107,6 @@ public class SVNPropEditCommand extends SVNPropertiesCommand {
                 String targetName = (String) ts.next();
                 SVNCommandTarget target = new SVNCommandTarget(targetName);
                 if (target.isFile()) {
-                    getEnvironment().setCurrentTarget(target);
                     if (getEnvironment().getMessage() != null || getEnvironment().getFileData() != null || getEnvironment().getRevisionProperties() != null) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_UNNECESSARY_LOG_MESSAGE, 
                                 "Local, non-commit operations do not take a log message or revision properties");

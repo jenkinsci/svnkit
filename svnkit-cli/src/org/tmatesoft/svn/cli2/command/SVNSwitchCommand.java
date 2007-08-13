@@ -83,7 +83,6 @@ public class SVNSwitchCommand extends SVNCommand {
         if (!getEnvironment().isQuiet()) {
             client.setEventHandler(new SVNNotifyPrinter(getEnvironment(), false, false, false));
         }
-        getEnvironment().setCurrentTarget(target);
         client.doSwitch(target.getFile(), switchURL.getURL(), SVNRevision.UNDEFINED, getEnvironment().getStartRevision(), getEnvironment().getDepth(), getEnvironment().isForce());    
     }
     
@@ -101,12 +100,10 @@ public class SVNSwitchCommand extends SVNCommand {
         SVNUpdateClient client = getEnvironment().getClientManager().getUpdateClient();
         if (targets.size() == 2) {
             SVNCommandTarget target = new SVNCommandTarget("");
-            getEnvironment().setCurrentTarget(target);
             client.doRelocate(target.getFile(), from.getURL(), to.getURL(), getEnvironment().getDepth().isRecursive());
         } else {
             for(int i = 2; i < targets.size(); i++) {
                 SVNCommandTarget target = new SVNCommandTarget((String) targets.get(i));
-                getEnvironment().setCurrentTarget(target);
                 client.doRelocate(target.getFile(), from.getURL(), to.getURL(), getEnvironment().getDepth().isRecursive());
             }
         }

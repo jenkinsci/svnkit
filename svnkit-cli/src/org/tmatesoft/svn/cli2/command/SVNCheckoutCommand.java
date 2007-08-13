@@ -88,17 +88,13 @@ public class SVNCheckoutCommand extends SVNCommand {
                 // url + path
                 targetDir = lastTarget;
                 dstTarget = new SVNCommandTarget(targetDir);
-                getEnvironment().setCurrentTarget(dstTarget);
             } else {
                 // all urls + base dst.
                 targetDir = target.getURL().getPath();
                 targetDir = SVNPathUtil.tail(targetDir);
                 targetDir = SVNPathUtil.append(lastTarget, targetDir);
                 dstTarget = new SVNCommandTarget(targetDir);
-                // base will be current target?
-                getEnvironment().setCurrentTarget(new SVNCommandTarget(lastTarget));
             }
-            getEnvironment().setCurrentTarget(dstTarget);
             SVNRevision pegRevision = target.getPegRevision();
             if (revision == SVNRevision.UNDEFINED) {
                 revision = pegRevision != SVNRevision.UNDEFINED ? pegRevision : SVNRevision.HEAD;

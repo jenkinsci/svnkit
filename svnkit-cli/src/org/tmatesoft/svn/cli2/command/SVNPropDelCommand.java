@@ -66,9 +66,9 @@ public class SVNPropDelCommand extends SVNPropertiesCommand {
 
         Collection targets = new ArrayList(); 
         if (getEnvironment().getChangelist() != null) {
-            getEnvironment().setCurrentTarget(new SVNCommandTarget(""));
+            SVNCommandTarget target = new SVNCommandTarget("");
             SVNChangelistClient changelistClient = getEnvironment().getClientManager().getChangelistClient();
-            changelistClient.getChangelist(getEnvironment().getCurrentTargetFile(), getEnvironment().getChangelist(), targets);
+            changelistClient.getChangelist(target.getFile(), getEnvironment().getChangelist(), targets);
             if (targets.isEmpty()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "no such changelist ''{0}''", getEnvironment().getChangelist());
                 SVNErrorManager.error(err);
@@ -99,7 +99,6 @@ public class SVNPropDelCommand extends SVNPropertiesCommand {
                 String targetName = (String) ts.next();
                 SVNCommandTarget target = new SVNCommandTarget(targetName);
                 if (target.isFile()) {
-                    getEnvironment().setCurrentTarget(target);
                     boolean success = true;
                     try {
                         client.doSetProperty(target.getFile(), propertyName, null, getEnvironment().isForce(), depth.isRecursive(), this);

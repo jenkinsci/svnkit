@@ -86,7 +86,6 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
     private PrintStream myErr;
     private PrintStream myOut;
     private SVNClientManager myClientManager;
-    private SVNCommandTarget myCurrentTarget;
     private List myArguments;
     private boolean myIsNoIgnore;
     private boolean myIsRevprop;
@@ -490,21 +489,6 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
     public SVNClientManager getClientManager() {
         return myClientManager;
     }
-    
-    public void setCurrentTarget(SVNCommandTarget target) {
-        myCurrentTarget = target;
-    }
-
-    public File getCurrentTargetFile() {
-        return myCurrentTarget.getFile();
-    }
-    
-    public String getCurrentTargetRelativePath(File path) {
-        if (myCurrentTarget != null) {
-            return myCurrentTarget.getPath(path);
-        }
-        return path.getAbsolutePath();
-    }
 
     public List getArguments() {
         return myArguments;
@@ -692,11 +676,11 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
                 codes.add(err.getErrorCode());
             }
             Object[] objects = err.getRelatedObjects();
-            if (objects != null && myCurrentTarget != null) {
+            if (objects != null) {
                 String template = err.getMessageTemplate();
                 for (int i = 0; objects != null && i < objects.length; i++) {
                     if (objects[i] instanceof File) {
-                        objects[i] = SVNCommandUtil.getLocalPath(getCurrentTargetRelativePath((File) objects[i]));
+                        objects[i] = SVNCommandUtil.getLocalPath(getRelativePath((File) objects[i]));
                     }
                 }
                 String message = (objects.length > 0 ? MessageFormat.format(template, objects) : template);
@@ -729,17 +713,42 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
         }
         throw new SVNException(err);
     }
+    
+    
+    public String getRelativePath(File file) {
+        String inPath = file.getAbsolutePath().replace(File.separatorChar, '/');
+        String basePath = new File("").getAbsolutePath().replace(File.separatorChar, '/');
+        /*
+        if (equals(inPath, basePath)) {
+            return myTarget;
+        } else if (inPath.length() > basePath.length() && startsWith(inPath, basePath + "/")) {
+            if ("".equals(myTarget)) {
+                return inPath.substring(basePath.length() + 1);
+            }
+            return myTarget + inPath.substring(basePath.length());
+        }*/
+        String commonRoot = getCommonAncestor(inPath, basePath);
+        if (commonRoot != null) {
+            if (equals(inPath , commonRoot)) {
+                return "";
+            } else if (startsWith(inPath, commonRoot + "/")) {
+                return inPath.substring(commonRoot.length() + 1);
+            }
+        }
+        return inPath;
+    }
+
 
     public SVNURL getURLFromTarget(String target) throws SVNException {
         if (SVNCommandUtil.isURL(target)) {
             return SVNURL.parseURIEncoded(target);
         }
         SVNWCAccess wcAccess = null;
-        setCurrentTarget(new SVNCommandTarget(target));
+        SVNCommandTarget commandTarget = new SVNCommandTarget(target);
         try {
             wcAccess = SVNWCAccess.newInstance(null);
-            wcAccess.probeOpen(getCurrentTargetFile(), false, 0);
-            SVNEntry entry = wcAccess.getVersionedEntry(getCurrentTargetFile(), false);
+            wcAccess.probeOpen(commandTarget.getFile(), false, 0);
+            SVNEntry entry = wcAccess.getVersionedEntry(commandTarget.getFile(), false);
             if (entry != null) {
                 return entry.getSVNURL();
             }
@@ -750,19 +759,17 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
     }
 
     public boolean isVersioned(String target) throws SVNException {
-        SVNCommandTarget oldTarget = myCurrentTarget;
         SVNWCAccess wcAccess = null;
-        setCurrentTarget(new SVNCommandTarget(target));
+        SVNCommandTarget commandTarget = new SVNCommandTarget(target);
         try {
             wcAccess = SVNWCAccess.newInstance(null);
-            wcAccess.probeOpen(getCurrentTargetFile(), false, 0);
-            SVNEntry entry = wcAccess.getVersionedEntry(getCurrentTargetFile(), false);
+            wcAccess.probeOpen(commandTarget.getFile(), false, 0);
+            SVNEntry entry = wcAccess.getVersionedEntry(commandTarget.getFile(), false);
             return entry != null;
         } catch (SVNException e) {
             //
         } finally {
             wcAccess.close();
-            setCurrentTarget(oldTarget);
         }
         return false;
     }
@@ -894,4 +901,34 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
         }
         return buffer.toString();
     }
+    
+    private static boolean startsWith(String p1, String p2) {
+        if (SVNFileUtil.isWindows || SVNFileUtil.isOpenVMS) {
+            return p1.toLowerCase().startsWith(p2.toLowerCase());
+        }
+        return p1.startsWith(p2);
+    }
+
+    private static boolean equals(String p1, String p2) {
+        if (SVNFileUtil.isWindows || SVNFileUtil.isOpenVMS) {
+            return p1.toLowerCase().equals(p2.toLowerCase());
+        }
+        return p1.equals(p2);
+    }
+
+    private static String getCommonAncestor(String p1, String p2) {
+        if (SVNFileUtil.isWindows || SVNFileUtil.isOpenVMS) {
+            String ancestor = SVNPathUtil.getCommonPathAncestor(p1.toLowerCase(), p2.toLowerCase());
+            if (equals(ancestor, p1)) {
+                return p1;
+            } else if (equals(ancestor, p2)) {
+                return p2;
+            } else if (startsWith(p1, ancestor)) {
+                return p1.substring(0, ancestor.length());
+            }
+            return ancestor;
+        }
+        return SVNPathUtil.getCommonPathAncestor(p1, p2);
+    }
+
 }

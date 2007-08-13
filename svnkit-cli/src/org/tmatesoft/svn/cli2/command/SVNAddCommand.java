@@ -73,7 +73,6 @@ public class SVNAddCommand extends SVNCommand {
                 continue;
             }
             try {
-                getEnvironment().setCurrentTarget(target);
                 client.doAdd(target.getFile(), getEnvironment().isForce(), false, getEnvironment().isParents(), depth.isRecursive(), 
                         getEnvironment().isNoIgnore(), getEnvironment().isParents());
             } catch (SVNException e) {

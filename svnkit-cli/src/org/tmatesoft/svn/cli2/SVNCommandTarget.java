@@ -20,7 +20,6 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 
@@ -85,29 +84,6 @@ public class SVNCommandTarget {
     public SVNRevision getPegRevision() {
         return myPegRevision;
     }
-    
-    public String getPath(File file) {
-        String inPath = file.getAbsolutePath().replace(File.separatorChar, '/');
-        String basePath = new File("").getAbsolutePath().replace(File.separatorChar, '/');
-        /*
-        if (equals(inPath, basePath)) {
-            return myTarget;
-        } else if (inPath.length() > basePath.length() && startsWith(inPath, basePath + "/")) {
-            if ("".equals(myTarget)) {
-                return inPath.substring(basePath.length() + 1);
-            }
-            return myTarget + inPath.substring(basePath.length());
-        }*/
-        String commonRoot = getCommonAncestor(inPath, basePath);
-        if (commonRoot != null) {
-            if (equals(inPath , commonRoot)) {
-                return "";
-            } else if (startsWith(inPath, commonRoot + "/")) {
-                return inPath.substring(commonRoot.length() + 1);
-            }
-        }
-        return inPath;
-    }
 
     private void parsePegRevision() throws SVNException {
         int index = myTarget.lastIndexOf('@');
@@ -132,34 +108,5 @@ public class SVNCommandTarget {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Syntax error parsing revision ''{0}''", myTarget.substring(index + 1));
             SVNErrorManager.error(err);
         }
-    }
-    
-    private static boolean startsWith(String p1, String p2) {
-        if (SVNFileUtil.isWindows || SVNFileUtil.isOpenVMS) {
-            return p1.toLowerCase().startsWith(p2.toLowerCase());
-        }
-        return p1.startsWith(p2);
-    }
-
-    private static boolean equals(String p1, String p2) {
-        if (SVNFileUtil.isWindows || SVNFileUtil.isOpenVMS) {
-            return p1.toLowerCase().equals(p2.toLowerCase());
-        }
-        return p1.equals(p2);
-    }
-
-    private static String getCommonAncestor(String p1, String p2) {
-        if (SVNFileUtil.isWindows || SVNFileUtil.isOpenVMS) {
-            String ancestor = SVNPathUtil.getCommonPathAncestor(p1.toLowerCase(), p2.toLowerCase());
-            if (equals(ancestor, p1)) {
-                return p1;
-            } else if (equals(ancestor, p2)) {
-                return p2;
-            } else if (startsWith(p1, ancestor)) {
-                return p1.substring(0, ancestor.length());
-            }
-            return ancestor;
-        }
-        return SVNPathUtil.getCommonPathAncestor(p1, p2);
     }
 }

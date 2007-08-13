@@ -27,7 +27,6 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.ISVNPathList;
-import org.tmatesoft.svn.core.wc.ISVNPathListHandler;
 import org.tmatesoft.svn.core.wc.SVNChangelistClient;
 import org.tmatesoft.svn.core.wc.SVNPathList;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -61,9 +60,9 @@ public class SVNUpdateCommand extends SVNCommand {
     public void run() throws SVNException {
         List targets = new ArrayList(); 
         if (getEnvironment().getChangelist() != null) {
-            getEnvironment().setCurrentTarget(new SVNCommandTarget(""));
+            SVNCommandTarget target = new SVNCommandTarget("");
             SVNChangelistClient changelistClient = getEnvironment().getClientManager().getChangelistClient();
-            changelistClient.getChangelist(getEnvironment().getCurrentTargetFile(), getEnvironment().getChangelist(), targets);
+            changelistClient.getChangelist(target.getFile(), getEnvironment().getChangelist(), targets);
             if (targets.isEmpty()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "no such changelist ''{0}''", getEnvironment().getChangelist());
                 SVNErrorManager.error(err);
@@ -92,14 +91,6 @@ public class SVNUpdateCommand extends SVNCommand {
         }
         File[] filesArray = (File[]) files.toArray(new File[files.size()]);
         ISVNPathList pathList = SVNPathList.create(filesArray, SVNRevision.UNDEFINED);
-        final int[] targetIndex = new int[] {0};
-        client.setPathListHandler(new ISVNPathListHandler() {
-            public void handlePathListItem(File path) throws SVNException {
-                int index = targetIndex[0];
-                getEnvironment().setCurrentTarget((SVNCommandTarget) updateTargets.get(index));
-                targetIndex[0]++;
-            }
-        });
         client.doUpdate(pathList, getEnvironment().getStartRevision(), getEnvironment().getDepth(), getEnvironment().isForce()); 
     } 
 

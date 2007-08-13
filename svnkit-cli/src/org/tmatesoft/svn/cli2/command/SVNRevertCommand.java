@@ -57,9 +57,9 @@ public class SVNRevertCommand extends SVNCommand {
     public void run() throws SVNException {
         List targets = getEnvironment().combineTargets(getEnvironment().getTargets());
         if (getEnvironment().getChangelist() != null) {
-            getEnvironment().setCurrentTarget(new SVNCommandTarget(""));
+            SVNCommandTarget target = new SVNCommandTarget("");
             SVNChangelistClient changelistClient = getEnvironment().getClientManager().getChangelistClient();
-            changelistClient.getChangelist(getEnvironment().getCurrentTargetFile(), getEnvironment().getChangelist(), targets);
+            changelistClient.getChangelist(target.getFile(), getEnvironment().getChangelist(), targets);
             if (targets.isEmpty()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "no such changelist ''{0}''", getEnvironment().getChangelist());
                 SVNErrorManager.error(err);
@@ -91,7 +91,6 @@ public class SVNRevertCommand extends SVNCommand {
             }
         }
         File[] paths = (File[]) pathsList.toArray(new File[pathsList.size()]);
-        getEnvironment().setCurrentTarget(new SVNCommandTarget(""));
         try {
             client.doRevert(paths, depth.isRecursive());
         } catch (SVNException e) {

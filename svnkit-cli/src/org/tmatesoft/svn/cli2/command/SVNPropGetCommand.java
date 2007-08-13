@@ -67,9 +67,9 @@ public class SVNPropGetCommand extends SVNPropertiesCommand {
 
         Collection targets = new ArrayList(); 
         if (getEnvironment().getChangelist() != null) {
-            getEnvironment().setCurrentTarget(new SVNCommandTarget(""));
+            SVNCommandTarget target = new SVNCommandTarget("");
             SVNChangelistClient changelistClient = getEnvironment().getClientManager().getChangelistClient();
-            changelistClient.getChangelist(getEnvironment().getCurrentTargetFile(), getEnvironment().getChangelist(), targets);
+            changelistClient.getChangelist(target.getFile(), getEnvironment().getChangelist(), targets);
             if (targets.isEmpty()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "no such changelist ''{0}''", getEnvironment().getChangelist());
                 SVNErrorManager.error(err);
@@ -121,7 +121,6 @@ public class SVNPropGetCommand extends SVNPropertiesCommand {
                     client.doGetProperty(target.getURL(), propertyName, pegRevision, getEnvironment().getStartRevision(), depth.isRecursive(), this);
                     printFileNames = !getEnvironment().isStrict() && (depth.isRecursive() || targets.size() > 1 || getURLProperties().size() > 1); 
                 } else {
-                    getEnvironment().setCurrentTarget(target);
                     client.doGetProperty(target.getFile(), propertyName, pegRevision, getEnvironment().getStartRevision(), depth.isRecursive(), this);
                     printFileNames = !getEnvironment().isStrict() && (depth.isRecursive() || targets.size() > 1 || getPathProperties().size() > 1); 
                 }
@@ -147,7 +146,7 @@ public class SVNPropGetCommand extends SVNPropertiesCommand {
                 if (isURL) {
                     getEnvironment().getOut().print(key);
                 } else {
-                    String path = SVNCommandUtil.getLocalPath(getEnvironment().getCurrentTargetRelativePath((File) key));
+                    String path = SVNCommandUtil.getLocalPath(getEnvironment().getRelativePath((File) key));
                     getEnvironment().getOut().print(path);
                 }
                 getEnvironment().getOut().print(" - ");
@@ -168,7 +167,7 @@ public class SVNPropGetCommand extends SVNPropertiesCommand {
             List props = (List) map.get(key);
             String target = key.toString();
             if (!isURL) {
-                target = SVNCommandUtil.getLocalPath(getEnvironment().getCurrentTargetRelativePath((File) key));
+                target = SVNCommandUtil.getLocalPath(getEnvironment().getRelativePath((File) key));
             } 
             SVNPropertyData property = (SVNPropertyData) props.get(0);
             StringBuffer buffer = openXMLTag("target", XML_STYLE_NORMAL, "path", target, null);

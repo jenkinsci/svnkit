@@ -83,7 +83,6 @@ public class SVNExportCommand extends SVNCommand {
         }
         try {
             SVNCommandTarget dst = new SVNCommandTarget(to);
-            getEnvironment().setCurrentTarget(dst);
             String eol = getEnvironment().getNativeEOL();
             SVNRevision revision = getEnvironment().getStartRevision();
             if (from.isFile()) {

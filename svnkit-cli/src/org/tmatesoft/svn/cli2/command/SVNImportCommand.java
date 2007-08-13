@@ -88,7 +88,6 @@ public class SVNImportCommand extends SVNCommand {
             depth = SVNDepth.INFINITY;
         }
         client.setCommitHandler(getEnvironment());
-        getEnvironment().setCurrentTarget(src);
         SVNCommitInfo info = client.doImport(src.getFile(), url.getURL(), getEnvironment().getMessage(), 
                 getEnvironment().getRevisionProperties(), !getEnvironment().isNoIgnore(), depth.isRecursive());
         getEnvironment().printCommitInfo(info);
