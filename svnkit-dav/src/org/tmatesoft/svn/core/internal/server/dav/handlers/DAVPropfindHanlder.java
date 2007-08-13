@@ -46,7 +46,7 @@ import java.util.Set;
  */
 public class DAVPropfindHanlder extends ServletDAVHandler {
 
-    private static final Set PROP_ELEMENTS = new HashSet();
+    private static final Set PROPERTY_ELEMENTS = new HashSet();
 
     private static final DAVElement PROPFIND = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "propfind");
     private static final DAVElement PROPNAME = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "propname");
@@ -61,22 +61,29 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
     private Collection myDAVElements;
 
     static {
-        PROP_ELEMENTS.add(DAVElement.AUTO_VERSION);
-        PROP_ELEMENTS.add(DAVElement.BASELINE_COLLECTION);
-        PROP_ELEMENTS.add(DAVElement.VERSION_NAME);
-        PROP_ELEMENTS.add(DAVElement.GET_CONTENT_LENGTH);
-        PROP_ELEMENTS.add(DAVElement.CREATION_DATE);
-        PROP_ELEMENTS.add(DAVElement.CREATOR_DISPLAY_NAME);
-        PROP_ELEMENTS.add(DAVElement.BASELINE_RELATIVE_PATH);
-        PROP_ELEMENTS.add(DAVElement.MD5_CHECKSUM);
-        PROP_ELEMENTS.add(DAVElement.REPOSITORY_UUID);
-        PROP_ELEMENTS.add(DAVElement.CHECKED_IN);
-        PROP_ELEMENTS.add(DAVElement.RESOURCE_TYPE);
-        PROP_ELEMENTS.add(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
-        PROP_ELEMENTS.add(DAVElement.DEADPROP_COUNT);
-        PROP_ELEMENTS.add(GET_ETAG);
-        PROP_ELEMENTS.add(GET_LAST_MODIFIED);
-        PROP_ELEMENTS.add(GET_CONTENT_TYPE);
+        PROPERTY_ELEMENTS.add(DAVElement.AUTO_VERSION);
+        PROPERTY_ELEMENTS.add(DAVElement.BASELINE_COLLECTION);
+        PROPERTY_ELEMENTS.add(DAVElement.VERSION_NAME);
+        PROPERTY_ELEMENTS.add(DAVElement.GET_CONTENT_LENGTH);
+        PROPERTY_ELEMENTS.add(DAVElement.CREATION_DATE);
+        PROPERTY_ELEMENTS.add(DAVElement.CREATOR_DISPLAY_NAME);
+        PROPERTY_ELEMENTS.add(DAVElement.BASELINE_RELATIVE_PATH);
+        PROPERTY_ELEMENTS.add(DAVElement.MD5_CHECKSUM);
+        PROPERTY_ELEMENTS.add(DAVElement.REPOSITORY_UUID);
+        PROPERTY_ELEMENTS.add(DAVElement.CHECKED_IN);
+        PROPERTY_ELEMENTS.add(DAVElement.RESOURCE_TYPE);
+        PROPERTY_ELEMENTS.add(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
+        PROPERTY_ELEMENTS.add(DAVElement.DEADPROP_COUNT);
+        PROPERTY_ELEMENTS.add(GET_ETAG);
+        PROPERTY_ELEMENTS.add(GET_LAST_MODIFIED);
+        PROPERTY_ELEMENTS.add(GET_CONTENT_TYPE);
+    }
+
+    private Collection getDAVProperties() {
+        if (myDAVElements == null) {
+            myDAVElements = new ArrayList();
+        }
+        return myDAVElements;
     }
 
     public DAVPropfindHanlder(DAVRepositoryManager connector, HttpServletRequest request, HttpServletResponse response) {
@@ -90,20 +97,14 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
             getDAVProperties().add(ALLPROP);
         } else if (element == PROPNAME) {
             getDAVProperties().add(PROPNAME);
-        } else if ((PROP_ELEMENTS.contains(element) || DAVElement.SVN_SVN_PROPERTY_NAMESPACE.equals(element.getNamespace())
+        } else
+        if ((PROPERTY_ELEMENTS.contains(element) || DAVElement.SVN_SVN_PROPERTY_NAMESPACE.equals(element.getNamespace())
                 || DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE.equals(element.getNamespace())) && parent == DAVElement.PROP) {
             getDAVProperties().add(element);
         }
     }
 
     protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
-    }
-
-    public Collection getDAVProperties() {
-        if (myDAVElements == null) {
-            myDAVElements = new ArrayList();
-        }
-        return myDAVElements;
     }
 
     public void execute() throws SVNException {
@@ -131,20 +132,20 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
     private void generatePropertiesResponse(StringBuffer xmlBuffer, DAVResource resource, DAVDepth depth) throws SVNException {
         appendXMLHeader(DAV_NAMESPACE_PREFIX, "multistatus", getDAVProperties(), xmlBuffer);
         if (getDAVProperties().size() == 1 && getDAVProperties().contains(ALLPROP)) {
-            //PROP_ELEMENTS contains only so called live properties, but to generate ALLPROP body we need some more: user defined + server defined
+            //PROPERTY_ELEMENTS contains only so called live properties, but to generate ALLPROP body we need some more: user defined + server defined
             // specific properties, so we add them from resource's SVNProperties.
             Collection allProperties = new ArrayList();
             for (Iterator iterator = resource.getDeadProperties().iterator(); iterator.hasNext();) {
                 String property = (String) iterator.next();
                 allProperties.add(DAVResourceUtil.convertToDAVElement(property));
             }
-            allProperties.addAll(PROP_ELEMENTS);
+            allProperties.addAll(PROPERTY_ELEMENTS);
             allProperties.remove(DAVElement.AUTO_VERSION);
-            if (resource.isCollection()){
+            if (resource.isCollection()) {
                 allProperties.remove(DAVElement.MD5_CHECKSUM);
                 allProperties.remove(DAVElement.GET_CONTENT_LENGTH);
             }
-            if (resource.getKind() == DAVResourceKind.BASELINE_COLL){
+            if (resource.getKind() == DAVResourceKind.BASELINE_COLL) {
                 allProperties.remove(DAVElement.BASELINE_COLLECTION);
             }
             generateResponse(xmlBuffer, resource, allProperties, depth);
@@ -404,11 +405,11 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
             return DEFAULT_COLLECTION_CONTENT_TYPE;
         }
         String contentType = resource.getContentType();
-        if (contentType != null){
+        if (contentType != null) {
             return contentType;
         }
         contentType = getRequestHeader(HTTPHeader.CONTENT_TYPE_HEADER);
-        if (resource.isSVNClient() && contentType != null){
+        if (resource.isSVNClient() && contentType != null) {
             return contentType;
         }
         return DEFAULT_FILE_CONTENT_TYPE;

@@ -50,13 +50,14 @@ import java.util.Map;
  */
 public abstract class ServletDAVHandler extends BasicDAVHandler {
 
-
+    protected static final int SC_OK = 200;
     protected static final int SC_MULTISTATUS = 207;
 
     protected static final String HTTP_STATUS_OK_LINE = "HTTP/1.1 200 OK";
     protected static final String HTTP_NOT_FOUND_LINE = "HTTP/1.1 404 NOT FOUND";
 
-    protected static final String DEFAULT_COLLECTION_CONTENT_TYPE = "text/html; charset=UTF-8";
+    protected static final String DEFAULT_XML_CONTENT_TYPE = "text/html; charset=utf-8";
+    protected static final String DEFAULT_COLLECTION_CONTENT_TYPE = "text/html; charset=utf-8";
     protected static final String DEFAULT_FILE_CONTENT_TYPE = "text/plain";
 
     protected static final int XML_STYLE_NORMAL = 1;
@@ -123,6 +124,10 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         myResponse.setStatus(statusCode);
     }
 
+    protected void setResponseContentType(String contentType){
+        myResponse.setContentType(contentType);
+    }
+
     protected Writer getResponseWriter() throws SVNException {
         try {
             return myResponse.getWriter();
@@ -181,8 +186,9 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         target.append(header);
         target.append(" xmlns:");
         target.append(DAV_NAMESPACE_PREFIX);
-        target.append("=");
-        target.append("\"DAV:\"");
+        target.append("=\"");
+        target.append(DAVElement.DAV_NAMESPACE);
+        target.append("\"");
         if (incomingDAVElements != null) {
             Collection elementNamespaces = new ArrayList();
             for (Iterator iterator = incomingDAVElements.iterator(); iterator.hasNext();) {
@@ -236,9 +242,10 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         target.append(":");
         target.append(tagName);
         if (attributes != null) {
-            for (Iterator iterator = attributes.keySet().iterator(); iterator.hasNext();) {
-                String name = (String) iterator.next();
-                String value = (String) attributes.get(name);
+            for (Iterator iterator = attributes.entrySet().iterator(); iterator.hasNext();) {
+                Map.Entry entry = (Map.Entry) iterator.next();
+                String name = (String) entry.getKey();
+                String value = (String) entry.getValue();
                 target.append(name);
                 target.append("=\"");
                 target.append(SVNEncodingUtil.xmlEncodeAttr(value));

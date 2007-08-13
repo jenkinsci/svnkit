@@ -23,7 +23,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
  * @version 1.1.2
  */
 public class DAVResourceUtil {
-    
+
     public static String buildURI(String context, String repositoryPath, DAVResourceKind davResourceKind, long revision, String parameterPath) {
         StringBuffer resultURI = new StringBuffer();
         resultURI.append(context);
@@ -33,6 +33,7 @@ public class DAVResourceUtil {
         if (davResourceKind == DAVResourceKind.ACT_COLLECTION) {
             resultURI.append(DAVResource.SPECIAL_URI).append("/");
             resultURI.append(davResourceKind.toString());
+            resultURI.append("/");
         } else if (davResourceKind == DAVResourceKind.BASELINE) {
             resultURI.append(DAVResource.SPECIAL_URI).append("/");
             resultURI.append(davResourceKind.toString()).append("/");
@@ -59,11 +60,11 @@ public class DAVResourceUtil {
 
     //Next three methods we can use for dead properties only
     public static DAVElement convertToDAVElement(String property) throws SVNException {
-        if (!SVNProperty.isRegularProperty(property)){
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Unrecognized property prefix ''{0}''", property ));                        
+        if (!SVNProperty.isRegularProperty(property)) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Unrecognized property prefix ''{0}''", property));
         }
         String namespace = DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE;
-        if(SVNProperty.isSVNProperty(property)){
+        if (SVNProperty.isSVNProperty(property)) {
             namespace = DAVElement.SVN_SVN_PROPERTY_NAMESPACE;
         }
         property = SVNProperty.shortPropertyName(property);
