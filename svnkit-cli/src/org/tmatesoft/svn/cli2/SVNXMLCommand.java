@@ -32,12 +32,12 @@ public abstract class SVNXMLCommand extends SVNCommand {
     }
     
     protected void printXMLHeader(String header) {
-        getEnvironment().getOut().println("<?xml version=\"1.0\"?>");
-        getEnvironment().getOut().println("<" + header + ">");
+        getEnvironment().getOut().print("<?xml version=\"1.0\"?>\n");
+        getEnvironment().getOut().print("<" + header + ">\n");
     }
 
     protected void printXMLFooter(String header) {
-        getEnvironment().getOut().println("</" + header + ">");
+        getEnvironment().getOut().print("</" + header + ">\n");
     }
     
 

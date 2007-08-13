@@ -94,6 +94,8 @@ public class SVNCommandTarget {
             }
             if (revStr.length() == 0) {
                 myPegRevision = isURL() ? SVNRevision.HEAD : SVNRevision.BASE;
+                myTarget = myTarget.substring(0, index);
+                return;
             }
             if (isURL() && revStr.length() > 6 && 
                     revStr.toLowerCase().startsWith("%7b") && revStr.toLowerCase().endsWith("%7d")) {

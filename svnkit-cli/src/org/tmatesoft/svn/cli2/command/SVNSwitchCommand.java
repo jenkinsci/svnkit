@@ -20,6 +20,7 @@ import org.tmatesoft.svn.cli2.SVNCommand;
 import org.tmatesoft.svn.cli2.SVNCommandTarget;
 import org.tmatesoft.svn.cli2.SVNNotifyPrinter;
 import org.tmatesoft.svn.cli2.SVNOption;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -55,6 +56,11 @@ public class SVNSwitchCommand extends SVNCommand {
     public void run() throws SVNException {
         List targets = getEnvironment().combineTargets(new ArrayList());
         if (getEnvironment().isRelocate()) {
+            if (getEnvironment().getDepth() != SVNDepth.UNKNOWN) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_MUTUALLY_EXCLUSIVE_ARGS, 
+                        "--relocate and --depth are mutually exclusive");
+                SVNErrorManager.error(err);
+            }
             relocate(targets);
             return;
         }

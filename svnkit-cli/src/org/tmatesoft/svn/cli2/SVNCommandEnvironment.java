@@ -50,6 +50,7 @@ import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNResolveAccept;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 
@@ -113,14 +114,21 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
     private boolean myIsAutoProps;
     private boolean myIsKeepChangelist;
     private boolean myIsParents;
-
     private boolean myIsKeepLocal;
+    private SVNResolveAccept myResolveAccept;
+    private boolean myIsRemove;
+    private String myNewTarget;
+    private String myOldTarget;
+    private boolean myIsNoticeAncestry;
+    private boolean myIsSummarize;
+    private boolean myIsNoDiffDeleted;
     
     public SVNCommandEnvironment(PrintStream out, PrintStream err, InputStream in) {
         myIsDescend = true;
         myOut = out;
         myErr = err;
         myIn = in;
+        myResolveAccept = SVNResolveAccept.DEFAULT;
         myExtensions = new HashSet();
         myDepth = SVNDepth.UNKNOWN;
         myStartRevision = SVNRevision.UNDEFINED;
@@ -184,6 +192,7 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
     }
     
     protected void initOptions(SVNCommandLine commandLine) throws SVNException {
+        boolean changeOptionIsUsed = false;
         for (Iterator options = commandLine.optionValues(); options.hasNext();) {
             SVNOptionValue optionValue = (SVNOptionValue) options.next();
             SVNOption option = optionValue.getOption();
@@ -214,6 +223,7 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
                     myStartRevision = SVNRevision.create(change);
                     myEndRevision = SVNRevision.create(change - 1);
                 }
+                changeOptionIsUsed = true;
             } else if (option == SVNOption.REVISION) {
                 if (myStartRevision != SVNRevision.UNDEFINED) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Multiple revision argument encountered; " +
@@ -301,6 +311,10 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
                 myIsNoAuthCache = true;
             } else if (option == SVNOption.NON_INTERACTIVE) {
                 myIsNonInteractive = true;
+            } else if (option == SVNOption.NO_DIFF_DELETED) {
+                myIsNoDiffDeleted = true;
+            } else if (option == SVNOption.NOTICE_ANCESTRY) {
+                myIsNoticeAncestry = true;
             } else if (option == SVNOption.IGNORE_ANCESTRY) {
                 myIsIgnoreAncestry = true;
             } else if (option == SVNOption.IGNORE_EXTERNALS) {
@@ -317,6 +331,13 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
                 myIsRecordOnly = true;
             } else if (option == SVNOption.EDITOR_CMD) {
                 myEditorCommand = optionValue.getValue();
+            } else if (option == SVNOption.OLD) {
+                if (changeOptionIsUsed) {
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Can't specify -c with --old"));
+                }
+                myOldTarget = optionValue.getValue();
+            } else if (option == SVNOption.NEW) {
+                myNewTarget = optionValue.getValue();
             } else if (option == SVNOption.CONFIG_DIR) {
                 myConfigDir = optionValue.getValue();
             } else if (option == SVNOption.AUTOPROPS) {
@@ -335,7 +356,11 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
                 myNativeEOL = optionValue.getValue();
             } else if (option == SVNOption.NO_UNLOCK) {
                 myIsNoUnlock = true;
-            } else if (option == SVNOption.CHANGELIST) {
+            } else if (option == SVNOption.SUMMARIZE) {
+                myIsSummarize = true;
+            } else if (option == SVNOption.REMOVE) {
+                myIsRemove = true;
+            } else if (option == SVNOption.CHANGELIST) {            
                 myChangelist = optionValue.getValue();
             } else if (option == SVNOption.KEEP_CHANGELIST) {
                 myIsKeepChangelist = true;
@@ -358,6 +383,14 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
                 myIsParents = true;
             } else if (option == SVNOption.USE_MERGE_HISTORY) {
                 myIsUseMergeHistory = true;
+            } else if (option == SVNOption.ACCEPT) {
+                SVNResolveAccept accept = SVNResolveAccept.fromString(optionValue.getValue());
+                if (accept == SVNResolveAccept.INVALID) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR,
+                            "'" + optionValue.getValue() + "' is not a valid accept value; try 'left', 'right', or 'working'");
+                    SVNErrorManager.error(err);
+                }
+                myResolveAccept = accept;
             }
         }
         myArguments = new LinkedList(commandLine.getArguments());
@@ -657,6 +690,34 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
         return myIsKeepLocal;
     }
     
+    public SVNResolveAccept getResolveAccept() {
+        return myResolveAccept;
+    }
+    
+    public boolean isRemove() {
+        return myIsRemove;
+    }
+    
+    public boolean isSummarize() {
+        return myIsSummarize;
+    }
+    
+    public boolean isNoticeAncestry() {
+        return myIsNoticeAncestry;
+    }
+    
+    public boolean isNoDiffDeleted() {
+        return myIsNoDiffDeleted;
+    }
+    
+    public String getOldTarget() {
+        return myOldTarget;
+    }
+    
+    public String getNewTarget() {
+        return myNewTarget;
+    }
+    
     public SVNDiffOptions getDiffOptions() {
         boolean ignoreAllWS = myExtensions.contains("-w") || myExtensions.contains("--ignore-all-space");
         boolean ignoreAmountOfWS = myExtensions.contains("-b") || myExtensions.contains("--ignore-space-change");
@@ -718,15 +779,6 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
     public String getRelativePath(File file) {
         String inPath = file.getAbsolutePath().replace(File.separatorChar, '/');
         String basePath = new File("").getAbsolutePath().replace(File.separatorChar, '/');
-        /*
-        if (equals(inPath, basePath)) {
-            return myTarget;
-        } else if (inPath.length() > basePath.length() && startsWith(inPath, basePath + "/")) {
-            if ("".equals(myTarget)) {
-                return inPath.substring(basePath.length() + 1);
-            }
-            return myTarget + inPath.substring(basePath.length());
-        }*/
         String commonRoot = getCommonAncestor(inPath, basePath);
         if (commonRoot != null) {
             if (equals(inPath , commonRoot)) {

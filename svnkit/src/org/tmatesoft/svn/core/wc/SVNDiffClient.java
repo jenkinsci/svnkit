@@ -297,7 +297,9 @@ public class SVNDiffClient extends SVNBasicClient {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Both rN and rM revisions should be specified");            
             SVNErrorManager.error(err);
         }
-        if (rN.isLocal() && rM.isLocal()) {
+        boolean rNisLocal = rN == SVNRevision.BASE || rN == SVNRevision.WORKING;
+        boolean rMisLocal = rM == SVNRevision.BASE || rM == SVNRevision.WORKING;
+        if (rNisLocal && rMisLocal) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "At least one revision must be non-local for " +
                     "a pegged diff");            
             SVNErrorManager.error(err);

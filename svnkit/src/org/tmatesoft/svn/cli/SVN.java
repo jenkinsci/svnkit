@@ -131,6 +131,25 @@ public class SVN {
         newCommands.add("remove");
         newCommands.add("rm");
         newCommands.add("revert");
+        newCommands.add("lock");
+        newCommands.add("unlock");
+        newCommands.add("resolved");
+        newCommands.add("cleanup");
+        newCommands.add("move");
+        newCommands.add("mv");
+        newCommands.add("rename");
+        newCommands.add("ren");
+        newCommands.add("copy");
+        newCommands.add("cp");
+        newCommands.add("changelist");
+        newCommands.add("cl");
+        newCommands.add("cat");
+        newCommands.add("blame");
+        newCommands.add("praise");
+        newCommands.add("annotate");
+        newCommands.add("ann");
+        newCommands.add("diff");
+        newCommands.add("di");
     }
 
     public static void main(String[] args) {

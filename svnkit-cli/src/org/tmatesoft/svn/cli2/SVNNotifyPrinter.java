@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.PrintStream;
 
 import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -219,6 +220,22 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
             buffer.append("Reverted '" + path + "'\n");
         } else if (event.getAction() == SVNEventAction.FAILED_REVERT) {
             buffer.append("Failed to revert '" + path + "' -- try updating instead.\n");
+        } else if (event.getAction() == SVNEventAction.LOCKED) {
+            buffer.append("'" + path + "' locked by user '" + event.getLock().getOwner() + "'.\n");
+        } else if (event.getAction() == SVNEventAction.UNLOCKED) {
+            buffer.append("'" + path + "' unlocked.\n");
+        } else if (event.getAction() == SVNEventAction.LOCK_FAILED || event.getAction() == SVNEventAction.UNLOCK_FAILED) {
+            myEnvironment.handleWarning(event.getErrorMessage(), new SVNErrorCode[] {event.getErrorMessage().getErrorCode()});
+            return;
+        } else if (event.getAction() == SVNEventAction.RESOLVED) {
+            buffer.append("Resolved conflicted state of '" + path + "'\n");
+        } else if (event.getAction() == SVNEventAction.CHANGELIST_SET) {
+            buffer.append("Path '" + path + "' is now a member of changelist '" + event.getChangelistName() + "'.\n");
+        } else if (event.getAction() == SVNEventAction.CHANGELIST_CLEAR) {
+            buffer.append("Path '" + path + "' is no longer a member of a changelist.\n");
+        } else if (event.getAction() == SVNEventAction.CHANGELIST_FAILED) {
+            myEnvironment.handleWarning(event.getErrorMessage(), new SVNErrorCode[] {event.getErrorMessage().getErrorCode()});
+            return;
         }
         if (buffer.length() > 0) {
             SVNDebugLog.getDefaultLog().info(buffer.toString());

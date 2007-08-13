@@ -68,6 +68,14 @@ public class SVNOption {
     public static final SVNOption KEEP_CHANGELIST = new SVNOption("keep-changelist");
     public static final SVNOption PARENTS = new SVNOption("parents");
     public static final SVNOption KEEP_LOCAL = new SVNOption("keep-local");
+    public static final SVNOption ACCEPT = new SVNOption("accept", false);
+    public static final SVNOption REMOVE = new SVNOption("remove");
+
+    public static final SVNOption OLD = new SVNOption("old", false);
+    public static final SVNOption NEW = new SVNOption("new", false);
+    public static final SVNOption SUMMARIZE = new SVNOption("summarize");
+    public static final SVNOption NOTICE_ANCESTRY = new SVNOption("notice-ancestry");
+    public static final SVNOption NO_DIFF_DELETED = new SVNOption("no-diff-deleted");
     
     // auth options.
     public static final SVNOption USERNAME = new SVNOption("username", false);
