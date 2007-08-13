@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
+import org.tmatesoft.svn.core.SVNMergeInfo;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
@@ -556,12 +557,14 @@ public class SVNBasicClient implements ISVNEventHandler {
                     repository = repository == null ? createRepository(url, true) : repository;
                     String repositoryPath = entry.getURL().substring(entry.
                                                                      getRepositoryRoot().length());
-                    Map reposMergeInfo = repository.getMergeInfo(new String[] {repositoryPath}, 
-                                                                 revision, 
-                                                                 inherit);
-                    if (!reposMergeInfo.isEmpty()) {
+                    Map pathToMergeInfo = repository.getMergeInfo(new String[] {repositoryPath}, 
+                                                                  revision, 
+                                                                  inherit);
+                    
+                    SVNMergeInfo reposMergeInfo = (SVNMergeInfo) pathToMergeInfo.get(repositoryPath); 
+                    if (reposMergeInfo != null) {
                         indirect = true;
-                        mergeInfo.putAll(reposMergeInfo);
+                        mergeInfo.putAll(reposMergeInfo.getMergeSourcesToMergeLists());
                     }
                 }
             }

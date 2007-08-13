@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" output="svnkit/bin" path="svnkit/src"/>
-	<classpathentry kind="src" output="svnkit-cli/bin" path="svnkit-cli/src"/>
-	<classpathentry kind="src" output="svnkit-dav/bin" path="svnkit-dav/src"/>
-	<classpathentry kind="src" output="doc/examples/bin" path="doc/examples/src"/>
-	<classpathentry kind="src" output="svnkit-eclipse/bin" path="svnkit-eclipse/org.tmatesoft.svnkit/src"/>
-	<classpathentry kind="src" output="svnkit-test/bin" path="svnkit-test/src"/>
-	<classpathentry excluding="**/SVNAdmin.java|**/SVNClient.java|org/tigris/subversion/javahl/tests/" kind="src" output="contrib/javahl/bin" path="contrib/javahl/src"/>
-	<classpathentry kind="src" output="contrib/sequence/bin" path="contrib/sequence/src"/>
-	<classpathentry kind="src" output="contrib/sequence/bin" path="contrib/sequence/src-test"/>
+	<classpathentry output="svnkit/bin" kind="src" path="svnkit/src"/>
+	<classpathentry output="svnkit-cli/bin" kind="src" path="svnkit-cli/src"/>
+	<classpathentry output="svnkit-dav/bin" kind="src" path="svnkit-dav/src"/>
+	<classpathentry output="doc/examples/bin" kind="src" path="doc/examples/src"/>
+	<classpathentry output="svnkit-eclipse/bin" kind="src" path="svnkit-eclipse/org.tmatesoft.svnkit/src"/>
+	<classpathentry output="svnkit-test/bin" kind="src" path="svnkit-test/src"/>
+	<classpathentry excluding="**/SVNAdmin.java|**/SVNClient.java|org/tigris/subversion/javahl/tests/" output="contrib/javahl/bin" kind="src" path="contrib/javahl/src"/>
+	<classpathentry output="contrib/sequence/bin" kind="src" path="contrib/sequence/src"/>
+	<classpathentry output="contrib/sequence/bin" kind="src" path="contrib/sequence/src-test"/>
 	<classpathentry kind="src" path="contrib/sqlite/src"/>
-	<classpathentry kind="lib" path="contrib/ganymed/ganymed.jar" sourcepath="contrib/ganymed/ganymedsrc.zip"/>
+	<classpathentry sourcepath="contrib/ganymed/ganymedsrc.zip" kind="lib" path="contrib/ganymed/ganymed.jar"/>
 	<classpathentry kind="lib" path="contrib/junit/junit.jar"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
-	<classpathentry kind="lib" path="contrib/sqlite/sqlitejdbc.jar" sourcepath="C:/test/sqlite-nested/src"/>
-	<classpathentry kind="lib" path="contrib/servlet-api/servlet-api.jar" sourcepath="contrib/servlet-api/servlet-api-2.3src.zip"/>
+	<classpathentry kind="lib" path="contrib/sqlite/sqlitejdbc.jar"/>
+	<classpathentry sourcepath="contrib/servlet-api/servlet-api-2.3src.zip" kind="lib" path="contrib/servlet-api/servlet-api.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.4"/>
 	<classpathentry kind="output" path="svnkit/bin"/>
 </classpath>
