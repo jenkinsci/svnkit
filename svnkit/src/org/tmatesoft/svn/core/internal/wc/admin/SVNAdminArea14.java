@@ -364,7 +364,11 @@ public class SVNAdminArea14 extends SVNAdminArea {
                         File tmpFile = getAdminFile(tmpPath);
                         String srcPath = getAdminDirectory().getName() + "/" + tmpPath;
                         SVNProperties tmpProps = new SVNProperties(tmpFile, srcPath);
-                        tmpProps.setProperties(props.asMap());
+                        if (!props.isEmpty()) {
+                            tmpProps.setProperties(props.asMap());
+                        } else {
+                            SVNFileUtil.createEmptyFile(tmpFile);
+                        }
                         command.put(SVNLog.NAME_ATTR, srcPath);
                         command.put(SVNLog.DEST_ATTR, dstPath);
                         log.addCommand(SVNLog.MOVE, command, false);
