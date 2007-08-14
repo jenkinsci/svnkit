@@ -120,6 +120,10 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         myResponse.setHeader(name, value);
     }
 
+    protected void addResponseHeader(String name, String value){
+        myResponse.addHeader(name, value);        
+    }
+
     protected void setResponseStatus(int statusCode) {
         myResponse.setStatus(statusCode);
     }
