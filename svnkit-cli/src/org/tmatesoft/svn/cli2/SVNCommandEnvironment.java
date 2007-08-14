@@ -38,6 +38,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
@@ -173,7 +174,7 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
         } catch (SVNException e) {
             SVNErrorMessage err = e.getErrorMessage();
             if (err.getErrorCode() == SVNErrorCode.CL_INSUFFICIENT_ARGS || err.getErrorCode() == SVNErrorCode.CL_ARG_PARSING_ERROR) {
-                err = err.wrap("Try ''jsvn help'' for more info");
+                err = err.wrap("Try 'jsvn help' for more info");
             }
             handleError(err);
             while(err != null) {
@@ -534,7 +535,7 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
         return (String) myArguments.remove(0);
     }
     
-    public List combineTargets(Collection targets) {
+    public List combineTargets(Collection targets) throws SVNException {
         List result = new LinkedList();
         result.addAll(getArguments());
         if (targets != null) {
@@ -543,11 +544,26 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
         List canonical = new ArrayList(result.size());
         for (Iterator iterator = result.iterator(); iterator.hasNext();) {
             String path = (String) iterator.next();
-            path = path.replace(File.separatorChar, '/');
-            path = SVNPathUtil.canonicalizePath(path);
-            String name = SVNPathUtil.tail(path);
-            if (SVNFileUtil.getAdminDirectoryName().equals(name)) {
-                continue;
+            if (SVNCommandUtil.isURL(path)) {
+                path = SVNEncodingUtil.autoURIEncode(path);
+                try {
+                    SVNEncodingUtil.assertURISafe(path);
+                } catch (SVNException e) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "URL '" + path + "' is not properly URI-encoded");
+                    SVNErrorManager.error(err);
+                }
+                if (path.indexOf("/../") >= 0 || path.endsWith("/..")) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "URL '" + path + "' contains '..' element");
+                    SVNErrorManager.error(err);
+                }
+                path = SVNPathUtil.canonicalizePath(path);
+            } else {
+                path = path.replace(File.separatorChar, '/');
+                path = SVNPathUtil.canonicalizePath(path);
+                String name = SVNPathUtil.tail(path);
+                if (SVNFileUtil.getAdminDirectoryName().equals(name)) {
+                    continue;
+                }
             }
             canonical.add(path);
         }

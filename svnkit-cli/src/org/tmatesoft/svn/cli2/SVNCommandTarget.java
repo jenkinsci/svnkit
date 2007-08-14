@@ -38,11 +38,6 @@ public class SVNCommandTarget {
         this(target, false);
     }
 
-    public SVNCommandTarget(String target, File file) {
-        myTarget = SVNPathUtil.canonicalizePath(target);
-        myFile = file;
-    }
-
     public SVNCommandTarget(String target, boolean hasPegRevision) throws SVNException {
         myTarget = target;
         myHasPegRevision = hasPegRevision;
@@ -50,6 +45,7 @@ public class SVNCommandTarget {
             parsePegRevision();
         } 
         myTarget = SVNPathUtil.canonicalizePath(myTarget);
+        assertControlChars(isURL() ? SVNEncodingUtil.uriDecode(myTarget) : myTarget);
     }
     
     public String getTarget() {
@@ -110,5 +106,22 @@ public class SVNCommandTarget {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Syntax error parsing revision ''{0}''", myTarget.substring(index + 1));
             SVNErrorManager.error(err);
         }
+    }
+
+    protected static void assertControlChars(String path) throws SVNException {
+        if (path != null) {
+            for (int i = 0; i < path.length(); i++) {
+                char ch = path.charAt(i);
+                String code = Integer.toHexString(ch);
+                if (code.length() < 2) {
+                    code = "0" + code;
+                }
+                if (SVNEncodingUtil.isASCIIControlChar(ch)) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_PATH_SYNTAX, "Invalid control character '0x" + code + "' in path '" + path + "'");
+                    SVNErrorManager.error(err);
+                }
+            }
+        }
+        return;
     }
 }
