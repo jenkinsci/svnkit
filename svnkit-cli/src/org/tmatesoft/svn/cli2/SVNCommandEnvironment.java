@@ -123,12 +123,15 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
     private boolean myIsNoticeAncestry;
     private boolean myIsSummarize;
     private boolean myIsNoDiffDeleted;
+    private long myLimit;
+    private boolean myIsStopOnCopy;
     
     public SVNCommandEnvironment(PrintStream out, PrintStream err, InputStream in) {
         myIsDescend = true;
         myOut = out;
         myErr = err;
         myIn = in;
+        myLimit = -1;
         myResolveAccept = SVNResolveAccept.DEFAULT;
         myExtensions = new HashSet();
         myDepth = SVNDepth.UNKNOWN;
@@ -197,7 +200,20 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
         for (Iterator options = commandLine.optionValues(); options.hasNext();) {
             SVNOptionValue optionValue = (SVNOptionValue) options.next();
             SVNOption option = optionValue.getOption();
-            if (option == SVNOption.MESSAGE) {
+            if (option == SVNOption.LIMIT) {
+                String limitStr = optionValue.getValue();
+                try {
+                    long limit = Long.parseLong(limitStr);
+                    if (limit <= 0) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, "Argument to --limit must be positive");
+                        SVNErrorManager.error(err);
+                    }
+                    myLimit = limit;
+                } catch (NumberFormatException nfe) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Non-numeric limit argument given");
+                    SVNErrorManager.error(err);
+                }
+            } else if (option == SVNOption.MESSAGE) {
                 myMessage = optionValue.getValue();
             } else if (option == SVNOption.CHANGE) {
                 if (myStartRevision != SVNRevision.UNDEFINED) {
@@ -306,6 +322,8 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
                 myEncoding = optionValue.getValue();
             } else if (option == SVNOption.XML) {
                 myIsXML = true;
+            } else if (option == SVNOption.STOP_ON_COPY) {
+                myIsStopOnCopy = true;
             } else if (option == SVNOption.STRICT) {
                 myIsStrict = true;
             } else if (option == SVNOption.NO_AUTH_CACHE) {
@@ -732,6 +750,14 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
     
     public String getNewTarget() {
         return myNewTarget;
+    }
+    
+    public long getLimit() {
+        return myLimit;
+    }
+    
+    public boolean isStopOnCopy() {
+        return myIsStopOnCopy;
     }
     
     public SVNDiffOptions getDiffOptions() {

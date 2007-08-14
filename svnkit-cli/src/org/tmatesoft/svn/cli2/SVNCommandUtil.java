@@ -155,4 +155,25 @@ public class SVNCommandUtil {
         }
         return command;
     }
+
+    public static int getLinesCount(String str) {
+        if ("".equals(str)) {
+            return 1;
+        }
+        int count = 1;
+        for (int i = 0; i < str.length(); i++) {
+            if (str.charAt(i) == '\r') {
+                count++;
+                if (i < str.length() - 1 && str.charAt(i + 1) == '\n') {
+                    i++;
+                }
+            } else if (str.charAt(i) == '\n') {
+                count++;
+            }
+        }
+        if (count == 0) {
+            count++;
+        }
+        return count;
+    }
 }

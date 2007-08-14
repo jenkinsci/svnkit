@@ -76,6 +76,8 @@ public class SVNOption {
     public static final SVNOption SUMMARIZE = new SVNOption("summarize");
     public static final SVNOption NOTICE_ANCESTRY = new SVNOption("notice-ancestry");
     public static final SVNOption NO_DIFF_DELETED = new SVNOption("no-diff-deleted");
+    public static final SVNOption STOP_ON_COPY = new SVNOption("stop-on-copy");
+    public static final SVNOption LIMIT = new SVNOption("limit", "l", false);
     
     // auth options.
     public static final SVNOption USERNAME = new SVNOption("username", false);

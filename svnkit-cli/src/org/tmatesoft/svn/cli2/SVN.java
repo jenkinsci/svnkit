@@ -11,6 +11,9 @@
  */
 package org.tmatesoft.svn.cli2;
 
+import org.tmatesoft.svn.cli2.command.SVNInfoCommand;
+import org.tmatesoft.svn.cli2.command.SVNListCommand;
+import org.tmatesoft.svn.cli2.command.SVNLogCommand;
 import org.tmatesoft.svn.cli2.command.SVNBlameCommand;
 import org.tmatesoft.svn.cli2.command.SVNCatCommand;
 import org.tmatesoft.svn.cli2.command.SVNChangeListCommand;
@@ -64,7 +67,10 @@ public class SVN {
         new SVNExportCommand();
         new SVNHelpCommand();
         new SVNImportCommand();
+        new SVNInfoCommand();
+        new SVNListCommand();
         new SVNLockCommand();
+        new SVNLogCommand();
         new SVNMergeCommand();
         new SVNMkDirCommand();
         new SVNMoveCommand();

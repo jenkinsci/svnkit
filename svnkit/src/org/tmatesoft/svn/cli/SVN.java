@@ -150,6 +150,10 @@ public class SVN {
         newCommands.add("ann");
         newCommands.add("diff");
         newCommands.add("di");
+        newCommands.add("log");
+        newCommands.add("list");
+        newCommands.add("ls");
+        newCommands.add("info");
     }
 
     public static void main(String[] args) {

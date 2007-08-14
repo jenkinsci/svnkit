@@ -76,7 +76,7 @@ public class FSLog {
         long sendCount = 0;
         if (myPaths.length == 1 && "/".equals(myPaths[0])) {
             count = myEndRevision - myStartRevision + 1;
-            if (myLimit != 0 && count > myLimit) {
+            if (myLimit > 0 && count > myLimit) {
                 count = myLimit;
             }
         
@@ -122,7 +122,7 @@ public class FSLog {
                 if (myIsDescending) {
                     LogTreeNode tree = buildLogTree(myPaths, currentRev, myIsIncludeMergedRevisions);
                     sendCount += sendLogTree(tree);
-                    if (myLimit != 0 && sendCount >= myLimit) {
+                    if (myLimit > 0 && sendCount >= myLimit) {
                         break;
                     }
                 } else {
@@ -139,7 +139,7 @@ public class FSLog {
                 long nextRev = ((Long) revs.next()).longValue(); 
                 LogTreeNode tree = buildLogTree(myPaths, nextRev, myIsIncludeMergedRevisions);
                 sendCount += sendLogTree(tree);
-                if (myLimit != 0 && sendCount >= myLimit) {
+                if (myLimit > 0 && sendCount >= myLimit) {
                     break;
                 }
             }
