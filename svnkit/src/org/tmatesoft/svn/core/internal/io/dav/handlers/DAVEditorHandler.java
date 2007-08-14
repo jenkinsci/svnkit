@@ -60,7 +60,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             buffer.append(targetRevision);
             buffer.append("</S:target-revision>\n");
         }
-        if (target != null) {
+        if (target != null && !"".equals(target)) {
             buffer.append("<S:update-target>");
             buffer.append(SVNEncodingUtil.xmlEncodeCDATA(target));
             buffer.append("</S:update-target>\n");
