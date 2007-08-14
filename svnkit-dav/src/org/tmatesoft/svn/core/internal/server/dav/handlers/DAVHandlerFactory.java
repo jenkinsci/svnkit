@@ -22,8 +22,8 @@ import javax.servlet.http.HttpServletResponse;
 
 
 /**
+ * @author TMate Software Ltd.
  * @version 1.1.2
- * @author  TMate Software Ltd.
  */
 public class DAVHandlerFactory {
 
@@ -52,8 +52,11 @@ public class DAVHandlerFactory {
         if (METHOD_PROPFIND.equals(request.getMethod())) {
             return new DAVPropfindHanlder(manager, request, response);
         }
-        if (METHOD_OPTIONS.equals(request.getMethod())){
+        if (METHOD_OPTIONS.equals(request.getMethod())) {
             return new DAVOptionsHandler(manager, request, response);
+        }
+        if (METHOD_GET.equals(request.getMethod())) {
+            return new DAVGetHandler(manager, request, response);
         }
         SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Unknown request method ''{0}''", request.getMethod()));
         return null;

@@ -194,7 +194,7 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         String uri = resource.getContext() + resource.getURI();
         xmlBuffer.append(addHrefTags(uri));
         Collection badProperties = addPropstat(xmlBuffer, properties, resource, prefixMapping);
-        addPropNames(xmlBuffer, prefixMapping, badProperties);
+        addBadPropertiesPropstat(xmlBuffer, prefixMapping, badProperties);
         closeXMLTag(DAV_NAMESPACE_PREFIX, "response", xmlBuffer);
     }
 
@@ -212,7 +212,7 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         return badProperties;
     }
 
-    private void addPropNames(StringBuffer xmlBuffer, Map prefixMapping, Collection properties) {
+    private void addBadPropertiesPropstat(StringBuffer xmlBuffer, Map prefixMapping, Collection properties) {
         if (properties != null) {
             openXMLTag(DAV_NAMESPACE_PREFIX, "propstat", XML_STYLE_NORMAL, null, xmlBuffer);
             openXMLTag(DAV_NAMESPACE_PREFIX, "prop", XML_STYLE_NORMAL, null, xmlBuffer);
@@ -418,7 +418,7 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         }
         //Should we validate content type before returning it?
         if (resource.isCollection()) {
-            return DEFAULT_COLLECTION_CONTENT_TYPE;
+            return DAVResource.DEFAULT_COLLECTION_CONTENT_TYPE;
         }
         String contentType = resource.getContentType();
         if (contentType != null) {
@@ -428,7 +428,7 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         if (resource.isSVNClient() && contentType != null) {
             return contentType;
         }
-        return DEFAULT_FILE_CONTENT_TYPE;
+        return DAVResource.DEFAULT_FILE_CONTENT_TYPE;
     }
 
     private String getCreatorDisplayNameProp(DAVResource resource) throws SVNException {

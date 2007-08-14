@@ -238,21 +238,21 @@ public class DAVOptionsHandler extends ServletDAVHandler {
         closeXMLTag(DAV_NAMESPACE_PREFIX, "supported-method-set", xmlBuffer);
     }
 
-    private void generateSupportedValueSet(String prefix, String tagName, Collection supportedValues, Collection requestedValues, StringBuffer xmlBuffer) {
-        for (Iterator iterator = supportedValues.iterator(); iterator.hasNext();) {
-            String value = (String) iterator.next();
-            if (requestedValues.isEmpty() || requestedValues.contains(value)) {
-                openXMLTag(prefix, tagName, XML_STYLE_SELF_CLOSING, NAME_ATTR, value, xmlBuffer);
-            }
-        }
-    }
-
     private void generateSupportedReportSet(DAVResource resource, StringBuffer xmlBuffer) {
         openXMLTag(DAV_NAMESPACE_PREFIX, "supported-report-set", XML_STYLE_NORMAL, null, xmlBuffer);
         if (resource.getType() == DAVResource.DAV_RESOURCE_TYPE_REGULAR) {
             Collection supportedReports = DAVReportHandler.REPORT_ELEMENTS;
             generateSupportedElementSet(DAV_NAMESPACE_PREFIX, SUPPORTED_REPORT.getName(), supportedReports, getRequestedReports(), xmlBuffer);
             closeXMLTag(DAV_NAMESPACE_PREFIX, "supported-report-set", xmlBuffer);
+        }
+    }
+
+    private void generateSupportedValueSet(String prefix, String tagName, Collection supportedValues, Collection requestedValues, StringBuffer xmlBuffer) {
+        for (Iterator iterator = supportedValues.iterator(); iterator.hasNext();) {
+            String value = (String) iterator.next();
+            if (requestedValues.isEmpty() || requestedValues.contains(value)) {
+                openXMLTag(prefix, tagName, XML_STYLE_SELF_CLOSING, NAME_ATTR, value, xmlBuffer);
+            }
         }
     }
 

@@ -36,6 +36,7 @@ import javax.xml.parsers.SAXParserFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Writer;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -56,9 +57,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     protected static final String HTTP_STATUS_OK_LINE = "HTTP/1.1 200 OK";
     protected static final String HTTP_NOT_FOUND_LINE = "HTTP/1.1 404 NOT FOUND";
 
-    protected static final String DEFAULT_XML_CONTENT_TYPE = "text/html; charset=utf-8";
-    protected static final String DEFAULT_COLLECTION_CONTENT_TYPE = "text/html; charset=utf-8";
-    protected static final String DEFAULT_FILE_CONTENT_TYPE = "text/plain";
+    protected static final String DEFAULT_XML_CONTENT_TYPE = "text/xml; charset=utf-8";
 
     protected static final int XML_STYLE_NORMAL = 1;
     protected static final int XML_STYLE_PROTECT_PCDATA = 2;
@@ -69,7 +68,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     private static final String DEPTH_HEADER = "Depth";
     private static final String VARY_HEADER = "Vary";
     private static final String USER_AGENT_HEADER = "User-Agent";
-    protected static final String ETAG_HEADER = "ETag";    
+    protected static final String ETAG_HEADER = "ETag";
 
     protected static final String XML_HEADER = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
 
@@ -120,21 +119,30 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         myResponse.setHeader(name, value);
     }
 
-    protected void addResponseHeader(String name, String value){
-        myResponse.addHeader(name, value);        
+    protected void addResponseHeader(String name, String value) {
+        myResponse.addHeader(name, value);
     }
 
     protected void setResponseStatus(int statusCode) {
         myResponse.setStatus(statusCode);
     }
 
-    protected void setResponseContentType(String contentType){
+    protected void setResponseContentType(String contentType) {
         myResponse.setContentType(contentType);
     }
 
     protected Writer getResponseWriter() throws SVNException {
         try {
             return myResponse.getWriter();
+        } catch (IOException e) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
+        }
+        return null;
+    }
+
+    protected OutputStream getResponseOutputStream() throws SVNException {
+        try {
+            return myResponse.getOutputStream();
         } catch (IOException e) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
         }
@@ -164,11 +172,15 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     }
 
     protected void setDefaultResponseHeaders(DAVResource resource) {
-        myResponse.setContentType("text/xml; charset=UTF-8");
+        try {
+            myResponse.setContentType(resource.getContentType());
+        } catch (SVNException e) {
+            //nothing to do we just skip this header    
+        }
         setResponseHeader("Accept-Ranges", "bytes");
         try {
             Date lastModifiedTime = resource.getLastModified();
-            if (lastModifiedTime != null){
+            if (lastModifiedTime != null) {
                 setResponseHeader(LAST_MODIFIED_HEADER, TimeFormatUtil.formatDate(lastModifiedTime));
             }
         } catch (SVNException e) {
