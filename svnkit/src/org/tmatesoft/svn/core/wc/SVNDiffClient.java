@@ -1894,7 +1894,8 @@ public class SVNDiffClient extends SVNBasicClient {
                         return;
                     }
                 
-                    SVNMergeRangeList requestedRangeList = calculateRequestedRanges(range, 
+                    SVNMergeRangeList requestedRangeList = calculateRequestedRanges(range,
+                                                                                    url1,
                                                                                     entry, 
                                                                                     repository1);
                     remainingRangeList = calculateMergeRanges(reposPath, requestedRangeList, 
@@ -2067,6 +2068,7 @@ public class SVNDiffClient extends SVNBasicClient {
                 }
                 
                 SVNMergeRangeList requestedRangeList = calculateRequestedRanges(range,  
+                                                                                url1,
                                                                                 entry, 
                                                                                 repository1);
                 remainingRangeList = calculateMergeRanges(reposPath, requestedRangeList, 
@@ -2466,13 +2468,14 @@ public class SVNDiffClient extends SVNBasicClient {
         }
         
         private SVNMergeRangeList calculateRequestedRanges(SVNMergeRange unrefinedRange, 
+                                                           SVNURL srcURL,                                           
                                                            SVNEntry entry,
                                                            SVNRepository repository) throws SVNException {
             SVNURL reposRoot = entry.getRepositoryRootURL();
             if (reposRoot == null) {
                 reposRoot = repository.getRepositoryRoot(true);
             }
-            String reposPath = entry.getSVNURL().getPath().substring(reposRoot.getPath().length());
+            String reposPath = srcURL.getPath().substring(reposRoot.getPath().length());
             if (!reposPath.startsWith("/")) {
                 reposPath = "/" + reposPath;
             }
