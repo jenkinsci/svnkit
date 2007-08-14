@@ -585,7 +585,6 @@ public abstract class SVNAdminArea {
                         SVNMergeInfoManager.diffMergeInfoProperties(null, addedMergeInfo, fromValue, null, toValue, null);
                         toValue = SVNMergeInfoManager.formatMergeInfoToString(addedMergeInfo);
                         working.setPropertyValue(propName, toValue);
-                        result = result != SVNStatusType.CONFLICTED && isNormal ? SVNStatusType.MERGED : result;
                     } else {
                         result = isNormal ? SVNStatusType.CONFLICTED : result;                            
                         conflicts.add(MessageFormat.format("Trying to change property ''{0}'' from ''{1}'' to ''{2}'',\n" +

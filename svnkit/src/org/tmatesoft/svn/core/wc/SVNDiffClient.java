@@ -2405,10 +2405,14 @@ public class SVNDiffClient extends SVNBasicClient {
                     mergeInfo = SVNMergeInfoManager.parseMergeInfo(new StringBuffer(propValue), mergeInfo);
                 }
                 
-                if (mergeInfo == null || ranges.getSize() == 0) {
+                if (mergeInfo == null && ranges.getSize() == 0) {
                     mergeInfo = new TreeMap();
                     getWCMergeInfo(mergeInfo, path, entry, null, 
                                    SVNMergeInfoInheritance.NEAREST_ANCESTOR, true);
+                }
+                
+                if (mergeInfo == null) {
+                    mergeInfo = new TreeMap();
                 }
                 
                 String parent = targetPath.getAbsolutePath();
@@ -2440,6 +2444,7 @@ public class SVNDiffClient extends SVNBasicClient {
                 }
                 
                 mergeInfo.put(reposPath, rangeList);
+                //TODO: I do not understand this:) how mergeInfo can be ever empty here????
                 if (isRollBack && mergeInfo.isEmpty()) {
                     mergeInfo = null;
                 }

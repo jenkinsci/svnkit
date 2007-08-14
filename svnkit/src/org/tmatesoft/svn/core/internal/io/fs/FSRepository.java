@@ -665,7 +665,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         } finally {
             myReporterContext.dispose();
         }
-        }
+    }
 
     public void abortReport() throws SVNException {
         if(myReporterContext != null){
