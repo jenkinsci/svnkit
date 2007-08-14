@@ -456,11 +456,12 @@ public class SVNDiffEditor implements ISVNEditor {
             }
         }
         if (getDiffCallback().isDiffUnversioned()) {
-            diffUnversioned(dir.getRoot(), dir, anchor, processedFiles);
+            String relativePath = dir.getRelativePath(myAdminInfo.getAnchor());
+            diffUnversioned(dir.getRoot(), dir, relativePath, anchor, processedFiles);
         }
     }
 
-    private void diffUnversioned(File root, SVNAdminArea dir, boolean anchor, Set processedFiles) throws SVNException {
+    private void diffUnversioned(File root, SVNAdminArea dir, String parentRelativePath, boolean anchor, Set processedFiles) throws SVNException {
         File[] allFiles = SVNFileListUtil.listFiles(root);
         for (int i = 0; allFiles != null && i < allFiles.length; i++) {
             File file = allFiles[i];
@@ -482,11 +483,11 @@ public class SVNDiffEditor implements ISVNEditor {
             // generate patch as for added file.
             SVNFileType fileType = SVNFileType.getType(file);
             if (fileType == SVNFileType.DIRECTORY) {
-                diffUnversioned(file, null, false, null);
+                diffUnversioned(file, null, SVNPathUtil.append(parentRelativePath, file.getName()), false, null);
             } else if (fileType == SVNFileType.FILE) {
                 String mimeType1 = null;
                 String mimeType2 = SVNFileUtil.detectMimeType(file);
-                String filePath = SVNPathUtil.append(dir.getRelativePath(myAdminInfo.getAnchor()), file.getName());
+                String filePath = SVNPathUtil.append(parentRelativePath, file.getName());
                 getDiffCallback().fileAdded(filePath, null, file, 0, 0, mimeType1, mimeType2, null, null);
             }
         }
