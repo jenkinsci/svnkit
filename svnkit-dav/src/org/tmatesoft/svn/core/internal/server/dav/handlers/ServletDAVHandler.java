@@ -35,8 +35,8 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Writer;
 import java.io.OutputStream;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -94,8 +94,8 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
 
     public abstract void execute() throws SVNException;
 
-    protected String getRequestURI() {
-        return myRequest.getRequestURI();
+    protected String getURI() {
+        return myRequest.getPathInfo();
     }
 
     protected String getRequestContext() {

@@ -24,37 +24,88 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
  */
 public class DAVResourceUtil {
 
-    public static String buildURI(String context, String repositoryPath, DAVResourceKind davResourceKind, long revision, String parameterPath) {
-        StringBuffer resultURI = new StringBuffer();
-        resultURI.append(context);
-        resultURI.append(repositoryPath.startsWith("/") ? "" : "/");
-        resultURI.append(repositoryPath);
-        resultURI.append(("".equals(repositoryPath) || repositoryPath.endsWith("/")) ? "" : "/");
-        if (davResourceKind == DAVResourceKind.ACT_COLLECTION) {
-            resultURI.append(DAVResource.SPECIAL_URI).append("/");
-            resultURI.append(davResourceKind.toString());
-            resultURI.append("/");
-        } else if (davResourceKind == DAVResourceKind.BASELINE) {
-            resultURI.append(DAVResource.SPECIAL_URI).append("/");
-            resultURI.append(davResourceKind.toString()).append("/");
-            resultURI.append(String.valueOf(revision));
-        } else if (davResourceKind == DAVResourceKind.BASELINE_COLL) {
-            resultURI.append(DAVResource.SPECIAL_URI).append("/");
-            resultURI.append(davResourceKind.toString()).append("/");
-            resultURI.append(String.valueOf(revision));
-            resultURI.append("/");
-        } else if (davResourceKind == DAVResourceKind.PUBLIC) {
-            resultURI.append(parameterPath).append("/");
-        } else if (davResourceKind == DAVResourceKind.VERSION) {
-            resultURI.append(DAVResource.SPECIAL_URI).append("/");
-            resultURI.append(davResourceKind.toString()).append("/");
-            resultURI.append(String.valueOf(revision));
-            resultURI.append(parameterPath);
-        } else if (davResourceKind == DAVResourceKind.VCC) {
-            resultURI.append(DAVResource.SPECIAL_URI).append("/");
-            resultURI.append(davResourceKind.toString()).append("/");
-            resultURI.append(DAVResource.DEDAULT_VCC_NAME);
+    private static final String SLASH = "/";
+
+    public static String dropLeadingSlash(String uri) {
+        return uri.startsWith(SLASH) ? uri.substring(SLASH.length()) : uri;
+    }
+
+    public static String addLeadingSlash(String uri) {
+        return uri.startsWith(SLASH) ? uri : SLASH + uri;
+    }
+
+    public static String dropTraillingSlash(String uri) {
+        return uri.endsWith(SLASH) ? uri.substring(0, uri.length() - SLASH.length()) : uri;
+    }
+
+    public static String addTrailingSlash(String uri) {
+        return uri.endsWith(SLASH) ? uri : uri + SLASH;
+    }
+
+    public static String head(String uri) {
+        uri = dropLeadingSlash(uri);
+        int slashIndex = uri.indexOf(SLASH);
+        if (slashIndex == -1) {
+            return uri;
         }
+        return uri.substring(0, slashIndex);
+    }
+
+    public static String removeHead(String uri, boolean doStandardize) {
+        uri = dropLeadingSlash(uri);
+        int headLength = head(uri).length();
+        return doStandardize ? standardize(uri.substring(headLength)) : uri.substring(headLength);
+    }
+
+    public static String standardize(String uri) {
+        if (uri == null) {
+            return SLASH;
+        }
+        return addLeadingSlash(dropTraillingSlash(uri));
+    }
+
+    public static String buildURI(DAVResource resource) {
+        return buildURI(resource.getContext(), resource.getKind(), resource.getRevision(), resource.getPath());
+    }
+
+    public static String buildURI(DAVResource resource, long revision) {
+        return buildURI(resource.getContext(), resource.getKind(), revision, resource.getPath());
+    }
+
+    public static String buildURI(String context, DAVResourceKind davResourceKind, long revision, String path) {
+        StringBuffer resultURI = new StringBuffer();
+        path = path == null ? "" : path;
+        resultURI.append(context);
+        resultURI.append(SLASH);
+        if (davResourceKind == DAVResourceKind.PUBLIC) {
+            resultURI.append(path);
+        } else {
+            resultURI.append(DAVResource.SPECIAL_URI).append(SLASH);
+            if (davResourceKind == DAVResourceKind.ACT_COLLECTION) {
+                resultURI.append(davResourceKind.toString());
+                resultURI.append(SLASH);
+            } else if (davResourceKind == DAVResourceKind.BASELINE) {
+                resultURI.append(davResourceKind.toString());
+                resultURI.append(SLASH);
+                resultURI.append(String.valueOf(revision));
+            } else if (davResourceKind == DAVResourceKind.BASELINE_COLL) {
+                resultURI.append(davResourceKind.toString());
+                resultURI.append(SLASH);
+                resultURI.append(String.valueOf(revision));
+                resultURI.append(SLASH);
+            } else if (davResourceKind == DAVResourceKind.VERSION) {
+                resultURI.append(davResourceKind.toString());
+                resultURI.append(SLASH);
+                resultURI.append(String.valueOf(revision));
+                resultURI.append(SLASH);
+                resultURI.append(path);
+            } else if (davResourceKind == DAVResourceKind.VCC) {
+                resultURI.append(davResourceKind.toString());
+                resultURI.append(SLASH);
+                resultURI.append(DAVResource.DEDAULT_VCC_NAME);
+            }
+        }
+
         return resultURI.toString();
     }
 

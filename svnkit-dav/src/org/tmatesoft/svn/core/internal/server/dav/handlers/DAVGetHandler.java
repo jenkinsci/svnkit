@@ -11,10 +11,10 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNDirEntry;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
@@ -24,9 +24,9 @@ import org.xml.sax.Attributes;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
-import java.io.IOException;
 
 /**
  * @author TMate Software Ltd.
@@ -46,10 +46,10 @@ public class DAVGetHandler extends ServletDAVHandler {
 
     public void execute() throws SVNException {
         String label = getRequestHeader(LABEL_HEADER);
-        DAVResource resource = getRepositoryManager().createDAVResource(getRequestContext(), getRequestURI(), label, false);
+        DAVResource resource = getRepositoryManager().createDAVResource(getRequestContext(), getURI(), label, false);
 
         if (!resource.exists()) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PATH_NOT_FOUND, "Path ''{0}'' you requested not found", resource.getParameterPath()));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PATH_NOT_FOUND, "Path ''{0}'' you requested not found", resource.getPath()));
         }
 
         gatherRequestHeadersInformation(resource);
@@ -75,8 +75,8 @@ public class DAVGetHandler extends ServletDAVHandler {
                 && resource.getType() != DAVResource.DAV_RESOURCE_TYPE_WORKING) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Cannot GET this type of resource."));
         }
-        startBody(resource.getParameterPath(), resource.getRevision(), buffer);
-        addUpperDirectoryLink(resource.getParameterPath(), buffer);
+        startBody(resource.getPath(), resource.getRevision(), buffer);
+        addUpperDirectoryLink(resource.getPath(), buffer);
         addDirectoryEntries(resource.getEntries(), buffer);
         finishBody(buffer);
     }

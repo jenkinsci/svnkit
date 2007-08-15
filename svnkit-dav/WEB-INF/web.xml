@@ -8,8 +8,10 @@
         <servlet-name>svnkit</servlet-name>
         <servlet-class>org.tmatesoft.svn.core.internal.server.dav.DAVServlet</servlet-class>
         <init-param>
-            <param-name>SVNPath</param-name>
-            <param-value>/var/svn/repository/repoview/</param-value>
+            <!--<param-name>SVNPath</param-name>-->
+            <!--<param-value>/var/svn/repository/repoview/</param-value>-->
+            <param-name>SVNParentPath</param-name>
+            <param-value>/var/svn/repository</param-value>
         </init-param>
     </servlet>
     <servlet-mapping>

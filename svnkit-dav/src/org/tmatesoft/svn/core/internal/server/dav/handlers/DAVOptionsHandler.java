@@ -27,9 +27,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.HashMap;
 
 /**
  * @author TMate Software Ltd.
@@ -131,7 +131,7 @@ public class DAVOptionsHandler extends ServletDAVHandler {
     }
 
     public void execute() throws SVNException {
-        DAVResource resource = getRepositoryManager().createDAVResource(getRequestContext(), getRequestURI(), null, false);
+        DAVResource resource = getRepositoryManager().createDAVResource(getRequestContext(), getURI(), null, false);
         Collection availableMethods = getSupportedMethods(resource);
         readInput(getRequestInputStream());
 
@@ -220,7 +220,7 @@ public class DAVOptionsHandler extends ServletDAVHandler {
 
     private void generateActivityCollectionSet(DAVResource resource, StringBuffer xmlBuffer) {
         openXMLTag(DAV_NAMESPACE_PREFIX, ACTIVITY_COLLECTION_SET.getName(), XML_STYLE_NORMAL, null, xmlBuffer);
-        String uri = DAVResourceUtil.buildURI(resource.getContext(), resource.getPath(), DAVResourceKind.ACT_COLLECTION, 0, null);
+        String uri = DAVResourceUtil.buildURI(resource.getContext(), DAVResourceKind.ACT_COLLECTION, 0, null);
         xmlBuffer.append(addHrefTags(uri));
         closeXMLTag(DAV_NAMESPACE_PREFIX, ACTIVITY_COLLECTION_SET.getName(), xmlBuffer);
     }

@@ -11,9 +11,12 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 
@@ -25,16 +28,53 @@ import javax.servlet.ServletConfig;
  */
 public class DAVRepositoryManager {
 
+    private static final String PATH_PARAMETER = "SVNPath";
+    private static final String PARENT_PATH_PARAMETER = "SVNParentPath";
+
     private SVNRepository myRepository;
+    private String myRepositoryParentPath;
 
     public DAVRepositoryManager(ServletConfig config) throws SVNException {
-        String repositoryPath = "file://" + config.getInitParameter("SVNPath");
-        FSRepositoryFactory.setup();
-        myRepository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(repositoryPath));
+        String repositoryPath = config.getInitParameter(PATH_PARAMETER);
+        String repositoryParentPath = config.getInitParameter(PARENT_PATH_PARAMETER);
+        if (repositoryPath != null && repositoryParentPath == null) {
+            FSRepositoryFactory.setup();
+            String repositoryURL = (repositoryPath.startsWith("/") ? "file://" : "file:///") + repositoryPath;
+            myRepository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(repositoryURL));
+        } else if (repositoryParentPath != null && repositoryPath == null) {
+            myRepositoryParentPath = repositoryParentPath;
+        } else {
+            //repositoryPath == null <=> repositoryParentPath == null.
+            if (repositoryPath == null) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "Neither SVNPath nor SVNParentPath directive were specified."));
+            } else {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "Only one of SVNPath and SVNParentPath directives should be specified."));
+            }
+        }
     }
 
     public DAVResource createDAVResource(String requestContext, String requestURI, String label, boolean useCheckedIn) throws SVNException {
-        requestURI = requestURI.substring(requestContext.length());
+        if (myRepositoryParentPath != null) {
+            if (requestURI == null || requestURI.length() == 0 || "/".equals(requestURI)) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED));
+                //TODO: tried to access repository parent path, result status code should be FORBIDDEN.
+            }
+            String repositoryName = DAVResourceUtil.head(requestURI);
+            requestContext = requestContext + "/" + repositoryName;
+            requestURI = DAVResourceUtil.removeHead(requestURI, true);
+            String repositoryURL = getRepositoryURL(repositoryName);
+
+            FSRepositoryFactory.setup();
+            myRepository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(repositoryURL));
+        }
         return new DAVResource(myRepository, requestContext, requestURI, label, useCheckedIn);
+    }
+
+    private String getRepositoryURL(String repositoryName) {
+        StringBuffer urlBuffer = new StringBuffer();
+        urlBuffer.append(myRepositoryParentPath.startsWith("/") ? "file://" : "file:///");
+        urlBuffer.append(DAVResourceUtil.addTrailingSlash(myRepositoryParentPath));
+        urlBuffer.append(repositoryName);
+        return urlBuffer.toString();
     }
 }
