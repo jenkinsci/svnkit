@@ -78,7 +78,7 @@ public class SVNDiffEditor implements ISVNEditor {
 
     public void openRoot(long revision) throws SVNException {
         myIsRootOpen = true;
-        myCurrentDirectory = createDirInfo(null, "", false);
+        myCurrentDirectory = createDirInfo(null, "", false, myDepth);
     }
 
     public void deleteEntry(String path, long revision) throws SVNException {
@@ -102,7 +102,7 @@ public class SVNDiffEditor implements ISVNEditor {
                 reportAddedFile(myCurrentDirectory, path, entry);
             }
         } else if (entry.isDirectory()) {
-            SVNDirectoryInfo info = createDirInfo(myCurrentDirectory, path, false);
+            SVNDirectoryInfo info = createDirInfo(myCurrentDirectory, path, false, SVNDepth.INFINITY);
             reportAddedDir(info);
         }
     }
@@ -129,9 +129,19 @@ public class SVNDiffEditor implements ISVNEditor {
             }
             if (entry.isFile()) {
                 reportAddedFile(info, SVNPathUtil.append(info.myPath, entry.getName()), entry);
-            } else if (entry.isDirectory() && myDepth == SVNDepth.INFINITY) {
-                SVNDirectoryInfo childInfo = createDirInfo(info, SVNPathUtil.append(info.myPath, entry.getName()), false);
-                reportAddedDir(childInfo);
+            } else if (entry.isDirectory()) {
+                if (info.myDepth.compareTo(SVNDepth.FILES) > 0 || 
+                    info.myDepth == SVNDepth.UNKNOWN) {
+                    SVNDepth depthBelowHere = info.myDepth;
+                    if (depthBelowHere == SVNDepth.IMMEDIATES) {
+                        depthBelowHere = SVNDepth.EMPTY;
+                    }
+                    SVNDirectoryInfo childInfo = createDirInfo(info, 
+                                                               SVNPathUtil.append(info.myPath, entry.getName()), 
+                                                               false,
+                                                               depthBelowHere);
+                    reportAddedDir(childInfo);
+                }
             }
         }
     }
@@ -220,11 +230,19 @@ public class SVNDiffEditor implements ISVNEditor {
     }
 
     public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
-        myCurrentDirectory = createDirInfo(myCurrentDirectory, path, true);
+        SVNDepth subDirDepth = myCurrentDirectory.myDepth;
+        if (subDirDepth == SVNDepth.IMMEDIATES) {
+            subDirDepth = SVNDepth.EMPTY;    
+        }
+        myCurrentDirectory = createDirInfo(myCurrentDirectory, path, true, subDirDepth);
     }
 
     public void openDir(String path, long revision) throws SVNException {
-        myCurrentDirectory = createDirInfo(myCurrentDirectory, path, false);
+        SVNDepth subDirDepth = myCurrentDirectory.myDepth;
+        if (subDirDepth == SVNDepth.IMMEDIATES) {
+            subDirDepth = SVNDepth.EMPTY;    
+        }
+        myCurrentDirectory = createDirInfo(myCurrentDirectory, path, false, subDirDepth);
     }
 
     public void changeDirProperty(String name, String value) throws SVNException {
@@ -391,7 +409,7 @@ public class SVNDiffEditor implements ISVNEditor {
 
     public SVNCommitInfo closeEdit() throws SVNException {
         if (!myIsRootOpen) {
-            localDirectoryDiff(createDirInfo(null, "", false));
+            localDirectoryDiff(createDirInfo(null, "", false, myDepth));
         }
         return null;
     }
@@ -426,6 +444,11 @@ public class SVNDiffEditor implements ISVNEditor {
                 getDiffCallback().propertiesChanged(info.myPath, baseProps.asMap(), propDiff);
             }
         }
+        
+        if (info.myDepth == SVNDepth.EMPTY) {
+            return;
+        }
+        
         Set processedFiles = null;
         if (getDiffCallback().isDiffUnversioned()) {
             processedFiles = new HashSet();
@@ -449,8 +472,16 @@ public class SVNDiffEditor implements ISVNEditor {
             if (entry.isFile()) {
                 reportModifiedFile(info, entry);
             } else if (entry.isDirectory()) {
-                if (anchor || myDepth == SVNDepth.INFINITY || myDepth == SVNDepth.UNKNOWN) {
-                    SVNDirectoryInfo childInfo = createDirInfo(info, SVNPathUtil.append(info.myPath, entry.getName()), false);
+                if (anchor || info.myDepth.compareTo(SVNDepth.FILES) > 0 || 
+                    info.myDepth == SVNDepth.UNKNOWN) {
+                    SVNDepth depthBelowHere = info.myDepth;
+                    if (depthBelowHere == SVNDepth.IMMEDIATES) {
+                        depthBelowHere = SVNDepth.EMPTY;
+                    }
+                    SVNDirectoryInfo childInfo = createDirInfo(info, 
+                                                               SVNPathUtil.append(info.myPath, entry.getName()), 
+                                                               false,
+                                                               depthBelowHere);
                     localDirectoryDiff(childInfo);
                 }
             }
@@ -492,11 +523,13 @@ public class SVNDiffEditor implements ISVNEditor {
         }
     }
 
-    private SVNDirectoryInfo createDirInfo(SVNDirectoryInfo parent, String path, boolean added) {
+    private SVNDirectoryInfo createDirInfo(SVNDirectoryInfo parent, String path, boolean added, 
+                                           SVNDepth depth) {
         SVNDirectoryInfo info = new SVNDirectoryInfo();
         info.myParent = parent;
         info.myPath = path;
         info.myIsAdded = added;
+        info.myDepth = depth;
         return info;
     }
 
@@ -563,6 +596,7 @@ public class SVNDiffEditor implements ISVNEditor {
         private Map myPropertyDiff;
         private SVNDirectoryInfo myParent;
         private Set myComparedEntries = new HashSet();
+        private SVNDepth myDepth;
     }
 
     private static class SVNFileInfo {

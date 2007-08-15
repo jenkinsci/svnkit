@@ -604,7 +604,7 @@ public class SVNDiffClient extends SVNBasicClient {
         boolean isPath2Local = rM == SVNRevision.WORKING || rM == SVNRevision.BASE;
         getDiffGenerator().init(path1.getAbsolutePath(), path2.getAbsolutePath());
         if (isPath1Local && isPath2Local) {
-            doDiffWCWC(path1, rN, path2, rM, SVNDepth.recurseFromDepth(depth), useAncestry, result);
+            doDiffWCWC(path1, rN, path2, rM, depth, useAncestry, result);
         } else if (isPath1Local) {
             doDiffURLWC(path2, rM, SVNRevision.UNDEFINED, path1, rN, true, depth, useAncestry, result);
         } else if (isPath2Local) {
@@ -904,12 +904,13 @@ public class SVNDiffClient extends SVNBasicClient {
         }
     }
 
-    private void doDiffURLWC(File path1, SVNRevision revision1, SVNRevision pegRevision, File path2, SVNRevision revision2, 
-            boolean reverse, SVNDepth depth, boolean useAncestry, OutputStream result) throws SVNException {
-        
+    private void doDiffURLWC(File path1, SVNRevision revision1, SVNRevision pegRevision, 
+                             File path2, SVNRevision revision2, boolean reverse, SVNDepth depth, 
+                             boolean useAncestry, OutputStream result) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess();
         try {
-            SVNAdminAreaInfo info = wcAccess.openAnchor(path2, false, SVNDepth.recurseFromDepth(depth) ? SVNWCAccess.INFINITE_DEPTH : 0);
+            int admDepth = getAdminDepth(depth);
+            SVNAdminAreaInfo info = wcAccess.openAnchor(path2, false, admDepth);
             File anchorPath = info.getAnchor().getRoot();
             String target = "".equals(info.getTargetName()) ? null : info.getTargetName();
             
@@ -956,8 +957,8 @@ public class SVNDiffClient extends SVNBasicClient {
         }
     }
     
-    private void doDiffWCWC(File path1, SVNRevision revision1, File path2, SVNRevision revision2, boolean recursive, boolean useAncestry,
-            OutputStream result) throws SVNException {
+    private void doDiffWCWC(File path1, SVNRevision revision1, File path2, SVNRevision revision2, 
+                            SVNDepth depth, boolean useAncestry, OutputStream result) throws SVNException {
         if (!path1.equals(path2) || !(revision1 == SVNRevision.BASE && revision2 == SVNRevision.WORKING)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Only diffs between a path's text-base " +
                                     "and its working files are supported at this time (-rBASE:WORKING)");
@@ -966,13 +967,15 @@ public class SVNDiffClient extends SVNBasicClient {
         
         SVNWCAccess wcAccess = createWCAccess();
         try {
-            SVNAdminAreaInfo info = wcAccess.openAnchor(path1, false, recursive ? SVNWCAccess.INFINITE_DEPTH: 0);
+            int admDepth = getAdminDepth(depth);
+            SVNAdminAreaInfo info = wcAccess.openAnchor(path1, false, admDepth);
             wcAccess.getVersionedEntry(path1, false);
             long rev = getRevisionNumber(revision1, null, path1);
             AbstractDiffCallback callback = new SVNDiffCallback(info.getAnchor(), 
                                                                 getDiffGenerator(), 
                                                                 rev, -1, result);
-            SVNDiffEditor editor = new SVNDiffEditor(wcAccess, info, callback, useAncestry, false, false, SVNDepth.fromRecurse(recursive));
+            SVNDiffEditor editor = new SVNDiffEditor(wcAccess, info, callback, useAncestry, false, 
+                                                     false, depth);
             try {
                 editor.closeEdit();
             } finally {
@@ -1127,6 +1130,16 @@ public class SVNDiffClient extends SVNBasicClient {
             }
             repository2.closeSession();
         }
+    }
+    
+    private int getAdminDepth(SVNDepth depth) {
+        int admDepth = SVNWCAccess.INFINITE_DEPTH;
+        if (depth == SVNDepth.IMMEDIATES) {
+            admDepth = 1;
+        } else if (depth == SVNDepth.EMPTY || depth == SVNDepth.FILES) {
+            admDepth = 0;
+        }
+        return admDepth;
     }
     
     /**
