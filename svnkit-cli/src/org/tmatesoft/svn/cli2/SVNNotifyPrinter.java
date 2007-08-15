@@ -244,6 +244,7 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
     }
 
     public void checkCancelled() throws SVNCancelException {
+        myEnvironment.checkCancelled();
     }
 
 }

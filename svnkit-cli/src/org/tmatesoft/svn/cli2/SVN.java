@@ -42,6 +42,8 @@ import org.tmatesoft.svn.cli2.command.SVNStatusCommand;
 import org.tmatesoft.svn.cli2.command.SVNSwitchCommand;
 import org.tmatesoft.svn.cli2.command.SVNUnLockCommand;
 import org.tmatesoft.svn.cli2.command.SVNUpdateCommand;
+import org.tmatesoft.svn.core.SVNAuthenticationException;
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
@@ -53,6 +55,8 @@ import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
  */
 public class SVN {
     
+    private static volatile boolean ourIsCompleted;
+
     static {
         new SVNAddCommand();
         new SVNBlameCommand();
@@ -102,20 +106,30 @@ public class SVN {
             failure();
         }
         SVNCommandEnvironment env = new SVNCommandEnvironment(System.out, System.err, System.in);
+        Runtime.getRuntime().addShutdownHook(new Thread(new Cancellator(env)));
         
         try {
-            env.init(commandLine);
-        } catch (SVNException e) {
-            handleError(e);
-            SVNHelpCommand.printBasicUsage("jsvn");
+            try {
+                env.init(commandLine);
+            } catch (SVNException e) {
+                handleError(e);
+                if (e instanceof SVNCancelException || e instanceof SVNAuthenticationException) {
+                    failure();
+                }
+                SVNHelpCommand.printBasicUsage("jsvn");
+                failure();
+            }
+    
+            env.initClientManager();
+            if (!env.run()) {
+                failure();
+            }
+            success();
+        } catch (Throwable th) {
             failure();
+        } finally {
+            setCompleted();
         }
-
-        env.initClientManager();
-        if (!env.run()) {
-            failure();
-        }
-        success();
     }
     
     private static void initRA() {
@@ -129,11 +143,41 @@ public class SVN {
     }
 
     public static void failure() {
+        setCompleted();
         System.exit(1);
     }
 
     public static void success() {
+        setCompleted();
         System.exit(0);
+    }
+    
+    private static void setCompleted() {
+        synchronized (SVN.class) {
+            ourIsCompleted = true;
+            SVN.class.notifyAll();
+        }
+    }
+    
+    private static class Cancellator implements Runnable {
+        
+        private SVNCommandEnvironment myEnvironment;
+
+        public Cancellator(SVNCommandEnvironment env) {
+            myEnvironment = env;
+        }
+        
+        public void run() {
+            myEnvironment.setCancelled();
+            synchronized (SVN.class) {
+                while(!ourIsCompleted) {
+                    try {
+                        SVN.class.wait();
+                    } catch (InterruptedException e) {
+                    }
+                }
+            }
+        }
     }
 
 }

@@ -31,6 +31,8 @@ import java.util.Map;
 
 import org.tmatesoft.svn.cli.SVNConsoleAuthenticationProvider;
 import org.tmatesoft.svn.cli2.command.SVNStatusCommand;
+import org.tmatesoft.svn.core.ISVNCanceller;
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -46,10 +48,12 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
+import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNResolveAccept;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
@@ -59,7 +63,7 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
  * @version 1.1.2
  * @author  TMate Software Ltd.
  */
-public class SVNCommandEnvironment implements ISVNCommitHandler {
+public class SVNCommandEnvironment implements ISVNCommitHandler, ISVNCanceller {
     
     private static final String DEFAULT_LOG_MESSAGE_HEADER = "--This line, and those below, will be ignored--";
     
@@ -125,6 +129,8 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
     private boolean myIsNoDiffDeleted;
     private long myLimit;
     private boolean myIsStopOnCopy;
+
+    private boolean ourIsCancelled;
     
     public SVNCommandEnvironment(PrintStream out, PrintStream err, InputStream in) {
         myIsDescend = true;
@@ -168,6 +174,13 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
         }
         myClientManager = SVNClientManager.newInstance(options, authManager);
         myClientManager.setIgnoreExternals(myIsIgnoreExternals);
+        myClientManager.setEventHandler(new ISVNEventHandler() {
+            public void handleEvent(SVNEvent event, double progress) throws SVNException {
+            }
+            public void checkCancelled() throws SVNCancelException {
+                SVNCommandEnvironment.this.checkCancelled();
+            }
+        });
     }
     
     public boolean run() {
@@ -1023,6 +1036,20 @@ public class SVNCommandEnvironment implements ISVNCommitHandler {
             return ancestor;
         }
         return SVNPathUtil.getCommonPathAncestor(p1, p2);
+    }
+
+    public void checkCancelled() throws SVNCancelException {
+        synchronized (SVNCommandEnvironment.class) {
+            if (ourIsCancelled) {
+                SVNErrorManager.cancel("operation cancelled");
+            }
+        }
+    }
+    
+    public void setCancelled() {
+        synchronized (SVNCommandEnvironment.class) {
+            ourIsCancelled = true;
+        }
     }
 
 }
