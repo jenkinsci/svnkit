@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.cli2.command;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -27,6 +28,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -139,18 +141,21 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
         }
         path = SVNCommandUtil.getLocalPath(path);
         buffer.append("Path: " + path + "\n");
-        buffer.append("Name: " + SVNPathUtil.tail(path) + "\n");
+        if (info.getKind() != SVNNodeKind.DIR) {
+            buffer.append("Name: " + SVNPathUtil.tail(path.replace(File.separatorChar, '/')) + "\n");
+        }
         buffer.append("URL: " + info.getURL() + "\n");
         if (info.getRepositoryRootURL() != null) {
             buffer.append("Repository Root: " + info.getRepositoryRootURL() + "\n");
         }
-        if (info.getRepositoryUUID() != null) {
+        if (info.isRemote() && info.getRepositoryUUID() != null) {
             buffer.append("Repository UUID: " + info.getRepositoryUUID() + "\n");
         }
         if (info.getRevision() != null && info.getRevision().isValid()) {
             buffer.append("Revision: " + info.getRevision() + "\n");
         }
-        buffer.append("Node Kind: " + info.getKind() + "\n");
+        String kind = info.getKind() == SVNNodeKind.DIR ? "directory" : (info.getKind() != null ? info.getKind().toString() : "none");
+        buffer.append("Node Kind: " + kind + "\n");
         if (!info.isRemote()) {
             if (info.getSchedule() == null) {
                 buffer.append("Schedule: normal\n");
@@ -163,10 +168,10 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
                 }
             }
             if (info.getCopyFromURL() != null) {
-                buffer.append("Copy From URL: " + info.getCopyFromURL() + "\n");
+                buffer.append("Copied From URL: " + info.getCopyFromURL() + "\n");
             }
             if (info.getCopyFromRevision() != null && info.getCopyFromRevision().getNumber() >= 0) {
-                buffer.append("Copy From Rev: " + info.getCopyFromRevision() + "\n");
+                buffer.append("Copied From Rev: " + info.getCopyFromRevision() + "\n");
             }
         }
         if (info.getAuthor() != null) {
