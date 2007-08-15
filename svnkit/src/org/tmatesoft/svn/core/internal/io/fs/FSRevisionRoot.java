@@ -91,7 +91,7 @@ public class FSRevisionRoot extends FSRoot {
             return null;
         }
 
-        long createdRev = copyDstNode.getId().getRevision();
+        long createdRev = copyDstNode.getCreatedRevision();
         if (createdRev == copyDstEntry.getRevision()) {
             if (copyDstNode.getPredecessorId() == null) {
                 return null;

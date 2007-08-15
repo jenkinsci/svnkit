@@ -233,14 +233,14 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
 
     public long getDir(String path, long revision, Map properties, ISVNDirEntryHandler handler) throws SVNException {
         return getDir(path, revision, properties, SVNDirEntry.DIRENT_ALL, handler);
-            }
+    }
 
     public SVNDirEntry getDir(String path, long revision, boolean includeCommitMessages, Collection entries) throws SVNException {
         try {
             openRepository();
             if (!SVNRepository.isValidRevision(revision)) {
                 revision = myFSFS.getYoungestRevision();
-        }
+            }
 
             String repositoryPath = getRepositoryPath(path);
             SVNURL parentURL = getLocation().appendPath(path, false);
@@ -250,7 +250,8 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         
             if (entries != null) {
                 entries.addAll(getDirEntries(parent, parentURL, SVNDirEntry.DIRENT_ALL));
-        }
+            }
+            
             SVNDirEntry parentDirEntry = buildDirEntry(new FSEntry(parent.getId(), parent.getType(), ""), parentURL, parent, SVNDirEntry.DIRENT_ALL);
             return parentDirEntry;
         } finally {
@@ -857,7 +858,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
         Map metaprops = null;
         try {
-            metaprops = myFSFS.compoundMetaProperties(revNode.getId().getRevision());
+            metaprops = myFSFS.compoundMetaProperties(revNode.getCreatedRevision());
         } catch (SVNException svne) {
             //
         }

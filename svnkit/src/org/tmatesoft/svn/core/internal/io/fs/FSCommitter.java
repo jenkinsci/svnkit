@@ -317,9 +317,9 @@ public class FSCommitter {
             FSTransactionInfo txn = myTxnRoot.getTxn();
 
             if (txn.getRootID().equals(txn.getBaseID())) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "FATAL error: txn ''{0}'' root id ''{1}'' matches base id ''{2}''", new Object[] {
-                        txnId, txn.getRootID(), txn.getBaseID()
-                });
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
+                                                             "FATAL error: txn ''{0}'' root id ''{1}'' matches base id ''{2}''", 
+                                                             new Object[] { txnId, txn.getRootID(), txn.getBaseID() });
                 SVNErrorManager.error(err);
             }
             clone = myFSFS.getRevisionNode(txn.getRootID());
@@ -363,6 +363,7 @@ public class FSCommitter {
         String nodeId = getNewTxnNodeId();
         FSID id = FSID.createTxnId(nodeId, copyId, txnId);
         revNode.setId(id);
+        revNode.setIsFreshTxnRoot(false);
         myFSFS.putTxnRevisionNode(id, revNode);
         return id;
     }
@@ -556,6 +557,7 @@ public class FSCommitter {
         FSRevisionNode revNode = myFSFS.getRevisionNode(targetId);
         revNode.setPredecessorId(sourceId);
         revNode.setCount(sourcePredecessorCount != -1 ? sourcePredecessorCount + 1 : sourcePredecessorCount);
+        revNode.setIsFreshTxnRoot(false);
         myFSFS.putTxnRevisionNode(targetId, revNode);
     }
 

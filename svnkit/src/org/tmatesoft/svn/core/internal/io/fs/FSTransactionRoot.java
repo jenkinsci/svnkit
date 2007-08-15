@@ -296,6 +296,7 @@ public class FSTransactionRoot extends FSRoot {
             FSRepresentation mutableRep = new FSRepresentation();
             mutableRep.setTxnId(node.getId().getTxnID());
             node.setPropsRepresentation(mutableRep);
+            node.setIsFreshTxnRoot(false);
             getOwner().putTxnRevisionNode(node.getId(), node);
         }
     }
@@ -323,8 +324,9 @@ public class FSTransactionRoot extends FSRoot {
         newRevNode.setId(id);
         if (newRevNode.getCopyRootPath() == null) {
             newRevNode.setCopyRootPath(newRevNode.getCreatedPath());
-            newRevNode.setCopyRootRevision(newRevNode.getId().getRevision());
+            newRevNode.setCopyRootRevision(newRevNode.getCreatedRevision());
         }
+        newRevNode.setIsFreshTxnRoot(false);
         getOwner().putTxnRevisionNode(newRevNode.getId(), newRevNode);
         return id;
     }
@@ -354,6 +356,7 @@ public class FSTransactionRoot extends FSRoot {
                 textRep.setRevision(SVNRepository.INVALID_REVISION);
                 textRep.setTxnId(myTxnID);
                 parentRevNode.setTextRepresentation(textRep);
+                parentRevNode.setIsFreshTxnRoot(false);
                 getOwner().putTxnRevisionNode(parentRevNode.getId(), parentRevNode);
             } else {
                 dst = SVNFileUtil.openFileForWriting(childrenFile, true);
@@ -555,6 +558,7 @@ public class FSTransactionRoot extends FSRoot {
         revNode.setId(newId);
 
         getOwner().writeTxnNodeRevision(protoFile, revNode);
+        revNode.setIsFreshTxnRoot(false);
         getOwner().putTxnRevisionNode(id, revNode);
         return newId;
     }

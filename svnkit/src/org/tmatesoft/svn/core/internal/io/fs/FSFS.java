@@ -331,8 +331,12 @@ public class FSFS {
         } finally{
             revisionFile.close();
         }
-
-        return FSRevisionNode.fromMap(headers);
+        
+        FSRevisionNode node = FSRevisionNode.fromMap(headers);
+        if (node.isFreshTxnRoot()) {
+            node.setFreshRootPredecessorId(node.getPredecessorId());
+        }
+        return node;
     }
     
     public Map getDirContents(FSRevisionNode revNode) throws SVNException {
@@ -697,6 +701,7 @@ public class FSFS {
         revNode.setPredecessorId(sourceNode.getId());
         revNode.setCount(revNode.getCount() + 1);
         revNode.setCopyFromPath(null);
+        revNode.setIsFreshTxnRoot(true);
         revNode.setCopyFromRevision(SVNRepository.INVALID_REVISION);
         revNode.setId(FSID.createTxnId(sourceNode.getId().getNodeID(), sourceNode.getId().getCopyID(), txnID));
         putTxnRevisionNode(revNode.getId(), revNode);
@@ -728,31 +733,44 @@ public class FSFS {
         revNodeFile.write(id.getBytes("UTF-8"));
         String type = FSRevisionNode.HEADER_TYPE + ": " + revNode.getType() + "\n";
         revNodeFile.write(type.getBytes("UTF-8"));
+        
         if (revNode.getPredecessorId() != null) {
             String predId = FSRevisionNode.HEADER_PRED + ": " + revNode.getPredecessorId() + "\n";
             revNodeFile.write(predId.getBytes("UTF-8"));
         }
+        
         String count = FSRevisionNode.HEADER_COUNT + ": " + revNode.getCount() + "\n";
         revNodeFile.write(count.getBytes("UTF-8"));
+        
         if (revNode.getTextRepresentation() != null) {
             String textRepresentation = FSRevisionNode.HEADER_TEXT + ": "
                     + (revNode.getTextRepresentation().getTxnId() != null && revNode.getType() == SVNNodeKind.DIR ? "-1" : revNode.getTextRepresentation().toString()) + "\n";
             revNodeFile.write(textRepresentation.getBytes("UTF-8"));
         }
+        
         if (revNode.getPropsRepresentation() != null) {
             String propsRepresentation = FSRevisionNode.HEADER_PROPS + ": " + (revNode.getPropsRepresentation().getTxnId() != null ? "-1" : revNode.getPropsRepresentation().toString()) + "\n";
             revNodeFile.write(propsRepresentation.getBytes("UTF-8"));
         }
+        
         String cpath = FSRevisionNode.HEADER_CPATH + ": " + revNode.getCreatedPath() + "\n";
         revNodeFile.write(cpath.getBytes("UTF-8"));
+        
         if (revNode.getCopyFromPath() != null) {
             String copyFromPath = FSRevisionNode.HEADER_COPYFROM + ": " + revNode.getCopyFromRevision() + " " + revNode.getCopyFromPath() + "\n";
             revNodeFile.write(copyFromPath.getBytes("UTF-8"));
         }
-        if (revNode.getCopyRootRevision() != revNode.getId().getRevision() || !revNode.getCopyRootPath().equals(revNode.getCreatedPath())) {
+        
+        if (revNode.getCopyRootRevision() != revNode.getCreatedRevision() || !revNode.getCopyRootPath().equals(revNode.getCreatedPath())) {
             String copyroot = FSRevisionNode.HEADER_COPYROOT + ": " + revNode.getCopyRootRevision() + " " + revNode.getCopyRootPath() + "\n";
             revNodeFile.write(copyroot.getBytes("UTF-8"));
         }
+        
+        if (revNode.isFreshTxnRoot()) {
+            String isFreshRootStr = FSRevisionNode.HEADER_IS_FRESH_TXN_ROOT + ": y\n";
+            revNodeFile.write(isFreshRootStr.getBytes("UTF-8"));
+        }
+        
         revNodeFile.write("\n".getBytes("UTF-8"));
     }
     
@@ -1261,7 +1279,7 @@ public class FSFS {
 
         if (FSRepository.isValidRevision(currentRevision)) {
             FSRevisionNode node = root.getRevisionNode(path);
-            long createdRev = node.getId().getRevision();
+            long createdRev = node.getCreatedRevision();
             if (FSRepository.isInvalidRevision(createdRev)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_OUT_OF_DATE, "Path ''{0}'' doesn't exist in HEAD revision", path);
                 SVNErrorManager.error(err);

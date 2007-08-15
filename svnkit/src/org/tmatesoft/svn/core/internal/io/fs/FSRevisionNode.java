@@ -39,6 +39,7 @@ public class FSRevisionNode {
     public static final String HEADER_PRED = "pred";
     public static final String HEADER_COPYFROM = "copyfrom";
     public static final String HEADER_COPYROOT = "copyroot";
+    public static final String HEADER_IS_FRESH_TXN_ROOT = "is-fresh-txn-root";
 
     // id: a.b.r<revID>/offset
     private FSID myId;
@@ -74,9 +75,9 @@ public class FSRevisionNode {
     // for only node-revs representing dirs
     private Map myDirContents;
 
-    public FSRevisionNode() {
-    }
-
+    private boolean myIsFreshTxnRoot;
+    private FSID myFreshRootPredecessorId;
+    
     public void setId(FSID revNodeID) {
         myId = revNodeID;
     }
@@ -151,6 +152,13 @@ public class FSRevisionNode {
         return myCreatedPath;
     }
 
+    public long getCreatedRevision() {
+        if (myFreshRootPredecessorId != null) {
+            return myFreshRootPredecessorId.getRevision();
+        }
+        return myId.getRevision();
+    }
+    
     public long getCopyFromRevision() {
         return myCopyFromRevision;
     }
@@ -272,7 +280,7 @@ public class FSRevisionNode {
         String copyroot = (String) headers.get(FSRevisionNode.HEADER_COPYROOT);
         if (copyroot == null) {
             revNode.setCopyRootPath(revNode.getCreatedPath());
-            revNode.setCopyRootRevision(revNode.getId().getRevision());
+            revNode.setCopyRootRevision(revNode.getCreatedRevision());
         } else {
             parseCopyRoot(copyroot, revNode);
         }
@@ -285,7 +293,8 @@ public class FSRevisionNode {
         } else {
             parseCopyFrom(copyfrom, revNode);
         }
-
+        
+        revNode.myIsFreshTxnRoot = headers.containsKey(HEADER_IS_FRESH_TXN_ROOT);
         return revNode;
     }
 
@@ -515,5 +524,21 @@ public class FSRevisionNode {
             SVNErrorManager.error(err);
         }
         return getTextRepresentation() != null ? getTextRepresentation().getExpandedSize() : 0;
+    }
+
+    public void setIsFreshTxnRoot(boolean isFreshTxnRoot) {
+        myIsFreshTxnRoot = isFreshTxnRoot;
+    }
+
+    public boolean isFreshTxnRoot() {
+        return myIsFreshTxnRoot;
+    }
+
+    public FSID getFreshRootPredecessorId() {
+        return myFreshRootPredecessorId;
+    }
+
+    public void setFreshRootPredecessorId(FSID freshRootPredecessorId) {
+        myFreshRootPredecessorId = freshRootPredecessorId;
     }
 }
