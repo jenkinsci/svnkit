@@ -483,7 +483,7 @@ public class FSFS {
                     reader.close();
                 }
                 
-                txnId = FSTransactionRoot.generateNextKey(txnId);
+                String nextTxnId = FSTransactionRoot.generateNextKey(txnId);
 
                 OutputStream txnCurrentOS = null;
                 File tmpFile = null;
@@ -491,8 +491,8 @@ public class FSFS {
                     tmpFile = SVNFileUtil.createUniqueFile(txnCurrentFile.getParentFile(),
                                                            TXN_CURRENT_FILE, ".tmp");
                     txnCurrentOS = SVNFileUtil.openFileForWriting(tmpFile);
-                    String txnIdString = txnId + "\n";
-                    txnCurrentOS.write(txnIdString.getBytes("UTF-8"));
+                    nextTxnId = nextTxnId + "\n";
+                    txnCurrentOS.write(nextTxnId.getBytes("UTF-8"));
                 } catch (IOException ioe) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
                     SVNErrorManager.error(err, ioe);
