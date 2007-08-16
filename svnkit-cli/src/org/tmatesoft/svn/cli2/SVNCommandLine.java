@@ -44,10 +44,16 @@ public class SVNCommandLine {
     private String myCommand;
     private Collection myArguments;
     private Collection myOptions;
+    private boolean myNeedsCommand;
 
     public SVNCommandLine() {
+        this(true);
+    }
+
+    public SVNCommandLine(boolean needsCommand) {
         myArguments = new LinkedList();
         myOptions = new LinkedList();
+        myNeedsCommand = needsCommand;
     }
 
     public void init(String[] args) throws SVNException {
@@ -67,7 +73,7 @@ public class SVNCommandLine {
                    }
                }
                myOptions.add(new SVNOptionValue(option, value, parameter));
-           } else if (myCommand == null) {
+           } else if (myNeedsCommand && myCommand == null) {
                myCommand = value;
            } else {
                myArguments.add(value);

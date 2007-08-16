@@ -38,7 +38,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
-import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
@@ -50,7 +49,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
  * @version 1.1.2
  * @author  TMate Software Ltd.
  */
-public abstract class AbstractSVNCommandEnvironment implements ISVNCommitHandler, ISVNCanceller {
+public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
     
     private boolean ourIsCancelled;
     private InputStream myIn;

@@ -39,6 +39,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
+import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
@@ -51,7 +52,7 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
  * @version 1.1.2
  * @author  TMate Software Ltd.
  */
-public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment {
+public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment implements ISVNCommitHandler {
     
     private static final String DEFAULT_LOG_MESSAGE_HEADER = "--This line, and those below, will be ignored--";
     

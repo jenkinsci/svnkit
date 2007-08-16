@@ -109,6 +109,8 @@ svnkit-cli/src/org/tmatesoft/svn/cli2/svn/SVNPropEditCommand.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svn/SVNRevertCommand.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svn/commands.properties eol=lf
 svnkit-cli/src/org/tmatesoft/svn/cli2/svn/options.properties eol=lf
+svnkit-cli/src/org/tmatesoft/svn/cli2/svnversion/commands.properties -text
+svnkit-cli/src/org/tmatesoft/svn/cli2/svnversion/options.properties -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVDepth.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVHandlerFactory.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/ServletDAVHandler.java -text

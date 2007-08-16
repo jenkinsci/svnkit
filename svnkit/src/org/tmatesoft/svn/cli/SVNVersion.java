@@ -40,6 +40,8 @@ public class SVNVersion {
 
 
     public static void main(String[] args) {
+        org.tmatesoft.svn.cli2.svnversion.SVNVersion.main(args);
+        
         if (args == null) {
             System.err.println("usage: jsvnversion [OPTIONS] [WC_PATH [TRAIL_URL]]");
             System.exit(1);

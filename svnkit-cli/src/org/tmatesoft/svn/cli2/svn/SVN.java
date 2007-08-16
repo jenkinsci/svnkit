@@ -128,4 +128,12 @@ public class SVN extends AbstractSVNLauncher {
         SVNCommandLine.registerOption(SVNOption.NO_AUTH_CACHE);
         SVNCommandLine.registerOption(SVNOption.NON_INTERACTIVE);
     }
+
+    protected boolean needArgs() {
+        return true;
+    }
+
+    protected boolean needCommand() {
+        return true;
+    }
 }

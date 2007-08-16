@@ -2375,7 +2375,7 @@ public class SVNWCClient extends SVNBasicClient {
             if (pathType == SVNFileType.DIRECTORY) {
                 return "exported";
             } else if (pathType == SVNFileType.NONE) {
-                return null;
+                throw e;
             }
             return "'" + path + "' is not versioned and not exported"; 
         } finally {

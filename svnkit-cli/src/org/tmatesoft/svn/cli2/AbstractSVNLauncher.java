@@ -30,7 +30,7 @@ public abstract class AbstractSVNLauncher {
     private static volatile boolean ourIsCompleted;
 
     protected void run(String[] args) {
-        if (args == null || args.length < 1) {
+        if (needArgs() && (args == null || args.length < 1)) {
             printBasicUsage();
             failure();
         }
@@ -38,7 +38,7 @@ public abstract class AbstractSVNLauncher {
         registerOptions();
         registerCommands();
 
-        SVNCommandLine commandLine = new SVNCommandLine();
+        SVNCommandLine commandLine = new SVNCommandLine(needCommand());
         try {
             commandLine.init(args);
         } catch (SVNException e) {
@@ -72,6 +72,10 @@ public abstract class AbstractSVNLauncher {
             setCompleted();
         }
     }
+
+    protected abstract boolean needArgs();
+
+    protected abstract boolean needCommand();
 
     protected abstract String getProgramName();
 
