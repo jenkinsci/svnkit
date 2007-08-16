@@ -16,12 +16,15 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVHandlerFactory;
 import org.tmatesoft.svn.core.internal.server.dav.handlers.ServletDAVHandler;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.ArrayList;
 
 /**
  * @author TMate Software Ltd.
@@ -57,29 +60,27 @@ public class DAVServlet extends HttpServlet {
     }
 
     private String generateStandardizedErrorBody(int errorID, String namespace, String tagName, String description) {
-        StringBuffer buffer = new StringBuffer();
-        buffer.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
-        buffer.append("<D:error xmlns:D=\"DAV:\"");
-        buffer.append(" xmlns:m=\"http://apache.org/dav/xmlns\"");
-        if (namespace != null && !"".equals(namespace)) {
-            buffer.append(" xmlns:C=\"");
-            buffer.append(namespace);
-            buffer.append(">");
-            buffer.append(" <C:");
-            buffer.append(tagName);
-        } else if (tagName != null && !"".equals(tagName)) {
-            buffer.append(">\n");
-            buffer.append("<D:");
-            buffer.append(tagName);
+        StringBuffer xmlBuffer = new StringBuffer();
+        DAVXMLUtil.addHeader(xmlBuffer);
+        Collection namespaces = new ArrayList();
+        namespaces.add(DAVElement.DAV_NAMESPACE);
+        namespaces.add(DAVElement.SVN_APACHE_PROPERTY_NAMESPACE);
+        if (namespace != null) {
+            namespaces.add(namespace);
         }
-        buffer.append(">\n");
-        buffer.append("<m:human-readable errcode=\"");
-        buffer.append(errorID);
-        buffer.append("\">");
-        buffer.append(SVNEncodingUtil.xmlEncodeCDATA(description));
-        buffer.append("</m:human-readable>\n");
-        buffer.append("</D:error>");
-        return buffer.toString();
+        DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "error", namespaces, xmlBuffer);
+        String prefix = (String) DAVXMLUtil.PREFIX_MAP.get(namespace);
+        if (prefix != null) {
+            prefix = DAVXMLUtil.DAV_NAMESPACE_PREFIX;
+        }
+        if (tagName != null && tagName.length() > 0) {
+            DAVXMLUtil.openXMLTag(prefix, tagName, DAVXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
+        }
+        DAVXMLUtil.openXMLTag(DAVXMLUtil.SVN_APACHE_PROPERTY_PREFIX, "human-readable", DAVXMLUtil.XML_STYLE_NORMAL, "errcode", String.valueOf(errorID), xmlBuffer);
+        xmlBuffer.append(SVNEncodingUtil.xmlEncodeCDATA(description));
+        DAVXMLUtil.closeXMLTag(DAVXMLUtil.SVN_APACHE_PROPERTY_PREFIX, "human-readable", xmlBuffer);
+        DAVXMLUtil.closeXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "error", xmlBuffer);
+        return xmlBuffer.toString();
     }
 
     private String generateErrorBody(String statusLine, String description) {

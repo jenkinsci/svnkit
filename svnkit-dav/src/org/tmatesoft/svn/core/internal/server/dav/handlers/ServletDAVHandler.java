@@ -21,7 +21,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
 import org.tmatesoft.svn.core.internal.server.dav.TimeFormatUtil;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -41,18 +41,12 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-
 
 /**
  * @author TMate Software Ltd.
  * @version 1.1.2
  */
 public abstract class ServletDAVHandler extends BasicDAVHandler {
-
-    protected static final Map PREFIX_MAP = new HashMap();
 
     protected static final int SC_OK = 200;
     protected static final int SC_MULTISTATUS = 207;
@@ -62,24 +56,15 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
 
     protected static final String DEFAULT_XML_CONTENT_TYPE = "text/xml; charset=utf-8";
 
-    protected static final int XML_STYLE_NORMAL = 1;
-    protected static final int XML_STYLE_PROTECT_PCDATA = 2;
-    protected static final int XML_STYLE_SELF_CLOSING = 4;
-
     protected static final String LAST_MODIFIED_HEADER = "Last-Modified";
     protected static final String LABEL_HEADER = "Label";
     private static final String DEPTH_HEADER = "Depth";
     private static final String VARY_HEADER = "Vary";
     private static final String USER_AGENT_HEADER = "User-Agent";
     protected static final String ETAG_HEADER = "ETag";
+    protected static final String ACCEPT_RANGES_HEADER = "Accept-Ranges";
 
-    protected static final String XML_HEADER = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
-
-    protected static final String DAV_NAMESPACE_PREFIX = "D";
-    protected static final String SVN_DAV_PROPERTY_PREFIX = "V";
-    protected static final String SVN_CUSTOM_PROPERTY_PREFIX = "C";
-    protected static final String SVN_SVN_PROPERTY_PREFIX = "S";
-
+    protected static final String ACCEPT_RANGES_VALUE = "bytes";
 
     protected static final DAVElement PROPFIND = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "propfind");
     protected static final DAVElement PROPNAME = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "propname");
@@ -96,43 +81,11 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     private HttpServletRequest myRequest;
     private HttpServletResponse myResponse;
 
-    static {
-        PREFIX_MAP.put(DAVElement.DAV_NAMESPACE, DAV_NAMESPACE_PREFIX);
-        PREFIX_MAP.put(DAVElement.SVN_DAV_PROPERTY_NAMESPACE, SVN_DAV_PROPERTY_PREFIX);
-        PREFIX_MAP.put(DAVElement.SVN_SVN_PROPERTY_NAMESPACE, SVN_SVN_PROPERTY_PREFIX);
-        PREFIX_MAP.put(DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE, SVN_CUSTOM_PROPERTY_PREFIX);
-    }
-
     protected ServletDAVHandler(DAVRepositoryManager connector, HttpServletRequest request, HttpServletResponse response) {
         init();
         myRepositoryManager = connector;
         myRequest = request;
         myResponse = response;
-    }
-
-
-    protected Collection getSupportedLiveProperties(DAVResource resource) {
-        Collection liveProperties = new ArrayList();
-        liveProperties.add(DAVElement.AUTO_VERSION);
-        liveProperties.add(DAVElement.VERSION_NAME);
-        liveProperties.add(DAVElement.CREATION_DATE);
-        liveProperties.add(DAVElement.CREATOR_DISPLAY_NAME);
-        liveProperties.add(DAVElement.BASELINE_RELATIVE_PATH);
-        liveProperties.add(DAVElement.REPOSITORY_UUID);
-        liveProperties.add(DAVElement.CHECKED_IN);
-        liveProperties.add(DAVElement.RESOURCE_TYPE);
-        liveProperties.add(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
-        liveProperties.add(GET_ETAG);
-        liveProperties.add(GET_LAST_MODIFIED);
-        liveProperties.add(GET_CONTENT_TYPE);
-        if (!resource.isCollection()) {
-            liveProperties.add(DAVElement.MD5_CHECKSUM);
-            liveProperties.add(DAVElement.GET_CONTENT_LENGTH);
-        }
-        if (resource.getKind() != DAVResourceKind.BASELINE_COLL) {
-            liveProperties.add(DAVElement.BASELINE_COLLECTION);
-        }
-        return liveProperties;
     }
 
     public abstract void execute() throws SVNException;
@@ -196,6 +149,30 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return myRepositoryManager;
     }
 
+    protected Collection getSupportedLiveProperties(DAVResource resource) {
+        Collection liveProperties = new ArrayList();
+        liveProperties.add(DAVElement.AUTO_VERSION);
+        liveProperties.add(DAVElement.VERSION_NAME);
+        liveProperties.add(DAVElement.CREATION_DATE);
+        liveProperties.add(DAVElement.CREATOR_DISPLAY_NAME);
+        liveProperties.add(DAVElement.BASELINE_RELATIVE_PATH);
+        liveProperties.add(DAVElement.REPOSITORY_UUID);
+        liveProperties.add(DAVElement.CHECKED_IN);
+        liveProperties.add(DAVElement.RESOURCE_TYPE);
+        liveProperties.add(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
+        liveProperties.add(GET_ETAG);
+        liveProperties.add(GET_LAST_MODIFIED);
+        liveProperties.add(GET_CONTENT_TYPE);
+        if (!resource.isCollection()) {
+            liveProperties.add(DAVElement.MD5_CHECKSUM);
+            liveProperties.add(DAVElement.GET_CONTENT_LENGTH);
+        }
+        if (resource.getKind() != DAVResourceKind.BASELINE_COLL) {
+            liveProperties.add(DAVElement.BASELINE_COLLECTION);
+        }
+        return liveProperties;
+    }
+
     protected DAVDepth getRequestDepth(DAVDepth defaultDepth) throws SVNException {
         String depth = getRequestHeader(DEPTH_HEADER);
         if (depth == null) {
@@ -210,7 +187,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
 
     protected void gatherRequestHeadersInformation(DAVResource resource) {
         String userAgent = getRequestHeader(USER_AGENT_HEADER);
-        boolean isSVNClient = userAgent != null && "SVN/".equals(userAgent);
+        boolean isSVNClient = userAgent != null && userAgent.startsWith("SVN/");
         resource.setSVNClient(isSVNClient);
     }
 
@@ -220,7 +197,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         } catch (SVNException e) {
             //nothing to do we just skip this header    
         }
-        setResponseHeader("Accept-Ranges", "bytes");
+        setResponseHeader(ACCEPT_RANGES_HEADER, ACCEPT_RANGES_VALUE);
         try {
             Date lastModifiedTime = resource.getLastModified();
             if (lastModifiedTime != null) {
@@ -235,113 +212,6 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         if (getRequestHeader(LABEL_HEADER) != null && getRequestHeader(LABEL_HEADER).length() > 0) {
             setResponseHeader(VARY_HEADER, LABEL_HEADER);
         }
-    }
-
-    protected StringBuffer addHeader(StringBuffer target) {
-        target = target == null ? new StringBuffer() : target;
-        target.append(XML_HEADER);
-        return target;
-    }
-
-    protected StringBuffer openNamespaceDeclarationTag(String prefix, String header, Collection davElements, StringBuffer target) {
-        target = target == null ? new StringBuffer() : target;
-        target.append("<");
-        target.append(prefix);
-        target.append(":");
-        target.append(header);
-        //We should always add DAV: namespace, otherwise client will fail parsing response body
-        target.append(" xmlns:");
-        target.append(DAV_NAMESPACE_PREFIX);
-        target.append("=\"");
-        target.append(DAVElement.DAV_NAMESPACE);
-        target.append("\"");
-        if (davElements != null && !davElements.isEmpty()) {
-            Collection usedNamespaces = new ArrayList();
-            usedNamespaces.add(DAVElement.DAV_NAMESPACE);
-            for (Iterator iterator = davElements.iterator(); iterator.hasNext();) {
-                DAVElement currentElement = (DAVElement) iterator.next();
-                String currentNamespace = currentElement.getNamespace();
-                if (currentNamespace != null && currentNamespace.length() > 0 && !usedNamespaces.contains(currentNamespace)) {
-                    usedNamespaces.add(currentNamespace);
-                    target.append(" xmlns:");
-                    target.append(PREFIX_MAP.get(currentNamespace));
-                    target.append("=\"");
-                    target.append(currentNamespace);
-                    target.append("\"");
-                }
-            }
-            usedNamespaces.clear();
-        }
-        target.append(">\n");
-        return target;
-    }
-
-    protected StringBuffer appendXMLFooter(String prefix, String header, StringBuffer target) {
-        target.append("</");
-        target.append(prefix);
-        target.append(":");
-        target.append(header);
-        target.append(">");
-        return target;
-    }
-
-
-    protected StringBuffer openCDataTag(String prefix, String tagName, String cdata, StringBuffer target) {
-        if (cdata == null) {
-            return target;
-        }
-        target = openXMLTag(prefix, tagName, XML_STYLE_PROTECT_PCDATA, null, target);
-        target.append(SVNEncodingUtil.xmlEncodeCDATA(cdata));
-        target = closeXMLTag(prefix, tagName, target);
-        return target;
-    }
-
-    protected StringBuffer openXMLTag(String prefix, String tagName, int style, String attr, String value, StringBuffer target) {
-        HashMap attributes = new HashMap();
-        attributes.put(attr, value);
-        return openXMLTag(prefix, tagName, style, attributes, target);
-    }
-
-    protected StringBuffer openXMLTag(String prefix, String tagName, int style, Map attributes, StringBuffer target) {
-        target = target == null ? new StringBuffer() : target;
-        target.append("<");
-        target.append(prefix);
-        target.append(":");
-        target.append(tagName);
-        if (attributes != null) {
-            for (Iterator iterator = attributes.entrySet().iterator(); iterator.hasNext();) {
-                Map.Entry entry = (Map.Entry) iterator.next();
-                String name = (String) entry.getKey();
-                String value = (String) entry.getValue();
-                target.append(name);
-                target.append("=\"");
-                target.append(SVNEncodingUtil.xmlEncodeAttr(value));
-            }
-            attributes.clear();
-        }
-        if (style == XML_STYLE_SELF_CLOSING) {
-            target.append("/");
-        }
-        target.append(">");
-        return target;
-    }
-
-    protected StringBuffer closeXMLTag(String prefix, String tagName, StringBuffer target) {
-        target = target == null ? new StringBuffer() : target;
-        target.append("</");
-        target.append(prefix);
-        target.append(":");
-        target.append(tagName);
-        target.append(">\n");
-        return target;
-    }
-
-    protected String addHrefTags(String uri) {
-        StringBuffer tmpBuffer = new StringBuffer();
-        openXMLTag(DAV_NAMESPACE_PREFIX, "href", XML_STYLE_NORMAL, null, tmpBuffer);
-        tmpBuffer.append(uri);
-        closeXMLTag(DAV_NAMESPACE_PREFIX, "href", tmpBuffer);
-        return tmpBuffer.toString();
     }
 
     protected void readInput(InputStream is) throws SVNException {

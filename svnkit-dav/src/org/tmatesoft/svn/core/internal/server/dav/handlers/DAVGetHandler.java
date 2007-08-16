@@ -17,16 +17,15 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
-import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.xml.sax.Attributes;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Iterator;
 
 /**
@@ -86,7 +85,7 @@ public class DAVGetHandler extends ServletDAVHandler {
         buffer.append(": ");
         buffer.append(path);
         buffer.append("</title></head>\n");
-        buffer.append("<body>\n <h2> Revision ");
+        buffer.append("<body>\n<h2> Revision ");
         buffer.append(String.valueOf(revision));
         buffer.append(": ");
         buffer.append(path);

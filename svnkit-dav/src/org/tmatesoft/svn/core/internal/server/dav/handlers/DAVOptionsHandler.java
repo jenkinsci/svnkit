@@ -19,6 +19,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
+import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.xml.sax.Attributes;
 
@@ -201,8 +202,8 @@ public class DAVOptionsHandler extends ServletDAVHandler {
 
     private void generateOptionsResponse(DAVResource resource, Collection supportedMethods, StringBuffer xmlBuffer) {
         if (!getDAVElements().isEmpty()) {
-            addHeader(xmlBuffer);
-            openNamespaceDeclarationTag(DAV_NAMESPACE_PREFIX, "options-response", null, xmlBuffer);
+            DAVXMLUtil.addHeader(xmlBuffer);
+            DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "options-response", null, xmlBuffer);
             for (Iterator iterator = getDAVElements().iterator(); iterator.hasNext();) {
                 DAVElement element = (DAVElement) iterator.next();
                 if (element == ACTIVITY_COLLECTION_SET) {
@@ -215,57 +216,55 @@ public class DAVOptionsHandler extends ServletDAVHandler {
                     generateSupportedReportSet(resource, xmlBuffer);
                 }
             }
-            appendXMLFooter(DAV_NAMESPACE_PREFIX, "options-response", xmlBuffer);
+            DAVXMLUtil.appendXMLFooter(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "options-response", xmlBuffer);
         }
     }
 
     private void generateActivityCollectionSet(DAVResource resource, StringBuffer xmlBuffer) {
-        openXMLTag(DAV_NAMESPACE_PREFIX, ACTIVITY_COLLECTION_SET.getName(), XML_STYLE_NORMAL, null, xmlBuffer);
+        DAVXMLUtil.openXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, ACTIVITY_COLLECTION_SET.getName(), DAVXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
         String uri = DAVPathUtil.buildURI(resource.getContext(), DAVResourceKind.ACT_COLLECTION, 0, null);
-        xmlBuffer.append(addHrefTags(uri));
-        closeXMLTag(DAV_NAMESPACE_PREFIX, ACTIVITY_COLLECTION_SET.getName(), xmlBuffer);
+        DAVXMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "href", uri, xmlBuffer);
+        DAVXMLUtil.closeXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, ACTIVITY_COLLECTION_SET.getName(), xmlBuffer);
     }
 
     private void generateSupportedLivePropertySet(DAVResource resource, StringBuffer xmlBuffer) {
-        openXMLTag(DAV_NAMESPACE_PREFIX, "supported-live-property-set", XML_STYLE_NORMAL, null, xmlBuffer);
+        DAVXMLUtil.openXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "supported-live-property-set", DAVXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
         Collection supportedLiveProperties = getSupportedLiveProperties(resource);
-        generateSupportedElementSet(DAV_NAMESPACE_PREFIX, SUPPORTED_LIVE_PROPERTY.getName(), supportedLiveProperties, getRequestedLiveProperties(), xmlBuffer);
-        closeXMLTag(DAV_NAMESPACE_PREFIX, "supported-live-property-set", xmlBuffer);
+        generateSupportedElementSet(DAVXMLUtil.DAV_NAMESPACE_PREFIX, SUPPORTED_LIVE_PROPERTY.getName(), supportedLiveProperties, getRequestedLiveProperties(), xmlBuffer);
+        DAVXMLUtil.closeXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "supported-live-property-set", xmlBuffer);
     }
 
     private void generateSupportedMethodSet(Collection supportedMethods, StringBuffer xmlBuffer) {
-        openXMLTag(DAV_NAMESPACE_PREFIX, "supported-method-set", XML_STYLE_NORMAL, null, xmlBuffer);
-        generateSupportedValueSet(DAV_NAMESPACE_PREFIX, SUPPORTED_METHOD.getName(), supportedMethods, getRequestedMethods(), xmlBuffer);
-        closeXMLTag(DAV_NAMESPACE_PREFIX, "supported-method-set", xmlBuffer);
+        DAVXMLUtil.openXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "supported-method-set", DAVXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
+        generateSupportedElementSet(DAVXMLUtil.DAV_NAMESPACE_PREFIX, SUPPORTED_METHOD.getName(), supportedMethods, getRequestedMethods(), xmlBuffer);
+        DAVXMLUtil.closeXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "supported-method-set", xmlBuffer);
     }
 
     private void generateSupportedReportSet(DAVResource resource, StringBuffer xmlBuffer) {
-        openXMLTag(DAV_NAMESPACE_PREFIX, "supported-report-set", XML_STYLE_NORMAL, null, xmlBuffer);
+        DAVXMLUtil.openXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "supported-report-set", DAVXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
         if (resource.getType() == DAVResource.DAV_RESOURCE_TYPE_REGULAR) {
             Collection supportedReports = DAVReportHandler.REPORT_ELEMENTS;
-            generateSupportedElementSet(DAV_NAMESPACE_PREFIX, SUPPORTED_REPORT.getName(), supportedReports, getRequestedReports(), xmlBuffer);
-            closeXMLTag(DAV_NAMESPACE_PREFIX, "supported-report-set", xmlBuffer);
-        }
-    }
-
-    private void generateSupportedValueSet(String prefix, String tagName, Collection supportedValues, Collection requestedValues, StringBuffer xmlBuffer) {
-        for (Iterator iterator = supportedValues.iterator(); iterator.hasNext();) {
-            String value = (String) iterator.next();
-            if (requestedValues.isEmpty() || requestedValues.contains(value)) {
-                openXMLTag(prefix, tagName, XML_STYLE_SELF_CLOSING, NAME_ATTR, value, xmlBuffer);
-            }
+            generateSupportedElementSet(DAVXMLUtil.DAV_NAMESPACE_PREFIX, SUPPORTED_REPORT.getName(), supportedReports, getRequestedReports(), xmlBuffer);
+            DAVXMLUtil.closeXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "supported-report-set", xmlBuffer);
         }
     }
 
     private void generateSupportedElementSet(String prefix, String tagName, Collection supportedElements, Collection requestedElements, StringBuffer xmlBuffer) {
         for (Iterator iterator = supportedElements.iterator(); iterator.hasNext();) {
-            DAVElement element = (DAVElement) iterator.next();
-            if (requestedElements.isEmpty() || requestedElements.contains(element)) {
+            Object item = iterator.next();
+            if (requestedElements.isEmpty() || requestedElements.contains(item)) {
                 Map attrs = new HashMap();
-                attrs.put(NAME_ATTR, element.getNamespace());
-                attrs.put(NAME_ATTR, element.getName());
-                openXMLTag(prefix, tagName, XML_STYLE_SELF_CLOSING, attrs, xmlBuffer);
+                if (item instanceof DAVElement) {
+                    DAVElement currentElement = (DAVElement) item;
+                    attrs.put(NAME_ATTR, currentElement.getNamespace());
+                    attrs.put(NAMESPACE_ATTR, currentElement.getName());
+                } else if (item instanceof String) {
+                    String currentName = (String) item;
+                    attrs.put(NAME_ATTR, currentName);
+                }
+                DAVXMLUtil.openXMLTag(prefix, tagName, DAVXMLUtil.XML_STYLE_SELF_CLOSING, attrs, xmlBuffer);
             }
         }
     }
 }
+

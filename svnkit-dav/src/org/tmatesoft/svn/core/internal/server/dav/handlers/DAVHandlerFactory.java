@@ -20,7 +20,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-
 /**
  * @author TMate Software Ltd.
  * @version 1.1.2

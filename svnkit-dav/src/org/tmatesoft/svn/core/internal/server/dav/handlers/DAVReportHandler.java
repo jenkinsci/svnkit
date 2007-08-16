@@ -20,11 +20,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.HashSet;
 import java.util.Set;
-/**
- * User: vs
- * Date: 14.08.2007
- * Time: 1:49:04
- */
 
 /**
  * @author TMate Software Ltd.
