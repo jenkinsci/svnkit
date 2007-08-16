@@ -11,20 +11,21 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav;
 
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVHandlerFactory;
-import org.tmatesoft.svn.core.internal.server.dav.handlers.ServletDAVHandler;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.ArrayList;
+
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVHandlerFactory;
+import org.tmatesoft.svn.core.internal.server.dav.handlers.ServletDAVHandler;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 
 /**
  * @author TMate Software Ltd.
@@ -35,24 +36,35 @@ public class DAVServlet extends HttpServlet {
     private static final int SC_SERVER_INTERNAL_ERROR = 500;
 
     private static final String NOT_FOUND_STATUS_LINE = "404 Not Found";
+    private static final String SERVER_INTERNAL_ERROR_LINE = "500 Internal Server Error";
+
+    private static final String HTML_CONTENT_TYPE = "text/html; charset=\"utf-8\"";
+    private static final String XML_CONTENT_TYPE = "text/xml; charset=\"utf-8\"";
 
     public void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         try {
             DAVRepositoryManager connector = new DAVRepositoryManager(getServletConfig());
             ServletDAVHandler handler = DAVHandlerFactory.createHandler(connector, request, response);
             handler.execute();
-        } catch (SVNException e) {
+        } catch (Throwable th) {
             String errorBody;
-            SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
-            if (errorCode == SVNErrorCode.RA_DAV_MALFORMED_DATA || errorCode == SVNErrorCode.FS_NOT_DIRECTORY
-                    || errorCode == SVNErrorCode.FS_NOT_FOUND) {
-                errorBody = generateErrorBody(NOT_FOUND_STATUS_LINE, e.getErrorMessage().getFullMessage());
-                response.setStatus(SC_NOT_FOUND);
-                response.setContentType("text/html; charset=\"utf-8\"");
+            if (th instanceof SVNException) {
+                SVNException e = (SVNException) th;
+                SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
+                if (errorCode == SVNErrorCode.RA_DAV_MALFORMED_DATA || errorCode == SVNErrorCode.FS_NOT_DIRECTORY
+                        || errorCode == SVNErrorCode.FS_NOT_FOUND) {
+                    errorBody = generateErrorBody(NOT_FOUND_STATUS_LINE, e.getMessage());
+                    response.setStatus(SC_NOT_FOUND);
+                    response.setContentType(HTML_CONTENT_TYPE);
+                } else {
+                    errorBody = generateStandardizedErrorBody(errorCode.getCode(), null, null, e.getErrorMessage().getFullMessage());
+                    response.setStatus(SC_SERVER_INTERNAL_ERROR);
+                    response.setContentType(XML_CONTENT_TYPE);
+                }
             } else {
-                errorBody = generateStandardizedErrorBody(errorCode.getCode(), null, null, e.getErrorMessage().getFullMessage());
+                errorBody = generateErrorBody(SERVER_INTERNAL_ERROR_LINE, th.getMessage());
                 response.setStatus(SC_SERVER_INTERNAL_ERROR);
-                response.setContentType("text/xml; charset=\"utf-8\"");
+                response.setContentType(HTML_CONTENT_TYPE);
             }
             response.getWriter().print(errorBody);
         }
@@ -68,18 +80,18 @@ public class DAVServlet extends HttpServlet {
         if (namespace != null) {
             namespaces.add(namespace);
         }
-        DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "error", namespaces, xmlBuffer);
-        String prefix = (String) DAVXMLUtil.PREFIX_MAP.get(namespace);
+        DAVXMLUtil.openNamespaceDeclarationTag(ServletDAVHandler.DAV_NAMESPACE_PREFIX, "error", namespaces, ServletDAVHandler.PREFIX_MAP, xmlBuffer);
+        String prefix = (String) ServletDAVHandler.PREFIX_MAP.get(namespace);
         if (prefix != null) {
-            prefix = DAVXMLUtil.DAV_NAMESPACE_PREFIX;
+            prefix = ServletDAVHandler.DAV_NAMESPACE_PREFIX;
         }
         if (tagName != null && tagName.length() > 0) {
             DAVXMLUtil.openXMLTag(prefix, tagName, DAVXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
         }
-        DAVXMLUtil.openXMLTag(DAVXMLUtil.SVN_APACHE_PROPERTY_PREFIX, "human-readable", DAVXMLUtil.XML_STYLE_NORMAL, "errcode", String.valueOf(errorID), xmlBuffer);
+        DAVXMLUtil.openXMLTag(ServletDAVHandler.SVN_APACHE_PROPERTY_PREFIX, "human-readable", DAVXMLUtil.XML_STYLE_NORMAL, "errcode", String.valueOf(errorID), xmlBuffer);
         xmlBuffer.append(SVNEncodingUtil.xmlEncodeCDATA(description));
-        DAVXMLUtil.closeXMLTag(DAVXMLUtil.SVN_APACHE_PROPERTY_PREFIX, "human-readable", xmlBuffer);
-        DAVXMLUtil.closeXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "error", xmlBuffer);
+        DAVXMLUtil.closeXMLTag(ServletDAVHandler.SVN_APACHE_PROPERTY_PREFIX, "human-readable", xmlBuffer);
+        DAVXMLUtil.closeXMLTag(ServletDAVHandler.DAV_NAMESPACE_PREFIX, "error", xmlBuffer);
         return xmlBuffer.toString();
     }
 

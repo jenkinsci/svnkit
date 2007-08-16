@@ -29,26 +29,13 @@ public class DAVXMLUtil {
 
     private static final String XML_HEADER = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
 
-    public static final Map PREFIX_MAP = new HashMap();
-
-
-    public static final String DAV_NAMESPACE_PREFIX = "D";
-    public static final String SVN_DAV_PROPERTY_PREFIX = "V";
-    public static final String SVN_CUSTOM_PROPERTY_PREFIX = "C";
-    public static final String SVN_SVN_PROPERTY_PREFIX = "S";
-    public static final String SVN_APACHE_PROPERTY_PREFIX = "M";
-
+    private static final String DAV_NAMESPACE_PREFIX = "D";
+    private static final String DAV_NAMESPACE = "DAV:";
+    
     public static final int XML_STYLE_NORMAL = 1;
     public static final int XML_STYLE_PROTECT_PCDATA = 2;
     public static final int XML_STYLE_SELF_CLOSING = 4;
 
-    static {
-        PREFIX_MAP.put(DAVElement.DAV_NAMESPACE, DAV_NAMESPACE_PREFIX);
-        PREFIX_MAP.put(DAVElement.SVN_DAV_PROPERTY_NAMESPACE, SVN_DAV_PROPERTY_PREFIX);
-        PREFIX_MAP.put(DAVElement.SVN_SVN_PROPERTY_NAMESPACE, SVN_SVN_PROPERTY_PREFIX);
-        PREFIX_MAP.put(DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE, SVN_CUSTOM_PROPERTY_PREFIX);
-        PREFIX_MAP.put(DAVElement.SVN_APACHE_PROPERTY_NAMESPACE, SVN_APACHE_PROPERTY_PREFIX);
-    }
 
     public static StringBuffer addHeader(StringBuffer target) {
         target = target == null ? new StringBuffer() : target;
@@ -56,22 +43,21 @@ public class DAVXMLUtil {
         return target;
     }
 
-    public static StringBuffer openNamespaceDeclarationTag(String prefix, String header, Collection davElements, StringBuffer target) {
+    public static StringBuffer openNamespaceDeclarationTag(String prefix, String header, Collection namespaces, Map prefixMap, StringBuffer target) {
         target = target == null ? new StringBuffer() : target;
         target.append("<");
         target.append(prefix);
         target.append(":");
         target.append(header);
-        //We should always add DAV: namespace, otherwise client will fail parsing response body
         target.append(" xmlns:");
         target.append(DAV_NAMESPACE_PREFIX);
         target.append("=\"");
-        target.append(DAVElement.DAV_NAMESPACE);
+        target.append(DAV_NAMESPACE);
         target.append("\"");
-        if (davElements != null && !davElements.isEmpty()) {
+        if (namespaces != null && !namespaces.isEmpty()) {
             Collection usedNamespaces = new ArrayList();
-            usedNamespaces.add(DAVElement.DAV_NAMESPACE);
-            for (Iterator iterator = davElements.iterator(); iterator.hasNext();) {
+            usedNamespaces.add(DAV_NAMESPACE);
+            for (Iterator iterator = namespaces.iterator(); iterator.hasNext();) {
                 Object item = iterator.next();
                 String currentNamespace = null;
                 if (item instanceof DAVElement) {
@@ -83,7 +69,7 @@ public class DAVXMLUtil {
                 if (currentNamespace != null && currentNamespace.length() > 0 && !usedNamespaces.contains(currentNamespace)) {
                     usedNamespaces.add(currentNamespace);
                     target.append(" xmlns:");
-                    target.append(PREFIX_MAP.get(currentNamespace));
+                    target.append(prefixMap.get(currentNamespace));
                     target.append("=\"");
                     target.append(currentNamespace);
                     target.append("\"");
@@ -95,7 +81,7 @@ public class DAVXMLUtil {
         return target;
     }
 
-    public static StringBuffer appendXMLFooter(String prefix, String header, StringBuffer target) {
+    public static StringBuffer addXMLFooter(String prefix, String header, StringBuffer target) {
         target.append("</");
         target.append(prefix);
         target.append(":");
@@ -132,9 +118,11 @@ public class DAVXMLUtil {
                 Map.Entry entry = (Map.Entry) iterator.next();
                 String name = (String) entry.getKey();
                 String value = (String) entry.getValue();
+                target.append(" ");
                 target.append(name);
                 target.append("=\"");
                 target.append(SVNEncodingUtil.xmlEncodeAttr(value));
+                target.append("\"");
             }
             attributes.clear();
         }
@@ -142,6 +130,9 @@ public class DAVXMLUtil {
             target.append("/");
         }
         target.append(">");
+        if (style != XML_STYLE_PROTECT_PCDATA) {
+            target.append("\n");
+        }
         return target;
     }
 

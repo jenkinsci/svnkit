@@ -202,13 +202,6 @@ public class DAVResource {
         return mySVNProperties;
     }
 
-    public Collection getEntries() {
-        if (myEntries == null) {
-            myEntries = new ArrayList();
-        }
-        return myEntries;
-    }
-
     private void parseURI(String label, boolean useCheckedIn) throws SVNException {
         if (!SPECIAL_URI.equals(DAVPathUtil.head(getURI()))) {
             setKind(DAVResourceKind.PUBLIC);
@@ -377,7 +370,7 @@ public class DAVResource {
         }
     }
 
-    public void prepare() throws SVNException {
+    private void prepare() throws SVNException {
         long latestRevision = getLatestRevision();
         if (getType() == DAVResource.DAV_RESOURCE_TYPE_REGULAR) {
             if (getRevision() == INVALID_REVISION) {
@@ -385,7 +378,7 @@ public class DAVResource {
             }
             checkPath();
             if (isCollection()) {
-                getRepository().getDir(getPath(), getRevision(), getSVNProperties(), getEntries());
+                getRepository().getDir(getPath(), getRevision(), getSVNProperties(), (Collection) null);
             } else {
                 getRepository().getFile(getPath(), getRevision(), getSVNProperties(), null);
             }
@@ -410,6 +403,15 @@ public class DAVResource {
         SVNNodeKind currentNodeKind = getRepository().checkPath(getPath(), getRevision());
         setExists(currentNodeKind != SVNNodeKind.NONE && currentNodeKind != SVNNodeKind.UNKNOWN);
         setCollection(currentNodeKind == SVNNodeKind.DIR);
+    }
+
+    public Collection getEntries() throws SVNException {
+        if (isCollection() && myEntries == null) {
+            myEntries = new ArrayList();
+            //May be we need to add property mask if any hadler uses not only directory entry size property.
+            getRepository().getDir(getPath(), getRevision(), null, SVNDirEntry.DIRENT_KIND, myEntries);
+        }
+        return myEntries;
     }
 
     private boolean lacksETagPotential() {
@@ -515,7 +517,7 @@ public class DAVResource {
         return getRepository().getRevisionPropertyValue(revision, propertyName);
     }
 
-    public void output(OutputStream out) throws SVNException {
+    public void writeTo(OutputStream out) throws SVNException {
         if (isCollection()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED));
         }

@@ -11,6 +11,12 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
+import java.io.IOException;
+import java.util.Iterator;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -21,12 +27,8 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.Version;
 import org.xml.sax.Attributes;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.Iterator;
 
 /**
  * @author TMate Software Ltd.
@@ -64,7 +66,7 @@ public class DAVGetHandler extends ServletDAVHandler {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
             }
         } else {
-            resource.output(getResponseOutputStream());
+            resource.writeTo(getResponseOutputStream());
         }
     }
 
@@ -103,7 +105,7 @@ public class DAVGetHandler extends ServletDAVHandler {
         }
     }
 
-    private void addDirectoryEntries(DAVResource resource, StringBuffer buffer) {
+    private void addDirectoryEntries(DAVResource resource, StringBuffer buffer) throws SVNException {
         for (Iterator iterator = resource.getEntries().iterator(); iterator.hasNext();) {
             SVNDirEntry entry = (SVNDirEntry) iterator.next();
             boolean isDir = entry.getKind() == SVNNodeKind.DIR;
@@ -121,8 +123,8 @@ public class DAVGetHandler extends ServletDAVHandler {
 
     private void finishBody(StringBuffer buffer) {
         buffer.append("</ul><hr noshade><em>");
-        buffer.append("Powered by <a href=\"http://svnkit.com/\">SVNKit</a> ");
-        buffer.append("pure Java Subversion client & server library");
+        buffer.append("Powered by ");
+        buffer.append(Version.getVersionString());
         buffer.append("</em>\n</body></html>");
     }
 

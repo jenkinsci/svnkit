@@ -18,6 +18,8 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Map;
+import java.util.HashMap;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -66,6 +68,14 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
 
     protected static final String ACCEPT_RANGES_VALUE = "bytes";
 
+    public static final Map PREFIX_MAP = new HashMap();
+
+    public static final String DAV_NAMESPACE_PREFIX = "D";
+    public static final String SVN_DAV_PROPERTY_PREFIX = "V";
+    public static final String SVN_CUSTOM_PROPERTY_PREFIX = "C";
+    public static final String SVN_SVN_PROPERTY_PREFIX = "S";
+    public static final String SVN_APACHE_PROPERTY_PREFIX = "M";
+
     protected static final DAVElement PROPFIND = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "propfind");
     protected static final DAVElement PROPNAME = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "propname");
     protected static final DAVElement ALLPROP = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "allprop");
@@ -80,6 +90,14 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     private DAVRepositoryManager myRepositoryManager = null;
     private HttpServletRequest myRequest;
     private HttpServletResponse myResponse;
+
+    static {
+        PREFIX_MAP.put(DAVElement.DAV_NAMESPACE, DAV_NAMESPACE_PREFIX);
+        PREFIX_MAP.put(DAVElement.SVN_DAV_PROPERTY_NAMESPACE, SVN_DAV_PROPERTY_PREFIX);
+        PREFIX_MAP.put(DAVElement.SVN_SVN_PROPERTY_NAMESPACE, SVN_SVN_PROPERTY_PREFIX);
+        PREFIX_MAP.put(DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE, SVN_CUSTOM_PROPERTY_PREFIX);
+        PREFIX_MAP.put(DAVElement.SVN_APACHE_PROPERTY_NAMESPACE, SVN_APACHE_PROPERTY_PREFIX);
+    }
 
     protected ServletDAVHandler(DAVRepositoryManager connector, HttpServletRequest request, HttpServletResponse response) {
         init();
