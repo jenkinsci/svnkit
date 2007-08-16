@@ -393,7 +393,7 @@ public class DAVResource {
             setRevision(latestRevision);
             setExists(true);
             // URI doesn't contain any information about context of requested uri
-            setURI(DAVPathUtil.buildURI("", DAVResourceKind.BASELINE, getRevision(), ""));
+            setURI(DAVPathUtil.buildURI(null, DAVResourceKind.BASELINE, getRevision(), ""));
         } else if (getType() == DAVResource.DAV_RESOURCE_TYPE_WORKING) {
             //TODO: Define filename for ACTIVITY_ID under the repository
             if (isBaseLined()) {
@@ -516,6 +516,9 @@ public class DAVResource {
     }
 
     public void output(OutputStream out) throws SVNException {
+        if (isCollection()) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED));
+        }
         getRepository().getFile(getPath(), getRevision(), null, out);
     }
 }

@@ -75,7 +75,7 @@ public class DAVServlet extends HttpServlet {
         buffer.append(">\n");
         buffer.append("<m:human-readable errcode=\"");
         buffer.append(errorID);
-        buffer.append(">");
+        buffer.append("\">");
         buffer.append(SVNEncodingUtil.xmlEncodeCDATA(description));
         buffer.append("</m:human-readable>\n");
         buffer.append("</D:error>");

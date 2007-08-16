@@ -50,6 +50,21 @@ public class DAVPathUtil {
         return doStandardize ? standardize(uri.substring(headLength)) : uri.substring(headLength);
     }
 
+    public static String tail(String uri) {
+        uri = dropTraillingSlash(uri);
+        int lastSlashIndex = uri.lastIndexOf(SLASH);
+        if (lastSlashIndex == -1){
+            return uri;
+        }
+        return uri.substring(lastSlashIndex);
+    }
+
+    public static String removeTail(String uri, boolean doStandardize) {
+        uri = dropTraillingSlash(uri);
+        int tailLength = tail(uri).length();
+        return doStandardize ? standardize(uri.substring(0, uri.length() - tailLength)) : uri.substring(0, uri.length() - tailLength);
+    }
+
     public static String concat(String parent, String child) {
         StringBuffer uriBuffer = new StringBuffer();
         uriBuffer.append(standardize(parent));
@@ -67,6 +82,7 @@ public class DAVPathUtil {
     public static String buildURI(String context, DAVResourceKind davResourceKind, long revision, String path) {
         StringBuffer resultURI = new StringBuffer();
         path = path == null ? "" : path;
+        context = context == null ? "" : context;
         resultURI.append(context);
         resultURI.append(SLASH);
         if (davResourceKind == DAVResourceKind.PUBLIC) {

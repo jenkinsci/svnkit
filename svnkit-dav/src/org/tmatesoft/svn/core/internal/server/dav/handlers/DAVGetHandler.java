@@ -19,6 +19,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
+import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.xml.sax.Attributes;
 
@@ -66,8 +67,6 @@ public class DAVGetHandler extends ServletDAVHandler {
         } else {
             resource.output(getResponseOutputStream());
         }
-
-
     }
 
     private void generateResponseBody(DAVResource resource, StringBuffer buffer) throws SVNException {
@@ -76,36 +75,43 @@ public class DAVGetHandler extends ServletDAVHandler {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Cannot GET this type of resource."));
         }
         startBody(resource.getPath(), resource.getRevision(), buffer);
-        addUpperDirectoryLink(resource.getPath(), buffer);
-        addDirectoryEntries(resource.getEntries(), buffer);
+        addUpperDirectoryLink(resource.getContext(), resource.getPath(), buffer);
+        addDirectoryEntries(resource, buffer);
         finishBody(buffer);
     }
 
-    private void startBody(String parameterPath, long revision, StringBuffer buffer) {
+    private void startBody(String path, long revision, StringBuffer buffer) {
         buffer.append("<html><head><title> Revision ");
         buffer.append(String.valueOf(revision));
-        buffer.append(" : ");
-        buffer.append(parameterPath);
+        buffer.append(": ");
+        buffer.append(path);
         buffer.append("</title></head>\n");
         buffer.append("<body>\n <h2> Revision ");
         buffer.append(String.valueOf(revision));
-        buffer.append(" : ");
-        buffer.append(parameterPath);
+        buffer.append(": ");
+        buffer.append(path);
         buffer.append("</h2>\n <ul>\n");
     }
 
-    private void addUpperDirectoryLink(String parameterPath, StringBuffer buffer) {
-        if (parameterPath.length() > 0 || !"/".equals(parameterPath)) {
-            buffer.append("<li><a href=\"../\">..</a></li>\n");
+    private void addUpperDirectoryLink(String context, String path, StringBuffer buffer) {
+        if (!"/".equals(path)) {
+            buffer.append("<li><a href=\"");
+            buffer.append(context);
+            String parent = DAVPathUtil.removeTail(path, true);
+            buffer.append("/".equals(parent) ? "" : parent);
+            buffer.append("/");
+            buffer.append("\">..</a></li>\n");
         }
     }
 
-    private void addDirectoryEntries(Collection entries, StringBuffer buffer) {
-        for (Iterator iterator = entries.iterator(); iterator.hasNext();) {
+    private void addDirectoryEntries(DAVResource resource, StringBuffer buffer) {
+        for (Iterator iterator = resource.getEntries().iterator(); iterator.hasNext();) {
             SVNDirEntry entry = (SVNDirEntry) iterator.next();
             boolean isDir = entry.getKind() == SVNNodeKind.DIR;
             buffer.append("<li><a href=\"");
-            buffer.append(entry.getName());
+            buffer.append(resource.getContext());
+            buffer.append("/".equals(resource.getPath()) ? "" : resource.getPath());
+            buffer.append(DAVPathUtil.standardize(entry.getName()));
             buffer.append(isDir ? "/" : "");
             buffer.append("\">");
             buffer.append(entry.getName());
