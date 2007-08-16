@@ -246,6 +246,12 @@ public class FSHooks {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "Failed to start ''{0}'' hook", hook);
             SVNErrorManager.error(err);
         }
+
+        SVNStreamGobbler inputGobbler = new SVNStreamGobbler(hookProcess.getInputStream());
+        SVNStreamGobbler errorGobbler = new SVNStreamGobbler(hookProcess.getErrorStream());
+        inputGobbler.start();
+        errorGobbler.start();
+
         if (stdInValue != null) {
             OutputStream osToStdIn = hookProcess.getOutputStream();
             try {
@@ -260,11 +266,6 @@ public class FSHooks {
                 SVNFileUtil.closeFile(osToStdIn);
             }
         }
-
-        SVNStreamGobbler inputGobbler = new SVNStreamGobbler(hookProcess.getInputStream());
-        SVNStreamGobbler errorGobbler = new SVNStreamGobbler(hookProcess.getErrorStream());
-        inputGobbler.start();
-        errorGobbler.start();
 
         int rc = -1;
         try {
