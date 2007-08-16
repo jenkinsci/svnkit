@@ -38,6 +38,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.io.fs.FSFile;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -1059,7 +1060,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         return THIS_DIR;
     }
     
-    protected void writeEntries(Writer writer) throws IOException {
+    protected void writeEntries(Writer writer) throws IOException, SVNException {
         SVNEntry rootEntry = (SVNEntry)myEntries.get(getThisDirName());
         writer.write(getFormatVersion() + "\n");
         writeEntry(writer, getThisDirName(), rootEntry.asMap(), null);
@@ -1103,7 +1104,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         }
     }
 
-    private void writeEntry(Writer writer, String name, Map entry, Map rootEntry) throws IOException {
+    private void writeEntry(Writer writer, String name, Map entry, Map rootEntry) throws IOException, SVNException {
         boolean isThisDir = getThisDirName().equals(name);
         boolean isSubDir = !isThisDir && SVNProperty.KIND_DIR.equals(entry.get(SVNProperty.KIND)); 
         int emptyFields = 0;
@@ -1177,7 +1178,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         }
         
         String textTime = (String)entry.get(SVNProperty.TEXT_TIME);
-        if (writeValue(writer, textTime, emptyFields)) {
+        if (writeTime(writer, textTime, emptyFields)) {
             emptyFields = 0;
         } else {
             ++emptyFields;
@@ -1191,7 +1192,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         }
         
         String committedDate = (String)entry.get(SVNProperty.COMMITTED_DATE);
-        if (writeValue(writer, committedDate, emptyFields)) {
+        if (writeTime(writer, committedDate, emptyFields)) {
             emptyFields = 0;
         } else {
             ++emptyFields;
@@ -1356,7 +1357,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         }
         
         String lockCreationDate = (String)entry.get(SVNProperty.LOCK_CREATION_DATE);
-        if (writeValue(writer, lockCreationDate, emptyFields)) {
+        if (writeTime(writer, lockCreationDate, emptyFields)) {
             emptyFields = 0;
         } else {
             ++emptyFields;
@@ -1428,6 +1429,21 @@ public class SVNAdminArea14 extends SVNAdminArea {
         return false;
     }
     
+    private boolean writeTime(Writer writer, String val, int emptyFields) throws IOException, SVNException {
+        if (val != null && val.length() > 0) {
+            long time = SVNDate.parseDatestamp(val).getTime();
+            if (time > 0) {
+                for (int i = 0; i < emptyFields; i++) {
+                    writer.write('\n');
+                }
+                writer.write(val);
+                writer.write('\n');
+                return true;
+            }
+        }
+        return false;
+    }
+
     private boolean writeRevision(Writer writer, String rev, int emptyFields) throws IOException {
         if (rev != null && rev.length() > 0 && Long.parseLong(rev) >= 0) {
             for (int i = 0; i < emptyFields; i++) {

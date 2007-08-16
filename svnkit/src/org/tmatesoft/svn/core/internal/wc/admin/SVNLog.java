@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
@@ -170,7 +171,7 @@ public abstract class SVNLog {
         attributes.put(SVNProperty.shortPropertyName(SVNProperty.DELETED), Boolean.FALSE.toString());
         attributes.put(SVNProperty.shortPropertyName(SVNProperty.ABSENT), Boolean.FALSE.toString());
         attributes.put(SVNProperty.shortPropertyName(SVNProperty.WORKING_SIZE), Long.toString(SVNProperty.WORKING_SIZE_UNKNOWN));
-        attributes.put(SVNProperty.shortPropertyName(SVNProperty.TEXT_TIME), "0");
+        attributes.put(SVNProperty.shortPropertyName(SVNProperty.TEXT_TIME), SVNDate.NULL.format());
         if (newURL != null) {
             attributes.put(SVNProperty.shortPropertyName(SVNProperty.URL), newURL);
         }

@@ -1404,7 +1404,7 @@ public abstract class SVNAdminArea {
         return getAdminFile(path);
     }
 
-    protected abstract void writeEntries(Writer writer) throws IOException;
+    protected abstract void writeEntries(Writer writer) throws IOException, SVNException;
     
     protected abstract int getFormatVersion();
 

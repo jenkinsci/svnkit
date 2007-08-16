@@ -398,7 +398,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         return THIS_DIR;
     }
 
-    protected void writeEntries(Writer writer) throws IOException {
+    protected void writeEntries(Writer writer) throws IOException, SVNException {
         SVNEntry rootEntry = (SVNEntry)myEntries.get(getThisDirName());
         Map rootEntryAttrs = rootEntry.asMap();
         
