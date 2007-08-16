@@ -34,7 +34,6 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
-import org.tmatesoft.svn.core.internal.server.dav.TimeFormatUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.xml.sax.Attributes;
@@ -250,7 +249,7 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         } else if (element == DAVElement.CREATION_DATE) {
             value = SVNTimeUtil.formatDate(getLastModifiedTime(resource));
         } else if (element == GET_LAST_MODIFIED) {
-            value = TimeFormatUtil.formatDate(getLastModifiedTime(resource));
+            value = SVNTimeUtil.formatRFC1123Date(getLastModifiedTime(resource));
         } else if (element == DAVElement.CREATOR_DISPLAY_NAME) {
             value = getCreatorDisplayNameProp(resource);
         } else if (element == DAVElement.DEADPROP_COUNT) {

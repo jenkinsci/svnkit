@@ -18,8 +18,8 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -36,7 +36,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVDepth;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
-import org.tmatesoft.svn.core.internal.server.dav.TimeFormatUtil;
+import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -219,7 +219,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         try {
             Date lastModifiedTime = resource.getLastModified();
             if (lastModifiedTime != null) {
-                setResponseHeader(LAST_MODIFIED_HEADER, TimeFormatUtil.formatDate(lastModifiedTime));
+                setResponseHeader(LAST_MODIFIED_HEADER, SVNTimeUtil.formatRFC1123Date(lastModifiedTime));
             }
         } catch (SVNException e) {
             //nothing to do we just skip this header

@@ -18,6 +18,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
+import java.util.Locale;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -36,10 +37,14 @@ public class SVNTimeUtil {
     private static final DateFormat ISO8601_FORMAT_OUT = new SimpleDateFormat(
             "yyyy-MM-dd'T'HH:mm:ss.SSS'000Z'");
 
+    public static final DateFormat RFC1123_FORMAT = new SimpleDateFormat(
+            "EEE, d MMM yyyy HH:mm:ss z", Locale.US);
+
     private static final Calendar CALENDAR = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
 
     static {
         ISO8601_FORMAT_OUT.setTimeZone(TimeZone.getTimeZone("GMT"));
+        RFC1123_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
     }
 
     public static void formatDate(Date date, StringBuffer buffer) {
@@ -51,6 +56,15 @@ public class SVNTimeUtil {
 
         synchronized (ISO8601_FORMAT_OUT) {
             ISO8601_FORMAT_OUT.format(date, buffer, new FieldPosition(0));
+        }
+    }
+
+    public static String formatRFC1123Date(Date date) {
+        if (date == null) {
+            return null;
+        }
+        synchronized (RFC1123_FORMAT) {
+            return RFC1123_FORMAT.format(date);
         }
     }
 
