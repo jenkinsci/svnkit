@@ -761,7 +761,8 @@ public class FSFS {
             revNodeFile.write(copyFromPath.getBytes("UTF-8"));
         }
         
-        if (revNode.getCopyRootRevision() != revNode.getCreatedRevision() || !revNode.getCopyRootPath().equals(revNode.getCreatedPath())) {
+        if (revNode.getCopyRootRevision() != revNode.getId().getRevision() || 
+            !revNode.getCopyRootPath().equals(revNode.getCreatedPath())) {
             String copyroot = FSRevisionNode.HEADER_COPYROOT + ": " + revNode.getCopyRootRevision() + " " + revNode.getCopyRootPath() + "\n";
             revNodeFile.write(copyroot.getBytes("UTF-8"));
         }

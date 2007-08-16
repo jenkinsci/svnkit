@@ -324,7 +324,7 @@ public class FSTransactionRoot extends FSRoot {
         newRevNode.setId(id);
         if (newRevNode.getCopyRootPath() == null) {
             newRevNode.setCopyRootPath(newRevNode.getCreatedPath());
-            newRevNode.setCopyRootRevision(newRevNode.getCreatedRevision());
+            newRevNode.setCopyRootRevision(newRevNode.getId().getRevision());
         }
         newRevNode.setIsFreshTxnRoot(false);
         getOwner().putTxnRevisionNode(newRevNode.getId(), newRevNode);
