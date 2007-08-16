@@ -22,7 +22,6 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.TreeSet;
 
-import org.tmatesoft.svn.cli2.command.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
 
 
@@ -39,22 +38,22 @@ public abstract class AbstractSVNCommand {
     private Collection myOptions;
     private AbstractSVNCommandEnvironment myEnvironment;
     
-    public static void registerCommand(SVNCommand command) {
+    public static void registerCommand(AbstractSVNCommand command) {
         ourCommands.put(command.getName(), command);
         for (int i = 0; i < command.getAliases().length; i++) {
             ourCommands.put(command.getAliases()[i], command);
         }
     }
     
-    public static SVNCommand getCommand(String nameOrAlias) {
-        return (SVNCommand) ourCommands.get(nameOrAlias);
+    public static AbstractSVNCommand getCommand(String nameOrAlias) {
+        return (AbstractSVNCommand) ourCommands.get(nameOrAlias);
     }
     
     public static Iterator availableCommands() {
         TreeSet sortedList = new TreeSet(new Comparator() {
             public int compare(Object o1, Object o2) {
-                SVNCommand c1 = (SVNCommand) o1;
-                SVNCommand c2 = (SVNCommand) o2;
+                AbstractSVNCommand c1 = (AbstractSVNCommand) o1;
+                AbstractSVNCommand c2 = (AbstractSVNCommand) o2;
                 return c1.getName().compareTo(c2.getName());
             }
         });

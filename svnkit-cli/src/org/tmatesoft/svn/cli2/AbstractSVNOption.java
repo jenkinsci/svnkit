@@ -15,8 +15,6 @@ import java.text.MessageFormat;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
-import org.tmatesoft.svn.cli2.command.SVNCommand;
-
 
 /**
  * @version 1.1.2
@@ -46,7 +44,7 @@ public abstract class AbstractSVNOption {
         return myIsUnary;
     }
     
-    public String getDescription(SVNCommand context) {
+    public String getDescription(AbstractSVNCommand context) {
         ResourceBundle bundle = null;
         try {
             bundle = ResourceBundle.getBundle(getResourceBundleName());

@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.tmatesoft.svn.cli2.command.SVNCommandEnvironment;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -66,7 +65,7 @@ public class SVNCommandUtil {
                         || pathOrUrl.startsWith("file://"));
     }
     
-    public static byte[] runEditor(SVNCommandEnvironment env, String existingValue, String prefix) throws SVNException {
+    public static byte[] runEditor(AbstractSVNCommandEnvironment env, String editorCommand, String existingValue, String prefix) throws SVNException {
         File tmpDir = new File(System.getProperty("java.io.tmpdir"));
         File tmpFile = SVNFileUtil.createUniqueFile(tmpDir, prefix, ".tmp");
         OutputStream os = null;
@@ -81,7 +80,7 @@ public class SVNCommandUtil {
         }
         tmpFile.setLastModified(System.currentTimeMillis() - 2000);
         long timestamp = tmpFile.lastModified();
-        String editorCommand = getEditorCommand(env);
+        editorCommand = getEditorCommand(env, editorCommand);
         try {
             String result = null;
             if (SVNFileUtil.isWindows) {
@@ -126,9 +125,9 @@ public class SVNCommandUtil {
         }
     }
     
-    private static String getEditorCommand(SVNCommandEnvironment env) throws SVNException {
-        if (env.getEditorCommand() != null) {
-            return env.getEditorCommand();
+    private static String getEditorCommand(AbstractSVNCommandEnvironment env, String editorCommand) throws SVNException {
+        if (editorCommand != null) {
+            return editorCommand;
         } 
         String command = SVNFileUtil.getEnvironmentVariable("SVN_EDITOR");
         if (command == null) {

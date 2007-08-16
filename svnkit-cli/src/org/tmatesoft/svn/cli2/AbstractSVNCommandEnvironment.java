@@ -24,7 +24,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.tmatesoft.svn.cli2.command.SVNCommandEnvironment;
 import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
@@ -423,7 +422,7 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCommitHandler
     }
 
     public void checkCancelled() throws SVNCancelException {
-        synchronized (SVNCommandEnvironment.class) {
+        synchronized (AbstractSVNCommandEnvironment.class) {
             if (ourIsCancelled) {
                 SVNErrorManager.cancel("operation cancelled");
             }
@@ -431,7 +430,7 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCommitHandler
     }
     
     public void setCancelled() {
-        synchronized (SVNCommandEnvironment.class) {
+        synchronized (AbstractSVNCommandEnvironment.class) {
             ourIsCancelled = true;
         }
     }

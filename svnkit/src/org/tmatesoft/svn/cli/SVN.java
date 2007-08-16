@@ -178,7 +178,7 @@ public class SVN {
             }
             String commandName = commandLine.getCommandName();
             if (newCommands.contains(commandName.toLowerCase().trim())) {
-                org.tmatesoft.svn.cli2.command.SVN.main(args);
+                org.tmatesoft.svn.cli2.svn.SVN.main(args);
                 return;
             }
             SVNCommand command = SVNCommand.getCommand(commandName);
