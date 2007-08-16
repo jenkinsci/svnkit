@@ -18,10 +18,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.tmatesoft.svn.cli2.SVNCommand;
 import org.tmatesoft.svn.cli2.SVNCommandTarget;
-import org.tmatesoft.svn.cli2.SVNNotifyPrinter;
-import org.tmatesoft.svn.cli2.SVNOption;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -59,22 +56,22 @@ public class SVNUpdateCommand extends SVNCommand {
 
     public void run() throws SVNException {
         List targets = new ArrayList(); 
-        if (getEnvironment().getChangelist() != null) {
+        if (getSVNEnvironment().getChangelist() != null) {
             SVNCommandTarget target = new SVNCommandTarget("");
-            SVNChangelistClient changelistClient = getEnvironment().getClientManager().getChangelistClient();
-            changelistClient.getChangelist(target.getFile(), getEnvironment().getChangelist(), targets);
+            SVNChangelistClient changelistClient = getSVNEnvironment().getClientManager().getChangelistClient();
+            changelistClient.getChangelist(target.getFile(), getSVNEnvironment().getChangelist(), targets);
             if (targets.isEmpty()) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "no such changelist ''{0}''", getEnvironment().getChangelist());
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "no such changelist ''{0}''", getSVNEnvironment().getChangelist());
                 SVNErrorManager.error(err);
             }
         }
-        targets = getEnvironment().combineTargets(targets);
+        targets = getSVNEnvironment().combineTargets(targets);
         if (targets.isEmpty()) {
             targets.add("");
         }
-        SVNUpdateClient client = getEnvironment().getClientManager().getUpdateClient();
-        if (!getEnvironment().isQuiet()) {
-            client.setEventHandler(new SVNNotifyPrinter(getEnvironment()));
+        SVNUpdateClient client = getSVNEnvironment().getClientManager().getUpdateClient();
+        if (!getSVNEnvironment().isQuiet()) {
+            client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment()));
         }
         final List updateTargets = new ArrayList(targets.size());
         List files = new ArrayList(targets.size());
@@ -83,7 +80,7 @@ public class SVNUpdateCommand extends SVNCommand {
             SVNCommandTarget target = new SVNCommandTarget(targetName);
             if (!target.isFile()) {
                 // skip it.
-                getEnvironment().getOut().println("Skipped '" + targetName + "'");
+                getSVNEnvironment().getOut().println("Skipped '" + targetName + "'");
                 continue;
             }
             updateTargets.add(target);
@@ -91,7 +88,7 @@ public class SVNUpdateCommand extends SVNCommand {
         }
         File[] filesArray = (File[]) files.toArray(new File[files.size()]);
         ISVNPathList pathList = SVNPathList.create(filesArray, SVNRevision.UNDEFINED);
-        client.doUpdate(pathList, getEnvironment().getStartRevision(), getEnvironment().getDepth(), getEnvironment().isForce()); 
+        client.doUpdate(pathList, getSVNEnvironment().getStartRevision(), getSVNEnvironment().getDepth(), getSVNEnvironment().isForce()); 
     } 
 
 }

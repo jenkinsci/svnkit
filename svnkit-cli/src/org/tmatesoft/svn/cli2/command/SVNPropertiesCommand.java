@@ -18,7 +18,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.tmatesoft.svn.cli2.SVNXMLCommand;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -63,7 +62,7 @@ public abstract class SVNPropertiesCommand extends SVNXMLCommand implements ISVN
             SVNErrorManager.error(err);
         }
         String target = (String) targets.iterator().next();
-        return getEnvironment().getURLFromTarget(target);
+        return getSVNEnvironment().getURLFromTarget(target);
     }
 
     public void handleProperty(File path, SVNPropertyData property) throws SVNException {
@@ -130,7 +129,8 @@ public abstract class SVNPropertiesCommand extends SVNXMLCommand implements ISVN
         if ("".equals(value) || "off".equalsIgnoreCase(value) || "no".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_PROPERTY_VALUE, "To turn off the {0} property, use ''svn propdel'';\n" +
             		"setting the property to ''{1}'' will not turn it off.", new Object[] {name, value});
-            getEnvironment().handleWarning(err, new SVNErrorCode[] {SVNErrorCode.BAD_PROPERTY_VALUE});
+            getSVNEnvironment().handleWarning(err, new SVNErrorCode[] {SVNErrorCode.BAD_PROPERTY_VALUE},
+                    getSVNEnvironment().isQuiet());
         }
     }
 }

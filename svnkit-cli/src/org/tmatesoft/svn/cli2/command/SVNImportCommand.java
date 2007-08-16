@@ -16,10 +16,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.tmatesoft.svn.cli2.SVNCommand;
 import org.tmatesoft.svn.cli2.SVNCommandTarget;
-import org.tmatesoft.svn.cli2.SVNNotifyPrinter;
-import org.tmatesoft.svn.cli2.SVNOption;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -59,7 +56,7 @@ public class SVNImportCommand extends SVNCommand {
     }
 
     public void run() throws SVNException {
-        List targets = getEnvironment().combineTargets(new ArrayList());
+        List targets = getSVNEnvironment().combineTargets(new ArrayList());
         SVNCommandTarget url = null;
         SVNCommandTarget src = null;
         if (targets.isEmpty()) {
@@ -79,18 +76,18 @@ public class SVNImportCommand extends SVNCommand {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR,
                     "Invalid URL ''{0}''", url.getTarget()));
         }
-        SVNCommitClient client = getEnvironment().getClientManager().getCommitClient();
-        if (!getEnvironment().isQuiet()) {
-            client.setEventHandler(new SVNNotifyPrinter(getEnvironment()));
+        SVNCommitClient client = getSVNEnvironment().getClientManager().getCommitClient();
+        if (!getSVNEnvironment().isQuiet()) {
+            client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment()));
         }
-        SVNDepth depth = getEnvironment().getDepth();
+        SVNDepth depth = getSVNEnvironment().getDepth();
         if (depth == SVNDepth.UNKNOWN) {
             depth = SVNDepth.INFINITY;
         }
-        client.setCommitHandler(getEnvironment());
-        SVNCommitInfo info = client.doImport(src.getFile(), url.getURL(), getEnvironment().getMessage(), 
-                getEnvironment().getRevisionProperties(), !getEnvironment().isNoIgnore(), depth.isRecursive());
-        getEnvironment().printCommitInfo(info);
+        client.setCommitHandler(getSVNEnvironment());
+        SVNCommitInfo info = client.doImport(src.getFile(), url.getURL(), getSVNEnvironment().getMessage(), 
+                getSVNEnvironment().getRevisionProperties(), !getSVNEnvironment().isNoIgnore(), depth.isRecursive());
+        getSVNEnvironment().printCommitInfo(info);
     }
 
 }

@@ -32,7 +32,7 @@ public class SVNCommandLine {
     
     private static final Map ourOptions = new HashMap();
     
-    public static void registerOption(SVNOption option) {
+    public static void registerOption(AbstractSVNOption option) {
         if (option.getName() != null) {
             ourOptions.put("--" + option.getName(), option);
         } 
@@ -55,7 +55,7 @@ public class SVNCommandLine {
         for (int i = 0; i < args.length; i++) {
            String value = args[i];
            if (ourOptions.containsKey(value)) {
-               SVNOption option = (SVNOption) ourOptions.get(value);
+               AbstractSVNOption option = (AbstractSVNOption) ourOptions.get(value);
                String parameter = null;
                if (!option.isUnary()) {
                    if (i + 1 < args.length) {

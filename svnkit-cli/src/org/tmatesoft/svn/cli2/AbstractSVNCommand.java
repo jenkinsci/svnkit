@@ -22,6 +22,7 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.TreeSet;
 
+import org.tmatesoft.svn.cli2.command.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
 
 
@@ -29,15 +30,21 @@ import org.tmatesoft.svn.core.SVNException;
  * @version 1.1.2
  * @author  TMate Software Ltd.
  */
-public abstract class SVNCommand {
+public abstract class AbstractSVNCommand {
     
-    private static final String COMMANDS_RESOURCE_BUNDLE = "org.tmatesoft.svn.cli2.commands";
     private static Map ourCommands = new HashMap();
 
     private String myName;
     private String[] myAliases;
     private Collection myOptions;
-    private SVNCommandEnvironment myEnvironment;
+    private AbstractSVNCommandEnvironment myEnvironment;
+    
+    public static void registerCommand(SVNCommand command) {
+        ourCommands.put(command.getName(), command);
+        for (int i = 0; i < command.getAliases().length; i++) {
+            ourCommands.put(command.getAliases()[i], command);
+        }
+    }
     
     public static SVNCommand getCommand(String nameOrAlias) {
         return (SVNCommand) ourCommands.get(nameOrAlias);
@@ -55,39 +62,20 @@ public abstract class SVNCommand {
         return sortedList.iterator();
     }
 
-    protected SVNCommand(String name, String[] aliases) {
+    protected AbstractSVNCommand(String name, String[] aliases) {
         myName = name;
         myAliases = aliases == null ? new String[0] : aliases;
         myOptions = createSupportedOptions();
         if (myOptions == null) {
             myOptions = Collections.EMPTY_SET;
         }
-        
-        ourCommands.put(name, this);
-        for (int i = 0; i < myAliases.length; i++) {
-            ourCommands.put(myAliases[i], this);
-        }
     }
 
     public abstract void run() throws SVNException;
 
     protected abstract Collection createSupportedOptions();
-    
-    public boolean acceptsRevisionRange() {
-        return false;
-    }
 
-    public boolean isCommitter() {
-        return false;
-    }
-    
-    public String getFileAmbigousErrorMessage() {
-        return "Log message file is a versioned file; use '--force-log' to override";
-    }
-
-    public String getMessageAmbigousErrorMessage() {
-        return "The log message is a path name (was -F intended?); use '--force-log' to override";
-    }
+    protected abstract String getResourceBundleName();
 
     public String getName() {
         return myName;
@@ -101,18 +89,18 @@ public abstract class SVNCommand {
         return myOptions;
     }
     
-    public void init(SVNCommandEnvironment env) {
+    public void init(AbstractSVNCommandEnvironment env) {
         myEnvironment = env;
     }
     
-    protected SVNCommandEnvironment getEnvironment() {
+    protected AbstractSVNCommandEnvironment getEnvironment() {
         return myEnvironment;
     }
     
     public String getDescription() {
         ResourceBundle bundle = null;
         try {
-            bundle = ResourceBundle.getBundle(COMMANDS_RESOURCE_BUNDLE);
+            bundle = ResourceBundle.getBundle(getResourceBundleName());
         } catch (MissingResourceException missing) {
             bundle = null;
         }
@@ -134,7 +122,8 @@ public abstract class SVNCommand {
         return false;
     }
     
-    public boolean isOptionSupported(SVNOption option) {
+    public boolean isOptionSupported(AbstractSVNOption option) {
         return getSupportedOptions() != null && getSupportedOptions().contains(option);
     }
+
 }

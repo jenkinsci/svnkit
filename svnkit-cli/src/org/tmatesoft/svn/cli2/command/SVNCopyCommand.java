@@ -16,10 +16,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.tmatesoft.svn.cli2.SVNCommand;
 import org.tmatesoft.svn.cli2.SVNCommandTarget;
-import org.tmatesoft.svn.cli2.SVNNotifyPrinter;
-import org.tmatesoft.svn.cli2.SVNOption;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -55,13 +52,13 @@ public class SVNCopyCommand extends SVNCommand {
     }
 
     public void run() throws SVNException {
-        List targets = getEnvironment().combineTargets(null);
+        List targets = getSVNEnvironment().combineTargets(null);
         if (targets.size() < 2) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS));
         }
         SVNCommandTarget dst = new SVNCommandTarget((String) targets.remove(targets.size() - 1));
         if (!dst.isURL()) {
-            if (getEnvironment().getMessage() != null || getEnvironment().getFileData() != null || getEnvironment().getRevisionProperties() != null) {
+            if (getSVNEnvironment().getMessage() != null || getSVNEnvironment().getFileData() != null || getSVNEnvironment().getRevisionProperties() != null) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_UNNECESSARY_LOG_MESSAGE,
                 "Local, non-commit operations do not take a log message or revision properties"));
             }
@@ -76,34 +73,34 @@ public class SVNCopyCommand extends SVNCommand {
                 sourceIsURL = source.isURL();
             }
             if (source.isURL()) {
-                sources.add(new SVNCopySource(source.getPegRevision(), getEnvironment().getStartRevision(), source.getURL()));
+                sources.add(new SVNCopySource(source.getPegRevision(), getSVNEnvironment().getStartRevision(), source.getURL()));
             } else {
-                sources.add(new SVNCopySource(source.getPegRevision(), getEnvironment().getStartRevision(), source.getFile()));
+                sources.add(new SVNCopySource(source.getPegRevision(), getSVNEnvironment().getStartRevision(), source.getFile()));
             }
         }
 
-        SVNCopyClient client = getEnvironment().getClientManager().getCopyClient();
+        SVNCopyClient client = getSVNEnvironment().getClientManager().getCopyClient();
         if (!sourceIsURL && !dst.isURL()) {
-            if (!getEnvironment().isQuiet()) {
-                client.setEventHandler(new SVNNotifyPrinter(getEnvironment()));
+            if (!getSVNEnvironment().isQuiet()) {
+                client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment()));
             }
         } else if (!sourceIsURL && dst.isURL()){
             // skip
         } else if (sourceIsURL && !dst.isURL()) {
-            if (!getEnvironment().isQuiet()) {
-                client.setEventHandler(new SVNNotifyPrinter(getEnvironment(), true, false, false));
+            if (!getSVNEnvironment().isQuiet()) {
+                client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment(), true, false, false));
             }
         }         
-        client.setCommitHandler(getEnvironment());
+        client.setCommitHandler(getSVNEnvironment());
         SVNCopySource[] copySources = (SVNCopySource[]) sources.toArray(new SVNCopySource[sources.size()]);
         if (dst.isURL()) {
             SVNCommitInfo info = client.doCopy(copySources, dst.getURL(), false, false, 
-                    getEnvironment().isParents(), getEnvironment().getMessage(), getEnvironment().getRevisionProperties());
-            if (!getEnvironment().isQuiet()) {
-                getEnvironment().printCommitInfo(info);
+                    getSVNEnvironment().isParents(), getSVNEnvironment().getMessage(), getSVNEnvironment().getRevisionProperties());
+            if (!getSVNEnvironment().isQuiet()) {
+                getSVNEnvironment().printCommitInfo(info);
             }
         } else {
-            client.doCopy(copySources, dst.getFile(), false, getEnvironment().isParents());
+            client.doCopy(copySources, dst.getFile(), false, getSVNEnvironment().isParents());
         }
     }
 

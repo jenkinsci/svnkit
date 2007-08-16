@@ -16,10 +16,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.tmatesoft.svn.cli2.SVNCommand;
 import org.tmatesoft.svn.cli2.SVNCommandTarget;
-import org.tmatesoft.svn.cli2.SVNNotifyPrinter;
-import org.tmatesoft.svn.cli2.SVNOption;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -67,7 +64,7 @@ public class SVNMergeCommand extends SVNCommand {
     }
 
     public void run() throws SVNException {
-        List targets = getEnvironment().combineTargets(new ArrayList());
+        List targets = getSVNEnvironment().combineTargets(new ArrayList());
         SVNCommandTarget source1 = null;
         SVNCommandTarget source2 = null;
         SVNCommandTarget target = null;
@@ -88,14 +85,14 @@ public class SVNMergeCommand extends SVNCommand {
         } else if (targets.size() == 2) {
             isUseRevisionRange = source1.isURL() && !source2.isURL();
         }
-        if (getEnvironment().getStartRevision() != SVNRevision.UNDEFINED) {
-            if (getEnvironment().getEndRevision() == SVNRevision.UNDEFINED) {
+        if (getSVNEnvironment().getStartRevision() != SVNRevision.UNDEFINED) {
+            if (getSVNEnvironment().getEndRevision() == SVNRevision.UNDEFINED) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, "Second revision required"));
             }
             isUseRevisionRange = true;
         }
         if (isUseRevisionRange) {
-            if (targets.size() < 1 && !getEnvironment().isUseMergeHistory()) {
+            if (targets.size() < 1 && !getSVNEnvironment().isUseMergeHistory()) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS));
             }
             if (targets.size() > 2) {
@@ -154,36 +151,36 @@ public class SVNMergeCommand extends SVNCommand {
         if (target == null) {
             target = new SVNCommandTarget("");
         }
-        SVNDiffClient client = getEnvironment().getClientManager().getDiffClient();
-        if (!getEnvironment().isQuiet()) {
-            client.setEventHandler(new SVNNotifyPrinter(getEnvironment()));
+        SVNDiffClient client = getSVNEnvironment().getClientManager().getDiffClient();
+        if (!getSVNEnvironment().isQuiet()) {
+            client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment()));
         }
         try {
-            client.setMergeOptions(getEnvironment().getDiffOptions());
+            client.setMergeOptions(getSVNEnvironment().getDiffOptions());
             if (isUseRevisionRange) {
                 if (source1 == null) {
-                    client.doMerge((SVNURL) null, pegRevision1, getEnvironment().getStartRevision(), getEnvironment().getEndRevision(), target.getFile(), 
-                            getEnvironment().getDepth(), !getEnvironment().isIgnoreAncestry(), getEnvironment().isForce(), getEnvironment().isDryRun(), getEnvironment().isRecordOnly());
+                    client.doMerge((SVNURL) null, pegRevision1, getSVNEnvironment().getStartRevision(), getSVNEnvironment().getEndRevision(), target.getFile(), 
+                            getSVNEnvironment().getDepth(), !getSVNEnvironment().isIgnoreAncestry(), getSVNEnvironment().isForce(), getSVNEnvironment().isDryRun(), getSVNEnvironment().isRecordOnly());
                 } else if (source1.isURL()) {
-                    client.doMerge(source1.getURL(), pegRevision1, getEnvironment().getStartRevision(), getEnvironment().getEndRevision(), target.getFile(), 
-                            getEnvironment().getDepth(), !getEnvironment().isIgnoreAncestry(), getEnvironment().isForce(), getEnvironment().isDryRun(), getEnvironment().isRecordOnly());
+                    client.doMerge(source1.getURL(), pegRevision1, getSVNEnvironment().getStartRevision(), getSVNEnvironment().getEndRevision(), target.getFile(), 
+                            getSVNEnvironment().getDepth(), !getSVNEnvironment().isIgnoreAncestry(), getSVNEnvironment().isForce(), getSVNEnvironment().isDryRun(), getSVNEnvironment().isRecordOnly());
                 } else {
-                    client.doMerge(source1.getFile(), pegRevision1, getEnvironment().getStartRevision(), getEnvironment().getEndRevision(), target.getFile(), 
-                            getEnvironment().getDepth(), !getEnvironment().isIgnoreAncestry(), getEnvironment().isForce(), getEnvironment().isDryRun(), getEnvironment().isRecordOnly());
+                    client.doMerge(source1.getFile(), pegRevision1, getSVNEnvironment().getStartRevision(), getSVNEnvironment().getEndRevision(), target.getFile(), 
+                            getSVNEnvironment().getDepth(), !getSVNEnvironment().isIgnoreAncestry(), getSVNEnvironment().isForce(), getSVNEnvironment().isDryRun(), getSVNEnvironment().isRecordOnly());
                 }
             } else {
                 if (source1.isURL() && source2.isURL()) {
                     client.doMerge(source1.getURL(), pegRevision1, source2.getURL(), pegRevision2, target.getFile(), 
-                            getEnvironment().getDepth(), !getEnvironment().isIgnoreAncestry(), getEnvironment().isForce(), getEnvironment().isDryRun(), getEnvironment().isRecordOnly());
+                            getSVNEnvironment().getDepth(), !getSVNEnvironment().isIgnoreAncestry(), getSVNEnvironment().isForce(), getSVNEnvironment().isDryRun(), getSVNEnvironment().isRecordOnly());
                 } else if (source1.isURL() && source2.isFile()) {
                     client.doMerge(source1.getURL(), pegRevision1, source2.getFile(), pegRevision2, target.getFile(), 
-                            getEnvironment().getDepth(), !getEnvironment().isIgnoreAncestry(), getEnvironment().isForce(), getEnvironment().isDryRun(), getEnvironment().isRecordOnly());
+                            getSVNEnvironment().getDepth(), !getSVNEnvironment().isIgnoreAncestry(), getSVNEnvironment().isForce(), getSVNEnvironment().isDryRun(), getSVNEnvironment().isRecordOnly());
                 } else if (source1.isFile() && source2.isURL()) {
                     client.doMerge(source1.getFile(), pegRevision1, source2.getURL(), pegRevision2, target.getFile(), 
-                            getEnvironment().getDepth(), !getEnvironment().isIgnoreAncestry(), getEnvironment().isForce(), getEnvironment().isDryRun(), getEnvironment().isRecordOnly());
+                            getSVNEnvironment().getDepth(), !getSVNEnvironment().isIgnoreAncestry(), getSVNEnvironment().isForce(), getSVNEnvironment().isDryRun(), getSVNEnvironment().isRecordOnly());
                 } else {
                     client.doMerge(source1.getFile(), pegRevision1, source2.getFile(), pegRevision2, target.getFile(), 
-                            getEnvironment().getDepth(), !getEnvironment().isIgnoreAncestry(), getEnvironment().isForce(), getEnvironment().isDryRun(), getEnvironment().isRecordOnly());
+                            getSVNEnvironment().getDepth(), !getSVNEnvironment().isIgnoreAncestry(), getSVNEnvironment().isForce(), getSVNEnvironment().isDryRun(), getSVNEnvironment().isRecordOnly());
                 }
             }
         } catch (SVNException e) {

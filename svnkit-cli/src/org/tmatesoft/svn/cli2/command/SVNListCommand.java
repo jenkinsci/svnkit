@@ -20,8 +20,6 @@ import java.util.List;
 
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.cli2.SVNCommandTarget;
-import org.tmatesoft.svn.cli2.SVNOption;
-import org.tmatesoft.svn.cli2.SVNXMLCommand;
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNDirEntry;
@@ -63,55 +61,55 @@ public class SVNListCommand extends SVNXMLCommand implements ISVNDirEntryHandler
     }
 
     public void run() throws SVNException {
-        List targets = getEnvironment().combineTargets(null);
+        List targets = getSVNEnvironment().combineTargets(null);
         if (targets.isEmpty()) {
             targets.add("");
         }
-        if (getEnvironment().isXML()) {
-            if (getEnvironment().isVerbose()) {
+        if (getSVNEnvironment().isXML()) {
+            if (getSVNEnvironment().isVerbose()) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "'verbose' option invalid in XML mode"));
             }
-            if (!getEnvironment().isIncremental()) {
+            if (!getSVNEnvironment().isIncremental()) {
                 printXMLHeader("lists");
             }
-        } else if (getEnvironment().isIncremental()) {
+        } else if (getSVNEnvironment().isIncremental()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "'incremental' option only valid in XML mode"));
         }
         
-        SVNDepth depth = getEnvironment().getDepth();
+        SVNDepth depth = getSVNEnvironment().getDepth();
         if (depth == SVNDepth.UNKNOWN) {
             depth = SVNDepth.IMMEDIATES;
         }
-        int fields = getEnvironment().isXML() || getEnvironment().isVerbose() ? 
+        int fields = getSVNEnvironment().isXML() || getSVNEnvironment().isVerbose() ? 
                 SVNDirEntry.DIRENT_ALL : SVNDirEntry.DIRENT_KIND | SVNDirEntry.DIRENT_TIME;
-        boolean fetchLocks = getEnvironment().isXML() || getEnvironment().isVerbose();
-        SVNLogClient client = getEnvironment().getClientManager().getLogClient();
+        boolean fetchLocks = getSVNEnvironment().isXML() || getSVNEnvironment().isVerbose();
+        SVNLogClient client = getSVNEnvironment().getClientManager().getLogClient();
         for (int i = 0; i < targets.size(); i++) {
             String targetName = (String) targets.get(i);
             SVNCommandTarget target = new SVNCommandTarget(targetName, true);
-            if (getEnvironment().isXML()) {
+            if (getSVNEnvironment().isXML()) {
                 StringBuffer buffer = openXMLTag("list", XML_STYLE_NORMAL, "path", 
                         "".equals(target.getTarget()) ? "." : target.getTarget(), new StringBuffer());
-                getEnvironment().getOut().print(buffer.toString());
+                getSVNEnvironment().getOut().print(buffer.toString());
             }
             if (!target.isURL()) {
-                client.doList(target.getFile(), target.getPegRevision(), getEnvironment().getStartRevision(), fetchLocks, depth, fields, this);
+                client.doList(target.getFile(), target.getPegRevision(), getSVNEnvironment().getStartRevision(), fetchLocks, depth, fields, this);
             } else {
-                client.doList(target.getURL(), target.getPegRevision(), getEnvironment().getStartRevision(), fetchLocks, depth, fields, this);
+                client.doList(target.getURL(), target.getPegRevision(), getSVNEnvironment().getStartRevision(), fetchLocks, depth, fields, this);
             }
-            if (getEnvironment().isXML()) {
+            if (getSVNEnvironment().isXML()) {
                 StringBuffer buffer = closeXMLTag("list", new StringBuffer());
-                getEnvironment().getOut().print(buffer.toString());
+                getSVNEnvironment().getOut().print(buffer.toString());
             }
         }
         
-        if (getEnvironment().isXML() && !getEnvironment().isIncremental()) {
+        if (getSVNEnvironment().isXML() && !getSVNEnvironment().isIncremental()) {
             printXMLFooter("lists");
         }
     }
 
     public void handleDirEntry(SVNDirEntry dirEntry) throws SVNException {
-        if (getEnvironment().isXML()) {
+        if (getSVNEnvironment().isXML()) {
             printDirEntryXML(dirEntry);
         } else {
             printDirEntry(dirEntry);
@@ -121,14 +119,14 @@ public class SVNListCommand extends SVNXMLCommand implements ISVNDirEntryHandler
     protected void printDirEntry(SVNDirEntry dirEntry) {
         String path = dirEntry.getRelativePath();
         if ("".equals(path)) {
-            if (getEnvironment().isVerbose() && dirEntry.getKind() == SVNNodeKind.DIR) {
+            if (getSVNEnvironment().isVerbose() && dirEntry.getKind() == SVNNodeKind.DIR) {
                 path = ".";
             } else if (dirEntry.getKind() == SVNNodeKind.DIR) {
                 return;
             }
         }
         StringBuffer buffer = new StringBuffer();
-        if (getEnvironment().isVerbose()) {
+        if (getSVNEnvironment().isVerbose()) {
             buffer.append(SVNCommand.formatString(dirEntry.getRevision() + "", 7, false));
             buffer.append(' ');
             buffer.append(SVNCommand.formatString(dirEntry.getAuthor() == null ? " ? " : dirEntry.getAuthor(), 16, true));
@@ -155,13 +153,13 @@ public class SVNListCommand extends SVNXMLCommand implements ISVNDirEntryHandler
             buffer.append('/');
         }
         buffer.append('\n');
-        getEnvironment().getOut().print(buffer.toString());
+        getSVNEnvironment().getOut().print(buffer.toString());
     }
 
     protected void printDirEntryXML(SVNDirEntry dirEntry) {
         String path = dirEntry.getRelativePath();
         if ("".equals(path)) {
-            if (getEnvironment().isVerbose() && dirEntry.getKind() == SVNNodeKind.DIR) {
+            if (getSVNEnvironment().isVerbose() && dirEntry.getKind() == SVNNodeKind.DIR) {
                 path = ".";
             } else if (dirEntry.getKind() == SVNNodeKind.DIR) {
                 return;
@@ -194,7 +192,7 @@ public class SVNListCommand extends SVNXMLCommand implements ISVNDirEntryHandler
         }
         buffer = closeXMLTag("entry", buffer);
 
-        getEnvironment().getOut().print(buffer.toString());
+        getSVNEnvironment().getOut().print(buffer.toString());
     }
 
 }

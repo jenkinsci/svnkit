@@ -17,10 +17,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.tmatesoft.svn.cli2.SVNCommand;
 import org.tmatesoft.svn.cli2.SVNCommandTarget;
-import org.tmatesoft.svn.cli2.SVNNotifyPrinter;
-import org.tmatesoft.svn.cli2.SVNOption;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -55,26 +52,26 @@ public class SVNRevertCommand extends SVNCommand {
     }
 
     public void run() throws SVNException {
-        List targets = getEnvironment().combineTargets(getEnvironment().getTargets());
-        if (getEnvironment().getChangelist() != null) {
+        List targets = getSVNEnvironment().combineTargets(getSVNEnvironment().getTargets());
+        if (getSVNEnvironment().getChangelist() != null) {
             SVNCommandTarget target = new SVNCommandTarget("");
-            SVNChangelistClient changelistClient = getEnvironment().getClientManager().getChangelistClient();
-            changelistClient.getChangelist(target.getFile(), getEnvironment().getChangelist(), targets);
+            SVNChangelistClient changelistClient = getSVNEnvironment().getClientManager().getChangelistClient();
+            changelistClient.getChangelist(target.getFile(), getSVNEnvironment().getChangelist(), targets);
             if (targets.isEmpty()) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "no such changelist ''{0}''", getEnvironment().getChangelist());
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "no such changelist ''{0}''", getSVNEnvironment().getChangelist());
                 SVNErrorManager.error(err);
             }
         }
         if (targets.isEmpty()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS));
         }
-        SVNDepth depth = getEnvironment().getDepth();
+        SVNDepth depth = getSVNEnvironment().getDepth();
         if (depth == SVNDepth.UNKNOWN) {
             depth = SVNDepth.fromRecurse(false);
         }
-        SVNWCClient client = getEnvironment().getClientManager().getWCClient();
-        if (!getEnvironment().isQuiet()) {
-            client.setEventHandler(new SVNNotifyPrinter(getEnvironment()));
+        SVNWCClient client = getSVNEnvironment().getClientManager().getWCClient();
+        if (!getSVNEnvironment().isQuiet()) {
+            client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment()));
         }
         Collection pathsList = new ArrayList(targets.size());
         for(int i = 0; i < targets.size(); i++) {

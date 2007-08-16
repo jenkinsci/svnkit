@@ -18,10 +18,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 
-import org.tmatesoft.svn.cli2.SVNCommand;
 import org.tmatesoft.svn.cli2.SVNCommandTarget;
-import org.tmatesoft.svn.cli2.SVNNotifyPrinter;
-import org.tmatesoft.svn.cli2.SVNOption;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -69,24 +66,24 @@ public class SVNLockCommand extends SVNCommand {
 
     public void run() throws SVNException {
         Collection targets = new ArrayList(); 
-        if (getEnvironment().getChangelist() != null) {
+        if (getSVNEnvironment().getChangelist() != null) {
             SVNCommandTarget target = new SVNCommandTarget("");
-            SVNChangelistClient changelistClient = getEnvironment().getClientManager().getChangelistClient();
-            changelistClient.getChangelist(target.getFile(), getEnvironment().getChangelist(), targets);
+            SVNChangelistClient changelistClient = getSVNEnvironment().getClientManager().getChangelistClient();
+            changelistClient.getChangelist(target.getFile(), getSVNEnvironment().getChangelist(), targets);
             if (targets.isEmpty()) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "no such changelist ''{0}''", getEnvironment().getChangelist());
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "no such changelist ''{0}''", getSVNEnvironment().getChangelist());
                 SVNErrorManager.error(err);
             }
         }
-        if (getEnvironment().getTargets() != null) {
-            targets.addAll(getEnvironment().getTargets());
+        if (getSVNEnvironment().getTargets() != null) {
+            targets.addAll(getSVNEnvironment().getTargets());
         }
-        targets = getEnvironment().combineTargets(targets);
+        targets = getSVNEnvironment().combineTargets(targets);
         if (targets.isEmpty()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS));
         }
-        SVNWCClient client = getEnvironment().getClientManager().getWCClient();
-        client.setEventHandler(new SVNNotifyPrinter(getEnvironment()));
+        SVNWCClient client = getSVNEnvironment().getClientManager().getWCClient();
+        client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment()));
         String message = getLockMessage();
         Collection paths = new ArrayList();
         Collection urls = new ArrayList();
@@ -101,29 +98,29 @@ public class SVNLockCommand extends SVNCommand {
         }
         if (!paths.isEmpty()) {
             File[] filesArray = (File[]) paths.toArray(new File[paths.size()]);
-            client.doLock(filesArray, getEnvironment().isForce(), message);
+            client.doLock(filesArray, getSVNEnvironment().isForce(), message);
         }
         if (!urls.isEmpty()) {
             SVNURL[] urlsArray = (SVNURL[]) urls.toArray(new SVNURL[urls.size()]);
-            client.doLock(urlsArray, getEnvironment().isForce(), message);
+            client.doLock(urlsArray, getSVNEnvironment().isForce(), message);
         }
     }
     
     protected String getLockMessage() throws SVNException {
-        if (getEnvironment().getFileData() != null) {
-            byte[] data = getEnvironment().getFileData();
+        if (getSVNEnvironment().getFileData() != null) {
+            byte[] data = getSVNEnvironment().getFileData();
             for (int i = 0; i < data.length; i++) {
                 if (data[i] == 0) {
                     SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_BAD_LOG_MESSAGE, "Log message contains a zero byte"));
                 }
             }
             try {
-                return new String(getEnvironment().getFileData(), getEnvironment().getEncoding() != null ? getEnvironment().getEncoding() : "UTF-8");
+                return new String(getSVNEnvironment().getFileData(), getSVNEnvironment().getEncoding() != null ? getSVNEnvironment().getEncoding() : "UTF-8");
             } catch (UnsupportedEncodingException e) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()));
             }
-        } else if (getEnvironment().getMessage() != null) {
-            return getEnvironment().getMessage();
+        } else if (getSVNEnvironment().getMessage() != null) {
+            return getSVNEnvironment().getMessage();
         }
         return null;
     }

@@ -20,19 +20,19 @@ public class SVNOptionValue {
     
     private String myName;
     private String myValue;
-    private SVNOption myOption;
+    private AbstractSVNOption myOption;
 
-    public SVNOptionValue(SVNOption option, String name) {
+    public SVNOptionValue(AbstractSVNOption option, String name) {
         this(option, name, null);
     }
 
-    public SVNOptionValue(SVNOption option, String name, String value) {
+    public SVNOptionValue(AbstractSVNOption option, String name, String value) {
         myOption = option;
         myValue = value;
         myName = name;
     }
     
-    public SVNOption getOption() {
+    public AbstractSVNOption getOption() {
         return myOption;
     }
     

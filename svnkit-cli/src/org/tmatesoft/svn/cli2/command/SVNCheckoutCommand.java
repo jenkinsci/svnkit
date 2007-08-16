@@ -16,11 +16,8 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.tmatesoft.svn.cli2.SVNCommand;
 import org.tmatesoft.svn.cli2.SVNCommandTarget;
 import org.tmatesoft.svn.cli2.SVNCommandUtil;
-import org.tmatesoft.svn.cli2.SVNNotifyPrinter;
-import org.tmatesoft.svn.cli2.SVNOption;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -53,7 +50,7 @@ public class SVNCheckoutCommand extends SVNCommand {
     }
 
     public void run() throws SVNException {
-        List targets = getEnvironment().combineTargets(new ArrayList());
+        List targets = getSVNEnvironment().combineTargets(new ArrayList());
         if (targets.isEmpty()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS));
         }
@@ -70,12 +67,12 @@ public class SVNCheckoutCommand extends SVNCommand {
         } else if (targets.size() == 1){
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS));
         }
-        SVNUpdateClient client = getEnvironment().getClientManager().getUpdateClient();
-        if (!getEnvironment().isQuiet()) {
-            client.setEventHandler(new SVNNotifyPrinter(getEnvironment(), true, false, false));
+        SVNUpdateClient client = getSVNEnvironment().getClientManager().getUpdateClient();
+        if (!getSVNEnvironment().isQuiet()) {
+            client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment(), true, false, false));
         }
 
-        SVNRevision revision = getEnvironment().getStartRevision();
+        SVNRevision revision = getSVNEnvironment().getStartRevision();
         for (int i = 0; i < targets.size() - 1; i++) {
             String targetName = (String) targets.get(i);
             SVNCommandTarget target = new SVNCommandTarget(targetName, true);
@@ -99,7 +96,7 @@ public class SVNCheckoutCommand extends SVNCommand {
             if (revision == SVNRevision.UNDEFINED) {
                 revision = pegRevision != SVNRevision.UNDEFINED ? pegRevision : SVNRevision.HEAD;
             }
-            client.doCheckout(target.getURL(), dstTarget.getFile(), pegRevision, revision, getEnvironment().getDepth(), getEnvironment().isForce());
+            client.doCheckout(target.getURL(), dstTarget.getFile(), pegRevision, revision, getSVNEnvironment().getDepth(), getSVNEnvironment().isForce());
         }
     }
 }

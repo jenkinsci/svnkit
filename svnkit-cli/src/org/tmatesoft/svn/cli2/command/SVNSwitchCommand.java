@@ -16,10 +16,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.tmatesoft.svn.cli2.SVNCommand;
 import org.tmatesoft.svn.cli2.SVNCommandTarget;
-import org.tmatesoft.svn.cli2.SVNNotifyPrinter;
-import org.tmatesoft.svn.cli2.SVNOption;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -54,9 +51,9 @@ public class SVNSwitchCommand extends SVNCommand {
     }
 
     public void run() throws SVNException {
-        List targets = getEnvironment().combineTargets(new ArrayList());
-        if (getEnvironment().isRelocate()) {
-            if (getEnvironment().getDepth() != SVNDepth.UNKNOWN) {
+        List targets = getSVNEnvironment().combineTargets(new ArrayList());
+        if (getSVNEnvironment().isRelocate()) {
+            if (getSVNEnvironment().getDepth() != SVNDepth.UNKNOWN) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_MUTUALLY_EXCLUSIVE_ARGS, 
                         "--relocate and --depth are mutually exclusive");
                 SVNErrorManager.error(err);
@@ -80,16 +77,16 @@ public class SVNSwitchCommand extends SVNCommand {
         } else {
             target = new SVNCommandTarget((String) targets.get(1));
         }
-        if (!getEnvironment().isVersioned(target.getTarget())) {
+        if (!getSVNEnvironment().isVersioned(target.getTarget())) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND,
                     "''{0}'' does not appear to be a working copy path", target.getTarget());
             SVNErrorManager.error(err);
         }
-        SVNUpdateClient client = getEnvironment().getClientManager().getUpdateClient();
-        if (!getEnvironment().isQuiet()) {
-            client.setEventHandler(new SVNNotifyPrinter(getEnvironment(), false, false, false));
+        SVNUpdateClient client = getSVNEnvironment().getClientManager().getUpdateClient();
+        if (!getSVNEnvironment().isQuiet()) {
+            client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment(), false, false, false));
         }
-        client.doSwitch(target.getFile(), switchURL.getURL(), SVNRevision.UNDEFINED, getEnvironment().getStartRevision(), getEnvironment().getDepth(), getEnvironment().isForce());    
+        client.doSwitch(target.getFile(), switchURL.getURL(), SVNRevision.UNDEFINED, getSVNEnvironment().getStartRevision(), getSVNEnvironment().getDepth(), getSVNEnvironment().isForce());    
     }
     
     protected void relocate(List targets) throws SVNException {
@@ -103,14 +100,14 @@ public class SVNSwitchCommand extends SVNCommand {
                     "''{0}'' to ''{1}'' is not a valid relocation", new Object[] {from.getTarget(), to.getTarget()});
             SVNErrorManager.error(err);
         }
-        SVNUpdateClient client = getEnvironment().getClientManager().getUpdateClient();
+        SVNUpdateClient client = getSVNEnvironment().getClientManager().getUpdateClient();
         if (targets.size() == 2) {
             SVNCommandTarget target = new SVNCommandTarget("");
-            client.doRelocate(target.getFile(), from.getURL(), to.getURL(), getEnvironment().getDepth().isRecursive());
+            client.doRelocate(target.getFile(), from.getURL(), to.getURL(), getSVNEnvironment().getDepth().isRecursive());
         } else {
             for(int i = 2; i < targets.size(); i++) {
                 SVNCommandTarget target = new SVNCommandTarget((String) targets.get(i));
-                client.doRelocate(target.getFile(), from.getURL(), to.getURL(), getEnvironment().getDepth().isRecursive());
+                client.doRelocate(target.getFile(), from.getURL(), to.getURL(), getSVNEnvironment().getDepth().isRecursive());
             }
         }
     }

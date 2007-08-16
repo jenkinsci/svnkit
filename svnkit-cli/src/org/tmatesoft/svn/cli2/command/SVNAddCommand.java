@@ -16,10 +16,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.tmatesoft.svn.cli2.SVNCommand;
 import org.tmatesoft.svn.cli2.SVNCommandTarget;
-import org.tmatesoft.svn.cli2.SVNNotifyPrinter;
-import org.tmatesoft.svn.cli2.SVNOption;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -54,17 +51,17 @@ public class SVNAddCommand extends SVNCommand {
     }
 
     public void run() throws SVNException {
-        List targets = getEnvironment().combineTargets(getEnvironment().getTargets());
+        List targets = getSVNEnvironment().combineTargets(getSVNEnvironment().getTargets());
         if (targets.isEmpty()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS));
         }
-        SVNDepth depth = getEnvironment().getDepth();
+        SVNDepth depth = getSVNEnvironment().getDepth();
         if (depth == SVNDepth.UNKNOWN) {
             depth = SVNDepth.INFINITY;
         }
-        SVNWCClient client = getEnvironment().getClientManager().getWCClient();
-        if (!getEnvironment().isQuiet()) {
-            client.setEventHandler(new SVNNotifyPrinter(getEnvironment()));
+        SVNWCClient client = getSVNEnvironment().getClientManager().getWCClient();
+        if (!getSVNEnvironment().isQuiet()) {
+            client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment()));
         }
         for (Iterator ts = targets.iterator(); ts.hasNext();) {
             String targetName = (String) ts.next();
@@ -73,10 +70,11 @@ public class SVNAddCommand extends SVNCommand {
                 continue;
             }
             try {
-                client.doAdd(target.getFile(), getEnvironment().isForce(), false, getEnvironment().isParents(), depth.isRecursive(), 
-                        getEnvironment().isNoIgnore(), getEnvironment().isParents());
+                client.doAdd(target.getFile(), getSVNEnvironment().isForce(), false, getSVNEnvironment().isParents(), depth.isRecursive(), 
+                        getSVNEnvironment().isNoIgnore(), getSVNEnvironment().isParents());
             } catch (SVNException e) {
-                getEnvironment().handleWarning(e.getErrorMessage(), new SVNErrorCode[] {SVNErrorCode.ENTRY_EXISTS, SVNErrorCode.WC_PATH_NOT_FOUND});
+                getSVNEnvironment().handleWarning(e.getErrorMessage(), 
+                        new SVNErrorCode[] {SVNErrorCode.ENTRY_EXISTS, SVNErrorCode.WC_PATH_NOT_FOUND}, getSVNEnvironment().isQuiet());
             }
         }
     }

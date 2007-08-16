@@ -20,9 +20,6 @@ import java.util.TreeMap;
 
 import org.tmatesoft.svn.cli2.SVNCommandTarget;
 import org.tmatesoft.svn.cli2.SVNCommandUtil;
-import org.tmatesoft.svn.cli2.SVNNotifyPrinter;
-import org.tmatesoft.svn.cli2.SVNOption;
-import org.tmatesoft.svn.cli2.SVNXMLCommand;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -70,29 +67,29 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
 
     public void run() throws SVNException {
         Collection targets = new ArrayList(); 
-        if (getEnvironment().getChangelist() != null) {
+        if (getSVNEnvironment().getChangelist() != null) {
             SVNCommandTarget target = new SVNCommandTarget("");
-            SVNChangelistClient changelistClient = getEnvironment().getClientManager().getChangelistClient();
-            changelistClient.getChangelist(target.getFile(), getEnvironment().getChangelist(), targets);
+            SVNChangelistClient changelistClient = getSVNEnvironment().getClientManager().getChangelistClient();
+            changelistClient.getChangelist(target.getFile(), getSVNEnvironment().getChangelist(), targets);
             if (targets.isEmpty()) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "no such changelist ''{0}''", getEnvironment().getChangelist());
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "no such changelist ''{0}''", getSVNEnvironment().getChangelist());
                 SVNErrorManager.error(err);
             }
         }
-        targets = getEnvironment().combineTargets(targets);
+        targets = getSVNEnvironment().combineTargets(targets);
         if (targets.isEmpty()) {
             targets.add("");
         }
-        myStatusPrinter = new SVNStatusPrinter(getEnvironment());
-        SVNStatusClient client = getEnvironment().getClientManager().getStatusClient();
-        if (!getEnvironment().isXML()) {
-            client.setEventHandler(new SVNNotifyPrinter(getEnvironment()));
+        myStatusPrinter = new SVNStatusPrinter(getSVNEnvironment());
+        SVNStatusClient client = getSVNEnvironment().getClientManager().getStatusClient();
+        if (!getSVNEnvironment().isXML()) {
+            client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment()));
         }
-        if (getEnvironment().isXML()) {
-            if (!getEnvironment().isIncremental()) {
+        if (getSVNEnvironment().isXML()) {
+            if (!getSVNEnvironment().isIncremental()) {
                 printXMLHeader("status");
             }
-        } else if (getEnvironment().isIncremental()) {
+        } else if (getSVNEnvironment().isIncremental()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "'incremental' option only valid in XML mode");
             SVNErrorManager.error(err);
         }
@@ -100,50 +97,51 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
             String target = (String) ts.next();
             SVNCommandTarget commandTarget = new SVNCommandTarget(target);
 
-            if (getEnvironment().isXML()) {
+            if (getSVNEnvironment().isXML()) {
                 StringBuffer xmlBuffer = openXMLTag("target", XML_STYLE_NORMAL, "path", SVNCommandUtil.getLocalPath(target), null);
-                getEnvironment().getOut().print(xmlBuffer);
+                getSVNEnvironment().getOut().print(xmlBuffer);
             }
             
             try {
                 long rev = client.doStatus(commandTarget.getFile(), SVNRevision.HEAD,
-                        getEnvironment().getDepth(), getEnvironment().isUpdate(),
-                        getEnvironment().isVerbose(), getEnvironment().isNoIgnore(),
+                        getSVNEnvironment().getDepth(), getSVNEnvironment().isUpdate(),
+                        getSVNEnvironment().isVerbose(), getSVNEnvironment().isNoIgnore(),
                         false, this);
 
-                if (getEnvironment().isXML()) {
+                if (getSVNEnvironment().isXML()) {
                     StringBuffer xmlBuffer = new StringBuffer();
                     if (rev >= 0) {
                         xmlBuffer = openXMLTag("against", XML_STYLE_SELF_CLOSING, "revision", Long.toString(rev), xmlBuffer);
                     }
                     xmlBuffer = closeXMLTag("target", xmlBuffer);
-                    getEnvironment().getOut().print(xmlBuffer);
+                    getSVNEnvironment().getOut().print(xmlBuffer);
                 }
             } catch (SVNException e) {
-                getEnvironment().handleWarning(e.getErrorMessage(), new SVNErrorCode[] {SVNErrorCode.WC_NOT_DIRECTORY});
+                getSVNEnvironment().handleWarning(e.getErrorMessage(), new SVNErrorCode[] {SVNErrorCode.WC_NOT_DIRECTORY}, 
+                        getSVNEnvironment().isQuiet());
             }
         }
         if (myStatusCache != null) {
             for (Iterator changelists = myStatusCache.keySet().iterator(); changelists.hasNext();) {
                 String changelist = (String) changelists.next();
                 Map statuses = (Map) myStatusCache.get(changelist);
-                getEnvironment().getOut().println("\n--- Changelist '" + changelist + "':");
+                getSVNEnvironment().getOut().println("\n--- Changelist '" + changelist + "':");
                 for (Iterator paths = statuses.keySet().iterator(); paths.hasNext();) {
                     String path = (String) paths.next();
                     SVNStatus status = (SVNStatus) statuses.get(path);
                     myStatusPrinter.printStatus(path, status, 
-                            getEnvironment().isVerbose() || getEnvironment().isUpdate(), 
-                            getEnvironment().isVerbose(), getEnvironment().isQuiet(), getEnvironment().isUpdate());
+                            getSVNEnvironment().isVerbose() || getSVNEnvironment().isUpdate(), 
+                            getSVNEnvironment().isVerbose(), getSVNEnvironment().isQuiet(), getSVNEnvironment().isUpdate());
                 }
             }
         }
-        if (getEnvironment().isXML() && !getEnvironment().isIncremental()) {
+        if (getSVNEnvironment().isXML() && !getSVNEnvironment().isIncremental()) {
             printXMLFooter("status");
         }
     }
 
     public void handleStatus(SVNStatus status) throws SVNException {
-        String path = getEnvironment().getRelativePath(status.getFile());
+        String path = getSVNEnvironment().getRelativePath(status.getFile());
         path = SVNCommandUtil.getLocalPath(path);
         if (status != null && status.getChangelistName() != null) {
             if (myStatusCache == null) {
@@ -155,16 +153,16 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
             ((Map) myStatusCache.get(status.getChangelistName())).put(path, status);
             return;
         }
-        if (getEnvironment().isXML()) {
+        if (getSVNEnvironment().isXML()) {
             if (status.getContentsStatus() == SVNStatusType.STATUS_NONE && status.getRemoteContentsStatus() == SVNStatusType.STATUS_NONE) {
                 return;
             }
             StringBuffer xmlBuffer = printXMLStatus(status, path);
-            getEnvironment().getOut().print(xmlBuffer);
+            getSVNEnvironment().getOut().print(xmlBuffer);
         } else {
             myStatusPrinter.printStatus(path, status, 
-                getEnvironment().isVerbose() || getEnvironment().isUpdate(), 
-                getEnvironment().isVerbose(), getEnvironment().isQuiet(), getEnvironment().isUpdate());
+                getSVNEnvironment().isVerbose() || getSVNEnvironment().isUpdate(), 
+                getSVNEnvironment().isVerbose(), getSVNEnvironment().isQuiet(), getSVNEnvironment().isUpdate());
         }
     }
 

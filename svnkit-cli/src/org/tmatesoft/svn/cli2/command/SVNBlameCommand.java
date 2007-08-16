@@ -19,8 +19,6 @@ import java.util.List;
 
 import org.tmatesoft.svn.cli2.SVNCommandTarget;
 import org.tmatesoft.svn.cli2.SVNCommandUtil;
-import org.tmatesoft.svn.cli2.SVNOption;
-import org.tmatesoft.svn.cli2.SVNXMLCommand;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -62,12 +60,12 @@ public class SVNBlameCommand extends SVNXMLCommand implements ISVNAnnotateHandle
     }
 
     public void run() throws SVNException {
-        List targets = getEnvironment().combineTargets(null);
+        List targets = getSVNEnvironment().combineTargets(null);
         if (targets.isEmpty()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS));
         }
-        SVNRevision start = getEnvironment().getStartRevision();
-        SVNRevision end = getEnvironment().getEndRevision();
+        SVNRevision start = getSVNEnvironment().getStartRevision();
+        SVNRevision end = getSVNEnvironment().getEndRevision();
         if (end == SVNRevision.UNDEFINED) {
             if (start != SVNRevision.UNDEFINED) {
                 end = start;
@@ -77,20 +75,20 @@ public class SVNBlameCommand extends SVNXMLCommand implements ISVNAnnotateHandle
         if (start == SVNRevision.UNDEFINED) {
             start = SVNRevision.create(1);
         }
-        if (getEnvironment().isXML()) {
-            if (getEnvironment().isVerbose()) {
+        if (getSVNEnvironment().isXML()) {
+            if (getSVNEnvironment().isVerbose()) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "'verbose' option invalid in XML mode"));
             }
-            if (!getEnvironment().isIncremental()) {
+            if (!getSVNEnvironment().isIncremental()) {
                 printXMLHeader("blame");
             }
-        } else if (getEnvironment().isIncremental()) {
+        } else if (getSVNEnvironment().isIncremental()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "'incremental' option only valid in XML mode"));
         }
         
         myBuffer = new StringBuffer();
-        SVNLogClient client = getEnvironment().getClientManager().getLogClient();
-        client.setDiffOptions(getEnvironment().getDiffOptions());
+        SVNLogClient client = getSVNEnvironment().getClientManager().getLogClient();
+        client.setDiffOptions(getSVNEnvironment().getDiffOptions());
         for (Iterator ts = targets.iterator(); ts.hasNext();) {
             String targetName = (String) ts.next();
             SVNCommandTarget target = new SVNCommandTarget(targetName, true);
@@ -104,29 +102,29 @@ public class SVNBlameCommand extends SVNXMLCommand implements ISVNAnnotateHandle
                     endRev = SVNRevision.BASE;
                 }
             }
-            if (getEnvironment().isXML()) {
+            if (getSVNEnvironment().isXML()) {
                 myBuffer = openXMLTag("target", XML_STYLE_NORMAL, "path", SVNCommandUtil.getLocalPath(target.getTarget()), myBuffer);
             }
             try {
                 if (target.isFile()) {
-                    client.doAnnotate(target.getFile(), target.getPegRevision(), start, endRev, getEnvironment().isForce(), this);
+                    client.doAnnotate(target.getFile(), target.getPegRevision(), start, endRev, getSVNEnvironment().isForce(), this);
                 } else {
-                    client.doAnnotate(target.getURL(), target.getPegRevision(), start, endRev, getEnvironment().isForce(), this, null);
+                    client.doAnnotate(target.getURL(), target.getPegRevision(), start, endRev, getSVNEnvironment().isForce(), this, null);
                 }
-                if (getEnvironment().isXML()) {
+                if (getSVNEnvironment().isXML()) {
                     myBuffer = closeXMLTag("target", myBuffer);
-                    getEnvironment().getOut().print(myBuffer);
+                    getSVNEnvironment().getOut().print(myBuffer);
                 }
             } catch (SVNException e) {
                 if (e.getErrorMessage().getErrorCode() == SVNErrorCode.CLIENT_IS_BINARY_FILE) {
-                    getEnvironment().getErr().println("Skipping binary file: '" + SVNCommandUtil.getLocalPath(targetName) + "'");
+                    getSVNEnvironment().getErr().println("Skipping binary file: '" + SVNCommandUtil.getLocalPath(targetName) + "'");
                 } else {
                     throw e;
                 }
             }
             myBuffer = myBuffer.delete(0, myBuffer.length());
         }
-        if (getEnvironment().isXML() && !getEnvironment().isIncremental()) {
+        if (getSVNEnvironment().isXML() && !getSVNEnvironment().isIncremental()) {
             printXMLFooter("blame");
         }
     }
@@ -135,7 +133,7 @@ public class SVNBlameCommand extends SVNXMLCommand implements ISVNAnnotateHandle
 
     public void handleLine(Date date, long revision, String author, String line) throws SVNException {
         myCurrentLineNumber++;
-        if (getEnvironment().isXML()) {
+        if (getSVNEnvironment().isXML()) {
             myBuffer = openXMLTag("entry", XML_STYLE_NORMAL, "line-number", Long.toString(myCurrentLineNumber), myBuffer);
             if (revision >= 0) {
                 myBuffer = openXMLTag("commit", XML_STYLE_NORMAL, "revision", Long.toString(revision), myBuffer);
@@ -147,14 +145,14 @@ public class SVNBlameCommand extends SVNXMLCommand implements ISVNAnnotateHandle
         } else {
             String revStr = revision >= 0 ? SVNCommandUtil.formatString(Long.toString(revision), 6, false) : "     -";
             String authorStr = author != null ? SVNCommandUtil.formatString(author, 10, false) : "         -";
-            if (getEnvironment().isVerbose()) {
+            if (getSVNEnvironment().isVerbose()) {
                 String dateStr = "                                           -"; 
                 if (date != null) {
-                    dateStr = SVNFormatUtil.formatHumanDate(date, getEnvironment().getClientManager().getOptions());
+                    dateStr = SVNFormatUtil.formatHumanDate(date, getSVNEnvironment().getClientManager().getOptions());
                 }
-                getEnvironment().getOut().println(revStr + " " + authorStr + " " + dateStr + " " + line);
+                getSVNEnvironment().getOut().println(revStr + " " + authorStr + " " + dateStr + " " + line);
             } else {
-                getEnvironment().getOut().println(revStr + " " + authorStr + " " + line);
+                getSVNEnvironment().getOut().println(revStr + " " + authorStr + " " + line);
             }
         }
     }

@@ -9,21 +9,18 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.cli2;
+package org.tmatesoft.svn.cli2.command;
 
-import java.text.MessageFormat;
 import java.util.Collection;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
+
+import org.tmatesoft.svn.cli2.AbstractSVNOption;
 
 
 /**
  * @version 1.1.2
  * @author  TMate Software Ltd.
  */
-public class SVNOption {
-
-    private static final String OPTIONS_RESOURCE_BUNDLE = "org.tmatesoft.svn.cli2.options";
+public class SVNOption extends AbstractSVNOption {
 
     public static final SVNOption VERBOSE = new SVNOption("verbose", "v");
     public static final SVNOption UPDATE = new SVNOption("show-updates", "u");
@@ -85,9 +82,6 @@ public class SVNOption {
     public static final SVNOption NO_AUTH_CACHE = new SVNOption("no-auth-cache");
     public static final SVNOption NON_INTERACTIVE = new SVNOption("non-interactive");
     
-    
-
-    
     public static Collection addAuthOptions(Collection target) {
         if (target != null) {
             target.add(USERNAME);
@@ -110,10 +104,6 @@ public class SVNOption {
         return target;
     }
     
-    private String myName;
-    private String myAlias;
-    private boolean myIsUnary;
-    
     private SVNOption(String name) {
         this(name, null, true);
     }
@@ -127,52 +117,10 @@ public class SVNOption {
     }
 
     private SVNOption(String name, String alias, boolean unary) {
-        myName = name;
-        myAlias = alias;
-        myIsUnary = unary;
-        
-        SVNCommandLine.registerOption(this);
-    }
-    
-    public String getName() {
-        return myName;
+        super(name, alias, unary);
     }
 
-    public String getAlias() {
-        return myAlias;
-    }
-    
-    public boolean isUnary() {
-        return myIsUnary;
-    }
-    
-    public String getDescription(SVNCommand context) {
-        ResourceBundle bundle = null;
-        try {
-            bundle = ResourceBundle.getBundle(OPTIONS_RESOURCE_BUNDLE);
-        } catch (MissingResourceException missing) {
-            bundle = null;
-        }
-        if (bundle != null) {
-            String[] keys = 
-                context != null ? 
-                    new String[] {getName() + "." + context.getName(), getAlias() + "." + context.getName(), getName(), getAlias()} :
-                    new String[] {getName(), getAlias()};
-            for (int i = 0; i < keys.length; i++) {
-                String key = keys[i];
-                if (key == null) {
-                    continue;
-                }
-                try {
-                    return bundle.getString(key);
-                } catch (MissingResourceException missing) {
-                }
-            }
-        }
-        return MessageFormat.format("No description has been found for ''{0}'' option.", new Object[] {getName()});
-    }
-    
-    public String toString() {
-        return getName();
+    protected String getResourceBundleName() {
+        return "org.tmatesoft.svn.cli2.command.options";
     }
 }

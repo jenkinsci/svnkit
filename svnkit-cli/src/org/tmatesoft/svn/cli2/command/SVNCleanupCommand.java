@@ -16,9 +16,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.tmatesoft.svn.cli2.SVNCommand;
 import org.tmatesoft.svn.cli2.SVNCommandTarget;
-import org.tmatesoft.svn.cli2.SVNOption;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
@@ -40,11 +38,11 @@ public class SVNCleanupCommand extends SVNCommand {
     }
 
     public void run() throws SVNException {
-        List targets = getEnvironment().combineTargets(getEnvironment().getTargets());
+        List targets = getSVNEnvironment().combineTargets(getSVNEnvironment().getTargets());
         if (targets.isEmpty()) {
             targets.add("");
         }
-        SVNWCClient client = getEnvironment().getClientManager().getWCClient();
+        SVNWCClient client = getSVNEnvironment().getClientManager().getWCClient();
         for (Iterator ts = targets.iterator(); ts.hasNext();) {
             String targetName = (String) ts.next();
             SVNCommandTarget target = new SVNCommandTarget(targetName);

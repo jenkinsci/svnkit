@@ -17,10 +17,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 
-import org.tmatesoft.svn.cli2.SVNCommand;
 import org.tmatesoft.svn.cli2.SVNCommandTarget;
-import org.tmatesoft.svn.cli2.SVNNotifyPrinter;
-import org.tmatesoft.svn.cli2.SVNOption;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -52,24 +49,24 @@ public class SVNUnLockCommand extends SVNCommand {
 
     public void run() throws SVNException {
         Collection targets = new ArrayList(); 
-        if (getEnvironment().getChangelist() != null) {
+        if (getSVNEnvironment().getChangelist() != null) {
             SVNCommandTarget target = new SVNCommandTarget("");
-            SVNChangelistClient changelistClient = getEnvironment().getClientManager().getChangelistClient();
-            changelistClient.getChangelist(target.getFile(), getEnvironment().getChangelist(), targets);
+            SVNChangelistClient changelistClient = getSVNEnvironment().getClientManager().getChangelistClient();
+            changelistClient.getChangelist(target.getFile(), getSVNEnvironment().getChangelist(), targets);
             if (targets.isEmpty()) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "no such changelist ''{0}''", getEnvironment().getChangelist());
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "no such changelist ''{0}''", getSVNEnvironment().getChangelist());
                 SVNErrorManager.error(err);
             }
         }
-        if (getEnvironment().getTargets() != null) {
-            targets.addAll(getEnvironment().getTargets());
+        if (getSVNEnvironment().getTargets() != null) {
+            targets.addAll(getSVNEnvironment().getTargets());
         }
-        targets = getEnvironment().combineTargets(targets);
+        targets = getSVNEnvironment().combineTargets(targets);
         if (targets.isEmpty()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS));
         }
-        SVNWCClient client = getEnvironment().getClientManager().getWCClient();
-        client.setEventHandler(new SVNNotifyPrinter(getEnvironment()));
+        SVNWCClient client = getSVNEnvironment().getClientManager().getWCClient();
+        client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment()));
         Collection paths = new ArrayList();
         Collection urls = new ArrayList();
         for (Iterator ts = targets.iterator(); ts.hasNext();) {
@@ -83,11 +80,11 @@ public class SVNUnLockCommand extends SVNCommand {
         }
         if (!paths.isEmpty()) {
             File[] filesArray = (File[]) paths.toArray(new File[paths.size()]);
-            client.doUnlock(filesArray, getEnvironment().isForce());
+            client.doUnlock(filesArray, getSVNEnvironment().isForce());
         }
         if (!urls.isEmpty()) {
             SVNURL[] urlsArray = (SVNURL[]) urls.toArray(new SVNURL[urls.size()]);
-            client.doUnlock(urlsArray, getEnvironment().isForce());
+            client.doUnlock(urlsArray, getSVNEnvironment().isForce());
         }
     }
 

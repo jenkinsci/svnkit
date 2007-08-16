@@ -23,9 +23,6 @@ import java.util.TreeMap;
 
 import org.tmatesoft.svn.cli2.SVNCommandTarget;
 import org.tmatesoft.svn.cli2.SVNCommandUtil;
-import org.tmatesoft.svn.cli2.SVNNotifyPrinter;
-import org.tmatesoft.svn.cli2.SVNOption;
-import org.tmatesoft.svn.cli2.SVNXMLCommand;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -77,26 +74,26 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
 
     public void run() throws SVNException {
         List targets = new ArrayList(); 
-        if (getEnvironment().getChangelist() != null) {
+        if (getSVNEnvironment().getChangelist() != null) {
             SVNCommandTarget target = new SVNCommandTarget("");
-            SVNChangelistClient changelistClient = getEnvironment().getClientManager().getChangelistClient();
-            changelistClient.getChangelist(target.getFile(), getEnvironment().getChangelist(), targets);
+            SVNChangelistClient changelistClient = getSVNEnvironment().getClientManager().getChangelistClient();
+            changelistClient.getChangelist(target.getFile(), getSVNEnvironment().getChangelist(), targets);
             if (targets.isEmpty()) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "no such changelist ''{0}''", getEnvironment().getChangelist());
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "no such changelist ''{0}''", getSVNEnvironment().getChangelist());
                 SVNErrorManager.error(err);
             }
         }
-        if (getEnvironment().getTargets() != null) {
-            targets.addAll(getEnvironment().getTargets());
+        if (getSVNEnvironment().getTargets() != null) {
+            targets.addAll(getSVNEnvironment().getTargets());
         }
-        targets = getEnvironment().combineTargets(targets);
+        targets = getSVNEnvironment().combineTargets(targets);
         if (targets.isEmpty()) {
             targets.add("");
         }
         SVNCommandTarget target = new SVNCommandTarget((String) targets.get(0), true);
         
-        SVNRevision start = getEnvironment().getStartRevision();
-        SVNRevision end = getEnvironment().getEndRevision();
+        SVNRevision start = getSVNEnvironment().getStartRevision();
+        SVNRevision end = getSVNEnvironment().getEndRevision();
         if (start != SVNRevision.UNDEFINED && end == SVNRevision.UNDEFINED) {
             end = start;
         } else if (start == SVNRevision.UNDEFINED) {
@@ -125,43 +122,43 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
                 }
             }
         }
-        SVNLogClient client = getEnvironment().getClientManager().getLogClient();
-        if (!getEnvironment().isQuiet()) {
-            client.setEventHandler(new SVNNotifyPrinter(getEnvironment()));
+        SVNLogClient client = getSVNEnvironment().getClientManager().getLogClient();
+        if (!getSVNEnvironment().isQuiet()) {
+            client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment()));
         }
         
-        if (getEnvironment().isXML() && !getEnvironment().isIncremental()) {
+        if (getSVNEnvironment().isXML() && !getSVNEnvironment().isIncremental()) {
             printXMLHeader("log");
         }
 
         if (target.isFile()) {
             SVNPathList list = SVNPathList.create(new File[] {target.getFile()}, target.getPegRevision());
             client.doLog(list, start, end, 
-                    getEnvironment().isStopOnCopy(), 
-                    getEnvironment().isVerbose(), 
-                    getEnvironment().isUseMergeHistory(),
-                    getEnvironment().isQuiet(),
-                    getEnvironment().getLimit(), this);
+                    getSVNEnvironment().isStopOnCopy(), 
+                    getSVNEnvironment().isVerbose(), 
+                    getSVNEnvironment().isUseMergeHistory(),
+                    getSVNEnvironment().isQuiet(),
+                    getSVNEnvironment().getLimit(), this);
         } else {
             targets.remove(0);
             String[] paths = (String[]) targets.toArray(new String[targets.size()]);
             client.doLog(target.getURL(), paths, target.getPegRevision(), start, end, 
-                    getEnvironment().isStopOnCopy(), 
-                    getEnvironment().isVerbose(),
-                    getEnvironment().isUseMergeHistory(),
-                    getEnvironment().isQuiet(),
-                    getEnvironment().getLimit(), this);
+                    getSVNEnvironment().isStopOnCopy(), 
+                    getSVNEnvironment().isVerbose(),
+                    getSVNEnvironment().isUseMergeHistory(),
+                    getSVNEnvironment().isQuiet(),
+                    getSVNEnvironment().getLimit(), this);
         }
 
-        if (getEnvironment().isXML() && !getEnvironment().isIncremental()) {
+        if (getSVNEnvironment().isXML() && !getSVNEnvironment().isIncremental()) {
             printXMLFooter("log");
-        } else if (!getEnvironment().isIncremental()) {
-            getEnvironment().getOut().print(SEPARATOR);
+        } else if (!getSVNEnvironment().isIncremental()) {
+            getSVNEnvironment().getOut().print(SEPARATOR);
         }
     }
 
     public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
-        if (!getEnvironment().isXML()) {
+        if (!getSVNEnvironment().isXML()) {
             printLogEntry(logEntry);
         } else {
             printLogEntryXML(logEntry);
@@ -176,19 +173,19 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
         }
         StringBuffer buffer = new StringBuffer();
         String author = logEntry.getAuthor() == null ? "(no author)" : logEntry.getAuthor();
-        String date = logEntry.getDate() == null ? "(no date)" : SVNFormatUtil.formatHumanDate(logEntry.getDate(), getEnvironment().getClientManager().getOptions());
+        String date = logEntry.getDate() == null ? "(no date)" : SVNFormatUtil.formatHumanDate(logEntry.getDate(), getSVNEnvironment().getClientManager().getOptions());
         String message = logEntry.getMessage();
-        if (!getEnvironment().isQuiet() && message == null) {
+        if (!getSVNEnvironment().isQuiet() && message == null) {
             message = "";
         }
         buffer.append(SEPARATOR);
         buffer.append("r" + Long.toString(logEntry.getRevision()) + " | " + author + " | " + date);
-        if (!getEnvironment().isQuiet()) {
+        if (!getSVNEnvironment().isQuiet()) {
             int count = SVNCommandUtil.getLinesCount(message);
             buffer.append(" | " + count + (count == 1 ? " line" : " lines"));
         }
         buffer.append("\n");
-        if (getEnvironment().isVerbose() && logEntry.getChangedPaths() != null) {
+        if (getSVNEnvironment().isVerbose() && logEntry.getChangedPaths() != null) {
             Map sortedPaths = new TreeMap(logEntry.getChangedPaths());
             buffer.append("Changed paths:\n");
             for (Iterator paths = sortedPaths.keySet().iterator(); paths.hasNext();) {
@@ -218,7 +215,7 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
             frame.myNumberOfChildrenRemaining--;
         }
         
-        if (!getEnvironment().isQuiet()) {
+        if (!getSVNEnvironment().isQuiet()) {
             buffer.append("\n" + message + "\n");
         }
         
@@ -240,7 +237,7 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
                 }
             }
         }
-        getEnvironment().getOut().print(buffer.toString());
+        getSVNEnvironment().getOut().print(buffer.toString());
     }
     
     protected void printLogEntryXML(SVNLogEntry logEntry) {
@@ -271,7 +268,7 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
             buffer = closeXMLTag("paths", buffer);
         }
         
-        if (!getEnvironment().isQuiet()) {
+        if (!getSVNEnvironment().isQuiet()) {
             String message = logEntry.getMessage();
             message = message == null ? "" : message;
             buffer = openCDataTag("msg", message, buffer);
@@ -301,7 +298,7 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
             }
             buffer = closeXMLTag("logentry", buffer);
         }
-        getEnvironment().getOut().print(buffer.toString());
+        getSVNEnvironment().getOut().print(buffer.toString());
     }
 
     private static class MergeFrame {

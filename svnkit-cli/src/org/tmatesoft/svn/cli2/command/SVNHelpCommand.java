@@ -16,9 +16,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 
-import org.tmatesoft.svn.cli2.SVNCommand;
+import org.tmatesoft.svn.cli2.AbstractSVNCommand;
 import org.tmatesoft.svn.cli2.SVNCommandUtil;
-import org.tmatesoft.svn.cli2.SVNOption;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.util.Version;
 
@@ -44,37 +43,37 @@ public class SVNHelpCommand extends SVNCommand {
     }
 
     public void run() throws SVNException {
-        if (!getEnvironment().getArguments().isEmpty()) {
-            for (Iterator commands = getEnvironment().getArguments().iterator(); commands.hasNext();) {
+        if (!getSVNEnvironment().getArguments().isEmpty()) {
+            for (Iterator commands = getSVNEnvironment().getArguments().iterator(); commands.hasNext();) {
                 String commandName = (String) commands.next();
-                SVNCommand command = SVNCommand.getCommand(commandName);
+                SVNCommand command = AbstractSVNCommand.getCommand(commandName);
                 if (command == null) {
-                    getEnvironment().getErr().println("svn: \"" + commandName + "\": unknown command.\n");
+                    getSVNEnvironment().getErr().println("svn: \"" + commandName + "\": unknown command.\n");
                     continue;
                 }
                 String help = getCommandHelp(command);
-                getEnvironment().getOut().println(help);
+                getSVNEnvironment().getOut().println(help);
             }
-        } else if (getEnvironment().isVersion()) {
+        } else if (getSVNEnvironment().isVersion()) {
             String version = Version.getMajorVersion() + "." + Version.getMinorVersion() + "." + Version.getMicroVersion();
             String revNumber = Version.getRevisionNumber() < 0 ? "SNAPSHOT" : Long.toString(Version.getRevisionNumber());
             String message = MessageFormat.format("SVNKit, version {0}\n", new String[] {version + " (r" + revNumber + ")"});
-            if (getEnvironment().isQuiet()) {
+            if (getSVNEnvironment().isQuiet()) {
                 message = version;
             }
-            getEnvironment().getOut().println(message);
-            if (!getEnvironment().isQuiet()) {
+            getSVNEnvironment().getOut().println(message);
+            if (!getSVNEnvironment().isQuiet()) {
                 message = 
                     "Copyright (C) 2004-2007 TMate Software.\n" +
                     "SVNKit is open source (GPL) software, see http://svnkit.com/ for more information.\n" +
                     "SVNKit is pure Java (TM) version of Subversion, see http://subversion.tigris.org/";
-                getEnvironment().getOut().println(message);
+                getSVNEnvironment().getOut().println(message);
             }
-        } else if (getEnvironment().getArguments().isEmpty()) {
-            getEnvironment().getOut().print(getGenericHelp());
+        } else if (getSVNEnvironment().getArguments().isEmpty()) {
+            getSVNEnvironment().getOut().print(getGenericHelp());
         } else {
-            String message = MessageFormat.format("Type ''{0} help'' for usage.", new String[] {getEnvironment().getProgramName()});
-            getEnvironment().getOut().println(message);
+            String message = MessageFormat.format("Type ''{0} help'' for usage.", new String[] {getSVNEnvironment().getProgramName()});
+            getSVNEnvironment().getOut().println(message);
         }
     }
 
@@ -131,11 +130,11 @@ public class SVNHelpCommand extends SVNCommand {
             "SVNKit is a pure Java (TM) version of Subversion - a tool for version control.\n" +
             "For additional information, see http://svnkit.com/\n";
         String version = Version.getMajorVersion() + "." + Version.getMinorVersion() + "." + Version.getMicroVersion();
-        header = MessageFormat.format(header, new Object[] {getEnvironment().getProgramName(), version});
+        header = MessageFormat.format(header, new Object[] {getSVNEnvironment().getProgramName(), version});
 
         StringBuffer help = new StringBuffer();
         help.append(header);
-        for (Iterator commands = SVNCommand.availableCommands(); commands.hasNext();) {
+        for (Iterator commands = AbstractSVNCommand.availableCommands(); commands.hasNext();) {
             SVNCommand command = (SVNCommand) commands.next();
             help.append("\n   ");
             help.append(command.getName());

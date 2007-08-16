@@ -18,10 +18,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.tmatesoft.svn.cli2.SVNCommand;
 import org.tmatesoft.svn.cli2.SVNCommandTarget;
-import org.tmatesoft.svn.cli2.SVNNotifyPrinter;
-import org.tmatesoft.svn.cli2.SVNOption;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
@@ -58,15 +55,15 @@ public class SVNCommitCommand extends SVNCommand {
     }
 
     public void run() throws SVNException {
-        List targets = getEnvironment().combineTargets(getEnvironment().getTargets());
+        List targets = getSVNEnvironment().combineTargets(getSVNEnvironment().getTargets());
         if (targets.isEmpty()) {
             targets.add(".");
         }
-        SVNDepth depth = getEnvironment().getDepth();
+        SVNDepth depth = getSVNEnvironment().getDepth();
         if (depth == SVNDepth.UNKNOWN) {
             depth = SVNDepth.INFINITY;
         }
-        SVNCommitClient client = getEnvironment().getClientManager().getCommitClient();
+        SVNCommitClient client = getSVNEnvironment().getClientManager().getCommitClient();
         Collection filesList = new ArrayList();
         for (Iterator ts = targets.iterator(); ts.hasNext();) {
             String targetName = (String) ts.next();
@@ -74,7 +71,7 @@ public class SVNCommitCommand extends SVNCommand {
             if (target.isFile()) {
                 filesList.add(target.getFile());
             } else {
-                getEnvironment().getOut().println("Skipped '" + targetName + "'");
+                getSVNEnvironment().getOut().println("Skipped '" + targetName + "'");
             }
         }
         if (filesList.isEmpty()) {
@@ -82,16 +79,16 @@ public class SVNCommitCommand extends SVNCommand {
         }
         File[] files = (File[]) filesList.toArray(new File[filesList.size()]);
 
-        if (!getEnvironment().isQuiet()) {
-            client.setEventHandler(new SVNNotifyPrinter(getEnvironment()));
+        if (!getSVNEnvironment().isQuiet()) {
+            client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment()));
         }        
-        client.setCommitHandler(getEnvironment());
-        boolean keepLocks = getEnvironment().getClientManager().getOptions().isKeepLocks();
-        SVNCommitInfo info = client.doCommit(files, keepLocks, getEnvironment().getMessage(), getEnvironment().getRevisionProperties(),
-                getEnvironment().getChangelist(), getEnvironment().isKeepChangelist(), getEnvironment().isForce(), depth.isRecursive());
+        client.setCommitHandler(getSVNEnvironment());
+        boolean keepLocks = getSVNEnvironment().getClientManager().getOptions().isKeepLocks();
+        SVNCommitInfo info = client.doCommit(files, keepLocks, getSVNEnvironment().getMessage(), getSVNEnvironment().getRevisionProperties(),
+                getSVNEnvironment().getChangelist(), getSVNEnvironment().isKeepChangelist(), getSVNEnvironment().isForce(), depth.isRecursive());
 
-        if (!getEnvironment().isQuiet()) {
-            getEnvironment().printCommitInfo(info);
+        if (!getSVNEnvironment().isQuiet()) {
+            getSVNEnvironment().printCommitInfo(info);
         }
     }
 

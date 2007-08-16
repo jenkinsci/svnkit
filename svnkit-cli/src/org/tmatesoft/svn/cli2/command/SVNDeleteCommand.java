@@ -16,11 +16,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.tmatesoft.svn.cli2.SVNCommand;
 import org.tmatesoft.svn.cli2.SVNCommandTarget;
 import org.tmatesoft.svn.cli2.SVNCommandUtil;
-import org.tmatesoft.svn.cli2.SVNNotifyPrinter;
-import org.tmatesoft.svn.cli2.SVNOption;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -58,7 +55,7 @@ public class SVNDeleteCommand extends SVNCommand {
     }
 
     public void run() throws SVNException {
-        List targets = getEnvironment().combineTargets(getEnvironment().getTargets());
+        List targets = getSVNEnvironment().combineTargets(getSVNEnvironment().getTargets());
         if (targets.isEmpty()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS));
         }
@@ -67,7 +64,7 @@ public class SVNDeleteCommand extends SVNCommand {
         for (Iterator ts = targets.iterator(); ts.hasNext();) {
             String targetName = (String) ts.next();
             if (!SVNCommandUtil.isURL(targetName)) {
-                if (getEnvironment().getMessage() != null || getEnvironment().getFileData() != null || getEnvironment().getRevisionProperties() != null) {
+                if (getSVNEnvironment().getMessage() != null || getSVNEnvironment().getFileData() != null || getSVNEnvironment().getRevisionProperties() != null) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_UNNECESSARY_LOG_MESSAGE,
                             "Local, non-commit operations do not take a log message or revision properties");
                     SVNErrorManager.error(err);
@@ -81,33 +78,33 @@ public class SVNDeleteCommand extends SVNCommand {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Specify either URLs or local paths, not both"));
         }
         if (hasURLs) {
-            SVNCommitClient client = getEnvironment().getClientManager().getCommitClient();
-            if (!getEnvironment().isQuiet()) {
-                client.setEventHandler(new SVNNotifyPrinter(getEnvironment()));
+            SVNCommitClient client = getSVNEnvironment().getClientManager().getCommitClient();
+            if (!getSVNEnvironment().isQuiet()) {
+                client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment()));
             }
-            client.setCommitHandler(getEnvironment());
+            client.setCommitHandler(getSVNEnvironment());
             SVNURL[] urls = new SVNURL[targets.size()];
             for (int i = 0; i < targets.size(); i++) {
                 String url = (String) targets.get(i);
                 urls[i] = SVNURL.parseURIEncoded(url);
             }
             try {
-                SVNCommitInfo info = client.doDelete(urls, getEnvironment().getMessage(), getEnvironment().getRevisionProperties());
-                getEnvironment().printCommitInfo(info);
+                SVNCommitInfo info = client.doDelete(urls, getSVNEnvironment().getMessage(), getSVNEnvironment().getRevisionProperties());
+                getSVNEnvironment().printCommitInfo(info);
             } catch (SVNException e) {
                 SVNErrorMessage err = e.getErrorMessage();
                 SVNErrorManager.error(err);
             }
         } else {
-            SVNWCClient client = getEnvironment().getClientManager().getWCClient();
-            if (!getEnvironment().isQuiet()) {
-                client.setEventHandler(new SVNNotifyPrinter(getEnvironment()));
+            SVNWCClient client = getSVNEnvironment().getClientManager().getWCClient();
+            if (!getSVNEnvironment().isQuiet()) {
+                client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment()));
             }
             try {
                 for (Iterator ts = targets.iterator(); ts.hasNext();) {
                     String targetName = (String) ts.next();
                     SVNCommandTarget target = new SVNCommandTarget(targetName);
-                    client.doDelete(target.getFile(), getEnvironment().isForce(), !getEnvironment().isKeepLocal(), false);
+                    client.doDelete(target.getFile(), getSVNEnvironment().isForce(), !getSVNEnvironment().isKeepLocal(), false);
                 }
             } catch (SVNException e) {
                 SVNErrorMessage err = e.getErrorMessage();

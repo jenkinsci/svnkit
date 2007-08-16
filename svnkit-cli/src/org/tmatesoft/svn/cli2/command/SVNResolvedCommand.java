@@ -16,10 +16,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.tmatesoft.svn.cli2.SVNCommand;
 import org.tmatesoft.svn.cli2.SVNCommandTarget;
-import org.tmatesoft.svn.cli2.SVNNotifyPrinter;
-import org.tmatesoft.svn.cli2.SVNOption;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -50,15 +47,15 @@ public class SVNResolvedCommand extends SVNCommand {
     }
 
     public void run() throws SVNException {
-        List targets = getEnvironment().combineTargets(getEnvironment().getTargets());
+        List targets = getSVNEnvironment().combineTargets(getSVNEnvironment().getTargets());
         if (targets.isEmpty()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS));
         }
-        SVNWCClient client = getEnvironment().getClientManager().getWCClient();
-        if (!getEnvironment().isQuiet()) {
-            client.setEventHandler(new SVNNotifyPrinter(getEnvironment()));
+        SVNWCClient client = getSVNEnvironment().getClientManager().getWCClient();
+        if (!getSVNEnvironment().isQuiet()) {
+            client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment()));
         }
-        SVNDepth depth = getEnvironment().getDepth();
+        SVNDepth depth = getSVNEnvironment().getDepth();
         if (depth == SVNDepth.UNKNOWN) {
             depth = SVNDepth.EMPTY;
         }
@@ -67,10 +64,10 @@ public class SVNResolvedCommand extends SVNCommand {
             SVNCommandTarget target = new SVNCommandTarget(targetName);
             if (target.isFile()) {
                 try {
-                    client.doResolve(target.getFile(), depth.isRecursive(), getEnvironment().getResolveAccept());
+                    client.doResolve(target.getFile(), depth.isRecursive(), getSVNEnvironment().getResolveAccept());
                 } catch (SVNException e) {
                     SVNErrorMessage err = e.getErrorMessage();
-                    getEnvironment().handleWarning(err, new SVNErrorCode[] {err.getErrorCode()});
+                    getSVNEnvironment().handleWarning(err, new SVNErrorCode[] {err.getErrorCode()}, getSVNEnvironment().isQuiet());
                 }
             }
         }

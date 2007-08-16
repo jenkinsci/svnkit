@@ -12,7 +12,6 @@
 package org.tmatesoft.svn.cli2.command;
 
 import org.tmatesoft.svn.cli.SVNCommand;
-import org.tmatesoft.svn.cli2.SVNCommandEnvironment;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 

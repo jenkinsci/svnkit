@@ -21,8 +21,6 @@ import java.util.Map;
 
 import org.tmatesoft.svn.cli2.SVNCommandTarget;
 import org.tmatesoft.svn.cli2.SVNCommandUtil;
-import org.tmatesoft.svn.cli2.SVNOption;
-import org.tmatesoft.svn.cli2.SVNXMLCommand;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -66,34 +64,34 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
 
     public void run() throws SVNException {
         List targets = new ArrayList(); 
-        if (getEnvironment().getChangelist() != null) {
+        if (getSVNEnvironment().getChangelist() != null) {
             SVNCommandTarget target = new SVNCommandTarget("");
-            SVNChangelistClient changelistClient = getEnvironment().getClientManager().getChangelistClient();
-            changelistClient.getChangelist(target.getFile(), getEnvironment().getChangelist(), targets);
+            SVNChangelistClient changelistClient = getSVNEnvironment().getClientManager().getChangelistClient();
+            changelistClient.getChangelist(target.getFile(), getSVNEnvironment().getChangelist(), targets);
             if (targets.isEmpty()) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "no such changelist ''{0}''", getEnvironment().getChangelist());
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "no such changelist ''{0}''", getSVNEnvironment().getChangelist());
                 SVNErrorManager.error(err);
             }
         }
-        if (getEnvironment().getTargets() != null) {
-            targets.addAll(getEnvironment().getTargets());
+        if (getSVNEnvironment().getTargets() != null) {
+            targets.addAll(getSVNEnvironment().getTargets());
         }
-        targets = getEnvironment().combineTargets(targets);
+        targets = getSVNEnvironment().combineTargets(targets);
         if (targets.isEmpty()) {
             targets.add("");
         }
-        if (getEnvironment().isXML()) {
-            if (!getEnvironment().isIncremental()) {
+        if (getSVNEnvironment().isXML()) {
+            if (!getSVNEnvironment().isIncremental()) {
                 printXMLHeader("info");
             }
-        } else if (getEnvironment().isIncremental()) {
+        } else if (getSVNEnvironment().isIncremental()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "'incremental' option only valid in XML mode"));
         }
-        SVNDepth depth = getEnvironment().getDepth();
+        SVNDepth depth = getSVNEnvironment().getDepth();
         if (depth == SVNDepth.UNKNOWN) {
             depth = SVNDepth.IMMEDIATES;
         }
-        SVNWCClient client = getEnvironment().getClientManager().getWCClient();
+        SVNWCClient client = getSVNEnvironment().getClientManager().getWCClient();
         for(int i = 0; i < targets.size(); i++) {
             String targetName = (String) targets.get(i);
             SVNCommandTarget target = new SVNCommandTarget(targetName, true);
@@ -103,28 +101,28 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
             }
             try {
                 if (target.isFile()) {
-                    client.doInfo(target.getFile(), pegRevision, getEnvironment().getStartRevision(), depth.isRecursive(), this);
+                    client.doInfo(target.getFile(), pegRevision, getSVNEnvironment().getStartRevision(), depth.isRecursive(), this);
                 } else {
-                    client.doInfo(target.getURL(), pegRevision, getEnvironment().getStartRevision(), depth.isRecursive(), this);
+                    client.doInfo(target.getURL(), pegRevision, getSVNEnvironment().getStartRevision(), depth.isRecursive(), this);
                 }
             } catch (SVNException e) {
                 SVNErrorMessage err = e.getErrorMessage();
                 if (err.getErrorCode() == SVNErrorCode.UNVERSIONED_RESOURCE) {
-                    getEnvironment().getErr().print(SVNCommandUtil.getLocalPath(target.getTarget()) + ": (Not a versioned resource)\n\n");
+                    getSVNEnvironment().getErr().print(SVNCommandUtil.getLocalPath(target.getTarget()) + ": (Not a versioned resource)\n\n");
                 } else if (err.getErrorCode() == SVNErrorCode.RA_ILLEGAL_URL) {
-                    getEnvironment().getErr().print(target.getTarget() + ": (Not a valid URL)\n\n");
+                    getSVNEnvironment().getErr().print(target.getTarget() + ": (Not a valid URL)\n\n");
                 } else {
                     throw e;
                 }
             }
         }
-        if (getEnvironment().isXML() && !getEnvironment().isIncremental()) {
+        if (getSVNEnvironment().isXML() && !getSVNEnvironment().isIncremental()) {
             printXMLFooter("info");
         }
     }
 
     public void handleInfo(SVNInfo info) throws SVNException {
-        if (!getEnvironment().isXML()) {
+        if (!getSVNEnvironment().isXML()) {
             printInfo(info);
         } else {
             printInfoXML(info);
@@ -135,11 +133,11 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
         StringBuffer buffer = new StringBuffer();
         String path = null;
         if (info.getFile() != null) {
-            path = getEnvironment().getRelativePath(info.getFile());
+            path = getSVNEnvironment().getRelativePath(info.getFile());
+            path = SVNCommandUtil.getLocalPath(path);
         } else {
             path = info.getPath();
         }
-        path = SVNCommandUtil.getLocalPath(path);
         buffer.append("Path: " + path + "\n");
         if (info.getKind() != SVNNodeKind.DIR) {
             buffer.append("Name: " + SVNPathUtil.tail(path.replace(File.separatorChar, '/')) + "\n");
@@ -182,16 +180,16 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
         }
         if (info.getCommittedDate() != null) {
             buffer.append("Last Changed Date: " + 
-                    SVNFormatUtil.formatHumanDate(info.getCommittedDate(), getEnvironment().getClientManager().getOptions()) + "\n");
+                    SVNFormatUtil.formatHumanDate(info.getCommittedDate(), getSVNEnvironment().getClientManager().getOptions()) + "\n");
         }
         if (!info.isRemote()) {
             if (info.getTextTime() != null) {
                 buffer.append("Text Last Updated: " + 
-                        SVNFormatUtil.formatHumanDate(info.getTextTime(), getEnvironment().getClientManager().getOptions()) + "\n");
+                        SVNFormatUtil.formatHumanDate(info.getTextTime(), getSVNEnvironment().getClientManager().getOptions()) + "\n");
             }
             if (info.getPropTime() != null) {
                 buffer.append("Properties Last Updated: " + 
-                        SVNFormatUtil.formatHumanDate(info.getPropTime(), getEnvironment().getClientManager().getOptions()) + "\n");
+                        SVNFormatUtil.formatHumanDate(info.getPropTime(), getSVNEnvironment().getClientManager().getOptions()) + "\n");
             }
             if (info.getChecksum() != null) {
                 buffer.append("Checksum: " + info.getChecksum() + "\n");
@@ -219,11 +217,11 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
             }
             if (lock.getCreationDate() != null && lock.getCreationDate().getTime() != 0) {
                 buffer.append("Lock Created: " + 
-                        SVNFormatUtil.formatHumanDate(lock.getCreationDate(), getEnvironment().getClientManager().getOptions()) + "\n");
+                        SVNFormatUtil.formatHumanDate(lock.getCreationDate(), getSVNEnvironment().getClientManager().getOptions()) + "\n");
             }
             if (lock.getExpirationDate() != null && lock.getExpirationDate().getTime() != 0) {
                 buffer.append("Lock Expires: " + 
-                        SVNFormatUtil.formatHumanDate(lock.getExpirationDate(), getEnvironment().getClientManager().getOptions()) + "\n");
+                        SVNFormatUtil.formatHumanDate(lock.getExpirationDate(), getSVNEnvironment().getClientManager().getOptions()) + "\n");
             }
             if (lock.getComment() != null) {
                 buffer.append("Lock Comment "); 
@@ -238,18 +236,18 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
             buffer.append("Changelist: " + info.getChangelistName() + "\n");
         }
         buffer.append("\n");
-        getEnvironment().getOut().print(buffer.toString());
+        getSVNEnvironment().getOut().print(buffer.toString());
     }
     
     protected void printInfoXML(SVNInfo info) {
         StringBuffer buffer = new StringBuffer();
         String path = null;
         if (info.getFile() != null) {
-            path = getEnvironment().getRelativePath(info.getFile());
+            path = getSVNEnvironment().getRelativePath(info.getFile());
+            path = SVNCommandUtil.getLocalPath(path);
         } else {
             path = info.getPath();
         }
-        path = SVNCommandUtil.getLocalPath(path);
         Map attrs = new LinkedHashMap();
         attrs.put("kind", info.getKind().toString());
         attrs.put("path", path);
@@ -337,7 +335,7 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
         }
         buffer = closeXMLTag("entry", buffer);
         
-        getEnvironment().getOut().print(buffer.toString());
+        getSVNEnvironment().getOut().print(buffer.toString());
     }
 
 }

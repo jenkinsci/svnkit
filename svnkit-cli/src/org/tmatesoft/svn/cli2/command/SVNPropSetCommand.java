@@ -20,7 +20,6 @@ import java.util.LinkedList;
 
 import org.tmatesoft.svn.cli2.SVNCommandTarget;
 import org.tmatesoft.svn.cli2.SVNCommandUtil;
-import org.tmatesoft.svn.cli2.SVNOption;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -63,25 +62,25 @@ public class SVNPropSetCommand extends SVNPropertiesCommand {
     }
 
     public void run() throws SVNException {
-        String propertyName = getEnvironment().popArgument();
+        String propertyName = getSVNEnvironment().popArgument();
         if (propertyName == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS);
             SVNErrorManager.error(err);
         }
         String propertyValue = null;
-        if (getEnvironment().getFileData() != null) {
-            String encoding = getEnvironment().getEncoding();
+        if (getSVNEnvironment().getFileData() != null) {
+            String encoding = getSVNEnvironment().getEncoding();
             if (encoding == null) {
                 encoding = "UTF-8";
             }
             try {
-                propertyValue = new String(getEnvironment().getFileData(), encoding);
+                propertyValue = new String(getSVNEnvironment().getFileData(), encoding);
             } catch (UnsupportedEncodingException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
                 SVNErrorManager.error(err);
             }
         } else {
-            propertyValue = getEnvironment().popArgument();
+            propertyValue = getSVNEnvironment().popArgument();
         }
         if (propertyValue == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS);
@@ -89,37 +88,37 @@ public class SVNPropSetCommand extends SVNPropertiesCommand {
         }
 
         Collection targets = new ArrayList(); 
-        if (getEnvironment().getChangelist() != null) {
+        if (getSVNEnvironment().getChangelist() != null) {
             SVNCommandTarget target = new SVNCommandTarget("");
-            SVNChangelistClient changelistClient = getEnvironment().getClientManager().getChangelistClient();
-            changelistClient.getChangelist(target.getFile(), getEnvironment().getChangelist(), targets);
+            SVNChangelistClient changelistClient = getSVNEnvironment().getClientManager().getChangelistClient();
+            changelistClient.getChangelist(target.getFile(), getSVNEnvironment().getChangelist(), targets);
             if (targets.isEmpty()) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "no such changelist ''{0}''", getEnvironment().getChangelist());
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "no such changelist ''{0}''", getSVNEnvironment().getChangelist());
                 SVNErrorManager.error(err);
             }
         }
-        if (getEnvironment().getTargets() != null) {
-            targets.addAll(getEnvironment().getTargets());
+        if (getSVNEnvironment().getTargets() != null) {
+            targets.addAll(getSVNEnvironment().getTargets());
         }
-        targets = getEnvironment().combineTargets(targets);
+        targets = getSVNEnvironment().combineTargets(targets);
         
-        if (getEnvironment().isRevprop()) {
+        if (getSVNEnvironment().isRevprop()) {
             if (targets.isEmpty()) {
                 targets.add("");
             }
-            SVNURL revPropURL = getRevpropURL(getEnvironment().getStartRevision(), targets);
-            getEnvironment().getClientManager().getWCClient().doSetRevisionProperty(revPropURL, getEnvironment().getStartRevision(), propertyName, propertyValue, getEnvironment().isForce(), this);
-        } else if (getEnvironment().getStartRevision() != SVNRevision.UNDEFINED) {
+            SVNURL revPropURL = getRevpropURL(getSVNEnvironment().getStartRevision(), targets);
+            getSVNEnvironment().getClientManager().getWCClient().doSetRevisionProperty(revPropURL, getSVNEnvironment().getStartRevision(), propertyName, propertyValue, getSVNEnvironment().isForce(), this);
+        } else if (getSVNEnvironment().getStartRevision() != SVNRevision.UNDEFINED) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                     "Cannot specify revision for setting versioned property ''{0}''", propertyName);
             SVNErrorManager.error(err);
         } else {
-            SVNDepth depth = getEnvironment().getDepth();
+            SVNDepth depth = getSVNEnvironment().getDepth();
             if (depth == SVNDepth.UNKNOWN) {
                 depth = SVNDepth.EMPTY;
             }
             if (targets.isEmpty()) {
-                if (getEnvironment().getFileData() == null) {
+                if (getSVNEnvironment().getFileData() == null) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, 
                             "Explicit target required (''{0}'' interpreted as prop value)", propertyValue);
                     SVNErrorManager.error(err);
@@ -128,19 +127,21 @@ public class SVNPropSetCommand extends SVNPropertiesCommand {
                     SVNErrorManager.error(err);
                 }
             }
-            SVNWCClient client = getEnvironment().getClientManager().getWCClient();
+            SVNWCClient client = getSVNEnvironment().getClientManager().getWCClient();
             for (Iterator ts = targets.iterator(); ts.hasNext();) {
                 String targetName = (String) ts.next();
                 SVNCommandTarget target = new SVNCommandTarget(targetName);
                 if (target.isFile()) {
                     boolean success = true;
                     try {
-                        client.doSetProperty(target.getFile(), propertyName, propertyValue, getEnvironment().isForce(), depth.isRecursive(), this);
+                        client.doSetProperty(target.getFile(), propertyName, propertyValue, getSVNEnvironment().isForce(), depth.isRecursive(), this);
                     } catch (SVNException e) {
-                        success = getEnvironment().handleWarning(e.getErrorMessage(), new SVNErrorCode[] {SVNErrorCode.UNVERSIONED_RESOURCE, SVNErrorCode.ENTRY_NOT_FOUND});
+                        success = getSVNEnvironment().handleWarning(e.getErrorMessage(), 
+                                new SVNErrorCode[] {SVNErrorCode.UNVERSIONED_RESOURCE, SVNErrorCode.ENTRY_NOT_FOUND},
+                                getSVNEnvironment().isQuiet());
                     }
                     clearCollectedProperties();
-                    if (!getEnvironment().isQuiet()) {
+                    if (!getSVNEnvironment().isQuiet()) {
                         checkBooleanProperty(propertyName, propertyValue);
                         if (success) {
                             String path = SVNCommandUtil.getLocalPath(targetName);
@@ -148,7 +149,7 @@ public class SVNPropSetCommand extends SVNPropertiesCommand {
                                     "property ''{0}'' set (recursively) on ''{1}''" :
                                         "property ''{0}'' set on ''{1}''";
                             message = MessageFormat.format(message, new Object[] {propertyName, path});
-                            getEnvironment().getOut().println(message);
+                            getSVNEnvironment().getOut().println(message);
                         }
                     }
                 } 
@@ -158,10 +159,10 @@ public class SVNPropSetCommand extends SVNPropertiesCommand {
     
     public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
         super.handleProperty(revision, property);
-        if (!getEnvironment().isQuiet()) {
+        if (!getSVNEnvironment().isQuiet()) {
             String message = "property ''{0}'' set on repository revision {1}";
             message = MessageFormat.format(message, new Object[] {property.getName(), new Long(revision)});
-            getEnvironment().getOut().println(message);
+            getSVNEnvironment().getOut().println(message);
         }
     }
     

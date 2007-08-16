@@ -9,7 +9,7 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.cli2;
+package org.tmatesoft.svn.cli2.command;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -32,12 +32,12 @@ public abstract class SVNXMLCommand extends SVNCommand {
     }
     
     protected void printXMLHeader(String header) {
-        getEnvironment().getOut().print("<?xml version=\"1.0\"?>\n");
-        getEnvironment().getOut().print("<" + header + ">\n");
+        getSVNEnvironment().getOut().print("<?xml version=\"1.0\"?>\n");
+        getSVNEnvironment().getOut().print("<" + header + ">\n");
     }
 
     protected void printXMLFooter(String header) {
-        getEnvironment().getOut().print("</" + header + ">\n");
+        getSVNEnvironment().getOut().print("</" + header + ">\n");
     }
     
 

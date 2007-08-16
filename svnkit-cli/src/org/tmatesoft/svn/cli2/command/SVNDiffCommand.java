@@ -18,10 +18,8 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.tmatesoft.svn.cli2.SVNCommand;
 import org.tmatesoft.svn.cli2.SVNCommandTarget;
 import org.tmatesoft.svn.cli2.SVNCommandUtil;
-import org.tmatesoft.svn.cli2.SVNOption;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -71,33 +69,33 @@ public class SVNDiffCommand extends SVNCommand implements ISVNDiffStatusHandler 
 
     public void run() throws SVNException {
         List targets = new ArrayList(); 
-        if (getEnvironment().getChangelist() != null) {
+        if (getSVNEnvironment().getChangelist() != null) {
             SVNCommandTarget target = new SVNCommandTarget("");
-            SVNChangelistClient changelistClient = getEnvironment().getClientManager().getChangelistClient();
-            changelistClient.getChangelist(target.getFile(), getEnvironment().getChangelist(), targets);
+            SVNChangelistClient changelistClient = getSVNEnvironment().getClientManager().getChangelistClient();
+            changelistClient.getChangelist(target.getFile(), getSVNEnvironment().getChangelist(), targets);
             if (targets.isEmpty()) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "no such changelist ''{0}''", getEnvironment().getChangelist());
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "no such changelist ''{0}''", getSVNEnvironment().getChangelist());
                 SVNErrorManager.error(err);
             }
         }
-        if (getEnvironment().getTargets() != null) {
-            targets.addAll(getEnvironment().getTargets());
+        if (getSVNEnvironment().getTargets() != null) {
+            targets.addAll(getSVNEnvironment().getTargets());
         }
-        targets = getEnvironment().combineTargets(targets);
+        targets = getSVNEnvironment().combineTargets(targets);
         
         SVNCommandTarget oldTarget = null;
         SVNCommandTarget newTarget = null;
-        SVNRevision start = getEnvironment().getStartRevision();
-        SVNRevision end = getEnvironment().getEndRevision();
+        SVNRevision start = getSVNEnvironment().getStartRevision();
+        SVNRevision end = getSVNEnvironment().getEndRevision();
         boolean peggedDiff = false;
         
         if (targets.size() == 2 && 
-                getEnvironment().getOldTarget() == null && 
-                getEnvironment().getNewTarget() == null &&
+                getSVNEnvironment().getOldTarget() == null && 
+                getSVNEnvironment().getNewTarget() == null &&
                 SVNCommandUtil.isURL((String) targets.get(0)) && 
                 SVNCommandUtil.isURL((String) targets.get(1)) &&
-                getEnvironment().getStartRevision() == SVNRevision.UNDEFINED &&
-                getEnvironment().getEndRevision() == SVNRevision.UNDEFINED) {
+                getSVNEnvironment().getStartRevision() == SVNRevision.UNDEFINED &&
+                getSVNEnvironment().getEndRevision() == SVNRevision.UNDEFINED) {
             oldTarget = new SVNCommandTarget((String) targets.get(0), true);
             newTarget = new SVNCommandTarget((String) targets.get(1), true);
             start = oldTarget.getPegRevision();
@@ -109,15 +107,15 @@ public class SVNDiffCommand extends SVNCommand implements ISVNDiffStatusHandler 
             if (end == SVNRevision.UNDEFINED) {
                 end = SVNRevision.HEAD;
             }
-        } else if (getEnvironment().getOldTarget() != null) {
+        } else if (getSVNEnvironment().getOldTarget() != null) {
             targets.clear();
-            targets.add(getEnvironment().getOldTarget());
-            targets.add(getEnvironment().getNewTarget() != null ? getEnvironment().getNewTarget() : getEnvironment().getOldTarget());
+            targets.add(getSVNEnvironment().getOldTarget());
+            targets.add(getSVNEnvironment().getNewTarget() != null ? getSVNEnvironment().getNewTarget() : getSVNEnvironment().getOldTarget());
             
             oldTarget = new SVNCommandTarget((String) targets.get(0), true);
             newTarget = new SVNCommandTarget((String) targets.get(1), true);
-            start = getEnvironment().getStartRevision();
-            end = getEnvironment().getEndRevision();
+            start = getSVNEnvironment().getStartRevision();
+            end = getSVNEnvironment().getEndRevision();
             if (oldTarget.getPegRevision() != SVNRevision.UNDEFINED) {
                 start = oldTarget.getPegRevision();
             }
@@ -130,8 +128,8 @@ public class SVNDiffCommand extends SVNCommand implements ISVNDiffStatusHandler 
             if (end == SVNRevision.UNDEFINED) {
                 end = newTarget.isURL() ? SVNRevision.HEAD : SVNRevision.WORKING;
             }
-            targets = getEnvironment().combineTargets(null);
-        } else if (getEnvironment().getNewTarget() != null) {
+            targets = getSVNEnvironment().combineTargets(null);
+        } else if (getSVNEnvironment().getNewTarget() != null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                     "'--new' option only valid with '--old' option");
             SVNErrorManager.error(err);
@@ -154,8 +152,8 @@ public class SVNDiffCommand extends SVNCommand implements ISVNDiffStatusHandler 
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Target lists to diff may not contain both working copy paths and URLs");
                 SVNErrorManager.error(err);
             }
-            start = getEnvironment().getStartRevision();
-            end = getEnvironment().getEndRevision();
+            start = getSVNEnvironment().getStartRevision();
+            end = getSVNEnvironment().getEndRevision();
             if (start == SVNRevision.UNDEFINED && hasWCs) {
                 start = SVNRevision.BASE;
             }
@@ -168,39 +166,39 @@ public class SVNDiffCommand extends SVNCommand implements ISVNDiffStatusHandler 
             targets.add("");
         }
 
-        SVNDiffClient client = getEnvironment().getClientManager().getDiffClient();
+        SVNDiffClient client = getSVNEnvironment().getClientManager().getDiffClient();
         DefaultSVNDiffGenerator diffGenerator = new DefaultSVNDiffGenerator();
-        diffGenerator.setDiffOptions(getEnvironment().getDiffOptions());
-        diffGenerator.setDiffDeleted(!getEnvironment().isNoDiffDeleted());
-        diffGenerator.setForcedBinaryDiff(getEnvironment().isForce());
+        diffGenerator.setDiffOptions(getSVNEnvironment().getDiffOptions());
+        diffGenerator.setDiffDeleted(!getSVNEnvironment().isNoDiffDeleted());
+        diffGenerator.setForcedBinaryDiff(getSVNEnvironment().isForce());
         diffGenerator.setBasePath(new File("").getAbsoluteFile());
         client.setDiffGenerator(diffGenerator);
         
-        PrintStream ps = getEnvironment().getOut();
+        PrintStream ps = getSVNEnvironment().getOut();
         for(int i = 0; i < targets.size(); i++) {
             String targetName = (String) targets.get(i);
             if (!peggedDiff) {
                 SVNCommandTarget target1 = new SVNCommandTarget(SVNPathUtil.append(oldTarget.getTarget(), targetName));
                 SVNCommandTarget target2 = new SVNCommandTarget(SVNPathUtil.append(newTarget.getTarget(), targetName));
-                if (getEnvironment().isSummarize()) {
+                if (getSVNEnvironment().isSummarize()) {
                     if (target1.isURL() && target2.isURL()) {
-                        client.doDiffStatus(target1.getURL(), start, target2.getURL(), end, getEnvironment().getDepth(), getEnvironment().isNoticeAncestry(), this);
+                        client.doDiffStatus(target1.getURL(), start, target2.getURL(), end, getSVNEnvironment().getDepth(), getSVNEnvironment().isNoticeAncestry(), this);
                     } else if (target1.isURL()) {
-                        client.doDiffStatus(target1.getURL(), start, target2.getFile(), end, getEnvironment().getDepth(), getEnvironment().isNoticeAncestry(), this);
+                        client.doDiffStatus(target1.getURL(), start, target2.getFile(), end, getSVNEnvironment().getDepth(), getSVNEnvironment().isNoticeAncestry(), this);
                     } else if (target2.isURL()) {
-                        client.doDiffStatus(target1.getFile(), start, target2.getURL(), end, getEnvironment().getDepth(), getEnvironment().isNoticeAncestry(), this);
+                        client.doDiffStatus(target1.getFile(), start, target2.getURL(), end, getSVNEnvironment().getDepth(), getSVNEnvironment().isNoticeAncestry(), this);
                     } else {
-                        client.doDiffStatus(target1.getFile(), start, target2.getFile(), end, getEnvironment().getDepth(), getEnvironment().isNoticeAncestry(), this);
+                        client.doDiffStatus(target1.getFile(), start, target2.getFile(), end, getSVNEnvironment().getDepth(), getSVNEnvironment().isNoticeAncestry(), this);
                     }
                 } else {
                     if (target1.isURL() && target2.isURL()) {
-                        client.doDiff(target1.getURL(), start, target2.getURL(), end, getEnvironment().getDepth(), getEnvironment().isNoticeAncestry(), ps);
+                        client.doDiff(target1.getURL(), start, target2.getURL(), end, getSVNEnvironment().getDepth(), getSVNEnvironment().isNoticeAncestry(), ps);
                     } else if (target1.isURL()) {
-                        client.doDiff(target1.getURL(), start, target2.getFile(), end, getEnvironment().getDepth(), getEnvironment().isNoticeAncestry(), ps);
+                        client.doDiff(target1.getURL(), start, target2.getFile(), end, getSVNEnvironment().getDepth(), getSVNEnvironment().isNoticeAncestry(), ps);
                     } else if (target2.isURL()) {
-                        client.doDiff(target1.getFile(), start, target2.getURL(), end, getEnvironment().getDepth(), getEnvironment().isNoticeAncestry(), ps);
+                        client.doDiff(target1.getFile(), start, target2.getURL(), end, getSVNEnvironment().getDepth(), getSVNEnvironment().isNoticeAncestry(), ps);
                     } else {
-                        client.doDiff(target1.getFile(), start, target2.getFile(), end, getEnvironment().getDepth(), getEnvironment().isNoticeAncestry(), ps);
+                        client.doDiff(target1.getFile(), start, target2.getFile(), end, getSVNEnvironment().getDepth(), getSVNEnvironment().isNoticeAncestry(), ps);
                     }
                 }
             } else {
@@ -209,17 +207,17 @@ public class SVNDiffCommand extends SVNCommand implements ISVNDiffStatusHandler 
                 if (pegRevision == SVNRevision.UNDEFINED) {
                     pegRevision = target.isURL() ? SVNRevision.HEAD : SVNRevision.WORKING;
                 }
-                if (getEnvironment().isSummarize()) {
+                if (getSVNEnvironment().isSummarize()) {
                     if (target.isURL()) {
-                        client.doDiffStatus(target.getURL(), start, end, pegRevision, getEnvironment().getDepth(), getEnvironment().isNoticeAncestry(), this);
+                        client.doDiffStatus(target.getURL(), start, end, pegRevision, getSVNEnvironment().getDepth(), getSVNEnvironment().isNoticeAncestry(), this);
                     } else {
-                        client.doDiffStatus(target.getFile(), start, end, pegRevision, getEnvironment().getDepth(), getEnvironment().isNoticeAncestry(), this);
+                        client.doDiffStatus(target.getFile(), start, end, pegRevision, getSVNEnvironment().getDepth(), getSVNEnvironment().isNoticeAncestry(), this);
                     }
                 } else {
                     if (target.isURL()) {
-                        client.doDiff(target.getURL(), pegRevision, start, end, getEnvironment().getDepth(), getEnvironment().isNoticeAncestry(), ps);
+                        client.doDiff(target.getURL(), pegRevision, start, end, getSVNEnvironment().getDepth(), getSVNEnvironment().isNoticeAncestry(), ps);
                     } else {
-                        client.doDiff(target.getFile(), pegRevision, start, end, getEnvironment().getDepth(), getEnvironment().isNoticeAncestry(), ps);
+                        client.doDiff(target.getFile(), pegRevision, start, end, getSVNEnvironment().getDepth(), getSVNEnvironment().isNoticeAncestry(), ps);
                     }
                 }
             }
@@ -234,12 +232,12 @@ public class SVNDiffCommand extends SVNCommand implements ISVNDiffStatusHandler 
         String path = diffStatus.getPath();
         if (!SVNCommandUtil.isURL(path)) {
             if (diffStatus.getFile() != null) {
-                path = getEnvironment().getRelativePath(diffStatus.getFile());
+                path = getSVNEnvironment().getRelativePath(diffStatus.getFile());
             }
             path = SVNCommandUtil.getLocalPath(path);
         }
-        getEnvironment().getOut().print(diffStatus.getModificationType().getCode() + (diffStatus.isPropertiesModified() ? "M" : " ") + "     " + path + "\n");
-        getEnvironment().getOut().flush();
+        getSVNEnvironment().getOut().print(diffStatus.getModificationType().getCode() + (diffStatus.isPropertiesModified() ? "M" : " ") + "     " + path + "\n");
+        getSVNEnvironment().getOut().flush();
     }
 
 }

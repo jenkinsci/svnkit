@@ -15,9 +15,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.tmatesoft.svn.cli2.SVNCommand;
 import org.tmatesoft.svn.cli2.SVNCommandTarget;
-import org.tmatesoft.svn.cli2.SVNOption;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -44,23 +42,25 @@ public class SVNCatCommand extends SVNCommand {
     }
 
     public void run() throws SVNException {
-        List targets = getEnvironment().combineTargets(null);
+        List targets = getSVNEnvironment().combineTargets(null);
         if (targets.isEmpty()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS));
         }
-        SVNWCClient client = getEnvironment().getClientManager().getWCClient();
+        SVNWCClient client = getSVNEnvironment().getClientManager().getWCClient();
 
         for(int i = 0; i < targets.size(); i++) {
             SVNCommandTarget target = new SVNCommandTarget((String) targets.get(i), true);
             try {
                 if (target.isURL()) {
-                    client.doGetFileContents(target.getURL(), target.getPegRevision(), getEnvironment().getStartRevision(), true, getEnvironment().getOut());
+                    client.doGetFileContents(target.getURL(), target.getPegRevision(), getSVNEnvironment().getStartRevision(), true, getSVNEnvironment().getOut());
                 } else {
-                    client.doGetFileContents(target.getFile(), target.getPegRevision(), getEnvironment().getStartRevision(), true, getEnvironment().getOut());
+                    client.doGetFileContents(target.getFile(), target.getPegRevision(), getSVNEnvironment().getStartRevision(), true, getSVNEnvironment().getOut());
                 }
             } catch (SVNException e) {
                 SVNErrorMessage err = e.getErrorMessage();
-                getEnvironment().handleWarning(err, new SVNErrorCode[] {SVNErrorCode.UNVERSIONED_RESOURCE, SVNErrorCode.ENTRY_NOT_FOUND, SVNErrorCode.CLIENT_IS_DIRECTORY});
+                getSVNEnvironment().handleWarning(err, 
+                        new SVNErrorCode[] {SVNErrorCode.UNVERSIONED_RESOURCE, SVNErrorCode.ENTRY_NOT_FOUND, SVNErrorCode.CLIENT_IS_DIRECTORY}, 
+                        getSVNEnvironment().isQuiet());
             }
         }
     }

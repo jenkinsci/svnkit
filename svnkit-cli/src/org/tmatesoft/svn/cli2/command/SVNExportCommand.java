@@ -16,10 +16,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.tmatesoft.svn.cli2.SVNCommand;
 import org.tmatesoft.svn.cli2.SVNCommandTarget;
-import org.tmatesoft.svn.cli2.SVNNotifyPrinter;
-import org.tmatesoft.svn.cli2.SVNOption;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -55,7 +52,7 @@ public class SVNExportCommand extends SVNCommand {
     }
 
     public void run() throws SVNException {
-        List targets = getEnvironment().combineTargets(new ArrayList());
+        List targets = getSVNEnvironment().combineTargets(new ArrayList());
         if (targets.isEmpty()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS));
         }
@@ -73,22 +70,22 @@ public class SVNExportCommand extends SVNCommand {
         } else {
             to = (String) targets.get(1);
         }
-        SVNUpdateClient client = getEnvironment().getClientManager().getUpdateClient();
-        if (!getEnvironment().isQuiet()) {
-            client.setEventHandler(new SVNNotifyPrinter(getEnvironment(), false, true, false));
+        SVNUpdateClient client = getSVNEnvironment().getClientManager().getUpdateClient();
+        if (!getSVNEnvironment().isQuiet()) {
+            client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment(), false, true, false));
         }
-        SVNDepth depth = getEnvironment().getDepth();
+        SVNDepth depth = getSVNEnvironment().getDepth();
         if (depth == SVNDepth.UNKNOWN) {
             depth = SVNDepth.INFINITY;
         }
         try {
             SVNCommandTarget dst = new SVNCommandTarget(to);
-            String eol = getEnvironment().getNativeEOL();
-            SVNRevision revision = getEnvironment().getStartRevision();
+            String eol = getSVNEnvironment().getNativeEOL();
+            SVNRevision revision = getSVNEnvironment().getStartRevision();
             if (from.isFile()) {
-                client.doExport(from.getFile(), dst.getFile(), pegRevision, revision, eol, getEnvironment().isForce(), depth);
+                client.doExport(from.getFile(), dst.getFile(), pegRevision, revision, eol, getSVNEnvironment().isForce(), depth);
             } else {
-                client.doExport(from.getURL(), dst.getFile(), pegRevision, revision, eol, getEnvironment().isForce(), depth);
+                client.doExport(from.getURL(), dst.getFile(), pegRevision, revision, eol, getSVNEnvironment().isForce(), depth);
             }
         } catch (SVNException e) {
             SVNErrorMessage err = e.getErrorMessage();
