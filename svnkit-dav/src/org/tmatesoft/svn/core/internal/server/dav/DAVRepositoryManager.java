@@ -41,8 +41,10 @@ public class DAVRepositoryManager {
             FSRepositoryFactory.setup();
             String repositoryURL = (repositoryPath.startsWith("/") ? "file://" : "file:///") + repositoryPath;
             myRepository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(repositoryURL));
+            myRepositoryParentPath = null;
         } else if (repositoryParentPath != null && repositoryPath == null) {
             myRepositoryParentPath = repositoryParentPath;
+            myRepository = null;
         } else {
             //repositoryPath == null <=> repositoryParentPath == null.
             if (repositoryPath == null) {
@@ -57,11 +59,11 @@ public class DAVRepositoryManager {
         if (myRepositoryParentPath != null) {
             if (requestURI == null || requestURI.length() == 0 || "/".equals(requestURI)) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED));
-                //TODO: tried to access repository parent path, result status code should be FORBIDDEN.
+                //TODO: client tried to access repository parent path, result status code should be FORBIDDEN.
             }
-            String repositoryName = DAVResourceUtil.head(requestURI);
-            requestContext = requestContext + "/" + repositoryName;
-            requestURI = DAVResourceUtil.removeHead(requestURI, true);
+            String repositoryName = DAVPathUtil.head(requestURI);
+            requestContext = DAVPathUtil.concat(requestContext, repositoryName);
+            requestURI = DAVPathUtil.removeHead(requestURI, true);
             String repositoryURL = getRepositoryURL(repositoryName);
 
             FSRepositoryFactory.setup();
@@ -72,8 +74,9 @@ public class DAVRepositoryManager {
 
     private String getRepositoryURL(String repositoryName) {
         StringBuffer urlBuffer = new StringBuffer();
-        urlBuffer.append(myRepositoryParentPath.startsWith("/") ? "file://" : "file:///");
-        urlBuffer.append(DAVResourceUtil.addTrailingSlash(myRepositoryParentPath));
+        urlBuffer.append("file://");
+        urlBuffer.append(myRepositoryParentPath.startsWith("/") ? "" : "/");
+        urlBuffer.append(DAVPathUtil.addTrailingSlash(myRepositoryParentPath));
         urlBuffer.append(repositoryName);
         return urlBuffer.toString();
     }

@@ -5,7 +5,7 @@
   <component name="NewModuleRootManager" inherit-compiler-output="false">
     <output url="file://$MODULE_DIR$/bin" />
     <exclude-output />
-    <exploded url="file:///var/lib/tomcat5.5/webapps/svnkit-dav" />
+    <exploded url="file:///var/lib/tomcat5.5/webapps/svn" />
     <exclude-exploded />
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
@@ -27,7 +27,7 @@
     <orderEntryProperties />
   </component>
   <component name="WebModuleBuildComponent">
-    <setting name="EXPLODED_URL" value="file:///var/lib/tomcat5.5/webapps/svnkit-dav" />
+    <setting name="EXPLODED_URL" value="file:///var/lib/tomcat5.5/webapps/svn" />
     <setting name="EXPLODED_ENABLED" value="true" />
     <setting name="JAR_URL" value="file://" />
     <setting name="JAR_ENABLED" value="false" />
@@ -47,6 +47,10 @@
     </containerElement>
     <containerElement type="module" name="svnkit">
       <attribute name="method" value="1" />
+      <attribute name="URI" value="/WEB-INF/classes" />
+    </containerElement>
+    <containerElement type="module" name="svnkit-cli">
+      <attribute name="method" value="0" />
       <attribute name="URI" value="/WEB-INF/classes" />
     </containerElement>
     <containerElement type="library" level="module">

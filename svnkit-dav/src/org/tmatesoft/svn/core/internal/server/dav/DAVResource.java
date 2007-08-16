@@ -76,8 +76,8 @@ public class DAVResource {
      * DAVResource  constructor
      *
      * @param repository   repository resource connect to
-     * @param context      contains url requestContext and name of repository if servlet use SVNParentPath directive.
-     * @param uri          special uri for DAV requests can be /path or /!svn/xxx/path
+     * @param context      contains requested url requestContext and name of repository if servlet use SVNParentPath directive.
+     * @param uri          special uri for DAV requests can be /path or /SPECIAL_URI/xxx/path
      * @param label        request's label header
      * @param useCheckedIn special case for VCC resource
      * @throws SVNException if an error occurs while fetching repository properties.
@@ -136,7 +136,7 @@ public class DAVResource {
     }
 
     private void setPath(String path) {
-        myPath = DAVResourceUtil.standardize(path);
+        myPath = DAVPathUtil.standardize(path);
     }
 
     public String getActivityID() {
@@ -210,29 +210,28 @@ public class DAVResource {
     }
 
     private void parseURI(String label, boolean useCheckedIn) throws SVNException {
-        String uri = getURI();
-        if (!SPECIAL_URI.equals(DAVResourceUtil.head(uri))) {
+        if (!SPECIAL_URI.equals(DAVPathUtil.head(getURI()))) {
             setKind(DAVResourceKind.PUBLIC);
             setType(DAVResource.DAV_RESOURCE_TYPE_REGULAR);
-            setPath(uri);
+            setPath(getURI());
             setVersioned(true);
         } else {
-            String specialPart = DAVResourceUtil.removeHead(uri, false);
+            String specialPart = DAVPathUtil.removeHead(getURI(), false);
             if (specialPart.length() == 0) {
                 // root/!svn
                 setType(DAVResource.DAV_RESOURCE_TYPE_PRIVATE);
                 setKind(DAVResourceKind.ROOT_COLLECTION);
             } else {
-                specialPart = DAVResourceUtil.dropLeadingSlash(specialPart);
+                specialPart = DAVPathUtil.dropLeadingSlash(specialPart);
                 if (!specialPart.endsWith("/") && SVNPathUtil.getSegmentsCount(specialPart) == 1) {
                     // root/!svn/XXX
                     setType(DAVResource.DAV_RESOURCE_TYPE_PRIVATE);
                 } else {
-                    DAVResourceKind kind = DAVResourceKind.parseKind(DAVResourceUtil.head(specialPart));
+                    DAVResourceKind kind = DAVResourceKind.parseKind(DAVPathUtil.head(specialPart));
                     if (kind != DAVResourceKind.UNKNOWN) {
                         setKind(kind);
-                        String parameter = DAVResourceUtil.removeHead(specialPart, false);
-                        parameter = DAVResourceUtil.dropLeadingSlash(parameter);
+                        String parameter = DAVPathUtil.removeHead(specialPart, false);
+                        parameter = DAVPathUtil.dropLeadingSlash(parameter);
                         if (kind == DAVResourceKind.VCC) {
                             parseVCC(parameter, label, useCheckedIn);
                         } else if (kind == DAVResourceKind.VERSION) {
@@ -264,8 +263,8 @@ public class DAVResource {
             setActivityID(parameter);
             setPath("/");
         } else {
-            setActivityID(DAVResourceUtil.head(parameter));
-            setPath(DAVResourceUtil.removeHead(parameter, false));
+            setActivityID(DAVPathUtil.head(parameter));
+            setPath(DAVPathUtil.removeHead(parameter, false));
         }
     }
 
@@ -277,13 +276,13 @@ public class DAVResource {
         if (SVNPathUtil.getSegmentsCount(parameter) == 1) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Invalid URI ''{0}''", getContext() + getURI()));
         }
-        setActivityID(DAVResourceUtil.head(parameter));
+        setActivityID(DAVPathUtil.head(parameter));
         try {
-            String revisionParameter = DAVResourceUtil.removeHead(parameter, false);
-            long revision = Long.parseLong(DAVResourceUtil.dropLeadingSlash(revisionParameter));
+            String revisionParameter = DAVPathUtil.removeHead(parameter, false);
+            long revision = Long.parseLong(DAVPathUtil.dropLeadingSlash(revisionParameter));
             setRevision(revision);
         } catch (NumberFormatException e) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Invalid URI ''{0}''", getContext() + getURI()));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, e), e);
         }
     }
 
@@ -305,15 +304,15 @@ public class DAVResource {
             try {
                 revision = Long.parseLong(parameter);
             } catch (NumberFormatException e) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Invalid URI ''{0}''", getContext() + getURI()));
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, e.getMessage()), e);
             }
         } else {
             try {
-                revision = Long.parseLong(DAVResourceUtil.head(parameter));
+                revision = Long.parseLong(DAVPathUtil.head(parameter));
             } catch (NumberFormatException e) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Invalid URI ''{0}''", getContext() + getURI()));
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, e.getMessage()), e);
             }
-            parameterPath = DAVResourceUtil.removeHead(parameter, false);
+            parameterPath = DAVPathUtil.removeHead(parameter, false);
         }
         setType(DAVResource.DAV_RESOURCE_TYPE_REGULAR);
         setVersioned(true);
@@ -325,7 +324,7 @@ public class DAVResource {
         try {
             setRevision(Long.parseLong(parameter));
         } catch (NumberFormatException e) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Invalid URI ''{0}''", getContext() + getURI()));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, e.getMessage()), e);
         }
         setVersioned(true);
         setBaseLined(true);
@@ -339,16 +338,16 @@ public class DAVResource {
             try {
                 setRevision(Long.parseLong(parameter));
             } catch (NumberFormatException e) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Invalid URI ''{0}''", getContext() + getURI()));
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Invalid URI ''{0}''", e.getMessage()), e);
             }
             setPath("/");
         } else {
             try {
-                setRevision(Long.parseLong(DAVResourceUtil.head(parameter)));
+                setRevision(Long.parseLong(DAVPathUtil.head(parameter)));
             } catch (NumberFormatException e) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Invalid URI ''{0}''", getContext() + getURI()));
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, e.getMessage()), e);
             }
-            setPath(DAVResourceUtil.removeHead(parameter, false));
+            setPath(DAVPathUtil.removeHead(parameter, false));
         }
     }
 
@@ -394,7 +393,7 @@ public class DAVResource {
             setRevision(latestRevision);
             setExists(true);
             // URI doesn't contain any information about context of requested uri
-            setURI(DAVResourceUtil.buildURI("", DAVResourceKind.BASELINE, getRevision(), ""));
+            setURI(DAVPathUtil.buildURI("", DAVResourceKind.BASELINE, getRevision(), ""));
         } else if (getType() == DAVResource.DAV_RESOURCE_TYPE_WORKING) {
             //TODO: Define filename for ACTIVITY_ID under the repository
             if (isBaseLined()) {
@@ -419,7 +418,7 @@ public class DAVResource {
     }
 
     public long getCreatedRevision() {
-        String revisionParameter = (String) getSVNProperties().get(SVNProperty.COMMITTED_REVISION);
+        String revisionParameter = getProperty(SVNProperty.COMMITTED_REVISION);
         try {
             return Long.parseLong(revisionParameter);
         } catch (NumberFormatException e) {
@@ -436,7 +435,7 @@ public class DAVResource {
 
 
     public Date getRevisionDate(long revision) throws SVNException {
-        return SVNTimeUtil.parseDate(getRepository().getRevisionPropertyValue(revision, SVNRevisionProperty.DATE));
+        return SVNTimeUtil.parseDate(getRevisionProperty(revision, SVNRevisionProperty.DATE));
     }
 
     public String getETag() {
@@ -457,10 +456,6 @@ public class DAVResource {
         return getRepository().getRepositoryUUID(forceConnect);
     }
 
-    private String getContentTypeProperty() {
-        return ((String) getSVNProperties().get(SVNProperty.MIME_TYPE));
-    }
-
     public String getContentType() throws SVNException {
         if (isBaseLined() && getType() == DAVResource.DAV_RESOURCE_TYPE_VERSION) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Failed to determine property"));
@@ -473,7 +468,7 @@ public class DAVResource {
         if (isCollection()) {
             return DEFAULT_COLLECTION_CONTENT_TYPE;
         }
-        String contentType = getContentTypeProperty();
+        String contentType = getProperty(SVNProperty.MIME_TYPE);
         if (contentType != null) {
             return contentType;
         }
@@ -484,22 +479,17 @@ public class DAVResource {
         return getRepository().getLatestRevision();
     }
 
-    public long getCommitedRevision() {
-        String commitedRevision = (String) getSVNProperties().get(SVNProperty.COMMITTED_REVISION);
-        return SVNProperty.longValue(commitedRevision);
-    }
-
     public long getContentLength() throws SVNException {
         SVNDirEntry entry = getRepository().getDir(getPath(), getRevision(), false, null);
         return entry.getSize();
     }
 
     public String getAuthor(long revision) throws SVNException {
-        return getRepository().getRevisionPropertyValue(revision, SVNRevisionProperty.AUTHOR);
+        return getRevisionProperty(revision, SVNRevisionProperty.AUTHOR);
     }
 
     public String getMD5Checksum() {
-        return ((String) getSVNProperties().get(SVNProperty.CHECKSUM));
+        return getProperty(SVNProperty.CHECKSUM);
     }
 
     public Collection getDeadProperties() {
@@ -514,16 +504,14 @@ public class DAVResource {
     }
 
     public String getLog(long revision) throws SVNException {
-        return getRepository().getRevisionPropertyValue(revision, SVNRevisionProperty.LOG);
+        return getRevisionProperty(revision, SVNRevisionProperty.LOG);
     }
 
-    public String getProperty(String namespace, String name) throws SVNException {
-        String propertyName = DAVResourceUtil.convertToSVNProperty(namespace, name);
-        return ((String) getSVNProperties().get(propertyName));
+    public String getProperty(String propertyName) {
+        return (String) getSVNProperties().get(propertyName);
     }
 
-    public String getRevisionProperty(String namespace, String name, long revision) throws SVNException {
-        String propertyName = DAVResourceUtil.convertToSVNProperty(namespace, name);
+    public String getRevisionProperty(long revision, String propertyName) throws SVNException {
         return getRepository().getRevisionPropertyValue(revision, propertyName);
     }
 

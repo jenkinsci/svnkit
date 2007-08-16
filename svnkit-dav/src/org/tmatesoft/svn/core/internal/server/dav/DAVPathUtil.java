@@ -11,18 +11,11 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav;
 
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-
 /**
  * @author TMate Software Ltd.
  * @version 1.1.2
  */
-public class DAVResourceUtil {
+public class DAVPathUtil {
 
     private static final String SLASH = "/";
 
@@ -57,19 +50,18 @@ public class DAVResourceUtil {
         return doStandardize ? standardize(uri.substring(headLength)) : uri.substring(headLength);
     }
 
+    public static String concat(String parent, String child) {
+        StringBuffer uriBuffer = new StringBuffer();
+        uriBuffer.append(standardize(parent));
+        uriBuffer.append(standardize(child));
+        return uriBuffer.toString();
+    }
+
     public static String standardize(String uri) {
         if (uri == null) {
             return SLASH;
         }
         return addLeadingSlash(dropTraillingSlash(uri));
-    }
-
-    public static String buildURI(DAVResource resource) {
-        return buildURI(resource.getContext(), resource.getKind(), resource.getRevision(), resource.getPath());
-    }
-
-    public static String buildURI(DAVResource resource, long revision) {
-        return buildURI(resource.getContext(), resource.getKind(), revision, resource.getPath());
     }
 
     public static String buildURI(String context, DAVResourceKind davResourceKind, long revision, String path) {
@@ -97,7 +89,6 @@ public class DAVResourceUtil {
                 resultURI.append(davResourceKind.toString());
                 resultURI.append(SLASH);
                 resultURI.append(String.valueOf(revision));
-                resultURI.append(SLASH);
                 resultURI.append(path);
             } else if (davResourceKind == DAVResourceKind.VCC) {
                 resultURI.append(davResourceKind.toString());
@@ -105,34 +96,6 @@ public class DAVResourceUtil {
                 resultURI.append(DAVResource.DEDAULT_VCC_NAME);
             }
         }
-
         return resultURI.toString();
-    }
-
-    //Next three methods we can use for dead properties only
-    public static DAVElement convertToDAVElement(String property) throws SVNException {
-        if (!SVNProperty.isRegularProperty(property)) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Unrecognized property prefix ''{0}''", property));
-        }
-        String namespace = DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE;
-        if (SVNProperty.isSVNProperty(property)) {
-            namespace = DAVElement.SVN_SVN_PROPERTY_NAMESPACE;
-        }
-        property = SVNProperty.shortPropertyName(property);
-        return DAVElement.getElement(namespace, property);
-    }
-
-    public static String convertToSVNProperty(DAVElement element) throws SVNException {
-        return convertToSVNProperty(element.getNamespace(), element.getName());
-    }
-
-    public static String convertToSVNProperty(String namespace, String name) throws SVNException {
-        if (DAVElement.SVN_SVN_PROPERTY_NAMESPACE.equals(namespace)) {
-            return SVNProperty.SVN_PREFIX + name;
-        } else if (DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE.equals(namespace)) {
-            return name;
-        }
-        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Unrecognized namespace ''{0}''", namespace));
-        return null;
     }
 }

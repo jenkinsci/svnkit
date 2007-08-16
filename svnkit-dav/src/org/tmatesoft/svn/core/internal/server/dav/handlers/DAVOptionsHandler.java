@@ -15,10 +15,10 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
-import org.tmatesoft.svn.core.internal.server.dav.DAVResourceUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.xml.sax.Attributes;
 
@@ -201,7 +201,8 @@ public class DAVOptionsHandler extends ServletDAVHandler {
 
     private void generateOptionsResponse(DAVResource resource, Collection supportedMethods, StringBuffer xmlBuffer) {
         if (!getDAVElements().isEmpty()) {
-            appendXMLHeader(DAV_NAMESPACE_PREFIX, "options-response", null, xmlBuffer);
+            addHeader(xmlBuffer);
+            openNamespaceDeclarationTag(DAV_NAMESPACE_PREFIX, "options-response", null, xmlBuffer);
             for (Iterator iterator = getDAVElements().iterator(); iterator.hasNext();) {
                 DAVElement element = (DAVElement) iterator.next();
                 if (element == ACTIVITY_COLLECTION_SET) {
@@ -220,14 +221,14 @@ public class DAVOptionsHandler extends ServletDAVHandler {
 
     private void generateActivityCollectionSet(DAVResource resource, StringBuffer xmlBuffer) {
         openXMLTag(DAV_NAMESPACE_PREFIX, ACTIVITY_COLLECTION_SET.getName(), XML_STYLE_NORMAL, null, xmlBuffer);
-        String uri = DAVResourceUtil.buildURI(resource.getContext(), DAVResourceKind.ACT_COLLECTION, 0, null);
+        String uri = DAVPathUtil.buildURI(resource.getContext(), DAVResourceKind.ACT_COLLECTION, 0, null);
         xmlBuffer.append(addHrefTags(uri));
         closeXMLTag(DAV_NAMESPACE_PREFIX, ACTIVITY_COLLECTION_SET.getName(), xmlBuffer);
     }
 
     private void generateSupportedLivePropertySet(DAVResource resource, StringBuffer xmlBuffer) {
         openXMLTag(DAV_NAMESPACE_PREFIX, "supported-live-property-set", XML_STYLE_NORMAL, null, xmlBuffer);
-        Collection supportedLiveProperties = DAVPropfindHanlder.getSupportedLiveProperties(resource);
+        Collection supportedLiveProperties = getSupportedLiveProperties(resource);
         generateSupportedElementSet(DAV_NAMESPACE_PREFIX, SUPPORTED_LIVE_PROPERTY.getName(), supportedLiveProperties, getRequestedLiveProperties(), xmlBuffer);
         closeXMLTag(DAV_NAMESPACE_PREFIX, "supported-live-property-set", xmlBuffer);
     }
