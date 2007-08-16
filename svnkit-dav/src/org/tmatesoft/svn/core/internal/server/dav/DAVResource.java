@@ -255,7 +255,7 @@ public class DAVResource {
         }
     }
 
-    private void parseWorking(String parameter) throws SVNException {
+    private void parseWorking(String parameter) {
         setType(DAVResource.DAV_RESOURCE_TYPE_WORKING);
         setVersioned(true);
         setWorking(true);
