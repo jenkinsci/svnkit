@@ -121,6 +121,6 @@ public class SVNOption extends AbstractSVNOption {
     }
 
     protected String getResourceBundleName() {
-        return "org.tmatesoft.svn.cli2.command.options";
+        return "org.tmatesoft.svn.cli2.svn.options";
     }
 }

@@ -46,7 +46,7 @@ public abstract class SVNCommand extends AbstractSVNCommand {
     }
     
     protected String getResourceBundleName() {
-        return "org.tmatesoft.svn.cli2.command.commands";
+        return "org.tmatesoft.svn.cli2.svn.commands";
     }
 
     public boolean isOptionSupported(AbstractSVNOption option) {
