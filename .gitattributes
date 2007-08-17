@@ -111,6 +111,8 @@ svnkit-cli/src/org/tmatesoft/svn/cli2/svn/commands.properties eol=lf
 svnkit-cli/src/org/tmatesoft/svn/cli2/svn/options.properties eol=lf
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnadmin/commands.properties -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnadmin/options.properties -text
+svnkit-cli/src/org/tmatesoft/svn/cli2/svnlook/commands.properties -text
+svnkit-cli/src/org/tmatesoft/svn/cli2/svnlook/options.properties -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnsync/commands.properties -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnsync/options.properties -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnversion/commands.properties -text
