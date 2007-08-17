@@ -37,6 +37,7 @@ public class SVNVersion extends AbstractSVNLauncher {
 
     protected void registerCommands() {
         AbstractSVNCommand.registerCommand(new SVNVersionCommand());
+        AbstractSVNCommand.registerCommand(new SVNVersionHelpCommand());
     }
 
     protected void registerOptions() {

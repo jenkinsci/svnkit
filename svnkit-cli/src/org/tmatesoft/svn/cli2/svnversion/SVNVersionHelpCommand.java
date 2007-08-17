@@ -16,27 +16,24 @@ import java.util.Collection;
 import java.util.List;
 
 import org.tmatesoft.svn.cli2.AbstractSVNCommand;
-import org.tmatesoft.svn.cli2.SVNCommandTarget;
+import org.tmatesoft.svn.cli2.SVNCommandUtil;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.SVNClientManager;
 
 
 /**
  * @version 1.1.2
  * @author  TMate Software Ltd.
  */
-public class SVNVersionCommand extends AbstractSVNCommand {
+public class SVNVersionHelpCommand extends AbstractSVNCommand {
 
-    public SVNVersionCommand() {
-        super("", null);
+    public SVNVersionHelpCommand() {
+        super("help", null);
     }
 
     protected Collection createSupportedOptions() {
         List options = new ArrayList();
-        options.add(SVNVersionOption.NO_NEWLINE);
-        options.add(SVNVersionOption.COMMITTED);
-        options.add(SVNVersionOption.HELP);
         options.add(SVNVersionOption.VERSION);
+        options.add(SVNVersionOption.HELP);
         return options;
     }
     
@@ -49,24 +46,12 @@ public class SVNVersionCommand extends AbstractSVNCommand {
     }
 
     public void run() throws SVNException {
-        List targets = getEnvironment().combineTargets(null);
-        if (targets.isEmpty()) {
-            targets.add("");
-        }
-        SVNCommandTarget target = new SVNCommandTarget((String) targets.get(0));
-        if (target.isURL()) {
-            target = new SVNCommandTarget("");
-            targets.add(0, "");
-        }
-        String trailURL = (String) (targets.size() > 1 ? targets.get(1) : null);
-        if (target.isFile()) {
-            String id = SVNClientManager.newInstance().getWCClient().doGetWorkingCopyID(target.getFile(), trailURL, getSVNVersionEnvironment().isCommitted());
-            if (id != null) {
-                getEnvironment().getOut().print(id);
-                if (!getSVNVersionEnvironment().isNoNewLine()) {
-                    getEnvironment().getOut().println();
-                }
-            }
+        if (getSVNVersionEnvironment().isHelp()) {
+            String help = SVNCommandUtil.getCommandHelp(AbstractSVNCommand.getCommand(""));
+            getEnvironment().getOut().println(help);
+        } else if (getSVNVersionEnvironment().isVersion()) {
+            String help = SVNCommandUtil.getVersion(getEnvironment(), false);
+            getEnvironment().getOut().println(help);
         }
     }
 

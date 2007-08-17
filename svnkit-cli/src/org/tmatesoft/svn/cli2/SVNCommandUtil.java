@@ -16,12 +16,15 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.MessageFormat;
+import java.util.Iterator;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.util.Version;
 
 
 /**
@@ -175,5 +178,101 @@ public class SVNCommandUtil {
             count++;
         }
         return count;
+    }
+
+    public static String getCommandHelp(AbstractSVNCommand command) {
+        StringBuffer help = new StringBuffer();
+        help.append(command.getName());
+        if (command.getAliases().length > 0) {
+            help.append(" (");
+            for (int i = 0; i < command.getAliases().length; i++) {
+                help.append(command.getAliases()[i]);
+                if (i + 1 < command.getAliases().length) {
+                    help.append(", ");
+                }
+            }
+            help.append(")");
+        }
+        if (!"".equals(command.getName())) {
+            help.append(": ");
+        }
+        help.append(command.getDescription());
+        help.append("\n");
+        if (!command.getSupportedOptions().isEmpty()) {
+            help.append("\nValid Options:\n");
+            for (Iterator options = command.getSupportedOptions().iterator(); options.hasNext();) {
+                AbstractSVNOption option = (AbstractSVNOption) options.next();
+                help.append("  ");
+                String optionDesc = null;
+                if (option.getAlias() != null) {
+                    optionDesc = "-" + option.getAlias() + " [--" + option.getName() + "]";
+                } else {
+                    optionDesc = "--" + option.getName();
+                }
+                help.append(formatString(optionDesc, 24, true));
+                help.append(" : ");
+                help.append(option.getDescription(command));
+                help.append("\n");
+            }
+        }
+        return help.toString();
+    }
+
+    public static String getVersion(AbstractSVNCommandEnvironment env, boolean quiet) {
+        String version = Version.getMajorVersion() + "." + Version.getMinorVersion() + "." + Version.getMicroVersion();
+        String revNumber = Version.getRevisionNumber() < 0 ? "SNAPSHOT" : Long.toString(Version.getRevisionNumber());
+        String message = MessageFormat.format(env.getProgramName() + ", version {0}\n", new String[] {version + " (r" + revNumber + ")"});
+        if (quiet) {
+            message = version;
+        }
+        if (!quiet) {
+            message += 
+                "\nCopyright (C) 2004-2007 TMate Software.\n" +
+                "SVNKit is open source (GPL) software, see http://svnkit.com/ for more information.\n" +
+                "SVNKit is pure Java (TM) version of Subversion, see http://subversion.tigris.org/";
+        }
+        return message;
+    
+    }
+
+    public static String getGenericHelp(String programName) {
+        String header = 
+            "usage: {0} <subcommand> [options] [args]\n" +
+            "Subversion command-line client, version {1}.\n" +
+            "Type ''{0} help <subcommand>'' for help on a specific subcommand.\n" +
+            "Type ''{0} --version'' to see the program version and RA modules\n" +
+            "  or ''{0} --version --quiet'' to see just the version number.\n" +
+            "\n" +
+            "Most subcommands take file and/or directory arguments, recursing\n" +
+            "on the directories.  If no arguments are supplied to such a\n" +
+            "command, it recurses on the current directory (inclusive) by default.\n" +
+            "\n" +
+            "Available subcommands:\n";
+        String footer = 
+            "SVNKit is a pure Java (TM) version of Subversion - a tool for version control.\n" +
+            "For additional information, see http://svnkit.com/\n";
+        String version = Version.getMajorVersion() + "." + Version.getMinorVersion() + "." + Version.getMicroVersion();
+        header = MessageFormat.format(header, new Object[] {programName, version});
+    
+        StringBuffer help = new StringBuffer();
+        help.append(header);
+        for (Iterator commands = AbstractSVNCommand.availableCommands(); commands.hasNext();) {
+            AbstractSVNCommand command = (AbstractSVNCommand) commands.next();
+            help.append("\n   ");
+            help.append(command.getName());
+            if (command.getAliases().length > 0) {
+                help.append(" (");
+                for (int i = 0; i < command.getAliases().length; i++) {
+                    help.append(command.getAliases()[i]);
+                    if (i + 1 < command.getAliases().length) {
+                        help.append(", ");
+                    }
+                }
+                help.append(")");
+            }
+        }
+        help.append("\n\n");
+        help.append(footer);
+        return help.toString();
     }
 }
