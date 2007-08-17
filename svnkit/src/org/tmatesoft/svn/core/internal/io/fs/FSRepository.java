@@ -133,6 +133,10 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     }
 
     public void setRevisionPropertyValue(long revision, String propertyName, String propertyValue, boolean bypassHooks) throws SVNException {
+        setRevisionPropertyValue(revision, propertyName, propertyValue, bypassHooks, bypassHooks);
+    }
+
+    public void setRevisionPropertyValue(long revision, String propertyName, String propertyValue, boolean bypassPreRevpropHook, boolean bypassPostRevpropHook) throws SVNException {
         assertValidRevision(revision);
         try {
             openRepository();
@@ -152,11 +156,11 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             } else {
                 action = FSHooks.REVPROP_MODIFY;
             }
-            if (FSHooks.isHooksEnabled() && !bypassHooks) {
+            if (FSHooks.isHooksEnabled() && !bypassPreRevpropHook) {
                 FSHooks.runPreRevPropChangeHook(myReposRootDir, propertyName, propertyValue, userName, revision, action);
             }
             myFSFS.setRevisionProperty(revision, propertyName, propertyValue);
-            if (FSHooks.isHooksEnabled() && !bypassHooks) {
+            if (FSHooks.isHooksEnabled() && !bypassPostRevpropHook) {
                 FSHooks.runPostRevPropChangeHook(myReposRootDir, propertyName, propertyValue, userName, revision, action);
             }
         } finally {

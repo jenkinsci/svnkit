@@ -919,7 +919,7 @@ public class SVNAdminClient extends SVNBasicClient {
     }
 
     private void dump(FSFS fsfs, OutputStream dumpStream, long start, long end, boolean isIncremental, boolean useDeltas) throws SVNException, IOException {
-        boolean isDumping = dumpStream != null;
+        boolean isDumping = dumpStream != null && dumpStream != SVNFileUtil.DUMMY_OUT;
         long youngestRevision = fsfs.getYoungestRevision();
 
         if (!SVNRevision.isValidRevisionNumber(start)) {

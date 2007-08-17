@@ -157,7 +157,7 @@ public class FSHooks {
             });
             SVNErrorManager.error(err, ioe);
         }
-        runHook(hookFile, hookName, hookProc, paths, path != null);
+        runHook(hookFile, hookName, hookProc, paths);
     }
 
     public static void runPreRevPropChangeHook(File reposRootDir, String propName, String propNewValue, String author, long revision, String action) throws SVNException {
@@ -170,18 +170,18 @@ public class FSHooks {
 
     public static void runStartCommitHook(File reposRootDir, String author) throws SVNException {
         author = author == null ? "" : author;
-        runCommitHook(reposRootDir, SVN_REPOS_HOOK_START_COMMIT, author, true);
+        runCommitHook(reposRootDir, SVN_REPOS_HOOK_START_COMMIT, author);
     }
 
     public static void runPreCommitHook(File reposRootDir, String txnName) throws SVNException {
-        runCommitHook(reposRootDir, SVN_REPOS_HOOK_PRE_COMMIT, txnName, true);
+        runCommitHook(reposRootDir, SVN_REPOS_HOOK_PRE_COMMIT, txnName);
     }
 
     public static void runPostCommitHook(File reposRootDir, long committedRevision) throws SVNException {
-        runCommitHook(reposRootDir, SVN_REPOS_HOOK_POST_COMMIT, String.valueOf(committedRevision), true);
+        runCommitHook(reposRootDir, SVN_REPOS_HOOK_POST_COMMIT, String.valueOf(committedRevision));
     }
 
-    private static void runCommitHook(File reposRootDir, String hookName, String secondArg, boolean readErrorStream) throws SVNException {
+    private static void runCommitHook(File reposRootDir, String hookName, String secondArg) throws SVNException {
         File hookFile = getHookFile(reposRootDir, hookName);
         if (hookFile == null) {
             return;
@@ -205,7 +205,7 @@ public class FSHooks {
             });
             SVNErrorManager.error(err, ioe);
         }
-        runHook(hookFile, hookName, hookProc, null, readErrorStream);
+        runHook(hookFile, hookName, hookProc, null);
     }
 
     public static void runChangeRevPropHook(File reposRootDir, String hookName, String propName, String propValue, String author, long revision, String action, boolean isPre) throws SVNException {
@@ -238,10 +238,10 @@ public class FSHooks {
             });
             SVNErrorManager.error(err, ioe);
         }
-        runHook(hookFile, hookName, hookProc, propValue, isPre);
+        runHook(hookFile, hookName, hookProc, propValue);
     }
 
-    private static void runHook(File hook, String hookName, Process hookProcess, String stdInValue, boolean readErrorStream) throws SVNException {
+    private static void runHook(File hook, String hookName, Process hookProcess, String stdInValue) throws SVNException {
         if (hookProcess == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "Failed to start ''{0}'' hook", hook);
             SVNErrorManager.error(err);
