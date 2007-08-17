@@ -320,7 +320,7 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
         SVNErrorCode code = err.getErrorCode();
         for (int i = 0; i < warningCodes.length; i++) {
             if (code == warningCodes[i]) {
-                if (quiet) {
+                if (!quiet) {
                     err.setType(SVNErrorMessage.TYPE_WARNING);
                     err.setChildErrorMessage(null);
                     handleError(err);
