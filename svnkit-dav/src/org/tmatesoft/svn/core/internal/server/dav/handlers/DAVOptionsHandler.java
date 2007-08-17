@@ -141,9 +141,10 @@ public class DAVOptionsHandler extends ServletDAVHandler {
         StringBuffer body = new StringBuffer();
         generateOptionsResponse(resource, availableMethods, body);
 
+        setDefaultResponseHeaders();
         setResponseHeaders(availableMethods);
-        setResponseStatus(HttpServletResponse.SC_OK);
         setResponseContentType(DEFAULT_XML_CONTENT_TYPE);
+        setResponseStatus(HttpServletResponse.SC_OK);
 
         try {
             getResponseWriter().write(body.toString());

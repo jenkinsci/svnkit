@@ -12,6 +12,8 @@
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.io.IOException;
+import java.util.Date;
+import java.util.Enumeration;
 import java.util.Iterator;
 
 import javax.servlet.http.HttpServletRequest;
@@ -27,6 +29,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceType;
+import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.Version;
 import org.xml.sax.Attributes;
@@ -48,14 +51,18 @@ public class DAVGetHandler extends ServletDAVHandler {
     }
 
     public void execute() throws SVNException {
-        String label = getRequestHeader(LABEL_HEADER);
         DAVResource resource = createDAVResource(false);
 
         if (!resource.exists()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PATH_NOT_FOUND, "Path ''{0}'' you requested not found", resource.getResourceURI().getPath()));
         }
-
-        setDefaultResponseHeaders(resource);
+        try {
+            checkPreconditions(resource.getETag(), resource.getLastModified());
+        } catch (SVNException e) {
+            //Nothing to do, there are no enough conditions
+        }
+        setDefaultResponseHeaders();
+        setResponseHeaders(resource);
 
         if (resource.isCollection()) {
             StringBuffer body = new StringBuffer();
@@ -67,6 +74,52 @@ public class DAVGetHandler extends ServletDAVHandler {
             }
         } else {
             resource.writeTo(getResponseOutputStream());
+        }
+    }
+
+    protected void checkPreconditions(String eTag, Date lastModified) {
+        super.checkPreconditions(eTag, lastModified);
+        lastModified = lastModified == null ? new Date() : lastModified;
+        boolean isNotModified = false;
+        Enumeration ifNoneMatch = getRequestHeaders(IF_NONE_MATCH_HEADER);
+        if (ifNoneMatch != null && ifNoneMatch.hasMoreElements()) {
+            if (eTag != null) {
+                if (getRequestHeaders(RANGE_HEADER) != null && getRequestHeaders(RANGE_HEADER).hasMoreElements()) {
+                    isNotModified = !eTag.startsWith("W") && containsValue(ifNoneMatch, eTag, "*");
+                } else {
+                    isNotModified = containsValue(ifNoneMatch, eTag, "*");
+                }
+            }
+        }
+        long ifModified = getRequestDateHeader(IF_MODIFIED_SINCE_HEADER);
+        long date = getRequestDateHeader(DATE_HEADER);
+        if ((isNotModified || ifNoneMatch == null || !ifNoneMatch.hasMoreElements()) && ifModified != -1 && date != -1) {
+            isNotModified = ifModified >= lastModified.getTime() && ifModified <= date;
+        }
+        if (isNotModified) {
+            // status HTTP_NOT_MODIFIED
+        } else {
+            //status OK
+        }
+    }
+
+    private void setResponseHeaders(DAVResource resource) {
+        try {
+            setResponseContentType(resource.getContentType());
+        } catch (SVNException e) {
+            //nothing to do we just skip this header
+        }
+        setResponseHeader(ACCEPT_RANGES_HEADER, ACCEPT_RANGES_VALUE);
+        try {
+            Date lastModifiedTime = resource.getLastModified();
+            if (lastModifiedTime != null) {
+                setResponseHeader(LAST_MODIFIED_HEADER, SVNTimeUtil.formatRFC1123Date(lastModifiedTime));
+            }
+        } catch (SVNException e) {
+            //nothing to do we just skip this header
+        }
+        if (resource.getETag() != null) {
+            setResponseHeader(ETAG_HEADER, resource.getETag());
         }
     }
 

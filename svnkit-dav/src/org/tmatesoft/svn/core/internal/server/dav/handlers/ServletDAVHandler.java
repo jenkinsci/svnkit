@@ -18,6 +18,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,7 +37,6 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVDepth;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -65,14 +65,25 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     protected static final String SVN_BASE_FULLTEXT_MD5_HEADER = "X-SVN-Base-Fulltext-MD5";
     protected static final String SVN_RESULT_FULLTEXT_MD5_HEADER = "X-SVN-Result-Fulltext-MD5";
 
-    private static final String DEPTH_HEADER = "Depth";
-    private static final String VARY_HEADER = "Vary";
+    //Precondition handling headers
+    protected static final String IF_MATCH_HEADER = "If-Match";
+    protected static final String IF_UNMODIFIED_SINCE_HEADER = "If-Unmodified-Since";
+    protected static final String IF_NONE_MATCH_HEADER = "If-None-Match";
+    protected static final String IF_MODIFIED_SINCE_HEADER = "If-Modified-Since";
+    protected static final String RANGE_HEADER = "Range";
+
+    protected static final String DEPTH_HEADER = "Depth";
+    protected static final String VARY_HEADER = "Vary";
     protected static final String LAST_MODIFIED_HEADER = "Last-Modified";
     protected static final String LABEL_HEADER = "Label";
     protected static final String USER_AGENT_HEADER = "User-Agent";
     protected static final String ETAG_HEADER = "ETag";
+    protected static final String CONNECTION_HEADER = "Connection";
+    protected static final String DATE_HEADER = "Date";
+    protected static final String KEEP_ALIVE_HEADER = "Keep-Alive";
     protected static final String ACCEPT_RANGES_HEADER = "Accept-Ranges";
 
+    protected static final String DEFAULT_KEEP_ALIVE_VALUE = "timeout=15, max=99";
     protected static final String ACCEPT_RANGES_VALUE = "bytes";
 
     public static final Map PREFIX_MAP = new HashMap();
@@ -127,6 +138,14 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return myRequest.getHeader(name);
     }
 
+    protected Enumeration getRequestHeaders(String name) {
+        return myRequest.getHeaders(name);
+    }
+
+    protected long getRequestDateHeader(String name) {
+        return myRequest.getDateHeader(name);
+    }
+
     protected InputStream getRequestInputStream() throws SVNException {
         try {
             return myRequest.getInputStream();
@@ -168,6 +187,43 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
         }
         return null;
+    }
+
+    protected void checkPreconditions(String eTag, Date lastModified) {
+        lastModified = lastModified == null ? new Date() : lastModified;
+        long lastModifiedTime = lastModified.getTime();
+        Enumeration ifMatch = getRequestHeaders(IF_MATCH_HEADER);
+        if (ifMatch != null && ifMatch.hasMoreElements()) {
+            String first = (String) ifMatch.nextElement();
+            if (!"*".equals(first) && (eTag == null || "W".startsWith(eTag) || !first.equals(eTag))) {
+                if ("W".startsWith(eTag) || !containsValue(ifMatch, eTag, null)) {
+                    //Precondition failed!
+                }
+            }
+        } else {
+            long ifUnmodified = getRequestDateHeader(IF_UNMODIFIED_SINCE_HEADER);
+            if (ifUnmodified != -1 && lastModifiedTime > ifUnmodified) {
+                //Precondition failed!
+            }
+        }
+        Enumeration ifNoneMatch = getRequestHeaders(IF_NONE_MATCH_HEADER);
+        if (ifNoneMatch != null && containsValue(ifNoneMatch, eTag, "*")) {
+            //Precondition failed!
+        }
+    }
+
+    protected boolean containsValue(Enumeration values, String stringToFind, String matchAllString) {
+        boolean contains = false;
+        if (values != null) {
+            while (values.hasMoreElements()) {
+                String currentCondition = (String) values.nextElement();
+                contains = currentCondition.equals(stringToFind) || currentCondition.equals(matchAllString);
+                if (contains) {
+                    break;
+                }
+            }
+        }
+        return contains;
     }
 
     protected DAVRepositoryManager getRepositoryManager() {
@@ -221,24 +277,9 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return result;
     }
 
-    protected void setDefaultResponseHeaders(DAVResource resource) {
-        try {
-            myResponse.setContentType(resource.getContentType());
-        } catch (SVNException e) {
-            //nothing to do we just skip this header    
-        }
-        setResponseHeader(ACCEPT_RANGES_HEADER, ACCEPT_RANGES_VALUE);
-        try {
-            Date lastModifiedTime = resource.getLastModified();
-            if (lastModifiedTime != null) {
-                setResponseHeader(LAST_MODIFIED_HEADER, SVNTimeUtil.formatRFC1123Date(lastModifiedTime));
-            }
-        } catch (SVNException e) {
-            //nothing to do we just skip this header
-        }
-        if (resource.getETag() != null) {
-            setResponseHeader(ETAG_HEADER, resource.getETag());
-        }
+    protected void setDefaultResponseHeaders() {
+        setResponseHeader(KEEP_ALIVE_HEADER, DEFAULT_KEEP_ALIVE_VALUE);
+        setResponseHeader(CONNECTION_HEADER, KEEP_ALIVE_HEADER);
         if (getRequestHeader(LABEL_HEADER) != null && getRequestHeader(LABEL_HEADER).length() > 0) {
             setResponseHeader(VARY_HEADER, LABEL_HEADER);
         }
@@ -263,7 +304,6 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             }
         }
     }
-
 
     private synchronized static SAXParserFactory getSAXParserFactory() {
         if (ourSAXParserFactory == null) {
@@ -291,6 +331,4 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         }
         return ourSAXParserFactory;
     }
-
-
 }

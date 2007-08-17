@@ -108,7 +108,8 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         DAVDepth depth = getRequestDepth(DAVDepth.DEPTH_INFINITY);
         generatePropertiesResponse(body, resource, depth);
 
-//        setDefaultResponseHeaders(resource);
+        setDefaultResponseHeaders();
+        setResponseContentType(DEFAULT_XML_CONTENT_TYPE);
         setResponseStatus(SC_MULTISTATUS);
 
         try {

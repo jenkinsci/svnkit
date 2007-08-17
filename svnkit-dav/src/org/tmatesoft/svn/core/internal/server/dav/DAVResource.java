@@ -171,10 +171,12 @@ public class DAVResource {
                 getRepository().getFile(getResourceURI().getPath(), getRevision(), getSVNProperties(), null);
             }
         } else if (getResourceURI().getType() == DAVResourceType.VERSION) {
-            setRevision(latestRevision);
+            if (getRevision() == INVALID_REVISION) {
+                setRevision(latestRevision);
+            }
             setExists(true);
             // URI doesn't contain any information about context of requested uri
-            getResourceURI().setURI(DAVPathUtil.buildURI(null, DAVResourceKind.BASELINE, getRevision(), ""));
+            getResourceURI().setURI(DAVPathUtil.buildURI(null, DAVResourceKind.BASELINE, getRevision(), null));
         } else if (getResourceURI().getType() == DAVResourceType.WORKING) {
             //TODO: Define filename for ACTIVITY_ID under the repository
             if (getResourceURI().isBaseLined()) {
