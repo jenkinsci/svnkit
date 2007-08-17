@@ -235,27 +235,13 @@ public class SVNCommandUtil {
     
     }
 
-    public static String getGenericHelp(String programName) {
-        String header = 
-            "usage: {0} <subcommand> [options] [args]\n" +
-            "Subversion command-line client, version {1}.\n" +
-            "Type ''{0} help <subcommand>'' for help on a specific subcommand.\n" +
-            "Type ''{0} --version'' to see the program version and RA modules\n" +
-            "  or ''{0} --version --quiet'' to see just the version number.\n" +
-            "\n" +
-            "Most subcommands take file and/or directory arguments, recursing\n" +
-            "on the directories.  If no arguments are supplied to such a\n" +
-            "command, it recurses on the current directory (inclusive) by default.\n" +
-            "\n" +
-            "Available subcommands:\n";
-        String footer = 
-            "SVNKit is a pure Java (TM) version of Subversion - a tool for version control.\n" +
-            "For additional information, see http://svnkit.com/\n";
-        String version = Version.getMajorVersion() + "." + Version.getMinorVersion() + "." + Version.getMicroVersion();
-        header = MessageFormat.format(header, new Object[] {programName, version});
-    
+    public static String getGenericHelp(String programName, String header, String footer) {
         StringBuffer help = new StringBuffer();
-        help.append(header);
+        if (header != null) {
+            String version = Version.getMajorVersion() + "." + Version.getMinorVersion() + "." + Version.getMicroVersion();
+            header = MessageFormat.format(header, new Object[] {programName, version});
+            help.append(header);
+        }
         for (Iterator commands = AbstractSVNCommand.availableCommands(); commands.hasNext();) {
             AbstractSVNCommand command = (AbstractSVNCommand) commands.next();
             help.append("\n   ");
@@ -271,8 +257,10 @@ public class SVNCommandUtil {
                 help.append(")");
             }
         }
-        help.append("\n\n");
-        help.append(footer);
+        if (footer != null) { 
+            help.append("\n\n");
+            help.append(footer);
+        }
         return help.toString();
     }
 }

@@ -101,6 +101,7 @@ public abstract class AbstractSVNCommand {
         try {
             bundle = ResourceBundle.getBundle(getResourceBundleName());
         } catch (MissingResourceException missing) {
+            missing.printStackTrace();
             bundle = null;
         }
         if (bundle != null) {

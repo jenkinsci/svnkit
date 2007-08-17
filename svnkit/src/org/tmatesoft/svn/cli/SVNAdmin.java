@@ -61,6 +61,7 @@ public class SVNAdmin {
     }
 
     public static void main(String[] args) {
+        org.tmatesoft.svn.cli2.svnadmin.SVNAdmin.main(args);
         if (args == null || args.length < 1) {
             System.err.println("general usage: jsvnadmin SUBCOMMAND REPOS_PATH  [ARGS & OPTIONS ...]");
             System.exit(0);

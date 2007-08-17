@@ -33,8 +33,7 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  */
 public class SVN {
     private static Set ourArguments;
-    private static Set newCommands;
-
+    
     static {
         ourArguments = new HashSet();
         ourArguments.add(SVNArgument.PASSWORD);
@@ -90,73 +89,10 @@ public class SVN {
         ourArguments.add(SVNArgument.USE_MERGE_INFO);
         ourArguments.add(SVNArgument.IGNORE_EXTERNALS);
         ourArguments.add(SVNArgument.RECORD_ONLY);
-
-        newCommands = new HashSet();
-        newCommands.add("status");
-        newCommands.add("stat");
-        newCommands.add("st");
-        newCommands.add("propedit");
-        newCommands.add("pedit");
-        newCommands.add("pe");
-        newCommands.add("propset");
-        newCommands.add("pset");
-        newCommands.add("ps");
-        newCommands.add("propdel");
-        newCommands.add("pdel");
-        newCommands.add("pd");
-        newCommands.add("proplist");
-        newCommands.add("plist");
-        newCommands.add("pl");
-        newCommands.add("propgrt");
-        newCommands.add("pget");
-        newCommands.add("pg");
-        newCommands.add("merge");
-        newCommands.add("update");
-        newCommands.add("up");
-        newCommands.add("checkout");
-        newCommands.add("co");
-        newCommands.add("export");
-        newCommands.add("switch");
-        newCommands.add("sw");
-        newCommands.add("help");
-        newCommands.add("h");
-        newCommands.add("?");
-        newCommands.add("import");
-        newCommands.add("commit");
-        newCommands.add("ci");
-        newCommands.add("mkdir");
-        newCommands.add("add");
-        newCommands.add("delete");
-        newCommands.add("del");
-        newCommands.add("remove");
-        newCommands.add("rm");
-        newCommands.add("revert");
-        newCommands.add("lock");
-        newCommands.add("unlock");
-        newCommands.add("resolved");
-        newCommands.add("cleanup");
-        newCommands.add("move");
-        newCommands.add("mv");
-        newCommands.add("rename");
-        newCommands.add("ren");
-        newCommands.add("copy");
-        newCommands.add("cp");
-        newCommands.add("changelist");
-        newCommands.add("cl");
-        newCommands.add("cat");
-        newCommands.add("blame");
-        newCommands.add("praise");
-        newCommands.add("annotate");
-        newCommands.add("ann");
-        newCommands.add("diff");
-        newCommands.add("di");
-        newCommands.add("log");
-        newCommands.add("list");
-        newCommands.add("ls");
-        newCommands.add("info");
     }
 
     public static void main(String[] args) {
+        org.tmatesoft.svn.cli2.svn.SVN.main(args);
         if (args == null || args.length < 1) {
             System.err.println("usage: jsvn commandName commandArguments");
             System.exit(1);
@@ -177,10 +113,6 @@ public class SVN {
                 System.exit(1);
             }
             String commandName = commandLine.getCommandName();
-            if (newCommands.contains(commandName.toLowerCase().trim())) {
-                org.tmatesoft.svn.cli2.svn.SVN.main(args);
-                return;
-            }
             SVNCommand command = SVNCommand.getCommand(commandName);
 
 

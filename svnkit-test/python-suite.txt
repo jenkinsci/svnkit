@@ -20,7 +20,7 @@ revert ALL
 schedule ALL
 special ALL
 stat ALL
-svnadmin ALL -7 -8
+svnadmin ALL -8 -9
 svnlook ALL
 svnsync ALL
 svnversion ALL

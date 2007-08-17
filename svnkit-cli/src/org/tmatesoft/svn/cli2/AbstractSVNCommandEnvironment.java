@@ -257,7 +257,7 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
         return result;
     }
     
-    protected byte[] readFromFile(File file) throws SVNException {
+    public byte[] readFromFile(File file) throws SVNException {
         InputStream is = null;
         ByteArrayOutputStream bos = null;
         try {

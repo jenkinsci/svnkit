@@ -67,6 +67,7 @@ public abstract class AbstractSVNLauncher {
             }
             success();
         } catch (Throwable th) {
+            th.printStackTrace();
             failure();
         } finally {
             setCompleted();
