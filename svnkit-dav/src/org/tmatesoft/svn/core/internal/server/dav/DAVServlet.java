@@ -32,8 +32,6 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
  * @version 1.1.2
  */
 public class DAVServlet extends HttpServlet {
-    private static final int SC_NOT_FOUND = 404;
-    private static final int SC_SERVER_INTERNAL_ERROR = 500;
 
     private static final String NOT_FOUND_STATUS_LINE = "404 Not Found";
     private static final String SERVER_INTERNAL_ERROR_LINE = "500 Internal Server Error";
@@ -54,16 +52,16 @@ public class DAVServlet extends HttpServlet {
                 if (errorCode == SVNErrorCode.RA_DAV_MALFORMED_DATA || errorCode == SVNErrorCode.FS_NOT_DIRECTORY
                         || errorCode == SVNErrorCode.FS_NOT_FOUND) {
                     errorBody = generateErrorBody(NOT_FOUND_STATUS_LINE, e.getMessage());
-                    response.setStatus(SC_NOT_FOUND);
+                    response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                     response.setContentType(HTML_CONTENT_TYPE);
                 } else {
                     errorBody = generateStandardizedErrorBody(errorCode.getCode(), null, null, e.getErrorMessage().getFullMessage());
-                    response.setStatus(SC_SERVER_INTERNAL_ERROR);
+                    response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                     response.setContentType(XML_CONTENT_TYPE);
                 }
             } else {
                 errorBody = generateErrorBody(SERVER_INTERNAL_ERROR_LINE, th.getMessage());
-                response.setStatus(SC_SERVER_INTERNAL_ERROR);
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 response.setContentType(HTML_CONTENT_TYPE);
             }
             response.getWriter().print(errorBody);

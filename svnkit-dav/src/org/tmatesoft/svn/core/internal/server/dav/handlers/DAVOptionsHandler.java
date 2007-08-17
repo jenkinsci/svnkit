@@ -29,8 +29,8 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
-import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceType;
+import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.xml.sax.Attributes;
 
@@ -134,7 +134,7 @@ public class DAVOptionsHandler extends ServletDAVHandler {
     }
 
     public void execute() throws SVNException {
-        DAVResource resource = getRepositoryManager().createDAVResource(getRequestContext(), getURI(), null, false);
+        DAVResource resource = createDAVResource(false);
         Collection availableMethods = getSupportedMethods(resource);
         readInput(getRequestInputStream());
 
@@ -142,7 +142,7 @@ public class DAVOptionsHandler extends ServletDAVHandler {
         generateOptionsResponse(resource, availableMethods, body);
 
         setResponseHeaders(availableMethods);
-        setResponseStatus(SC_OK);
+        setResponseStatus(HttpServletResponse.SC_OK);
         setResponseContentType(DEFAULT_XML_CONTENT_TYPE);
 
         try {

@@ -50,6 +50,10 @@ public class DAVResource {
     private boolean myIsExists = false;
     private boolean myIsCollection;
     private boolean myIsSVNClient;
+    private long myVersion;
+    private String myClientOptions;
+    private String myBaseChecksum;
+    private String myResultChecksum;
 
     private Map mySVNProperties;
     private Collection myEntries;
@@ -69,6 +73,24 @@ public class DAVResource {
         myResourceURI = new DAVResourceURI(context, uri, label, useCheckedIn);
         myRevision = myResourceURI.getRevision();
         myIsExists = myResourceURI.exists();
+        prepare();
+    }
+
+    public DAVResource(SVNRepository repository, DAVResourceURI resourceURI, boolean isSVNClient, String versionName, String clientOptions,
+                       String baseChecksum, String resultChecksum) throws SVNException {
+        myRepository = repository;
+        myResourceURI = resourceURI;
+        myIsSVNClient = isSVNClient;
+        try {
+            myVersion = Long.parseLong(versionName);
+        } catch (NumberFormatException e) {
+            myVersion = INVALID_REVISION;
+        }
+        myClientOptions = clientOptions;
+        myBaseChecksum = baseChecksum;
+        myResultChecksum = resultChecksum;
+        myRevision = resourceURI.getRevision();
+        myIsExists = resourceURI.exists();
         prepare();
     }
 
@@ -112,8 +134,21 @@ public class DAVResource {
         return myIsSVNClient;
     }
 
-    public void setSVNClient(boolean isSVNClient) {
-        myIsSVNClient = isSVNClient;
+    public long getVersion() {
+        return myVersion;
+    }
+
+    public String getClientOptions() {
+        return myClientOptions;
+    }
+
+    public String getBaseChecksum() {
+        return myBaseChecksum;
+    }
+
+
+    public String getResultChecksum() {
+        return myResultChecksum;
     }
 
     private Map getSVNProperties() {

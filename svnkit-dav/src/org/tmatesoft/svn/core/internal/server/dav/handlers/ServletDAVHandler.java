@@ -50,7 +50,6 @@ import org.xml.sax.XMLReader;
  */
 public abstract class ServletDAVHandler extends BasicDAVHandler {
 
-    protected static final int SC_OK = 200;
     protected static final int SC_MULTISTATUS = 207;
 
     protected static final String HTTP_STATUS_OK_LINE = "HTTP/1.1 200 OK";
@@ -58,11 +57,19 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
 
     protected static final String DEFAULT_XML_CONTENT_TYPE = "text/xml; charset=utf-8";
 
-    protected static final String LAST_MODIFIED_HEADER = "Last-Modified";
-    protected static final String LABEL_HEADER = "Label";
+    protected static final String SVN_OPTIONS_HEADER = "X-SVN-Options";
+    protected static final String SVN_DELTA_BASE_HEADER = "X-SVN-VR-Base";
+    protected static final String SVN_VERSION_NAME_HEADER = "X-SVN-Version-Name";
+    protected static final String SVN_CREATIONDATE_HEADER = "X-SVN-Creation-Date";
+    protected static final String SVN_LOCK_OWNER_HEADER = "X-SVN-Lock-Owner";
+    protected static final String SVN_BASE_FULLTEXT_MD5_HEADER = "X-SVN-Base-Fulltext-MD5";
+    protected static final String SVN_RESULT_FULLTEXT_MD5_HEADER = "X-SVN-Result-Fulltext-MD5";
+
     private static final String DEPTH_HEADER = "Depth";
     private static final String VARY_HEADER = "Vary";
-    private static final String USER_AGENT_HEADER = "User-Agent";
+    protected static final String LAST_MODIFIED_HEADER = "Last-Modified";
+    protected static final String LABEL_HEADER = "Label";
+    protected static final String USER_AGENT_HEADER = "User-Agent";
     protected static final String ETAG_HEADER = "ETag";
     protected static final String ACCEPT_RANGES_HEADER = "Accept-Ranges";
 
@@ -167,6 +174,17 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return myRepositoryManager;
     }
 
+    protected DAVResource createDAVResource(boolean useCheckedIn) throws SVNException {
+        String label = getRequestHeader(LABEL_HEADER);
+        String versionName = getRequestHeader(SVN_VERSION_NAME_HEADER);
+        String clientOptions = getRequestHeader(SVN_OPTIONS_HEADER);
+        String baseChecksum = getRequestHeader(SVN_BASE_FULLTEXT_MD5_HEADER);
+        String resultChecksum = getRequestHeader(SVN_RESULT_FULLTEXT_MD5_HEADER);
+        String userAgent = getRequestHeader(USER_AGENT_HEADER);
+        boolean isSVNClient = userAgent != null && (userAgent.startsWith("SVN/") || userAgent.startsWith("SVNKit"));
+        return getRepositoryManager().createDAVResource(getRequestContext(), getURI(), isSVNClient, versionName, clientOptions, baseChecksum, resultChecksum, label, useCheckedIn);
+    }
+
     protected Collection getSupportedLiveProperties(DAVResource resource) {
         Collection liveProperties = new ArrayList();
         liveProperties.add(DAVElement.AUTO_VERSION);
@@ -201,12 +219,6 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Invalid depth ''{0}''", depth));
         }
         return result;
-    }
-
-    protected void gatherRequestHeadersInformation(DAVResource resource) {
-        String userAgent = getRequestHeader(USER_AGENT_HEADER);
-        boolean isSVNClient = userAgent != null && userAgent.startsWith("SVN/");
-        resource.setSVNClient(isSVNClient);
     }
 
     protected void setDefaultResponseHeaders(DAVResource resource) {

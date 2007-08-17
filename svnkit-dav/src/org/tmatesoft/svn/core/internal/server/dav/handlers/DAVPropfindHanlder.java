@@ -33,8 +33,8 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
-import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceType;
+import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.xml.sax.Attributes;
@@ -100,9 +100,7 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
     }
 
     public void execute() throws SVNException {
-        String label = getRequestHeader(LABEL_HEADER);
-        DAVResource resource = getRepositoryManager().createDAVResource(getRequestContext(), getURI(), label, false);
-        gatherRequestHeadersInformation(resource);
+        DAVResource resource = createDAVResource(false);
 
         readInput(getRequestInputStream());
 

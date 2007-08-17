@@ -49,13 +49,12 @@ public class DAVGetHandler extends ServletDAVHandler {
 
     public void execute() throws SVNException {
         String label = getRequestHeader(LABEL_HEADER);
-        DAVResource resource = getRepositoryManager().createDAVResource(getRequestContext(), getURI(), label, false);
+        DAVResource resource = createDAVResource(false);
 
         if (!resource.exists()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PATH_NOT_FOUND, "Path ''{0}'' you requested not found", resource.getResourceURI().getPath()));
         }
 
-        gatherRequestHeadersInformation(resource);
         setDefaultResponseHeaders(resource);
 
         if (resource.isCollection()) {
