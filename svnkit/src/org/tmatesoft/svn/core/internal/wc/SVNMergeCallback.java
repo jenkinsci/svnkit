@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
+import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
@@ -46,13 +47,16 @@ public class SVNMergeCallback extends AbstractDiffCallback {
     private String myAddedPath = null;
     private boolean myIsForce;
     private SVNDiffOptions myDiffOptions;
+    private ISVNConflictHandler myConflictHandler;
     
-    public SVNMergeCallback(SVNAdminArea adminArea, SVNURL url, boolean force, boolean dryRun, SVNDiffOptions options) {
+    public SVNMergeCallback(SVNAdminArea adminArea, SVNURL url, boolean force, boolean dryRun, 
+                            SVNDiffOptions options, ISVNConflictHandler conflictHandler) {
         super(adminArea);
         myURL = url;
         myIsDryRun = dryRun;
         myIsForce = force;
         myDiffOptions = options;
+        myConflictHandler = conflictHandler;
     }
 
     public File createTempDirectory() throws SVNException {
@@ -246,7 +250,8 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                 String latestLabel = ".merge-right.r" + revision2;
                 SVNStatusType mergeResult = dir.mergeText(name, file1, file2, localLabel, 
                                                           baseLabel, latestLabel, diff, false, 
-                                                          myIsDryRun, myDiffOptions, null);
+                                                          myIsDryRun, myDiffOptions, 
+                                                          null, myConflictHandler);
                 dir.runLogs();
                 if (mergeResult == SVNStatusType.CONFLICTED || mergeResult == SVNStatusType.CONFLICTED_UNRESOLVED) {
                     result[0] = mergeResult;

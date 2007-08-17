@@ -93,6 +93,7 @@ public class SVNDiffClient extends SVNBasicClient {
 
     private ISVNDiffGenerator myDiffGenerator;
     private SVNDiffOptions myDiffOptions;
+    private ISVNConflictHandler myConflictHandler;
 
     /**
      * Constructs and initializes an <b>SVNDiffClient</b> object
@@ -179,7 +180,14 @@ public class SVNDiffClient extends SVNBasicClient {
         return myDiffOptions;
     }
 
+    public ISVNConflictHandler getConflictHandler() {
+        return myConflictHandler;
+    }
     
+    public void setConflictHandler(ISVNConflictHandler conflictHandler) {
+        myConflictHandler = conflictHandler;
+    }
+
     /**
      * Generates the differences for the specified URL taken from the two 
      * specified revisions and writes the result to the provided output
@@ -1633,7 +1641,7 @@ public class SVNDiffClient extends SVNBasicClient {
             }
             
             Merger merger = createMerger(srcURL, srcURL, targetEntry, dstPath, wcAccess, dryRun, 
-                                         force, recordOnly);
+                                         force, recordOnly, getConflictHandler());
             SVNRepository repository = createRepository(srcURL, true);
             SVNRevision[] revs = getAssumedDefaultRevisionRange(revision1, revision2, repository);
 
@@ -1678,8 +1686,6 @@ public class SVNDiffClient extends SVNBasicClient {
         dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath()));
         try {
             dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath()));
-//            SVNAdminAreaInfo info = wcAccess.openAnchor(dstPath, !dryRun, 
-//                                                        SVNDepth.recurseFromDepth(depth) ? SVNWCAccess.INFINITE_DEPTH : 0);
             SVNAdminArea adminArea = wcAccess.probeOpen(dstPath, !dryRun, 
                                                         SVNDepth.recurseFromDepth(depth) ? 
                                                         SVNWCAccess.INFINITE_DEPTH : 0);
@@ -1690,7 +1696,7 @@ public class SVNDiffClient extends SVNBasicClient {
             }
             
             Merger merger = createMerger(url1, url2, targetEntry, dstPath, wcAccess, dryRun, force,  
-                                         recordOnly);
+                                         recordOnly, getConflictHandler());
             if (targetEntry.isFile()) {
                 merger.doMergeFile(url1, revision1, url2, revision2, dstPath, adminArea, 
                                    !useAncestry);
@@ -1747,7 +1753,7 @@ public class SVNDiffClient extends SVNBasicClient {
     
     private Merger createMerger(SVNURL url1, SVNURL url2, SVNEntry entry, File target, 
                                 SVNWCAccess access, boolean dryRun, boolean force, 
-                                boolean recordOnly) throws SVNException {
+                                boolean recordOnly, ISVNConflictHandler conflictHandler) throws SVNException {
         Merger merger = new Merger();
         merger.myURL = url2;
         merger.myTarget = target;
@@ -1756,6 +1762,7 @@ public class SVNDiffClient extends SVNBasicClient {
         merger.myIsRecordOnly = recordOnly;
         merger.myOperativeNotificationsNumber = 0;
         merger.myWCAccess = access;
+        merger.myConflictHandler = conflictHandler; 
         
         if (dryRun) {
             merger.myIsSameRepository = false;
@@ -1825,6 +1832,7 @@ public class SVNDiffClient extends SVNBasicClient {
         File myTarget;
         LinkedList mySkippedPaths;
         SVNWCAccess myWCAccess;
+        ISVNConflictHandler myConflictHandler;
         
         public void doMergeFile(SVNURL url1, SVNRevision revision1, SVNURL url2, 
                                 SVNRevision revision2, File dstPath, 
@@ -1920,7 +1928,8 @@ public class SVNDiffClient extends SVNBasicClient {
     
                 SVNMergeRange[] remainingRanges = remainingRangeList.getRanges();
                 SVNMergeCallback callback = new SVNMergeCallback(adminArea, myURL, myIsForce, 
-                                                                 myIsDryRun, getMergeOptions());
+                                                                 myIsDryRun, getMergeOptions(),
+                                                                 myConflictHandler);
     
                 for (int i = 0; i < remainingRanges.length; i++) {
                     SVNMergeRange nextRange = remainingRanges[i];
@@ -2093,7 +2102,7 @@ public class SVNDiffClient extends SVNBasicClient {
 
             SVNMergeRange[] remainingRanges = remainingRangeList.getRanges();
             SVNMergeCallback callback = new SVNMergeCallback(adminArea, myURL, myIsForce, myIsDryRun, 
-                                                             getMergeOptions());
+                                                             getMergeOptions(), myConflictHandler);
 
             SVNRemoteDiffEditor editor = null; 
             final String targetPath = dstPath.getAbsolutePath().replace(File.separatorChar, '/');

@@ -38,6 +38,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -68,12 +69,16 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
     private SVNDeltaProcessor myDeltaProcessor;
     private SVNDepth myDepth;
     private String[] myExtensionPatterns;
+    private ISVNConflictHandler myConflictHandler;
     
     public SVNUpdateEditor(SVNAdminAreaInfo info, String switchURL, boolean recursive, boolean leaveConflicts, boolean allowUnversionedObstructions) throws SVNException {
-        this(info, switchURL, leaveConflicts, allowUnversionedObstructions, SVNDepth.fromRecurse(recursive), null);
+        this(info, switchURL, leaveConflicts, allowUnversionedObstructions, 
+             SVNDepth.fromRecurse(recursive), null, null);
     }
 
-    public SVNUpdateEditor(SVNAdminAreaInfo info, String switchURL, boolean leaveConflicts, boolean allowUnversionedObstructions, SVNDepth depth, String[] preservedExtensions) throws SVNException {
+    public SVNUpdateEditor(SVNAdminAreaInfo info, String switchURL, boolean leaveConflicts, 
+                           boolean allowUnversionedObstructions, SVNDepth depth, 
+                           String[] preservedExtensions, ISVNConflictHandler conflictHandler) throws SVNException {
         myAdminInfo = info;
         myWCAccess = info.getWCAccess();
         myIsUnversionedObstructionsAllowed = allowUnversionedObstructions;
@@ -84,7 +89,8 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         myDepth = depth;
         myDeltaProcessor = new SVNDeltaProcessor();
         myExtensionPatterns = preservedExtensions;
-
+        myConflictHandler = conflictHandler;
+        
         SVNEntry entry = info.getAnchor().getEntry(info.getAnchor().getThisDirName(), false);
         myTargetURL = entry != null ? entry.getURL() : null;
         myRootURL = entry != null ? entry.getRepositoryRoot() : null;
@@ -696,7 +702,11 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                     String rightLabel = ".r" + myTargetRevision + (pathExt != null ? "." + pathExt : "");
                     String mineLabel = ".mine" + (pathExt != null ? "." + pathExt : "");
                     // do test merge.
-                    mergeOutcome = adminArea.mergeText(name, mergeLeftFile, adminArea.getFile(tmpBasePath), mineLabel, leftLabel, rightLabel, modifiedProps, myIsLeaveConflicts, false, null, log);
+                    mergeOutcome = adminArea.mergeText(name, mergeLeftFile, 
+                                                       adminArea.getFile(tmpBasePath), 
+                                                       mineLabel, leftLabel, rightLabel, 
+                                                       modifiedProps, myIsLeaveConflicts, 
+                                                       false, null, log, myConflictHandler);
                     if (mergeOutcome == SVNStatusType.UNCHANGED) {
                         textStatus = SVNStatusType.MERGED;
                     }
