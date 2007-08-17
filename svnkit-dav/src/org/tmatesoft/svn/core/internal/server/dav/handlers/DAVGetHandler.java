@@ -26,6 +26,7 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
+import org.tmatesoft.svn.core.internal.server.dav.DAVResourceType;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.Version;
 import org.xml.sax.Attributes;
@@ -51,7 +52,7 @@ public class DAVGetHandler extends ServletDAVHandler {
         DAVResource resource = getRepositoryManager().createDAVResource(getRequestContext(), getURI(), label, false);
 
         if (!resource.exists()) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PATH_NOT_FOUND, "Path ''{0}'' you requested not found", resource.getPath()));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PATH_NOT_FOUND, "Path ''{0}'' you requested not found", resource.getResourceURI().getPath()));
         }
 
         gatherRequestHeadersInformation(resource);
@@ -71,12 +72,12 @@ public class DAVGetHandler extends ServletDAVHandler {
     }
 
     private void generateResponseBody(DAVResource resource, StringBuffer buffer) throws SVNException {
-        if (resource.getType() != DAVResource.DAV_RESOURCE_TYPE_REGULAR && resource.getType() != DAVResource.DAV_RESOURCE_TYPE_VERSION
-                && resource.getType() != DAVResource.DAV_RESOURCE_TYPE_WORKING) {
+        if (resource.getResourceURI().getType() != DAVResourceType.REGULAR && resource.getResourceURI().getType() != DAVResourceType.VERSION
+                && resource.getResourceURI().getType() != DAVResourceType.WORKING) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Cannot GET this type of resource."));
         }
-        startBody(resource.getPath(), resource.getRevision(), buffer);
-        addUpperDirectoryLink(resource.getContext(), resource.getPath(), buffer);
+        startBody(resource.getResourceURI().getPath(), resource.getRevision(), buffer);
+        addUpperDirectoryLink(resource.getResourceURI().getContext(), resource.getResourceURI().getPath(), buffer);
         addDirectoryEntries(resource, buffer);
         finishBody(buffer);
     }
@@ -110,8 +111,8 @@ public class DAVGetHandler extends ServletDAVHandler {
             SVNDirEntry entry = (SVNDirEntry) iterator.next();
             boolean isDir = entry.getKind() == SVNNodeKind.DIR;
             buffer.append("<li><a href=\"");
-            buffer.append(resource.getContext());
-            buffer.append("/".equals(resource.getPath()) ? "" : resource.getPath());
+            buffer.append(resource.getResourceURI().getContext());
+            buffer.append("/".equals(resource.getResourceURI().getPath()) ? "" : resource.getResourceURI().getPath());
             buffer.append(DAVPathUtil.standardize(entry.getName()));
             buffer.append(isDir ? "/" : "");
             buffer.append("\">");

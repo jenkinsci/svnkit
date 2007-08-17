@@ -30,6 +30,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
+import org.tmatesoft.svn.core.internal.server.dav.DAVResourceType;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.xml.sax.Attributes;
 
@@ -173,9 +174,9 @@ public class DAVOptionsHandler extends ServletDAVHandler {
             }
         }
         //TODO: native svn checks if resource is auto checked out.
-        if (resource.getType() == DAVResource.DAV_RESOURCE_TYPE_ACTIVITY && !resource.exists()) {
+        if (resource.getResourceURI().getType() == DAVResourceType.ACTIVITY && !resource.exists()) {
             supportedMethods.add(DAVHandlerFactory.METHOD_MKACTIVITY);
-        } else if (resource.isWorking()) {
+        } else if (resource.getResourceURI().isWorking()) {
             supportedMethods.add(DAVHandlerFactory.METHOD_CHECKIN);
         } else {
             supportedMethods.add(DAVHandlerFactory.METHOD_CHECKOUT);
@@ -223,7 +224,7 @@ public class DAVOptionsHandler extends ServletDAVHandler {
 
     private void generateActivityCollectionSet(DAVResource resource, StringBuffer xmlBuffer) {
         DAVXMLUtil.openXMLTag(DAV_NAMESPACE_PREFIX, ACTIVITY_COLLECTION_SET.getName(), DAVXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
-        String uri = DAVPathUtil.buildURI(resource.getContext(), DAVResourceKind.ACT_COLLECTION, 0, null);
+        String uri = DAVPathUtil.buildURI(resource.getResourceURI().getContext(), DAVResourceKind.ACT_COLLECTION, 0, null);
         DAVXMLUtil.openCDataTag(DAV_NAMESPACE_PREFIX, "href", uri, xmlBuffer);
         DAVXMLUtil.closeXMLTag(DAV_NAMESPACE_PREFIX, ACTIVITY_COLLECTION_SET.getName(), xmlBuffer);
     }
@@ -243,7 +244,7 @@ public class DAVOptionsHandler extends ServletDAVHandler {
 
     private void generateSupportedReportSet(DAVResource resource, StringBuffer xmlBuffer) {
         DAVXMLUtil.openXMLTag(DAV_NAMESPACE_PREFIX, "supported-report-set", DAVXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
-        if (resource.getType() == DAVResource.DAV_RESOURCE_TYPE_REGULAR) {
+        if (resource.getResourceURI().getType() == DAVResourceType.REGULAR) {
             Collection supportedReports = DAVReportHandler.REPORT_ELEMENTS;
             generateSupportedElementSet(DAV_NAMESPACE_PREFIX, SUPPORTED_REPORT.getName(), supportedReports, getRequestedReports(), xmlBuffer);
             DAVXMLUtil.closeXMLTag(DAV_NAMESPACE_PREFIX, "supported-report-set", xmlBuffer);

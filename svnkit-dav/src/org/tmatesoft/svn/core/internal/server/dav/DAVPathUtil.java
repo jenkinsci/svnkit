@@ -65,7 +65,7 @@ public class DAVPathUtil {
         return doStandardize ? standardize(uri.substring(0, uri.length() - tailLength)) : uri.substring(0, uri.length() - tailLength);
     }
 
-    public static String concat(String parent, String child) {
+    public static String append(String parent, String child) {
         StringBuffer uriBuffer = new StringBuffer();
         uriBuffer.append(standardize(parent));
         uriBuffer.append(standardize(child));
@@ -88,7 +88,7 @@ public class DAVPathUtil {
         if (davResourceKind == DAVResourceKind.PUBLIC) {
             resultURI.append(path);
         } else {
-            resultURI.append(DAVResource.SPECIAL_URI).append(SLASH);
+            resultURI.append(DAVResourceURI.SPECIAL_URI).append(SLASH);
             if (davResourceKind == DAVResourceKind.ACT_COLLECTION) {
                 resultURI.append(davResourceKind.toString());
                 resultURI.append(SLASH);
@@ -109,7 +109,7 @@ public class DAVPathUtil {
             } else if (davResourceKind == DAVResourceKind.VCC) {
                 resultURI.append(davResourceKind.toString());
                 resultURI.append(SLASH);
-                resultURI.append(DAVResource.DEDAULT_VCC_NAME);
+                resultURI.append(DAVResourceURI.DEDAULT_VCC_NAME);
             }
         }
         return resultURI.toString();

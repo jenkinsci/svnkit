@@ -185,7 +185,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             liveProperties.add(DAVElement.MD5_CHECKSUM);
             liveProperties.add(DAVElement.GET_CONTENT_LENGTH);
         }
-        if (resource.getKind() != DAVResourceKind.BASELINE_COLL) {
+        if (resource.getResourceURI().getKind() != DAVResourceKind.BASELINE_COLL) {
             liveProperties.add(DAVElement.BASELINE_COLLECTION);
         }
         return liveProperties;

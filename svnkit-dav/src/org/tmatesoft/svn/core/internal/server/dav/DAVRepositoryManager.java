@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav;
 
+import javax.servlet.ServletConfig;
+
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -19,8 +21,6 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
-
-import javax.servlet.ServletConfig;
 
 /**
  * @author TMate Software Ltd.
@@ -62,7 +62,7 @@ public class DAVRepositoryManager {
                 //TODO: client tried to access repository parent path, result status code should be FORBIDDEN.
             }
             String repositoryName = DAVPathUtil.head(requestURI);
-            requestContext = DAVPathUtil.concat(requestContext, repositoryName);
+            requestContext = DAVPathUtil.append(requestContext, repositoryName);
             requestURI = DAVPathUtil.removeHead(requestURI, true);
             String repositoryURL = getRepositoryURL(repositoryName);
 
