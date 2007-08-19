@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.tigris.subversion.javahl.BlameCallback;
+import org.tigris.subversion.javahl.BlameCallback2;
 import org.tigris.subversion.javahl.ClientException;
 import org.tigris.subversion.javahl.CommitItem;
 import org.tigris.subversion.javahl.CommitMessage;
@@ -2129,6 +2130,10 @@ public class SVNClientImpl implements SVNClientInterface {
     public long doSwitch(String path, String url, Revision revision, int depth, boolean ignoreExternals, boolean allowUnverObstructions) throws ClientException {
         notImplementedYet(null);
         return 0;
+    }
+
+    public void blame(String path, Revision pegRevision, Revision revisionStart, Revision revisionEnd, boolean ignoreMimeType, boolean includeMergedRevisions, BlameCallback2 callback) throws ClientException {
+        notImplementedYet(null);
     }
 
     private void notImplementedYet() throws ClientException {

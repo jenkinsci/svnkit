@@ -561,4 +561,8 @@ public class SVNClient implements SVNClientInterface {
     public long doSwitch(String path, String url, Revision revision, int depth, boolean ignoreExternals, boolean allowUnverObstructions) throws ClientException {
         return myDelegate.doSwitch(path, url, revision, depth, ignoreExternals, allowUnverObstructions);
     }
+
+    public void blame(String path, Revision pegRevision, Revision revisionStart, Revision revisionEnd, boolean ignoreMimeType, boolean includeMergedRevisions, BlameCallback2 callback) throws ClientException {
+        myDelegate.blame(path, pegRevision, revisionStart, revisionEnd, ignoreMimeType, includeMergedRevisions, callback);
+    }
 }
