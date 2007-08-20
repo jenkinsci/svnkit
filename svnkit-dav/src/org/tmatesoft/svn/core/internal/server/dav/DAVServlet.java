@@ -60,7 +60,8 @@ public class DAVServlet extends HttpServlet {
                     response.setContentType(XML_CONTENT_TYPE);
                 }
             } else {
-                errorBody = generateErrorBody(SERVER_INTERNAL_ERROR_LINE, th.getMessage());
+                th.printStackTrace(response.getWriter());
+                errorBody = generateErrorBody(SERVER_INTERNAL_ERROR_LINE, th.getLocalizedMessage());
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 response.setContentType(HTML_CONTENT_TYPE);
             }
@@ -78,18 +79,18 @@ public class DAVServlet extends HttpServlet {
         if (namespace != null) {
             namespaces.add(namespace);
         }
-        DAVXMLUtil.openNamespaceDeclarationTag(ServletDAVHandler.DAV_NAMESPACE_PREFIX, "error", namespaces, ServletDAVHandler.PREFIX_MAP, xmlBuffer);
-        String prefix = (String) ServletDAVHandler.PREFIX_MAP.get(namespace);
+        DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "error", namespaces, DAVXMLUtil.PREFIX_MAP, xmlBuffer);
+        String prefix = (String) DAVXMLUtil.PREFIX_MAP.get(namespace);
         if (prefix != null) {
-            prefix = ServletDAVHandler.DAV_NAMESPACE_PREFIX;
+            prefix = DAVXMLUtil.DAV_NAMESPACE_PREFIX;
         }
         if (tagName != null && tagName.length() > 0) {
             DAVXMLUtil.openXMLTag(prefix, tagName, DAVXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
         }
-        DAVXMLUtil.openXMLTag(ServletDAVHandler.SVN_APACHE_PROPERTY_PREFIX, "human-readable", DAVXMLUtil.XML_STYLE_NORMAL, "errcode", String.valueOf(errorID), xmlBuffer);
+        DAVXMLUtil.openXMLTag(DAVXMLUtil.SVN_APACHE_PROPERTY_PREFIX, "human-readable", DAVXMLUtil.XML_STYLE_NORMAL, "errcode", String.valueOf(errorID), xmlBuffer);
         xmlBuffer.append(SVNEncodingUtil.xmlEncodeCDATA(description));
-        DAVXMLUtil.closeXMLTag(ServletDAVHandler.SVN_APACHE_PROPERTY_PREFIX, "human-readable", xmlBuffer);
-        DAVXMLUtil.closeXMLTag(ServletDAVHandler.DAV_NAMESPACE_PREFIX, "error", xmlBuffer);
+        DAVXMLUtil.closeXMLTag(DAVXMLUtil.SVN_APACHE_PROPERTY_PREFIX, "human-readable", xmlBuffer);
+        DAVXMLUtil.closeXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "error", xmlBuffer);
         return xmlBuffer.toString();
     }
 

@@ -19,8 +19,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -55,7 +53,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     protected static final String HTTP_STATUS_OK_LINE = "HTTP/1.1 200 OK";
     protected static final String HTTP_NOT_FOUND_LINE = "HTTP/1.1 404 NOT FOUND";
 
-    protected static final String DEFAULT_XML_CONTENT_TYPE = "text/xml; charset=utf-8";
+    protected static final String DEFAULT_XML_CONTENT_TYPE = "text/xml; charset=\"utf-8\"";
 
     protected static final String SVN_OPTIONS_HEADER = "X-SVN-Options";
     protected static final String SVN_DELTA_BASE_HEADER = "X-SVN-VR-Base";
@@ -86,14 +84,6 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     protected static final String DEFAULT_KEEP_ALIVE_VALUE = "timeout=15, max=99";
     protected static final String ACCEPT_RANGES_VALUE = "bytes";
 
-    public static final Map PREFIX_MAP = new HashMap();
-
-    public static final String DAV_NAMESPACE_PREFIX = "D";
-    public static final String SVN_DAV_PROPERTY_PREFIX = "V";
-    public static final String SVN_CUSTOM_PROPERTY_PREFIX = "C";
-    public static final String SVN_SVN_PROPERTY_PREFIX = "S";
-    public static final String SVN_APACHE_PROPERTY_PREFIX = "M";
-
     protected static final DAVElement PROPFIND = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "propfind");
     protected static final DAVElement PROPNAME = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "propname");
     protected static final DAVElement ALLPROP = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "allprop");
@@ -108,14 +98,6 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     private DAVRepositoryManager myRepositoryManager = null;
     private HttpServletRequest myRequest;
     private HttpServletResponse myResponse;
-
-    static {
-        PREFIX_MAP.put(DAVElement.DAV_NAMESPACE, DAV_NAMESPACE_PREFIX);
-        PREFIX_MAP.put(DAVElement.SVN_DAV_PROPERTY_NAMESPACE, SVN_DAV_PROPERTY_PREFIX);
-        PREFIX_MAP.put(DAVElement.SVN_SVN_PROPERTY_NAMESPACE, SVN_SVN_PROPERTY_PREFIX);
-        PREFIX_MAP.put(DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE, SVN_CUSTOM_PROPERTY_PREFIX);
-        PREFIX_MAP.put(DAVElement.SVN_APACHE_PROPERTY_NAMESPACE, SVN_APACHE_PROPERTY_PREFIX);
-    }
 
     protected ServletDAVHandler(DAVRepositoryManager connector, HttpServletRequest request, HttpServletResponse response) {
         init();
@@ -230,8 +212,8 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return myRepositoryManager;
     }
 
-    protected DAVResource createDAVResource(boolean useCheckedIn) throws SVNException {
-        String label = getRequestHeader(LABEL_HEADER);
+    protected DAVResource createDAVResource(boolean labelAllowed, boolean useCheckedIn) throws SVNException {
+        String label = labelAllowed ? getRequestHeader(LABEL_HEADER) : null;
         String versionName = getRequestHeader(SVN_VERSION_NAME_HEADER);
         long version;
         try {

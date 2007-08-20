@@ -51,7 +51,7 @@ public class DAVGetHandler extends ServletDAVHandler {
     }
 
     public void execute() throws SVNException {
-        DAVResource resource = createDAVResource(false);
+        DAVResource resource = createDAVResource(true, false);
 
         if (!resource.exists()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PATH_NOT_FOUND, "Path ''{0}'' you requested not found", resource.getResourceURI().getPath()));
