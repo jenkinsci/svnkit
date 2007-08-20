@@ -34,6 +34,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceType;
+import org.tmatesoft.svn.core.internal.server.dav.DAVResourceURI;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -124,31 +125,31 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         DAVXMLUtil.addHeader(xmlBuffer);
         DAVXMLUtil.openNamespaceDeclarationTag(DAV_NAMESPACE_PREFIX, "multistatus", getDAVProperties(), PREFIX_MAP, xmlBuffer);
         if (getDAVProperties().contains(ALLPROP)) {
-            Collection allProperties = getSupportedLiveProperties(resource);
-            for (Iterator iterator = resource.getDeadProperties().iterator(); iterator.hasNext();) {
-                String property = (String) iterator.next();
-                allProperties.add(convertDeadPropertyToDAVElement(property));
-            }
-            generateResponse(xmlBuffer, resource, allProperties, depth);
+            Collection allProperties = convertDeadPropertiesToDAVElements(resource.getDeadProperties());
+            getSupportedLiveProperties(resource, allProperties);
+            generateResponse(xmlBuffer, resource, allProperties, depth, true);
         } else if (getDAVProperties().contains(PROPNAME)) {
             //TODO: generate all properties' names
         } else {
-            generateResponse(xmlBuffer, resource, getDAVProperties(), depth);
+            generateResponse(xmlBuffer, resource, getDAVProperties(), depth, false);
         }
         DAVXMLUtil.closeXMLTag(DAV_NAMESPACE_PREFIX, "multistatus", xmlBuffer);
     }
 
-    private void generateResponse(StringBuffer xmlBuffer, DAVResource resource, Collection properties, DAVDepth depth) throws SVNException {
+    private void generateResponse(StringBuffer xmlBuffer, DAVResource resource, Collection properties, DAVDepth depth, boolean updateProperties) throws SVNException {
         addResponse(xmlBuffer, resource, properties);
         if (depth != DAVDepth.DEPTH_ZERO && resource.getResourceURI().getType() == DAVResourceType.REGULAR && resource.isCollection()) {
             DAVDepth newDepth = DAVDepth.decreaseDepth(depth);
             for (Iterator entriesIterator = resource.getEntries().iterator(); entriesIterator.hasNext();) {
                 SVNDirEntry entry = (SVNDirEntry) entriesIterator.next();
-                StringBuffer entryURI = new StringBuffer();
-                entryURI.append(DAVPathUtil.addTrailingSlash(resource.getResourceURI().getURI()));
-                entryURI.append(entry.getName());
-                DAVResource newResource = new DAVResource(resource.getRepository(), resource.getResourceURI().getContext(), entryURI.toString(), null, false);
-                generateResponse(xmlBuffer, newResource, properties, newDepth);
+                String entryURI = DAVPathUtil.append(resource.getResourceURI().getURI(), entry.getName());
+                DAVResourceURI newResourceURI = new DAVResourceURI(resource.getResourceURI().getContext(), entryURI, null, false);
+                DAVResource newResource = new DAVResource(resource.getRepository(), newResourceURI, resource.isSVNClient(), resource.getVersion(), resource.getClientOptions(), null, null);
+                if (updateProperties) {
+                    properties = convertDeadPropertiesToDAVElements(newResource.getDeadProperties());
+                    getSupportedLiveProperties(newResource, properties);
+                }
+                generateResponse(xmlBuffer, newResource, properties, newDepth, updateProperties);
             }
         }
     }
@@ -173,8 +174,6 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
             } catch (SVNException e) {
                 if (e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_DAV_PROPS_NOT_FOUND) {
                     badProperties.add(element);
-                } else if (e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_DAV_MALFORMED_DATA) {
-                    //TODO:handle this.
                 } else {
                     throw e;
                 }
@@ -265,46 +264,13 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         } else if (element == LOG) {
             value = getLogProp(resource);
         } else {
-            value = getPropertyByName(element, resource);
+            value = getDeadProperty(element, resource);
         }
         if (value == null || value.length() == 0) {
             DAVXMLUtil.openXMLTag(prefix, name, DAVXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
         } else if (isCData) {
             DAVXMLUtil.openCDataTag(prefix, name, value, xmlBuffer);
         }
-    }
-
-    //Next three methods we can use for dead properties only
-    private DAVElement convertDeadPropertyToDAVElement(String property) throws SVNException {
-        if (!SVNProperty.isRegularProperty(property)) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Unrecognized property prefix ''{0}''", property));
-        }
-        String namespace;
-        if (SVNProperty.isSVNProperty(property)) {
-            namespace = DAVElement.SVN_SVN_PROPERTY_NAMESPACE;
-        } else {
-            namespace = DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE;
-        }
-        property = SVNProperty.shortPropertyName(property);
-        return DAVElement.getElement(namespace, property);
-    }
-
-    private String convertDAVElementToDeadProperty(DAVElement element) throws SVNException {
-        return convertDAVElementToDAVProperty(element.getNamespace(), element.getName());
-    }
-
-    private String convertDAVElementToDAVProperty(String namespace, String name) throws SVNException {
-        if (DAVElement.SVN_SVN_PROPERTY_NAMESPACE.equals(namespace)) {
-            return SVNProperty.SVN_PREFIX + name;
-        } else if (DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE.equals(namespace)) {
-            return name;
-        }
-        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Unrecognized namespace ''{0}''", namespace));
-        return null;
-    }
-
-    private String getLogProp(DAVResource resource) throws SVNException {
-        return resource.getLog(resource.getCreatedRevision());
     }
 
     private String getAutoVersionProp() {
@@ -417,15 +383,13 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
 
     private String getCheckedInProp(DAVResource resource) throws SVNException {
         if (resource.getResourceURI().getType() == DAVResourceType.PRIVATE && resource.getResourceURI().getKind() == DAVResourceKind.VCC) {
-            long latestRevision = resource.getLatestRevision();
-            return DAVPathUtil.buildURI(resource.getResourceURI().getContext(), DAVResourceKind.BASELINE, latestRevision, null);
+            return DAVPathUtil.buildURI(resource.getResourceURI().getContext(), DAVResourceKind.BASELINE, resource.getLatestRevision(), null);
 
         } else if (resource.getResourceURI().getType() != DAVResourceType.REGULAR) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Failed to determine property"));
             return null;
         } else {
-            long revision = resource.getRevision();
-            return DAVPathUtil.buildURI(resource.getResourceURI().getContext(), DAVResourceKind.VERSION, revision, resource.getResourceURI().getPath());
+            return DAVPathUtil.buildURI(resource.getResourceURI().getContext(), DAVResourceKind.VERSION, resource.getCreatedRevision(), resource.getResourceURI().getPath());
         }
     }
 
@@ -447,12 +411,48 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         return String.valueOf(deadPropertiesCount);
     }
 
+    private String getLogProp(DAVResource resource) throws SVNException {
+        return resource.getLog(resource.getCreatedRevision());
+    }
 
-    private String getPropertyByName(DAVElement element, DAVResource resource) throws SVNException {
-        String value = resource.getProperty(convertDAVElementToDeadProperty(element));
-        if (value == null) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Requested for non-existent property ''{0}''", element.getName()));
+    private String getDeadProperty(DAVElement element, DAVResource resource) throws SVNException {
+        return resource.getProperty(convertDAVElementToDeadProperty(element));
+    }
+
+    //Next four methods we can use for dead properties only
+
+    private Collection convertDeadPropertiesToDAVElements(Collection deadProperties) throws SVNException {
+        Collection elements = new ArrayList();
+        for (Iterator iterator = deadProperties.iterator(); iterator.hasNext();) {
+            String propertyName = (String) iterator.next();
+            elements.add(convertDeadPropertyToDAVElement(propertyName));
         }
-        return value;
+        return elements;
+    }
+
+    private DAVElement convertDeadPropertyToDAVElement(String property) throws SVNException {
+        if (!SVNProperty.isRegularProperty(property)) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Unrecognized property prefix ''{0}''", property));
+        }
+        String namespace = DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE;
+        if (SVNProperty.isSVNProperty(property)) {
+            namespace = DAVElement.SVN_SVN_PROPERTY_NAMESPACE;
+        }
+        property = SVNProperty.shortPropertyName(property);
+        return DAVElement.getElement(namespace, property);
+    }
+
+    private String convertDAVElementToDeadProperty(DAVElement element) throws SVNException {
+        return convertDAVElementToDeadProperty(element.getNamespace(), element.getName());
+    }
+
+    private String convertDAVElementToDeadProperty(String namespace, String name) throws SVNException {
+        if (DAVElement.SVN_SVN_PROPERTY_NAMESPACE.equals(namespace)) {
+            return SVNProperty.SVN_PREFIX + name;
+        } else if (DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE.equals(namespace)) {
+            return name;
+        }
+        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Unrecognized namespace ''{0}''", namespace));
+        return null;
     }
 }

@@ -56,6 +56,7 @@ public class DAVResource {
     private String myResultChecksum;
 
     private Map mySVNProperties;
+    private Collection myDeadProperties;
     private Collection myEntries;
 
     /**
@@ -76,16 +77,12 @@ public class DAVResource {
         prepare();
     }
 
-    public DAVResource(SVNRepository repository, DAVResourceURI resourceURI, boolean isSVNClient, String versionName, String clientOptions,
+    public DAVResource(SVNRepository repository, DAVResourceURI resourceURI, boolean isSVNClient, long version, String clientOptions,
                        String baseChecksum, String resultChecksum) throws SVNException {
         myRepository = repository;
         myResourceURI = resourceURI;
         myIsSVNClient = isSVNClient;
-        try {
-            myVersion = Long.parseLong(versionName);
-        } catch (NumberFormatException e) {
-            myVersion = INVALID_REVISION;
-        }
+        myVersion = version;
         myClientOptions = clientOptions;
         myBaseChecksum = baseChecksum;
         myResultChecksum = resultChecksum;
@@ -285,14 +282,16 @@ public class DAVResource {
     }
 
     public Collection getDeadProperties() {
-        Collection deadProperties = new ArrayList();
-        for (Iterator iterator = getSVNProperties().keySet().iterator(); iterator.hasNext();) {
-            String propertyName = (String) iterator.next();
-            if (SVNProperty.isRegularProperty(propertyName)) {
-                deadProperties.add(propertyName);
+        if (myDeadProperties == null) {
+            myDeadProperties = new ArrayList();
+            for (Iterator iterator = getSVNProperties().keySet().iterator(); iterator.hasNext();) {
+                String propertyName = (String) iterator.next();
+                if (SVNProperty.isRegularProperty(propertyName)) {
+                    myDeadProperties.add(propertyName);
+                }
             }
         }
-        return deadProperties;
+        return myDeadProperties;
     }
 
     public String getLog(long revision) throws SVNException {

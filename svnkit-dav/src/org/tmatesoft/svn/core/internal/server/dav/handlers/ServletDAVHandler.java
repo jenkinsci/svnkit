@@ -233,36 +233,49 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     protected DAVResource createDAVResource(boolean useCheckedIn) throws SVNException {
         String label = getRequestHeader(LABEL_HEADER);
         String versionName = getRequestHeader(SVN_VERSION_NAME_HEADER);
+        long version;
+        try {
+            version = Long.parseLong(versionName);
+        } catch (NumberFormatException e) {
+            version = DAVResource.INVALID_REVISION;
+        }
         String clientOptions = getRequestHeader(SVN_OPTIONS_HEADER);
         String baseChecksum = getRequestHeader(SVN_BASE_FULLTEXT_MD5_HEADER);
         String resultChecksum = getRequestHeader(SVN_RESULT_FULLTEXT_MD5_HEADER);
         String userAgent = getRequestHeader(USER_AGENT_HEADER);
         boolean isSVNClient = userAgent != null && (userAgent.startsWith("SVN/") || userAgent.startsWith("SVNKit"));
-        return getRepositoryManager().createDAVResource(getRequestContext(), getURI(), isSVNClient, versionName, clientOptions, baseChecksum, resultChecksum, label, useCheckedIn);
+        return getRepositoryManager().createDAVResource(getRequestContext(), getURI(), isSVNClient, version, clientOptions, baseChecksum, resultChecksum, label, useCheckedIn);
     }
 
-    protected Collection getSupportedLiveProperties(DAVResource resource) {
-        Collection liveProperties = new ArrayList();
-        liveProperties.add(DAVElement.AUTO_VERSION);
-        liveProperties.add(DAVElement.VERSION_NAME);
-        liveProperties.add(DAVElement.CREATION_DATE);
-        liveProperties.add(DAVElement.CREATOR_DISPLAY_NAME);
-        liveProperties.add(DAVElement.BASELINE_RELATIVE_PATH);
-        liveProperties.add(DAVElement.REPOSITORY_UUID);
-        liveProperties.add(DAVElement.CHECKED_IN);
-        liveProperties.add(DAVElement.RESOURCE_TYPE);
-        liveProperties.add(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
-        liveProperties.add(GET_ETAG);
-        liveProperties.add(GET_LAST_MODIFIED);
-        liveProperties.add(GET_CONTENT_TYPE);
-        if (!resource.isCollection()) {
-            liveProperties.add(DAVElement.MD5_CHECKSUM);
-            liveProperties.add(DAVElement.GET_CONTENT_LENGTH);
+    protected Collection getSupportedLiveProperties(DAVResource resource, Collection properties) {
+        if (properties == null) {
+            properties = new ArrayList();
         }
+        properties.add(DAVElement.DEADPROP_COUNT);
+        properties.add(DAVElement.REPOSITORY_UUID);
+        properties.add(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
         if (resource.getResourceURI().getKind() != DAVResourceKind.BASELINE_COLL) {
-            liveProperties.add(DAVElement.BASELINE_COLLECTION);
+            properties.add(DAVElement.BASELINE_COLLECTION);
+        } else {
+            properties.remove(DAVElement.BASELINE_COLLECTION);
         }
-        return liveProperties;
+        properties.add(DAVElement.BASELINE_RELATIVE_PATH);
+        properties.add(DAVElement.RESOURCE_TYPE);
+        properties.add(DAVElement.CHECKED_IN);
+        properties.add(GET_ETAG);
+        properties.add(DAVElement.CREATOR_DISPLAY_NAME);
+        properties.add(DAVElement.CREATION_DATE);
+        properties.add(GET_LAST_MODIFIED);
+        properties.add(DAVElement.VERSION_NAME);
+        properties.add(GET_CONTENT_TYPE);
+        if (!resource.isCollection()) {
+            properties.add(DAVElement.GET_CONTENT_LENGTH);
+            properties.add(DAVElement.MD5_CHECKSUM);
+        } else {
+            properties.remove(DAVElement.GET_CONTENT_LENGTH);
+            properties.remove(DAVElement.MD5_CHECKSUM);
+        }
+        return properties;
     }
 
     protected DAVDepth getRequestDepth(DAVDepth defaultDepth) throws SVNException {
@@ -278,8 +291,8 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     }
 
     protected void setDefaultResponseHeaders() {
-        setResponseHeader(KEEP_ALIVE_HEADER, DEFAULT_KEEP_ALIVE_VALUE);
-        setResponseHeader(CONNECTION_HEADER, KEEP_ALIVE_HEADER);
+//        setResponseHeader(KEEP_ALIVE_HEADER, DEFAULT_KEEP_ALIVE_VALUE);
+//        setResponseHeader(CONNECTION_HEADER, KEEP_ALIVE_HEADER);
         if (getRequestHeader(LABEL_HEADER) != null && getRequestHeader(LABEL_HEADER).length() > 0) {
             setResponseHeader(VARY_HEADER, LABEL_HEADER);
         }

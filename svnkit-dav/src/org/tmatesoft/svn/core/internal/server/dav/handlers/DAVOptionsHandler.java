@@ -232,7 +232,7 @@ public class DAVOptionsHandler extends ServletDAVHandler {
 
     private void generateSupportedLivePropertySet(DAVResource resource, StringBuffer xmlBuffer) {
         DAVXMLUtil.openXMLTag(DAV_NAMESPACE_PREFIX, "supported-live-property-set", DAVXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
-        Collection supportedLiveProperties = getSupportedLiveProperties(resource);
+        Collection supportedLiveProperties = getSupportedLiveProperties(resource, null);
         generateSupportedElementSet(DAV_NAMESPACE_PREFIX, SUPPORTED_LIVE_PROPERTY.getName(), supportedLiveProperties, getRequestedLiveProperties(), xmlBuffer);
         DAVXMLUtil.closeXMLTag(DAV_NAMESPACE_PREFIX, "supported-live-property-set", xmlBuffer);
     }

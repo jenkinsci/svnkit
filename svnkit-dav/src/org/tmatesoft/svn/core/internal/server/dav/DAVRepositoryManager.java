@@ -55,7 +55,7 @@ public class DAVRepositoryManager {
         }
     }
 
-    public DAVResource createDAVResource(String requestContext, String requestURI, boolean isSVNClient, String versionName, String clientOptions,
+    public DAVResource createDAVResource(String requestContext, String requestURI, boolean isSVNClient, long version, String clientOptions,
                                          String baseChecksum, String resultChecksum, String label, boolean useCheckedIn) throws SVNException {
         if (myRepositoryParentPath != null) {
             if (requestURI == null || requestURI.length() == 0 || "/".equals(requestURI)) {
@@ -71,7 +71,7 @@ public class DAVRepositoryManager {
             myRepository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(repositoryURL));
         }
         DAVResourceURI resourceURI = new DAVResourceURI(requestContext, requestURI, label, useCheckedIn);
-        return new DAVResource(myRepository, resourceURI, isSVNClient, versionName, clientOptions, baseChecksum, resultChecksum);
+        return new DAVResource(myRepository, resourceURI, isSVNClient, version, clientOptions, baseChecksum, resultChecksum);
     }
 
     private String getRepositoryURL(String repositoryName) {
