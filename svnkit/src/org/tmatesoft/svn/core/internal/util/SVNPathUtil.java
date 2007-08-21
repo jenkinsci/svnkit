@@ -523,6 +523,16 @@ public class SVNPathUtil {
     	return null;
     }
 
+    public static String getRelativePath(File parent, File child) {
+        String parentPath = parent.getAbsolutePath().replace(File.separatorChar, '/');
+        String childPath = child.getAbsolutePath().replace(File.separatorChar, '/');
+        String relPath = childPath.substring(parentPath.length());
+        if (relPath.startsWith("/")) {
+            relPath = relPath.substring(1);
+        }
+        return relPath;
+    }
+    
     public static String canonicalizePath(String path) {
         StringBuffer result = new StringBuffer();
         int i = 0;

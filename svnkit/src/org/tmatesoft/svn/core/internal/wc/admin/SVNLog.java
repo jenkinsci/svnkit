@@ -175,6 +175,16 @@ public abstract class SVNLog {
         if (newURL != null) {
             attributes.put(SVNProperty.shortPropertyName(SVNProperty.URL), newURL);
         }
+        
+/*        if (copyFromURL != null) {
+            attributes.put(SVNProperty.shortPropertyName(SVNProperty.COPIED), Boolean.TRUE.toString());
+            attributes.put(SVNProperty.shortPropertyName(SVNProperty.COPYFROM_URL), copyFromURL);
+            attributes.put(SVNProperty.shortPropertyName(SVNProperty.COPYFROM_REVISION), Long.toString(copyFromRevision));
+        }
+        if (isAdded) {
+            attributes.put(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE), SVNProperty.SCHEDULE_ADD);
+        }
+*/        
         logChangedEntryProperties(name, attributes);
     }
 

@@ -603,14 +603,8 @@ public class SVNWCManager {
         log.logChangedEntryProperties(fileName, entryAttrs);
         entryAttrs.clear();
         
-        entryAttrs.put(SVNProperty.shortPropertyName(SVNProperty.KIND), SVNProperty.KIND_FILE);
-        entryAttrs.put(SVNProperty.shortPropertyName(SVNProperty.REVISION), SVNProperty.toString(dstEntry != null ? dstEntry.getRevision() : parentEntry.getRevision()));
-        entryAttrs.put(SVNProperty.shortPropertyName(SVNProperty.URL), newURL);
-        entryAttrs.put(SVNProperty.shortPropertyName(SVNProperty.ABSENT), null);
-        entryAttrs.put(SVNProperty.shortPropertyName(SVNProperty.DELETED), null);
-        log.logChangedEntryProperties(fileName, entryAttrs);
-        entryAttrs.clear();
-    
+        log.logTweakEntry(fileName, newURL, dstEntry != null ? dstEntry.getRevision() : parentEntry.getRevision()); 
+                          
         SVNWCManager.addProperties(dir, fileName, baseProperties, true, log);
         SVNWCManager.addProperties(dir, fileName, properties, false, log);
         
@@ -645,8 +639,6 @@ public class SVNWCManager {
             log.logChangedEntryProperties(fileName, command);
             command.clear();
         }
-        
-    
     
         command.put(SVNLog.NAME_ATTR, SVNAdminUtil.getTextBasePath(fileName, true));
         command.put(SVNLog.DEST_ATTR, SVNAdminUtil.getTextBasePath(fileName, false));
@@ -696,4 +688,28 @@ public class SVNWCManager {
         log.logChangedEntryProperties(fileName, entryProps);
         log.logChangedWCProperties(fileName, wcProps);
     }
+    
+/*    private static String scheduleForAddedEntry(SVNAdminArea adminArea, String dstPathName, 
+                                                String copyFromURL, long copyFromRevision) throws SVNException {
+
+        if (copyFromURL == null) {
+            return SVNProperty.SCHEDULE_ADD;
+        }
+
+        String urlBaseName = SVNPathUtil.tail(copyFromURL);
+        if (!dstPathName.equals(urlBaseName)) {
+            return SVNProperty.SCHEDULE_ADD;
+        }
+
+        String urlDirName = SVNPathUtil.removeTail(copyFromURL);
+        SVNEntry parentEntry = adminArea.getVersionedEntry(adminArea.getThisDirName(), false);
+        if (parentEntry.isCopied() && parentEntry.getCopyFromRevision() == copyFromRevision && 
+            urlDirName.equals(parentEntry.getCopyFromURL())) {
+            return null;
+        }
+
+        return SVNProperty.SCHEDULE_ADD;
+    }
+*/
+
 }

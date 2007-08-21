@@ -395,6 +395,7 @@ public class SVNErrorCode implements Serializable {
      */
     public static final SVNErrorCode MERGE_INFO_PARSE_ERROR = new SVNErrorCode(MISC_CATEGORY, 20, "Merge info parse error");
     
+    
     public static final SVNErrorCode CL_ARG_PARSING_ERROR = new SVNErrorCode(CL_CATEGORY, 0, "Client error in parsing arguments");
     public static final SVNErrorCode CL_INSUFFICIENT_ARGS = new SVNErrorCode(CL_CATEGORY, 1, "Not enough args provided");
     public static final SVNErrorCode CL_MUTUALLY_EXCLUSIVE_ARGS = new SVNErrorCode(CL_CATEGORY, 2, "Mutually exclusive arguments specified");

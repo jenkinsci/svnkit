@@ -1606,6 +1606,17 @@ public class SVNDiffClient extends SVNBasicClient {
                                                         SVNDepth.recurseFromDepth(depth) ? 
                                                         SVNWCAccess.INFINITE_DEPTH : 0);
             SVNEntry targetEntry = wcAccess.getVersionedEntry(dstPath, false);
+            
+            SVNURL wcReposRoot = null;
+            if (targetEntry.getRepositoryRoot() != null) {
+                wcReposRoot = targetEntry.getRepositoryRootURL();
+            } else {
+                SVNRepository repos = createRepository(null, dstPath, 
+                                                       SVNRevision.WORKING, 
+                                                       SVNRevision.WORKING);
+                wcReposRoot = repos.getRepositoryRoot(true);
+            }
+            
             if (depth == null || depth == SVNDepth.UNKNOWN) {
                 depth = targetEntry.getDepth();
             }
@@ -1619,18 +1630,11 @@ public class SVNDiffClient extends SVNBasicClient {
                     SVNErrorManager.error(err);
                 }
                 
-                SVNURL reposRoot = targetEntry.getRepositoryRootURL();
-                if (reposRoot == null) {
-                    SVNRepository repository = createRepository(null, dstPath, SVNRevision.WORKING, 
-                                                                SVNRevision.WORKING);
-                    reposRoot = repository.getRepositoryRoot(true);
-                }
-                
                 String suggestedSrc = (String) suggestedSources.getFirst();
                 if (suggestedSrc.startsWith("/")) {
                     suggestedSrc = suggestedSrc.substring(1);
                 }
-                srcURL = reposRoot.appendPath(suggestedSrc, false);
+                srcURL = wcReposRoot.appendPath(suggestedSrc, false);
             } else if (srcURL == null && srcPath != null) {
                 srcURL = getURL(srcPath);
                 if (srcURL == null) {
@@ -1661,7 +1665,8 @@ public class SVNDiffClient extends SVNBasicClient {
                                                                         revision1, 
                                                                         revision2, 
                                                                         depth, 
-                                                                        url1, 
+                                                                        url1,
+                                                                        wcReposRoot,
                                                                         !useAncestry);
                 
                 merger.doMerge(url1, revision1, url2, revision2, dstPath, adminArea, depth, 
@@ -1691,6 +1696,16 @@ public class SVNDiffClient extends SVNBasicClient {
                                                         SVNWCAccess.INFINITE_DEPTH : 0);
 
             SVNEntry targetEntry = wcAccess.getVersionedEntry(dstPath, false);
+            SVNURL wcReposRoot = null;
+            if (targetEntry.getRepositoryRoot() != null) {
+                wcReposRoot = targetEntry.getRepositoryRootURL();
+            } else {
+                SVNRepository repos = createRepository(null, dstPath, 
+                                                       SVNRevision.WORKING, 
+                                                       SVNRevision.WORKING);
+                wcReposRoot = repos.getRepositoryRoot(true);
+            }
+            
             if (depth == null || depth == SVNDepth.UNKNOWN) {
                 depth = targetEntry.getDepth();
             }
@@ -1707,7 +1722,8 @@ public class SVNDiffClient extends SVNBasicClient {
                                                                             revision1, 
                                                                             revision2, 
                                                                             depth, 
-                                                                            url1, 
+                                                                            url1,
+                                                                            wcReposRoot,
                                                                             !useAncestry);
                 }
                 
@@ -2139,6 +2155,10 @@ public class SVNDiffClient extends SVNBasicClient {
     
                                                      for (Iterator paths = childrenSwitchedOrWithMergeInfo.iterator(); paths.hasNext();) {
                                                         File childFile = (File) paths.next();
+                                                        if (childFile == null) {
+                                                            continue;
+                                                        }
+                                                       
                                                         String childPath = childFile.getAbsolutePath();
                                                         childPath = childPath.replace(File.separatorChar, '/');
                                                         if (!dstPath.equals(childFile) && 
@@ -2202,10 +2222,16 @@ public class SVNDiffClient extends SVNBasicClient {
 
         public LinkedList discoverAndMergeChildren(SVNEntry parentEntry, SVNRevision revision1, 
                                                    SVNRevision revision2, SVNDepth depth,
-                                                   SVNURL parentURL, 
+                                                   SVNURL parentMergeSourceURL,
+                                                   SVNURL wcRootURL,
                                                    boolean ignoreAncestry) throws SVNException {
             
-            LinkedList childrenSwitchedOrWithMergeInfo = getSwitchedOrWithMergeInfoChildren(parentEntry);
+            String parentMergeSourcePath = parentMergeSourceURL.getPath();
+            String wcRootPath = wcRootURL.getPath();
+            String mergeSourcePath = parentMergeSourcePath.substring(wcRootPath.length()); 
+            LinkedList childrenSwitchedOrWithMergeInfo = getSwitchedOrWithMergeInfoChildren(parentEntry,
+                                                                                            myTarget,
+                                                                                            mergeSourcePath);
             for (Iterator childrenFiles = childrenSwitchedOrWithMergeInfo.iterator(); childrenFiles.hasNext();) {
                 File childFile = (File) childrenFiles.next();
                 if (childFile.equals(myTarget)) {
@@ -2213,13 +2239,9 @@ public class SVNDiffClient extends SVNBasicClient {
                 }
                 
                 SVNEntry childEntry = myWCAccess.getVersionedEntry(childFile, false);
-                String mergeTargetPath = myTarget.getAbsolutePath().replace(File.separatorChar, '/');
-                String childPath = childFile.getAbsolutePath().replace(File.separatorChar, '/');
-                String relPath = childPath.substring(mergeTargetPath.length());
-                if (relPath.startsWith("/")) {
-                    relPath = relPath.substring(1);
-                }
-                SVNURL childURL = parentURL.appendPath(relPath, false);
+                String relPath = SVNPathUtil.getRelativePath(myTarget, childFile);
+                
+                SVNURL childURL = parentMergeSourceURL.appendPath(relPath, false);
                 SVNAdminArea adminArea = childEntry.getAdminArea();
                 if (childEntry.isFile()) {
                     doMergeFile(childURL, revision1, childURL, revision2, childFile, adminArea, 
@@ -2248,6 +2270,9 @@ public class SVNDiffClient extends SVNBasicClient {
                 for (ListIterator childrenFiles = childrenWithMergeInfo.listIterator(); childrenFiles.hasNext();) {
                     boolean isFirst = !childrenFiles.hasPrevious(); 
                     File childFile = (File) childrenFiles.next();
+                    if (childFile == null) {
+                        continue;
+                    }
                     if (isFirst) {
                         if (childFile.equals(dstPath)) {
                             lastImmediateChild = null;
@@ -2323,7 +2348,9 @@ public class SVNDiffClient extends SVNBasicClient {
             SVNDiffClient.this.checkCancelled();
         }
 
-        private LinkedList getSwitchedOrWithMergeInfoChildren(SVNEntry entry) throws SVNException {
+        private LinkedList getSwitchedOrWithMergeInfoChildren(SVNEntry entry, 
+                                                              final File target,                                              
+                                                              final String mergeSrcPath) throws SVNException {
             SVNAdminArea adminArea = entry.getAdminArea();
             final LinkedList children = new LinkedList();
             
@@ -2336,11 +2363,22 @@ public class SVNDiffClient extends SVNBasicClient {
                     SVNVersionedProperties props = adminArea.getProperties(entry.getName());
                     String mergeInfoProp = props.getPropertyValue(SVNProperty.MERGE_INFO);
                     boolean isSwitched = false;
-                    if (mergeInfoProp == null) {
+                    boolean hasMergeInfoFromMergeSrc = false;
+                    if (mergeInfoProp != null) {
+                        String relToTargetPath = SVNPathUtil.getRelativePath(target, path);
+                        String mergeSrcChildPath = SVNPathUtil.concatToAbs(mergeSrcPath, 
+                                                                           relToTargetPath);
+                        Map mergeInfo = SVNMergeInfoManager.parseMergeInfo(new StringBuffer(mergeInfoProp), 
+                                                                           null);
+                        if (mergeInfo.containsKey(mergeSrcChildPath)) {
+                            hasMergeInfoFromMergeSrc = true;
+                        }
+                    } else {
                         isSwitched = adminArea.isEntrySwitched(entry);
                     }
                     
-                    if (mergeInfoProp != null || isSwitched) {
+                    
+                    if (hasMergeInfoFromMergeSrc || isSwitched) {
                         children.add(path);
                     }
                 }
