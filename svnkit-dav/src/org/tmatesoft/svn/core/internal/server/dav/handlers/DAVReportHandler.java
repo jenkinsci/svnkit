@@ -12,6 +12,8 @@
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -83,7 +85,14 @@ public class DAVReportHandler extends ServletDAVHandler implements IDAVReportHan
 
     protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
         if (REPORT_ELEMENTS.contains(parent)) {
-            getDAVProperties().put(element, cdata.toString());
+            Collection tagsCData = (Collection) getDAVProperties().get(element);
+            if (tagsCData == null) {
+                Collection currentCData = new ArrayList();
+                currentCData.add(cdata.toString());
+                getDAVProperties().put(element, currentCData);
+            } else {
+                tagsCData.add(cdata.toString());
+            }
         }
     }
 
@@ -114,8 +123,10 @@ public class DAVReportHandler extends ServletDAVHandler implements IDAVReportHan
     private IDAVReportHandler getHandler() throws SVNException {
         if (myRootElement == DATED_REVISIONS_REPORT) {
             return new DAVDatedRevisionHandler(getDAVProperties());
+        } else if (myRootElement == LOG_REPORT) {
+            return new DAVLogHandler(getDAVProperties());
         }
-        //Here should be something like NOT_SUPPORTED
+        //TODO: Here should be something like NOT_SUPPORTED
         SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA));
         return null;
     }

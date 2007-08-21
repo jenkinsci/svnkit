@@ -205,7 +205,7 @@ public class DAVOptionsHandler extends ServletDAVHandler {
 
     private void generateOptionsResponse(DAVResource resource, Collection supportedMethods, StringBuffer xmlBuffer) {
         if (!getDAVElements().isEmpty()) {
-            DAVXMLUtil.addHeader(xmlBuffer);
+            DAVXMLUtil.addXMLHeader(xmlBuffer);
             DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "options-response", null, xmlBuffer);
             for (Iterator iterator = getDAVElements().iterator(); iterator.hasNext();) {
                 DAVElement element = (DAVElement) iterator.next();

@@ -122,7 +122,7 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
 
 
     private void generatePropertiesResponse(StringBuffer xmlBuffer, DAVResource resource, DAVDepth depth) throws SVNException {
-        DAVXMLUtil.addHeader(xmlBuffer);
+        DAVXMLUtil.addXMLHeader(xmlBuffer);
         DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "multistatus", getDAVProperties(), xmlBuffer);
         if (getDAVProperties().contains(ALLPROP)) {
             Collection allProperties = convertDeadPropertiesToDAVElements(resource.getDeadProperties());

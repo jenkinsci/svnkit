@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
+import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
 
@@ -40,7 +41,7 @@ public class DAVDatedRevisionHandler implements IDAVReportHandler {
     public StringBuffer generateResponseBody(DAVResource resource, StringBuffer xmlBuffer) throws SVNException {
         xmlBuffer = xmlBuffer == null ? new StringBuffer() : xmlBuffer;
         long revision = getDatedRevision(resource);
-        DAVXMLUtil.addHeader(xmlBuffer);
+        DAVXMLUtil.addXMLHeader(xmlBuffer);
         DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, DATED_REVISIONS_REPORT.getName(), myProperties.keySet(), xmlBuffer);
         DAVXMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.VERSION_NAME.getName(), String.valueOf(revision), xmlBuffer);
         DAVXMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, DATED_REVISIONS_REPORT.getName(), xmlBuffer);
@@ -48,7 +49,8 @@ public class DAVDatedRevisionHandler implements IDAVReportHandler {
     }
 
     private long getDatedRevision(DAVResource resource) throws SVNException {
-        String dateString = (String) getProperties().get(DAVElement.CREATION_DATE);
+        Collection cdata = (Collection) getProperties().get(DAVElement.CREATION_DATE);
+        String dateString = (String) cdata.iterator().next();
         Date date = SVNTimeUtil.parseDate(dateString);
         return resource.getRepository().getDatedRevision(date);
     }

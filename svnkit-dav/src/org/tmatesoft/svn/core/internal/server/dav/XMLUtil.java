@@ -32,7 +32,7 @@ public class XMLUtil {
     public static final int XML_STYLE_SELF_CLOSING = 4;
 
 
-    public static StringBuffer addHeader(StringBuffer target) {
+    public static StringBuffer addXMLHeader(StringBuffer target) {
         target = target == null ? new StringBuffer() : target;
         target.append(XML_HEADER);
         return target;
@@ -85,6 +85,16 @@ public class XMLUtil {
             return target;
         }
         target = openXMLTag(prefix, tagName, XML_STYLE_PROTECT_PCDATA, null, target);
+        target.append(SVNEncodingUtil.xmlEncodeCDATA(cdata));
+        target = closeXMLTag(prefix, tagName, target);
+        return target;
+    }
+
+    public static StringBuffer openCDataTag(String prefix, String tagName, String cdata, Map attributes, StringBuffer target) {
+        if (cdata == null) {
+            return target;
+        }
+        target = openXMLTag(prefix, tagName, XML_STYLE_PROTECT_PCDATA, attributes, target);
         target.append(SVNEncodingUtil.xmlEncodeCDATA(cdata));
         target = closeXMLTag(prefix, tagName, target);
         return target;

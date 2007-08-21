@@ -72,7 +72,7 @@ public class DAVServlet extends HttpServlet {
 
     private String generateStandardizedErrorBody(int errorID, String namespace, String tagName, String description) {
         StringBuffer xmlBuffer = new StringBuffer();
-        DAVXMLUtil.addHeader(xmlBuffer);
+        DAVXMLUtil.addXMLHeader(xmlBuffer);
         Collection namespaces = new ArrayList();
         namespaces.add(DAVElement.DAV_NAMESPACE);
         namespaces.add(DAVElement.SVN_APACHE_PROPERTY_NAMESPACE);
