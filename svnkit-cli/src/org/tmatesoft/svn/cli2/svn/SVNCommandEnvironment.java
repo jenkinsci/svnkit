@@ -378,6 +378,10 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                 myRevisionProperties = new LinkedHashMap();
             }
             String revProp = optionValue.getValue();
+            if ("".equals(revProp.trim())) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Revision property pair is empty");
+                SVNErrorManager.error(err);
+            }
             int index = revProp.indexOf('='); 
             if (index >= 0) {
                 myRevisionProperties.put(revProp.substring(0, index), revProp.substring(index + 1));
