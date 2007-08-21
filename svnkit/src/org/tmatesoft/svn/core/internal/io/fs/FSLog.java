@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNMergeInfo;
+import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
 import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -212,6 +213,10 @@ public class FSLog {
             for (int i = 0; i < revs.length; i++) {
                 long rev = revs[i];
                 String mergeSource = SVNMergeInfoManager.findMergeSource(rev, mergeInfo);
+                root = myFSFS.createRevisionRoot(rev);
+                if (root.checkNodeKind(mergeSource) == SVNNodeKind.NONE) {
+                    continue;
+                }
                 LogTreeNode subTree = doMergedLog(mergeSource, rev);
                 if (subTree != null) {
                     treeNode.myChildren.add(subTree);
@@ -385,7 +390,7 @@ public class FSLog {
             myIsFindingCurrentRevision = isFindingCurrentRevision;
         }
         
-        public boolean omitMergeInfo(String path, Map pathMergeinfo) throws SVNException {
+        public boolean omitMergeInfo(String path, Map pathMergeInfo) throws SVNException {
             if (!myIsFindingCurrentRevision) {
                 return false;
             }
@@ -393,6 +398,16 @@ public class FSLog {
             SVNNodeKind kind = myRoot.checkNodeKind(path);
             if (kind == SVNNodeKind.NONE) {
                 return false;
+            }
+            return isBranchingCopy(pathMergeInfo, path);
+        }
+        
+        private boolean isBranchingCopy(Map pathMergeInfo, String path) throws SVNException {
+            Map mergeInfo = null;
+            if (pathMergeInfo != null) {
+                mergeInfo = pathMergeInfo;
+            } else {
+                mergeInfo = getPathMergeInfo(path); 
             }
             
             FSClosestCopy closestCopy = myRoot.getClosestCopy(path);
@@ -402,22 +417,35 @@ public class FSLog {
             if (copyRoot == null) {
                 return false;
             }
-            
+
             if (copyRoot.getRevision() != myRevision) {
                 return false;
             }
-            
+
             Map impliedMergeInfo = calculateBranchingCopyMergeInfo(copyRoot, 
                                                                    closestCopy.getPath(), 
                                                                    path, 
                                                                    myRevision);           
+
             Map added = new HashMap();
             Map deleted = new HashMap();
-            SVNMergeInfoManager.diffMergeInfo(deleted, added, impliedMergeInfo, pathMergeinfo);
+            SVNMergeInfoManager.diffMergeInfo(deleted, added, impliedMergeInfo, mergeInfo);
             if (deleted.isEmpty() && added.isEmpty()) {
                 return false;
             }
             return true;
+        }
+        
+        private Map getPathMergeInfo(String path) throws SVNException {
+            SVNMergeInfoManager mergeInfoManager = SVNMergeInfoManager.createMergeInfoManager(null);
+            Map tmpMergeInfo = mergeInfoManager.getMergeInfo(new String[] {path}, 
+                                                             myRoot, 
+                                                             SVNMergeInfoInheritance.INHERITED);
+            SVNMergeInfo mergeInfo = (SVNMergeInfo) tmpMergeInfo.get(path);
+            if (mergeInfo != null) {
+                return mergeInfo.getMergeSourcesToMergeLists();
+            }
+            return new TreeMap();
         }
         
         private Map calculateBranchingCopyMergeInfo(FSRevisionRoot srcRoot, 

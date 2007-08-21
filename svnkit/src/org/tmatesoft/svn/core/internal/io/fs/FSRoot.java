@@ -61,6 +61,11 @@ public abstract class FSRoot {
     public abstract FSCopyInheritance getCopyInheritance(FSParentPath child) throws SVNException;
 
     public FSParentPath openPath(String path, boolean lastEntryMustExist, boolean storeParents) throws SVNException {
+        if (path == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "null path is not supported");
+            SVNErrorManager.error(err);
+        }
+        
         String canonPath = path;
         FSRevisionNode here = getRootRevisionNode();
         String pathSoFar = "/";
