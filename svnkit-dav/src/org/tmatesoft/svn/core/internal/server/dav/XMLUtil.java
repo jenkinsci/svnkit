@@ -100,8 +100,14 @@ public class XMLUtil {
         return target;
     }
 
+    public static StringBuffer openCDataTag(String prefix, String tagName, String cdata, String attr, String value, StringBuffer target) {
+        Map attributes = new HashMap();
+        attributes.put(attr, value);
+        return openCDataTag(prefix, tagName, cdata, attributes, target);
+    }
+
     public static StringBuffer openXMLTag(String prefix, String tagName, int style, String attr, String value, StringBuffer target) {
-        HashMap attributes = new HashMap();
+        Map attributes = new HashMap();
         attributes.put(attr, value);
         return openXMLTag(prefix, tagName, style, attributes, target);
     }

@@ -11,18 +11,18 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
-import java.util.Map;
-import java.util.Iterator;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
-import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 
@@ -30,7 +30,7 @@ import org.tmatesoft.svn.core.io.SVNLocationEntry;
  * @author TMate Software Ltd.
  * @version 1.1.2
  */
-public class DAVGetLocationsReport implements IDAVReportHandler, ISVNLocationEntryHandler {
+public class DAVGetLocationsHandler implements IDAVReportHandler, ISVNLocationEntryHandler {
 
     private static final DAVElement PEG_REVISION = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "peg-revision");
     private static final DAVElement LOCATION_REVISION = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "location-revision");
@@ -38,7 +38,7 @@ public class DAVGetLocationsReport implements IDAVReportHandler, ISVNLocationEnt
     private Map myProperties;
     private StringBuffer myBody;
 
-    public DAVGetLocationsReport(Map properties) {
+    public DAVGetLocationsHandler(Map properties) {
         myProperties = properties;
     }
 

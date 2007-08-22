@@ -118,6 +118,8 @@ public class DAVReportHandler extends ServletDAVHandler implements IDAVReportHan
     public StringBuffer generateResponseBody(DAVResource resource, StringBuffer xmlBuffer) throws SVNException {
         IDAVReportHandler reportHandler = getHandler();
         return reportHandler.generateResponseBody(resource, xmlBuffer);
+
+        //TODO: In some cases native svn starts blame command and clean all out headers
     }
 
     private IDAVReportHandler getHandler() throws SVNException {
@@ -125,8 +127,10 @@ public class DAVReportHandler extends ServletDAVHandler implements IDAVReportHan
             return new DAVDatedRevisionHandler(getDAVProperties());
         } else if (myRootElement == LOG_REPORT) {
             return new DAVLogHandler(getDAVProperties());
-        } else if (myRootElement == GET_LOCATIONS_REPORT){
-            return new DAVGetLocationsReport(getDAVProperties());
+        } else if (myRootElement == GET_LOCATIONS_REPORT) {
+            return new DAVGetLocationsHandler(getDAVProperties());
+        } else if (myRootElement == FILE_REVISIONS_REPORT) {
+            return new DAVFileRevsHandler(getDAVProperties());
         }
         //TODO: Here should be something like NOT_SUPPORTED
         SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA));
