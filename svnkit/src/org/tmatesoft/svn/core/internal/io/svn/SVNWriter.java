@@ -53,6 +53,9 @@ public class SVNWriter {
                 }
                 Object item = src[offset++];
                 if (item == null) {
+                    if (ch == '*' || ch == '?') {
+                        i++;
+                    }
                     continue;
                 }
                 if (item instanceof Date) {
@@ -116,21 +119,16 @@ public class SVNWriter {
                         }
                     } else if (item instanceof Map && ch == 'l') {
                         Map map = (Map) item;
-                        for (Iterator paths = map.keySet().iterator(); paths
-                                .hasNext();) {
+                        for (Iterator paths = map.keySet().iterator(); paths.hasNext();) {
                             String path = (String) paths.next();
                             String token = (String) map.get(path);
                             os.write('(');
                             os.write(' ');
-                            os.write(Integer.toString(
-                                    path.getBytes("UTF-8").length).getBytes(
-                                    "UTF-8"));
+                            os.write(Integer.toString(path.getBytes("UTF-8").length).getBytes("UTF-8"));
                             os.write(':');
                             os.write(path.getBytes("UTF-8"));
                             os.write(' ');
-                            os.write(Integer.toString(
-                                    token.getBytes("UTF-8").length).getBytes(
-                                    "UTF-8"));
+                            os.write(Integer.toString(token.getBytes("UTF-8").length).getBytes("UTF-8"));
                             os.write(':');
                             os.write(token.getBytes("UTF-8"));
                             os.write(' ');
