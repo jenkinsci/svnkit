@@ -11,17 +11,22 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
+import java.io.IOException;
 import java.io.OutputStream;
+import java.io.Writer;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
@@ -30,13 +35,13 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  * @author TMate Software Ltd.
  * @version 1.1.2
  */
-public class DAVFileRevsHandler implements IDAVReportHandler, ISVNFileRevisionHandler {
+public class DAVFileRevisionsHandler implements IDAVReportHandler, ISVNFileRevisionHandler {
 
     private Map myProperties;
     private StringBuffer myBody;
 
 
-    public DAVFileRevsHandler(Map properties) {
+    public DAVFileRevisionsHandler(Map properties) {
         myProperties = properties;
     }
 
@@ -51,11 +56,17 @@ public class DAVFileRevsHandler implements IDAVReportHandler, ISVNFileRevisionHa
         return myBody;
     }
 
-    private void setBody(StringBuffer body) {
-        myBody = body;
+    public void writeTo(Writer out, DAVResource resource) throws SVNException {
+        generateResponseBody(resource);
+
+        try {
+            out.write(getBody().toString());
+        } catch (IOException e) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
+        }
     }
 
-    public StringBuffer generateResponseBody(DAVResource resource, StringBuffer xmlBuffer) throws SVNException {
+    private void generateResponseBody(DAVResource resource) throws SVNException {
         String path = null;
         long startRevision = DAVResource.INVALID_REVISION;
         long endRevision = DAVResource.INVALID_REVISION;
@@ -73,7 +84,6 @@ public class DAVFileRevsHandler implements IDAVReportHandler, ISVNFileRevisionHa
             }
         }
 
-        setBody(xmlBuffer);
         XMLUtil.addXMLHeader(getBody());
         DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, FILE_REVISIONS_REPORT.getName(), getProperties().keySet(), getBody());
 
@@ -81,8 +91,6 @@ public class DAVFileRevsHandler implements IDAVReportHandler, ISVNFileRevisionHa
         resource.getRepository().getFileRevisions(path, startRevision, endRevision, this);
 
         XMLUtil.addXMLFooter(DAVXMLUtil.SVN_NAMESPACE_PREFIX, FILE_REVISIONS_REPORT.getName(), getBody());
-
-        return getBody();
     }
 
     public void openRevision(SVNFileRevision fileRevision) throws SVNException {

@@ -11,7 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
-import java.io.IOException;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -101,23 +101,17 @@ public class DAVReportHandler extends ServletDAVHandler implements IDAVReportHan
 
         readInput(getRequestInputStream());
 
-        StringBuffer body = new StringBuffer();
-        generateResponseBody(resource, body);
-
         setDefaultResponseHeaders();
         setResponseContentType(DEFAULT_XML_CONTENT_TYPE);
         setResponseStatus(HttpServletResponse.SC_OK);
 
-        try {
-            getResponseWriter().write(body.toString());
-        } catch (IOException e) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
-        }
+        writeTo(getResponseWriter(), resource);
+
     }
 
-    public StringBuffer generateResponseBody(DAVResource resource, StringBuffer xmlBuffer) throws SVNException {
+    public void writeTo(Writer out, DAVResource resource) throws SVNException {
         IDAVReportHandler reportHandler = getHandler();
-        return reportHandler.generateResponseBody(resource, xmlBuffer);
+        reportHandler.writeTo(out, resource);
 
         //TODO: In some cases native svn starts blame command and clean all out headers
     }
@@ -130,7 +124,7 @@ public class DAVReportHandler extends ServletDAVHandler implements IDAVReportHan
         } else if (myRootElement == GET_LOCATIONS_REPORT) {
             return new DAVGetLocationsHandler(getDAVProperties());
         } else if (myRootElement == FILE_REVISIONS_REPORT) {
-            return new DAVFileRevsHandler(getDAVProperties());
+            return new DAVFileRevisionsHandler(getDAVProperties());
         }
         //TODO: Here should be something like NOT_SUPPORTED
         SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA));

@@ -11,12 +11,16 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
+import java.io.IOException;
+import java.io.Writer;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
@@ -25,6 +29,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 /**
  * @author TMate Software Ltd.
@@ -56,11 +61,16 @@ public class DAVLogHandler implements IDAVReportHandler, ISVNLogEntryHandler {
         return myBody;
     }
 
-    private void setBody(StringBuffer body) {
-        myBody = body;
+    public void writeTo(Writer out, DAVResource resource) throws SVNException {
+        generateResponseBody(resource);
+        try {
+            out.write(getBody().toString());
+        } catch (IOException e) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
+        }
     }
 
-    public StringBuffer generateResponseBody(DAVResource resource, StringBuffer xmlBuffer) throws SVNException {
+    private void generateResponseBody(DAVResource resource) throws SVNException {
         boolean discoverChangedPaths = false;
         boolean strictNodeHistory = false;
         boolean includeMergedRevisions = false;
@@ -100,13 +110,14 @@ public class DAVLogHandler implements IDAVReportHandler, ISVNLogEntryHandler {
             }
         }
 
-        setBody(xmlBuffer);
         XMLUtil.addXMLHeader(getBody());
         DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, LOG_REPORT.getName(), getProperties().keySet(), getBody());
+
         resource.getRepository().log(targetPaths, startRevision, endRevision, discoverChangedPaths,
                 strictNodeHistory, limit, includeMergedRevisions, omitLogText, this);
+
         XMLUtil.addXMLFooter(DAVXMLUtil.SVN_NAMESPACE_PREFIX, LOG_REPORT.getName(), getBody());
-        return getBody();
+
     }
 
     public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {

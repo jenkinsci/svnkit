@@ -12,6 +12,8 @@
 
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
+import java.io.Writer;
+
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
@@ -37,6 +39,6 @@ public interface IDAVReportHandler {
 
     static final String NAME_ATTR = "name";
 
-    public StringBuffer generateResponseBody(DAVResource resource, StringBuffer xmlBuffer) throws SVNException;
+    public void writeTo(Writer out, DAVResource resource) throws SVNException;
 
 }

@@ -11,16 +11,21 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
+import java.io.IOException;
+import java.io.Writer;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 /**
  * @author TMate Software Ltd.
@@ -39,8 +44,17 @@ public class DAVDatedRevisionHandler implements IDAVReportHandler {
         return myProperties;
     }
 
-    public StringBuffer generateResponseBody(DAVResource resource, StringBuffer xmlBuffer) throws SVNException {
-        xmlBuffer = xmlBuffer == null ? new StringBuffer() : xmlBuffer;
+    public void writeTo(Writer out, DAVResource resource) throws SVNException {
+        StringBuffer body = generateResponseBody(resource);
+        try {
+            out.write(body.toString());
+        } catch (IOException e) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
+        }
+    }
+
+    private StringBuffer generateResponseBody(DAVResource resource) throws SVNException {
+        StringBuffer xmlBuffer = new StringBuffer();
         long revision = getDatedRevision(resource);
         XMLUtil.addXMLHeader(xmlBuffer);
         DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, DATED_REVISIONS_REPORT.getName(), myProperties.keySet(), xmlBuffer);

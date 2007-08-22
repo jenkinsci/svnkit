@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
+import java.io.IOException;
+import java.io.Writer;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -55,11 +57,17 @@ public class DAVGetLocationsHandler implements IDAVReportHandler, ISVNLocationEn
         return myBody;
     }
 
-    private void setBody(StringBuffer body) {
-        myBody = body;
+    public void writeTo(Writer out, DAVResource resource) throws SVNException {
+        generateResponseBody(resource);
+
+        try {
+            out.write(getBody().toString());
+        } catch (IOException e) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
+        }
     }
 
-    public StringBuffer generateResponseBody(DAVResource resource, StringBuffer xmlBuffer) throws SVNException {
+    private void generateResponseBody(DAVResource resource) throws SVNException {
         String path = null;
         long pegRevision = DAVResource.INVALID_REVISION;
         long[] revisions = null;
@@ -88,14 +96,12 @@ public class DAVGetLocationsHandler implements IDAVReportHandler, ISVNLocationEn
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Not all parameters passed."));
         }
 
-        setBody(xmlBuffer);
         XMLUtil.addXMLHeader(getBody());
         DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, GET_LOCATIONS_REPORT.getName(), getProperties().keySet(), getBody());
 
         resource.getRepository().getLocations(path, pegRevision, revisions, this);
 
         XMLUtil.addXMLFooter(DAVXMLUtil.SVN_NAMESPACE_PREFIX, GET_LOCATIONS_REPORT.getName(), getBody());
-        return getBody();
     }
 
 
