@@ -17,8 +17,8 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 
 /**
+ * @author TMate Software Ltd.
  * @version 1.1.2
- * @author  TMate Software Ltd.
  */
 public interface IDAVReportHandler {
 
@@ -30,6 +30,8 @@ public interface IDAVReportHandler {
     static final DAVElement GET_LOCKS_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "get-locks-report");
     static final DAVElement REPLAY_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "replay-report");
     static final DAVElement MERGEINFO_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "mergeinfo-report");
+
+    static final DAVElement PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "path");
 
     public StringBuffer generateResponseBody(DAVResource resource, StringBuffer xmlBuffer) throws SVNException;
 

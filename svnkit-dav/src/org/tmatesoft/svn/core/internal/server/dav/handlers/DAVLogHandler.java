@@ -38,7 +38,6 @@ public class DAVLogHandler implements IDAVReportHandler, ISVNLogEntryHandler {
     private static final DAVElement STRICT_NODE_HISTORY = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "strict-node-history");
     private static final DAVElement OMIT_LOG_TEXT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "omit-log-text");
     private static final DAVElement LIMIT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "limit");
-    private static final DAVElement PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "path");
 
     private Map myProperties;
     private StringBuffer myBody;

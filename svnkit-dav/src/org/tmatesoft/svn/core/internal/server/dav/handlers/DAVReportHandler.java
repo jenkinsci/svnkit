@@ -125,6 +125,8 @@ public class DAVReportHandler extends ServletDAVHandler implements IDAVReportHan
             return new DAVDatedRevisionHandler(getDAVProperties());
         } else if (myRootElement == LOG_REPORT) {
             return new DAVLogHandler(getDAVProperties());
+        } else if (myRootElement == GET_LOCATIONS_REPORT){
+            return new DAVGetLocationsReport(getDAVProperties());
         }
         //TODO: Here should be something like NOT_SUPPORTED
         SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA));
