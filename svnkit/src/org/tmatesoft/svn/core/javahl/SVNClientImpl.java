@@ -482,7 +482,7 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public long commit(String[] path, String message, boolean recurse, boolean noUnlock) throws ClientException {
-        return commit(path, message, recurse, noUnlock, false, null);
+        return commit(path, message, SVNDepth.fromRecurse(recurse).getId(), noUnlock, false, null);
         }
 
     public long[] commit(String[] path, String message, boolean recurse, boolean noUnlock, boolean atomicCommit) throws ClientException {
@@ -1405,7 +1405,7 @@ public class SVNClientImpl implements SVNClientInterface {
         }
     }
 
-    public long commit(String[] path, String message, boolean recurse, boolean noUnlock, boolean keepChangelist, String changelistName) throws ClientException {
+    public long commit(String[] path, String message, int depth, boolean noUnlock, boolean keepChangelist, String changelistName) throws ClientException {
         if(path == null || path.length == 0){
             return 0;
         }
@@ -1423,6 +1423,8 @@ public class SVNClientImpl implements SVNClientInterface {
                     }
                 });
             }
+            SVNDepth svnDepth = SVNDepth.fromID(depth);
+            boolean recurse = SVNDepth.recurseFromDepth(svnDepth);
             return client.doCommit(files, noUnlock, message, null, changelistName, keepChangelist, !recurse, recurse).getNewRevision();
         } catch (SVNException e) {
             throwException(e);

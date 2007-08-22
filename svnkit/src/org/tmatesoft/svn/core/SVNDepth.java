@@ -87,5 +87,23 @@ public class SVNDepth implements Comparable {
             return UNKNOWN;
         }
     }
+    
+    public static SVNDepth fromID(int id) { 
+        switch (id) {
+            case 3:
+                return INFINITY;
+            case 2:
+                return IMMEDIATES;
+            case 1:
+                return FILES;
+            case 0:
+                return EMPTY;
+            case -1:
+                return EXCLUDE;
+            case -2:
+            default:
+                return UNKNOWN;
+        }
+    }
 
 }
