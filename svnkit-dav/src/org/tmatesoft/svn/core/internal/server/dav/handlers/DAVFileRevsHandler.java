@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
+import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
@@ -73,13 +74,13 @@ public class DAVFileRevsHandler implements IDAVReportHandler, ISVNFileRevisionHa
         }
 
         setBody(xmlBuffer);
-        DAVXMLUtil.addXMLHeader(getBody());
+        XMLUtil.addXMLHeader(getBody());
         DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, FILE_REVISIONS_REPORT.getName(), getProperties().keySet(), getBody());
 
         //TODO: native SVN takes SVNDiff Version from request's header sets it to generate txdelta
         resource.getRepository().getFileRevisions(path, startRevision, endRevision, this);
 
-        DAVXMLUtil.addXMLFooter(DAVXMLUtil.SVN_NAMESPACE_PREFIX, FILE_REVISIONS_REPORT.getName(), getBody());
+        XMLUtil.addXMLFooter(DAVXMLUtil.SVN_NAMESPACE_PREFIX, FILE_REVISIONS_REPORT.getName(), getBody());
 
         return getBody();
     }
@@ -88,39 +89,39 @@ public class DAVFileRevsHandler implements IDAVReportHandler, ISVNFileRevisionHa
         Map attrs = new HashMap();
         attrs.put(PATH.getName(), fileRevision.getPath());
         attrs.put("rev", String.valueOf(fileRevision.getRevision()));
-        DAVXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "file-rev", DAVXMLUtil.XML_STYLE_NORMAL, attrs, getBody());
+        XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "file-rev", XMLUtil.XML_STYLE_NORMAL, attrs, getBody());
         for (Iterator iterator = fileRevision.getRevisionProperties().entrySet().iterator(); iterator.hasNext();) {
             Map.Entry entry = (Map.Entry) iterator.next();
             String propertyName = (String) entry.getKey();
             String propertyValue = (String) entry.getValue();
             //TODO: native svn checks if propertyValue is XML safe, if not applies base64 encoding.
-            DAVXMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "rev-prop", propertyValue, NAME_ATTR, propertyName, getBody());
+            XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "rev-prop", propertyValue, NAME_ATTR, propertyName, getBody());
         }
         for (Iterator iterator = fileRevision.getPropertiesDelta().entrySet().iterator(); iterator.hasNext();) {
             Map.Entry entry = (Map.Entry) iterator.next();
             String propertyName = (String) entry.getKey();
             String propertyValue = (String) entry.getValue();
             if (propertyValue != null) {
-                DAVXMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "set-prop", propertyValue, NAME_ATTR, propertyName, getBody());
+                XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "set-prop", propertyValue, NAME_ATTR, propertyName, getBody());
             } else {
-                DAVXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "remove-prop", DAVXMLUtil.XML_STYLE_SELF_CLOSING, NAME_ATTR, propertyName, getBody());
+                XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "remove-prop", XMLUtil.XML_STYLE_SELF_CLOSING, NAME_ATTR, propertyName, getBody());
             }
         }
     }
 
     public void closeRevision(String token) throws SVNException {
-        DAVXMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "file-rev", getBody());
+        XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "file-rev", getBody());
     }
 
     public void applyTextDelta(String path, String baseChecksum) throws SVNException {
     }
 
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
-        DAVXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "txdelta", DAVXMLUtil.XML_STYLE_NORMAL, null, getBody());
+        XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "txdelta", XMLUtil.XML_STYLE_NORMAL, null, getBody());
         return null;
     }
 
     public void textDeltaEnd(String path) throws SVNException {
-        DAVXMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "txdelta", getBody());
+        XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "txdelta", getBody());
     }
 }

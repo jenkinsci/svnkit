@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
+import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
@@ -88,12 +89,12 @@ public class DAVGetLocationsHandler implements IDAVReportHandler, ISVNLocationEn
         }
 
         setBody(xmlBuffer);
-        DAVXMLUtil.addXMLHeader(getBody());
+        XMLUtil.addXMLHeader(getBody());
         DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, GET_LOCATIONS_REPORT.getName(), getProperties().keySet(), getBody());
 
         resource.getRepository().getLocations(path, pegRevision, revisions, this);
 
-        DAVXMLUtil.addXMLFooter(DAVXMLUtil.SVN_NAMESPACE_PREFIX, GET_LOCATIONS_REPORT.getName(), getBody());
+        XMLUtil.addXMLFooter(DAVXMLUtil.SVN_NAMESPACE_PREFIX, GET_LOCATIONS_REPORT.getName(), getBody());
         return getBody();
     }
 
@@ -102,6 +103,6 @@ public class DAVGetLocationsHandler implements IDAVReportHandler, ISVNLocationEn
         Map attrs = new HashMap();
         attrs.put(PATH.getName(), locationEntry.getPath());
         attrs.put("rev", String.valueOf(locationEntry.getRevision()));
-        DAVXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "location", DAVXMLUtil.XML_STYLE_SELF_CLOSING, attrs, getBody());
+        XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "location", XMLUtil.XML_STYLE_SELF_CLOSING, attrs, getBody());
     }
 }

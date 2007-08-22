@@ -72,25 +72,25 @@ public class DAVServlet extends HttpServlet {
 
     private String generateStandardizedErrorBody(int errorID, String namespace, String tagName, String description) {
         StringBuffer xmlBuffer = new StringBuffer();
-        DAVXMLUtil.addXMLHeader(xmlBuffer);
+        XMLUtil.addXMLHeader(xmlBuffer);
         Collection namespaces = new ArrayList();
         namespaces.add(DAVElement.DAV_NAMESPACE);
         namespaces.add(DAVElement.SVN_APACHE_PROPERTY_NAMESPACE);
         if (namespace != null) {
             namespaces.add(namespace);
         }
-        DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "error", namespaces, DAVXMLUtil.PREFIX_MAP, xmlBuffer);
+        XMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "error", namespaces, DAVXMLUtil.PREFIX_MAP, xmlBuffer);
         String prefix = (String) DAVXMLUtil.PREFIX_MAP.get(namespace);
         if (prefix != null) {
             prefix = DAVXMLUtil.DAV_NAMESPACE_PREFIX;
         }
         if (tagName != null && tagName.length() > 0) {
-            DAVXMLUtil.openXMLTag(prefix, tagName, DAVXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
+            XMLUtil.openXMLTag(prefix, tagName, XMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
         }
-        DAVXMLUtil.openXMLTag(DAVXMLUtil.SVN_APACHE_PROPERTY_PREFIX, "human-readable", DAVXMLUtil.XML_STYLE_NORMAL, "errcode", String.valueOf(errorID), xmlBuffer);
+        XMLUtil.openXMLTag(DAVXMLUtil.SVN_APACHE_PROPERTY_PREFIX, "human-readable", XMLUtil.XML_STYLE_NORMAL, "errcode", String.valueOf(errorID), xmlBuffer);
         xmlBuffer.append(SVNEncodingUtil.xmlEncodeCDATA(description));
-        DAVXMLUtil.closeXMLTag(DAVXMLUtil.SVN_APACHE_PROPERTY_PREFIX, "human-readable", xmlBuffer);
-        DAVXMLUtil.closeXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "error", xmlBuffer);
+        XMLUtil.closeXMLTag(DAVXMLUtil.SVN_APACHE_PROPERTY_PREFIX, "human-readable", xmlBuffer);
+        XMLUtil.closeXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "error", xmlBuffer);
         return xmlBuffer.toString();
     }
 

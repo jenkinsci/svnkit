@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
+import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 
 /**
@@ -100,33 +101,33 @@ public class DAVLogHandler implements IDAVReportHandler, ISVNLogEntryHandler {
         }
 
         setBody(xmlBuffer);
-        DAVXMLUtil.addXMLHeader(getBody());
+        XMLUtil.addXMLHeader(getBody());
         DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, LOG_REPORT.getName(), getProperties().keySet(), getBody());
         resource.getRepository().log(targetPaths, startRevision, endRevision, discoverChangedPaths,
                 strictNodeHistory, limit, includeMergedRevisions, omitLogText, this);
-        DAVXMLUtil.addXMLFooter(DAVXMLUtil.SVN_NAMESPACE_PREFIX, LOG_REPORT.getName(), getBody());
+        XMLUtil.addXMLFooter(DAVXMLUtil.SVN_NAMESPACE_PREFIX, LOG_REPORT.getName(), getBody());
         return getBody();
     }
 
     public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
 
-        DAVXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "log-item", DAVXMLUtil.XML_STYLE_NORMAL, null, getBody());
-        DAVXMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.VERSION_NAME.getName(), String.valueOf(logEntry.getRevision()), getBody());
+        XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "log-item", XMLUtil.XML_STYLE_NORMAL, null, getBody());
+        XMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.VERSION_NAME.getName(), String.valueOf(logEntry.getRevision()), getBody());
 
         if (logEntry.getAuthor() != null) {
-            DAVXMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.CREATOR_DISPLAY_NAME.getName(), logEntry.getAuthor(), getBody());
+            XMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.CREATOR_DISPLAY_NAME.getName(), logEntry.getAuthor(), getBody());
         }
 
         if (logEntry.getDate() != null) {
-            DAVXMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "date", SVNTimeUtil.formatDate(logEntry.getDate()), getBody());
+            XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "date", SVNTimeUtil.formatDate(logEntry.getDate()), getBody());
         }
 
         if (logEntry.getMessage() != null) {
-            DAVXMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.COMMENT.getName(), logEntry.getMessage(), getBody());
+            XMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.COMMENT.getName(), logEntry.getMessage(), getBody());
         }
 
         if (logEntry.getNumberOfChildren() != 0) {
-            DAVXMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "nbr-children", String.valueOf(logEntry.getNumberOfChildren()), getBody());
+            XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "nbr-children", String.valueOf(logEntry.getNumberOfChildren()), getBody());
         }
 
         if (logEntry.getChangedPaths() != null) {
@@ -138,7 +139,7 @@ public class DAVLogHandler implements IDAVReportHandler, ISVNLogEntryHandler {
             }
         }
 
-        DAVXMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "log-item", getBody());
+        XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "log-item", getBody());
     }
 
     private void addChangedPathTag(String path, SVNLogEntryPath logEntryPath) {
@@ -149,9 +150,9 @@ public class DAVLogHandler implements IDAVReportHandler, ISVNLogEntryHandler {
                     Map attrs = new HashMap();
                     attrs.put("copyfrom-path", logEntryPath.getCopyPath());
                     attrs.put("copyfrom-rev", String.valueOf(logEntryPath.getCopyRevision()));
-                    DAVXMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "added-path", path, attrs, getBody());
+                    XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "added-path", path, attrs, getBody());
                 } else {
-                    DAVXMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "added-path", path, getBody());
+                    XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "added-path", path, getBody());
                 }
                 break;
             case SVNLogEntryPath.TYPE_REPLACED:
@@ -159,16 +160,16 @@ public class DAVLogHandler implements IDAVReportHandler, ISVNLogEntryHandler {
                     Map attrs = new HashMap();
                     attrs.put("copyfrom-path", logEntryPath.getCopyPath());
                     attrs.put("copyfrom-rev", String.valueOf(logEntryPath.getCopyRevision()));
-                    DAVXMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "replaced-path", path, attrs, getBody());
+                    XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "replaced-path", path, attrs, getBody());
                 } else {
-                    DAVXMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "replaced-path", path, getBody());
+                    XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "replaced-path", path, getBody());
                 }
                 break;
             case SVNLogEntryPath.TYPE_MODIFIED:
-                DAVXMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "modified-path", path, getBody());
+                XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "modified-path", path, getBody());
                 break;
             case SVNLogEntryPath.TYPE_DELETED:
-                DAVXMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "deleted-path", path, getBody());
+                XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "deleted-path", path, getBody());
                 break;
             default:
                 break;
