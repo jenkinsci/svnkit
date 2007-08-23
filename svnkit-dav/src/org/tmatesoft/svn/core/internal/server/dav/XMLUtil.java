@@ -71,6 +71,7 @@ public class XMLUtil {
     }
 
     public static StringBuffer addXMLFooter(String prefix, String header, StringBuffer target) {
+        target = target == null ? new StringBuffer() : target;
         target.append("</");
         target.append(prefix);
         target.append(":");

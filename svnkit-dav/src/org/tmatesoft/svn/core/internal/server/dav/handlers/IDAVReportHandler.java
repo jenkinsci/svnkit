@@ -16,7 +16,6 @@ import java.io.Writer;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
-import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 
 /**
  * @author TMate Software Ltd.
@@ -38,7 +37,10 @@ public interface IDAVReportHandler {
     static final DAVElement END_REVISION = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "end-revision");
 
     static final String NAME_ATTR = "name";
+    static final String ENCODING_ATTR = "encoding";
 
-    public void writeTo(Writer out, DAVResource resource, IDAVRequest davRequest) throws SVNException;
+    public int getContentLength();
+
+    public void writeTo(Writer out) throws SVNException;
 
 }

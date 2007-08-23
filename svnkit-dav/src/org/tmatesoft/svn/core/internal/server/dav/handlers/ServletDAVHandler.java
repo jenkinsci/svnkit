@@ -16,9 +16,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -80,9 +82,13 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     protected static final String DATE_HEADER = "Date";
     protected static final String KEEP_ALIVE_HEADER = "Keep-Alive";
     protected static final String ACCEPT_RANGES_HEADER = "Accept-Ranges";
+    protected static final String ACCEPT_ENCODING_HEADER = "Accept-Encoding";
 
     protected static final String DEFAULT_KEEP_ALIVE_VALUE = "timeout=15, max=99";
     protected static final String ACCEPT_RANGES_VALUE = "bytes";
+
+    protected static final String DIFF_VERSION_1 = "svndiff1";
+    protected static final String DIFF_VERSION = "svndiff";
 
     protected static final DAVElement PROPFIND = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "propfind");
     protected static final DAVElement PROPNAME = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "propname");
@@ -151,6 +157,10 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
 
     protected void setResponseContentType(String contentType) {
         myResponse.setContentType(contentType);
+    }
+
+    protected void setResponseContentLength(int length) {
+        myResponse.setContentLength(length);
     }
 
     protected Writer getResponseWriter() throws SVNException {
@@ -227,6 +237,30 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         String userAgent = getRequestHeader(USER_AGENT_HEADER);
         boolean isSVNClient = userAgent != null && (userAgent.startsWith("SVN/") || userAgent.startsWith("SVNKit"));
         return getRepositoryManager().createDAVResource(getRequestContext(), getURI(), isSVNClient, version, clientOptions, baseChecksum, resultChecksum, label, useCheckedIn);
+    }
+
+    protected boolean getSVNDiffVersion() {
+        boolean diffCompress = false;
+        for (Enumeration headerEncodings = getRequestHeaders(ACCEPT_ENCODING_HEADER); headerEncodings.hasMoreElements();)
+        {
+            String currentEncodings = (String) headerEncodings.nextElement();
+            Pattern comma = Pattern.compile(",");
+            String[] encodings = comma.split(currentEncodings);
+            AcceptEncodingEntry[] encodingEntries = new AcceptEncodingEntry[encodings.length];
+            for (int i = 0; i < encodingEntries.length; i++) {
+                encodingEntries[i] = new AcceptEncodingEntry(encodings[i]);
+            }
+            Arrays.sort(encodingEntries);
+            for (int i = encodingEntries.length - 1; i >= 0; i--) {
+                if (DIFF_VERSION_1.equals(encodingEntries[i].getEncoding())) {
+                    diffCompress = true;
+                    break;
+                } else if (DIFF_VERSION.equals(encodingEntries[i].getEncoding())) {
+                    break;
+                }
+            }
+        }
+        return diffCompress;
     }
 
     protected Collection getSupportedLiveProperties(DAVResource resource, Collection properties) {
@@ -325,5 +359,54 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             ourSAXParserFactory.setValidating(false);
         }
         return ourSAXParserFactory;
+    }
+
+    private class AcceptEncodingEntry implements Comparable {
+
+        private String myEncoding;
+
+        private float myQuality;
+
+        private AcceptEncodingEntry(String acceptEncodingHeaderValue) {
+            myQuality = 1.0f;
+            int delimiterIndex = acceptEncodingHeaderValue.indexOf(";");
+            if (delimiterIndex == -1) {
+                setEncoding(acceptEncodingHeaderValue);
+            } else {
+                setEncoding(acceptEncodingHeaderValue.substring(0, delimiterIndex));
+                String qualityString = acceptEncodingHeaderValue.substring(delimiterIndex + 1);
+                if (qualityString.startsWith("q=")) {
+                    myQuality = Float.parseFloat(qualityString.substring("q=".length()));
+                }
+            }
+        }
+
+        public void setEncoding(String encoding) {
+            myEncoding = encoding.toLowerCase();
+        }
+
+        public String getEncoding() {
+            return myEncoding;
+        }
+
+        public float getQuality() {
+            return myQuality;
+        }
+
+        public int compareTo(Object object) {
+            if (object == null) {
+                throw new NullPointerException();
+            }
+            if (!(object instanceof AcceptEncodingEntry)) {
+                throw new ClassCastException();
+            }
+
+            AcceptEncodingEntry anotherEntry = (AcceptEncodingEntry) object;
+            if (getQuality() == anotherEntry.getQuality()) {
+                return 0;
+            } else {
+                return getQuality() > anotherEntry.getQuality() ? 1 : -1;
+            }
+        }
     }
 }

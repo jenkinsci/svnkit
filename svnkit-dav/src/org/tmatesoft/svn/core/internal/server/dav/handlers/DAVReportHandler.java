@@ -30,7 +30,7 @@ import org.xml.sax.Attributes;
  * @author TMate Software Ltd.
  * @version 1.1.2
  */
-public class DAVReportHandler extends ServletDAVHandler{
+public class DAVReportHandler extends ServletDAVHandler {
 
     public static final Set REPORT_ELEMENTS = new HashSet();
 
@@ -84,20 +84,25 @@ public class DAVReportHandler extends ServletDAVHandler{
         setResponseContentType(DEFAULT_XML_CONTENT_TYPE);
         setResponseStatus(HttpServletResponse.SC_OK);
 
-        IDAVReportHandler reportHandler = getReportHandler();
-        reportHandler.writeTo(getResponseWriter(), resource, getDAVRequest());
+        IDAVReportHandler reportHandler = getReportHandler(resource);
+
+        if (reportHandler.getContentLength() != -1) {
+            setResponseContentLength(reportHandler.getContentLength());
+        }
+
+        reportHandler.writeTo(getResponseWriter());
         //TODO: In some cases native svn starts blame command and clean all out headers        
     }
 
-    private IDAVReportHandler getReportHandler() throws SVNException {
+    private IDAVReportHandler getReportHandler(DAVResource resource) throws SVNException {
         if (getDAVRequest().getRootElement() == IDAVReportHandler.DATED_REVISIONS_REPORT) {
-            return new DAVDatedRevisionHandler();
+            return new DAVDatedRevisionHandler(resource, getDAVRequest());
         } else if (getDAVRequest().getRootElement() == IDAVReportHandler.LOG_REPORT) {
-            return new DAVLogHandler();
+            return new DAVLogHandler(resource, getDAVRequest());
         } else if (getDAVRequest().getRootElement() == IDAVReportHandler.GET_LOCATIONS_REPORT) {
-            return new DAVGetLocationsHandler();
+            return new DAVGetLocationsHandler(resource, getDAVRequest());
         } else if (getDAVRequest().getRootElement() == IDAVReportHandler.FILE_REVISIONS_REPORT) {
-            return new DAVFileRevisionsHandler();
+            return new DAVFileRevisionsHandler(resource, getDAVRequest(), getSVNDiffVersion());
         }
         //TODO: Here should be something like NOT_SUPPORTED
         SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA));
