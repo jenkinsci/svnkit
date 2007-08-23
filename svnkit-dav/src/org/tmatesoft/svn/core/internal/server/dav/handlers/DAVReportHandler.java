@@ -11,12 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
-import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
@@ -35,64 +30,48 @@ import org.xml.sax.Attributes;
  * @author TMate Software Ltd.
  * @version 1.1.2
  */
-public class DAVReportHandler extends ServletDAVHandler implements IDAVReportHandler {
+public class DAVReportHandler extends ServletDAVHandler{
 
     public static final Set REPORT_ELEMENTS = new HashSet();
 
     static {
-        REPORT_ELEMENTS.add(UPDATE_REPORT);
-        REPORT_ELEMENTS.add(LOG_REPORT);
-        REPORT_ELEMENTS.add(DATED_REVISIONS_REPORT);
-        REPORT_ELEMENTS.add(GET_LOCATIONS_REPORT);
-        REPORT_ELEMENTS.add(FILE_REVISIONS_REPORT);
-        REPORT_ELEMENTS.add(GET_LOCKS_REPORT);
-        REPORT_ELEMENTS.add(REPLAY_REPORT);
-        REPORT_ELEMENTS.add(MERGEINFO_REPORT);
+        REPORT_ELEMENTS.add(IDAVReportHandler.UPDATE_REPORT);
+        REPORT_ELEMENTS.add(IDAVReportHandler.LOG_REPORT);
+        REPORT_ELEMENTS.add(IDAVReportHandler.DATED_REVISIONS_REPORT);
+        REPORT_ELEMENTS.add(IDAVReportHandler.GET_LOCATIONS_REPORT);
+        REPORT_ELEMENTS.add(IDAVReportHandler.FILE_REVISIONS_REPORT);
+        REPORT_ELEMENTS.add(IDAVReportHandler.GET_LOCKS_REPORT);
+        REPORT_ELEMENTS.add(IDAVReportHandler.REPLAY_REPORT);
+        REPORT_ELEMENTS.add(IDAVReportHandler.MERGEINFO_REPORT);
     }
 
-    private DAVElement myRootElement;
-    private Map myDAVProperties;
-    private Map myDAVAttributes;
+    private DAVPropertyValuesRequest myDAVRequest;
 
     protected DAVReportHandler(DAVRepositoryManager connector, HttpServletRequest request, HttpServletResponse response) {
         super(connector, request, response);
     }
 
-    private Map getDAVProperties() {
-        if (myDAVProperties == null) {
-            myDAVProperties = new HashMap();
+    private IDAVRequest getDAVRequest() {
+        if (myDAVRequest == null) {
+            myDAVRequest = new DAVPropertyValuesRequest();
         }
-        return myDAVProperties;
-    }
-
-    private Map getDAVAttributes() {
-        if (myDAVAttributes == null) {
-            myDAVAttributes = new HashMap();
-        }
-        return myDAVAttributes;
+        return myDAVRequest;
     }
 
     protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
         if (parent == null) {
-            myRootElement = element;
+            getDAVRequest().setRootElement(element);
             //TODO: Think of something better.
             //Now we put root not to forget about its namespace
-            getDAVProperties().put(element, null);
+            getDAVRequest().add(element);
         } else if (REPORT_ELEMENTS.contains(parent)) {
-            getDAVAttributes().put(element, attrs);
+            getDAVRequest().put(element, attrs);
         }
     }
 
     protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
         if (REPORT_ELEMENTS.contains(parent)) {
-            Collection tagsCData = (Collection) getDAVProperties().get(element);
-            if (tagsCData == null) {
-                Collection currentCData = new ArrayList();
-                currentCData.add(cdata.toString());
-                getDAVProperties().put(element, currentCData);
-            } else {
-                tagsCData.add(cdata.toString());
-            }
+            getDAVRequest().put(element, cdata.toString());
         }
     }
 
@@ -105,26 +84,20 @@ public class DAVReportHandler extends ServletDAVHandler implements IDAVReportHan
         setResponseContentType(DEFAULT_XML_CONTENT_TYPE);
         setResponseStatus(HttpServletResponse.SC_OK);
 
-        writeTo(getResponseWriter(), resource);
-
+        IDAVReportHandler reportHandler = getReportHandler();
+        reportHandler.writeTo(getResponseWriter(), resource, getDAVRequest());
+        //TODO: In some cases native svn starts blame command and clean all out headers        
     }
 
-    public void writeTo(Writer out, DAVResource resource) throws SVNException {
-        IDAVReportHandler reportHandler = getHandler();
-        reportHandler.writeTo(out, resource);
-
-        //TODO: In some cases native svn starts blame command and clean all out headers
-    }
-
-    private IDAVReportHandler getHandler() throws SVNException {
-        if (myRootElement == DATED_REVISIONS_REPORT) {
-            return new DAVDatedRevisionHandler(getDAVProperties());
-        } else if (myRootElement == LOG_REPORT) {
-            return new DAVLogHandler(getDAVProperties());
-        } else if (myRootElement == GET_LOCATIONS_REPORT) {
-            return new DAVGetLocationsHandler(getDAVProperties());
-        } else if (myRootElement == FILE_REVISIONS_REPORT) {
-            return new DAVFileRevisionsHandler(getDAVProperties());
+    private IDAVReportHandler getReportHandler() throws SVNException {
+        if (getDAVRequest().getRootElement() == IDAVReportHandler.DATED_REVISIONS_REPORT) {
+            return new DAVDatedRevisionHandler();
+        } else if (getDAVRequest().getRootElement() == IDAVReportHandler.LOG_REPORT) {
+            return new DAVLogHandler();
+        } else if (getDAVRequest().getRootElement() == IDAVReportHandler.GET_LOCATIONS_REPORT) {
+            return new DAVGetLocationsHandler();
+        } else if (getDAVRequest().getRootElement() == IDAVReportHandler.FILE_REVISIONS_REPORT) {
+            return new DAVFileRevisionsHandler();
         }
         //TODO: Here should be something like NOT_SUPPORTED
         SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA));

@@ -13,7 +13,6 @@ package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -38,17 +37,7 @@ public class DAVGetLocationsHandler implements IDAVReportHandler, ISVNLocationEn
     private static final DAVElement PEG_REVISION = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "peg-revision");
     private static final DAVElement LOCATION_REVISION = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "location-revision");
 
-    private Map myProperties;
     private StringBuffer myBody;
-
-    public DAVGetLocationsHandler(Map properties) {
-        myProperties = properties;
-    }
-
-    private Map getProperties() {
-        return myProperties;
-    }
-
 
     private StringBuffer getBody() {
         if (myBody == null) {
@@ -57,8 +46,8 @@ public class DAVGetLocationsHandler implements IDAVReportHandler, ISVNLocationEn
         return myBody;
     }
 
-    public void writeTo(Writer out, DAVResource resource) throws SVNException {
-        generateResponseBody(resource);
+    public void writeTo(Writer out, DAVResource resource, IDAVRequest davRequest) throws SVNException {
+        generateResponseBody(resource, davRequest);
 
         try {
             out.write(getBody().toString());
@@ -67,24 +56,23 @@ public class DAVGetLocationsHandler implements IDAVReportHandler, ISVNLocationEn
         }
     }
 
-    private void generateResponseBody(DAVResource resource) throws SVNException {
+    private void generateResponseBody(DAVResource resource, IDAVRequest davRequest) throws SVNException {
         String path = null;
         long pegRevision = DAVResource.INVALID_REVISION;
         long[] revisions = null;
 
-        for (Iterator iterator = getProperties().entrySet().iterator(); iterator.hasNext();) {
-            Map.Entry entry = (Map.Entry) iterator.next();
-            DAVElement element = (DAVElement) entry.getKey();
-            Collection values = (Collection) entry.getValue();
+        for (Iterator iterator = davRequest.entryIterator(); iterator.hasNext();) {
+            IDAVRequest.Entry entry = (IDAVRequest.Entry) iterator.next();
+            DAVElement element = entry.getElement();
             if (element == PATH) {
-                path = (String) values.iterator().next();
+                path = entry.getFirstValue();
             } else if (element == PEG_REVISION) {
-                String pegRevisionString = (String) values.iterator().next();
+                String pegRevisionString = entry.getFirstValue();
                 pegRevision = Long.parseLong(pegRevisionString);
             } else if (element == LOCATION_REVISION) {
-                revisions = new long[values.size()];
+                revisions = new long[entry.getValues().size()];
                 int i = 0;
-                for (Iterator revisionsIterator = values.iterator(); revisionsIterator.hasNext(); i++) {
+                for (Iterator revisionsIterator = entry.getValues().iterator(); revisionsIterator.hasNext(); i++) {
                     long currentRevision = Long.parseLong((String) revisionsIterator.next());
                     revisions[i] = currentRevision;
                 }
@@ -97,7 +85,7 @@ public class DAVGetLocationsHandler implements IDAVReportHandler, ISVNLocationEn
         }
 
         XMLUtil.addXMLHeader(getBody());
-        DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, GET_LOCATIONS_REPORT.getName(), getProperties().keySet(), getBody());
+        DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, GET_LOCATIONS_REPORT.getName(), davRequest.getElements(), getBody());
 
         resource.getRepository().getLocations(path, pegRevision, revisions, this);
 

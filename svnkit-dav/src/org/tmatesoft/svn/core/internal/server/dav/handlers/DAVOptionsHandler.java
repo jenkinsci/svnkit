@@ -60,20 +60,21 @@ public class DAVOptionsHandler extends ServletDAVHandler {
     private static final String NAME_ATTR = "name";
     private static final String NAMESPACE_ATTR = "namespace";
 
-    private Collection myDAVElements;
+    private IDAVRequest myDAVRequest;
+
     private Collection myRequestedMethods;
-    private Collection myRequestedReports;
-    private Collection myRequestedLiveProperties;
+    private IDAVRequest myRequestedReports;
+    private IDAVRequest myRequestedLiveProperties;
 
     public DAVOptionsHandler(DAVRepositoryManager connector, HttpServletRequest request, HttpServletResponse response) {
         super(connector, request, response);
     }
 
-    private Collection getDAVElements() {
-        if (myDAVElements == null) {
-            myDAVElements = new ArrayList();
+    private IDAVRequest getDAVRequest(){
+        if (myDAVRequest == null ){
+            myDAVRequest = new DAVPropertiesRequest();            
         }
-        return myDAVElements;
+        return myDAVRequest;
     }
 
     private Collection getRequestedMethods() {
@@ -83,23 +84,23 @@ public class DAVOptionsHandler extends ServletDAVHandler {
         return myRequestedMethods;
     }
 
-    private Collection getRequestedReports() {
+    private IDAVRequest getRequestedReports() {
         if (myRequestedReports == null) {
-            myRequestedReports = new ArrayList();
+            myRequestedReports = new DAVPropertiesRequest();
         }
         return myRequestedReports;
     }
 
-    private Collection getRequestedLiveProperties() {
+    private IDAVRequest getRequestedLiveProperties() {
         if (myRequestedLiveProperties == null) {
-            myRequestedLiveProperties = new ArrayList();
+            myRequestedLiveProperties = new DAVPropertiesRequest();
         }
         return myRequestedLiveProperties;
     }
 
     protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
         if (parent == OPTIONS) {
-            getDAVElements().add(element);
+            getDAVRequest().add(element);
         } else if (parent == SUPPORTED_METHOD_SET && element == SUPPORTED_METHOD) {
             String requestedMethodName = attrs.getValue(DAVElement.DAV_NAMESPACE, NAME_ATTR);
             if (requestedMethodName == null) {
@@ -205,10 +206,10 @@ public class DAVOptionsHandler extends ServletDAVHandler {
     }
 
     private void generateOptionsResponse(DAVResource resource, Collection supportedMethods, StringBuffer xmlBuffer) {
-        if (!getDAVElements().isEmpty()) {
+        if (!getDAVRequest().isEmpty()) {
             XMLUtil.addXMLHeader(xmlBuffer);
             DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "options-response", null, xmlBuffer);
-            for (Iterator iterator = getDAVElements().iterator(); iterator.hasNext();) {
+            for (Iterator iterator = getDAVRequest().getElements().iterator(); iterator.hasNext();) {
                 DAVElement element = (DAVElement) iterator.next();
                 if (element == ACTIVITY_COLLECTION_SET) {
                     generateActivityCollectionSet(resource, xmlBuffer);
@@ -234,7 +235,7 @@ public class DAVOptionsHandler extends ServletDAVHandler {
     private void generateSupportedLivePropertySet(DAVResource resource, StringBuffer xmlBuffer) {
         XMLUtil.openXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "supported-live-property-set", XMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
         Collection supportedLiveProperties = getSupportedLiveProperties(resource, null);
-        generateSupportedElementSet(DAVXMLUtil.DAV_NAMESPACE_PREFIX, SUPPORTED_LIVE_PROPERTY.getName(), supportedLiveProperties, getRequestedLiveProperties(), xmlBuffer);
+        generateSupportedElementSet(DAVXMLUtil.DAV_NAMESPACE_PREFIX, SUPPORTED_LIVE_PROPERTY.getName(), supportedLiveProperties, getRequestedLiveProperties().getElements(), xmlBuffer);
         XMLUtil.closeXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "supported-live-property-set", xmlBuffer);
     }
 
@@ -248,7 +249,7 @@ public class DAVOptionsHandler extends ServletDAVHandler {
         XMLUtil.openXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "supported-report-set", XMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
         if (resource.getResourceURI().getType() == DAVResourceType.REGULAR) {
             Collection supportedReports = DAVReportHandler.REPORT_ELEMENTS;
-            generateSupportedElementSet(DAVXMLUtil.DAV_NAMESPACE_PREFIX, SUPPORTED_REPORT.getName(), supportedReports, getRequestedReports(), xmlBuffer);
+            generateSupportedElementSet(DAVXMLUtil.DAV_NAMESPACE_PREFIX, SUPPORTED_REPORT.getName(), supportedReports, getRequestedReports().getElements(), xmlBuffer);
             XMLUtil.closeXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "supported-report-set", xmlBuffer);
         }
     }

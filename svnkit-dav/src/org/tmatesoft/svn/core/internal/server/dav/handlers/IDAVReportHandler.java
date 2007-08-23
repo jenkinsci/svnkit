@@ -39,6 +39,6 @@ public interface IDAVReportHandler {
 
     static final String NAME_ATTR = "name";
 
-    public void writeTo(Writer out, DAVResource resource) throws SVNException;
+    public void writeTo(Writer out, DAVResource resource, IDAVRequest davRequest) throws SVNException;
 
 }

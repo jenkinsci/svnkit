@@ -43,16 +43,7 @@ public class DAVLogHandler implements IDAVReportHandler, ISVNLogEntryHandler {
     private static final DAVElement OMIT_LOG_TEXT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "omit-log-text");
     private static final DAVElement LIMIT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "limit");
 
-    private Map myProperties;
     private StringBuffer myBody;
-
-    public DAVLogHandler(Map properties) {
-        myProperties = properties;
-    }
-
-    private Map getProperties() {
-        return myProperties;
-    }
 
     private StringBuffer getBody() {
         if (myBody == null) {
@@ -61,8 +52,8 @@ public class DAVLogHandler implements IDAVReportHandler, ISVNLogEntryHandler {
         return myBody;
     }
 
-    public void writeTo(Writer out, DAVResource resource) throws SVNException {
-        generateResponseBody(resource);
+    public void writeTo(Writer out, DAVResource resource, IDAVRequest davRequest) throws SVNException {
+        generateResponseBody(resource, davRequest);
         try {
             out.write(getBody().toString());
         } catch (IOException e) {
@@ -70,7 +61,7 @@ public class DAVLogHandler implements IDAVReportHandler, ISVNLogEntryHandler {
         }
     }
 
-    private void generateResponseBody(DAVResource resource) throws SVNException {
+    private void generateResponseBody(DAVResource resource, IDAVRequest davRequest) throws SVNException {
         boolean discoverChangedPaths = false;
         boolean strictNodeHistory = false;
         boolean includeMergedRevisions = false;
@@ -80,9 +71,9 @@ public class DAVLogHandler implements IDAVReportHandler, ISVNLogEntryHandler {
         long limit = 0;
         String[] targetPaths = null;
 
-        for (Iterator iterator = getProperties().entrySet().iterator(); iterator.hasNext();) {
-            Map.Entry entry = (Map.Entry) iterator.next();
-            DAVElement element = (DAVElement) entry.getKey();
+        for (Iterator iterator = davRequest.entryIterator(); iterator.hasNext();) {
+            IDAVRequest.Entry entry = (IDAVRequest.Entry) iterator.next();
+            DAVElement element = entry.getElement();
             if (element == DISCOVER_CHANGED_PATHS) {
                 discoverChangedPaths = true;
             } else if (element == STRICT_NODE_HISTORY) {
@@ -92,26 +83,23 @@ public class DAVLogHandler implements IDAVReportHandler, ISVNLogEntryHandler {
             } else if (element == OMIT_LOG_TEXT) {
                 omitLogText = true;
             } else if (element == START_REVISION) {
-                Collection revisions = (Collection) entry.getValue();
-                String revisionString = (String) revisions.iterator().next();
+                String revisionString = entry.getFirstValue();
                 startRevision = Long.parseLong(revisionString);
             } else if (element == END_REVISION) {
-                Collection revisions = (Collection) entry.getValue();
-                String revisionString = (String) revisions.iterator().next();
+                String revisionString = entry.getFirstValue();
                 endRevision = Long.parseLong(revisionString);
             } else if (element == LIMIT) {
-                Collection limits = (Collection) entry.getValue();
-                String limitString = (String) limits.iterator().next();
+                String limitString = entry.getFirstValue();
                 limit = Integer.parseInt(limitString);
             } else if (element == PATH) {
-                Collection paths = (Collection) entry.getValue();
+                Collection paths = entry.getValues();
                 targetPaths = new String[paths.size()];
                 targetPaths = (String[]) paths.toArray(targetPaths);
             }
         }
 
         XMLUtil.addXMLHeader(getBody());
-        DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, LOG_REPORT.getName(), getProperties().keySet(), getBody());
+        DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, LOG_REPORT.getName(), davRequest.getElements(), getBody());
 
         resource.getRepository().log(targetPaths, startRevision, endRevision, discoverChangedPaths,
                 strictNodeHistory, limit, includeMergedRevisions, omitLogText, this);

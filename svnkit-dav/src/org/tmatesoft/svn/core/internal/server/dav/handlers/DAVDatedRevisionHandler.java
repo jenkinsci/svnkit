@@ -13,9 +13,7 @@ package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.Collection;
 import java.util.Date;
-import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -33,19 +31,8 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
  */
 public class DAVDatedRevisionHandler implements IDAVReportHandler {
 
-    private Map myProperties;
-
-    public DAVDatedRevisionHandler(Map properties) {
-        myProperties = properties;
-    }
-
-
-    private Map getProperties() {
-        return myProperties;
-    }
-
-    public void writeTo(Writer out, DAVResource resource) throws SVNException {
-        StringBuffer body = generateResponseBody(resource);
+    public void writeTo(Writer out, DAVResource resource, IDAVRequest davRequest) throws SVNException {
+        StringBuffer body = generateResponseBody(resource, davRequest);
         try {
             out.write(body.toString());
         } catch (IOException e) {
@@ -53,19 +40,18 @@ public class DAVDatedRevisionHandler implements IDAVReportHandler {
         }
     }
 
-    private StringBuffer generateResponseBody(DAVResource resource) throws SVNException {
+    private StringBuffer generateResponseBody(DAVResource resource, IDAVRequest davRequest) throws SVNException {
         StringBuffer xmlBuffer = new StringBuffer();
-        long revision = getDatedRevision(resource);
+        long revision = getDatedRevision(resource, davRequest);
         XMLUtil.addXMLHeader(xmlBuffer);
-        DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, DATED_REVISIONS_REPORT.getName(), myProperties.keySet(), xmlBuffer);
+        DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, DATED_REVISIONS_REPORT.getName(), davRequest.getElements(), xmlBuffer);
         XMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.VERSION_NAME.getName(), String.valueOf(revision), xmlBuffer);
         XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, DATED_REVISIONS_REPORT.getName(), xmlBuffer);
         return xmlBuffer;
     }
 
-    private long getDatedRevision(DAVResource resource) throws SVNException {
-        Collection cdata = (Collection) getProperties().get(DAVElement.CREATION_DATE);
-        String dateString = (String) cdata.iterator().next();
+    private long getDatedRevision(DAVResource resource, IDAVRequest davRequest) throws SVNException {
+        String dateString = davRequest.getFirstValue(DAVElement.CREATION_DATE);
         Date date = SVNTimeUtil.parseDate(dateString);
         return resource.getRepository().getDatedRevision(date);
     }

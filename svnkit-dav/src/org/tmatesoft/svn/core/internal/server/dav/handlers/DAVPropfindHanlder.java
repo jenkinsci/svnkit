@@ -52,7 +52,7 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
     private static final String DEFAULT_AUTOVERSION_LINE = "DAV:checkout-checkin";
     private static final String COLLECTION_RESOURCE_TYPE = "<D:collection/>\n";
 
-    private Collection myDAVElements;
+    private IDAVRequest myDAVRequest;
 
     static {
         PROPERTY_ELEMENTS.add(DAVElement.AUTO_VERSION);
@@ -73,11 +73,12 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         PROPERTY_ELEMENTS.add(GET_CONTENT_TYPE);
     }
 
-    private Collection getDAVProperties() {
-        if (myDAVElements == null) {
-            myDAVElements = new ArrayList();
+    private IDAVRequest getDAVRequest() {
+        if (myDAVRequest == null) {
+            myDAVRequest = new DAVPropertiesRequest();
         }
-        return myDAVElements;
+        return myDAVRequest;
+
     }
 
     public DAVPropfindHanlder(DAVRepositoryManager connector, HttpServletRequest request, HttpServletResponse response) {
@@ -88,13 +89,14 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         if ((element == ALLPROP || element == DAVElement.PROP || element == PROPNAME) && parent != PROPFIND) {
             invalidXML();
         } else if (element == ALLPROP) {
-            getDAVProperties().add(ALLPROP);
+            getDAVRequest().setRootElement(ALLPROP);
         } else if (element == PROPNAME) {
-            getDAVProperties().add(PROPNAME);
+            getDAVRequest().setRootElement(PROPNAME);
         } else
         if ((PROPERTY_ELEMENTS.contains(element) || DAVElement.SVN_SVN_PROPERTY_NAMESPACE.equals(element.getNamespace())
                 || DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE.equals(element.getNamespace())) && parent == DAVElement.PROP) {
-            getDAVProperties().add(element);
+            getDAVRequest().setRootElement(DAVElement.PROP);
+            getDAVRequest().add(element);
         }
     }
 
@@ -124,15 +126,15 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
 
     private void generatePropertiesResponse(StringBuffer xmlBuffer, DAVResource resource, DAVDepth depth) throws SVNException {
         XMLUtil.addXMLHeader(xmlBuffer);
-        DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "multistatus", getDAVProperties(), xmlBuffer);
-        if (getDAVProperties().contains(ALLPROP)) {
+        DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "multistatus", getDAVRequest().getElements(), xmlBuffer);
+        if (getDAVRequest().getRootElement() == ALLPROP) {
             Collection allProperties = convertDeadPropertiesToDAVElements(resource.getDeadProperties());
             getSupportedLiveProperties(resource, allProperties);
             generateResponse(xmlBuffer, resource, allProperties, depth, true);
-        } else if (getDAVProperties().contains(PROPNAME)) {
+        } else if (getDAVRequest().getRootElement() == PROPNAME) {
             //TODO: generate all properties' names
-        } else {
-            generateResponse(xmlBuffer, resource, getDAVProperties(), depth, false);
+        } else if (getDAVRequest().getRootElement() == DAVElement.PROP) {
+            generateResponse(xmlBuffer, resource, getDAVRequest().getElements(), depth, false);
         }
         XMLUtil.closeXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "multistatus", xmlBuffer);
     }
@@ -144,6 +146,7 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
             for (Iterator entriesIterator = resource.getEntries().iterator(); entriesIterator.hasNext();) {
                 SVNDirEntry entry = (SVNDirEntry) entriesIterator.next();
                 String entryURI = DAVPathUtil.append(resource.getResourceURI().getURI(), entry.getName());
+                //TODO: check if native svn uses label from parent resource
                 DAVResourceURI newResourceURI = new DAVResourceURI(resource.getResourceURI().getContext(), entryURI, null, false);
                 DAVResource newResource = new DAVResource(resource.getRepository(), newResourceURI, resource.isSVNClient(), resource.getVersion(), resource.getClientOptions(), null, null);
                 if (updateProperties) {

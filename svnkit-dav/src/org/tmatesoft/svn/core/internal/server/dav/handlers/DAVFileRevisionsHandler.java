@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.internal.server.dav.handlers;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -37,17 +36,7 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  */
 public class DAVFileRevisionsHandler implements IDAVReportHandler, ISVNFileRevisionHandler {
 
-    private Map myProperties;
     private StringBuffer myBody;
-
-
-    public DAVFileRevisionsHandler(Map properties) {
-        myProperties = properties;
-    }
-
-    private Map getProperties() {
-        return myProperties;
-    }
 
     private StringBuffer getBody() {
         if (myBody == null) {
@@ -56,8 +45,8 @@ public class DAVFileRevisionsHandler implements IDAVReportHandler, ISVNFileRevis
         return myBody;
     }
 
-    public void writeTo(Writer out, DAVResource resource) throws SVNException {
-        generateResponseBody(resource);
+    public void writeTo(Writer out, DAVResource resource, IDAVRequest davRequest) throws SVNException {
+        generateResponseBody(resource, davRequest);
 
         try {
             out.write(getBody().toString());
@@ -66,26 +55,25 @@ public class DAVFileRevisionsHandler implements IDAVReportHandler, ISVNFileRevis
         }
     }
 
-    private void generateResponseBody(DAVResource resource) throws SVNException {
+    private void generateResponseBody(DAVResource resource, IDAVRequest davRequest) throws SVNException {
         String path = null;
         long startRevision = DAVResource.INVALID_REVISION;
         long endRevision = DAVResource.INVALID_REVISION;
 
-        for (Iterator iterator = getProperties().entrySet().iterator(); iterator.hasNext();) {
-            Map.Entry entry = (Map.Entry) iterator.next();
-            DAVElement element = (DAVElement) entry.getKey();
-            Collection values = (Collection) entry.getValue();
+        for (Iterator iterator = davRequest.entryIterator(); iterator.hasNext();) {
+            IDAVRequest.Entry entry = (IDAVRequest.Entry) iterator.next();
+            DAVElement element = entry.getElement();
             if (element == PATH) {
-                path = (String) values.iterator().next();
+                path = entry.getFirstValue();
             } else if (element == START_REVISION) {
-                startRevision = Long.parseLong((String) values.iterator().next());
+                startRevision = Long.parseLong(entry.getFirstValue());
             } else if (element == END_REVISION) {
-                endRevision = Long.parseLong((String) values.iterator().next());
+                endRevision = Long.parseLong(entry.getFirstValue());
             }
         }
 
         XMLUtil.addXMLHeader(getBody());
-        DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, FILE_REVISIONS_REPORT.getName(), getProperties().keySet(), getBody());
+        DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, FILE_REVISIONS_REPORT.getName(), davRequest.getElements(), getBody());
 
         //TODO: native SVN takes SVNDiff Version from request's header sets it to generate txdelta
         resource.getRepository().getFileRevisions(path, startRevision, endRevision, this);
