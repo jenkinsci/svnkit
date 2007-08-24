@@ -70,7 +70,7 @@ public class DAVFileRevisionsHandler implements IDAVReportHandler, ISVNFileRevis
         myResponseWriter = responseWriter;
     }
 
-    private boolean isWriteHeader() {
+    private boolean addWriteHeader() {
         return myWriteHeader;
     }
 
@@ -189,7 +189,7 @@ public class DAVFileRevisionsHandler implements IDAVReportHandler, ISVNFileRevis
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try {
-            diffWindow.writeTo(baos, isWriteHeader(), isDiffCompress());
+            diffWindow.writeTo(baos, addWriteHeader(), isDiffCompress());
             byte[] textDelta = baos.toByteArray();
             String txDelta = SVNBase64.byteArrayToBase64(textDelta);
             writeString(txDelta);

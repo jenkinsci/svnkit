@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -111,13 +112,20 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
         StringBuffer body = new StringBuffer();
         DAVDepth depth = getRequestDepth(DAVDepth.DEPTH_INFINITY);
         generatePropertiesResponse(body, resource, depth);
+        String responseBody = body.toString();
+
+        try {
+            setResponseContentLength(responseBody.getBytes(UTF_8_ENCODING).length);
+        } catch (UnsupportedEncodingException e) {
+            //Nothing to do, we just skip Content-Length header
+        }
 
         setDefaultResponseHeaders();
         setResponseContentType(DEFAULT_XML_CONTENT_TYPE);
         setResponseStatus(SC_MULTISTATUS);
 
         try {
-            getResponseWriter().write(body.toString());
+            getResponseWriter().write(responseBody);
         } catch (IOException e) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
         }

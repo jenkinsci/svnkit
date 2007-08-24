@@ -39,7 +39,7 @@ public class DAVResource {
 
     public static final long INVALID_REVISION = SVNRepository.INVALID_REVISION;
 
-    public static final String DEFAULT_COLLECTION_CONTENT_TYPE = "text/html; charset=utf-8";
+    public static final String DEFAULT_COLLECTION_CONTENT_TYPE = "text/html; charset=\"utf-8\"";
     public static final String DEFAULT_FILE_CONTENT_TYPE = "text/plain";
 
     private DAVResourceURI myResourceURI;

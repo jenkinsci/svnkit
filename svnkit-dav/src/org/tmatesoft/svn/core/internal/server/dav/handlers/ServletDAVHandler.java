@@ -90,6 +90,8 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     protected static final String DIFF_VERSION_1 = "svndiff1";
     protected static final String DIFF_VERSION = "svndiff";
 
+    protected static final String UTF_8_ENCODING = "UTF-8";    
+
     protected static final DAVElement PROPFIND = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "propfind");
     protected static final DAVElement PROPNAME = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "propname");
     protected static final DAVElement ALLPROP = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "allprop");

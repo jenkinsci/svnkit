@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -56,19 +57,29 @@ public class DAVGetHandler extends ServletDAVHandler {
         if (!resource.exists()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PATH_NOT_FOUND, "Path ''{0}'' you requested not found", resource.getResourceURI().getPath()));
         }
+
         try {
             checkPreconditions(resource.getETag(), resource.getLastModified());
         } catch (SVNException e) {
             //Nothing to do, there are no enough conditions
         }
+
         setDefaultResponseHeaders();
         setResponseHeaders(resource);
 
         if (resource.isCollection()) {
             StringBuffer body = new StringBuffer();
             generateResponseBody(resource, body);
+            String responseBody = body.toString();
+
             try {
-                getResponseWriter().write(body.toString());
+                setResponseContentLength(responseBody.getBytes(UTF_8_ENCODING).length);
+            } catch (UnsupportedEncodingException e) {
+                //Nothing to do, we just skip Content-Length header
+            }
+
+            try {
+                getResponseWriter().write(responseBody);
             } catch (IOException e) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
             }

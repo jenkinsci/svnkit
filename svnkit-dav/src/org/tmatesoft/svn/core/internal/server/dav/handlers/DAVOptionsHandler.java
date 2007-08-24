@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -70,9 +71,9 @@ public class DAVOptionsHandler extends ServletDAVHandler {
         super(connector, request, response);
     }
 
-    private IDAVRequest getDAVRequest(){
-        if (myDAVRequest == null ){
-            myDAVRequest = new DAVPropertiesRequest();            
+    private IDAVRequest getDAVRequest() {
+        if (myDAVRequest == null) {
+            myDAVRequest = new DAVPropertiesRequest();
         }
         return myDAVRequest;
     }
@@ -142,6 +143,13 @@ public class DAVOptionsHandler extends ServletDAVHandler {
 
         StringBuffer body = new StringBuffer();
         generateOptionsResponse(resource, availableMethods, body);
+        String responseBody = body.toString();
+
+        try {
+            setResponseContentLength(responseBody.getBytes(UTF_8_ENCODING).length);
+        } catch (UnsupportedEncodingException e) {
+            //Nothing to do, we just skip Content-Length header
+        }
 
         setDefaultResponseHeaders();
         setResponseHeaders(availableMethods);
@@ -149,7 +157,7 @@ public class DAVOptionsHandler extends ServletDAVHandler {
         setResponseStatus(HttpServletResponse.SC_OK);
 
         try {
-            getResponseWriter().write(body.toString());
+            getResponseWriter().write(responseBody);
         } catch (IOException e) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
         }
