@@ -19,10 +19,12 @@ package org.tmatesoft.svn.core;
 public class SVNMergeRange implements Comparable {
     private long myStartRevision;
     private long myEndRevision;
+    private boolean myIsInheritable; 
     
-    public SVNMergeRange(long startRevision, long endRevision) {
+    public SVNMergeRange(long startRevision, long endRevision, boolean isInheritable) {
         myStartRevision = startRevision;
         myEndRevision = endRevision;
+        myIsInheritable = isInheritable;
     }
     
     public long getEndRevision() {
@@ -63,29 +65,44 @@ public class SVNMergeRange implements Comparable {
         return this.compareTo(obj) == 0;
     }
     
-    public SVNMergeRange combine(SVNMergeRange range, boolean dup) {
-        if (canCombine(range)) {
+    public SVNMergeRange combine(SVNMergeRange range, boolean dup, 
+                                 SVNMergeRangeInheritance considerInheritance) {
+        if (canCombine(range, considerInheritance)) {
             myStartRevision = Math.min(myStartRevision, range.getStartRevision());
             myEndRevision = Math.max(myEndRevision, range.getEndRevision());
+            myIsInheritable = myIsInheritable && range.isInheritable();
             return this; 
         }
         return dup ? new SVNMergeRange(range.getStartRevision(), 
-                                       range.getEndRevision()) : range;
+                                       range.getEndRevision(), 
+                                       range.isInheritable()) 
+                   : range;
     }
     
-    public boolean canCombine(SVNMergeRange range) {
-        return range != null && myStartRevision <= range.getEndRevision() &&
-               range.getStartRevision() <= myEndRevision;
+    public boolean canCombine(SVNMergeRange range, SVNMergeRangeInheritance considerInheritance) {
+        if (range != null && myStartRevision <= range.getEndRevision() &&
+            range.getStartRevision() <= myEndRevision) {
+            if (considerInheritance == SVNMergeRangeInheritance.IGNORE_INHERITANCE ||
+                (considerInheritance == SVNMergeRangeInheritance.EQUAL_INHERITANCE &&
+                 myIsInheritable == range.isInheritable()) || 
+                (considerInheritance == SVNMergeRangeInheritance.ONLY_INHERITABLE && 
+                 myIsInheritable && range.isInheritable())) {
+                return true;
+            }
+        }
+        return false;
     }
     
-    public boolean contains(SVNMergeRange range) {
+    public boolean contains(SVNMergeRange range, SVNMergeRangeInheritance considerInheritance) {
         return range != null && myStartRevision <= range.myStartRevision && 
-               range.myEndRevision <= myEndRevision;
+               range.myEndRevision <= myEndRevision && 
+               inheritanceEqual(range, considerInheritance);
     }
     
-    public boolean intersects(SVNMergeRange range) {
+    public boolean intersects(SVNMergeRange range, SVNMergeRangeInheritance considerInheritance) {
         return range != null && myStartRevision + 1 <= range.myEndRevision && 
-               range.myStartRevision + 1 <= myEndRevision;
+               range.myStartRevision + 1 <= myEndRevision && 
+               inheritanceEqual(range, considerInheritance);
     }
     
     public SVNMergeRange swapEndPoints() {
@@ -94,4 +111,23 @@ public class SVNMergeRange implements Comparable {
         myEndRevision = tmp;
         return this;
     }
+    
+    public boolean isInheritable() {
+        return myIsInheritable;
+    }
+    
+    private boolean inheritanceEqual(SVNMergeRange range, SVNMergeRangeInheritance considerInheritance) {
+        if (considerInheritance == SVNMergeRangeInheritance.IGNORE_INHERITANCE) {
+            return true;
+        } else if (considerInheritance == SVNMergeRangeInheritance.ONLY_INHERITABLE) {
+            return myIsInheritable && range.isInheritable();
+        }
+        
+        return myIsInheritable == range.isInheritable();
+    }
+
+    public void setInheritable(boolean isInheritable) {
+        myIsInheritable = isInheritable;
+    }
+
 }

@@ -11,7 +11,6 @@
  */
 package org.tmatesoft.svn.core;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -20,6 +19,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 
@@ -28,10 +28,12 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  * @author  TMate Software Ltd.
  */
 public class SVNMergeRangeList {
+    public static String MERGE_INFO_NONINHERITABLE_STRING = "*";
     
     public static SVNMergeRangeList EMPTY_RANGE_LIST = new SVNMergeRangeList(new SVNMergeRange[] {
                                                        new SVNMergeRange(SVNRepository.INVALID_REVISION, 
-                                                                         SVNRepository.INVALID_REVISION)
+                                                                         SVNRepository.INVALID_REVISION,
+                                                                         false)
                                                        });
     
     private SVNMergeRange[] myRanges;
@@ -52,12 +54,14 @@ public class SVNMergeRangeList {
         SVNMergeRange[] ranges = new SVNMergeRange[myRanges.length];
         for (int i = 0; i < myRanges.length; i++) {
             SVNMergeRange range = myRanges[i];
-            ranges[i] = new SVNMergeRange(range.getStartRevision(), range.getEndRevision());
+            ranges[i] = new SVNMergeRange(range.getStartRevision(), 
+                                          range.getEndRevision(), 
+                                          range.isInheritable());
         }
         return new SVNMergeRangeList(ranges);
     }
     
-    public SVNMergeRangeList merge(SVNMergeRangeList rangeList) {
+    public SVNMergeRangeList merge(SVNMergeRangeList rangeList, SVNMergeRangeInheritance considerInheritance) {
         int i = 0;
         int j = 0;
         SVNMergeRange lastRange = null;
@@ -66,17 +70,28 @@ public class SVNMergeRangeList {
             SVNMergeRange range1 = myRanges[i];
             SVNMergeRange range2 = rangeList.myRanges[j];
             SVNMergeRange combinedRange = null;
-            
             int res = range1.compareTo(range2);
             if (res == 0) {
-                combinedRange = lastRange == null ? range1 : lastRange.combine(range1, true); 
+                if (range2.isInheritable()) {
+                    range1.setInheritable(true);
+                }
+                combinedRange = lastRange == null ? range1 
+                                                  : lastRange.combine(range1, 
+                                                                      true, 
+                                                                      considerInheritance); 
                 i++;
                 j++;
             } else if (res < 0) {
-                combinedRange = lastRange == null ? range1 : lastRange.combine(range1, true); 
+                combinedRange = lastRange == null ? range1 
+                                                  : lastRange.combine(range1, 
+                                                                      true,
+                                                                      considerInheritance); 
                 i++;
             } else { 
-                combinedRange = lastRange == null ? range2 : lastRange.combine(range2, true); 
+                combinedRange = lastRange == null ? range2 
+                                                  : lastRange.combine(range2, 
+                                                                      true,
+                                                                      considerInheritance); 
                 j++;
             }
             if (combinedRange != lastRange) {
@@ -84,18 +99,26 @@ public class SVNMergeRangeList {
                 resultRanges.add(lastRange);
             }
         }
+        
         SVNDebugLog.assertCondition(i >= myRanges.length || j >= rangeList.myRanges.length, "assertion failure in SVNMergeRangeList.merge()");
         for (; i < myRanges.length; i++) {
             SVNMergeRange range = myRanges[i];
-            SVNMergeRange combinedRange = lastRange == null ? range : lastRange.combine(range, true); 
+            SVNMergeRange combinedRange = lastRange == null ? range 
+                                                            : lastRange.combine(range, 
+                                                                                true,
+                                                                                considerInheritance); 
             if (combinedRange != lastRange) {
                 lastRange = combinedRange;
                 resultRanges.add(lastRange);
             }
         }
+
         for (; j < rangeList.myRanges.length; j++) {
             SVNMergeRange range = rangeList.myRanges[j];
-            SVNMergeRange combinedRange = lastRange == null ? range : lastRange.combine(range, true); 
+            SVNMergeRange combinedRange = lastRange == null ? range 
+                                                            : lastRange.combine(range, 
+                                                                                true,
+                                                                                considerInheritance); 
             if (combinedRange != lastRange) {
                 lastRange = combinedRange;
                 resultRanges.add(lastRange);
@@ -104,7 +127,7 @@ public class SVNMergeRangeList {
         return new SVNMergeRangeList((SVNMergeRange[]) resultRanges.toArray(new SVNMergeRange[resultRanges.size()]));
     }
     
-    public SVNMergeRangeList combineRanges() {
+/*    public SVNMergeRangeList combineRanges() {
         Collection combinedRanges = new LinkedList();
         SVNMergeRange lastRange = null;
         for (int k = 0; k < myRanges.length; k++) {
@@ -119,6 +142,7 @@ public class SVNMergeRangeList {
         Arrays.sort(ranges);
         return new SVNMergeRangeList(ranges);
     }
+*/
     
     public String toString() {
         String output = "";
@@ -131,6 +155,11 @@ public class SVNMergeRangeList {
             } else {
                 output += String.valueOf(startRev + 1) + "-" + String.valueOf(endRev);
             }
+
+            if (!range.isInheritable()) {
+                output += MERGE_INFO_NONINHERITABLE_STRING;
+            }
+
             if (i < myRanges.length - 1) {
                 output += ',';
             }
@@ -142,12 +171,13 @@ public class SVNMergeRangeList {
      * Returns ranges which present in this range list but not in the 
      * argument range list. 
      */
-    public SVNMergeRangeList diff(SVNMergeRangeList eraserRangeList) {
-        return removeOrIntersect(eraserRangeList, true);
+    public SVNMergeRangeList diff(SVNMergeRangeList eraserRangeList, 
+                                  SVNMergeRangeInheritance considerInheritance) {
+        return removeOrIntersect(eraserRangeList, true, considerInheritance);
     }
     
     public SVNMergeRangeList intersect(SVNMergeRangeList eraserRangeList) {
-        return removeOrIntersect(eraserRangeList, false);
+        return removeOrIntersect(eraserRangeList, false, SVNMergeRangeInheritance.ONLY_INHERITABLE);
     }
     
     public long countRevisions() {
@@ -218,7 +248,33 @@ public class SVNMergeRangeList {
         return this;
     }
     
-    private SVNMergeRangeList removeOrIntersect(SVNMergeRangeList rangeList, boolean remove) {
+    public SVNMergeRangeList getInheritableRangeList(long startRev, long endRev) {
+        LinkedList inheritableRanges = new LinkedList();
+        if (myRanges.length > 0) {
+            if (!SVNRevision.isValidRevisionNumber(startRev) ||
+                !SVNRevision.isValidRevisionNumber(endRev) ||
+                endRev < startRev) {
+                for (int i = 0; i < myRanges.length; i++) {
+                    SVNMergeRange range = myRanges[i];
+                    if (range.isInheritable()) {
+                        SVNMergeRange inheritableRange = new SVNMergeRange(range.getStartRevision(),
+                                                                           range.getEndRevision(), 
+                                                                           true);
+                        inheritableRanges.add(inheritableRange);
+                    }
+                }
+            } else {
+                SVNMergeRange range = new SVNMergeRange(startRev, endRev, false);
+                SVNMergeRangeList boundRangeList = new SVNMergeRangeList(new SVNMergeRange[] { range });
+                return diff(boundRangeList, SVNMergeRangeInheritance.EQUAL_INHERITANCE);
+            }
+        }
+        SVNMergeRange[] ranges = (SVNMergeRange[]) inheritableRanges.toArray(new SVNMergeRange[inheritableRanges.size()]);
+        return new SVNMergeRangeList(ranges);
+    }
+    
+    private SVNMergeRangeList removeOrIntersect(SVNMergeRangeList rangeList, boolean remove, 
+                                                SVNMergeRangeInheritance considerInheritance) {
         Collection ranges = new LinkedList();
         SVNMergeRange lastRange = null;
         SVNMergeRange range1 = null;
@@ -232,9 +288,12 @@ public class SVNMergeRangeList {
                 lastInd = i;
             }
             
-            if (range2.contains(range1)) {
+            if (range2.contains(range1, considerInheritance)) {
                 if (!remove) {
-                    SVNMergeRange combinedRange = lastRange == null ? range1 : lastRange.combine(range1, true);
+                    SVNMergeRange combinedRange = lastRange == null ? range1 
+                                                                    : lastRange.combine(range1, 
+                                                                                        true, 
+                                                                                        considerInheritance);
                     if (combinedRange != lastRange) {
                         lastRange = combinedRange;
                         ranges.add(lastRange);
@@ -246,18 +305,23 @@ public class SVNMergeRangeList {
                 if (range2.equals(range1)) {
                     j++;
                 }
-            } else if (range2.intersects(range1)) {
+            } else if (range2.intersects(range1, considerInheritance)) {
                 if (range1.getStartRevision() < range2.getStartRevision()) {
                     SVNMergeRange tmpRange = null;
                     if (remove) {
                         tmpRange = new SVNMergeRange(range1.getStartRevision(), 
-                                                     range2.getStartRevision());    
+                                                     range2.getStartRevision(),
+                                                     range1.isInheritable());    
                     } else {
                         tmpRange = new SVNMergeRange(range2.getStartRevision(), 
-                                                     range1.getEndRevision());                        
+                                                     range1.getEndRevision(), 
+                                                     range1.isInheritable());                        
                     }
 
-                    SVNMergeRange combinedRange = lastRange == null ? tmpRange : lastRange.combine(tmpRange, true);
+                    SVNMergeRange combinedRange = lastRange == null ? tmpRange 
+                                                                    : lastRange.combine(tmpRange, 
+                                                                                        true, 
+                                                                                        considerInheritance);
                     if (combinedRange != lastRange) {
                         lastRange = combinedRange;
                         ranges.add(lastRange);
@@ -267,8 +331,12 @@ public class SVNMergeRangeList {
                 if (range1.getEndRevision() > range2.getEndRevision()) {
                     if (!remove) {
                         SVNMergeRange tmpRange = new SVNMergeRange(range1.getStartRevision(), 
-                                                                   range2.getEndRevision());
-                        SVNMergeRange combinedRange = lastRange == null ? tmpRange : lastRange.combine(tmpRange, true);
+                                                                   range2.getEndRevision(), 
+                                                                   range1.isInheritable());
+                        SVNMergeRange combinedRange = lastRange == null ? tmpRange 
+                                                                        : lastRange.combine(tmpRange, 
+                                                                                            true, 
+                                                                                            considerInheritance);
                         if (combinedRange != lastRange) {
                             lastRange = combinedRange;
                             ranges.add(lastRange);
@@ -282,13 +350,15 @@ public class SVNMergeRangeList {
                 if (range2.compareTo(range1) < 0) {
                     j++;
                 } else {
-                    if (lastRange == null || !lastRange.canCombine(range1)) {
+                    if (lastRange == null || !lastRange.canCombine(range1, considerInheritance)) {
                         if (remove) {
-                            lastRange = new SVNMergeRange(range1.getStartRevision(), range1.getEndRevision());
+                            lastRange = new SVNMergeRange(range1.getStartRevision(), 
+                                                          range1.getEndRevision(), 
+                                                          range1.isInheritable());
                             ranges.add(lastRange);
                         }
-                    } else if (lastRange != null && lastRange.canCombine(range1)) {
-                        lastRange = lastRange.combine(range1, false);
+                    } else if (lastRange != null && lastRange.canCombine(range1, considerInheritance)) {
+                        lastRange = lastRange.combine(range1, false, considerInheritance);
                     }
                     i++;
                 }
@@ -297,7 +367,10 @@ public class SVNMergeRangeList {
         
         if (remove) {
             if (i == lastInd && i < myRanges.length) {
-                SVNMergeRange combinedRange = lastRange == null ? range1 : lastRange.combine(range1, true);
+                SVNMergeRange combinedRange = lastRange == null ? range1 
+                                                                : lastRange.combine(range1, 
+                                                                                    true, 
+                                                                                    considerInheritance);
                 if (combinedRange != lastRange) {
                     lastRange = combinedRange;
                     ranges.add(lastRange);
@@ -306,7 +379,10 @@ public class SVNMergeRangeList {
             }
             for (; i < myRanges.length; i++) {
                 SVNMergeRange range = myRanges[i];
-                SVNMergeRange combinedRange = lastRange == null ? range : lastRange.combine(range, true);
+                SVNMergeRange combinedRange = lastRange == null ? range 
+                                                                : lastRange.combine(range, 
+                                                                                    true,
+                                                                                    considerInheritance);
                 if (combinedRange != lastRange) {
                     lastRange = combinedRange;
                     ranges.add(lastRange);

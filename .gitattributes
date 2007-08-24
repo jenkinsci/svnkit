@@ -159,6 +159,7 @@ svnkit/src/org/tmatesoft/svn/core/SVNDepth.java -text
 svnkit/src/org/tmatesoft/svn/core/SVNMergeInfo.java -text
 svnkit/src/org/tmatesoft/svn/core/SVNMergeInfoInheritance.java -text
 svnkit/src/org/tmatesoft/svn/core/SVNMergeRange.java -text
+svnkit/src/org/tmatesoft/svn/core/SVNMergeRangeInheritance.java -text
 svnkit/src/org/tmatesoft/svn/core/SVNMergeRangeList.java -text
 svnkit/src/org/tmatesoft/svn/core/SVNURL.java -text
 svnkit/src/org/tmatesoft/svn/core/auth/package.html -text

@@ -394,6 +394,14 @@ public class SVNErrorCode implements Serializable {
      * @since SVN 1.5
      */
     public static final SVNErrorCode MERGE_INFO_PARSE_ERROR = new SVNErrorCode(MISC_CATEGORY, 20, "Merge info parse error");
+    /**
+     * @since SVN 1.5
+     */
+    public static final SVNErrorCode CEASE_INVOCATION = new SVNErrorCode(MISC_CATEGORY, 21, "Cease invocation of this API");
+    /**
+     * @since SVN 1.5
+     */
+    public static final SVNErrorCode REVISION_NUMBER_PARSE_ERROR = new SVNErrorCode(MISC_CATEGORY, 22, "Revision number parse error");
     
     
     public static final SVNErrorCode CL_ARG_PARSING_ERROR = new SVNErrorCode(CL_CATEGORY, 0, "Client error in parsing arguments");

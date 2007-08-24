@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNMergeRange;
+import org.tmatesoft.svn.core.SVNMergeRangeInheritance;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -54,7 +55,7 @@ public class SVNSQLiteDBProcessor implements ISVNDBProcessor {
         "PRAGMA auto_vacuum = 1;",
         "CREATE TABLE mergeinfo (revision INTEGER NOT NULL, mergedfrom TEXT NOT " +
         "NULL, mergedto TEXT NOT NULL, mergedrevstart INTEGER NOT NULL, " +
-        "mergedrevend INTEGER NOT NULL);",
+        "mergedrevend INTEGER NOT NULL, inheritable INTEGER NOT NULL);",
         "CREATE INDEX mi_mergedfrom_idx ON mergeinfo (mergedfrom);",
         "CREATE INDEX mi_mergedto_idx ON mergeinfo (mergedto);",
         "CREATE INDEX mi_revision_idx ON mergeinfo (revision);",
@@ -140,15 +141,16 @@ public class SVNSQLiteDBProcessor implements ISVNDBProcessor {
                 mergedFrom = rows.getString("mergedfrom");
                 long startRev = rows.getLong("mergedrevstart");
                 long endRev = rows.getLong("mergedrevend");
+                boolean isInheritable = rows.getInt("inheritable") != 0;
                 if (lastMergedFrom != null && !lastMergedFrom.equals(mergedFrom)) {
                     SVNMergeRange[] rangesArray = (SVNMergeRange[]) ranges.toArray(new SVNMergeRange[ranges.size()]);
                     Arrays.sort(rangesArray);
                     result.put(lastMergedFrom, new SVNMergeRangeList(rangesArray));
                     ranges.clear();
                 }
-                if (SVNRevision.isValidRevisionNumber(startRev) 
-                        && SVNRevision.isValidRevisionNumber(endRev)) {
-                    ranges.add(new SVNMergeRange(startRev, endRev));
+                if (SVNRevision.isValidRevisionNumber(startRev) && 
+                    SVNRevision.isValidRevisionNumber(endRev)) {
+                    ranges.add(new SVNMergeRange(startRev, endRev, isInheritable));
                 }
                 lastMergedFrom = mergedFrom;
             }
@@ -179,7 +181,8 @@ public class SVNSQLiteDBProcessor implements ISVNDBProcessor {
                                                                                    srcsToRangeLists); 
                     if (!omitMergeInfo) {
                         parentMergeInfo = SVNMergeInfoManager.mergeMergeInfos(parentMergeInfo, 
-                                                                              srcsToRangeLists);
+                                                                              srcsToRangeLists,
+                                                                              SVNMergeRangeInheritance.EQUAL_INHERITANCE);
                     }
                 }
             }
@@ -239,9 +242,9 @@ public class SVNSQLiteDBProcessor implements ISVNDBProcessor {
                 SVNMergeRange range = ranges[i];
                 insertIntoMergeInfoTableStmt.setLong(4, range.getStartRevision());
                 insertIntoMergeInfoTableStmt.setLong(5, range.getEndRevision());
+                insertIntoMergeInfoTableStmt.setInt(6, range.isInheritable() ? 1 : 0);
                 insertIntoMergeInfoTableStmt.execute();
             }
-            
         } catch (SQLException sqle) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_SQLITE_ERROR, 
                                                          sqle.getLocalizedMessage());
@@ -347,7 +350,7 @@ public class SVNSQLiteDBProcessor implements ISVNDBProcessor {
         if (myInsertToMergeInfoTableStatement == null) {
             Connection connection = getConnection();
             try {
-                myInsertToMergeInfoTableStatement = connection.prepareStatement("INSERT INTO mergeinfo (revision, mergedfrom, mergedto, mergedrevstart, mergedrevend) VALUES (?, ?, ?, ?, ?);");
+                myInsertToMergeInfoTableStatement = connection.prepareStatement("INSERT INTO mergeinfo (revision, mergedfrom, mergedto, mergedrevstart, mergedrevend, inheritable) VALUES (?, ?, ?, ?, ?, ?);");
             } catch (SQLException sqle) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_SQLITE_ERROR, sqle.getLocalizedMessage());
                 SVNErrorManager.error(err, sqle);
@@ -399,7 +402,7 @@ public class SVNSQLiteDBProcessor implements ISVNDBProcessor {
         if (mySelectMergeInfoStatement == null) {
             Connection connection = getConnection();
             try {
-                mySelectMergeInfoStatement = connection.prepareStatement("SELECT mergedfrom, mergedrevstart, mergedrevend FROM mergeinfo WHERE mergedto = ? AND revision = ? ORDER BY mergedfrom, mergedrevstart;");
+                mySelectMergeInfoStatement = connection.prepareStatement("SELECT mergedfrom, mergedrevstart, mergedrevend, inheritable FROM mergeinfo WHERE mergedto = ? AND revision = ? ORDER BY mergedfrom, mergedrevstart;");
             } catch (SQLException sqle) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_SQLITE_ERROR, sqle.getLocalizedMessage());
                 SVNErrorManager.error(err, sqle);

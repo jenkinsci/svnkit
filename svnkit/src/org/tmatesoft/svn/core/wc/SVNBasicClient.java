@@ -525,20 +525,9 @@ public class SVNBasicClient implements ISVNEventHandler {
             SVNErrorManager.error(err);
         }
         
-        SVNURL url = null;
-        long revision = -1;
-        if (entry.isScheduledForAddition() || entry.isScheduledForReplacement()) {
-            if (entry.getCopyFromURL() != null) {
-                url = entry.getCopyFromSVNURL();
-                revision = entry.getCopyFromRevision();
-            } else {
-                url = entry.getSVNURL();
-                revision = entry.getRevision();
-            }        
-        } else {
-            url = entry.getSVNURL();
-            revision = entry.getRevision();
-        }        
+        SVNRepositoryLocation mergeInfoLocation = getMergeInfoLocation(entry);
+        SVNURL url = mergeInfoLocation.getURL();
+        long revision = mergeInfoLocation.getRevisionNumber();
 
         if (!reposOnly) {
             indirect = getWCMergeInfo(mergeInfo, path, entry, null, inherit, false);
@@ -572,6 +561,24 @@ public class SVNBasicClient implements ISVNEventHandler {
         return indirect;
     }
     
+    protected SVNRepositoryLocation getMergeInfoLocation(SVNEntry entry) throws SVNException {
+        SVNURL url = null;
+        long revision = SVNRepository.INVALID_REVISION;
+        if (entry.isScheduledForAddition() || entry.isScheduledForReplacement()) {
+            if (entry.getCopyFromURL() != null) {
+                url = entry.getCopyFromSVNURL();
+                revision = entry.getCopyFromRevision();
+            } else {
+                url = entry.getSVNURL();
+                revision = entry.getRevision();
+            }        
+        } else {
+            url = entry.getSVNURL();
+            revision = entry.getRevision();
+        }        
+        return new SVNRepositoryLocation(url, revision);
+    }
+    
     /**
      * @param mergeInfo must not be null!
      */
@@ -582,6 +589,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         String walkPath = "";
         Map result = new TreeMap();
         SVNWCAccess wcAccess = createWCAccess();
+        
         try {
             while (true) {
                 if (inherit == SVNMergeInfoInheritance.NEAREST_ANCESTOR) {
@@ -636,20 +644,27 @@ public class SVNBasicClient implements ISVNEventHandler {
             wcAccess.close();
         }
         
+        boolean isInherited = false;
         if (walkPath.length() == 0) {
             mergeInfo.putAll(result);
-            return false;
+        } else {
+            if (!result.isEmpty()) {
+                for (Iterator paths = result.keySet().iterator(); paths.hasNext();) {
+                    String srcMergePath = (String) paths.next();
+                    SVNMergeRangeList rangeList = (SVNMergeRangeList) result.get(srcMergePath); 
+                    mergeInfo.put(SVNPathUtil.concatToAbs(srcMergePath, walkPath), rangeList);
+                }
+                isInherited = true;
+            }
         }
         
-        if (!result.isEmpty()) {
-            for (Iterator paths = result.keySet().iterator(); paths.hasNext();) {
-                String srcMergePath = (String) paths.next();
-                SVNMergeRangeList rangeList = (SVNMergeRangeList) result.get(srcMergePath); 
-                mergeInfo.put(SVNPathUtil.concatToAbs(srcMergePath, walkPath), rangeList);
-            }
-            return true;
+        if (isInherited) {
+            mergeInfo = SVNMergeInfoManager.getInheritableMergeInfo(mergeInfo, null, 
+                                                                    SVNRepository.INVALID_REVISION, 
+                                                                    SVNRepository.INVALID_REVISION);
         }
-        return false;
+        
+        return isInherited;
     }
 
     protected long getPathLastChangeRevision(String relPath, long revision, SVNRepository repository) throws SVNException {

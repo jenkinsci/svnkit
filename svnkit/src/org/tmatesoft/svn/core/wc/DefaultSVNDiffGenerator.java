@@ -28,6 +28,7 @@ import java.util.TreeMap;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNMergeRangeInheritance;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -516,7 +517,8 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         
         Map deleted = new TreeMap();
         Map added = new TreeMap();
-        SVNMergeInfoManager.diffMergeInfo(deleted, added, oldMergeInfo, newMergeInfo);
+        SVNMergeInfoManager.diffMergeInfo(deleted, added, oldMergeInfo, newMergeInfo, 
+                                          SVNMergeRangeInheritance.EQUAL_INHERITANCE);
 
         for (Iterator paths = deleted.keySet().iterator(); paths.hasNext();) {
             String path = (String) paths.next();

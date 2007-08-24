@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNMergeInfo;
 import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
 import org.tmatesoft.svn.core.SVNMergeRange;
+import org.tmatesoft.svn.core.SVNMergeRangeInheritance;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -1210,7 +1211,8 @@ public class SVNCopyClient extends SVNBasicClient {
                 String mergeInfoString = (String) fileToProp.get(source.getPath());
                 if (mergeInfoString != null) {
                     Map wcMergeInfo = SVNMergeInfoManager.parseMergeInfo(new StringBuffer(mergeInfoString), null);
-                    mergeInfo = SVNMergeInfoManager.mergeMergeInfos(mergeInfo, wcMergeInfo);
+                    mergeInfo = SVNMergeInfoManager.mergeMergeInfos(mergeInfo, wcMergeInfo,
+                                                                    SVNMergeRangeInheritance.EQUAL_INHERITANCE);
                 }
                 
                 mergeInfoString = SVNMergeInfoManager.formatMergeInfoToString(mergeInfo); 
@@ -1488,7 +1490,8 @@ public class SVNCopyClient extends SVNBasicClient {
         Map wcMergeInfo = mergeInfo;
         if (mergeInfoString != null) {
             wcMergeInfo = SVNMergeInfoManager.parseMergeInfo(new StringBuffer(mergeInfoString), null);
-            wcMergeInfo = SVNMergeInfoManager.mergeMergeInfos(wcMergeInfo, mergeInfo);
+            wcMergeInfo = SVNMergeInfoManager.mergeMergeInfos(wcMergeInfo, mergeInfo, 
+                                                              SVNMergeRangeInheritance.EQUAL_INHERITANCE);
         }
         
         mergeInfoString = wcMergeInfo != null ? SVNMergeInfoManager.formatMergeInfoToString(wcMergeInfo) 
@@ -1512,7 +1515,7 @@ public class SVNCopyClient extends SVNBasicClient {
         long oldestRev = getPathLastChangeRevision(srcRelativePath, srcRevision, repository);
         
         if (SVNRevision.isValidRevisionNumber(oldestRev)) {
-            SVNMergeRange range = new SVNMergeRange(oldestRev - 1, srcRevision);
+            SVNMergeRange range = new SVNMergeRange(oldestRev - 1, srcRevision, true);
             targetMergeInfo.put(srcPath, new SVNMergeRangeList(new SVNMergeRange[] {range}));
         }
         
@@ -1521,7 +1524,8 @@ public class SVNCopyClient extends SVNBasicClient {
         SVNMergeInfo srcInfo = (SVNMergeInfo) srcMergeInfo.get(srcPath);
         if (srcInfo != null) {
             srcMergeInfo = srcInfo.getMergeSourcesToMergeLists();
-            targetMergeInfo = SVNMergeInfoManager.mergeMergeInfos(targetMergeInfo, srcMergeInfo);
+            targetMergeInfo = SVNMergeInfoManager.mergeMergeInfos(targetMergeInfo, srcMergeInfo, 
+                                                                  SVNMergeRangeInheritance.EQUAL_INHERITANCE);
         }
         return targetMergeInfo;
     }
