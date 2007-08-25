@@ -79,7 +79,6 @@ public class DAVPropfindHanlder extends ServletDAVHandler {
             myDAVRequest = new DAVPropertiesRequest();
         }
         return myDAVRequest;
-
     }
 
     public DAVPropfindHanlder(DAVRepositoryManager connector, HttpServletRequest request, HttpServletResponse response) {

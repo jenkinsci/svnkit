@@ -57,6 +57,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
 
     protected static final String DEFAULT_XML_CONTENT_TYPE = "text/xml; charset=\"utf-8\"";
 
+    //Specific svn headers
     protected static final String SVN_OPTIONS_HEADER = "X-SVN-Options";
     protected static final String SVN_DELTA_BASE_HEADER = "X-SVN-VR-Base";
     protected static final String SVN_VERSION_NAME_HEADER = "X-SVN-Version-Name";
@@ -65,13 +66,14 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     protected static final String SVN_BASE_FULLTEXT_MD5_HEADER = "X-SVN-Base-Fulltext-MD5";
     protected static final String SVN_RESULT_FULLTEXT_MD5_HEADER = "X-SVN-Result-Fulltext-MD5";
 
-    //Precondition handling headers
+    //Precondition headers
     protected static final String IF_MATCH_HEADER = "If-Match";
     protected static final String IF_UNMODIFIED_SINCE_HEADER = "If-Unmodified-Since";
     protected static final String IF_NONE_MATCH_HEADER = "If-None-Match";
     protected static final String IF_MODIFIED_SINCE_HEADER = "If-Modified-Since";
     protected static final String RANGE_HEADER = "Range";
 
+    //Common HTTP headers
     protected static final String DEPTH_HEADER = "Depth";
     protected static final String VARY_HEADER = "Vary";
     protected static final String LAST_MODIFIED_HEADER = "Last-Modified";
@@ -90,7 +92,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     protected static final String DIFF_VERSION_1 = "svndiff1";
     protected static final String DIFF_VERSION = "svndiff";
 
-    protected static final String UTF_8_ENCODING = "UTF-8";    
+    protected static final String UTF_8_ENCODING = "UTF-8";
 
     protected static final DAVElement PROPFIND = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "propfind");
     protected static final DAVElement PROPNAME = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "propname");
@@ -106,6 +108,8 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     private DAVRepositoryManager myRepositoryManager = null;
     private HttpServletRequest myRequest;
     private HttpServletResponse myResponse;
+
+    protected DAVRequest myDAVRequest;
 
     protected ServletDAVHandler(DAVRepositoryManager connector, HttpServletRequest request, HttpServletResponse response) {
         init();

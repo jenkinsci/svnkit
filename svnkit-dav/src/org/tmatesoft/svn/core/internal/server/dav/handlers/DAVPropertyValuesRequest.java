@@ -49,9 +49,16 @@ public class DAVPropertyValuesRequest implements IDAVRequest {
     }
 
     public void add(DAVElement element) {
-        if (getProperties().get(element) == null) {
+        getProperties().put(element, null);
+    }
+
+    public void addChild(DAVElement parent, DAVElement element) {
+        if (parent == myRootElement) {
             getProperties().put(element, null);
+        } else {
+
         }
+
     }
 
     public void put(DAVElement element, String cdata) {

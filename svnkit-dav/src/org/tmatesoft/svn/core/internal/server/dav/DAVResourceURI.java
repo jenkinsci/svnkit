@@ -46,8 +46,8 @@ public class DAVResourceURI {
         parseURI(label, useCheckedIn);
     }
 
-    public String getRequestURI(){
-        return DAVPathUtil.append(getContext(),  getURI());      
+    public String getRequestURI() {
+        return DAVPathUtil.append(getContext(), getURI());
     }
 
     public String getContext() {

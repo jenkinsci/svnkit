@@ -53,7 +53,7 @@ public class DAVPathUtil {
     public static String tail(String uri) {
         uri = dropTraillingSlash(uri);
         int lastSlashIndex = uri.lastIndexOf(SLASH);
-        if (lastSlashIndex == -1){
+        if (lastSlashIndex == -1) {
             return uri;
         }
         return uri.substring(lastSlashIndex);

@@ -11,21 +11,21 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
-import java.io.Writer;
 import java.io.IOException;
-import java.util.Iterator;
+import java.io.Writer;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
-import org.tmatesoft.svn.core.SVNMergeInfo;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
-import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
-import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNMergeInfo;
+import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
+import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
+import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 /**

@@ -12,8 +12,8 @@
 package org.tmatesoft.svn.core.internal.server.dav;
 
 /**
+ * @author TMate Software Ltd.
  * @version 1.1.2
- * @author  TMate Software Ltd.
  */
 public class DAVResourceKind {
     public static final DAVResourceKind ACT_COLLECTION = new DAVResourceKind("act");
