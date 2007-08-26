@@ -2504,7 +2504,6 @@ public class SVNDiffClient extends SVNBasicClient {
                     } else {
                         parent = new MergePath(parentPath, true, false, false);
                         mergePaths.add(parent);
-                        mergePaths.next();
                     }
                     
                     SVNAdminArea parentArea = myWCAccess.probeTry(parentPath, true, 
