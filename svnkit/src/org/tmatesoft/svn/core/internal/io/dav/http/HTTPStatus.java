@@ -28,6 +28,15 @@ public class HTTPStatus {
     private HTTPHeader myHeader;
     private SVNErrorMessage myError;
     
+    public static boolean isHTTPStatusLine(String statusLine) {
+        try {
+            HTTPStatus status = createHTTPStatus(statusLine);
+            return status != null;
+        } catch (ParseException pe) {
+        }
+        return false;
+    }
+    
     public static HTTPStatus createHTTPStatus(String statusLine) throws ParseException {
         int length = statusLine.length();
         int at = 0;

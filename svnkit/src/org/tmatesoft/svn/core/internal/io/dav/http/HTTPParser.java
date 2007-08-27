@@ -24,9 +24,17 @@ class HTTPParser {
     
     public static HTTPStatus parseStatus(InputStream is, String charset) throws IOException, ParseException {
         String line = null;
+        int limit = 100;
         do {
+            if (limit < 0) {
+                line = null;
+                break;
+            }
             line = readLine(is, charset);
-        } while (line != null && line.length() == 0);
+            limit--;
+            // check if line represents HTTP status line.
+        } while (line != null && (line.length() == 0 || line.trim().length() == 0 || !HTTPStatus.isHTTPStatusLine(line)));
+        
         if (line == null) {
             throw new ParseException("can not read HTTP status line", 0);
         }
