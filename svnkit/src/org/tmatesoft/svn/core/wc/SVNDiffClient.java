@@ -2208,7 +2208,7 @@ public class SVNDiffClient extends SVNBasicClient {
                 repository2.closeSession();
             }
             
-            if (myIsSameURLs && ! myIsDryRun && myIsSameRepository && targetIndex > 0) {
+            if (myIsSameURLs && !myIsDryRun && myIsSameRepository && targetIndex > 0) {
                 MergePath mergePath = (MergePath) childrenWithMergeInfo.get(targetIndex);
                 if (mergePath.myHasNonInheritableMergeInfo && !mergePath.myHasMissingChildren) {
                     SVNMergeRangeList inheritableRangeList = new SVNMergeRangeList(new SVNMergeRange[] {range});
@@ -2802,6 +2802,10 @@ public class SVNDiffClient extends SVNBasicClient {
         
         public boolean equals(Object obj) {
             return compareTo(obj) == 0;
+        }
+        
+        public String toString() {
+            return myPath.toString();
         }
     }
     

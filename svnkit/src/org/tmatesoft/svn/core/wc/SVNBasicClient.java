@@ -659,9 +659,11 @@ public class SVNBasicClient implements ISVNEventHandler {
         }
         
         if (isInherited) {
-            mergeInfo = SVNMergeInfoManager.getInheritableMergeInfo(mergeInfo, null, 
-                                                                    SVNRepository.INVALID_REVISION, 
-                                                                    SVNRepository.INVALID_REVISION);
+            Map inheritableMergeInfo = SVNMergeInfoManager.getInheritableMergeInfo(mergeInfo, 
+                                                                                   null, 
+                                                                                   SVNRepository.INVALID_REVISION, 
+                                                                                   SVNRepository.INVALID_REVISION);
+            mergeInfo.putAll(inheritableMergeInfo);
         }
         
         return isInherited;
