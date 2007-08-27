@@ -13,7 +13,6 @@ package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -21,8 +20,6 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNMergeInfo;
-import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
-import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
@@ -32,27 +29,13 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
  * @author TMate Software Ltd.
  * @version 1.1.2
  */
-public class DAVMergeInfoHandler implements IDAVReportHandler {
-
-    private static final DAVElement INHERIT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "inherit");
-
-    private DAVResource myDAVResource;
-    private IDAVRequest myDAVRequest;
+public class DAVMergeInfoHandler extends ReportHandler {
 
     private String myResponseBody;
 
-    public DAVMergeInfoHandler(DAVResource resource, IDAVRequest davRequest) throws SVNException {
-        myDAVResource = resource;
-        myDAVRequest = davRequest;
+    public DAVMergeInfoHandler(DAVResource resource, DAVMergeInfoRequest reportRequest, Writer responseWriter) throws SVNException {
+        super(resource, reportRequest, responseWriter);
         generateResponseBody();
-    }
-
-    private DAVResource getDAVResource() {
-        return myDAVResource;
-    }
-
-    private IDAVRequest getDAVRequest() {
-        return myDAVRequest;
     }
 
     private String getResponseBody() {
@@ -63,14 +46,17 @@ public class DAVMergeInfoHandler implements IDAVReportHandler {
         myResponseBody = responseBody;
     }
 
+    private DAVMergeInfoRequest getDAVRequest() {
+        return (DAVMergeInfoRequest) myDAVRequest;
+    }
 
     public int getContentLength() {
         return getResponseBody() == null ? -1 : getResponseBody().getBytes().length;
     }
 
-    public void writeTo(Writer out) throws SVNException {
+    public void sendResponse() throws SVNException {
         try {
-            out.write(getResponseBody());
+            getResponseWriter().write(getResponseBody());
         } catch (IOException e) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
         }
@@ -78,32 +64,10 @@ public class DAVMergeInfoHandler implements IDAVReportHandler {
 
     private void generateResponseBody() throws SVNException {
 
-        long revision = DAVResource.INVALID_REVISION;
-        SVNMergeInfoInheritance inherit = SVNMergeInfoInheritance.EXPLICIT;
-        String[] targetPaths = null;
-
-
-        for (Iterator iterator = getDAVRequest().entryIterator(); iterator.hasNext();) {
-            IDAVRequest.Entry entry = (IDAVRequest.Entry) iterator.next();
-            if (entry.getElement() == REVISION) {
-                revision = Long.parseLong(entry.getFirstValue());
-            } else if (entry.getElement() == INHERIT) {
-                SVNMergeInfoInheritance requestedInherit = parseInheritance(entry.getFirstValue());
-                if (requestedInherit != null) {
-                    inherit = requestedInherit;
-                }
-            } else if (entry.getElement() == PATH) {
-                Collection paths = entry.getValues();
-                targetPaths = new String[paths.size()];
-                targetPaths = (String[]) paths.toArray(targetPaths);
-            }
-        }
-
         StringBuffer xmlBuffer = new StringBuffer();
-        XMLUtil.addXMLHeader(xmlBuffer);
-        DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, MERGEINFO_REPORT.getName(), getDAVRequest().getElements(), xmlBuffer);
+        addXMLHeader(xmlBuffer);
 
-        Map mergeInfoMap = getDAVResource().getRepository().getMergeInfo(targetPaths, revision, inherit);
+        Map mergeInfoMap = getDAVResource().getRepository().getMergeInfo(getDAVRequest().getTargetPaths(), getDAVRequest().getRevision(), getDAVRequest().getInherit());
         if (mergeInfoMap != null && !mergeInfoMap.isEmpty()) {
             for (Iterator iterator = mergeInfoMap.entrySet().iterator(); iterator.hasNext();) {
                 Map.Entry entry = (Map.Entry) iterator.next();
@@ -111,7 +75,8 @@ public class DAVMergeInfoHandler implements IDAVReportHandler {
                 addMergeInfo(mergeInfo, xmlBuffer);
             }
         }
-        XMLUtil.addXMLFooter(DAVXMLUtil.SVN_NAMESPACE_PREFIX, MERGEINFO_REPORT.getName(), xmlBuffer);
+
+        addXMLFooter(xmlBuffer);
         setResponseBody(xmlBuffer.toString());
     }
 
@@ -121,18 +86,4 @@ public class DAVMergeInfoHandler implements IDAVReportHandler {
         XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "mergeinfo-info", null, xmlBuffer);
         XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "mergeinfo-item", xmlBuffer);
     }
-
-
-    //TODO: move this method to SVNMergeInfoInheritance
-    private SVNMergeInfoInheritance parseInheritance(String inheritance) {
-        if (SVNMergeInfoInheritance.EXPLICIT.toString().equals(inheritance)) {
-            return SVNMergeInfoInheritance.EXPLICIT;
-        } else if (SVNMergeInfoInheritance.INHERITED.toString().equals(inheritance)) {
-            return SVNMergeInfoInheritance.INHERITED;
-        } else if (SVNMergeInfoInheritance.NEAREST_ANCESTOR.toString().equals(inheritance)) {
-            return SVNMergeInfoInheritance.NEAREST_ANCESTOR;
-        }
-        return null;
-    }
-
 }

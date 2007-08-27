@@ -120,7 +120,7 @@ public class DAVGetHandler extends ServletDAVHandler {
         } catch (SVNException e) {
             //nothing to do we just skip this header
         }
-        setResponseHeader(ACCEPT_RANGES_HEADER, ACCEPT_RANGES_VALUE);
+        setResponseHeader(ACCEPT_RANGES_HEADER, "bytes");
         try {
             Date lastModifiedTime = resource.getLastModified();
             if (lastModifiedTime != null) {

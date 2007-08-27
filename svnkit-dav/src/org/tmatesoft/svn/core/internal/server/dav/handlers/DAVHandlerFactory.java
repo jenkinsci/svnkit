@@ -49,7 +49,7 @@ public class DAVHandlerFactory {
 
     public static ServletDAVHandler createHandler(DAVRepositoryManager manager, HttpServletRequest request, HttpServletResponse response) throws SVNException {
         if (METHOD_PROPFIND.equals(request.getMethod())) {
-            return new DAVPropfindHanlder(manager, request, response);
+            return new DAVPropfindHandler(manager, request, response);
         }
         if (METHOD_OPTIONS.equals(request.getMethod())) {
             return new DAVOptionsHandler(manager, request, response);

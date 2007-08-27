@@ -24,31 +24,22 @@ import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
-import org.tmatesoft.svn.core.internal.io.dav.handlers.BasicDAVHandler;
 import org.tmatesoft.svn.core.internal.server.dav.DAVDepth;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXNotRecognizedException;
-import org.xml.sax.SAXNotSupportedException;
-import org.xml.sax.XMLReader;
 
 /**
  * @author TMate Software Ltd.
  * @version 1.1.2
  */
-public abstract class ServletDAVHandler extends BasicDAVHandler {
+public abstract class ServletDAVHandler {
 
     protected static final int SC_MULTISTATUS = 207;
 
@@ -86,39 +77,67 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     protected static final String ACCEPT_RANGES_HEADER = "Accept-Ranges";
     protected static final String ACCEPT_ENCODING_HEADER = "Accept-Encoding";
 
-    protected static final String DEFAULT_KEEP_ALIVE_VALUE = "timeout=15, max=99";
-    protected static final String ACCEPT_RANGES_VALUE = "bytes";
+    //Supported live properties
+    protected static final DAVElement GET_CONTENT_TYPE = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "getcontenttype");
+    protected static final DAVElement GET_LAST_MODIFIED = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "getlastmodified");
+    protected static final DAVElement GET_ETAG = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "getetag");
+    protected static final DAVElement LOG = DAVElement.getElement(DAVElement.SVN_SVN_PROPERTY_NAMESPACE, "log");
 
     protected static final String DIFF_VERSION_1 = "svndiff1";
     protected static final String DIFF_VERSION = "svndiff";
 
     protected static final String UTF_8_ENCODING = "UTF-8";
 
-    protected static final DAVElement PROPFIND = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "propfind");
-    protected static final DAVElement PROPNAME = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "propname");
-    protected static final DAVElement ALLPROP = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "allprop");
-    protected static final DAVElement GET_CONTENT_TYPE = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "getcontenttype");
-    protected static final DAVElement GET_LAST_MODIFIED = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "getlastmodified");
-    protected static final DAVElement GET_ETAG = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "getetag");
-    protected static final DAVElement LOG = DAVElement.getElement(DAVElement.SVN_SVN_PROPERTY_NAMESPACE, "log");
-
-    private static SAXParserFactory ourSAXParserFactory;
-    private SAXParser mySAXParser;
-
     private DAVRepositoryManager myRepositoryManager = null;
     private HttpServletRequest myRequest;
     private HttpServletResponse myResponse;
 
-    protected DAVRequest myDAVRequest;
-
     protected ServletDAVHandler(DAVRepositoryManager connector, HttpServletRequest request, HttpServletResponse response) {
-        init();
         myRepositoryManager = connector;
         myRequest = request;
         myResponse = response;
     }
 
+    protected DAVRepositoryManager getRepositoryManager() {
+        return myRepositoryManager;
+    }
+
     public abstract void execute() throws SVNException;
+
+    protected DAVResource createDAVResource(boolean labelAllowed, boolean useCheckedIn) throws SVNException {
+        String label = labelAllowed ? getRequestHeader(LABEL_HEADER) : null;
+        String versionName = getRequestHeader(SVN_VERSION_NAME_HEADER);
+        long version;
+        try {
+            version = Long.parseLong(versionName);
+        } catch (NumberFormatException e) {
+            version = DAVResource.INVALID_REVISION;
+        }
+        String clientOptions = getRequestHeader(SVN_OPTIONS_HEADER);
+        String baseChecksum = getRequestHeader(SVN_BASE_FULLTEXT_MD5_HEADER);
+        String resultChecksum = getRequestHeader(SVN_RESULT_FULLTEXT_MD5_HEADER);
+        String userAgent = getRequestHeader(USER_AGENT_HEADER);
+        boolean isSVNClient = userAgent != null && (userAgent.startsWith("SVN/") || userAgent.startsWith("SVNKit"));
+        return getRepositoryManager().createDAVResource(getRequestContext(), getURI(), isSVNClient, version, clientOptions, baseChecksum, resultChecksum, label, useCheckedIn);
+    }
+
+    protected DAVDepth getRequestDepth(DAVDepth defaultDepth) throws SVNException {
+        String depth = getRequestHeader(DEPTH_HEADER);
+        if (depth == null) {
+            return defaultDepth;
+        }
+        DAVDepth result = DAVDepth.parseDepth(depth);
+        if (result == null) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Invalid depth ''{0}''", depth));
+        }
+        return result;
+    }
+
+    protected void setDefaultResponseHeaders() {
+        if (getRequestHeader(LABEL_HEADER) != null && getRequestHeader(LABEL_HEADER).length() > 0) {
+            setResponseHeader(VARY_HEADER, LABEL_HEADER);
+        }
+    }
 
     protected String getURI() {
         return myRequest.getPathInfo();
@@ -187,6 +206,37 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return null;
     }
 
+    protected static Collection getSupportedLiveProperties(DAVResource resource, Collection properties) {
+        if (properties == null) {
+            properties = new ArrayList();
+        }
+        properties.add(DAVElement.DEADPROP_COUNT);
+        properties.add(DAVElement.REPOSITORY_UUID);
+        properties.add(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
+        if (resource.getResourceURI().getKind() != DAVResourceKind.BASELINE_COLL) {
+            properties.add(DAVElement.BASELINE_COLLECTION);
+        } else {
+            properties.remove(DAVElement.BASELINE_COLLECTION);
+        }
+        properties.add(DAVElement.BASELINE_RELATIVE_PATH);
+        properties.add(DAVElement.RESOURCE_TYPE);
+        properties.add(DAVElement.CHECKED_IN);
+        properties.add(GET_ETAG);
+        properties.add(DAVElement.CREATOR_DISPLAY_NAME);
+        properties.add(DAVElement.CREATION_DATE);
+        properties.add(GET_LAST_MODIFIED);
+        properties.add(DAVElement.VERSION_NAME);
+        properties.add(GET_CONTENT_TYPE);
+        if (!resource.isCollection()) {
+            properties.add(DAVElement.GET_CONTENT_LENGTH);
+            properties.add(DAVElement.MD5_CHECKSUM);
+        } else {
+            properties.remove(DAVElement.GET_CONTENT_LENGTH);
+            properties.remove(DAVElement.MD5_CHECKSUM);
+        }
+        return properties;
+    }
+
     protected void checkPreconditions(String eTag, Date lastModified) {
         lastModified = lastModified == null ? new Date() : lastModified;
         long lastModifiedTime = lastModified.getTime();
@@ -224,27 +274,6 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return contains;
     }
 
-    protected DAVRepositoryManager getRepositoryManager() {
-        return myRepositoryManager;
-    }
-
-    protected DAVResource createDAVResource(boolean labelAllowed, boolean useCheckedIn) throws SVNException {
-        String label = labelAllowed ? getRequestHeader(LABEL_HEADER) : null;
-        String versionName = getRequestHeader(SVN_VERSION_NAME_HEADER);
-        long version;
-        try {
-            version = Long.parseLong(versionName);
-        } catch (NumberFormatException e) {
-            version = DAVResource.INVALID_REVISION;
-        }
-        String clientOptions = getRequestHeader(SVN_OPTIONS_HEADER);
-        String baseChecksum = getRequestHeader(SVN_BASE_FULLTEXT_MD5_HEADER);
-        String resultChecksum = getRequestHeader(SVN_RESULT_FULLTEXT_MD5_HEADER);
-        String userAgent = getRequestHeader(USER_AGENT_HEADER);
-        boolean isSVNClient = userAgent != null && (userAgent.startsWith("SVN/") || userAgent.startsWith("SVNKit"));
-        return getRepositoryManager().createDAVResource(getRequestContext(), getURI(), isSVNClient, version, clientOptions, baseChecksum, resultChecksum, label, useCheckedIn);
-    }
-
     protected boolean getSVNDiffVersion() {
         boolean diffCompress = false;
         for (Enumeration headerEncodings = getRequestHeaders(ACCEPT_ENCODING_HEADER); headerEncodings.hasMoreElements();)
@@ -267,104 +296,6 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             }
         }
         return diffCompress;
-    }
-
-    protected Collection getSupportedLiveProperties(DAVResource resource, Collection properties) {
-        if (properties == null) {
-            properties = new ArrayList();
-        }
-        properties.add(DAVElement.DEADPROP_COUNT);
-        properties.add(DAVElement.REPOSITORY_UUID);
-        properties.add(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
-        if (resource.getResourceURI().getKind() != DAVResourceKind.BASELINE_COLL) {
-            properties.add(DAVElement.BASELINE_COLLECTION);
-        } else {
-            properties.remove(DAVElement.BASELINE_COLLECTION);
-        }
-        properties.add(DAVElement.BASELINE_RELATIVE_PATH);
-        properties.add(DAVElement.RESOURCE_TYPE);
-        properties.add(DAVElement.CHECKED_IN);
-        properties.add(GET_ETAG);
-        properties.add(DAVElement.CREATOR_DISPLAY_NAME);
-        properties.add(DAVElement.CREATION_DATE);
-        properties.add(GET_LAST_MODIFIED);
-        properties.add(DAVElement.VERSION_NAME);
-        properties.add(GET_CONTENT_TYPE);
-        if (!resource.isCollection()) {
-            properties.add(DAVElement.GET_CONTENT_LENGTH);
-            properties.add(DAVElement.MD5_CHECKSUM);
-        } else {
-            properties.remove(DAVElement.GET_CONTENT_LENGTH);
-            properties.remove(DAVElement.MD5_CHECKSUM);
-        }
-        return properties;
-    }
-
-    protected DAVDepth getRequestDepth(DAVDepth defaultDepth) throws SVNException {
-        String depth = getRequestHeader(DEPTH_HEADER);
-        if (depth == null) {
-            return defaultDepth;
-        }
-        DAVDepth result = DAVDepth.parseDepth(depth);
-        if (result == null) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Invalid depth ''{0}''", depth));
-        }
-        return result;
-    }
-
-    protected void setDefaultResponseHeaders() {
-//        setResponseHeader(KEEP_ALIVE_HEADER, DEFAULT_KEEP_ALIVE_VALUE);
-//        setResponseHeader(CONNECTION_HEADER, KEEP_ALIVE_HEADER);
-        if (getRequestHeader(LABEL_HEADER) != null && getRequestHeader(LABEL_HEADER).length() > 0) {
-            setResponseHeader(VARY_HEADER, LABEL_HEADER);
-        }
-    }
-
-    protected void readInput(InputStream is) throws SVNException {
-        if (mySAXParser == null) {
-            try {
-                mySAXParser = getSAXParserFactory().newSAXParser();
-                XMLReader reader = mySAXParser.getXMLReader();
-                reader.setContentHandler(this);
-                reader.setDTDHandler(this);
-                reader.setErrorHandler(this);
-                reader.setEntityResolver(this);
-                reader.parse(new InputSource(is));
-            } catch (ParserConfigurationException e) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
-            } catch (SAXException e) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
-            } catch (IOException e) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
-            }
-        }
-    }
-
-    private synchronized static SAXParserFactory getSAXParserFactory() {
-        if (ourSAXParserFactory == null) {
-            ourSAXParserFactory = SAXParserFactory.newInstance();
-            try {
-                ourSAXParserFactory.setFeature("http://xml.org/sax/features/namespaces", true);
-            } catch (SAXNotRecognizedException e) {
-            } catch (SAXNotSupportedException e) {
-            } catch (ParserConfigurationException e) {
-            }
-            try {
-                ourSAXParserFactory.setFeature("http://xml.org/sax/features/validation", false);
-            } catch (SAXNotRecognizedException e) {
-            } catch (SAXNotSupportedException e) {
-            } catch (ParserConfigurationException e) {
-            }
-            try {
-                ourSAXParserFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-            } catch (SAXNotRecognizedException e) {
-            } catch (SAXNotSupportedException e) {
-            } catch (ParserConfigurationException e) {
-            }
-            ourSAXParserFactory.setNamespaceAware(true);
-            ourSAXParserFactory.setValidating(false);
-        }
-        return ourSAXParserFactory;
     }
 
     private class AcceptEncodingEntry implements Comparable {

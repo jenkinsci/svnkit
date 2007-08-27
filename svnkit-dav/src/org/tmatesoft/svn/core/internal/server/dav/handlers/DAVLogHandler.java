@@ -11,16 +11,12 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
-import java.io.IOException;
 import java.io.Writer;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
@@ -29,116 +25,39 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 /**
  * @author TMate Software Ltd.
  * @version 1.1.2
  */
-public class DAVLogHandler implements IDAVReportHandler, ISVNLogEntryHandler {
+public class DAVLogHandler extends ReportHandler implements ISVNLogEntryHandler {
 
-    private static final DAVElement DISCOVER_CHANGED_PATHS = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "discover-changed-paths");
-    private static final DAVElement INCLUDE_MERGED_REVISIONS = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "include-merged-revisions");
-    private static final DAVElement STRICT_NODE_HISTORY = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "strict-node-history");
-    private static final DAVElement OMIT_LOG_TEXT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "omit-log-text");
-    private static final DAVElement LIMIT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "limit");
-
-    private DAVResource myDAVResource;
-    private IDAVRequest myDAVRequest;
-
-    private Writer myResponseWriter;
-
-    public DAVLogHandler(DAVResource resource, IDAVRequest davRequest) {
-        myDAVResource = resource;
-        myDAVRequest = davRequest;
+    public DAVLogHandler(DAVResource resource, DAVLogRequest reportRequest, Writer responseWriter) {
+        super(resource, reportRequest, responseWriter);
     }
 
-    private DAVResource getDAVResource() {
-        return myDAVResource;
-    }
-
-    private IDAVRequest getDAVRequest() {
-        return myDAVRequest;
-    }
-
-    private Writer getResponseWriter() {
-        return myResponseWriter;
-    }
-
-    private void setResponseWriter(Writer responseWriter) {
-        myResponseWriter = responseWriter;
+    private DAVLogRequest getDAVRequest() {
+        return (DAVLogRequest) myDAVRequest;
     }
 
     public int getContentLength() {
         return -1;
     }
 
-    public void writeTo(Writer out) throws SVNException {
-        setResponseWriter(out);
-
-        boolean discoverChangedPaths = false;
-        boolean strictNodeHistory = false;
-        boolean includeMergedRevisions = false;
-        boolean omitLogText = false;
-        long startRevision = DAVResource.INVALID_REVISION;
-        long endRevision = DAVResource.INVALID_REVISION;
-        long limit = 0;
-        String[] targetPaths = null;
-
-        for (Iterator iterator = getDAVRequest().entryIterator(); iterator.hasNext();) {
-            IDAVRequest.Entry entry = (IDAVRequest.Entry) iterator.next();
-            DAVElement element = entry.getElement();
-            if (element == DISCOVER_CHANGED_PATHS) {
-                discoverChangedPaths = true;
-            } else if (element == STRICT_NODE_HISTORY) {
-                strictNodeHistory = true;
-            } else if (element == INCLUDE_MERGED_REVISIONS) {
-                includeMergedRevisions = true;
-            } else if (element == OMIT_LOG_TEXT) {
-                omitLogText = true;
-            } else if (element == START_REVISION) {
-                String revisionString = entry.getFirstValue();
-                startRevision = Long.parseLong(revisionString);
-            } else if (element == END_REVISION) {
-                String revisionString = entry.getFirstValue();
-                endRevision = Long.parseLong(revisionString);
-            } else if (element == LIMIT) {
-                String limitString = entry.getFirstValue();
-                limit = Integer.parseInt(limitString);
-            } else if (element == PATH) {
-                Collection paths = entry.getValues();
-                targetPaths = new String[paths.size()];
-                targetPaths = (String[]) paths.toArray(targetPaths);
-            }
-        }
-
+    public void sendResponse() throws SVNException {
         writeXMLHeader();
 
-        getDAVResource().getRepository().log(targetPaths, startRevision, endRevision, discoverChangedPaths,
-                strictNodeHistory, limit, includeMergedRevisions, omitLogText, this);
+        getDAVResource().getRepository().log(getDAVRequest().getTargetPaths(),
+                getDAVRequest().getStartRevision(),
+                getDAVRequest().getEndRevision(),
+                getDAVRequest().isDiscoverChangedPaths(),
+                getDAVRequest().isStrictNodeHistory(),
+                getDAVRequest().getLimit(),
+                getDAVRequest().isIncludeMergedRevisions(),
+                getDAVRequest().isOmitLogText(),
+                this);
 
         writeXMLFooter();
-
-    }
-
-    private void writeString(String stringToWrite) throws SVNException {
-        try {
-            getResponseWriter().write(stringToWrite);
-        } catch (IOException e) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
-        }
-    }
-
-    private void writeXMLHeader() throws SVNException {
-        StringBuffer xmlBuffer = new StringBuffer();
-        XMLUtil.addXMLHeader(xmlBuffer);
-        DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, LOG_REPORT.getName(), getDAVRequest().getElements(), xmlBuffer);
-        writeString(xmlBuffer.toString());
-    }
-
-    private void writeXMLFooter() throws SVNException {
-        String footer = XMLUtil.addXMLFooter(DAVXMLUtil.SVN_NAMESPACE_PREFIX, LOG_REPORT.getName(), null).toString();
-        writeString(footer);
     }
 
     public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
@@ -162,7 +81,7 @@ public class DAVLogHandler implements IDAVReportHandler, ISVNLogEntryHandler {
             XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "nbr-children", String.valueOf(logEntry.getNumberOfChildren()), xmlBuffer);
         }
 
-        writeString(xmlBuffer.toString());
+        write(xmlBuffer);
 
         if (logEntry.getChangedPaths() != null) {
             for (Iterator iterator = logEntry.getChangedPaths().entrySet().iterator(); iterator.hasNext();) {
@@ -173,8 +92,8 @@ public class DAVLogHandler implements IDAVReportHandler, ISVNLogEntryHandler {
             }
         }
 
-        String closingTag = XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "log-item", null).toString();
-        writeString(closingTag);
+        xmlBuffer = XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "log-item", null);
+        write(xmlBuffer);
     }
 
     private void addChangedPathTag(String path, SVNLogEntryPath logEntryPath) throws SVNException {
@@ -210,7 +129,7 @@ public class DAVLogHandler implements IDAVReportHandler, ISVNLogEntryHandler {
             default:
                 break;
         }
-        writeString(xmlBuffer.toString());
+        write(xmlBuffer);
     }
 }
 

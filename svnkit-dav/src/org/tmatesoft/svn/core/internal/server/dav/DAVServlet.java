@@ -60,11 +60,11 @@ public class DAVServlet extends HttpServlet {
                     response.setContentType(XML_CONTENT_TYPE);
                 }
             } else {
-                th.printStackTrace(response.getWriter());
                 errorBody = generateErrorBody(SERVER_INTERNAL_ERROR_LINE, th.getLocalizedMessage());
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 response.setContentType(HTML_CONTENT_TYPE);
             }
+            th.printStackTrace(response.getWriter());
             response.getWriter().print(errorBody);
         }
         response.flushBuffer();
