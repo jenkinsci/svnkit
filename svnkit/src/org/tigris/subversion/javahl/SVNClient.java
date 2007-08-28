@@ -565,4 +565,8 @@ public class SVNClient implements SVNClientInterface {
     public void blame(String path, Revision pegRevision, Revision revisionStart, Revision revisionEnd, boolean ignoreMimeType, boolean includeMergedRevisions, BlameCallback2 callback) throws ClientException {
         myDelegate.blame(path, pegRevision, revisionStart, revisionEnd, ignoreMimeType, includeMergedRevisions, callback);
     }
+
+    public String[] suggestMergeSources(String path) throws SubversionException {
+        return myDelegate.suggestMergeSources(path);
+    }
 }

@@ -2130,12 +2130,17 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public long doSwitch(String path, String url, Revision revision, int depth, boolean ignoreExternals, boolean allowUnverObstructions) throws ClientException {
-        notImplementedYet(null);
+        notImplementedYet(null);//TODO: fixme
         return 0;
     }
 
     public void blame(String path, Revision pegRevision, Revision revisionStart, Revision revisionEnd, boolean ignoreMimeType, boolean includeMergedRevisions, BlameCallback2 callback) throws ClientException {
-        notImplementedYet(null);
+        notImplementedYet(null);//TODO: fixme
+    }
+
+    public String[] suggestMergeSources(String path) throws SubversionException {
+        notImplementedYet(null);//TODO: fixme
+        return null;
     }
 
     private void notImplementedYet() throws ClientException {
