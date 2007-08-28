@@ -69,6 +69,8 @@ public class DAVReportHandler extends ServletDAVHandler {
             return new DAVMergeInfoHandler(resource, (DAVMergeInfoRequest) getDAVRequest().getReportRequest(), getResponseWriter());
         } else if (getDAVRequest().isGetLocksRequest()) {
             return new DAVGetLocksHandler(resource, (DAVGetLocksRequest) getDAVRequest().getReportRequest(), getResponseWriter());
+        } else if (getDAVRequest().isReplayRequest()) {
+            return new DAVReplayHandler(resource, (DAVReplayRequest) getDAVRequest().getReportRequest(), getResponseWriter());
         }
         return null;
     }

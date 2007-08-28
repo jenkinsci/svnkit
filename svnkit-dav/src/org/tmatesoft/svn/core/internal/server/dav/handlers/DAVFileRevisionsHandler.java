@@ -38,25 +38,15 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  */
 public class DAVFileRevisionsHandler extends ReportHandler implements ISVNFileRevisionHandler {
 
-    private boolean myWriteHeader;
     private boolean myDiffCompress;
 
     public DAVFileRevisionsHandler(DAVResource resource, DAVFileRevisionsRequest reportRequest, Writer responseWriter, boolean diffCompress) {
         super(resource, reportRequest, responseWriter);
-        myWriteHeader = true;
         myDiffCompress = diffCompress;
     }
 
     private DAVFileRevisionsRequest getDAVRequest() {
         return (DAVFileRevisionsRequest) myDAVRequest;
-    }
-
-    private boolean writeHeader() {
-        return myWriteHeader;
-    }
-
-    private void setWriteHeader(boolean writeHeader) {
-        myWriteHeader = writeHeader;
     }
 
     private boolean isDiffCompress() {
@@ -130,16 +120,7 @@ public class DAVFileRevisionsHandler extends ReportHandler implements ISVNFileRe
     }
 
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try {
-            diffWindow.writeTo(baos, writeHeader(), isDiffCompress());
-            byte[] textDelta = baos.toByteArray();
-            String txDelta = SVNBase64.byteArrayToBase64(textDelta);
-            write(txDelta);
-            setWriteHeader(false);
-        } catch (IOException e) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
-        }
+        writeTextDeltaChunk(diffWindow, isDiffCompress());
         return null;
     }
 

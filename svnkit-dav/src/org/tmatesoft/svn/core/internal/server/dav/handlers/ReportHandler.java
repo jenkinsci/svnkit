@@ -13,14 +13,17 @@ package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.io.ByteArrayOutputStream;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.util.SVNBase64;
 
 /**
  * @author TMate Software Ltd.
@@ -34,6 +37,13 @@ public abstract class ReportHandler {
     private DAVResource myDAVResource;
     private Writer myResponseWriter;
 
+    private boolean myWriteTextDeltaHeader = true;
+
+    public ReportHandler(DAVResource resource, DAVReportRequest reportRequest, Writer responseWriter) {
+        myDAVResource = resource;
+        myDAVRequest = reportRequest;
+        myResponseWriter = responseWriter;
+    }
 
     protected DAVResource getDAVResource() {
         return myDAVResource;
@@ -47,10 +57,13 @@ public abstract class ReportHandler {
         return myResponseWriter;
     }
 
-    public ReportHandler(DAVResource resource, DAVReportRequest reportRequest, Writer responseWriter) {
-        myDAVResource = resource;
-        myDAVRequest = reportRequest;
-        myResponseWriter = responseWriter;
+
+    private boolean isWriteTextDeltaHeader() {
+        return myWriteTextDeltaHeader;
+    }
+
+    private void setWriteTextDeltaHeader(boolean writeTextDeltaHeader) {
+        myWriteTextDeltaHeader = writeTextDeltaHeader;
     }
 
     public abstract void sendResponse() throws SVNException;
@@ -90,4 +103,16 @@ public abstract class ReportHandler {
         XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, getDAVRequest().getRootElement().getName(), xmlBuffer);
     }
 
+    protected void writeTextDeltaChunk(SVNDiffWindow diffWindow, boolean diffVersion) throws SVNException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try {
+            diffWindow.writeTo(baos, isWriteTextDeltaHeader(), diffVersion);
+            byte[] textDelta = baos.toByteArray();
+            String txDelta = SVNBase64.byteArrayToBase64(textDelta);
+            write(txDelta);
+            setWriteTextDeltaHeader(false);
+        } catch (IOException e) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
+        }
+    }
 }
