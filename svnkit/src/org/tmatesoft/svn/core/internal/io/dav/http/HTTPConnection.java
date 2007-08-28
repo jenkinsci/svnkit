@@ -123,6 +123,7 @@ class HTTPConnection implements IHTTPConnection {
                 if (myIsSecured) {
                     HTTPRequest connectRequest = new HTTPRequest(myCharset);
                     connectRequest.setConnection(this);
+                    connectRequest.initCredentials(myProxyAuthentication, "CONNECT", host + ":" + port);
                     connectRequest.setProxyAuthentication(myProxyAuthentication.authenticate());
                     connectRequest.setForceProxyAuth(true);
                     connectRequest.dispatch("CONNECT", host + ":" + port, null, 0, 0, null);
@@ -243,11 +244,6 @@ class HTTPConnection implements IHTTPConnection {
             path = "/";
         }
         
-        if (myChallengeCredentials != null) {
-            myChallengeCredentials.setChallengeParameter("methodname", method);
-            myChallengeCredentials.setChallengeParameter("uri", path);
-        }
-        
         // 1. prompt for ssl client cert if needed, if cancelled - throw cancellation exception.
         ISVNSSLManager sslManager = mySSLManager != null ? mySSLManager : promptSSLClientCertificate(true, false);
         String sslRealm = "<" + myHost.getProtocol() + "://" + myHost.getHost() + ":" + myHost.getPort() + ">";
@@ -256,8 +252,6 @@ class HTTPConnection implements IHTTPConnection {
         if (httpAuth == null && isAuthForced) {
             httpAuth = myRepository.getAuthenticationManager().getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, sslRealm, null);
             myChallengeCredentials = new HTTPBasicAuthentication((SVNPasswordAuthentication)httpAuth, myCharset);
-            myChallengeCredentials.setChallengeParameter("methodname", method);
-            myChallengeCredentials.setChallengeParameter("uri", path);
         } 
         String realm = null;
 
@@ -280,9 +274,11 @@ class HTTPConnection implements IHTTPConnection {
                 request.setProxied(myIsProxied);
                 request.setSecured(myIsSecured);
                 if (myProxyAuthentication != null) {
+                    request.initCredentials(myProxyAuthentication, method, path);
                     request.setProxyAuthentication(myProxyAuthentication.authenticate());
                 }
                 if (httpAuth != null && myChallengeCredentials != null) {
+                    request.initCredentials(myChallengeCredentials, method, path);
                     String authResponse = myChallengeCredentials.authenticate();
                     request.setAuthentication(authResponse);
                 }
