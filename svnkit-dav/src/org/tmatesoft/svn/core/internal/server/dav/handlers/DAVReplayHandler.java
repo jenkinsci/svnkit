@@ -12,8 +12,8 @@
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.io.OutputStream;
-import java.io.Writer;
 import java.io.UnsupportedEncodingException;
+import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
 
