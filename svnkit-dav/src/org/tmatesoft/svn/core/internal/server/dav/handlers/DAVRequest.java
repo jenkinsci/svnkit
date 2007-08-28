@@ -117,7 +117,7 @@ public abstract class DAVRequest extends BasicDAVHandler {
         if (cdata != null) {
             if (parent == getRootElement()) {
                 put(getProperties(), element, cdata);
-            } else {
+            } else if (parent != null) {
                 DAVElementProperty parentProperty = (DAVElementProperty) getProperties().get(parent);
                 if (parentProperty == null) {
                     invalidXML();

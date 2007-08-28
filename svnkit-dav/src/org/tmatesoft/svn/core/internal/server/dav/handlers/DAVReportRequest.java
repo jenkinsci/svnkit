@@ -79,6 +79,8 @@ public class DAVReportRequest extends DAVRequest {
             myCustomRequest = new DAVFileRevisionsRequest(getProperties());
         } else if (isMergeInfoRequest()) {
             myCustomRequest = new DAVMergeInfoRequest(getProperties());
+        } else if (isGetLocksRequest()) {
+            myCustomRequest = new DAVGetLocksRequest(getProperties());
         } else {
             //TODO: Here should be something like NOT_SUPPORTED
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA));
@@ -103,5 +105,9 @@ public class DAVReportRequest extends DAVRequest {
 
     public boolean isMergeInfoRequest() {
         return getRootElement() == MERGEINFO_REPORT;
+    }
+
+    public boolean isGetLocksRequest() {
+        return getRootElement() == GET_LOCKS_REPORT;
     }
 }

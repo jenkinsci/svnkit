@@ -28,6 +28,8 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
  */
 public abstract class ReportHandler {
 
+    protected static final String UTF_8_ENCODING = "UTF-8";
+
     protected DAVReportRequest myDAVRequest;
     private DAVResource myDAVResource;
     private Writer myResponseWriter;

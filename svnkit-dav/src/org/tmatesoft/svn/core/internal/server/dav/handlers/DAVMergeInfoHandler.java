@@ -11,19 +11,16 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
-import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNMergeInfo;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 /**
  * @author TMate Software Ltd.
@@ -51,15 +48,15 @@ public class DAVMergeInfoHandler extends ReportHandler {
     }
 
     public int getContentLength() {
-        return getResponseBody() == null ? -1 : getResponseBody().getBytes().length;
+        try {
+            return getResponseBody().getBytes(UTF_8_ENCODING).length;
+        } catch (UnsupportedEncodingException e) {
+        }
+        return -1;
     }
 
     public void sendResponse() throws SVNException {
-        try {
-            getResponseWriter().write(getResponseBody());
-        } catch (IOException e) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
-        }
+        write(getResponseBody());
     }
 
     private void generateResponseBody() throws SVNException {

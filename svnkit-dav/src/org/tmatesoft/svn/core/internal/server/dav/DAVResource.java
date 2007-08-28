@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
@@ -271,6 +272,13 @@ public class DAVResource {
     public long getContentLength() throws SVNException {
         SVNDirEntry entry = getRepository().getDir(getResourceURI().getPath(), getRevision(), false, null);
         return entry.getSize();
+    }
+
+    public SVNLock[] getLocks() throws SVNException {
+        if (getResourceURI().getPath() == null) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "get-locks-report run on resource which doesn't represent a path within a repository."));
+        }
+        return getRepository().getLocks(getResourceURI().getPath());
     }
 
     public String getAuthor(long revision) throws SVNException {
