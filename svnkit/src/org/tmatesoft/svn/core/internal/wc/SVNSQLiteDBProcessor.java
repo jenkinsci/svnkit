@@ -166,6 +166,7 @@ public class SVNSQLiteDBProcessor implements ISVNDBProcessor {
 
     public Map getMergeInfoForChildren(String parentPath, long revision, Map parentMergeInfo, 
                                        ISVNMergeInfoFilter filter) throws SVNException {
+        parentPath = "/".equals(parentPath) ? "" : parentPath;
         parentMergeInfo = parentMergeInfo == null ? new TreeMap() : parentMergeInfo;
         PreparedStatement statement = createPathLikeSelectFromMergeInfoChangedStatement();
         try {
