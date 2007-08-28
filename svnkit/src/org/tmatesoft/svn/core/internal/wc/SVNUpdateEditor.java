@@ -147,6 +147,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
     }
 
     public void deleteEntry(String path, long revision) throws SVNException {
+        checkIfPathIsUnderRoot(path);
         String name = SVNPathUtil.tail(path);
         SVNAdminArea parentArea = myCurrentDirectory.getAdminArea();
         SVNEntry entry = parentArea.getEntry(name, true);
@@ -219,7 +220,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         SVNDirectoryInfo parentDirectory = myCurrentDirectory;
         myCurrentDirectory = createDirectoryInfo(myCurrentDirectory, path, true);
         parentDirectory.flushLog();
-
+        checkIfPathIsUnderRoot(path);
         String name = SVNPathUtil.tail(path);
         File childDir = parentArea.getFile(name);
         SVNFileType kind = SVNFileType.getType(childDir);
@@ -319,6 +320,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
 
     public void openDir(String path, long revision) throws SVNException {
         myCurrentDirectory.flushLog();
+        checkIfPathIsUnderRoot(path);
         myCurrentDirectory = createDirectoryInfo(myCurrentDirectory, path, false);
         SVNAdminArea adminArea = myCurrentDirectory.getAdminArea(); 
         myWCAccess.registerCleanupHandler(adminArea, myCurrentDirectory);
@@ -812,6 +814,42 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
     public void abortEdit() throws SVNException {
     }
 
+    private void checkIfPathIsUnderRoot(String path) throws SVNException {
+        if (SVNFileUtil.isWindows && path != null) { 
+            String testPath = path.replace(File.separatorChar, '/');
+            int ind = -1;
+            
+            while (testPath.length() > 0 && (ind = testPath.indexOf("..")) != -1) {
+                if (ind == 0 || testPath.charAt(ind - 1) == '/') {
+                    int i;
+                    for (i = ind + 2; i < testPath.length(); i++) {
+                        if (testPath.charAt(i) == '.') {
+                            continue;
+                        } else if (testPath.charAt(i) == '/') {
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, 
+                                                                         "Path ''{0}'' is not in the working copy",
+                                                                         path);
+                            SVNErrorManager.error(err);
+                            
+                        } else {
+                            break;
+                        }
+                    }
+                    if (i == testPath.length()) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, 
+                                                                     "Path ''{0}'' is not in the working copy",
+                                                                     path);
+                        SVNErrorManager.error(err);
+                        
+                    }
+                    testPath = testPath.substring(i);
+                } else {
+                    testPath = testPath.substring(ind + 2);
+                }
+            }
+        }
+    }
+    
     private void completeDirectory(SVNDirectoryInfo dirInfo) throws SVNException {
         while (dirInfo != null) {
             dirInfo.RefCount--;
@@ -862,6 +900,8 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
     }
 
     private SVNFileInfo createFileInfo(SVNDirectoryInfo parent, String path, boolean added) throws SVNException {
+        checkIfPathIsUnderRoot(path);
+        
         SVNFileInfo info = new SVNFileInfo(parent, path);
         info.IsAdded = added;
         info.Name = SVNPathUtil.tail(path);
