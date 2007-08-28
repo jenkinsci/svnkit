@@ -2138,7 +2138,7 @@ public class SVNClientImpl implements SVNClientInterface {
         notImplementedYet(null);//TODO: fixme
     }
 
-    public String[] suggestMergeSources(String path) throws SubversionException {
+    public String[] suggestMergeSources(String path, Revision pegRevision) throws SubversionException {
         notImplementedYet(null);//TODO: fixme
         return null;
     }
