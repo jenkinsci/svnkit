@@ -113,7 +113,7 @@ public class DAVReplayHandler extends ReportHandler implements ISVNEditor {
         if (textChecksum != null) {
             attrs.put("checksum", textChecksum);
         }
-        StringBuffer xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "close-file", DAVXMLUtil.XML_STYLE_SELF_CLOSING, attrs, null);
+        StringBuffer xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "close-file", XMLUtil.XML_STYLE_SELF_CLOSING, attrs, null);
         write(xmlBuffer);
     }
 

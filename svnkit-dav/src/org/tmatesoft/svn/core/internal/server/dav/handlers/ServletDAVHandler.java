@@ -341,9 +341,8 @@ public abstract class ServletDAVHandler {
             AcceptEncodingEntry anotherEntry = (AcceptEncodingEntry) object;
             if (getQuality() == anotherEntry.getQuality()) {
                 return 0;
-            } else {
-                return getQuality() > anotherEntry.getQuality() ? 1 : -1;
-            }
+            } 
+            return getQuality() > anotherEntry.getQuality() ? 1 : -1;
         }
     }
 }

@@ -13,14 +13,13 @@ package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.util.Map;
 
-import org.tmatesoft.svn.core.SVNException;
-
 /**
  * @author TMate Software Ltd.
  * @version 1.1.2
  */
 public class DAVGetLocksRequest extends DAVReportRequest {
-    public DAVGetLocksRequest(Map properties) throws SVNException {
+    
+    public DAVGetLocksRequest(Map properties) {
         super(GET_LOCKS_REPORT, properties);
     }
 }

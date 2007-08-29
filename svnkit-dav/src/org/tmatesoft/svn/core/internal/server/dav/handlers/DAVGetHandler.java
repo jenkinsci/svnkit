@@ -25,7 +25,6 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
@@ -33,7 +32,6 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVResourceType;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.Version;
-import org.xml.sax.Attributes;
 
 /**
  * @author TMate Software Ltd.
@@ -43,12 +41,6 @@ public class DAVGetHandler extends ServletDAVHandler {
 
     public DAVGetHandler(DAVRepositoryManager connector, HttpServletRequest request, HttpServletResponse response) {
         super(connector, request, response);
-    }
-
-    protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
-    }
-
-    protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
     }
 
     public void execute() throws SVNException {
@@ -108,9 +100,9 @@ public class DAVGetHandler extends ServletDAVHandler {
             isNotModified = ifModified >= lastModified.getTime() && ifModified <= date;
         }
         if (isNotModified) {
-            // status HTTP_NOT_MODIFIED
+            // TODO status HTTP_NOT_MODIFIED
         } else {
-            //status OK
+            //TODO status OK
         }
     }
 
