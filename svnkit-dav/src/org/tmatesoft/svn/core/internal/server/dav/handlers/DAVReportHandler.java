@@ -48,7 +48,7 @@ public class DAVReportHandler extends ServletDAVHandler {
         setResponseContentType(DEFAULT_XML_CONTENT_TYPE);
         setResponseStatus(HttpServletResponse.SC_OK);
 
-        if (reportHandler.getContentLength() != -1) {
+        if (reportHandler.getContentLength() > 0) {
             setResponseContentLength(reportHandler.getContentLength());
         }
 
@@ -71,6 +71,8 @@ public class DAVReportHandler extends ServletDAVHandler {
             return new DAVGetLocksHandler(resource, (DAVGetLocksRequest) getDAVRequest().getReportRequest(), getResponseWriter());
         } else if (getDAVRequest().isReplayRequest()) {
             return new DAVReplayHandler(resource, (DAVReplayRequest) getDAVRequest().getReportRequest(), getResponseWriter());
+        } else if (getDAVRequest().isUpdateRequest()) {
+            return new DAVUpdateHandler(resource, (DAVUpdateRequest) getDAVRequest().getReportRequest(), getResponseWriter());
         }
         return null;
     }

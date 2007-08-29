@@ -83,6 +83,8 @@ public class DAVReportRequest extends DAVRequest {
             myCustomRequest = new DAVGetLocksRequest(getProperties());
         } else if (isReplayRequest()) {
             myCustomRequest = new DAVReplayRequest(getProperties());
+        } else if (isUpdateRequest()) {
+            myCustomRequest = new DAVUpdateRequest(getProperties(), getRootElementAttributes());
         } else {
             //TODO: Here should be something like NOT_SUPPORTED
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA));
@@ -115,5 +117,9 @@ public class DAVReportRequest extends DAVRequest {
 
     public boolean isReplayRequest() {
         return getRootElement() == REPLAY_REPORT;
+    }
+
+    public boolean isUpdateRequest() {
+        return getRootElement() == UPDATE_REPORT;
     }
 }

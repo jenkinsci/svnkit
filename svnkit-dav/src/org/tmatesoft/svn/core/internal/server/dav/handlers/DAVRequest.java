@@ -48,6 +48,7 @@ public abstract class DAVRequest extends BasicDAVHandler {
     private SAXParser mySAXParser;
 
     private DAVElement myRootElement;
+    private Attributes myRootElementAttributes;
     private Map myProperties;
 
     public DAVRequest() {
@@ -87,9 +88,18 @@ public abstract class DAVRequest extends BasicDAVHandler {
         return myRootElement;
     }
 
+    protected Attributes getRootElementAttributes() {
+        return myRootElementAttributes;
+    }
+
+    protected void setRootElementAttributes(Attributes rootElementAttributes) {
+        myRootElementAttributes = rootElementAttributes;
+    }
+
     protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
         if (parent == null) {
             setRootElement(element);
+            setRootElementAttributes(attrs);
         } else if (parent == getRootElement()) {
             put(getProperties(), element, attrs);
         } else {
