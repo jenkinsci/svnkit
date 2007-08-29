@@ -541,6 +541,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             if (repositoryPaths == null || repositoryPaths.length == 0) {
                 repositoryPaths = new String[]{""};
             }
+            if (repositoryPaths.length == 1 && "/".equals(repositoryPaths[0])) {
+                 repositoryPaths[0] = "";
+            } 
             Object[] buffer = new Object[] { "log",
                     repositoryPaths,
                     getRevisionObject(startRevision),
