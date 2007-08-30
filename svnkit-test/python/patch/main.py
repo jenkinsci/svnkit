@@ -128,6 +128,7 @@ command_line_parsed = False
 
 # The locations of the svn, svnadmin and svnlook binaries, relative to
 # the only scripts that import this file right now (they live in ../).
+# Use --bin to override these defaults.
 #svn_binary = os.path.abspath('../../../clients/cmdline/svn' + _exe)
 #svn_binary = 'svn' + _exe
 svn_binary = os.path.abspath('%ant.dir%/build/lib/jsvn' + _bat)
@@ -334,13 +335,19 @@ def spawn_process(command, binary_mode=0,stdin_lines=None, *varargs):
   if platform_with_os_wait:
     pid, wait_code = os.wait()
 
-    exit_code = int(wait_code / 256)
-    exit_signal = wait_code % 256
-
-    if exit_signal != 0:
+    if os.WIFSIGNALED(wait_code):
+      exit_signal = os.WTERMSIG(wait_code)
       sys.stdout.write("".join(stdout_lines))
       sys.stderr.write("".join(stderr_lines))
+      if verbose_mode:
+        # show the whole path to make it easier to start a debugger
+        sys.stderr.write("CMD: %s terminated by signal %d\n"
+                         % (command, exit_signal))
       raise SVNProcessTerminatedBySignal
+    else:
+      exit_code = os.WEXITSTATUS(wait_code)
+      if exit_code and verbose_mode:
+        sys.stderr.write("CMD: %s exited with %d\n" % (command, exit_code))
 
   return exit_code, stdout_lines, stderr_lines
 
@@ -356,10 +363,10 @@ def run_command_stdin(command, error_expected, binary_mode=0,
 
   if verbose_mode:
     start = time.time()
-  
-  exit_code, stdout_lines, stderr_lines = spawn_process(command, 
-                                                        binary_mode, 
-                                                        stdin_lines, 
+
+  exit_code, stdout_lines, stderr_lines = spawn_process(command,
+                                                        binary_mode,
+                                                        stdin_lines,
                                                         *varargs)
 
   if verbose_mode:
@@ -401,7 +408,7 @@ http-library=%s
 """ % (http_library)
     else:
       server_contents = "#\n"
-    
+
   file_write(cfgfile_cfg, config_contents)
   file_write(cfgfile_srv, server_contents)
 
@@ -479,7 +486,7 @@ def file_append(path, new_text):
 def file_append_binary(path, new_text):
   "Append NEW_TEXT to file at PATH in binary mode"
   file_write(path, new_text, 'ab')  # open in (a)ppend mode
-  
+
 # For creating new files, and making local mods to existing files.
 def file_write(path, contents, mode = 'w'):
   """Write the CONTENTS to the file at PATH, opening file using MODE,
@@ -496,6 +503,17 @@ def file_read(path, mode = 'r'):
   contents = fp.read()
   fp.close()
   return contents
+
+# For replacing parts of contents in an existing file, with new content.
+def file_substitute(path, contents, new_contents):
+  """Replace the CONTENTS in the file at PATH using the NEW_CONTENTS"""
+  fp = open(path, 'r')
+  fcontent = fp.read()
+  fp.close()
+  fcontent = fcontent.replace(contents, new_contents)
+  fp = open(path, 'w')
+  fp.write(fcontent)
+  fp.close()
 
 # For creating blank new repositories
 def create_repos(path):
@@ -538,7 +556,7 @@ def create_repos(path):
 def copy_repos(src_path, dst_path, head_revision, ignore_uuid = 0):
   "Copy the repository SRC_PATH, with head revision HEAD_REVISION, to DST_PATH"
 
-  # Do an svnadmin dump|svnadmin load cycle. Print a fake pipe command so that 
+  # Do an svnadmin dump|svnadmin load cycle. Print a fake pipe command so that
   # the displayed CMDs can be run by hand
   create_repos(dst_path)
   dump_args = ' dump "' + src_path + '"'
@@ -679,13 +697,13 @@ def use_editor(func):
 def merge_notify_line(revstart, revend=None):
   """Return an expected output line that describes the beginning of a
   merge operation on revisions REVSTART through REVEND."""
-  if (revend is None):
-    if (revstart < 0):
+  if revend is None:
+    if revstart < 0:
       return "--- Undoing r%ld:\n" % abs(revstart)
     else:
       return "--- Merging r%ld:\n" % revstart
   else:
-    if (revstart > revend):
+    if revstart > revend:
       return "--- Undoing r%ld through r%ld:\n" % (revstart, revend)
     else:
       return "--- Merging r%ld through r%ld:\n" % (revstart, revend)
@@ -837,8 +855,8 @@ def _cleanup_test_path(path, retrying=None):
     _deferred_test_paths.append(path)
 
 class SpawnTest(threading.Thread):
-  """Encapsulate a single test case, run it in a separate child process. 
-  Instead of waiting till the process is finished, add this class to a 
+  """Encapsulate a single test case, run it in a separate child process.
+  Instead of waiting till the process is finished, add this class to a
   list of active tests for follow up in the parent process."""
   def __init__(self, index, tests = None):
     threading.Thread.__init__(self)
@@ -865,11 +883,11 @@ class SpawnTest(threading.Thread):
       args.append('--cleanup')
     if enable_sasl:
       args.append('--enable-sasl')
-    
+
     self.result, self.stdout_lines, self.stderr_lines =\
                                          spawn_process(command, 1, None, *args)
     # don't trust the exitcode, will not be correct on Windows
-    if filter(lambda x: x.startswith('FAIL: ') or x.startswith('XPASS: '), 
+    if filter(lambda x: x.startswith('FAIL: ') or x.startswith('XPASS: '),
               self.stdout_lines):
       self.result = 1
     self.tests.append(self)
@@ -950,7 +968,7 @@ class TestRunner:
       result = 1
       print 'UNEXPECTED EXCEPTION:'
       traceback.print_exc(file=sys.stdout)
-      
+
     os.chdir(saved_dir)
     result = self.pred.convert_result(result)
     print self.pred.run_text(result),
@@ -972,7 +990,7 @@ class TestRunner:
 # Func to run one test in the list.
 def run_one_test(n, test_list, parallel = 0, finished_tests = None):
   """Run the Nth client test in TEST_LIST, return the result.
-  
+
   If we're running the tests in parallel spawn the test in a new process.
   """
 
@@ -991,9 +1009,9 @@ def run_one_test(n, test_list, parallel = 0, finished_tests = None):
 
 def _internal_run_tests(test_list, testnums, parallel):
   """Run the tests from TEST_LIST whose indices are listed in TESTNUMS.
-  
+
   If we're running the tests in parallel spawn as much parallel processes
-  as requested and gather the results in a temp. buffer when a child 
+  as requested and gather the results in a temp. buffer when a child
   process is finished.
   """
 
@@ -1088,7 +1106,7 @@ def run_tests(test_list, serial_only = False):
   global command_line_parsed
   global http_library
   global server_minor_version
-  
+
   testnums = []
   # Should the tests be listed (as opposed to executed)?
   list_tests = False
@@ -1161,7 +1179,7 @@ def run_tests(test_list, serial_only = False):
   # Calculate pristine_url from test_area_url.
   pristine_url = test_area_url + '/' + pristine_dir
   if windows:
-    pristine_url = pristine_url.replace('\\', '/')  
+    pristine_url = pristine_url.replace('\\', '/')
 
   if not svn_bin is None:
     svn_binary = os.path.join(svn_bin, 'svn' + _exe)
@@ -1192,7 +1210,7 @@ def run_tests(test_list, serial_only = False):
     # done. just exit with success.
     sys.exit(0)
 
-  # don't run tests in parallel when the tests don't support it or there 
+  # don't run tests in parallel when the tests don't support it or there
   # are only a few tests to run.
   if serial_only or len(testnums) < 2:
     parallel = 0
@@ -1202,7 +1220,7 @@ def run_tests(test_list, serial_only = False):
 
   # Build out the default configuration directory
   create_config_dir(default_config_dir)
-    
+
   # Run the tests.
   exit_code = _internal_run_tests(test_list, testnums, parallel)
 
