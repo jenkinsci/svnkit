@@ -25,6 +25,7 @@ import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -576,22 +577,16 @@ public class SVNCommitClient extends SVNBasicClient {
      * @throws SVNException
      * @see	                    #doCommit(SVNCommitPacket, boolean, String) 
      */
-    /* TODO(sd): "For consistency, this should probably take svn_depth_t
-     * depth instead of svn_boolean_t recurse.  But it's not needed
-     * for the sparse-directories work right now, so leaving it alone
-     * for now, although note that this is a 1.5 API so revving it
-     * would be fairly painless."
-     */
     public SVNCommitInfo doCommit(File[] paths, boolean keepLocks, String commitMessage, boolean force, boolean recursive) throws SVNException {
-        return doCommit(paths, keepLocks, commitMessage, null, null, false, force, recursive);
+        return doCommit(paths, keepLocks, commitMessage, null, null, false, force, SVNDepth.fromRecurse(recursive));
     }
     
     public SVNCommitInfo doCommit(File[] paths, boolean keepLocks, 
-            String commitMessage, Map revisionProperties, 
-            String changelistName, boolean keepChangelist, boolean force, 
-            boolean recursive) throws SVNException {
+                                  String commitMessage, Map revisionProperties, 
+                                  String changelistName, boolean keepChangelist, boolean force, 
+                                  SVNDepth depth) throws SVNException {
         SVNCommitPacket packet = doCollectCommitItems(paths, keepLocks, force, 
-                recursive, changelistName);
+                                                      depth, changelistName);
         try {
             packet = packet.removeSkippedItems();
             return doCommit(packet, keepLocks, keepChangelist, commitMessage, revisionProperties);
@@ -666,7 +661,8 @@ public class SVNCommitClient extends SVNBasicClient {
         return doCommit(commitPackets, keepLocks, false, commitMessage, null);
     }
     
-    public SVNCommitInfo[] doCommit(SVNCommitPacket[] commitPackets, boolean keepLocks, boolean keepChangelist, String commitMessage, Map revisionProperties) throws SVNException {
+    public SVNCommitInfo[] doCommit(SVNCommitPacket[] commitPackets, boolean keepLocks, boolean keepChangelist, 
+                                    String commitMessage, Map revisionProperties) throws SVNException {
         if (commitPackets == null || commitPackets.length == 0) {
             return new SVNCommitInfo[0];
         }
@@ -838,11 +834,16 @@ public class SVNCommitClient extends SVNBasicClient {
      */
     //TODO(sd): to be updated...
     public SVNCommitPacket doCollectCommitItems(File[] paths, boolean keepLocks, boolean force, boolean recursive) throws SVNException {
-        return doCollectCommitItems(paths, keepLocks, force, recursive, null);
+        return doCollectCommitItems(paths, keepLocks, force, SVNDepth.fromRecurse(recursive), null);
     }
     
     public SVNCommitPacket doCollectCommitItems(File[] paths, boolean keepLocks, boolean force, 
-            boolean recursive, String changelistName) throws SVNException {
+                                                SVNDepth depth, String changelistName) throws SVNException {
+        depth = depth == null ? SVNDepth.UNKNOWN : depth;
+        if (depth == SVNDepth.UNKNOWN) {
+            depth = SVNDepth.INFINITY;
+        }
+
         if (paths == null || paths.length == 0) {
             return SVNCommitPacket.EMPTY;
         }
@@ -855,7 +856,7 @@ public class SVNCommitClient extends SVNBasicClient {
                 SVNCommitClient.this.checkCancelled();
             }
         });
-        SVNWCAccess wcAccess = SVNCommitUtil.createCommitWCAccess(paths, recursive, force, targets, statusClient);
+        SVNWCAccess wcAccess = SVNCommitUtil.createCommitWCAccess(paths, depth, force, targets, statusClient);
         SVNAdminArea[] areas = wcAccess.getAdminAreas();
         for (int i = 0; areas != null && i < areas.length; i++) {
             if (areas[i] != null) {
@@ -865,10 +866,9 @@ public class SVNCommitClient extends SVNBasicClient {
         try {
             Map lockTokens = new HashMap();
             checkCancelled();
-            SVNCommitItem[] commitItems = SVNCommitUtil.harvestCommitables(wcAccess, targets, 
-                    lockTokens, !keepLocks, recursive, 
-                    force, changelistName, 
-                    getCommitParameters());
+            SVNCommitItem[] commitItems = SVNCommitUtil.harvestCommitables(wcAccess, targets, lockTokens, 
+                                                                           !keepLocks, depth, force, 
+                                                                           changelistName, getCommitParameters());
             boolean hasModifications = false;
             checkCancelled();
             for (int i = 0; commitItems != null && i < commitItems.length; i++) {
@@ -926,14 +926,19 @@ public class SVNCommitClient extends SVNBasicClient {
      * @throws SVNException
      * @see                     SVNCommitItem
      */
-    //TODO(sd): to be updated...
     public SVNCommitPacket[] doCollectCommitItems(File[] paths, boolean keepLocks, boolean force, boolean recursive, boolean combinePackets) throws SVNException {
-        return doCollectCommitItems(paths, keepLocks, force, recursive, combinePackets, null);
+        return doCollectCommitItems(paths, keepLocks, force, SVNDepth.fromRecurse(recursive), combinePackets, null);
     }
     
-    public SVNCommitPacket[] doCollectCommitItems(File[] paths, boolean keepLocks, 
-            boolean force, boolean recursive, 
-            boolean combinePackets, String changelistName) throws SVNException {
+    public SVNCommitPacket[] doCollectCommitItems(File[] paths, boolean keepLocks, boolean force, SVNDepth depth, 
+                                                  boolean combinePackets, String changelistName) throws SVNException {
+        
+        depth = depth == null ? SVNDepth.UNKNOWN : depth;
+        
+        if (depth == SVNDepth.UNKNOWN) {
+            depth = SVNDepth.INFINITY;
+        }
+        
         if (paths == null || paths.length == 0) {
             return new SVNCommitPacket[0];
         }
@@ -947,7 +952,8 @@ public class SVNCommitClient extends SVNBasicClient {
                 SVNCommitClient.this.checkCancelled();
             }
         });
-        SVNWCAccess[] wcAccesses = SVNCommitUtil.createCommitWCAccess2(paths, recursive, force, targets, statusClient);
+        
+        SVNWCAccess[] wcAccesses = SVNCommitUtil.createCommitWCAccess2(paths, depth, force, targets, statusClient);
 
         for (int i = 0; i < wcAccesses.length; i++) {
             SVNWCAccess wcAccess = wcAccesses[i];
@@ -961,7 +967,9 @@ public class SVNCommitClient extends SVNBasicClient {
             try {
                 checkCancelled();
                 Map lockTokens = new HashMap();
-                SVNCommitItem[] commitItems = SVNCommitUtil.harvestCommitables(wcAccess, targetPaths, lockTokens, !keepLocks, recursive, force, changelistName, getCommitParameters());
+                SVNCommitItem[] commitItems = SVNCommitUtil.harvestCommitables(wcAccess, targetPaths, lockTokens, 
+                                                                               !keepLocks, depth, force, 
+                                                                               changelistName, getCommitParameters());
                 checkCancelled();
                 boolean hasModifications = false;
                 for (int j = 0; commitItems != null && j < commitItems.length; j++) {

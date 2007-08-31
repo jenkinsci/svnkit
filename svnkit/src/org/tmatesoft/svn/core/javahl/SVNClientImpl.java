@@ -1425,7 +1425,7 @@ public class SVNClientImpl implements SVNClientInterface {
             }
             SVNDepth svnDepth = SVNDepth.fromID(depth);
             boolean recurse = SVNDepth.recurseFromDepth(svnDepth);
-            return client.doCommit(files, noUnlock, message, null, changelistName, keepChangelist, !recurse, recurse).getNewRevision();
+            return client.doCommit(files, noUnlock, message, null, changelistName, keepChangelist, !recurse, svnDepth).getNewRevision();
         } catch (SVNException e) {
             throwException(e);
         }

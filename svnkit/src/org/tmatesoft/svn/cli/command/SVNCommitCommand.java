@@ -69,7 +69,7 @@ public class SVNCommitCommand extends SVNCommand {
         SVNCommitClient client = getClientManager().getCommitClient();
         SVNCommitInfo result = client.doCommit(localPaths, keepLocks, message, 
                                                revProps, changelistName, keepChangelist, false, 
-                                               SVNDepth.recurseFromDepth(depth));
+                                               depth);
         if (result != SVNCommitInfo.NULL && !quiet) {
             out.println();
             out.println("Committed revision " + result.getNewRevision() + ".");

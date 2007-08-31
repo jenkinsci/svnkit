@@ -1190,9 +1190,10 @@ public class SVNCopyClient extends SVNBasicClient {
                 } else {
                     dirArea = wcAccess.retrieve(source.getPath().getParentFile());
                 }
-                SVNCommitUtil.harvestCommitables(commitables, dirArea, source.getPath(), null, 
-                        entry, source.getDstURL().toString(), entry.getURL(), 
-                        true, false, false, null, true, false, null, getCommitParameters());
+                SVNCommitUtil.harvestCommitables(commitables, dirArea, source.getPath(), 
+                                                 null, entry, source.getDstURL().toString(), 
+                                                 entry.getURL(), true, false, false, null, 
+                                                 SVNDepth.INFINITY, false, null, getCommitParameters());
                 
                 SVNCommitItem item = (SVNCommitItem) commitables.get(source.getPath());
                 SVNURL reposRoot = entry.getRepositoryRootURL();
