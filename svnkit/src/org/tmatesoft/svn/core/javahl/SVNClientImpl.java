@@ -483,7 +483,7 @@ public class SVNClientImpl implements SVNClientInterface {
 
     public long commit(String[] path, String message, boolean recurse, boolean noUnlock) throws ClientException {
         return commit(path, message, SVNDepth.fromRecurse(recurse).getId(), noUnlock, false, null);
-        }
+    }
 
     public long[] commit(String[] path, String message, boolean recurse, boolean noUnlock, boolean atomicCommit) throws ClientException {
         if(path == null || path.length == 0){
@@ -522,13 +522,53 @@ public class SVNClientImpl implements SVNClientInterface {
         return new long[0];
     }
 
+    public long[] commit(String[] path, String message, int depth, boolean noUnlock, boolean keepChangelist, 
+                         String changelistName, boolean atomicCommit, Map revisionProps) throws ClientException {
+        if(path == null || path.length == 0){
+            return new long[0];
+        }
+        SVNCommitClient client = getSVNCommitClient();
+        File[] files = new File[path.length];
+        for (int i = 0; i < path.length; i++) {
+            files[i] = new File(path[i]).getAbsoluteFile();
+        }
+        SVNCommitPacket[] packets = null;
+        SVNCommitInfo[] commitResults = null;
+        SVNDepth svnDepth = JavaHLObjectFactory.getSVNDepth(depth);
+        try {
+            if(myMessageHandler != null){
+                client.setCommitHandler(new ISVNCommitHandler(){
+                    public String getCommitMessage(String cmessage, SVNCommitItem[] commitables) {
+                        CommitItem[] items = JavaHLObjectFactory.getCommitItems(commitables);
+                        return myMessageHandler.getLogMessage(items);
+                    }
+                });
+            }
+            packets = client.doCollectCommitItems(files, noUnlock, svnDepth != SVNDepth.INFINITY, 
+                                                  svnDepth, atomicCommit, changelistName);
+            commitResults = client.doCommit(packets, noUnlock, keepChangelist, message, revisionProps);
+        } catch (SVNException e) {
+            throwException(e);
+        }
+        if (commitResults != null && commitResults.length > 0) {
+            long[] revisions = new long[commitResults.length];
+            for (int i = 0; i < commitResults.length; i++) {
+                SVNCommitInfo result = commitResults[i];
+                revisions[i] = result.getNewRevision();
+            }
+            return revisions;
+            
+        }
+        return new long[0];
+    }
+
     public void copy(String srcPath, String destPath, String message, Revision revision) throws ClientException {
         copy(new CopySource[]{new CopySource(srcPath, revision, revision)}, destPath, message, false);
-            }
+    }
 
     public void move(String srcPath, String destPath, String message, Revision revision, boolean force) throws ClientException {
         move(new String[] {srcPath}, destPath, message, force, false);
-            }
+    }
 
     public void move(String srcPath, String destPath, String message, boolean force) throws ClientException {
         move(srcPath, destPath, message, Revision.WORKING, force);
