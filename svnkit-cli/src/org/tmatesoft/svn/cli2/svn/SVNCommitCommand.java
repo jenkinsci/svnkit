@@ -84,8 +84,12 @@ public class SVNCommitCommand extends SVNCommand {
         }        
         client.setCommitHandler(getSVNEnvironment());
         boolean keepLocks = getSVNEnvironment().getClientManager().getOptions().isKeepLocks();
-        SVNCommitInfo info = client.doCommit(files, keepLocks, getSVNEnvironment().getMessage(), getSVNEnvironment().getRevisionProperties(),
-                getSVNEnvironment().getChangelist(), getSVNEnvironment().isKeepChangelist(), getSVNEnvironment().isForce(), depth.isRecursive());
+        SVNCommitInfo info = client.doCommit(files, keepLocks, getSVNEnvironment().getMessage(), 
+                                             getSVNEnvironment().getRevisionProperties(),
+                                             getSVNEnvironment().getChangelist(), 
+                                             getSVNEnvironment().isKeepChangelist(), 
+                                             getSVNEnvironment().isForce(), 
+                                             depth);
 
         if (!getSVNEnvironment().isQuiet()) {
             getSVNEnvironment().printCommitInfo(info);
