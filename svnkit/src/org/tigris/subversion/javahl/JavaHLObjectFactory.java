@@ -349,7 +349,7 @@ public class JavaHLObjectFactory {
         }
         handler.singleMessage(cp, logEntry.getRevision(), logEntry.getAuthor(), 
                               logEntry.getDate().getTime() * 1000, logEntry.getMessage(), 
-                              logEntry.getNumberOfChildren());
+                              logEntry.getNumberOfChildren() > 0);
     }
 
     public static CommitItem[] getCommitItems(SVNCommitItem[] commitables) {
