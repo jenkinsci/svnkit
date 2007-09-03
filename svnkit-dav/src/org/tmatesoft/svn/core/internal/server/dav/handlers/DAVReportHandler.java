@@ -30,15 +30,19 @@ public class DAVReportHandler extends ServletDAVHandler {
         super(connector, request, response);
     }
 
-    private DAVReportRequest getDAVRequest() {
+    protected DAVRequest getDAVRequest() {
         if (myDAVRequest == null) {
             myDAVRequest = new DAVReportRequest();
         }
         return myDAVRequest;
     }
 
+    private DAVReportRequest getReportRequest(){
+        return (DAVReportRequest) getDAVRequest();
+    }
+
     public void execute() throws SVNException {
-        getDAVRequest().readInput(getRequestInputStream());
+        readInput();
 
         DAVResource resource = createDAVResource(false, false);
 
@@ -57,22 +61,22 @@ public class DAVReportHandler extends ServletDAVHandler {
     }
 
     private ReportHandler getReportHandler(DAVResource resource) throws SVNException {
-        if (getDAVRequest().isDatedRevisionsRequest()) {
-            return new DAVDatedRevisionHandler(resource, (DAVDatedRevisionRequest) getDAVRequest().getReportRequest(), getResponseWriter());
-        } else if (getDAVRequest().isFileRevisionsRequest()) {
-            return new DAVFileRevisionsHandler(resource, (DAVFileRevisionsRequest) getDAVRequest().getReportRequest(), getResponseWriter(), getSVNDiffVersion());
-        } else if (getDAVRequest().isGetLocationsRequest()) {
-            return new DAVGetLocationsHandler(resource, (DAVGetLocationsRequest) getDAVRequest().getReportRequest(), getResponseWriter());
-        } else if (getDAVRequest().isLogRequest()) {
-            return new DAVLogHandler(resource, (DAVLogRequest) getDAVRequest().getReportRequest(), getResponseWriter());
-        } else if (getDAVRequest().isMergeInfoRequest()) {
-            return new DAVMergeInfoHandler(resource, (DAVMergeInfoRequest) getDAVRequest().getReportRequest(), getResponseWriter());
-        } else if (getDAVRequest().isGetLocksRequest()) {
-            return new DAVGetLocksHandler(resource, (DAVGetLocksRequest) getDAVRequest().getReportRequest(), getResponseWriter());
-        } else if (getDAVRequest().isReplayRequest()) {
-            return new DAVReplayHandler(resource, (DAVReplayRequest) getDAVRequest().getReportRequest(), getResponseWriter());
-        } else if (getDAVRequest().isUpdateRequest()) {
-            return new DAVUpdateHandler(resource, (DAVUpdateRequest) getDAVRequest().getReportRequest(), getResponseWriter());
+        if (getReportRequest().isDatedRevisionsRequest()) {
+            return new DAVDatedRevisionHandler(resource, (DAVDatedRevisionRequest) getReportRequest().getReportRequest(), getResponseWriter());
+        } else if (getReportRequest().isFileRevisionsRequest()) {
+            return new DAVFileRevisionsHandler(resource, (DAVFileRevisionsRequest) getReportRequest().getReportRequest(), getResponseWriter(), getSVNDiffVersion());
+        } else if (getReportRequest().isGetLocationsRequest()) {
+            return new DAVGetLocationsHandler(resource, (DAVGetLocationsRequest) getReportRequest().getReportRequest(), getResponseWriter());
+        } else if (getReportRequest().isLogRequest()) {
+            return new DAVLogHandler(resource, (DAVLogRequest) getReportRequest().getReportRequest(), getResponseWriter());
+        } else if (getReportRequest().isMergeInfoRequest()) {
+            return new DAVMergeInfoHandler(resource, (DAVMergeInfoRequest) getReportRequest().getReportRequest(), getResponseWriter());
+        } else if (getReportRequest().isGetLocksRequest()) {
+            return new DAVGetLocksHandler(resource, (DAVGetLocksRequest) getReportRequest().getReportRequest(), getResponseWriter());
+        } else if (getReportRequest().isReplayRequest()) {
+            return new DAVReplayHandler(resource, (DAVReplayRequest) getReportRequest().getReportRequest(), getResponseWriter());
+        } else if (getReportRequest().isUpdateRequest()) {
+            return new DAVUpdateHandler(resource, (DAVUpdateRequest) getReportRequest().getReportRequest(), getResponseWriter());
         }
         return null;
     }

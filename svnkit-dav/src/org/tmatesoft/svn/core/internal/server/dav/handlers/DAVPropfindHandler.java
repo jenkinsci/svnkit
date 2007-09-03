@@ -54,15 +54,19 @@ public class DAVPropfindHandler extends ServletDAVHandler {
         super(connector, request, response);
     }
 
-    protected DAVPropfindRequest getDAVRequest() {
+    protected DAVRequest getDAVRequest() {
         if (myDAVRequest == null) {
             myDAVRequest = new DAVPropfindRequest();
         }
         return myDAVRequest;
     }
 
+    private DAVPropfindRequest getPropfindRequest() {
+        return (DAVPropfindRequest) getDAVRequest();
+    }
+
     public void execute() throws SVNException {
-        getDAVRequest().readInput(getRequestInputStream());
+        readInput();
         DAVResource resource = createDAVResource(true, false);
 
         StringBuffer body = new StringBuffer();
@@ -89,14 +93,14 @@ public class DAVPropfindHandler extends ServletDAVHandler {
     private void generatePropertiesResponse(StringBuffer xmlBuffer, DAVResource resource, DAVDepth depth) throws SVNException {
         XMLUtil.addXMLHeader(xmlBuffer);
         DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "multistatus", null, xmlBuffer);
-        if (getDAVRequest().isAllPropRequest()) {
+        if (getPropfindRequest().isAllPropRequest()) {
             Collection allProperties = convertDeadPropertiesToDAVElements(resource.getDeadProperties());
             getSupportedLiveProperties(resource, allProperties);
             generateResponse(xmlBuffer, resource, allProperties, depth, true);
-        } else if (getDAVRequest().isPropNameRequest()) {
+        } else if (getPropfindRequest().isPropNameRequest()) {
             //TODO: generate all properties' names
-        } else if (getDAVRequest().isPropRequest()) {
-            generateResponse(xmlBuffer, resource, getDAVRequest().getPropertyElements(), depth, false);
+        } else if (getPropfindRequest().isPropRequest()) {
+            generateResponse(xmlBuffer, resource, getPropfindRequest().getPropertyElements(), depth, false);
         }
         XMLUtil.closeXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "multistatus", xmlBuffer);
     }

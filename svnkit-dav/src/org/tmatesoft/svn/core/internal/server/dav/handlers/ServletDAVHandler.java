@@ -24,22 +24,32 @@ import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.io.dav.handlers.BasicDAVHandler;
 import org.tmatesoft.svn.core.internal.server.dav.DAVDepth;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXNotRecognizedException;
+import org.xml.sax.SAXNotSupportedException;
+import org.xml.sax.XMLReader;
 
 /**
  * @author TMate Software Ltd.
  * @version 1.1.2
  */
-public abstract class ServletDAVHandler {
+public abstract class ServletDAVHandler extends BasicDAVHandler {
 
     protected static final int SC_MULTISTATUS = 207;
 
@@ -88,6 +98,9 @@ public abstract class ServletDAVHandler {
 
     protected static final String UTF_8_ENCODING = "UTF-8";
 
+    private static SAXParserFactory ourSAXParserFactory;
+    private SAXParser mySAXParser;
+
     private DAVRepositoryManager myRepositoryManager = null;
     private HttpServletRequest myRequest;
     private HttpServletResponse myResponse;
@@ -96,6 +109,7 @@ public abstract class ServletDAVHandler {
         myRepositoryManager = connector;
         myRequest = request;
         myResponse = response;
+        init();
     }
 
     protected DAVRepositoryManager getRepositoryManager() {
@@ -103,6 +117,37 @@ public abstract class ServletDAVHandler {
     }
 
     public abstract void execute() throws SVNException;
+
+    protected abstract DAVRequest getDAVRequest();
+
+    protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
+        if (parent == null) {
+            getDAVRequest().setRootElement(element);
+            getDAVRequest().setRootElementAttributes(attrs);
+        } else if (parent == getDAVRequest().getRootElement()) {
+            getDAVRequest().put(getDAVRequest().getProperties(), element, attrs);
+        } else {
+            DAVRequest.DAVElementProperty parentProperty = (DAVRequest.DAVElementProperty) getDAVRequest().getProperties().get(parent);
+            if (parentProperty != null) {
+                parentProperty.addChild(element, attrs);
+            }
+        }
+    }
+
+    protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
+        if (cdata != null) {
+            if (parent == getDAVRequest().getRootElement()) {
+                getDAVRequest().put(getDAVRequest().getProperties(), element, cdata);
+            } else if (parent != null) {
+                DAVRequest.DAVElementProperty parentProperty = (DAVRequest.DAVElementProperty) getDAVRequest().getProperties().get(parent);
+                if (parentProperty == null) {
+                    invalidXML();
+                } else {
+                    parentProperty.addChild(element, cdata);
+                }
+            }
+        }
+    }
 
     protected DAVResource createDAVResource(boolean labelAllowed, boolean useCheckedIn) throws SVNException {
         String label = labelAllowed ? getRequestHeader(LABEL_HEADER) : null;
@@ -298,6 +343,55 @@ public abstract class ServletDAVHandler {
         return diffCompress;
     }
 
+    public void readInput() throws SVNException {
+        if (mySAXParser == null) {
+            try {
+                mySAXParser = getSAXParserFactory().newSAXParser();
+                XMLReader reader = mySAXParser.getXMLReader();
+                reader.setContentHandler(this);
+                reader.setDTDHandler(this);
+                reader.setErrorHandler(this);
+                reader.setEntityResolver(this);
+                reader.parse(new InputSource(getRequestInputStream()));
+            } catch (ParserConfigurationException e) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
+            } catch (SAXException e) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
+            } catch (IOException e) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
+            }
+            getDAVRequest().initialize();
+        }
+    }
+
+
+    private synchronized static SAXParserFactory getSAXParserFactory() {
+        if (ourSAXParserFactory == null) {
+            ourSAXParserFactory = SAXParserFactory.newInstance();
+            try {
+                ourSAXParserFactory.setFeature("http://xml.org/sax/features/namespaces", true);
+            } catch (SAXNotRecognizedException e) {
+            } catch (SAXNotSupportedException e) {
+            } catch (ParserConfigurationException e) {
+            }
+            try {
+                ourSAXParserFactory.setFeature("http://xml.org/sax/features/validation", false);
+            } catch (SAXNotRecognizedException e) {
+            } catch (SAXNotSupportedException e) {
+            } catch (ParserConfigurationException e) {
+            }
+            try {
+                ourSAXParserFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+            } catch (SAXNotRecognizedException e) {
+            } catch (SAXNotSupportedException e) {
+            } catch (ParserConfigurationException e) {
+            }
+            ourSAXParserFactory.setNamespaceAware(true);
+            ourSAXParserFactory.setValidating(false);
+        }
+        return ourSAXParserFactory;
+    }
+
     private class AcceptEncodingEntry implements Comparable {
 
         private String myEncoding;
@@ -341,7 +435,7 @@ public abstract class ServletDAVHandler {
             AcceptEncodingEntry anotherEntry = (AcceptEncodingEntry) object;
             if (getQuality() == anotherEntry.getQuality()) {
                 return 0;
-            } 
+            }
             return getQuality() > anotherEntry.getQuality() ? 1 : -1;
         }
     }

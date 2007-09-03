@@ -67,7 +67,6 @@ public class DAVGetHandler extends ServletDAVHandler {
             try {
                 setResponseContentLength(responseBody.getBytes(UTF_8_ENCODING).length);
             } catch (UnsupportedEncodingException e) {
-                //Nothing to do, we just skip Content-Length header
             }
 
             try {
@@ -78,6 +77,10 @@ public class DAVGetHandler extends ServletDAVHandler {
         } else {
             resource.writeTo(getResponseOutputStream());
         }
+    }
+
+    protected DAVRequest getDAVRequest() {
+        return null;
     }
 
     protected void checkPreconditions(String eTag, Date lastModified) {
