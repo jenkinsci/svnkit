@@ -15,9 +15,10 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -38,10 +39,11 @@ public class DAVUpdateRequest extends DAVReportRequest {
     private static final DAVElement IGNORE_ANCESTRY = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "ignore-ancestry");
     private static final DAVElement TEXT_DELTAS = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "text-deltas");
     private static final DAVElement RESOURCE_WALK = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "resource-walk");
+    private static final DAVElement ENTRY = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "entry");
+    private static final DAVElement MISSING = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "missing");
 
     boolean mySendAll;
     long myRevision;
-    long myFromRevision;
     String mySrcPath;
     String myDstPath;
     String myTarget;
@@ -52,6 +54,13 @@ public class DAVUpdateRequest extends DAVReportRequest {
     boolean myIgnoreAncestry;
     boolean myResourceWalk;
 
+    String myEntryPath;
+    long myEntryRevision;
+    String myEntryLinkPath;
+    boolean myEntryStartEmpty;
+    String myEntryLockToken;
+
+    String myMissing;
 
     public DAVUpdateRequest(Map properties, Attributes rootElementAttributes) throws SVNException {
         super(UPDATE_REPORT, properties);
@@ -59,7 +68,6 @@ public class DAVUpdateRequest extends DAVReportRequest {
         mySendAll = "true".equals(rootElementAttributes.getValue("send-all"));
 
         myRevision = DAVResource.INVALID_REVISION;
-        myFromRevision = DAVResource.INVALID_REVISION;
         mySrcPath = null;
         myDstPath = null;
         myTarget = "";
@@ -69,6 +77,14 @@ public class DAVUpdateRequest extends DAVReportRequest {
         myRecursiveRequested = false;
         myIgnoreAncestry = false;
         myResourceWalk = false;
+
+        myEntryPath = null;
+        myEntryRevision = DAVResource.INVALID_REVISION;
+        myEntryLinkPath = null;
+        myEntryStartEmpty = false;
+        myEntryLockToken = null;
+
+        myMissing = null;
 
         initialize();
     }
@@ -90,7 +106,12 @@ public class DAVUpdateRequest extends DAVReportRequest {
         return mySrcPath;
     }
 
-    private void setSrcPath(String srcPath) {
+    private void setSrcPath(String srcPath) throws SVNException {
+        try {
+            SVNURL.parseURIEncoded(srcPath);
+        } catch (SVNException e) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
+        }
         mySrcPath = srcPath;
     }
 
@@ -98,7 +119,8 @@ public class DAVUpdateRequest extends DAVReportRequest {
         return myDstPath;
     }
 
-    private void setDstPath(String dstPath) {
+    private void setDstPath(String dstPath) throws SVNException {
+        SVNURL.parseURIEncoded(dstPath);
         myDstPath = dstPath;
     }
 
@@ -158,6 +180,56 @@ public class DAVUpdateRequest extends DAVReportRequest {
         myResourceWalk = resourceWalk;
     }
 
+
+    public String getEntryPath() {
+        return myEntryPath;
+    }
+
+    private void setEntryPath(String entryPath) {
+        myEntryPath = entryPath;
+    }
+
+    public long getEntryRevision() {
+        return myEntryRevision;
+    }
+
+    private void setEntryRevision(long entryRevision) {
+        myEntryRevision = entryRevision;
+    }
+
+    public String getEntryLinkPath() {
+        return myEntryLinkPath;
+    }
+
+    private void setEntryLinkPath(String entryLinkPath) {
+        myEntryLinkPath = entryLinkPath;
+    }
+
+    public boolean isEntryStartEmpty() {
+        return myEntryStartEmpty;
+    }
+
+    private void setEntryStartEmpty(boolean entryStartEmpty) {
+        myEntryStartEmpty = entryStartEmpty;
+    }
+
+    public String getEntryLockToken() {
+        return myEntryLockToken;
+    }
+
+    private void setEntryLockToken(String entryLockToken) {
+        myEntryLockToken = entryLockToken;
+    }
+
+
+    public String getMissing() {
+        return myMissing;
+    }
+
+    private void setMissing(String missing) {
+        myMissing = missing;
+    }
+
     protected void initialize() throws SVNException {
         for (Iterator iterator = getProperties().entrySet().iterator(); iterator.hasNext();) {
             Map.Entry entry = (Map.Entry) iterator.next();
@@ -191,6 +263,22 @@ public class DAVUpdateRequest extends DAVReportRequest {
             } else if (element == RESOURCE_WALK) {
                 assertNullCData(property);
                 setResourceWalk(!"no".equals(property.getFirstValue()));
+            } else if (element == ENTRY) {
+                try {
+                    long revision = Long.parseLong(property.getAttributeValue("rev"));
+                    setEntryRevision(revision);
+                } catch (NumberFormatException e) {
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
+                }
+
+                setEntryPath(property.getFirstValue());
+                setDepth(SVNDepth.fromString(property.getFirstValue()));
+                setEntryLinkPath(property.getAttributeValue("linkpath"));
+                setEntryStartEmpty(property.getAttributeValue("start-empty") != null);
+                setEntryLockToken(property.getAttributeValue("lock-token"));
+
+            } else if (element == MISSING) {
+                setMissing(property.getFirstValue());
             }
         }
         if (!isDepthRequested() && !isRecursiveRequested() && (getDepth() == SVNDepth.UNKNOWN)) {
@@ -198,6 +286,9 @@ public class DAVUpdateRequest extends DAVReportRequest {
         }
         if (getSrcPath() == null) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED));
+        }
+        if (!isSendAll()) {
+            setTextDeltas(false);
         }
     }
 
