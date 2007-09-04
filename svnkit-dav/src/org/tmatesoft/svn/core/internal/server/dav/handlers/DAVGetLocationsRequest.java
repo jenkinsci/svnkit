@@ -25,26 +25,15 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
  * @author TMate Software Ltd.
  * @version 1.1.2
  */
-public class DAVGetLocationsRequest extends DAVReportRequest {
+public class DAVGetLocationsRequest extends DAVRequest {
 
 
     private static final DAVElement PEG_REVISION = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "peg-revision");
     private static final DAVElement LOCATION_REVISION = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "location-revision");
 
-    private String myPath;
-    private long myPegRevision;
-    private long[] myRevisions;
-
-    public DAVGetLocationsRequest(Map properties) throws SVNException {
-        super(GET_LOCATIONS_REPORT, properties);
-
-        myPath = null;
-        myPegRevision = DAVResource.INVALID_REVISION;
-        myRevisions = null;
-
-        initialize();
-    }
-
+    private String myPath = null;
+    private long myPegRevision = DAVResource.INVALID_REVISION;
+    private long[] myRevisions = null;
 
     public String getPath() {
         return myPath;

@@ -22,13 +22,12 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.xml.sax.Attributes;
 
 /**
  * @author TMate Software Ltd.
  * @version 1.1.2
  */
-public class DAVUpdateRequest extends DAVReportRequest {
+public class DAVUpdateRequest extends DAVRequest {
 
     private static final DAVElement TARGET_REVISION = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "target-revision");
     private static final DAVElement SRC_PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "src-path");
@@ -42,56 +41,32 @@ public class DAVUpdateRequest extends DAVReportRequest {
     private static final DAVElement ENTRY = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "entry");
     private static final DAVElement MISSING = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "missing");
 
-    boolean mySendAll;
-    long myRevision;
-    String mySrcPath;
-    String myDstPath;
-    String myTarget;
-    boolean myTextDeltas;
-    SVNDepth myDepth;
-    boolean myDepthRequested;
-    boolean myRecursiveRequested;
-    boolean myIgnoreAncestry;
-    boolean myResourceWalk;
+    boolean mySendAll = false;
+    long myRevision = DAVResource.INVALID_REVISION;
+    String mySrcPath = null;
+    String myDstPath = null;
+    String myTarget = "";
+    boolean myTextDeltas = true;
+    SVNDepth myDepth = SVNDepth.UNKNOWN;
+    boolean myDepthRequested = false;
+    boolean myRecursiveRequested = false;
+    boolean myIgnoreAncestry = false;
+    boolean myResourceWalk = false;
 
-    String myEntryPath;
-    long myEntryRevision;
-    String myEntryLinkPath;
-    boolean myEntryStartEmpty;
-    String myEntryLockToken;
+    String myEntryPath = null;
+    long myEntryRevision = DAVResource.INVALID_REVISION;
+    String myEntryLinkPath = null;
+    boolean myEntryStartEmpty = false;
+    String myEntryLockToken = null;
 
-    String myMissing;
-
-    public DAVUpdateRequest(Map properties, Attributes rootElementAttributes) throws SVNException {
-        super(UPDATE_REPORT, properties);
-
-        mySendAll = "true".equals(rootElementAttributes.getValue("send-all"));
-
-        myRevision = DAVResource.INVALID_REVISION;
-        mySrcPath = null;
-        myDstPath = null;
-        myTarget = "";
-        myTextDeltas = true;
-        myDepth = SVNDepth.UNKNOWN;
-        myDepthRequested = false;
-        myRecursiveRequested = false;
-        myIgnoreAncestry = false;
-        myResourceWalk = false;
-
-        myEntryPath = null;
-        myEntryRevision = DAVResource.INVALID_REVISION;
-        myEntryLinkPath = null;
-        myEntryStartEmpty = false;
-        myEntryLockToken = null;
-
-        myMissing = null;
-
-        initialize();
-    }
-
+    String myMissing = null;
 
     public boolean isSendAll() {
         return mySendAll;
+    }
+
+    private void setSendAll(boolean sendAll) {
+        mySendAll = sendAll;
     }
 
     public long getRevision() {
@@ -231,6 +206,7 @@ public class DAVUpdateRequest extends DAVReportRequest {
     }
 
     protected void initialize() throws SVNException {
+        setSendAll("true".equals(getRootElementAttributes().getValue("send-all")));
         for (Iterator iterator = getProperties().entrySet().iterator(); iterator.hasNext();) {
             Map.Entry entry = (Map.Entry) iterator.next();
             DAVElement element = (DAVElement) entry.getKey();

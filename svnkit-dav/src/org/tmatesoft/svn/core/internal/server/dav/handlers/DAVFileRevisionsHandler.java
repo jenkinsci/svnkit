@@ -33,15 +33,25 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  */
 public class DAVFileRevisionsHandler extends ReportHandler implements ISVNFileRevisionHandler {
 
+    private DAVFileRevisionsRequest myDAVRequest;
     private boolean myDiffCompress;
 
-    public DAVFileRevisionsHandler(DAVResource resource, DAVFileRevisionsRequest reportRequest, Writer responseWriter, boolean diffCompress) {
-        super(resource, reportRequest, responseWriter);
+
+    public DAVFileRevisionsHandler(DAVResource resource, Writer responseWriter, boolean diffCompress) {
+        super(resource, responseWriter);
         myDiffCompress = diffCompress;
     }
 
-    private DAVFileRevisionsRequest getDAVRequest() {
-        return (DAVFileRevisionsRequest) myDAVRequest;
+
+    public DAVRequest getDAVRequest() {
+        return getFileRevsionsRequest();
+    }
+
+    private DAVFileRevisionsRequest getFileRevsionsRequest() {
+        if (myDAVRequest == null) {
+            myDAVRequest = new DAVFileRevisionsRequest();
+        }
+        return myDAVRequest;
     }
 
     private boolean isDiffCompress() {
@@ -55,7 +65,7 @@ public class DAVFileRevisionsHandler extends ReportHandler implements ISVNFileRe
     public void sendResponse() throws SVNException {
         writeXMLHeader();
 
-        getDAVResource().getRepository().getFileRevisions(getDAVRequest().getPath(), getDAVRequest().getStartRevision(), getDAVRequest().getEndRevision(), this);
+        getDAVResource().getRepository().getFileRevisions(getFileRevsionsRequest().getPath(), getFileRevsionsRequest().getStartRevision(), getFileRevsionsRequest().getEndRevision(), this);
 
         writeXMLFooter();
     }

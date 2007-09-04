@@ -32,12 +32,22 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  */
 public class DAVReplayHandler extends ReportHandler implements ISVNEditor {
 
-    public DAVReplayHandler(DAVResource resource, DAVReplayRequest reportRequest, Writer responseWriter) {
-        super(resource, reportRequest, responseWriter);
+    private DAVReplayRequest myDAVRequest;
+
+    public DAVReplayHandler(DAVResource resource, Writer responseWriter) {
+        super(resource, responseWriter);
     }
 
-    private DAVReplayRequest getDAVRequest() {
-        return (DAVReplayRequest) myDAVRequest;
+
+    public DAVRequest getDAVRequest() {
+        return getReplayRequest();
+    }
+
+    private DAVReplayRequest getReplayRequest() {
+        if (myDAVRequest == null) {
+            myDAVRequest = new DAVReplayRequest();
+        }
+        return myDAVRequest;
     }
 
     public int getContentLength() {
@@ -47,9 +57,9 @@ public class DAVReplayHandler extends ReportHandler implements ISVNEditor {
     public void sendResponse() throws SVNException {
         writeXMLHeader();
 
-        getDAVResource().getRepository().replay(getDAVRequest().getLowRevision(),
-                getDAVRequest().getRevision(),
-                getDAVRequest().isSendDeltas(),
+        getDAVResource().getRepository().replay(getReplayRequest().getLowRevision(),
+                getReplayRequest().getRevision(),
+                getReplayRequest().isSendDeltas(),
                 this);
 
         writeXMLFooter();

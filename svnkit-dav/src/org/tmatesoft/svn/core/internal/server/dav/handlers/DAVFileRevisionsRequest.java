@@ -22,22 +22,11 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
  * @author TMate Software Ltd.
  * @version 1.1.2
  */
-public class DAVFileRevisionsRequest extends DAVReportRequest {
+public class DAVFileRevisionsRequest extends DAVRequest {
 
-    String myPath;
-    long myStartRevision;
-    long myEndRevision;
-
-    public DAVFileRevisionsRequest(Map properties) throws SVNException {
-        super(FILE_REVISIONS_REPORT, properties);
-
-        myPath = null;
-        myStartRevision = DAVResource.INVALID_REVISION;
-        myEndRevision = DAVResource.INVALID_REVISION;
-
-        initialize();
-    }
-
+    String myPath = null;
+    long myStartRevision = DAVResource.INVALID_REVISION;
+    long myEndRevision = DAVResource.INVALID_REVISION;
 
     public String getPath() {
         return myPath;

@@ -29,11 +29,19 @@ import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
  */
 public class DAVGetLocksHandler extends ReportHandler {
 
-    String myResponseBody;
+    private DAVGetLocksRequest myDAVRequest;
+    private String myResponseBody;
 
-    protected DAVGetLocksHandler(DAVResource resource, DAVGetLocksRequest reportRequest, Writer responseWriter) throws SVNException {
-        super(resource, reportRequest, responseWriter);
-        generateResponseBody();
+    protected DAVGetLocksHandler(DAVResource resource, Writer responseWriter) throws SVNException {
+        super(resource, responseWriter);
+    }
+
+
+    public DAVRequest getDAVRequest() {
+        if (myDAVRequest == null) {
+            myDAVRequest = new DAVGetLocksRequest();
+        }
+        return myDAVRequest;
     }
 
     public String getResponseBody() {
@@ -44,7 +52,8 @@ public class DAVGetLocksHandler extends ReportHandler {
         myResponseBody = responseBody;
     }
 
-    public int getContentLength() {
+    public int getContentLength() throws SVNException {
+        generateResponseBody();
         try {
             return getResponseBody().getBytes(UTF_8_ENCODING).length;
         } catch (UnsupportedEncodingException e) {
@@ -53,19 +62,22 @@ public class DAVGetLocksHandler extends ReportHandler {
     }
 
     public void sendResponse() throws SVNException {
+        generateResponseBody();
         write(getResponseBody());
     }
 
     private void generateResponseBody() throws SVNException {
-        SVNLock[] locks = getDAVResource().getLocks();
+        if (getResponseBody() == null) {
+            SVNLock[] locks = getDAVResource().getLocks();
 
-        StringBuffer xmlBuffer = new StringBuffer();
-        addXMLHeader(xmlBuffer);
-        for (int i = 0; i < locks.length; i++) {
-            addLock(locks[i], xmlBuffer);
+            StringBuffer xmlBuffer = new StringBuffer();
+            addXMLHeader(xmlBuffer);
+            for (int i = 0; i < locks.length; i++) {
+                addLock(locks[i], xmlBuffer);
+            }
+            addXMLFooter(xmlBuffer);
+            setResponseBody(xmlBuffer.toString());
         }
-        addXMLFooter(xmlBuffer);
-        setResponseBody(xmlBuffer.toString());
     }
 
     private void addLock(SVNLock lock, StringBuffer xmlBuffer) {

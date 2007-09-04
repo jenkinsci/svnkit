@@ -22,27 +22,16 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
  * @author TMate Software Ltd.
  * @version 1.1.2
  */
-public class DAVReplayRequest extends DAVReportRequest {
+public class DAVReplayRequest extends DAVRequest {
 
     private static final DAVElement EDITOR_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "editor-report");
 
     private static final DAVElement LOW_WATER_MARK = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "low-water-mark");
     private static final DAVElement SEND_DELTAS = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "send-deltas");
 
-    boolean myIsSendDeltas;
-    long myLowRevision;
-    long myRevision;
-
-    public DAVReplayRequest(Map properties) throws SVNException {
-        super(EDITOR_REPORT, properties);
-
-        myIsSendDeltas = true;
-        myLowRevision = DAVResource.INVALID_REVISION;
-        myRevision = DAVResource.INVALID_REVISION;
-
-        initialize();
-    }
-
+    boolean myIsSendDeltas = true;
+    long myLowRevision = DAVResource.INVALID_REVISION;
+    long myRevision = DAVResource.INVALID_REVISION;
 
     public boolean isSendDeltas() {
         return myIsSendDeltas;
@@ -69,6 +58,7 @@ public class DAVReplayRequest extends DAVReportRequest {
     }
 
     protected void initialize() throws SVNException {
+        setRootElement(EDITOR_REPORT);
         for (Iterator iterator = getProperties().entrySet().iterator(); iterator.hasNext();) {
             Map.Entry entry = (Map.Entry) iterator.next();
             DAVElement element = (DAVElement) entry.getKey();

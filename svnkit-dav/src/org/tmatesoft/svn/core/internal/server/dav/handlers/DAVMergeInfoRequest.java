@@ -24,24 +24,13 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
  * @author TMate Software Ltd.
  * @version 1.1.2
  */
-public class DAVMergeInfoRequest extends DAVReportRequest {
+public class DAVMergeInfoRequest extends DAVRequest {
 
     private static final DAVElement INHERIT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "inherit");
 
-    long myRevision;
-    SVNMergeInfoInheritance myInherit;
-    String[] myTargetPaths;
-
-    public DAVMergeInfoRequest(Map properties) throws SVNException {
-        super(MERGEINFO_REPORT, properties);
-
-        myRevision = DAVResource.INVALID_REVISION;
-        myInherit = SVNMergeInfoInheritance.EXPLICIT;
-        myTargetPaths = null;
-
-        initialize();
-    }
-
+    long myRevision = DAVResource.INVALID_REVISION;
+    SVNMergeInfoInheritance myInherit = SVNMergeInfoInheritance.EXPLICIT;
+    String[] myTargetPaths = null;
 
     public long getRevision() {
         return myRevision;

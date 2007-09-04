@@ -12,7 +12,6 @@
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.util.Date;
-import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
@@ -22,17 +21,9 @@ import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
  * @author TMate Software Ltd.
  * @version 1.1.2
  */
-public class DAVDatedRevisionRequest extends DAVReportRequest {
+public class DAVDatedRevisionRequest extends DAVRequest {
 
-    Date myDate;
-
-    protected DAVDatedRevisionRequest(Map properties) throws SVNException {
-        super(DATED_REVISIONS_REPORT, properties);
-
-        myDate = null;
-
-        initialize();
-    }
+    Date myDate = null;
 
     public Date getDate() {
         return myDate;

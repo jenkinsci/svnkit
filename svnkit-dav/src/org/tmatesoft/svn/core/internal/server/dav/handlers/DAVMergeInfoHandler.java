@@ -28,10 +28,11 @@ import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
  */
 public class DAVMergeInfoHandler extends ReportHandler {
 
+    private DAVMergeInfoRequest myDAVRequest;
     private String myResponseBody;
 
-    public DAVMergeInfoHandler(DAVResource resource, DAVMergeInfoRequest reportRequest, Writer responseWriter) throws SVNException {
-        super(resource, reportRequest, responseWriter);
+    public DAVMergeInfoHandler(DAVResource resource, Writer responseWriter) throws SVNException {
+        super(resource, responseWriter);
         generateResponseBody();
     }
 
@@ -43,11 +44,20 @@ public class DAVMergeInfoHandler extends ReportHandler {
         myResponseBody = responseBody;
     }
 
-    private DAVMergeInfoRequest getDAVRequest() {
-        return (DAVMergeInfoRequest) myDAVRequest;
+
+    public DAVRequest getDAVRequest() {
+        return getMergeInfoRequest();
     }
 
-    public int getContentLength() {
+    private DAVMergeInfoRequest getMergeInfoRequest() {
+        if (myDAVRequest == null) {
+            myDAVRequest = new DAVMergeInfoRequest();
+        }
+        return myDAVRequest;
+    }
+
+    public int getContentLength() throws SVNException {
+        generateResponseBody();
         try {
             return getResponseBody().getBytes(UTF_8_ENCODING).length;
         } catch (UnsupportedEncodingException e) {
@@ -56,25 +66,27 @@ public class DAVMergeInfoHandler extends ReportHandler {
     }
 
     public void sendResponse() throws SVNException {
+        generateResponseBody();
         write(getResponseBody());
     }
 
     private void generateResponseBody() throws SVNException {
+        if (getResponseBody() == null) {
+            StringBuffer xmlBuffer = new StringBuffer();
+            addXMLHeader(xmlBuffer);
 
-        StringBuffer xmlBuffer = new StringBuffer();
-        addXMLHeader(xmlBuffer);
-
-        Map mergeInfoMap = getDAVResource().getRepository().getMergeInfo(getDAVRequest().getTargetPaths(), getDAVRequest().getRevision(), getDAVRequest().getInherit());
-        if (mergeInfoMap != null && !mergeInfoMap.isEmpty()) {
-            for (Iterator iterator = mergeInfoMap.entrySet().iterator(); iterator.hasNext();) {
-                Map.Entry entry = (Map.Entry) iterator.next();
-                SVNMergeInfo mergeInfo = (SVNMergeInfo) entry.getValue();
-                addMergeInfo(mergeInfo, xmlBuffer);
+            Map mergeInfoMap = getDAVResource().getRepository().getMergeInfo(getMergeInfoRequest().getTargetPaths(), getMergeInfoRequest().getRevision(), getMergeInfoRequest().getInherit());
+            if (mergeInfoMap != null && !mergeInfoMap.isEmpty()) {
+                for (Iterator iterator = mergeInfoMap.entrySet().iterator(); iterator.hasNext();) {
+                    Map.Entry entry = (Map.Entry) iterator.next();
+                    SVNMergeInfo mergeInfo = (SVNMergeInfo) entry.getValue();
+                    addMergeInfo(mergeInfo, xmlBuffer);
+                }
             }
-        }
 
-        addXMLFooter(xmlBuffer);
-        setResponseBody(xmlBuffer.toString());
+            addXMLFooter(xmlBuffer);
+            setResponseBody(xmlBuffer.toString());
+        }
     }
 
     private void addMergeInfo(SVNMergeInfo mergeInfo, StringBuffer xmlBuffer) {

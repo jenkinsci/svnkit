@@ -26,8 +26,21 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
  */
 public class DAVUpdateHandler extends ReportHandler {
 
-    public DAVUpdateHandler(DAVResource resource, DAVUpdateRequest reportRequest, Writer responseWriter) throws SVNException {
-        super(resource, reportRequest, responseWriter);
+    private DAVUpdateRequest myDAVRequest;
+
+    public DAVRequest getDAVRequest() {
+        return getUpdateReques();
+    }
+
+    private DAVUpdateRequest getUpdateReques() {
+        if (myDAVRequest == null) {
+            myDAVRequest = new DAVUpdateRequest();
+        }
+        return myDAVRequest;
+    }
+
+    public DAVUpdateHandler(DAVResource resource, Writer responseWriter) throws SVNException {
+        super(resource, responseWriter);
         if (resource.getResourceURI().getKind() != DAVResourceKind.VCC) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "This report can only be run against a VCC."));
         }

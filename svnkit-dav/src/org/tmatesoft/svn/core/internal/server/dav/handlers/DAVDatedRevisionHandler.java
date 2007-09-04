@@ -26,15 +26,22 @@ import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
  */
 public class DAVDatedRevisionHandler extends ReportHandler {
 
-    String myResponseBody;
+    private String myResponseBody = null;
+    private DAVDatedRevisionRequest myDAVRequest;
 
-    public DAVDatedRevisionHandler(DAVResource resource, DAVDatedRevisionRequest reportRequest, Writer responseWriter) throws SVNException {
-        super(resource, reportRequest, responseWriter);
-        generateResponseBody();
+    public DAVDatedRevisionHandler(DAVResource resource, Writer responseWriter) throws SVNException {
+        super(resource, responseWriter);
     }
 
-    private DAVDatedRevisionRequest getDAVRequest() {
-        return (DAVDatedRevisionRequest) myDAVRequest;
+    public DAVRequest getDAVRequest() {
+        return getDatedRevisionRequest();
+    }
+
+    private DAVDatedRevisionRequest getDatedRevisionRequest() {
+        if (myDAVRequest == null) {
+            myDAVRequest = new DAVDatedRevisionRequest();
+        }
+        return myDAVRequest;
     }
 
     private String getResponseBody() {
@@ -45,7 +52,8 @@ public class DAVDatedRevisionHandler extends ReportHandler {
         myResponseBody = body;
     }
 
-    public int getContentLength() {
+    public int getContentLength() throws SVNException {
+        generateResponseBody();
         try {
             return getResponseBody().getBytes(UTF_8_ENCODING).length;
         } catch (UnsupportedEncodingException e) {
@@ -54,19 +62,22 @@ public class DAVDatedRevisionHandler extends ReportHandler {
     }
 
     public void sendResponse() throws SVNException {
+        generateResponseBody();
         write(getResponseBody());
     }
 
     private void generateResponseBody() throws SVNException {
-        StringBuffer xmlBuffer = new StringBuffer();
-        long revision = getDatedRevision();
-        addXMLHeader(xmlBuffer);
-        XMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.VERSION_NAME.getName(), String.valueOf(revision), xmlBuffer);
-        addXMLFooter(xmlBuffer);
-        setResponseBody(xmlBuffer.toString());
+        if (getResponseBody() == null) {
+            StringBuffer xmlBuffer = new StringBuffer();
+            long revision = getDatedRevision();
+            addXMLHeader(xmlBuffer);
+            XMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.VERSION_NAME.getName(), String.valueOf(revision), xmlBuffer);
+            addXMLFooter(xmlBuffer);
+            setResponseBody(xmlBuffer.toString());
+        }
     }
 
     private long getDatedRevision() throws SVNException {
-        return getDAVResource().getRepository().getDatedRevision(getDAVRequest().getDate());
+        return getDAVResource().getRepository().getDatedRevision(getDatedRevisionRequest().getDate());
     }
 }

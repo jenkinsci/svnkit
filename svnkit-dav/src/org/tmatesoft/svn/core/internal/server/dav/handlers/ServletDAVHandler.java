@@ -121,32 +121,11 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     protected abstract DAVRequest getDAVRequest();
 
     protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
-        if (parent == null) {
-            getDAVRequest().setRootElement(element);
-            getDAVRequest().setRootElementAttributes(attrs);
-        } else if (parent == getDAVRequest().getRootElement()) {
-            getDAVRequest().put(getDAVRequest().getProperties(), element, attrs);
-        } else {
-            DAVRequest.DAVElementProperty parentProperty = (DAVRequest.DAVElementProperty) getDAVRequest().getProperties().get(parent);
-            if (parentProperty != null) {
-                parentProperty.addChild(element, attrs);
-            }
-        }
+        getDAVRequest().startElement(parent, element, attrs);
     }
 
     protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
-        if (cdata != null) {
-            if (parent == getDAVRequest().getRootElement()) {
-                getDAVRequest().put(getDAVRequest().getProperties(), element, cdata);
-            } else if (parent != null) {
-                DAVRequest.DAVElementProperty parentProperty = (DAVRequest.DAVElementProperty) getDAVRequest().getProperties().get(parent);
-                if (parentProperty == null) {
-                    invalidXML();
-                } else {
-                    parentProperty.addChild(element, cdata);
-                }
-            }
-        }
+        getDAVRequest().endElement(parent, element, cdata);
     }
 
     protected DAVResource createDAVResource(boolean labelAllowed, boolean useCheckedIn) throws SVNException {

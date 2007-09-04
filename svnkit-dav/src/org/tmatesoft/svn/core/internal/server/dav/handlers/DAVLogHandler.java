@@ -32,12 +32,22 @@ import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
  */
 public class DAVLogHandler extends ReportHandler implements ISVNLogEntryHandler {
 
-    public DAVLogHandler(DAVResource resource, DAVLogRequest reportRequest, Writer responseWriter) {
-        super(resource, reportRequest, responseWriter);
+    private DAVLogRequest myDAVRequest;
+
+    public DAVLogHandler(DAVResource resource, Writer responseWriter) {
+        super(resource, responseWriter);
     }
 
-    private DAVLogRequest getDAVRequest() {
-        return (DAVLogRequest) myDAVRequest;
+
+    public DAVRequest getDAVRequest() {
+        return getLogRequest();
+    }
+
+    private DAVLogRequest getLogRequest() {
+        if (myDAVRequest == null) {
+            myDAVRequest = new DAVLogRequest();
+        }
+        return myDAVRequest;
     }
 
     public int getContentLength() {
@@ -47,14 +57,14 @@ public class DAVLogHandler extends ReportHandler implements ISVNLogEntryHandler 
     public void sendResponse() throws SVNException {
         writeXMLHeader();
 
-        getDAVResource().getRepository().log(getDAVRequest().getTargetPaths(),
-                getDAVRequest().getStartRevision(),
-                getDAVRequest().getEndRevision(),
-                getDAVRequest().isDiscoverChangedPaths(),
-                getDAVRequest().isStrictNodeHistory(),
-                getDAVRequest().getLimit(),
-                getDAVRequest().isIncludeMergedRevisions(),
-                getDAVRequest().isOmitLogText(),
+        getDAVResource().getRepository().log(getLogRequest().getTargetPaths(),
+                getLogRequest().getStartRevision(),
+                getLogRequest().getEndRevision(),
+                getLogRequest().isDiscoverChangedPaths(),
+                getLogRequest().isStrictNodeHistory(),
+                getLogRequest().getLimit(),
+                getLogRequest().isIncludeMergedRevisions(),
+                getLogRequest().isOmitLogText(),
                 this);
 
         writeXMLFooter();

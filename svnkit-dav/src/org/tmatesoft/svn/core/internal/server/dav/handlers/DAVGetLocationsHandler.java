@@ -28,12 +28,21 @@ import org.tmatesoft.svn.core.io.SVNLocationEntry;
  */
 public class DAVGetLocationsHandler extends ReportHandler implements ISVNLocationEntryHandler {
 
-    public DAVGetLocationsHandler(DAVResource resource, DAVGetLocationsRequest reportRequest, Writer responseWriter) {
-        super(resource, reportRequest, responseWriter);
+    private DAVGetLocationsRequest myDAVRequest;
+
+    public DAVGetLocationsHandler(DAVResource resource, Writer responseWriter) {
+        super(resource, responseWriter);
     }
 
-    private DAVGetLocationsRequest getDAVRequest() {
-        return (DAVGetLocationsRequest) myDAVRequest;
+    public DAVRequest getDAVRequest() {
+        return getGetLocationsRequest();
+    }
+
+    private DAVGetLocationsRequest getGetLocationsRequest() {
+        if (myDAVRequest == null) {
+            myDAVRequest = new DAVGetLocationsRequest();
+        }
+        return myDAVRequest;
     }
 
     public int getContentLength() {
@@ -43,7 +52,7 @@ public class DAVGetLocationsHandler extends ReportHandler implements ISVNLocatio
     public void sendResponse() throws SVNException {
         writeXMLHeader();
 
-        getDAVResource().getRepository().getLocations(getDAVRequest().getPath(), getDAVRequest().getPegRevision(), getDAVRequest().getRevisions(), this);
+        getDAVResource().getRepository().getLocations(getGetLocationsRequest().getPath(), getGetLocationsRequest().getPegRevision(), getGetLocationsRequest().getRevisions(), this);
 
         writeXMLFooter();
     }

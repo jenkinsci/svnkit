@@ -231,7 +231,7 @@ public class DAVOptionsHandler extends ServletDAVHandler {
     private void generateSupportedReportSet(DAVResource resource, StringBuffer xmlBuffer) {
         XMLUtil.openXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "supported-report-set", XMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
         if (resource.getResourceURI().getType() == DAVResourceType.REGULAR) {
-            Collection supportedReports = DAVReportRequest.REPORT_ELEMENTS;
+            Collection supportedReports = DAVReportHandler.REPORT_ELEMENTS;
             generateSupportedElementSet(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "supported-report", supportedReports, getOptionsRequest().getRequestedReports(), xmlBuffer);
             XMLUtil.closeXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "supported-report-set", xmlBuffer);
         }

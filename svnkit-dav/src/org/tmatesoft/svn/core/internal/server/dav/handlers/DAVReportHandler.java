@@ -11,12 +11,17 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
+import org.xml.sax.Attributes;
 
 /**
  * @author TMate Software Ltd.
@@ -24,60 +29,100 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
  */
 public class DAVReportHandler extends ServletDAVHandler {
 
-    private DAVReportRequest myDAVRequest;
+    public static Set REPORT_ELEMENTS = new HashSet();    
+
+    public static final DAVElement UPDATE_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "update-report");
+    public static final DAVElement LOG_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "log-report");
+    public static final DAVElement DATED_REVISIONS_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "dated-rev-report");
+    public static final DAVElement GET_LOCATIONS_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "get-locations");
+    public static final DAVElement FILE_REVISIONS_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "file-revs-report");
+    public static final DAVElement GET_LOCKS_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "get-locks-report");
+    public static final DAVElement REPLAY_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "replay-report");
+    public static final DAVElement MERGEINFO_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "mergeinfo-report");
+
+    private ReportHandler myReportHandler;
+    private DAVResource myDAVResource;
+         
+    static {
+        REPORT_ELEMENTS.add(UPDATE_REPORT);
+        REPORT_ELEMENTS.add(LOG_REPORT);
+        REPORT_ELEMENTS.add(DATED_REVISIONS_REPORT);
+        REPORT_ELEMENTS.add(GET_LOCATIONS_REPORT);
+        REPORT_ELEMENTS.add(FILE_REVISIONS_REPORT);
+        REPORT_ELEMENTS.add(GET_LOCKS_REPORT);
+        REPORT_ELEMENTS.add(REPLAY_REPORT);
+        REPORT_ELEMENTS.add(MERGEINFO_REPORT);
+    }
 
     protected DAVReportHandler(DAVRepositoryManager connector, HttpServletRequest request, HttpServletResponse response) {
         super(connector, request, response);
     }
 
     protected DAVRequest getDAVRequest() {
-        if (myDAVRequest == null) {
-            myDAVRequest = new DAVReportRequest();
-        }
-        return myDAVRequest;
+        return getReportHandler().getDAVRequest();
     }
 
-    private DAVReportRequest getReportRequest(){
-        return (DAVReportRequest) getDAVRequest();
+    private ReportHandler getReportHandler() {
+        return myReportHandler;
+    }
+
+    private void setReportHandler(ReportHandler reportHandler) {
+        myReportHandler = reportHandler;
+    }
+
+    private DAVResource getDAVResource() {
+        return myDAVResource;
+    }
+
+    private void setDAVResource(DAVResource DAVResource) {
+        myDAVResource = DAVResource;
+    }
+
+    protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
+        if (parent == null) {
+            initReportHandler(element);
+        }
+        getReportHandler().startElement(parent, element, attrs);
+    }
+
+    protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
+        getReportHandler().endElement(parent, element, cdata);
     }
 
     public void execute() throws SVNException {
+        setDAVResource(createDAVResource(false, false));
+
         readInput();
-
-        DAVResource resource = createDAVResource(false, false);
-
-        ReportHandler reportHandler = getReportHandler(resource);
 
         setDefaultResponseHeaders();
         setResponseContentType(DEFAULT_XML_CONTENT_TYPE);
         setResponseStatus(HttpServletResponse.SC_OK);
 
-        if (reportHandler.getContentLength() > 0) {
-            setResponseContentLength(reportHandler.getContentLength());
+        if (getReportHandler().getContentLength() > 0) {
+            setResponseContentLength(getReportHandler().getContentLength());
         }
 
-        reportHandler.sendResponse();
+        getReportHandler().sendResponse();
         //TODO: In some cases native svn starts blame command and clean all out headers        
     }
 
-    private ReportHandler getReportHandler(DAVResource resource) throws SVNException {
-        if (getReportRequest().isDatedRevisionsRequest()) {
-            return new DAVDatedRevisionHandler(resource, (DAVDatedRevisionRequest) getReportRequest().getReportRequest(), getResponseWriter());
-        } else if (getReportRequest().isFileRevisionsRequest()) {
-            return new DAVFileRevisionsHandler(resource, (DAVFileRevisionsRequest) getReportRequest().getReportRequest(), getResponseWriter(), getSVNDiffVersion());
-        } else if (getReportRequest().isGetLocationsRequest()) {
-            return new DAVGetLocationsHandler(resource, (DAVGetLocationsRequest) getReportRequest().getReportRequest(), getResponseWriter());
-        } else if (getReportRequest().isLogRequest()) {
-            return new DAVLogHandler(resource, (DAVLogRequest) getReportRequest().getReportRequest(), getResponseWriter());
-        } else if (getReportRequest().isMergeInfoRequest()) {
-            return new DAVMergeInfoHandler(resource, (DAVMergeInfoRequest) getReportRequest().getReportRequest(), getResponseWriter());
-        } else if (getReportRequest().isGetLocksRequest()) {
-            return new DAVGetLocksHandler(resource, (DAVGetLocksRequest) getReportRequest().getReportRequest(), getResponseWriter());
-        } else if (getReportRequest().isReplayRequest()) {
-            return new DAVReplayHandler(resource, (DAVReplayRequest) getReportRequest().getReportRequest(), getResponseWriter());
-        } else if (getReportRequest().isUpdateRequest()) {
-            return new DAVUpdateHandler(resource, (DAVUpdateRequest) getReportRequest().getReportRequest(), getResponseWriter());
+    private void initReportHandler(DAVElement rootElement) throws SVNException {
+        if (rootElement == DATED_REVISIONS_REPORT) {
+            setReportHandler(new DAVDatedRevisionHandler(getDAVResource(), getResponseWriter()));
+        } else if (rootElement == FILE_REVISIONS_REPORT) {
+            setReportHandler(new DAVFileRevisionsHandler(getDAVResource(), getResponseWriter(), getSVNDiffVersion()));
+        } else if (rootElement == GET_LOCATIONS_REPORT) {
+            setReportHandler(new DAVGetLocationsHandler(getDAVResource(), getResponseWriter()));
+        } else if (rootElement == LOG_REPORT) {
+            setReportHandler(new DAVLogHandler(getDAVResource(), getResponseWriter()));
+        } else if (rootElement == MERGEINFO_REPORT) {
+            setReportHandler(new DAVMergeInfoHandler(getDAVResource(), getResponseWriter()));
+        } else if (rootElement == GET_LOCKS_REPORT) {
+            setReportHandler(new DAVGetLocksHandler(getDAVResource(), getResponseWriter()));
+        } else if (rootElement == REPLAY_REPORT) {
+            setReportHandler(new DAVReplayHandler(getDAVResource(), getResponseWriter()));
+        } else if (rootElement == UPDATE_REPORT) {
+            setReportHandler(new DAVUpdateHandler(getDAVResource(), getResponseWriter()));
         }
-        return null;
     }
 }

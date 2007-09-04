@@ -18,12 +18,14 @@ import java.io.Writer;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.xml.sax.Attributes;
 
 /**
  * @author TMate Software Ltd.
@@ -33,30 +35,25 @@ public abstract class ReportHandler {
 
     protected static final String UTF_8_ENCODING = "UTF-8";
 
-    protected DAVReportRequest myDAVRequest;
     private DAVResource myDAVResource;
     private Writer myResponseWriter;
 
     private boolean myWriteTextDeltaHeader = true;
 
-    public ReportHandler(DAVResource resource, DAVReportRequest reportRequest, Writer responseWriter) {
+    public ReportHandler(DAVResource resource, Writer responseWriter) {
         myDAVResource = resource;
-        myDAVRequest = reportRequest;
         myResponseWriter = responseWriter;
     }
+
+    public abstract DAVRequest getDAVRequest();
 
     protected DAVResource getDAVResource() {
         return myDAVResource;
     }
 
-    private DAVReportRequest getDAVRequest() {
-        return myDAVRequest;
-    }
-
     protected Writer getResponseWriter() {
         return myResponseWriter;
     }
-
 
     private boolean isWriteTextDeltaHeader() {
         return myWriteTextDeltaHeader;
@@ -66,9 +63,17 @@ public abstract class ReportHandler {
         myWriteTextDeltaHeader = writeTextDeltaHeader;
     }
 
+    protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
+        getDAVRequest().startElement(parent, element, attrs);
+    }
+
+    protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
+        getDAVRequest().endElement(parent, element, cdata);
+    }
+
     public abstract void sendResponse() throws SVNException;
 
-    public abstract int getContentLength();
+    public abstract int getContentLength() throws SVNException;
 
     protected void write(String string) throws SVNException {
         try {

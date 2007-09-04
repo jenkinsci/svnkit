@@ -23,8 +23,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
  * @author TMate Software Ltd.
  * @version 1.1.2
  */
-public class DAVLogRequest extends DAVReportRequest {
-
+public class DAVLogRequest extends DAVRequest {
 
     private static final DAVElement DISCOVER_CHANGED_PATHS = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "discover-changed-paths");
     private static final DAVElement INCLUDE_MERGED_REVISIONS = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "include-merged-revisions");
@@ -32,32 +31,14 @@ public class DAVLogRequest extends DAVReportRequest {
     private static final DAVElement OMIT_LOG_TEXT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "omit-log-text");
     private static final DAVElement LIMIT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "limit");
 
-
-    boolean myDiscoverChangedPaths;
-    boolean myStrictNodeHistory;
-    boolean myIncludeMergedRevisions;
-    boolean myOmitLogText;
-    long myStartRevision;
-    long myEndRevision;
-    long myLimit;
-    String[] myTargetPaths;
-
-
-    protected DAVLogRequest(Map properties) throws SVNException {
-        super(LOG_REPORT, properties);
-
-        myDiscoverChangedPaths = false;
-        myStrictNodeHistory = false;
-        myIncludeMergedRevisions = false;
-        myOmitLogText = false;
-        myStartRevision = DAVResource.INVALID_REVISION;
-        myEndRevision = DAVResource.INVALID_REVISION;
-        myLimit = 0;
-        myTargetPaths = null;
-
-        initialize();
-    }
-
+    boolean myDiscoverChangedPaths = false;
+    boolean myStrictNodeHistory = false;
+    boolean myIncludeMergedRevisions = false;
+    boolean myOmitLogText = false;
+    long myStartRevision = DAVResource.INVALID_REVISION;
+    long myEndRevision = DAVResource.INVALID_REVISION;
+    long myLimit = 0;
+    String[] myTargetPaths = null;
 
     public boolean isDiscoverChangedPaths() {
         return myDiscoverChangedPaths;
