@@ -21,9 +21,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
@@ -36,6 +36,9 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
+import org.tmatesoft.svn.core.SVNMergeRange;
+import org.tmatesoft.svn.core.SVNMergeRangeInheritance;
+import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
@@ -58,10 +61,8 @@ import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.ISVNSession;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
-import org.tmatesoft.svn.core.io.SVNFileRevision;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 
 /**
  * @version 1.1.1
@@ -291,95 +292,34 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
     }
 
-    public int getFileRevisions(String path, long startRevision, long endRevision, ISVNFileRevisionHandler handler) throws SVNException {
+    public int getFileRevisions(String path, long startRevision, long endRevision, boolean includeMergedRevisions, ISVNFileRevisionHandler handler) throws SVNException {
         try {
             openRepository();
             path = getRepositoryPath(path);
-            startRevision = isInvalidRevision(startRevision) ? myFSFS.getYoungestRevision() : startRevision;
-            endRevision = isInvalidRevision(endRevision) ? myFSFS.getYoungestRevision() : endRevision;
-            FSRevisionRoot root = myFSFS.createRevisionRoot(endRevision);
-
-            if (root.checkNodeKind(path) != SVNNodeKind.FILE) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FILE, "''{0}'' is not a file", path);
-                SVNErrorManager.error(err);
-            }
-            LinkedList locationEntries = new LinkedList();
-
-            FSNodeHistory history = root.getNodeHistory(path);
-
-            while (true) {
-                history = history.getPreviousHistory(true);
-                if (history == null) {
-                    break;
-                }
-                long histRev = history.getHistoryEntry().getRevision();
-                String histPath = history.getHistoryEntry().getPath();
-                locationEntries.addFirst(new SVNLocationEntry(histRev, histPath));
-                if (histRev <= startRevision) {
-                    break;
-                }
-            }
-
-            if (locationEntries.size() == 0) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "FATAL error: there're no file revisions to get");
-                SVNErrorManager.error(err);
+            long latestRevision = INVALID_REVISION;
+            if (isInvalidRevision(startRevision)) {
+                latestRevision = myFSFS.getYoungestRevision();
+                startRevision = latestRevision;
             }
             
-            FSRoot lastRoot = null;
-            String lastPath = null;
-            Map lastProps = new HashMap();
-            for (ListIterator locations = locationEntries.listIterator(); locations.hasNext();) {
-                SVNLocationEntry location = (SVNLocationEntry) locations.next();
-                long rev = location.getRevision();
-                String revPath = location.getPath();
-                Map revProps = myFSFS.getRevisionProperties(rev);
-
-                root = myFSFS.createRevisionRoot(rev);
-
-                FSRevisionNode fileNode = root.getRevisionNode(revPath);
-                Map props = fileNode.getProperties(myFSFS);
-                Map propDiffs = FSRepositoryUtil.getPropsDiffs(lastProps, props);
-                boolean contentsChanged = false;
-                if (lastRoot != null) {
-                    contentsChanged = FSRepositoryUtil.areFileContentsChanged(lastRoot, lastPath, root, revPath);
-                } else {
-                    contentsChanged = true;
+            if (isInvalidRevision(endRevision)) {
+                if (isInvalidRevision(latestRevision)) {
+                    latestRevision = myFSFS.getYoungestRevision();
                 }
-
-                if (handler != null) {
-                    handler.openRevision(new SVNFileRevision(revPath, rev, revProps, propDiffs));
-                    if (contentsChanged) {
-                        SVNDeltaCombiner sourceCombiner = new SVNDeltaCombiner();
-                        SVNDeltaCombiner targetCombiner = new SVNDeltaCombiner();
-                        handler.applyTextDelta(path, null);
-                        InputStream sourceStream = null;
-                        InputStream targetStream = null;
-                        try {
-                            if (lastRoot != null && lastPath != null) {
-                                sourceStream = lastRoot.getFileStreamForPath(sourceCombiner, lastPath);
-                            } else {
-                                sourceStream = FSInputStream.createDeltaStream(sourceCombiner, (FSRevisionNode) null, myFSFS);
-                            }
-                            targetStream = root.getFileStreamForPath(targetCombiner, revPath);
-                            SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
-                            deltaGenerator.sendDelta(path, sourceStream, 0, targetStream, handler, false);
-                        } finally {
-                            SVNFileUtil.closeFile(sourceStream);
-                            SVNFileUtil.closeFile(targetStream);
-                        }
-                        handler.closeRevision(path);
-                    } else {
-                        handler.closeRevision(path);
-                    }
-                }
-                lastRoot = root;
-                lastPath = revPath;
-                lastProps = props;
+                endRevision = latestRevision;
             }
-            return locationEntries.size();
+            
+            FSFileRevisionsFinder finder = new FSFileRevisionsFinder(myFSFS);
+            int fileRevsNumber = finder.getFileRevisions(path, startRevision, endRevision, 
+                                                         includeMergedRevisions, handler);
+            return fileRevsNumber;
         } finally {
             closeRepository();
         }
+    }
+    
+    public int getFileRevisions(String path, long startRevision, long endRevision, ISVNFileRevisionHandler handler) throws SVNException {
+        return getFileRevisions(path, startRevision, endRevision, false, handler);
     }
 
     public long log(String[] targetPaths, long startRevision, long endRevision, boolean 
@@ -722,6 +662,37 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         myReporterContext.writePathInfoToReportFile(path, null, lockToken, revision, startEmpty, depth);
     }
 
+    public FSTranslateReporter getTranslateReporterForUpdate(long revision, String target, 
+                                                             SVNDepth depth, ISVNEditor editor) throws SVNException {
+        openRepository();
+        makeReporterContext(revision, target, null, depth, false, true, editor);
+        return new FSTranslateReporter(this);
+    }
+
+    public FSTranslateReporter getTranslateReporterForSwitch(SVNURL url, long revision, String target, 
+                                                             SVNDepth depth, ISVNEditor editor) throws SVNException {
+        openRepository();
+        makeReporterContext(revision, target, url, depth, true, true, editor);
+        return new FSTranslateReporter(this);
+    }
+
+    public FSTranslateReporter getTranslateReporterForDiff(SVNURL url, long targetRevision, 
+                                                           String target, boolean ignoreAncestry, 
+                                                           SVNDepth depth, boolean getContents, 
+                                                           ISVNEditor editor) throws SVNException {
+        openRepository();
+        makeReporterContext(targetRevision, target, url, depth, ignoreAncestry, getContents, editor);
+        return new FSTranslateReporter(this);
+    }
+
+    public FSTranslateReporter getTranslateReporterForStatus(long revision, String target, SVNDepth depth, 
+                                                             ISVNEditor editor) throws SVNException {
+
+        openRepository();
+        makeReporterContext(revision, target, null, depth, false, false, editor);
+        return new FSTranslateReporter(this);
+    }
+
     public void update(long revision, String target, SVNDepth depth, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
         try {
             openRepository();
@@ -730,7 +701,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         } finally {
             closeRepository();
         }
-        }
+    }
 
     public void update(SVNURL url, long revision, String target, SVNDepth depth, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
         try {
@@ -741,11 +712,12 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             closeRepository();
         }
     }
-
-    public void diff(SVNURL url, long targetRevision, long revision, String target, boolean ignoreAncestry, SVNDepth depth, boolean getContents, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
+    
+    public void diff(SVNURL url, long targetRevision, long revision, String target, boolean ignoreAncestry, 
+                     SVNDepth depth, boolean getContents, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
         try {
             openRepository();
-            makeReporterContext(targetRevision, target, url, depth, ignoreAncestry, true, editor);
+            makeReporterContext(targetRevision, target, url, depth, ignoreAncestry, getContents, editor);
             reporter.report(this);
         } finally {
             closeRepository();
@@ -948,9 +920,14 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         String fullTargetPath = switchPath != null ? switchPath : SVNPathUtil.concatToAbs(anchor, target);
 
         if (myReporterContext == null) {
-            myReporterContext = new FSUpdateContext(this, myFSFS, targetRevision, SVNFileUtil.createTempFile("report", ".tmp"), target, fullTargetPath, switchURL == null ? false : true, depth, ignoreAncestry, textDeltas, editor);    
+            myReporterContext = new FSUpdateContext(this, myFSFS, targetRevision, 
+                                                    SVNFileUtil.createTempFile("report", ".tmp"), 
+                                                    target, fullTargetPath, switchURL == null ? false : true, 
+                                                    depth, ignoreAncestry, textDeltas, editor);    
         } else {
-            myReporterContext.reset(this, myFSFS, targetRevision, SVNFileUtil.createTempFile("report", ".tmp"), target, fullTargetPath, switchURL == null ? false : true, depth, ignoreAncestry, textDeltas, editor);
+            myReporterContext.reset(this, myFSFS, targetRevision, SVNFileUtil.createTempFile("report", ".tmp"), 
+                                    target, fullTargetPath, switchURL == null ? false : true, depth, 
+                                    ignoreAncestry, textDeltas, editor);
         }
     }
 
@@ -992,4 +969,80 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         return System.getProperty("user.name");
     }
 
+    private LinkedList findInterestingRevisions(LinkedList pathRevisions, String path, 
+                                                long startRevision, long endRevision, 
+                                                boolean includeMergedRevisions, 
+                                                boolean markAsMerged) throws SVNException {
+        FSRevisionRoot root = myFSFS.createRevisionRoot(endRevision);
+        if (root.checkNodeKind(path) != SVNNodeKind.FILE) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FILE, 
+                                                         "''{0}'' is not a file in revision ''{1,number,integer}''", 
+                                                         new Object[] { path, endRevision });
+            SVNErrorManager.error(err);
+        }
+        
+        pathRevisions = pathRevisions == null ? new LinkedList() : pathRevisions;
+        FSNodeHistory history = root.getNodeHistory(path);
+        while (true) {
+            history = history.getPreviousHistory(true);
+            if (history == null) {
+                break;
+            }
+
+            long histRev = history.getHistoryEntry().getRevision();
+            String histPath = history.getHistoryEntry().getPath();
+            SVNLocationEntry pathRev = new SVNLocationEntry(histRev, histPath, markAsMerged); 
+            pathRevisions.addFirst(pathRev);
+            
+            if (includeMergedRevisions) {
+                getMergedPathRevisions(pathRevisions, pathRev);
+                FSRevisionRoot mergeRoot = myFSFS.createRevisionRoot(pathRev.getRevision());
+                boolean isBranching = FSLog.isBranchingCopy(mergeRoot, null, pathRev.getPath());
+                if (isBranching) {
+                    break;
+                }
+            }
+            
+            if (histRev <= startRevision) {
+                break;
+            }
+        }
+        return pathRevisions;
+    }
+    
+    private void getMergedPathRevisions(LinkedList pathRevisions, SVNLocationEntry oldPathRevision) throws SVNException {
+        FSRevisionRoot root = myFSFS.createRevisionRoot(oldPathRevision.getRevision());
+        Map currentMergeInfo = FSLog.getPathMergeInfo(oldPathRevision.getPath(), 
+                                                                    root);
+        FSRevisionRoot previousRoot = myFSFS.createRevisionRoot(oldPathRevision.getRevision() - 1);
+        Map previousMergeInfo = FSLog.getPathMergeInfo(oldPathRevision.getPath(), 
+                                                                     previousRoot);
+        
+        Map deleted = new TreeMap();
+        Map changed = new TreeMap();
+        SVNMergeInfoManager.diffMergeInfo(deleted, changed, previousMergeInfo, currentMergeInfo, 
+                                          SVNMergeRangeInheritance.IGNORE_INHERITANCE);
+        
+        changed = SVNMergeInfoManager.mergeMergeInfos(changed, deleted, SVNMergeRangeInheritance.EQUAL_INHERITANCE);
+        if (changed.isEmpty()) {
+            return;
+        }
+        
+        for (Iterator mergeSrcs = changed.keySet().iterator(); mergeSrcs.hasNext();) {
+            String path = (String) mergeSrcs.next();
+            SVNMergeRangeList rangeList = (SVNMergeRangeList) changed.get(path);
+            SVNMergeRange[] ranges = rangeList.getRanges();
+            for (int i = 0; i <= rangeList.getSize(); i++) {
+                SVNMergeRange range = ranges[i];
+                try {
+                    pathRevisions = findInterestingRevisions(pathRevisions, path, range.getStartRevision(), 
+                                                             range.getEndRevision(), true, true);
+                } catch (SVNException svne) {
+                    if (svne.getErrorMessage().getErrorCode() != SVNErrorCode.FS_NOT_FILE) {
+                        throw svne;
+                    }
+                }
+            }
+        }
+    }
 }

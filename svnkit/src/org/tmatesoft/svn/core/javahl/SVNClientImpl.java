@@ -947,6 +947,10 @@ public class SVNClientImpl implements SVNClientInterface {
                 } catch (IOException e) {
                 }
             }
+
+            public void handleLine(Date date, long revision, String author, String line, Date mergedDate, long mergedRevision, String mergedAuthor, String mergedPath) throws SVNException {
+                //FIXME
+            }
         };
         try {
             if(isURL(path)){
@@ -979,6 +983,10 @@ public class SVNClientImpl implements SVNClientInterface {
                 if(callback!=null){
                     callback.singleLine(date, revision, author, line);
                 }
+            }
+
+            public void handleLine(Date date, long revision, String author, String line, Date mergedDate, long mergedRevision, String mergedAuthor, String mergedPath) throws SVNException {
+                //FIXME
             }
         };
         try {
@@ -1511,6 +1519,10 @@ public class SVNClientImpl implements SVNClientInterface {
                 if (callback != null) {
                     callback.singleLine(date, revision, author, line);
                 }
+            }
+
+            public void handleLine(Date date, long revision, String author, String line, Date mergedDate, long mergedRevision, String mergedAuthor, String mergedPath) throws SVNException {
+                //FIXME
             }
         };
         try {

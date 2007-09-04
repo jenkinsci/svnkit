@@ -503,6 +503,11 @@ class DAVRepository extends SVNRepository {
         return parent[0];
     }
 
+    public int getFileRevisions(String path, long startRevision, long endRevision, boolean includeMergedRevisions, ISVNFileRevisionHandler handler) throws SVNException {
+        //TODO: implement
+        return getFileRevisions(path, startRevision, endRevision, includeMergedRevisions, handler);
+    }
+    
     public int getFileRevisions(String path, long startRevision, long endRevision, ISVNFileRevisionHandler handler) throws SVNException {
 		String bcPath = getLocation().getPath();
         bcPath = SVNEncodingUtil.uriEncode(bcPath);

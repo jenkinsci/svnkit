@@ -169,6 +169,7 @@ svnkit/src/org/tmatesoft/svn/core/internal/io/fs/FSClosestCopy.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/FSCommitEditor.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/FSEntry.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/FSErrors.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/io/fs/FSFileRevisionsFinder.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/FSHooks.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/FSID.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/FSInputStream.java -text
@@ -183,6 +184,7 @@ svnkit/src/org/tmatesoft/svn/core/internal/io/fs/FSRepositoryFactory.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/FSRepresentation.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/FSRevisionNode.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/FSTransactionInfo.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/io/fs/FSTranslateReporter.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/FSWriteLock.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/PathInfo.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/util/DefaultSVNDebugFormatter.java -text

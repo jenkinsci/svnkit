@@ -25,7 +25,8 @@ public class SVNLocationEntry {
     
     private long myRevision;
     private String myPath;
-    
+    private boolean myIsResultOfMerge;
+
     /**
      * Constructs an <b>SVNLocationEntry</b> object.
      * 
@@ -34,10 +35,15 @@ public class SVNLocationEntry {
      *                  the <code>revision</code>
      */
     public SVNLocationEntry(long revision, String path) {
+        this(revision, path, false);
+    }
+
+    public SVNLocationEntry(long revision, String path, boolean isResultOfMerge) {
         myRevision = revision;
         myPath = path;
+        myIsResultOfMerge = isResultOfMerge;
     }
-    
+
     /**
      * Gets the path.
      * 
@@ -54,5 +60,9 @@ public class SVNLocationEntry {
      */
     public long getRevision() {
         return myRevision;
+    }
+
+    public boolean isResultOfMerge() {
+        return myIsResultOfMerge;
     }
 }

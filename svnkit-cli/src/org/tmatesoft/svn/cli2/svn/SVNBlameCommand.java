@@ -156,4 +156,8 @@ public class SVNBlameCommand extends SVNXMLCommand implements ISVNAnnotateHandle
             }
         }
     }
+
+    public void handleLine(Date date, long revision, String author, String line, Date mergedDate, long mergedRevision, String mergedAuthor, String mergedPath) throws SVNException {
+        //TODO: fixme
+    }
 }

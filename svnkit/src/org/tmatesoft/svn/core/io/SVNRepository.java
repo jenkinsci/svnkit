@@ -638,7 +638,10 @@ public abstract class SVNRepository {
 	 * @since					SVN 1.1
 	 */    
     public abstract int getFileRevisions(String path, long startRevision, long endRevision, ISVNFileRevisionHandler handler) throws SVNException;
-    
+
+    public abstract int getFileRevisions(String path, long startRevision, long endRevision, 
+                                         boolean includeMergedRevisions, ISVNFileRevisionHandler handler) throws SVNException;
+
     /**
 	 * Traverses revisions history. In other words, collects per revision
      * information that includes the revision number, author, datestamp, 
@@ -1201,7 +1204,7 @@ public abstract class SVNRepository {
      *                          ignored, otherwise not 
      * @param  recursive        if <span class="javakeyword">true</span> and the diff scope
      *                          is a directory, descends recursively, otherwise not 
-     * @param  getContents      if <span class="javakeyword">false</span> contents (diff windows) will not be sent ot 
+     * @param  getContents      if <span class="javakeyword">false</span> contents (diff windows) will not be sent to 
      *                          the editor. 
      * @param  reporter 		a caller's reporter
      * @param  editor 			a caller's editor

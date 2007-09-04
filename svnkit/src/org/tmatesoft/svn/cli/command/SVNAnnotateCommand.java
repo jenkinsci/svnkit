@@ -153,4 +153,8 @@ public class SVNAnnotateCommand extends SVNCommand implements ISVNAnnotateHandle
         result.append(line);
         myPrintStream.println(result.toString());
     }
+
+    public void handleLine(Date date, long revision, String author, String line, Date mergedDate, long mergedRevision, String mergedAuthor, String mergedPath) throws SVNException {
+        //TODO: fixme
+    }
 }

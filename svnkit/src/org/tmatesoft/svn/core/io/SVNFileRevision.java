@@ -36,6 +36,9 @@ public class SVNFileRevision implements Comparable {
     
     private String myPath;
     private long myRevision;
+    private Map myProperties;
+    private Map myPropertiesDelta;
+    private boolean myIsResultOfMerge;
     
     /**
      * Constructs an instance of <b>SVNFileRevision</b>.
@@ -48,12 +51,17 @@ public class SVNFileRevision implements Comparable {
      * @param propertiesDelta	file properties for the <code>revision</code>
      */
     public SVNFileRevision(String path, long revision, Map properties, Map propertiesDelta) {
+        this(path, revision, properties, propertiesDelta, false);
+    }
+    
+    public SVNFileRevision(String path, long revision, Map properties, Map propertiesDelta, boolean isResultOfMerge) {
         myPath = path;
         myRevision = revision;
         myProperties = properties;
         myPropertiesDelta = propertiesDelta;
+        myIsResultOfMerge = isResultOfMerge;
     }
-    
+
     /**
      * Gets the file path (relative to a repository root URL).
      *  
@@ -136,8 +144,8 @@ public class SVNFileRevision implements Comparable {
         return myRevision == number ? 0 : myRevision > number ? 1 : -1;
     }
 
-
-    private Map myProperties;
-    private Map myPropertiesDelta;
+    public boolean isResultOfMerge() {
+        return myIsResultOfMerge;
+    }
 
 }

@@ -289,8 +289,7 @@ public class FSLog {
         }
         FSRevisionRoot root = myFSFS.createRevisionRoot(revision);
         SVNMergeInfoManager mergeInfoManager = getMergeInfoManager(); 
-        ISVNMergeInfoFilter filter = new BranchingCopyFilter(revision, root, 
-                                                             revision == currentRevision);
+        ISVNMergeInfoFilter filter = new BranchingCopyFilter(root, revision == currentRevision);
         Map treeMergeInfo = mergeInfoManager.getMergeInfoForTree(paths, root, filter);
         for (Iterator pathsIter = treeMergeInfo.keySet().iterator(); pathsIter.hasNext();) {
             String path = (String) pathsIter.next();
@@ -324,6 +323,75 @@ public class FSLog {
         return myMergeInfoManager;
     }
     
+    public static Map getPathMergeInfo(String path, FSRevisionRoot root) throws SVNException {
+        SVNMergeInfoManager mergeInfoManager = SVNMergeInfoManager.createMergeInfoManager(null);
+        Map tmpMergeInfo = mergeInfoManager.getMergeInfo(new String[] {path}, 
+                                                         root, 
+                                                         SVNMergeInfoInheritance.INHERITED);
+        SVNMergeInfo mergeInfo = (SVNMergeInfo) tmpMergeInfo.get(path);
+        if (mergeInfo != null) {
+            return mergeInfo.getMergeSourcesToMergeLists();
+        }
+        return new TreeMap();
+    }
+
+    public static boolean isBranchingCopy(FSRevisionRoot root, Map pathMergeInfo, String path) throws SVNException {
+        Map mergeInfo = null;
+        if (pathMergeInfo != null) {
+            mergeInfo = pathMergeInfo;
+        } else {
+            mergeInfo = FSLog.getPathMergeInfo(path, root); 
+        }
+        
+        FSClosestCopy closestCopy = root.getClosestCopy(path);
+        FSRevisionRoot copyRoot = closestCopy != null ? closestCopy.getRevisionRoot()
+                                                      : null;
+        
+        if (copyRoot == null) {
+            return false;
+        }
+
+        if (copyRoot.getRevision() != root.getRevision()) {
+            return false;
+        }
+
+        Map impliedMergeInfo = calculateBranchingCopyMergeInfo(copyRoot, 
+                                                               closestCopy.getPath(), 
+                                                               path, 
+                                                               root.getRevision());           
+
+        Map added = new HashMap();
+        Map deleted = new HashMap();
+        SVNMergeInfoManager.diffMergeInfo(deleted, added, impliedMergeInfo, mergeInfo,
+                                          SVNMergeRangeInheritance.IGNORE_INHERITANCE);
+        if (deleted.isEmpty() && added.isEmpty()) {
+            return false;
+        }
+        return true;
+    }
+    
+    private static Map calculateBranchingCopyMergeInfo(FSRevisionRoot srcRoot, 
+                                                       String srcPath,
+                                                       String dstPath, 
+                                                       long revision) throws SVNException {
+        
+        Map impliedMergeInfo = new TreeMap();
+        FSClosestCopy closestCopy = srcRoot.getClosestCopy(srcPath);
+        FSRevisionRoot copyRoot = closestCopy != null ? closestCopy.getRevisionRoot() : null;  
+        if (copyRoot == null) {
+            return impliedMergeInfo;
+        }
+        
+        long oldestRevision = copyRoot.getRevision();
+        SVNMergeRangeList rangeList = new SVNMergeRangeList(new SVNMergeRange[] {
+                                                            new SVNMergeRange(oldestRevision, 
+                                                                              revision - 1, 
+                                                                              true)
+                                                            });
+        impliedMergeInfo.put(dstPath, rangeList);    
+        return impliedMergeInfo;
+    }
+
     private class LogTreeNode {
         SVNLogEntry myLogEntry;
         Collection myChildren;
@@ -384,13 +452,10 @@ public class FSLog {
     }
     
     private class BranchingCopyFilter implements ISVNMergeInfoFilter {
-        private long myRevision;
         private FSRevisionRoot myRoot;
         private boolean myIsFindingCurrentRevision;
         
-        public BranchingCopyFilter(long revision, FSRevisionRoot root, 
-                                   boolean isFindingCurrentRevision) {
-            myRevision = revision;
+        public BranchingCopyFilter(FSRevisionRoot root, boolean isFindingCurrentRevision) {
             myRoot = root;
             myIsFindingCurrentRevision = isFindingCurrentRevision;
         }
@@ -404,77 +469,9 @@ public class FSLog {
             if (kind == SVNNodeKind.NONE) {
                 return false;
             }
-            return isBranchingCopy(pathMergeInfo, path);
+            return isBranchingCopy(myRoot, pathMergeInfo, path);
         }
         
-        private boolean isBranchingCopy(Map pathMergeInfo, String path) throws SVNException {
-            Map mergeInfo = null;
-            if (pathMergeInfo != null) {
-                mergeInfo = pathMergeInfo;
-            } else {
-                mergeInfo = getPathMergeInfo(path); 
-            }
-            
-            FSClosestCopy closestCopy = myRoot.getClosestCopy(path);
-            FSRevisionRoot copyRoot = closestCopy != null ? closestCopy.getRevisionRoot()
-                                                          : null;
-            
-            if (copyRoot == null) {
-                return false;
-            }
-
-            if (copyRoot.getRevision() != myRevision) {
-                return false;
-            }
-
-            Map impliedMergeInfo = calculateBranchingCopyMergeInfo(copyRoot, 
-                                                                   closestCopy.getPath(), 
-                                                                   path, 
-                                                                   myRevision);           
-
-            Map added = new HashMap();
-            Map deleted = new HashMap();
-            SVNMergeInfoManager.diffMergeInfo(deleted, added, impliedMergeInfo, mergeInfo,
-                                              SVNMergeRangeInheritance.IGNORE_INHERITANCE);
-            if (deleted.isEmpty() && added.isEmpty()) {
-                return false;
-            }
-            return true;
-        }
-        
-        private Map getPathMergeInfo(String path) throws SVNException {
-            SVNMergeInfoManager mergeInfoManager = SVNMergeInfoManager.createMergeInfoManager(null);
-            Map tmpMergeInfo = mergeInfoManager.getMergeInfo(new String[] {path}, 
-                                                             myRoot, 
-                                                             SVNMergeInfoInheritance.INHERITED);
-            SVNMergeInfo mergeInfo = (SVNMergeInfo) tmpMergeInfo.get(path);
-            if (mergeInfo != null) {
-                return mergeInfo.getMergeSourcesToMergeLists();
-            }
-            return new TreeMap();
-        }
-        
-        private Map calculateBranchingCopyMergeInfo(FSRevisionRoot srcRoot, 
-                                                    String srcPath,
-                                                    String dstPath, 
-                                                    long revision) throws SVNException {
-            
-            Map impliedMergeInfo = new TreeMap();
-            FSClosestCopy closestCopy = srcRoot.getClosestCopy(srcPath);
-            FSRevisionRoot copyRoot = closestCopy != null ? closestCopy.getRevisionRoot() : null;  
-            if (copyRoot == null) {
-                return impliedMergeInfo;
-            }
-            
-            long oldestRevision = copyRoot.getRevision();
-            SVNMergeRangeList rangeList = new SVNMergeRangeList(new SVNMergeRange[] {
-                                                                new SVNMergeRange(oldestRevision, 
-                                                                                  revision - 1, 
-                                                                                  true)
-                                                                });
-            impliedMergeInfo.put(dstPath, rangeList);    
-            return impliedMergeInfo;
-        }
     }
 
 }
