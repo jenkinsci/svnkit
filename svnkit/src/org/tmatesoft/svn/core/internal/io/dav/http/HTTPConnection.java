@@ -90,7 +90,6 @@ class HTTPConnection implements IHTTPConnection {
     private String myCharset;
     private boolean myIsSpoolAll;
     private File mySpoolDirectory;
-
     
     public HTTPConnection(SVNRepository repository, String charset, File spoolDirectory, boolean spoolAll) throws SVNException {
         myRepository = repository;
@@ -425,6 +424,12 @@ class HTTPConnection implements IHTTPConnection {
                 if (myChallengeCredentials instanceof HTTPNTLMAuthentication) {
                     HTTPNTLMAuthentication ntlmAuth = (HTTPNTLMAuthentication)myChallengeCredentials;
                     if (ntlmAuth.isInType3State()) {
+                        continue;
+                    }
+                } else if (myChallengeCredentials instanceof HTTPDigestAuthentication) {
+                    // continue (retry once) if previous request was acceppted?
+                    if (myLastValidAuth != null) {
+                        myLastValidAuth = null;
                         continue;
                     }
                 }

@@ -36,7 +36,6 @@ class HTTPDigestAuthentication extends HTTPAuthentication {
     private String myQop;
 
     protected HTTPDigestAuthentication () {
-        super();
     }
 
     public void init() throws SVNException {
@@ -123,7 +122,7 @@ class HTTPDigestAuthentication extends HTTPAuthentication {
         tmp.append(':');
         tmp.append(pwd);
         String a1 = tmp.toString();
-        if(algorithm.equals("MD5-sess")) {
+        if ("MD5-sess".equals(algorithm)) {
             String tmp2=encode(md5Helper.digest(HTTPAuthentication.getBytes(a1, charset)));
             StringBuffer tmp3 = new StringBuffer(tmp2.length() + nonce.length() + myCnonce.length() + 2);
             tmp3.append(tmp2);
