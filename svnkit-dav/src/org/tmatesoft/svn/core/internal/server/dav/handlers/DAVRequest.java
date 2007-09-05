@@ -127,7 +127,7 @@ public abstract class DAVRequest {
         }
     }
 
-    protected abstract void initialize() throws SVNException;
+    protected abstract void init() throws SVNException;
 
     protected void invalidXML() throws SVNException {
         SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.XML_MALFORMED, "Malformed XML"));

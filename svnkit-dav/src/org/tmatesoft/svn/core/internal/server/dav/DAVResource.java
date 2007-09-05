@@ -92,6 +92,10 @@ public class DAVResource {
         prepare();
     }
 
+    public static boolean isValidRevision(long revision) {
+        return revision >= 0;
+    }
+
     public DAVResourceURI getResourceURI() {
         return myResourceURI;
     }

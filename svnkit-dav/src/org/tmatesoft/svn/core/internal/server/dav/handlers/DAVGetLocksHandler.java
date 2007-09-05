@@ -12,11 +12,14 @@
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.io.UnsupportedEncodingException;
-import java.io.Writer;
+
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
-import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
+import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
@@ -27,57 +30,43 @@ import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
  * @author TMate Software Ltd.
  * @version 1.1.2
  */
-public class DAVGetLocksHandler extends ReportHandler {
+public class DAVGetLocksHandler extends DAVReportHandler {
 
     private DAVGetLocksRequest myDAVRequest;
-    private String myResponseBody;
 
-    protected DAVGetLocksHandler(DAVResource resource, Writer responseWriter) throws SVNException {
-        super(resource, responseWriter);
+    protected DAVGetLocksHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response, ServletContext servletContext) throws SVNException {
+        super(repositoryManager, request, response, servletContext);
     }
 
 
-    public DAVRequest getDAVRequest() {
+    protected DAVRequest getDAVRequest() {
         if (myDAVRequest == null) {
             myDAVRequest = new DAVGetLocksRequest();
         }
         return myDAVRequest;
     }
 
-    public String getResponseBody() {
-        return myResponseBody;
-    }
+    public void execute() throws SVNException {
+        String responseBody = generateResponseBody();
 
-    private void setResponseBody(String responseBody) {
-        myResponseBody = responseBody;
-    }
-
-    public int getContentLength() throws SVNException {
-        generateResponseBody();
         try {
-            return getResponseBody().getBytes(UTF_8_ENCODING).length;
+            setResponseContentLength(responseBody.getBytes(UTF_8_ENCODING).length);
         } catch (UnsupportedEncodingException e) {
         }
-        return -1;
+
+        write(responseBody);
     }
 
-    public void sendResponse() throws SVNException {
-        generateResponseBody();
-        write(getResponseBody());
-    }
+    private String generateResponseBody() throws SVNException {
+        SVNLock[] locks = getDAVResource().getLocks();
 
-    private void generateResponseBody() throws SVNException {
-        if (getResponseBody() == null) {
-            SVNLock[] locks = getDAVResource().getLocks();
-
-            StringBuffer xmlBuffer = new StringBuffer();
-            addXMLHeader(xmlBuffer);
-            for (int i = 0; i < locks.length; i++) {
-                addLock(locks[i], xmlBuffer);
-            }
-            addXMLFooter(xmlBuffer);
-            setResponseBody(xmlBuffer.toString());
+        StringBuffer xmlBuffer = new StringBuffer();
+        addXMLHeader(xmlBuffer);
+        for (int i = 0; i < locks.length; i++) {
+            addLock(locks[i], xmlBuffer);
         }
+        addXMLFooter(xmlBuffer);
+        return xmlBuffer.toString();
     }
 
     private void addLock(SVNLock lock, StringBuffer xmlBuffer) {

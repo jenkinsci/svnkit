@@ -11,6 +11,12 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+
 /**
  * @author TMate Software Ltd.
  * @version 1.1.2
@@ -77,6 +83,16 @@ public class DAVPathUtil {
             return SLASH;
         }
         return addLeadingSlash(dropTraillingSlash(uri));
+    }
+
+    public static String normalize(String uri){
+        return "".equals(uri) ? SLASH : uri;
+    }
+
+    public static void testCanonical(String path) throws SVNException {
+        if (path != null && !path.equals(SVNPathUtil.canonicalizePath(path))) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Path ''{0}'' is not canonicalized;\nthere is a problem with the client.", path));
+        }
     }
 
     public static String buildURI(String context, DAVResourceKind davResourceKind, long revision, String path) {

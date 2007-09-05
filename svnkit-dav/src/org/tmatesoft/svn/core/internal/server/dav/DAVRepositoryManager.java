@@ -34,15 +34,19 @@ public class DAVRepositoryManager {
     private SVNRepository myRepository;
     private String myRepositoryParentPath;
 
+    boolean myUsingRepositoryParameter;
+
     public DAVRepositoryManager(ServletConfig config) throws SVNException {
         String repositoryPath = config.getInitParameter(PATH_PARAMETER);
         String repositoryParentPath = config.getInitParameter(PARENT_PATH_PARAMETER);
         if (repositoryPath != null && repositoryParentPath == null) {
+            myUsingRepositoryParameter = true;
             FSRepositoryFactory.setup();
             String repositoryURL = (repositoryPath.startsWith("/") ? "file://" : "file:///") + repositoryPath;
             myRepository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(repositoryURL));
             myRepositoryParentPath = null;
         } else if (repositoryParentPath != null && repositoryPath == null) {
+            myUsingRepositoryParameter = false;
             myRepositoryParentPath = repositoryParentPath;
             myRepository = null;
         } else {
@@ -55,9 +59,13 @@ public class DAVRepositoryManager {
         }
     }
 
+    public boolean isUsingRepositoryParameter() {
+        return myUsingRepositoryParameter;
+    }
+
     public DAVResource createDAVResource(String requestContext, String requestURI, boolean isSVNClient, long version, String clientOptions,
                                          String baseChecksum, String resultChecksum, String label, boolean useCheckedIn) throws SVNException {
-        if (myRepositoryParentPath != null) {
+        if (!isUsingRepositoryParameter()) {
             if (requestURI == null || requestURI.length() == 0 || "/".equals(requestURI)) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED));
                 //TODO: client tried to access repository parent path, result status code should be FORBIDDEN.

@@ -56,7 +56,7 @@ public class DAVMergeInfoRequest extends DAVRequest {
         myTargetPaths = targetPaths;
     }
 
-    protected void initialize() throws SVNException {
+    protected void init() throws SVNException {
         for (Iterator iterator = getProperties().entrySet().iterator(); iterator.hasNext();) {
             Map.Entry entry = (Map.Entry) iterator.next();
             DAVElement element = (DAVElement) entry.getKey();

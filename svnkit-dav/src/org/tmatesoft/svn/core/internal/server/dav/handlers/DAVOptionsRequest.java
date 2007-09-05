@@ -32,7 +32,7 @@ public class DAVOptionsRequest extends DAVRequest {
         super();
     }
 
-    protected void initialize() throws SVNException {
+    protected void init() throws SVNException {
     }
 
     public boolean isEmpty() {

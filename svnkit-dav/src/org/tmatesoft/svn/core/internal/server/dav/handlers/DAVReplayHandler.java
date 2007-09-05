@@ -13,13 +13,16 @@ package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
+import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
@@ -30,16 +33,16 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  * @author TMate Software Ltd.
  * @version 1.1.2
  */
-public class DAVReplayHandler extends ReportHandler implements ISVNEditor {
+public class DAVReplayHandler extends DAVReportHandler implements ISVNEditor {
 
     private DAVReplayRequest myDAVRequest;
 
-    public DAVReplayHandler(DAVResource resource, Writer responseWriter) {
-        super(resource, responseWriter);
+    public DAVReplayHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response, ServletContext servletContext) throws SVNException {
+        super(repositoryManager, request, response, servletContext);
     }
 
 
-    public DAVRequest getDAVRequest() {
+    protected DAVRequest getDAVRequest() {
         return getReplayRequest();
     }
 
@@ -50,11 +53,7 @@ public class DAVReplayHandler extends ReportHandler implements ISVNEditor {
         return myDAVRequest;
     }
 
-    public int getContentLength() {
-        return -1;
-    }
-
-    public void sendResponse() throws SVNException {
+    public void execute() throws SVNException {
         writeXMLHeader();
 
         getDAVResource().getRepository().replay(getReplayRequest().getLowRevision(),

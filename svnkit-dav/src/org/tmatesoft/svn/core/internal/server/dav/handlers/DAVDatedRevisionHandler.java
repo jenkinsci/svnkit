@@ -12,11 +12,14 @@
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.io.UnsupportedEncodingException;
-import java.io.Writer;
+
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
-import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
+import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
 
@@ -24,16 +27,15 @@ import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
  * @author TMate Software Ltd.
  * @version 1.1.2
  */
-public class DAVDatedRevisionHandler extends ReportHandler {
+public class DAVDatedRevisionHandler extends DAVReportHandler {
 
-    private String myResponseBody = null;
     private DAVDatedRevisionRequest myDAVRequest;
 
-    public DAVDatedRevisionHandler(DAVResource resource, Writer responseWriter) throws SVNException {
-        super(resource, responseWriter);
+    public DAVDatedRevisionHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response, ServletContext servletContext) throws SVNException {
+        super(repositoryManager, request, response, servletContext);
     }
 
-    public DAVRequest getDAVRequest() {
+    protected DAVRequest getDAVRequest() {
         return getDatedRevisionRequest();
     }
 
@@ -44,37 +46,25 @@ public class DAVDatedRevisionHandler extends ReportHandler {
         return myDAVRequest;
     }
 
-    private String getResponseBody() {
-        return myResponseBody;
-    }
+    public void execute() throws SVNException {
+        String responseBody = generateResponseBody();
 
-    private void setResponseBody(String body) {
-        myResponseBody = body;
-    }
-
-    public int getContentLength() throws SVNException {
-        generateResponseBody();
         try {
-            return getResponseBody().getBytes(UTF_8_ENCODING).length;
+            int contentLength = responseBody.getBytes(UTF_8_ENCODING).length;
+            setResponseContentLength(contentLength);
         } catch (UnsupportedEncodingException e) {
         }
-        return -1;
+
+        write(responseBody);
     }
 
-    public void sendResponse() throws SVNException {
-        generateResponseBody();
-        write(getResponseBody());
-    }
-
-    private void generateResponseBody() throws SVNException {
-        if (getResponseBody() == null) {
-            StringBuffer xmlBuffer = new StringBuffer();
-            long revision = getDatedRevision();
-            addXMLHeader(xmlBuffer);
-            XMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.VERSION_NAME.getName(), String.valueOf(revision), xmlBuffer);
-            addXMLFooter(xmlBuffer);
-            setResponseBody(xmlBuffer.toString());
-        }
+    private String generateResponseBody() throws SVNException {
+        StringBuffer xmlBuffer = new StringBuffer();
+        long revision = getDatedRevision();
+        addXMLHeader(xmlBuffer);
+        XMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.VERSION_NAME.getName(), String.valueOf(revision), xmlBuffer);
+        addXMLFooter(xmlBuffer);
+        return xmlBuffer.toString();
     }
 
     private long getDatedRevision() throws SVNException {

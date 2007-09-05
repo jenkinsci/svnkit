@@ -33,7 +33,7 @@ public class DAVDatedRevisionRequest extends DAVRequest {
         myDate = date;
     }
 
-    protected void initialize() throws SVNException {
+    protected void init() throws SVNException {
         String dateString = getProperty(getProperties(), DAVElement.CREATION_DATE).getFirstValue();
         setDate(SVNTimeUtil.parseDate(dateString));
     }

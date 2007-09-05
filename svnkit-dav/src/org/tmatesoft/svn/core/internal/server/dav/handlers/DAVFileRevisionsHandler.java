@@ -12,13 +12,16 @@
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.io.OutputStream;
-import java.io.Writer;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
+import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
@@ -31,19 +34,17 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  * @author TMate Software Ltd.
  * @version 1.1.2
  */
-public class DAVFileRevisionsHandler extends ReportHandler implements ISVNFileRevisionHandler {
+public class DAVFileRevisionsHandler extends DAVReportHandler implements ISVNFileRevisionHandler {
 
     private DAVFileRevisionsRequest myDAVRequest;
-    private boolean myDiffCompress;
 
 
-    public DAVFileRevisionsHandler(DAVResource resource, Writer responseWriter, boolean diffCompress) {
-        super(resource, responseWriter);
-        myDiffCompress = diffCompress;
+    public DAVFileRevisionsHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response, ServletContext servletContext) throws SVNException {
+        super(repositoryManager, request, response, servletContext);
     }
 
 
-    public DAVRequest getDAVRequest() {
+    protected DAVRequest getDAVRequest() {
         return getFileRevsionsRequest();
     }
 
@@ -54,15 +55,7 @@ public class DAVFileRevisionsHandler extends ReportHandler implements ISVNFileRe
         return myDAVRequest;
     }
 
-    private boolean isDiffCompress() {
-        return myDiffCompress;
-    }
-
-    public int getContentLength() {
-        return -1;
-    }
-
-    public void sendResponse() throws SVNException {
+    public void execute() throws SVNException {
         writeXMLHeader();
 
         getDAVResource().getRepository().getFileRevisions(getFileRevsionsRequest().getPath(), getFileRevsionsRequest().getStartRevision(), getFileRevsionsRequest().getEndRevision(), this);
@@ -125,7 +118,7 @@ public class DAVFileRevisionsHandler extends ReportHandler implements ISVNFileRe
     }
 
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
-        writeTextDeltaChunk(diffWindow, isDiffCompress());
+        writeTextDeltaChunk(diffWindow, getSVNDiffVersion());
         return null;
     }
 

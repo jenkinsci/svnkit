@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -47,7 +48,7 @@ public class DAVHandlerFactory {
     public static final String METHOD_CHECKIN = "CHECKIN";
     public static final String METHOD_CHECKOUT = "CHECKOUT";
 
-    public static ServletDAVHandler createHandler(DAVRepositoryManager manager, HttpServletRequest request, HttpServletResponse response) throws SVNException {
+    public static ServletDAVHandler createHandler(DAVRepositoryManager manager, HttpServletRequest request, HttpServletResponse response, ServletContext servletContext) throws SVNException {
         if (METHOD_PROPFIND.equals(request.getMethod())) {
             return new DAVPropfindHandler(manager, request, response);
         }
@@ -58,7 +59,7 @@ public class DAVHandlerFactory {
             return new DAVGetHandler(manager, request, response);
         }
         if (METHOD_REPORT.equals(request.getMethod())) {
-            return new DAVReportHandler(manager, request, response);
+            return new DAVReportHandler(manager, request, response, servletContext);
         }
         SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Unknown request method ''{0}''", request.getMethod()));
         return null;

@@ -20,7 +20,9 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 /**
@@ -28,6 +30,12 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
  * @version 1.1.2
  */
 public class DAVUpdateRequest extends DAVRequest {
+
+    public static final int UPDATE_ACTION = 2;
+    public static final int DIFF_ACTION = 9;
+    public static final int STATUS_ACTION = 10;
+    public static final int SWITCH_ACTION = 12;
+    public static final int UNKNOWN_ACTION = 20;
 
     private static final DAVElement TARGET_REVISION = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "target-revision");
     private static final DAVElement SRC_PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "src-path");
@@ -38,28 +46,21 @@ public class DAVUpdateRequest extends DAVRequest {
     private static final DAVElement IGNORE_ANCESTRY = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "ignore-ancestry");
     private static final DAVElement TEXT_DELTAS = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "text-deltas");
     private static final DAVElement RESOURCE_WALK = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "resource-walk");
-    private static final DAVElement ENTRY = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "entry");
-    private static final DAVElement MISSING = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "missing");
 
-    boolean mySendAll = false;
-    long myRevision = DAVResource.INVALID_REVISION;
-    String mySrcPath = null;
-    String myDstPath = null;
-    String myTarget = "";
-    boolean myTextDeltas = true;
-    SVNDepth myDepth = SVNDepth.UNKNOWN;
-    boolean myDepthRequested = false;
-    boolean myRecursiveRequested = false;
-    boolean myIgnoreAncestry = false;
-    boolean myResourceWalk = false;
+    private boolean mySendAll = false;
+    private long myRevision = DAVResource.INVALID_REVISION;
+    private String mySrcURL = null;
+    private String myDstURL = null;
+    private String myTarget = "";
+    private boolean myTextDeltas = true;
+    private SVNDepth myDepth = SVNDepth.UNKNOWN;
+    private boolean myDepthRequested = false;
+    private boolean myRecursiveRequested = false;
+    private boolean myIgnoreAncestry = false;
+    private boolean myResourceWalk = false;
 
-    String myEntryPath = null;
-    long myEntryRevision = DAVResource.INVALID_REVISION;
-    String myEntryLinkPath = null;
-    boolean myEntryStartEmpty = false;
-    String myEntryLockToken = null;
+    private boolean myIsInitialized;
 
-    String myMissing = null;
 
     public boolean isSendAll() {
         return mySendAll;
@@ -77,26 +78,26 @@ public class DAVUpdateRequest extends DAVRequest {
         myRevision = revision;
     }
 
-    public String getSrcPath() {
-        return mySrcPath;
+    public String getSrcURL() {
+        return mySrcURL;
     }
 
-    private void setSrcPath(String srcPath) throws SVNException {
+    private void setSrcURL(String srcURL) throws SVNException {
         try {
-            SVNURL.parseURIEncoded(srcPath);
+            SVNURL.parseURIEncoded(srcURL);
         } catch (SVNException e) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
         }
-        mySrcPath = srcPath;
+        mySrcURL = srcURL;
     }
 
-    public String getDstPath() {
-        return myDstPath;
+    public String getDstURL() {
+        return myDstURL;
     }
 
-    private void setDstPath(String dstPath) throws SVNException {
-        SVNURL.parseURIEncoded(dstPath);
-        myDstPath = dstPath;
+    private void setDstURL(String dstURL) throws SVNException {
+        SVNURL.parseURIEncoded(dstURL);
+        myDstURL = dstURL;
     }
 
     public String getTarget() {
@@ -155,116 +156,65 @@ public class DAVUpdateRequest extends DAVRequest {
         myResourceWalk = resourceWalk;
     }
 
-
-    public String getEntryPath() {
-        return myEntryPath;
+    private boolean isInitialized() {
+        return myIsInitialized;
     }
 
-    private void setEntryPath(String entryPath) {
-        myEntryPath = entryPath;
+    private void setInitialized(boolean isInitialized) {
+        myIsInitialized = isInitialized;
     }
 
-    public long getEntryRevision() {
-        return myEntryRevision;
-    }
-
-    private void setEntryRevision(long entryRevision) {
-        myEntryRevision = entryRevision;
-    }
-
-    public String getEntryLinkPath() {
-        return myEntryLinkPath;
-    }
-
-    private void setEntryLinkPath(String entryLinkPath) {
-        myEntryLinkPath = entryLinkPath;
-    }
-
-    public boolean isEntryStartEmpty() {
-        return myEntryStartEmpty;
-    }
-
-    private void setEntryStartEmpty(boolean entryStartEmpty) {
-        myEntryStartEmpty = entryStartEmpty;
-    }
-
-    public String getEntryLockToken() {
-        return myEntryLockToken;
-    }
-
-    private void setEntryLockToken(String entryLockToken) {
-        myEntryLockToken = entryLockToken;
-    }
-
-
-    public String getMissing() {
-        return myMissing;
-    }
-
-    private void setMissing(String missing) {
-        myMissing = missing;
-    }
-
-    protected void initialize() throws SVNException {
-        setSendAll("true".equals(getRootElementAttributes().getValue("send-all")));
-        for (Iterator iterator = getProperties().entrySet().iterator(); iterator.hasNext();) {
-            Map.Entry entry = (Map.Entry) iterator.next();
-            DAVElement element = (DAVElement) entry.getKey();
-            DAVElementProperty property = (DAVElementProperty) entry.getValue();
-            if (element == TARGET_REVISION) {
-                assertNullCData(property);
-                setRevision(Long.parseLong(property.getFirstValue()));
-            } else if (element == SRC_PATH) {
-                assertNullCData(property);
-                setSrcPath(property.getFirstValue());
-            } else if (element == DST_PATH) {
-                assertNullCData(property);
-                setDstPath(property.getFirstValue());
-            } else if (element == UPDATE_TARGET) {
-                setTarget(property.getFirstValue());
-            } else if (element == DEPTH) {
-                assertNullCData(property);
-                setDepth(SVNDepth.fromString(property.getFirstValue()));
-                setDepthRequested(true);
-            } else if (element == RECURSIVE && !isDepthRequested()) {
-                assertNullCData(property);
-                SVNDepth.fromRecurse(!"no".equals(property.getFirstValue()));
-                setRecursiveRequested(true);
-            } else if (element == IGNORE_ANCESTRY) {
-                assertNullCData(property);
-                setIgnoreAncestry(!"no".equals(property.getFirstValue()));
-            } else if (element == TEXT_DELTAS) {
-                assertNullCData(property);
-                setTextDeltas(!"no".equals(property.getFirstValue()));
-            } else if (element == RESOURCE_WALK) {
-                assertNullCData(property);
-                setResourceWalk(!"no".equals(property.getFirstValue()));
-            } else if (element == ENTRY) {
-                try {
-                    long revision = Long.parseLong(property.getAttributeValue("rev"));
-                    setEntryRevision(revision);
-                } catch (NumberFormatException e) {
-                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
+    protected void init() throws SVNException {
+        if (!isInitialized()) {
+            setSendAll("true".equals(getRootElementAttributes().getValue("send-all")));
+            for (Iterator iterator = getProperties().entrySet().iterator(); iterator.hasNext();) {
+                Map.Entry entry = (Map.Entry) iterator.next();
+                DAVElement element = (DAVElement) entry.getKey();
+                DAVElementProperty property = (DAVElementProperty) entry.getValue();
+                String value = property.getFirstValue();
+                if (element == TARGET_REVISION) {
+                    assertNullCData(property);
+                    setRevision(Long.parseLong(value));
+                } else if (element == SRC_PATH) {
+                    assertNullCData(property);
+                    DAVPathUtil.testCanonical(value);
+                    setSrcURL(value);
+                } else if (element == DST_PATH) {
+                    assertNullCData(property);
+                    DAVPathUtil.testCanonical(value);
+                    setDstURL(value);
+                } else if (element == UPDATE_TARGET) {
+                    DAVPathUtil.testCanonical(value);
+                    setTarget(value);
+                } else if (element == DEPTH) {
+                    assertNullCData(property);
+                    setDepth(SVNDepth.fromString(value));
+                    setDepthRequested(true);
+                } else if (element == RECURSIVE && !isDepthRequested()) {
+                    assertNullCData(property);
+                    SVNDepth.fromRecurse(!"no".equals(value));
+                    setRecursiveRequested(true);
+                } else if (element == IGNORE_ANCESTRY) {
+                    assertNullCData(property);
+                    setIgnoreAncestry(!"no".equals(value));
+                } else if (element == TEXT_DELTAS) {
+                    assertNullCData(property);
+                    setTextDeltas(!"no".equals(value));
+                } else if (element == RESOURCE_WALK) {
+                    assertNullCData(property);
+                    setResourceWalk(!"no".equals(value));
                 }
-
-                setEntryPath(property.getFirstValue());
-                setDepth(SVNDepth.fromString(property.getFirstValue()));
-                setEntryLinkPath(property.getAttributeValue("linkpath"));
-                setEntryStartEmpty(property.getAttributeValue("start-empty") != null);
-                setEntryLockToken(property.getAttributeValue("lock-token"));
-
-            } else if (element == MISSING) {
-                setMissing(property.getFirstValue());
             }
-        }
-        if (!isDepthRequested() && !isRecursiveRequested() && (getDepth() == SVNDepth.UNKNOWN)) {
-            setDepth(SVNDepth.INFINITY);
-        }
-        if (getSrcPath() == null) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED));
-        }
-        if (!isSendAll()) {
-            setTextDeltas(false);
+            if (!isDepthRequested() && !isRecursiveRequested() && (getDepth() == SVNDepth.UNKNOWN)) {
+                setDepth(SVNDepth.INFINITY);
+            }
+            if (getSrcURL() == null) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "The request did not contain the '<src-path>' element.\nThis may indicate that your client is too old."));
+            }
+            if (!isSendAll()) {
+                setTextDeltas(false);
+            }
+            setInitialized(true);
         }
     }
 
@@ -274,4 +224,28 @@ public class DAVUpdateRequest extends DAVRequest {
         }
     }
 
+    public int getAction() {
+        if (!isInitialized()) {
+            return UNKNOWN_ACTION;
+        }
+        String sPath;
+        if (getTarget() != null) {
+            sPath = SVNPathUtil.append(getSrcURL(), getTarget());
+        } else {
+            sPath = getSrcURL();
+        }
+        if (getDstURL() != null) {
+            if (!isSendAll() && getDstURL().equals(sPath)) {
+                return DIFF_ACTION;
+            } else {
+                return isSendAll() ? SWITCH_ACTION : DIFF_ACTION;
+            }
+        } else {
+            if (isTextDeltas()) {
+                return UPDATE_ACTION;
+            } else {
+                return STATUS_ACTION;
+            }
+        }
+    }
 }

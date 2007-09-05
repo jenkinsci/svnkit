@@ -30,7 +30,7 @@ public class DAVPropfindRequest extends DAVRequest {
         super();
     }
 
-    protected void initialize() throws SVNException {
+    protected void init() throws SVNException {
         if (getRootElement() != PROPFIND) {
             invalidXML();
         }

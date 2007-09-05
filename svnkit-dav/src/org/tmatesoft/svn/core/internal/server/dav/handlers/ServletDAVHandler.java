@@ -339,7 +339,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             } catch (IOException e) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
             }
-            getDAVRequest().initialize();
+            getDAVRequest().init();
         }
     }
 

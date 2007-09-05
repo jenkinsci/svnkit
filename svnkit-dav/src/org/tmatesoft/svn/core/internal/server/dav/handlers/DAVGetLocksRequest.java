@@ -18,6 +18,6 @@ import org.tmatesoft.svn.core.SVNException;
  * @version 1.1.2
  */
 public class DAVGetLocksRequest extends DAVRequest {
-    protected void initialize() throws SVNException {
+    protected void init() throws SVNException {
     }
 }

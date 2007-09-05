@@ -59,7 +59,7 @@ public class DAVGetLocationsRequest extends DAVRequest {
         myRevisions = revisions;
     }
 
-    protected void initialize() throws SVNException {
+    protected void init() throws SVNException {
         for (Iterator iterator = getProperties().entrySet().iterator(); iterator.hasNext();) {
             Map.Entry entry = (Map.Entry) iterator.next();
             DAVElement element = (DAVElement) entry.getKey();

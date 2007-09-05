@@ -11,17 +11,20 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
-import java.io.Writer;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
-import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
+import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
@@ -30,16 +33,15 @@ import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
  * @author TMate Software Ltd.
  * @version 1.1.2
  */
-public class DAVLogHandler extends ReportHandler implements ISVNLogEntryHandler {
+public class DAVLogHandler extends DAVReportHandler implements ISVNLogEntryHandler {
 
     private DAVLogRequest myDAVRequest;
 
-    public DAVLogHandler(DAVResource resource, Writer responseWriter) {
-        super(resource, responseWriter);
+    public DAVLogHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response, ServletContext servletContext) throws SVNException {
+        super(repositoryManager, request, response, servletContext);
     }
 
-
-    public DAVRequest getDAVRequest() {
+    protected DAVRequest getDAVRequest() {
         return getLogRequest();
     }
 
@@ -50,11 +52,7 @@ public class DAVLogHandler extends ReportHandler implements ISVNLogEntryHandler 
         return myDAVRequest;
     }
 
-    public int getContentLength() {
-        return -1;
-    }
-
-    public void sendResponse() throws SVNException {
+    public void execute() throws SVNException {
         writeXMLHeader();
 
         getDAVResource().getRepository().log(getLogRequest().getTargetPaths(),
