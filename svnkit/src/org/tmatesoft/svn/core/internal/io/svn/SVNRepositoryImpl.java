@@ -434,7 +434,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
 
     public int getFileRevisions(String path, long startRevision, long endRevision, boolean includeMergedRevisions, ISVNFileRevisionHandler handler) throws SVNException {
         //TODO: implement
-        return getFileRevisions(path, startRevision, endRevision, includeMergedRevisions, handler);
+        return getFileRevisions(path, startRevision, endRevision, handler);
     }
     
     public int getFileRevisions(String path, long sRevision, long eRevision, ISVNFileRevisionHandler handler) throws SVNException {

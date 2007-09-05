@@ -505,7 +505,7 @@ class DAVRepository extends SVNRepository {
 
     public int getFileRevisions(String path, long startRevision, long endRevision, boolean includeMergedRevisions, ISVNFileRevisionHandler handler) throws SVNException {
         //TODO: implement
-        return getFileRevisions(path, startRevision, endRevision, includeMergedRevisions, handler);
+        return getFileRevisions(path, startRevision, endRevision, handler);
     }
     
     public int getFileRevisions(String path, long startRevision, long endRevision, ISVNFileRevisionHandler handler) throws SVNException {
