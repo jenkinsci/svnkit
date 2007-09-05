@@ -18,6 +18,7 @@ import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -168,6 +169,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             myTmpDirectory.mkdirs();
         }
         myLines = new ArrayList();
+        myMergeLines = new ArrayList();
         myDeltaProcessor = new SVNDeltaProcessor();
         myStartRevision = startRevision;
         myDiffOptions = diffOptions;
@@ -272,6 +274,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
                         line.author = myCurrentAuthor;
                         line.line = result.getRightCache().getLine(j).getContentBytes();
                         line.date = myCurrentDate;
+                        line.blockStart = block.getRightFrom();
                         newLines.add(line);
                     }
                     oldStart = block.getLeftTo() + 1;
@@ -329,12 +332,12 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         }
     }
 
-	private static void copyOldLinesToNewLines(int oldStart, int newStart, int count, List oldLines, List newLines, QSequenceLineCache newCache) throws IOException {
+	private void copyOldLinesToNewLines(int oldStart, int newStart, int count, List oldLines, List newLines, QSequenceLineCache newCache) throws IOException {
 		for (int index = 0; index < count; index++) {
 			final LineInfo line = (LineInfo)oldLines.get(oldStart + index);
 			final QSequenceLine sequenceLine = newCache.getLine(newStart + index);
 			line.line = sequenceLine.getContentBytes();
-
+			line.blockStart = newStart; 
 			newLines.add(line);
 		}
 	}
@@ -483,7 +486,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         public String author;
         public Date date;
         public String path;
+        public int blockStart;
     }
-    
     
 }
