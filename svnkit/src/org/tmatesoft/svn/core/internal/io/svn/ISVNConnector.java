@@ -29,6 +29,8 @@ public interface ISVNConnector {
 
     public void close(SVNRepositoryImpl repository) throws SVNException;
     
+    public boolean isStale();
+    
     public OutputStream getOutputStream() throws IOException;
 
     public InputStream getInputStream() throws IOException;

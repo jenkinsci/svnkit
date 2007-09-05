@@ -171,4 +171,8 @@ public class SVNGanymedConnector implements ISVNConnector {
     public boolean isConnected(SVNRepositoryImpl repos) throws SVNException {
         return true;
     }
+    
+    public boolean isStale() {
+        return false;
+    }
 }
