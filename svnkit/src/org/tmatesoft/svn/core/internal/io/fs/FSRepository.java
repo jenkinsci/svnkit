@@ -23,7 +23,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
@@ -36,9 +35,6 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
-import org.tmatesoft.svn.core.SVNMergeRange;
-import org.tmatesoft.svn.core.SVNMergeRangeInheritance;
-import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
@@ -967,82 +963,5 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             }
         }
         return System.getProperty("user.name");
-    }
-
-    private LinkedList findInterestingRevisions(LinkedList pathRevisions, String path, 
-                                                long startRevision, long endRevision, 
-                                                boolean includeMergedRevisions, 
-                                                boolean markAsMerged) throws SVNException {
-        FSRevisionRoot root = myFSFS.createRevisionRoot(endRevision);
-        if (root.checkNodeKind(path) != SVNNodeKind.FILE) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FILE, 
-                                                         "''{0}'' is not a file in revision ''{1,number,integer}''", 
-                                                         new Object[] { path, endRevision });
-            SVNErrorManager.error(err);
-        }
-        
-        pathRevisions = pathRevisions == null ? new LinkedList() : pathRevisions;
-        FSNodeHistory history = root.getNodeHistory(path);
-        while (true) {
-            history = history.getPreviousHistory(true);
-            if (history == null) {
-                break;
-            }
-
-            long histRev = history.getHistoryEntry().getRevision();
-            String histPath = history.getHistoryEntry().getPath();
-            SVNLocationEntry pathRev = new SVNLocationEntry(histRev, histPath, markAsMerged); 
-            pathRevisions.addFirst(pathRev);
-            
-            if (includeMergedRevisions) {
-                getMergedPathRevisions(pathRevisions, pathRev);
-                FSRevisionRoot mergeRoot = myFSFS.createRevisionRoot(pathRev.getRevision());
-                boolean isBranching = FSLog.isBranchingCopy(mergeRoot, null, pathRev.getPath());
-                if (isBranching) {
-                    break;
-                }
-            }
-            
-            if (histRev <= startRevision) {
-                break;
-            }
-        }
-        return pathRevisions;
-    }
-    
-    private void getMergedPathRevisions(LinkedList pathRevisions, SVNLocationEntry oldPathRevision) throws SVNException {
-        FSRevisionRoot root = myFSFS.createRevisionRoot(oldPathRevision.getRevision());
-        Map currentMergeInfo = FSLog.getPathMergeInfo(oldPathRevision.getPath(), 
-                                                                    root);
-        FSRevisionRoot previousRoot = myFSFS.createRevisionRoot(oldPathRevision.getRevision() - 1);
-        Map previousMergeInfo = FSLog.getPathMergeInfo(oldPathRevision.getPath(), 
-                                                                     previousRoot);
-        
-        Map deleted = new TreeMap();
-        Map changed = new TreeMap();
-        SVNMergeInfoManager.diffMergeInfo(deleted, changed, previousMergeInfo, currentMergeInfo, 
-                                          SVNMergeRangeInheritance.IGNORE_INHERITANCE);
-        
-        changed = SVNMergeInfoManager.mergeMergeInfos(changed, deleted, SVNMergeRangeInheritance.EQUAL_INHERITANCE);
-        if (changed.isEmpty()) {
-            return;
-        }
-        
-        for (Iterator mergeSrcs = changed.keySet().iterator(); mergeSrcs.hasNext();) {
-            String path = (String) mergeSrcs.next();
-            SVNMergeRangeList rangeList = (SVNMergeRangeList) changed.get(path);
-            SVNMergeRange[] ranges = rangeList.getRanges();
-            for (int i = 0; i <= rangeList.getSize(); i++) {
-                SVNMergeRange range = ranges[i];
-                try {
-                    pathRevisions = findInterestingRevisions(pathRevisions, path, range.getStartRevision(), 
-                                                             range.getEndRevision(), true, true);
-                } catch (SVNException svne) {
-                    if (svne.getErrorMessage().getErrorCode() != SVNErrorCode.FS_NOT_FILE) {
-                        throw svne;
-                    }
-                }
-            }
-        }
     }
 }

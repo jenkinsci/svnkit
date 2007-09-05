@@ -162,7 +162,7 @@ public class FSFileRevisionsFinder {
         if (root.checkNodeKind(path) != SVNNodeKind.FILE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FILE, 
                                                          "''{0}'' is not a file in revision ''{1,number,integer}''", 
-                                                         new Object[] { path, endRevision });
+                                                         new Object[] { path, new Long(endRevision) });
             SVNErrorManager.error(err);
         }
 
