@@ -2195,6 +2195,14 @@ public class SVNClientImpl implements SVNClientInterface {
         return null;
     }
 
+    public void copy(CopySource[] sources, String destPath, String message, boolean copyAsChild, boolean makeParents, boolean withMergeHistory) throws ClientException {
+        notImplementedYet(null);//TODO: fixme
+    }
+
+    public void move(String[] srcPaths, String destPath, String message, boolean force, boolean moveAsChild, boolean makeParents, boolean withMergeHistory) throws ClientException {
+        notImplementedYet(null);//TODO: fixme
+    }
+    
     private void notImplementedYet() throws ClientException {
         notImplementedYet(null);
     }
