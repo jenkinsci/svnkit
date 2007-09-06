@@ -48,7 +48,7 @@ public class DAVReportHandler extends ServletDAVHandler {
     public static final DAVElement UPDATE_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "update-report");
     public static final DAVElement LOG_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "log-report");
     public static final DAVElement DATED_REVISIONS_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "dated-rev-report");
-    public static final DAVElement GET_LOCATIONS_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "get-locations");
+    public static final DAVElement GET_LOCATIONS = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "get-locations");
     public static final DAVElement FILE_REVISIONS_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "file-revs-report");
     public static final DAVElement GET_LOCKS_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "get-locks-report");
     public static final DAVElement REPLAY_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "replay-report");
@@ -76,7 +76,7 @@ public class DAVReportHandler extends ServletDAVHandler {
         REPORT_ELEMENTS.add(UPDATE_REPORT);
         REPORT_ELEMENTS.add(LOG_REPORT);
         REPORT_ELEMENTS.add(DATED_REVISIONS_REPORT);
-        REPORT_ELEMENTS.add(GET_LOCATIONS_REPORT);
+        REPORT_ELEMENTS.add(GET_LOCATIONS);
         REPORT_ELEMENTS.add(FILE_REVISIONS_REPORT);
         REPORT_ELEMENTS.add(GET_LOCKS_REPORT);
         REPORT_ELEMENTS.add(REPLAY_REPORT);
@@ -153,7 +153,7 @@ public class DAVReportHandler extends ServletDAVHandler {
             setReportHandler(new DAVDatedRevisionHandler(myRepositoryManager, myRequest, myResponse, myServletContext));
         } else if (rootElement == FILE_REVISIONS_REPORT) {
             setReportHandler(new DAVFileRevisionsHandler(myRepositoryManager, myRequest, myResponse, myServletContext));
-        } else if (rootElement == GET_LOCATIONS_REPORT) {
+        } else if (rootElement == GET_LOCATIONS) {
             setReportHandler(new DAVGetLocationsHandler(myRepositoryManager, myRequest, myResponse, myServletContext));
         } else if (rootElement == LOG_REPORT) {
             setReportHandler(new DAVLogHandler(myRepositoryManager, myRequest, myResponse, myServletContext));

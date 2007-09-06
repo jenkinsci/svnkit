@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
  */
 public class DAVGetLocationsRequest extends DAVRequest {
 
+    private static final DAVElement GET_LOCATIONS_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "get-locations-report");
 
     private static final DAVElement PEG_REVISION = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "peg-revision");
     private static final DAVElement LOCATION_REVISION = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "location-revision");
@@ -60,6 +61,7 @@ public class DAVGetLocationsRequest extends DAVRequest {
     }
 
     protected void init() throws SVNException {
+        setRootElement(GET_LOCATIONS_REPORT);
         for (Iterator iterator = getProperties().entrySet().iterator(); iterator.hasNext();) {
             Map.Entry entry = (Map.Entry) iterator.next();
             DAVElement element = (DAVElement) entry.getKey();
