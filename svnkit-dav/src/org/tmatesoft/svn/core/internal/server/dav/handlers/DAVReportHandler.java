@@ -16,16 +16,13 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
-import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
@@ -57,7 +54,6 @@ public class DAVReportHandler extends ServletDAVHandler {
     private DAVRepositoryManager myRepositoryManager;
     private HttpServletRequest myRequest;
     private HttpServletResponse myResponse;
-    private ServletContext myServletContext;
 
     private DAVReportHandler myReportHandler;
     private DAVResource myDAVResource;
@@ -83,21 +79,15 @@ public class DAVReportHandler extends ServletDAVHandler {
         REPORT_ELEMENTS.add(MERGEINFO_REPORT);
     }
 
-    protected DAVReportHandler(DAVRepositoryManager connector, HttpServletRequest request, HttpServletResponse response, ServletContext servletContext) {
+    protected DAVReportHandler(DAVRepositoryManager connector, HttpServletRequest request, HttpServletResponse response) {
         super(connector, request, response);
         myRepositoryManager = connector;
         myRequest = request;
         myResponse = response;
-        myServletContext = servletContext;
     }
 
     protected DAVRequest getDAVRequest() {
         return getReportHandler().getDAVRequest();
-    }
-
-
-    private ServletContext getServletContext() {
-        return myServletContext;
     }
 
     private DAVReportHandler getReportHandler() {
@@ -112,7 +102,7 @@ public class DAVReportHandler extends ServletDAVHandler {
         return myDAVResource;
     }
 
-    private void setDAVResource(DAVResource DAVResource) {
+    protected void setDAVResource(DAVResource DAVResource) {
         myDAVResource = DAVResource;
     }
 
@@ -138,8 +128,6 @@ public class DAVReportHandler extends ServletDAVHandler {
     public void execute() throws SVNException {
         readInput();
 
-        getReportHandler().setDAVResource(createDAVResource(false, false));
-
         setDefaultResponseHeaders();
         setResponseContentType(DEFAULT_XML_CONTENT_TYPE);
         setResponseStatus(HttpServletResponse.SC_OK);
@@ -150,40 +138,22 @@ public class DAVReportHandler extends ServletDAVHandler {
 
     private void initReportHandler(DAVElement rootElement) throws SVNException {
         if (rootElement == DATED_REVISIONS_REPORT) {
-            setReportHandler(new DAVDatedRevisionHandler(myRepositoryManager, myRequest, myResponse, myServletContext));
+            setReportHandler(new DAVDatedRevisionHandler(myRepositoryManager, myRequest, myResponse));
         } else if (rootElement == FILE_REVISIONS_REPORT) {
-            setReportHandler(new DAVFileRevisionsHandler(myRepositoryManager, myRequest, myResponse, myServletContext));
+            setReportHandler(new DAVFileRevisionsHandler(myRepositoryManager, myRequest, myResponse));
         } else if (rootElement == GET_LOCATIONS) {
-            setReportHandler(new DAVGetLocationsHandler(myRepositoryManager, myRequest, myResponse, myServletContext));
+            setReportHandler(new DAVGetLocationsHandler(myRepositoryManager, myRequest, myResponse));
         } else if (rootElement == LOG_REPORT) {
-            setReportHandler(new DAVLogHandler(myRepositoryManager, myRequest, myResponse, myServletContext));
+            setReportHandler(new DAVLogHandler(myRepositoryManager, myRequest, myResponse));
         } else if (rootElement == MERGEINFO_REPORT) {
-            setReportHandler(new DAVMergeInfoHandler(myRepositoryManager, myRequest, myResponse, myServletContext));
+            setReportHandler(new DAVMergeInfoHandler(myRepositoryManager, myRequest, myResponse));
         } else if (rootElement == GET_LOCKS_REPORT) {
-            setReportHandler(new DAVGetLocksHandler(myRepositoryManager, myRequest, myResponse, myServletContext));
+            setReportHandler(new DAVGetLocksHandler(myRepositoryManager, myRequest, myResponse));
         } else if (rootElement == REPLAY_REPORT) {
-            setReportHandler(new DAVReplayHandler(myRepositoryManager, myRequest, myResponse, myServletContext));
+            setReportHandler(new DAVReplayHandler(myRepositoryManager, myRequest, myResponse));
         } else if (rootElement == UPDATE_REPORT) {
-            setReportHandler(new DAVUpdateHandler(myRepositoryManager, myRequest, myResponse, myServletContext));
+            setReportHandler(new DAVUpdateHandler(myRepositoryManager, myRequest, myResponse));
         }
-    }
-
-    protected String getRealPath(String url) {
-        return getServletContext().getRealPath(url);
-    }
-
-    protected SVNURL getRepositorySVNURL(String url) throws SVNException {
-        String path = getRealPath(url);
-        if (!getRepositoryManager().isUsingRepositoryParameter()) {
-            path = DAVPathUtil.removeHead(path, true);
-        }
-        String repositoryRootPath = getDAVResource().getRepository().getRepositoryRoot(false).getURIEncodedPath();
-        StringBuffer fullPath = new StringBuffer();
-        fullPath.append("file://");
-        fullPath.append(repositoryRootPath.startsWith("/") ? "" : "/");
-        fullPath.append(DAVPathUtil.dropTraillingSlash(repositoryRootPath));
-        fullPath.append(path);
-        return SVNURL.parseURIEncoded(fullPath.toString());
     }
 
     protected void write(String string) throws SVNException {
@@ -231,5 +201,4 @@ public class DAVReportHandler extends ServletDAVHandler {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
         }
     }
-
 }

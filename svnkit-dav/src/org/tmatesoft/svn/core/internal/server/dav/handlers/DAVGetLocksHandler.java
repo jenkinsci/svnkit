@@ -13,7 +13,6 @@ package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.io.UnsupportedEncodingException;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -34,8 +33,8 @@ public class DAVGetLocksHandler extends DAVReportHandler {
 
     private DAVGetLocksRequest myDAVRequest;
 
-    protected DAVGetLocksHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response, ServletContext servletContext) throws SVNException {
-        super(repositoryManager, request, response, servletContext);
+    protected DAVGetLocksHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) throws SVNException {
+        super(repositoryManager, request, response);
     }
 
 
@@ -47,6 +46,8 @@ public class DAVGetLocksHandler extends DAVReportHandler {
     }
 
     public void execute() throws SVNException {
+        setDAVResource(createDAVResource(false, false));
+        
         String responseBody = generateResponseBody();
 
         try {

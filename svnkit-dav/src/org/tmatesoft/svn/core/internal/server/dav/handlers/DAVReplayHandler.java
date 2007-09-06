@@ -16,7 +16,6 @@ import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -37,8 +36,8 @@ public class DAVReplayHandler extends DAVReportHandler implements ISVNEditor {
 
     private DAVReplayRequest myDAVRequest;
 
-    public DAVReplayHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response, ServletContext servletContext) throws SVNException {
-        super(repositoryManager, request, response, servletContext);
+    public DAVReplayHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) throws SVNException {
+        super(repositoryManager, request, response);
     }
 
 
@@ -54,6 +53,8 @@ public class DAVReplayHandler extends DAVReportHandler implements ISVNEditor {
     }
 
     public void execute() throws SVNException {
+        setDAVResource(createDAVResource(false, false));
+        
         writeXMLHeader();
 
         getDAVResource().getRepository().replay(getReplayRequest().getLowRevision(),

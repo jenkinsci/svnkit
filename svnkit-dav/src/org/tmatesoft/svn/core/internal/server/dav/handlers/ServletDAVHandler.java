@@ -142,7 +142,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         String resultChecksum = getRequestHeader(SVN_RESULT_FULLTEXT_MD5_HEADER);
         String userAgent = getRequestHeader(USER_AGENT_HEADER);
         boolean isSVNClient = userAgent != null && (userAgent.startsWith("SVN/") || userAgent.startsWith("SVNKit"));
-        return getRepositoryManager().createDAVResource(getRequestContext(), getURI(), isSVNClient, version, clientOptions, baseChecksum, resultChecksum, label, useCheckedIn);
+        return getRepositoryManager().createDAVResource(getURI(), isSVNClient, version, clientOptions, baseChecksum, resultChecksum, label, useCheckedIn);
     }
 
     protected DAVDepth getRequestDepth(DAVDepth defaultDepth) throws SVNException {
@@ -165,10 +165,6 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
 
     protected String getURI() {
         return myRequest.getPathInfo();
-    }
-
-    protected String getRequestContext() {
-        return myRequest.getContextPath();
     }
 
     protected String getRequestHeader(String name) {

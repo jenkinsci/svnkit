@@ -15,7 +15,6 @@ import java.io.UnsupportedEncodingException;
 import java.util.Iterator;
 import java.util.Map;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -33,8 +32,8 @@ public class DAVMergeInfoHandler extends DAVReportHandler {
 
     private DAVMergeInfoRequest myDAVRequest;
 
-    public DAVMergeInfoHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response, ServletContext servletContext) throws SVNException {
-        super(repositoryManager, request, response, servletContext);
+    public DAVMergeInfoHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) throws SVNException {
+        super(repositoryManager, request, response);
     }
 
     protected DAVRequest getDAVRequest() {
@@ -49,6 +48,8 @@ public class DAVMergeInfoHandler extends DAVReportHandler {
     }
 
     public void execute() throws SVNException {
+        setDAVResource(createDAVResource(false, false));
+
         String responseBody = generateResponseBody();
 
         try {

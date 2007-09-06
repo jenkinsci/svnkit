@@ -41,8 +41,8 @@ public class DAVServlet extends HttpServlet {
 
     public void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         try {
-            DAVRepositoryManager connector = new DAVRepositoryManager(getServletConfig());
-            ServletDAVHandler handler = DAVHandlerFactory.createHandler(connector, request, response, getServletContext());
+            DAVRepositoryManager connector = new DAVRepositoryManager(getServletConfig(), request.getContextPath());
+            ServletDAVHandler handler = DAVHandlerFactory.createHandler(connector, request, response);
             handler.execute();
         } catch (Throwable th) {
             String errorBody;

@@ -15,7 +15,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -37,8 +36,8 @@ public class DAVLogHandler extends DAVReportHandler implements ISVNLogEntryHandl
 
     private DAVLogRequest myDAVRequest;
 
-    public DAVLogHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response, ServletContext servletContext) throws SVNException {
-        super(repositoryManager, request, response, servletContext);
+    public DAVLogHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) throws SVNException {
+        super(repositoryManager, request, response);
     }
 
     protected DAVRequest getDAVRequest() {
@@ -53,6 +52,8 @@ public class DAVLogHandler extends DAVReportHandler implements ISVNLogEntryHandl
     }
 
     public void execute() throws SVNException {
+        setDAVResource(createDAVResource(false, false));        
+
         writeXMLHeader();
 
         getDAVResource().getRepository().log(getLogRequest().getTargetPaths(),

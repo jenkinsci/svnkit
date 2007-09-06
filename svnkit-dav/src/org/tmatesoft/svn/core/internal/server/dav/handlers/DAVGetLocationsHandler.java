@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.internal.server.dav.handlers;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -22,6 +21,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 
@@ -33,8 +33,8 @@ public class DAVGetLocationsHandler extends DAVReportHandler implements ISVNLoca
 
     private DAVGetLocationsRequest myDAVRequest;
 
-    public DAVGetLocationsHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response, ServletContext servletContext) throws SVNException {
-        super(repositoryManager, request, response, servletContext);
+    public DAVGetLocationsHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) throws SVNException {
+        super(repositoryManager, request, response);
     }
 
     protected DAVRequest getDAVRequest() {
@@ -49,6 +49,8 @@ public class DAVGetLocationsHandler extends DAVReportHandler implements ISVNLoca
     }
 
     public void execute() throws SVNException {
+        setDAVResource(createDAVResource(false, false));
+        
         writeXMLHeader();
 
         getDAVResource().getRepository().getLocations(getGetLocationsRequest().getPath(), getGetLocationsRequest().getPegRevision(), getGetLocationsRequest().getRevisions(), this);
@@ -58,7 +60,9 @@ public class DAVGetLocationsHandler extends DAVReportHandler implements ISVNLoca
 
     public void handleLocationEntry(SVNLocationEntry locationEntry) throws SVNException {
         Map attrs = new HashMap();
-        attrs.put("path", locationEntry.getPath());
+        String relativePath = locationEntry.getPath();
+        String basePath = getDAVResource().getResourceURI().getPath();
+        attrs.put("path", SVNPathUtil.append(basePath, relativePath));
         attrs.put("rev", String.valueOf(locationEntry.getRevision()));
         StringBuffer xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "location", XMLUtil.XML_STYLE_SELF_CLOSING, attrs, null);
         write(xmlBuffer);

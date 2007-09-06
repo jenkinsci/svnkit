@@ -50,7 +50,7 @@ public class DAVUpdateRequest extends DAVRequest {
     private boolean mySendAll = false;
     private long myRevision = DAVResource.INVALID_REVISION;
     private String mySrcURL = null;
-    private String myDstURL = null;
+    private SVNURL myDstURL = null;
     private String myTarget = "";
     private boolean myTextDeltas = true;
     private SVNDepth myDepth = SVNDepth.UNKNOWN;
@@ -83,21 +83,15 @@ public class DAVUpdateRequest extends DAVRequest {
     }
 
     private void setSrcURL(String srcURL) throws SVNException {
-        try {
-            SVNURL.parseURIEncoded(srcURL);
-        } catch (SVNException e) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
-        }
         mySrcURL = srcURL;
     }
 
-    public String getDstURL() {
+    public SVNURL getDstURL() {
         return myDstURL;
     }
 
     private void setDstURL(String dstURL) throws SVNException {
-        SVNURL.parseURIEncoded(dstURL);
-        myDstURL = dstURL;
+        myDstURL = SVNURL.parseURIEncoded(dstURL);
     }
 
     public String getTarget() {

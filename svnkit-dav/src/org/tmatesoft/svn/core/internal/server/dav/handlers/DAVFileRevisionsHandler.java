@@ -16,7 +16,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -39,8 +38,8 @@ public class DAVFileRevisionsHandler extends DAVReportHandler implements ISVNFil
     private DAVFileRevisionsRequest myDAVRequest;
 
 
-    public DAVFileRevisionsHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response, ServletContext servletContext) throws SVNException {
-        super(repositoryManager, request, response, servletContext);
+    public DAVFileRevisionsHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) throws SVNException {
+        super(repositoryManager, request, response);
     }
 
 
@@ -56,6 +55,8 @@ public class DAVFileRevisionsHandler extends DAVReportHandler implements ISVNFil
     }
 
     public void execute() throws SVNException {
+        setDAVResource(createDAVResource(false, false));        
+
         writeXMLHeader();
 
         getDAVResource().getRepository().getFileRevisions(getFileRevsionsRequest().getPath(), getFileRevsionsRequest().getStartRevision(), getFileRevsionsRequest().getEndRevision(), this);

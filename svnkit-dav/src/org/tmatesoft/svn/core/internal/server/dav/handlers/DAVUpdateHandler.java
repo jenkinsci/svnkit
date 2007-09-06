@@ -15,7 +15,6 @@ import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -54,11 +53,10 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
     private FSTranslateReporter myReporter;
 
     private long myRevision = DAVResource.INVALID_REVISION;
-
     private SVNURL myDstURL;
     private String myAnchor;
     private SVNDepth myDepth;
-    private Map myPathMap;
+    //    private Map myPathMap;
     private long myFromRevision;
 
     private boolean myInitialized;
@@ -69,8 +67,8 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
     private String myEntryLockToken = null;
     private boolean myEntryIsEmpty;
 
-    public DAVUpdateHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response, ServletContext servletContext) throws SVNException {
-        super(repositoryManager, request, response, servletContext);
+    public DAVUpdateHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) throws SVNException {
+        super(repositoryManager, request, response);
     }
 
     public DAVRequest getDAVRequest() {
@@ -138,12 +136,12 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
         myFromRevision = fromRevision;
     }
 
-    private Map getPathMap() {
-        if (myPathMap == null) {
-            myPathMap = new HashMap();
-        }
-        return myPathMap;
-    }
+//    private Map getPathMap() {
+//        if (myPathMap == null) {
+//            myPathMap = new HashMap();
+//        }
+//        return myPathMap;
+//    }
 
 
     private boolean isInitialized() {
@@ -199,11 +197,11 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
             setEntryLinkPath(attrs.getValue("linkpath"));
             setEntryLockToken(attrs.getValue("lock-token"));
             String revisionString = attrs.getValue("rev");
-            setDepth(SVNDepth.fromString(attrs.getValue("depth")));
             if (revisionString == null) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Missing XML attribute: rev"));
             }
             setEntryRevision(Long.parseLong(revisionString));
+            setDepth(SVNDepth.fromString(attrs.getValue("depth")));
             if (attrs.getValue("start-empty") != null) {
                 setEntryStartEmpty(true);
                 setEntryIsEmpty(true);
@@ -218,11 +216,10 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
 
     protected void handleCData(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
         if (element == ENTRY && parent == DAVReportHandler.UPDATE_REPORT) {
-            String entryPath = cdata.toString();
-            if ("".equals(entryPath)) {
+            if (cdata.length() == 0) {
                 setFromRevision(getEntryRevision());
             }
-            handleEntry(entryPath, false);
+            handleEntry(cdata.toString(), false);
         } else if (element == MISSING && parent == DAVReportHandler.UPDATE_REPORT) {
             handleEntry(cdata.toString(), true);
         } else {
@@ -230,9 +227,43 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
         }
     }
 
+    private void handleEntry(String entryPath, boolean deletePath) throws SVNException {
+        initialize();
+        try {
+            if (deletePath) {
+                getReporter().deletePath(entryPath);
+            } else {
+                if (getEntryLinkPath() == null) {
+                    getReporter().setPath(entryPath, getEntryLockToken(), getEntryRevision(), getDepth(), isEntryStartEmpty());
+                } else {
+                    SVNURL linkURL = getRepositoryManager().convertHttpToFile(SVNURL.parseURIEncoded(getEntryLinkPath()));
+                    getReporter().linkPath(linkURL, entryPath, getEntryLockToken(), getEntryRevision(), getDepth(), isEntryStartEmpty());
+                }
+//                if (getEntryLinkPath() != null && getUpdateRequest().getAction() != DAVUpdateRequest.SWITCH_ACTION) {
+//                    String path = SVNPathUtil.append(getAnchor(), SVNPathUtil.append(getUpdateRequest().getTarget(), entryPath));
+//                    addToPathMap(path, getEntryLinkPath());
+//                }
+                refreshEntry();
+            }
+        } catch (SVNException e) {
+            getReporter().abortReport();
+            getReporter().closeRepository();
+            throw e;
+        }
+    }
+
+    private void refreshEntry() {
+        setEntryLinkPath(null);
+        setEntryLockToken(null);
+        setEntryRevision(DAVResource.INVALID_REVISION);
+        setEntryStartEmpty(false);
+    }
+
     private void initialize() throws SVNException {
         if (!isInitialized()) {
             getUpdateRequest().init();
+
+            setDAVResource(createDAVResource(false, false));
 
             if (!DAVResource.isValidRevision(getUpdateRequest().getRevision())) {
                 setRevision(getDAVResource().getLatestRevision());
@@ -242,19 +273,21 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
 
             setDepth(getUpdateRequest().getDepth());
 
-            String srcPath = getRealPath(getUpdateRequest().getSrcURL());
+            SVNURL srcURL = SVNURL.parseURIEncoded(getUpdateRequest().getSrcURL());
+            String srcPath = getRepositoryManager().getRepositoryRelativePath(srcURL);
             setAnchor(srcPath);
 
-            String dstPath = getUpdateRequest().getDstURL();
-            if (dstPath != null) {
+            SVNURL dstURL = getUpdateRequest().getDstURL();
+            if (dstURL != null) {
                 if (getUpdateRequest().getTarget() != null) {
-                    setDstURL(getRepositorySVNURL(dstPath));
-                    addToPathMap(SVNPathUtil.append(srcPath, getUpdateRequest().getTarget()), dstPath);
+                    setDstURL(getRepositoryManager().convertHttpToFile(dstURL));
+//                    addToPathMap(SVNPathUtil.append(srcPath, getUpdateRequest().getTarget()), dstURL);
                 } else {
-                    setDstURL(getRepositorySVNURL(dstPath));
+                    setDstURL(getRepositoryManager().convertHttpToFile(dstURL));
                 }
             } else {
-                setDstURL(getRepositorySVNURL(getUpdateRequest().getSrcURL()));
+                SVNURL src = SVNURL.parseURIEncoded(getUpdateRequest().getSrcURL());
+                setDstURL(getRepositoryManager().convertHttpToFile(src));
             }
 
             initReporter();
@@ -282,72 +315,38 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
         }
     }
 
-    private void addToPathMap(String path, String linkPath) {
-        String normalizedPath = DAVPathUtil.normalize(path);
-        String repositoryPath = linkPath == null ? normalizedPath : linkPath;
-        getPathMap().put(path, repositoryPath);
-    }
-
-    private String getFromPathMap(String path) {
-        if (getPathMap().isEmpty()) {
-            return path;
-        }
-        String repositoryPath = (String) getPathMap().get(path);
-        if (repositoryPath != null) {
-            return repositoryPath;
-        }
-        String tmpPath = path;
-        do {
-            tmpPath = SVNPathUtil.removeTail(tmpPath);
-            repositoryPath = (String) getPathMap().get(tmpPath);
-            if (repositoryPath != null) {
-                return repositoryPath + "/" + path.substring(tmpPath.length() + 1);
-            }
-        } while (tmpPath.length() != 0 && tmpPath.charAt(0) != '/');
-        return path;
-    }
-
-    private String getRealPath(String anchor, String dstPath) {
-        String path = getFromPathMap(getAnchor());
-        if (anchor == null) {
-            return dstPath;
-        }
-        return anchor.equals(path) ? path : dstPath;
-    }
-
-    private void handleEntry(String entryPath, boolean deletePath) throws SVNException {
-        initialize();
-        try {
-            if (deletePath) {
-                getReporter().deletePath(entryPath);
-            } else {
-
-                if (getEntryLinkPath() == null) {
-                    getReporter().setPath(entryPath, getEntryLockToken(), getEntryRevision(), getDepth(), isEntryStartEmpty());
-                } else {
-                    SVNURL linkURL = getRepositorySVNURL(getEntryLinkPath());
-                    getReporter().linkPath(linkURL, entryPath, getEntryLockToken(), getEntryRevision(), getDepth(), isEntryStartEmpty());
-                }
-                if (getEntryLinkPath() != null && getUpdateRequest().getAction() != DAVUpdateRequest.SWITCH_ACTION) {
-                    String path = SVNPathUtil.append(getAnchor(), SVNPathUtil.append(getUpdateRequest().getTarget(), entryPath));
-                    addToPathMap(path, getEntryLinkPath());
-                }
-
-                refreshEntry();
-            }
-        } catch (SVNException e) {
-            getReporter().abortReport();
-            getReporter().closeRepository();
-            throw e;
-        }
-    }
-
-    private void refreshEntry() {
-        setEntryLinkPath(null);
-        setEntryLockToken(null);
-        setEntryRevision(DAVResource.INVALID_REVISION);
-        setEntryStartEmpty(false);
-    }
+//    private void addToPathMap(String path, String linkPath) {
+//        String normalizedPath = DAVPathUtil.normalize(path);
+//        String repositoryPath = linkPath == null ? normalizedPath : linkPath;
+//        getPathMap().put(path, repositoryPath);
+//    }
+//
+//    private String getFromPathMap(String path) {
+//        if (getPathMap().isEmpty()) {
+//            return path;
+//        }
+//        String repositoryPath = (String) getPathMap().get(path);
+//        if (repositoryPath != null) {
+//            return repositoryPath;
+//        }
+//        String tmpPath = path;
+//        do {
+//            tmpPath = SVNPathUtil.removeTail(tmpPath);
+//            repositoryPath = (String) getPathMap().get(tmpPath);
+//            if (repositoryPath != null) {
+//                return repositoryPath + "/" + path.substring(tmpPath.length() + 1);
+//            }
+//        } while (tmpPath.length() != 0 && tmpPath.charAt(0) != '/');
+//        return path;
+//    }
+//
+//    private String getRealPath(String anchor, String dstPath) {
+//        String path = getFromPathMap(getAnchor());
+//        if (anchor == null) {
+//            return dstPath;
+//        }
+//        return anchor.equals(path) ? path : dstPath;
+//    }
 
     public void execute() throws SVNException {
         writeXMLHeader();
@@ -374,8 +373,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
         //TODO: handle special case resource walk
         StringBuffer xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "open-directory", XMLUtil.XML_STYLE_NORMAL, "rev", String.valueOf(revision), null);
         if (getUpdateRequest().getTarget() == null) {
-            //TODO: use dstPath instead of dstURL
-            addVersionURL(getAnchor(), getDstURL().getPath(), xmlBuffer);
+            addVersionURL(null, xmlBuffer);
         }
         write(xmlBuffer);
     }
@@ -393,6 +391,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
     }
 
     public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
+        writeAddEntryTag("add-directory", path, copyFromPath, copyFromRevision);
     }
 
     public void openDir(String path, long revision) throws SVNException {
@@ -408,6 +407,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
     }
 
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
+        writeAddEntryTag("add-file", path, copyFromPath, copyFromRevision);
     }
 
     public void openFile(String path, long revision) throws SVNException {
@@ -431,6 +431,8 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
     }
 
     public void applyTextDelta(String path, String baseChecksum) throws SVNException {
+        StringBuffer xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "txdelta", XMLUtil.XML_STYLE_NORMAL, null, null);
+        write(xmlBuffer);
     }
 
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
@@ -439,11 +441,13 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
     }
 
     public void textDeltaEnd(String path) throws SVNException {
+        StringBuffer xmlBuffer = XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "txdelta", null);
+        write(xmlBuffer);
     }
 
     private void writeEntryTag(String tagName, String path) throws SVNException {
-        String parentPath = SVNPathUtil.removeTail(path);
-        StringBuffer xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, XMLUtil.XML_STYLE_SELF_CLOSING, "name", parentPath, null);
+        String base = SVNPathUtil.tail(path);
+        StringBuffer xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, XMLUtil.XML_STYLE_SELF_CLOSING, "name", base, null);
         write(xmlBuffer);
     }
 
@@ -452,19 +456,35 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
         attrs.put("name", path);
         attrs.put("rev", String.valueOf(revision));
         StringBuffer xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, XMLUtil.XML_STYLE_NORMAL, attrs, null);
-        addVersionURL(getAnchor(), getDstURL().getPath(), xmlBuffer);
+        addVersionURL(path, xmlBuffer);
         write(xmlBuffer);
     }
 
-    private StringBuffer addVersionURL(String anchor, String dstPath, StringBuffer xmlBuffer) throws SVNException {
-        String path = getRealPath(anchor, dstPath);
+    private void writeAddEntryTag(String tagName, String path, String copyFromPath, long copyFromRevision) throws SVNException {
+        Map attrs = new HashMap();
         long revision = getDAVResource().getLatestRevision();
-        String url = DAVPathUtil.buildURI(getDAVResource().getResourceURI().getContext(), DAVResourceKind.VERSION, revision, path);
+        String bcURL = DAVPathUtil.buildURI(getDAVResource().getResourceURI().getContext(), DAVResourceKind.BASELINE_COLL, revision, SVNPathUtil.append(getAnchor(), path));
+        attrs.put("name", SVNPathUtil.tail(path));
+        attrs.put("bc-url", bcURL);
+        if (copyFromPath != null) {
+            attrs.put("copyfrom-path", copyFromPath);
+            attrs.put("copyfrom-rev", String.valueOf(copyFromRevision));
+        }
+        StringBuffer xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, XMLUtil.XML_STYLE_NORMAL, attrs, null);
+        write(xmlBuffer);
+    }
+
+    private StringBuffer addVersionURL(String path, StringBuffer xmlBuffer) throws SVNException {
+        //TODO: check if here we should use latest revision
+        long revision = getDAVResource().getLatestRevision();
+        String fullPath = getAnchor();
+        if (path != null) {
+            fullPath = SVNPathUtil.append(fullPath, path);
+        }
+        String url = DAVPathUtil.buildURI(getDAVResource().getResourceURI().getContext(), DAVResourceKind.VERSION, revision, fullPath);
         xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "checked-in", XMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
         XMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "href", url, xmlBuffer);
         XMLUtil.closeXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "checked-in", xmlBuffer);
         return xmlBuffer;
     }
-
-
 }
