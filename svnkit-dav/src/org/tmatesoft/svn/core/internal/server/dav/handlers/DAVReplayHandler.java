@@ -141,7 +141,7 @@ public class DAVReplayHandler extends DAVReportHandler implements ISVNEditor {
     }
 
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
-        writeTextDeltaChunk(diffWindow, false);
+        writeTextDeltaChunk(diffWindow);
         return null;
     }
 

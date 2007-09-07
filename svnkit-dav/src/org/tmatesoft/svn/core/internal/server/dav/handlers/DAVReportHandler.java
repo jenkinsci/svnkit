@@ -13,7 +13,9 @@ package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
@@ -28,6 +30,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.xml.sax.Attributes;
@@ -189,16 +192,34 @@ public class DAVReportHandler extends ServletDAVHandler {
         XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, getDAVRequest().getRootElement().getName(), xmlBuffer);
     }
 
-    protected void writeTextDeltaChunk(SVNDiffWindow diffWindow, boolean diffVersion) throws SVNException {
+    protected void writeTextDeltaChunk(SVNDiffWindow diffWindow) throws SVNException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try {
-            diffWindow.writeTo(baos, isWriteTextDeltaHeader(), diffVersion);
+            diffWindow.writeTo(baos, isWriteTextDeltaHeader(), getSVNDiffVersion());
             byte[] textDelta = baos.toByteArray();
             String txDelta = SVNBase64.byteArrayToBase64(textDelta);
             write(txDelta);
             setWriteTextDeltaHeader(false);
         } catch (IOException e) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
+        }
+    }
+
+    protected void writePropertyTag(String tagName, String propertyName, String propertyValue) throws SVNException {
+        StringBuffer xmlBuffer;
+        if (SVNEncodingUtil.isXMLSafe(propertyValue)) {
+            xmlBuffer = XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, propertyValue, "name", propertyName, null);
+            write(xmlBuffer);
+        } else {
+            Map attrs = new HashMap();
+            attrs.put("name", propertyName);
+            attrs.put("encoding", "base64");
+            propertyValue = SVNBase64.byteArrayToBase64(propertyValue.getBytes());
+            xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, XMLUtil.XML_STYLE_PROTECT_PCDATA, attrs, null);
+            write(xmlBuffer);
+            write(propertyValue);
+            xmlBuffer = XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, null);
+            write(xmlBuffer);
         }
     }
 }

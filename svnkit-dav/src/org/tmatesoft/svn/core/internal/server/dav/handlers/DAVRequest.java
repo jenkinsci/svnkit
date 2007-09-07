@@ -72,7 +72,7 @@ public abstract class DAVRequest {
         return myRootElementAttributes;
     }
 
-    public void setRootElementAttributes(Attributes rootElementAttributes) {
+    private void setRootElementAttributes(Attributes rootElementAttributes) {
         myRootElementAttributes = rootElementAttributes;
     }
 

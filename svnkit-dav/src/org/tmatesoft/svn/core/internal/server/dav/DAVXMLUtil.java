@@ -18,6 +18,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 
 
 /**
@@ -45,12 +46,16 @@ public class DAVXMLUtil extends XMLUtil {
     }
 
     public static StringBuffer openNamespaceDeclarationTag(String prefix, String header, Collection namespaces, StringBuffer target) {
+        return openNamespaceDeclarationTag(prefix, header, namespaces, null, target);
+    }
+
+    public static StringBuffer openNamespaceDeclarationTag(String prefix, String header, Collection namespaces, Map attrs, StringBuffer target) {
         target = target == null ? new StringBuffer() : target;
         target.append("<");
         target.append(prefix);
         target.append(":");
         target.append(header);
-        //We should allways add "DAV:" namespace   
+        //We should allways add "DAV:" namespace
         target.append(" xmlns:");
         target.append(DAV_NAMESPACE_PREFIX);
         target.append("=\"");
@@ -78,6 +83,18 @@ public class DAVXMLUtil extends XMLUtil {
                 }
             }
             usedNamespaces.clear();
+        }
+        if (attrs != null && !attrs.isEmpty()) {
+            for (Iterator iterator = attrs.entrySet().iterator(); iterator.hasNext();) {
+                Map.Entry entry = (Map.Entry) iterator.next();
+                String name = (String) entry.getKey();
+                String value = (String) entry.getValue();
+                target.append(" ");
+                target.append(name);
+                target.append("=\"");
+                target.append(SVNEncodingUtil.xmlEncodeAttr(value));
+                target.append("\"");
+            }
         }
         target.append(">\n");
         return target;
