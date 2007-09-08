@@ -182,7 +182,14 @@ public class SVNLogClient extends SVNBasicClient {
      * @throws SVNException
      * @since                 1.1
      */
-    public void doAnnotate(File path, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean force, ISVNAnnotateHandler handler) throws SVNException {
+    public void doAnnotate(File path, SVNRevision pegRevision, SVNRevision startRevision, 
+                           SVNRevision endRevision, boolean force, ISVNAnnotateHandler handler) throws SVNException {
+        doAnnotate(path, pegRevision, startRevision, endRevision, force, false, handler, null);
+    }
+
+    public void doAnnotate(File path, SVNRevision pegRevision, SVNRevision startRevision, 
+                           SVNRevision endRevision, boolean force, boolean includeMergedRevisions, 
+                           ISVNAnnotateHandler handler, String inputEncoding) throws SVNException {
         if (startRevision == null || !startRevision.isValid()) {
             startRevision = SVNRevision.create(1);
         }
@@ -200,9 +207,10 @@ public class SVNLogClient extends SVNBasicClient {
         if (!tmpFile.isDirectory()) {
             tmpFile = SVNFileUtil.createTempDirectory("annotate");
         }
-        doAnnotate(path.getAbsolutePath(), startRev, tmpFile, repos, endRev, force, handler, null, false);
+        doAnnotate(path.getAbsolutePath(), startRev, tmpFile, repos, endRev, force, handler, 
+                   inputEncoding, includeMergedRevisions);
     }
-    
+
     /**
      * Obtains annotation information for each file text line from a repository
      * and passes it to a provided annotation handler. 
@@ -281,22 +289,11 @@ public class SVNLogClient extends SVNBasicClient {
      * @throws SVNException
      * @since                 1.1
      */
-	public void doAnnotate(SVNURL url, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean force, ISVNAnnotateHandler handler, String inputEncoding) throws SVNException {
-	    if (startRevision == null || !startRevision.isValid()) {
-	        startRevision = SVNRevision.create(1);
-	    }
-        if (endRevision == null || !endRevision.isValid()) {
-            endRevision = pegRevision;
-        }
-	    SVNRepository repos = createRepository(url, null, pegRevision, endRevision);
-	    long endRev = getRevisionNumber(endRevision, repos, null);
-	    long startRev = getRevisionNumber(startRevision, repos, null);
-	    if (endRev < startRev) {
-	        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Start revision must precede end revision"));
-	    }
-	    File tmpFile = SVNFileUtil.createTempDirectory("annotate");
-	    doAnnotate(repos.getLocation().toDecodedString(), startRev, tmpFile, repos, endRev, 
-                   force, handler, inputEncoding, false);
+	public void doAnnotate(SVNURL url, SVNRevision pegRevision, SVNRevision startRevision, 
+                           SVNRevision endRevision, boolean force, ISVNAnnotateHandler handler, 
+                           String inputEncoding) throws SVNException {
+	    doAnnotate(url, pegRevision, startRevision, endRevision, force, false, 
+                   handler, inputEncoding);
 	}
 
     public void doAnnotate(SVNURL url, SVNRevision pegRevision, SVNRevision startRevision, 
@@ -325,7 +322,8 @@ public class SVNLogClient extends SVNBasicClient {
                             long endRev, boolean force, ISVNAnnotateHandler handler, 
                             String inputEncoding, boolean includeMergedRevisions) throws SVNException {
         SVNAnnotationGenerator generator = new SVNAnnotationGenerator(path, tmpFile, startRev, 
-                                                                      force, getDiffOptions(), this);
+                                                                      force, includeMergedRevisions,
+                                                                      getDiffOptions(), this);
         try {
             repos.getFileRevisions("", startRev > 0 ? startRev - 1 : startRev, 
                                    endRev, includeMergedRevisions, generator);

@@ -13,11 +13,13 @@ package org.tmatesoft.svn.core;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
-import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -26,18 +28,20 @@ import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslatorInputStream;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 import de.regnis.q.sequence.QSequenceDifferenceBlock;
-import de.regnis.q.sequence.line.QSequenceLine;
-import de.regnis.q.sequence.line.QSequenceLineCache;
 import de.regnis.q.sequence.line.QSequenceLineMedia;
 import de.regnis.q.sequence.line.QSequenceLineRAFileData;
 import de.regnis.q.sequence.line.QSequenceLineResult;
@@ -102,8 +106,8 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
     private File myPreviousOriginalFile;
     private File myCurrentFile;
 
-    private List myLines;
-    private List myMergeLines;
+    private LinkedList myMergeBlameChunks;
+    private LinkedList myBlameChunks;
     private SVNDeltaProcessor myDeltaProcessor;
     private ISVNEventHandler myCancelBaton;
     private long myStartRevision;
@@ -168,8 +172,8 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         if (!myTmpDirectory.isDirectory()) {
             myTmpDirectory.mkdirs();
         }
-        myLines = new ArrayList();
-        myMergeLines = new ArrayList();
+        myMergeBlameChunks = new LinkedList();
+        myBlameChunks = new LinkedList();
         myDeltaProcessor = new SVNDeltaProcessor();
         myStartRevision = startRevision;
         myDiffOptions = diffOptions;
@@ -210,15 +214,6 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         } else {
             myCurrentDate = null;
         }
-        if (myPreviousFile == null) {
-            // create previous file.
-            myPreviousFile = SVNFileUtil.createUniqueFile(myTmpDirectory, "annotate", ".tmp");
-            SVNFileUtil.createEmptyFile(myPreviousFile);
-        }
-        
-        if (myIncludeMergedRevisions && myPreviousOriginalFile == null) {
-            myPreviousOriginalFile = myPreviousFile;
-        }
         
         myIsCurrentResultOfMerge = fileRevision.isResultOfMerge();
         if (myIncludeMergedRevisions) {
@@ -247,79 +242,24 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
     public OutputStream textDeltaChunk(String token, SVNDiffWindow diffWindow) throws SVNException {
         return myDeltaProcessor.textDeltaChunk(diffWindow);
     }
-
+    
     public void textDeltaEnd(String token) throws SVNException {
         myDeltaProcessor.textDeltaEnd();
         
-        RandomAccessFile left = null;
-        RandomAccessFile right = null;
-        try {
-            left = new RandomAccessFile(myPreviousFile, "r");
-            right = new RandomAccessFile(myCurrentFile, "r");
-
-            ArrayList newLines = new ArrayList();
-            int oldStart = 0;
-            int newStart = 0;
-
-            final QSequenceLineResult result = QSequenceLineMedia.createBlocks(new QSequenceLineRAFileData(left), new QSequenceLineRAFileData(right), createSimplifier());
-            try {
-                List blocksList = result.getBlocks();
-                for(int i = 0; i < blocksList.size(); i++) {
-                    QSequenceDifferenceBlock block = (QSequenceDifferenceBlock) blocksList.get(i);
-                    copyOldLinesToNewLines(oldStart, newStart, block.getLeftFrom() - oldStart, myLines, newLines, result.getRightCache());
-                    // copy all from right.
-                    for (int j = block.getRightFrom(); j <= block.getRightTo(); j++) {
-                        LineInfo line = new LineInfo();
-                        line.revision = myCurrentDate != null ? myCurrentRevision : -1;
-                        line.author = myCurrentAuthor;
-                        line.line = result.getRightCache().getLine(j).getContentBytes();
-                        line.date = myCurrentDate;
-                        line.blockStart = block.getRightFrom();
-                        newLines.add(line);
-                    }
-                    oldStart = block.getLeftTo() + 1;
-                    newStart = block.getRightTo() + 1;
-                }
-                  
-                copyOldLinesToNewLines(oldStart, newStart, myLines.size() - oldStart, myLines, newLines, result.getRightCache());
-                myLines = newLines;
-            }
-            finally {
-                result.close();
-            }
-        } catch (Throwable e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Exception while generating annotation: {0}", e.getMessage());
-            SVNErrorManager.error(err, e);
-        } finally {
-            if (left != null) {
-                try {
-                    left.close();
-                } catch (IOException e) {
-                    //
-                }
-            }
-            if (right != null) {
-                try {
-                    right.close();
-                } catch (IOException e) {
-                    //
-                }
-            }
-        }
-        SVNFileUtil.rename(myCurrentFile, myPreviousFile);
-    }
-    
-    public void textDeltaEndNew(String token) throws SVNException {
-        myDeltaProcessor.textDeltaEnd();
-        
         if (myIncludeMergedRevisions) {
-            myMergeLines = addFileBlame(myPreviousFile, myCurrentFile, myMergeLines);
+            myMergeBlameChunks = addFileBlame(myPreviousFile, myCurrentFile, myMergeBlameChunks);
             if (!myIsCurrentResultOfMerge) {
-                myLines = addFileBlame(myPreviousOriginalFile, myCurrentFile, myLines);
-                SVNFileUtil.rename(myCurrentFile, myPreviousOriginalFile);
+                myBlameChunks = addFileBlame(myPreviousOriginalFile, myCurrentFile, myBlameChunks);
+                if (myPreviousOriginalFile == null) {
+                    myPreviousOriginalFile = myCurrentFile;
+                    myCurrentFile = null;
+                } else {
+                    SVNFileUtil.rename(myCurrentFile, myPreviousOriginalFile);    
+                }
+                
                 myPreviousFile = myPreviousOriginalFile;
             } else {
-                if (myPreviousFile != myPreviousOriginalFile) {
+                if (myPreviousFile != null && myPreviousFile != myPreviousOriginalFile) {
                     SVNFileUtil.rename(myCurrentFile, myPreviousFile);    
                 } else {
                     myPreviousFile = myCurrentFile;
@@ -327,56 +267,49 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
                 }
             }
         } else {
-            myLines = addFileBlame(myPreviousOriginalFile, myCurrentFile, myLines);
-            SVNFileUtil.rename(myCurrentFile, myPreviousFile);
+            myBlameChunks = addFileBlame(myPreviousFile, myCurrentFile, myBlameChunks);
+            if (myPreviousFile == null) {
+                myPreviousFile = myCurrentFile;
+                myCurrentFile = null;
+            } else {
+                SVNFileUtil.rename(myCurrentFile, myPreviousFile);
+            }
         }
     }
 
-	private void copyOldLinesToNewLines(int oldStart, int newStart, int count, List oldLines, List newLines, QSequenceLineCache newCache) throws IOException {
-		for (int index = 0; index < count; index++) {
-			final LineInfo line = (LineInfo)oldLines.get(oldStart + index);
-			final QSequenceLine sequenceLine = newCache.getLine(newStart + index);
-			line.line = sequenceLine.getContentBytes();
-			line.blockStart = newStart; 
-			newLines.add(line);
-		}
-	}
-
-	private List addFileBlame(File previousFile, File currentFile, List lines) throws SVNException {
+	private LinkedList addFileBlame(File previousFile, File currentFile, LinkedList chain) throws SVNException {
+        if (previousFile == null) {
+            BlameChunk chunk = new BlameChunk();
+            chunk.author = myCurrentAuthor;
+            chunk.revision = myCurrentDate != null ? myCurrentRevision : -1;
+            chunk.date = myCurrentDate;
+            chunk.blockStart = 0;
+            chunk.path = myCurrentPath;
+            chain.add(chunk);
+            return chain;
+        }
+        
         RandomAccessFile left = null;
         RandomAccessFile right = null;
         try {
             left = new RandomAccessFile(previousFile, "r");
             right = new RandomAccessFile(currentFile, "r");
 
-            ArrayList newLines = new ArrayList();
-            int oldStart = 0;
-            int newStart = 0;
-
             final QSequenceLineResult result = QSequenceLineMedia.createBlocks(new QSequenceLineRAFileData(left), new QSequenceLineRAFileData(right), createSimplifier());
             try {
                 List blocksList = result.getBlocks();
                 for(int i = 0; i < blocksList.size(); i++) {
                     QSequenceDifferenceBlock block = (QSequenceDifferenceBlock) blocksList.get(i);
-                    copyOldLinesToNewLines(oldStart, newStart, block.getLeftFrom() - oldStart, lines, newLines, result.getRightCache());
-                    // copy all from right.
-                    for (int j = block.getRightFrom(); j <= block.getRightTo(); j++) {
-                        LineInfo line = new LineInfo();
-                        line.revision = myCurrentDate != null ? myCurrentRevision : -1;
-                        line.author = myCurrentAuthor;
-                        line.line = result.getRightCache().getLine(j).getContentBytes();
-                        line.date = myCurrentDate;
-                        line.path = myCurrentPath;
-                        newLines.add(line);
+                    if (block.getLeftSize() > 0) {
+                        deleteBlameChunk(block.getRightFrom(), block.getLeftSize(), chain);
                     }
-                    oldStart = block.getLeftTo() + 1;
-                    newStart = block.getRightTo() + 1;
+                    if (block.getRightSize() > 0) {
+                        insertBlameChunk(myCurrentRevision, myCurrentAuthor, 
+                                         myCurrentDate, myCurrentPath, 
+                                         block.getRightFrom(), block.getRightSize(), chain);
+                    }
                 }
-                  
-                copyOldLinesToNewLines(oldStart, newStart, lines.size() - oldStart, lines, newLines, result.getRightCache());
-                lines = newLines;
-            }
-            finally {
+            } finally {
                 result.close();
             }
         } catch (Throwable e) {
@@ -399,11 +332,155 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             }
         }
 
-        return lines;
+        return chain;
     }
     
-    private void normalizeBlames() {
+    private void insertBlameChunk(long revision, String author, Date date, String path, 
+                                  int start, int length, LinkedList chain) {
+        int[] index = new int[1];
+        BlameChunk startPoint = findBlameChunk(chain, start, index);
+        int adjustFromIndex = -1;
+        if (startPoint.blockStart == start) {
+            BlameChunk insert = new BlameChunk();
+            insert.copy(startPoint);
+            insert.blockStart = start + length;
+            chain.add(index[0] + 1, insert);
+
+            startPoint.author = author;
+            startPoint.revision = revision;
+            startPoint.date = date;
+            startPoint.path = path;
+            adjustFromIndex = index[0] + 2;
+        } else {
+            BlameChunk middle = new BlameChunk();
+            middle.author = author;
+            middle.revision = revision;
+            middle.date = date;
+            middle.path = path;
+            middle.blockStart = start;
+            
+            BlameChunk insert = new BlameChunk();
+            insert.copy(startPoint);
+            insert.blockStart = start + length;
+            chain.add(index[0] + 1, middle);
+            chain.add(index[0] + 2, insert);
+            adjustFromIndex = index[0] + 3;
+        }
         
+        adjustBlameChunks(chain, adjustFromIndex, length);
+    }
+    
+    private void deleteBlameChunk(int start, int length, LinkedList chain) {
+        int[] ind = new int[1];
+        
+        BlameChunk first = findBlameChunk(chain, start, ind);
+        int firstInd = ind[0];
+        
+        BlameChunk last = findBlameChunk(chain, start + length, ind);
+        int lastInd = ind[0];
+        
+        if (first != last) {
+            int deleteCount = lastInd - firstInd - 1;
+            for (int i = 0; i < deleteCount; i++) {
+                chain.remove(firstInd + 1);
+            }
+            lastInd -= deleteCount;
+            
+            last.blockStart = start;
+            if (first.blockStart == start) {
+                first.copy(last);
+                chain.remove(lastInd);
+                lastInd--;
+                last = first;
+            }
+        }
+
+        int tailInd = lastInd < chain.size() - 1 ? lastInd + 1 : -1;
+        BlameChunk tail = tailInd > 0 ? (BlameChunk)chain.get(tailInd) : null;
+
+        if (tail != null && tail.blockStart == last.blockStart + length) {
+            last.copy(tail);
+            chain.remove(tail);
+            tailInd--;
+            tail = last;
+        }
+        
+        if (tail != null) {
+            adjustBlameChunks(chain, tailInd, -length);
+        }
+    }
+    
+    private void adjustBlameChunks(LinkedList chain, int startIndex, int adjust) {
+        for (int i = startIndex; i < chain.size(); i++) {
+            BlameChunk curChunk = (BlameChunk) chain.get(i);
+            curChunk.blockStart += adjust;
+        }
+    }
+    
+    private BlameChunk findBlameChunk(LinkedList chain, int offset, int[] index) {
+        BlameChunk prevChunk = null;
+        index[0] = -1; 
+        for (Iterator chunks = chain.iterator(); chunks.hasNext();) {
+            BlameChunk chunk = (BlameChunk) chunks.next();
+            if (chunk.blockStart > offset) {
+                break;
+            }
+            prevChunk = chunk;
+            index[0]++;
+        }
+        return prevChunk;
+    }
+    
+    private void normalizeBlames(LinkedList chain, LinkedList mergedChain) {
+        int i = 0, k = 0;
+        for (; i < chain.size() - 1 && k < mergedChain.size() - 1; i++, k++) {
+            BlameChunk chunk = (BlameChunk) chain.get(i);
+            BlameChunk mergedChunk = (BlameChunk) mergedChain.get(k);
+            SVNDebugLog.assertCondition(chunk.blockStart == mergedChunk.blockStart, 
+                                        "ASSERTION FAILURE in " + 
+                                        "SVNAnnotationGenerator.normalizeBlames():" +
+                                        "current chunks should always be starting " + 
+                                        "at the same offset");
+
+            BlameChunk nextChunk = (BlameChunk) chain.get(i + 1);
+            BlameChunk nextMergedChunk = (BlameChunk) mergedChain.get(k + 1);
+            if (nextChunk.blockStart < nextMergedChunk.blockStart) {
+                nextMergedChunk.blockStart = nextChunk.blockStart;
+            }
+            if (nextChunk.blockStart < nextMergedChunk.blockStart) {
+                nextChunk.blockStart = nextMergedChunk.blockStart;
+            }
+        }
+
+        if ((i == chain.size() - 1) && (k == mergedChain.size() - 1)) {
+            return;
+        }
+        
+        if (k == mergedChain.size() - 1) {
+            for (i += 1; i < chain.size(); i++) {
+                BlameChunk chunk = (BlameChunk) chain.get(i);
+                BlameChunk mergedChunk = (BlameChunk) mergedChain.getLast();
+
+                BlameChunk insert = new BlameChunk();
+                insert.copy(mergedChunk);
+                insert.blockStart = chunk.blockStart;
+                mergedChain.add(insert);
+                k++;
+            }
+        }
+
+        if (i == chain.size() - 1) {
+            for (k += 1; k < mergedChain.size(); k++) {
+                BlameChunk mergedChunk = (BlameChunk) mergedChain.get(k);
+                BlameChunk chunk = (BlameChunk) chain.getLast();
+
+                BlameChunk insert = new BlameChunk();
+                insert.copy(chunk);
+                insert.blockStart = mergedChunk.blockStart;
+                chain.add(insert);
+                i++;
+            }
+        }
     }
        
     /**
@@ -420,39 +497,99 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
      * @throws SVNException
      */
     public void reportAnnotations(ISVNAnnotateHandler handler, String inputEncoding) throws SVNException {
-        if (myLines == null || handler == null) {
+        if (handler == null) {
             return;
         }
-        inputEncoding = inputEncoding == null ? System.getProperty("file.encoding") : inputEncoding;
-        for(int i = 0; i < myLines.size(); i++) {
-            LineInfo info = (LineInfo) myLines.get(i);
-            String lineAsString;
-            byte[] bytes = info.line;
-            int length = bytes.length;
-            if (bytes.length >=2 && bytes[length - 2] == '\r' && bytes[length - 1] == '\n') {
-                length -= 2;
-            } else if (bytes.length >= 1 && (bytes[length - 1] == '\r' || bytes[length - 1] == '\n')) {
-                length -= 1;
-            } 
-            try {
-                lineAsString = new String(info.line, 0, length, inputEncoding);
-            } catch (UnsupportedEncodingException e) {
-                lineAsString = new String(info.line, 0, length);
+
+        SVNDebugLog.assertCondition(myPreviousFile != null, 
+                                    "ASSERTION FAILURE in " + 
+                                    "SVNAnnotationGenerator.reportAnnotations():" +
+                                    "generator has to have been called at least once");
+        int mergedCount = -1;
+        if (myIncludeMergedRevisions) {
+            if (myBlameChunks.isEmpty()) {
+                BlameChunk chunk = new BlameChunk();
+                chunk.blockStart = 0;
+                chunk.author = myCurrentAuthor;
+                chunk.date = myCurrentDate;
+                chunk.revision = myCurrentRevision;
+                chunk.path = myCurrentPath;
+                myBlameChunks.add(chunk);
             }
-            handler.handleLine(info.date, info.revision, info.author, lineAsString);
+            normalizeBlames(myBlameChunks, myMergeBlameChunks);
+            mergedCount = 0;
+        }
+        
+        inputEncoding = inputEncoding == null ? System.getProperty("file.encoding") : inputEncoding;
+        CharsetDecoder decoder = Charset.forName(inputEncoding).newDecoder();
+
+        InputStream stream = null;
+        try {
+            stream = new SVNTranslatorInputStream(SVNFileUtil.openFileForReading(myPreviousFile), 
+                                                  SVNTranslator.LF, true, null, false);
+            
+            StringBuffer buffer = new StringBuffer();
+            for (int i = 0; i < myBlameChunks.size(); i++) {
+                BlameChunk chunk = (BlameChunk) myBlameChunks.get(i);
+                String mergedAuthor = null;
+                long mergedRevision = SVNRepository.INVALID_REVISION;
+                Date mergedDate = null;
+                String mergedPath = null;
+                if (mergedCount >= 0) {
+                    BlameChunk mergedChunk = (BlameChunk) myMergeBlameChunks.get(mergedCount++);
+                    mergedAuthor = mergedChunk.author;
+                    mergedRevision = mergedChunk.revision;
+                    mergedDate = mergedChunk.date;
+                    mergedPath = mergedChunk.path;
+                }
+                
+                BlameChunk nextChunk = null;
+                if (i < myBlameChunks.size() - 1) {
+                    nextChunk = (BlameChunk) myBlameChunks.get(i + 1);
+                }
+                
+                for (int lineNo = chunk.blockStart; 
+                     nextChunk == null || lineNo < nextChunk.blockStart; lineNo++) {
+                    myCancelBaton.checkCancelled();
+                    buffer.setLength(0);
+                    String line = SVNFileUtil.readLineFromStream(stream, buffer, decoder);
+                    boolean isEOF = false;
+                    if (line == null) {
+                        isEOF = true;
+                        if (buffer.length() > 0) {
+                            line = buffer.toString();
+                        }
+                    }
+                    
+                    if (!isEOF || line != null) {
+                        handler.handleLine(chunk.date, chunk.revision, chunk.author, 
+                                           line, mergedDate, mergedRevision, mergedAuthor, 
+                                           mergedPath, lineNo);
+                    }
+                    
+                    if (isEOF) {
+                        break;
+                    }
+                }
+            }
+        } catch (IOException ioe) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
+            SVNErrorManager.error(err, ioe);
+        } finally {
+            SVNFileUtil.closeFile(stream);
         }
     }
-    
+
     /**
      * Finalizes an annotation operation releasing resources involved
      * by this generator. Should be called after {@link #reportAnnotations(ISVNAnnotateHandler, String) reportAnnotations()}. 
      *
      */
     public void dispose() {
-        myLines = null;
         myIsCurrentResultOfMerge = false;
         if (myCurrentFile != null) {
             myCurrentFile.delete();
+            myCurrentFile = null;
         }
         if (myPreviousFile != null) {
             myPreviousFile.delete();
@@ -462,6 +599,9 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             myPreviousOriginalFile.delete();
             myPreviousOriginalFile = null;
         }
+        
+        myBlameChunks.clear();
+        myMergeBlameChunks.clear();
     }
     
     private QSequenceLineSimplifier createSimplifier() {
@@ -480,13 +620,20 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         return mySimplifier;
     }
 
-    private static class LineInfo {
-        public byte[] line;
+    private static class BlameChunk {
+        public int blockStart;
         public long revision;
         public String author;
         public Date date;
         public String path;
-        public int blockStart;
+        
+        public void copy(BlameChunk chunk) {
+            author = chunk.author;
+            date = chunk.date;
+            revision = chunk.revision;
+            path = chunk.path;
+            blockStart = chunk.blockStart;
+        }
     }
     
 }

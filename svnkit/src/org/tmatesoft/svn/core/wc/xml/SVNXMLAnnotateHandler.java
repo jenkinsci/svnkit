@@ -121,7 +121,9 @@ public class SVNXMLAnnotateHandler extends AbstractXMLHandler implements ISVNAnn
         }
     }
 
-    public void handleLine(Date date, long revision, String author, String line, Date mergedDate, long mergedRevision, String mergedAuthor, String mergedPath) throws SVNException {
+    public void handleLine(Date date, long revision, String author, String line, 
+                           Date mergedDate, long mergedRevision, String mergedAuthor, 
+                           String mergedPath, int lineNumber) throws SVNException {
         //TODO: fixme
     }
 }

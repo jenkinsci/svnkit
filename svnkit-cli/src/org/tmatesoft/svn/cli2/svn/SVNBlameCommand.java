@@ -37,7 +37,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 public class SVNBlameCommand extends SVNXMLCommand implements ISVNAnnotateHandler {
 
     private StringBuffer myBuffer;
-
+    
     public SVNBlameCommand() {
         super("blame", new String[] {"praise", "annotate", "ann"});
     }
@@ -56,6 +56,7 @@ public class SVNBlameCommand extends SVNXMLCommand implements ISVNAnnotateHandle
         options.add(SVNOption.FORCE);
         options = SVNOption.addAuthOptions(options);
         options.add(SVNOption.CONFIG_DIR);
+        options.add(SVNOption.USE_MERGE_HISTORY);
         return options;
     }
 
@@ -107,9 +108,15 @@ public class SVNBlameCommand extends SVNXMLCommand implements ISVNAnnotateHandle
             }
             try {
                 if (target.isFile()) {
-                    client.doAnnotate(target.getFile(), target.getPegRevision(), start, endRev, getSVNEnvironment().isForce(), this);
+                    client.doAnnotate(target.getFile(), target.getPegRevision(), 
+                                      start, endRev, getSVNEnvironment().isForce(), 
+                                      getSVNEnvironment().isUseMergeHistory(), 
+                                      this, null);
                 } else {
-                    client.doAnnotate(target.getURL(), target.getPegRevision(), start, endRev, getSVNEnvironment().isForce(), this, null);
+                    client.doAnnotate(target.getURL(), target.getPegRevision(), 
+                                      start, endRev, getSVNEnvironment().isForce(), 
+                                      getSVNEnvironment().isUseMergeHistory(), 
+                                      this, null);
                 }
                 if (getSVNEnvironment().isXML()) {
                     myBuffer = closeXMLTag("target", myBuffer);
@@ -129,20 +136,51 @@ public class SVNBlameCommand extends SVNXMLCommand implements ISVNAnnotateHandle
         }
     }
     
-    private long myCurrentLineNumber = 0;
+    private int myCurrentLineNumber = 0;
 
     public void handleLine(Date date, long revision, String author, String line) throws SVNException {
         myCurrentLineNumber++;
+        handleLine(date, revision, author, line, null, -1, null, null, myCurrentLineNumber);
+    }
+
+    public void handleLine(Date date, long revision, String author, String line, 
+                           Date mergedDate, long mergedRevision, String mergedAuthor, 
+                           String mergedPath, int lineNumber) throws SVNException {
         if (getSVNEnvironment().isXML()) {
-            myBuffer = openXMLTag("entry", XML_STYLE_NORMAL, "line-number", Long.toString(myCurrentLineNumber), myBuffer);
-            if (revision >= 0) {
+            myBuffer = openXMLTag("entry", XML_STYLE_NORMAL, "line-number", 
+                                  Long.toString(lineNumber + 1), myBuffer);
+            if (SVNRevision.isValidRevisionNumber(revision)) {
                 myBuffer = openXMLTag("commit", XML_STYLE_NORMAL, "revision", Long.toString(revision), myBuffer);
                 myBuffer = openCDataTag("author", author, myBuffer);
                 myBuffer = openCDataTag("date", ((SVNDate) date).format(), myBuffer);
                 myBuffer = closeXMLTag("commit", myBuffer);
             }
+            
+            if (getSVNEnvironment().isUseMergeHistory() && 
+                SVNRevision.isValidRevisionNumber(mergedRevision)) {
+                myBuffer = openXMLTag("merged", XML_STYLE_NORMAL, "path", 
+                                      mergedPath, myBuffer);
+                myBuffer = openXMLTag("commit", XML_STYLE_NORMAL, "revision", 
+                                      Long.toString(mergedRevision), myBuffer);
+                myBuffer = openCDataTag("author", mergedAuthor, myBuffer);
+                myBuffer = openCDataTag("date", ((SVNDate) mergedDate).format(), myBuffer);
+                myBuffer = closeXMLTag("commit", myBuffer);
+                myBuffer = closeXMLTag("merged", myBuffer);
+            }
             myBuffer = closeXMLTag("entry", myBuffer);
         } else {
+            String mergedStr = "";
+            if (getSVNEnvironment().isUseMergeHistory()) {
+                if (revision != mergedRevision) {
+                    mergedStr = "G ";
+                } else {
+                    mergedStr = "  ";
+                }
+                date = mergedDate;
+                revision = mergedRevision;
+                author = mergedAuthor;
+            } 
+           
             String revStr = revision >= 0 ? SVNCommandUtil.formatString(Long.toString(revision), 6, false) : "     -";
             String authorStr = author != null ? SVNCommandUtil.formatString(author, 10, false) : "         -";
             if (getSVNEnvironment().isVerbose()) {
@@ -150,14 +188,15 @@ public class SVNBlameCommand extends SVNXMLCommand implements ISVNAnnotateHandle
                 if (date != null) {
                     dateStr = SVNFormatUtil.formatHumanDate(date, getSVNEnvironment().getClientManager().getOptions());
                 }
-                getSVNEnvironment().getOut().println(revStr + " " + authorStr + " " + dateStr + " " + line);
+                getSVNEnvironment().getOut().print(mergedStr + revStr + " " + authorStr + " " + dateStr + " ");
+                if (getSVNEnvironment().isUseMergeHistory() && mergedPath != null) {
+                    String pathStr = SVNCommandUtil.formatString(mergedPath, 14, true);
+                    getSVNEnvironment().getOut().print(pathStr + " ");
+                }
+                getSVNEnvironment().getOut().println(line);
             } else {
-                getSVNEnvironment().getOut().println(revStr + " " + authorStr + " " + line);
+                getSVNEnvironment().getOut().println(mergedStr + revStr + " " + authorStr + " " + line);
             }
         }
-    }
-
-    public void handleLine(Date date, long revision, String author, String line, Date mergedDate, long mergedRevision, String mergedAuthor, String mergedPath) throws SVNException {
-        //TODO: fixme
     }
 }

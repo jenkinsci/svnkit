@@ -220,7 +220,7 @@ public class FSFileRevisionsFinder {
             String path = (String) mergeSrcs.next();
             SVNMergeRangeList rangeList = (SVNMergeRangeList) changed.get(path);
             SVNMergeRange[] ranges = rangeList.getRanges();
-            for (int i = 0; i <= rangeList.getSize(); i++) {
+            for (int i = 0; i < rangeList.getSize(); i++) {
                 SVNMergeRange range = ranges[i];
                 try {
                     pathRevisions = findInterestingRevisions(pathRevisions, path, range.getStartRevision(), 
