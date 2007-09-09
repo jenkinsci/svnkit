@@ -38,7 +38,7 @@ public abstract class DAVRequest {
     protected static final String NAMESPACE_ATTR = "namespace";
 
     private DAVElement myRootElement;
-    private Attributes myRootElementAttributes;
+    private Map myRootElementAttributes;
     private Map myProperties;
 
     protected Map getProperties() {
@@ -68,12 +68,15 @@ public abstract class DAVRequest {
         return myRootElement;
     }
 
-    protected Attributes getRootElementAttributes() {
-        return myRootElementAttributes;
+    protected String getRootElementAttributeValue(String name) {
+        if (myRootElementAttributes != null) {
+            return (String) myRootElementAttributes.get(name);
+        }
+        return null;
     }
 
     private void setRootElementAttributes(Attributes rootElementAttributes) {
-        myRootElementAttributes = rootElementAttributes;
+        myRootElementAttributes = getAttributesMap(rootElementAttributes);
     }
 
     public void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
@@ -134,10 +137,21 @@ public abstract class DAVRequest {
 
     }
 
+    private Map getAttributesMap(Attributes attrs) {
+        Map attributes = null;
+        if (attrs.getLength() != 0) {
+            attributes = new HashMap(attrs.getLength());
+            for (int i = 0; i < attrs.getLength(); i++) {
+                attributes.put(attrs.getQName(i), attrs.getValue(i));
+            }
+        }
+        return attributes;
+    }
+
     protected class DAVElementProperty {
 
         private ArrayList myValues;
-        private Attributes myAttributes;
+        private Map myAttributes;
         private Map myChildren;
 
         private void addValue(String cdata) throws SVNException {
@@ -162,19 +176,13 @@ public abstract class DAVRequest {
 
         protected String getAttributeValue(String name) {
             if (myAttributes != null) {
-                return myAttributes.getValue(name);
+                return (String) myAttributes.get(name);
             }
             return null;
         }
 
-        protected String getAttributeValue(String namespace, String name) {
-            return myAttributes.getValue(namespace, name);
-        }
-
         private void setAttributes(Attributes attributes) {
-            if (attributes != null) {
-                myAttributes = attributes;
-            }
+            myAttributes = getAttributesMap(attributes);
         }
 
         protected Map getChildren() {

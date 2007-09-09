@@ -160,7 +160,7 @@ public class DAVUpdateRequest extends DAVRequest {
 
     protected void init() throws SVNException {
         if (!isInitialized()) {
-            setSendAll("true".equals(getRootElementAttributes().getValue("send-all")));
+            setSendAll("true".equals(getRootElementAttributeValue("send-all")));
             for (Iterator iterator = getProperties().entrySet().iterator(); iterator.hasNext();) {
                 Map.Entry entry = (Map.Entry) iterator.next();
                 DAVElement element = (DAVElement) entry.getKey();
