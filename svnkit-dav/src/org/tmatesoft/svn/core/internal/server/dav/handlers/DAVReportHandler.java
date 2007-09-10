@@ -67,7 +67,7 @@ public class DAVReportHandler extends ServletDAVHandler {
         return myWriteTextDeltaHeader;
     }
 
-    private void setWriteTextDeltaHeader(boolean writeTextDeltaHeader) {
+    protected void setWriteTextDeltaHeader(boolean writeTextDeltaHeader) {
         myWriteTextDeltaHeader = writeTextDeltaHeader;
     }
 

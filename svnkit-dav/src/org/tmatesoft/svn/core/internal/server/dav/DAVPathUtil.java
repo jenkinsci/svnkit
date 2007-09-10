@@ -26,18 +26,30 @@ public class DAVPathUtil {
     private static final String SLASH = "/";
 
     public static String dropLeadingSlash(String uri) {
+        if (uri == null){
+            return "";
+        }
         return uri.startsWith(SLASH) ? uri.substring(SLASH.length()) : uri;
     }
 
     public static String addLeadingSlash(String uri) {
+        if (uri == null){
+            return SLASH;           
+        }
         return uri.startsWith(SLASH) ? uri : SLASH + uri;
     }
 
     public static String dropTraillingSlash(String uri) {
+        if (uri == null){
+            return "";
+        }
         return uri.endsWith(SLASH) ? uri.substring(0, uri.length() - SLASH.length()) : uri;
     }
 
     public static String addTrailingSlash(String uri) {
+        if (uri == null){
+            return SLASH;
+        }
         return uri.endsWith(SLASH) ? uri : uri + SLASH;
     }
 
@@ -116,12 +128,12 @@ public class DAVPathUtil {
                 resultURI.append(davResourceKind.toString());
                 resultURI.append(SLASH);
                 resultURI.append(String.valueOf(revision));
-                resultURI.append(SLASH);
+                resultURI.append(addLeadingSlash(path));
             } else if (davResourceKind == DAVResourceKind.VERSION) {
                 resultURI.append(davResourceKind.toString());
                 resultURI.append(SLASH);
                 resultURI.append(String.valueOf(revision));
-                resultURI.append(path);
+                resultURI.append(addLeadingSlash(path));
             } else if (davResourceKind == DAVResourceKind.VCC) {
                 resultURI.append(davResourceKind.toString());
                 resultURI.append(SLASH);
