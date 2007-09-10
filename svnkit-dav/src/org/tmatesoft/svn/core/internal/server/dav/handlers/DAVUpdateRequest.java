@@ -49,7 +49,7 @@ public class DAVUpdateRequest extends DAVRequest {
 
     private boolean mySendAll = false;
     private long myRevision = DAVResource.INVALID_REVISION;
-    private String mySrcURL = null;
+    private SVNURL mySrcURL = null;
     private SVNURL myDstURL = null;
     private String myTarget = "";
     private boolean myTextDeltas = true;
@@ -78,12 +78,12 @@ public class DAVUpdateRequest extends DAVRequest {
         myRevision = revision;
     }
 
-    public String getSrcURL() {
+    public SVNURL getSrcURL() {
         return mySrcURL;
     }
 
     private void setSrcURL(String srcURL) throws SVNException {
-        mySrcURL = srcURL;
+        mySrcURL = SVNURL.parseURIEncoded(srcURL);
     }
 
     public SVNURL getDstURL() {
@@ -167,35 +167,35 @@ public class DAVUpdateRequest extends DAVRequest {
                 DAVElementProperty property = (DAVElementProperty) entry.getValue();
                 String value = property.getFirstValue();
                 if (element == TARGET_REVISION) {
-                    assertNullCData(property);
+                    assertNullCData(element, property);
                     setRevision(Long.parseLong(value));
                 } else if (element == SRC_PATH) {
-                    assertNullCData(property);
+                    assertNullCData(element, property);
                     DAVPathUtil.testCanonical(value);
                     setSrcURL(value);
                 } else if (element == DST_PATH) {
-                    assertNullCData(property);
+                    assertNullCData(element, property);
                     DAVPathUtil.testCanonical(value);
                     setDstURL(value);
                 } else if (element == UPDATE_TARGET) {
                     DAVPathUtil.testCanonical(value);
                     setTarget(value);
                 } else if (element == DEPTH) {
-                    assertNullCData(property);
+                    assertNullCData(element, property);
                     setDepth(SVNDepth.fromString(value));
                     setDepthRequested(true);
                 } else if (element == RECURSIVE && !isDepthRequested()) {
-                    assertNullCData(property);
+                    assertNullCData(element, property);
                     SVNDepth.fromRecurse(!"no".equals(value));
                     setRecursiveRequested(true);
                 } else if (element == IGNORE_ANCESTRY) {
-                    assertNullCData(property);
+                    assertNullCData(element, property);
                     setIgnoreAncestry(!"no".equals(value));
                 } else if (element == TEXT_DELTAS) {
-                    assertNullCData(property);
+                    assertNullCData(element, property);
                     setTextDeltas(!"no".equals(value));
                 } else if (element == RESOURCE_WALK) {
-                    assertNullCData(property);
+                    assertNullCData(element, property);
                     setResourceWalk(!"no".equals(value));
                 }
             }
@@ -212,9 +212,9 @@ public class DAVUpdateRequest extends DAVRequest {
         }
     }
 
-    private void assertNullCData(DAVElementProperty property) throws SVNException {
+    private void assertNullCData(DAVElement element, DAVElementProperty property) throws SVNException {
         if (property.getValues() == null) {
-            invalidXML();
+            invalidXML(element);
         }
     }
 
@@ -224,9 +224,9 @@ public class DAVUpdateRequest extends DAVRequest {
         }
         String sPath;
         if (getTarget() != null) {
-            sPath = SVNPathUtil.append(getSrcURL(), getTarget());
+            sPath = SVNPathUtil.append(getSrcURL().toString(), getTarget());
         } else {
-            sPath = getSrcURL();
+            sPath = getSrcURL().toString();
         }
         if (getDstURL() != null) {
             if (!isSendAll() && getDstURL().equals(sPath)) {
@@ -241,5 +241,10 @@ public class DAVUpdateRequest extends DAVRequest {
                 return STATUS_ACTION;
             }
         }
+    }
+
+    private void invalidXML(DAVElement element) throws SVNException {
+        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.XML_MALFORMED, "\"The request's ''{0}'' element is malformed; there is a problem with the client.", element.getName()));
+
     }
 }
