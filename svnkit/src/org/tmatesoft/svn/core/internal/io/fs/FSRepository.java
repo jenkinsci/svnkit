@@ -74,6 +74,10 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         super(location, options);
     }
 
+    public FSFS getFSFS() {
+        return myFSFS;
+    }
+    
     public void testConnection() throws SVNException {
         // try to open and close a repository
         try {
