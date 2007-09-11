@@ -449,9 +449,12 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 SVNFileRevision fileRevision = null;
                 boolean skipDelta = false;
                 try {
-                    buffer = read("(SN(*P)(*Z)?T?S", buffer, false);
-                    if (buffer[5] != null && ((String) buffer[5]).length() == 0) {
-                        buffer[5] = null;
+                    buffer = read("(SN(*P)(*Z)?T", buffer, false);
+                    
+                    Object[] responseTail = new Object[1];
+                    responseTail = read("?S", responseTail, false);
+                    if (responseTail[0] != null && ((String) responseTail[0]).length() == 0) {
+                        responseTail[0] = null;
                         skipDelta = true;
                     } else {
                         read(")", null, false);
@@ -462,6 +465,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     read("[()]", buffer, true);
                     return count;
                 }
+                
                 String name = null;
                 if (handler != null) {
                     name = (String) buffer[0];
@@ -524,91 +528,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     }
     
     public int getFileRevisions(String path, long sRevision, long eRevision, ISVNFileRevisionHandler handler) throws SVNException {
-        Long srev = getRevisionObject(sRevision);
-        Long erev = getRevisionObject(eRevision);
-        int count = 0;
-        SVNDeltaReader deltaReader = new SVNDeltaReader();
-        try {
-            openConnection();
-            Object[] buffer = new Object[] { "get-file-revs",
-                    getRepositoryPath(path), srev, erev };
-            write("(w(s(n)(n)))", buffer);
-            authenticate();
-            buffer = new Object[5];
-            while (true) {
-                SVNFileRevision fileRevision = null;
-                boolean skipDelta = false;
-                try {
-                    buffer = read("(SN(*P)(*Z)?S", buffer, false);
-                    if (buffer[4] != null && ((String) buffer[4]).length() == 0) {
-                        buffer[4] = null;
-                        skipDelta = true;
-                    } else {
-                        read(")", null, false);
-                    }
-                    count++;
-                } catch (SVNException e) {
-                    read("x", buffer, true);
-                    read("[()]", buffer, true);
-                    return count;
-                }
-                String name = null;
-                if (handler != null) {
-                    name = (String) buffer[0];
-                    long revision = SVNReader.getLong(buffer, 1);
-                    Map properties = SVNReader.getMap(buffer, 2);
-                    Map propertiesDelta = SVNReader.getMap(buffer, 3);
-                    if (name != null) {
-                        fileRevision = new SVNFileRevision(name, revision,
-                                properties, propertiesDelta);
-                    }
-                    buffer[2] = null;
-                    buffer[3] = null;
-                }
-                if (handler != null && fileRevision != null) {
-                    handler.openRevision(fileRevision);
-                }
-                if (skipDelta) {
-                    if (handler != null) {
-                        handler.closeRevision(name == null ? path : name);
-                    }
-                    continue;
-                }
-                boolean windowRead = false;
-                while (true) {
-                    byte[] line = (byte[]) read("?W?B", buffer, true)[1];
-                    if (line == null) {
-                        // may be failure
-                        read("[]", buffer, true);
-                        break;
-                    } else if (line.length == 0) {
-                        // empty line, delta end.
-                        break;
-                    }
-                    // apply delta here.
-                    if (!windowRead) {
-                        if (handler != null) {
-                            handler.applyTextDelta(name == null ? path : name, null);
-                            windowRead = true;
-                        }
-                    }
-                    deltaReader.nextWindow(line, 0, line.length, name == null ? path : name, handler);
-                }
-                deltaReader.reset(name == null ? path : name, handler);
-                if (windowRead) {
-                    handler.textDeltaEnd(name == null ? path : name);
-                }
-                if (handler != null) {
-                    handler.closeRevision(name == null ? path : name);
-                }
-            }
-        } catch (SVNException e) {
-            closeSession();
-            handleUnsupportedCommand(e, "'get-file-revs' not implemented");
-        } finally {
-            closeConnection();
-        }
-        return -1;
+        return getFileRevisions(path, sRevision, eRevision, false, handler);
     }
 
     public long log(String[] targetPaths, long startRevision, long endRevision, 
