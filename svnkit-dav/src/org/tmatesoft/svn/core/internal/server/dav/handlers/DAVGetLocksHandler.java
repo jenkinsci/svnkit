@@ -47,7 +47,7 @@ public class DAVGetLocksHandler extends DAVReportHandler {
 
     public void execute() throws SVNException {
         setDAVResource(createDAVResource(false, false));
-        
+
         String responseBody = generateResponseBody();
 
         try {

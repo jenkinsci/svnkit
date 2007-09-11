@@ -15,8 +15,10 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 
 import javax.servlet.http.HttpServletRequest;
@@ -31,8 +33,10 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
+import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSTranslateReporter;
 import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
@@ -41,6 +45,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNAdminHelper;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
@@ -53,6 +58,8 @@ import org.xml.sax.Attributes;
  */
 public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
 
+    private static Set UPDATE_REPORT_NAMESPACES = new HashSet();
+
     private static final DAVElement ENTRY = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "entry");
     private static final DAVElement MISSING = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "missing");
 
@@ -61,6 +68,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
     private FSTranslateReporter myReporter;
     private boolean myInitialized = false;
     private boolean myResourceWalk = false;
+    private FSRepository myRepositoryForResourceWalk;
 
     private long myRevision = DAVResource.INVALID_REVISION;
     private SVNURL myDstURL = null;
@@ -79,6 +87,11 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
     private EditorEntry myFileEditorEntry;
 
     Stack myEditorEntries;
+
+    static {
+        UPDATE_REPORT_NAMESPACES.add(DAVElement.SVN_NAMESPACE);
+        UPDATE_REPORT_NAMESPACES.add(DAVElement.SVN_DAV_PROPERTY_NAMESPACE);
+    }
 
     public DAVUpdateHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) throws SVNException {
         super(repositoryManager, request, response);
@@ -167,6 +180,15 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
 
     private void setResourceWalk(boolean resourceWalk) {
         myResourceWalk = resourceWalk;
+    }
+
+
+    private FSRepository getRepositoryForResourceWalk() {
+        return myRepositoryForResourceWalk;
+    }
+
+    private void setRepositoryForResourceWalk(FSRepository repositoryForResourceWalk) {
+        myRepositoryForResourceWalk = repositoryForResourceWalk;
     }
 
     private long getEntryRevision() {
@@ -332,6 +354,12 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
                 setDstURL(getUpdateRequest().getSrcURL());
             }
 
+            if (getDstPath() != null && getUpdateRequest().isResourceWalk()) {
+                if (SVNNodeKind.DIR == getDAVResource().getRepository().checkPath(getDstPath(), getRevision())) {
+                    setResourceWalk(true);
+                }
+            }
+
             initReporter();
 
             setInitialized(true);
@@ -342,6 +370,12 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
         FSRepositoryFactory.setup();
         SVNURL repositoryURL = getRepositoryManager().convertHttpToFile(getUpdateRequest().getSrcURL());
         FSRepository repository = (FSRepository) SVNRepositoryFactory.create(repositoryURL);
+
+        if (isResourceWalk()) {
+            setRepositoryForResourceWalk(repository);
+
+        }
+
         int action = getUpdateRequest().getAction();
         if (action == DAVUpdateRequest.UPDATE_ACTION) {
             setReporter(repository.getTranslateReporterForUpdate(getRevision(), getUpdateRequest().getTarget(),
@@ -401,20 +435,19 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
             getReporter().finishReport();
         } catch (SVNException e) {
             getReporter().abortReport();
+            throw e;
         } finally {
             getReporter().closeRepository();
         }
 
-        if (getDstPath() != null && getUpdateRequest().isResourceWalk()) {
-            if (SVNNodeKind.DIR == getDAVResource().getRepository().checkPath(getDstPath(), getRevision())) {
-                setResourceWalk(true);
-            }
-        }
         if (isResourceWalk()) {
             StringBuffer xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "resource- walk", XMLUtil.XML_STYLE_NORMAL, null, null);
             write(xmlBuffer);
 
-            getDAVResource().getRepository().diff(SVNURL.parseURIEncoded(""), 3, 3, "", false, false, false, null, this);
+            FSFS fsfs = getRepositoryForResourceWalk().getFSFS();
+            FSRevisionRoot zeroRoot = fsfs.createRevisionRoot(0);
+            FSRevisionRoot requestedRoot = fsfs.createRevisionRoot(getRevision());
+            SVNAdminHelper.deltifyDir(fsfs, zeroRoot, "", getUpdateRequest().getTarget(), requestedRoot, getDstPath(), this);
 
             xmlBuffer = XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "resource- walk", null);
             write(xmlBuffer);
@@ -422,19 +455,14 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
         writeXMLFooter();
     }
 
-    protected void writeXMLHeader() throws SVNException {
-        StringBuffer xmlBuffer = new StringBuffer();
-        Collection namespaces = new ArrayList(3);
-        namespaces.add(DAVElement.SVN_NAMESPACE);
-        namespaces.add(DAVElement.SVN_DAV_PROPERTY_NAMESPACE);
+    protected void addXMLHeader(StringBuffer xmlBuffer) {
         Map attrs = null;
         if (getUpdateRequest().isSendAll()) {
             attrs = new HashMap();
             attrs.put("send-all", "true");
         }
         XMLUtil.addXMLHeader(xmlBuffer);
-        DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, getDAVRequest().getRootElement().getName(), namespaces, attrs, xmlBuffer);
-        write(xmlBuffer);
+        DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, getDAVRequest().getRootElement().getName(), UPDATE_REPORT_NAMESPACES, attrs, xmlBuffer);
     }
 
 
@@ -598,8 +626,8 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
             Map attrs = new HashMap();
             attrs.put("name", SVNPathUtil.tail(path));
             if (isDirectory) {
-                long revision = getDAVResource().getLatestRevision();
-                String bcURL = DAVPathUtil.buildURI(getDAVResource().getResourceURI().getContext(), DAVResourceKind.BASELINE_COLL, revision, realPath);
+                long createdRevision = getDAVResource().getCreatedRevision(realPath, getRevision());
+                String bcURL = DAVPathUtil.buildURI(getDAVResource().getResourceURI().getContext(), DAVResourceKind.BASELINE_COLL, createdRevision, realPath);
                 //TODO: check bcURL
                 attrs.put("bc-url", bcURL);
             }
@@ -610,7 +638,6 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
             String tagName = isDirectory ? "add-directory" : "add-file";
             xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, XMLUtil.XML_STYLE_NORMAL, attrs, null);
         }
-        //anyway
         addVersionURL(realPath, xmlBuffer);
         if (isResourceWalk()) {
             closeResourceTag(xmlBuffer);
@@ -619,7 +646,6 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
     }
 
     private void changeProperties(EditorEntry entry, String name, String value) throws SVNException {
-        //if !(resource walk)
         if (getUpdateRequest().isSendAll()) {
             if (value != null) {
                 writePropertyTag("set-prop", name, value);
@@ -681,13 +707,11 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
     }
 
     private StringBuffer addVersionURL(String path, StringBuffer xmlBuffer) throws SVNException {
-        //TODO: check if here we should use latest revision
-//        long revision = getDAVResource().getLatestRevision();
-        long revision = DAVResource.INVALID_REVISION;
         String fullPath = getAnchor();
         if (path != null) {
             fullPath = SVNPathUtil.append(fullPath, path);
         }
+        long revision = getDAVResource().getCreatedRevision(fullPath, getRevision());
         String url = DAVPathUtil.buildURI(getDAVResource().getResourceURI().getContext(), DAVResourceKind.VERSION, revision, fullPath);
         xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "checked-in", XMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
         XMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "href", url, xmlBuffer);

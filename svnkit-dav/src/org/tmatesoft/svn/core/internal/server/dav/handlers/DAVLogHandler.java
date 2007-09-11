@@ -52,7 +52,7 @@ public class DAVLogHandler extends DAVReportHandler implements ISVNLogEntryHandl
     }
 
     public void execute() throws SVNException {
-        setDAVResource(createDAVResource(false, false));        
+        setDAVResource(createDAVResource(false, false));
 
         writeXMLHeader();
 

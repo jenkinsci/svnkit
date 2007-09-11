@@ -26,28 +26,28 @@ public class DAVPathUtil {
     private static final String SLASH = "/";
 
     public static String dropLeadingSlash(String uri) {
-        if (uri == null){
+        if (uri == null) {
             return "";
         }
         return uri.startsWith(SLASH) ? uri.substring(SLASH.length()) : uri;
     }
 
     public static String addLeadingSlash(String uri) {
-        if (uri == null){
-            return SLASH;           
+        if (uri == null) {
+            return SLASH;
         }
         return uri.startsWith(SLASH) ? uri : SLASH + uri;
     }
 
     public static String dropTraillingSlash(String uri) {
-        if (uri == null){
+        if (uri == null) {
             return "";
         }
         return uri.endsWith(SLASH) ? uri.substring(0, uri.length() - SLASH.length()) : uri;
     }
 
     public static String addTrailingSlash(String uri) {
-        if (uri == null){
+        if (uri == null) {
             return SLASH;
         }
         return uri.endsWith(SLASH) ? uri : uri + SLASH;
@@ -97,7 +97,7 @@ public class DAVPathUtil {
         return addLeadingSlash(dropTraillingSlash(uri));
     }
 
-    public static String normalize(String uri){
+    public static String normalize(String uri) {
         return "".equals(uri) ? SLASH : uri;
     }
 

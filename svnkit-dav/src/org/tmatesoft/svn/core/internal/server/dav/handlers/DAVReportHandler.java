@@ -42,6 +42,7 @@ import org.xml.sax.Attributes;
 public class DAVReportHandler extends ServletDAVHandler {
 
     public static Set REPORT_ELEMENTS = new HashSet();
+    private static Set REPORT_NAMESPACES = new HashSet();
 
     protected static final String UTF_8_ENCODING = "UTF-8";
 
@@ -80,6 +81,8 @@ public class DAVReportHandler extends ServletDAVHandler {
         REPORT_ELEMENTS.add(GET_LOCKS_REPORT);
         REPORT_ELEMENTS.add(REPLAY_REPORT);
         REPORT_ELEMENTS.add(MERGEINFO_REPORT);
+
+        REPORT_NAMESPACES.add(DAVElement.SVN_NAMESPACE);
     }
 
     protected DAVReportHandler(DAVRepositoryManager connector, HttpServletRequest request, HttpServletResponse response) {
@@ -185,7 +188,7 @@ public class DAVReportHandler extends ServletDAVHandler {
 
     protected void addXMLHeader(StringBuffer xmlBuffer) {
         XMLUtil.addXMLHeader(xmlBuffer);
-        DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, getDAVRequest().getRootElement().getName(), getDAVRequest().getElements(), xmlBuffer);
+        DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, getDAVRequest().getRootElement().getName(), REPORT_NAMESPACES, xmlBuffer);
     }
 
     protected void addXMLFooter(StringBuffer xmlBuffer) {

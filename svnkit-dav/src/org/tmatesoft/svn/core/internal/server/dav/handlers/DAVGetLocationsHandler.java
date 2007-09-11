@@ -50,7 +50,7 @@ public class DAVGetLocationsHandler extends DAVReportHandler implements ISVNLoca
 
     public void execute() throws SVNException {
         setDAVResource(createDAVResource(false, false));
-        
+
         writeXMLHeader();
 
         getDAVResource().getRepository().getLocations(getGetLocationsRequest().getPath(), getGetLocationsRequest().getPegRevision(), getGetLocationsRequest().getRevisions(), this);

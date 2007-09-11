@@ -53,7 +53,7 @@ public class DAVFileRevisionsHandler extends DAVReportHandler implements ISVNFil
     }
 
     public void execute() throws SVNException {
-        setDAVResource(createDAVResource(false, false));        
+        setDAVResource(createDAVResource(false, false));
 
         writeXMLHeader();
 

@@ -54,7 +54,7 @@ public class DAVReplayHandler extends DAVReportHandler implements ISVNEditor {
 
     public void execute() throws SVNException {
         setDAVResource(createDAVResource(false, false));
-        
+
         writeXMLHeader();
 
         getDAVResource().getRepository().replay(getReplayRequest().getLowRevision(),

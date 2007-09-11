@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -168,7 +169,7 @@ public class DAVResource {
             }
             checkPath();
             if (isCollection()) {
-                getRepository().getDir(getResourceURI().getPath(), getRevision(), getSVNProperties(), (Collection) null);
+                getRepository().getDir(getResourceURI().getPath(), getRevision(), getSVNProperties(), (ISVNDirEntryHandler) null);
             } else {
                 getRepository().getFile(getResourceURI().getPath(), getRevision(), getSVNProperties(), null);
             }
@@ -218,6 +219,18 @@ public class DAVResource {
         } catch (NumberFormatException e) {
             return getRevision();
         }
+    }
+
+    public long getCreatedRevision(String path, long revision) throws SVNException {
+        if (path == null) {
+            return INVALID_REVISION;
+        } else if (path.equals(getResourceURI().getPath())) {
+            return getCreatedRevision();
+        } else {
+            SVNDirEntry currentEntry = getRepository().getDir(path, revision, false, null);
+            return currentEntry.getRevision();
+        }
+
     }
 
     public Date getLastModified() throws SVNException {
