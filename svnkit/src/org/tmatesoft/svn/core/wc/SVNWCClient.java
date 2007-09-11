@@ -367,6 +367,10 @@ public class SVNWCClient extends SVNBasicClient {
      *                          </ul>
      */
     public void doCleanup(File path) throws SVNException {
+        doCleanup(path, false);
+    }
+    
+    public void doCleanup(File path, boolean deleteWCProperties) throws SVNException {
         SVNFileType fType = SVNFileType.getType(path);
         if (fType == SVNFileType.NONE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "''{0}'' does not exist", path);
@@ -378,6 +382,9 @@ public class SVNWCClient extends SVNBasicClient {
         try {
             SVNAdminArea adminArea = wcAccess.open(path, true, true, 0);
             adminArea.cleanup();
+            if (deleteWCProperties) {
+                SVNPropertiesManager.deleteWCProperties(adminArea, null, true);
+            }
         } catch (SVNException e) {
             if (e instanceof SVNCancelException) {
                 throw e;
@@ -2217,6 +2224,18 @@ public class SVNWCClient extends SVNBasicClient {
             }
         });
         return result[0];
+    }
+    
+    public void doCleanupWCProperties(File directory) throws SVNException {
+        SVNWCAccess wcAccess = SVNWCAccess.newInstance(this);
+        try {
+            SVNAdminArea dir = wcAccess.open(directory, true, true, -1);
+            if (dir != null) {
+                SVNPropertiesManager.deleteWCProperties(dir, null, true);
+            }
+        } finally {
+            wcAccess.close();
+        }
     }
     
     private void collectInfo(SVNRepository repos, SVNDirEntry entry,
