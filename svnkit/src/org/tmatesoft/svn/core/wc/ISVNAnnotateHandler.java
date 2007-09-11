@@ -53,21 +53,29 @@ import org.tmatesoft.svn.core.SVNException;
  */
 public interface ISVNAnnotateHandler {
 	/**
-	 * Handles per line annotation information - that is information about 
+     * @deprecated use {@link #handleLine(Date, long, String, String, Date, long, String, String, int)}
+     *             instead 
+	 */
+    public void handleLine(Date date, long revision, String author, String line) throws SVNException;
+
+    /**
+     * Handles per line annotation information - that is information about 
      * who last committed (changed) this line, the revision and timestamp when it was last 
      * committed. 
-	 * 
-	 * @param date		the time moment when changes to <code>line</code> were commited
-	 * 					to the repository		
-	 * @param revision	the revision the changes were commited to
-	 * @param author	the person who did those changes
-	 * @param line		a text line of the target file (on which 
-     *                  {@link SVNLogClient#doAnnotate(File, SVNRevision, SVNRevision, SVNRevision, ISVNAnnotateHandler) doAnnotate()}
-     *                  was invoked)
+     * 
+     * @param date          the time moment when changes to <code>line</code> were commited
+     *                      to the repository       
+     * @param revision      the revision the changes were commited to
+     * @param author        the person who did those changes
+     * @param line          a text line of the target file (on which 
+     *                      {@link SVNLogClient#doAnnotate(File, SVNRevision, SVNRevision, SVNRevision, ISVNAnnotateHandler) doAnnotate()}
+     *                      was invoked)
+     * @param mergedDate    date when merge changes occurred
+     * @param megedRevision revision in which merge changes occurred
+     * @param mergedAuthor  author of merge
+     * @param mergedPath      
      * @throws SVNException  
-	 */
-	public void handleLine(Date date, long revision, String author, String line) throws SVNException;
-
+     */
     public void handleLine(Date date, long revision, String author, String line, 
                            Date mergedDate, long mergedRevision, String mergedAuthor, 
                            String mergedPath, int lineNumber) throws SVNException;

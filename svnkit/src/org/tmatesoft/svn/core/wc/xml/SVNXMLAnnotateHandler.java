@@ -43,9 +43,10 @@ public class SVNXMLAnnotateHandler extends AbstractXMLHandler implements ISVNAnn
     public static final String LINE_NUMBER_TAG = "line-number";
     public static final String TARGET_TAG = "target";
     public static final String BLAME_TAG = "blame";
+    public static final String MERGED_TAG = "merged";
     
     private long myLineNumber;
-    
+    private boolean myIsUseMergeHistory;
     /**
      * Creates a new annotation handler.
      * 
@@ -64,7 +65,13 @@ public class SVNXMLAnnotateHandler extends AbstractXMLHandler implements ISVNAnn
      * @param log            a debug logger
      */
     public SVNXMLAnnotateHandler(ContentHandler contentHandler, ISVNDebugLog log) {
+        this(contentHandler, log, false);
+    }
+
+    public SVNXMLAnnotateHandler(ContentHandler contentHandler, ISVNDebugLog log, 
+                                 boolean isUseMergeHistory) {
         super(contentHandler, log);
+        myIsUseMergeHistory = isUseMergeHistory;
     }
 
     protected String getHeaderName() {
@@ -124,6 +131,31 @@ public class SVNXMLAnnotateHandler extends AbstractXMLHandler implements ISVNAnn
     public void handleLine(Date date, long revision, String author, String line, 
                            Date mergedDate, long mergedRevision, String mergedAuthor, 
                            String mergedPath, int lineNumber) throws SVNException {
-        //TODO: fixme
+        try {
+            addAttribute(LINE_NUMBER_TAG, ++lineNumber + "");
+            openTag(ENTRY_TAG);
+            if (revision >= 0) {
+                addAttribute(REVISION_ATTR, revision + "");
+                openTag(COMMIT_TAG);
+                addTag(AUTHOR_TAG, author);
+                addTag(DATE_TAG, SVNTimeUtil.formatDate(date));
+                closeTag(COMMIT_TAG);
+            }
+            if (myIsUseMergeHistory && mergedRevision >= 0) {
+                addAttribute(PATH_ATTR, mergedPath);
+                openTag(MERGED_TAG);
+                addAttribute(REVISION_ATTR, mergedRevision + "");
+                openTag(COMMIT_TAG);
+                addTag(AUTHOR_TAG, mergedAuthor);
+                addTag(DATE_TAG, SVNTimeUtil.formatDate(mergedDate));
+                closeTag(COMMIT_TAG);
+                closeTag(MERGED_TAG);
+            }
+            closeTag(ENTRY_TAG);
+        } catch (SAXException e) {
+            getDebugLog().error(e);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.XML_MALFORMED, e.getLocalizedMessage());
+            SVNErrorManager.error(err, e);
+        } 
     }
 }

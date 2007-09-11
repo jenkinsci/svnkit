@@ -39,7 +39,7 @@ public class SVNAnnotateCommand extends SVNCommand implements ISVNAnnotateHandle
 
     private boolean myIsVerbose;
     private PrintStream myPrintStream;
-
+     
     public void run(InputStream in, PrintStream out, PrintStream err) throws SVNException {
         run(out, err);
     }
@@ -157,6 +157,32 @@ public class SVNAnnotateCommand extends SVNCommand implements ISVNAnnotateHandle
     public void handleLine(Date date, long revision, String author, String line, 
                            Date mergedDate, long mergedRevision, String mergedAuthor, 
                            String mergedPath, int linenUmber) throws SVNException {
+        StringBuffer result = new StringBuffer();
+        if (myIsVerbose) {
+            if (revision >= 0) {
+                result.append(SVNFormatUtil.formatString(Long.toString(revision), 6, false));
+                result.append(' ');
+            } else {
+                result.append("     -");
+            }
+            result.append(' ');
+            result.append(author != null ? SVNFormatUtil.formatString(author, 10, false) : "         -");
+            result.append(' ');
+            if (date != null) {
+                result.append(SVNFormatUtil.formatHumanDate(date, getClientManager().getOptions()));
+            } else {
+                result.append("                                           -");
+            }
+            result.append(' ');
+        } else {
+            result.append(SVNFormatUtil.formatString(Long.toString(revision), 6, false));
+            result.append(' ');
+            result.append(author != null ? SVNFormatUtil.formatString(author, 10, false) : "         -");
+            result.append(' ');
+        }
+        result.append(line);
+        myPrintStream.println(result.toString());
+     
         //TODO: fixme
     }
 }
