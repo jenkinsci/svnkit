@@ -503,26 +503,26 @@ class DAVRepository extends SVNRepository {
         return parent[0];
     }
 
-    public int getFileRevisions(String path, long startRevision, long endRevision, boolean includeMergedRevisions, ISVNFileRevisionHandler handler) throws SVNException {
-        //TODO: implement
-        return getFileRevisions(path, startRevision, endRevision, handler);
-    }
-    
-    public int getFileRevisions(String path, long startRevision, long endRevision, ISVNFileRevisionHandler handler) throws SVNException {
-		String bcPath = getLocation().getPath();
+    public int getFileRevisions(String path, long startRevision, long endRevision, 
+                                boolean includeMergedRevisions, ISVNFileRevisionHandler handler) throws SVNException {
+        String bcPath = getLocation().getPath();
         bcPath = SVNEncodingUtil.uriEncode(bcPath);
-		try {
+        try {
             openConnection();
             path = "".equals(path) ? "" : doGetRepositoryPath(path);
             DAVFileRevisionHandler davHandler = new DAVFileRevisionHandler(handler);
-            StringBuffer request = DAVFileRevisionHandler.generateFileRevisionsRequest(null, startRevision, endRevision, path);
-			long revision = -1;
-			if (isValidRevision(startRevision) && isValidRevision(endRevision)) {
-				revision = Math.max(startRevision, endRevision);				
-			}
-			DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, this, bcPath, revision, false, false, null);
-			bcPath = SVNPathUtil.append(info.baselineBase, info.baselinePath);
-			HTTPStatus status = myConnection.doReport(bcPath, request, davHandler);
+            StringBuffer request = DAVFileRevisionHandler.generateFileRevisionsRequest(null, 
+                                                                                       startRevision, 
+                                                                                       endRevision, 
+                                                                                       path, 
+                                                                                       includeMergedRevisions);
+            long revision = -1;
+            if (isValidRevision(startRevision) && isValidRevision(endRevision)) {
+                revision = Math.max(startRevision, endRevision);                
+            }
+            DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, this, bcPath, revision, false, false, null);
+            bcPath = SVNPathUtil.append(info.baselineBase, info.baselinePath);
+            HTTPStatus status = myConnection.doReport(bcPath, request, davHandler);
             if (status.getCode() == 501) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "'get-file-revs' REPORT not implemented");
                 SVNErrorManager.error(err, status.getError());
@@ -534,9 +534,13 @@ class DAVRepository extends SVNRepository {
                 SVNErrorManager.error(err);
             }
             return davHandler.getEntriesCount();
-		} finally {
-			closeConnection();
-		}
+        } finally {
+            closeConnection();
+        }
+    }
+    
+    public int getFileRevisions(String path, long startRevision, long endRevision, ISVNFileRevisionHandler handler) throws SVNException {
+        return getFileRevisions(path, startRevision, endRevision, false, handler);
     }
     
     //TODO: FIXME

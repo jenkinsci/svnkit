@@ -17,10 +17,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
@@ -33,8 +36,11 @@ import org.xml.sax.Attributes;
  */
 public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
 	
-	public static StringBuffer generateFileRevisionsRequest(StringBuffer buffer, long startRevision, long endRevision,
-			String path) {
+	public static StringBuffer generateFileRevisionsRequest(StringBuffer buffer, 
+                                                            long startRevision, 
+                                                            long endRevision,
+                                                            String path, 
+                                                            boolean includeMergedRevisions) {
 		buffer = buffer == null ? new StringBuffer() : buffer;
         buffer.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
         buffer.append("<S:file-revs-report xmlns:S=\"svn:\">");
@@ -44,6 +50,10 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
         if (endRevision >= 0) {
         	buffer.append("<S:end-revision>"  + endRevision + "</S:end-revision>");
         }
+        if (includeMergedRevisions) {
+            buffer.append("<S:include-merged-revisions/>");
+        }
+       
         buffer.append("<S:path>"  + SVNEncodingUtil.xmlEncodeCDATA(path) + "</S:path>");
         buffer.append("</S:file-revs-report>");
         return buffer;
@@ -54,6 +64,7 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
 
     private static final DAVElement SET_PROPERTY = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "set-prop");
     private static final DAVElement DELETE_PROPERTY = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "remove-prop");
+    private static final DAVElement MERGED_REVISION = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "merged-revision");
 
 	private ISVNFileRevisionHandler myFileRevisionsHandler;
     private String myPath;
@@ -62,23 +73,33 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
     private Map myPropertiesDelta;
     private String myPropertyName;
     private String myPropertyEncoding;
-	
+    private boolean myIsMergedRevision;
     private int myCount;
 
 	public DAVFileRevisionHandler(ISVNFileRevisionHandler handler) {
-		myFileRevisionsHandler = handler;
-		myCount = 0;
-		init();
-	}
-	
+        myFileRevisionsHandler = handler;
+        myCount = 0;
+        init();
+    }
+
 	protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
         if (element == FILE_REVISION) {
             myPath = attrs.getValue("path");
-            myRevision = Long.parseLong(attrs.getValue("rev"));
+            if (myPath == null) {
+                missingAttributeError(element, "path");
+            }
+            String revString = attrs.getValue("rev");
+            if (revString == null) {
+                missingAttributeError(element, "rev");
+            }
+            myRevision = Long.parseLong(revString);
         } else if (element == REVISION_PROPERTY || element == SET_PROPERTY || element == DELETE_PROPERTY) {
             myPropertyName = attrs.getValue("name");
+            if (myPropertyName == null) {
+                missingAttributeError(element, "name");
+            }
             myPropertyEncoding = attrs.getValue("encoding");
-        } if (element == TX_DELTA) {
+        } else if (element == TX_DELTA) {
             // handle file revision with props.
             if (myPath != null && myFileRevisionsHandler != null) {
                 if (myProperties == null) {
@@ -87,15 +108,21 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
                 if (myPropertiesDelta == null) {
                     myPropertiesDelta = Collections.EMPTY_MAP;
                 }
-                SVNFileRevision revision = new SVNFileRevision(myPath, myRevision, myProperties, myPropertiesDelta);
+                SVNFileRevision revision = new SVNFileRevision(myPath, 
+                                                               myRevision, 
+                                                               myProperties, 
+                                                               myPropertiesDelta, 
+                                                               myIsMergedRevision);
                 myFileRevisionsHandler.openRevision(revision);
                 myProperties = null;
                 myPropertiesDelta = null;
                 myPath = null;
                 myFileRevisionsHandler.applyTextDelta(myPath, null);
-            }
+            } 
             setDeltaProcessing(true);
-		}
+		} else if (element == MERGED_REVISION) {
+            myIsMergedRevision = true;
+        }
 	}
     
 	protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
@@ -108,7 +135,10 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
                 if (myPropertiesDelta == null) {
                     myPropertiesDelta = Collections.EMPTY_MAP;
                 }
-                SVNFileRevision revision = new SVNFileRevision(myPath, myRevision, myProperties, myPropertiesDelta);
+                SVNFileRevision revision = new SVNFileRevision(myPath, 
+                                                               myRevision, 
+                                                               myProperties, 
+                                                               myPropertiesDelta);
                 myFileRevisionsHandler.openRevision(revision);
             }
             // handle close revision with props?
@@ -172,6 +202,13 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
     
     protected String getCurrentPath() {
         return myPath;
+    }
+    
+    private void missingAttributeError(DAVElement element, String attr) throws SVNException {
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
+                                                     "Missing attribute ''{0}'' on element {1}", 
+                                                     new Object[] { attr, element });
+        SVNErrorManager.error(err);
     }
 }
  
