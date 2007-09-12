@@ -48,6 +48,7 @@ public class DAVResource {
 
     private SVNRepository myRepository;
     private long myRevision;
+    private long myLatestRevision = INVALID_REVISION;
 
     private boolean myIsExists = false;
     private boolean myIsCollection;
@@ -60,6 +61,8 @@ public class DAVResource {
     private Map mySVNProperties;
     private Collection myDeadProperties;
     private Collection myEntries;
+
+    private boolean myChecked = false;
 
     /**
      * DAVResource  constructor
@@ -109,15 +112,23 @@ public class DAVResource {
         return myRepository;
     }
 
-    public long getRevision() {
+    public long getRevision() throws SVNException {
+        if (getResourceURI().getType() == DAVResourceType.REGULAR || getResourceURI().getType() == DAVResourceType.VERSION) {
+            if (!isValidRevision(myRevision)) {
+                myRevision = getLatestRevision();
+            }
+        }
         return myRevision;
     }
 
-    private void setRevision(long revisionNumber) {
-        myRevision = revisionNumber;
-    }
-
-    public boolean exists() {
+    public boolean exists() throws SVNException {
+        if (getResourceURI().getType() == DAVResourceType.REGULAR ||
+                (getResourceURI().getType() == DAVResourceType.WORKING && !getResourceURI().isBaseLined())) {
+            checkPath();
+        } else if (getResourceURI().getType() == DAVResourceType.VERSION ||
+                (getResourceURI().getType() == DAVResourceType.WORKING && getResourceURI().isBaseLined())) {
+            myIsExists = true;
+        }
         return myIsExists;
     }
 
@@ -125,7 +136,10 @@ public class DAVResource {
         myIsExists = isExist;
     }
 
-    public boolean isCollection() {
+    public boolean isCollection() throws SVNException {
+        if (getResourceURI().getType() == DAVResourceType.REGULAR || (getResourceURI().getType() == DAVResourceType.WORKING && !getResourceURI().isBaseLined())) {
+            checkPath();
+        }
         return myIsCollection;
     }
 
@@ -154,65 +168,62 @@ public class DAVResource {
         return myResultChecksum;
     }
 
-    private Map getSVNProperties() {
+    private Map getSVNProperties() throws SVNException {
         if (mySVNProperties == null) {
             mySVNProperties = new HashMap();
+            if (getResourceURI().getType() == DAVResourceType.REGULAR) {
+                if (isCollection()) {
+                    getRepository().getDir(getResourceURI().getPath(), getRevision(), mySVNProperties, (ISVNDirEntryHandler) null);
+                } else {
+                    getRepository().getFile(getResourceURI().getPath(), getRevision(), mySVNProperties, null);
+                }
+            }
         }
         return mySVNProperties;
     }
 
+
+    private boolean isChecked() {
+        return myChecked;
+    }
+
+    private void setChecked(boolean checked) {
+        myChecked = checked;
+    }
+
     private void prepare() throws SVNException {
-        long latestRevision = getLatestRevision();
-        if (getResourceURI().getType() == DAVResourceType.REGULAR) {
-            if (getRevision() == INVALID_REVISION) {
-                setRevision(latestRevision);
-            }
-            checkPath();
-            if (isCollection()) {
-                getRepository().getDir(getResourceURI().getPath(), getRevision(), getSVNProperties(), (ISVNDirEntryHandler) null);
-            } else {
-                getRepository().getFile(getResourceURI().getPath(), getRevision(), getSVNProperties(), null);
-            }
-        } else if (getResourceURI().getType() == DAVResourceType.VERSION) {
-            if (getRevision() == INVALID_REVISION) {
-                setRevision(latestRevision);
-            }
-            setExists(true);
-            // URI doesn't contain any information about context of requested uri
+        if (getResourceURI().getType() == DAVResourceType.VERSION) {
             getResourceURI().setURI(DAVPathUtil.buildURI(null, DAVResourceKind.BASELINE, getRevision(), null));
         } else if (getResourceURI().getType() == DAVResourceType.WORKING) {
             //TODO: Define filename for ACTIVITY_ID under the repository
-            if (getResourceURI().isBaseLined()) {
-                setExists(true);
-                return;
-            }
-            checkPath();
         } else if (getResourceURI().getType() == DAVResourceType.ACTIVITY) {
             //TODO: Define filename for ACTIVITY_ID under the repository
         }
     }
 
     private void checkPath() throws SVNException {
-        SVNNodeKind currentNodeKind = getRepository().checkPath(getResourceURI().getPath(), getRevision());
-        setExists(currentNodeKind != SVNNodeKind.NONE && currentNodeKind != SVNNodeKind.UNKNOWN);
-        setCollection(currentNodeKind == SVNNodeKind.DIR);
+        if (!isChecked()) {
+            SVNNodeKind currentNodeKind = getRepository().checkPath(getResourceURI().getPath(), getRevision());
+            setExists(currentNodeKind != SVNNodeKind.NONE && currentNodeKind != SVNNodeKind.UNKNOWN);
+            setCollection(currentNodeKind == SVNNodeKind.DIR);
+            setChecked(true);
+        }
     }
 
     public Collection getEntries() throws SVNException {
         if (isCollection() && myEntries == null) {
             myEntries = new ArrayList();
-            //May be we need to add property mask if any hadler uses not only directory entry size property.
             getRepository().getDir(getResourceURI().getPath(), getRevision(), null, SVNDirEntry.DIRENT_KIND, myEntries);
         }
         return myEntries;
     }
 
-    private boolean lacksETagPotential() {
+    private boolean lacksETagPotential() throws SVNException {
         return (!exists() || (getResourceURI().getType() != DAVResourceType.REGULAR && getResourceURI().getType() != DAVResourceType.VERSION)
                 || getResourceURI().getType() == DAVResourceType.VERSION && getResourceURI().isBaseLined());
     }
 
-    public long getCreatedRevision() {
+    public long getCreatedRevision() throws SVNException {
         String revisionParameter = getProperty(SVNProperty.COMMITTED_REVISION);
         try {
             return Long.parseLong(revisionParameter);
@@ -245,7 +256,7 @@ public class DAVResource {
         return SVNTimeUtil.parseDate(getRevisionProperty(revision, SVNRevisionProperty.DATE));
     }
 
-    public String getETag() {
+    public String getETag() throws SVNException {
         if (lacksETagPotential()) {
             return null;
         }
@@ -283,7 +294,10 @@ public class DAVResource {
     }
 
     public long getLatestRevision() throws SVNException {
-        return getRepository().getLatestRevision();
+        if (!isValidRevision(myLatestRevision)) {
+            myLatestRevision = getRepository().getLatestRevision();
+        }
+        return myLatestRevision;
     }
 
     public long getContentLength() throws SVNException {
@@ -302,11 +316,11 @@ public class DAVResource {
         return getRevisionProperty(revision, SVNRevisionProperty.AUTHOR);
     }
 
-    public String getMD5Checksum() {
+    public String getMD5Checksum() throws SVNException {
         return getProperty(SVNProperty.CHECKSUM);
     }
 
-    public Collection getDeadProperties() {
+    public Collection getDeadProperties() throws SVNException {
         if (myDeadProperties == null) {
             myDeadProperties = new ArrayList();
             for (Iterator iterator = getSVNProperties().keySet().iterator(); iterator.hasNext();) {
@@ -323,7 +337,7 @@ public class DAVResource {
         return getRevisionProperty(revision, SVNRevisionProperty.LOG);
     }
 
-    public String getProperty(String propertyName) {
+    public String getProperty(String propertyName) throws SVNException {
         return (String) getSVNProperties().get(propertyName);
     }
 

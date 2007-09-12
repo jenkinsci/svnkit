@@ -364,7 +364,7 @@ public class DAVPropfindHandler extends ServletDAVHandler {
         }
     }
 
-    private String getResourceTypeProp(DAVResource resource) {
+    private String getResourceTypeProp(DAVResource resource) throws SVNException {
         return resource.isCollection() ? COLLECTION_RESOURCE_TYPE : "";
     }
 
@@ -377,7 +377,7 @@ public class DAVPropfindHandler extends ServletDAVHandler {
         return DAVPathUtil.buildURI(resource.getResourceURI().getContext(), DAVResourceKind.VCC, -1, resource.getResourceURI().getPath());
     }
 
-    private String getDeadpropCountProp(DAVResource resource) {
+    private String getDeadpropCountProp(DAVResource resource) throws SVNException {
         int deadPropertiesCount = resource.getDeadProperties().size();
         return String.valueOf(deadPropertiesCount);
     }

@@ -142,7 +142,7 @@ public class DAVOptionsHandler extends ServletDAVHandler {
     protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
     }
 
-    private Collection getSupportedMethods(DAVResource resource) {
+    private Collection getSupportedMethods(DAVResource resource) throws SVNException {
         //TODO: when work with locks will be implemented, we need to check resource state: LOCK_NULL, EXIST, NULL.
         Collection supportedMethods = new ArrayList();
         supportedMethods.add(DAVHandlerFactory.METHOD_OPTIONS);
@@ -191,7 +191,7 @@ public class DAVOptionsHandler extends ServletDAVHandler {
         return allowHeaderBuffer.toString();
     }
 
-    private void generateOptionsResponse(DAVResource resource, Collection supportedMethods, StringBuffer xmlBuffer) {
+    private void generateOptionsResponse(DAVResource resource, Collection supportedMethods, StringBuffer xmlBuffer) throws SVNException {
         if (!getOptionsRequest().isEmpty()) {
             XMLUtil.addXMLHeader(xmlBuffer);
             DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "options-response", null, xmlBuffer);
@@ -215,7 +215,7 @@ public class DAVOptionsHandler extends ServletDAVHandler {
         XMLUtil.closeXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "activity-collection-set", xmlBuffer);
     }
 
-    private void generateSupportedLivePropertySet(DAVResource resource, StringBuffer xmlBuffer) {
+    private void generateSupportedLivePropertySet(DAVResource resource, StringBuffer xmlBuffer) throws SVNException {
         XMLUtil.openXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "supported-live-property-set", XMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
         Collection supportedLiveProperties = getSupportedLiveProperties(resource, null);
         generateSupportedElementSet(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "supported-live-property", supportedLiveProperties, getOptionsRequest().getRequestedLiveProperties(), xmlBuffer);

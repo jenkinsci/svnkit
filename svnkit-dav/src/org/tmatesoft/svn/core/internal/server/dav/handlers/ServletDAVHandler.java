@@ -226,7 +226,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return null;
     }
 
-    protected static Collection getSupportedLiveProperties(DAVResource resource, Collection properties) {
+    protected static Collection getSupportedLiveProperties(DAVResource resource, Collection properties) throws SVNException {
         if (properties == null) {
             properties = new ArrayList();
         }

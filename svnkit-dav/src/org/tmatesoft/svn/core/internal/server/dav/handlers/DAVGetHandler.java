@@ -124,8 +124,12 @@ public class DAVGetHandler extends ServletDAVHandler {
         } catch (SVNException e) {
             //nothing to do we just skip this header
         }
-        if (resource.getETag() != null) {
-            setResponseHeader(ETAG_HEADER, resource.getETag());
+        try {
+            String eTag = resource.getETag();
+            if (eTag != null) {
+                setResponseHeader(ETAG_HEADER, eTag);
+            }
+        } catch (SVNException e) {
         }
     }
 
