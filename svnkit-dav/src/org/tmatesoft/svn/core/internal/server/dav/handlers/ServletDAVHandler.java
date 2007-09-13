@@ -56,7 +56,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     protected static final String HTTP_STATUS_OK_LINE = "HTTP/1.1 200 OK";
     protected static final String HTTP_NOT_FOUND_LINE = "HTTP/1.1 404 NOT FOUND";
 
-    protected static final String DEFAULT_XML_CONTENT_TYPE = "text/xml; charset=\"utf-8\"";
+    protected static final String DEFAULT_XML_CONTENT_TYPE = "text/xml; charset=\"UTF-8\"";
 
     //Specific svn headers
     protected static final String SVN_OPTIONS_HEADER = "X-SVN-Options";

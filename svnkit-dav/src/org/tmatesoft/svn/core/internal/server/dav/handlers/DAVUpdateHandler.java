@@ -45,7 +45,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNAdminHelper;
+import org.tmatesoft.svn.core.internal.wc.SVNAdminDeltifier;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
@@ -95,6 +95,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
 
     public DAVUpdateHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) throws SVNException {
         super(repositoryManager, request, response);
+        setSVNDiffVersion(getSVNDiffVersion());
     }
 
     public DAVRequest getDAVRequest() {
@@ -444,9 +445,11 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
             write(xmlBuffer);
 
             FSFS fsfs = getRepositoryForResourceWalk().getFSFS();
+            SVNAdminDeltifier deltifier = new SVNAdminDeltifier(fsfs, getDepth(), true, false, false, this);
+
             FSRevisionRoot zeroRoot = fsfs.createRevisionRoot(0);
             FSRevisionRoot requestedRoot = fsfs.createRevisionRoot(getRevision());
-            SVNAdminHelper.deltifyDir(fsfs, zeroRoot, "", getUpdateRequest().getTarget(), requestedRoot, getDstPath(), this);
+            deltifier.deltifyDir(zeroRoot, "", getUpdateRequest().getTarget(), requestedRoot, getDstPath());
 
             xmlBuffer = XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "resource- walk", null);
             write(xmlBuffer);

@@ -63,6 +63,7 @@ public class DAVReportHandler extends ServletDAVHandler {
     private DAVResource myDAVResource;
 
     private boolean myWriteTextDeltaHeader = true;
+    private boolean mySVNDiffVersion = false;
 
     private boolean isWriteTextDeltaHeader() {
         return myWriteTextDeltaHeader;
@@ -110,6 +111,15 @@ public class DAVReportHandler extends ServletDAVHandler {
 
     protected void setDAVResource(DAVResource DAVResource) {
         myDAVResource = DAVResource;
+    }
+
+
+    public boolean doCompress() {
+        return mySVNDiffVersion;
+    }
+
+    public void setSVNDiffVersion(boolean SVNDiffVersion) {
+        mySVNDiffVersion = SVNDiffVersion;
     }
 
     protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
@@ -198,7 +208,7 @@ public class DAVReportHandler extends ServletDAVHandler {
     protected void writeTextDeltaChunk(SVNDiffWindow diffWindow) throws SVNException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try {
-            diffWindow.writeTo(baos, isWriteTextDeltaHeader(), getSVNDiffVersion());
+            diffWindow.writeTo(baos, isWriteTextDeltaHeader(), doCompress());
             byte[] textDelta = baos.toByteArray();
             String txDelta = SVNBase64.byteArrayToBase64(textDelta);
             write(txDelta);
