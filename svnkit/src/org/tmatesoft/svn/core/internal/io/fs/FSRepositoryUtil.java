@@ -25,11 +25,15 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
 import org.tmatesoft.svn.core.internal.wc.ISVNCommitPathHandler;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
+import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 
 
 /**
@@ -158,6 +162,78 @@ public class FSRepositoryUtil {
         return result;
     }
 
+    public static boolean checkFilesDifferent(FSRoot root1, String path1, FSRoot root2, 
+            String path2, SVNDeltaCombiner deltaCombiner) throws SVNException {
+        boolean changed = FSRepositoryUtil.areFileContentsChanged(root1, path1, root2, path2);
+        if (!changed) {
+            return false;
+        }
+
+        FSRevisionNode revNode1 = root1.getRevisionNode(path1);
+        FSRevisionNode revNode2 = root2.getRevisionNode(path2);
+        if (revNode1.getFileLength() != revNode2.getFileLength()) {
+            return true;
+        }
+
+        if (!revNode1.getFileChecksum().equals(revNode2.getFileChecksum())) {
+            return true;
+        }
+
+        InputStream file1IS = null;
+        InputStream file2IS = null;
+        try {
+            file1IS = root1.getFileStreamForPath(deltaCombiner, path1);
+            file2IS = root2.getFileStreamForPath(deltaCombiner, path2);
+
+            int r1 = -1;
+            int r2 = -1;
+            while (true) {
+                r1 = file1IS.read();
+                r2 = file2IS.read();
+                if (r1 != r2) {
+                    return true;
+                }
+                if (r1 == -1) {// we've finished - files do not differ
+                    break;
+                }
+            }
+        } catch (IOException ioe) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
+            SVNErrorManager.error(err, ioe);
+        } finally {
+            SVNFileUtil.closeFile(file1IS);
+            SVNFileUtil.closeFile(file2IS);
+        }
+        return false;
+    }
+
+    public static void sendTextDelta(ISVNEditor editor, String editPath, String sourcePath, 
+            String hexDigest, FSRevisionRoot sourceRoot, String targetPath, 
+            FSRevisionRoot targetRoot, boolean sendDeltas, SVNDeltaCombiner deltaCombiner, 
+            SVNDeltaGenerator deltaGenerator, FSFS fsfs) throws SVNException {
+        editor.applyTextDelta(editPath, hexDigest);
+
+        if (sendDeltas) {
+            InputStream sourceStream = null;
+            InputStream targetStream = null;
+            try {
+                if (sourceRoot != null && sourcePath != null) {
+                    sourceStream = sourceRoot.getFileStreamForPath(deltaCombiner, sourcePath);
+                } else {
+                    sourceStream = FSInputStream.createDeltaStream(deltaCombiner, (FSRevisionNode) null, fsfs);
+                }
+                targetStream = targetRoot.getFileStreamForPath(deltaCombiner, targetPath);
+                deltaGenerator.sendDelta(editPath, sourceStream, 0, targetStream, editor, false);
+            } finally {
+                SVNFileUtil.closeFile(sourceStream);
+                SVNFileUtil.closeFile(targetStream);
+            }
+        } else {
+            editor.textDeltaChunk(editPath, SVNDiffWindow.EMPTY);
+            editor.textDeltaEnd(editPath);
+        }
+    }
+    
     private static boolean areRepresentationsEqual(FSRevisionNode revNode1, FSRevisionNode revNode2, boolean forProperties) {
         if(revNode1 == revNode2){
             return true;

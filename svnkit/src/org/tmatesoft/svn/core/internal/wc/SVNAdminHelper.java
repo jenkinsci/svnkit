@@ -120,13 +120,16 @@ public class SVNAdminHelper {
         }
     }
     
-    public static void deltifyDir(FSFS fsfs, FSRevisionRoot srcRoot, String srcParentDir, String srcEntry, FSRevisionRoot tgtRoot, String tgtFullPath, ISVNEditor editor) throws SVNException {
+    public static void deltifyDir(FSFS fsfs, FSRevisionRoot srcRoot, String srcParentDir, 
+                                  String srcEntry, FSRevisionRoot tgtRoot, String tgtFullPath, 
+                                  ISVNEditor editor) throws SVNException {
         if (srcParentDir == null) {
             generateNotADirError("source parent", srcParentDir);
         }
         
         if (tgtFullPath == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_PATH_SYNTAX, "Invalid target path");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_PATH_SYNTAX, 
+                                                         "Invalid target path");
             SVNErrorManager.error(err);
         }
         
@@ -215,7 +218,8 @@ public class SVNAdminHelper {
         return ++readLength;
     }
 
-    private static void addFileOrDir(FSFS fsfs, ISVNEditor editor, FSRevisionRoot srcRoot, FSRevisionRoot tgtRoot, String tgtPath, String editPath, SVNNodeKind tgtKind) throws SVNException {
+    private static void addFileOrDir(FSFS fsfs, ISVNEditor editor, FSRevisionRoot srcRoot, 
+            FSRevisionRoot tgtRoot, String tgtPath, String editPath, SVNNodeKind tgtKind) throws SVNException {
         if (tgtKind == SVNNodeKind.DIR) {
             editor.addDir(editPath, null, -1);
             deltifyDirs(fsfs, editor, srcRoot, tgtRoot, null, tgtPath, editPath);

@@ -48,11 +48,17 @@ public class FSTransactionRoot extends FSRoot {
     private int myTxnFlags;
     private File myTxnChangesFile;
     private File myTxnRevFile;
-
-    public FSTransactionRoot(FSFS owner, String txnID, int flags) {
+    private long myBaseRevision;
+    
+    public FSTransactionRoot(FSFS owner, String txnID, long baseRevision, int flags) {
         super(owner);
         myTxnID = txnID;
         myTxnFlags = flags;
+        myBaseRevision = baseRevision;
+    }
+
+    public long getRevision() {
+        return myBaseRevision;
     }
 
     public FSCopyInheritance getCopyInheritance(FSParentPath child) throws SVNException {

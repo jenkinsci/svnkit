@@ -289,8 +289,8 @@ public class FSFS {
         return new FSRevisionRoot(this, revision);
     }
     
-    public FSTransactionRoot createTransactionRoot(String txnId) throws SVNException {
-        Map txnProps = getTransactionProperties(txnId);
+    public FSTransactionRoot createTransactionRoot(FSTransactionInfo txn) throws SVNException {
+        Map txnProps = getTransactionProperties(txn.getTxnId());
         int flags = 0;
         if (txnProps.get(SVNProperty.TXN_CHECK_OUT_OF_DATENESS) != null) {
             flags |= FSTransactionRoot.SVN_FS_TXN_CHECK_OUT_OF_DATENESS;
@@ -299,7 +299,7 @@ public class FSFS {
             flags |= FSTransactionRoot.SVN_FS_TXN_CHECK_LOCKS;
         }
 
-        return new FSTransactionRoot(this, txnId, flags);
+        return new FSTransactionRoot(this, txn.getTxnId(), txn.getBaseRevision(), flags);
     }
 
     public FSTransactionInfo openTxn(String txnName) throws SVNException {
@@ -309,7 +309,7 @@ public class FSFS {
             SVNErrorManager.error(err);
         }
         
-        FSTransactionRoot txnRoot = new FSTransactionRoot(this, txnName, 0);
+        FSTransactionRoot txnRoot = new FSTransactionRoot(this, txnName, -1, 0);
         FSTransactionInfo localTxn = txnRoot.getTxn();
         return new FSTransactionInfo(localTxn.getBaseRevision(), txnName);
     }

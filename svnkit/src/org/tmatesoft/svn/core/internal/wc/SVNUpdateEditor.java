@@ -537,20 +537,20 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
     public OutputStream textDeltaChunk(String commitPath, SVNDiffWindow diffWindow) throws SVNException {
         if (!myCurrentFile.isSkipped) {
             try {
-        return myDeltaProcessor.textDeltaChunk(diffWindow);
+                return myDeltaProcessor.textDeltaChunk(diffWindow);
             } catch (SVNException svne) {
                 myDeltaProcessor.textDeltaEnd();
                 SVNFileUtil.deleteFile(myCurrentFile.newBaseFile);
                 myCurrentFile.newBaseFile = null;
-    }
+            }
         }
         return SVNFileUtil.DUMMY_OUT;
     }
 
     public void textDeltaEnd(String commitPath) throws SVNException {
         if (!myCurrentFile.isSkipped) {
-        myCurrentFile.Checksum = myDeltaProcessor.textDeltaEnd();
-    }
+            myCurrentFile.Checksum = myDeltaProcessor.textDeltaEnd();
+        }
     }
 
     public void closeFile(String commitPath, String textChecksum) throws SVNException {

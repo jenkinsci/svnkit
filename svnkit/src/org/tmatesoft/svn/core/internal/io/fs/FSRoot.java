@@ -54,6 +54,8 @@ public abstract class FSRoot {
         return node;
     }
 
+    public abstract long getRevision();
+
     public abstract FSRevisionNode getRootRevisionNode() throws SVNException;
 
     public abstract Map getChangedPaths() throws SVNException;

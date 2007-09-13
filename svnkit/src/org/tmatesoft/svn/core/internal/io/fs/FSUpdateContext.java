@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.internal.io.fs;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -444,7 +443,8 @@ public class FSUpdateContext {
 
             boolean changed = false;
             if (isIgnoreAncestry()) {
-                changed = checkFilesDifferent(sourceRoot, sourcePath, getTargetRoot(), targetPath);
+                changed = FSRepositoryUtil.checkFilesDifferent(sourceRoot, sourcePath, getTargetRoot(), 
+                        targetPath, myDeltaCombiner);
             } else {
                 changed = FSRepositoryUtil.areFileContentsChanged(sourceRoot, sourcePath, getTargetRoot(), targetPath);
             }
@@ -454,71 +454,10 @@ public class FSUpdateContext {
             FSRevisionNode sourceNode = sourceRoot.getRevisionNode(sourcePath);
             sourceHexDigest = sourceNode.getFileChecksum();
         }
-
-        getEditor().applyTextDelta(editPath, sourceHexDigest);
-
-        if (isSendTextDeltas()) {
-            InputStream sourceStream = null;
-            InputStream targetStream = null;
-            try {
-                if (sourceRoot != null && sourcePath != null) {
-                    sourceStream = sourceRoot.getFileStreamForPath(myDeltaCombiner, sourcePath);
-                } else {
-                    sourceStream = FSInputStream.createDeltaStream(myDeltaCombiner, (FSRevisionNode) null, myFSFS);
-                }
-                targetStream = getTargetRoot().getFileStreamForPath(myDeltaCombiner, targetPath);
-                myDeltaGenerator.sendDelta(editPath, sourceStream, 0, targetStream, getEditor(), false);
-            } finally {
-                SVNFileUtil.closeFile(sourceStream);
-                SVNFileUtil.closeFile(targetStream);
-            }
-        } else {
-            getEditor().textDeltaEnd(editPath);
-        }
-    }
-
-    private boolean checkFilesDifferent(FSRoot root1, String path1, FSRoot root2, String path2) throws SVNException {
-        boolean changed = FSRepositoryUtil.areFileContentsChanged(root1, path1, root2, path2);
-        if (!changed) {
-            return false;
-        }
-
-        FSRevisionNode revNode1 = root1.getRevisionNode(path1);
-        FSRevisionNode revNode2 = root2.getRevisionNode(path2);
-        if (revNode1.getFileLength() != revNode2.getFileLength()) {
-            return true;
-        }
-
-        if (!revNode1.getFileChecksum().equals(revNode2.getFileChecksum())) {
-            return true;
-        }
-
-        InputStream file1IS = null;
-        InputStream file2IS = null;
-        try {
-            file1IS = root1.getFileStreamForPath(myDeltaCombiner, path1);
-            file2IS = root2.getFileStreamForPath(myDeltaCombiner, path2);
-
-            int r1 = -1;
-            int r2 = -1;
-            while (true) {
-                r1 = file1IS.read();
-                r2 = file2IS.read();
-                if (r1 != r2) {
-                    return true;
-                }
-                if (r1 == -1) {// we've finished - files do not differ
-                    break;
-                }
-            }
-        } catch (IOException ioe) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-            SVNErrorManager.error(err, ioe);
-        } finally {
-            SVNFileUtil.closeFile(file1IS);
-            SVNFileUtil.closeFile(file2IS);
-        }
-        return false;
+        
+        FSRepositoryUtil.sendTextDelta(getEditor(), editPath, sourcePath, sourceHexDigest, 
+                sourceRoot, targetPath, getTargetRoot(), isSendTextDeltas(), myDeltaCombiner, 
+                myDeltaGenerator, myFSFS);
     }
 
     private void updateEntry(long sourceRevision, String sourcePath, FSEntry sourceEntry, String targetPath, FSEntry targetEntry, String editPath, PathInfo pathInfo, SVNDepth wcDepth, SVNDepth requestedDepth)

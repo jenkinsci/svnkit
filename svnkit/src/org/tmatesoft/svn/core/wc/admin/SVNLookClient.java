@@ -345,7 +345,7 @@ public class SVNLookClient extends SVNBasicClient {
         
         FSFS fsfs = open(repositoryRoot, transactionName);
         FSTransactionInfo txn = fsfs.openTxn(transactionName);
-        FSRoot root = fsfs.createTransactionRoot(txn.getTxnId());
+        FSRoot root = fsfs.createTransactionRoot(txn);
         catFile(root, path, out);
     }
 
@@ -472,7 +472,7 @@ public class SVNLookClient extends SVNBasicClient {
     public void doGetChanged(File repositoryRoot, String transactionName, ISVNChangeEntryHandler handler, boolean includeCopyInfo) throws SVNException {
         FSFS fsfs = open(repositoryRoot, transactionName);
         FSTransactionInfo txn = fsfs.openTxn(transactionName);
-        FSRoot root = fsfs.createTransactionRoot(txn.getTxnId());
+        FSRoot root = fsfs.createTransactionRoot(txn);
         long baseRevision = txn.getBaseRevision();
 
         if (!SVNRevision.isValidRevisionNumber(baseRevision)) {
@@ -520,7 +520,7 @@ public class SVNLookClient extends SVNBasicClient {
     public void doGetChangedDirectories(File repositoryRoot, String transactionName, ISVNChangedDirectoriesHandler handler) throws SVNException {
         FSFS fsfs = open(repositoryRoot, transactionName);
         FSTransactionInfo txn = fsfs.openTxn(transactionName);
-        FSRoot root = fsfs.createTransactionRoot(txn.getTxnId());
+        FSRoot root = fsfs.createTransactionRoot(txn);
         long baseRevision = txn.getBaseRevision();
 
         if (!SVNRevision.isValidRevisionNumber(baseRevision)) {
@@ -679,7 +679,7 @@ public class SVNLookClient extends SVNBasicClient {
     public void doGetTree(File repositoryRoot, String path, String transactionName, boolean includeIDs, ISVNTreeHandler handler) throws SVNException {
         FSFS fsfs = open(repositoryRoot, transactionName);
         FSTransactionInfo txn = fsfs.openTxn(transactionName);
-        FSRoot root = fsfs.createTransactionRoot(txn.getTxnId());
+        FSRoot root = fsfs.createTransactionRoot(txn);
         path = path == null ? "/" : path;
         FSRevisionNode node = root.getRevisionNode(path);
         FSID id = includeIDs ? node.getId() : null;
@@ -759,7 +759,7 @@ public class SVNLookClient extends SVNBasicClient {
     public void doGetDiff(File repositoryRoot, String transactionName, boolean diffDeleted, boolean diffAdded, boolean diffCopyFrom, OutputStream os) throws SVNException {
         FSFS fsfs = open(repositoryRoot, transactionName);
         FSTransactionInfo txn = fsfs.openTxn(transactionName);
-        FSRoot root = fsfs.createTransactionRoot(txn.getTxnId());
+        FSRoot root = fsfs.createTransactionRoot(txn);
         long baseRevision = txn.getBaseRevision();
 
         if (!SVNRevision.isValidRevisionNumber(baseRevision)) {
@@ -1007,7 +1007,7 @@ public class SVNLookClient extends SVNBasicClient {
             if (revProps) {
                 return fsfs.getTransactionProperties(txn.getTxnId());
             }
-            root = fsfs.createTransactionRoot(txn.getTxnId());
+            root = fsfs.createTransactionRoot(txn);
         }
 
         verifyPath(root, path);

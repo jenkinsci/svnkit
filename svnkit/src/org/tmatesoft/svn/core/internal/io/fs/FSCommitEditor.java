@@ -94,7 +94,7 @@ public class FSCommitEditor implements ISVNEditor {
         } else {
             changeTransactionProperties(myTxn.getTxnId());
         }
-        myTxnRoot = myFSFS.createTransactionRoot(myTxn.getTxnId());
+        myTxnRoot = myFSFS.createTransactionRoot(myTxn);
         myCommitter = new FSCommitter(myFSFS, myTxnRoot, myTxn, myLockTokens, getAuthor());
         DirBaton dirBaton = new DirBaton(revision, myBasePath, false);
         myDirsStack.push(dirBaton);

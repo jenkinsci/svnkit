@@ -160,7 +160,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
         
         if (revision > 0) {
             myCurrentRevisionBaton.myTxn = FSTransactionRoot.beginTransaction(headRevision, 0, myFSFS);
-            myCurrentRevisionBaton.myTxnRoot = myFSFS.createTransactionRoot(myCurrentRevisionBaton.myTxn.getTxnId());
+            myCurrentRevisionBaton.myTxnRoot = myFSFS.createTransactionRoot(myCurrentRevisionBaton.myTxn);
             String message = "<<< Started new transaction, based on original revision " + revision;
             if (myProgressHandler != null) {
                 SVNAdminEvent event = new SVNAdminEvent(revision, SVNAdminEventAction.REVISION_LOAD, message); 
