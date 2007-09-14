@@ -23,6 +23,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVHandlerFactory;
 import org.tmatesoft.svn.core.internal.server.dav.handlers.ServletDAVHandler;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
@@ -38,6 +39,10 @@ public class DAVServlet extends HttpServlet {
 
     private static final String HTML_CONTENT_TYPE = "text/html; charset=\"utf-8\"";
     private static final String XML_CONTENT_TYPE = "text/xml; charset=\"utf-8\"";
+
+    public void init() {
+        FSRepositoryFactory.setup();
+    }
 
     public void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         try {

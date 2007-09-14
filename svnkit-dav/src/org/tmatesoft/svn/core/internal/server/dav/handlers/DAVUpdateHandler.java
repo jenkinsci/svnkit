@@ -35,7 +35,6 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
-import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSTranslateReporter;
 import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
@@ -368,7 +367,6 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
     }
 
     private void initReporter() throws SVNException {
-        FSRepositoryFactory.setup();
         SVNURL repositoryURL = getRepositoryManager().convertHttpToFile(getUpdateRequest().getSrcURL());
         FSRepository repository = (FSRepository) SVNRepositoryFactory.create(repositoryURL);
 

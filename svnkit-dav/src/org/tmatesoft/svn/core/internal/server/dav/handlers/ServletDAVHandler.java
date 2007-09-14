@@ -18,6 +18,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.regex.Pattern;
@@ -97,6 +98,8 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     protected static final String DIFF_VERSION = "svndiff";
 
     protected static final String UTF_8_ENCODING = "UTF-8";
+
+    private static final Pattern COMMA = Pattern.compile(",");
 
     private static SAXParserFactory ourSAXParserFactory;
     private SAXParser mySAXParser;
@@ -299,26 +302,53 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         for (Enumeration headerEncodings = getRequestHeaders(ACCEPT_ENCODING_HEADER); headerEncodings.hasMoreElements();)
         {
             String currentEncodings = (String) headerEncodings.nextElement();
-            Pattern comma = Pattern.compile(",");
-            String[] encodings = comma.split(currentEncodings);
-            AcceptEncodingEntry[] encodingEntries = new AcceptEncodingEntry[encodings.length];
-            for (int i = 0; i < encodingEntries.length; i++) {
-                encodingEntries[i] = new AcceptEncodingEntry(encodings[i]);
-            }
-            Arrays.sort(encodingEntries);
-            for (int i = encodingEntries.length - 1; i >= 0; i--) {
-                if (DIFF_VERSION_1.equals(encodingEntries[i].getEncoding())) {
-                    diffCompress = true;
-                    break;
-                } else if (DIFF_VERSION.equals(encodingEntries[i].getEncoding())) {
-                    break;
+            String[] encodings = COMMA.split(currentEncodings);
+            if (encodings.length > 1) {
+
+                Arrays.sort(encodings, new Comparator() {
+                    public int compare(Object o1, Object o2) {
+                        String encoding1 = (String) o1;
+                        String encoding2 = (String) o2;
+                        return getEncodingRange(encoding1) > getEncodingRange(encoding2) ? 1 : -1;
+                    }
+                });
+
+                for (int i = encodings.length - 1; i >= 0; i--) {
+                    if (DIFF_VERSION_1.equals(getEncodingName(encodings[i]))) {
+                        diffCompress = true;
+                        break;
+                    } else if (DIFF_VERSION.equals(getEncodingName(encodings[i]))) {
+                        break;
+                    }
                 }
             }
         }
         return diffCompress;
     }
 
-    public void readInput() throws SVNException {
+    private float getEncodingRange(String encoding) {
+        int delimiterIndex = encoding.indexOf(";");
+        if (delimiterIndex != -1) {
+            String qualityString = encoding.substring(delimiterIndex + 1);
+            if (qualityString.startsWith("q=")) {
+                try {
+                    return Float.parseFloat(qualityString.substring("q=".length()));
+                } catch (NumberFormatException e) {
+                }
+            }
+        }
+        return 1.0f;
+    }
+
+    private String getEncodingName(String encoding) {
+        int delimiterIndex = encoding.indexOf(";");
+        if (delimiterIndex != -1) {
+            return encoding.substring(0, delimiterIndex);
+        }
+        return encoding;
+    }
+
+    protected void readInput() throws SVNException {
         if (mySAXParser == null) {
             try {
                 mySAXParser = getSAXParserFactory().newSAXParser();
@@ -365,53 +395,5 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             ourSAXParserFactory.setValidating(false);
         }
         return ourSAXParserFactory;
-    }
-
-    private class AcceptEncodingEntry implements Comparable {
-
-        private String myEncoding;
-
-        private float myQuality;
-
-        private AcceptEncodingEntry(String acceptEncodingHeaderValue) {
-            myQuality = 1.0f;
-            int delimiterIndex = acceptEncodingHeaderValue.indexOf(";");
-            if (delimiterIndex == -1) {
-                setEncoding(acceptEncodingHeaderValue);
-            } else {
-                setEncoding(acceptEncodingHeaderValue.substring(0, delimiterIndex));
-                String qualityString = acceptEncodingHeaderValue.substring(delimiterIndex + 1);
-                if (qualityString.startsWith("q=")) {
-                    myQuality = Float.parseFloat(qualityString.substring("q=".length()));
-                }
-            }
-        }
-
-        public void setEncoding(String encoding) {
-            myEncoding = encoding.toLowerCase();
-        }
-
-        public String getEncoding() {
-            return myEncoding;
-        }
-
-        public float getQuality() {
-            return myQuality;
-        }
-
-        public int compareTo(Object object) {
-            if (object == null) {
-                throw new NullPointerException();
-            }
-            if (!(object instanceof AcceptEncodingEntry)) {
-                throw new ClassCastException();
-            }
-
-            AcceptEncodingEntry anotherEntry = (AcceptEncodingEntry) object;
-            if (getQuality() == anotherEntry.getQuality()) {
-                return 0;
-            }
-            return getQuality() > anotherEntry.getQuality() ? 1 : -1;
-        }
     }
 }

@@ -17,7 +17,6 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
@@ -97,7 +96,6 @@ public class DAVRepositoryManager {
         String resourceContext = getResourceContext(requestURI);
         String resourceRepositoryRelativePath = getPathInfo(requestURI);
 
-        FSRepositoryFactory.setup();
         SVNRepository resourceRepository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(resourceRepositoryRoot));
 
         DAVResourceURI resourceURI = new DAVResourceURI(resourceContext, resourceRepositoryRelativePath, label, useCheckedIn);

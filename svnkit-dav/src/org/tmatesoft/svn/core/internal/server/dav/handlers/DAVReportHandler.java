@@ -13,6 +13,7 @@ package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -227,7 +228,11 @@ public class DAVReportHandler extends ServletDAVHandler {
             Map attrs = new HashMap();
             attrs.put("name", propertyName);
             attrs.put("encoding", "base64");
-            propertyValue = SVNBase64.byteArrayToBase64(propertyValue.getBytes());
+            try {
+                propertyValue = SVNBase64.byteArrayToBase64(propertyValue.getBytes(UTF_8_ENCODING));
+            } catch (UnsupportedEncodingException e) {
+                propertyValue = SVNBase64.byteArrayToBase64(propertyValue.getBytes());
+            }
             xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, XMLUtil.XML_STYLE_PROTECT_PCDATA, attrs, null);
             write(xmlBuffer);
             write(propertyValue);
