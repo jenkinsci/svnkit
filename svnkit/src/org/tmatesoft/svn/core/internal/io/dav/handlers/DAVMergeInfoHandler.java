@@ -61,6 +61,7 @@ public class DAVMergeInfoHandler extends BasicDAVHandler {
     private Map myPathsToMergeInfos;
     
     public DAVMergeInfoHandler() {
+        init();
         myPathsToMergeInfos = new TreeMap();
     }
     
