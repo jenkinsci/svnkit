@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav;
 
+import java.io.File;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,6 +30,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -53,6 +55,7 @@ public class DAVResource {
     private boolean myIsExists = false;
     private boolean myIsCollection;
     private boolean myIsSVNClient;
+    private String myDeltaBase;
     private long myVersion;
     private String myClientOptions;
     private String myBaseChecksum;
@@ -82,11 +85,12 @@ public class DAVResource {
         prepare();
     }
 
-    public DAVResource(SVNRepository repository, DAVResourceURI resourceURI, boolean isSVNClient, long version, String clientOptions,
+    public DAVResource(SVNRepository repository, DAVResourceURI resourceURI, boolean isSVNClient, String deltaBase, long version, String clientOptions,
                        String baseChecksum, String resultChecksum) throws SVNException {
         myRepository = repository;
         myResourceURI = resourceURI;
         myIsSVNClient = isSVNClient;
+        myDeltaBase = deltaBase;
         myVersion = version;
         myClientOptions = clientOptions;
         myBaseChecksum = baseChecksum;
@@ -149,6 +153,10 @@ public class DAVResource {
 
     public boolean isSVNClient() {
         return myIsSVNClient;
+    }
+
+    public String getDeltaBase() {
+        return myDeltaBase;
     }
 
     public long getVersion() {
@@ -350,5 +358,10 @@ public class DAVResource {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED));
         }
         getRepository().getFile(getResourceURI().getPath(), getRevision(), null, out);
+    }
+
+    public File getFile() {
+        String absolutePath = SVNPathUtil.append(getRepository().getLocation().getPath(), getResourceURI().getPath());
+        return new File(absolutePath);
     }
 }

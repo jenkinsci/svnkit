@@ -80,7 +80,7 @@ public class DAVRepositoryManager {
         return resourceURI.getPath();
     }
 
-    private String getURI(SVNURL url) throws SVNException {
+    public String getURI(SVNURL url) throws SVNException {
         String uri = DAVPathUtil.addLeadingSlash(url.getPath());
         if (uri.startsWith(myContext)) {
             uri = uri.substring(myContext.length());
@@ -90,7 +90,7 @@ public class DAVRepositoryManager {
         return uri;
     }
 
-    public DAVResource createDAVResource(String requestURI, boolean isSVNClient, long version, String clientOptions,
+    public DAVResource createDAVResource(String requestURI, boolean isSVNClient, String deltaBase, long version, String clientOptions,
                                          String baseChecksum, String resultChecksum, String label, boolean useCheckedIn) throws SVNException {
         String resourceRepositoryRoot = getRepositoryRoot(requestURI);
         String resourceContext = getResourceContext(requestURI);
@@ -99,7 +99,7 @@ public class DAVRepositoryManager {
         SVNRepository resourceRepository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(resourceRepositoryRoot));
 
         DAVResourceURI resourceURI = new DAVResourceURI(resourceContext, resourceRepositoryRelativePath, label, useCheckedIn);
-        return new DAVResource(resourceRepository, resourceURI, isSVNClient, version, clientOptions, baseChecksum, resultChecksum);
+        return new DAVResource(resourceRepository, resourceURI, isSVNClient, deltaBase, version, clientOptions, baseChecksum, resultChecksum);
     }
 
     private String getRepositoryRoot(String requestURI) throws SVNException {

@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNMergeInfo;
+import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
@@ -68,8 +69,9 @@ public class DAVMergeInfoHandler extends DAVReportHandler {
         if (mergeInfoMap != null && !mergeInfoMap.isEmpty()) {
             for (Iterator iterator = mergeInfoMap.entrySet().iterator(); iterator.hasNext();) {
                 Map.Entry entry = (Map.Entry) iterator.next();
+                String path = (String) entry.getKey();
                 SVNMergeInfo mergeInfo = (SVNMergeInfo) entry.getValue();
-                addMergeInfo(mergeInfo, xmlBuffer);
+                addMergeInfo(path, mergeInfo, xmlBuffer);
             }
         }
 
@@ -77,10 +79,26 @@ public class DAVMergeInfoHandler extends DAVReportHandler {
         return xmlBuffer.toString();
     }
 
-    private void addMergeInfo(SVNMergeInfo mergeInfo, StringBuffer xmlBuffer) {
+    private void addMergeInfo(String path, SVNMergeInfo mergeInfo, StringBuffer xmlBuffer) {
         XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "mergeinfo-item", XMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
-        XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "mergeinfo-path", mergeInfo.getPath(), xmlBuffer);
-        XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "mergeinfo-info", null, xmlBuffer);
+        XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "mergeinfo-path", path, xmlBuffer);
+        XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "mergeinfo-info", addSourcePathes(mergeInfo), xmlBuffer);
         XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "mergeinfo-item", xmlBuffer);
+    }
+
+    private String addSourcePathes(SVNMergeInfo mergeInfo) {
+        StringBuffer result = new StringBuffer();
+        for (Iterator iterator = mergeInfo.getMergeSourcesToMergeLists().entrySet().iterator(); iterator.hasNext();) {
+            Map.Entry entry = (Map.Entry) iterator.next();
+            String sourcePath = (String) entry.getKey();
+            SVNMergeRangeList rangeList = (SVNMergeRangeList) entry.getValue();
+            result.append(sourcePath);
+            result.append(":");
+            result.append(rangeList.toString());
+            if (iterator.hasNext()) {
+                result.append('\n');
+            }
+        }
+        return result.toString();
     }
 }

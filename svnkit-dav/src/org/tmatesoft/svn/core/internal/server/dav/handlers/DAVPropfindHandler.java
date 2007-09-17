@@ -114,7 +114,7 @@ public class DAVPropfindHandler extends ServletDAVHandler {
                 String entryURI = DAVPathUtil.append(resource.getResourceURI().getURI(), entry.getName());
                 //TODO: check if native svn uses label from parent resource
                 DAVResourceURI newResourceURI = new DAVResourceURI(resource.getResourceURI().getContext(), entryURI, null, false);
-                DAVResource newResource = new DAVResource(resource.getRepository(), newResourceURI, resource.isSVNClient(), resource.getVersion(), resource.getClientOptions(), null, null);
+                DAVResource newResource = new DAVResource(resource.getRepository(), newResourceURI, resource.isSVNClient(), resource.getDeltaBase(), resource.getVersion(), resource.getClientOptions(), null, null);
                 if (updateProperties) {
                     properties.clear();
                     properties.addAll(convertDeadPropertiesToDAVElements(newResource.getDeadProperties()));
