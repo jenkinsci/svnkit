@@ -1214,4 +1214,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         }
     }
 
+    public void update(long revision, String target, SVNDepth depth, boolean sendCopyFromArgs, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
+    }
+
 }

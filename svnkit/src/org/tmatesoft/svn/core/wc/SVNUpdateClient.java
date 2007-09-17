@@ -32,6 +32,7 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.wc.ISVNFileFetcher;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableOutputStream;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -198,10 +199,6 @@ public class SVNUpdateClient extends SVNBasicClient {
         return result;
     }
 
-    /* TODO(sd): "In the SVNDepth.DEPTH_IMMEDIATES case, shouldn't we update
-     * the presence/absence of subdirs, even though we don't update
-     * inside the subdirs themselves?"
-     */
     public long doUpdate(File file, SVNRevision revision, SVNDepth depth, boolean force) throws SVNException {
         depth = depth == null ? SVNDepth.UNKNOWN : depth;
         file = new File(SVNPathUtil.validateFilePath(file.getAbsolutePath()));
@@ -218,23 +215,35 @@ public class SVNUpdateClient extends SVNBasicClient {
             SVNEntry entry = anchorArea.getEntry(anchorArea.getThisDirName(), false);
             SVNURL url = entry.getSVNURL();
             if (url == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "Entry ''{0}'' has no URL", anchorArea.getRoot());
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, 
+                        "Entry ''{0}'' has no URL", anchorArea.getRoot());
                 SVNErrorManager.error(err);
             }
   
             final SVNReporter reporter = new SVNReporter(adminInfo, file, true, depth, getDebugLog());
             String[] preservedExts = getOptions().getPreservedConflictFileExtensions();
-            SVNUpdateEditor editor = new SVNUpdateEditor(adminInfo, null, 
-                                                         isLeaveConflictsUnresolved(), 
-                                                         force, depth, preservedExts,
-                                                         getConflictHandler());
+            
             SVNRepository repos = createRepository(url, true);
             
             String target = "".equals(adminInfo.getTargetName()) ? null : adminInfo.getTargetName();
             long revNumber = getRevisionNumber(revision, repos, file);
             SVNURL reposRoot = repos.getRepositoryRoot(true);
             wcAccess.setRepositoryRoot(file, reposRoot);
-            repos.update(revNumber, target, depth, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
+            
+            final SVNRepository repos2 = createRepository(reposRoot, false);
+            ISVNFileFetcher fileFetcher = new ISVNFileFetcher() {
+                public long fetchFile(String path, long revision, OutputStream os, Map properties) throws SVNException {
+                    return repos2.getFile(path, revision, properties, os);
+                }
+            };
+            SVNUpdateEditor editor = new SVNUpdateEditor(adminInfo, null, 
+                                                         isLeaveConflictsUnresolved(), 
+                                                         force, depth, preservedExts,
+                                                         getConflictHandler(),
+                                                         fileFetcher);
+            
+            repos.update(revNumber, target, depth, true, reporter, 
+                    SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
 
             if (editor.getTargetRevision() >= 0) {
                 if ((depth == SVNDepth.INFINITY || depth == SVNDepth.UNKNOWN) 
@@ -307,9 +316,6 @@ public class SVNUpdateClient extends SVNBasicClient {
         return doSwitch(file, url, pegRevision, revision, SVNDepth.fromRecurse(recursive), force);
     }    
     
-    /* TODO(sd): "But, I think the svn_depth_immediates behavior is not
-     * actually implemented yet."
-     */
     public long doSwitch(File file, SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, boolean force) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess();
         try {
@@ -347,7 +353,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             SVNUpdateEditor editor = new SVNUpdateEditor(info, url.toString(), 
                                                          isLeaveConflictsUnresolved(), 
                                                          force, depth, preservedExts, 
-                                                         getConflictHandler());
+                                                         getConflictHandler(), null);
             String target = "".equals(info.getTargetName()) ? null : info.getTargetName();
             repository.update(url, revNumber, target, depth, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
 
@@ -754,7 +760,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         SVNNodeKind dstKind = repository.checkPath("", revNumber);
         if (dstKind == SVNNodeKind.DIR) {
             SVNExportEditor editor = new SVNExportEditor(this, repository.getLocation().toString(), dstPath,  force, eolStyle, getOptions());
-            repository.update(revNumber, null, depth, new ISVNReporterBaton() {
+            repository.update(revNumber, null, depth, false, new ISVNReporterBaton() {
                 public void report(ISVNReporter reporter) throws SVNException {
                     reporter.setPath("", null, revNumber, SVNDepth.INFINITY, true);
                     reporter.finishReport();

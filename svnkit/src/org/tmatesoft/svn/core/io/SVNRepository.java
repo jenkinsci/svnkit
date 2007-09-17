@@ -1396,10 +1396,11 @@ public abstract class SVNRepository {
      * @see                     <a href="http://svnkit.com/kb/dev-guide-update-operation.html">Using ISVNReporter/ISVNEditor in update-related operations</a>
      */
     public void update(long revision, String target, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
-        update(revision, target, SVNDepth.fromRecurse(recursive), reporter, editor);
+        update(revision, target, SVNDepth.fromRecurse(recursive), false, reporter, editor);
     }
 
-    public abstract void update(long revision, String target, SVNDepth depth, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException;
+    public abstract void update(long revision, String target, SVNDepth depth, 
+            boolean sendCopyFromArgs, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException;
     
     /**
      * Gets status of a path.
@@ -1513,7 +1514,7 @@ public abstract class SVNRepository {
             SVNErrorManager.error(err);
         }
         final SVNDepth reporterDepth = depth;
-        update(revision, target, depth, new ISVNReporterBaton() {
+        update(revision, target, depth, false, new ISVNReporterBaton() {
                     public void report(ISVNReporter reporter) throws SVNException {
                         reporter.setPath("", null, lastRev, reporterDepth, true);
                         reporter.finishReport();

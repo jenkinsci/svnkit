@@ -665,14 +665,14 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     public FSTranslateReporter getTranslateReporterForUpdate(long revision, String target, 
                                                              SVNDepth depth, ISVNEditor editor) throws SVNException {
         openRepository();
-        makeReporterContext(revision, target, null, depth, false, true, editor);
+        makeReporterContext(revision, target, null, depth, false, true, false, editor);
         return new FSTranslateReporter(this);
     }
 
     public FSTranslateReporter getTranslateReporterForSwitch(SVNURL url, long revision, String target, 
                                                              SVNDepth depth, ISVNEditor editor) throws SVNException {
         openRepository();
-        makeReporterContext(revision, target, url, depth, true, true, editor);
+        makeReporterContext(revision, target, url, depth, true, true, false, editor);
         return new FSTranslateReporter(this);
     }
 
@@ -681,7 +681,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                                                            SVNDepth depth, boolean getContents, 
                                                            ISVNEditor editor) throws SVNException {
         openRepository();
-        makeReporterContext(targetRevision, target, url, depth, ignoreAncestry, getContents, editor);
+        makeReporterContext(targetRevision, target, url, depth, ignoreAncestry, getContents, false, editor);
         return new FSTranslateReporter(this);
     }
 
@@ -689,24 +689,27 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                                                              ISVNEditor editor) throws SVNException {
 
         openRepository();
-        makeReporterContext(revision, target, null, depth, false, false, editor);
+        makeReporterContext(revision, target, null, depth, false, false, false, editor);
         return new FSTranslateReporter(this);
     }
 
-    public void update(long revision, String target, SVNDepth depth, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
+    public void update(long revision, String target, SVNDepth depth, boolean sendCopyFromArgs, 
+            ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
         try {
             openRepository();
-            makeReporterContext(revision, target, null, depth, false, true, editor);
+            makeReporterContext(revision, target, null, depth, false, true, sendCopyFromArgs, 
+                    editor);
             reporter.report(this);
         } finally {
             closeRepository();
         }
     }
 
-    public void update(SVNURL url, long revision, String target, SVNDepth depth, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
+    public void update(SVNURL url, long revision, String target, SVNDepth depth, 
+            ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
         try {
             openRepository();
-            makeReporterContext(revision, target, url, depth, true, true, editor);
+            makeReporterContext(revision, target, url, depth, true, true, false, editor);
             reporter.report(this);
         } finally {
             closeRepository();
@@ -717,17 +720,19 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                      SVNDepth depth, boolean getContents, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
         try {
             openRepository();
-            makeReporterContext(targetRevision, target, url, depth, ignoreAncestry, getContents, editor);
+            makeReporterContext(targetRevision, target, url, depth, ignoreAncestry, getContents, 
+                    false, editor);
             reporter.report(this);
         } finally {
             closeRepository();
         }
     }
 
-    public void status(long revision, String target, SVNDepth depth, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
+    public void status(long revision, String target, SVNDepth depth, ISVNReporterBaton reporter, 
+            ISVNEditor editor) throws SVNException {
         try {
             openRepository();
-            makeReporterContext(revision, target, null, depth, false, false, editor);
+            makeReporterContext(revision, target, null, depth, false, false, false, editor);
             reporter.report(this);
         } finally {
             closeRepository();
@@ -890,7 +895,9 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         return dirEntry;
     }
     
-    private void makeReporterContext(long targetRevision, String target, SVNURL switchURL, SVNDepth depth, boolean ignoreAncestry, boolean textDeltas, ISVNEditor editor) throws SVNException {
+    private void makeReporterContext(long targetRevision, String target, SVNURL switchURL, 
+            SVNDepth depth, boolean ignoreAncestry, boolean textDeltas, boolean sendCopyFromArgs, 
+            ISVNEditor editor) throws SVNException {
         target = target == null ? "" : target;
 
         if (!isValidRevision(targetRevision)) {
@@ -922,8 +929,10 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         if (myReporterContext == null) {
             myReporterContext = new FSUpdateContext(this, myFSFS, targetRevision, 
                                                     SVNFileUtil.createTempFile("report", ".tmp"), 
-                                                    target, fullTargetPath, switchURL == null ? false : true, 
-                                                    depth, ignoreAncestry, textDeltas, editor);    
+                                                    target, fullTargetPath, 
+                                                    switchURL == null ? false : true, 
+                                                    depth, ignoreAncestry, textDeltas, 
+                                                    sendCopyFromArgs, editor);    
         } else {
             myReporterContext.reset(this, myFSFS, targetRevision, SVNFileUtil.createTempFile("report", ".tmp"), 
                                     target, fullTargetPath, switchURL == null ? false : true, depth, 
