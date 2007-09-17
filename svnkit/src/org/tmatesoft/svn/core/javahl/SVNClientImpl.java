@@ -2208,7 +2208,15 @@ public class SVNClientImpl implements SVNClientInterface {
     public void move(String[] srcPaths, String destPath, String message, boolean force, boolean moveAsChild, boolean makeParents, boolean withMergeHistory) throws ClientException {
         notImplementedYet(null);//TODO: fixme
     }
-    
+
+    public void add(String path, int depth, boolean force, boolean noIgnores, boolean addParents) throws ClientException {
+        notImplementedYet(null);//TODO: fixme
+    }
+
+    public void doImport(String path, String url, String message, int depth, boolean noIgnore, boolean ignoreUnknownNodeTypes) throws ClientException {
+        notImplementedYet(null);//TODO: fixme
+    }
+
     private void notImplementedYet() throws ClientException {
         notImplementedYet(null);
     }

@@ -577,4 +577,12 @@ public class SVNClient implements SVNClientInterface {
     public void move(String[] srcPaths, String destPath, String message, boolean force, boolean moveAsChild, boolean makeParents, boolean withMergeHistory) throws ClientException {
         myDelegate.move(srcPaths, destPath, message, force, moveAsChild, makeParents, withMergeHistory);
     }
+
+    public void add(String path, int depth, boolean force, boolean noIgnores, boolean addParents) throws ClientException {
+        myDelegate.add(path, depth, force, noIgnores, addParents);
+    }
+
+    public void doImport(String path, String url, String message, int depth, boolean noIgnore, boolean ignoreUnknownNodeTypes) throws ClientException {
+        myDelegate.doImport(path, url, message, depth, noIgnore, ignoreUnknownNodeTypes);
+    }
 }
