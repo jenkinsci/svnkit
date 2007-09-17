@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.io.ISVNTunnelProvider;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.util.ISVNDebugLog;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 
 /**
@@ -345,18 +346,28 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
     
     private class TimeoutTask extends TimerTask {
         public void run() {
-            long currentTime = System.currentTimeMillis();
-            synchronized (myInactiveRepositories) {
-                for (Iterator repositories = myInactiveRepositories.keySet().iterator(); repositories.hasNext();) {
-                    SVNRepository repos = (SVNRepository) repositories.next();
-                    long time = ((Long) myInactiveRepositories.get(repos)).longValue();
-                    if (currentTime - time >= getTimeout()) {
-                        repositories.remove();
-                        repos.closeSession();
+            boolean scheduled = false;
+            try {
+                long currentTime = System.currentTimeMillis();
+                synchronized (myInactiveRepositories) {
+                    for (Iterator repositories = myInactiveRepositories.keySet().iterator(); repositories.hasNext();) {
+                        SVNRepository repos = (SVNRepository) repositories.next();
+                        long time = ((Long) myInactiveRepositories.get(repos)).longValue();
+                        if (currentTime - time >= getTimeout()) {
+                            repositories.remove();
+                            repos.closeSession();
+                        }
+                    }
+                    if (myTimer != null) {
+                        myTimer.schedule(new TimeoutTask(), 10000);
+                        scheduled = true;
                     }
                 }
-                if (myTimer != null) {
+            } catch (Throwable th) {
+                SVNDebugLog.getDefaultLog().error(th);
+                if (!scheduled && myTimer != null) {
                     myTimer.schedule(new TimeoutTask(), 10000);
+                    scheduled = true;
                 }
             }
         }
