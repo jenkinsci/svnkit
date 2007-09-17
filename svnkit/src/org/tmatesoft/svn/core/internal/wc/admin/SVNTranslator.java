@@ -16,7 +16,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PushbackInputStream;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -114,9 +113,10 @@ public class SVNTranslator {
             return;
         }
         OutputStream os = SVNFileUtil.openFileForWriting(dst);
+        os = new SVNTranslatorOutputStream(os, eol, false, keywords, expand);
         InputStream is = SVNFileUtil.openFileForReading(src);
         try {
-            copy(is, os, eol, keywords);
+            copy(is, os);
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
             SVNErrorManager.error(err, e);
@@ -171,141 +171,6 @@ public class SVNTranslator {
             }
             dst.write(buffer, 0, read);
         }
-    }
-
-    public static void copy(InputStream src, OutputStream dst, byte[] eol, Map keywords) throws IOException {
-        if (keywords != null && keywords.isEmpty()) {
-            keywords = null;
-        }
-        PushbackInputStream in = new PushbackInputStream(src, 2048);
-        byte[] keywordBuffer = new byte[256];
-
-        while (true) {
-            int r = in.read();
-            if (r < 0) {
-                return;
-            }
-            if ((r == '\r' || r == '\n') && eol != null) {
-                int next = in.read();
-                dst.write(eol);
-                if (r == '\r' && next == '\n') {
-                    continue;
-                }
-                if (next < 0) {
-                    return;
-                }
-                in.unread(next);
-            } else if (r == '$' && keywords != null) {
-                // advance in buffer for 256 more chars.
-                dst.write(r);
-                int length = in.read(keywordBuffer);
-                int keywordLength = 0;
-                for (int i = 0; i < length; i++) {
-                    if (keywordBuffer[i] == '\r' || keywordBuffer[i] == '\n') {
-                        // failure, save all before i, unread remains.
-                        dst.write(keywordBuffer, 0, i);
-                        in.unread(keywordBuffer, i, length - i);
-                        keywordLength = -1;
-                        break;
-                    } else if (keywordBuffer[i] == '$') {
-                        keywordLength = i + 1;
-                        break;
-                    }
-                }
-                if (keywordLength == 0) {
-                    if (length > 0) {
-                        dst.write(keywordBuffer, 0, length);
-                    }
-                } else if (keywordLength > 0) {
-                    int from = translateKeyword(dst, keywords, keywordBuffer, keywordLength);
-                    in.unread(keywordBuffer, from, length - from);
-                }
-            } else {
-                dst.write(r);
-            }
-        }
-    }
-
-    private static int translateKeyword(OutputStream os, Map keywords, byte[] keyword, int length) throws IOException {
-        // $$ = 0, 2 => 1,0
-        String keywordName = null;
-        int i = 0;
-        for (i = 0; i < length; i++) {
-            if (keyword[i] == '$' || keyword[i] == ':') {
-                // from first $ to the offset i, exclusive
-                keywordName = new String(keyword, 0, i, "UTF-8");
-                break;
-            }
-            // write to os, we do not need it.
-            os.write(keyword[i]);
-        }
-
-        if (!keywords.containsKey(keywordName)) {
-            // unknown keyword, just write trailing chars.
-            // already written is $keyword[i]..
-            // but do not write last '$' - it could be a start of another
-            // keyword.
-            os.write(keyword, i, length - i - 1);
-            return length - 1;
-        }
-        byte[] value = (byte[]) keywords.get(keywordName);
-        // now i points to the first char after keyword name.
-        if (length - i > 5 && keyword[i] == ':' && keyword[i + 1] == ':'
-                && keyword[i + 2] == ' '
-                && (keyword[length - 2] == ' ' || keyword[length - 2] == '#')) {
-            // :: x $
-            // fixed size keyword.
-            // 1. write value to keyword
-            int vOffset = 0;
-            int start = i;
-            for (i = i + 3; i < length - 2; i++) {
-                if (value == null) {
-                    keyword[i] = ' ';
-                } else {
-                    keyword[i] = vOffset < value.length ? value[vOffset] : (byte) ' ';
-                }
-                vOffset++;
-            }
-            keyword[i] = (byte) (value != null && vOffset < value.length ? '#' : ' ');
-            // now save all.
-            os.write(keyword, start, length - start);
-        } else if (length - i > 4 && keyword[i] == ':' && keyword[i + 1] == ' ' && keyword[length - 2] == ' ') {
-            // : x $
-            if (value != null) {
-                os.write(keyword, i, value.length > 0 ? 1 : 2); // ': ' or ':'
-                if (value.length > 250) {
-                    os.write(value, 0, 250);
-                } else {
-                    os.write(value);
-                }
-                os.write(keyword, length - 2, 2); // ' $';
-            } else {
-                os.write('$');
-            }
-        } else if (keyword[i] == '$' || (keyword[i] == ':' && keyword[i + 1] == '$')) {
-            // $ or :$
-            if (value != null) {
-                os.write(':');
-                os.write(' ');
-                if (value.length > 250 - keywordName.length()) {
-                    os.write(value, 0, 250 - keywordName.length());
-                } else {
-                    os.write(value);
-                }
-                if (value.length > 0) {
-                    os.write(' ');
-                }
-                os.write('$');
-            } else {
-                os.write('$');
-            }
-        } else {
-            // something wrong. write all, but not last $
-            os.write(keyword, i, length - i - 1);
-            return length - 1;
-        }
-        return length;
-
     }
 
     public static Map computeKeywords(String keywords, String u, String a, String d, String r, ISVNOptions options) {
