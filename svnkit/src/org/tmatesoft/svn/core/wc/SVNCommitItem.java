@@ -192,9 +192,6 @@ public class SVNCommitItem {
      *         have local changes, otherwise <span class="javakeyword">false</span>
      */
     public boolean isPropertiesModified() {
-        if (isAdded() || isDeleted()) {
-            return false;
-        }
         return myIsPropertiesModified;
     }
 
