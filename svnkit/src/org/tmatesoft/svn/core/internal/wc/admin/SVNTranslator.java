@@ -113,14 +113,15 @@ public class SVNTranslator {
             return;
         }
         OutputStream os = SVNFileUtil.openFileForWriting(dst);
-        os = new SVNTranslatorOutputStream(os, eol, false, keywords, expand);
+        OutputStream tos = new SVNTranslatorOutputStream(os, eol, false, keywords, expand);
         InputStream is = SVNFileUtil.openFileForReading(src);
         try {
-            copy(is, os);
+            copy(is, tos);
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
             SVNErrorManager.error(err, e);
         } finally {
+            SVNFileUtil.closeFile(tos);
             SVNFileUtil.closeFile(os);
             SVNFileUtil.closeFile(is);
         }
