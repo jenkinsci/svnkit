@@ -662,6 +662,13 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         myReporterContext.writePathInfoToReportFile(path, null, lockToken, revision, startEmpty, depth);
     }
 
+    public FSTranslateReporter beginReport(long revision, SVNURL url, String target, boolean ignoreAncestry, 
+            boolean sendTextDeltas, boolean sendCopyFromArgs, SVNDepth depth, ISVNEditor editor) throws SVNException {
+        openRepository();
+        makeReporterContext(revision, target, url, depth, ignoreAncestry, sendTextDeltas, sendCopyFromArgs, editor);
+        return new FSTranslateReporter(this);
+    }
+    
     public FSTranslateReporter getTranslateReporterForUpdate(long revision, String target, 
                                                              SVNDepth depth, ISVNEditor editor) throws SVNException {
         openRepository();
