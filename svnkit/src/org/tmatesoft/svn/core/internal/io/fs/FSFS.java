@@ -882,16 +882,8 @@ public class FSFS {
             if (rootPath.getParentFile() == null) {
                 return null;
             }
-            String name = rootPath.getName();
-            path = path.substring(0, path.length() - name.length());
-            while (path.endsWith("/") || path.endsWith("\\")) {
-                path = path.substring(0, path.length() - 1);
-            }
-            if ("".equals(path)) {
-                return null;
-            }
-            testPath = host != null ? SVNPathUtil.append("\\\\" + host, path) : path;
-            rootPath = new File(testPath).getAbsoluteFile();
+            path = SVNPathUtil.removeTail(path);
+            rootPath = rootPath.getParentFile();
         }
         while (path.endsWith("/")) {
             path = path.substring(0, path.length() - 1);
