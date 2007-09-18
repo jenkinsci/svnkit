@@ -213,12 +213,6 @@ public class DAVUpdateRequest extends DAVRequest {
         }
     }
 
-    private void assertNullCData(DAVElement element, DAVElementProperty property) throws SVNException {
-        if (property.getValues() == null) {
-            invalidXML(element);
-        }
-    }
-
     public int getAction() {
         if (!isInitialized()) {
             return UNKNOWN_ACTION;
@@ -242,10 +236,5 @@ public class DAVUpdateRequest extends DAVRequest {
                 return STATUS_ACTION;
             }
         }
-    }
-
-    private void invalidXML(DAVElement element) throws SVNException {
-        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.XML_MALFORMED, "\"The request's ''{0}'' element is malformed; there is a problem with the client.", element.getName()));
-
     }
 }

@@ -65,7 +65,7 @@ public class DAVMergeInfoRequest extends DAVRequest {
                 setRevision(Long.parseLong(property.getFirstValue()));
             } else if (element == INHERIT) {
                 setInherit(parseInheritance(property.getFirstValue()));
-                if (getInherit() != null) {
+                if (getInherit() == null) {
                     invalidXML();
                 }
             } else if (element == PATH) {
@@ -77,7 +77,6 @@ public class DAVMergeInfoRequest extends DAVRequest {
         }
     }
 
-    //TODO: move this method to SVNMergeInfoInheritance
     private SVNMergeInfoInheritance parseInheritance(String inheritance) {
         if (SVNMergeInfoInheritance.EXPLICIT.toString().equals(inheritance)) {
             return SVNMergeInfoInheritance.EXPLICIT;

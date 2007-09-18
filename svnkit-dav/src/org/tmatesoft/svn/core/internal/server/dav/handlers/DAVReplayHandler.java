@@ -21,11 +21,15 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 
 /**
@@ -57,12 +61,21 @@ public class DAVReplayHandler extends DAVReportHandler implements ISVNEditor {
 
         writeXMLHeader();
 
-        getDAVResource().getRepository().replay(getReplayRequest().getLowRevision(),
+        getRequestedRepository().replay(getReplayRequest().getLowRevision(),
                 getReplayRequest().getRevision(),
                 getReplayRequest().isSendDeltas(),
                 this);
 
         writeXMLFooter();
+    }
+
+    private SVNRepository getRequestedRepository() throws SVNException {
+        if (getDAVResource().getResourceURI().getPath() == null || getDAVResource().getResourceURI().getPath().length() == 0) {
+            return getDAVResource().getRepository();
+        }
+        SVNURL resourceURL = getDAVResource().getRepository().getLocation();
+        SVNURL resultURL = resourceURL.setPath(SVNPathUtil.append(resourceURL.getPath(), getDAVResource().getResourceURI().getPath()), true);
+        return SVNRepositoryFactory.create(resultURL);
     }
 
     public void targetRevision(long revision) throws SVNException {

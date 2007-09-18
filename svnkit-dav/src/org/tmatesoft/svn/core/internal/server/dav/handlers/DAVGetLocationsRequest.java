@@ -19,6 +19,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
+import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 /**
@@ -67,7 +68,9 @@ public class DAVGetLocationsRequest extends DAVRequest {
             DAVElement element = (DAVElement) entry.getKey();
             DAVElementProperty property = (DAVElementProperty) entry.getValue();
             if (element == PATH) {
-                setPath(property.getFirstValue());
+                String path = property.getFirstValue();
+                DAVPathUtil.testCanonical(path);
+                setPath(path);
             } else if (element == PEG_REVISION) {
                 String pegRevisionString = property.getFirstValue();
                 setPegRevision(Long.parseLong(pegRevisionString));
@@ -82,8 +85,7 @@ public class DAVGetLocationsRequest extends DAVRequest {
             }
         }
 
-        //TODO: check pegRevision
-        if (getPath() == null) {
+        if (getPath() == null && !DAVResource.isValidRevision(getPegRevision())) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Not all parameters passed."));
         }
     }

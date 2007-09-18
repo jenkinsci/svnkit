@@ -18,12 +18,15 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 /**
  * @author TMate Software Ltd.
@@ -59,6 +62,10 @@ public class DAVGetLocksHandler extends DAVReportHandler {
     }
 
     private String generateResponseBody() throws SVNException {
+        if (getDAVResource().getResourceURI().getPath() == null) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "get-locks-report run on resource which doesn't represent a path within a repository."));
+        }
+
         SVNLock[] locks = getDAVResource().getLocks();
 
         StringBuffer xmlBuffer = new StringBuffer();

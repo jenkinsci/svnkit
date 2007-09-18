@@ -150,7 +150,6 @@ public class DAVReportHandler extends ServletDAVHandler {
         setResponseStatus(HttpServletResponse.SC_OK);
 
         getReportHandler().execute();
-        //TODO: In some cases native svn starts blame command and clean all out headers
     }
 
     private void initReportHandler(DAVElement rootElement) throws SVNException {

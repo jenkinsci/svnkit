@@ -26,7 +26,10 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
+import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
+import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 /**
  * @author TMate Software Ltd.
@@ -55,6 +58,12 @@ public class DAVLogHandler extends DAVReportHandler implements ISVNLogEntryHandl
         setDAVResource(createDAVResource(false, false));
 
         writeXMLHeader();
+
+        for (int i = 0; i < getLogRequest().getTargetPaths().length; i++) {
+            String currentPath = getLogRequest().getTargetPaths()[i];
+            DAVPathUtil.testCanonical(currentPath);
+            getLogRequest().getTargetPaths()[i] = SVNPathUtil.append(getDAVResource().getResourceURI().getPath(), currentPath);
+        }
 
         getDAVResource().getRepository().log(getLogRequest().getTargetPaths(),
                 getLogRequest().getStartRevision(),
@@ -108,9 +117,8 @@ public class DAVLogHandler extends DAVReportHandler implements ISVNLogEntryHandl
     private void addChangedPathTag(String path, SVNLogEntryPath logEntryPath) throws SVNException {
         StringBuffer xmlBuffer = new StringBuffer();
         switch (logEntryPath.getType()) {
-            //TODO: check copyfrom revision
             case SVNLogEntryPath.TYPE_ADDED:
-                if (logEntryPath.getCopyPath() != null) {
+                if (logEntryPath.getCopyPath() != null && DAVResource.isValidRevision(logEntryPath.getCopyRevision())) {
                     Map attrs = new HashMap();
                     attrs.put("copyfrom-path", logEntryPath.getCopyPath());
                     attrs.put("copyfrom-rev", String.valueOf(logEntryPath.getCopyRevision()));
@@ -120,14 +128,14 @@ public class DAVLogHandler extends DAVReportHandler implements ISVNLogEntryHandl
                 }
                 break;
             case SVNLogEntryPath.TYPE_REPLACED:
-                if (logEntryPath.getCopyPath() != null) {
-                    Map attrs = new HashMap();
+                Map attrs = null;
+                if (logEntryPath.getCopyPath() != null && DAVResource.isValidRevision(logEntryPath.getCopyRevision())) {
+                    attrs = new HashMap();
                     attrs.put("copyfrom-path", logEntryPath.getCopyPath());
                     attrs.put("copyfrom-rev", String.valueOf(logEntryPath.getCopyRevision()));
-                    XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "replaced-path", path, attrs, xmlBuffer);
-                } else {
-                    XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "replaced-path", path, xmlBuffer);
                 }
+                XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "replaced-path", path, attrs, xmlBuffer);
+
                 break;
             case SVNLogEntryPath.TYPE_MODIFIED:
                 XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "modified-path", path, xmlBuffer);

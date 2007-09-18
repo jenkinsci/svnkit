@@ -15,8 +15,11 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 /**
  * @author TMate Software Ltd.
@@ -64,23 +67,22 @@ public class DAVReplayRequest extends DAVRequest {
             DAVElement element = (DAVElement) entry.getKey();
             DAVElementProperty property = (DAVElementProperty) entry.getValue();
             if (element == REVISION) {
-                if (property.getFirstValue() == null) {
-                    invalidXML();
-                }
+                assertNullCData(element, property);
                 setRevision(Long.parseLong(property.getFirstValue()));
             } else if (element == LOW_WATER_MARK) {
-                if (property.getFirstValue() == null) {
-                    invalidXML();
-                }
+                assertNullCData(element, property);
                 setLowRevision(Long.parseLong(property.getFirstValue()));
             } else if (element == SEND_DELTAS) {
-                if (property.getFirstValue() == null) {
-                    invalidXML();
-                }
+                assertNullCData(element, property);
                 int sendDeltas = Integer.parseInt(property.getFirstValue());
                 setSendDeltas(sendDeltas != 0);
             }
         }
-        //TODO: check revisions
+        if (!DAVResource.isValidRevision(getRevision())) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Request was missing the revision argument."));
+        }
+        if (!DAVResource.isValidRevision(getLowRevision())) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Request was missing the low-water-mark argument."));
+        }
     }
 }

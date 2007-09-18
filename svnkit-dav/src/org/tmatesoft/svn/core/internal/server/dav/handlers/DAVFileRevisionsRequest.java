@@ -17,6 +17,7 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
+import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 
 /**
  * @author TMate Software Ltd.
@@ -58,7 +59,9 @@ public class DAVFileRevisionsRequest extends DAVRequest {
             DAVElement element = (DAVElement) entry.getKey();
             DAVElementProperty property = (DAVElementProperty) entry.getValue();
             if (element == PATH) {
-                setPath(property.getFirstValue());
+                String path = property.getFirstValue();
+                DAVPathUtil.testCanonical(path);
+                setPath(path);
             } else if (element == START_REVISION) {
                 setStartRevision(Long.parseLong(property.getFirstValue()));
             } else if (element == END_REVISION) {

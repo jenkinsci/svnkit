@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
@@ -57,7 +58,8 @@ public class DAVFileRevisionsHandler extends DAVReportHandler implements ISVNFil
 
         writeXMLHeader();
 
-        getDAVResource().getRepository().getFileRevisions(getFileRevsionsRequest().getPath(), getFileRevsionsRequest().getStartRevision(), getFileRevsionsRequest().getEndRevision(), this);
+        String path = SVNPathUtil.append(getDAVResource().getResourceURI().getPath(), getFileRevsionsRequest().getPath());
+        getDAVResource().getRepository().getFileRevisions(path, getFileRevsionsRequest().getStartRevision(), getFileRevsionsRequest().getEndRevision(), this);
 
         writeXMLFooter();
     }

@@ -632,7 +632,6 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
             if (isDirectory) {
                 long createdRevision = getDAVResource().getCreatedRevision(realPath, getRevision());
                 String bcURL = DAVPathUtil.buildURI(getDAVResource().getResourceURI().getContext(), DAVResourceKind.BASELINE_COLL, createdRevision, realPath);
-                //TODO: check bcURL
                 attrs.put("bc-url", bcURL);
             }
             if (copyFromPath != null) {

@@ -24,6 +24,8 @@ import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
+import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 /**
  * @author TMate Software Ltd.
@@ -64,6 +66,12 @@ public class DAVMergeInfoHandler extends DAVReportHandler {
     private String generateResponseBody() throws SVNException {
         StringBuffer xmlBuffer = new StringBuffer();
         addXMLHeader(xmlBuffer);
+
+        for (int i = 0; i < getMergeInfoRequest().getTargetPaths().length; i++) {
+            String currentPath = getMergeInfoRequest().getTargetPaths()[i];
+            DAVPathUtil.testCanonical(currentPath);
+            getMergeInfoRequest().getTargetPaths()[i] = SVNPathUtil.append(getDAVResource().getResourceURI().getPath(), currentPath);
+        }
 
         Map mergeInfoMap = getDAVResource().getRepository().getMergeInfo(getMergeInfoRequest().getTargetPaths(), getMergeInfoRequest().getRevision(), getMergeInfoRequest().getInherit());
         if (mergeInfoMap != null && !mergeInfoMap.isEmpty()) {

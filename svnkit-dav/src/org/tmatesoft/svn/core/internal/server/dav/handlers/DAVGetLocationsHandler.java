@@ -53,7 +53,8 @@ public class DAVGetLocationsHandler extends DAVReportHandler implements ISVNLoca
 
         writeXMLHeader();
 
-        getDAVResource().getRepository().getLocations(getGetLocationsRequest().getPath(), getGetLocationsRequest().getPegRevision(), getGetLocationsRequest().getRevisions(), this);
+        String path = SVNPathUtil.append(getDAVResource().getResourceURI().getPath(), getGetLocationsRequest().getPath());
+        getDAVResource().getRepository().getLocations(path, getGetLocationsRequest().getPegRevision(), getGetLocationsRequest().getRevisions(), this);
 
         writeXMLFooter();
     }

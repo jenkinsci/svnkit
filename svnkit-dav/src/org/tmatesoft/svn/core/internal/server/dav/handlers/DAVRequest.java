@@ -134,7 +134,16 @@ public abstract class DAVRequest {
 
     protected void invalidXML() throws SVNException {
         SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.XML_MALFORMED, "Malformed XML"));
+    }
 
+    protected void invalidXML(DAVElement element) throws SVNException {
+        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.XML_MALFORMED, "\"The request's ''{0}'' element is malformed; there is a problem with the client.", element.getName()));
+    }
+
+    protected void assertNullCData(DAVElement element, DAVElementProperty property) throws SVNException {
+        if (property.getValues() == null) {
+            invalidXML(element);
+        }
     }
 
     private Map getAttributesMap(Attributes attrs) {
