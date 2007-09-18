@@ -146,6 +146,7 @@ public class DAVReplayHandler extends DAVReportHandler implements ISVNEditor {
     }
 
     public void textDeltaEnd(String path) throws SVNException {
+        textDeltaChunkEnd();
         setWriteTextDeltaHeader(true);
         StringBuffer xmlBuffer = XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "apply-textdelta", null);
         write(xmlBuffer);

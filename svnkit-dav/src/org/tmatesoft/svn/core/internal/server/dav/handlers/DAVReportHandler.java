@@ -11,8 +11,8 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -205,18 +205,31 @@ public class DAVReportHandler extends ServletDAVHandler {
     protected void addXMLFooter(StringBuffer xmlBuffer) {
         XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, getDAVRequest().getRootElement().getName(), xmlBuffer);
     }
+    
+    private OutputStream myDiffWindowWriter;
 
     protected void writeTextDeltaChunk(SVNDiffWindow diffWindow) throws SVNException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        if (myDiffWindowWriter == null) {
+            myDiffWindowWriter = new DAVBase64OutputStream(getResponseWriter());
+        }
         try {
-            diffWindow.writeTo(baos, isWriteTextDeltaHeader(), doCompress());
-            byte[] textDelta = baos.toByteArray();
-            String txDelta = SVNBase64.byteArrayToBase64(textDelta);
-            write(txDelta);
-            setWriteTextDeltaHeader(false);
+            diffWindow.writeTo(myDiffWindowWriter, isWriteTextDeltaHeader(), doCompress());
         } catch (IOException e) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
+        } finally {
+            setWriteTextDeltaHeader(false);
         }
+    }
+    
+    protected void textDeltaChunkEnd() throws SVNException {
+        if (myDiffWindowWriter != null) {
+            try {
+                myDiffWindowWriter.flush();
+            } catch (IOException e) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
+            }
+        }
+        myDiffWindowWriter = null;
     }
 
     protected void writePropertyTag(String tagName, String propertyName, String propertyValue) throws SVNException {

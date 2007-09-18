@@ -103,6 +103,8 @@ public class DAVFileRevisionsHandler extends DAVReportHandler implements ISVNFil
     }
 
     public void textDeltaEnd(String path) throws SVNException {
+        textDeltaChunkEnd();
+        setWriteTextDeltaHeader(true);
         StringBuffer xmlBuffer = XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "txdelta", null);
         write(xmlBuffer);
     }

@@ -92,7 +92,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
         UPDATE_REPORT_NAMESPACES.add(DAVElement.SVN_DAV_PROPERTY_NAMESPACE);
     }
 
-    public DAVUpdateHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) throws SVNException {
+    public DAVUpdateHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) {
         super(repositoryManager, request, response);
         setSVNDiffVersion(getSVNDiffVersion());
     }
@@ -588,6 +588,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
 
     public void textDeltaEnd(String path) throws SVNException {
         if (!isResourceWalk()) {
+            textDeltaChunkEnd();
             setWriteTextDeltaHeader(true);
             StringBuffer xmlBuffer = XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "txdelta", null);
             write(xmlBuffer);
