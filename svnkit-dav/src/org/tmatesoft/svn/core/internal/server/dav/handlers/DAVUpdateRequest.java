@@ -22,7 +22,6 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 /**
@@ -30,12 +29,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
  * @version 1.1.2
  */
 public class DAVUpdateRequest extends DAVRequest {
-
-    public static final int UPDATE_ACTION = 2;
-    public static final int DIFF_ACTION = 9;
-    public static final int STATUS_ACTION = 10;
-    public static final int SWITCH_ACTION = 12;
-    public static final int UNKNOWN_ACTION = 20;
 
     private static final DAVElement TARGET_REVISION = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "target-revision");
     private static final DAVElement SRC_PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "src-path");
@@ -223,31 +216,6 @@ public class DAVUpdateRequest extends DAVRequest {
                 setTextDeltas(false);
             }
             setInitialized(true);
-        }
-    }
-
-    public int getAction() {
-        if (!isInitialized()) {
-            return UNKNOWN_ACTION;
-        }
-        String sPath;
-        if (getTarget() != null) {
-            sPath = SVNPathUtil.append(getSrcURL().toString(), getTarget());
-        } else {
-            sPath = getSrcURL().toString();
-        }
-        if (getDstURL() != null) {
-            if (!isSendAll() && getDstURL().equals(sPath)) {
-                return DIFF_ACTION;
-            } else {
-                return isSendAll() ? SWITCH_ACTION : DIFF_ACTION;
-            }
-        } else {
-            if (isTextDeltas()) {
-                return UPDATE_ACTION;
-            } else {
-                return STATUS_ACTION;
-            }
         }
     }
 }

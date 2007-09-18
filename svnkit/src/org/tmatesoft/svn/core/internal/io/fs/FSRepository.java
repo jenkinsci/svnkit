@@ -668,37 +668,6 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         makeReporterContext(revision, target, url, depth, ignoreAncestry, sendTextDeltas, sendCopyFromArgs, editor);
         return new FSTranslateReporter(this);
     }
-    
-    public FSTranslateReporter getTranslateReporterForUpdate(long revision, String target, 
-                                                             SVNDepth depth, ISVNEditor editor) throws SVNException {
-        openRepository();
-        makeReporterContext(revision, target, null, depth, false, true, false, editor);
-        return new FSTranslateReporter(this);
-    }
-
-    public FSTranslateReporter getTranslateReporterForSwitch(SVNURL url, long revision, String target, 
-                                                             SVNDepth depth, ISVNEditor editor) throws SVNException {
-        openRepository();
-        makeReporterContext(revision, target, url, depth, true, true, false, editor);
-        return new FSTranslateReporter(this);
-    }
-
-    public FSTranslateReporter getTranslateReporterForDiff(SVNURL url, long targetRevision, 
-                                                           String target, boolean ignoreAncestry, 
-                                                           SVNDepth depth, boolean getContents, 
-                                                           ISVNEditor editor) throws SVNException {
-        openRepository();
-        makeReporterContext(targetRevision, target, url, depth, ignoreAncestry, getContents, false, editor);
-        return new FSTranslateReporter(this);
-    }
-
-    public FSTranslateReporter getTranslateReporterForStatus(long revision, String target, SVNDepth depth, 
-                                                             ISVNEditor editor) throws SVNException {
-
-        openRepository();
-        makeReporterContext(revision, target, null, depth, false, false, false, editor);
-        return new FSTranslateReporter(this);
-    }
 
     public void update(long revision, String target, SVNDepth depth, boolean sendCopyFromArgs, 
             ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {

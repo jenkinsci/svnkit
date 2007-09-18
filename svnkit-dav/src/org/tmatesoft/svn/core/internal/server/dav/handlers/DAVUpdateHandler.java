@@ -343,21 +343,22 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
             setAnchor(srcPath);
 
             SVNURL dstURL = getUpdateRequest().getDstURL();
+            String dstPath = null;
             if (dstURL != null) {
-                String dstPath = getRepositoryManager().getRepositoryRelativePath(dstURL);
+                dstPath = getRepositoryManager().getRepositoryRelativePath(dstURL);
                 setDstURL(getRepositoryManager().convertHttpToFile(dstURL));
                 if (getUpdateRequest().getTarget() != null) {
                     setDstPath(DAVPathUtil.standardize(SVNPathUtil.tail(dstPath)));
-                    addToPathMap(SVNPathUtil.append(srcPath, getUpdateRequest().getTarget()), getDstPath());
+                    addToPathMap(SVNPathUtil.append(srcPath, getUpdateRequest().getTarget()), dstPath);
                 } else {
                     setDstPath(dstPath);
                 }
             } else {
-                setDstURL(getUpdateRequest().getSrcURL());
+                setDstURL(getRepositoryManager().convertHttpToFile(getUpdateRequest().getSrcURL()));
             }
 
             if (getDstPath() != null && getUpdateRequest().isResourceWalk()) {
-                if (SVNNodeKind.DIR == getDAVResource().getRepository().checkPath(getDstPath(), getRevision())) {
+                if (SVNNodeKind.DIR == getDAVResource().getRepository().checkPath(dstPath, getRevision())) {
                     setResourceWalk(true);
                 }
             }
@@ -372,26 +373,17 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
         SVNURL repositoryURL = getRepositoryManager().convertHttpToFile(getUpdateRequest().getSrcURL());
         FSRepository repository = (FSRepository) SVNRepositoryFactory.create(repositoryURL);
 
+        FSTranslateReporter reporter = repository.beginReport(getRevision(),
+                getDstURL(),
+                getUpdateRequest().getTarget(),
+                getUpdateRequest().isIgnoreAncestry(),
+                getUpdateRequest().isTextDeltas(),
+                getUpdateRequest().isSendCopyFromArgs(),
+                getDepth(),
+                this);
+        setReporter(reporter);
         if (isResourceWalk()) {
             setRepositoryForResourceWalk(repository);
-
-        }
-
-        int action = getUpdateRequest().getAction();
-        if (action == DAVUpdateRequest.UPDATE_ACTION) {
-            setReporter(repository.getTranslateReporterForUpdate(getRevision(), getUpdateRequest().getTarget(),
-                    getUpdateRequest().getDepth(), this));
-        } else if (action == DAVUpdateRequest.DIFF_ACTION) {
-            setReporter(repository.getTranslateReporterForDiff(getDstURL(), getRevision(), getUpdateRequest().getTarget(),
-                    getUpdateRequest().isIgnoreAncestry(), getUpdateRequest().getDepth(), getUpdateRequest().isTextDeltas(), this));
-        } else if (action == DAVUpdateRequest.SWITCH_ACTION) {
-            setReporter(repository.getTranslateReporterForSwitch(getDstURL(), getRevision(), getUpdateRequest().getTarget(),
-                    getUpdateRequest().getDepth(), this));
-        } else if (action == DAVUpdateRequest.STATUS_ACTION) {
-            setReporter(repository.getTranslateReporterForStatus(getRevision(), getUpdateRequest().getTarget(),
-                    getUpdateRequest().getDepth(), this));
-        } else if (action == DAVUpdateRequest.UNKNOWN_ACTION) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Server internal error"));
         }
     }
 
