@@ -1072,6 +1072,7 @@ class DAVRepository extends SVNRepository {
     }
 
     public void update(long revision, String target, SVNDepth depth, boolean sendCopyFromArgs, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
+        update(revision, target, depth, reporter, editor);
     }
 
 }
