@@ -23,13 +23,13 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
+import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
-import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
-import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 
 /**
  * @author TMate Software Ltd.

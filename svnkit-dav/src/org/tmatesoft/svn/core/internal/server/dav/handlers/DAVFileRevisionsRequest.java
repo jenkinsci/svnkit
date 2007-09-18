@@ -16,8 +16,8 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
-import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
+import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 
 /**
  * @author TMate Software Ltd.

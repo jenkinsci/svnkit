@@ -335,7 +335,9 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
                 setRevision(getUpdateRequest().getRevision());
             }
 
-            setDepth(getUpdateRequest().getDepth());
+            if (getDepth() == SVNDepth.UNKNOWN) {
+                setDepth(getUpdateRequest().getDepth());
+            }
 
             String srcPath = getRepositoryManager().getRepositoryRelativePath(getUpdateRequest().getSrcURL());
             setAnchor(srcPath);
@@ -456,15 +458,14 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
     }
 
     protected void addXMLHeader(StringBuffer xmlBuffer) {
-        Map attrs = null;
+        Map attrs = new HashMap();
+        attrs.put("depth", getDepth().toString());
         if (getUpdateRequest().isSendAll()) {
-            attrs = new HashMap();
             attrs.put("send-all", "true");
         }
         XMLUtil.addXMLHeader(xmlBuffer);
         DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, getDAVRequest().getRootElement().getName(), UPDATE_REPORT_NAMESPACES, attrs, xmlBuffer);
     }
-
 
     public void targetRevision(long revision) throws SVNException {
         if (!isResourceWalk()) {

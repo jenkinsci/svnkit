@@ -61,9 +61,8 @@ public class DAVGetLocationsHandler extends DAVReportHandler implements ISVNLoca
 
     public void handleLocationEntry(SVNLocationEntry locationEntry) throws SVNException {
         Map attrs = new HashMap();
-        String relativePath = locationEntry.getPath();
-        String basePath = getDAVResource().getResourceURI().getPath();
-        attrs.put("path", SVNPathUtil.append(basePath, relativePath));
+        locationEntry.getPath();
+        attrs.put("path", locationEntry.getPath());
         attrs.put("rev", String.valueOf(locationEntry.getRevision()));
         StringBuffer xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "location", XMLUtil.XML_STYLE_SELF_CLOSING, attrs, null);
         write(xmlBuffer);

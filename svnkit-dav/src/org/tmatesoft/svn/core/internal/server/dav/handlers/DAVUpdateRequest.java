@@ -43,6 +43,7 @@ public class DAVUpdateRequest extends DAVRequest {
     private static final DAVElement UPDATE_TARGET = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "update-target");
     private static final DAVElement DEPTH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "depth");
     private static final DAVElement RECURSIVE = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "recursive");
+    private static final DAVElement SEND_COPYFROM_ARGS = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "send-copyfrom-args");
     private static final DAVElement IGNORE_ANCESTRY = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "ignore-ancestry");
     private static final DAVElement TEXT_DELTAS = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "text-deltas");
     private static final DAVElement RESOURCE_WALK = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "resource-walk");
@@ -54,6 +55,7 @@ public class DAVUpdateRequest extends DAVRequest {
     private String myTarget = "";
     private boolean myTextDeltas = true;
     private SVNDepth myDepth = SVNDepth.UNKNOWN;
+    private boolean mySendCopyFromArgs = false;
     private boolean myDepthRequested = false;
     private boolean myRecursiveRequested = false;
     private boolean myIgnoreAncestry = false;
@@ -116,6 +118,14 @@ public class DAVUpdateRequest extends DAVRequest {
 
     private void setDepth(SVNDepth depth) {
         myDepth = depth;
+    }
+
+    public boolean isSendCopyFromArgs() {
+        return mySendCopyFromArgs;
+    }
+
+    private void setSendCopyFromArgs(boolean sendCopyFromArgs) {
+        mySendCopyFromArgs = sendCopyFromArgs;
     }
 
     public boolean isDepthRequested() {
@@ -185,6 +195,9 @@ public class DAVUpdateRequest extends DAVRequest {
                     assertNullCData(element, property);
                     setDepth(SVNDepth.fromString(value));
                     setDepthRequested(true);
+                } else if (element == SEND_COPYFROM_ARGS) {
+                    assertNullCData(element, property);
+                    setSendCopyFromArgs("no".equals(property.getFirstValue()));
                 } else if (element == RECURSIVE && !isDepthRequested()) {
                     assertNullCData(element, property);
                     SVNDepth.fromRecurse(!"no".equals(value));
