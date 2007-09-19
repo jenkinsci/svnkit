@@ -494,9 +494,7 @@ public class FSUpdateContext {
             if (distance == 0 && !PathInfo.isRelevant(getCurrentPathInfo(), editPath) && 
                     (pathInfo == null || 
                             (!pathInfo.isStartEmpty() && pathInfo.getLockToken() == null)) && 
-                            (requestedDepth.equals(wcDepth) || 
-                                    requestedDepth.compareTo(wcDepth) < 0 || 
-                                    targetEntry.getType() == SVNNodeKind.FILE)) {
+                            (requestedDepth.compareTo(wcDepth) <= 0 || targetEntry.getType() == SVNNodeKind.FILE)) {
                 return;
             } else if (distance != -1 || isIgnoreAncestry()) {
                 related = true;
