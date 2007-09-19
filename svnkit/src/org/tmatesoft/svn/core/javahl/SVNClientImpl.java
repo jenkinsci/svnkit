@@ -79,7 +79,6 @@ import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.wc.DefaultSVNRepositoryPool;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
@@ -422,6 +421,17 @@ public class SVNClientImpl implements SVNClientInterface {
             throwException(e);
         }
     }
+
+    public void revert(String path, int depth) throws ClientException {
+        SVNWCClient client = getSVNWCClient();
+        try {
+            // TODO change to depth.
+            client.doRevert(new File(path).getAbsoluteFile(), SVNDepth.fromID(depth).isRecursive());
+        } catch (SVNException e) {
+            throwException(e);
+        }
+    }
+
 
     public void add(String path, boolean recurse) throws ClientException {
         add(path, recurse, false);
@@ -1588,16 +1598,6 @@ public class SVNClientImpl implements SVNClientInterface {
         return (LogMessage[]) entries.toArray(new LogMessage[entries.size()]);
     }
 
-    public CopySource getCopySource(String path) throws SubversionException {
-        notImplementedYet();
-        return null;
-    }
-
-    public PropertyData getMergeInfoProperty(String path) throws SubversionException {
-        notImplementedYet();
-        return null;
-    }
-
     public void properties(String path, Revision revision, Revision pegRevision, boolean recurse, ProplistCallback callback) throws ClientException {
         if(path == null){
             return;
@@ -1784,18 +1784,6 @@ public class SVNClientImpl implements SVNClientInterface {
             throwException(e);
         }
         return -1;
-    }
-
-    public CopySource getCopySource(String path, Revision revision) throws SubversionException {
-        SVNLogClient logClient = getSVNLogClient();
-        try {
-            SVNLocationEntry location = logClient.getCopySource(new File(path).getAbsoluteFile(), 
-                                                                JavaHLObjectFactory.getSVNRevision(revision));
-            return JavaHLObjectFactory.createCopySource(location);
-        } catch (SVNException e) {
-            throwException(e);
-        }
-        return null;
     }
 
     public MergeInfo getMergeInfo(String path, Revision revision) throws SubversionException {

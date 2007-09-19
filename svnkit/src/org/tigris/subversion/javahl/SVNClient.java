@@ -118,6 +118,11 @@ public class SVNClient implements SVNClientInterface {
         myDelegate.revert(path, recurse);
     }
 
+    public void revert(String path, int depth) throws ClientException {
+        myDelegate.revert(path, depth);
+    }
+
+
     public void add(String path, boolean recurse) throws ClientException {
         myDelegate.add(path, recurse);
     }
@@ -438,14 +443,6 @@ public class SVNClient implements SVNClientInterface {
         return myDelegate.logMessages(path, pegRevision, revisionStart, revisionEnd, stopOnCopy, discoverPath, limit);
     }
 
-    public CopySource getCopySource(String path) throws SubversionException {
-        return myDelegate.getCopySource(path);
-    }
-
-    public PropertyData getMergeInfoProperty(String path) throws SubversionException {
-        return myDelegate.getMergeInfoProperty(path);
-    }
-
     public void properties(String path, Revision revision, Revision pegRevision, boolean recurse, ProplistCallback callback) throws ClientException {
         myDelegate.properties(path, revision, pegRevision, recurse, callback);
     }
@@ -476,10 +473,6 @@ public class SVNClient implements SVNClientInterface {
 
     public long doSwitch(String path, String url, Revision revision, int depth, boolean allowUnverObstructions) throws ClientException {
         return myDelegate.doSwitch(path, url, revision, depth, allowUnverObstructions);
-    }
-
-    public CopySource getCopySource(String path, Revision revision) throws SubversionException {
-        return myDelegate.getCopySource(path, revision);
     }
 
     public MergeInfo getMergeInfo(String path, Revision revision) throws SubversionException {
