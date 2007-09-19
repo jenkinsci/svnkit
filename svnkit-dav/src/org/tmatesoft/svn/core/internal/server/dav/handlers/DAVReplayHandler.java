@@ -26,7 +26,6 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
@@ -74,7 +73,7 @@ public class DAVReplayHandler extends DAVReportHandler implements ISVNEditor {
             return getDAVResource().getRepository();
         }
         SVNURL resourceURL = getDAVResource().getRepository().getLocation();
-        SVNURL resultURL = resourceURL.setPath(SVNPathUtil.append(resourceURL.getPath(), getDAVResource().getResourceURI().getPath()), true);
+        SVNURL resultURL = resourceURL.appendPath(getDAVResource().getResourceURI().getPath(), true);
         return SVNRepositoryFactory.create(resultURL);
     }
 

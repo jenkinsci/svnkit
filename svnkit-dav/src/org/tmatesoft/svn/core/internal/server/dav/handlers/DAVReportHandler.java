@@ -204,7 +204,7 @@ public class DAVReportHandler extends ServletDAVHandler {
     protected void addXMLFooter(StringBuffer xmlBuffer) {
         XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, getDAVRequest().getRootElement().getName(), xmlBuffer);
     }
-    
+
     private OutputStream myDiffWindowWriter;
 
     protected void writeTextDeltaChunk(SVNDiffWindow diffWindow) throws SVNException {
@@ -219,7 +219,7 @@ public class DAVReportHandler extends ServletDAVHandler {
             setWriteTextDeltaHeader(false);
         }
     }
-    
+
     protected void textDeltaChunkEnd() throws SVNException {
         if (myDiffWindowWriter != null) {
             try {
