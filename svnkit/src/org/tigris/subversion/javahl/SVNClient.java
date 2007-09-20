@@ -578,4 +578,8 @@ public class SVNClient implements SVNClientInterface {
     public void doImport(String path, String url, String message, int depth, boolean noIgnore, boolean ignoreUnknownNodeTypes) throws ClientException {
         myDelegate.doImport(path, url, message, depth, noIgnore, ignoreUnknownNodeTypes);
     }
+
+    public void info2(String pathOrUrl, Revision revision, Revision pegRevision, int depth, InfoCallback callback) throws ClientException {
+        myDelegate.info2(pathOrUrl, revision, pegRevision, depth, callback);
+    }
 }

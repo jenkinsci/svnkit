@@ -2205,6 +2205,10 @@ public class SVNClientImpl implements SVNClientInterface {
         notImplementedYet(null);//TODO: fixme
     }
 
+    public void info2(String pathOrUrl, Revision revision, Revision pegRevision, int depth, InfoCallback callback) throws ClientException {
+        notImplementedYet(null);//TODO: fixme
+    }
+
     private void notImplementedYet() throws ClientException {
         notImplementedYet(null);
     }
