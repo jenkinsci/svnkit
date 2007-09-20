@@ -14,7 +14,7 @@
 #include <jni.h>
 #include <windows.h>
 #include <Wincrypt.h>
-#include "SVNWinCryptPasswordCipher.h"
+#include "jsvncrypt.h"
 
 
 BOOL APIENTRY DllMain( HANDLE hModule, 
