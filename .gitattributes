@@ -133,6 +133,7 @@ svnkit/native/jsvncrypt.h -text
 svnkit/native/jsvnstat.c -text
 svnkit/native/jsvnstat.h -text
 svnkit/native/libjsvnstat32.so -text
+svnkit/native/libjsvnstat64.so -text
 svnkit/src/org/tigris/subversion/javahl/SVNClient.java -text
 svnkit/src/org/tmatesoft/svn/cli/command/SVNAdminListLocksCommand.java -text
 svnkit/src/org/tmatesoft/svn/cli/command/SVNAdminRemoveLocksCommand.java -text
