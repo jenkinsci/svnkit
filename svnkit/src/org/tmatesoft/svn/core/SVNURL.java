@@ -239,11 +239,14 @@ public class SVNURL {
             }
             
             if (uriEncoded) {
+                //do it before decoding - if a caller said url is encoded 
+                //but however typed \ instead of / - this replace will recover
+                //his url
+                myPath = myPath.replace('\\', '/');
                 // autoencode it.
                 myEncodedPath = SVNEncodingUtil.autoURIEncode(myPath);
                 SVNEncodingUtil.assertURISafe(myEncodedPath);
                 myPath = SVNEncodingUtil.uriDecode(myEncodedPath);
-                myPath = myPath.replace('\\', '/');
                 if(!myPath.startsWith("/")){
                     myPath = "/" + myPath;
                 }
