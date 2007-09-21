@@ -100,6 +100,19 @@ public class DAVResource {
         prepare();
     }
 
+
+    private DAVResource(SVNRepository repository, DAVResourceURI resourceURI, long revision, boolean isSVNClient, String deltaBase, long version, String clientOptions, String baseChecksum, String resultChecksum) {
+        myResourceURI = resourceURI;
+        myRepository = repository;
+        myRevision = revision;
+        myIsSVNClient = isSVNClient;
+        myDeltaBase = deltaBase;
+        myVersion = version;
+        myClientOptions = clientOptions;
+        myBaseChecksum = baseChecksum;
+        myResultChecksum = resultChecksum;
+    }
+
     public static boolean isValidRevision(long revision) {
         return revision >= 0;
     }
@@ -216,6 +229,30 @@ public class DAVResource {
             setCollection(currentNodeKind == SVNNodeKind.DIR);
             setChecked(true);
         }
+    }
+
+    public Iterator getChildren() throws SVNException {
+        return new Iterator() {
+            Iterator entriesIterator = getEntries().iterator();
+
+            public void remove() {
+            }
+
+            public boolean hasNext() {
+                return entriesIterator.hasNext();
+            }
+
+            public Object next() {
+                SVNDirEntry entry = (SVNDirEntry) entriesIterator.next();
+                String childURI = DAVPathUtil.append(getResourceURI().getURI(), entry.getName());
+                try {
+                    DAVResourceURI newResourceURI = new DAVResourceURI(getResourceURI().getContext(), childURI, null, false);
+                    return new DAVResource(getRepository(), newResourceURI, getRevision(), isSVNClient(), getDeltaBase(), getVersion(), getClientOptions(), null, null);
+                } catch (SVNException e) {
+                    return null;
+                }
+            }
+        };
     }
 
     public Collection getEntries() throws SVNException {
