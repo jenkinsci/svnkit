@@ -291,8 +291,6 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
                 } else {
                     setDstPath(dstPath);
                 }
-            } else {
-                setDstURL(getRepositoryManager().convertHttpToFile(getUpdateRequest().getSrcURL()));
             }
 
             if (getDstPath() != null && getUpdateRequest().isResourceWalk()) {
@@ -314,7 +312,6 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
                     this);
             setReporter(reporter);
             setSourceRepository(repository);
-
             setInitialized(true);
         }
     }
@@ -359,7 +356,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
                 if (getEntryLinkPath() == null) {
                     getReporter().setPath(entryPath, getEntryLockToken(), getEntryRevision(), getDepth(), isEntryStartEmpty());
                 } else {
-                    SVNURL linkURL = getSourceRepository().getLocation().appendPath(getEntryLinkPath(), true);
+                    SVNURL linkURL = getDAVResource().getRepository().getLocation().appendPath(getEntryLinkPath(), true);
                     getReporter().linkPath(linkURL, entryPath, getEntryLockToken(), getEntryRevision(), getDepth(), isEntryStartEmpty());
                 }
                 if (getEntryLinkPath() != null && getDstPath() == null) {
