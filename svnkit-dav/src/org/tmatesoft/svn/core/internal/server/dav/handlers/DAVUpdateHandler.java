@@ -281,21 +281,13 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
             setAnchor(srcPath);
 
             SVNURL dstURL = getUpdateRequest().getDstURL();
-            String dstPath = null;
+            String dstPath;
             if (dstURL != null) {
                 dstPath = getRepositoryManager().getRepositoryRelativePath(dstURL);
+                setDstPath(dstPath);                
                 setDstURL(getRepositoryManager().convertHttpToFile(dstURL));
                 if (getUpdateRequest().getTarget() != null) {
-                    setDstPath(DAVPathUtil.standardize(SVNPathUtil.tail(dstPath)));
                     addToPathMap(SVNPathUtil.concatToAbs(srcPath, getUpdateRequest().getTarget()), dstPath);
-                } else {
-                    setDstPath(dstPath);
-                }
-            }
-
-            if (getDstPath() != null && getUpdateRequest().isResourceWalk()) {
-                if (SVNNodeKind.DIR == getDAVResource().getRepository().checkPath(dstPath, getRevision())) {
-                    setResourceWalk(true);
                 }
             }
 
@@ -414,8 +406,14 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
             getReporter().closeRepository();
         }
 
+        if (getDstPath() != null && getUpdateRequest().isResourceWalk()) {
+            if (SVNNodeKind.DIR == getDAVResource().getRepository().checkPath(getDstPath(), getRevision())) {
+                setResourceWalk(true);
+            }
+        }
+
         if (isResourceWalk()) {
-            StringBuffer xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "resource- walk", XMLUtil.XML_STYLE_NORMAL, null, null);
+            StringBuffer xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "resource-walk", XMLUtil.XML_STYLE_NORMAL, null, null);
             write(xmlBuffer);
 
             FSFS fsfs = getSourceRepository().getFSFS();
@@ -425,7 +423,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
             FSRevisionRoot requestedRoot = fsfs.createRevisionRoot(getRevision());
             deltifier.deltifyDir(zeroRoot, "", getUpdateRequest().getTarget(), requestedRoot, getDstPath());
 
-            xmlBuffer = XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "resource- walk", null);
+            xmlBuffer = XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "resource-walk", null);
             write(xmlBuffer);
         }
         writeXMLFooter();
