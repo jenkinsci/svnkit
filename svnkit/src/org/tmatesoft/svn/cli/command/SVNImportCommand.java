@@ -54,6 +54,7 @@ public class SVNImportCommand extends SVNCommand {
         }
         String url = getCommandLine().getURL(0);
         boolean disableAutoProps = getCommandLine().hasArgument(SVNArgument.NO_AUTO_PROPS);
+        boolean force = getCommandLine().hasArgument(SVNArgument.FORCE);
         boolean enableAutoProps = getCommandLine().hasArgument(SVNArgument.AUTO_PROPS);
         String message = (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
         Map revProps = (Map) getCommandLine().getArgumentValue(SVNArgument.WITH_REVPROP); 
@@ -68,12 +69,8 @@ public class SVNImportCommand extends SVNCommand {
         }
 
         boolean useGlobalIgnores = !getCommandLine().hasArgument(SVNArgument.NO_IGNORE);
-        /* TODO(sd): "take a real depth?  But I'm not sure how
-         * useful that would be for an import.  I could see
-         * svn_depth_files being useful for import, but we
-         * don't have that (yet)." 
-         */
-        SVNCommitInfo info = commitClient.doImport(new File(path), SVNURL.parseURIEncoded(url), message, revProps, useGlobalIgnores, SVNDepth.recurseFromDepth(depth));
+        SVNCommitInfo info = commitClient.doImport(new File(path), SVNURL.parseURIEncoded(url), message, revProps, 
+                useGlobalIgnores, force, depth);
         if (info != SVNCommitInfo.NULL) {
             out.println();
             out.println("Imported revision " + info.getNewRevision() + ".");

@@ -125,14 +125,26 @@ public class SVNCommitUtil {
             validatedPaths[i] = SVNPathUtil.validateFilePath(file.getAbsolutePath());
         }
         String rootPath = SVNPathUtil.condencePaths(validatedPaths, relativePaths, depth == SVNDepth.INFINITY);
+        
         if (rootPath == null) {
             return null;
         }
+
+        boolean lockAll = false;
+        if (depth == SVNDepth.FILES || depth == SVNDepth.IMMEDIATES) {
+            for (Iterator relPathsIter = relativePaths.iterator(); relPathsIter.hasNext();) {
+                String relPath = (String) relPathsIter.next();
+                if ("".equals(relPath)) {
+                    lockAll = true;
+                    break;
+                }
+            }
+        }
+
         File baseDir = new File(rootPath).getAbsoluteFile();
         rootPath = baseDir.getAbsolutePath().replace(File.separatorChar, '/');
         Collection dirsToLock = new HashSet(); // relative paths to lock.
         Collection dirsToLockRecursively = new HashSet(); 
-        boolean lockAll = false;
         if (relativePaths.isEmpty()) {
             statusClient.checkCancelled();
             String target = getTargetName(baseDir);
@@ -154,7 +166,7 @@ public class SVNCommitUtil {
             } else {
                 lockAll = true;
             }
-        } else {
+        } else if (!lockAll) {
             baseDir = adjustRelativePaths(baseDir, relativePaths);
             // there are multiple paths.
             for (Iterator targets = relativePaths.iterator(); targets.hasNext();) {
@@ -181,6 +193,7 @@ public class SVNCommitUtil {
                 }
             }
         }
+        
         SVNWCAccess baseAccess = SVNWCAccess.newInstance(new ISVNEventHandler() {
             public void handleEvent(SVNEvent event, double progress) throws SVNException {
             }
@@ -188,6 +201,7 @@ public class SVNCommitUtil {
                 statusClient.checkCancelled();
             }
         });
+        
         baseAccess.setOptions(statusClient.getOptions());
         try {
             baseAccess.open(baseDir, true, lockAll ? SVNWCAccess.INFINITE_DEPTH : 0);
@@ -199,8 +213,16 @@ public class SVNCommitUtil {
             if (!lockAll) {
                 List uniqueDirsToLockRecursively = new ArrayList();
                 uniqueDirsToLockRecursively.addAll(dirsToLockRecursively);
+                Map processedPaths = new HashMap();
                 for(Iterator ps = uniqueDirsToLockRecursively.iterator(); ps.hasNext();) {
                     String pathToLock = (String) ps.next();
+                    if (processedPaths.containsKey(pathToLock)) {
+                        //remove any duplicates
+                        ps.remove();
+                        continue;
+                    }
+                    processedPaths.put(pathToLock, pathToLock);
+                    
                     for(Iterator existing = dirsToLockRecursively.iterator(); existing.hasNext();) {
                         String existingPath = (String) existing.next();
                         if (pathToLock.startsWith(existingPath + "/")) {
@@ -211,6 +233,7 @@ public class SVNCommitUtil {
                     }
                     
                 }
+                
                 Collections.sort(uniqueDirsToLockRecursively, SVNPathUtil.PATH_COMPARATOR);
                 dirsToLockRecursively = uniqueDirsToLockRecursively;
                 removeRedundantPaths(dirsToLockRecursively, dirsToLock);
@@ -227,6 +250,7 @@ public class SVNCommitUtil {
                     baseAccess.open(pathFile, true, SVNWCAccess.INFINITE_DEPTH);
                 }
             }
+            
             for(int i = 0; i < paths.length; i++) {
                 statusClient.checkCancelled();
                 File path = new File(SVNPathUtil.validateFilePath(paths[i].getAbsolutePath()));
@@ -248,6 +272,7 @@ public class SVNCommitUtil {
                     }
                 }
             }
+            
             // if commit is non-recursive and forced, remove those child dirs 
             // that were not explicitly added but are explicitly copied. ufff.
             if (depth != SVNDepth.INFINITY && force) {
@@ -583,9 +608,13 @@ public class SVNCommitUtil {
             propConflicts = dir.hasPropConflict(entry.getName());
             textConflicts = dir.hasTextConflict(entry.getName());
         }
+        
         if (propConflicts || textConflicts) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT, "Aborting commit: ''{0}'' remains in conflict", path);                    
-            SVNErrorManager.error(err);
+            if (changelistName == null || changelistName.equals(entry.getChangelistName())) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT, 
+                        "Aborting commit: ''{0}'' remains in conflict", path);                    
+                SVNErrorManager.error(err);
+            }
         }
         if (entry.getURL() != null && !copyMode) {
             url = entry.getURL();
@@ -731,7 +760,7 @@ public class SVNCommitUtil {
                 if (currentEntry.getKind() == SVNNodeKind.DIR) {
                     if (SVNDepth.FILES.compareTo(depth) >= 0) {
                         continue;
-                    }
+                    } 
                     
                     try {
                         childDir = dir.getWCAccess().retrieve(dir.getFile(currentEntry.getName()));
@@ -742,6 +771,7 @@ public class SVNCommitUtil {
                             throw e;
                         }
                     }
+                    
                     if (childDir == null) {
                         SVNFileType currentType = SVNFileType.getType(currentFile);
                         if (currentType == SVNFileType.NONE && currentEntry.isScheduledForDeletion()) {
@@ -827,8 +857,16 @@ public class SVNCommitUtil {
     }
 
     private static void removeRedundantPaths(Collection dirsToLockRecursively, Collection dirsToLock) {
+        Map processedDirs = new HashMap();
         for (Iterator paths = dirsToLock.iterator(); paths.hasNext();) {
             String path = (String) paths.next();
+            //check for path dublicates and remove them if any 
+            if (processedDirs.containsKey(path)) {
+                paths.remove();
+                continue;
+            }
+            processedDirs.put(path, path);
+            
             if (dirsToLockRecursively.contains(path)) {
                 paths.remove();
             } else {

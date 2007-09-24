@@ -457,15 +457,12 @@ public class SVNCommitClient extends SVNBasicClient {
      *                          </ul>
      */
     public SVNCommitInfo doImport(File path, SVNURL dstURL, String commitMessage, boolean useGlobalIgnores, boolean recursive) throws SVNException {
-        return doImport(path, dstURL, commitMessage, null, useGlobalIgnores, recursive);
+        return doImport(path, dstURL, commitMessage, null, useGlobalIgnores, false, SVNDepth.fromRecurse(recursive));
     }
     
-    /* TODO(sd): "For consistency, this should probably take svn_depth_t
-     * depth instead of svn_boolean_t nonrecursive.  But it's not
-     * needed for the sparse-directories work right now, so leaving it
-     * alone."
-     */
-    public SVNCommitInfo doImport(File path, SVNURL dstURL, String commitMessage, Map revisionProperties, boolean useGlobalIgnores, boolean recursive) throws SVNException {
+    public SVNCommitInfo doImport(File path, SVNURL dstURL, String commitMessage, 
+            Map revisionProperties, boolean useGlobalIgnores, boolean ignoreUnknownNodeTypes, 
+            SVNDepth depth) throws SVNException {
         // first find dstURL root.
         SVNRepository repos = null;
         SVNFileType srcKind = SVNFileType.getType(path);
@@ -526,10 +523,18 @@ public class SVNCommitClient extends SVNBasicClient {
             changed = newPaths.size() > 0;
             SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
             if (srcKind == SVNFileType.DIRECTORY) {
-                changed |= importDir(deltaGenerator, path, path, newDirPath, useGlobalIgnores, recursive, commitEditor);
-            } else {
-                changed |= importFile(deltaGenerator, path.getParentFile(), path, srcKind, filePath, commitEditor);
+                changed |= importDir(deltaGenerator, path, path, newDirPath, useGlobalIgnores, 
+                        ignoreUnknownNodeTypes, depth, commitEditor);
+            } else if (srcKind == SVNFileType.FILE) {
+                if (!useGlobalIgnores || !getOptions().isIgnored(path)) {
+                    changed |= importFile(deltaGenerator, path.getParentFile(), path, srcKind, filePath, commitEditor);
+                }
+            } else if (srcKind == SVNFileType.NONE || srcKind == SVNFileType.UNKNOWN) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, 
+                        "''{0}'' does not exist", path);
+                SVNErrorManager.error(err);
             }
+            
             if (!changed) {
                 try {
                     commitEditor.abortEdit();
@@ -1079,7 +1084,8 @@ public class SVNCommitClient extends SVNBasicClient {
         targets.add(url);
     }
 
-    private boolean importDir(SVNDeltaGenerator deltaGenerator, File rootFile, File dir, String importPath, boolean useGlobalIgnores, boolean recursive, ISVNEditor editor) throws SVNException {
+    private boolean importDir(SVNDeltaGenerator deltaGenerator, File rootFile, File dir, String importPath, 
+            boolean useGlobalIgnores, boolean ignoreUnknownNodeTypes, SVNDepth depth, ISVNEditor editor) throws SVNException {
         checkCancelled();
         File[] children = SVNFileListUtil.listFiles(dir);
         boolean changed = false;
@@ -1096,17 +1102,33 @@ public class SVNCommitClient extends SVNBasicClient {
             }
             String path = importPath == null ? file.getName() : SVNPathUtil.append(importPath, file.getName());
             SVNFileType fileType = SVNFileType.getType(file);
-            if (fileType == SVNFileType.DIRECTORY && recursive) {
+            if (fileType == SVNFileType.DIRECTORY && depth.compareTo(SVNDepth.IMMEDIATES) >= 0) {
                 editor.addDir(path, null, -1);
                 changed |= true;
                 SVNEvent event = SVNEventFactory.createCommitEvent(rootFile,
                         file, SVNEventAction.COMMIT_ADDED, SVNNodeKind.DIR,
                         null);
                 handleEvent(event, ISVNEventHandler.UNKNOWN);
-                importDir(deltaGenerator, rootFile, file, path, useGlobalIgnores, recursive, editor);
+                SVNDepth depthBelowHere = depth;
+                if (depth == SVNDepth.IMMEDIATES) {
+                    depthBelowHere = SVNDepth.EMPTY;
+                }
+                importDir(deltaGenerator, rootFile, file, path, useGlobalIgnores, ignoreUnknownNodeTypes, 
+                        depthBelowHere, editor);
                 editor.closeDir();
-            } else if (fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK){
+            } else if ((fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) && 
+                    depth.compareTo(SVNDepth.FILES) >= 0) {
                 changed |= importFile(deltaGenerator, rootFile, file, fileType, path, editor);
+            } else if (fileType != SVNFileType.DIRECTORY && fileType != SVNFileType.FILE) {
+                if (ignoreUnknownNodeTypes) {
+                    SVNEvent skippedEvent = SVNEventFactory.createSkipEvent(rootFile, file, SVNEventAction.SKIP, 
+                            SVNEventAction.COMMIT_ADDED, SVNNodeKind.NONE);
+                    handleEvent(skippedEvent, ISVNEventHandler.UNKNOWN);
+                } else {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, 
+                            "Unknown or unversionable type for ''{0}''", file);
+                    SVNErrorManager.error(err);
+                }
             }
 
         }
