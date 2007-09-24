@@ -2209,6 +2209,14 @@ public class SVNClientImpl implements SVNClientInterface {
         notImplementedYet(null);//TODO: fixme
     }
 
+    public void propertyRemove(String path, String name, int depth) throws ClientException {
+        notImplementedYet(null);//TODO: fixme
+    }
+
+    public void propertySet(String path, String name, String value, int depth, boolean force) throws ClientException {
+        notImplementedYet(null);//TODO: fixme
+    }
+
     private void notImplementedYet() throws ClientException {
         notImplementedYet(null);
     }

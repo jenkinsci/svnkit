@@ -582,4 +582,12 @@ public class SVNClient implements SVNClientInterface {
     public void info2(String pathOrUrl, Revision revision, Revision pegRevision, int depth, InfoCallback callback) throws ClientException {
         myDelegate.info2(pathOrUrl, revision, pegRevision, depth, callback);
     }
+
+    public void propertyRemove(String path, String name, int depth) throws ClientException {
+        myDelegate.propertyRemove(path, name, depth);
+    }
+
+    public void propertySet(String path, String name, String value, int depth, boolean force) throws ClientException {
+        myDelegate.propertySet(path, name, value, depth, force);
+    }
 }
