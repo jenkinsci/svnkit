@@ -934,6 +934,16 @@ public class SVNUpdateClient extends SVNBasicClient {
                             throw e;
                         }
                     } else {
+                        File[] children = external.getFile().listFiles();
+                        if (children != null && children.length == 0) {
+                            // unversioned empty directory.
+                            try {
+                                doCheckout(external.getNewURL(), external.getFile(), revision, revision, true);
+                            } catch (SVNException e) {
+                                throw e;
+                            }
+                            continue;
+                        }
                         SVNWCAccess wcAccess = createWCAccess();
                         SVNAdminArea area = wcAccess.open(external.getFile(), true, 0);
                         SVNEntry entry = area.getEntry(area.getThisDirName(), false);
