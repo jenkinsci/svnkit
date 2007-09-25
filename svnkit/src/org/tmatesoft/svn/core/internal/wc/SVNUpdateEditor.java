@@ -1064,7 +1064,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             if ((myTarget == null && path == null) || (myTarget != null && myTarget.equals(path))) {
                 info.myDepth = myDepth == SVNDepth.UNKNOWN ? SVNDepth.INFINITY : myDepth;
             } else if (myDepth == SVNDepth.IMMEDIATES || (myDepth == SVNDepth.UNKNOWN && 
-                    parent.myDepth == SVNDepth.UNKNOWN)) {
+                    parent.myDepth == SVNDepth.IMMEDIATES)) {
                 info.myDepth = SVNDepth.EMPTY;
             } else {
                 info.myDepth = SVNDepth.INFINITY;
