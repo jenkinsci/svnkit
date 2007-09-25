@@ -13,20 +13,27 @@ package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
 
+import org.tmatesoft.svn.util.SVNDebugLog;
+
 
 /**
  * @version 1.1.2
  * @author  TMate Software Ltd.
  */
 public class SVNStatHelper {
-    private static boolean ourIsLibraryLoaded;
+
+    private static boolean ourIsLibraryLoaded = false;
 
     static {
         try {
             System.loadLibrary("jsvnstat32");
             ourIsLibraryLoaded = true;
         } catch (Throwable th) {
-            ourIsLibraryLoaded = false;
+            try {
+                System.loadLibrary("jsvnstat64");
+                ourIsLibraryLoaded = true;
+            } catch (Throwable th2) {
+            }
         }
     }
 
@@ -45,8 +52,22 @@ public class SVNStatHelper {
                 default:
                     return SVNFileType.NONE;
             }
+        } 
+        String line = null;
+        try {
+            line = SVNFileUtil.execCommand(new String[] {SVNFileUtil.LS_COMMAND, "-ld", path.getAbsolutePath()});
+        } catch (Throwable th) {
+            SVNDebugLog.getDefaultLog().info(th);
         }
-        
+        if (line != null) {
+            if (line.startsWith("l")) {
+                return SVNFileType.SYMLINK;
+            } else if (line.startsWith("d")) {
+                return SVNFileType.DIRECTORY;
+            } else if (line.startsWith("-")) {
+                return SVNFileType.FILE;
+            }
+        }
         return SVNFileType.NONE;
     }
     

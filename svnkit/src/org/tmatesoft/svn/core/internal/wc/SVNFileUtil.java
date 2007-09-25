@@ -52,7 +52,7 @@ public class SVNFileUtil {
 
     private static final String ID_COMMAND;
     private static final String LN_COMMAND;
-    private static final String LS_COMMAND;
+    public static final String LS_COMMAND;
     private static final String CHMOD_COMMAND;
     private static final String ATTRIB_COMMAND;
     private static final String ENV_COMMAND;
@@ -284,15 +284,7 @@ public class SVNFileUtil {
         if (isWindows || isOpenVMS || file == null) {
             return false;
         }
-        String line = null;
-        try {
-            line = execCommand(new String[] {
-                    LS_COMMAND, "-ld", file.getAbsolutePath()
-            });
-        } catch (Throwable th) {
-            SVNDebugLog.getDefaultLog().info(th);
-        }
-        return line != null && line.startsWith("l");
+        return SVNStatHelper.getType(file, true) == SVNFileType.SYMLINK;
     }
 
     public static void copy(File src, File dst, boolean safe, boolean copyAdminDirectories) throws SVNException {
@@ -1035,7 +1027,7 @@ public class SVNFileUtil {
         }
     }
 
-    private static String execCommand(String[] commandLine) {
+    public static String execCommand(String[] commandLine) {
         return execCommand(commandLine, false);
     }
 

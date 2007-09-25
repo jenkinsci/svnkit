@@ -177,6 +177,8 @@
         </jar>
         <copy file="contrib/ganymed/ganymed.jar" todir="build/lib" />
         <copy file="svnkit/native/jsvncrypt.dll" todir="build/lib" />
+        <copy file="svnkit/native/libjsvnstat32.so" todir="build/lib" />
+        <copy file="svnkit/native/libjsvnstat64.so" todir="build/lib" />
     	<!-- copy licences and changelog -->
         <copy todir="build/lib" flatten="true">
             <fileset dir=".">
@@ -209,6 +211,8 @@
         <chmod file="build/lib/jsvnversion" perm="ugo+rx" />
         <chmod file="build/lib/jsvnsync" perm="ugo+rx" />
     	<chmod file="build/lib/jsvnlook" perm="ugo+rx" />
+        <chmod file="build/lib/libjsvnstat32.so" perm="ugo+rx" />
+    	<chmod file="build/lib/libjsvnstat64.so" perm="ugo+rx" />
     </target>
 
     <target name="build-src">
