@@ -590,4 +590,8 @@ public class SVNClient implements SVNClientInterface {
     public void propertySet(String path, String name, String value, int depth, boolean force) throws ClientException {
         myDelegate.propertySet(path, name, value, depth, force);
     }
+
+    public RevisionRange[] getAvailableMerges(String path, Revision pegRevision, String mergeSource) throws SubversionException {
+        return myDelegate.getAvailableMerges(path, pegRevision, mergeSource);
+    }
 }

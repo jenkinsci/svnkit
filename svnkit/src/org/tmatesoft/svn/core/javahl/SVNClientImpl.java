@@ -2217,6 +2217,11 @@ public class SVNClientImpl implements SVNClientInterface {
         notImplementedYet(null);//TODO: fixme
     }
 
+    public RevisionRange[] getAvailableMerges(String path, Revision pegRevision, String mergeSource) throws SubversionException {
+        notImplementedYet(null);//TODO: fixme
+        return null;
+    }
+
     private void notImplementedYet() throws ClientException {
         notImplementedYet(null);
     }
