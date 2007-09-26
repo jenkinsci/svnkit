@@ -71,6 +71,26 @@ public class SVNStatHelper {
         return SVNFileType.NONE;
     }
     
+    public static void setFilePermissions(File path, boolean changeReadWrite, boolean enableWrite, 
+            boolean changeExecutable, boolean executable) {
+        int retVal = changeMode(path.getAbsolutePath(), changeReadWrite, enableWrite, changeExecutable, executable);
+        if (retVal != 0) {
+            SVNDebugLog.getDefaultLog().info("Can't change perms of file '" + path + "'");
+        }
+    }
+
+    public static void createSymlink(File path, String linkName) {
+        int retVal = link(path.getAbsolutePath(), linkName);
+        if (retVal != 0) {
+            SVNDebugLog.getDefaultLog().info("Can't create symbolic link '" + linkName + "'");
+        }
+    }
+    
+    public static String resolveSymlink(File path) {
+        String target = getLinkTargetPath(path.getAbsolutePath());
+        return target;
+    }
+    
     /**
      * return values:
      *   1 - ordinar file
@@ -80,5 +100,14 @@ public class SVNStatHelper {
      *  -1 - no such path or error occurres during system call 
      * 
      */
-    private static native int getType(String path, boolean findLinks);
+    private static native int getType(String path, boolean discoverLinks);
+    
+    private static native int changeMode(String path, boolean changeReadWrite, boolean enableWrite, 
+            boolean changeExecutable, boolean executable);
+    
+    private static native int link(String target, String linkName);
+    
+    private static native String getLinkTargetPath(String path);
+    
+//    private static native int getAttributes(String path);
 }

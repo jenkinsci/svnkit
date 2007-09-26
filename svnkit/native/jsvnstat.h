@@ -7,13 +7,18 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-/*
- * Class:     org_tmatesoft_svn_core_internal_wc_SVNStatHelper
- * Method:    getType
- * Signature: (Ljava/lang/String;Z)I
- */
+
 JNIEXPORT jint JNICALL Java_org_tmatesoft_svn_core_internal_wc_SVNStatHelper_getType
   (JNIEnv *, jclass, jstring, jboolean);
+
+JNIEXPORT jint JNICALL Java_org_tmatesoft_svn_core_internal_wc_SVNStatHelper_changeMode
+  (JNIEnv *, jclass, jstring, jboolean, jboolean, jboolean, jboolean);
+
+JNIEXPORT jint JNICALL Java_org_tmatesoft_svn_core_internal_wc_SVNStatHelper_link
+  (JNIEnv *, jclass, jstring, jstring);
+
+JNIEXPORT jstring JNICALL Java_org_tmatesoft_svn_core_internal_wc_SVNStatHelper_getLinkTargetPath
+  (JNIEnv *, jclass, jstring);
 
 #ifdef __cplusplus
 }
