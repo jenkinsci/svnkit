@@ -215,7 +215,7 @@ public class DAVGetHandler extends ServletDAVHandler {
 
         String tmpURI = getRepositoryManager().getURI(deltaBaseSVNURL);
         DAVResourceURI deltaBaseURI = new DAVResourceURI(resource.getResourceURI().getContext(), tmpURI, null, false);
-        if (!DAVResource.isValidRevision(deltaBaseURI.getRevision())) {
+        if (DAVResource.isValidRevision(deltaBaseURI.getRevision())) {
             InputStream sourceIS = null;
             InputStream targetIS = null;
             File deltaBaseFile = new File(deltaBaseFSURL.getPath());

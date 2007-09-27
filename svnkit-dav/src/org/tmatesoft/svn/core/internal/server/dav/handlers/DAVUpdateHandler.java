@@ -284,11 +284,9 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
             String dstPath;
             if (dstURL != null) {
                 dstPath = getRepositoryManager().getRepositoryRelativePath(dstURL);
-                setDstPath(dstPath);                
+                setDstPath(dstPath);
                 setDstURL(getRepositoryManager().convertHttpToFile(dstURL));
-                if (getUpdateRequest().getTarget() != null) {
-                    addToPathMap(SVNPathUtil.concatToAbs(srcPath, getUpdateRequest().getTarget()), dstPath);
-                }
+                addToPathMap(SVNPathUtil.concatToAbs(srcPath, getUpdateRequest().getTarget()), dstPath);
             }
 
             SVNURL repositoryURL = getRepositoryManager().convertHttpToFile(getUpdateRequest().getSrcURL());
@@ -456,7 +454,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
         } else {
             xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "open-directory", XMLUtil.XML_STYLE_NORMAL, "rev", String.valueOf(revision), null);
         }
-        if (getUpdateRequest().getTarget() == null || getUpdateRequest().getTarget().length() == 0) {
+        if (getUpdateRequest().getTarget().length() == 0) {
             addVersionURL(getRealPath(""), xmlBuffer);
         }
         if (isResourceWalk()) {
