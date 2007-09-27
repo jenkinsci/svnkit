@@ -9,8 +9,6 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-// jsvncrypt.c: Defines the entry point for the dll application.
-//
 #include <jni.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -18,22 +16,32 @@
 #include "jsvnstat.h"
 
 /*
- * return values:
+ * return values: int[3] attributes
+ * attributes[0] & 0xF - type and can be one of the following values:
  *   1 - ordinar file
  *   2 - directory
  *   3 - symlink
  *   4 - unknown
- *  -1 - error occurres during system call 
+ *   5 - error occurres during system call
+ * 
+ * int uPerms = attributes[0] >> 12; - user permissions
+ * int gPerms = attributes[0] >> 8;  - group permissions
+ * int oPerms = attributes[0] >> 4;  - world permissions
+ * 
+ * int uid = attributes[1];          - user id
+ * int gid = attributes[2];          - group id
  * 
  */
-JNIEXPORT jint JNICALL Java_org_tmatesoft_svn_core_internal_wc_SVNStatHelper_getType 
+JNIEXPORT jintArray JNICALL Java_org_tmatesoft_svn_core_internal_wc_SVNStatHelper_getAttributes 
     (JNIEnv *env, jclass clazz, jstring path, jboolean find_links) {
     
     struct stat info;
-    int srv, ret_val;
+    int srv, attributes, uid, gid;
     const char* p_path;
 	mode_t mode;
-
+	jintArray attributesArray;
+	jint *arrayElements;
+	
     p_path = (char*)((*env)->GetStringUTFChars(env, path, 0));
     
     if (find_links)
@@ -46,24 +54,63 @@ JNIEXPORT jint JNICALL Java_org_tmatesoft_svn_core_internal_wc_SVNStatHelper_get
     	
     	switch (mode & S_IFMT) {
         case S_IFREG:
-            ret_val = 1;  
+            attributes = 1;  
             break;
         case S_IFDIR:
-            ret_val = 2;  
+            attributes = 2;  
             break;
         case S_IFLNK:
-            ret_val = 3;  
+            attributes = 3;  
             break;
         default:
-            ret_val = 4;  
+            attributes = 4;  
             break;
         }
+    
+    	if (mode & S_IRUSR) {
+    		attributes |= (0x4 << 12);	
+    	}
+    	if (mode & S_IWUSR) {
+    		attributes |= (0x2 << 12);	
+    	}
+    	if (mode & S_IXUSR) {
+    		attributes |= (0x1 << 12);	
+    	}
+
+    	if (mode & S_IRGRP) {
+    		attributes |= (0x4 << 8);	
+    	}
+    	if (mode & S_IWGRP) {
+    		attributes |= (0x2 << 8);	
+    	}
+    	if (mode & S_IXGRP) {
+    		attributes |= (0x1 << 8);	
+    	}
+    	
+    	if (mode & S_IROTH) {
+    		attributes |= (0x4 << 4);	
+    	}
+    	if (mode & S_IWOTH) {
+    		attributes |= (0x2 << 4);	
+    	}
+    	if (mode & S_IXOTH) {
+    		attributes |= (0x1 << 4);	
+    	}
+    	
+    	gid = info.st_gid;
+    	uid = info.st_uid;
     } else {
-    	ret_val = -1;
+    	attributes = 5;
     }
 
+	attributesArray = (*env)->NewIntArray(env, 3);
+    arrayElements = (*env)->GetIntArrayElements(env, attributesArray, 0);
+	arrayElements[0] = attributes;
+	arrayElements[1] = uid;
+	arrayElements[2] = gid;
+	(*env)->ReleaseIntArrayElements(env, attributesArray, arrayElements, 0);
     (*env)->ReleaseStringUTFChars(env, path, p_path);
-    return ret_val;
+    return attributesArray;
 }
 
 JNIEXPORT jint JNICALL Java_org_tmatesoft_svn_core_internal_wc_SVNStatHelper_changeMode
