@@ -15,6 +15,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.net.ssl.TrustManager;
+
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -192,19 +194,12 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
     public ISVNProxyManager getProxyManager(SVNURL url) throws SVNException {
         return this;
     }
-    
-    /**
-     * Returns <span class="javakeyword">null</span>.
-     * 
-     * @param  url
-     * @return <span class="javakeyword">null</span>
-     * @throws SVNException
-     */
-    public ISVNSSLManager getSSLManager(SVNURL url) throws SVNException {
-        return null;
-    }
-    
-    /**
+
+	public TrustManager getTrustManager(SVNURL url) throws SVNException {
+		return null;
+	}
+
+	/**
      * Does nothing.
      * 
      * @param accepted

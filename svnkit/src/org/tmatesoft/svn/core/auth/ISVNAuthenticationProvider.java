@@ -80,7 +80,7 @@ public interface ISVNAuthenticationProvider {
      * (if the client trusts it) or not.
      * 
      * <p>
-     * This method is used by an SSL manager (see {@link ISVNSSLManager}).
+     * This method is used by an SSL manager (see {@link org.tmatesoft.svn.core.internal.wc.DefaultSVNSSLTrustManager}).
      * 
      * @param url                 a repository location that is accessed
      * @param realm               a repository authentication realm (host, port, realm string) 

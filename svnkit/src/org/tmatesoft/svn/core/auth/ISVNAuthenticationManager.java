@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.auth;
 
+import javax.net.ssl.TrustManager;
+
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -104,29 +106,10 @@ public interface ISVNAuthenticationManager {
      * @throws SVNException   
      */
     public ISVNProxyManager getProxyManager(SVNURL url) throws SVNException;
-    
-    /**
-     * Returns the SSL manager for secure interracting with a 
-     * repository.
-     * 
-     * <p>
-     * A default implementation of <b>ISVNAuthenticationManager</b> returns an 
-     * SSL manager that uses CA and user certificate files specified in the 
-     * standard <i>servers</i> file.
-     * 
-     * <p>     
-     * Even if the default manager's <b>getSSLManager()</b> method returns 
-     * <span class="javakeyword">null</span> for the given <code>url</code>, a secure 
-     * context will be created anymore, but, of course no user certificate files are provided 
-     * to a server as well as server's certificates are not checked.  
-     * 
-     * @param  url            a repository location to access 
-     * @return                an appropriate SSL manager
-     * @throws SVNException
-     */
-    public ISVNSSLManager getSSLManager(SVNURL url) throws SVNException;
-    
-    /**
+
+	public TrustManager getTrustManager(SVNURL url) throws SVNException;		
+
+	/**
      * Retrieves the first user credential.
      * 
      * The scheme of retrieving credentials:
