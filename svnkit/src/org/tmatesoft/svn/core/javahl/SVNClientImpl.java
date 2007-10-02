@@ -638,6 +638,15 @@ public class SVNClientImpl implements SVNClientInterface {
         }
     }
 
+    public void resolved(String path, int depth) throws SubversionException {
+        SVNWCClient client = getSVNWCClient();
+        try {
+            client.doResolve(new File(path).getAbsoluteFile(), SVNDepth.fromID(depth).isRecursive());
+        } catch (SVNException e) {
+            throwException(e);
+        }
+    }
+
     public long doExport(String srcPath, String destPath, Revision revision, boolean force) throws ClientException {
         return doExport(srcPath, destPath, revision, null, force, false, true, "");
     }

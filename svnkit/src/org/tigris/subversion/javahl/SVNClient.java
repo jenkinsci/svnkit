@@ -166,6 +166,9 @@ public class SVNClient implements SVNClientInterface {
     public void cleanup(String path) throws ClientException {
         myDelegate.cleanup(path);
     }
+    public void resolved(String path, int depth) throws SubversionException {
+        myDelegate.resolved(path, depth);
+    }
 
     public void resolved(String path, boolean recurse) throws ClientException {
         myDelegate.resolved(path, recurse);
