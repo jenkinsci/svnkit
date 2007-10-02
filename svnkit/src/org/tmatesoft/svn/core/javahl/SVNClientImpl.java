@@ -693,9 +693,11 @@ public class SVNClientImpl implements SVNClientInterface {
         merge(path1, revision1, path2, revision2, localPath, force, recurse, false, false);
     }
 
-    public void merge(String path1, Revision revision1, String path2, Revision revision2, String localPath, boolean force, boolean recurse, boolean ignoreAncestry, boolean dryRun) throws ClientException {
-        merge(path1, revision1, path2, revision2, localPath, force, Depth.fromRecurse(recurse), ignoreAncestry, dryRun);
-            }
+    public void merge(String path1, Revision revision1, String path2, Revision revision2, String localPath, 
+            boolean force, boolean recurse, boolean ignoreAncestry, boolean dryRun) throws ClientException {
+        merge(path1, revision1, path2, revision2, localPath, force, JavaHLObjectFactory.infinityOrFiles(recurse), 
+                ignoreAncestry, dryRun);
+    }
 
     public void merge(String path, Revision pegRevision, Revision revision1, Revision revision2, String localPath, boolean force, boolean recurse, boolean ignoreAncestry, boolean dryRun) throws ClientException {
         SVNDiffClient differ = getSVNDiffClient();
@@ -723,13 +725,16 @@ public class SVNClientImpl implements SVNClientInterface {
         diff(target1, revision1, target2, revision2, outFileName, recurse, false, false, false);
     }
 
-    public void diff(String target1, Revision revision1, String target2, Revision revision2, String outFileName, boolean recurse, boolean ignoreAncestry, boolean noDiffDeleted, boolean force) throws ClientException {
-        diff(target1, revision1, target2, revision2, outFileName, 
-                Depth.fromRecurse(recurse), ignoreAncestry, noDiffDeleted, force);
-            }
+    public void diff(String target1, Revision revision1, String target2, Revision revision2, String outFileName, 
+            boolean recurse, boolean ignoreAncestry, boolean noDiffDeleted, boolean force) throws ClientException {
+        diff(target1, revision1, target2, revision2, outFileName, JavaHLObjectFactory.infinityOrFiles(recurse), ignoreAncestry, 
+                noDiffDeleted, force);
+    }
 
-    public void diff(String target, Revision pegRevision, Revision startRevision, Revision endRevision, String outFileName, boolean recurse, boolean ignoreAncestry, boolean noDiffDeleted, boolean force) throws ClientException {
-        diff(target, pegRevision, startRevision, endRevision, outFileName, Depth.fromRecurse(recurse), ignoreAncestry, noDiffDeleted, force);
+    public void diff(String target, Revision pegRevision, Revision startRevision, Revision endRevision, 
+            String outFileName, boolean recurse, boolean ignoreAncestry, boolean noDiffDeleted, boolean force) throws ClientException {
+        diff(target, pegRevision, startRevision, endRevision, outFileName, 
+                JavaHLObjectFactory.infinityOrFiles(recurse), ignoreAncestry, noDiffDeleted, force);
     }
 
     public PropertyData[] properties(String path) throws ClientException {
@@ -1348,11 +1353,6 @@ public class SVNClientImpl implements SVNClientInterface {
         } catch (SVNException e) {
             throwException(e);
         }
-    }
-
-    public void diffSummarize(String target, Revision pegRevision, Revision startRevision, Revision endRevision, boolean recurse, boolean ignoreAncestry, final DiffSummaryReceiver receiver)
-            throws ClientException {
-        diffSummarize(target, pegRevision, startRevision, endRevision, Depth.fromRecurse(recurse), ignoreAncestry, receiver);
     }
 
     public long doSwitch(String path, String url, Revision revision, boolean recurse, boolean allowUnverObstructions) throws ClientException {

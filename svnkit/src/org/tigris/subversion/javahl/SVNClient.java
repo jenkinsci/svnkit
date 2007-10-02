@@ -393,11 +393,6 @@ public class SVNClient implements SVNClientInterface {
         myDelegate.diffSummarize(target1, revision1, target2, revision2, recurse, ignoreAncestry, receiver);
     }
 
-    public void diffSummarize(String target, Revision pegRevision, Revision startRevision, Revision endRevision, boolean recurse, boolean ignoreAncestry, DiffSummaryReceiver receiver)
-            throws ClientException {
-        myDelegate.diffSummarize(target, pegRevision, startRevision, endRevision, recurse, ignoreAncestry, receiver);
-    }
-
     public long doSwitch(String path, String url, Revision revision, boolean recurse, boolean allowUnverObstructions) throws ClientException {
         return myDelegate.doSwitch(path, url, revision, recurse, allowUnverObstructions);
     }

@@ -519,4 +519,17 @@ public class JavaHLObjectFactory {
         svnClient.getClientManager().getDebugLog().info(e);
         throw ec;
     }
+
+    public static final int infinityOrEmpty(boolean recurse) {
+        return Depth.infinityOrEmpty(recurse);
+    }
+
+    public static final int infinityOrFiles(boolean recurse) {
+        return Depth.infinityOrFiles(recurse);
+    }
+
+    public static final int infinityOrImmediates(boolean recurse) {
+        return Depth.infinityOrImmediates(recurse);
+    }
+
 }
