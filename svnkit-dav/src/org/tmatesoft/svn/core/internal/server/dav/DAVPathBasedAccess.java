@@ -21,9 +21,12 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
@@ -36,7 +39,12 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslatorInputStream;
 public class DAVPathBasedAccess {
     private static final Pattern COMMA = Pattern.compile(",");
 
-    private static final String ANONYMOUS_REPOSITORY = ".";
+    private static final String ANONYMOUS_REPOSITORY = "";
+
+    private static final int DAV_ACCESS_NONE = 0;
+    private static final int DAV_ACCESS_READ = 1;
+    private static final int DAV_ACCESS_WRITE = 2;
+    private static final int DAV_ACCESS_RECURSIVE = 4;
 
     private String myConfigPath;
     private int myCurrentLineNumber = 1;
@@ -109,47 +117,77 @@ public class DAVPathBasedAccess {
         myHasUngottenChar = hasUngottenChar;
     }
 
-    public StringBuffer getSectionName() {
+    private StringBuffer getSectionName() {
         if (mySectionName == null) {
             mySectionName = new StringBuffer();
         }
         return mySectionName;
     }
 
-
-    public StringBuffer getOption() {
+    private StringBuffer getOption() {
         if (myOption == null) {
             myOption = new StringBuffer();
         }
         return myOption;
     }
 
-    public StringBuffer getValue() {
+    private StringBuffer getValue() {
         if (myValue == null) {
             myValue = new StringBuffer();
         }
         return myValue;
     }
 
-    public Map getGroups() {
+    private Map getGroups() {
         if (myGroups == null) {
             myGroups = new HashMap();
         }
         return myGroups;
     }
 
-    public Map getAliases() {
+    private boolean groupContainsUser(String group, String user) {
+        String[] groupUsers = (String[]) getGroups().get(group);
+        for (int i = 0; i < groupUsers.length; i++) {
+            if (groupUsers[i].startsWith("@")) {
+                if (groupContainsUser(groupUsers[i].substring("@".length()), user)) {
+                    return true;
+                }
+            } else if (groupUsers[i].startsWith("&")) {
+                if (aliasIsUser(groupUsers[i].substring("&".length()), user)) {
+                    return true;
+                }
+            } else if (groupUsers[i].equals(user)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private Map getAliases() {
         if (myAliases == null) {
             myAliases = new HashMap();
         }
         return myAliases;
     }
 
-    public Map getRules() {
+    private boolean aliasIsUser(String alias, String user) {
+        String aliasValue = (String) getAliases().get(alias);
+        return aliasValue != null && aliasValue.equals(user);
+    }
+
+    private Map getRules() {
         if (myRules == null) {
             myRules = new HashMap();
         }
         return myRules;
+    }
+
+    public boolean checkRequestAccess(HttpServletRequest request) {
+        String user = request.getUserPrincipal().getName();
+        String path = request.getPathInfo();
+        int requestedAccess = DAV_ACCESS_NONE;
+        RepositoryAccess repositoryAccess = (RepositoryAccess) getRules().get(path);
+        return repositoryAccess.checkPathAccess(user, path, requestedAccess);
     }
 
     private void parse(InputStream is) throws IOException, SVNException {
@@ -269,7 +307,7 @@ public class DAVPathBasedAccess {
             }
         }
 
-        return 0;
+        return currentByte;
     }
 
     private int skipWhitespace(InputStream is) throws IOException {
@@ -306,10 +344,10 @@ public class DAVPathBasedAccess {
     }
 
     private void trimBuffer(StringBuffer buffer) {
-        while (Character.isWhitespace(buffer.charAt(0))) {
+        while (buffer.length() > 0 && Character.isWhitespace(buffer.charAt(0))) {
             buffer.deleteCharAt(0);
         }
-        while (Character.isWhitespace(buffer.charAt(buffer.length() - 1))) {
+        while (buffer.length() > 0 && Character.isWhitespace(buffer.charAt(buffer.length() - 1))) {
             buffer.deleteCharAt(buffer.length() - 1);
         }
     }
@@ -367,7 +405,7 @@ public class DAVPathBasedAccess {
 
         RepositoryAccess repositoryAccess = (RepositoryAccess) getRules().get(repositoryName);
         if (repositoryAccess == null) {
-            repositoryAccess = new RepositoryAccess();
+            repositoryAccess = new RepositoryAccess(ANONYMOUS_REPOSITORY.equals(repositoryName));
             getRules().put(repositoryName, repositoryAccess);
         }
         repositoryAccess.addRule(path, getOption().toString(), getValue().toString());
@@ -401,32 +439,38 @@ public class DAVPathBasedAccess {
                 checkedGroups.add(subGroup);
                 groupWalk(subGroup, checkedGroups);
                 checkedGroups.remove(subGroup);
-            } else if (users[i].startsWith("&")){
+            } else if (users[i].startsWith("&")) {
                 String alias = users[i].substring("&".length());
-                if (!getAliases().keySet().contains(alias)){
-                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "An authz rule refers to alias ''{0}'', which is undefined.", alias));                                                            
+                if (!getAliases().keySet().contains(alias)) {
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "An authz rule refers to alias ''{0}'', which is undefined.", alias));
                 }
             }
         }
     }
 
     private class RepositoryAccess {
+        boolean myAnonymous = false;
+
         private Map myPathRules;
         private PathAccess myGlobalAccess;
+
+
+        public RepositoryAccess(boolean isAnonymous) {
+            myAnonymous = isAnonymous;
+        }
 
         private void addRule(String path, String matchString, String value) {
             if (path.equals("/") || path.length() == 0) {
                 myGlobalAccess = myGlobalAccess == null ? new PathAccess() : myGlobalAccess;
-                myGlobalAccess.addAccessRule(matchString, value);
-            } else {
-                myPathRules = myPathRules == null ? new HashMap() : myPathRules;
-                PathAccess pathAccess = (PathAccess) myPathRules.get(path);
-                if (pathAccess == null) {
-                    pathAccess = new PathAccess();
-                    myPathRules.put(path, pathAccess);
-                }
-                pathAccess.addAccessRule(matchString, value);
+                myGlobalAccess.addRule(matchString, value);
             }
+            myPathRules = myPathRules == null ? new HashMap() : myPathRules;
+            PathAccess pathAccess = (PathAccess) myPathRules.get(path);
+            if (pathAccess == null) {
+                pathAccess = new PathAccess();
+                myPathRules.put(path, pathAccess);
+            }
+            pathAccess.addRule(matchString, value);
         }
 
         private void validateRules() throws SVNException {
@@ -436,28 +480,168 @@ public class DAVPathBasedAccess {
                 pathAccess.validateRules();
             }
         }
+
+        private boolean checkPathAccess(String user, String path, int requestedAccess) {
+            boolean accessGranted = false;
+            if (path == null || path.length() == 0 || path.equals("/")) {
+                if (myGlobalAccess != null) {
+                    int[] pathAccess = myGlobalAccess.checkAccess(user);
+                    if (isAccessDetermined(pathAccess, requestedAccess)) {
+                        accessGranted = isAccessGranted(pathAccess, requestedAccess);
+                    }
+                }
+            } else {
+                for (String currentPath = path; currentPath.length() > 0 && !"/".equals(currentPath); currentPath = SVNPathUtil.removeTail(currentPath))
+                {
+                    if (myPathRules == null) {
+                        return false;
+                    }
+                    PathAccess currentPathAccess = (PathAccess) myPathRules.get(currentPath);
+                    if (currentPathAccess != null) {
+                        int[] pathAccess = currentPathAccess.checkAccess(user);
+                        if (isAccessDetermined(pathAccess, requestedAccess)) {
+                            accessGranted = isAccessGranted(pathAccess, requestedAccess);
+                            break;
+                        }
+                    } else if (!myAnonymous) {
+                        RepositoryAccess commomRepositoryAccess = (RepositoryAccess) getRules().get(ANONYMOUS_REPOSITORY);
+                        if (commomRepositoryAccess != null) {
+                            int[] pathAccess = commomRepositoryAccess.checkPathAccess(user, path);
+                            if (isAccessDetermined(pathAccess, requestedAccess)) {
+                                accessGranted = isAccessGranted(pathAccess, requestedAccess);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            if (accessGranted && ((requestedAccess & DAV_ACCESS_RECURSIVE) != DAV_ACCESS_NONE)) {
+                accessGranted = checkTreeAccess(user, path, requestedAccess);
+            }
+            return accessGranted;
+        }
+
+        private int[] checkPathAccess(String user, String path) {
+            PathAccess pathAccess = (PathAccess) myPathRules.get(path);
+            return pathAccess.checkAccess(user);
+        }
+
+        private boolean checkTreeAccess(String user, String path, int requestedAccess) {
+            if (myRules == null) {
+                return false;
+            }
+            boolean accessGranted = true;
+            for (Iterator iterator = myRules.entrySet().iterator(); iterator.hasNext();) {
+                Map.Entry entry = (Map.Entry) iterator.next();
+                String currentPath = (String) entry.getKey();
+                if (SVNPathUtil.isAncestor(path, currentPath)) {
+                    PathAccess currentPathAccess = (PathAccess) entry.getValue();
+                    int[] pathAccess = currentPathAccess.checkAccess(user);
+                    accessGranted = isAccessGranted(pathAccess, requestedAccess) || !isAccessDetermined(pathAccess, requestedAccess);
+                    if (!accessGranted) {
+                        return accessGranted;
+                    }
+                }
+            }
+            return accessGranted;
+        }
+
+        private boolean isAccessGranted(int[] pathAccess, int requestedAccess) {
+            if (pathAccess == null) {
+                return false;
+            }
+            int allow = pathAccess[0];
+            int deny = pathAccess[1];
+            int strippedAccess = requestedAccess & (DAV_ACCESS_READ | DAV_ACCESS_WRITE);
+            return (deny & requestedAccess) == DAV_ACCESS_NONE || (allow & requestedAccess) == strippedAccess;
+        }
+
+        private boolean isAccessDetermined(int[] pathAccess, int requestedAccess) {
+            if (pathAccess == null) {
+                return false;
+            }
+            int allow = pathAccess[0];
+            int deny = pathAccess[1];
+            return ((deny & requestedAccess) != DAV_ACCESS_NONE) || ((allow & requestedAccess) != DAV_ACCESS_NONE);
+        }
     }
 
     private class PathAccess {
-        private Map myAccessRules;
+        private Map myRules;
 
-        private void addAccessRule(String matchString, String value) {
-            myAccessRules = myAccessRules == null ? new HashMap() : myAccessRules;
-            myAccessRules.put(matchString, value);
+        private void addRule(String matchString, String value) {
+            myRules = myRules == null ? new HashMap() : myRules;
+            myRules.put(matchString, value);
         }
 
         private void validateRules() throws SVNException {
-            for (Iterator iterator = myAccessRules.keySet().iterator(); iterator.hasNext();) {
-                String matchString = (String) iterator.next();
-                if (matchString.startsWith("@")) {
-                    if (!getGroups().keySet().contains(matchString.substring("@".length()))) {
-                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "An authz rule refers to group ''{0}'', which is undefined.", matchString));
-                    }
-                } else if (matchString.startsWith("&")) {
-                    if (!getAliases().keySet().contains(matchString.substring("&".length()))) {
-                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "An authz rule refers to alias ''{0}'', which is undefined.", matchString));
+            if (myRules != null) {
+                for (Iterator iterator = myRules.keySet().iterator(); iterator.hasNext();) {
+                    String matchString = (String) iterator.next();
+                    if (matchString.startsWith("@")) {
+                        if (!getGroups().keySet().contains(matchString.substring("@".length()))) {
+                            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "An authz rule refers to group ''{0}'', which is undefined.", matchString));
+                        }
+                    } else if (matchString.startsWith("&")) {
+                        if (!getAliases().keySet().contains(matchString.substring("&".length()))) {
+                            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "An authz rule refers to alias ''{0}'', which is undefined.", matchString));
+                        }
                     }
                 }
+            }
+        }
+
+        private int[] checkAccess(String user) {
+            if (myRules == null) {
+                return null;
+            } else {
+                int deny = DAV_ACCESS_NONE;
+                int allow = DAV_ACCESS_NONE;
+                for (Iterator iterator = myRules.entrySet().iterator(); iterator.hasNext();) {
+                    Map.Entry entry = (Map.Entry) iterator.next();
+                    String matchString = (String) entry.getKey();
+                    String accessType = (String) entry.getValue();
+                    if (ruleApliesToUser(matchString, user)) {
+                        if (accessType.indexOf('r') >= 0) {
+                            allow |= DAV_ACCESS_READ;
+                        } else {
+                            deny |= DAV_ACCESS_READ;
+                        }
+                        if (accessType.indexOf('w') >= 0) {
+                            allow |= DAV_ACCESS_WRITE;
+                        } else {
+                            deny |= DAV_ACCESS_WRITE;
+                        }
+                    }
+                }
+                return new int[]{allow, deny};
+            }
+        }
+
+        private boolean ruleApliesToUser(String matchString, String user) {
+            if (matchString.startsWith("~")) {
+                return !ruleApliesToUser(matchString.substring("~".length()), user);
+            }
+
+            if (matchString.equals("*")) {
+                return true;
+            }
+            if (matchString.equals("$anonymous")) {
+                return user == null;
+            }
+            if (matchString.equals("$authenticated")) {
+                return user != null;
+            }
+
+            if (user == null) {
+                return false;
+            }
+            if (matchString.startsWith("@")) {
+                return groupContainsUser(matchString.substring("@".length()), user);
+            } else if (matchString.startsWith("&")) {
+                return aliasIsUser(matchString.substring("&".length()), user);
+            } else {
+                return matchString.equals(user);
             }
         }
     }
