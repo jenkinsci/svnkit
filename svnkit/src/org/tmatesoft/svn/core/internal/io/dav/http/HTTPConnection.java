@@ -44,6 +44,7 @@ import org.tmatesoft.svn.core.auth.ISVNProxyManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVErrorHandler;
+import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSocketFactory;
 import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableOutputStream;
@@ -297,6 +298,9 @@ class HTTPConnection implements IHTTPConnection {
             } catch (SSLHandshakeException ssl) {
                 myRepository.getDebugLog().info(ssl);
 	              close();
+	            if (ssl.getCause() instanceof SVNSSLUtil.CertificateNotTrustedException) {
+		            SVNErrorManager.cancel(ssl.getCause().getMessage());
+	            }
                 SVNErrorMessage sslErr = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "SSL handshake failed: ''{0}''", ssl.getMessage());
 		            if (keyManager != null) {
 			            keyManager.acknowledgeAndClearAuthentication(sslErr);
@@ -794,5 +798,4 @@ class HTTPConnection implements IHTTPConnection {
     public void setSpoolResponse(boolean spoolResponse) {
         myIsSpoolResponse = spoolResponse;
     }
-
 }
