@@ -75,6 +75,7 @@ public class SVNGanymedConnector implements ISVNConnector {
                         authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.SSH, realm, null, authentication);
                         break;
                     } catch (SVNAuthenticationException e) {
+                        SVNDebugLog.getDefaultLog().info(e);
                         authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.SSH, realm, e.getErrorMessage(), authentication);
                         authentication = (SVNSSHAuthentication) authManager.getNextAuthentication(ISVNAuthenticationManager.SSH, realm, repository.getLocation());
                         connection = null;
