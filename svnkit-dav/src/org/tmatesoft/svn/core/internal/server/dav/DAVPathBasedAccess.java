@@ -279,31 +279,30 @@ public class DAVPathBasedAccess {
             if (currentByte == -1 || isEndOfValue) {
                 updateConfiguration();
                 break;
-            } else {
-                increaseCurrentLineNumber();
-                currentByte = skipWhitespace(is);
-                switch (currentByte) {
-                    case'\n':
-                        increaseCurrentLineNumber();
+            }
+            increaseCurrentLineNumber();
+            currentByte = skipWhitespace(is);
+            switch (currentByte) {
+                case'\n':
+                    increaseCurrentLineNumber();
+                    isEndOfValue = true;
+                    continue;
+                case-1:
+                    isEndOfValue = true;
+                    continue;
+                default:
+                    if (getCurrentLineColumn() == 0) {
+                        ungetc((char) currentByte);
                         isEndOfValue = true;
-                        continue;
-                    case-1:
-                        isEndOfValue = true;
-                        continue;
-                    default:
-                        if (getCurrentLineColumn() == 0) {
-                            ungetc((char) currentByte);
-                            isEndOfValue = true;
-                        } else {
-                            //Continuation line found.
-                            getValue().append(' ');
-                            while (currentByte != -1 && currentByte != '\n') {
-                                getValue().append((char) currentByte);
-                                currentByte = getc(is);
-                            }
-                            trimBuffer(getValue());
+                    } else {
+                        //Continuation line found.
+                        getValue().append(' ');
+                        while (currentByte != -1 && currentByte != '\n') {
+                            getValue().append((char) currentByte);
+                            currentByte = getc(is);
                         }
-                }
+                        trimBuffer(getValue());
+                    }
             }
         }
 
@@ -333,9 +332,8 @@ public class DAVPathBasedAccess {
         if (hasUngottenChar()) {
             setHasUngottenChar(false);
             return getUngottenChar();
-        } else {
-            return is.read();
         }
+        return is.read();
     }
 
     private void ungetc(char ungottenChar) {
@@ -594,28 +592,28 @@ public class DAVPathBasedAccess {
         private int[] checkAccess(String user) {
             if (myRules == null) {
                 return null;
-            } else {
-                int deny = DAV_ACCESS_NONE;
-                int allow = DAV_ACCESS_NONE;
-                for (Iterator iterator = myRules.entrySet().iterator(); iterator.hasNext();) {
-                    Map.Entry entry = (Map.Entry) iterator.next();
-                    String matchString = (String) entry.getKey();
-                    String accessType = (String) entry.getValue();
-                    if (ruleApliesToUser(matchString, user)) {
-                        if (accessType.indexOf('r') >= 0) {
-                            allow |= DAV_ACCESS_READ;
-                        } else {
-                            deny |= DAV_ACCESS_READ;
-                        }
-                        if (accessType.indexOf('w') >= 0) {
-                            allow |= DAV_ACCESS_WRITE;
-                        } else {
-                            deny |= DAV_ACCESS_WRITE;
-                        }
+            }
+            
+            int deny = DAV_ACCESS_NONE;
+            int allow = DAV_ACCESS_NONE;
+            for (Iterator iterator = myRules.entrySet().iterator(); iterator.hasNext();) {
+                Map.Entry entry = (Map.Entry) iterator.next();
+                String matchString = (String) entry.getKey();
+                String accessType = (String) entry.getValue();
+                if (ruleApliesToUser(matchString, user)) {
+                    if (accessType.indexOf('r') >= 0) {
+                        allow |= DAV_ACCESS_READ;
+                    } else {
+                        deny |= DAV_ACCESS_READ;
+                    }
+                    if (accessType.indexOf('w') >= 0) {
+                        allow |= DAV_ACCESS_WRITE;
+                    } else {
+                        deny |= DAV_ACCESS_WRITE;
                     }
                 }
-                return new int[]{allow, deny};
             }
+            return new int[]{allow, deny};
         }
 
         private boolean ruleApliesToUser(String matchString, String user) {

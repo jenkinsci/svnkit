@@ -39,7 +39,7 @@ public class DAVReplayHandler extends DAVReportHandler implements ISVNEditor {
 
     private DAVReplayRequest myDAVRequest;
 
-    public DAVReplayHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) throws SVNException {
+    public DAVReplayHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) {
         super(repositoryManager, request, response);
     }
 

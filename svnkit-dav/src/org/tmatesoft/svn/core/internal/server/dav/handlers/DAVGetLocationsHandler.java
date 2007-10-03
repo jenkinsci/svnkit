@@ -33,7 +33,7 @@ public class DAVGetLocationsHandler extends DAVReportHandler implements ISVNLoca
 
     private DAVGetLocationsRequest myDAVRequest;
 
-    public DAVGetLocationsHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) throws SVNException {
+    public DAVGetLocationsHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) {
         super(repositoryManager, request, response);
     }
 

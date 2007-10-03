@@ -35,7 +35,7 @@ public class DAVMergeInfoHandler extends DAVReportHandler {
 
     private DAVMergeInfoRequest myDAVRequest;
 
-    public DAVMergeInfoHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) throws SVNException {
+    public DAVMergeInfoHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) {
         super(repositoryManager, request, response);
     }
 

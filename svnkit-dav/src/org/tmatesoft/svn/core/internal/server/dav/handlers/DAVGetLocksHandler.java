@@ -36,7 +36,7 @@ public class DAVGetLocksHandler extends DAVReportHandler {
 
     private DAVGetLocksRequest myDAVRequest;
 
-    protected DAVGetLocksHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) throws SVNException {
+    protected DAVGetLocksHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) {
         super(repositoryManager, request, response);
     }
 

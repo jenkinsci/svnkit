@@ -102,7 +102,7 @@ public class DAVRepositoryManager {
         return new DAVResource(resourceRepository, resourceURI, isSVNClient, deltaBase, version, clientOptions, baseChecksum, resultChecksum);
     }
 
-    private String getRepositoryRoot(String requestURI) throws SVNException {
+    private String getRepositoryRoot(String requestURI) {
         StringBuffer repositoryURL = new StringBuffer();
         repositoryURL.append(FILE_PROTOCOL_LINE);
         if (isUsingRepositoryPathParameter()) {
@@ -119,20 +119,19 @@ public class DAVRepositoryManager {
     private String getPathInfo(String requestURI) throws SVNException {
         if (isUsingRepositoryPathParameter()) {
             return requestURI;
-        } else {
-            if (requestURI == null || requestURI.length() == 0 || "/".equals(requestURI)) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED));
-                //TODO: client tried to access repository parent path, result status code should be FORBIDDEN.
-            }
-            return DAVPathUtil.removeHead(requestURI, true);
         }
+        
+        if (requestURI == null || requestURI.length() == 0 || "/".equals(requestURI)) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED));
+            //TODO: client tried to access repository parent path, result status code should be FORBIDDEN.
+        }
+        return DAVPathUtil.removeHead(requestURI, true);
     }
 
     private String getResourceContext(String requestURI) {
         if (isUsingRepositoryPathParameter()) {
             return myContext;
-        } else {
-            return DAVPathUtil.append(myContext, DAVPathUtil.head(requestURI));
         }
+        return DAVPathUtil.append(myContext, DAVPathUtil.head(requestURI));
     }
 }

@@ -152,7 +152,7 @@ public class DAVReportHandler extends ServletDAVHandler {
         getReportHandler().execute();
     }
 
-    private void initReportHandler(DAVElement rootElement) throws SVNException {
+    private void initReportHandler(DAVElement rootElement) {
         if (rootElement == DATED_REVISIONS_REPORT) {
             setReportHandler(new DAVDatedRevisionHandler(myRepositoryManager, myRequest, myResponse));
         } else if (rootElement == FILE_REVISIONS_REPORT) {

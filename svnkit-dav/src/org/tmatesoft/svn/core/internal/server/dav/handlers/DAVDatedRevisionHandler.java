@@ -30,7 +30,7 @@ public class DAVDatedRevisionHandler extends DAVReportHandler {
 
     private DAVDatedRevisionRequest myDAVRequest;
 
-    public DAVDatedRevisionHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) throws SVNException {
+    public DAVDatedRevisionHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) {
         super(repositoryManager, request, response);
     }
 

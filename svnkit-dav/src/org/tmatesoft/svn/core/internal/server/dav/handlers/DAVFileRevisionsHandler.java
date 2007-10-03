@@ -37,7 +37,7 @@ public class DAVFileRevisionsHandler extends DAVReportHandler implements ISVNFil
     private DAVFileRevisionsRequest myDAVRequest;
 
 
-    public DAVFileRevisionsHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) throws SVNException {
+    public DAVFileRevisionsHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) {
         super(repositoryManager, request, response);
     }
 

@@ -39,7 +39,7 @@ public class DAVLogHandler extends DAVReportHandler implements ISVNLogEntryHandl
 
     private DAVLogRequest myDAVRequest;
 
-    public DAVLogHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) throws SVNException {
+    public DAVLogHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) {
         super(repositoryManager, request, response);
     }
 
