@@ -546,7 +546,7 @@ class DAVRepository extends SVNRepository {
     //TODO: FIXME
     public long log(String[] targetPaths, long startRevision, long endRevision, 
                     boolean changedPath, boolean strictNode, long limit, 
-                    boolean includeMergedRevisions, boolean omitLogText, 
+                    boolean includeMergedRevisions, String[] revPropNames, 
                     final ISVNLogEntryHandler handler) throws SVNException {
         if (targetPaths == null || targetPaths.length == 0) {
             targetPaths = new String[]{""};
@@ -590,7 +590,7 @@ class DAVRepository extends SVNRepository {
                                                                     changedPath, 
                                                                     strictNode, 
                                                                     includeMergedRevisions, 
-                                                                    omitLogText,
+                                                                    revPropNames,
                                                                     limit, 
                                                                     fullPaths);
             

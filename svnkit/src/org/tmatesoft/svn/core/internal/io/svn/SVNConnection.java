@@ -42,6 +42,9 @@ class SVNConnection {
     private boolean myIsSVNDiff1;
     private boolean myIsCommitRevprops;
     private boolean myIsMergeInfo;
+    private boolean myIsReopening = false;
+    private boolean myIsCredentialsReceived = false;
+    private InputStream myLoggingInputStream;
 
     private static final String SUCCESS = "success";
     private static final String FAILURE = "failure";
@@ -104,9 +107,6 @@ class SVNConnection {
         write("(n(www)s)", new Object[] { "2", EDIT_PIPELINE, SVNDIFF1, ABSENT_ENTRIES, 
               repository.getLocation().toString() });
     }
-
-    private boolean myIsCredentialsReceived = false;
-    private InputStream myLoggingInputStream;
 
     public void authenticate(SVNRepositoryImpl repository) throws SVNException {
         SVNErrorMessage failureReason = null;
@@ -244,8 +244,6 @@ class SVNConnection {
             myRepository.getDebugLog().flushStream(myLoggingInputStream);
         }
     }
-    
-    private boolean myIsReopening = false;
     
     public void write(String template, Object[] items) throws SVNException {
         try {

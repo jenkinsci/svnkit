@@ -393,7 +393,7 @@ public class SVNLogClient extends SVNBasicClient {
     
     public void doLog(ISVNPathList pathList, SVNRevision startRevision, SVNRevision endRevision, 
                       boolean stopOnCopy, boolean reportPaths, boolean includeMergedRevisions, 
-                      boolean omitLogText, long limit, final ISVNLogEntryHandler handler) throws SVNException {
+                      long limit, String[] revisionProperties, final ISVNLogEntryHandler handler) throws SVNException {
         if (pathList == null) {
             return;
         }
@@ -467,13 +467,13 @@ public class SVNLogClient extends SVNBasicClient {
                 long startRev = getRevisionNumber(startRevision, repos, paths[i]);
                 long endRev = getRevisionNumber(endRevision, repos, paths[i]);
                 repos.log(targetPaths, startRev, endRev, reportPaths, stopOnCopy, limit, 
-                          includeMergedRevisions, omitLogText, wrappingHandler);
+                          includeMergedRevisions, revisionProperties, wrappingHandler);
             }
         } else {
             long startRev = getRevisionNumber(startRevision, repos, null);
             long endRev = getRevisionNumber(endRevision, repos, null);
             repos.log(targetPaths, startRev, endRev, reportPaths, stopOnCopy, limit, 
-                      includeMergedRevisions, omitLogText, wrappingHandler);
+                      includeMergedRevisions, revisionProperties, wrappingHandler);
         }
     }
     
@@ -530,7 +530,7 @@ public class SVNLogClient extends SVNBasicClient {
     public void doLog(File[] paths, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean reportPaths, long limit, final ISVNLogEntryHandler handler) throws SVNException {
         SVNPathList pathList = SVNPathList.create(paths, pegRevision);
         doLog(pathList, startRevision, endRevision, stopOnCopy, reportPaths, 
-              false, false, limit, handler);
+              false, limit, null, handler);
     }
     
     /**
@@ -581,13 +581,13 @@ public class SVNLogClient extends SVNBasicClient {
      */
     public void doLog(SVNURL url, String[] paths, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean reportPaths, long limit, final ISVNLogEntryHandler handler) throws SVNException {
         doLog(url, paths, pegRevision, startRevision, endRevision, stopOnCopy, 
-              reportPaths, false, false, limit, handler);
+              reportPaths, false, limit, null, handler);
     }
     
     public void doLog(SVNURL url, String[] paths, SVNRevision pegRevision, 
                       SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, 
-                      boolean reportPaths, boolean includeMergeInfo, boolean omitLogText, 
-                      long limit, final ISVNLogEntryHandler handler) throws SVNException {
+                      boolean reportPaths, boolean includeMergeInfo, long limit, 
+                      String[] revisionProperties, final ISVNLogEntryHandler handler) throws SVNException {
         if (startRevision.isValid() && !endRevision.isValid()) {
             endRevision = startRevision;
         } else if (!startRevision.isValid()) {
@@ -621,7 +621,7 @@ public class SVNLogClient extends SVNBasicClient {
         long endRev = getRevisionNumber(endRevision, repos, null);
         checkCancelled();
         repos.log(paths, startRev, endRev, reportPaths, stopOnCopy, limit, 
-                  includeMergeInfo, omitLogText, wrappingHandler);
+                  includeMergeInfo, revisionProperties, wrappingHandler);
     }
     
     public SVNLocationEntry getCopySource(File path, SVNRevision revision) throws SVNException {

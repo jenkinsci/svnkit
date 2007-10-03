@@ -14,6 +14,7 @@ package org.tmatesoft.svn.cli2.svn;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -29,6 +30,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
+import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
@@ -46,6 +48,8 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler {
 
     private static final String SEPARATOR = "------------------------------------------------------------------------\n";
+
+    private LinkedList myMergeStack;
 
     public SVNLogCommand() {
         super("log", null);
@@ -69,10 +73,25 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
         options.add(SVNOption.CONFIG_DIR);
         options.add(SVNOption.LIMIT);
         options.add(SVNOption.CHANGELIST);
+        options.add(SVNOption.WITH_ALL_REVPROPS);
+        options.add(SVNOption.WITH_REVPROP);
         return options;
     }
 
     public void run() throws SVNException {
+        if (!getSVNEnvironment().isXML()) {
+            if (getSVNEnvironment().isAllRevisionProperties()) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+                        "'with-all-revprops' option only valid in XML mode");
+                SVNErrorManager.error(err);
+            }
+            if (getSVNEnvironment().getRevisionProperties() != null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+                        "'with-revprop' option only valid in XML mode");
+                SVNErrorManager.error(err);
+            }
+        }
+        
         List targets = new ArrayList(); 
         if (getSVNEnvironment().getChangelist() != null) {
             SVNCommandTarget target = new SVNCommandTarget("");
@@ -107,13 +126,7 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
             }
         }
         
-        if (!target.isURL()) {
-            if (targets.size() > 1) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
-                        "When specifying working copy paths, only one target may be given");
-                SVNErrorManager.error(err);
-            }
-        } else {
+        if (target.isURL()) {
             for(int i = 1; i < targets.size(); i++) {
                 if (SVNCommandUtil.isURL((String) targets.get(i))) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
@@ -122,13 +135,57 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
                 }
             }
         }
+        
         SVNLogClient client = getSVNEnvironment().getClientManager().getLogClient();
         if (!getSVNEnvironment().isQuiet()) {
             client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment()));
         }
         
-        if (getSVNEnvironment().isXML() && !getSVNEnvironment().isIncremental()) {
-            printXMLHeader("log");
+        String[] revProps = null;
+        if (getSVNEnvironment().isXML()) {
+            if (!getSVNEnvironment().isIncremental()) {
+                printXMLHeader("log");    
+            }
+            
+            if (!getSVNEnvironment().isAllRevisionProperties() && 
+                    getSVNEnvironment().getRevisionProperties() != null && 
+                    !getSVNEnvironment().getRevisionProperties().isEmpty()) {
+                Map revPropNames = getSVNEnvironment().getRevisionProperties();
+                revProps = new String[revPropNames.size()];
+                int i = 0;
+                for (Iterator propNames = revPropNames.keySet().iterator(); propNames.hasNext();) {
+                    String propName = (String) propNames.next();
+                    String propVal = (String) revPropNames.get(propName);
+                    if (propVal.length() > 0) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+                                "cannot assign with 'with-revprop' option (drop the '=')");
+                        SVNErrorManager.error(err);
+                    }
+                    revProps[i++] = propName;
+                }
+            } else {
+                if (!getSVNEnvironment().isQuiet()) {
+                    revProps = new String[3];
+                    revProps[0] = SVNRevisionProperty.AUTHOR;
+                    revProps[1] = SVNRevisionProperty.DATE;
+                    revProps[2] = SVNRevisionProperty.LOG;
+                } else {
+                    revProps = new String[2];
+                    revProps[0] = SVNRevisionProperty.AUTHOR;
+                    revProps[1] = SVNRevisionProperty.DATE;
+                }
+            }
+        } else {
+            if (!getSVNEnvironment().isQuiet()) {
+                revProps = new String[3];
+                revProps[0] = SVNRevisionProperty.AUTHOR;
+                revProps[1] = SVNRevisionProperty.DATE;
+                revProps[2] = SVNRevisionProperty.LOG;
+            } else {
+                revProps = new String[2];
+                revProps[0] = SVNRevisionProperty.AUTHOR;
+                revProps[1] = SVNRevisionProperty.DATE;
+            }
         }
 
         if (target.isFile()) {
@@ -137,8 +194,7 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
                     getSVNEnvironment().isStopOnCopy(), 
                     getSVNEnvironment().isVerbose(), 
                     getSVNEnvironment().isUseMergeHistory(),
-                    getSVNEnvironment().isQuiet(),
-                    getSVNEnvironment().getLimit(), this);
+                    getSVNEnvironment().getLimit(), revProps, this);
         } else {
             targets.remove(0);
             String[] paths = (String[]) targets.toArray(new String[targets.size()]);
@@ -146,8 +202,7 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
                     getSVNEnvironment().isStopOnCopy(), 
                     getSVNEnvironment().isVerbose(),
                     getSVNEnvironment().isUseMergeHistory(),
-                    getSVNEnvironment().isQuiet(),
-                    getSVNEnvironment().getLimit(), this);
+                    getSVNEnvironment().getLimit(), revProps, this);
         }
 
         if (getSVNEnvironment().isXML() && !getSVNEnvironment().isIncremental()) {
@@ -165,22 +220,38 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
         }
     }
     
-    private LinkedList myMergeStack;
     
     protected void printLogEntry(SVNLogEntry logEntry) {
-        if (logEntry == null || (logEntry.getMessage() == null && logEntry.getRevision() == 0)) {
+        if (logEntry == null) {
+            return;
+        }
+
+        Map revisionProperties = logEntry.getRevisionProperties();
+        String author = (String) revisionProperties.get(SVNRevisionProperty.AUTHOR);
+        String message = (String) revisionProperties.get(SVNRevisionProperty.LOG);
+        Date dateObject = (Date) revisionProperties.get(SVNRevisionProperty.DATE); 
+
+        if (message == null && logEntry.getRevision() == 0) {
+            return;
+        }
+        
+        if (!SVNRevision.isValidRevisionNumber(logEntry.getRevision())) {
+            myMergeStack.removeLast();
             return;
         }
         StringBuffer buffer = new StringBuffer();
-        String author = logEntry.getAuthor() == null ? "(no author)" : logEntry.getAuthor();
-        String date = logEntry.getDate() == null ? "(no date)" : SVNFormatUtil.formatHumanDate(logEntry.getDate(), getSVNEnvironment().getClientManager().getOptions());
-        String message = logEntry.getMessage();
+        if (author == null) {
+            author = "(no author)";
+        }
+            
+        String date = dateObject == null ? "(no date)" : SVNFormatUtil.formatHumanDate(dateObject, 
+                getSVNEnvironment().getClientManager().getOptions());
         if (!getSVNEnvironment().isQuiet() && message == null) {
             message = "";
         }
         buffer.append(SEPARATOR);
         buffer.append("r" + Long.toString(logEntry.getRevision()) + " | " + author + " | " + date);
-        if (!getSVNEnvironment().isQuiet()) {
+        if (message != null) {
             int count = SVNCommandUtil.getLinesCount(message);
             buffer.append(" | " + count + (count == 1 ? " line" : " lines"));
         }
@@ -201,54 +272,57 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
         
         if (myMergeStack != null && !myMergeStack.isEmpty()) {
             buffer.append("Result of a merge from:");
-            MergeFrame frame = (MergeFrame) myMergeStack.getLast();
-            for (Iterator frames = myMergeStack.iterator(); frames.hasNext();) {
-                MergeFrame outputFrame = (MergeFrame) frames.next();
+            for (Iterator revs = myMergeStack.iterator(); revs.hasNext();) {
+                long rev = ((Long) revs.next()).longValue();
                 buffer.append(" r");
-                buffer.append(outputFrame.myMergeRevision);
-                if (frames.hasNext()) {
+                buffer.append(rev);
+                if (revs.hasNext()) {
                     buffer.append(',');
                 } else {
                     buffer.append('\n');
                 }
             }
-            frame.myNumberOfChildrenRemaining--;
         }
         
-        if (!getSVNEnvironment().isQuiet()) {
+        if (message != null) {
             buffer.append("\n" + message + "\n");
         }
         
-        if (logEntry.getNumberOfChildren() > 0) {
-            MergeFrame frame = new MergeFrame();
-            frame.myMergeRevision = logEntry.getRevision();
-            frame.myNumberOfChildrenRemaining = logEntry.getNumberOfChildren();
+        if (logEntry.hasChildren()) {
+            Long rev = new Long(logEntry.getRevision());
             if (myMergeStack == null) {
                 myMergeStack = new LinkedList();
             }
-            myMergeStack.addLast(frame);
-        } else {
-            while(myMergeStack != null && !myMergeStack.isEmpty()) {
-                MergeFrame frame = (MergeFrame) myMergeStack.getLast();
-                if (frame.myNumberOfChildrenRemaining == 0) {
-                    myMergeStack.removeLast();
-                } else {
-                    break;
-                }
-            }
-        }
+            myMergeStack.addLast(rev);
+        } 
         getSVNEnvironment().getOut().print(buffer.toString());
     }
     
     protected void printLogEntryXML(SVNLogEntry logEntry) {
-        if (logEntry.getRevision() == 0 && logEntry.getMessage() == null) {
+        if (logEntry == null) {
             return;
         }
+        
+        Map revProps = logEntry.getRevisionProperties();
+        String author = (String) revProps.get(SVNRevisionProperty.AUTHOR);
+        String message = (String) revProps.get(SVNRevisionProperty.LOG);
+        Date dateObject = (Date) revProps.get(SVNRevisionProperty.DATE);
+        
+        if (logEntry.getRevision() == 0 && message == null) {
+            return;
+        }
+
         StringBuffer buffer = new StringBuffer();
+        if (!SVNRevision.isValidRevisionNumber(logEntry.getRevision())) {
+            buffer = closeXMLTag("logentry", buffer);
+            myMergeStack.removeLast();
+            return;
+        }
+        
         buffer = openXMLTag("logentry", XML_STYLE_NORMAL, "revision", Long.toString(logEntry.getRevision()), buffer);
-        buffer = openCDataTag("author", logEntry.getAuthor(), buffer);
-        if (logEntry.getDate() != null && logEntry.getDate().getTime() != 0) {
-            buffer = openCDataTag("date", ((SVNDate) logEntry.getDate()).format(), buffer);
+        buffer = openCDataTag("author", author, buffer);
+        if (dateObject != null && dateObject.getTime() != 0) {
+            buffer = openCDataTag("date", ((SVNDate) dateObject).format(), buffer);
         }
         if (logEntry.getChangedPaths() != null && !logEntry.getChangedPaths().isEmpty()) {
             buffer = openXMLTag("paths", XML_STYLE_NORMAL, null, buffer);
@@ -268,42 +342,30 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
             buffer = closeXMLTag("paths", buffer);
         }
         
-        if (!getSVNEnvironment().isQuiet()) {
-            String message = logEntry.getMessage();
-            message = message == null ? "" : message;
+        if (message != null) {
             buffer = openCDataTag("msg", message, buffer);
         }
         
-        if (myMergeStack != null && !myMergeStack.isEmpty()) {
-            MergeFrame frame = (MergeFrame) myMergeStack.getLast();
-            frame.myNumberOfChildrenRemaining--;
+        if (revProps != null) {
+            revProps.remove(SVNRevisionProperty.AUTHOR);
+            revProps.remove(SVNRevisionProperty.DATE);
+            revProps.remove(SVNRevisionProperty.LOG);
         }
-        
-        if (logEntry.getNumberOfChildren() > 0) {
-            MergeFrame frame = new MergeFrame();
-            frame.myNumberOfChildrenRemaining = logEntry.getNumberOfChildren();
+        if (revProps != null && !revProps.isEmpty()) {
+            buffer = openXMLTag("revprops", XML_STYLE_NORMAL, null, buffer);
+            printXMLPropHash(buffer, revProps, false);
+            buffer = closeXMLTag("revprops", buffer);
+        }
+        if (logEntry.hasChildren()) {
             if (myMergeStack == null) {
                 myMergeStack = new LinkedList();
             }
-            myMergeStack.addLast(frame);
+            myMergeStack.addLast(new Long(logEntry.getRevision()));
         } else {
-            while(myMergeStack != null && !myMergeStack.isEmpty()) {
-                MergeFrame frame = (MergeFrame) myMergeStack.getLast();
-                if (frame.myNumberOfChildrenRemaining == 0) {
-                    buffer = closeXMLTag("logentry", buffer);
-                    myMergeStack.removeLast();
-                } else {
-                    break;
-                }
-            }
             buffer = closeXMLTag("logentry", buffer);
         }
+        
         getSVNEnvironment().getOut().print(buffer.toString());
-    }
-
-    private static class MergeFrame {
-        private long myMergeRevision;
-        private long myNumberOfChildrenRemaining;
     }
 
 }

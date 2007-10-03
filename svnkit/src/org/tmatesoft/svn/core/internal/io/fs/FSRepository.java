@@ -324,7 +324,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
 
     public long log(String[] targetPaths, long startRevision, long endRevision, boolean 
                     discoverChangedPaths, boolean strictNode, long limit, 
-                    boolean includeMergedRevisions, boolean omitLogText, 
+                    boolean includeMergedRevisions, String[] revPropNames, 
                     ISVNLogEntryHandler handler) throws SVNException {
         try {
             openRepository();
@@ -364,7 +364,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
 
             FSLog logDriver = new FSLog(myFSFS, absPaths, limit, histStart, histEnd, 
                                         isDescendingOrder, discoverChangedPaths, strictNode, 
-                                        includeMergedRevisions, omitLogText, handler);
+                                        includeMergedRevisions, revPropNames, handler);
             
             return logDriver.runLog();
         } finally {

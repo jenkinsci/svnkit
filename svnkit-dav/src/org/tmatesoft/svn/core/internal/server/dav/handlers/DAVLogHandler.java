@@ -65,6 +65,7 @@ public class DAVLogHandler extends DAVReportHandler implements ISVNLogEntryHandl
             getLogRequest().getTargetPaths()[i] = SVNPathUtil.append(getDAVResource().getResourceURI().getPath(), currentPath);
         }
 
+        //TODO: Sema, FIXME :)
         getDAVResource().getRepository().log(getLogRequest().getTargetPaths(),
                 getLogRequest().getStartRevision(),
                 getLogRequest().getEndRevision(),
@@ -72,7 +73,7 @@ public class DAVLogHandler extends DAVReportHandler implements ISVNLogEntryHandl
                 getLogRequest().isStrictNodeHistory(),
                 getLogRequest().getLimit(),
                 getLogRequest().isIncludeMergedRevisions(),
-                getLogRequest().isOmitLogText(),
+                null,//just to get the source compiling...
                 this);
 
         writeXMLFooter();
@@ -95,9 +96,10 @@ public class DAVLogHandler extends DAVReportHandler implements ISVNLogEntryHandl
             XMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.COMMENT.getName(), logEntry.getMessage(), xmlBuffer);
         }
 
-        if (logEntry.getNumberOfChildren() != 0) {
-            XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "nbr-children", String.valueOf(logEntry.getNumberOfChildren()), xmlBuffer);
-        }
+        //TODO: Sema, FIXME :)
+//        if (logEntry.getNumberOfChildren() != 0) {
+//            XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "nbr-children", String.valueOf(logEntry.getNumberOfChildren()), xmlBuffer);
+//        }
 
         write(xmlBuffer);
 

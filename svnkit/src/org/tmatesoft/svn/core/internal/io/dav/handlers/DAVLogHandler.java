@@ -33,7 +33,7 @@ public class DAVLogHandler extends BasicDAVHandler {
 	
 	public static StringBuffer generateLogRequest(StringBuffer buffer, long startRevision, long endRevision,
 			boolean includeChangedPaths, boolean strictNodes, boolean includeMergedRevisions, 
-            boolean omitLogText, long limit, String[] paths) {
+            String[] revPropNames, long limit, String[] paths) {
 		buffer = buffer == null ? new StringBuffer() : buffer;
         buffer.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
         buffer.append("<S:log-report xmlns:S=\"svn:\">");
@@ -55,9 +55,10 @@ public class DAVLogHandler extends BasicDAVHandler {
         if (includeMergedRevisions) {
             buffer.append("<S:include-merged-revisions />");
         }
-        if (omitLogText) {
-            buffer.append("<S:omit-log-text />");
-        }
+        //TODO: FIXME
+//        if (omitLogText) {
+//            buffer.append("<S:omit-log-text />");
+//        }
         for (int i = 0; i < paths.length; i++) {
             buffer.append("<S:path>"  + paths[i] + "</S:path>");
 		}
@@ -134,7 +135,7 @@ public class DAVLogHandler extends BasicDAVHandler {
     				}
     				SVNLogEntry logEntry = new SVNLogEntry(myPaths, myRevision, myAuthor, myDate, myComment);
     				if (myNumberOfChildren > 0) {
-                        logEntry.setNumberOfChildren(myNumberOfChildren);
+//                        logEntry.setNumberOfChildren(myNumberOfChildren);
                     }
                     myLogEntryHandler.handleLogEntry(logEntry);
     			}

@@ -131,9 +131,10 @@ public class SVNXMLLogHandler extends AbstractXMLHandler implements ISVNLogEntry
             frame.myNumberOfChildrenRemaining--;
         }
         
-        if (logEntry.getNumberOfChildren() > 0) {
+        //TODO: FIXME
+        if (logEntry.hasChildren()) {
             MergeFrame frame = new MergeFrame();
-            frame.myNumberOfChildrenRemaining = logEntry.getNumberOfChildren();
+            //frame.myNumberOfChildrenRemaining = logEntry.getNumberOfChildren();
             if (myMergeStack == null) {
                 myMergeStack = new LinkedList();
             }

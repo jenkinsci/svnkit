@@ -48,18 +48,18 @@ public class FSLog {
     private boolean myIsDescending;
     private boolean myIsDiscoverChangedPaths;
     private boolean myIsStrictNode;
-    private boolean myIsOmitLogText;
     private boolean myIsIncludeMergedRevisions;
     private long myStartRevision;
     private long myEndRevision;
     private long myLimit;
     private ISVNLogEntryHandler myHandler;
     private SVNMergeInfoManager myMergeInfoManager;
+    private String[] myRevPropNames;
     
     public FSLog(FSFS owner, String[] paths, long limit, long start, 
                  long end, boolean descending, boolean discoverChangedPaths, 
                  boolean strictNode, boolean includeMergedRevisions, 
-                 boolean omitLogText, ISVNLogEntryHandler handler) {
+                 String[] revPropNames, ISVNLogEntryHandler handler) {
         myFSFS = owner;
         myPaths = paths;
         myStartRevision = start;
@@ -68,7 +68,7 @@ public class FSLog {
         myIsDiscoverChangedPaths = discoverChangedPaths;
         myIsStrictNode = strictNode;
         myIsIncludeMergedRevisions = includeMergedRevisions;
-        myIsOmitLogText = omitLogText;
+        myRevPropNames = revPropNames;
         myLimit = limit;
         myHandler = handler;
     }
@@ -188,10 +188,10 @@ public class FSLog {
         }
 
         changedPaths = changedPaths == null ? new HashMap() : changedPaths;
-
-        if (myIsOmitLogText && message != null) {
-            message = null;
-        }
+//TODO:fixme!
+//        if (myIsOmitLogText && message != null) {
+//            message = null;
+//        }
 
         treeNode.myLogEntry = new SVNLogEntry(changedPaths, revision, author, date, message);
 
@@ -303,7 +303,8 @@ public class FSLog {
     
     private long sendLogTree(LogTreeNode treeNode) throws SVNException {
         long ret = 0;
-        treeNode.myLogEntry.setNumberOfChildren(treeNode.myChildren.size());
+//TODO: fixme!
+//        treeNode.myLogEntry.setNumberOfChildren(treeNode.myChildren.size());
         if (myHandler != null) {
             ++ret;
             myHandler.handleLogEntry(treeNode.myLogEntry);

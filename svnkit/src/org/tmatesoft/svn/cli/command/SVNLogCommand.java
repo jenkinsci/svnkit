@@ -134,8 +134,8 @@ public class SVNLogCommand extends SVNCommand implements ISVNLogEntryHandler {
             }
             String[] paths = (String[]) targets.toArray(new String[targets.size()]);
             logClient.doLog(SVNURL.parseURIEncoded(url), paths, pegRevision, startRevision, 
-                            endRevision, stopOnCopy, myReportPaths, useMergeHistory, myIsQuiet, 
-                            limit, handler);
+                            endRevision, stopOnCopy, myReportPaths, useMergeHistory,  
+                            limit, null, handler);
         } else if (getCommandLine().hasPaths()) {
             if (getCommandLine().getPathCount() > 1) {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "When specifying working copy paths, only one target may be given");
@@ -156,7 +156,7 @@ public class SVNLogCommand extends SVNCommand implements ISVNLogEntryHandler {
             SVNPathList pathList = SVNPathList.create(paths, pegRevision);
             SVNCompositePathList combinedPathList = SVNCompositePathList.create(pathList, changelist, false);
             logClient.doLog(combinedPathList, startRevision, endRevision, stopOnCopy, 
-                            myReportPaths, useMergeHistory, myIsQuiet, limit, handler);
+                            myReportPaths, useMergeHistory, limit, null, handler);
         }
         if (getCommandLine().hasArgument(SVNArgument.XML)) {
             if (!getCommandLine().hasArgument(SVNArgument.INCREMENTAL)) {
@@ -224,10 +224,10 @@ public class SVNLogCommand extends SVNCommand implements ISVNLogEntryHandler {
             result.append("\n" + message + "\n");
         }
         
-        if (logEntry.getNumberOfChildren() > 0) {
+        if (logEntry.hasChildren()) {
             MergeFrame frame = new MergeFrame();
             frame.myMergeRevision = logEntry.getRevision();
-            frame.myNumberOfChildrenRemaining = logEntry.getNumberOfChildren();
+            //frame.myNumberOfChildrenRemaining = logEntry.getNumberOfChildren();
             if (myMergeStack == null) {
                 myMergeStack = new LinkedList();
             }

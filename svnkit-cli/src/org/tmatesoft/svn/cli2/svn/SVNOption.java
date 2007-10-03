@@ -75,6 +75,7 @@ public class SVNOption extends AbstractSVNOption {
     public static final SVNOption NO_DIFF_DELETED = new SVNOption("no-diff-deleted");
     public static final SVNOption STOP_ON_COPY = new SVNOption("stop-on-copy");
     public static final SVNOption LIMIT = new SVNOption("limit", "l", false);
+    public static final SVNOption WITH_ALL_REVPROPS = new SVNOption("with-all-revprops");
     
     // auth options.
     public static final SVNOption USERNAME = new SVNOption("username", false);

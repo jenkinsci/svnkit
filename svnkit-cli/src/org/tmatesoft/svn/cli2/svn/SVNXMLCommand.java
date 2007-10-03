@@ -91,4 +91,20 @@ public abstract class SVNXMLCommand extends SVNCommand {
         target.append(">\n");
         return target;
     }
+    
+    protected void printXMLPropHash(StringBuffer buffer, Map propHash, boolean namesOnly) {
+        if (propHash != null) {
+            for (Iterator propNames = propHash.keySet().iterator(); propNames.hasNext();) {
+                String propName = (String) propNames.next();
+                String propVal = (String) propHash.get(propName);
+                if (namesOnly) {
+                    buffer = openXMLTag("property", XML_STYLE_SELF_CLOSING, "name", propName, null);
+                } else {
+                    buffer = openXMLTag("property", XML_STYLE_PROTECT_PCDATA, "name", propName, null);
+                    buffer.append(SVNEncodingUtil.xmlEncodeCDATA(propVal));
+                    buffer = closeXMLTag("property", buffer);
+                }
+            }
+        }
+    }
 }

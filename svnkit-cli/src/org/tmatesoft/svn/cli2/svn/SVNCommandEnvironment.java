@@ -112,6 +112,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private long myLimit;
     private boolean myIsStopOnCopy;
     private boolean myIsChangeOptionIsUsed;
+    private boolean myIsWithAllRevprops;
     
     public SVNCommandEnvironment(String programName, PrintStream out, PrintStream err, InputStream in) {
         super(programName, out, err, in);
@@ -373,6 +374,8 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             myIsKeepLocal = true;
         } else if (option == SVNOption.NO_IGNORE) {
             myIsNoIgnore = true;
+        } else if (option == SVNOption.WITH_ALL_REVPROPS) {
+            myIsWithAllRevprops = true;
         } else if (option == SVNOption.WITH_REVPROP) {
             if (myRevisionProperties == null) {
                 myRevisionProperties = new LinkedHashMap();
@@ -600,6 +603,10 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     
     public boolean isStopOnCopy() {
         return myIsStopOnCopy;
+    }
+    
+    public boolean isAllRevisionProperties() {
+        return myIsWithAllRevprops;
     }
     
     public SVNDiffOptions getDiffOptions() {
