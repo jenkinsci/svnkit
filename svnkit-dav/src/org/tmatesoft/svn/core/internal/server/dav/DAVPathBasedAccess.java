@@ -64,17 +64,20 @@ public class DAVPathBasedAccess {
         myConfigPath = pathBasedAccessConfiguration.getAbsolutePath();
 
         InputStream stream = null;
+
         try {
             stream = new SVNTranslatorInputStream(SVNFileUtil.openFileForReading(pathBasedAccessConfiguration), SVNTranslator.LF, true, null, false);
-            parse(stream);
-            validate();
         } catch (SVNException e) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "Failed to load the AuthzSVNAccessFile: ''{0}''", pathBasedAccessConfiguration.getAbsolutePath()));
+        }
+
+        try {
+            parse(stream);
         } catch (IOException e) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
-        } finally {
-            SVNFileUtil.closeFile(stream);
         }
+
+        validate();
     }
 
     private String getConfigPath() {
@@ -197,14 +200,14 @@ public class DAVPathBasedAccess {
         do {
             currentByte = skipWhitespace(is);
             switch (currentByte) {
-                case'[':
+                case '[':
                     if (getCurrentLineColumn() == 0) {
                         parseSectionName(is);
                     } else {
                         SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "''{0}'' : ''{1}'' : Section header must start in the first column.", new Object[]{getConfigPath(), new Integer(getCurrentLineNumber())}));
                     }
                     break;
-                case'#':
+                case '#':
                     if (getCurrentLineColumn() == 0) {
                         skipToEndOfLine(is);
                         increaseCurrentLineNumber();
@@ -212,10 +215,10 @@ public class DAVPathBasedAccess {
                         SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "''{0}'' : ''{1}'' : Comment must start in the first column.", new Object[]{getConfigPath(), new Integer(getCurrentLineNumber())}));
                     }
                     break;
-                case'\n':
+                case '\n':
                     increaseCurrentLineNumber();
                     break;
-                case-1:
+                case -1:
                     isEOF = true;
                     break;
                 default:
@@ -283,11 +286,11 @@ public class DAVPathBasedAccess {
             increaseCurrentLineNumber();
             currentByte = skipWhitespace(is);
             switch (currentByte) {
-                case'\n':
+                case '\n':
                     increaseCurrentLineNumber();
                     isEndOfValue = true;
                     continue;
-                case-1:
+                case -1:
                     isEndOfValue = true;
                     continue;
                 default:
@@ -429,6 +432,7 @@ public class DAVPathBasedAccess {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "An authz rule refers to group ''{0}'', which is undefined.", group));
         }
         for (int i = 0; i < users.length; i++) {
+            users[i] = users[i].trim();
             if (users[i].startsWith("@")) {
                 String subGroup = users[i].substring("@".length());
                 if (checkedGroups.contains(subGroup)) {
@@ -489,26 +493,20 @@ public class DAVPathBasedAccess {
                     }
                 }
             } else {
-                for (String currentPath = path; currentPath.length() > 0 && !"/".equals(currentPath); currentPath = SVNPathUtil.removeTail(currentPath))
-                {
-                    if (myPathRules == null) {
-                        return false;
-                    }
-                    PathAccess currentPathAccess = (PathAccess) myPathRules.get(currentPath);
-                    if (currentPathAccess != null) {
-                        int[] pathAccess = currentPathAccess.checkAccess(user);
+                if (myPathRules == null) {
+                    return false;
+                }
+                int[] pathAccess = checkCurrentPath(path, user);
+                if (isAccessDetermined(pathAccess, requestedAccess)) {
+                    accessGranted = isAccessGranted(pathAccess, requestedAccess);
+                } else {
+                    String currentPath = path;
+                    while (currentPath.length() > 0 && !"/".equals(currentPath)) {
+                        currentPath = SVNPathUtil.canonicalizeAbsPath(SVNPathUtil.removeTail(currentPath));
+                        pathAccess = checkCurrentPath(currentPath, user);
                         if (isAccessDetermined(pathAccess, requestedAccess)) {
                             accessGranted = isAccessGranted(pathAccess, requestedAccess);
                             break;
-                        }
-                    } else if (!myAnonymous) {
-                        RepositoryAccess commomRepositoryAccess = (RepositoryAccess) getRules().get(ANONYMOUS_REPOSITORY);
-                        if (commomRepositoryAccess != null) {
-                            int[] pathAccess = commomRepositoryAccess.checkPathAccess(user, path);
-                            if (isAccessDetermined(pathAccess, requestedAccess)) {
-                                accessGranted = isAccessGranted(pathAccess, requestedAccess);
-                                break;
-                            }
                         }
                     }
                 }
@@ -519,9 +517,27 @@ public class DAVPathBasedAccess {
             return accessGranted;
         }
 
+        private int[] checkCurrentPath(String currentPath, String user) {
+            int[] pathAccess = new int[]{DAV_ACCESS_NONE, DAV_ACCESS_NONE};
+            PathAccess currentPathAccess = (PathAccess) myPathRules.get(currentPath);
+            if (currentPathAccess != null) {
+                pathAccess = currentPathAccess.checkAccess(user);
+            } else if (!myAnonymous) {
+                RepositoryAccess commomRepositoryAccess = (RepositoryAccess) getRules().get(ANONYMOUS_REPOSITORY);
+                if (commomRepositoryAccess != null) {
+                    pathAccess = commomRepositoryAccess.checkPathAccess(user, currentPath);
+                }
+            }
+            return pathAccess;
+        }
+
         private int[] checkPathAccess(String user, String path) {
+            int[] result = new int[]{DAV_ACCESS_NONE, DAV_ACCESS_NONE};
             PathAccess pathAccess = (PathAccess) myPathRules.get(path);
-            return pathAccess.checkAccess(user);
+            if (pathAccess != null) {
+                result = pathAccess.checkAccess(user);
+            }
+            return result;
         }
 
         private boolean checkTreeAccess(String user, String path, int requestedAccess) {
@@ -593,7 +609,7 @@ public class DAVPathBasedAccess {
             if (myRules == null) {
                 return null;
             }
-            
+
             int deny = DAV_ACCESS_NONE;
             int allow = DAV_ACCESS_NONE;
             for (Iterator iterator = myRules.entrySet().iterator(); iterator.hasNext();) {

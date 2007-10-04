@@ -16,6 +16,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 
@@ -30,15 +31,21 @@ public class DAVLogRequest extends DAVRequest {
     private static final DAVElement STRICT_NODE_HISTORY = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "strict-node-history");
     private static final DAVElement OMIT_LOG_TEXT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "omit-log-text");
     private static final DAVElement LIMIT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "limit");
+    private static final DAVElement ALL_REVPROPS = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "all-revprops");
+    private static final DAVElement REVPROP = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "revprop");
 
-    boolean myDiscoverChangedPaths = false;
-    boolean myStrictNodeHistory = false;
-    boolean myIncludeMergedRevisions = false;
-    boolean myOmitLogText = false;
-    long myStartRevision = DAVResource.INVALID_REVISION;
-    long myEndRevision = DAVResource.INVALID_REVISION;
-    long myLimit = 0;
-    String[] myTargetPaths = null;
+    private static final String[] DEFAULT_REVISION_PROPERTIES = new String[]{SVNRevisionProperty.AUTHOR, SVNRevisionProperty.DATE, SVNRevisionProperty.LOG};
+
+    private boolean myDiscoverChangedPaths = false;
+    private boolean myStrictNodeHistory = false;
+    private boolean myIncludeMergedRevisions = false;
+    private boolean myOmitLogText = false;
+    private long myStartRevision = DAVResource.INVALID_REVISION;
+    private long myEndRevision = DAVResource.INVALID_REVISION;
+    private long myLimit = 0;
+    private String[] myTargetPaths = null;
+    private String[] myRevisionProperties = null;
+    private boolean myCustomPropertyRequested = false;
 
     public boolean isDiscoverChangedPaths() {
         return myDiscoverChangedPaths;
@@ -104,7 +111,24 @@ public class DAVLogRequest extends DAVRequest {
         myTargetPaths = targetPaths;
     }
 
+    public String[] getRevisionProperties() {
+        return myRevisionProperties;
+    }
+
+    private void setRevisionProperties(String[] revisionProperties) {
+        myRevisionProperties = revisionProperties;
+    }
+
+    public boolean isCustomPropertyRequested() {
+        return myCustomPropertyRequested;
+    }
+
+    private void setCustomPropertyRequested(boolean customPropertyRequested) {
+        myCustomPropertyRequested = customPropertyRequested;
+    }
+
     protected void init() throws SVNException {
+        boolean revisionPropertyRequested = false;
         for (Iterator iterator = getProperties().entrySet().iterator(); iterator.hasNext();) {
             Map.Entry entry = (Map.Entry) iterator.next();
             DAVElement element = (DAVElement) entry.getKey();
@@ -131,7 +155,31 @@ public class DAVLogRequest extends DAVRequest {
                 String[] targetPaths = new String[paths.size()];
                 targetPaths = (String[]) paths.toArray(targetPaths);
                 setTargetPaths(targetPaths);
+            } else if (element == ALL_REVPROPS) {
+                setCustomPropertyRequested(true);
+                revisionPropertyRequested = true;
+            } else if (element == REVPROP) {
+                Collection properties = property.getValues();
+                String[] revProps = new String[properties.size()];
+                revProps = (String[]) properties.toArray(revProps);
+                setRevisionProperties(revProps);
+                setCustomPropertyRequested(containsCustomProperty(properties));
+                revisionPropertyRequested = true;
             }
         }
+        if (!revisionPropertyRequested) {
+            setRevisionProperties(DEFAULT_REVISION_PROPERTIES);
+        }
+    }
+
+    private boolean containsCustomProperty(Collection requestedProperties) {
+        for (Iterator iterator = requestedProperties.iterator(); iterator.hasNext();) {
+            String property = (String) iterator.next();
+            if (!SVNRevisionProperty.AUTHOR.equals(property) && !SVNRevisionProperty.DATE.equals(property) &&
+                    !SVNRevisionProperty.LOG.equals(property)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

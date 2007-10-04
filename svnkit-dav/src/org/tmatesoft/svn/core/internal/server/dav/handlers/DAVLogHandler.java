@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
+import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
@@ -29,7 +30,6 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 
 /**
  * @author TMate Software Ltd.
@@ -38,6 +38,7 @@ import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 public class DAVLogHandler extends DAVReportHandler implements ISVNLogEntryHandler {
 
     private DAVLogRequest myDAVRequest;
+    private int myDepth = 0;
 
     public DAVLogHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) {
         super(repositoryManager, request, response);
@@ -54,6 +55,18 @@ public class DAVLogHandler extends DAVReportHandler implements ISVNLogEntryHandl
         return myDAVRequest;
     }
 
+    private int getDepth() {
+        return myDepth;
+    }
+
+    private void increaseDepth() {
+        myDepth++;
+    }
+
+    private void decreaseDepth() {
+        myDepth--;
+    }
+
     public void execute() throws SVNException {
         setDAVResource(createDAVResource(false, false));
 
@@ -65,7 +78,6 @@ public class DAVLogHandler extends DAVReportHandler implements ISVNLogEntryHandl
             getLogRequest().getTargetPaths()[i] = SVNPathUtil.append(getDAVResource().getResourceURI().getPath(), currentPath);
         }
 
-        //TODO: Sema, FIXME :)
         getDAVResource().getRepository().log(getLogRequest().getTargetPaths(),
                 getLogRequest().getStartRevision(),
                 getLogRequest().getEndRevision(),
@@ -73,33 +85,50 @@ public class DAVLogHandler extends DAVReportHandler implements ISVNLogEntryHandl
                 getLogRequest().isStrictNodeHistory(),
                 getLogRequest().getLimit(),
                 getLogRequest().isIncludeMergedRevisions(),
-                null,//just to get the source compiling...
+                getLogRequest().getRevisionProperties(),
                 this);
 
         writeXMLFooter();
     }
 
     public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
+        if (logEntry.getRevision() == DAVResource.INVALID_REVISION) {
+            if (getDepth() == 0) {
+                return;
+            } else {
+                decreaseDepth();
+            }
+        }
+
         StringBuffer xmlBuffer = new StringBuffer();
         XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "log-item", XMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
         XMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.VERSION_NAME.getName(), String.valueOf(logEntry.getRevision()), xmlBuffer);
 
-        if (logEntry.getAuthor() != null) {
-            XMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.CREATOR_DISPLAY_NAME.getName(), logEntry.getAuthor(), xmlBuffer);
+        boolean noCustomProperties = getLogRequest().isCustomPropertyRequested();
+        for (Iterator iterator = logEntry.getRevisionProperties().entrySet().iterator(); iterator.hasNext();) {
+            Map.Entry entry = (Map.Entry) iterator.next();
+            String property = (String) entry.getKey();
+            String value = (String) entry.getValue();
+            if (property.equals(SVNRevisionProperty.AUTHOR)) {
+                XMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.CREATOR_DISPLAY_NAME.getName(), value, xmlBuffer);
+            } else if (property.equals(SVNRevisionProperty.DATE)) {
+                XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "date", value, xmlBuffer);                                
+            } else if (property.equals(SVNRevisionProperty.LOG)) {
+                XMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.COMMENT.getName(), value, xmlBuffer);                
+            } else {
+                noCustomProperties = false;
+                XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "revprop", value, "name", property, xmlBuffer);
+            }
         }
 
-        if (logEntry.getDate() != null) {
-            XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "date", SVNTimeUtil.formatDate(logEntry.getDate()), xmlBuffer);
+        if (noCustomProperties){
+            XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "no-custom-revprops", XMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);            
         }
 
-        if (logEntry.getMessage() != null) {
-            XMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.COMMENT.getName(), logEntry.getMessage(), xmlBuffer);
+        if (logEntry.hasChildren()) {
+            XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "has-children", XMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
+            increaseDepth();
         }
-
-        //TODO: Sema, FIXME :)
-//        if (logEntry.getNumberOfChildren() != 0) {
-//            XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "nbr-children", String.valueOf(logEntry.getNumberOfChildren()), xmlBuffer);
-//        }
 
         write(xmlBuffer);
 
