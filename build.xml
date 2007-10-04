@@ -33,6 +33,7 @@
 
         <path id="library.classpath">
             <pathelement location="contrib/ganymed/ganymed.jar" />
+            <pathelement location="contrib/jna/jna.jar" />
             <pathelement path="contrib/javahl/bin" />
             <pathelement path="contrib/sequence/bin" />
         </path>
@@ -56,6 +57,7 @@
 	<target name="compile-library-eclipse" depends="init-environment" if="eclipse.present"> 
         <path id="library-eclipse.classpath">
             <pathelement location="contrib/ganymed/ganymed.jar" />
+            <pathelement location="contrib/jna/jna.jar" />
             <pathelement path="contrib/javahl/bin" />
             <pathelement path="contrib/sequence/bin" />
         	<fileset dir="${eclipse.home}/plugins">
@@ -88,6 +90,7 @@
         <path id="eclipse.classpath">
             <pathelement path="build/lib/svnkit.jar" />
             <pathelement path="build/lib/ganymed.jar" />
+            <pathelement path="build/lib/jna.jar" />
         	<fileset dir="${eclipse.home}/plugins">
     	        <include name="**/*.jar"/>
 	        </fileset>
@@ -107,6 +110,7 @@
         <mkdir dir="svnkit-test/bin" />
         <path id="tests.classpath">
             <pathelement location="contrib/ganymed/ganymed.jar" />
+            <pathelement location="contrib/jna/jna.jar" />
             <pathelement location="contrib/junit/junit.jar" />
             <pathelement path="contrib/javahl/bin" />
             <pathelement path="contrib/sequence/bin" />
@@ -176,7 +180,7 @@
             </fileset>
         </jar>
         <copy file="contrib/ganymed/ganymed.jar" todir="build/lib" />
-        <copy file="svnkit/native/jsvncrypt.dll" todir="build/lib" />
+        <copy file="contrib/jna/jna.jar" todir="build/lib" />
         <copy file="svnkit/native/libjsvnstat32.so" todir="build/lib" />
         <copy file="svnkit/native/libjsvnstat64.so" todir="build/lib" />
     	<!-- copy licences and changelog -->

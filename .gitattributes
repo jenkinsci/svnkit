@@ -6,6 +6,9 @@ contrib/ganymed/GANYMED-LICENSE -text
 contrib/ganymed/ganymed.jar -text
 contrib/ganymed/ganymedsrc.zip -text
 contrib/javahl/JAVAHL-LICENSE eol=lf
+contrib/jna/JNA-LICENSE eol=lf
+contrib/jna/jna-src.zip -text
+contrib/jna/jna.jar -text
 contrib/junit/junit.jar -text
 contrib/sequence/SEQUENCE-LICENSE eol=lf
 contrib/sequence/src-test/de/regnis/q/sequence/line/QSequenceLineMediaTest.java -text
@@ -127,9 +130,6 @@ svnkit/cli/jsvnversion eol=lf
 svnkit/cli/jsvnversion.bat eol=crlf
 svnkit/cli/logging.properties.disabled eol=lf
 svnkit/native/compile_jsvnstat -text
-svnkit/native/jsvncrypt.c -text
-svnkit/native/jsvncrypt.dll -text
-svnkit/native/jsvncrypt.h -text
 svnkit/native/jsvnstat.c -text
 svnkit/native/jsvnstat.h -text
 svnkit/native/libjsvnstat32.so -text

@@ -16,6 +16,7 @@
       </library>
       <library name="svnkitplugin.jar"/>
       <library name="ganymed.jar"/>
+      <library name="jna.jar"/>
    </runtime>
    
    <requires>
