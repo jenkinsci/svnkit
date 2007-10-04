@@ -380,7 +380,7 @@ class SVNReader {
 
     private static final char[] VALID_TEMPLATE_CHARS = { '(', ')', '[', ']', // groups
             's', 'w', 'b', 'i', 'n', 't', 'p', // items
-            'd', 'f', 'l', 'a', 'r', 'e', 'x', 'l', // command-specific
+            'd', 'f', 'l', 'a', 'r', 'e', 'x', 'l', 'g', // command-specific
             '?', '*', 'z' };
 
     private static final char[] INVALID_CARDINALITY_SUBJECTS = { '(', ')', '[',

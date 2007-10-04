@@ -134,8 +134,14 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
                     SVNErrorManager.error(err);
                 }
             }
+        } else {
+            if (targets.size() > 1) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                        "When specifying working copy paths, only one target may be given");
+                SVNErrorManager.error(err);
+            }
         }
-        
+
         SVNLogClient client = getSVNEnvironment().getClientManager().getLogClient();
         if (!getSVNEnvironment().isQuiet()) {
             client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment()));
@@ -163,7 +169,7 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
                     }
                     revProps[i++] = propName;
                 }
-            } else {
+            } else if (!getSVNEnvironment().isAllRevisionProperties()) {
                 if (!getSVNEnvironment().isQuiet()) {
                     revProps = new String[3];
                     revProps[0] = SVNRevisionProperty.AUTHOR;
@@ -314,7 +320,8 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
 
         StringBuffer buffer = new StringBuffer();
         if (!SVNRevision.isValidRevisionNumber(logEntry.getRevision())) {
-            buffer = closeXMLTag("logentry", buffer);
+            buffer = closeXMLTag("logentry", null);
+            getSVNEnvironment().getOut().print(buffer.toString());
             myMergeStack.removeLast();
             return;
         }
@@ -353,7 +360,7 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
         }
         if (revProps != null && !revProps.isEmpty()) {
             buffer = openXMLTag("revprops", XML_STYLE_NORMAL, null, buffer);
-            printXMLPropHash(buffer, revProps, false);
+            buffer = printXMLPropHash(buffer, revProps, false);
             buffer = closeXMLTag("revprops", buffer);
         }
         if (logEntry.hasChildren()) {
