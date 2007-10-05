@@ -503,14 +503,13 @@ public class SVNAdminArea14 extends SVNAdminArea {
                 } catch (IOException e) {
                     SVNFileUtil.closeFile(os);
                     SVNFileUtil.deleteFile(tmpFile);
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot write entries file ''{0}'': {1}", new Object[] {myEntriesFile, e.getLocalizedMessage()});
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot write entries file ''{0}'': {1}", new Object[] {myEntriesFile, e.getMessage()});
                     SVNErrorManager.error(err, e);
                 } finally {
                     SVNFileUtil.closeFile(os);
                 }
-                
+                tmpFile.setReadOnly();
                 SVNFileUtil.rename(tmpFile, myEntriesFile);
-                SVNFileUtil.setReadonly(myEntriesFile, true);
             }
             if (close) {
                 closeEntries();

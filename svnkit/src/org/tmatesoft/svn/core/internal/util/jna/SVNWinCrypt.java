@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.util.jna;
 import java.io.UnsupportedEncodingException;
 
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 import com.sun.jna.NativeLong;
 import com.sun.jna.WString;
@@ -25,7 +26,7 @@ import com.sun.jna.WString;
  */
 public class SVNWinCrypt {
 
-    public static synchronized String decrypt(String encryptedData) {
+    public static String decrypt(String encryptedData) {
         if (encryptedData == null) {
             return null;
         }
@@ -45,15 +46,16 @@ public class SVNWinCrypt {
             dataIn.write();
             dataOut = new ISVNWinCryptLibrary.DATA_BLOB(null);
             dataOut.write();
-            
-            boolean ok = library.CryptUnprotectData(
-                    dataIn.getPointer(), 
-                    null, null, null, null, new NativeLong(1), 
-                    dataOut.getPointer());
-            if (!ok) {
-                return encryptedData;
+            synchronized (library) {
+                boolean ok = library.CryptUnprotectData(
+                        dataIn.getPointer(), 
+                        null, null, null, null, new NativeLong(1), 
+                        dataOut.getPointer());
+                if (!ok) {
+                    return encryptedData;
+                }
+                dataOut.read();
             }
-            dataOut.read();
             if (dataOut.cbSize == null || dataOut.cbSize.intValue() <= 0) {
                 return encryptedData;
             }
@@ -66,18 +68,19 @@ public class SVNWinCrypt {
             ISVNKernel32Library kernel = JNALibraryLoader.getKernelLibrary();
             if (kernel != null) {
                 try {
-                    if (dataOut != null) {
-                        kernel.LocalFree(dataOut.cbData); 
+                    synchronized (kernel) {
+                        if (dataOut != null) {
+                            kernel.LocalFree(dataOut.cbData); 
+                        }
                     }
                 } catch (Throwable th) {
                     //
                 }
             }
         }
-        
     }
     
-    public static synchronized String encrypt(String rawData) {
+    public static String encrypt(String rawData) {
         if (rawData == null) {
             return null;
         }
@@ -97,15 +100,17 @@ public class SVNWinCrypt {
             dataOut = new ISVNWinCryptLibrary.DATA_BLOB(null);
             dataOut.write();
             
-            boolean ok = library.CryptProtectData(
-                    dataIn.getPointer(), 
-                    new WString("auth_svn.simple.wincrypt"), 
-                    null, null, null, new NativeLong(1), 
-                    dataOut.getPointer());
-            if (!ok) {
-                return rawData;
+            synchronized (library) {
+                boolean ok = library.CryptProtectData(
+                        dataIn.getPointer(), 
+                        new WString("auth_svn.simple.wincrypt"), 
+                        null, null, null, new NativeLong(1), 
+                        dataOut.getPointer());
+                if (!ok) {
+                    return rawData;
+                }
+                dataOut.read();
             }
-            dataOut.read();
             if (dataOut.cbSize == null || dataOut.cbSize.intValue() <= 0) {
                 return rawData;
             }
@@ -118,8 +123,10 @@ public class SVNWinCrypt {
             ISVNKernel32Library kernel = JNALibraryLoader.getKernelLibrary();
             if (kernel != null) {
                 try {
-                    if (dataOut != null) {
-                        kernel.LocalFree(dataOut.cbData); 
+                    synchronized (kernel) {
+                        if (dataOut != null) {
+                            kernel.LocalFree(dataOut.cbData); 
+                        }
                     }
                 } catch (Throwable th) {
                 }
@@ -128,7 +135,7 @@ public class SVNWinCrypt {
     }
 
     public synchronized static boolean isEnabled() {
-        return JNALibraryLoader.getWinCryptLibrary() != null;
+        return SVNFileUtil.isWindows && JNALibraryLoader.getWinCryptLibrary() != null;
     }
 
 

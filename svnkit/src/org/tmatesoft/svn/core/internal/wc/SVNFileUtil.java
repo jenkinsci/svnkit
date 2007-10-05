@@ -40,6 +40,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.util.jna.SVNWin32Util;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.util.SVNDebugLog;
@@ -184,21 +185,25 @@ public class SVNFileUtil {
         if (!isWindows) {
             renamed = src.renameTo(dst);
         } else {
-            boolean wasRO = dst.exists() && !dst.canWrite();
-            setReadonly(src, false);
-            setReadonly(dst, false);
-            // use special loop on windows.
-            for (int i = 0; i < 10; i++) {
-                dst.delete();
-                if (src.renameTo(dst)) {
-                    if (wasRO) {
-                        dst.setReadOnly();
+            if (SVNWin32Util.moveFile(src, dst)) {
+                renamed = true;
+            } else {
+                boolean wasRO = dst.exists() && !dst.canWrite();
+                setReadonly(src, false);
+                setReadonly(dst, false);
+                // use special loop on windows.
+                for (int i = 0; i < 10; i++) {
+                    dst.delete();
+                    if (src.renameTo(dst)) {
+                        if (wasRO) {
+                            dst.setReadOnly();
+                        }
+                        return;
                     }
-                    return;
-                }
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                    }
                 }
             }
         }
@@ -219,6 +224,12 @@ public class SVNFileUtil {
         if (readonly) {
             return file.setReadOnly();
         }
+        if (isWindows) {
+            if (SVNWin32Util.setWritable(file)) {
+                return true;
+            }
+        }
+        
         if (file.canWrite()) {
             return true;
         }
@@ -558,6 +569,9 @@ public class SVNFileUtil {
     }
 
     public static void setHidden(File file, boolean hidden) {
+        if (isWindows && SVNWin32Util.setHidden(file)) {
+            return;
+        }
         if (!isWindows || file == null || !file.exists() || file.isHidden()) {
             return;
         }
@@ -1162,13 +1176,9 @@ public class SVNFileUtil {
         try {
             // pre-Java 1.5 this throws an Error. On Java 1.5 it
             // returns the environment variable
-            Method getenv = System.class.getMethod("getenv", new Class[] {
-                String.class
-            });
+            Method getenv = System.class.getMethod("getenv", new Class[] {String.class});
             if (getenv != null) {
-                Object value = getenv.invoke(null, new Object[] {
-                    name
-                });
+                Object value = getenv.invoke(null, new Object[] {name});
                 if (value instanceof String) {
                     return (String) value;
                 }
@@ -1187,18 +1197,19 @@ public class SVNFileUtil {
         return null;
     }
 
-    public static Properties getEnvironment() throws Throwable {
+    private static Properties getEnvironment() throws Throwable {
         Process p = null;
         Properties envVars = new Properties();
         Runtime r = Runtime.getRuntime();
         if (isWindows) {
-            if (System.getProperty("os.name").toLowerCase().indexOf("windows 9") >= 0)
+            if (System.getProperty("os.name").toLowerCase().indexOf("windows 9") >= 0) {
                 p = r.exec("command.com /c set");
-            else
+            } else {
                 p = r.exec("cmd.exe /c set");
+            }
         } else {
             p = r.exec(ENV_COMMAND); // if OpenVMS ENV_COMMAND could be "mcr
-                                        // gnu:[bin]env"
+                                     // gnu:[bin]env"
         }
         if (p != null) {
             BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));

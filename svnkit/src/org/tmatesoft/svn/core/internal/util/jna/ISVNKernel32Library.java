@@ -11,7 +11,9 @@
  */
 package org.tmatesoft.svn.core.internal.util.jna;
 
+import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
+import com.sun.jna.WString;
 import com.sun.jna.win32.StdCallLibrary;
 
 
@@ -21,6 +23,15 @@ import com.sun.jna.win32.StdCallLibrary;
  */
 public interface ISVNKernel32Library extends StdCallLibrary {
     
+    public long FILE_ATTRIBUTE_READONLY = 0x01;
+    public long FILE_ATTRIBUTE_HIDDEN   = 0x02;
+    public long FILE_ATTRIBUTE_NORMAL   = 0x80;
+    
     public Pointer LocalFree(Pointer ptr);
+    
+    public int SetFileAttributesW(WString path, NativeLong attrs);
 
+    public int MoveFileW(WString src, WString dst);
+
+    public int MoveFileExW(WString src, WString dst, NativeLong flags);
 }
