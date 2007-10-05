@@ -24,8 +24,6 @@ public class JNALibraryLoader {
     private static ISVNKernel32Library ourKenrelLibrary;
 
     static {
-        Native.setPreserveLastError(true);
-        Native.setProtected(true);
         // load win32 libraries.
         try {
             ourWinCryptLibrary = (ISVNWinCryptLibrary) Native.loadLibrary("Crypt32", ISVNWinCryptLibrary.class);
