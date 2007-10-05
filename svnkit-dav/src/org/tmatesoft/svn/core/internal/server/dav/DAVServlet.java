@@ -40,13 +40,24 @@ public class DAVServlet extends HttpServlet {
     private static final String HTML_CONTENT_TYPE = "text/html; charset=\"utf-8\"";
     private static final String XML_CONTENT_TYPE = "text/xml; charset=\"utf-8\"";
 
+    private DAVConfig myDAVConfig;
+
+    private DAVConfig getDAVConfig() {
+        return myDAVConfig;
+    }
+
     public void init() {
         FSRepositoryFactory.setup();
+        try {
+            myDAVConfig = new DAVConfig(getServletConfig());
+        } catch (SVNException e) {
+            myDAVConfig = null;
+        }
     }
 
     public void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         try {
-            DAVRepositoryManager connector = new DAVRepositoryManager(getServletConfig(), request.getContextPath());
+            DAVRepositoryManager connector = new DAVRepositoryManager(getDAVConfig(), request);
             ServletDAVHandler handler = DAVHandlerFactory.createHandler(connector, request, response);
             handler.execute();
         } catch (Throwable th) {
