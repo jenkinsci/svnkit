@@ -226,7 +226,6 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
         }
     }
     
-    
     protected void printLogEntry(SVNLogEntry logEntry) {
         if (logEntry == null) {
             return;
@@ -318,6 +317,13 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
             return;
         }
 
+        if (author != null) {
+            author = SVNEncodingUtil.fuzzyEscape(author);
+        }
+        if (message != null) {
+            message = SVNEncodingUtil.fuzzyEscape(message);
+        }
+        
         StringBuffer buffer = new StringBuffer();
         if (!SVNRevision.isValidRevisionNumber(logEntry.getRevision())) {
             buffer = closeXMLTag("logentry", null);
@@ -329,7 +335,8 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
         buffer = openXMLTag("logentry", XML_STYLE_NORMAL, "revision", Long.toString(logEntry.getRevision()), buffer);
         buffer = openCDataTag("author", author, buffer);
         if (dateObject != null && dateObject.getTime() != 0) {
-            buffer = openCDataTag("date", ((SVNDate) dateObject).format(), buffer);
+            String dateString = SVNEncodingUtil.fuzzyEscape(((SVNDate) dateObject).format());
+            buffer = openCDataTag("date", dateString, buffer);
         }
         if (logEntry.getChangedPaths() != null && !logEntry.getChangedPaths().isEmpty()) {
             buffer = openXMLTag("paths", XML_STYLE_NORMAL, null, buffer);

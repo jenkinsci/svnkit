@@ -18,6 +18,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.io.SVNRepository;
+
 
 /**
  * The <b>SVNLogEntry</b> class encapsulates such per revision information as: 
@@ -32,6 +34,9 @@ import java.util.Map;
  */
 public class SVNLogEntry implements Serializable {
     
+    public static SVNLogEntry EMPTY_ENTRY = new SVNLogEntry(new HashMap(), SVNRepository.INVALID_REVISION, 
+            new HashMap(), false);
+
     private long myRevision;
     private Map myChangedPaths;
     private Map myRevisionProperties;

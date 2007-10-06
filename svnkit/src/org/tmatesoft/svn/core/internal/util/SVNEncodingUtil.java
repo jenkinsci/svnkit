@@ -300,11 +300,16 @@ public class SVNEncodingUtil {
         byte[] bytes = str.getBytes(); // native encoding
         StringBuffer result = createStringBuffer(str, 0);
         for (int i = 0; i < bytes.length; i++) {
-            if (bytes[i] >= 0) {
+            if (!isASCIIControlChar((char) bytes[i]) || bytes[i] == '\r' 
+                || bytes[i] == '\n' || bytes[i] == '\t') {
                 result.append((char) bytes[i]);
             } else {
                 result.append("?\\");
-                result.append((256 - (-bytes[i]))); // get positive code (256 - b).
+                int code = bytes[i] & 0xFF;
+                if (code < 100) {
+                    result.append('0');
+                }
+                result.append(code);
             }
         }
         return result.toString();

@@ -11,7 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -75,7 +74,6 @@ public class FSLog {
     
     public long runLog() throws SVNException {
         long count = 0;
-        long sendCount = 0;
         if (myPaths.length == 1 && "/".equals(myPaths[0])) {
             count = myEndRevision - myStartRevision + 1;
             if (myLimit > 0 && count > myLimit) {
@@ -87,8 +85,7 @@ public class FSLog {
                 if (myIsDescending) {
                     rev = myEndRevision - i;
                 }
-                LogTreeNode tree = buildLogTree(myPaths, rev, myIsIncludeMergedRevisions);
-                sendCount += sendLogTree(tree);
+                sendLogs(myPaths, rev, myIsIncludeMergedRevisions);
             }
             
             return count;
@@ -122,9 +119,8 @@ public class FSLog {
 
             if (changed) {
                 if (myIsDescending) {
-                    LogTreeNode tree = buildLogTree(myPaths, currentRev, myIsIncludeMergedRevisions);
-                    sendCount += sendLogTree(tree);
-                    if (myLimit > 0 && sendCount >= myLimit) {
+                    sendLogs(myPaths, currentRev, myIsIncludeMergedRevisions);
+                    if (myLimit > 0 && ++sendCount >= myLimit) {
                         break;
                     }
                 } else {
@@ -139,9 +135,8 @@ public class FSLog {
         if (revisions != null) {
             for (ListIterator revs = revisions.listIterator(); revs.hasNext();) {
                 long nextRev = ((Long) revs.next()).longValue(); 
-                LogTreeNode tree = buildLogTree(myPaths, nextRev, myIsIncludeMergedRevisions);
-                sendCount += sendLogTree(tree);
-                if (myLimit > 0 && sendCount >= myLimit) {
+                sendLogs(myPaths, nextRev, myIsIncludeMergedRevisions);
+                if (myLimit > 0 && ++sendCount >= myLimit) {
                     break;
                 }
             }
@@ -163,40 +158,11 @@ public class FSLog {
         return nextRevision;
     }
 
-    private LogTreeNode buildLogTree(String[] paths, long revision, 
-                                     boolean includeMergedRevisions) throws SVNException {
-        LogTreeNode treeNode = new LogTreeNode();
-        treeNode.myChildren = new LinkedList();
+    private void sendLogs(String[] paths, long revision, boolean includeMergedRevisions) throws SVNException {
 
-        Map revisionProps = myFSFS.getRevisionProperties(revision);
-        Map changedPaths = null;
-        String author = null;
-        Date date = null;
-        String message = null;
-
-        if (revisionProps != null) {
-            author = (String) revisionProps.get(SVNRevisionProperty.AUTHOR);
-            String datestamp = (String) revisionProps.get(SVNRevisionProperty.DATE);
-            message = (String) revisionProps.get(SVNRevisionProperty.LOG);
-            date = datestamp != null ? SVNTimeUtil.parseDateString(datestamp) : null;
-        }
-
-        FSRevisionRoot root = null;
-        if (revision > 0 && myIsDiscoverChangedPaths) {
-            root = myFSFS.createRevisionRoot(revision);
-            changedPaths = root.detectChanged();
-        }
-
-        changedPaths = changedPaths == null ? new HashMap() : changedPaths;
-//TODO:fixme!
-//        if (myIsOmitLogText && message != null) {
-//            message = null;
-//        }
-
-        treeNode.myLogEntry = new SVNLogEntry(changedPaths, revision, author, date, message);
+        SVNLogEntry logEntry = fillLogEntry(revision);
 
         Map mergeInfo = null;
-        long numberOfChildren = 0;
         SVNMergeRangeList combinedRangeList = null;
         if (includeMergedRevisions) {
             mergeInfo = getMergedRevisionMergeInfo(paths, revision);
@@ -207,10 +173,17 @@ public class FSLog {
                 combinedRangeList = combinedRangeList.merge(rangeList, 
                                                             SVNMergeRangeInheritance.EQUAL_INHERITANCE);
             }
-            numberOfChildren = combinedRangeList.countRevisions();
+            if (combinedRangeList.countRevisions() != 0) {
+                logEntry.setHasChildren(true);
+            }
+        }
+
+        if (myHandler != null) {
+            myHandler.handleLogEntry(logEntry);
         }
         
-        if (numberOfChildren > 0) {
+        if (logEntry.hasChildren()) {
+            FSRevisionRoot root = null;
             long[] revs = combinedRangeList.toRevisionsArray();
             for (int i = 0; i < revs.length; i++) {
                 long rev = revs[i];
@@ -219,16 +192,81 @@ public class FSLog {
                 if (root.checkNodeKind(mergeSource) == SVNNodeKind.NONE) {
                     continue;
                 }
-                LogTreeNode subTree = doMergedLog(mergeSource, rev);
-                if (subTree != null) {
-                    treeNode.myChildren.add(subTree);
+                
+                doMergedLog(mergeSource, rev);
+            }
+            if (myHandler != null) {
+                myHandler.handleLogEntry(SVNLogEntry.EMPTY_ENTRY);
+            }
+        }
+    }
+    
+    private SVNLogEntry fillLogEntry(long revision) throws SVNException {
+        Map changedPaths = null;
+        Map entryRevProps = null;
+        boolean getRevProps = true;
+        boolean censorRevProps = false;
+        if (revision > 0 && myIsDiscoverChangedPaths) {
+            FSRevisionRoot root = myFSFS.createRevisionRoot(revision);
+            changedPaths = root.detectChanged();
+        }
+
+        //TODO: add autz check code later
+        if (getRevProps) {
+            Map revisionProps = myFSFS.getRevisionProperties(revision);
+
+            if (revisionProps != null) {
+                String author = (String) revisionProps.get(SVNRevisionProperty.AUTHOR);
+                String datestamp = (String) revisionProps.get(SVNRevisionProperty.DATE);
+                Date date = datestamp != null ? SVNTimeUtil.parseDateString(datestamp) : null;
+
+                if (myRevPropNames == null || myRevPropNames.length == 0) {
+                    if (censorRevProps) {
+                        entryRevProps = new HashMap();
+                        if (author != null) {
+                            entryRevProps.put(SVNRevisionProperty.AUTHOR, author);
+                        }
+                        if (date != null) {
+                            entryRevProps.put(SVNRevisionProperty.DATE, date);
+                        }
+                    } else {
+                        entryRevProps = revisionProps;
+                        if (date != null) {
+                            entryRevProps.put(SVNRevisionProperty.DATE, date);
+                        }
+                    }
+                } else {
+                    for (int i = 0; i < myRevPropNames.length; i++) {
+                        String propName = myRevPropNames[i];
+                        String propVal = (String) revisionProps.get(propName);
+                        if (censorRevProps && !SVNRevisionProperty.AUTHOR.equals(propName) && 
+                                !SVNRevisionProperty.DATE.equals(propName)) {
+                            continue;
+                        }
+                        if (entryRevProps == null) {
+                            entryRevProps = new HashMap();
+                        }
+                        if (SVNRevisionProperty.DATE.equals(propName) && date != null) {
+                            entryRevProps.put(propName, date);
+                        } else if (propVal != null) {
+                            entryRevProps.put(propName, propVal);
+                        }
+                    }
                 }
             }
         }
-        return treeNode;    
+        
+        if (changedPaths == null) {
+            changedPaths = new HashMap();
+        }
+        if (entryRevProps == null) {
+            entryRevProps = new HashMap();
+        }
+        SVNLogEntry entry = new SVNLogEntry(changedPaths, revision, entryRevProps, false);
+        return entry;
     }
     
-    private LogTreeNode doMergedLog(String path, long revision) throws SVNException {
+    private void doMergedLog(String path, long revision) throws SVNException {
         String[] paths = new String[] {path};
         PathInfo[] histories = getPathHistories(paths, revision, revision, 
                                                 true);
@@ -239,9 +277,8 @@ public class FSLog {
         }
 
         if (changed) {
-            return buildLogTree(paths, revision, true);
+            sendLogs(paths, revision, true);
         }
-        return null;
     }
     
     private PathInfo[] getPathHistories(String[] paths, long start, 
@@ -301,22 +338,6 @@ public class FSLog {
         return mergeInfo;
     }
     
-    private long sendLogTree(LogTreeNode treeNode) throws SVNException {
-        long ret = 0;
-//TODO: fixme!
-//        treeNode.myLogEntry.setNumberOfChildren(treeNode.myChildren.size());
-        if (myHandler != null) {
-            ++ret;
-            myHandler.handleLogEntry(treeNode.myLogEntry);
-        }
-
-        for (Iterator childrent = treeNode.myChildren.iterator(); childrent.hasNext();) {
-            LogTreeNode subTree = (LogTreeNode) childrent.next();
-            ret += sendLogTree(subTree);
-        }
-        return ret;
-    }
-
     private SVNMergeInfoManager getMergeInfoManager() {
         if (myMergeInfoManager == null) {
             myMergeInfoManager = SVNMergeInfoManager.createMergeInfoManager(null);
@@ -393,13 +414,7 @@ public class FSLog {
         return impliedMergeInfo;
     }
 
-    private class LogTreeNode {
-        SVNLogEntry myLogEntry;
-        Collection myChildren;
-    }
-
     private class PathInfo {
-
         FSNodeHistory myHistory;
         boolean myIsDone;
         boolean myIsFirstTime;
