@@ -148,6 +148,9 @@ public class SVNPathBasedAccess {
 
     private boolean groupContainsUser(String group, String user) {
         String[] groupUsers = (String[]) getGroups().get(group);
+        if (groupUsers == null) {
+            return false;
+        }
         for (int i = 0; i < groupUsers.length; i++) {
             if (groupUsers[i].startsWith("@")) {
                 if (groupContainsUser(groupUsers[i].substring("@".length()), user)) {
@@ -184,7 +187,7 @@ public class SVNPathBasedAccess {
     }
 
     public boolean checkAccess(String repository, String path, String user, int access) {
-        RepositoryAccess repositoryAccess = (RepositoryAccess) getRules().get(path);
+        RepositoryAccess repositoryAccess = (RepositoryAccess) getRules().get(repository);
         if (repositoryAccess == null) {
             repositoryAccess = (SVNPathBasedAccess.RepositoryAccess) getRules().get(ANONYMOUS_REPOSITORY);
             if (repositoryAccess == null) {
@@ -319,7 +322,7 @@ public class SVNPathBasedAccess {
     private int skipWhitespace(InputStream is) throws IOException {
         resetCurrentLineColumn();
         int currentByte = getc(is);
-        while (currentByte != -1 && currentByte != '\n' && !Character.isWhitespace((char) currentByte)) {
+        while (Character.isWhitespace((char) currentByte)) {
             currentByte = getc(is);
             increaseCurrentLineColumn();
         }
@@ -461,7 +464,7 @@ public class SVNPathBasedAccess {
         private PathAccess myGlobalAccess;
 
 
-        public RepositoryAccess(boolean isAnonymous) {
+        private RepositoryAccess(boolean isAnonymous) {
             myAnonymous = isAnonymous;
         }
 
@@ -480,16 +483,20 @@ public class SVNPathBasedAccess {
         }
 
         private void validateRules() throws SVNException {
-            myGlobalAccess.validateRules();
-            for (Iterator iterator = myPathRules.values().iterator(); iterator.hasNext();) {
-                PathAccess pathAccess = (PathAccess) iterator.next();
-                pathAccess.validateRules();
+            if (myGlobalAccess != null) {
+                myGlobalAccess.validateRules();
+            }
+            if (myPathRules != null) {
+                for (Iterator iterator = myPathRules.values().iterator(); iterator.hasNext();) {
+                    PathAccess pathAccess = (PathAccess) iterator.next();
+                    pathAccess.validateRules();
+                }
             }
         }
 
         private boolean checkPathAccess(String path, String user, int requestedAccess) {
             boolean accessGranted = false;
-            if (path == null || path.length() == 0 || path.equals("/")) {
+            if (path == null || path.length() == 0 || "/".equals(path)) {
                 if (myGlobalAccess != null) {
                     int[] pathAccess = myGlobalAccess.checkAccess(user);
                     if (isAccessDetermined(pathAccess, requestedAccess)) {
@@ -527,9 +534,9 @@ public class SVNPathBasedAccess {
             if (currentPathAccess != null) {
                 pathAccess = currentPathAccess.checkAccess(user);
             } else if (!myAnonymous) {
-                RepositoryAccess commomRepositoryAccess = (RepositoryAccess) getRules().get(ANONYMOUS_REPOSITORY);
-                if (commomRepositoryAccess != null) {
-                    pathAccess = commomRepositoryAccess.checkPathAccess(user, currentPath);
+                RepositoryAccess commonRepositoryAccess = (RepositoryAccess) getRules().get(ANONYMOUS_REPOSITORY);
+                if (commonRepositoryAccess != null) {
+                    pathAccess = commonRepositoryAccess.checkPathAccess(user, currentPath);
                 }
             }
             return pathAccess;

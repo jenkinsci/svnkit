@@ -64,12 +64,13 @@ public class DAVConfig {
         }
 
         String configurationFilePath = servletConfig.getInitParameter(SVN_ACCESS_FILE_DIRECTIVE);
-        try {
-            if (configurationFilePath != null) {
-                myUsingPBA = true;
+        if (configurationFilePath != null) {
+            myUsingPBA = true;
+            try {
                 mySVNAccess = new SVNPathBasedAccess(new File(configurationFilePath));
+            } catch (SVNException e) {
+                mySVNAccess = null;
             }
-        } catch (SVNException e) {
         }
 
         String anonymous = servletConfig.getInitParameter(SVN_ANONYMOUS_DIRECTIVE);

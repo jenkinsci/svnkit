@@ -48,7 +48,7 @@ public class DAVRepositoryManager {
             String path = null;
             if (!DAVHandlerFactory.METHOD_MERGE.equals(request.getMethod())) {
                 DAVResourceURI tmp = new DAVResourceURI(null, myResourcePathInfo, null, false);
-                DAVPathUtil.standardize(tmp.getPath());
+                path = DAVPathUtil.standardize(tmp.getPath());
             }
 
             boolean checkDestinationPath = false;
