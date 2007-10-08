@@ -43,6 +43,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaReader;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNDepthFilterEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
@@ -1120,12 +1121,15 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 lockToken, SVNDepth.asString(depth) });
     }
 
-    public void diff(SVNURL url, long targetRevision, long revision, String target, boolean ignoreAncestry, SVNDepth depth, boolean getContents, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
-        boolean recursive = SVNDepth.recurseFromDepth(depth);
+    public void diff(SVNURL url, long targetRevision, long revision, String target, boolean ignoreAncestry, 
+            SVNDepth depth, boolean getContents, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
+        boolean recursive = getRecurseFromDepth(depth);
         target = target == null ? "" : target;
         if (url == null) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.BAD_URL, "URL can not be NULL"));
         }
+
+        editor = getDepthFilterEditor(editor, depth, target != null);
         Object[] buffer = new Object[] { "diff", getRevisionObject(targetRevision), 
                     target, Boolean.valueOf(recursive),
                     Boolean.valueOf(ignoreAncestry), url.toString(), 
@@ -1148,8 +1152,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     }
 
     public void status(long revision, String target, SVNDepth depth, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
-        boolean recursive = SVNDepth.recurseFromDepth(depth);
+        boolean recursive = getRecurseFromDepth(depth);
         target = target == null ? "" : target;
+        editor = getDepthFilterEditor(editor, depth, target != null);
         Object[] buffer = new Object[] { "status", target,
                 Boolean.valueOf(recursive), getRevisionObject(revision), SVNDepth.asString(depth) };
         try {
@@ -1169,12 +1174,14 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     }
     }
 
-    public void update(SVNURL url, long revision, String target, SVNDepth depth, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
-        boolean recursive = SVNDepth.recurseFromDepth(depth);
+    public void update(SVNURL url, long revision, String target, SVNDepth depth, ISVNReporterBaton reporter, 
+            ISVNEditor editor) throws SVNException {
+        boolean recursive = getRecurseFromDepth(depth);
         target = target == null ? "" : target;
         if (url == null) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.BAD_URL, "URL can not be NULL"));
         }
+        editor = getDepthFilterEditor(editor, depth, target != null);
         Object[] buffer = new Object[] { "switch", getRevisionObject(revision),
                 target, Boolean.valueOf(recursive), url.toString(), SVNDepth.asString(depth) };
         try {
@@ -1194,33 +1201,11 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         }
     }
 
-    public void update(long revision, String target, SVNDepth depth, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
-        target = target == null ? "" : target;
-        boolean recursive = SVNDepth.recurseFromDepth(depth);
-        Object[] buffer = new Object[] { "update", getRevisionObject(revision),
-                target, Boolean.valueOf(recursive), SVNDepth.asString(depth) };
-
-        try {
-            openConnection();
-            write("(w((n)sww))", buffer);
-            authenticate();
-            reporter.report(this);
-            authenticate();
-            read("*E", new Object[] { editor }, true);
-            write("(w())", new Object[] {"success"});
-            read("[()]", null, true);
-        } catch (SVNException e) {
-            closeSession();
-            throw e;
-        } finally {
-            closeConnection();
-        }
-    }
-
     public void update(long revision, String target, SVNDepth depth, boolean sendCopyFromArgs, 
             ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
         target = target == null ? "" : target;
         boolean recursive = getRecurseFromDepth(depth);
+        editor = getDepthFilterEditor(editor, depth, target != null); 
         Object[] buffer = new Object[] { "update", getRevisionObject(revision),
                 target, Boolean.valueOf(recursive), SVNDepth.asString(depth), Boolean.valueOf(sendCopyFromArgs) };
 
@@ -1299,5 +1284,12 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
 
     private static boolean getRecurseFromDepth(SVNDepth depth) {
         return depth == null || depth == SVNDepth.UNKNOWN || depth.compareTo(SVNDepth.FILES) > 0;
+    }
+    
+    private ISVNEditor getDepthFilterEditor(ISVNEditor editor, SVNDepth depth, boolean hasTarget) {
+        if (depth != SVNDepth.FILES && depth != SVNDepth.INFINITY) {
+            return SVNDepthFilterEditor.getDepthFilterEditor(depth, editor, hasTarget);    
+        }
+        return editor;
     }
 }
