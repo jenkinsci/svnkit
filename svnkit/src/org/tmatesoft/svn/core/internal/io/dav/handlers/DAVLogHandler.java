@@ -17,11 +17,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
+import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.xml.sax.Attributes;
 
 
@@ -55,10 +59,17 @@ public class DAVLogHandler extends BasicDAVHandler {
         if (includeMergedRevisions) {
             buffer.append("<S:include-merged-revisions />");
         }
-        //TODO: FIXME
-//        if (omitLogText) {
-//            buffer.append("<S:omit-log-text />");
-//        }
+        if (revPropNames != null && revPropNames.length > 0) {
+            for (int i = 0; i < revPropNames.length; i++) {
+                String revPropName = revPropNames[i];
+                buffer.append("<S:revprop>");
+                buffer.append(revPropName);
+                buffer.append("</S:revprop>");
+            }
+        } else {
+            buffer.append("<S:all-revprops/>");
+        }
+       
         for (int i = 0; i < paths.length; i++) {
             buffer.append("<S:path>"  + paths[i] + "</S:path>");
 		}
@@ -67,12 +78,13 @@ public class DAVLogHandler extends BasicDAVHandler {
 	}
 	
 	private static final DAVElement LOG_ITEM = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "log-item");
-	
 	private static final DAVElement ADDED_PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "added-path");
 	private static final DAVElement DELETED_PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "deleted-path");
 	private static final DAVElement MODIFIED_PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "modified-path");
 	private static final DAVElement REPLACED_PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "replaced-path");
-    private static final DAVElement NUMBER_OF_CHILDREN = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "nbr-children");
+    private static final DAVElement HAS_CHILDREN = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "has-children");
+    private static final DAVElement NO_CUSTOM_REVPROPS = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "no-custom-revprops");
+    private static final DAVElement REVPROP = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "revprop");
 	
 	private ISVNLogEntryHandler myLogEntryHandler;
 	private long myRevision;
@@ -81,30 +93,68 @@ public class DAVLogHandler extends BasicDAVHandler {
 	private Date myDate;
 	private String myComment;
 	private SVNLogEntryPath myPath;
-	private long myNumberOfChildren;
 	private int myCount;
     private long myLimit;
-
     private boolean myIsCompatibleMode;
+    private boolean myHasRevPropElement;
+    private boolean myHasChildren;
+    private boolean myIsWantAuthor;
+    private boolean myIsWantDate;
+    private boolean myIsWantComment;
+    private boolean myIsWantCustomRevProps;
+    private String myRevPropName;
+    private Map myRevProps;
 
-	public DAVLogHandler(ISVNLogEntryHandler handler, long limit) {
+	public DAVLogHandler(ISVNLogEntryHandler handler, long limit, String[] revPropNames) {
 		myLogEntryHandler = handler;
 		myRevision = -1;
 		myCount = 0;
         myLimit = limit;
-        myNumberOfChildren = 0;
-		init();
+        if (revPropNames != null && revPropNames.length > 0) {
+            for (int i = 0; i < revPropNames.length; i++) {
+                String revPropName = revPropNames[i];
+                if (SVNRevisionProperty.AUTHOR.equals(revPropName)) {
+                    myIsWantAuthor = true;
+                } else if (SVNRevisionProperty.LOG.equals(revPropName)) {
+                    myIsWantComment = true;
+                } else if (SVNRevisionProperty.DATE.equals(revPropName)) {
+                    myIsWantDate = true;
+                } else {
+                    myIsWantCustomRevProps = true;
+                }
+            }
+        } else {
+            myIsWantAuthor = myIsWantComment = myIsWantCustomRevProps = myIsWantDate = true;
+        }
+		
+        init();
 	}
     
     public boolean isCompatibleMode() {
         return myIsCompatibleMode;
     }
 	
-	protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) {
+	protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
 		char type = 0;
 		String copyPath = null;
 		long copyRevision = -1;
-		if (element == ADDED_PATH || element == REPLACED_PATH) {
+		
+        if (element == REVPROP) {
+            myHasRevPropElement = true;
+            myRevPropName = attrs.getValue("name");
+            if (myRevPropName == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
+                        "Missing name attr in revprop element");
+                SVNErrorManager.error(err);
+            }
+            
+        } else if (element == NO_CUSTOM_REVPROPS) {
+            myHasRevPropElement = true;
+        } else if (element == HAS_CHILDREN) {
+            myHasChildren = true;
+        }
+        
+        if (element == ADDED_PATH || element == REPLACED_PATH) {
 			type = element == ADDED_PATH ? SVNLogEntryPath.TYPE_ADDED : SVNLogEntryPath.TYPE_REPLACED;
 			copyPath = attrs.getValue("copyfrom-path");
 			String copyRevisionStr = attrs.getValue("copyfrom-rev");
@@ -120,44 +170,71 @@ public class DAVLogHandler extends BasicDAVHandler {
 			type = SVNLogEntryPath.TYPE_DELETED;			
 		}
 		if (type != 0) {
-			myPath = new SVNLogEntryPath(null, type, copyPath, copyRevision);
+            myPath = new SVNLogEntryPath(null, type, copyPath, copyRevision);
 		}
 		
 	}
 	
 	protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
-		if (element == LOG_ITEM) {
-			myCount++;
+        if (element == LOG_ITEM) {
+			if (myIsWantCustomRevProps && !myHasRevPropElement) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "Server does not support custom revprops via log");
+                SVNErrorManager.error(err);
+            }
+                 
+            myCount++;
             if (myLimit <= 0 || myCount <= myLimit) {
     			if (myLogEntryHandler != null) {
     				if (myPaths == null) {
     					myPaths = new HashMap();
     				}
-    				SVNLogEntry logEntry = new SVNLogEntry(myPaths, myRevision, myAuthor, myDate, myComment);
-    				if (myNumberOfChildren > 0) {
-//                        logEntry.setNumberOfChildren(myNumberOfChildren);
+    				if (myRevProps == null) {
+                        myRevProps = new HashMap();
                     }
+                    if (myAuthor != null) {
+                        myRevProps.put(SVNRevisionProperty.AUTHOR, myAuthor); 
+                    }
+                    if (myComment != null) {
+                        myRevProps.put(SVNRevisionProperty.LOG, myComment);
+                    }
+                    if (myDate != null) {
+                        myRevProps.put(SVNRevisionProperty.DATE, myDate);
+                    }
+                    SVNLogEntry logEntry = new SVNLogEntry(myPaths, myRevision, myRevProps, myHasChildren);
                     myLogEntryHandler.handleLogEntry(logEntry);
     			}
-            } else if (myLimit < myCount) {
+            } else if (myLimit > 0 && myLimit < myCount) {
                 myIsCompatibleMode = true;
             }
 			myPaths = null;
+            myRevProps = null;
 			myRevision = -1;
 			myAuthor = null;
 			myDate = null;
 			myComment = null;
-            myNumberOfChildren = 0;
-		} else if (element == DAVElement.VERSION_NAME && cdata != null) {
+            myRevPropName = null;
+            myHasChildren = false;
+        } else if (element == DAVElement.VERSION_NAME && cdata != null) {
 			myRevision = Long.parseLong(cdata.toString());
-        } else if (element == NUMBER_OF_CHILDREN && cdata != null) {
-            myNumberOfChildren = Long.parseLong(cdata.toString());
+        } else if (element == REVPROP) {
+            if (myRevProps == null) {
+                myRevProps = new HashMap();
+            }
+            if (myRevPropName != null && cdata != null) {
+                myRevProps.put(myRevPropName, cdata.toString());    
+            } 
         } else if (element == DAVElement.CREATOR_DISPLAY_NAME && cdata != null) {
-			myAuthor = cdata.toString();
+            if (myIsWantAuthor) {
+                myAuthor = cdata.toString();
+            }
 		} else if (element == DAVElement.COMMENT && cdata != null) {
-			myComment = cdata.toString();
+			if (myIsWantComment) {
+                myComment = cdata.toString();    
+            }
 		} else if (element == DAVElement.DATE && cdata != null) {
-			myDate = SVNTimeUtil.parseDate(cdata.toString());
+			if (myIsWantDate) {
+                myDate = SVNTimeUtil.parseDate(cdata.toString());    
+            }
 		} else if (element == ADDED_PATH || element == MODIFIED_PATH || element == REPLACED_PATH ||
 				element == DELETED_PATH) {
 			if (myPath != null && cdata != null) {

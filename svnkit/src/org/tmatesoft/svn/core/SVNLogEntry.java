@@ -35,7 +35,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 public class SVNLogEntry implements Serializable {
     
     public static SVNLogEntry EMPTY_ENTRY = new SVNLogEntry(new HashMap(), SVNRepository.INVALID_REVISION, 
-            new HashMap(), false);
+            null, false);
 
     private long myRevision;
     private Map myChangedPaths;

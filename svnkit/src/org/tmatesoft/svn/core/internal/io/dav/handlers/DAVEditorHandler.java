@@ -44,9 +44,9 @@ import org.xml.sax.Attributes;
 public class DAVEditorHandler extends BasicDAVDeltaHandler {
 
     public static StringBuffer generateEditorRequest(final DAVConnection connection, StringBuffer buffer, String url, 
-            long targetRevision, String target, String dstPath, SVNDepth depth,
-            boolean ignoreAncestry, boolean resourceWalk, 
-            boolean fetchContents, ISVNReporterBaton reporterBaton) throws SVNException {
+            long targetRevision, String target, String dstPath, SVNDepth depth, boolean ignoreAncestry, 
+            boolean resourceWalk, boolean fetchContents, boolean sendCopyFromArgs, 
+            ISVNReporterBaton reporterBaton) throws SVNException {
 		buffer = buffer == null ? new StringBuffer() : buffer;
         buffer.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
         buffer.append("<S:update-report send-all=\"true\" xmlns:S=\"svn:\">\n");
