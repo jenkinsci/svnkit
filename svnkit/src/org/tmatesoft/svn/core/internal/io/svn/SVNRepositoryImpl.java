@@ -588,9 +588,12 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             
             authenticate();
             while (true) {
+	            Map changedPathsMap = null;
+	            long revision = 0;
+	            boolean hasChildren = false;
+	            Map revProps = null;
                 try {
                     read("((", buffer, false);
-                    Map changedPathsMap = null;
                     if (changedPaths) {
                         changedPathsMap = handler != null ? new HashMap() : null;
                         while (true) {
@@ -614,20 +617,20 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     read(")N(?S)(?S)(?S)?T?T?N(*P))", buffer, false);
                     count++;
                     if (handler != null && (limit <= 0 || count <= limit)) {
-                        long revision = SVNReader.getLong(buffer, 0);
+                        revision = SVNReader.getLong(buffer, 0);
                         String author = SVNReader.getString(buffer, 1);
                         Date date = SVNReader.getDate(buffer, 2);
                         if (date == SVNDate.NULL) {
                             date = null;
                         }
                         String message = SVNReader.getString(buffer, 3);
-                        boolean hasChildren = SVNReader.getBoolean(buffer, 4);
+                        hasChildren = SVNReader.getBoolean(buffer, 4);
                         boolean isInvalidRevision = SVNReader.getBoolean(buffer, 5);
                         if (isInvalidRevision) {
                             revision = SVNRepository.INVALID_REVISION;
                         }
                         
-                        Map revProps = SVNReader.getMap(buffer, 7);
+                        revProps = SVNReader.getMap(buffer, 7);
                         if (wantCustomRevProps && revProps == null) {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, 
                                     "Server does not support custom revprops via log");
@@ -662,8 +665,6 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                                 }
                             }
                         }
-                        SVNLogEntry logEntry = new SVNLogEntry(changedPathsMap, revision, revProps, hasChildren);
-                        handler.handleLogEntry(logEntry);
                     }
                 } catch (SVNException e) {
                     if (e instanceof SVNCancelException || e instanceof SVNAuthenticationException) {
@@ -675,6 +676,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     }
                     return count;
                 }
+
+	            SVNLogEntry logEntry = new SVNLogEntry(changedPathsMap, revision, revProps, hasChildren);
+	            handler.handleLogEntry(logEntry);
             }
         } catch (SVNException e) {
             closeSession();
