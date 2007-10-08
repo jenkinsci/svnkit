@@ -7,7 +7,6 @@ esac
 
 SVNKIT_HOME=`dirname $0`
 SVNKIT_HOME=`cd "$SVNKIT_HOME" ; pwd`
-export LD_LIBRARY_PATH="$SVNKIT_HOME":$LD_LIBRARY_PATH
 
 SVNKIT_CP="$SVNKIT_HOME/svnkit.jar":"$SVNKIT_HOME/svnkit-cli.jar":"$SVNKIT_HOME/ganymed.jar":"$SVNKIT_HOME/jna.jar"
 

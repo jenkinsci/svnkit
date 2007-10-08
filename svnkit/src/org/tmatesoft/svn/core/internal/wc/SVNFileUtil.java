@@ -40,6 +40,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.util.jna.SVNLinuxUtil;
 import org.tmatesoft.svn.core.internal.util.jna.SVNWin32Util;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
@@ -60,6 +61,8 @@ public class SVNFileUtil {
 
     public final static boolean isWindows;
     public final static boolean isOSX;
+    public final static boolean isBSD;
+    public static boolean isLinux;
     public final static boolean isOpenVMS;
 
     public final static OutputStream DUMMY_OUT = new OutputStream() {
@@ -92,6 +95,8 @@ public class SVNFileUtil {
 
         isWindows = windows;
         isOSX = !isWindows && osName != null && osName.toLowerCase().indexOf("mac") >= 0;
+        isLinux = !isWindows && osName != null && osName.toLowerCase().indexOf("linux") >= 0;
+        isBSD = !isWindows && !isLinux && osName != null && osName.toLowerCase().indexOf("bsd") >= 0;
         isOpenVMS = osName != null && !isWindows && !isOSX && osName.toLowerCase().indexOf("openvms") >= 0;
         if (isOpenVMS) {
             setAdminDirectoryName("_svn");
@@ -229,7 +234,6 @@ public class SVNFileUtil {
                 return true;
             }
         }
-        
         if (file.canWrite()) {
             return true;
         }
@@ -259,6 +263,9 @@ public class SVNFileUtil {
 
     public static void setExecutable(File file, boolean executable) {
         if (isWindows || isOpenVMS || file == null || !file.exists()) {
+            return;
+        }
+        if (SVNLinuxUtil.setExecutable(file, executable)) {
             return;
         }
         try {
@@ -423,6 +430,9 @@ public class SVNFileUtil {
     }
 
     public static boolean createSymlink(File link, String linkName) {
+        if (SVNLinuxUtil.createSymlink(link, linkName)) {
+            return isSymlink(link);
+        }
         try {
             execCommand(new String[] {
                     LN_COMMAND, "-s", linkName, link.getAbsolutePath()
@@ -460,6 +470,10 @@ public class SVNFileUtil {
             return null;
         }
         String ls = null;
+        ls = SVNLinuxUtil.getLinkTarget(link);
+        if (ls != null) {
+            return ls;
+        }
         try {
             ls = execCommand(new String[] {
                     LS_COMMAND, "-ld", link.getAbsolutePath()
@@ -812,6 +826,10 @@ public class SVNFileUtil {
     public static boolean isExecutable(File file) {
         if (isWindows || isOpenVMS) {
             return false;
+        }
+        Boolean executable = SVNLinuxUtil.isExecutable(file);
+        if (executable != null) {
+            return executable.booleanValue();
         }
         String[] commandLine = new String[] {
                 LS_COMMAND, "-ln", file.getAbsolutePath()

@@ -129,11 +129,6 @@ svnkit/cli/jsvnsync.bat eol=crlf
 svnkit/cli/jsvnversion eol=lf
 svnkit/cli/jsvnversion.bat eol=crlf
 svnkit/cli/logging.properties.disabled eol=lf
-svnkit/native/compile_jsvnstat -text
-svnkit/native/jsvnstat.c -text
-svnkit/native/jsvnstat.h -text
-svnkit/native/libjsvnstat32.so -text
-svnkit/native/libjsvnstat64.so -text
 svnkit/src/org/tigris/subversion/javahl/SVNClient.java -text
 svnkit/src/org/tmatesoft/svn/cli/command/SVNAdminListLocksCommand.java -text
 svnkit/src/org/tmatesoft/svn/cli/command/SVNAdminRemoveLocksCommand.java -text

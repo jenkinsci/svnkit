@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.internal.util.jna;
 
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+
 import com.sun.jna.Native;
 
 
@@ -22,15 +24,26 @@ public class JNALibraryLoader {
     
     private static ISVNWinCryptLibrary ourWinCryptLibrary;
     private static ISVNKernel32Library ourKenrelLibrary;
+    private static ISVNCLibrary ourCLibrary;
 
     static {
         // load win32 libraries.
-        try {
-            ourWinCryptLibrary = (ISVNWinCryptLibrary) Native.loadLibrary("Crypt32", ISVNWinCryptLibrary.class);
-            ourKenrelLibrary = (ISVNKernel32Library) Native.loadLibrary("Kernel32", ISVNKernel32Library.class);
-        } catch (Throwable th) {
-            ourWinCryptLibrary = null;
-            ourKenrelLibrary = null;
+        if (SVNFileUtil.isWindows) {
+            try {
+                ourWinCryptLibrary = (ISVNWinCryptLibrary) Native.loadLibrary("Crypt32", ISVNWinCryptLibrary.class);
+                ourKenrelLibrary = (ISVNKernel32Library) Native.loadLibrary("Kernel32", ISVNKernel32Library.class);
+            } catch (Throwable th) {
+                ourWinCryptLibrary = null;
+                ourKenrelLibrary = null;
+            }
+        }
+        if (SVNFileUtil.isOSX || SVNFileUtil.isLinux || SVNFileUtil.isBSD) {
+            try {
+                ourCLibrary = (ISVNCLibrary) Native.loadLibrary("c", ISVNCLibrary.class);
+            } catch (Throwable th) {
+                ourCLibrary = null;
+            }
+            
         }
     }
     
@@ -40,5 +53,9 @@ public class JNALibraryLoader {
 
     public static synchronized ISVNKernel32Library getKernelLibrary() {
         return ourKenrelLibrary;
+    }
+
+    public static synchronized ISVNCLibrary getCLibrary() {
+        return ourCLibrary;
     }
 }

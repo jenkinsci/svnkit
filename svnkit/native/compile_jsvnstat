@@ -1,3 +1,0 @@
-#!/bin/sh
-gcc -m32 -I$JAVA_HOME/include -I$JAVA_HOME/include/linux jsvnstat.c -shared -fPIC -o libjsvnstat32.so
-gcc -m64 -I$JAVA_HOME/include -I$JAVA_HOME/include/linux jsvnstat.c -shared -fPIC -o libjsvnstat64.so
