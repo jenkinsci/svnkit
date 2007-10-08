@@ -61,7 +61,7 @@ public class DAVServlet extends HttpServlet {
             ServletDAVHandler handler = DAVHandlerFactory.createHandler(connector, request, response);
             handler.execute();
         } catch (Throwable th) {
-            String errorBody;
+            String errorBody = null;
             if (th instanceof SVNException) {
                 SVNException e = (SVNException) th;
                 SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
@@ -70,6 +70,10 @@ public class DAVServlet extends HttpServlet {
                     errorBody = generateErrorBody(NOT_FOUND_STATUS_LINE, e.getMessage());
                     response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                     response.setContentType(HTML_CONTENT_TYPE);
+                } else if (errorCode == SVNErrorCode.NO_AUTH_FILE_PATH) {
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                } else if (errorCode == SVNErrorCode.RA_NOT_AUTHORIZED) {
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
                 } else {
                     errorBody = generateStandardizedErrorBody(errorCode.getCode(), null, null, e.getErrorMessage().getFullMessage());
                     response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);

@@ -39,7 +39,7 @@ public class SVNPathBasedAccess {
 
     private static final String ANONYMOUS_REPOSITORY = "";
 
-    private static final int SVN_ACCESS_NONE = 0;
+    public static final int SVN_ACCESS_NONE = 0;
     public static final int SVN_ACCESS_READ = 1;
     public static final int SVN_ACCESS_WRITE = 2;
     public static final int SVN_ACCESS_RECURSIVE = 4;
@@ -185,10 +185,10 @@ public class SVNPathBasedAccess {
 
     public boolean checkAccess(String repository, String path, String user, int access) {
         RepositoryAccess repositoryAccess = (RepositoryAccess) getRules().get(path);
-        if (repositoryAccess == null){
+        if (repositoryAccess == null) {
             repositoryAccess = (SVNPathBasedAccess.RepositoryAccess) getRules().get(ANONYMOUS_REPOSITORY);
-            if (repositoryAccess == null){
-                return false;                
+            if (repositoryAccess == null) {
+                return false;
             }
         }
         return repositoryAccess.checkPathAccess(path, user, access);

@@ -39,6 +39,7 @@ public class DAVConfig {
     private String myRepositoryParentPath;
 
     private SVNPathBasedAccess mySVNAccess = null;
+    private boolean myUsingPBA = false;
     private boolean myAnonymous = true;
     private boolean myNoAuthIfAnonymousAllowed = false;
 
@@ -65,6 +66,7 @@ public class DAVConfig {
         String configurationFilePath = servletConfig.getInitParameter(SVN_ACCESS_FILE_DIRECTIVE);
         try {
             if (configurationFilePath != null) {
+                myUsingPBA = true;
                 mySVNAccess = new SVNPathBasedAccess(new File(configurationFilePath));
             }
         } catch (SVNException e) {
@@ -85,7 +87,6 @@ public class DAVConfig {
         return myRepositoryPath != null;
     }
 
-
     public String getRepositoryPath() {
         return myRepositoryPath;
     }
@@ -98,7 +99,11 @@ public class DAVConfig {
         return mySVNAccess;
     }
 
-    public boolean isAnonymous() {
+    public boolean isUsingPBA() {
+        return myUsingPBA;
+    }
+
+    public boolean isAnonymousAllowed() {
         return myAnonymous;
     }
 

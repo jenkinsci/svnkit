@@ -46,6 +46,7 @@ public class DAVHandlerFactory {
     public static final String METHOD_MKACTIVITY = "MKACTIVITY";
     public static final String METHOD_CHECKIN = "CHECKIN";
     public static final String METHOD_CHECKOUT = "CHECKOUT";
+    public static final String METHOD_MERGE = "MERGE";
 
     public static ServletDAVHandler createHandler(DAVRepositoryManager manager, HttpServletRequest request, HttpServletResponse response) throws SVNException {
         if (METHOD_PROPFIND.equals(request.getMethod())) {

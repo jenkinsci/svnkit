@@ -2,7 +2,7 @@
 <web-app version="2.4"
          xmlns="http://java.sun.com/xml/ns/j2ee"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd" >
+         xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd">
     <display-name>DAV Subversion Servlet</display-name>
     <servlet>
         <servlet-name>svnkit</servlet-name>
@@ -13,9 +13,27 @@
             <param-name>SVNParentPath</param-name>
             <param-value>/var/svn/repository</param-value>
         </init-param>
+        <init-param>
+            <param-name>AuthzSVNAccessFile</param-name>
+            <param-value>/var/svn/conf.txt</param-value>
+        </init-param>
     </servlet>
     <servlet-mapping>
         <servlet-name>svnkit</servlet-name>
         <url-pattern>/*</url-pattern>
     </servlet-mapping>
+
+    <security-constraint>
+        <display-name>DAV Subversion Security Constarint</display-name>
+        <web-resource-collection>
+            <web-resource-name>svnkit</web-resource-name>
+            <url-pattern>/*</url-pattern>
+        </web-resource-collection>
+    </security-constraint>
+
+    <login-config>
+        <auth-method>BASIC</auth-method>
+        <realm-name>Repository Realm</realm-name>
+    </login-config>
+
 </web-app>
