@@ -233,6 +233,10 @@ public class SVNFileUtil {
             if (SVNWin32Util.setWritable(file)) {
                 return true;
             }
+        } else if (isLinux || isOSX || isBSD) {
+            if (SVNLinuxUtil.setWritable(file)) {
+                return true;
+            }
         }
         if (file.canWrite()) {
             return true;
@@ -302,7 +306,7 @@ public class SVNFileUtil {
         if (isWindows || isOpenVMS || file == null) {
             return false;
         }
-        return SVNStatHelper.getType(file, true) == SVNFileType.SYMLINK;
+        return SVNFileType.getType(file) == SVNFileType.SYMLINK;
     }
 
     public static void copy(File src, File dst, boolean safe, boolean copyAdminDirectories) throws SVNException {

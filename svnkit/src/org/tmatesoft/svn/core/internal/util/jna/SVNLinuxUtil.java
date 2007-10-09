@@ -180,6 +180,44 @@ public class SVNLinuxUtil {
         return false;
     }
 
+    public static boolean setWritable(File file) {
+        if (file == null) {
+            return false;
+        }
+        String path = file.getAbsolutePath();
+        if (path.endsWith("/") && path.length() > 1) {
+            path = path.substring(0, path.length() - 1);
+        }
+        try {
+            ISVNCLibrary cLibrary = JNALibraryLoader.getCLibrary();
+            if (cLibrary == null) {
+                return false;
+            }
+            synchronized (ourSharedMemory) {
+                ourSharedMemory.clear();
+                int rc;
+                synchronized (cLibrary) {
+                    rc = SVNFileUtil.isOSX || SVNFileUtil.isBSD ? 
+                            cLibrary.lstat(path, ourSharedMemory) : 
+                            cLibrary.__lxstat64(0, path, ourSharedMemory);
+                }
+                if (rc < 0) {
+                    return false;
+                }
+                int mode = SVNFileUtil.isOSX || SVNFileUtil.isBSD ?
+                        ourSharedMemory.getInt(8) : ourSharedMemory.getInt(16);
+                int access = mode & 0777;
+                synchronized (cLibrary) {
+                    rc = cLibrary.chmod(path, 0222 | access);
+                }
+                return rc < 0 ? false : true;
+            }
+        } catch (Throwable th) {
+            //
+        }
+        return false;
+    }
+
     public static boolean createSymlink(File file, String linkName) {
         if (file == null || linkName == null) {
             return false;
@@ -195,7 +233,7 @@ public class SVNLinuxUtil {
             }
             int rc;
             synchronized (cLibrary) {
-                rc = cLibrary.symlink(path, linkName);
+                rc = cLibrary.symlink(linkName, path);
             }
             return rc < 0 ? false : true;
         } catch (Throwable th) {

@@ -124,14 +124,17 @@ public class SVN {
                         } catch (SVNException e) {}
                     }
                     if (commandLine.hasArgument(SVNArgument.MESSAGE)) {
-                        File file = new File((String) commandLine.getArgumentValue(SVNArgument.MESSAGE));
-                        if (SVNFileType.getType(file) != SVNFileType.NONE) {
-                            if ("lock".equals(commandName)) {
-                                System.err.println("svn: The lock comment is a path name (was -F intended?); use '--force-log' to override");
-                            } else {
-                                System.err.println("svn: The log message is a path name (was -F intended?); use '--force-log' to override");
+                        String msg = (String) commandLine.getArgumentValue(SVNArgument.MESSAGE);
+                        if (!"".equals(msg) && msg != null) {
+                            File file = new File(msg);
+                            if (SVNFileType.getType(file) != SVNFileType.NONE) {
+                                if ("lock".equals(commandName)) {
+                                    System.err.println("svn: The lock comment is a path name (was -F intended?); use '--force-log' to override");
+                                } else {
+                                    System.err.println("svn: The log message is a path name (was -F intended?); use '--force-log' to override");
+                                }
+                                System.exit(1);
                             }
-                            System.exit(1);
                         }
                     }
                 }
