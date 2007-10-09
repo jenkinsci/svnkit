@@ -605,8 +605,8 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                                         String type = SVNReader.getString(buffer, 1);
                                         String copyPath = SVNReader.getString(buffer, 2);
                                         long copyRev = SVNReader.getLong(buffer, 3);
-                                        
-                                        changedPathsMap.put(path, new SVNLogEntryPath(path, type.charAt(0), copyPath, copyRev));
+                                        changedPathsMap.put(path, new SVNLogEntryPath(path, type.charAt(0), copyPath, 
+                                                copyRev));
                                     }
                                 }
                             } catch (SVNException e) {
@@ -614,7 +614,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                             }
                         }
                     }
-                    read(")N(?S)(?S)(?S)?T?T?N(*P))", buffer, false);
+                    read(")N(?S)(?S)(?S)|TTN(*P))", buffer, false);
                     count++;
                     if (handler != null && (limit <= 0 || count <= limit)) {
                         revision = SVNReader.getLong(buffer, 0);

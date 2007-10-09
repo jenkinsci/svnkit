@@ -189,7 +189,8 @@ class SVNReader {
         boolean unconditionalThrow = false;
         for (int i = 0; i < template.length(); i++) {
             char ch = template.charAt(i);
-            boolean optional = ch == '?' || ch == '*';
+            boolean optional = ch == '?' || ch == '|' || ch == '*';
+            boolean returnOnFailure = ch == '|';
             boolean multiple = ch == '*';
             boolean doRead = Character.isUpperCase(ch)
                     && !isListed(INVALID_CARDINALITY_SUBJECTS, ch);
@@ -355,6 +356,9 @@ class SVNReader {
                 if (unconditionalThrow || e instanceof SVNCancelException || e instanceof SVNAuthenticationException) {
                     throw e;
                 }
+                if (returnOnFailure) {
+                    break;
+                }
                 try {
                     is.reset();
                 } catch (IOException e1) {
@@ -378,10 +382,43 @@ class SVNReader {
         return target;
     }
 
+    //TODO: FIXME imlement new reading/parsine engine
+    //    public SVNItem readItem(InputStream is) throws SVNException {
+//        char ch = skipWhitespace(is);
+//        return readItem(is, ch, 0);
+//    }
+
+/*    public SVNItem readItem(InputStream is, char ch, int level) throws SVNException {
+        if (++level >= 64) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Too many nested items");
+            SVNErrorManager.error(err);
+        }
+        
+        
+        if (Character.isDigit(ch)) {
+            int length = 0;
+            while (true) {
+                
+            }
+            while (Character.isDigit(ch)) {
+                length *= 10;
+                length += (ch - '0');
+                ch = (char) is.read();
+            }
+            if (ch == ':') {
+                return length;
+            }
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Malformed network data, string length expected"));
+
+        }
+        
+    }
+*/
+  
     private static final char[] VALID_TEMPLATE_CHARS = { '(', ')', '[', ']', // groups
             's', 'w', 'b', 'i', 'n', 't', 'p', // items
             'd', 'f', 'l', 'a', 'r', 'e', 'x', 'l', 'g', // command-specific
-            '?', '*', 'z' };
+            '?', '*', '|', 'z' };
 
     private static final char[] INVALID_CARDINALITY_SUBJECTS = { '(', ')', '[',
             ']', '?', '*', '<' };
