@@ -25,6 +25,9 @@ public class JNALibraryLoader {
     private static ISVNWinCryptLibrary ourWinCryptLibrary;
     private static ISVNKernel32Library ourKenrelLibrary;
     private static ISVNCLibrary ourCLibrary;
+    
+    private static volatile int ourUID = -1;
+    private static volatile int ourGID = -1;
 
     static {
         // load win32 libraries.
@@ -40,11 +43,28 @@ public class JNALibraryLoader {
         if (SVNFileUtil.isOSX || SVNFileUtil.isLinux || SVNFileUtil.isBSD) {
             try {
                 ourCLibrary = (ISVNCLibrary) Native.loadLibrary("c", ISVNCLibrary.class);
+                try {
+                    ourUID = ourCLibrary.getuid();
+                } catch (Throwable th) {
+                    ourUID = -1;
+                }
+                try {
+                    ourGID = ourCLibrary.getgid();
+                } catch (Throwable th) {
+                    ourGID = -1;
+                }
             } catch (Throwable th) {
                 ourCLibrary = null;
             }
-            
         }
+    }
+    
+    public static int getUID() {
+        return ourUID;
+    }
+
+    public static int getGID() {
+        return ourGID;
     }
     
     public static synchronized ISVNWinCryptLibrary getWinCryptLibrary() {

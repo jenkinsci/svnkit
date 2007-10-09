@@ -31,4 +31,8 @@ public interface ISVNCLibrary extends Library {
 
     public int symlink(String targetPath, String linkPath);
     
+    public int getuid();
+    
+    public int getgid();
+    
 }

@@ -101,8 +101,21 @@ public class SVNLinuxUtil {
                 }
                 int mode = SVNFileUtil.isOSX || SVNFileUtil.isBSD ?
                         ourSharedMemory.getInt(8) : ourSharedMemory.getInt(16);
+                        
+                int fuid = SVNFileUtil.isOSX || SVNFileUtil.isBSD ?
+                        ourSharedMemory.getInt(8 + 4 + 4) : ourSharedMemory.getInt(16 + 4 + 4);
+                int fgid = SVNFileUtil.isOSX || SVNFileUtil.isBSD ?
+                        ourSharedMemory.getInt(8 + 4 + 4 + 4) : ourSharedMemory.getInt(16 + 4 + 4 + 4);
                 int access = mode & 0777;
-                return Boolean.valueOf((access & 0111) != 0);
+                int mask = 0111;
+                if (JNALibraryLoader.getUID() == fuid) {
+                    mask = 0100; // check user
+                } else if (JNALibraryLoader.getGID() == fgid) {
+                    mask = 0010; // check group 
+                } else {
+                    mask = 0001; // check other.
+                }
+                return Boolean.valueOf((access & mask) != 0);
             }
         } catch (Throwable th) {
             //
@@ -169,8 +182,21 @@ public class SVNLinuxUtil {
                 int mode = SVNFileUtil.isOSX || SVNFileUtil.isBSD ?
                         ourSharedMemory.getInt(8) : ourSharedMemory.getInt(16);
                 int access = mode & 0777;
+                int mask = 0;
+                if ((access & 0400) != 0) {
+                    mask |= 0100;
+                }
+                if ((access & 0040) != 0) {
+                    mask |= 0010;
+                }
+                if ((access & 0004) != 0) {
+                    mask |= 0001;
+                }
+                if (mask == 0) {
+                    return false;
+                }
                 synchronized (cLibrary) {
-                    rc = cLibrary.chmod(path, set ? 0111 | access : 0111 ^ access);
+                    rc = cLibrary.chmod(path, set ? mask | access : mask ^ access);
                 }
                 return rc < 0 ? false : true;
             }
@@ -207,8 +233,21 @@ public class SVNLinuxUtil {
                 int mode = SVNFileUtil.isOSX || SVNFileUtil.isBSD ?
                         ourSharedMemory.getInt(8) : ourSharedMemory.getInt(16);
                 int access = mode & 0777;
+                int mask = 0;
+                if ((access & 0400) != 0) {
+                    mask |= 0200;
+                }
+                if ((access & 0040) != 0) {
+                    mask |= 0020;
+                }
+                if ((access & 0004) != 0) {
+                    mask |= 0002;
+                }
+                if (mask == 0) {
+                    return false;
+                }
                 synchronized (cLibrary) {
-                    rc = cLibrary.chmod(path, 0222 | access);
+                    rc = cLibrary.chmod(path, mask | access);
                 }
                 return rc < 0 ? false : true;
             }
