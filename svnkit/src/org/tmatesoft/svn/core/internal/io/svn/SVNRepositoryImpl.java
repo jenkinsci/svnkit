@@ -677,8 +677,10 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     return count;
                 }
 
-	            SVNLogEntry logEntry = new SVNLogEntry(changedPathsMap, revision, revProps, hasChildren);
-	            handler.handleLogEntry(logEntry);
+	            if (handler != null && (limit <= 0 || count <= limit)) {
+		            SVNLogEntry logEntry = new SVNLogEntry(changedPathsMap, revision, revProps, hasChildren);
+		            handler.handleLogEntry(logEntry);
+	            }
             }
         } catch (SVNException e) {
             closeSession();
