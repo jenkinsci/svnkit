@@ -58,9 +58,6 @@ public class DAVOptionsHandler extends ServletDAVHandler {
     private static final String MS_AUTHOR_VIA_HEADER = "MS-Author-Via";
     private static final String ALLOW_HEADER = "Allow";
 
-    private static final String NAME_ATTR = "name";
-    private static final String NAMESPACE_ATTR = "namespace";
-
     private DAVOptionsRequest myDAVRequest;
 
     public DAVOptionsHandler(DAVRepositoryManager connector, HttpServletRequest request, HttpServletResponse response) {
@@ -81,7 +78,7 @@ public class DAVOptionsHandler extends ServletDAVHandler {
     public void execute() throws SVNException {
         readInput();
 
-        DAVResource resource = createDAVResource(true, false);
+        DAVResource resource = getRequestedDAVResource(true, false);
         Collection supportedMethods = getSupportedMethods(resource);
 
         StringBuffer body = new StringBuffer();
@@ -89,8 +86,9 @@ public class DAVOptionsHandler extends ServletDAVHandler {
         String responseBody = body.toString();
 
         try {
-            setResponseContentLength(responseBody.getBytes(UTF_8_ENCODING).length);
+            setResponseContentLength(responseBody.getBytes(UTF8_ENCODING).length);
         } catch (UnsupportedEncodingException e) {
+            setResponseContentLength(responseBody.getBytes().length);
         }
 
         setDefaultResponseHeaders();
@@ -142,7 +140,7 @@ public class DAVOptionsHandler extends ServletDAVHandler {
     protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
     }
 
-    private Collection getSupportedMethods(DAVResource resource) throws SVNException {
+    private static Collection getSupportedMethods(DAVResource resource) throws SVNException {
         //TODO: when work with locks will be implemented, we need to check resource state: LOCK_NULL, EXIST, NULL.
         Collection supportedMethods = new ArrayList();
         supportedMethods.add(DAVHandlerFactory.METHOD_OPTIONS);
@@ -231,8 +229,7 @@ public class DAVOptionsHandler extends ServletDAVHandler {
     private void generateSupportedReportSet(DAVResource resource, StringBuffer xmlBuffer) {
         XMLUtil.openXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "supported-report-set", XMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
         if (resource.getResourceURI().getType() == DAVResourceType.REGULAR) {
-            Collection supportedReports = DAVReportHandler.REPORT_ELEMENTS;
-            generateSupportedElementSet(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "supported-report", supportedReports, getOptionsRequest().getRequestedReports(), xmlBuffer);
+            generateSupportedElementSet(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "supported-report", REPORT_ELEMENTS, getOptionsRequest().getRequestedReports(), xmlBuffer);
             XMLUtil.closeXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "supported-report-set", xmlBuffer);
         }
     }

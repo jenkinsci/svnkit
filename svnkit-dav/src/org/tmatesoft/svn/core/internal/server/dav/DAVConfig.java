@@ -45,7 +45,6 @@ public class DAVConfig {
 
 
     public DAVConfig(ServletConfig servletConfig) throws SVNException {
-
         String repositoryPath = servletConfig.getInitParameter(PATH_DIRECIVE);
         String repositoryParentPath = servletConfig.getInitParameter(PARENT_PATH_DIRECIVE);
         if (repositoryPath != null && repositoryParentPath == null) {

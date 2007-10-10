@@ -33,9 +33,13 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  * @version 1.1.2
  */
 public class DAVFileRevisionsHandler extends DAVReportHandler implements ISVNFileRevisionHandler {
+    
+    private static final String FILE_REVISION_ATTR = "file-rev";
+    private static final String REVISION_PROPERTY_ATTR = "rev-prop";
+    private static final String SET_PROPERTY_ATTR = "set-prop";
+    private static final String REMOVE_PROPERTY_ATTR = "remove-prop";
 
     private DAVFileRevisionsRequest myDAVRequest;
-
 
     public DAVFileRevisionsHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) {
         super(repositoryManager, request, response);
@@ -54,7 +58,7 @@ public class DAVFileRevisionsHandler extends DAVReportHandler implements ISVNFil
     }
 
     public void execute() throws SVNException {
-        setDAVResource(createDAVResource(false, false));
+        setDAVResource(getRequestedDAVResource(false, false));
 
         writeXMLHeader();
 
@@ -66,36 +70,36 @@ public class DAVFileRevisionsHandler extends DAVReportHandler implements ISVNFil
 
     public void openRevision(SVNFileRevision fileRevision) throws SVNException {
         Map attrs = new HashMap();
-        attrs.put("path", fileRevision.getPath());
-        attrs.put("rev", String.valueOf(fileRevision.getRevision()));
-        StringBuffer xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "file-rev", XMLUtil.XML_STYLE_NORMAL, attrs, null);
+        attrs.put(PATH_ATTR, fileRevision.getPath());
+        attrs.put(REVISION_ATTR, String.valueOf(fileRevision.getRevision()));
+        StringBuffer xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, FILE_REVISION_ATTR, XMLUtil.XML_STYLE_NORMAL, attrs, null);
         write(xmlBuffer);
         for (Iterator iterator = fileRevision.getRevisionProperties().entrySet().iterator(); iterator.hasNext();) {
             Map.Entry entry = (Map.Entry) iterator.next();
             String propertyName = (String) entry.getKey();
             String propertyValue = (String) entry.getValue();
-            writePropertyTag("rev-prop", propertyName, propertyValue);
+            writePropertyTag(REVISION_PROPERTY_ATTR, propertyName, propertyValue);
         }
         for (Iterator iterator = fileRevision.getPropertiesDelta().entrySet().iterator(); iterator.hasNext();) {
             Map.Entry entry = (Map.Entry) iterator.next();
             String propertyName = (String) entry.getKey();
             String propertyValue = (String) entry.getValue();
             if (propertyValue != null) {
-                writePropertyTag("set-prop", propertyName, propertyValue);
+                writePropertyTag(SET_PROPERTY_ATTR, propertyName, propertyValue);
             } else {
-                xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "remove-prop", XMLUtil.XML_STYLE_SELF_CLOSING, "name", propertyName, null);
+                xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, REMOVE_PROPERTY_ATTR, XMLUtil.XML_STYLE_SELF_CLOSING, "name", propertyName, null);
                 write(xmlBuffer);
             }
         }
     }
 
     public void closeRevision(String token) throws SVNException {
-        StringBuffer xmlBuffer = XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "file-rev", null);
+        StringBuffer xmlBuffer = XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, FILE_REVISION_ATTR, null);
         write(xmlBuffer);
     }
 
     public void applyTextDelta(String path, String baseChecksum) throws SVNException {
-        StringBuffer xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "txdelta", XMLUtil.XML_STYLE_NORMAL, null, null);
+        StringBuffer xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, TXDELTA_ATTR, XMLUtil.XML_STYLE_NORMAL, null, null);
         write(xmlBuffer);
     }
 
@@ -107,7 +111,7 @@ public class DAVFileRevisionsHandler extends DAVReportHandler implements ISVNFil
     public void textDeltaEnd(String path) throws SVNException {
         textDeltaChunkEnd();
         setWriteTextDeltaHeader(true);
-        StringBuffer xmlBuffer = XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "txdelta", null);
+        StringBuffer xmlBuffer = XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, TXDELTA_ATTR, null);
         write(xmlBuffer);
     }
 }

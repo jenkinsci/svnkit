@@ -21,6 +21,8 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
@@ -59,6 +61,9 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
 
     protected static final String DEFAULT_XML_CONTENT_TYPE = "text/xml; charset=\"UTF-8\"";
 
+    protected static final String UTF8_ENCODING = "UTF-8";
+    protected static final String BASE64_ENCODING = "base64";    
+
     //Specific svn headers
     protected static final String SVN_OPTIONS_HEADER = "X-SVN-Options";
     protected static final String SVN_DELTA_BASE_HEADER = "X-SVN-VR-Base";
@@ -73,6 +78,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     protected static final String IF_UNMODIFIED_SINCE_HEADER = "If-Unmodified-Since";
     protected static final String IF_NONE_MATCH_HEADER = "If-None-Match";
     protected static final String IF_MODIFIED_SINCE_HEADER = "If-Modified-Since";
+    protected static final String ETAG_HEADER = "ETag";
     protected static final String RANGE_HEADER = "Range";
 
     //Common HTTP headers
@@ -81,7 +87,6 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     protected static final String LAST_MODIFIED_HEADER = "Last-Modified";
     protected static final String LABEL_HEADER = "Label";
     protected static final String USER_AGENT_HEADER = "User-Agent";
-    protected static final String ETAG_HEADER = "ETag";
     protected static final String CONNECTION_HEADER = "Connection";
     protected static final String DATE_HEADER = "Date";
     protected static final String KEEP_ALIVE_HEADER = "Keep-Alive";
@@ -94,12 +99,27 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     protected static final DAVElement GET_ETAG = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "getetag");
     protected static final DAVElement LOG = DAVElement.getElement(DAVElement.SVN_SVN_PROPERTY_NAMESPACE, "log");
 
+    //Common xml attributes
+    protected static final String NAME_ATTR = "name";
+    protected static final String NAMESPACE_ATTR = "namespace";
+
     protected static final String DIFF_VERSION_1 = "svndiff1";
     protected static final String DIFF_VERSION = "svndiff";
 
-    protected static final String UTF_8_ENCODING = "UTF-8";
+    protected static final String ACCEPT_RANGES_DEFAULT_VALUE = "bytes";    
 
     private static final Pattern COMMA = Pattern.compile(",");
+
+    //Report related stuff DAVOptionsHandler uses
+    protected static Set REPORT_ELEMENTS = new HashSet();
+    protected static final DAVElement UPDATE_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "update-report");
+    protected static final DAVElement LOG_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "log-report");
+    protected static final DAVElement DATED_REVISIONS_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "dated-rev-report");
+    protected static final DAVElement GET_LOCATIONS = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "get-locations");
+    protected static final DAVElement FILE_REVISIONS_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "file-revs-report");
+    protected static final DAVElement GET_LOCKS_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "get-locks-report");
+    protected static final DAVElement REPLAY_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "replay-report");
+    protected static final DAVElement MERGEINFO_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "mergeinfo-report");
 
     private static SAXParserFactory ourSAXParserFactory;
     private SAXParser mySAXParser;
@@ -107,6 +127,17 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     private DAVRepositoryManager myRepositoryManager = null;
     private HttpServletRequest myRequest;
     private HttpServletResponse myResponse;
+        
+    static {
+        REPORT_ELEMENTS.add(UPDATE_REPORT);
+        REPORT_ELEMENTS.add(LOG_REPORT);
+        REPORT_ELEMENTS.add(DATED_REVISIONS_REPORT);
+        REPORT_ELEMENTS.add(GET_LOCATIONS);
+        REPORT_ELEMENTS.add(FILE_REVISIONS_REPORT);
+        REPORT_ELEMENTS.add(GET_LOCKS_REPORT);
+        REPORT_ELEMENTS.add(REPLAY_REPORT);
+        REPORT_ELEMENTS.add(MERGEINFO_REPORT);
+    }
 
     protected ServletDAVHandler(DAVRepositoryManager connector, HttpServletRequest request, HttpServletResponse response) {
         myRepositoryManager = connector;
@@ -131,14 +162,13 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         getDAVRequest().endElement(parent, element, cdata);
     }
 
-    protected DAVResource createDAVResource(boolean labelAllowed, boolean useCheckedIn) throws SVNException {
+    protected DAVResource getRequestedDAVResource(boolean labelAllowed, boolean useCheckedIn) throws SVNException {
         String label = labelAllowed ? getRequestHeader(LABEL_HEADER) : null;
         String versionName = getRequestHeader(SVN_VERSION_NAME_HEADER);
-        long version;
+        long version = DAVResource.INVALID_REVISION;
         try {
             version = Long.parseLong(versionName);
         } catch (NumberFormatException e) {
-            version = DAVResource.INVALID_REVISION;
         }
         String clientOptions = getRequestHeader(SVN_OPTIONS_HEADER);
         String baseChecksum = getRequestHeader(SVN_BASE_FULLTEXT_MD5_HEADER);
@@ -146,7 +176,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         String deltaBase = getRequestHeader(SVN_DELTA_BASE_HEADER);
         String userAgent = getRequestHeader(USER_AGENT_HEADER);
         boolean isSVNClient = userAgent != null && (userAgent.startsWith("SVN/") || userAgent.startsWith("SVNKit"));
-        return getRepositoryManager().createDAVResource(getURI(), isSVNClient, deltaBase, version, clientOptions, baseChecksum, resultChecksum, label, useCheckedIn);
+        return getRepositoryManager().getRequestedDAVResource(isSVNClient, deltaBase, version, clientOptions, baseChecksum, resultChecksum, label, useCheckedIn);
     }
 
     protected DAVDepth getRequestDepth(DAVDepth defaultDepth) throws SVNException {

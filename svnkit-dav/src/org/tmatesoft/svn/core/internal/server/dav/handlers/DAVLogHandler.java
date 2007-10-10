@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -30,6 +31,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 
 /**
  * @author TMate Software Ltd.
@@ -68,7 +70,7 @@ public class DAVLogHandler extends DAVReportHandler implements ISVNLogEntryHandl
     }
 
     public void execute() throws SVNException {
-        setDAVResource(createDAVResource(false, false));
+        setDAVResource(getRequestedDAVResource(false, false));
 
         writeXMLHeader();
 
@@ -108,21 +110,21 @@ public class DAVLogHandler extends DAVReportHandler implements ISVNLogEntryHandl
         for (Iterator iterator = logEntry.getRevisionProperties().entrySet().iterator(); iterator.hasNext();) {
             Map.Entry entry = (Map.Entry) iterator.next();
             String property = (String) entry.getKey();
-            String value = (String) entry.getValue();
+            Object value = entry.getValue();
             if (property.equals(SVNRevisionProperty.AUTHOR)) {
-                XMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.CREATOR_DISPLAY_NAME.getName(), value, xmlBuffer);
+                XMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.CREATOR_DISPLAY_NAME.getName(), (String) value, xmlBuffer);
             } else if (property.equals(SVNRevisionProperty.DATE)) {
-                XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "date", value, xmlBuffer);                                
+                XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "date", SVNTimeUtil.formatDate((Date) value), xmlBuffer);
             } else if (property.equals(SVNRevisionProperty.LOG)) {
-                XMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.COMMENT.getName(), value, xmlBuffer);                
+                XMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.COMMENT.getName(), (String) value, xmlBuffer);
             } else {
                 noCustomProperties = false;
-                XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "revprop", value, "name", property, xmlBuffer);
+                XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "revprop", (String) value, NAME_ATTR, property, xmlBuffer);
             }
         }
 
-        if (noCustomProperties){
-            XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "no-custom-revprops", XMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);            
+        if (noCustomProperties) {
+            XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "no-custom-revprops", XMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
         }
 
         if (logEntry.hasChildren()) {
@@ -151,8 +153,8 @@ public class DAVLogHandler extends DAVReportHandler implements ISVNLogEntryHandl
             case SVNLogEntryPath.TYPE_ADDED:
                 if (logEntryPath.getCopyPath() != null && DAVResource.isValidRevision(logEntryPath.getCopyRevision())) {
                     Map attrs = new HashMap();
-                    attrs.put("copyfrom-path", logEntryPath.getCopyPath());
-                    attrs.put("copyfrom-rev", String.valueOf(logEntryPath.getCopyRevision()));
+                    attrs.put(COPYFROM_PATH_ATTR, logEntryPath.getCopyPath());
+                    attrs.put(COPYFROM_REVISION_ATTR, String.valueOf(logEntryPath.getCopyRevision()));
                     XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "added-path", path, attrs, xmlBuffer);
                 } else {
                     XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "added-path", path, xmlBuffer);
@@ -162,8 +164,8 @@ public class DAVLogHandler extends DAVReportHandler implements ISVNLogEntryHandl
                 Map attrs = null;
                 if (logEntryPath.getCopyPath() != null && DAVResource.isValidRevision(logEntryPath.getCopyRevision())) {
                     attrs = new HashMap();
-                    attrs.put("copyfrom-path", logEntryPath.getCopyPath());
-                    attrs.put("copyfrom-rev", String.valueOf(logEntryPath.getCopyRevision()));
+                    attrs.put(COPYFROM_PATH_ATTR, logEntryPath.getCopyPath());
+                    attrs.put(COPYFROM_REVISION_ATTR, String.valueOf(logEntryPath.getCopyRevision()));
                 }
                 XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "replaced-path", path, attrs, xmlBuffer);
 

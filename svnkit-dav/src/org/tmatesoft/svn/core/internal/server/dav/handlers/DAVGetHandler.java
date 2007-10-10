@@ -11,10 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.util.Enumeration;
@@ -28,19 +25,13 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceType;
-import org.tmatesoft.svn.core.internal.server.dav.DAVResourceURI;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
-import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
-import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.util.Version;
 
 /**
@@ -48,16 +39,13 @@ import org.tmatesoft.svn.util.Version;
  * @version 1.1.2
  */
 public class DAVGetHandler extends ServletDAVHandler {
-
+   
     public DAVGetHandler(DAVRepositoryManager connector, HttpServletRequest request, HttpServletResponse response) {
         super(connector, request, response);
     }
 
     public void execute() throws SVNException {
-        DAVResource resource = createDAVResource(true, false);
-
-        setDefaultResponseHeaders();
-        setResponseHeaders(resource);
+        DAVResource resource = getRequestedDAVResource(true, false);
 
         if (!resource.exists()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PATH_NOT_FOUND, "Path ''{0}'' you requested not found", resource.getResourceURI().getPath()));
@@ -67,6 +55,9 @@ public class DAVGetHandler extends ServletDAVHandler {
                 && resource.getResourceURI().getType() != DAVResourceType.WORKING) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Cannot GET this type of resource."));
         }
+
+        setDefaultResponseHeaders();
+        setResponseHeaders(resource);
 
         try {
             checkPreconditions(resource.getETag(), resource.getLastModified());
@@ -80,7 +71,7 @@ public class DAVGetHandler extends ServletDAVHandler {
             String responseBody = body.toString();
 
             try {
-                setResponseContentLength(responseBody.getBytes(UTF_8_ENCODING).length);
+                setResponseContentLength(responseBody.getBytes(UTF8_ENCODING).length);
             } catch (UnsupportedEncodingException e) {
                 setResponseContentLength(responseBody.getBytes().length);
             }
@@ -91,7 +82,7 @@ public class DAVGetHandler extends ServletDAVHandler {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
             }
         } else if (resource.getDeltaBase() != null) {
-            sendSVNDelta(resource, resource.getDeltaBase());
+            //Here we should send SVN delta (for old clients)
         } else {
             resource.writeTo(getResponseOutputStream());
         }
@@ -133,7 +124,7 @@ public class DAVGetHandler extends ServletDAVHandler {
         } catch (SVNException e) {
             //nothing to do we just skip this header
         }
-        setResponseHeader(ACCEPT_RANGES_HEADER, "bytes");
+        setResponseHeader(ACCEPT_RANGES_HEADER, ACCEPT_RANGES_DEFAULT_VALUE);
         try {
             Date lastModifiedTime = resource.getLastModified();
             if (lastModifiedTime != null) {
@@ -207,53 +198,5 @@ public class DAVGetHandler extends ServletDAVHandler {
         buffer.append("Powered by ");
         buffer.append(Version.getVersionString());
         buffer.append("</em>\n</body></html>");
-    }
-
-    private void sendSVNDelta(DAVResource resource, String deltaBase) throws SVNException {
-        SVNURL deltaBaseSVNURL = SVNURL.parseURIEncoded(deltaBase);
-        SVNURL deltaBaseFSURL = getRepositoryManager().convertHttpToFile(deltaBaseSVNURL);
-
-        String tmpURI = getRepositoryManager().getURI(deltaBaseSVNURL);
-        DAVResourceURI deltaBaseURI = new DAVResourceURI(resource.getResourceURI().getContext(), tmpURI, null, false);
-        if (DAVResource.isValidRevision(deltaBaseURI.getRevision())) {
-            InputStream sourceIS = null;
-            InputStream targetIS = null;
-            File deltaBaseFile = new File(deltaBaseFSURL.getPath());
-            SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
-
-            ISVNDeltaConsumer consumer = new ISVNDeltaConsumer() {
-                private boolean writeHeader = true;
-
-                public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
-                    try {
-                        if (diffWindow != null) {
-                            diffWindow.writeTo(getResponseOutputStream(), writeHeader, getSVNDiffVersion());
-                        }
-                    } catch (IOException e) {
-                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
-                    }
-
-                    writeHeader = false;
-                    return null;
-                }
-
-                public void applyTextDelta(String path, String baseChecksum) throws SVNException {
-                }
-
-                public void textDeltaEnd(String path) throws SVNException {
-                }
-            };
-
-            try {
-                sourceIS = SVNFileUtil.openFileForReading(deltaBaseFile);
-                targetIS = SVNFileUtil.openFileForReading(resource.getFile());
-                deltaGenerator.sendDelta(null, sourceIS, 0, targetIS, consumer, false);
-            } catch (SVNException e) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Error while sending svn diff", e), e);
-            } finally {
-                SVNFileUtil.closeFile(sourceIS);
-                SVNFileUtil.closeFile(targetIS);
-            }
-        }
     }
 }

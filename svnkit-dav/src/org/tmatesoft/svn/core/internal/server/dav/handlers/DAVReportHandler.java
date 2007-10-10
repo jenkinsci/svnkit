@@ -42,19 +42,23 @@ import org.xml.sax.Attributes;
  */
 public class DAVReportHandler extends ServletDAVHandler {
 
-    public static Set REPORT_ELEMENTS = new HashSet();
     private static Set REPORT_NAMESPACES = new HashSet();
 
-    protected static final String UTF_8_ENCODING = "UTF-8";
-
-    public static final DAVElement UPDATE_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "update-report");
-    public static final DAVElement LOG_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "log-report");
-    public static final DAVElement DATED_REVISIONS_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "dated-rev-report");
-    public static final DAVElement GET_LOCATIONS = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "get-locations");
-    public static final DAVElement FILE_REVISIONS_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "file-revs-report");
-    public static final DAVElement GET_LOCKS_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "get-locks-report");
-    public static final DAVElement REPLAY_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "replay-report");
-    public static final DAVElement MERGEINFO_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "mergeinfo-report");
+    protected static final String PATH_ATTR = "path";
+    protected static final String REVISION_ATTR = "rev";
+    protected static final String COPYFROM_PATH_ATTR = "copyfrom-path";
+    protected static final String COPYFROM_REVISION_ATTR = "copyfrom-rev";
+    protected static final String TXDELTA_ATTR = "txdelta";
+    protected static final String ENCODING_ATTR = "encoding";
+    protected static final String CHECKSUM_ATTR = "checksum";
+    protected static final String DELETE_ATTR = "del";
+    protected static final String LOCK_TOKEN_ATTR = "lock-token";
+    protected static final String LINKPATH_ATTR = "linkpath";
+    protected static final String DEPTH_ATTR = "depth";
+    protected static final String START_EMPTY_ATTR = "start-empty";
+    protected static final String SEND_ALL_ATTR = "send-all";
+    protected static final String BASE_CHECKSUM_ATTR = "base-checksum";
+    protected static final String BC_URL_ATTR = "bc-url";
 
     private DAVRepositoryManager myRepositoryManager;
     private HttpServletRequest myRequest;
@@ -66,24 +70,7 @@ public class DAVReportHandler extends ServletDAVHandler {
     private boolean myWriteTextDeltaHeader = true;
     private boolean mySVNDiffVersion = false;
 
-    private boolean isWriteTextDeltaHeader() {
-        return myWriteTextDeltaHeader;
-    }
-
-    protected void setWriteTextDeltaHeader(boolean writeTextDeltaHeader) {
-        myWriteTextDeltaHeader = writeTextDeltaHeader;
-    }
-
     static {
-        REPORT_ELEMENTS.add(UPDATE_REPORT);
-        REPORT_ELEMENTS.add(LOG_REPORT);
-        REPORT_ELEMENTS.add(DATED_REVISIONS_REPORT);
-        REPORT_ELEMENTS.add(GET_LOCATIONS);
-        REPORT_ELEMENTS.add(FILE_REVISIONS_REPORT);
-        REPORT_ELEMENTS.add(GET_LOCKS_REPORT);
-        REPORT_ELEMENTS.add(REPLAY_REPORT);
-        REPORT_ELEMENTS.add(MERGEINFO_REPORT);
-
         REPORT_NAMESPACES.add(DAVElement.SVN_NAMESPACE);
     }
 
@@ -114,13 +101,20 @@ public class DAVReportHandler extends ServletDAVHandler {
         myDAVResource = DAVResource;
     }
 
-
     public boolean doCompress() {
         return mySVNDiffVersion;
     }
 
     public void setSVNDiffVersion(boolean SVNDiffVersion) {
         mySVNDiffVersion = SVNDiffVersion;
+    }        
+
+    private boolean isWriteTextDeltaHeader() {
+        return myWriteTextDeltaHeader;
+    }
+
+    protected void setWriteTextDeltaHeader(boolean writeTextDeltaHeader) {
+        myWriteTextDeltaHeader = writeTextDeltaHeader;
     }
 
     protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
@@ -234,14 +228,14 @@ public class DAVReportHandler extends ServletDAVHandler {
     protected void writePropertyTag(String tagName, String propertyName, String propertyValue) throws SVNException {
         StringBuffer xmlBuffer;
         if (SVNEncodingUtil.isXMLSafe(propertyValue)) {
-            xmlBuffer = XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, propertyValue, "name", propertyName, null);
+            xmlBuffer = XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, propertyValue, NAME_ATTR, propertyName, null);
             write(xmlBuffer);
         } else {
             Map attrs = new HashMap();
-            attrs.put("name", propertyName);
-            attrs.put("encoding", "base64");
+            attrs.put(NAME_ATTR, propertyName);
+            attrs.put(ENCODING_ATTR, BASE64_ENCODING);
             try {
-                propertyValue = SVNBase64.byteArrayToBase64(propertyValue.getBytes(UTF_8_ENCODING));
+                propertyValue = SVNBase64.byteArrayToBase64(propertyValue.getBytes(UTF8_ENCODING));
             } catch (UnsupportedEncodingException e) {
                 propertyValue = SVNBase64.byteArrayToBase64(propertyValue.getBytes());
             }

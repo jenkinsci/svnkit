@@ -51,12 +51,12 @@ public class DAVMergeInfoHandler extends DAVReportHandler {
     }
 
     public void execute() throws SVNException {
-        setDAVResource(createDAVResource(false, false));
+        setDAVResource(getRequestedDAVResource(false, false));
 
         String responseBody = generateResponseBody();
 
         try {
-            setResponseContentLength(responseBody.getBytes(UTF_8_ENCODING).length);
+            setResponseContentLength(responseBody.getBytes(UTF8_ENCODING).length);
         } catch (UnsupportedEncodingException e) {
         }
 

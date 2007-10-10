@@ -11,13 +11,13 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav;
 
-import java.io.File;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
@@ -30,7 +30,6 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -99,7 +98,6 @@ public class DAVResource {
         myIsExists = resourceURI.exists();
         prepare();
     }
-
 
     private DAVResource(SVNRepository repository, DAVResourceURI resourceURI, long revision, boolean isSVNClient, String deltaBase, long version, String clientOptions, String baseChecksum, String resultChecksum) {
         myResourceURI = resourceURI;
@@ -257,7 +255,7 @@ public class DAVResource {
 
     public Collection getEntries() throws SVNException {
         if (isCollection() && myEntries == null) {
-            myEntries = new ArrayList();
+            myEntries = new LinkedList();
             getRepository().getDir(getResourceURI().getPath(), getRevision(), null, SVNDirEntry.DIRENT_KIND, myEntries);
         }
         return myEntries;
@@ -395,10 +393,5 @@ public class DAVResource {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED));
         }
         getRepository().getFile(getResourceURI().getPath(), getRevision(), null, out);
-    }
-
-    public File getFile() {
-        String absolutePath = SVNPathUtil.append(getRepository().getLocation().getPath(), getResourceURI().getPath());
-        return new File(absolutePath);
     }
 }

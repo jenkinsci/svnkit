@@ -49,12 +49,12 @@ public class DAVGetLocksHandler extends DAVReportHandler {
     }
 
     public void execute() throws SVNException {
-        setDAVResource(createDAVResource(false, false));
+        setDAVResource(getRequestedDAVResource(false, false));
 
         String responseBody = generateResponseBody();
 
         try {
-            setResponseContentLength(responseBody.getBytes(UTF_8_ENCODING).length);
+            setResponseContentLength(responseBody.getBytes(UTF8_ENCODING).length);
         } catch (UnsupportedEncodingException e) {
         }
 
@@ -91,11 +91,11 @@ public class DAVGetLocksHandler extends DAVReportHandler {
             } else {
                 String ownerEncoded = null;
                 try {
-                    ownerEncoded = SVNBase64.byteArrayToBase64(lock.getOwner().getBytes(UTF_8_ENCODING));
+                    ownerEncoded = SVNBase64.byteArrayToBase64(lock.getOwner().getBytes(UTF8_ENCODING));
                 } catch (UnsupportedEncodingException e) {
                     ownerEncoded = SVNBase64.byteArrayToBase64(lock.getOwner().getBytes());
                 }
-                XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "owner", XMLUtil.XML_STYLE_PROTECT_PCDATA, "encoding", "base64", xmlBuffer);
+                XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "owner", XMLUtil.XML_STYLE_PROTECT_PCDATA, ENCODING_ATTR, BASE64_ENCODING, xmlBuffer);
                 xmlBuffer.append(ownerEncoded);
                 XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "owner", xmlBuffer);
             }
@@ -106,11 +106,11 @@ public class DAVGetLocksHandler extends DAVReportHandler {
             } else {
                 String commentEncoded = null;
                 try {
-                    commentEncoded = SVNBase64.byteArrayToBase64(lock.getComment().getBytes(UTF_8_ENCODING));
+                    commentEncoded = SVNBase64.byteArrayToBase64(lock.getComment().getBytes(UTF8_ENCODING));
                 } catch (UnsupportedEncodingException e) {
                     commentEncoded = SVNBase64.byteArrayToBase64(lock.getComment().getBytes());
                 }
-                XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "comment", XMLUtil.XML_STYLE_PROTECT_PCDATA, "encoding", "base64", xmlBuffer);
+                XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "comment", XMLUtil.XML_STYLE_PROTECT_PCDATA, ENCODING_ATTR, BASE64_ENCODING, xmlBuffer);
                 xmlBuffer.append(commentEncoded);
                 XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "comment", xmlBuffer);
             }

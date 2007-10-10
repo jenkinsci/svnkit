@@ -46,12 +46,12 @@ public class DAVDatedRevisionHandler extends DAVReportHandler {
     }
 
     public void execute() throws SVNException {
-        setDAVResource(createDAVResource(false, false));
+        setDAVResource(getRequestedDAVResource(false, false));
 
         String responseBody = generateResponseBody();
 
         try {
-            int contentLength = responseBody.getBytes(UTF_8_ENCODING).length;
+            int contentLength = responseBody.getBytes(UTF8_ENCODING).length;
             setResponseContentLength(contentLength);
         } catch (UnsupportedEncodingException e) {
         }

@@ -65,7 +65,7 @@ public class DAVPropfindHandler extends ServletDAVHandler {
 
     public void execute() throws SVNException {
         readInput();
-        DAVResource resource = createDAVResource(true, false);
+        DAVResource resource = getRequestedDAVResource(true, false);
 
         StringBuffer body = new StringBuffer();
         DAVDepth depth = getRequestDepth(DAVDepth.DEPTH_INFINITY);
@@ -73,7 +73,7 @@ public class DAVPropfindHandler extends ServletDAVHandler {
         String responseBody = body.toString();
 
         try {
-            setResponseContentLength(responseBody.getBytes(UTF_8_ENCODING).length);
+            setResponseContentLength(responseBody.getBytes(UTF8_ENCODING).length);
         } catch (UnsupportedEncodingException e) {
         }
 

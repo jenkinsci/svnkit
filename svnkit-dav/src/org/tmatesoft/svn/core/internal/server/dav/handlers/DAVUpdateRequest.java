@@ -77,16 +77,16 @@ public class DAVUpdateRequest extends DAVRequest {
         return mySrcURL;
     }
 
-    private void setSrcURL(String srcURL) throws SVNException {
-        mySrcURL = SVNURL.parseURIEncoded(srcURL);
+    private void setSrcURL(SVNURL srcURL) throws SVNException {
+        mySrcURL = srcURL;
     }
 
     public SVNURL getDstURL() {
         return myDstURL;
     }
 
-    private void setDstURL(String dstURL) throws SVNException {
-        myDstURL = SVNURL.parseURIEncoded(dstURL);
+    private void setDstURL(SVNURL dstURL) throws SVNException {
+        myDstURL = dstURL;
     }
 
     public String getTarget() {
@@ -176,11 +176,11 @@ public class DAVUpdateRequest extends DAVRequest {
                 } else if (element == SRC_PATH) {
                     assertNullCData(element, property);
                     DAVPathUtil.testCanonical(value);
-                    setSrcURL(value);
+                    setSrcURL(SVNURL.parseURIEncoded(value));
                 } else if (element == DST_PATH) {
                     assertNullCData(element, property);
                     DAVPathUtil.testCanonical(value);
-                    setDstURL(value);
+                    setDstURL(SVNURL.parseURIEncoded(value));
                 } else if (element == UPDATE_TARGET) {
                     DAVPathUtil.testCanonical(value);
                     setTarget(value);

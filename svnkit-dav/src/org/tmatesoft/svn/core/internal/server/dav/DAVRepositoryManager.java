@@ -38,6 +38,10 @@ public class DAVRepositoryManager {
     private String myResourcePathInfo;
 
     public DAVRepositoryManager(DAVConfig config, HttpServletRequest request) throws SVNException {
+        if (config == null) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE));
+        }
+
         myDAVConfig = config;
 
         myResourceRepositoryRoot = getRepositoryRoot(request.getPathInfo());
@@ -100,7 +104,7 @@ public class DAVRepositoryManager {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "An error occured while loading configuration file."));
         }
         if (!getDAVConfig().isAnonymousAllowed() && user == null) {
-            SVNErrorManager.authenticationFailed("Anonymous user is not allowed for resource", null);
+            SVNErrorManager.authenticationFailed("Anonymous user is not allowed on resource", null);
         }
 
         if (path != null || (path == null && (access & SVNPathBasedAccess.SVN_ACCESS_WRITE) != SVNPathBasedAccess.SVN_ACCESS_NONE)) {
@@ -153,7 +157,7 @@ public class DAVRepositoryManager {
 
     public String getRepositoryRelativePath(SVNURL url) throws SVNException {
         String uri = getURI(url);
-        DAVResourceURI resourceURI = new DAVResourceURI(null, getResourcePathInfo(uri), null, false);
+        DAVResourceURI resourceURI = new DAVResourceURI(null, uri, null, false);
         return resourceURI.getPath();
     }
 
@@ -167,10 +171,9 @@ public class DAVRepositoryManager {
         return uri;
     }
 
-    public DAVResource createDAVResource(String requestURI, boolean isSVNClient, String deltaBase, long version, String clientOptions,
+    public DAVResource getRequestedDAVResource(boolean isSVNClient, String deltaBase, long version, String clientOptions,
                                          String baseChecksum, String resultChecksum, String label, boolean useCheckedIn) throws SVNException {
         SVNRepository resourceRepository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(getResourceRepositoryRoot()));
-
         DAVResourceURI resourceURI = new DAVResourceURI(getResourceContext(), getResourcePathInfo(), label, useCheckedIn);
         return new DAVResource(resourceRepository, resourceURI, isSVNClient, deltaBase, version, clientOptions, baseChecksum, resultChecksum);
     }
