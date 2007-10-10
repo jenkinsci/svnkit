@@ -18,6 +18,7 @@ import java.util.Set;
 
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.jna.SVNLinuxUtil;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 
 /**
@@ -86,7 +87,7 @@ public class SVNFileType {
             }
         }
         if (detectSymlinks && !SVNFileUtil.isWindows && !isAdminFile(file)) {
-            if (canonPathCacheUsed && !fastSymlinkResoution && SVNFileUtil.isSymlink(file)) {
+            if (canonPathCacheUsed && !fastSymlinkResoution && SVNFileType.isSymlink(file)) {
                 return SVNFileType.SYMLINK;
             } else if (!canonPathCacheUsed || fastSymlinkResoution) {            
                 if (!file.exists()) {
@@ -94,7 +95,7 @@ public class SVNFileType {
                     for (int i = 0; children != null && i < children.length; i++) {
                         File child = children[i];
                         if (child.getName().equals(file.getName())) {
-                            if (SVNFileUtil.isSymlink(file)) {
+                            if (SVNFileType.isSymlink(file)) {
                                 return SVNFileType.SYMLINK;
                             }
                         }
@@ -107,7 +108,7 @@ public class SVNFileType {
                     } catch (IOException e) {
                         canonicalPath = file.getAbsolutePath();
                     }
-                    if (!absolutePath.equals(canonicalPath) && SVNFileUtil.isSymlink(file)) {
+                    if (!absolutePath.equals(canonicalPath) && SVNFileType.isSymlink(file)) {
                         return SVNFileType.SYMLINK;
                     }
                 }
@@ -141,6 +142,18 @@ public class SVNFileType {
         String path = file.getAbsolutePath().replace(File.separatorChar, '/');
         String adminDir = "/" + SVNFileUtil.getAdminDirectoryName();
         return path.lastIndexOf(adminDir + "/") > 0 || path.endsWith(adminDir);
+    }
+    
+    private static boolean isSymlink(File file) {
+        String line = null;
+        try {
+            line = SVNFileUtil.execCommand(new String[] {
+                    SVNFileUtil.LS_COMMAND, "-ld", file.getAbsolutePath()
+            });
+        } catch (Throwable th) {
+            SVNDebugLog.getDefaultLog().info(th);
+        }
+        return line != null && line.startsWith("l");
     }
 
     public int getID() {

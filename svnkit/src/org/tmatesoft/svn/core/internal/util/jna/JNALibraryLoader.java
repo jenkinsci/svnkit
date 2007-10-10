@@ -31,7 +31,7 @@ public class JNALibraryLoader {
 
     static {
         // load win32 libraries.
-        if (SVNFileUtil.isWindows) {
+        if (SVNFileUtil.isWindows && !SVNFileUtil.isOS2) {
             try {
                 ourWinCryptLibrary = (ISVNWinCryptLibrary) Native.loadLibrary("Crypt32", ISVNWinCryptLibrary.class);
                 ourKenrelLibrary = (ISVNKernel32Library) Native.loadLibrary("Kernel32", ISVNKernel32Library.class);

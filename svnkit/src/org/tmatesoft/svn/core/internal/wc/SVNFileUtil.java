@@ -60,6 +60,7 @@ public class SVNFileUtil {
     private static final String ENV_COMMAND;
 
     public final static boolean isWindows;
+    public final static boolean isOS2;
     public final static boolean isOSX;
     public final static boolean isBSD;
     public static boolean isLinux;
@@ -91,6 +92,9 @@ public class SVNFileUtil {
         boolean windows = osName != null && osName.toLowerCase().indexOf("windows") >= 0;
         if (!windows && osName != null) {
             windows = osName.toLowerCase().indexOf("os/2") >= 0;
+            isOS2 = windows;
+        } else {
+            isOS2 = false;
         }
 
         isWindows = windows;
@@ -285,7 +289,7 @@ public class SVNFileUtil {
 
     public static File resolveSymlinkToFile(File file) {
         File targetFile = file;
-        while (isSymlink(targetFile)) {
+        while (SVNFileType.getType(targetFile) == SVNFileType.SYMLINK) {
             String symlinkName = getSymlinkName(targetFile);
             if (symlinkName == null) {
                 return null;
@@ -300,13 +304,6 @@ public class SVNFileUtil {
             return null;
         }
         return targetFile;
-    }
-
-    public static boolean isSymlink(File file) {
-        if (isWindows || isOpenVMS || file == null) {
-            return false;
-        }
-        return SVNFileType.getType(file) == SVNFileType.SYMLINK;
     }
 
     public static void copy(File src, File dst, boolean safe, boolean copyAdminDirectories) throws SVNException {
@@ -435,7 +432,7 @@ public class SVNFileUtil {
 
     public static boolean createSymlink(File link, String linkName) {
         if (SVNLinuxUtil.createSymlink(link, linkName)) {
-            return isSymlink(link);
+            return true;
         }
         try {
             execCommand(new String[] {
@@ -444,7 +441,7 @@ public class SVNFileUtil {
         } catch (Throwable th) {
             SVNDebugLog.getDefaultLog().info(th);
         }
-        return isSymlink(link);
+        return SVNFileType.getType(link) == SVNFileType.SYMLINK;
     }
 
     public static boolean detranslateSymlink(File src, File linkFile) throws SVNException {
