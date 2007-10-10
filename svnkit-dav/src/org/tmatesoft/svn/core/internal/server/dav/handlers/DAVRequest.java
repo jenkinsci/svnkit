@@ -110,15 +110,11 @@ public abstract class DAVRequest {
 
     protected void put(Map properties, DAVElement element, Attributes attrs) {
         DAVElementProperty elementProperty = (DAVElementProperty) properties.get(element);
-        boolean hasSuchElement = true;
         if (elementProperty == null) {
             elementProperty = new DAVElementProperty();
-            hasSuchElement = false;
-        }
-        elementProperty.setAttributes(attrs);
-        if (!hasSuchElement) {
             properties.put(element, elementProperty);
         }
+        elementProperty.setAttributes(attrs);        
     }
 
     protected void put(Map properties, DAVElement element, StringBuffer cdata) throws SVNException {

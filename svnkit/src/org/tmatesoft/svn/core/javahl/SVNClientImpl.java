@@ -2231,6 +2231,10 @@ public class SVNClientImpl implements SVNClientInterface {
         return null;
     }
 
+    public void resolved(String path, int depth, int conflictResult) throws SubversionException {
+        notImplementedYet(null);//TODO: fixme        
+    }
+
     private void notImplementedYet() throws ClientException {
         notImplementedYet(null);
     }
