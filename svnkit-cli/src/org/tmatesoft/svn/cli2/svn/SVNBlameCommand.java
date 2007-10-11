@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.cli2.svn;
 
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
@@ -198,5 +199,9 @@ public class SVNBlameCommand extends SVNXMLCommand implements ISVNAnnotateHandle
                 getSVNEnvironment().getOut().println(mergedStr + revStr + " " + authorStr + " " + line);
             }
         }
+    }
+
+    public OutputStream handleFile(Date date, long revision, String author) throws SVNException {
+        return null;
     }
 }

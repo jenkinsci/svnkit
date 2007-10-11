@@ -977,6 +977,10 @@ public class SVNClientImpl implements SVNClientInterface {
                                    String mergedPath, int lineNumber) throws SVNException {
                 //FIXME
             }
+
+            public OutputStream handleFile(Date date, long revision, String author) throws SVNException {
+                return null;
+            }
         };
         try {
             if(isURL(path)){
@@ -1015,6 +1019,10 @@ public class SVNClientImpl implements SVNClientInterface {
                                    Date mergedDate, long mergedRevision, String mergedAuthor, 
                                    String mergedPath, int lineNumber) throws SVNException {
                 //FIXME
+            }
+
+            public OutputStream handleFile(Date date, long revision, String author) throws SVNException {
+                return null;
             }
         };
         try {
@@ -1548,6 +1556,10 @@ public class SVNClientImpl implements SVNClientInterface {
                                    Date mergedDate, long mergedRevision, String mergedAuthor, 
                                    String mergedPath, int lineNumber) throws SVNException {
                 //FIXME
+            }
+
+            public OutputStream handleFile(Date date, long revision, String author) throws SVNException {
+                return null;
             }
         };
         try {

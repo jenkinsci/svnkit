@@ -25,9 +25,11 @@ import java.util.List;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNCancellableOutputStream;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNCancellableOutputStream.IOCancelException;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslatorInputStream;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
@@ -115,6 +117,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
     private boolean myIncludeMergedRevisions;
     private SVNDiffOptions myDiffOptions;
     private QSequenceLineSimplifier mySimplifier;
+    private ISVNAnnotateHandler myFileHandler;
     
     /**
      * Constructs an annotation generator object. 
@@ -159,11 +162,12 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
      *                       is cancelled
      */
     public SVNAnnotationGenerator(String path, File tmpDirectory, long startRevision, boolean force, SVNDiffOptions diffOptions, ISVNEventHandler cancelBaton) {
-        this(path, tmpDirectory, startRevision, force, false, diffOptions, cancelBaton);
+        this(path, tmpDirectory, startRevision, force, false, diffOptions, null, cancelBaton);
     }
     
     public SVNAnnotationGenerator(String path, File tmpDirectory, long startRevision, boolean force, 
-                                  boolean includeMergedRevisions, SVNDiffOptions diffOptions, 
+                                  boolean includeMergedRevisions, SVNDiffOptions diffOptions,
+                                  ISVNAnnotateHandler handler,
                                   ISVNEventHandler cancelBaton) {
         myTmpDirectory = tmpDirectory;
         myCancelBaton = cancelBaton;
@@ -178,6 +182,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         myStartRevision = startRevision;
         myDiffOptions = diffOptions;
         myIncludeMergedRevisions = includeMergedRevisions;
+        myFileHandler = handler;
     }
     
     /**
@@ -274,6 +279,27 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             } else {
                 SVNFileUtil.rename(myCurrentFile, myPreviousFile);
             }
+        }
+        // handle file contents.
+        if (myFileHandler != null) {
+            OutputStream os = myFileHandler.handleFile(
+                    myCurrentDate, myCurrentDate != null ? myCurrentRevision : -1, myCurrentAuthor);
+            if (os == null) {
+                return;
+            }
+            InputStream is = SVNFileUtil.openFileForReading(myPreviousFile);
+            os = new SVNCancellableOutputStream(os, myCancelBaton);
+            try {
+                SVNTranslator.copy(is, os);
+            } catch (IOException e) {
+                if (e instanceof IOCancelException) {
+                    SVNErrorManager.cancel(e.getMessage());
+                }
+            } finally {
+                SVNFileUtil.closeFile(os);
+                SVNFileUtil.closeFile(is);
+            }
+            
         }
     }
 

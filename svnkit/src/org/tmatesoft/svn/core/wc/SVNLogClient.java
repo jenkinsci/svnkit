@@ -323,7 +323,7 @@ public class SVNLogClient extends SVNBasicClient {
                             String inputEncoding, boolean includeMergedRevisions) throws SVNException {
         SVNAnnotationGenerator generator = new SVNAnnotationGenerator(path, tmpFile, startRev, 
                                                                       force, includeMergedRevisions,
-                                                                      getDiffOptions(), this);
+                                                                      getDiffOptions(), handler, this);
         try {
             repos.getFileRevisions("", startRev > 0 ? startRev - 1 : startRev, 
                                    endRev, includeMergedRevisions, generator);

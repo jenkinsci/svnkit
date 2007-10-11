@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.wc;
 
+import java.io.OutputStream;
 import java.util.Date;
 
 import org.tmatesoft.svn.core.SVNException;
@@ -52,6 +53,7 @@ import org.tmatesoft.svn.core.SVNException;
  * @see     SVNLogClient
  */
 public interface ISVNAnnotateHandler {
+    
 	/**
      * @deprecated use {@link #handleLine(Date, long, String, String, Date, long, String, String, int)}
      *             instead 
@@ -79,5 +81,20 @@ public interface ISVNAnnotateHandler {
     public void handleLine(Date date, long revision, String author, String line, 
                            Date mergedDate, long mergedRevision, String mergedAuthor, 
                            String mergedPath, int lineNumber) throws SVNException;
+    
+    /**
+     * When non-null OutputStream is returned by this method, caller will write 
+     * contents of the file at revision specified to it. Caller will call {@link OutputStream#close()} 
+     * after file contents is written.
 
+     * @param date          the time moment when changes to <code>line</code> were commited
+     *                      to the repository       
+     * @param revision      the revision the changes were commited to
+     * @param author        the person who did those changes
+     * 
+     * @return OutputStream to which contents of the file have to be written or null if no contents is needed. 
+     * 
+     * @throws SVNException  
+     */
+    public OutputStream handleFile(Date date, long revision, String author) throws SVNException;
 }

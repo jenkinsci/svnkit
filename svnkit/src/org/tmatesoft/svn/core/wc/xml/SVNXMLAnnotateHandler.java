@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.wc.xml;
 
+import java.io.OutputStream;
 import java.util.Date;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -157,5 +158,9 @@ public class SVNXMLAnnotateHandler extends AbstractXMLHandler implements ISVNAnn
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.XML_MALFORMED, e.getLocalizedMessage());
             SVNErrorManager.error(err, e);
         } 
+    }
+
+    public OutputStream handleFile(Date date, long revision, String author) throws SVNException {
+        return null;
     }
 }
