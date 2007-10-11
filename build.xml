@@ -59,7 +59,7 @@
         </javac>
     </target>
 
-	<target name="compile-dav" depends="init-environment,compile-library" if="eclipse.present"> 
+	<target name="compile-dav" depends="init-environment,compile-library"> 
         <mkdir dir="svnkit-dav/bin" />
         <path id="library-dav.classpath">
             <pathelement location="contrib/servlet-api/servlet-api.jar" />
@@ -167,6 +167,7 @@
         <jar destfile="build/lib/svnkit.jar">
             <fileset dir="svnkit/bin">
                 <exclude name="org/tmatesoft/svn/cli/**" />
+                <exclude name="org/tmatesoft/svn/cli2/**" />
                 <exclude name="org/tigris/subversion/javahl/SVNClient**" />
                 <exclude name="org/tigris/subversion/javahl/SVNAdmin**" />
             </fileset>

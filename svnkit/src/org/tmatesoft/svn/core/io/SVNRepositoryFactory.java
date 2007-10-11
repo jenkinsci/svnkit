@@ -342,6 +342,7 @@ public abstract class SVNRepositoryFactory {
         try {
             copyToFile(is, jarFile);
             extract(jarFile, path);
+            SVNFileUtil.deleteFile(jarFile);
             // translate eols.
             if (!SVNFileUtil.isWindows) {
                 translateFiles(path);
@@ -569,7 +570,7 @@ public abstract class SVNRepositoryFactory {
             if (child.isFile()) {
                 try {
                     tmpChild = SVNFileUtil.createUniqueFile(directory, ".repos", ".tmp");
-                        SVNTranslator.translate(child, tmpChild, eol, null, false, true);
+                    SVNTranslator.translate(child, tmpChild, eol, null, false, true);
                     SVNFileUtil.deleteFile(child);
                     SVNFileUtil.rename(tmpChild, child);
                 } finally {
