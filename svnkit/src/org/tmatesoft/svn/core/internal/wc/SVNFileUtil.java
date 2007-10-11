@@ -41,6 +41,8 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.jna.SVNLinuxUtil;
+import org.tmatesoft.svn.core.internal.util.jna.SVNWin32Util;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.util.SVNDebugLog;
@@ -53,13 +55,16 @@ public class SVNFileUtil {
 
     private static final String ID_COMMAND;
     private static final String LN_COMMAND;
-    private static final String LS_COMMAND;
+    public static final String LS_COMMAND;
     private static final String CHMOD_COMMAND;
     private static final String ATTRIB_COMMAND;
     private static final String ENV_COMMAND;
 
     public final static boolean isWindows;
+    public final static boolean isOS2;
     public final static boolean isOSX;
+    public final static boolean isBSD;
+    public static boolean isLinux;
     public final static boolean isOpenVMS;
 
     public static final int STREAM_CHUNK_SIZE = 16384;
@@ -90,10 +95,15 @@ public class SVNFileUtil {
         boolean windows = osName != null && osName.toLowerCase().indexOf("windows") >= 0;
         if (!windows && osName != null) {
             windows = osName.toLowerCase().indexOf("os/2") >= 0;
+            isOS2 = windows;
+        } else {
+            isOS2 = false;
         }
 
         isWindows = windows;
         isOSX = !isWindows && osName != null && osName.toLowerCase().indexOf("mac") >= 0;
+        isLinux = !isWindows && osName != null && osName.toLowerCase().indexOf("linux") >= 0;
+        isBSD = !isWindows && !isLinux && osName != null && osName.toLowerCase().indexOf("bsd") >= 0;
         isOpenVMS = osName != null && !isWindows && !isOSX && osName.toLowerCase().indexOf("openvms") >= 0;
         if (isOpenVMS) {
             setAdminDirectoryName("_svn");
@@ -255,21 +265,25 @@ public class SVNFileUtil {
         if (!isWindows) {
             renamed = src.renameTo(dst);
         } else {
-            boolean wasRO = dst.exists() && !dst.canWrite();
-            setReadonly(src, false);
-            setReadonly(dst, false);
-            // use special loop on windows.
-            for (int i = 0; i < 10; i++) {
-                dst.delete();
-                if (src.renameTo(dst)) {
-                    if (wasRO) {
-                        dst.setReadOnly();
+            if (SVNWin32Util.moveFile(src, dst)) {
+                renamed = true;
+            } else {
+                boolean wasRO = dst.exists() && !dst.canWrite();
+                setReadonly(src, false);
+                setReadonly(dst, false);
+                // use special loop on windows.
+                for (int i = 0; i < 10; i++) {
+                    dst.delete();
+                    if (src.renameTo(dst)) {
+                        if (wasRO) {
+                            dst.setReadOnly();
+                        }
+                        return;
                     }
-                    return;
-                }
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                    }
                 }
             }
         }
@@ -289,6 +303,15 @@ public class SVNFileUtil {
         }
         if (readonly) {
             return file.setReadOnly();
+        }
+        if (isWindows) {
+            if (SVNWin32Util.setWritable(file)) {
+                return true;
+            }
+        } else if (isLinux || isOSX || isBSD) {
+            if (SVNLinuxUtil.setWritable(file)) {
+                return true;
+            }
         }
         if (file.canWrite()) {
             return true;
@@ -321,6 +344,9 @@ public class SVNFileUtil {
         if (isWindows || isOpenVMS || file == null || !file.exists()) {
             return;
         }
+        if (SVNLinuxUtil.setExecutable(file, executable)) {
+            return;
+        }
         try {
             if (file.canWrite()) {
                 execCommand(new String[] {
@@ -334,7 +360,7 @@ public class SVNFileUtil {
 
     public static File resolveSymlinkToFile(File file) {
         File targetFile = file;
-        while (isSymlink(targetFile)) {
+        while (SVNFileType.getType(targetFile) == SVNFileType.SYMLINK) {
             String symlinkName = getSymlinkName(targetFile);
             if (symlinkName == null) {
                 return null;
@@ -349,21 +375,6 @@ public class SVNFileUtil {
             return null;
         }
         return targetFile;
-    }
-
-    public static boolean isSymlink(File file) {
-        if (isWindows || isOpenVMS || file == null) {
-            return false;
-        }
-        String line = null;
-        try {
-            line = execCommand(new String[] {
-                    LS_COMMAND, "-ld", file.getAbsolutePath()
-            });
-        } catch (Throwable th) {
-            SVNDebugLog.getDefaultLog().info(th);
-        }
-        return line != null && line.startsWith("l");
     }
 
     public static void copy(File src, File dst, boolean safe, boolean copyAdminDirectories) throws SVNException {
@@ -400,27 +411,28 @@ public class SVNFileUtil {
             }
         }
         boolean executable = isExecutable(src);
+        dst.getParentFile().mkdirs();
+        
         FileChannel srcChannel = null;
         FileChannel dstChannel = null;
         FileInputStream is = null;
         FileOutputStream os = null;
-        dst.getParentFile().mkdirs();
+        
+        SVNErrorMessage error = null;
         try {
             is = new FileInputStream(src);
             srcChannel = is.getChannel();
             os = new FileOutputStream(tmpDst);
             dstChannel = os.getChannel();
-            long copied = 0;
             long totalSize = srcChannel.size();
-            while (copied < totalSize) {
-                long toCopy = Math.min(1024 * 1024 * 1024, totalSize - copied);
-                copied += dstChannel.transferFrom(srcChannel, copied, toCopy);
+            long toCopy = totalSize;
+            while (toCopy > 0) {
+                toCopy -= dstChannel.transferFrom(srcChannel, totalSize - toCopy, toCopy);
             }
         } catch (IOException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot copy file ''{0}'' to ''{1}'': {2}", new Object[] {
+            error = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot copy file ''{0}'' to ''{1}'': {2}", new Object[] {
                     src, dst, e.getLocalizedMessage()
             });
-            SVNErrorManager.error(err, e);
         } finally {
             if (srcChannel != null) {
                 try {
@@ -438,6 +450,26 @@ public class SVNFileUtil {
             }
             SVNFileUtil.closeFile(is);
             SVNFileUtil.closeFile(os);
+        }
+        if (error != null) {
+            error = null;
+            InputStream sis = null;
+            OutputStream dos = null;
+            try {
+                sis = SVNFileUtil.openFileForReading(src);
+                dos = SVNFileUtil.openFileForWriting(dst);
+                SVNTranslator.copy(sis, dos);
+            } catch (IOException e) { 
+                error = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot copy file ''{0}'' to ''{1}'': {2}", new Object[] {
+                        src, dst, e.getLocalizedMessage()
+                });
+            } finally {
+                SVNFileUtil.closeFile(dos);
+                SVNFileUtil.closeFile(sis);
+            }
+        }
+        if (error != null) {
+            SVNErrorManager.error(error);
         }
         if (safe && tmpDst != dst) {
             rename(tmpDst, dst);
@@ -470,6 +502,9 @@ public class SVNFileUtil {
     }
 
     public static boolean createSymlink(File link, String linkName) {
+        if (SVNLinuxUtil.createSymlink(link, linkName)) {
+            return true;
+        }
         try {
             execCommand(new String[] {
                     LN_COMMAND, "-s", linkName, link.getAbsolutePath()
@@ -477,7 +512,7 @@ public class SVNFileUtil {
         } catch (Throwable th) {
             SVNDebugLog.getDefaultLog().info(th);
         }
-        return isSymlink(link);
+        return SVNFileType.getType(link) == SVNFileType.SYMLINK;
     }
 
     public static boolean detranslateSymlink(File src, File linkFile) throws SVNException {
@@ -507,6 +542,10 @@ public class SVNFileUtil {
             return null;
         }
         String ls = null;
+        ls = SVNLinuxUtil.getLinkTarget(link);
+        if (ls != null) {
+            return ls;
+        }
         try {
             ls = execCommand(new String[] {
                     LS_COMMAND, "-ld", link.getAbsolutePath()
@@ -616,6 +655,9 @@ public class SVNFileUtil {
     }
 
     public static void setHidden(File file, boolean hidden) {
+        if (isWindows && SVNWin32Util.setHidden(file)) {
+            return;
+        }
         if (!isWindows || file == null || !file.exists() || file.isHidden()) {
             return;
         }
@@ -662,20 +704,19 @@ public class SVNFileUtil {
         deleteFile(dir);
     }
 
-    public static void deleteFile(File file) throws SVNException {
+    public static boolean deleteFile(File file) throws SVNException {
         if (file == null) {
-            return;
+            return true;
         }
         if (!isWindows || file.isDirectory() || !file.exists()) {
-            file.delete();
-            return;
+            return file.delete();
         }
         for (int i = 0; i < 10; i++) {
             if (file.delete() && !file.exists()) {
-                return;
+                return true;
             }
             if (!file.exists()) {
-                return;
+                return true;
             }
             setReadonly(file, false);
             try {
@@ -685,6 +726,7 @@ public class SVNFileUtil {
         }
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot delete file ''{0}''", file);
         SVNErrorManager.error(err);
+        return false;
     }
 
     private static String readSingleLine(File file) throws IOException {
@@ -857,6 +899,10 @@ public class SVNFileUtil {
         if (isWindows || isOpenVMS) {
             return false;
         }
+        Boolean executable = SVNLinuxUtil.isExecutable(file);
+        if (executable != null) {
+            return executable.booleanValue();
+        }
         String[] commandLine = new String[] {
                 LS_COMMAND, "-ln", file.getAbsolutePath()
         };
@@ -1018,28 +1064,6 @@ public class SVNFileUtil {
         return null;
     }
 
-    public static ISVNInputFile openSVNFileForReading(File file) throws SVNException {
-        if (file == null) {
-            return null;
-        }
-        if (!file.isFile() || !file.canRead()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot read from ''{0}'': path refers to directory or read access is denied", file);
-            SVNErrorManager.error(err);
-        }
-        if (!file.exists()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "File ''{0}'' does not exist", file);
-            SVNErrorManager.error(err);
-        }
-        try {
-            return new SVNInputFileChannel(file);
-        } catch (FileNotFoundException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot read from ''{0}'': {1}", new Object[] {
-                    file, e.getLocalizedMessage()
-            });
-            SVNErrorManager.error(err, e);
-        }
-        return null;
-    }
 
     public static RandomAccessFile openRAFileForReading(File file) throws SVNException {
         if (file == null) {
@@ -1108,7 +1132,7 @@ public class SVNFileUtil {
         }
     }
 
-    private static String execCommand(String[] commandLine) {
+    public static String execCommand(String[] commandLine) {
         return execCommand(commandLine, false);
     }
 
@@ -1243,13 +1267,9 @@ public class SVNFileUtil {
         try {
             // pre-Java 1.5 this throws an Error. On Java 1.5 it
             // returns the environment variable
-            Method getenv = System.class.getMethod("getenv", new Class[] {
-                String.class
-            });
+            Method getenv = System.class.getMethod("getenv", new Class[] {String.class});
             if (getenv != null) {
-                Object value = getenv.invoke(null, new Object[] {
-                    name
-                });
+                Object value = getenv.invoke(null, new Object[] {name});
                 if (value instanceof String) {
                     return (String) value;
                 }
@@ -1268,27 +1288,30 @@ public class SVNFileUtil {
         return null;
     }
 
-    public static Properties getEnvironment() throws Throwable {
+    private static Properties getEnvironment() throws Throwable {
         Process p = null;
         Properties envVars = new Properties();
         Runtime r = Runtime.getRuntime();
         if (isWindows) {
-            if (System.getProperty("os.name").toLowerCase().indexOf("windows 9") >= 0)
+            if (System.getProperty("os.name").toLowerCase().indexOf("windows 9") >= 0) {
                 p = r.exec("command.com /c set");
-            else
+            } else {
                 p = r.exec("cmd.exe /c set");
+            }
         } else {
             p = r.exec(ENV_COMMAND); // if OpenVMS ENV_COMMAND could be "mcr
-                                        // gnu:[bin]env"
+                                     // gnu:[bin]env"
         }
         if (p != null) {
             BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
             String line;
             while ((line = br.readLine()) != null) {
                 int idx = line.indexOf('=');
-                String key = line.substring(0, idx);
-                String value = line.substring(idx + 1);
-                envVars.setProperty(key, value);
+                if (idx >= 0) {
+                    String key = line.substring(0, idx);
+                    String value = line.substring(idx + 1);
+                    envVars.setProperty(key, value);
+                }
             }
         }
         return envVars;

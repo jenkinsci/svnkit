@@ -55,7 +55,7 @@ public class DAVXMLUtil extends XMLUtil {
         target.append(prefix);
         target.append(":");
         target.append(header);
-        //We should allways add "DAV:" namespace
+        //We should always add "DAV:" namespace
         target.append(" xmlns:");
         target.append(DAV_NAMESPACE_PREFIX);
         target.append("=\"");

@@ -84,17 +84,12 @@ public class SVNPropertiesManager {
         if (recursive || name == null) {
             for(Iterator entries = dir.entries(false); entries.hasNext();) {
                 SVNEntry entry = (SVNEntry) entries.next();
-                if (name != null) {
-                    SVNVersionedProperties props = dir.getWCProperties(entry.getName());
-                    if (props != null) {
-                        props.removeAll();
-                    }
+                SVNVersionedProperties props = dir.getWCProperties(entry.getName());
+                if (props != null) {
+                    props.removeAll();
                 }
-                if (dir.getThisDirName().equals(entry.getName())) {
+                if (entry.isFile() || dir.getThisDirName().equals(entry.getName())) {
                     continue;
-                }
-                if (entry.isFile()) {
-                    continue;                    
                 }
                 if (recursive) {
                     SVNAdminArea childDir = dir.getWCAccess().retrieve(dir.getFile(entry.getName()));

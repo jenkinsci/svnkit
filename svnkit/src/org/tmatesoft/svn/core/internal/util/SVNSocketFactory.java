@@ -26,6 +26,7 @@ import java.util.StringTokenizer;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
@@ -59,6 +60,7 @@ public class SVNSocketFactory {
         sslSocket.setTcpNoDelay(true);
         sslSocket.setKeepAlive(true);
         sslSocket.setSoLinger(true, 0);
+        ((SSLSocket) sslSocket).setEnabledProtocols(new String[] {"SSLv3"});
         return sslSocket;
     }
 
@@ -68,6 +70,7 @@ public class SVNSocketFactory {
         sslSocket.setTcpNoDelay(true);
         sslSocket.setKeepAlive(true);
         sslSocket.setSoLinger(true, 0);
+        ((SSLSocket) sslSocket).setEnabledProtocols(new String[] {"SSLv3"});
         return sslSocket;
     }
 

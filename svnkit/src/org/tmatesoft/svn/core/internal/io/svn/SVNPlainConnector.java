@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNSocketFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.1.1
@@ -65,6 +66,19 @@ public class SVNPlainConnector implements ISVNConnector {
                 myInputStream = null;
                 myOutputStream = null;
             }
+        }
+    }
+    
+    public boolean isStale() {
+        try {
+            SVNDebugLog.getDefaultLog().info("checking whether connection is stale.");
+            boolean result = mySocket != null && SVNSocketFactory.isSocketStale(mySocket);
+            SVNDebugLog.getDefaultLog().info("connection is stale: " + result);
+            return result;
+        } catch (IOException e) {
+            SVNDebugLog.getDefaultLog().info("failure during stale check");
+            SVNDebugLog.getDefaultLog().info(e);
+            return true;
         }
     }
     

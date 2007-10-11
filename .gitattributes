@@ -7,6 +7,9 @@ contrib/ganymed/GANYMED-LICENSE -text
 contrib/ganymed/ganymed.jar -text
 contrib/ganymed/ganymedsrc.zip -text
 contrib/javahl/JAVAHL-LICENSE eol=lf
+contrib/jna/JNA-LICENSE eol=lf
+contrib/jna/jna-src.zip -text
+contrib/jna/jna.jar -text
 contrib/junit/junit.jar -text
 contrib/sequence/SEQUENCE-LICENSE eol=lf
 contrib/sequence/src-test/de/regnis/q/sequence/line/QSequenceLineMediaTest.java -text
@@ -148,9 +151,6 @@ svnkit/cli/jsvnsync.bat eol=crlf
 svnkit/cli/jsvnversion eol=lf
 svnkit/cli/jsvnversion.bat eol=crlf
 svnkit/cli/logging.properties.disabled eol=lf
-svnkit/native/jsvncrypt.c -text
-svnkit/native/jsvncrypt.dll -text
-svnkit/native/jsvncrypt.h -text
 svnkit/src/org/tigris/subversion/javahl/SVNClient.java -text
 svnkit/src/org/tmatesoft/svn/cli/command/SVNAdminListLocksCommand.java -text
 svnkit/src/org/tmatesoft/svn/cli/command/SVNAdminRemoveLocksCommand.java -text

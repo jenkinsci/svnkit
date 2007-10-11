@@ -61,7 +61,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             buffer.append(targetRevision);
             buffer.append("</S:target-revision>\n");
         }
-        if (target != null) {
+        if (target != null && !"".equals(target)) {
             buffer.append("<S:update-target>");
             buffer.append(SVNEncodingUtil.xmlEncodeCDATA(target));
             buffer.append("</S:update-target>\n");
@@ -81,6 +81,9 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
         
         if (ignoreAncestry) {
             buffer.append("<S:ignore-ancestry>yes</S:ignore-ancestry>\n");
+        }
+        if (sendCopyFromArgs) {
+            buffer.append("<S:send-copyfrom-args>yes</S:send-copyfrom-args>\n");
         }
         if (resourceWalk) { 
             buffer.append("<S:resource-walk>yes</S:resource-walk>\n");

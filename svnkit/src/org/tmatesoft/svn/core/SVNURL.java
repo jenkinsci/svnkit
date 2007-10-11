@@ -151,7 +151,10 @@ public class SVNURL {
         if ("file".equals(protocol)) {
             return -1;
         }
-        Integer dPort = (Integer) DEFAULT_PORTS.get(protocol);
+        Integer dPort;
+        synchronized (DEFAULT_PORTS) {
+            dPort = (Integer) DEFAULT_PORTS.get(protocol);
+        }
         if (dPort != null) {
             return dPort.intValue();
         }
@@ -166,6 +169,18 @@ public class SVNURL {
         DEFAULT_PORTS.put("http", new Integer(80));
         DEFAULT_PORTS.put("https", new Integer(443));
         DEFAULT_PORTS.put("file", new Integer(0));
+    }
+    
+    public static void registerProtocol(String protocolName, int defaultPort) {
+        if (protocolName != null) {
+            synchronized (DEFAULT_PORTS) {
+                if (defaultPort >= 0) {
+                    DEFAULT_PORTS.put(protocolName, new Integer(defaultPort));
+                } else {
+                    DEFAULT_PORTS.remove(protocolName);
+                }
+            }
+        }
     }
     
     private String myURL;
@@ -192,9 +207,11 @@ public class SVNURL {
         }
         myProtocol = url.substring(0, index);
         myProtocol = myProtocol.toLowerCase();
-        if (!DEFAULT_PORTS.containsKey(myProtocol) && !myProtocol.startsWith("svn+")) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "URL protocol is not supported ''{0}''", url);
-            SVNErrorManager.error(err);
+        synchronized (DEFAULT_PORTS) {
+            if (!DEFAULT_PORTS.containsKey(myProtocol) && !myProtocol.startsWith("svn+")) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "URL protocol is not supported ''{0}''", url);
+                SVNErrorManager.error(err);
+            }
         }
         if ("file".equals(myProtocol)) {
             String normalizedPath = norlmalizeURLPath(url, url.substring("file://".length()));
@@ -222,11 +239,14 @@ public class SVNURL {
             }
             
             if (uriEncoded) {
+                //do it before decoding - if a caller said url is encoded 
+                //but however typed \ instead of / - this replace will recover
+                //his url
+                myPath = myPath.replace('\\', '/');
                 // autoencode it.
                 myEncodedPath = SVNEncodingUtil.autoURIEncode(myPath);
                 SVNEncodingUtil.assertURISafe(myEncodedPath);
                 myPath = SVNEncodingUtil.uriDecode(myEncodedPath);
-                myPath = myPath.replace('\\', '/');
                 if(!myPath.startsWith("/")){
                     myPath = "/" + myPath;
                 }
@@ -274,7 +294,10 @@ public class SVNURL {
             myPort = httpURL.getPort();
             myIsDefaultPort = myPort < 0;
             if (myPort < 0) {
-                Integer defaultPort = (Integer) DEFAULT_PORTS.get(myProtocol);
+                Integer defaultPort;
+                synchronized (DEFAULT_PORTS) {
+                    defaultPort = (Integer) DEFAULT_PORTS.get(myProtocol);
+                }
                 myPort = defaultPort != null ? defaultPort.intValue() : 0;
             } 
         }

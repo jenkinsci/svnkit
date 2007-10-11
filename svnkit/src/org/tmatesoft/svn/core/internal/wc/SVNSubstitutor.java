@@ -248,7 +248,7 @@ public class SVNSubstitutor {
                 }
             }
             return length;
-        } else if (src[pointer] == '$' || (src[pointer] == ':' && src[pointer + 1] == ':')) {
+        } else if (src[pointer] == '$' || (src[pointer] == ':' && src[pointer + 1] == '$')) {
             if (value != null) {
                 src[pointer] = ':';
                 src[pointer + 1] = ' ';

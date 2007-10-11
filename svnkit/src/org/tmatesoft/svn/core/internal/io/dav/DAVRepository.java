@@ -353,21 +353,26 @@ class DAVRepository extends SVNRepository {
                                 hasProperties = propCount > 0;
                             }
                         } else {
-                    for(Iterator props = child.getProperties().keySet().iterator(); props.hasNext();) {
-                        DAVElement property = (DAVElement) props.next();
-                        if (DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE.equals(property.getNamespace()) || 
-                                DAVElement.SVN_SVN_PROPERTY_NAMESPACE.equals(property.getNamespace())) {
-                            hasProperties = true;
-                            break;
+                            for(Iterator props = child.getProperties().keySet().iterator(); props.hasNext();) {
+                                DAVElement property = (DAVElement) props.next();
+                                if (DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE.equals(property.getNamespace()) || 
+                                        DAVElement.SVN_SVN_PROPERTY_NAMESPACE.equals(property.getNamespace())) {
+                                    hasProperties = true;
+                                    break;
                                 }
+                            }
                         }
-                    }
                     }                    
                     
                     long lastRevision = INVALID_REVISION;
                     if ((entryFields & SVNDirEntry.DIRENT_CREATED_REVISION) != 0) {
                         Object revisionStr = child.getPropertyValue(DAVElement.VERSION_NAME);
-                        lastRevision = Long.parseLong(revisionStr.toString());
+                        try {
+                            lastRevision = Long.parseLong(revisionStr.toString());
+                        } catch (NumberFormatException nfe) {
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA);
+                            SVNErrorManager.error(err);
+                        }
                     }
 
                     Date date = null;

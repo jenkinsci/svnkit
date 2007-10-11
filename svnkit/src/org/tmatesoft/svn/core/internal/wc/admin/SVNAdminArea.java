@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -57,6 +58,7 @@ import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNResolveAccept;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 
 /**
@@ -65,6 +67,8 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
  */
 public abstract class SVNAdminArea {
     protected static final String ADM_KILLME = "KILLME";
+    private static volatile boolean ourIsCleanupSafe;
+    
 
     protected Map myBaseProperties;
     protected Map myProperties;
@@ -77,6 +81,14 @@ public abstract class SVNAdminArea {
     private File myDirectory;
     private SVNWCAccess myWCAccess;
     private File myAdminRoot;
+    
+    public static synchronized void setSafeCleanup(boolean safe) {
+        ourIsCleanupSafe = safe;
+    }
+
+    public static synchronized boolean isSafeCleanup() {
+        return ourIsCleanupSafe;
+    }    
     
     public abstract boolean isLocked() throws SVNException;
 
@@ -1365,8 +1377,20 @@ public abstract class SVNAdminArea {
             if (entry.getKind() == SVNNodeKind.DIR && !getThisDirName().equals(entry.getName())) {
                 File childDir = getFile(entry.getName());
                 if(childDir.isDirectory()) {
-                    SVNAdminArea child = getWCAccess().open(childDir, true, true, 0);
-                    child.cleanup();
+                    try {
+                        SVNAdminArea child = getWCAccess().open(childDir, true, true, 0);
+                        child.cleanup();
+                    } catch (SVNException e) {
+                        if (e instanceof SVNCancelException) {
+                            throw e;
+                        }
+                        if (isSafeCleanup()) {
+                            SVNDebugLog.getDefaultLog().info("CLEANUP FAILED for " + childDir);
+                            SVNDebugLog.getDefaultLog().info(e);
+                            continue;
+                        }
+                        throw e;
+                    }
                 }
             } else {
                 hasPropModifications(entry.getName());

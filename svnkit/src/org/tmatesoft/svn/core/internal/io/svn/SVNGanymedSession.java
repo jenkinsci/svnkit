@@ -372,11 +372,14 @@ public class SVNGanymedSession {
         public void dispose() {
             lock(Thread.currentThread());
             try {
+                SVNDebugLog.getDefaultLog().info(ourRequestor + ": DISPOSING: " + this);
                 if (myTimer != null) {
                     myTimer.cancel();
+                    SVNDebugLog.getDefaultLog().info(ourRequestor + ": TIMER CANCELLED: " + this);
                     myTimer = null;
                 }
                 if (myConnection != null) {
+                    SVNDebugLog.getDefaultLog().info(ourRequestor + ": CONNECTION CLOSED: " + this);
                     myConnection.close();
                     myConnection = null;
                 }
@@ -436,10 +439,12 @@ public class SVNGanymedSession {
                     mySessionCount = 0;
                     if (isPersistent()) {
                         if (myTimer != null) {
+                            SVNDebugLog.getDefaultLog().info(ourRequestor + ": TIMER CANCELLED: " + this);
                             myTimer.cancel();
                         }
                         // start timeout count down (10 seconds).
                         myTimer = new Timer(true);
+                        SVNDebugLog.getDefaultLog().info(ourRequestor + ": TIMEOUT TASK SCHEDULED: " + this);
                         myTimer.schedule(new TimerTask() {
                             public void run() {
                                 runTimeout();

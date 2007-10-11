@@ -93,7 +93,6 @@ class HTTPConnection implements IHTTPConnection {
     private String myCharset;
     private boolean myIsSpoolAll;
     private File mySpoolDirectory;
-
     
     public HTTPConnection(SVNRepository repository, String charset, File spoolDirectory, boolean spoolAll) throws SVNException {
         myRepository = repository;
@@ -127,6 +126,7 @@ class HTTPConnection implements IHTTPConnection {
                 if (myIsSecured) {
                     HTTPRequest connectRequest = new HTTPRequest(myCharset);
                     connectRequest.setConnection(this);
+                    connectRequest.initCredentials(myProxyAuthentication, "CONNECT", host + ":" + port);
                     connectRequest.setProxyAuthentication(myProxyAuthentication.authenticate());
                     connectRequest.setForceProxyAuth(true);
                     connectRequest.dispatch("CONNECT", host + ":" + port, null, 0, 0, null);
@@ -248,11 +248,6 @@ class HTTPConnection implements IHTTPConnection {
             path = "/";
         }
         
-        if (myChallengeCredentials != null) {
-            myChallengeCredentials.setChallengeParameter("methodname", method);
-            myChallengeCredentials.setChallengeParameter("uri", path);
-        }
-        
         // 1. prompt for ssl client cert if needed, if cancelled - throw cancellation exception.
         HTTPSSLKeyManager keyManager = myKeyManager == null && myRepository.getAuthenticationManager() != null ? createKeyManager() : myKeyManager;
 	      TrustManager trustManager = myTrustManager == null && myRepository.getAuthenticationManager() != null ? myRepository.getAuthenticationManager().getTrustManager(myRepository.getLocation()) : myTrustManager;
@@ -263,8 +258,6 @@ class HTTPConnection implements IHTTPConnection {
         if (httpAuth == null && isAuthForced) {
             httpAuth = myRepository.getAuthenticationManager().getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, sslRealm, null);
             myChallengeCredentials = new HTTPBasicAuthentication((SVNPasswordAuthentication)httpAuth, myCharset);
-            myChallengeCredentials.setChallengeParameter("methodname", method);
-            myChallengeCredentials.setChallengeParameter("uri", path);
         } 
         String realm = null;
 
@@ -287,9 +280,11 @@ class HTTPConnection implements IHTTPConnection {
                 request.setProxied(myIsProxied);
                 request.setSecured(myIsSecured);
                 if (myProxyAuthentication != null) {
+                    request.initCredentials(myProxyAuthentication, method, path);
                     request.setProxyAuthentication(myProxyAuthentication.authenticate());
                 }
                 if (httpAuth != null && myChallengeCredentials != null) {
+                    request.initCredentials(myChallengeCredentials, method, path);
                     String authResponse = myChallengeCredentials.authenticate();
                     request.setAuthentication(authResponse);
                 }
@@ -425,6 +420,12 @@ class HTTPConnection implements IHTTPConnection {
                 if (myChallengeCredentials instanceof HTTPNTLMAuthentication) {
                     HTTPNTLMAuthentication ntlmAuth = (HTTPNTLMAuthentication)myChallengeCredentials;
                     if (ntlmAuth.isInType3State()) {
+                        continue;
+                    }
+                } else if (myChallengeCredentials instanceof HTTPDigestAuthentication) {
+                    // continue (retry once) if previous request was acceppted?
+                    if (myLastValidAuth != null) {
+                        myLastValidAuth = null;
                         continue;
                     }
                 }

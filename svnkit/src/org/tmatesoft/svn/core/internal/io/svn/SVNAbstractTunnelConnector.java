@@ -51,6 +51,10 @@ public abstract class SVNAbstractTunnelConnector implements ISVNConnector {
     public boolean isConnected(SVNRepositoryImpl repos) throws SVNException {
         return myInputStream != null;
     }
+    
+    public boolean isStale() {
+        return false;
+    }
 
     public void close(SVNRepositoryImpl repository) throws SVNException {
         if (myProcess != null) {

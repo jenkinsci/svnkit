@@ -21,6 +21,7 @@ import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 
@@ -45,7 +46,12 @@ public class SVNSwitchCommand extends SVNCommand {
         }
 
         String url = getCommandLine().getURL(0);
-        String absolutePath = getCommandLine().getPathAt(0);
+        String absolutePath;
+        if (getCommandLine().getPathCount() > 0) {
+            absolutePath = getCommandLine().getPathAt(0);
+        } else {
+            absolutePath = new File("").getAbsolutePath();
+        }
 
         SVNRevision revision = parseRevision(getCommandLine());
         if (!revision.isValid()) {
@@ -57,10 +63,14 @@ public class SVNSwitchCommand extends SVNCommand {
             SVNURL switchURL = SVNURL.parseURIEncoded(url);
             if (getCommandLine().hasArgument(SVNArgument.RELOCATE)) {
                 SVNURL targetURL = SVNURL.parseURIEncoded(getCommandLine().getURL(1));
-                updater.doRelocate(new File(absolutePath).getAbsoluteFile(), switchURL, targetURL, SVNDepth.recurseFromDepth(depth));
+                File file = new File(absolutePath).getAbsoluteFile();
+                file = new File(SVNPathUtil.validateFilePath(file.getAbsolutePath()));
+                updater.doRelocate(file, switchURL, targetURL, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
             } else {
-                boolean force = getCommandLine().hasArgument(SVNArgument.FORCE);
-                updater.doSwitch(new File(absolutePath).getAbsoluteFile(), switchURL, SVNRevision.UNDEFINED, revision, depth, force);
+                File file = new File(absolutePath).getAbsoluteFile();
+                file = new File(SVNPathUtil.validateFilePath(file.getAbsolutePath()));
+                updater.getDebugLog().info("switching path: " + file);
+                updater.doSwitch(file, switchURL, SVNRevision.UNDEFINED, revision, depth, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
             }
         } catch (Throwable th) {
             updater.getDebugLog().info(th);

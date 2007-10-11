@@ -12,6 +12,8 @@
 package org.tmatesoft.svn.core.internal.server.dav;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -57,26 +59,29 @@ public class DAVServlet extends HttpServlet {
             ServletDAVHandler handler = DAVHandlerFactory.createHandler(repositoryManager, request, response);
             handler.execute();
         } catch (Throwable th) {
-            th.printStackTrace(response.getWriter());            
+            StringWriter sw = new StringWriter();
+            th.printStackTrace(new PrintWriter(sw));
+            String msg = sw.getBuffer().toString();
             if (th instanceof SVNException) {
                 SVNException e = (SVNException) th;
                 SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();                
                 if (errorCode == SVNErrorCode.RA_DAV_MALFORMED_DATA ||
                         errorCode == SVNErrorCode.FS_NOT_DIRECTORY ||
                         errorCode == SVNErrorCode.FS_NOT_FOUND) {
-                    response.sendError(HttpServletResponse.SC_NOT_FOUND, e.getLocalizedMessage());
+                    response.sendError(HttpServletResponse.SC_NOT_FOUND, msg);
                 } else if (errorCode == SVNErrorCode.NO_AUTH_FILE_PATH) {
-                    response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN, msg);
                 } else if (errorCode == SVNErrorCode.RA_NOT_AUTHORIZED) {
-                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, msg);
                 } else {
                     String errorBody = generateStandardizedErrorBody(errorCode.getCode(), null, null, e.getLocalizedMessage());
                     response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                     response.setContentType(XML_CONTENT_TYPE);
                     response.getWriter().print(errorBody);                    
+                    th.printStackTrace(response.getWriter());            
                 }
             } else {
-//                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, th.getLocalizedMessage());
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg);
             }
         }
         response.flushBuffer();

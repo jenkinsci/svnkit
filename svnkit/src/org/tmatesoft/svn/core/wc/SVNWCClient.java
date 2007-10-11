@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -62,6 +63,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * The <b>SVNWCClient</b> class combines a number of version control 
@@ -412,6 +414,10 @@ public class SVNWCClient extends SVNBasicClient {
      *                          </ul>
      */
     public void doCleanup(File path) throws SVNException {
+        doCleanup(path, false);
+    }
+    
+    public void doCleanup(File path, boolean deleteWCProperties) throws SVNException {
         SVNFileType fType = SVNFileType.getType(path);
         if (fType == SVNFileType.NONE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "''{0}'' does not exist", path);
@@ -423,6 +429,17 @@ public class SVNWCClient extends SVNBasicClient {
         try {
             SVNAdminArea adminArea = wcAccess.open(path, true, true, 0);
             adminArea.cleanup();
+            if (deleteWCProperties) {
+                SVNPropertiesManager.deleteWCProperties(adminArea, null, true);
+            }
+        } catch (SVNException e) {
+            if (e instanceof SVNCancelException) {
+                throw e;
+            } else if (!SVNAdminArea.isSafeCleanup()) {
+                throw e;
+            }
+            SVNDebugLog.getDefaultLog().info("CLEANUP FAILED for " + path);
+            SVNDebugLog.getDefaultLog().info(e);
         } finally {
             wcAccess.close();
             sleepForTimeStamp();
@@ -1127,8 +1144,10 @@ public class SVNWCClient extends SVNBasicClient {
      * @param  path                        a path to be put under version 
      *                                     control (will be added to a repository
      *                                     in next commit)
-     * @param  force                       <span class="javakeyword">true</span> to
-     *                                     force the operation to run
+     * @param  force                       when <span class="javakeyword">true</span> forces the operation 
+     *                                     to run on already versioned files or directories without reporting 
+     *                                     error. When ran recursively, all unversioned files and directories 
+     *                                     in a tree will be scheduled for addition.
      * @param  mkdir                       if <span class="javakeyword">true</span> - 
      *                                     creates a new directory and schedules it for
      *                                     addition
@@ -1161,8 +1180,10 @@ public class SVNWCClient extends SVNBasicClient {
      * @param  path                        a path to be put under version 
      *                                     control (will be added to a repository
      *                                     in next commit)
-     * @param  force                       <span class="javakeyword">true</span> to
-     *                                     force the operation to run
+     * @param  force                       when <span class="javakeyword">true</span> forces the operation 
+     *                                     to run on already versioned files or directories without reporting 
+     *                                     error. When ran recursively, all unversioned files and directories 
+     *                                     in a tree will be scheduled for addition.
      * @param  mkdir                       if <span class="javakeyword">true</span> - 
      *                                     creates a new directory and schedules it for
      *                                     addition
@@ -1374,7 +1395,7 @@ public class SVNWCClient extends SVNBasicClient {
      * Reverts all local changes made to a Working Copy item(s) thus
      * bringing it to a 'pristine' state.
      * 
-     * @param  paths           a WC paths to perform a revert on
+     * @param  path            a WC path to perform a revert on
      * @param  recursive       <span class="javakeyword">true</span> to
      *                         descend recursively (relevant for directories)
      * @throws SVNException    if one of the following is true:
@@ -2490,6 +2511,18 @@ public class SVNWCClient extends SVNBasicClient {
             }
         });
         return result[0];
+    }
+    
+    public void doCleanupWCProperties(File directory) throws SVNException {
+        SVNWCAccess wcAccess = SVNWCAccess.newInstance(this);
+        try {
+            SVNAdminArea dir = wcAccess.open(directory, true, true, -1);
+            if (dir != null) {
+                SVNPropertiesManager.deleteWCProperties(dir, null, true);
+            }
+        } finally {
+            wcAccess.close();
+        }
     }
     
     private void collectInfo(SVNRepository repos, SVNDirEntry entry,

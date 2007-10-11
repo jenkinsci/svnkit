@@ -259,6 +259,10 @@ class SVNConnection {
             myRepository.getDebugLog().flushStream(getOutputStream());
         }
     }
+    
+    public boolean isConnectionStale() {
+        return myConnector.isStale();
+    }
 
     private void checkConnection() throws SVNException {
         if (!myIsReopening && !myConnector.isConnected(myRepository)) {

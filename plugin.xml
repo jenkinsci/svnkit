@@ -13,6 +13,11 @@
       </library>
       <library name="contrib/ganymed/ganymed.jar"/>
       <library name="contrib/junit/junit.jar"/>
+      <library name="contrib/jna/jna.jar">
+         <export
+               name="*">
+         </export>
+      </library>
    </runtime>
    <requires>
       <import plugin="org.eclipse.core.runtime"/>

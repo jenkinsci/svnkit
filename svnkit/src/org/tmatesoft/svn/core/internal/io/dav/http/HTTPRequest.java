@@ -83,6 +83,13 @@ class HTTPRequest {
         myConnection = connection;
     }
     
+    public void initCredentials(HTTPAuthentication authentication, String method, String path) {
+        if (authentication != null) {
+            authentication.setChallengeParameter("method", method);
+            authentication.setChallengeParameter("uri", composeRequestURI(method, path));
+        }
+    }
+    
     public void setAuthentication(String auth) {
         myAuthentication = auth;
     }
@@ -243,21 +250,7 @@ class HTTPRequest {
         StringBuffer sb = new StringBuffer();
         sb.append(request);
         sb.append(' ');
-
-        if (myIsProxied && !myIsSecured) {
-            // prepend path with host name.
-            sb.append("http://");
-            sb.append(myConnection.getHost().getHost());
-            sb.append(":");
-            sb.append(myConnection.getHost().getPort());
-        }
-        if (path == null) {
-            path = "/";
-        }
-        if (!"CONNECT".equals(request) && (path.length() == 0 || path.charAt(0) != '/')) {
-            path = "/" + path;
-        }
-        HTTPParser.getCanonicalPath(path, sb);
+        sb.append(composeRequestURI(request, path));
         sb.append(' ');
         sb.append("HTTP/1.1");
         sb.append(HTTPRequest.CRLF);
@@ -307,6 +300,26 @@ class HTTPRequest {
         }
         sb.append(HTTPRequest.CRLF);
         return sb;
+    }
+    
+    private String composeRequestURI(String request, String path) {
+        StringBuffer sb = new StringBuffer();
+        if (myIsProxied && !myIsSecured) {
+            // prepend path with host name.
+            sb.append("http://");
+            sb.append(myConnection.getHost().getHost());
+            sb.append(":");
+            sb.append(myConnection.getHost().getPort());
+        }
+        if (path == null) {
+            path = "/";
+        }
+        if (!"CONNECT".equals(request) && (path.length() == 0 || path.charAt(0) != '/')) {
+            path = "/" + path;
+        }
+        HTTPParser.getCanonicalPath(path, sb);
+        return sb.toString();
+
     }
     
     public static SVNErrorMessage createDefaultErrorMessage(SVNURL host, HTTPStatus status, String context, Object[] contextObjects) {
