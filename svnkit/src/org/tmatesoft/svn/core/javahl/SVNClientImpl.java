@@ -978,7 +978,7 @@ public class SVNClientImpl implements SVNClientInterface {
                 //FIXME
             }
 
-            public OutputStream handleFile(Date date, long revision, String author) throws SVNException {
+            public OutputStream handleFile(Date date, long revision, String author, File contents) throws SVNException {
                 return null;
             }
         };
@@ -1021,7 +1021,7 @@ public class SVNClientImpl implements SVNClientInterface {
                 //FIXME
             }
 
-            public OutputStream handleFile(Date date, long revision, String author) throws SVNException {
+            public OutputStream handleFile(Date date, long revision, String author, File contents) throws SVNException {
                 return null;
             }
         };
@@ -1558,7 +1558,7 @@ public class SVNClientImpl implements SVNClientInterface {
                 //FIXME
             }
 
-            public OutputStream handleFile(Date date, long revision, String author) throws SVNException {
+            public OutputStream handleFile(Date date, long revision, String author, File contents) throws SVNException {
                 return null;
             }
         };

@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.wc;
 
+import java.io.File;
 import java.io.OutputStream;
 import java.util.Date;
 
@@ -91,10 +92,13 @@ public interface ISVNAnnotateHandler {
      *                      to the repository       
      * @param revision      the revision the changes were commited to
      * @param author        the person who did those changes
-     * 
+     * @param contents      temporary file with contents. This file shouldn't be used 
+     *                      as persistent reference as it will be overwritten after this method exits
+     *                      and eventually deleted.
+     *                       
      * @return OutputStream to which contents of the file have to be written or null if no contents is needed. 
      * 
      * @throws SVNException  
      */
-    public OutputStream handleFile(Date date, long revision, String author) throws SVNException;
+    public OutputStream handleFile(Date date, long revision, String author, File contents) throws SVNException;
 }

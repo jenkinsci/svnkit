@@ -187,7 +187,7 @@ public class SVNAnnotateCommand extends SVNCommand implements ISVNAnnotateHandle
         //TODO: fixme
     }
 
-    public OutputStream handleFile(Date date, long revision, String author) throws SVNException {
+    public OutputStream handleFile(Date date, long revision, String author, File contents) throws SVNException {
         return null;
     }
 }

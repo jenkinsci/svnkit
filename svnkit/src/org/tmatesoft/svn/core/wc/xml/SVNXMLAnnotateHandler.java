@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.wc.xml;
 
+import java.io.File;
 import java.io.OutputStream;
 import java.util.Date;
 
@@ -160,7 +161,7 @@ public class SVNXMLAnnotateHandler extends AbstractXMLHandler implements ISVNAnn
         } 
     }
 
-    public OutputStream handleFile(Date date, long revision, String author) throws SVNException {
+    public OutputStream handleFile(Date date, long revision, String author, File contents) throws SVNException {
         return null;
     }
 }

@@ -280,10 +280,9 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
                 SVNFileUtil.rename(myCurrentFile, myPreviousFile);
             }
         }
-        // handle file contents.
+
         if (myFileHandler != null) {
-            OutputStream os = myFileHandler.handleFile(
-                    myCurrentDate, myCurrentDate != null ? myCurrentRevision : -1, myCurrentAuthor);
+            OutputStream os = myFileHandler.handleFile(myCurrentDate, myCurrentDate != null ? myCurrentRevision : -1, myCurrentAuthor, myPreviousFile);
             if (os == null) {
                 return;
             }
