@@ -592,4 +592,8 @@ public class SVNClient implements SVNClientInterface {
     public RevisionRange[] getAvailableMerges(String path, Revision pegRevision, String mergeSource) throws SubversionException {
         return myDelegate.getAvailableMerges(path, pegRevision, mergeSource);
     }
+
+    public void resolved(String path, int depth, int conflictResult) throws SubversionException {
+        myDelegate.resolved(path, depth, conflictResult);
+    }
 }
