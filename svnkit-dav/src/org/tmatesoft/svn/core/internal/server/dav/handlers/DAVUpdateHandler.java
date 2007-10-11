@@ -306,7 +306,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
     }
 
     protected void handleAttributes(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
-        if (element == ENTRY && parent == DAVReportHandler.UPDATE_REPORT) {
+        if (element == ENTRY && parent == ServletDAVHandler.UPDATE_REPORT) {
             setEntryLinkPath(attrs.getValue(LINKPATH_ATTR));
             setEntryLockToken(attrs.getValue(LOCK_TOKEN_ATTR));
             String revisionString = attrs.getValue(REVISION_ATTR);
@@ -318,7 +318,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
             if (attrs.getValue(START_EMPTY_ATTR) != null) {
                 setEntryStartEmpty(true);
             }
-        } else if (element != MISSING || parent != DAVReportHandler.UPDATE_REPORT) {
+        } else if (element != MISSING || parent != ServletDAVHandler.UPDATE_REPORT) {
             if (isInitialized()) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Invalid XML elements order: entry elements should follow any other."));
             }
@@ -327,9 +327,9 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
     }
 
     protected void handleCData(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
-        if (element == ENTRY && parent == DAVReportHandler.UPDATE_REPORT) {
+        if (element == ENTRY && parent == ServletDAVHandler.UPDATE_REPORT) {
             handleEntry(cdata.toString(), false);
-        } else if (element == MISSING && parent == DAVReportHandler.UPDATE_REPORT) {
+        } else if (element == MISSING && parent == ServletDAVHandler.UPDATE_REPORT) {
             handleEntry(cdata.toString(), true);
         } else {
             getDAVRequest().endElement(parent, element, cdata);

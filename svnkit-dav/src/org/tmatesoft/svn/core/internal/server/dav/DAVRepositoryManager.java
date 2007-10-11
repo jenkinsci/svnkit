@@ -207,7 +207,8 @@ public class DAVRepositoryManager {
     private String getResourceRepositoryName(String requestURI) {
         if (getDAVConfig().isUsingRepositoryPathDirective()) {
             return "";
-        } else return DAVPathUtil.head(requestURI);
+        } 
+        return DAVPathUtil.head(requestURI);        
     }
 
     private String getResourceContext(String requestContext, String requestURI) {

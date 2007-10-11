@@ -97,9 +97,8 @@ public class DAVLogHandler extends DAVReportHandler implements ISVNLogEntryHandl
         if (logEntry.getRevision() == DAVResource.INVALID_REVISION) {
             if (getDepth() == 0) {
                 return;
-            } else {
-                decreaseDepth();
             }
+            decreaseDepth();
         }
 
         StringBuffer xmlBuffer = new StringBuffer();

@@ -77,7 +77,7 @@ public class DAVUpdateRequest extends DAVRequest {
         return mySrcURL;
     }
 
-    private void setSrcURL(SVNURL srcURL) throws SVNException {
+    private void setSrcURL(SVNURL srcURL) {
         mySrcURL = srcURL;
     }
 
@@ -85,7 +85,7 @@ public class DAVUpdateRequest extends DAVRequest {
         return myDstURL;
     }
 
-    private void setDstURL(SVNURL dstURL) throws SVNException {
+    private void setDstURL(SVNURL dstURL) {
         myDstURL = dstURL;
     }
 
