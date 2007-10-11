@@ -1235,9 +1235,11 @@ public class SVNFileUtil {
             String line;
             while ((line = br.readLine()) != null) {
                 int idx = line.indexOf('=');
-                String key = line.substring(0, idx);
-                String value = line.substring(idx + 1);
-                envVars.setProperty(key, value);
+                if (idx >= 0) {
+                    String key = line.substring(0, idx);
+                    String value = line.substring(idx + 1);
+                    envVars.setProperty(key, value);
+                }
             }
         }
         return envVars;
