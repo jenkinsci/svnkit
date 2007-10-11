@@ -1779,7 +1779,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
                 return false;
             }
         }
-        boolean deleted = myLockFile.delete();
+        boolean deleted = SVNFileUtil.deleteFile(myLockFile);
         if (!deleted) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "Failed to unlock working copy ''{0}''", getRoot());
             SVNErrorManager.error(err);

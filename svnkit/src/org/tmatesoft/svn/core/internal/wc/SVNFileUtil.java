@@ -633,20 +633,19 @@ public class SVNFileUtil {
         deleteFile(dir);
     }
 
-    public static void deleteFile(File file) throws SVNException {
+    public static boolean deleteFile(File file) throws SVNException {
         if (file == null) {
-            return;
+            return true;
         }
         if (!isWindows || file.isDirectory() || !file.exists()) {
-            file.delete();
-            return;
+            return file.delete();
         }
         for (int i = 0; i < 10; i++) {
             if (file.delete() && !file.exists()) {
-                return;
+                return true;
             }
             if (!file.exists()) {
-                return;
+                return true;
             }
             setReadonly(file, false);
             try {
@@ -656,6 +655,7 @@ public class SVNFileUtil {
         }
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot delete file ''{0}''", file);
         SVNErrorManager.error(err);
+        return false;
     }
 
     private static String readSingleLine(File file) throws IOException {
