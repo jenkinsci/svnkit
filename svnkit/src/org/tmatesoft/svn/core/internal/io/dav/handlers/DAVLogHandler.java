@@ -124,7 +124,7 @@ public class DAVLogHandler extends BasicDAVHandler {
                 }
             }
         } else {
-            myIsWantAuthor = myIsWantComment = myIsWantCustomRevProps = myIsWantDate = true;
+            myIsWantAuthor = myIsWantComment = myIsWantDate = true;
         }
 		
         init();

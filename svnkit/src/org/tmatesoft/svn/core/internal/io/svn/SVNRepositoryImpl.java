@@ -567,10 +567,11 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                         Boolean.valueOf(includeMergedRevisions), "revprops", revisionPropertyNames};
                 for (int i = 0; i < revisionPropertyNames.length; i++) {
                     String propName = revisionPropertyNames[i];
-                    if (!wantCustomRevProps && !SVNRevisionProperty.AUTHOR.equals(propName) && 
+                    if (!SVNRevisionProperty.AUTHOR.equals(propName) && 
                             !SVNRevisionProperty.DATE.equals(propName) && 
                             !SVNRevisionProperty.LOG.equals(propName)) {
                         wantCustomRevProps = true;
+                        break;
                     }
                 }
                 buffer = realBuffer;
@@ -582,7 +583,6 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                         Boolean.valueOf(includeMergedRevisions), "all-revprops" };
 
                 buffer = realBuffer;
-                wantCustomRevProps = true;
                 write("(w((*s)(n)(n)wwnww()))", buffer);
             }
             
@@ -631,7 +631,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                         }
                         
                         revProps = SVNReader.getMap(buffer, 7);
-                        if (wantCustomRevProps && revProps == null) {
+                        if (wantCustomRevProps && (revProps == null || revProps == Collections.EMPTY_MAP)) {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, 
                                     "Server does not support custom revprops via log");
                             SVNErrorManager.error(err);
@@ -668,6 +668,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     }
                 } catch (SVNException e) {
                     if (e instanceof SVNCancelException || e instanceof SVNAuthenticationException) {
+                        throw e;
+                    }
+                    if (e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_IMPLEMENTED) {
                         throw e;
                     }
                     read("x", buffer, true);
