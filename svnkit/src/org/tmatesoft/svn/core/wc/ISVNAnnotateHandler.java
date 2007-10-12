@@ -100,5 +100,7 @@ public interface ISVNAnnotateHandler {
      * 
      * @throws SVNException  
      */
-    public OutputStream handleFile(Date date, long revision, String author, File contents) throws SVNException;
+    public boolean handleRevision(Date date, long revision, String author, File contents) throws SVNException;
+
+    public void handleEOF();
 }

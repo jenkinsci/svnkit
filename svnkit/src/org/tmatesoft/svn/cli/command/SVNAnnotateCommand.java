@@ -15,7 +15,6 @@ package org.tmatesoft.svn.cli.command;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.Date;
 
@@ -187,7 +186,10 @@ public class SVNAnnotateCommand extends SVNCommand implements ISVNAnnotateHandle
         //TODO: fixme
     }
 
-    public OutputStream handleFile(Date date, long revision, String author, File contents) throws SVNException {
-        return null;
+    public boolean handleRevision(Date date, long revision, String author, File contents) throws SVNException {
+        return false;
+    }
+
+    public void handleEOF() {
     }
 }

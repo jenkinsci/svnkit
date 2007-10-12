@@ -29,7 +29,6 @@ import org.tigris.subversion.javahl.CommitItem;
 import org.tigris.subversion.javahl.CommitMessage;
 import org.tigris.subversion.javahl.ConflictResolverCallback;
 import org.tigris.subversion.javahl.CopySource;
-import org.tigris.subversion.javahl.Depth;
 import org.tigris.subversion.javahl.DiffSummaryReceiver;
 import org.tigris.subversion.javahl.DirEntry;
 import org.tigris.subversion.javahl.Info;
@@ -978,8 +977,11 @@ public class SVNClientImpl implements SVNClientInterface {
                 //FIXME
             }
 
-            public OutputStream handleFile(Date date, long revision, String author, File contents) throws SVNException {
-                return null;
+            public boolean handleRevision(Date date, long revision, String author, File contents) throws SVNException {
+                return false;
+            }
+
+            public void handleEOF() {
             }
         };
         try {
@@ -1021,8 +1023,11 @@ public class SVNClientImpl implements SVNClientInterface {
                 //FIXME
             }
 
-            public OutputStream handleFile(Date date, long revision, String author, File contents) throws SVNException {
-                return null;
+            public boolean handleRevision(Date date, long revision, String author, File contents) throws SVNException {
+                return false;
+            }
+
+            public void handleEOF() {
             }
         };
         try {
@@ -1558,8 +1563,11 @@ public class SVNClientImpl implements SVNClientInterface {
                 //FIXME
             }
 
-            public OutputStream handleFile(Date date, long revision, String author, File contents) throws SVNException {
-                return null;
+            public boolean handleRevision(Date date, long revision, String author, File contents) throws SVNException {
+                return false;
+            }
+
+            public void handleEOF() {
             }
         };
         try {

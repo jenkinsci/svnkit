@@ -323,11 +323,13 @@ public class SVNLogClient extends SVNBasicClient {
                             String inputEncoding, boolean includeMergedRevisions) throws SVNException {
         SVNAnnotationGenerator generator = new SVNAnnotationGenerator(path, tmpFile, startRev, 
                                                                       force, includeMergedRevisions,
-                                                                      getDiffOptions(), handler, this);
+                                                                      getDiffOptions(), inputEncoding, handler, this);
         try {
             repos.getFileRevisions("", startRev > 0 ? startRev - 1 : startRev, 
                                    endRev, includeMergedRevisions, generator);
-            generator.reportAnnotations(handler, inputEncoding);
+            if (!generator.isLastRevisionReported()) {
+                generator.reportAnnotations(handler, inputEncoding);
+            }
         } finally {
             generator.dispose();
             SVNFileUtil.deleteAll(tmpFile, !"text-base".equals(tmpFile.getName()), null);

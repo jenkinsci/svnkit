@@ -12,7 +12,6 @@
 package org.tmatesoft.svn.cli2.svn;
 
 import java.io.File;
-import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
@@ -202,7 +201,10 @@ public class SVNBlameCommand extends SVNXMLCommand implements ISVNAnnotateHandle
         }
     }
 
-    public OutputStream handleFile(Date date, long revision, String author, File contents) throws SVNException {
-        return null;
+    public boolean handleRevision(Date date, long revision, String author, File contents) throws SVNException {
+        return false;
+    }
+
+    public void handleEOF() {
     }
 }
