@@ -24,10 +24,18 @@ import com.sun.jna.Memory;
  */
 public class SVNLinuxUtil {
 
-    private static final Memory ourSharedMemory = new Memory(1024);
+    private static Memory ourSharedMemory;
+    
+    static {
+        try {
+            ourSharedMemory = new Memory(1024);
+        } catch (Throwable th) {
+            ourSharedMemory = null;
+        }
+    }
 
     public static SVNFileType getFileType(File file) {
-        if (file == null) {
+        if (file == null || ourSharedMemory == null) {
             return null;
         }
         String path = file.getAbsolutePath();
@@ -76,7 +84,7 @@ public class SVNLinuxUtil {
     }
 
     public static Boolean isExecutable(File file) {
-        if (file == null) {
+        if (file == null || ourSharedMemory == null) {
             return null;
         }
         String path = file.getAbsolutePath();
@@ -124,7 +132,7 @@ public class SVNLinuxUtil {
     }
 
     public static String getLinkTarget(File file) {
-        if (file == null) {
+        if (file == null || ourSharedMemory == null) {
             return null;
         }
         String path = file.getAbsolutePath();
@@ -156,7 +164,7 @@ public class SVNLinuxUtil {
     }
 
     public static boolean setExecutable(File file, boolean set) {
-        if (file == null) {
+        if (file == null || ourSharedMemory == null) {
             return false;
         }
         String path = file.getAbsolutePath();
