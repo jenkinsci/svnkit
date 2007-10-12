@@ -51,10 +51,19 @@ public class DAVConnection {
     private boolean myKeepLocks;
     private IHTTPConnectionFactory myConnectionFactory;
     private SVNRepository myRepository;
+    private boolean myIsSpoolReport;
     
     public DAVConnection(IHTTPConnectionFactory connectionFactory, SVNRepository repository) {
         myRepository = repository;
         myConnectionFactory = connectionFactory;
+    }
+    
+    public boolean isReportResponseSpooled() {
+        return myIsSpoolReport;
+    }
+    
+    public void setReportResponseSpooled(boolean spool) {
+        myIsSpoolReport = spool;
     }
     
     public SVNURL getLocation() {
@@ -212,7 +221,7 @@ public class DAVConnection {
     }
 
     public HTTPStatus doReport(String path, StringBuffer requestBody, DefaultHandler handler, boolean spool) throws SVNException {
-        myHttpConnection.setSpoolResponse(spool);
+        myHttpConnection.setSpoolResponse(spool || isReportResponseSpooled());
         try {
             HTTPHeader header = new HTTPHeader();
             header.addHeaderValue("Accept-Encoding", "svndiff1;q=0.9,svndiff;q=0.8");

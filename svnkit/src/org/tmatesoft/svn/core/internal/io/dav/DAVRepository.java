@@ -65,10 +65,11 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  * @version 1.1.1
  * @author  TMate Software Ltd.
  */
-class DAVRepository extends SVNRepository {
+public class DAVRepository extends SVNRepository {
 
     private DAVConnection myConnection;
     private IHTTPConnectionFactory myConnectionFactory;
+    private boolean myIsSpoolResponse;
     
     private static boolean ourIsKeepCredentials = Boolean.valueOf(System.getProperty("svnkit.http.keepCredentials", Boolean.TRUE.toString())).booleanValue();
     
@@ -137,6 +138,17 @@ class DAVRepository extends SVNRepository {
             }
         }
         return myRepositoryUUID;
+    }
+    
+    public void setSpoolResponse(boolean spool) {
+        myIsSpoolResponse = spool;
+        if (myConnection != null) {
+            myConnection.setReportResponseSpooled(spool);
+        }
+    }
+    
+    public boolean isSpoolResponse() {
+        return myIsSpoolResponse;
     }
     
     public void setAuthenticationManager(ISVNAuthenticationManager authManager) {
@@ -616,6 +628,7 @@ class DAVRepository extends SVNRepository {
         fireConnectionOpened();
         if (myConnection == null) {
             myConnection = new DAVConnection(myConnectionFactory, this);
+            myConnection.setReportResponseSpooled(isSpoolResponse());
             myConnection.open(this);
         }
     }

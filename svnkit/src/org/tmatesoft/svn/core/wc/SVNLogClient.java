@@ -36,6 +36,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.io.dav.DAVRepository;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
@@ -324,6 +325,16 @@ public class SVNLogClient extends SVNBasicClient {
         SVNAnnotationGenerator generator = new SVNAnnotationGenerator(path, tmpFile, startRev, 
                                                                       force, includeMergedRevisions,
                                                                       getDiffOptions(), inputEncoding, handler, this);
+        
+        
+        // always spool HTTP response for non-standard annotation handlers.
+        boolean useSpool = handler != null && !handler.getClass().getName().startsWith("org.tmatesoft.svn.");
+        boolean oldSpool = false;
+        
+        if (useSpool && repos instanceof DAVRepository) {
+            oldSpool = ((DAVRepository) repos).isSpoolResponse();
+            ((DAVRepository) repos).setSpoolResponse(true);
+        }
         try {
             repos.getFileRevisions("", startRev > 0 ? startRev - 1 : startRev, 
                                    endRev, includeMergedRevisions, generator);
@@ -331,6 +342,9 @@ public class SVNLogClient extends SVNBasicClient {
                 generator.reportAnnotations(handler, inputEncoding);
             }
         } finally {
+            if (useSpool && repos instanceof DAVRepository) {
+                ((DAVRepository) repos).setSpoolResponse(oldSpool);
+            }
             generator.dispose();
             SVNFileUtil.deleteAll(tmpFile, !"text-base".equals(tmpFile.getName()), null);
         }
