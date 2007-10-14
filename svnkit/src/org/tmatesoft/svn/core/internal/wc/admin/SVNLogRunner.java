@@ -296,8 +296,13 @@ public class SVNLogRunner {
             }
         } else if (SVNLog.COPY_AND_TRANSLATE.equals(name)) {
             String dstName = (String) attributes.get(SVNLog.DEST_ATTR);
+            String versionedName = (String) attributes.get(SVNLog.ATTR2);
+            if (versionedName == null) {
+                versionedName = dstName;
+            }
             File src = adminArea.getFile(fileName);
             File dst = adminArea.getFile(dstName);
+
             //when performing a merge from a log runner we may have just set 
             //new properties (log command that copies a new base prop file), 
             //but probably we've got a non empty props cache which is no more 
@@ -305,7 +310,7 @@ public class SVNLogRunner {
             adminArea.closeVersionedProperties();
             try {
                 try {
-                    SVNTranslator.translate(adminArea, dstName, fileName, dstName, true);
+                    SVNTranslator.translate(adminArea, versionedName, src, dst, null, true);
                 } catch (SVNException svne) {
                     if (src.exists()) {
                         throw svne;
@@ -329,9 +334,10 @@ public class SVNLogRunner {
             }
         } else if (SVNLog.COPY_AND_DETRANSLATE.equals(name)) {
             String dstName = (String) attributes.get(SVNLog.DEST_ATTR);
+            String versionedName = (String) attributes.get(SVNLog.ATTR2);
             adminArea.closeVersionedProperties();
             try {
-                SVNTranslator.translate(adminArea, fileName, fileName, dstName, false);
+                SVNTranslator.translate(adminArea, versionedName != null ? versionedName : fileName, fileName, dstName, false);
             } catch (SVNException svne) {
                 error = svne;
             }
@@ -372,13 +378,10 @@ public class SVNLogRunner {
                 SVNVersionedProperties props = adminArea.getProperties(fileName);
                 SVNEntry entry = adminArea.getEntry(fileName, true);
     
-                String leaveConglictsAttr = (String) attributes.get(SVNLog.ATTR6);
-                boolean leaveConflicts = Boolean.TRUE.toString().equals(leaveConglictsAttr);
                 SVNStatusType mergeResult = adminArea.mergeText(fileName, adminArea.getFile(leftPath),
                                                                 adminArea.getFile(rightPath), targetLabel, 
                                                                 leftLabel, rightLabel, null, 
-                                                                leaveConflicts, false, null, 
-                                                                null, null);
+                                                                false, null, null);
     
                 if (props.getPropertyValue(SVNProperty.EXECUTABLE) != null) {
                     SVNFileUtil.setExecutable(target, true);

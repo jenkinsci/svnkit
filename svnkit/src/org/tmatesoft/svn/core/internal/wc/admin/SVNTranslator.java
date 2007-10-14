@@ -137,7 +137,7 @@ public class SVNTranslator {
             return;
         }
         OutputStream os = SVNFileUtil.openFileForWriting(dst);
-        OutputStream tos = new SVNTranslatorOutputStream(os, eol, false, keywords, expand);
+        OutputStream tos = new SVNTranslatorOutputStream(os, eol, true, keywords, expand);
         InputStream is = SVNFileUtil.openFileForReading(src);
         try {
             copy(is, tos);

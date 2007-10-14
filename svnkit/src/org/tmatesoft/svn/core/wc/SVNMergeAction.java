@@ -11,22 +11,22 @@
  */
 package org.tmatesoft.svn.core.wc;
 
-import java.io.File;
-
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
-
 
 /**
  * @version 1.1.2
  * @author  TMate Software Ltd.
  */
-public interface ISVNConflictHandler {
-    
-    public SVNConflictResult handleConflict(File path, SVNNodeKind kind, boolean isBinary, 
-                                            String mimeType, SVNConflictAction action, 
-                                            SVNConflictReason reason, File baseFile,
-                                            File reposFile, File wcFile, 
-                                            File mergedFile) throws SVNException;
+public class SVNMergeAction {
 
+    public static final SVNMergeAction MARK_CONFLICTED = new SVNMergeAction();
+    
+    public static final SVNMergeAction CHOOSE_BASE = new SVNMergeAction();
+    public static final SVNMergeAction CHOOSE_REPOSITORY = new SVNMergeAction();
+    public static final SVNMergeAction CHOOSE_WORKING = new SVNMergeAction();
+
+    public static final SVNMergeAction MARK_RESOLVED = new SVNMergeAction();
+    public static final SVNMergeAction CHOOSE_MERGED_FILE = new SVNMergeAction();
+    
+    private SVNMergeAction() {
+    }
 }

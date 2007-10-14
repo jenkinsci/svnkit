@@ -40,7 +40,6 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
-import org.tmatesoft.svn.core.internal.wc.DefaultSVNMerger;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
@@ -48,13 +47,12 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNMergeInfoManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.wc.ISVNCommitParameters;
-import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
 import org.tmatesoft.svn.core.wc.ISVNMerger;
 import org.tmatesoft.svn.core.wc.ISVNMergerFactory;
-import org.tmatesoft.svn.core.wc.SVNConflictAction;
-import org.tmatesoft.svn.core.wc.SVNConflictReason;
-import org.tmatesoft.svn.core.wc.SVNConflictResult;
+import org.tmatesoft.svn.core.wc.SVNMergeAction;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
+import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
+import org.tmatesoft.svn.core.wc.SVNMergeResult;
 import org.tmatesoft.svn.core.wc.SVNResolveAccept;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -696,8 +694,7 @@ public abstract class SVNAdminArea {
 
     public SVNStatusType mergeText(String localPath, File base, File latest, String localLabel, 
                                    String baseLabel, String latestLabel, Map propChanges, 
-                                   boolean leaveConflict, boolean dryRun, SVNDiffOptions options, 
-                                   SVNLog log, ISVNConflictHandler conflictHandler) throws SVNException {
+                                   boolean dryRun, SVNDiffOptions options, SVNLog log) throws SVNException {
         SVNEntry entry = getEntry(localPath, false);
         if (entry == null) {
             return SVNStatusType.MISSING;
@@ -724,238 +721,30 @@ public abstract class SVNAdminArea {
         byte[] separator = ("=======").getBytes();
         ISVNMergerFactory factory = myWCAccess.getOptions().getMergerFactory();
         ISVNMerger merger = factory.createMerger(conflictStart, separator, conflictEnd);
-        boolean customMerger = merger.getClass() != DefaultSVNMerger.class;
 
-        File tmpTarget = SVNTranslator.detranslateWorkingCopy(this, localPath, propChanges, !isBinary && customMerger);
+        File tmpTarget = SVNTranslator.detranslateWorkingCopy(this, localPath, propChanges, false);
         base = SVNTranslator.maybeUpdateTargetEOLs(this, base, propChanges);
-        
-        SVNStatusType status = SVNStatusType.UNCHANGED;
-        File mergeTarget = getFile(localPath);
-        Map command = new HashMap();
-        
-        if (isBinary && !customMerger) {
-            // binary
-            if (!dryRun) {                
-                File oldFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, baseLabel);
-                File newFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, latestLabel);
-                SVNFileUtil.copyFile(base, oldFile, false);
-                SVNFileUtil.copyFile(latest, newFile, false);
-                if (!tmpTarget.equals(mergeTarget)) {
-                    File mineFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, localLabel);
-                    String minePath = SVNFileUtil.getBasePath(mineFile);
-                    command.put(SVNLog.NAME_ATTR, SVNFileUtil.getBasePath(tmpTarget));
-                    command.put(SVNLog.DEST_ATTR, minePath);
-                    log.addCommand(SVNLog.MOVE, command, false);
-                    command.clear();
-                    command.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_WRK), minePath);
-                } else {
-                    command.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_WRK), "");
-                }
+        File resultFile = SVNAdminUtil.createTmpFile(this);
 
-                String newPath = SVNFileUtil.getBasePath(newFile);
-                String oldPath = SVNFileUtil.getBasePath(oldFile);
-                
-                command.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_NEW), newPath);
-                command.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_OLD), oldPath);
-                log.logChangedEntryProperties(localPath, command);
-                command.clear();
-                saveEntries(false);
-            } 
-            status = SVNStatusType.CONFLICTED;
+        SVNMergeFileSet mergeFileSet = new SVNMergeFileSet(this, log, 
+                SVNFileUtil.getBasePath(base), SVNFileUtil.getBasePath(tmpTarget), 
+                localPath, SVNFileUtil.getBasePath(latest), SVNFileUtil.getBasePath(resultFile), mimeType, isBinary);
+        mergeFileSet.setMergeLabels(baseLabel, localLabel, latestLabel);
+        
+        SVNMergeResult mergeResult = merger.merge(mergeFileSet, SVNProperty.isBinaryMimeType(mimeType), dryRun, options); 
+
+        if (dryRun) {
+            SVNFileUtil.deleteFile(resultFile);
         } else {
-            // text
-            // 1. destranslate local
-            File localTmpFile = tmpTarget;
-            // 2. run merge between all files we have :)
-            OutputStream result = null;
-            File resultFile = SVNAdminUtil.createTmpFile(this);
-            result = SVNFileUtil.openFileForWriting(resultFile);
-            try {
-                status = SVNProperty.isBinaryMimeType(mimeType) ? 
-                        merger.mergeBinary(base, localTmpFile, latest, dryRun, result) : 
-                        merger.mergeText(base, localTmpFile, latest, dryRun, options, result);
-            } finally {
-                SVNFileUtil.closeFile(result);
-            }
-            
-            if (dryRun && status == SVNStatusType.CONFLICTED) {
-                if (leaveConflict) {
-                    status = SVNStatusType.CONFLICTED_UNRESOLVED;
-                }
-            } else if (!dryRun && status == SVNStatusType.CONFLICTED) {
-                if (conflictHandler != null) {
-                    boolean resolved = false;
-                    SVNConflictResult conflictResult = conflictHandler.handleConflict(mergeTarget, 
-                                                                                      SVNNodeKind.FILE, 
-                                                                                      false, 
-                                                                                      mimeType, 
-                                                                                      SVNConflictAction.EDIT, 
-                                                                                      SVNConflictReason.EDITED, 
-                                                                                      base, 
-                                                                                      latest, 
-                                                                                      tmpTarget, 
-                                                                                      resultFile);
-                    if (conflictResult == SVNConflictResult.CHOOSE_BASE) {
-                        command.put(SVNLog.NAME_ATTR, SVNFileUtil.getBasePath(base));
-                        command.put(SVNLog.DEST_ATTR, localPath);
-                        log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
-                        command.clear();
-                        status = SVNStatusType.MERGED;
-                        resolved = true;
-                    } else if (conflictResult == SVNConflictResult.CHOOSE_REPOSITORY) {
-                        command.put(SVNLog.NAME_ATTR, SVNFileUtil.getBasePath(latest));
-                        command.put(SVNLog.DEST_ATTR, localPath);
-                        log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
-                        command.clear();
-                        status = SVNStatusType.MERGED;
-                        resolved = true;
-                    } else if (conflictResult == SVNConflictResult.RESOLVED || 
-                               conflictResult == SVNConflictResult.CHOOSE_WORKING) {
-                        status = SVNStatusType.MERGED;
-                        resolved = true;
-                    }
-
-                    if (resolved) {
-                        if (!dryRun) {
-                            command.put(SVNLog.NAME_ATTR, localPath);
-                            log.addCommand(SVNLog.MAYBE_EXECUTABLE, command, false);
-                            command.clear();
-    
-                            command.put(SVNLog.NAME_ATTR, localPath);
-                            log.addCommand(SVNLog.MAYBE_READONLY, command, false);
-                            command.clear();
-                        }
-                        
-                        if (saveLog) {
-                            log.save();
-                        }
-                        return status;
-                    }
-                }
-
-                // copy all to wc.
-                File mineFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, localLabel);
-                File oldFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, baseLabel);
-                File newFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, latestLabel);
-                String newPath = SVNFileUtil.getBasePath(newFile);
-                String oldPath = SVNFileUtil.getBasePath(oldFile);
-                String minePath = SVNFileUtil.getBasePath(mineFile);
-                
-                File tmpOldFile = base;
-                if (!SVNPathUtil.isChildOf(getRoot(), tmpOldFile)) {
-                    tmpOldFile = SVNAdminUtil.createTmpFile(this);
-                    SVNFileUtil.copyFile(base, tmpOldFile, true);
-                }
-
-                File tmpNewFile = latest;
-                if (!SVNPathUtil.isChildOf(getRoot(), tmpNewFile)) {
-                    tmpNewFile = SVNAdminUtil.createTmpFile(this);
-                    SVNFileUtil.copyFile(latest, tmpNewFile, true);
-                }
-                
-                String basePath = SVNFileUtil.getBasePath(tmpOldFile);
-                command.put(SVNLog.NAME_ATTR, basePath);
-                command.put(SVNLog.DEST_ATTR, oldPath);
-                log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
-                command.clear();
-
-                String latestPath = SVNFileUtil.getBasePath(tmpNewFile);
-                command.put(SVNLog.NAME_ATTR, latestPath);
-                command.put(SVNLog.DEST_ATTR, newPath);
-                log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
-                command.clear();
-
-                if (!tmpOldFile.equals(base)) {
-                    command.put(SVNLog.NAME_ATTR, basePath);
-                    log.addCommand(SVNLog.DELETE, command, false);
-                    command.clear();
-                }
-
-                if (!tmpNewFile.equals(latest)) {
-                    command.put(SVNLog.NAME_ATTR, latestPath);
-                    log.addCommand(SVNLog.DELETE, command, false);
-                    command.clear();
-                }
-                
-                File tmpTargetCopy = SVNTranslator.getTranslatedFile(this, localPath, mergeTarget, 
-                                                                     false, false, false, true);
-                String tmpTargetCopyPath = SVNFileUtil.getBasePath(tmpTargetCopy);
-                command.put(SVNLog.NAME_ATTR, tmpTargetCopyPath);
-                command.put(SVNLog.DEST_ATTR, minePath);
-                log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
-                command.clear();
-
-                if (!tmpTargetCopy.equals(mergeTarget)) {
-                    command.put(SVNLog.NAME_ATTR, tmpTargetCopyPath);
-                    log.addCommand(SVNLog.DELETE, command, false);
-                    command.clear();
-                }
-                
-                // translate result to local
-                if (!leaveConflict) {
-                    String resultPath = SVNFileUtil.getBasePath(resultFile);
-                    command.put(SVNLog.NAME_ATTR, resultPath);
-                    command.put(SVNLog.DEST_ATTR, localPath);
-                    log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
-                    command.clear();
-
-                    command.put(SVNLog.NAME_ATTR, resultPath);
-                    log.addCommand(SVNLog.DELETE, command, false);
-                    command.clear();
-                }
-                
-                command.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_WRK), minePath);
-                command.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_NEW), newPath);
-                command.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_OLD), oldPath);
-                log.logChangedEntryProperties(localPath, command);
-                command.clear();
-
-            } else {
-                boolean isSameContents = SVNFileUtil.compareFiles(resultFile, mergeTarget, null);
-                status = isSameContents ? SVNStatusType.UNCHANGED : status;
-                if (status != SVNStatusType.UNCHANGED && !dryRun) {
-                    String resultPath = SVNFileUtil.getBasePath(resultFile);
-                    command.put(SVNLog.NAME_ATTR, resultPath);
-                    command.put(SVNLog.DEST_ATTR, localPath);
-                    log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
-                    command.clear();
-
-                    command.put(SVNLog.NAME_ATTR, resultPath);
-                    log.addCommand(SVNLog.DELETE, command, false);
-                    command.clear();
-                }
-            }
-
-            if (dryRun) {
-                resultFile.delete();
-            }
-
-            if (status == SVNStatusType.CONFLICTED && leaveConflict) {
-                status = SVNStatusType.CONFLICTED_UNRESOLVED;
-            }
-        }
-
-        if (!tmpTarget.equals(mergeTarget)) {
-            command.put(SVNLog.NAME_ATTR, SVNFileUtil.getBasePath(tmpTarget));
-            log.addCommand(SVNLog.DELETE, command, false);
-            command.clear();
-        }
-
-
-        if (!dryRun) {
-            command.put(SVNLog.NAME_ATTR, localPath);
-            log.addCommand(SVNLog.MAYBE_EXECUTABLE, command, false);
-            command.clear();
-
-            command.put(SVNLog.NAME_ATTR, localPath);
-            log.addCommand(SVNLog.MAYBE_READONLY, command, false);
-            command.clear();
+            SVNMergeAction mergeAction = merger.getMergeAction(mergeFileSet, isBinary, mergeResult);
+            mergeResult = merger.processMergedFiles(mergeFileSet, isBinary, mergeResult, mergeAction);
         }
         
         if (saveLog) {
             log.save();
         }
-        return status;
+        
+        return mergeResult.getMergeStatus();
     }
     
     public InputStream getBaseFileForReading(String name, boolean tmp) throws SVNException {

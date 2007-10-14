@@ -94,7 +94,6 @@ public class SVNDiffClient extends SVNBasicClient {
 
     private ISVNDiffGenerator myDiffGenerator;
     private SVNDiffOptions myDiffOptions;
-    private ISVNConflictHandler myConflictHandler;
 
     /**
      * Constructs and initializes an <b>SVNDiffClient</b> object
@@ -179,14 +178,6 @@ public class SVNDiffClient extends SVNBasicClient {
             myDiffOptions = new SVNDiffOptions();
         }
         return myDiffOptions;
-    }
-
-    public ISVNConflictHandler getConflictHandler() {
-        return myConflictHandler;
-    }
-    
-    public void setConflictHandler(ISVNConflictHandler conflictHandler) {
-        myConflictHandler = conflictHandler;
     }
 
     /**
@@ -1646,7 +1637,7 @@ public class SVNDiffClient extends SVNBasicClient {
             }
             
             Merger merger = createMerger(srcURL, srcURL, targetEntry, dstPath, wcAccess, dryRun, 
-                                         force, recordOnly, getConflictHandler());
+                                         force, recordOnly);
             SVNRepository repository = createRepository(srcURL, true);
             SVNRevision[] revs = getAssumedDefaultRevisionRange(revision1, revision2, repository);
 
@@ -1714,7 +1705,7 @@ public class SVNDiffClient extends SVNBasicClient {
             }
             
             Merger merger = createMerger(url1, url2, targetEntry, dstPath, wcAccess, dryRun, force,  
-                                         recordOnly, getConflictHandler());
+                                         recordOnly);
             if (targetEntry.isFile()) {
                 merger.doMergeFile(url1, revision1, url2, revision2, dstPath, adminArea, 
                                    !useAncestry);
@@ -1774,7 +1765,7 @@ public class SVNDiffClient extends SVNBasicClient {
     
     private Merger createMerger(SVNURL url1, SVNURL url2, SVNEntry entry, File target, 
                                 SVNWCAccess access, boolean dryRun, boolean force, 
-                                boolean recordOnly, ISVNConflictHandler conflictHandler) throws SVNException {
+                                boolean recordOnly) throws SVNException {
         Merger merger = new Merger();
         merger.myURL = url2;
         merger.myTarget = target;
@@ -1783,7 +1774,6 @@ public class SVNDiffClient extends SVNBasicClient {
         merger.myIsRecordOnly = recordOnly;
         merger.myOperativeNotificationsNumber = 0;
         merger.myWCAccess = access;
-        merger.myConflictHandler = conflictHandler; 
         
         if (dryRun) {
             merger.myIsSameRepository = false;
@@ -1856,7 +1846,6 @@ public class SVNDiffClient extends SVNBasicClient {
         File myTarget;
         LinkedList mySkippedPaths;
         SVNWCAccess myWCAccess;
-        ISVNConflictHandler myConflictHandler;
         
         public void doMergeFile(SVNURL url1, SVNRevision revision1, SVNURL url2, 
                                 SVNRevision revision2, File dstPath, 
@@ -1953,8 +1942,7 @@ public class SVNDiffClient extends SVNBasicClient {
     
                 SVNMergeRange[] remainingRanges = remainingRangeList.getRanges();
                 SVNMergeCallback callback = new SVNMergeCallback(adminArea, myURL, myIsForce, 
-                                                                 myIsDryRun, getMergeOptions(),
-                                                                 myConflictHandler);
+                                                                 myIsDryRun, getMergeOptions());
     
                 for (int i = 0; i < remainingRanges.length; i++) {
                     SVNMergeRange nextRange = remainingRanges[i];
@@ -2133,7 +2121,7 @@ public class SVNDiffClient extends SVNBasicClient {
 
             SVNMergeRange[] remainingRanges = remainingRangeList.getRanges();
             SVNMergeCallback callback = new SVNMergeCallback(adminArea, myURL, myIsForce, myIsDryRun, 
-                                                             getMergeOptions(), myConflictHandler);
+                                                             getMergeOptions());
 
             SVNRemoteDiffEditor editor = null; 
             final String targetPath = dstPath.getAbsolutePath().replace(File.separatorChar, '/');

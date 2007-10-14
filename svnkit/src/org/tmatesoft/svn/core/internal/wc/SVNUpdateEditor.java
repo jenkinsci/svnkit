@@ -39,7 +39,6 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -63,7 +62,6 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
     private long myTargetRevision;
     private boolean myIsRootOpen;
     private boolean myIsTargetDeleted;
-    private boolean myIsLeaveConflicts;
     private boolean myIsUnversionedObstructionsAllowed;
     //File objects
     private Collection mySkippedPaths;
@@ -71,17 +69,16 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
     private SVNDeltaProcessor myDeltaProcessor;
     private SVNDepth myDepth;
     private String[] myExtensionPatterns;
-    private ISVNConflictHandler myConflictHandler;
     private ISVNFileFetcher myFileFetcher;
     
-    public SVNUpdateEditor(SVNAdminAreaInfo info, String switchURL, boolean recursive, boolean leaveConflicts, boolean allowUnversionedObstructions) throws SVNException {
-        this(info, switchURL, leaveConflicts, allowUnversionedObstructions, 
-             SVNDepth.fromRecurse(recursive), null, null, null);
+    public SVNUpdateEditor(SVNAdminAreaInfo info, String switchURL, boolean recursive, boolean allowUnversionedObstructions) throws SVNException {
+        this(info, switchURL, allowUnversionedObstructions, 
+             SVNDepth.fromRecurse(recursive), null, null);
     }
 
-    public SVNUpdateEditor(SVNAdminAreaInfo info, String switchURL, boolean leaveConflicts, 
+    public SVNUpdateEditor(SVNAdminAreaInfo info, String switchURL,  
                            boolean allowUnversionedObstructions, SVNDepth depth, 
-                           String[] preservedExtensions, ISVNConflictHandler conflictHandler,
+                           String[] preservedExtensions,
                            ISVNFileFetcher fileFetcher) throws SVNException {
         myAdminInfo = info;
         myWCAccess = info.getWCAccess();
@@ -89,11 +86,9 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         myTarget = info.getTargetName();
         mySwitchURL = switchURL;
         myTargetRevision = -1;
-        myIsLeaveConflicts = leaveConflicts;
         myDepth = depth;
         myDeltaProcessor = new SVNDeltaProcessor();
         myExtensionPatterns = preservedExtensions;
-        myConflictHandler = conflictHandler;
         myFileFetcher = fileFetcher;
         
         SVNEntry entry = info.getAnchor().getEntry(info.getAnchor().getThisDirName(), false);
@@ -926,8 +921,8 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                     mergeOutcome = adminArea.mergeText(name, mergeLeftFile, 
                                                        adminArea.getFile(tmpBasePath), 
                                                        mineLabel, leftLabel, rightLabel, 
-                                                       modifiedProps, myIsLeaveConflicts, 
-                                                       false, null, log, myConflictHandler);
+                                                       modifiedProps,  
+                                                       false, null, log);
                     if (mergeOutcome == SVNStatusType.UNCHANGED) {
                         textStatus = SVNStatusType.MERGED;
                     }

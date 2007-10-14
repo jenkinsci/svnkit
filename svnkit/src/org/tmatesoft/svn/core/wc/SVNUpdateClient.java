@@ -93,16 +93,6 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  */
 public class SVNUpdateClient extends SVNBasicClient {
 
-    private ISVNConflictHandler myConflictHandler;
-
-    public ISVNConflictHandler getConflictHandler() {
-        return myConflictHandler;
-    }
-    
-    public void setConflictHandler(ISVNConflictHandler conflictHandler) {
-        myConflictHandler = conflictHandler;
-    }
-
     /**
      * Constructs and initializes an <b>SVNUpdateClient</b> object
      * with the specified run-time configuration and authentication 
@@ -236,10 +226,8 @@ public class SVNUpdateClient extends SVNBasicClient {
                     return repos2.getFile(path, revision, properties, os);
                 }
             };
-            SVNUpdateEditor editor = new SVNUpdateEditor(adminInfo, null, 
-                                                         isLeaveConflictsUnresolved(), 
+            SVNUpdateEditor editor = new SVNUpdateEditor(adminInfo, null,                                                       
                                                          force, depth, preservedExts,
-                                                         getConflictHandler(),
                                                          fileFetcher);
             
             repos.update(revNumber, target, depth, true, reporter, 
@@ -350,10 +338,9 @@ public class SVNUpdateClient extends SVNBasicClient {
             repository = createRepository(sourceURL, true);
 
             String[] preservedExts = getOptions().getPreservedConflictFileExtensions();
-            SVNUpdateEditor editor = new SVNUpdateEditor(info, url.toString(), 
-                                                         isLeaveConflictsUnresolved(), 
+            SVNUpdateEditor editor = new SVNUpdateEditor(info, url.toString(),                                                         
                                                          force, depth, preservedExts, 
-                                                         getConflictHandler(), null);
+                                                         null);
             String target = "".equals(info.getTargetName()) ? null : info.getTargetName();
             repository.update(url, revNumber, target, depth, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
 
