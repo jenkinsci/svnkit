@@ -26,8 +26,8 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.wc.ISVNMerger;
-import org.tmatesoft.svn.core.wc.SVNMergeAction;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
+import org.tmatesoft.svn.core.wc.SVNMergeAction;
 import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
 import org.tmatesoft.svn.core.wc.SVNMergeResult;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -40,84 +40,26 @@ import de.regnis.q.sequence.line.QSequenceLineRAFileData;
  * @version 1.1.1
  * @author  TMate Software Ltd.
  */
-public class DefaultSVNMerger implements ISVNMerger {
+public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
     
-    private byte[] myStart;
-    private byte[] mySeparator;
-    private byte[] myEnd;
 
     public DefaultSVNMerger(byte[] start, byte[] sep, byte[] end) {
-        myStart = start;
-        mySeparator = sep;
-        myEnd = end;
+        super(start, sep, end);
     }
 
-    public SVNMergeResult merge(SVNMergeFileSet files, boolean binary, boolean dryRun, SVNDiffOptions options) throws SVNException {
-        SVNStatusType status;
-        if (binary) {
-            status = SVNStatusType.CONFLICTED;
-        } else {
-            status = mergeText(files.getBaseFile(), files.getLocalFile(), files.getRepositoryFile(), options, files.getResultFile());
-        }
-        if (!binary && status != SVNStatusType.CONFLICTED) {
-            // compare merge result with 'wcFile' (in case of text and no conflict).
-            boolean isSameContents = SVNFileUtil.compareFiles(files.getWCFile(), files.getResultFile(), null);
-            status = isSameContents ? SVNStatusType.UNCHANGED : status;
-        }
-        return SVNMergeResult.createMergeResult(status, null);
-    }
-
-    public SVNMergeAction getMergeAction(SVNMergeFileSet files, boolean binary, SVNMergeResult mergeResult) throws SVNException {
-        if (mergeResult.getMergeStatus() == SVNStatusType.CONFLICTED) {
+    public SVNMergeAction getMergeAction(SVNMergeFileSet files) throws SVNException {
+        if (files.getMergeResult().getMergeStatus() == SVNStatusType.CONFLICTED) {
             return SVNMergeAction.MARK_CONFLICTED;
         }
         return SVNMergeAction.CHOOSE_MERGED_FILE;
     }
 
-    public SVNMergeResult processMergedFiles(SVNMergeFileSet files, boolean binary, SVNMergeResult mergeResult, SVNMergeAction mergeAction) throws SVNException {
-        Map command = new HashMap();
-        SVNLog log = files.getLog();
-
-        if (mergeAction == SVNMergeAction.MARK_CONFLICTED || (files.isBinary() && mergeAction == SVNMergeAction.CHOOSE_MERGED_FILE)) {
-            if (binary) {
-                handleBinaryConflict(files);
-            } else {
-                handleTextConflict(files);
-            }                
-        } else if (mergeAction == SVNMergeAction.CHOOSE_BASE) {
-            command.put(SVNLog.NAME_ATTR, files.getBasePath());
-            command.put(SVNLog.DEST_ATTR, files.getWCPath());
-            log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
-            command.clear();
-            mergeResult = SVNMergeResult.createMergeResult(SVNStatusType.MERGED, null);
-        } else if (mergeAction == SVNMergeAction.CHOOSE_REPOSITORY) {
-            command.put(SVNLog.NAME_ATTR, files.getRepositoryPath());
-            command.put(SVNLog.DEST_ATTR, files.getWCPath());
-            log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
-            command.clear();
-            mergeResult = SVNMergeResult.createMergeResult(SVNStatusType.MERGED, null);
-        } else if (mergeAction == SVNMergeAction.CHOOSE_WORKING) {
-            mergeResult = SVNMergeResult.createMergeResult(SVNStatusType.MERGED, null);
-        } else if (mergeAction == SVNMergeAction.CHOOSE_MERGED_FILE || mergeAction == SVNMergeAction.MARK_RESOLVED) {
-            if (mergeAction == SVNMergeAction.CHOOSE_MERGED_FILE && mergeResult.getMergeStatus() != SVNStatusType.CONFLICTED) {
-                handleMerge(files, mergeResult);
-            } else {
-                if (!files.isBinary()) {
-                    command.put(SVNLog.NAME_ATTR, files.getResultPath());
-                    command.put(SVNLog.DEST_ATTR, files.getWCPath());
-                    log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
-                    command.clear();
-                }
-                mergeResult = SVNMergeResult.createMergeResult(SVNStatusType.MERGED, null);
-            }
-        } 
-        postProcessMergedFiles(files);
-        
-        return mergeResult;
+    protected SVNStatusType mergeBinary(File baseFile, File localFile, File repositoryFile, SVNDiffOptions options, File resultFile) throws SVNException {
+        return SVNStatusType.CONFLICTED;
     }
 
     protected SVNStatusType mergeText(File baseFile, File localFile, File latestFile, SVNDiffOptions options, File resultFile) throws SVNException {
-        FSMergerBySequence merger = new FSMergerBySequence(myStart, mySeparator, myEnd);
+        FSMergerBySequence merger = new FSMergerBySequence(getConflictStartMarker(), getConflictSeparatorMarker(), getConflictEndMarker());
         int mergeResult = 0;
         RandomAccessFile localIS = null;
         RandomAccessFile latestIS = null;
@@ -151,8 +93,43 @@ public class DefaultSVNMerger implements ISVNMerger {
         }
         return status;
     }
+    
+    protected SVNMergeResult handleChooseBase(SVNMergeFileSet files) throws SVNException {
+        Map command = new HashMap();
+        SVNLog log = files.getLog();
 
-    protected void handleBinaryConflict(SVNMergeFileSet files) throws SVNException {
+        command.put(SVNLog.NAME_ATTR, files.getBasePath());
+        command.put(SVNLog.DEST_ATTR, files.getWCPath());
+        log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
+        command.clear();
+        return SVNMergeResult.createMergeResult(SVNStatusType.MERGED, null);
+    }
+    
+    protected SVNMergeResult handleChooseRepository(SVNMergeFileSet files) throws SVNException {
+        Map command = new HashMap();
+        SVNLog log = files.getLog();
+        
+        command.put(SVNLog.NAME_ATTR, files.getRepositoryPath());
+        command.put(SVNLog.DEST_ATTR, files.getWCPath());
+        log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
+        command.clear();
+
+        return SVNMergeResult.createMergeResult(SVNStatusType.MERGED, null);
+    }
+    
+    protected SVNMergeResult handleChooseWorking(SVNMergeFileSet files) throws SVNException {
+        return SVNMergeResult.createMergeResult(SVNStatusType.MERGED, null);        
+    }
+
+    protected SVNMergeResult handleMarkConflicted(SVNMergeFileSet files) throws SVNException {
+        if (files.isBinary()) {
+            return handleMarkBinaryConflicted(files);
+        }
+        return handleMarkTextConflicted(files);                
+
+    }
+
+    protected SVNMergeResult handleMarkBinaryConflicted(SVNMergeFileSet files) throws SVNException {
         Map command = new HashMap();
         File root = files.getAdminArea().getRoot();
         SVNLog log = files.getLog();
@@ -178,14 +155,23 @@ public class DefaultSVNMerger implements ISVNMerger {
         String newPath = SVNFileUtil.getBasePath(newFile);
         String oldPath = SVNFileUtil.getBasePath(oldFile);
         
-        command.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_NEW), newPath);
-        command.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_OLD), oldPath);
+        makeBinaryConflictEntry(files, newPath, oldPath);
+
+        return SVNMergeResult.createMergeResult(SVNStatusType.CONFLICTED, null);
+    }
+    
+    protected void makeBinaryConflictEntry(SVNMergeFileSet files, String newFilePath, String oldFilePath) throws SVNException {
+        Map command = new HashMap();
+        SVNLog log = files.getLog();
+
+        command.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_NEW), newFilePath);
+        command.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_OLD), oldFilePath);
         log.logChangedEntryProperties(files.getWCPath(), command);
         command.clear();
         files.getAdminArea().saveEntries(false);
     }
 
-    protected void handleTextConflict(SVNMergeFileSet files) throws SVNException {
+    protected SVNMergeResult handleMarkTextConflicted(SVNMergeFileSet files) throws SVNException {
         Map command = new HashMap();
         File root = files.getAdminArea().getRoot();
         SVNLog log = files.getLog();
@@ -251,38 +237,65 @@ public class DefaultSVNMerger implements ISVNMerger {
             log.addCommand(SVNLog.DELETE, command, false);
             command.clear();
         }
+        makeTextConflictEntry(files, minePath, newPath, oldPath);
+        
+        return SVNMergeResult.createMergeResult(SVNStatusType.CONFLICTED, null);
+    }
+
+    protected void makeTextConflictEntry(SVNMergeFileSet files, String mineFilePath, String newFilePath, String oldFilePath) throws SVNException {
+        Map command = new HashMap();
+        SVNLog log = files.getLog();
         
         command.put(SVNLog.NAME_ATTR, files.getResultPath());
         command.put(SVNLog.DEST_ATTR, files.getWCPath());
         command.put(SVNLog.ATTR2, files.getWCPath());
         log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
         command.clear();
-
-        command.put(SVNLog.NAME_ATTR, files.getResultPath());
-        log.addCommand(SVNLog.DELETE, command, false);
-        command.clear();
-
         
-        command.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_WRK), minePath);
-        command.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_NEW), newPath);
-        command.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_OLD), oldPath);
+        command.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_WRK), mineFilePath);
+        command.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_NEW), newFilePath);
+        command.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_OLD), oldFilePath);
         log.logChangedEntryProperties(files.getWCPath(), command);
         command.clear();
     }
     
-    protected void handleMerge(SVNMergeFileSet files, SVNMergeResult mergeResult) throws SVNException {
+    protected SVNMergeResult handleChooseMerged(SVNMergeFileSet files) throws SVNException {
         Map command = new HashMap();
         SVNLog log = files.getLog();
-
-        if (mergeResult.getMergeStatus() != SVNStatusType.UNCHANGED) {
+        SVNMergeResult mergeResult = files.getMergeResult();
+        if (mergeResult.getMergeStatus() != SVNStatusType.CONFLICTED) {
+            // do normal merge.
+            if (files.getMergeResult().getMergeStatus() != SVNStatusType.UNCHANGED) {
+                command.put(SVNLog.NAME_ATTR, files.getResultPath());
+                command.put(SVNLog.DEST_ATTR, files.getWCPath());
+                log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
+                command.clear();
+            }
+            return files.getMergeResult();
+        } else if (files.isBinary()) {
+            // this action is not applicable for binary conflited files.
+            return handleMarkConflicted(files);
+        } else {
+            // for text file we could use merged version in case of conflict.
             command.put(SVNLog.NAME_ATTR, files.getResultPath());
             command.put(SVNLog.DEST_ATTR, files.getWCPath());
             log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
             command.clear();
+            return SVNMergeResult.createMergeResult(SVNStatusType.MERGED, null);
         }
     }
+    
 
-    protected void postProcessMergedFiles(SVNMergeFileSet files) throws SVNException {
+    protected SVNMergeResult handleMarkResolved(SVNMergeFileSet files) throws SVNException {
+        if (!files.isBinary()) {
+            // same as choose merged.
+            return handleChooseMerged(files);
+        }
+        // same as choose working.
+        return handleChooseWorking(files);
+    }
+
+    protected void postMergeCleanup(SVNMergeFileSet files) throws SVNException {
         Map command = new HashMap();
         SVNLog log = files.getLog();
 

@@ -731,13 +731,16 @@ public abstract class SVNAdminArea {
                 localPath, SVNFileUtil.getBasePath(latest), SVNFileUtil.getBasePath(resultFile), mimeType, isBinary);
         mergeFileSet.setMergeLabels(baseLabel, localLabel, latestLabel);
         
-        SVNMergeResult mergeResult = merger.merge(mergeFileSet, SVNProperty.isBinaryMimeType(mimeType), dryRun, options); 
-
+        SVNMergeResult mergeResult = merger.merge(mergeFileSet, dryRun, options); 
+        
         if (dryRun) {
             SVNFileUtil.deleteFile(resultFile);
         } else {
-            SVNMergeAction mergeAction = merger.getMergeAction(mergeFileSet, isBinary, mergeResult);
-            mergeResult = merger.processMergedFiles(mergeFileSet, isBinary, mergeResult, mergeAction);
+            mergeFileSet.setMergeResult(mergeResult);
+            SVNMergeAction mergeAction = merger.getMergeAction(mergeFileSet);
+            
+            mergeFileSet.setMergeAction(mergeAction);
+            mergeResult = merger.processMergedFiles(mergeFileSet);
         }
         
         if (saveLog) {

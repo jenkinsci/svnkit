@@ -28,9 +28,9 @@ import org.tmatesoft.svn.core.SVNException;
  */
 public interface ISVNMerger {
     
-    public SVNMergeResult merge(SVNMergeFileSet files, boolean binary, boolean dryRun, SVNDiffOptions options) throws SVNException;
+    public SVNMergeResult merge(SVNMergeFileSet files, boolean dryRun, SVNDiffOptions options) throws SVNException;
     
-    public SVNMergeAction getMergeAction(SVNMergeFileSet files, boolean binary, SVNMergeResult mergeResult) throws SVNException;
+    public SVNMergeAction getMergeAction(SVNMergeFileSet files) throws SVNException;
     
-    public SVNMergeResult processMergedFiles(SVNMergeFileSet files, boolean binary, SVNMergeResult mergeResult, SVNMergeAction mergeAction) throws SVNException;
+    public SVNMergeResult processMergedFiles(SVNMergeFileSet files) throws SVNException;
 }
