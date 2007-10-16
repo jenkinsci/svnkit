@@ -49,7 +49,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.wc.ISVNCommitParameters;
 import org.tmatesoft.svn.core.wc.ISVNMerger;
 import org.tmatesoft.svn.core.wc.ISVNMergerFactory;
-import org.tmatesoft.svn.core.wc.SVNMergeAction;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
 import org.tmatesoft.svn.core.wc.SVNMergeResult;
@@ -732,17 +731,7 @@ public abstract class SVNAdminArea {
         mergeFileSet.setMergeLabels(baseLabel, localLabel, latestLabel);
         
         SVNMergeResult mergeResult = merger.merge(mergeFileSet, dryRun, options); 
-        
-        if (dryRun) {
-            SVNFileUtil.deleteFile(resultFile);
-        } else {
-            mergeFileSet.setMergeResult(mergeResult);
-            SVNMergeAction mergeAction = merger.getMergeAction(mergeFileSet);
-            
-            mergeFileSet.setMergeAction(mergeAction);
-            mergeResult = merger.processMergedFiles(mergeFileSet);
-        }
-        
+
         if (saveLog) {
             log.save();
         }

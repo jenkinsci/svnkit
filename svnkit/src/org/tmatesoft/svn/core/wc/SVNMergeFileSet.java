@@ -37,9 +37,7 @@ public class SVNMergeFileSet {
     private String myLocalLabel;
     private String myBaseLabel;
     private String myRepositoryLabel;
-    private SVNMergeResult myMergeResult;
-    private SVNMergeAction myMergeAction;
-    
+
     public SVNMergeFileSet(SVNAdminArea adminArea, SVNLog log,
             String basePath, 
             String localPath, 
@@ -64,23 +62,7 @@ public class SVNMergeFileSet {
         myBaseLabel = baseLabel == null ? ".old" : baseLabel;
         myRepositoryLabel = repositoryLabel == null ? ".new" : repositoryLabel;
     }
-    
-    public void setMergeResult(SVNMergeResult result) {
-        myMergeResult = result;
-    }
-    
-    public SVNMergeResult getMergeResult() {
-        return myMergeResult;
-    }
 
-    public void setMergeAction(SVNMergeAction action) {
-        myMergeAction = action;
-    }
-    
-    public SVNMergeAction getMergeAction() {
-        return myMergeAction;
-    }
-    
     public SVNLog getLog() {
         return myLog;
     }

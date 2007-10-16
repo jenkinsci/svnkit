@@ -16,7 +16,6 @@ import java.io.File;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNMerger;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
-import org.tmatesoft.svn.core.wc.SVNMergeAction;
 import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
 import org.tmatesoft.svn.core.wc.SVNMergeResult;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -62,46 +61,17 @@ public abstract class AbstractSVNMerger implements ISVNMerger {
             boolean isSameContents = SVNFileUtil.compareFiles(files.getWCFile(), files.getResultFile(), null);
             status = isSameContents ? SVNStatusType.UNCHANGED : status;
         }
-        return SVNMergeResult.createMergeResult(status, null);
+	    final SVNMergeResult result = SVNMergeResult.createMergeResult(status, null);
+	    if (dryRun) {
+	        SVNFileUtil.deleteFile(files.getResultFile());
+		    return result;
+	    }
+        return processMergedFiles(files, result);
     }
 
-    public SVNMergeResult processMergedFiles(SVNMergeFileSet files) throws SVNException {
-        SVNMergeResult mergeResult = files.getMergeResult();
-        SVNMergeAction mergeAction = files.getMergeAction();
-
-        if (mergeAction == SVNMergeAction.MARK_CONFLICTED) {
-            mergeResult = handleMarkConflicted(files);
-        } else if (mergeAction == SVNMergeAction.CHOOSE_BASE) {
-            mergeResult = handleChooseBase(files);
-        } else if (mergeAction == SVNMergeAction.CHOOSE_REPOSITORY) {
-            mergeResult = handleChooseRepository(files);
-        } else if (mergeAction == SVNMergeAction.CHOOSE_WORKING) {
-            mergeResult = handleChooseWorking(files);
-        } else if (mergeAction == SVNMergeAction.CHOOSE_MERGED_FILE) {
-            mergeResult = handleChooseMerged(files);
-        } else if (mergeAction == SVNMergeAction.MARK_RESOLVED) {
-            mergeResult = handleMarkResolved(files);
-        }
-        
-        postMergeCleanup(files);
-        return mergeResult;
-    }
+    protected abstract SVNMergeResult processMergedFiles(SVNMergeFileSet files, SVNMergeResult mergeResult) throws SVNException;
 
     protected abstract SVNStatusType mergeText(File baseFile, File localFile, File repositoryFile, SVNDiffOptions options, File resultFile) throws SVNException;
 
     protected abstract SVNStatusType mergeBinary(File baseFile, File localFile, File repositoryFile, SVNDiffOptions options, File resultFile) throws SVNException;
-
-    protected abstract SVNMergeResult handleMarkConflicted(SVNMergeFileSet files) throws SVNException;
-
-    protected abstract SVNMergeResult handleMarkResolved(SVNMergeFileSet files) throws SVNException;;
-
-    protected abstract SVNMergeResult handleChooseMerged(SVNMergeFileSet files) throws SVNException;
-
-    protected abstract SVNMergeResult handleChooseWorking(SVNMergeFileSet files) throws SVNException;
-
-    protected abstract SVNMergeResult handleChooseRepository(SVNMergeFileSet files) throws SVNException;
-
-    protected abstract SVNMergeResult handleChooseBase(SVNMergeFileSet files) throws SVNException;
-
-    protected abstract void postMergeCleanup(SVNMergeFileSet files) throws SVNException;
 }

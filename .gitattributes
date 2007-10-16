@@ -234,7 +234,6 @@ svnkit/src/org/tmatesoft/svn/core/wc/SVNCompositePathList.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/SVNConflictAction.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/SVNConflictReason.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/SVNCopySource.java -text
-svnkit/src/org/tmatesoft/svn/core/wc/SVNMergeAction.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/SVNPathList.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/SVNResolveAccept.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/package.html -text

@@ -240,8 +240,12 @@ public class SVNTranslator {
             File tmpFile = SVNAdminUtil.createTmpFile(dir);
             copyAndTranslate(target, tmpFile, eol, null, false, false, eol == null);
             return tmpFile;
-        } 
-        return target;
+        }
+        
+        File tmpFile = SVNAdminUtil.createTmpFile(dir);
+        SVNFileUtil.copyFile(target, tmpFile, false);
+        
+        return tmpFile;
     }
     
     public static File detranslateWorkingCopy(SVNAdminArea dir, String name, Map propDiff, boolean force) throws SVNException {
