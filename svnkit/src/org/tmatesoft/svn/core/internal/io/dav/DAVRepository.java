@@ -1034,29 +1034,6 @@ public class DAVRepository extends SVNRepository {
         }
     }
 
-    public void update(long revision, String target, SVNDepth depth, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
-        try {
-            openConnection();
-            StringBuffer request = DAVEditorHandler.generateEditorRequest(myConnection, null, getLocation().toString(), 
-                    revision, target, null, depth, false, false, true, false, reporter);
-            DAVEditorHandler handler = new DAVEditorHandler(editor, true);
-            String bcPath = SVNEncodingUtil.uriEncode(getLocation().getPath());
-            try {
-                bcPath = DAVUtil.getVCCPath(myConnection, this, bcPath);
-            } catch (SVNException e) {
-                // no need to call close edit here, I suppose,
-                // no editing has been started yet.
-                throw e;
-            }
-            HTTPStatus status = myConnection.doReport(bcPath, request, handler);
-            if (status.getError() != null) {
-                SVNErrorManager.error(status.getError());
-            }
-        } finally {
-            closeConnection();
-        }
-    }
-
     public void update(long revision, String target, SVNDepth depth, boolean sendCopyFromArgs, 
             ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
         try {

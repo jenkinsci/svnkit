@@ -600,10 +600,6 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
     }
 
-    public void setLocation(SVNURL url, boolean forceReconnect) throws SVNException {
-        super.setLocation(url, forceReconnect);
-    }
-        
     public void finishReport() throws SVNException {
         try {
             myReporterContext.drive();

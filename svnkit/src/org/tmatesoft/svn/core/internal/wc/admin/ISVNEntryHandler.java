@@ -23,7 +23,7 @@ import org.tmatesoft.svn.core.SVNException;
  */
 public interface ISVNEntryHandler {
     
-    public void handleEntry(File path, SVNEntry entry, SVNAdminArea adminArea) throws SVNException;
+    public void handleEntry(File path, SVNEntry entry) throws SVNException;
     
     public void handleError(File path, SVNErrorMessage error) throws SVNException; 
 

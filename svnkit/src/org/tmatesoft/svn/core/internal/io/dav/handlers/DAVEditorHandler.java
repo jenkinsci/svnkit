@@ -217,7 +217,8 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
         if (element == UPDATE_REPORT) {
             String receiveAll = attrs.getValue(SEND_ALL_ATTR);
             if (receiveAll == null || !Boolean.valueOf(receiveAll).booleanValue()) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "'update' response format used by the server is not supported");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, 
+                        "'update' response format used by the server is not supported");
                 SVNErrorManager.error(err);
             }
         } else if (element == TARGET_REVISION) {

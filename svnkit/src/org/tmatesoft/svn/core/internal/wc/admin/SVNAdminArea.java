@@ -1529,31 +1529,6 @@ public abstract class SVNAdminArea {
         }
     }
 
-    public void walkEntries(String name, ISVNEntryHandler handler, boolean showHidden, boolean recursive) throws SVNException {
-        File path = getFile(name);
-        SVNEntry entry = getEntry(name, showHidden);
-        if (entry == null) {
-            handler.handleError(path, SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", path));
-            return;
-        }
-        if (entry.isFile()) {
-            try {
-                handler.handleEntry(path, entry, this);
-            } catch (SVNException svne) {
-                handler.handleError(path, svne.getErrorMessage());
-            }
-            return;
-        } 
-
-        if (getThisDirName().equals(name)) {
-            try {
-                walkThisDirectory(handler, showHidden, recursive);
-            } catch (SVNException svne) {
-                handler.handleError(path, svne.getErrorMessage());
-            }
-        }
-    }
-    
     public boolean isEntrySwitched(SVNEntry entry) throws SVNException {
         File entryPath = getFile(entry.getName()); 
         File parent = entryPath.getParentFile();
@@ -1587,22 +1562,23 @@ public abstract class SVNAdminArea {
         return !thisSVNURL.equals(expectedSVNURL);
     }
 
-    private void walkThisDirectory(ISVNEntryHandler handler, boolean showHidden, boolean recursive) throws SVNException {
-        File thisDir = getFile("");
+    public void walkThisDirectory(ISVNEntryHandler handler, boolean showHidden, SVNDepth depth) throws SVNException {
+        File thisDir = getRoot();
         
         SVNEntry thisEntry = getEntry(getThisDirName(), showHidden);
         if (thisEntry == null) {
-            handler.handleError(thisDir, SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "Directory ''{0}'' has no THIS_DIR entry", thisDir));
+            handler.handleError(thisDir, SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, 
+                    "Directory ''{0}'' has no THIS_DIR entry", thisDir));
             return;
         }
-        
+
         try {
-            handler.handleEntry(thisDir, thisEntry, this);
+            handler.handleEntry(thisDir, thisEntry);
         } catch (SVNException svne) {
             handler.handleError(thisDir, svne.getErrorMessage());
         }
         
-        if (!recursive) {
+        if (depth == SVNDepth.EMPTY) {
             return;
         }
         
@@ -1615,22 +1591,26 @@ public abstract class SVNAdminArea {
             }
 
             File childPath = getFile(entry.getName()); 
-            if (entry.isFile()) {
+            if (entry.isFile() || depth.compareTo(SVNDepth.IMMEDIATES) >= 0) {
                 try {
-                    handler.handleEntry(childPath, entry, this);
+                    handler.handleEntry(childPath, entry);
                 } catch (SVNException svne) {
                     handler.handleError(childPath, svne.getErrorMessage());
                 }
-                
-            } else if (entry.isDirectory()) {
+            } else if (entry.isDirectory() && depth.compareTo(SVNDepth.IMMEDIATES) >= 0) {
                 SVNAdminArea childArea = null;
+                SVNDepth depthBelowHere = depth;
+                if (depth == SVNDepth.IMMEDIATES) {
+                    depthBelowHere = SVNDepth.EMPTY;
+                }
+                
                 try {
                     childArea = getWCAccess().retrieve(childPath);
                 } catch (SVNException svne) {
                     handler.handleError(childPath, svne.getErrorMessage());
                 }
                 if (childArea != null) {
-                    childArea.walkThisDirectory(handler, showHidden, recursive);
+                    childArea.walkThisDirectory(handler, showHidden, depthBelowHere);
                 }
             }
         }

@@ -567,7 +567,7 @@ public class SVNCopyClient extends SVNBasicClient {
                     Map srcMergeInfo = calculateTargetMergeInfo(srcURL, null, null, "", 
                                                                 srcRevisionNumber, 
                                                                 repository);
-                    extendWCMergeInfo(dstPath, dstRootEntry.getName(), srcMergeInfo, dstArea);
+                    extendWCMergeInfo(dstPath, dstRootEntry, srcMergeInfo, dstArea);
                 } else {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Source URL ''{0}'' is from foreign repository; leaving it as a disjoint WC", srcURL);
                     SVNErrorManager.error(err);
@@ -597,7 +597,8 @@ public class SVNCopyClient extends SVNBasicClient {
                 Map srcMergeInfo = calculateTargetMergeInfo(srcURL, null, null, "", 
                                                             srcRevisionNumber, 
                                                             repository);
-                extendWCMergeInfo(dstPath, dstPath.getName(), srcMergeInfo, adminArea);
+                
+                extendWCMergeInfo(dstPath, dstEntry, srcMergeInfo, adminArea);
                 
                 dispatchEvent(SVNEventFactory.createAddedEvent(adminArea, dstAccess.getEntry(dstPath, false)));
                 revision = srcRevisionNumber;
@@ -1203,10 +1204,9 @@ public class SVNCopyClient extends SVNBasicClient {
                                                          source.getSrcPath(), 
                                                          source.getSrcRevisionNumber(), 
                                                          repository);
-                Map fileToProp = SVNPropertiesManager.getWorkingCopyPropertyValues(dirArea, 
-                                                                                   entry.getName(), 
+                Map fileToProp = SVNPropertiesManager.getWorkingCopyPropertyValues(entry, 
                                                                                    SVNProperty.MERGE_INFO, 
-                                                                                   false, 
+                                                                                   SVNDepth.EMPTY, 
                                                                                    false);
 
                 String mergeInfoString = (String) fileToProp.get(source.getPath());
@@ -1480,12 +1480,12 @@ public class SVNCopyClient extends SVNBasicClient {
         return new SVNLocationEntry(copyFromRevision, copyFromURL);
     }
 
-    private void extendWCMergeInfo(File path, String entryName, Map mergeInfo, 
-                                                     SVNAdminArea adminArea) throws SVNException {
-        Map fileToProp = SVNPropertiesManager.getWorkingCopyPropertyValues(adminArea, 
-                                                                           entryName, 
+    private void extendWCMergeInfo(File path, SVNEntry entry, Map mergeInfo, 
+            SVNAdminArea adminArea) throws SVNException {
+
+        Map fileToProp = SVNPropertiesManager.getWorkingCopyPropertyValues(entry, 
                                                                            SVNProperty.MERGE_INFO, 
-                                                                           false, 
+                                                                           SVNDepth.EMPTY, 
                                                                            false);
         String mergeInfoString = (String) fileToProp.get(path);
         Map wcMergeInfo = mergeInfo;

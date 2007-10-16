@@ -46,6 +46,8 @@ public class SVNMergeCallback extends AbstractDiffCallback {
     private String myAddedPath = null;
     private boolean myIsForce;
     private SVNDiffOptions myDiffOptions;
+    private Map myConflictedPaths;
+    
     
     public SVNMergeCallback(SVNAdminArea adminArea, SVNURL url, boolean force, boolean dryRun, 
                             SVNDiffOptions options) {
@@ -64,6 +66,10 @@ public class SVNMergeCallback extends AbstractDiffCallback {
         return false;
     }
 
+    public Map getConflictedPaths() {
+        return myConflictedPaths;
+    }
+    
     public SVNStatusType propertiesChanged(String path, Map originalProperties, Map diff) throws SVNException {
         Map regularProps = new HashMap();
         categorizeProperties(diff, regularProps, null, null);
@@ -108,7 +114,10 @@ public class SVNMergeCallback extends AbstractDiffCallback {
             if (entry != null && !entry.isScheduledForDeletion()) {
                 return SVNStatusType.OBSTRUCTED;
             }
-            if (!myIsDryRun) {
+
+            if (myIsDryRun) {
+                myAddedPath = path;
+            } else {
                 if (!mergedFile.mkdirs()) {
                     if (SVNFileType.getType(mergedFile) != SVNFileType.DIRECTORY) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create directory ''{0}''", mergedFile);
@@ -119,9 +128,6 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                 dir.getWCAccess().setEventHandler(null);                
                 SVNWCManager.add(mergedFile, dir, copyFromURL, revision);
                 dir.getWCAccess().setEventHandler(oldEventHandler);
-            }
-            if (myIsDryRun) {
-                myAddedPath = path;
             }
             return SVNStatusType.CHANGED;
         } else if (fileType == SVNFileType.DIRECTORY) {
@@ -249,6 +255,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                                                           baseLabel, latestLabel, diff, 
                                                           myIsDryRun, myDiffOptions, 
                                                           null);
+
                 dir.runLogs();
                 if (mergeResult == SVNStatusType.CONFLICTED || mergeResult == SVNStatusType.CONFLICTED_UNRESOLVED) {
                     result[0] = mergeResult;
@@ -258,6 +265,13 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                     result[0] = SVNStatusType.CHANGED;
                 } else if (mergeResult != SVNStatusType.MISSING) {
                     result[0] = SVNStatusType.UNCHANGED;
+                }
+
+                if (mergeResult == SVNStatusType.CONFLICTED) {
+                    if (myConflictedPaths == null) {
+                        myConflictedPaths = new HashMap();
+                    }
+                    myConflictedPaths.put(path, path);
                 }
             }
         } 

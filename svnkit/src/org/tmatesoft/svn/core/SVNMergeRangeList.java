@@ -50,6 +50,10 @@ public class SVNMergeRangeList {
         return myRanges.length;
     }
     
+    public boolean isEmpty() {
+        return myRanges.length == 0;
+    }
+    
     public SVNMergeRangeList dup() {
         SVNMergeRange[] ranges = new SVNMergeRange[myRanges.length];
         for (int i = 0; i < myRanges.length; i++) {

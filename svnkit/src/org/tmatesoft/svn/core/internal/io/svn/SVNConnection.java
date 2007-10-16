@@ -224,6 +224,9 @@ class SVNConnection {
         myConnector.close(myRepository);
     }
 
+//    public SVNItem readItem(InputStream is) throws SVNException {
+//    }
+    
     public Object[] read(String template, Object[] items, boolean readMalformedData) throws SVNException {
         try {
             checkConnection();

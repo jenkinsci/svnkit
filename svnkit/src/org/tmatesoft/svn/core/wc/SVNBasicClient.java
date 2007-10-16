@@ -24,6 +24,7 @@ import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -503,20 +504,14 @@ public class SVNBasicClient implements ISVNEventHandler {
                 }
                 
                 SVNMergeInfoManager.elideMergeInfo(inheritedMergeInfo, 
-                                                   mergeInfo, 
-                                                   path, 
-                                                   null, 
-                                                   access);
+                        mergeInfo, path, null, access);
             }
         }
     }
     
     protected boolean getWCOrRepositoryMergeInfo(SVNWCAccess access, Map mergeInfo, File path, 
-                                                 SVNEntry entry,  
-                                                 SVNMergeInfoInheritance inherit, 
-                                                 boolean indirect,
-                                                 boolean reposOnly,
-                                                 SVNRepository repository) throws SVNException {
+            SVNEntry entry, SVNMergeInfoInheritance inherit, boolean indirect,
+            boolean reposOnly, SVNRepository repository) throws SVNException {
         entry = entry == null ? access.getVersionedEntry(path, false) : entry;
         if (entry.getURL() == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, 
@@ -535,20 +530,23 @@ public class SVNBasicClient implements ISVNEventHandler {
         
         if (mergeInfo.isEmpty()) {
             if (!entry.isScheduledForAddition()) {
-                SVNAdminArea adminArea = entry.getAdminArea();
-                Map fileToProp = SVNPropertiesManager.getWorkingCopyPropertyValues(adminArea, 
-                                                                                   entry.getName(), 
+                Map fileToProp = SVNPropertiesManager.getWorkingCopyPropertyValues(entry, 
                                                                                    SVNProperty.MERGE_INFO, 
-                                                                                   false, 
+                                                                                   SVNDepth.EMPTY, 
                                                                                    true);
                 String mergeInfoProp = (String) fileToProp.get(path);
                 if (mergeInfoProp == null) {
-                    repository = repository == null ? createRepository(url, true) : repository;
-                    String repositoryPath = entry.getURL().substring(entry.
-                                                                     getRepositoryRoot().length());
-                    Map pathToMergeInfo = repository.getMergeInfo(new String[] {repositoryPath}, 
-                                                                  revision, 
-                                                                  inherit);
+                    boolean closeRepository = repository == null;
+                    Map pathToMergeInfo = null;
+                    String repositoryPath = entry.getURL().substring(entry.getRepositoryRoot().length());
+                    try {
+                        repository = repository == null ? createRepository(url, false) : repository;
+                        pathToMergeInfo = repository.getMergeInfo(new String[] { repositoryPath }, revision, inherit);
+                    } finally {
+                        if (closeRepository) {
+                            repository.closeSession();
+                        }
+                    }
                     
                     SVNMergeInfo reposMergeInfo = (SVNMergeInfo) pathToMergeInfo.get(repositoryPath); 
                     if (reposMergeInfo != null) {
@@ -597,10 +595,9 @@ public class SVNBasicClient implements ISVNEventHandler {
                     inherit = SVNMergeInfoInheritance.INHERITED;
                 } else {
                     SVNAdminArea adminArea = entry.getAdminArea();
-                    Map fileToProp = SVNPropertiesManager.getWorkingCopyPropertyValues(adminArea, 
-                                                                                       entry.getName(), 
+                    Map fileToProp = SVNPropertiesManager.getWorkingCopyPropertyValues(entry, 
                                                                                        SVNProperty.MERGE_INFO, 
-                                                                                       false, 
+                                                                                       SVNDepth.EMPTY, 
                                                                                        base); 
                     
                     String propValue = (String) fileToProp.get(path);

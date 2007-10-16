@@ -19,6 +19,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.StringTokenizer;
 
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -234,11 +235,13 @@ public class SVNPropertiesManager {
         return properties;
     }
     
-    public static Map getWorkingCopyPropertyValues(SVNAdminArea adminArea, String entryName, final String propName, boolean recursive, final boolean base) throws SVNException {
+    public static Map getWorkingCopyPropertyValues(SVNEntry entry, final String propName, 
+            SVNDepth depth, final boolean base) throws SVNException {
         final Map pathsToPropValues = new HashMap();
         
         ISVNEntryHandler handler = new ISVNEntryHandler() {
-            public void handleEntry(File path, SVNEntry entry, SVNAdminArea adminArea) throws SVNException {
+            public void handleEntry(File path, SVNEntry entry) throws SVNException {
+                SVNAdminArea adminArea = entry.getAdminArea();
                 if (entry.isDirectory() && !entry.getName().equals(adminArea.getThisDirName())) {
                     return;
                 }
@@ -273,7 +276,19 @@ public class SVNPropertiesManager {
             }
         };
         
-        adminArea.walkEntries(entryName, handler, false, recursive);
+        if (depth == SVNDepth.UNKNOWN) {
+            depth = SVNDepth.INFINITY;
+        }
+        
+        SVNAdminArea adminArea = entry.getAdminArea();
+        File path = adminArea.getFile(entry.getName());
+        if (entry.isDirectory() && depth.compareTo(SVNDepth.FILES) >= 0) {
+            SVNWCAccess wcAccess = adminArea.getWCAccess(); 
+            wcAccess.walkEntries(path, handler, false, depth);    
+        } else {
+            handler.handleEntry(path, entry);
+        }
+        
         return pathsToPropValues;
     }
 

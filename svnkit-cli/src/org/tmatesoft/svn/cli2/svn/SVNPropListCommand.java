@@ -171,6 +171,8 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
         }
     }
 
+    //TODO: in future replace all calls to this method within SVNProplistCommand with 
+    //calls to SVNXMLCommand.printXMLPropHash()
     protected void printCollectedPropertiesXML(boolean isURL) {
         Map map = isURL ? getURLProperties() : getPathProperties();
 
