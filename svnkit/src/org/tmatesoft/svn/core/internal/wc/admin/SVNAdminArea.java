@@ -726,8 +726,8 @@ public abstract class SVNAdminArea {
         File resultFile = SVNAdminUtil.createTmpFile(this);
 
         SVNMergeFileSet mergeFileSet = new SVNMergeFileSet(this, log, 
-                SVNFileUtil.getBasePath(base), SVNFileUtil.getBasePath(tmpTarget), 
-                localPath, SVNFileUtil.getBasePath(latest), SVNFileUtil.getBasePath(resultFile), mimeType, isBinary);
+                base, tmpTarget, localPath, latest, resultFile, mimeType, isBinary);
+
         mergeFileSet.setMergeLabels(baseLabel, localLabel, latestLabel);
         
         SVNMergeResult mergeResult = merger.merge(mergeFileSet, dryRun, options); 

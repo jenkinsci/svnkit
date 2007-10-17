@@ -13,6 +13,7 @@ package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
 
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
 
@@ -38,23 +39,33 @@ public class SVNMergeFileSet {
     private String myBaseLabel;
     private String myRepositoryLabel;
 
+    private File myLocalFile;
+    private File myBaseFile;
+    private File myRepositoryFile;
+    private File myMergeResultFile;
+
     public SVNMergeFileSet(SVNAdminArea adminArea, SVNLog log,
-            String basePath, 
-            String localPath, 
+            File baseFile, 
+            File localFile, 
             String wcPath, 
-            String reposPath, 
-            String resultPath, 
+            File reposFile, 
+            File resultFile, 
             String mimeType, 
             boolean binary) {
         myAdminArea = adminArea;
         myLog = log;
-        myLocalFilePath = localPath;
-        myBaseFilePath = basePath;
-        myRepositoryFilePath = reposPath;
+        myLocalFile = localFile;
+        myBaseFile = baseFile;
+        myRepositoryFile = reposFile;
         myWCFilePath = wcPath;
-        myMergeResultFilePath = resultPath;
+        myMergeResultFile = resultFile;
         myMimeType = mimeType;
         myIsBinary = binary;
+        
+        myBaseFilePath = SVNFileUtil.getBasePath(myBaseFile);
+        myLocalFilePath = SVNFileUtil.getBasePath(myLocalFile);
+        myRepositoryFilePath = SVNFileUtil.getBasePath(myRepositoryFile);
+        myMergeResultFilePath = SVNFileUtil.getBasePath(myMergeResultFile);
     }
     
     public void setMergeLabels(String baseLabel, String localLabel, String repositoryLabel) {
@@ -100,7 +111,7 @@ public class SVNMergeFileSet {
     }
     
     public File getBaseFile() {
-        return myAdminArea.getFile(myBaseFilePath);
+        return myBaseFile;
     }
     
     public File getWCFile() {
@@ -108,15 +119,15 @@ public class SVNMergeFileSet {
     }
     
     public File getLocalFile() {
-        return myAdminArea.getFile(myLocalFilePath);
+        return myLocalFile;
     }
     
     public File getRepositoryFile() {
-        return myAdminArea.getFile(myRepositoryFilePath);
+        return myRepositoryFile;
     }
     
     public File getResultFile() {
-        return myAdminArea.getFile(myMergeResultFilePath);
+        return myMergeResultFile;
     }
     
     public boolean isBinary() {
