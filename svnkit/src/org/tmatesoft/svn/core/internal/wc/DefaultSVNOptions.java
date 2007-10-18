@@ -32,6 +32,7 @@ import java.util.regex.PatternSyntaxException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.svn.ISVNConnector;
 import org.tmatesoft.svn.core.internal.io.svn.SVNTunnelConnector;
+import org.tmatesoft.svn.core.wc.ISVNConflictResolver;
 import org.tmatesoft.svn.core.wc.ISVNMerger;
 import org.tmatesoft.svn.core.wc.ISVNMergerFactory;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
@@ -59,6 +60,7 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
     private static final String EDITOR_CMD = "editor-cmd";
     private static final String NO_UNLOCK = "no-unlock";
     private static final String PRESERVED_CONFLICT_FILE_EXTENSIONS = "preserved-conflict-file-exts";
+    private static final String INTERACTIVE_COFLICTS = "interactive-conflicts";
     
     private static final String DEFAULT_IGNORES = "*.o *.lo *.la #*# .*.rej *.rej .*~ *~ .#* .DS_Store";    
     private static final String YES = "yes";
@@ -71,6 +73,7 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
     private File myConfigDirectory;
     private SVNCompositeConfigFile myConfigFile;
     private ISVNMergerFactory myMergerFactory;
+    private ISVNConflictResolver myConflictResolver;
     
     private String myKeywordLocale = DEFAULT_LOCALE; 
     private String myKeywordTimezone = DEFAULT_TIMEZONE;
@@ -245,6 +248,15 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
         getConfigFile().setPropertyValue(AUTOPROPS_GROUP, pattern, properties, !myIsReadonly);
     }
 
+    public boolean isInteractiveConflictResolution() {
+        String value = getConfigFile().getPropertyValue(MISCELLANY_GROUP, INTERACTIVE_COFLICTS);
+        return getBooleanValue(value, true);
+    }
+
+    public void setInteractiveConflictResolution(boolean interactive) {
+        getConfigFile().setPropertyValue(MISCELLANY_GROUP, INTERACTIVE_COFLICTS, interactive ? YES : NO, !myIsReadonly);
+    }
+
     public Map applyAutoProperties(File file, Map target) {
         String fileName = file.getName();
         target = target == null ? new HashMap() : target;
@@ -304,6 +316,10 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
             return;
         }
         getConfigFile().setPropertyValue(SVNKIT_GROUP, propertyName, propertyValue, !myIsReadonly);
+    }
+    
+    public void setConflictResolved(ISVNConflictResolver resolver) {
+        myConflictResolver = resolver;
     }
 
     private SVNCompositeConfigFile getConfigFile() {
@@ -383,7 +399,7 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
     }
 
     public ISVNMerger createMerger(byte[] conflictStart, byte[] conflictSeparator, byte[] conflictEnd) {
-        return new DefaultSVNMerger(conflictStart, conflictSeparator, conflictEnd);
+        return new DefaultSVNMerger(conflictStart, conflictSeparator, conflictEnd, myConflictResolver);
     }
 
     public ISVNConnector createTunnelConnector(SVNURL url) {

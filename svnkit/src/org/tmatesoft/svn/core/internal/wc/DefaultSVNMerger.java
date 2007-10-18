@@ -22,9 +22,9 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
+import org.tmatesoft.svn.core.wc.ISVNConflictResolver;
 import org.tmatesoft.svn.core.wc.ISVNMerger;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
@@ -40,10 +40,16 @@ import de.regnis.q.sequence.line.QSequenceLineRAFileData;
  * @author  TMate Software Ltd.
  */
 public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
-    
+
+    private ISVNConflictResolver myConflictCallback;
 
     public DefaultSVNMerger(byte[] start, byte[] sep, byte[] end) {
+        this(start, sep, end, null);
+    }
+
+    public DefaultSVNMerger(byte[] start, byte[] sep, byte[] end, ISVNConflictResolver callback) {
         super(start, sep, end);
+        myConflictCallback = callback;
     }
 
     protected SVNStatusType mergeBinary(File baseFile, File localFile, File repositoryFile, SVNDiffOptions options, File resultFile) throws SVNException {
@@ -109,6 +115,19 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
 
 	protected DefaultSVNMergerAction getMergeAction(SVNMergeFileSet files, SVNMergeResult mergeResult) throws SVNException {
 	    if (mergeResult.getMergeStatus() == SVNStatusType.CONFLICTED) {
+	        if (myConflictCallback != null) {
+	            int action = myConflictCallback.handleConflict(files);
+	            switch (action) {
+	                case ISVNConflictResolver.CHOOSE_BASE:
+                        return DefaultSVNMergerAction.CHOOSE_BASE;                        
+                    case ISVNConflictResolver.CHOOSE_MERGED:
+                        return DefaultSVNMergerAction.CHOOSE_MERGED_FILE;                        
+                    case ISVNConflictResolver.CHOOSE_MINE:
+                        return DefaultSVNMergerAction.CHOOSE_WORKING;                        
+                    case ISVNConflictResolver.CHOOSE_REPOSITORY:
+                        return DefaultSVNMergerAction.CHOOSE_REPOSITORY;                        
+	            }
+	        }
 	        return DefaultSVNMergerAction.MARK_CONFLICTED;
 	    }
 	    return DefaultSVNMergerAction.CHOOSE_MERGED_FILE;
@@ -138,6 +157,9 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
     }
     
     protected SVNMergeResult handleChooseWorking(SVNMergeFileSet files) throws SVNException {
+        if (files == null) {
+            SVNErrorManager.cancel("");
+        }
         return SVNMergeResult.createMergeResult(SVNStatusType.MERGED, null);        
     }
 
@@ -204,45 +226,20 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
         String oldPath = SVNFileUtil.getBasePath(oldFile);
         String minePath = SVNFileUtil.getBasePath(mineFile);
         
-        File tmpOldFile = files.getBaseFile();
-        
-        if (!SVNPathUtil.isChildOf(root, tmpOldFile)) {
-            tmpOldFile = SVNAdminUtil.createTmpFile(files.getAdminArea());
-            SVNFileUtil.copyFile(files.getBaseFile(), tmpOldFile, true);
-        }
-
-        File tmpNewFile = files.getRepositoryFile();
-        if (!SVNPathUtil.isChildOf(root, tmpNewFile)) {
-            tmpNewFile = SVNAdminUtil.createTmpFile(files.getAdminArea());
-            SVNFileUtil.copyFile(files.getRepositoryFile(), tmpNewFile, true);
-        }
-        
-        String basePath = SVNFileUtil.getBasePath(tmpOldFile);
+        String basePath = files.getBasePath();
         command.put(SVNLog.NAME_ATTR, basePath);
         command.put(SVNLog.DEST_ATTR, oldPath);
         command.put(SVNLog.ATTR2, files.getWCPath());
         log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
         command.clear();
 
-        String latestPath = SVNFileUtil.getBasePath(tmpNewFile);
+        String latestPath = files.getRepositoryPath();
         command.put(SVNLog.NAME_ATTR, latestPath);
         command.put(SVNLog.DEST_ATTR, newPath);
         command.put(SVNLog.ATTR2, files.getWCPath());
         log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
         command.clear();
 
-        if (!tmpOldFile.equals(files.getBaseFile())) {
-            command.put(SVNLog.NAME_ATTR, basePath);
-            log.addCommand(SVNLog.DELETE, command, false);
-            command.clear();
-        }
-
-        if (!tmpNewFile.equals(files.getRepositoryFile())) {
-            command.put(SVNLog.NAME_ATTR, latestPath);
-            log.addCommand(SVNLog.DELETE, command, false);
-            command.clear();
-        }
-        
         File tmpTargetCopy = SVNTranslator.getTranslatedFile(files.getAdminArea(), files.getWCPath(), files.getWCFile(), 
                                                              false, false, false, true);
         String tmpTargetCopyPath = SVNFileUtil.getBasePath(tmpTargetCopy);

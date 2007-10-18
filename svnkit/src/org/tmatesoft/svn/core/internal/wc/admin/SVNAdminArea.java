@@ -371,11 +371,11 @@ public abstract class SVNAdminArea {
         }
 
         String autoResolveSource = null;
-        if (accept == SVNResolveAccept.LEFT) {
+        if (accept == SVNResolveAccept.BASE) {
             autoResolveSource = entry.getConflictOld(); 
-        } else if (accept == SVNResolveAccept.WORKING) {
+        } else if (accept == SVNResolveAccept.MINE) {
             autoResolveSource = entry.getConflictWorking();
-        } else if (accept == SVNResolveAccept.RIGHT) {
+        } else if (accept == SVNResolveAccept.THEIRS) {
             autoResolveSource = entry.getConflictNew();
         } else if (accept == SVNResolveAccept.INVALID) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, "Invalid 'accept' argument");
@@ -730,7 +730,8 @@ public abstract class SVNAdminArea {
 
         mergeFileSet.setMergeLabels(baseLabel, localLabel, latestLabel);
         
-        SVNMergeResult mergeResult = merger.merge(mergeFileSet, dryRun, options); 
+        SVNMergeResult mergeResult = merger.merge(mergeFileSet, dryRun, options);
+        mergeFileSet.dispose();
 
         if (saveLog) {
             log.save();

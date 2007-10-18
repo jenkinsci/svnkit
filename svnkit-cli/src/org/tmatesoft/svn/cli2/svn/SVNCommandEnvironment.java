@@ -113,6 +113,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private boolean myIsStopOnCopy;
     private boolean myIsChangeOptionIsUsed;
     private boolean myIsWithAllRevprops;
+    private String myAcceptOption;
     
     public SVNCommandEnvironment(String programName, PrintStream out, PrintStream err, InputStream in) {
         super(programName, out, err, in);

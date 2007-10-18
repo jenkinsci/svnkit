@@ -12,7 +12,15 @@
 package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
@@ -43,6 +51,8 @@ public class SVNMergeFileSet {
     private File myBaseFile;
     private File myRepositoryFile;
     private File myMergeResultFile;
+    
+    private Collection myTmpPaths = new ArrayList();
 
     public SVNMergeFileSet(SVNAdminArea adminArea, SVNLog log,
             File baseFile, 
@@ -62,9 +72,9 @@ public class SVNMergeFileSet {
         myMimeType = mimeType;
         myIsBinary = binary;
         
-        myBaseFilePath = SVNFileUtil.getBasePath(myBaseFile);
+        myBaseFilePath = SVNPathUtil.isChildOf(myAdminArea.getAdminDirectory(), myBaseFile) ? SVNFileUtil.getBasePath(myBaseFile) : null;
         myLocalFilePath = SVNFileUtil.getBasePath(myLocalFile);
-        myRepositoryFilePath = SVNFileUtil.getBasePath(myRepositoryFile);
+        myRepositoryFilePath = SVNPathUtil.isChildOf(myAdminArea.getAdminDirectory(), myRepositoryFile) ? SVNFileUtil.getBasePath(myRepositoryFile) : null;
         myMergeResultFilePath = SVNFileUtil.getBasePath(myMergeResultFile);
     }
     
@@ -90,7 +100,13 @@ public class SVNMergeFileSet {
         return myRepositoryLabel;
     }
     
-    public String getBasePath() {
+    public String getBasePath() throws SVNException {
+        if (myBaseFilePath == null) {
+            File tmp = SVNAdminUtil.createTmpFile(myAdminArea);
+            SVNFileUtil.copyFile(myBaseFile, tmp, false);
+            myBaseFilePath = SVNFileUtil.getBasePath(tmp);
+            myTmpPaths.add(myBaseFilePath);
+        }
         return myBaseFilePath;
     }
     
@@ -102,7 +118,13 @@ public class SVNMergeFileSet {
         return myWCFilePath;
     }
     
-    public String getRepositoryPath() {
+    public String getRepositoryPath() throws SVNException {
+        if (myRepositoryFilePath == null) {
+            File tmp = SVNAdminUtil.createTmpFile(myAdminArea);
+            SVNFileUtil.copyFile(myRepositoryFile, tmp, false);
+            myRepositoryFilePath = SVNFileUtil.getBasePath(tmp);
+            myTmpPaths.add(myRepositoryFilePath);
+        }
         return myRepositoryFilePath;
     }
     
@@ -140,5 +162,16 @@ public class SVNMergeFileSet {
     
     public SVNAdminArea getAdminArea() {
         return myAdminArea;
+    }
+    
+    public void dispose() throws SVNException {
+        // add deletion commands to the log file.
+        Map command = new HashMap();
+        for (Iterator paths = myTmpPaths.iterator(); paths.hasNext();) {
+            String path = (String) paths.next();
+            command.put(SVNLog.NAME_ATTR, path);
+            myLog.addCommand(SVNLog.DELETE, command, false);
+            command.clear();
+        }
     }
 }

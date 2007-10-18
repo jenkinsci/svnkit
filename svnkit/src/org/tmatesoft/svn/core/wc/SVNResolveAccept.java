@@ -25,15 +25,20 @@ public class SVNResolveAccept {
     /**
      * Resolve the conflict with the pre-conflict base file.
      */
-    public static SVNResolveAccept LEFT = new SVNResolveAccept("left");
+    public static SVNResolveAccept BASE = new SVNResolveAccept("base");
     /**
      * Resolve the conflict with the pre-conflict working copy file.
      */
-    public static SVNResolveAccept WORKING = new SVNResolveAccept("working");
+    public static SVNResolveAccept MINE = new SVNResolveAccept("mine");
     /**
      * Resolve the conflict with the post-conflict base file.
      */
-    public static SVNResolveAccept RIGHT = new SVNResolveAccept("right");
+    public static SVNResolveAccept THEIRS = new SVNResolveAccept("theirs");
+
+    public static SVNResolveAccept POSTPONE = new SVNResolveAccept("postpone");
+    
+    public static SVNResolveAccept EDIT = new SVNResolveAccept("edit");
+    public static SVNResolveAccept LAUNCH = new SVNResolveAccept("launch");
     
     private String myName;
     private SVNResolveAccept(String name) {
@@ -46,11 +51,11 @@ public class SVNResolveAccept {
     
     public static SVNResolveAccept fromString(String accept) {
         if ("left".equals(accept)) {
-            return LEFT;
+            return BASE;
         } else if ("working".equals(accept)) {
-            return WORKING;
+            return MINE;
         } else if ("right".equals(accept)) {
-            return RIGHT;
+            return THEIRS;
         }
         return INVALID;
     }

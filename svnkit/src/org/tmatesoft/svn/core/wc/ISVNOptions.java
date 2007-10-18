@@ -403,4 +403,6 @@ public interface ISVNOptions extends ISVNTunnelProvider {
     public boolean isKeepLocks();
     
     public void setKeepLocks(boolean keep);
+    
+    public boolean isInteractiveConflictResolution();
 }
