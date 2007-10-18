@@ -389,7 +389,7 @@ public class SVNMergeInfoManager {
 
     public static void elideMergeInfo(Map parentMergeInfo, Map childMergeInfo, File path, 
                                       String pathSuffix, SVNWCAccess access) throws SVNException {
-        if (childMergeInfo.isEmpty()) {
+        if (childMergeInfo == null || childMergeInfo.isEmpty()) {
             return;
         }
         

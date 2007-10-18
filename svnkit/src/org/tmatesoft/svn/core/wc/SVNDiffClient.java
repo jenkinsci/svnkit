@@ -2058,7 +2058,8 @@ public class SVNDiffClient extends SVNBasicClient {
             }
             
             SVNMergeRange[] remainingRanges = remainingRangesList.getRanges();
-            SVNMergeCallback callback = new SVNMergeCallback(adminArea, myURL, myIsForce, myIsDryRun, getMergeOptions());
+            SVNMergeCallback callback = new SVNMergeCallback(adminArea, myURL, myIsForce, myIsDryRun, 
+                    getMergeOptions(), myConflictedPaths);
             
             for (int i = 0; i < remainingRanges.length; i++) {
                 SVNMergeRange nextRange = remainingRanges[i];
@@ -2163,7 +2164,7 @@ public class SVNDiffClient extends SVNBasicClient {
                     ISVNEventHandler.UNKNOWN);
    
             SVNMergeCallback mergeCallback = new SVNMergeCallback(adminArea, myURL, myIsForce, myIsDryRun, 
-                    getMergeOptions());
+                    getMergeOptions(), myConflictedPaths);
 
             driveMergeReportEditor(dstPath, url1, url2, childrenWithMergeInfo, range.getStartRevision(), 
                     range.getEndRevision(), depth, ignoreAncestry, adminArea, mergeCallback, null);
@@ -2953,6 +2954,9 @@ public class SVNDiffClient extends SVNBasicClient {
                                                 String childPath = childMergePath.myPath.getAbsolutePath();
                                                 childPath = childPath.replace(File.separatorChar, '/');
                                                 String relChildPath = childPath.substring(targetPath.length());
+                                                if (relChildPath.startsWith("/")) {
+                                                    relChildPath = relChildPath.substring(1);
+                                                }
                                                 if (range.getStartRevision() > end) {
                                                     reporter.setPath(relChildPath, null, end, reportDepth, false);
                                                 } else {
@@ -3139,7 +3143,7 @@ public class SVNDiffClient extends SVNBasicClient {
                 }
             }
             
-            if (children.isEmpty() && !children.contains(new MergePath(myTarget))) {
+            if (children.isEmpty() || !children.contains(new MergePath(myTarget))) {
                 boolean hasMissingChild = entry.getDepth() == SVNDepth.EMPTY || 
                 entry.getDepth() == SVNDepth.FILES;
                 MergePath targetItem = new MergePath(myTarget, hasMissingChild, false, 

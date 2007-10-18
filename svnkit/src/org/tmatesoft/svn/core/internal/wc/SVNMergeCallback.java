@@ -50,12 +50,13 @@ public class SVNMergeCallback extends AbstractDiffCallback {
     
     
     public SVNMergeCallback(SVNAdminArea adminArea, SVNURL url, boolean force, boolean dryRun, 
-                            SVNDiffOptions options) {
+                            SVNDiffOptions options, Map conflictedPathsGetter) {
         super(adminArea);
         myURL = url;
         myIsDryRun = dryRun;
         myIsForce = force;
         myDiffOptions = options;
+        myConflictedPaths = conflictedPathsGetter;
     }
 
     public File createTempDirectory() throws SVNException {

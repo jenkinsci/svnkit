@@ -101,7 +101,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
         if (myAdminArea == null || dir != null) {
             if (nodeKind == SVNNodeKind.FILE) {
                 SVNFileInfo file = new SVNFileInfo(path, false);
-                file.loadFromRepository();
+                file.loadFromRepository(myRevision1);
                 String baseType = (String) file.myBaseProperties.get(SVNProperty.MIME_TYPE);
                 type = getDiffCallback().fileDeleted(path, file.myBaseFile, null, baseType, null, file.myBaseProperties);
             } else if (nodeKind == SVNNodeKind.DIR) {
@@ -196,7 +196,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
 
     public void openFile(String path, long revision) throws SVNException {
         myCurrentFile = new SVNFileInfo(path, false);
-        myCurrentFile.loadFromRepository();
+        myCurrentFile.loadFromRepository(revision);
     }
 
     public void changeFileProperty(String commitPath, String name, String value) throws SVNException {
@@ -374,13 +374,13 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             myPropertyDiff = new HashMap();
         }
 
-        public void loadFromRepository() throws SVNException {
+        public void loadFromRepository(long revision) throws SVNException {
             myBaseFile = SVNFileUtil.createUniqueFile(getTempDirectory(), ".diff", ".tmp");
             OutputStream os = null;
             myBaseProperties = new HashMap();
             try {
                 os = SVNFileUtil.openFileForWriting(myBaseFile);
-                myRepos.getFile(myRepositoryPath, myRevision1, myBaseProperties, new SVNCancellableOutputStream(os, myCancelHandler));
+                myRepos.getFile(myRepositoryPath, revision, myBaseProperties, new SVNCancellableOutputStream(os, myCancelHandler));
             } finally {
                 SVNFileUtil.closeFile(os);
             }
