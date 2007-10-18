@@ -64,10 +64,10 @@ public class DAVServlet extends HttpServlet {
             String msg = sw.getBuffer().toString();
             if (th instanceof SVNException) {
                 SVNException e = (SVNException) th;
-                SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();                
-                if (errorCode == SVNErrorCode.RA_DAV_MALFORMED_DATA ||
-                        errorCode == SVNErrorCode.FS_NOT_DIRECTORY ||
-                        errorCode == SVNErrorCode.FS_NOT_FOUND) {
+                SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
+                if (errorCode == SVNErrorCode.FS_NOT_DIRECTORY ||
+                        errorCode == SVNErrorCode.FS_NOT_FOUND ||
+                        errorCode == SVNErrorCode.RA_DAV_PATH_NOT_FOUND) {
                     response.sendError(HttpServletResponse.SC_NOT_FOUND, msg);
                 } else if (errorCode == SVNErrorCode.NO_AUTH_FILE_PATH) {
                     response.sendError(HttpServletResponse.SC_FORBIDDEN, msg);
@@ -77,8 +77,7 @@ public class DAVServlet extends HttpServlet {
                     String errorBody = generateStandardizedErrorBody(errorCode.getCode(), null, null, e.getLocalizedMessage());
                     response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                     response.setContentType(XML_CONTENT_TYPE);
-                    response.getWriter().print(errorBody);                    
-                    th.printStackTrace(response.getWriter());            
+                    response.getWriter().print(errorBody);
                 }
             } else {
                 response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg);

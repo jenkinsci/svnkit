@@ -34,6 +34,15 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="svnkit-cli" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../contrib/jna/jna.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
     <orderEntryProperties />
   </component>
 </module>
