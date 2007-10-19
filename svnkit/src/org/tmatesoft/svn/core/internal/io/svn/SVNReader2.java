@@ -16,12 +16,15 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
@@ -33,15 +36,133 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 public class SVNReader2 {
 
     private static final String DEAFAULT_ERROR_TEMPLATE = "nccn";
+    private static final String DEFAULT_TEMPLATE = "wl";
 
-    public static List readResponse(InputStream is, String template) throws SVNException {
+    public static Date getDate(List items, int index) {
+        String str = getString(items, index);
+        return SVNTimeUtil.parseDate(str);
+    }
+
+    public static long getLong(List items, int index) {
+        if (items == null || index >= items.size()) {
+            return -1;
+        }
+        if (items.get(index) instanceof Long) {
+            return ((Long) items.get(index)).longValue();
+        } else if (items.get(index) instanceof Integer) {
+            return ((Integer) items.get(index)).intValue();
+        }
+        return -1;
+    }
+
+    public static boolean getBoolean(List items, int index) {
+        if (items == null || index >= items.size()) {
+            return false;
+        }
+        if (items.get(index) instanceof Boolean) {
+            return ((Boolean) items.get(index)).booleanValue();
+        } else if (items.get(index) instanceof String) {
+            return Boolean.valueOf((String) items.get(index)).booleanValue();
+        }
+        return false;
+
+    }
+
+//    public static Map getMap(List items, int index) {
+//        if (items == null || index >= items.size()) {
+//            return Collections.EMPTY_MAP;
+//        }
+//        if (items.get(index) instanceof Map) {
+//            return (Map) items.get(index);
+//        }
+//        return Collections.EMPTY_MAP;
+//    }
+
+    public static List getList(List items, int index) {
+        if (items == null || index >= items.size()) {
+            return Collections.EMPTY_LIST;
+        }
+        if (items.get(index) instanceof List) {
+            List list = (List) items.get(index);
+            for (int i = 0; i < list.size(); i++) {
+                if (list.get(i) instanceof Item) {
+                    Item item = (Item) list.get(i);
+                    if (item.kind == Item.STRING) {
+                        list.set(i, item.line);
+                    } else if (item.kind == Item.WORD) {
+                        list.set(i, item.word);
+                    } else if (item.kind == Item.NUMBER) {
+                        list.set(i, new Long(item.number));
+                    } else if (item.kind == Item.LIST) {
+                        list.set(i, getList(list, i));
+                    }
+                }
+            }
+            return list;
+        }
+        return Collections.EMPTY_LIST;
+    }
+
+    public static String getString(List items, int index) {
+        if (items == null || index >= items.size()) {
+            return null;
+        }
+        if (items.get(index) instanceof byte[]) {
+            try {
+                return new String((byte[]) items.get(index), "UTF-8");
+            } catch (IOException e) {
+                return null;
+            }
+        } else if (items.get(index) instanceof String) {
+            return (String) items.get(index);
+        }
+        return null;
+    }
+
+    public static boolean hasValue(List items, int index, boolean value) {
+        return hasValue(items, index, Boolean.valueOf(value));
+    }
+
+    public static boolean hasValue(List items, int index, int value) {
+        return hasValue(items, index, new Long(value));
+    }
+
+    public static boolean hasValue(List items, int index, Object value) {
+        if (items == null || index >= items.size()) {
+            return false;
+        }
+        if (items.get(index) instanceof List) {
+            // look in list.
+            for (Iterator iter = ((List) items.get(index)).iterator(); iter.hasNext();) {
+                Object element = iter.next();
+                if (element.equals(value)) {
+                    return true;
+                }
+            }
+        } else {
+            if (items.get(index) == null) {
+                return value == null;
+            }
+            if (items.get(index) instanceof byte[] && value instanceof String) {
+                try {
+                    items.set(index, new String((byte[]) items.get(index), "UTF-8"));
+                } catch (IOException e) {
+                    return false;
+                }
+            }
+            return items.get(index).equals(value);
+        }
+        return false;
+    }
+
+    public static List parse(InputStream is, String template, List values) throws SVNException {
         // "(success (10))"
-        List readItems = readTuple(is, "wl");
+        List readItems = readTuple(is, DEFAULT_TEMPLATE);
         String word = (String) readItems.get(0);
         List list = (List) readItems.get(1);
 
         if ("success".equals(word)) {
-            return parseTuple(template, list);
+            return parseTuple(template, list, values);
         } else if ("failure".equals(word)) {
             handleFailureStatus(list);
         } else {
@@ -62,7 +183,7 @@ public class SVNReader2 {
             Item item = (Item) list.get(i);
             SVNErrorMessage error = getErrorMessage(item);
             parentError.setChildErrorMessage(error);
-            parentError = error;                
+            parentError = error;
         }
         SVNErrorManager.error(topError);
     }
@@ -72,7 +193,7 @@ public class SVNReader2 {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Malformed error list");
             SVNErrorManager.error(err);
         }
-        List errorItems = parseTuple(DEAFAULT_ERROR_TEMPLATE, item.items);
+        List errorItems = parseTuple(DEAFAULT_ERROR_TEMPLATE, item.items, null);
         int code = ((Long) errorItems.get(0)).intValue();
         SVNErrorCode errorCode = SVNErrorCode.getErrorCode(code);
         String errorMessage = (String) errorItems.get(1);
@@ -90,11 +211,11 @@ public class SVNReader2 {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA);
             SVNErrorManager.error(err);
         }
-        return parseTuple(template, item.items);
+        return parseTuple(template, item.items, null);
     }
 
-    private static List parseTuple(String template, Collection items) throws SVNException {
-        List values = new ArrayList();
+    private static List parseTuple(String template, Collection items, List values) throws SVNException {
+        values = values == null ? new ArrayList() : values;
         int index = 0;
         for (Iterator iterator = items.iterator(); iterator.hasNext() && index < template.length(); index++) {
             Item item = (Item) iterator.next();
@@ -106,9 +227,11 @@ public class SVNReader2 {
 
             if ((ch == 'n' || ch == 'r') && item.kind == Item.NUMBER) {
                 values.add(new Long(item.number));
-            } else if ((ch == 's' || ch == 'c') && item.kind == Item.STRING) {
+            } else if (ch == 's' && item.kind == Item.STRING) {
                 values.add(item.line);
-            } else if (ch == 'w' && item.kind == Item.WORD) {
+            } else if (ch == 'c' && item.kind == Item.STRING){
+                values.add(item.line.getBytes());
+            }else if (ch == 'w' && item.kind == Item.WORD) {
                 values.add(item.word);
             } else if ((ch == 'b' || ch == 'B') && item.kind == Item.WORD) {
                 if (String.valueOf(true).equals(item.word)) {
@@ -122,8 +245,7 @@ public class SVNReader2 {
                 values.add(item.items);
             } else if (ch == '(' && item.kind == Item.LIST) {
                 index++;
-                Collection listValues = parseTuple(template.substring(index), item.items);
-                values.addAll(listValues);
+                values = parseTuple(template.substring(index), item.items, values);
             } else if (ch == ')') {
                 return values;
             } else {
