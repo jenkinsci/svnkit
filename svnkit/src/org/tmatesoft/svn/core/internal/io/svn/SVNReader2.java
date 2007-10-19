@@ -32,15 +32,11 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  */
 public class SVNReader2 {
 
-    private InputStream myInputStream;
+    private static final String DEAFAULT_ERROR_TEMPLATE = "nccn";
 
-    public SVNReader2(InputStream is) {
-        myInputStream = is;
-    }
-
-    public List readResponse(String template) throws SVNException {
+    public static List readResponse(InputStream is, String template) throws SVNException {
         // "(success (10))"
-        List readItems = readTuple("wl");
+        List readItems = readTuple(is, "wl");
         String word = (String) readItems.get(0);
         List list = (List) readItems.get(1);
 
@@ -55,30 +51,40 @@ public class SVNReader2 {
         return null;
     }
 
-    private void handleFailureStatus(List list) throws SVNException {
+    private static void handleFailureStatus(List list) throws SVNException {
         if (list.size() == 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Empty error list");
             SVNErrorManager.error(err);
         }
-        for (int i = list.size() - 1; i >= 0; i++) {
+        SVNErrorMessage topError = getErrorMessage((Item) list.get(list.size() - 1));
+        SVNErrorMessage parentError = topError;
+        for (int i = list.size() - 2; i >= 0; i++) {
             Item item = (Item) list.get(i);
-            if (item.kind != Item.LIST) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Malformed error list");
-                SVNErrorManager.error(err);
-            }
-            List errorItems = parseTuple("nccn", item.items);
-            int code = ((Long) errorItems.get(0)).intValue();
-            SVNErrorCode errorCode = SVNErrorCode.getErrorCode(code);
-            String errorMessage = (String) errorItems.get(1);
-//            String errorFile = (String) errorItems.get(2);
-//            long errorLine = ((Long) errorItems.get(3)).longValue();
-            SVNErrorMessage.create(errorCode, errorMessage);
+            SVNErrorMessage error = getErrorMessage(item);
+            parentError.setChildErrorMessage(error);
+            parentError = error;                
         }
+        SVNErrorManager.error(topError);
     }
 
-    private List readTuple(String template) throws SVNException {
-        char ch = readChar();
-        Item item = readItem(null, ch);
+    private static SVNErrorMessage getErrorMessage(Item item) throws SVNException {
+        if (item.kind != Item.LIST) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Malformed error list");
+            SVNErrorManager.error(err);
+        }
+        List errorItems = parseTuple(DEAFAULT_ERROR_TEMPLATE, item.items);
+        int code = ((Long) errorItems.get(0)).intValue();
+        SVNErrorCode errorCode = SVNErrorCode.getErrorCode(code);
+        String errorMessage = (String) errorItems.get(1);
+        errorMessage = errorMessage == null ? "" : errorMessage;
+        //errorItems contains 2 items more (file and line) but native svn uses them only for debugging purposes.
+        //May be we should use another error template.
+        return SVNErrorMessage.create(errorCode, errorMessage);
+    }
+
+    private static List readTuple(InputStream is, String template) throws SVNException {
+        char ch = readChar(is);
+        Item item = readItem(is, null, ch);
         System.out.println(item);
         if (item.kind != Item.LIST) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA);
@@ -87,7 +93,7 @@ public class SVNReader2 {
         return parseTuple(template, item.items);
     }
 
-    private List parseTuple(String template, Collection items) throws SVNException {
+    private static List parseTuple(String template, Collection items) throws SVNException {
         List values = new ArrayList();
         int index = 0;
         for (Iterator iterator = items.iterator(); iterator.hasNext() && index < template.length(); index++) {
@@ -164,16 +170,22 @@ public class SVNReader2 {
         return values;
     }
 
-    private Item readItem(Item item, char ch) throws SVNException {
+    private static Item readItem(InputStream is, Item item, char ch) throws SVNException {
         if (item == null) {
             item = new Item();
         }
         if (Character.isDigit(ch)) {
             long value = Character.digit(ch, 10);
+            long previousValue;
             while (true) {
-                ch = readChar();
+                previousValue = value;
+                ch = readChar(is);
                 if (Character.isDigit(ch)) {
                     value = value * 10 + Character.digit(ch, 10);
+                    if (previousValue != value / 10) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Number is larger than maximum");
+                        SVNErrorManager.error(err);
+                    }
                     continue;
                 }
                 break;
@@ -184,7 +196,7 @@ public class SVNReader2 {
                 try {
                     int toRead = (int) value;
                     while (toRead > 0) {
-                        int r = myInputStream.read(buffer, buffer.length - toRead, toRead);
+                        int r = is.read(buffer, buffer.length - toRead, toRead);
                         if (r <= 0) {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA);
                             SVNErrorManager.error(err);
@@ -202,7 +214,7 @@ public class SVNReader2 {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA);
                     SVNErrorManager.error(err);
                 }
-                ch = readChar();
+                ch = readChar(is);
             } else {
                 // number.
                 item.kind = Item.NUMBER;
@@ -212,7 +224,7 @@ public class SVNReader2 {
             StringBuffer buffer = new StringBuffer();
             buffer.append(ch);
             while (true) {
-                ch = readChar();
+                ch = readChar(is);
                 if (Character.isLetterOrDigit(ch) && ch != '-') {
                     buffer.append(ch);
                     continue;
@@ -225,15 +237,15 @@ public class SVNReader2 {
             item.kind = Item.LIST;
             item.items = new ArrayList();
             while (true) {
-                ch = skipWhiteSpace();
+                ch = skipWhiteSpace(is);
                 if (ch == ')') {
                     break;
                 }
                 Item child = new Item();
                 item.items.add(child);
-                readItem(child, ch);
+                readItem(is, child, ch);
             }
-            ch = readChar();
+            ch = readChar(is);
         }
         if (!Character.isWhitespace(ch)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA);
@@ -242,10 +254,10 @@ public class SVNReader2 {
         return item;
     }
 
-    private char readChar() throws SVNException {
+    private static char readChar(InputStream is) throws SVNException {
         int r = 0;
         try {
-            r = myInputStream.read();
+            r = is.read();
             if (r < 0) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA);
                 SVNErrorManager.error(err);
@@ -257,9 +269,9 @@ public class SVNReader2 {
         return (char) (r & 0xFF);
     }
 
-    private char skipWhiteSpace() throws SVNException {
+    private static char skipWhiteSpace(InputStream is) throws SVNException {
         while (true) {
-            char ch = readChar();
+            char ch = readChar(is);
             if (Character.isWhitespace(ch)) {
                 continue;
             }
@@ -300,6 +312,5 @@ public class SVNReader2 {
             }
             return result.toString();
         }
-
     }
 }
