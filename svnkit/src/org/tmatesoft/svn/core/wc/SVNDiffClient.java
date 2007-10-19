@@ -1612,17 +1612,25 @@ public class SVNDiffClient extends SVNBasicClient {
                 }
             }
             
+            SVNURL url = srcURL == null ? getURL(srcPath) : srcURL;
+            if (url == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", 
+                        srcPath);
+                SVNErrorManager.error(err);
+            }
+            
             if (depth == null || depth == SVNDepth.UNKNOWN) {
                 depth = targetEntry.getDepth();
             }
             
-            merger = createMerger(srcURL, srcURL, targetEntry, dstPath, wcAccess, dryRun, force,  
+            SVNRepository repository1 = createRepository(url, true);
+
+            merger = createMerger(repository1, null, url, targetEntry, dstPath, wcAccess, dryRun, force,  
                                          recordOnly);
             
-            merger.myRepository1 = createRepository(srcURL, true);
 
             SVNRevision[] revs = getAssumedDefaultRevisionRange(revision1, revision2, merger.myRepository1);
-            SVNRepositoryLocation[] locations = getLocations(srcURL, srcPath, null, pegRevision, 
+            SVNRepositoryLocation[] locations = getLocations(url, srcPath, null, pegRevision, 
                     revs[0], revs[1]);
 
             SVNURL url1 = locations[0].getURL();
@@ -1815,11 +1823,12 @@ public class SVNDiffClient extends SVNBasicClient {
                 depth = targetEntry.getDepth();
             }
             
-            merger = createMerger(url1, url2, targetEntry, dstPath, wcAccess, dryRun, force,  
+            SVNRepository repository1 = createRepository(url1, true);
+            SVNRepository repository2 = createRepository(url2, false);
+
+            merger = createMerger(repository1, repository2, url2, targetEntry, dstPath, wcAccess, dryRun, force,  
                                          recordOnly);
             
-            merger.myRepository1 = createRepository(url1, true);
-            merger.myRepository2 = createRepository(url2, false);
 
             if (!revision1.isValid() || !revision2.isValid()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, 
@@ -1913,23 +1922,23 @@ public class SVNDiffClient extends SVNBasicClient {
         return suggestions;
     }
     
-    private Merger createMerger(SVNURL url1, SVNURL url2, SVNEntry entry, File target, 
-                                SVNWCAccess access, boolean dryRun, boolean force, 
-                                boolean recordOnly) throws SVNException {
+    private Merger createMerger(SVNRepository repository1, SVNRepository repository2, SVNURL url, SVNEntry entry, 
+            File target, SVNWCAccess access, boolean dryRun, boolean force, boolean recordOnly) throws SVNException {
         Merger merger = new Merger();
-        merger.myURL = url2;
+        merger.myURL = url;
         merger.myTarget = target;
         merger.myIsForce = force;
         merger.myIsDryRun = dryRun;
         merger.myIsRecordOnly = recordOnly;
         merger.myOperativeNotificationsNumber = 0;
         merger.myWCAccess = access;
-
+        merger.myRepository1 = repository1;
+        merger.myRepository2 = repository2;
+        
         if (dryRun) {
             merger.myIsSameRepository = false;
         } else {
-            SVNRepository repos = createRepository(url1, true);
-            SVNURL reposRoot = repos.getRepositoryRoot(true);
+            SVNURL reposRoot = repository1.getRepositoryRoot(true);
             merger.myIsSameRepository = SVNPathUtil.isAncestor(reposRoot.toDecodedString(), 
                                                                entry.getRepositoryRootURL().toDecodedString());
         }
