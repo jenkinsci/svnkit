@@ -60,6 +60,7 @@ import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * The <b>SVNDiffClient</b> class provides methods allowing to get differences
@@ -2817,6 +2818,7 @@ public class SVNDiffClient extends SVNBasicClient {
                         SVNMergeRange originalRange = originalRemainingRanges[i];
                         remainingRanges[i - 1] = originalRange;
                     }
+                    child.myRemainingRanges = new SVNMergeRangeList(remainingRanges);
                 }
             }
         }
