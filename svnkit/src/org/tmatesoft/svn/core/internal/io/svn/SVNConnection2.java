@@ -88,21 +88,20 @@ class SVNConnection2 {
     }
 
     protected void handshake(SVNRepositoryImpl repository) throws SVNException {
-        List items = read("[(*N(*W)(*W))]", null, true);
-        List versions = SVNReader2.getList(items, 0);
-        Long minVer = (Long) versions.get(0);
-        Long maxVer = (Long) versions.get(1);
+        List items = read("nnll", null, true);
+        Long minVer = (Long) items.get(0);
+        Long maxVer = (Long) items.get(1);
         if (minVer.longValue() > 2) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_BAD_VERSION, "Server requires minimum version {0,number,integer}", minVer));
         } else if (maxVer.longValue() < 2) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_BAD_VERSION, "Server requires maximum version {0,number,integer}", maxVer));
         }
-        if (!SVNReader2.hasValue(items, 2, EDIT_PIPELINE)) {
+        if (!SVNReader2.hasValue(items, 3, EDIT_PIPELINE)) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_BAD_VERSION, "Only servers with 'edit-pipeline' capability is supported"));
         }
-        myIsSVNDiff1 = SVNReader2.hasValue(items, 2, SVNDIFF1);
-        myIsCommitRevprops = SVNReader2.hasValue(items, 2, COMMIT_REVPROPS);
-        myIsMergeInfo = SVNReader2.hasValue(items, 2, MERGE_INFO);
+        myIsSVNDiff1 = SVNReader2.hasValue(items, 3, SVNDIFF1);
+        myIsCommitRevprops = SVNReader2.hasValue(items, 3, COMMIT_REVPROPS);
+        myIsMergeInfo = SVNReader2.hasValue(items, 3, MERGE_INFO);
         write("(n(www)s)", new Object[]{"2", EDIT_PIPELINE, SVNDIFF1, ABSENT_ENTRIES,
                 repository.getLocation().toString()});
     }
@@ -197,7 +196,7 @@ class SVNConnection2 {
                 myRealm = (String) creds.get(0);
             }
             if (myRoot == null) {
-                myRoot = (String) creds.get(1);
+                myRoot = SVNReader2.getString(creds, 1);
             }
         }
     }
@@ -207,7 +206,7 @@ class SVNConnection2 {
         if (SUCCESS.equals(items.get(0))) {
             return null;
         } else if (FAILURE.equals(items.get(0))) {
-            return SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication error from server: {0}", items.get(1));
+            return SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication error from server: {0}", SVNReader2.getString(items, 1));
         }
         return SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Unexpected server response to authentication");
     }
@@ -223,9 +222,13 @@ class SVNConnection2 {
 //    }
 
     public List read(String template, List items, boolean readMalformedData) throws SVNException {
+        return read(template, items, null, readMalformedData);
+    }
+
+    public List read(String template, List items, String readingTerminatingWord, boolean readMalformedData) throws SVNException {
         try {
             checkConnection();
-            return SVNReader2.parse(getInputStream(), template, items);
+            return SVNReader2.parse(getInputStream(), readingTerminatingWord, template, items);
         } catch (SVNException e) {
             if (readMalformedData && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_SVN_MALFORMED_DATA) {
                 // read let's say next 255 bytes into the logging stream.

@@ -20,6 +20,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -103,6 +105,21 @@ public class SVNReader2 {
         return Collections.EMPTY_LIST;
     }
 
+    public static Map getProperties(List items, int index, Map properties) throws SVNException {
+        properties = properties == null ? new HashMap() : properties;
+        List props = getList(items, index);
+        for (Iterator prop = props.iterator(); prop.hasNext();) {
+            Item item = (Item) prop.next();
+            if (item.kind != Item.LIST) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Proplist element not a list");
+                SVNErrorManager.error(err);
+            }
+            List propItems = parseTuple("cs", item.items, null);
+            properties.put(getString(propItems, 0), getString(propItems, 1));
+        }
+        return properties;
+    }
+
     public static String getString(List items, int index) {
         if (items == null || index >= items.size()) {
             return null;
@@ -156,7 +173,6 @@ public class SVNReader2 {
     }
 
     public static List parse(InputStream is, String template, List values) throws SVNException {
-        // "(success (10))"
         List readItems = readTuple(is, DEFAULT_TEMPLATE);
         String word = (String) readItems.get(0);
         List list = (List) readItems.get(1);
@@ -170,6 +186,25 @@ public class SVNReader2 {
             SVNErrorManager.error(err);
         }
         return null;
+    }
+
+    public static List parse(InputStream is, String parsingTerminatingWord, String template, List values) throws SVNException {
+        if (parsingTerminatingWord == null) {
+            return parse(is, template, values);
+        }
+        while (true) {
+            char ch = skipWhiteSpace(is);
+            Item item = readItem(is, null, ch);
+            if (item.kind == Item.WORD && parsingTerminatingWord.equals(item.word)) {
+                break;
+            } else if (item.kind != Item.LIST) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Expected list missing");
+                SVNErrorManager.error(err);
+            } else {
+                values.add(parseTuple(template, item.items,  null));
+            }
+        }
+        return values;
     }
 
     private static void handleFailureStatus(List list) throws SVNException {
@@ -229,9 +264,9 @@ public class SVNReader2 {
                 values.add(new Long(item.number));
             } else if (ch == 's' && item.kind == Item.STRING) {
                 values.add(item.line);
-            } else if (ch == 'c' && item.kind == Item.STRING){
+            } else if (ch == 'c' && item.kind == Item.STRING) {
                 values.add(item.line.getBytes());
-            }else if (ch == 'w' && item.kind == Item.WORD) {
+            } else if (ch == 'w' && item.kind == Item.WORD) {
                 values.add(item.word);
             } else if ((ch == 'b' || ch == 'B') && item.kind == Item.WORD) {
                 if (String.valueOf(true).equals(item.word)) {

@@ -149,7 +149,7 @@ public class SVNRepositoryImpl2 extends SVNRepositoryImpl implements ISVNReporte
             openConnection();
             write("(w())", buffer);
             authenticate();
-            values = read("[(N)]", null, true);
+            values = read("r", null, true);
         } catch (SVNException e) {
             closeSession();
             throw e;
@@ -169,7 +169,7 @@ public class SVNRepositoryImpl2 extends SVNRepositoryImpl implements ISVNReporte
             openConnection();
             write("(w(s))", buffer);
             authenticate();
-            values = read("[(N)]", null, true);
+            values = read("r", null, true);
         } catch (SVNException e) {
             closeSession();
             throw e;
@@ -189,8 +189,8 @@ public class SVNRepositoryImpl2 extends SVNRepositoryImpl implements ISVNReporte
             openConnection();
             write("(w(n))", buffer);
             authenticate();
-            buffer[0] = properties;
-            read("[((*P))]", null, true);
+            List items = read("l", null, true);
+            properties = SVNReader2.getProperties(items, 0, properties);
         } catch (SVNException e) {
             closeSession();
             throw e;
@@ -208,14 +208,14 @@ public class SVNRepositoryImpl2 extends SVNRepositoryImpl implements ISVNReporte
             openConnection();
             write("(w(ns))", buffer);
             authenticate();
-            values = read("[((?S))]", null, true);
+            values = read("(?s)", null, true);
         } catch (SVNException e) {
             closeSession();
             throw e;
         } finally {
             closeConnection();
         }
-        return (String) values.get(0);
+        return SVNReader2.getString(values, 0);
     }
 
     public SVNNodeKind checkPath(String path, long revision) throws SVNException {
@@ -225,8 +225,8 @@ public class SVNRepositoryImpl2 extends SVNRepositoryImpl implements ISVNReporte
             Object[] buffer = new Object[]{"check-path", path, getRevisionObject(revision)};
             write("(w(s(n)))", buffer);
             authenticate();
-            read("[(W)]", null, true);
-            return SVNNodeKind.parseKind((String) buffer[0]);
+            List values = read("w", null, true);
+            return SVNNodeKind.parseKind(SVNReader2.getString(values, 0));
         } catch (SVNException e) {
             closeSession();
             throw e;
@@ -240,43 +240,40 @@ public class SVNRepositoryImpl2 extends SVNRepositoryImpl implements ISVNReporte
         for (int i = 0; i < revisions.length; i++) {
             assertValidRevision(revisions[i]);
         }
-        int count = 0;
-        List values = null;
+        List itemList = null;
         try {
             openConnection();
             path = getRepositoryPath(path);
             Object[] buffer = new Object[]{"get-locations", path, getRevisionObject(pegRevision), revisions};
             write("(w(sn(*n)))", buffer);
             authenticate();
-            while (true) {
-                try {
-                    values = read("(NS)", null, false);
-                } catch (SVNException e) {
-                    break;
-                }
-                count++;
-                if (handler != null) {
-                    long revision = SVNReader.getLong(buffer, 0);
-                    String location = SVNReader.getString(buffer, 1);
-                    if (location != null) {
-                        handler.handleLocationEntry(new SVNLocationEntry(revision, location));
+
+            itemList = read("rc", null, "done", true);
+            if (itemList != null) {
+                for (Iterator iterator = itemList.iterator(); iterator.hasNext();) {
+                    List values = (List) iterator.next();
+                    if (handler != null) {
+                        long revision = SVNReader2.getLong(values, 0);
+                        String location = SVNReader2.getString(values, 1);
+                        if (location != null) {
+                            handler.handleLocationEntry(new SVNLocationEntry(revision, location));
+                        }
                     }
                 }
             }
-            read("x", values, true);
-            read("[()]", values, true);
+
+            read("", null, true);
         } catch (SVNException e) {
             closeSession();
             handleUnsupportedCommand(e, "'get-locations' not implemented");
         } finally {
             closeConnection();
         }
-        return count;
+        return itemList == null ? 0 : itemList.size();
     }
 
     public long getFile(String path, long revision, Map properties, OutputStream contents) throws SVNException {
         Long rev = revision > 0 ? new Long(revision) : null;
-//        List values = null;
         List values2 = null;
         try {
             openConnection();
@@ -284,12 +281,15 @@ public class SVNRepositoryImpl2 extends SVNRepositoryImpl implements ISVNReporte
                     Boolean.valueOf(properties != null), Boolean.valueOf(contents != null)};
             write("(w(s(n)ww))", buffer);
             authenticate();
-            buffer[2] = properties;
-//            values = read("[((?S)N(*P))]", null, true);
+            List values = read("(?c)rl", null, true);
+
             if (properties != null) {
-                properties.put(SVNProperty.REVISION, buffer[1].toString());
-                properties.put(SVNProperty.CHECKSUM, buffer[0].toString());
+                properties.put(SVNProperty.REVISION, values.get(1).toString());
+                properties.put(SVNProperty.CHECKSUM, SVNReader2.getString(values, 0));
             }
+
+            
+            
             if (contents != null) {
 //                Object[] buffer2 = new Object[]{contents};
                 values2 = read("*I", null, true);
@@ -1045,10 +1045,15 @@ public class SVNRepositoryImpl2 extends SVNRepositoryImpl implements ISVNReporte
     }
 
     private List read(String template, List values, boolean readMalformedData) throws SVNException {
+        return read(template, values, null, readMalformedData);
+    }
+
+    private List read(String template, List values, String readingTerminatingWord, boolean readMalformedData) throws SVNException {
         if (myConnection == null) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED));
         }
-        return myConnection.read(template, values, readMalformedData);
+//        return myConnection.read(template, values, readingTerminatingWord, readMalformedData);
+        return null;
     }
 
     private String[] getRepositoryPaths(String[] paths) throws SVNException {
