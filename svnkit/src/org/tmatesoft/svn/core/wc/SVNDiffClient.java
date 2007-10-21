@@ -60,7 +60,6 @@ import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * The <b>SVNDiffClient</b> class provides methods allowing to get differences
@@ -1629,7 +1628,6 @@ public class SVNDiffClient extends SVNBasicClient {
             merger = createMerger(repository1, null, url, targetEntry, dstPath, wcAccess, dryRun, force,  
                                          recordOnly);
             
-
             SVNRevision[] revs = getAssumedDefaultRevisionRange(revision1, revision2, merger.myRepository1);
             SVNRepositoryLocation[] locations = getLocations(url, srcPath, null, pegRevision, 
                     revs[0], revs[1]);
@@ -1824,7 +1822,7 @@ public class SVNDiffClient extends SVNBasicClient {
                 depth = targetEntry.getDepth();
             }
             
-            SVNRepository repository1 = createRepository(url1, true);
+            SVNRepository repository1 = createRepository(url1, false);
             SVNRepository repository2 = createRepository(url2, false);
 
             merger = createMerger(repository1, repository2, url2, targetEntry, dstPath, wcAccess, dryRun, force,  
@@ -2502,8 +2500,6 @@ public class SVNDiffClient extends SVNBasicClient {
                         
                         updateWCMergeInfo(child.myPath, childMergeSourcePath, childEntry, childMerges, isRollBack);
                     }
-                    //TODO: what is this??? why URL??
-                    //SVNURL childURL = parentMergeSourceURL.appendPath(childRelPath, false);
                     markMergeInfoAsInheritableForARange(child.myPath, childMergeSourcePath, child.myPreMergeMergeInfo, 
                             range, childrenWithMergeInfo, true, i);
                     if (i > 0) {
@@ -2513,51 +2509,9 @@ public class SVNDiffClient extends SVNBasicClient {
                 }
             }
             
-            //------------------
-/*            final Map deletedPaths = new HashMap();
-            ISVNDiffStatusHandler handler = new ISVNDiffStatusHandler() {
-                public void handleDiffStatus(SVNDiffStatus diffStatus) throws SVNException {
-                    if (diffStatus.getModificationType() == SVNStatusType.STATUS_DELETED) {
-                        deletedPaths.put(diffStatus.getFile(), diffStatus.getFile());
-                    }
-                }
-            };
-                
-            doDiffStatus(parentMergeSourceURL, revision1, revision2, SVNRevision.HEAD, 
-                         depth, !ignoreAncestry, handler);
-
-            for (ListIterator childrenMergePaths = childrenWithMergeInfo.listIterator(); 
-                 childrenMergePaths.hasNext();) {
-                int ind = childrenMergePaths.nextIndex();
-                MergePath childMergePath = (MergePath) childrenMergePaths.next();
-                if (myTarget.equals(childMergePath.myPath)) {
-                    if (childMergePath.myHasMissingChildren) {
-                        myHasMissingChildren = true;
-                    }
-                    myHasExistingMergeInfo = true;
-                    continue;
-                }
-                
-                if (deletedPaths.containsKey(childMergePath.myPath)) {
-                    childrenMergePaths.remove();
-                    continue;
-                }
-                
-                SVNEntry childEntry = myWCAccess.getVersionedEntry(childMergePath.myPath, false);
-                String relPath = SVNPathUtil.getRelativePath(myTarget, childMergePath.myPath);
-                
-                SVNURL childURL = parentMergeSourceURL.appendPath(relPath, false);
-                SVNAdminArea adminArea = childEntry.getAdminArea();
-                if (childEntry.isFile()) {
-                    doMergeFile(childURL, revision1, childURL, revision2, childMergePath.myPath, 
-                                adminArea, ignoreAncestry);
-                } else if (childEntry.isDirectory()) {
-                    doMerge(childURL, revision1, childURL, revision2, childMergePath.myPath, 
-                            adminArea, depth, childrenWithMergeInfo, !ignoreAncestry, 
-                            childMergePath.myHasMissingChildren, ind);
-                }
+            if (error != null) {
+                SVNErrorManager.error(error);
             }
-*/            
             return childrenWithMergeInfo;
         }
         
