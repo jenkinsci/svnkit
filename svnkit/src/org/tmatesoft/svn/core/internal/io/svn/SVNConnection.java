@@ -16,7 +16,6 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.List;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -89,30 +88,29 @@ class SVNConnection {
     }
 
     protected void handshake(SVNRepositoryImpl repository) throws SVNException {
-        Object[] items = read("[(*N(*W)(*W))]", null, true);
-        List versions = SVNReader.getList(items, 0);
-        Long minVer = (Long) versions.get(0);
-        Long maxVer = (Long) versions.get(1);
+        List items = read("nnll", (List) null, true);
+        Long minVer = (Long) items.get(0);
+        Long maxVer = (Long) items.get(1);
         if (minVer.longValue() > 2) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_BAD_VERSION, "Server requires minimum version {0,number,integer}", minVer));
         } else if (maxVer.longValue() < 2) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_BAD_VERSION, "Server requires maximum version {0,number,integer}", maxVer));
         }
-        if (!SVNReader.hasValue(items, 2, EDIT_PIPELINE)) {
+        if (!SVNReader2.hasValue(items, 3, EDIT_PIPELINE)) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_BAD_VERSION, "Only servers with 'edit-pipeline' capability is supported"));
         }
-        myIsSVNDiff1 = SVNReader.hasValue(items, 2, SVNDIFF1);
-        myIsCommitRevprops = SVNReader.hasValue(items, 2, COMMIT_REVPROPS);
-        myIsMergeInfo = SVNReader.hasValue(items, 2, MERGE_INFO);
-        write("(n(www)s)", new Object[] { "2", EDIT_PIPELINE, SVNDIFF1, ABSENT_ENTRIES, 
-              repository.getLocation().toString() });
+        myIsSVNDiff1 = SVNReader2.hasValue(items, 3, SVNDIFF1);
+        myIsCommitRevprops = SVNReader2.hasValue(items, 3, COMMIT_REVPROPS);
+        myIsMergeInfo = SVNReader2.hasValue(items, 3, MERGE_INFO);
+        write("(n(www)s)", new Object[]{"2", EDIT_PIPELINE, SVNDIFF1, ABSENT_ENTRIES,
+                repository.getLocation().toString()});
     }
 
     public void authenticate(SVNRepositoryImpl repository) throws SVNException {
         SVNErrorMessage failureReason = null;
-        Object[] items = read("[((*W)?S)]", null, true);
-        List mechs = SVNReader.getList(items, 0);
-        myRealm = SVNReader.getString(items, 1);
+        List items = read("lc", (List) null, true);
+        List mechs = SVNReader2.getList(items, 0);
+        myRealm = SVNReader2.getString(items, 1);
         if (mechs == null || mechs.size() == 0) {
             receiveRepositoryCredentials(repository);
             return;
@@ -121,13 +119,13 @@ class SVNConnection {
         if (authManager != null && authManager.isAuthenticationForced() && mechs.contains("ANONYMOUS") && mechs.contains("CRAM-MD5")) {
             mechs.remove("ANONYMOUS");
         }
-        SVNURL location = myRepository.getLocation();        
+        SVNURL location = myRepository.getLocation();
         SVNPasswordAuthentication auth = null;
         if (repository.getExternalUserName() != null && mechs.contains("EXTERNAL")) {
-            write("(w(s))", new Object[] { "EXTERNAL", repository.getExternalUserName() });
+            write("(w(s))", new Object[]{"EXTERNAL", repository.getExternalUserName()});
             failureReason = readAuthResponse();
         } else if (mechs.contains("ANONYMOUS")) {
-            write("(w())", new Object[] { "ANONYMOUS" });
+            write("(w())", new Object[]{"ANONYMOUS"});
             failureReason = readAuthResponse();
         } else if (mechs.contains("CRAM-MD5")) {
             while (true) {
@@ -139,7 +137,7 @@ class SVNConnection {
                             + location.getPort() + "> " + realm;
                 }
                 if (auth == null && authManager != null) {
-                    auth = (SVNPasswordAuthentication) authManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm, location);                    
+                    auth = (SVNPasswordAuthentication) authManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm, location);
                 } else if (authManager != null) {
                     authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, realm, failureReason, auth);
                     auth = (SVNPasswordAuthentication) authManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm, location);
@@ -148,29 +146,25 @@ class SVNConnection {
                     failureReason = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Can''t get password. Authentication is required for ''{0}''", realm);
                     break;
                 }
-                write("(w())", new Object[] { "CRAM-MD5" });
+                write("(w())", new Object[]{"CRAM-MD5"});
                 while (true) {
                     authenticator.setUserCredentials(auth);
-                    items = read("(W(?B))", null, true);
-                    if (SUCCESS.equals(items[0])) {
+                    items = read("(w(?c))", (List) null, true);
+                    if (SUCCESS.equals(items.get(0))) {
                         authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.PASSWORD, realm, null, auth);
                         receiveRepositoryCredentials(repository);
                         return;
-                    } else if (FAILURE.equals(items[0])) {
-                        try {
-                            failureReason = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication error from server: {0}", new String((byte[]) items[1], "UTF-8"));
-                        } catch (UnsupportedEncodingException e) {
-                            failureReason = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication error from server: {0}", new String((byte[]) items[1]));
-                        }
+                    } else if (FAILURE.equals(items.get(0))) {
+                        failureReason = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication error from server: {0}", SVNReader2.getString(items, 1));
                         break;
-                    } else if (STEP.equals(items[0])) {
+                    } else if (STEP.equals(items.get(0))) {
                         try {
-                            byte[] response = authenticator.buildChallengeResponse((byte[]) items[1]);
+                            byte[] response = authenticator.buildChallengeResponse((byte[]) items.get(1));
                             getOutputStream().write(response);
                             getOutputStream().flush();
                         } catch (IOException e) {
                             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getMessage()), e);
-                        } 
+                        }
                     }
                 }
             }
@@ -188,31 +182,31 @@ class SVNConnection {
         if (myIsCredentialsReceived) {
             return;
         }
-        Object[] creds = read("[(S?S)]", null, true);
+        List creds = read("w(?c)", (List) null, true);
         myIsCredentialsReceived = true;
-        if (creds != null && creds.length == 2 && creds[0] != null && creds[1] != null) {
-            SVNURL rootURL = creds[1] != null ? SVNURL.parseURIEncoded((String) creds[1]) : null;
+        if (creds != null && creds.size() == 2 && creds.get(0) != null && creds.get(1) != null) {
+            SVNURL rootURL = creds.get(1) != null ? SVNURL.parseURIEncoded(SVNReader2.getString(creds, 1)) : null;
             if (rootURL != null && rootURL.toString().length() > repository.getLocation().toString().length()) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Impossibly long repository root from server"));
             }
             if (repository != null && repository.getRepositoryRoot(false) == null) {
-                repository.updateCredentials((String) creds[0], rootURL);
-            }                
+                repository.updateCredentials((String) creds.get(0), rootURL);
+            }
             if (myRealm == null) {
-                myRealm = (String) creds[0];
+                myRealm = (String) creds.get(0);
             }
             if (myRoot == null) {
-                myRoot = (String) creds[1];
+                myRoot = SVNReader2.getString(creds, 1);
             }
         }
     }
 
     private SVNErrorMessage readAuthResponse() throws SVNException {
-        Object[] items = read("(W(?S))", null, true);
-        if (SUCCESS.equals(items[0])) {
+        List items = read("w(?c)", (List) null, true);
+        if (SUCCESS.equals(items.get(0))) {
             return null;
-        } else if (FAILURE.equals(items[0])) {
-            return SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication error from server: {0}", items[1]);
+        } else if (FAILURE.equals(items.get(0))) {
+            return SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication error from server: {0}", SVNReader2.getString(items, 1));
         }
         return SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Unexpected server response to authentication");
     }
@@ -223,9 +217,6 @@ class SVNConnection {
         myOutputStream = null;
         myConnector.close(myRepository);
     }
-
-//    public SVNItem readItem(InputStream is) throws SVNException {
-//    }
     
     public Object[] read(String template, Object[] items, boolean readMalformedData) throws SVNException {
         try {
@@ -240,6 +231,45 @@ class SVNConnection {
                     getInputStream().read(malfored);
                 } catch (IOException e1) {
                     // ignore.
+                }
+            }
+            throw e;
+        } finally {
+            myRepository.getDebugLog().flushStream(myLoggingInputStream);
+        }
+    }
+
+    public List read(String template, List items, boolean readMalformedData) throws SVNException {
+        try {
+            checkConnection();
+            return SVNReader2.parse(getInputStream(), template, items);
+        } catch (SVNException e) {
+            if (readMalformedData && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_SVN_MALFORMED_DATA) {
+                // read let's say next 255 bytes into the logging stream.
+                byte[] malfored = new byte[1024];
+                try {
+                    // could it hang here for timeout?
+                    getInputStream().read(malfored);
+                } catch (IOException e1) {
+                    // ignore.
+                }
+            }
+            throw e;
+        } finally {
+            myRepository.getDebugLog().flushStream(myLoggingInputStream);
+        }
+    }
+
+    public SVNItem readItem(boolean readMalformedData) throws SVNException {
+        try {
+            checkConnection();
+            return SVNReader2.readItem(getInputStream());
+        } catch (SVNException e) {
+            if (readMalformedData && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_SVN_MALFORMED_DATA) {
+                byte[] malfored = new byte[1024];
+                try {
+                    getInputStream().read(malfored);
+                } catch (IOException e1) {
                 }
             }
             throw e;

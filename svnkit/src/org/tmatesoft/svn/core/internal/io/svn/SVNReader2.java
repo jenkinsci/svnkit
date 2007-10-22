@@ -18,10 +18,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -87,15 +87,15 @@ public class SVNReader2 {
         if (items.get(index) instanceof List) {
             List list = (List) items.get(index);
             for (int i = 0; i < list.size(); i++) {
-                if (list.get(i) instanceof Item) {
-                    Item item = (Item) list.get(i);
-                    if (item.kind == Item.STRING) {
-                        list.set(i, item.line);
-                    } else if (item.kind == Item.WORD) {
-                        list.set(i, item.word);
-                    } else if (item.kind == Item.NUMBER) {
-                        list.set(i, new Long(item.number));
-                    } else if (item.kind == Item.LIST) {
+                if (list.get(i) instanceof SVNItem) {
+                    SVNItem item = (SVNItem) list.get(i);
+                    if (item.getKind() == SVNItem.STRING) {
+                        list.set(i, item.getLine());
+                    } else if (item.getKind() == SVNItem.WORD) {
+                        list.set(i, item.getWord());
+                    } else if (item.getKind() == SVNItem.NUMBER) {
+                        list.set(i, new Long(item.getNumber()));
+                    } else if (item.getKind() == SVNItem.LIST) {
                         list.set(i, getList(list, i));
                     }
                 }
@@ -106,15 +106,19 @@ public class SVNReader2 {
     }
 
     public static Map getProperties(List items, int index, Map properties) throws SVNException {
-        properties = properties == null ? new HashMap() : properties;
         List props = getList(items, index);
+        if (props == null) {
+            return properties;
+        }
+
+        properties = properties == null ? new HashMap() : properties;
         for (Iterator prop = props.iterator(); prop.hasNext();) {
-            Item item = (Item) prop.next();
-            if (item.kind != Item.LIST) {
+            SVNItem item = (SVNItem) prop.next();
+            if (item.getKind() != SVNItem.LIST) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Proplist element not a list");
                 SVNErrorManager.error(err);
             }
-            List propItems = parseTuple("cs", item.items, null);
+            List propItems = parseTuple("cs", item.getItems(), null);
             properties.put(getString(propItems, 0), getString(propItems, 1));
         }
         return properties;
@@ -172,6 +176,11 @@ public class SVNReader2 {
         return false;
     }
 
+    public static SVNItem readItem(InputStream is) throws SVNException {
+        char ch = skipWhiteSpace(is);
+        return readItem(is, null, ch);
+    }
+
     public static List parse(InputStream is, String template, List values) throws SVNException {
         List readItems = readTuple(is, DEFAULT_TEMPLATE);
         String word = (String) readItems.get(0);
@@ -188,34 +197,15 @@ public class SVNReader2 {
         return null;
     }
 
-    public static List parse(InputStream is, String parsingTerminatingWord, String template, List values) throws SVNException {
-        if (parsingTerminatingWord == null) {
-            return parse(is, template, values);
-        }
-        while (true) {
-            char ch = skipWhiteSpace(is);
-            Item item = readItem(is, null, ch);
-            if (item.kind == Item.WORD && parsingTerminatingWord.equals(item.word)) {
-                break;
-            } else if (item.kind != Item.LIST) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Expected list missing");
-                SVNErrorManager.error(err);
-            } else {
-                values.add(parseTuple(template, item.items,  null));
-            }
-        }
-        return values;
-    }
-
     private static void handleFailureStatus(List list) throws SVNException {
         if (list.size() == 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Empty error list");
             SVNErrorManager.error(err);
         }
-        SVNErrorMessage topError = getErrorMessage((Item) list.get(list.size() - 1));
+        SVNErrorMessage topError = getErrorMessage((SVNItem) list.get(list.size() - 1));
         SVNErrorMessage parentError = topError;
         for (int i = list.size() - 2; i >= 0; i++) {
-            Item item = (Item) list.get(i);
+            SVNItem item = (SVNItem) list.get(i);
             SVNErrorMessage error = getErrorMessage(item);
             parentError.setChildErrorMessage(error);
             parentError = error;
@@ -223,12 +213,12 @@ public class SVNReader2 {
         SVNErrorManager.error(topError);
     }
 
-    private static SVNErrorMessage getErrorMessage(Item item) throws SVNException {
-        if (item.kind != Item.LIST) {
+    private static SVNErrorMessage getErrorMessage(SVNItem item) throws SVNException {
+        if (item.getKind() != SVNItem.LIST) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Malformed error list");
             SVNErrorManager.error(err);
         }
-        List errorItems = parseTuple(DEAFAULT_ERROR_TEMPLATE, item.items, null);
+        List errorItems = parseTuple(DEAFAULT_ERROR_TEMPLATE, item.getItems(), null);
         int code = ((Long) errorItems.get(0)).intValue();
         SVNErrorCode errorCode = SVNErrorCode.getErrorCode(code);
         String errorMessage = (String) errorItems.get(1);
@@ -240,47 +230,47 @@ public class SVNReader2 {
 
     private static List readTuple(InputStream is, String template) throws SVNException {
         char ch = readChar(is);
-        Item item = readItem(is, null, ch);
+        SVNItem item = readItem(is, null, ch);
         System.out.println(item);
-        if (item.kind != Item.LIST) {
+        if (item.getKind() != SVNItem.LIST) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA);
             SVNErrorManager.error(err);
         }
-        return parseTuple(template, item.items, null);
+        return parseTuple(template, item.getItems(), null);
     }
 
-    private static List parseTuple(String template, Collection items, List values) throws SVNException {
+    public static List parseTuple(String template, Collection items, List values) throws SVNException {
         values = values == null ? new ArrayList() : values;
         int index = 0;
         for (Iterator iterator = items.iterator(); iterator.hasNext() && index < template.length(); index++) {
-            Item item = (Item) iterator.next();
+            SVNItem item = (SVNItem) iterator.next();
             char ch = template.charAt(index);
             if (ch == '?') {
                 index++;
                 ch = template.charAt(index);
             }
 
-            if ((ch == 'n' || ch == 'r') && item.kind == Item.NUMBER) {
-                values.add(new Long(item.number));
-            } else if (ch == 's' && item.kind == Item.STRING) {
-                values.add(item.line);
-            } else if (ch == 'c' && item.kind == Item.STRING) {
-                values.add(item.line.getBytes());
-            } else if (ch == 'w' && item.kind == Item.WORD) {
-                values.add(item.word);
-            } else if ((ch == 'b' || ch == 'B') && item.kind == Item.WORD) {
-                if (String.valueOf(true).equals(item.word)) {
+            if ((ch == 'n' || ch == 'r') && item.getKind() == SVNItem.NUMBER) {
+                values.add(new Long(item.getNumber()));
+            } else if (ch == 's' && item.getKind() == SVNItem.STRING) {
+                values.add(item.getLine());
+            } else if (ch == 'c' && item.getKind() == SVNItem.STRING) {
+                values.add(item.getLine().getBytes());
+            } else if (ch == 'w' && item.getKind() == SVNItem.WORD) {
+                values.add(item.getWord());
+            } else if ((ch == 'b' || ch == 'B') && item.getKind() == SVNItem.WORD) {
+                if (String.valueOf(true).equals(item.getWord())) {
                     values.add(Boolean.TRUE);
-                } else if (String.valueOf(false).equals(item.word)) {
+                } else if (String.valueOf(false).equals(item.getWord())) {
                     values.add(Boolean.FALSE);
                 } else {
                     break;
                 }
-            } else if (ch == 'l' && item.kind == Item.LIST) {
-                values.add(item.items);
-            } else if (ch == '(' && item.kind == Item.LIST) {
+            } else if (ch == 'l' && item.getKind() == SVNItem.LIST) {
+                values.add(item.getItems());
+            } else if (ch == '(' && item.getKind() == SVNItem.LIST) {
                 index++;
-                values = parseTuple(template.substring(index), item.items, values);
+                values = parseTuple(template.substring(index), item.getItems(), values);
             } else if (ch == ')') {
                 return values;
             } else {
@@ -327,9 +317,9 @@ public class SVNReader2 {
         return values;
     }
 
-    private static Item readItem(InputStream is, Item item, char ch) throws SVNException {
+    private static SVNItem readItem(InputStream is, SVNItem item, char ch) throws SVNException {
         if (item == null) {
-            item = new Item();
+            item = new SVNItem();
         }
         if (Character.isDigit(ch)) {
             long value = Character.digit(ch, 10);
@@ -364,9 +354,9 @@ public class SVNReader2 {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA);
                     SVNErrorManager.error(err);
                 }
-                item.kind = Item.STRING;
+                item.setKind(SVNItem.STRING);
                 try {
-                    item.line = new String(buffer, 0, buffer.length, "UTF-8");
+                    item.setLine(new String(buffer, 0, buffer.length, "UTF-8"));
                 } catch (UnsupportedEncodingException e) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA);
                     SVNErrorManager.error(err);
@@ -374,8 +364,8 @@ public class SVNReader2 {
                 ch = readChar(is);
             } else {
                 // number.
-                item.kind = Item.NUMBER;
-                item.number = value;
+                item.setKind(SVNItem.NUMBER);
+                item.setNumber(value);
             }
         } else if (Character.isLetter(ch)) {
             StringBuffer buffer = new StringBuffer();
@@ -388,18 +378,18 @@ public class SVNReader2 {
                 }
                 break;
             }
-            item.kind = Item.WORD;
-            item.word = buffer.toString();
+            item.setKind(SVNItem.WORD);
+            item.setWord(buffer.toString());
         } else if (ch == '(') {
-            item.kind = Item.LIST;
-            item.items = new ArrayList();
+            item.setKind(SVNItem.LIST);
+            item.setItems(new ArrayList());
             while (true) {
                 ch = skipWhiteSpace(is);
                 if (ch == ')') {
                     break;
                 }
-                Item child = new Item();
-                item.items.add(child);
+                SVNItem child = new SVNItem();
+                item.getItems().add(child);
                 readItem(is, child, ch);
             }
             ch = readChar(is);
@@ -433,41 +423,6 @@ public class SVNReader2 {
                 continue;
             }
             return ch;
-        }
-    }
-
-    private static class Item {
-
-        public static final int WORD = 0;
-        public static final int STRING = 1;
-        public static final int LIST = 2;
-        public static final int NUMBER = 3;
-
-        public int kind;
-
-        public long number = -1;
-        public String word;  // success
-        public String line; // 3:abc
-        public Collection items;
-
-        public String toString() {
-            StringBuffer result = new StringBuffer();
-            if (kind == WORD) {
-                result.append("W").append(word);
-            } else if (kind == STRING) {
-                result.append("S").append(line.length()).append(":").append(line).append(" ");
-            } else if (kind == NUMBER) {
-                result.append("N").append(number);
-            } else if (kind == LIST) {
-                result.append("L(");
-                for (Iterator elemenets = items.iterator(); elemenets.hasNext();) {
-                    Item item = (Item) elemenets.next();
-                    result.append(item.toString());
-                    result.append(" ");
-                }
-                result.append(") ");
-            }
-            return result.toString();
         }
     }
 }

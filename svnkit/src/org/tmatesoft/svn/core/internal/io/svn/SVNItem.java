@@ -1,0 +1,94 @@
+/*
+ * ====================================================================
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ *
+ * This software is licensed as described in the file COPYING, which
+ * you should have received as part of this distribution.  The terms
+ * are also available at http://svnkit.com/license.html
+ * If newer versions of this license are posted there, you may use a
+ * newer version instead, at your option.
+ * ====================================================================
+ */
+package org.tmatesoft.svn.core.internal.io.svn;
+
+import java.util.Collection;
+import java.util.Iterator;
+
+
+/**
+ * @author TMate Software Ltd.
+ * @version 1.1.1
+ */
+public class SVNItem {
+    public static final int WORD = 0;
+    public static final int STRING = 1;
+    public static final int LIST = 2;
+    public static final int NUMBER = 3;
+
+    private int myKind;
+
+    private long myNumber = -1;
+    private String myWord;  // success
+    private String myLine; // 3:abc
+    private Collection myItems;
+
+    public int getKind() {
+        return myKind;
+    }
+
+    public void setKind(int kind) {
+        this.myKind = kind;
+    }
+
+    public long getNumber() {
+        return myNumber;
+    }
+
+    public void setNumber(long number) {
+        this.myNumber = number;
+    }
+
+    public String getWord() {
+        return myWord;
+    }
+
+    public void setWord(String word) {
+        this.myWord = word;
+    }
+
+    public String getLine() {
+        return myLine;
+    }
+
+    public void setLine(String line) {
+        this.myLine = line;
+    }
+
+    public Collection getItems() {
+        return myItems;
+    }
+
+    public void setItems(Collection items) {
+        this.myItems = items;
+    }
+
+    public String toString() {
+        StringBuffer result = new StringBuffer();
+        if (myKind == WORD) {
+            result.append("W").append(myWord);
+        } else if (myKind == STRING) {
+            result.append("S").append(myLine.length()).append(":").append(myLine).append(" ");
+        } else if (myKind == NUMBER) {
+            result.append("N").append(myNumber);
+        } else if (myKind == LIST) {
+            result.append("L(");
+            for (Iterator elemenets = myItems.iterator(); elemenets.hasNext();) {
+                SVNItem item = (SVNItem) elemenets.next();
+                result.append(item.toString());
+                result.append(" ");
+            }
+            result.append(") ");
+        }
+        return result.toString();
+    }
+}
