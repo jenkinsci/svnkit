@@ -1452,7 +1452,7 @@ public class SVNDiffClient extends SVNBasicClient {
             pegRevision = SVNRevision.HEAD;
         }
         runPeggedMerge(url1, null, pegRevision, revision1, revision2, dstPath, depth, dryRun, 
-                       force, useAncestry, recordOnly);
+                       force, !useAncestry, recordOnly);
     }
     
     /**
@@ -1518,7 +1518,7 @@ public class SVNDiffClient extends SVNBasicClient {
             pegRevision = SVNRevision.WORKING;
         }
         runPeggedMerge(null, path1, pegRevision, revision1, revision2, dstPath, depth, dryRun, 
-                       force, useAncestry, recordOnly);
+                       force, !useAncestry, recordOnly);
     }
     
     public SVNMergeInfo getMergeInfo(File path) throws SVNException {
