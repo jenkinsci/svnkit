@@ -393,7 +393,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                     if (myUserName == null || "".equals(myUserName)) {
                         String userName = System.getProperty("svnkit.ssh2.author", System.getProperty("javasvn.ssh2.author"));
                         if (userName != null) {
-                            new SVNUserNameAuthentication(userName, myIsStore);
+                            return new SVNUserNameAuthentication(userName, myIsStore);
                         }
                         return null;
                     }
