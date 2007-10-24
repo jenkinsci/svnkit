@@ -110,6 +110,7 @@ public class SVNReader2 {
             return properties;
         }
         properties = properties == null ? new HashMap() : properties;
+
         List props = (List) items.get(index);
         for (Iterator prop = props.iterator(); prop.hasNext();) {
             SVNItem item = (SVNItem) prop.next();
@@ -121,6 +122,24 @@ public class SVNReader2 {
             properties.put(getString(propItems, 0), getString(propItems, 1));
         }
         return properties;
+    }
+
+    public static Map getPropertyDiffs(List items, int index, Map diffs) throws SVNException {
+        if (!(items.get(index) instanceof List)){
+            return diffs;
+        }
+        diffs = diffs == null? new HashMap() : diffs;
+        items = (List) items.get(index);
+        for (Iterator iterator = items.iterator(); iterator.hasNext();) {
+            SVNItem item = (SVNItem) iterator.next();
+            if (item.getKind() != SVNItem.LIST){
+               SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Prop diffs element not a list");
+                SVNErrorManager.error(err);                 
+            }
+            List values = SVNReader2.parseTuple("c(?s)", item.getItems(), null);
+            diffs.put(SVNReader2.getString(values, 0), SVNReader2.getString(values, 1));
+        }
+        return diffs;
     }
 
     public static String getString(List items, int index) {
@@ -228,7 +247,7 @@ public class SVNReader2 {
         List errorItems = parseTuple(DEAFAULT_ERROR_TEMPLATE, item.getItems(), null);
         int code = ((Long) errorItems.get(0)).intValue();
         SVNErrorCode errorCode = SVNErrorCode.getErrorCode(code);
-        String errorMessage = (String) errorItems.get(1);
+        String errorMessage = SVNReader2.getString(errorItems, 1);
         errorMessage = errorMessage == null ? "" : errorMessage;
         //errorItems contains 2 items more (file and line) but native svn uses them only for debugging purposes.
         //May be we should use another error template.

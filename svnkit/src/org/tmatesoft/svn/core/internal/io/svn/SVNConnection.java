@@ -182,7 +182,7 @@ class SVNConnection {
         if (myIsCredentialsReceived) {
             return;
         }
-        List creds = read("w(?c)", (List) null, true);
+        List creds = read("c?c", (List) null, true);
         myIsCredentialsReceived = true;
         if (creds != null && creds.size() == 2 && creds.get(0) != null && creds.get(1) != null) {
             SVNURL rootURL = creds.get(1) != null ? SVNURL.parseURIEncoded(SVNReader2.getString(creds, 1)) : null;
@@ -190,10 +190,10 @@ class SVNConnection {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Impossibly long repository root from server"));
             }
             if (repository != null && repository.getRepositoryRoot(false) == null) {
-                repository.updateCredentials((String) creds.get(0), rootURL);
+                repository.updateCredentials(SVNReader2.getString(creds, 0), rootURL);
             }
             if (myRealm == null) {
-                myRealm = (String) creds.get(0);
+                myRealm = SVNReader2.getString(creds, 0);
             }
             if (myRoot == null) {
                 myRoot = SVNReader2.getString(creds, 1);
