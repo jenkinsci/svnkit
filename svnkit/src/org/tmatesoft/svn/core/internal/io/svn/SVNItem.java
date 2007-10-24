@@ -37,7 +37,7 @@ public class SVNItem {
     }
 
     public void setKind(int kind) {
-        this.myKind = kind;
+        myKind = kind;
     }
 
     public long getNumber() {
@@ -45,7 +45,7 @@ public class SVNItem {
     }
 
     public void setNumber(long number) {
-        this.myNumber = number;
+        myNumber = number;
     }
 
     public String getWord() {
@@ -53,7 +53,7 @@ public class SVNItem {
     }
 
     public void setWord(String word) {
-        this.myWord = word;
+        myWord = word;
     }
 
     public String getLine() {
@@ -61,7 +61,7 @@ public class SVNItem {
     }
 
     public void setLine(String line) {
-        this.myLine = line;
+        myLine = line;
     }
 
     public Collection getItems() {
@@ -69,7 +69,7 @@ public class SVNItem {
     }
 
     public void setItems(Collection items) {
-        this.myItems = items;
+        myItems = items;
     }
 
     public String toString() {

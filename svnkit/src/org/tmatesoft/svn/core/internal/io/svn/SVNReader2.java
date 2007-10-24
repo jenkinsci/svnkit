@@ -372,7 +372,7 @@ public class SVNReader2 {
             buffer.append(ch);
             while (true) {
                 ch = readChar(is);
-                if (Character.isLetterOrDigit(ch) && ch != '-') {
+                if (Character.isLetterOrDigit(ch) || ch == '-') {
                     buffer.append(ch);
                     continue;
                 }
