@@ -21,7 +21,7 @@ import com.sun.jna.WString;
  * @version 1.1.2
  * @author  TMate Software Ltd.
  */
-public class SVNWin32Util {
+class SVNWin32Util {
     
     public static boolean setWritable(File file) {
         if (file == null) {

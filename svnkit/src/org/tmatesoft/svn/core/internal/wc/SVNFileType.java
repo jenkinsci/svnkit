@@ -17,7 +17,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.internal.util.jna.SVNLinuxUtil;
+import org.tmatesoft.svn.core.internal.util.jna.SVNJNAUtil;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 
@@ -80,7 +80,7 @@ public class SVNFileType {
         }
         if (SVNFileUtil.isLinux || SVNFileUtil.isBSD || SVNFileUtil.isOSX) {
             if (detectSymlinks) {
-                SVNFileType ft = SVNLinuxUtil.getFileType(file);
+                SVNFileType ft = SVNJNAUtil.getFileType(file);
                 if (ft != null) {
                     return ft;
                 }

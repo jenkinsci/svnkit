@@ -19,7 +19,7 @@ import com.sun.jna.Pointer;
  * @version 1.1.2
  * @author  TMate Software Ltd.
  */
-public interface ISVNCLibrary extends Library {
+interface ISVNCLibrary extends Library {
     
     public int chmod(String filename, int mode);
     

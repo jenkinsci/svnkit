@@ -24,7 +24,7 @@ import com.sun.jna.WString;
  * @version 1.1.2
  * @author  TMate Software Ltd.
  */
-public class SVNWinCrypt {
+class SVNWinCrypt {
 
     public static String decrypt(String encryptedData) {
         if (encryptedData == null) {

@@ -22,7 +22,7 @@ import com.sun.jna.Memory;
  * @version 1.1.2
  * @author TMate Software Ltd.
  */
-public class SVNLinuxUtil {
+class SVNLinuxUtil {
 
     private static Memory ourSharedMemory;
     
@@ -215,7 +215,7 @@ public class SVNLinuxUtil {
     }
 
     public static boolean setWritable(File file) {
-        if (file == null) {
+        if (file == null || ourSharedMemory == null) {
             return false;
         }
         String path = file.getAbsolutePath();
@@ -266,7 +266,7 @@ public class SVNLinuxUtil {
     }
 
     public static boolean createSymlink(File file, String linkName) {
-        if (file == null || linkName == null) {
+        if (file == null || linkName == null || ourSharedMemory == null) {
             return false;
         }
         String path = file.getAbsolutePath();
