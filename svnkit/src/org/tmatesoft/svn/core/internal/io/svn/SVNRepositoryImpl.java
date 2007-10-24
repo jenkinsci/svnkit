@@ -310,7 +310,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
 
             if (properties != null) {
                 properties = SVNReader2.getProperties(values, 2, properties);
-                properties.put(SVNProperty.REVISION, values.get(1).toString());
+                properties.put(SVNProperty.REVISION, SVNReader2.getString(values, 1));
                 properties.put(SVNProperty.CHECKSUM, expectedChecksum);
             }
             if (contents != null) {

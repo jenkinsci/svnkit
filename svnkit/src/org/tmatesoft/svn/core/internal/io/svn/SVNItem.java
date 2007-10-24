@@ -91,4 +91,43 @@ public class SVNItem {
         }
         return result.toString();
     }
+
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o instanceof String) {
+            if (myKind == WORD) {
+                return myWord.equals(o);
+            } else if (myKind == STRING) {
+                return myLine.equals(o);
+            }
+            return false;
+        } else if (o instanceof byte[]) {
+            if (myKind == WORD) {
+                return myWord.getBytes().equals(o);
+            } else if (myKind == STRING) {
+                return myLine.getBytes().equals(o);
+            }
+            return false;
+        } else if (o instanceof Long) {
+            long value = ((Long) o).longValue();
+            if (myKind == NUMBER) {
+                return myNumber == value;
+            }
+            return false;
+        } else if (o instanceof Integer) {
+            long value = ((Integer) o).longValue();
+            if (myKind == NUMBER) {
+                return myNumber == value;
+            }
+            return false;
+        } else if (o instanceof Collection) {
+            if (myKind == LIST) {
+                return myItems.equals(o);
+            }
+            return false;
+        }
+        return super.equals(o);
+    }
 }

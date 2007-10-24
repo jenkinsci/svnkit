@@ -202,10 +202,10 @@ class SVNConnection {
     }
 
     private SVNErrorMessage readAuthResponse() throws SVNException {
-        List items = read("w(?c)", (List) null, true);
-        if (SUCCESS.equals(items.get(0))) {
+        List items = readTuple("w(?c)", null, true);
+        if (SUCCESS.equals(SVNReader2.getString(items, 0))) {
             return null;
-        } else if (FAILURE.equals(items.get(0))) {
+        } else if (FAILURE.equals(SVNReader2.getString(items, 0))) {
             return SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication error from server: {0}", SVNReader2.getString(items, 1));
         }
         return SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Unexpected server response to authentication");
@@ -223,17 +223,8 @@ class SVNConnection {
             checkConnection();
             return SVNReader.parse(getInputStream(), template, items);
         } catch (SVNException e) {
-            if (readMalformedData && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_SVN_MALFORMED_DATA) {
-                // read let's say next 255 bytes into the logging stream.
-                byte[] malfored = new byte[1024];
-                try {
-                    // could it hang here for timeout?
-                    getInputStream().read(malfored);
-                } catch (IOException e1) {
-                    // ignore.
-                }
-            }
-            throw e;
+            handleIOError(e, readMalformedData);
+            return null;
         } finally {
             myRepository.getDebugLog().flushStream(myLoggingInputStream);
         }
@@ -244,20 +235,23 @@ class SVNConnection {
             checkConnection();
             return SVNReader2.parse(getInputStream(), template, items);
         } catch (SVNException e) {
-            if (readMalformedData && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_SVN_MALFORMED_DATA) {
-                // read let's say next 255 bytes into the logging stream.
-                byte[] malfored = new byte[1024];
-                try {
-                    // could it hang here for timeout?
-                    getInputStream().read(malfored);
-                } catch (IOException e1) {
-                    // ignore.
-                }
-            }
-            throw e;
+            handleIOError(e, readMalformedData);
+            return null;
         } finally {
             myRepository.getDebugLog().flushStream(myLoggingInputStream);
         }
+    }
+
+    public List readTuple(String template, List items, boolean readMalformedData) throws SVNException {
+        try {
+            checkConnection();
+            return SVNReader2.readTuple(getInputStream(), template);
+        } catch (SVNException e) {
+            handleIOError(e, readMalformedData);
+            return null;
+        } finally {
+            myRepository.getDebugLog().flushStream(myLoggingInputStream);
+        }        
     }
 
     public SVNItem readItem(boolean readMalformedData) throws SVNException {
@@ -265,17 +259,22 @@ class SVNConnection {
             checkConnection();
             return SVNReader2.readItem(getInputStream());
         } catch (SVNException e) {
-            if (readMalformedData && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_SVN_MALFORMED_DATA) {
+            handleIOError(e, readMalformedData);
+            return null;
+        } finally {
+            myRepository.getDebugLog().flushStream(myLoggingInputStream);
+        }
+    }
+
+    private void handleIOError(SVNException e, boolean readMalformedData) throws SVNException {
+        if (readMalformedData && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_SVN_MALFORMED_DATA) {
                 byte[] malfored = new byte[1024];
                 try {
                     getInputStream().read(malfored);
                 } catch (IOException e1) {
                 }
             }
-            throw e;
-        } finally {
-            myRepository.getDebugLog().flushStream(myLoggingInputStream);
-        }
+            throw e;        
     }
     
     public void write(String template, Object[] items) throws SVNException {
@@ -325,7 +324,7 @@ class SVNConnection {
             try {
                 myInputStream = myRepository.getDebugLog().createLogStream(new BufferedInputStream(myConnector.getInputStream()));
                 myLoggingInputStream = myInputStream;
-                myInputStream = new SVNRollbackInputStream(myInputStream, 1024);
+//                myInputStream = new SVNRollbackInputStream(myInputStream, 1024);
             } catch (IOException e) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getMessage()), e);
             }

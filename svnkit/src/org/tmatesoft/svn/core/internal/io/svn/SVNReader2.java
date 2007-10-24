@@ -106,12 +106,11 @@ public class SVNReader2 {
     }
 
     public static Map getProperties(List items, int index, Map properties) throws SVNException {
-        List props = getList(items, index);
-        if (props == null) {
+        if (!(items.get(index) instanceof List)){
             return properties;
         }
-
         properties = properties == null ? new HashMap() : properties;
+        List props = (List) items.get(index);
         for (Iterator prop = props.iterator(); prop.hasNext();) {
             SVNItem item = (SVNItem) prop.next();
             if (item.getKind() != SVNItem.LIST) {
@@ -128,14 +127,22 @@ public class SVNReader2 {
         if (items == null || index >= items.size()) {
             return null;
         }
-        if (items.get(index) instanceof byte[]) {
+        Object item = items.get(index);
+        if (item instanceof byte[]) {
             try {
-                return new String((byte[]) items.get(index), "UTF-8");
+                return new String((byte[]) item, "UTF-8");
             } catch (IOException e) {
                 return null;
             }
-        } else if (items.get(index) instanceof String) {
-            return (String) items.get(index);
+        } else if (item instanceof String) {
+            return (String) item;
+        } else if (item instanceof Long || item instanceof Integer) {
+            return item.toString();
+        } else if (item instanceof List) {
+            List values = getList(items, index);
+            if (values.size() == 1) {
+                return (String) values.get(0);
+            }
         }
         return null;
     }
@@ -228,7 +235,7 @@ public class SVNReader2 {
         return SVNErrorMessage.create(errorCode, errorMessage);
     }
 
-    private static List readTuple(InputStream is, String template) throws SVNException {
+    public static List readTuple(InputStream is, String template) throws SVNException {
         char ch = readChar(is);
         SVNItem item = readItem(is, null, ch);
         System.out.println(item);
@@ -270,7 +277,9 @@ public class SVNReader2 {
                 values.add(item.getItems());
             } else if (ch == '(' && item.getKind() == SVNItem.LIST) {
                 index++;
-                values = parseTuple(template.substring(index), item.getItems(), values);
+                template = template.substring(index);
+                values = parseTuple(template, item.getItems(), values);
+                index++;
             } else if (ch == ')') {
                 return values;
             } else {
