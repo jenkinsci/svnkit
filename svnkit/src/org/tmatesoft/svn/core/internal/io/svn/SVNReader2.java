@@ -26,7 +26,9 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
@@ -106,7 +108,7 @@ public class SVNReader2 {
     }
 
     public static Map getProperties(List items, int index, Map properties) throws SVNException {
-        if (!(items.get(index) instanceof List)){
+        if (!(items.get(index) instanceof List)) {
             return properties;
         }
         properties = properties == null ? new HashMap() : properties;
@@ -125,21 +127,35 @@ public class SVNReader2 {
     }
 
     public static Map getPropertyDiffs(List items, int index, Map diffs) throws SVNException {
-        if (!(items.get(index) instanceof List)){
+        if (!(items.get(index) instanceof List)) {
             return diffs;
         }
-        diffs = diffs == null? new HashMap() : diffs;
+        diffs = diffs == null ? new HashMap() : diffs;
         items = (List) items.get(index);
         for (Iterator iterator = items.iterator(); iterator.hasNext();) {
             SVNItem item = (SVNItem) iterator.next();
-            if (item.getKind() != SVNItem.LIST){
-               SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Prop diffs element not a list");
-                SVNErrorManager.error(err);                 
+            if (item.getKind() != SVNItem.LIST) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Prop diffs element not a list");
+                SVNErrorManager.error(err);
             }
-            List values = SVNReader2.parseTuple("c(?s)", item.getItems(), null);
-            diffs.put(SVNReader2.getString(values, 0), SVNReader2.getString(values, 1));
+            List values = parseTuple("c(?s)", item.getItems(), null);
+            diffs.put(getString(values, 0), getString(values, 1));
         }
         return diffs;
+    }
+
+    public static SVNLock getLock(Collection items) throws SVNException {
+        List values = parseTuple("ccc(?c)c(?c)", items, null);
+        String path = SVNPathUtil.canonicalizePath(getString(values, 0));
+        String token = getString(values, 1);
+        String owner = getString(values, 2);
+        String comment = getString(values, 3);
+        Date creationDate = SVNTimeUtil.parseDate(getString(values, 4));
+        Date expirationDate = null;
+        if (values.get(5) != null) {
+            expirationDate = SVNTimeUtil.parseDate(getString(values, 5));
+        }
+        return new SVNLock(path, token, owner, comment, creationDate, expirationDate);
     }
 
     public static String getString(List items, int index) {
@@ -223,7 +239,7 @@ public class SVNReader2 {
         return null;
     }
 
-    private static void handleFailureStatus(List list) throws SVNException {
+    public static void handleFailureStatus(List list) throws SVNException {
         if (list.size() == 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Empty error list");
             SVNErrorManager.error(err);
