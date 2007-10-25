@@ -271,7 +271,8 @@ public class SVNReader2 {
     }
 
     public static List readTuple(InputStream is, String template) throws SVNException {
-        char ch = readChar(is);
+//        char ch = readChar(is);
+        char ch = skipWhiteSpace(is);
         SVNItem item = readItem(is, null, ch);
         System.out.println(item);
         if (item.getKind() != SVNItem.LIST) {

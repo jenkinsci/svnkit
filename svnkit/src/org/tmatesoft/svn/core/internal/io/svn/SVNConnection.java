@@ -149,7 +149,7 @@ class SVNConnection {
                 write("(w())", new Object[]{"CRAM-MD5"});
                 while (true) {
                     authenticator.setUserCredentials(auth);
-                    items = read("(w(?c))", (List) null, true);
+                    items = readTuple("w(?c))", true);
                     if (SUCCESS.equals(items.get(0))) {
                         authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.PASSWORD, realm, null, auth);
                         receiveRepositoryCredentials(repository);
@@ -202,7 +202,7 @@ class SVNConnection {
     }
 
     private SVNErrorMessage readAuthResponse() throws SVNException {
-        List items = readTuple("w(?c)", null, true);
+        List items = readTuple("w(?c)", true);
         if (SUCCESS.equals(SVNReader2.getString(items, 0))) {
             return null;
         } else if (FAILURE.equals(SVNReader2.getString(items, 0))) {
@@ -242,7 +242,7 @@ class SVNConnection {
         }
     }
 
-    public List readTuple(String template, List items, boolean readMalformedData) throws SVNException {
+    public List readTuple(String template, boolean readMalformedData) throws SVNException {
         try {
             checkConnection();
             return SVNReader2.readTuple(getInputStream(), template);

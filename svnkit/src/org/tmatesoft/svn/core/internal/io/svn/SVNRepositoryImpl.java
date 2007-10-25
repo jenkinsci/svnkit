@@ -17,6 +17,7 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -26,7 +27,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.ArrayList;
 
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
@@ -411,7 +411,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Dirlist element not a list");
                         SVNErrorManager.error(err);
                     }
-                    List direntProps = SVNReader2.parseTuple("cwnbr(?c)(?c)", item.getItems(), null);
+                    List direntProps = SVNReader2.parseTuple("wnbr(?c)(?c)", item.getItems(), null);
                     String name = SVNReader2.getString(direntProps, 0);
                     SVNNodeKind kind = SVNNodeKind.parseKind(SVNReader2.getString(direntProps, 1));
                     long size = SVNReader2.getLong(direntProps, 2);
@@ -454,7 +454,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             authenticate();
             List values = read("(?l)", (List) null, true);
             if (values != null) {
-                List direntProps = SVNReader2.parseTuple("wnbr(?c)(?c)", values, null);
+                List direntProps = SVNReader2.parseTuple("cwnbr(?c)(?c)", values, null);
                 SVNNodeKind kind = SVNNodeKind.parseKind(SVNReader2.getString(direntProps, 0));
                 long size = SVNReader2.getLong(direntProps, 1);
                 boolean hasProps = SVNReader2.getBoolean(direntProps, 2);
@@ -1107,12 +1107,12 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             List items = read("?l", (List) null, true);
             if (items != null) {
                 List values = SVNReader2.parseTuple("wnbr(?c)(?c)", items, null);
-                SVNNodeKind kind = SVNNodeKind.parseKind(SVNReader2.getString(items, 0));
-                long size = SVNReader2.getLong(items, 1);
-                boolean hasProperties = SVNReader2.getBoolean(items, 3);
+                SVNNodeKind kind = SVNNodeKind.parseKind(SVNReader2.getString(values, 0));
+                long size = SVNReader2.getLong(values, 1);
+                boolean hasProperties = SVNReader2.getBoolean(values, 3);
                 long createdRevision = SVNReader2.getLong(items, 4);
-                Date createdDate = SVNTimeUtil.parseDate(SVNReader2.getString(items, 5));
-                String lastAuthor = SVNReader2.getString(items, 6);
+                Date createdDate = SVNTimeUtil.parseDate(SVNReader2.getString(values, 5));
+                String lastAuthor = SVNReader2.getString(values, 6);
                 entry = new SVNDirEntry(url, SVNPathUtil.tail(path), kind, size, hasProperties, createdRevision, createdDate, lastAuthor);
             }
             return entry;
@@ -1196,11 +1196,11 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         return myConnection.read(template, values, readMalformedData);
     }
 
-    private List readTuple(String template, List values, boolean readMalformedData) throws SVNException {
+    private List readTuple(String template, boolean readMalformedData) throws SVNException {
         if (myConnection == null) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED));
         }
-        return myConnection.readTuple(template, values, readMalformedData);
+        return myConnection.readTuple(template, readMalformedData);
     }
 
     private SVNItem readItem(boolean readMalformedData) throws SVNException {

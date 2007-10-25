@@ -18,6 +18,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
+import java.util.List;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -195,25 +196,17 @@ class SVNCommitEditor implements ISVNEditor {
         SVNException e = null;
 	    try {
 		    myConnection.write("(w())", new Object[] { "close-edit" });
-	        myConnection.read("[()]", (Object[]) null, true);
+	        myConnection.read("", (List) null, true);
 
             myRepository.authenticate();
 
-		    Object[] items = myConnection.read("(N(?S)(?S)", new Object[3], true);
-            Object[] error = null;
-            try { 
-                error = myConnection.read("(?S)", new Object[1], false);
-            } catch (SVNException e2) {
-                // pre 1.4. servers are not sending this data.
-            }
-            myConnection.read(")", (Object[]) null, true);
-		    long revision = SVNReader.getLong(items, 0);
-		    Date date = SVNReader.getDate(items, 1);
-            SVNErrorMessage err = null;
-            if (error != null && error[0] != null && !"".equals(error[0])) {
-                err = SVNErrorMessage.create(SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED, error[0].toString(), SVNErrorMessage.TYPE_WARNING);
-            }
-		    return new SVNCommitInfo(revision, (String) items[2], date, err);
+            List items = myConnection.readTuple("r(?c)(?c)?(?c)", true);
+            long revision = SVNReader2.getLong(items, 0);
+            Date date = SVNReader2.getDate(items, 1);
+            String author = SVNReader2.getString(items, 2);
+            String errorMessage = SVNReader2.getString(items, 3);
+            SVNErrorMessage err = errorMessage == null || errorMessage.length() == 0 ? null : SVNErrorMessage.create(SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED, errorMessage, SVNErrorMessage.TYPE_WARNING);            
+		    return new SVNCommitInfo(revision, author, date, err);
 	    } catch (SVNException exception) {
             e = exception;
             try {
@@ -234,7 +227,7 @@ class SVNCommitEditor implements ISVNEditor {
         SVNException error = null;
 	    try {
 		    myConnection.write("(w())", new Object[] { "abort-edit" });
-            myConnection.read("[()]", (Object[]) null, true);
+            myConnection.read("", (List) null, true);
 	    } catch (SVNException e) {
             error = e;
             throw e;
