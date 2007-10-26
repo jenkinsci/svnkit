@@ -818,6 +818,10 @@ public class SVNClientImpl implements SVNClientInterface {
         propertyCreate(path, name, value == null ? null : new String(value), recurse, force);
     }
 
+    public void propertyCreate(String path, String name, String value, int depth, boolean force) throws ClientException {
+        notImplementedYet(null);//TODO: fixme
+    }
+
     public PropertyData revProperty(String path, String name, Revision rev) throws ClientException {
         if(name == null || name.equals("")){
             return null;

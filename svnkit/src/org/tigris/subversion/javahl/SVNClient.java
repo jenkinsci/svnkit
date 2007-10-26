@@ -262,6 +262,10 @@ public class SVNClient implements SVNClientInterface {
         myDelegate.propertyCreate(path, name, value, recurse, force);
     }
 
+    public void propertyCreate(String path, String name, String value, int depth, boolean force) throws ClientException {
+        myDelegate.propertyCreate(path, name, value, depth, force);
+    }
+
     public PropertyData revProperty(String path, String name, Revision rev) throws ClientException {
         return myDelegate.revProperty(path, name, rev);
     }
