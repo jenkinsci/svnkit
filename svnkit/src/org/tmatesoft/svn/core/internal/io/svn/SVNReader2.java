@@ -69,18 +69,7 @@ public class SVNReader2 {
             return Boolean.valueOf((String) items.get(index)).booleanValue();
         }
         return false;
-
     }
-
-//    public static Map getMap(List items, int index) {
-//        if (items == null || index >= items.size()) {
-//            return Collections.EMPTY_MAP;
-//        }
-//        if (items.get(index) instanceof Map) {
-//            return (Map) items.get(index);
-//        }
-//        return Collections.EMPTY_MAP;
-//    }
 
     public static List getList(List items, int index) {
         if (items == null || index >= items.size()) {
@@ -182,6 +171,23 @@ public class SVNReader2 {
         return null;
     }
 
+    public static byte[] getBytes(List items, int index) {
+        if (items == null || index >= items.size()) {
+            return null;
+        }
+        Object item = items.get(index);
+        if (item instanceof byte[]) {
+            return (byte[]) item;
+        } else if (item instanceof String){
+            try {
+                return ((String) item).getBytes("UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                return null;
+            }
+        }
+        return null;
+    }
+
     public static boolean hasValue(List items, int index, boolean value) {
         return hasValue(items, index, Boolean.valueOf(value));
     }
@@ -271,10 +277,8 @@ public class SVNReader2 {
     }
 
     public static List readTuple(InputStream is, String template) throws SVNException {
-//        char ch = readChar(is);
         char ch = skipWhiteSpace(is);
         SVNItem item = readItem(is, null, ch);
-        System.out.println(item);
         if (item.getKind() != SVNItem.LIST) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA);
             SVNErrorManager.error(err);
