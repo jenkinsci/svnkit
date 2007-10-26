@@ -85,6 +85,10 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         Map properties = getHostProperties(host);
         String proxyHost = (String) properties.get("http-proxy-host");
         if (proxyHost == null || "".equals(proxyHost.trim())) {
+            proxyHost = System.getProperty("http.proxyHost");
+            properties.put("http-proxy-port", System.getProperty("http.proxyPort"));
+        }
+        if (proxyHost == null || "".equals(proxyHost.trim())) {
             return null;
         }
         String proxyExceptions = (String) properties.get("http-proxy-exceptions");
