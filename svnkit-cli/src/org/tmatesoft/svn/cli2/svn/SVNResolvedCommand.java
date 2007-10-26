@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.wc.SVNConflictChoice;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 
@@ -47,6 +48,21 @@ public class SVNResolvedCommand extends SVNCommand {
     }
 
     public void run() throws SVNException {
+        SVNWCAccept accept = getSVNEnvironment().getResolveAccept();
+        SVNConflictChoice choice = null;
+        if (accept == SVNWCAccept.INVALID) {
+            choice = SVNConflictChoice.MERGED;
+        } else if (accept == SVNWCAccept.BASE) {
+            choice = SVNConflictChoice.BASE;
+        } else if (accept == SVNWCAccept.THEIRS) {
+            choice = SVNConflictChoice.THEIRS;
+        } else if (accept == SVNWCAccept.MINE) {
+            choice = SVNConflictChoice.MINE;
+        } else {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "invalid 'accept' ARG");
+            SVNErrorManager.error(err);
+        }
+       
         List targets = getSVNEnvironment().combineTargets(getSVNEnvironment().getTargets());
         if (targets.isEmpty()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS));
@@ -64,7 +80,7 @@ public class SVNResolvedCommand extends SVNCommand {
             SVNCommandTarget target = new SVNCommandTarget(targetName);
             if (target.isFile()) {
                 try {
-                    client.doResolve(target.getFile(), depth.isRecursive(), getSVNEnvironment().getResolveAccept());
+                    client.doResolve(target.getFile(), depth, choice);
                 } catch (SVNException e) {
                     SVNErrorMessage err = e.getErrorMessage();
                     getSVNEnvironment().handleWarning(err, new SVNErrorCode[] {err.getErrorCode()}, getSVNEnvironment().isQuiet());

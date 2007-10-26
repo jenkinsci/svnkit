@@ -48,6 +48,7 @@ public class SVNMergeFileSet {
     private String myRepositoryLabel;
 
     private File myLocalFile;
+    private File myTargetFile;
     private File myBaseFile;
     private File myRepositoryFile;
     private File myMergeResultFile;
@@ -59,12 +60,14 @@ public class SVNMergeFileSet {
             File localFile, 
             String wcPath, 
             File reposFile, 
-            File resultFile, 
+            File resultFile,
+            File targetFile,//non-translated wc file
             String mimeType, 
             boolean binary) {
         myAdminArea = adminArea;
         myLog = log;
         myLocalFile = localFile;
+        myTargetFile = targetFile;
         myBaseFile = baseFile;
         myRepositoryFile = reposFile;
         myWCFilePath = wcPath;
@@ -72,10 +75,18 @@ public class SVNMergeFileSet {
         myMimeType = mimeType;
         myIsBinary = binary;
         
-        myBaseFilePath = SVNPathUtil.isChildOf(myAdminArea.getAdminDirectory(), myBaseFile) ? SVNFileUtil.getBasePath(myBaseFile) : null;
-        myLocalFilePath = SVNFileUtil.getBasePath(myLocalFile);
-        myRepositoryFilePath = SVNPathUtil.isChildOf(myAdminArea.getAdminDirectory(), myRepositoryFile) ? SVNFileUtil.getBasePath(myRepositoryFile) : null;
-        myMergeResultFilePath = SVNFileUtil.getBasePath(myMergeResultFile);
+        if (myBaseFile != null) {
+            myBaseFilePath = SVNPathUtil.isChildOf(myAdminArea.getAdminDirectory(), myBaseFile) ? SVNFileUtil.getBasePath(myBaseFile) : null;
+        }
+        if (myLocalFile != null) {
+            myLocalFilePath = SVNFileUtil.getBasePath(myLocalFile);
+        }
+        if (myRepositoryFile != null) {
+            myRepositoryFilePath = SVNPathUtil.isChildOf(myAdminArea.getAdminDirectory(), myRepositoryFile) ? SVNFileUtil.getBasePath(myRepositoryFile) : null;
+        }
+        if (myMergeResultFile != null) {
+            myMergeResultFilePath = SVNFileUtil.getBasePath(myMergeResultFile);
+        }
     }
     
     public void setMergeLabels(String baseLabel, String localLabel, String repositoryLabel) {
@@ -101,7 +112,7 @@ public class SVNMergeFileSet {
     }
     
     public String getBasePath() throws SVNException {
-        if (myBaseFilePath == null) {
+        if (myBaseFilePath == null && myBaseFile != null) {
             File tmp = SVNAdminUtil.createTmpFile(myAdminArea);
             SVNFileUtil.copyFile(myBaseFile, tmp, false);
             myBaseFilePath = SVNFileUtil.getBasePath(tmp);
@@ -119,7 +130,7 @@ public class SVNMergeFileSet {
     }
     
     public String getRepositoryPath() throws SVNException {
-        if (myRepositoryFilePath == null) {
+        if (myRepositoryFilePath == null && myRepositoryFile != null) {
             File tmp = SVNAdminUtil.createTmpFile(myAdminArea);
             SVNFileUtil.copyFile(myRepositoryFile, tmp, false);
             myRepositoryFilePath = SVNFileUtil.getBasePath(tmp);
@@ -130,6 +141,10 @@ public class SVNMergeFileSet {
     
     public String getResultPath() {
         return myMergeResultFilePath;
+    }
+    
+    public File getTargetFile() {
+        return myTargetFile;
     }
     
     public File getBaseFile() {

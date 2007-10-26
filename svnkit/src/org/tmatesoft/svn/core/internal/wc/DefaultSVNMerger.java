@@ -21,11 +21,17 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
-import org.tmatesoft.svn.core.wc.ISVNConflictResolver;
+import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
 import org.tmatesoft.svn.core.wc.ISVNMerger;
+import org.tmatesoft.svn.core.wc.SVNConflictAction;
+import org.tmatesoft.svn.core.wc.SVNConflictChoice;
+import org.tmatesoft.svn.core.wc.SVNConflictDescription;
+import org.tmatesoft.svn.core.wc.SVNConflictReason;
+import org.tmatesoft.svn.core.wc.SVNConflictResult;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
 import org.tmatesoft.svn.core.wc.SVNMergeResult;
@@ -41,13 +47,13 @@ import de.regnis.q.sequence.line.QSequenceLineRAFileData;
  */
 public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
 
-    private ISVNConflictResolver myConflictCallback;
+    private ISVNConflictHandler myConflictCallback;
 
     public DefaultSVNMerger(byte[] start, byte[] sep, byte[] end) {
         this(start, sep, end, null);
     }
 
-    public DefaultSVNMerger(byte[] start, byte[] sep, byte[] end, ISVNConflictResolver callback) {
+    public DefaultSVNMerger(byte[] start, byte[] sep, byte[] end, ISVNConflictHandler callback) {
         super(start, sep, end);
         myConflictCallback = callback;
     }
@@ -116,17 +122,19 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
 	protected DefaultSVNMergerAction getMergeAction(SVNMergeFileSet files, SVNMergeResult mergeResult) throws SVNException {
 	    if (mergeResult.getMergeStatus() == SVNStatusType.CONFLICTED) {
 	        if (myConflictCallback != null) {
-	            int action = myConflictCallback.handleConflict(files);
-	            switch (action) {
-	                case ISVNConflictResolver.CHOOSE_BASE:
-                        return DefaultSVNMergerAction.CHOOSE_BASE;                        
-                    case ISVNConflictResolver.CHOOSE_MERGED:
-                        return DefaultSVNMergerAction.CHOOSE_MERGED_FILE;                        
-                    case ISVNConflictResolver.CHOOSE_MINE:
-                        return DefaultSVNMergerAction.CHOOSE_WORKING;                        
-                    case ISVNConflictResolver.CHOOSE_REPOSITORY:
-                        return DefaultSVNMergerAction.CHOOSE_REPOSITORY;                        
-	            }
+                SVNConflictDescription descr = new SVNConflictDescription(files, SVNNodeKind.FILE, null, false, 
+                        SVNConflictAction.EDIT, SVNConflictReason.EDITED);
+                SVNConflictResult result = myConflictCallback.handleConflict(descr);
+                SVNConflictChoice choice = result.getConflictChoice();
+                if (choice == SVNConflictChoice.BASE) {
+                    return DefaultSVNMergerAction.CHOOSE_BASE;                        
+                } else if (choice == SVNConflictChoice.MERGED) {
+                    return DefaultSVNMergerAction.CHOOSE_MERGED_FILE;                        
+                } else if (choice == SVNConflictChoice.MINE) {
+                    return DefaultSVNMergerAction.CHOOSE_WORKING;                        
+                } else if (choice == SVNConflictChoice.THEIRS) {
+                    return DefaultSVNMergerAction.CHOOSE_REPOSITORY;                        
+                }
 	        }
 	        return DefaultSVNMergerAction.MARK_CONFLICTED;
 	    }

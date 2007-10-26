@@ -43,7 +43,6 @@ import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
-import org.tmatesoft.svn.core.wc.SVNResolveAccept;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
@@ -102,7 +101,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private boolean myIsKeepChangelist;
     private boolean myIsParents;
     private boolean myIsKeepLocal;
-    private SVNResolveAccept myResolveAccept;
+    private SVNWCAccept myResolveAccept;
     private boolean myIsRemove;
     private String myNewTarget;
     private String myOldTarget;
@@ -119,7 +118,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         super(programName, out, err, in);
         myIsDescend = true;
         myLimit = -1;
-        myResolveAccept = SVNResolveAccept.DEFAULT;
+        myResolveAccept = SVNWCAccept.INVALID;
         myExtensions = new HashSet();
         myDepth = SVNDepth.UNKNOWN;
         myStartRevision = SVNRevision.UNDEFINED;
@@ -397,10 +396,10 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         } else if (option == SVNOption.USE_MERGE_HISTORY) {
             myIsUseMergeHistory = true;
         } else if (option == SVNOption.ACCEPT) {
-            SVNResolveAccept accept = SVNResolveAccept.fromString(optionValue.getValue());
-            if (accept == SVNResolveAccept.INVALID) {
+            SVNWCAccept accept = SVNWCAccept.fromString(optionValue.getValue());
+            if (accept == SVNWCAccept.INVALID) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR,
-                        "'" + optionValue.getValue() + "' is not a valid accept value; try 'left', 'right', or 'working'");
+                        "'" + optionValue.getValue() + "' is not a valid accept value;");
                 SVNErrorManager.error(err);
             }
             myResolveAccept = accept;
@@ -570,7 +569,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         return myIsKeepLocal;
     }
     
-    public SVNResolveAccept getResolveAccept() {
+    public SVNWCAccept getResolveAccept() {
         return myResolveAccept;
     }
     

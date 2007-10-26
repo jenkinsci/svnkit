@@ -108,8 +108,10 @@ doc/wiki/main.vm -text
 doc/wiki/repository_tree.png -text
 doc/wiki/svnkit_architecture.png -text
 doc/wiki/svnrepository_connection.png -text
+svnkit-cli/src/org/tmatesoft/svn/cli2/svn/SVNCommandLineConflictHandler.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svn/SVNPropEditCommand.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svn/SVNRevertCommand.java -text
+svnkit-cli/src/org/tmatesoft/svn/cli2/svn/SVNWCAccept.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svn/commands.properties eol=lf
 svnkit-cli/src/org/tmatesoft/svn/cli2/svn/options.properties eol=lf
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnadmin/commands.properties -text
@@ -232,10 +234,12 @@ svnkit/src/org/tmatesoft/svn/core/wc/SVNChangeList.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/SVNChangelistClient.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/SVNCompositePathList.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/SVNConflictAction.java -text
+svnkit/src/org/tmatesoft/svn/core/wc/SVNConflictChoice.java -text
+svnkit/src/org/tmatesoft/svn/core/wc/SVNConflictDescription.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/SVNConflictReason.java -text
+svnkit/src/org/tmatesoft/svn/core/wc/SVNConflictResult.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/SVNCopySource.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/SVNPathList.java -text
-svnkit/src/org/tmatesoft/svn/core/wc/SVNResolveAccept.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/package.html -text
 svnkit/src/org/tmatesoft/svn/core/wc/xml/SVNXMLInfoHandler.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/xml/package.html -text

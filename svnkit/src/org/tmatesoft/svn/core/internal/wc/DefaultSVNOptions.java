@@ -32,7 +32,7 @@ import java.util.regex.PatternSyntaxException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.svn.ISVNConnector;
 import org.tmatesoft.svn.core.internal.io.svn.SVNTunnelConnector;
-import org.tmatesoft.svn.core.wc.ISVNConflictResolver;
+import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
 import org.tmatesoft.svn.core.wc.ISVNMerger;
 import org.tmatesoft.svn.core.wc.ISVNMergerFactory;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
@@ -58,6 +58,7 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
     private static final String KEYWORD_TIMEZONE = "keyword_timezone";
     private static final String KEYWORD_LOCALE = "keyword_locale";
     private static final String EDITOR_CMD = "editor-cmd";
+    private static final String MERGE_TOOL_CMD = "merge-tool-cmd";
     private static final String NO_UNLOCK = "no-unlock";
     private static final String PRESERVED_CONFLICT_FILE_EXTENSIONS = "preserved-conflict-file-exts";
     private static final String INTERACTIVE_COFLICTS = "interactive-conflicts";
@@ -73,7 +74,7 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
     private File myConfigDirectory;
     private SVNCompositeConfigFile myConfigFile;
     private ISVNMergerFactory myMergerFactory;
-    private ISVNConflictResolver myConflictResolver;
+    private ISVNConflictHandler myConflictResolver;
     
     private String myKeywordLocale = DEFAULT_LOCALE; 
     private String myKeywordTimezone = DEFAULT_TIMEZONE;
@@ -240,6 +241,10 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
         return getConfigFile().getPropertyValue(HELPERS_GROUP, EDITOR_CMD);
     }
 
+    public String getMergeTool() {
+        return getConfigFile().getPropertyValue(HELPERS_GROUP, MERGE_TOOL_CMD);
+    }
+
     public void deleteAutoProperty(String pattern) {
         getConfigFile().setPropertyValue(AUTOPROPS_GROUP, pattern, null, !myIsReadonly);
     }
@@ -318,7 +323,7 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
         getConfigFile().setPropertyValue(SVNKIT_GROUP, propertyName, propertyValue, !myIsReadonly);
     }
     
-    public void setConflictResolved(ISVNConflictResolver resolver) {
+    public void setConflictHandler(ISVNConflictHandler resolver) {
         myConflictResolver = resolver;
     }
 

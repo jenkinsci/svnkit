@@ -68,6 +68,71 @@ public class SVNCommandUtil {
                         || pathOrUrl.startsWith("file://"));
     }
     
+    public static void mergeFileExternally(AbstractSVNCommandEnvironment env, String basePath, String repositoryPath, 
+            String localPath, String mergeResultPath) throws SVNException {
+        String mergeToolCommand = SVNFileUtil.getEnvironmentVariable("SVN_MERGE");
+        if (mergeToolCommand == null) {
+            mergeToolCommand = env.getClientManager().getOptions().getMergeTool();
+        }
+
+        if (mergeToolCommand != null) {
+            mergeToolCommand = mergeToolCommand.trim();
+            if (mergeToolCommand.length() == 0) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_NO_EXTERNAL_MERGE_TOOL, 
+                        "The SVN_MERGE environment variable is empty or consists solely of whitespace. Expected a shell command.");
+                SVNErrorManager.error(err);
+            }
+        } else {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_NO_EXTERNAL_MERGE_TOOL, 
+                    "The environment variable SVN_MERGE and the merge-tool-cmd run-time configuration option were not set.");
+            SVNErrorManager.error(err);
+        }
+        
+        String result = null;
+        if (SVNFileUtil.isWindows) {
+            String merger = mergeToolCommand.toLowerCase();
+            if (!(merger.endsWith(".exe") || merger.endsWith(".bat") || merger.endsWith(".cmd"))) {
+                result = SVNFileUtil.execCommand(new String[] { "cmd.exe", "/C", merger, basePath, repositoryPath, 
+                        localPath, mergeResultPath }, true);
+            } else {
+                result = SVNFileUtil.execCommand(new String[] { merger, basePath, repositoryPath, localPath, 
+                        mergeResultPath }, true);
+            }
+        } else {
+            result = SVNFileUtil.execCommand(new String[] { mergeToolCommand, basePath, repositoryPath, localPath, 
+                    mergeResultPath }, true);
+        }
+
+        if (result == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.EXTERNAL_PROGRAM, "Editor command '" + 
+                    mergeToolCommand + " " + basePath + " " + repositoryPath + " " + localPath + " " + 
+                    mergeResultPath +  "' failed.");
+            SVNErrorManager.error(err);
+        }
+    }
+
+    public static void editFileExternally(AbstractSVNCommandEnvironment env, String editorCommand, String path) throws SVNException {
+        editorCommand = getEditorCommand(env, editorCommand);
+        String result = null;
+        if (SVNFileUtil.isWindows) {
+            String editor = editorCommand.trim().toLowerCase();
+            if (!(editor.endsWith(".exe") || editor.endsWith(".bat") || editor.endsWith(".cmd"))) {
+                result = SVNFileUtil.execCommand(new String[] {"cmd.exe", "/C", editorCommand, 
+                        path}, false);
+            } else {
+                result = SVNFileUtil.execCommand(new String[] {editorCommand, path}, false);
+            }
+        } else {
+            result = SVNFileUtil.execCommand(new String[] {editorCommand, path}, false);
+        }
+        
+        if (result == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.EXTERNAL_PROGRAM, "Editor command '" + 
+                    editorCommand + " " + path + "' failed.");
+            SVNErrorManager.error(err);
+        }
+    }
+    
     public static byte[] runEditor(AbstractSVNCommandEnvironment env, String editorCommand, String existingValue, String prefix) throws SVNException {
         File tmpDir = new File(System.getProperty("java.io.tmpdir"));
         File tmpFile = SVNFileUtil.createUniqueFile(tmpDir, prefix, ".tmp");

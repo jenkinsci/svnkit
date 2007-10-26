@@ -18,14 +18,7 @@ import org.tmatesoft.svn.core.SVNException;
  * @version 1.1.2
  * @author  TMate Software Ltd.
  */
-public interface ISVNConflictResolver {
+public interface ISVNConflictHandler {
     
-    public int POSTPONE = 0; 
-    
-    public int CHOOSE_BASE = 1; 
-    public int CHOOSE_REPOSITORY = 2; 
-    public int CHOOSE_MINE = 3; 
-    public int CHOOSE_MERGED = 4; 
-    
-    public int handleConflict(SVNMergeFileSet files) throws SVNException;
+    public SVNConflictResult handleConflict(SVNConflictDescription conflictDescription) throws SVNException;
 }

@@ -414,4 +414,6 @@ public class SVNErrorCode implements Serializable {
     public static final SVNErrorCode CL_NO_EXTERNAL_EDITOR = new SVNErrorCode(CL_CATEGORY, 7, "No external editor available");
     public static final SVNErrorCode CL_BAD_LOG_MESSAGE = new SVNErrorCode(CL_CATEGORY, 8, "Something is wrong with the log message's contents");
     public static final SVNErrorCode CL_UNNECESSARY_LOG_MESSAGE = new SVNErrorCode(CL_CATEGORY, 9, "A log message was given where none was necessary");
+    public static final SVNErrorCode CL_NO_EXTERNAL_MERGE_TOOL = new SVNErrorCode(CL_CATEGORY, 10, "No external merge tool available");
+
 }

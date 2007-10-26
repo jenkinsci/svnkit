@@ -18,12 +18,13 @@ import java.io.PrintStream;
 
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
+import org.tmatesoft.svn.cli2.svn.SVNWCAccept;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.wc.SVNResolveAccept;
+import org.tmatesoft.svn.core.wc.SVNConflictChoice;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 /**
@@ -49,12 +50,11 @@ public class SVNResolvedCommand extends SVNCommand {
             depth = SVNDepth.EMPTY;
         }
         
-        final boolean recursive = SVNDepth.recurseFromDepth(depth);
-        SVNResolveAccept accept = SVNResolveAccept.DEFAULT;
+        SVNWCAccept accept = SVNWCAccept.INVALID;
         if (getCommandLine().hasArgument(SVNArgument.ACCEPT)) {
             String acceptStr = (String) getCommandLine().getArgumentValue(SVNArgument.ACCEPT);
-            accept = SVNResolveAccept.fromString(acceptStr);
-            if (accept == SVNResolveAccept.INVALID) {
+            //accept = SVNResolveAccept.fromString(acceptStr);
+            if (accept == SVNWCAccept.INVALID) {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "''{0}'' is not a valid accept value; try ''left'', ''right'', or ''working''", acceptStr);
                 SVNErrorManager.error(error);
             }
@@ -64,7 +64,7 @@ public class SVNResolvedCommand extends SVNCommand {
         for (int i = 0; i < getCommandLine().getPathCount(); i++) {
             final String absolutePath = getCommandLine().getPathAt(i);
             try {
-                wcClient.doResolve(new File(absolutePath), recursive, accept);
+                wcClient.doResolve(new File(absolutePath), depth, SVNConflictChoice.MERGED);
             } catch (SVNException e) {
                 e.getErrorMessage().setType(SVNErrorMessage.TYPE_WARNING);
                 err.println(e.getMessage());

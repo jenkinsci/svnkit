@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.tmatesoft.svn.cli2.svn.SVNWCAccept;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -49,10 +50,10 @@ import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.wc.ISVNCommitParameters;
 import org.tmatesoft.svn.core.wc.ISVNMerger;
 import org.tmatesoft.svn.core.wc.ISVNMergerFactory;
+import org.tmatesoft.svn.core.wc.SVNConflictChoice;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
 import org.tmatesoft.svn.core.wc.SVNMergeResult;
-import org.tmatesoft.svn.core.wc.SVNResolveAccept;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.util.SVNDebugLog;
@@ -66,7 +67,6 @@ public abstract class SVNAdminArea {
     protected static final String ADM_KILLME = "KILLME";
     private static volatile boolean ourIsCleanupSafe;
     
-
     protected Map myBaseProperties;
     protected Map myProperties;
     protected Map myWCProperties;
@@ -364,21 +364,22 @@ public abstract class SVNAdminArea {
         return getAdminFile(ADM_KILLME).isFile();
     }
 
-    public boolean markResolved(String name, boolean text, boolean props, SVNResolveAccept accept) throws SVNException {
+    public boolean markResolved(String name, boolean text, boolean props, SVNConflictChoice conflictChoice) throws SVNException {
         SVNEntry entry = getEntry(name, true);
         if (entry == null) {
             return false;
         }
 
         String autoResolveSource = null;
-        if (accept == SVNResolveAccept.BASE) {
-            autoResolveSource = entry.getConflictOld(); 
-        } else if (accept == SVNResolveAccept.MINE) {
+        if (conflictChoice == SVNConflictChoice.BASE) {
+            autoResolveSource = entry.getConflictOld();
+        } else if (conflictChoice == SVNConflictChoice.MINE) {
             autoResolveSource = entry.getConflictWorking();
-        } else if (accept == SVNResolveAccept.THEIRS) {
+        } else if (conflictChoice == SVNConflictChoice.THEIRS) {
             autoResolveSource = entry.getConflictNew();
-        } else if (accept == SVNResolveAccept.INVALID) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, "Invalid 'accept' argument");
+        } else if (conflictChoice != SVNConflictChoice.MERGED) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, 
+                    "Invalid 'conflict_result' argument");
             SVNErrorManager.error(err);
         }
         
@@ -390,6 +391,7 @@ public abstract class SVNAdminArea {
         if (!text && !props) {
             return false;
         }
+        
         boolean filesDeleted = false;
         boolean updateEntry = false;
         if (text && entry.getConflictOld() != null) {
@@ -448,7 +450,7 @@ public abstract class SVNAdminArea {
             SVNFileUtil.setExecutable(dst, true);
         }
 
-        markResolved(name, true, false, SVNResolveAccept.DEFAULT);
+        markResolved(name, true, false, SVNConflictChoice.MERGED);
 
         long tstamp;
         if (myWCAccess.getOptions().isUseCommitTimes() && !special) {
@@ -726,7 +728,7 @@ public abstract class SVNAdminArea {
         File resultFile = SVNAdminUtil.createTmpFile(this);
 
         SVNMergeFileSet mergeFileSet = new SVNMergeFileSet(this, log, 
-                base, tmpTarget, localPath, latest, resultFile, mimeType, isBinary);
+                base, tmpTarget, localPath, latest, resultFile, getFile(localPath), mimeType, isBinary);
 
         mergeFileSet.setMergeLabels(baseLabel, localLabel, latestLabel);
         

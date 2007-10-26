@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.tmatesoft.svn.cli2.svn.SVNWCAccept;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDirEntry;
@@ -52,6 +53,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.internal.wc.SVNStatusEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNWCManager;
+import org.tmatesoft.svn.core.internal.wc.admin.ISVNEntryHandler;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
@@ -62,6 +64,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
+import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
@@ -1731,30 +1734,52 @@ public class SVNWCClient extends SVNBasicClient {
      * @throws SVNException    if <code>path</code> is not under version control
      */
     public void doResolve(File path, boolean recursive) throws SVNException {
-        doResolve(path, recursive, SVNResolveAccept.DEFAULT);
+        doResolve(path, SVNDepth.fromRecurse(recursive), SVNConflictChoice.MERGED);
     }
     
-    /* TODO(sd): "I don't see any reason to change this recurse parameter
-     * to a depth, but making a note to re-check this logic later."
-     */
-    public void doResolve(File path, boolean recursive, SVNResolveAccept accept) throws SVNException {
-        accept = accept == null ? SVNResolveAccept.DEFAULT : accept;
+    public void doResolve(File path, SVNDepth depth, SVNConflictChoice conflictChoice) throws SVNException {
+        final SVNConflictChoice choice = conflictChoice == null ? SVNConflictChoice.MERGED : conflictChoice;
         path = path.getAbsoluteFile();
-        SVNWCAccess wcAccess = createWCAccess();
+        final SVNWCAccess wcAccess = createWCAccess();
+        int admLockLevel = SVNWCAccess.INFINITE_DEPTH;
+        if (depth == SVNDepth.EMPTY || depth == SVNDepth.FILES) {
+            admLockLevel = 0; 
+        }
+        
         try {
-            wcAccess.probeOpen(path, true, recursive ? SVNWCAccess.INFINITE_DEPTH : 0);
-            if (!recursive) {
+            wcAccess.probeOpen(path, true, admLockLevel);
+            ISVNEntryHandler resolveEntryHandler = new ISVNEntryHandler() {
+                public void handleEntry(File path, SVNEntry entry) throws SVNException {
+                    SVNAdminArea adminArea = entry.getAdminArea();
+                    if (entry.isDirectory() && !adminArea.getThisDirName().equals(entry.getName())) {
+                        return;
+                    }
+                    
+                    File conflictDir = entry.isDirectory() ? path : path.getParentFile();
+                    SVNAdminArea conflictArea = wcAccess.retrieve(conflictDir);
+                    if (conflictArea.markResolved(entry.getName(), true, true, choice)) {
+                        SVNEvent event = SVNEventFactory.createResolvedEvent(conflictArea, entry);
+                        dispatchEvent(event);
+                    }
+                }
+            
+                public void handleError(File path, SVNErrorMessage error) throws SVNException {
+                    SVNErrorManager.error(error);
+                }
+            };
+            
+            if (depth == SVNDepth.EMPTY) {
                 SVNEntry entry = wcAccess.getVersionedEntry(path, false);
-                resolveEntry(wcAccess, path, entry, accept);
+                resolveEntryHandler.handleEntry(path, entry);
             } else {
-                resolveAll(wcAccess, path, accept);
+                wcAccess.walkEntries(path, resolveEntryHandler, false, depth);
             }
         } finally {
             wcAccess.close();
         }
     }
     
-    private void resolveEntry(SVNWCAccess wcAccess, File path, SVNEntry entry, SVNResolveAccept accept) throws SVNException {
+/*    private void resolveEntry(SVNWCAccess wcAccess, File path, SVNEntry entry, SVNConflictChoice choice) throws SVNException {
         if (entry.getKind() == SVNNodeKind.DIR && !"".equals(entry.getName())) {
             return;
         }
@@ -1769,7 +1794,7 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
 
-    private void resolveAll(SVNWCAccess access, File path, SVNResolveAccept accept) throws SVNException {
+    private void resolveAll(SVNWCAccess access, File path, SVNWCAccept accept) throws SVNException {
         checkCancelled();
         SVNEntry entry = access.getEntry(path, false);
         resolveEntry(access, path, entry, accept);
@@ -1784,7 +1809,8 @@ public class SVNWCClient extends SVNBasicClient {
             }
         } 
     }
-    
+ */   
+
     /**
      * Locks file items in a Working Copy as well as in a repository so that 
      * no other user can commit changes to them.

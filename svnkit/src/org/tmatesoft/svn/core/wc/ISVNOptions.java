@@ -399,6 +399,8 @@ public interface ISVNOptions extends ISVNTunnelProvider {
     public String[] getPreservedConflictFileExtensions();
     
     public String getEditor();
+
+    public String getMergeTool();
     
     public boolean isKeepLocks();
     
