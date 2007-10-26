@@ -11,7 +11,8 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
-import org.tmatesoft.svn.core.internal.util.jna.SVNWinCrypt;
+import org.tmatesoft.svn.core.internal.util.jna.SVNJNAUtil;
+
 
 
 /**
@@ -21,15 +22,15 @@ import org.tmatesoft.svn.core.internal.util.jna.SVNWinCrypt;
 public class SVNWinCryptPasswordCipher extends SVNPasswordCipher {
 
     public static boolean isEnabled() {
-        return SVNWinCrypt.isEnabled();
+        return SVNJNAUtil.isWinCryptEnabled();
     }
     
     public String decrypt(String encryptedData) {
-        return SVNWinCrypt.decrypt(encryptedData);
+        return SVNJNAUtil.decrypt(encryptedData);
     }
 
     public String encrypt(String rawData) {
-        return SVNWinCrypt.encrypt(rawData);
+        return SVNJNAUtil.encrypt(rawData);
     }
 
     public String getCipherType() {

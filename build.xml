@@ -216,6 +216,7 @@
                 <include name="changelog.txt" />
                 <include name="README.txt" />
                 <include name="COPYING" />
+                <include name="contrib/jna/JNA-LICENSE" />
                 <include name="contrib/javahl/JAVAHL-LICENSE" />
                 <include name="contrib/sequence/SEQUENCE-LICENSE" />
                 <include name="contrib/ganymed/GANYMED-LICENSE" />
@@ -281,6 +282,9 @@
             <fileset dir="contrib/javahl" >
                 <include name="JAVAHL-LICENSE" />
             </fileset>
+            <fileset dir="contrib/jna" >
+                <include name="JNA-LICENSE" />
+            </fileset>
             <fileset dir="contrib/sequence" >
                 <include name="SEQUENCE-LICENSE" />
             </fileset>
@@ -317,6 +321,7 @@
                 <include name="SEQUENCE-LICENSE" />
                 <include name="JAVAHL-LICENSE" />
                 <include name="SQLITEJDBC-LICENSE" />
+				<include name="JNA-LICENSE" />
             </fileset>
             <fileset dir="svnkit-eclipse/org.tmatesoft.svnkit">
                 <include name="plugin.xml" />
@@ -450,6 +455,9 @@
             <fileset dir="contrib/javahl" >
                 <include name="JAVAHL-LICENSE" />
             </fileset>
+            <fileset dir="contrib/jna" >
+                <include name="JNA-LICENSE" />
+            </fileset>
             <fileset dir="contrib/sequence" >
                 <include name="SEQUENCE-LICENSE" />
             </fileset>
@@ -494,6 +502,9 @@
             </fileset>
             <fileset dir="contrib/javahl" >
                 <include name="JAVAHL-LICENSE" />
+            </fileset>
+            <fileset dir="contrib/jna" >
+                <include name="JNA-LICENSE" />
             </fileset>
             <fileset dir="contrib/sequence" >
                 <include name="SEQUENCE-LICENSE" />

@@ -23,9 +23,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.RandomAccessFile;
 import java.io.Reader;
 import java.io.Writer;
-import java.io.RandomAccessFile;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -41,8 +41,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.jna.SVNLinuxUtil;
-import org.tmatesoft.svn.core.internal.util.jna.SVNWin32Util;
+import org.tmatesoft.svn.core.internal.util.jna.SVNJNAUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.util.SVNDebugLog;
@@ -265,7 +264,7 @@ public class SVNFileUtil {
         if (!isWindows) {
             renamed = src.renameTo(dst);
         } else {
-            if (SVNWin32Util.moveFile(src, dst)) {
+            if (SVNJNAUtil.moveFile(src, dst)) {
                 renamed = true;
             } else {
                 boolean wasRO = dst.exists() && !dst.canWrite();
@@ -305,11 +304,11 @@ public class SVNFileUtil {
             return file.setReadOnly();
         }
         if (isWindows) {
-            if (SVNWin32Util.setWritable(file)) {
+            if (SVNJNAUtil.setWritable(file)) {
                 return true;
             }
         } else if (isLinux || isOSX || isBSD) {
-            if (SVNLinuxUtil.setWritable(file)) {
+            if (SVNJNAUtil.setWritable(file)) {
                 return true;
             }
         }
@@ -344,7 +343,7 @@ public class SVNFileUtil {
         if (isWindows || isOpenVMS || file == null || !file.exists()) {
             return;
         }
-        if (SVNLinuxUtil.setExecutable(file, executable)) {
+        if (SVNJNAUtil.setExecutable(file, executable)) {
             return;
         }
         try {
@@ -502,7 +501,7 @@ public class SVNFileUtil {
     }
 
     public static boolean createSymlink(File link, String linkName) {
-        if (SVNLinuxUtil.createSymlink(link, linkName)) {
+        if (SVNJNAUtil.createSymlink(link, linkName)) {
             return true;
         }
         try {
@@ -542,7 +541,7 @@ public class SVNFileUtil {
             return null;
         }
         String ls = null;
-        ls = SVNLinuxUtil.getLinkTarget(link);
+        ls = SVNJNAUtil.getLinkTarget(link);
         if (ls != null) {
             return ls;
         }
@@ -655,7 +654,7 @@ public class SVNFileUtil {
     }
 
     public static void setHidden(File file, boolean hidden) {
-        if (isWindows && SVNWin32Util.setHidden(file)) {
+        if (isWindows && SVNJNAUtil.setHidden(file)) {
             return;
         }
         if (!isWindows || file == null || !file.exists() || file.isHidden()) {
@@ -899,7 +898,7 @@ public class SVNFileUtil {
         if (isWindows || isOpenVMS) {
             return false;
         }
-        Boolean executable = SVNLinuxUtil.isExecutable(file);
+        Boolean executable = SVNJNAUtil.isExecutable(file);
         if (executable != null) {
             return executable.booleanValue();
         }

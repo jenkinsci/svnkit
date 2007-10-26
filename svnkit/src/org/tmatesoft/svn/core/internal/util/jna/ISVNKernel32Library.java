@@ -21,7 +21,7 @@ import com.sun.jna.win32.StdCallLibrary;
  * @version 1.1.2
  * @author  TMate Software Ltd.
  */
-public interface ISVNKernel32Library extends StdCallLibrary {
+interface ISVNKernel32Library extends StdCallLibrary {
     
     public long FILE_ATTRIBUTE_READONLY = 0x01;
     public long FILE_ATTRIBUTE_HIDDEN   = 0x02;

@@ -20,7 +20,7 @@ import com.sun.jna.Native;
  * @version 1.1.2
  * @author  TMate Software Ltd.
  */
-public class JNALibraryLoader {
+class JNALibraryLoader {
     
     private static ISVNWinCryptLibrary ourWinCryptLibrary;
     private static ISVNKernel32Library ourKenrelLibrary;

@@ -325,16 +325,15 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     }
                     if (item.getLine().length() == 0) {
                         break;
-                    } else {
-                        if (expectedChecksum != null) {
-                            digest.update(item.getLine().getBytes());
-                        }
-                        try {
-                            contents.write(item.getLine().getBytes());
-                        } catch (IOException e) {
-                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getLocalizedMessage());
-                            SVNErrorManager.error(err);
-                        }
+                    }
+                    if (expectedChecksum != null) {
+                        digest.update(item.getLine().getBytes());
+                    }
+                    try {
+                        contents.write(item.getLine().getBytes());
+                    } catch (IOException e) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getLocalizedMessage());
+                        SVNErrorManager.error(err);
                     }
                 }
                 read("", (List) null, true);
@@ -1194,13 +1193,6 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED));
         }
         return myConnection.read(template, values, readMalformedData);
-    }
-
-    private List readTuple(String template, boolean readMalformedData) throws SVNException {
-        if (myConnection == null) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED));
-        }
-        return myConnection.readTuple(template, readMalformedData);
     }
 
     private SVNItem readItem(boolean readMalformedData) throws SVNException {
