@@ -417,7 +417,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Dirlist element not a list");
                         SVNErrorManager.error(err);
                     }
-                    List direntProps = SVNReader2.parseTuple("wnbr(?c)(?c)", item.getItems(), null);
+                    List direntProps = SVNReader2.parseTuple("cwnbr(?c)(?c)", item.getItems(), null);
                     String name = SVNReader2.getString(direntProps, 0);
                     SVNNodeKind kind = SVNNodeKind.parseKind(SVNReader2.getString(direntProps, 1));
                     long size = SVNReader2.getLong(direntProps, 2);
@@ -692,7 +692,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 }
                 List items = SVNReader2.parseTuple("lr(?s)(?s)(?s)?BBnl", item.getItems(), null);
                 List changedPathsList = (List) items.get(0);
-                Map changedPathsMap = null;
+                Map changedPathsMap = new HashMap();
                 if (changedPathsList != null && changedPathsList.size() > 0) {
                     for (Iterator iterator = changedPathsList.iterator(); iterator.hasNext();) {
                         SVNItem pathItem = (SVNItem) iterator.next();
@@ -700,7 +700,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Changed-path entry not a list");
                             SVNErrorManager.error(err);
                         }
-                        List pathItems = SVNReader2.parseTuple("cw(?cr)", null, null);
+                        List pathItems = SVNReader2.parseTuple("cw(?cr)", pathItem.getItems(), null);
                         String path = SVNReader2.getString(pathItems, 0);
                         String action = SVNReader2.getString(pathItems, 1);
                         String copyPath = SVNReader2.getString(pathItems, 2);
@@ -843,6 +843,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             write("(w(s))", buffer);
             authenticate();
             List items = read("(?l)", null, true);
+            items = (List) items.get(0);
             return SVNReader2.getLock(items);
         } catch (SVNException e) {
             closeSession();
@@ -970,6 +971,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             List items = null;
             try {
                 items = read("l", null, false);
+                items = (List) items.get(0);
             } catch (SVNException e) {
                 if (e.getErrorMessage() != null) {
                     SVNErrorCode code = e.getErrorMessage().getErrorCode();
@@ -1073,6 +1075,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 write("(w(s))", buffer);
                 authenticate();
                 List items = read("l", null, true);
+                items = (List) items.get(0);
                 SVNLock lock = SVNReader2.getLock(items);
                 if (lock == null) {
                     lock = new SVNLock(path, "", null, null, null, null);
@@ -1119,10 +1122,10 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 List values = SVNReader2.parseTuple("wnbr(?c)(?c)", items, null);
                 SVNNodeKind kind = SVNNodeKind.parseKind(SVNReader2.getString(values, 0));
                 long size = SVNReader2.getLong(values, 1);
-                boolean hasProperties = SVNReader2.getBoolean(values, 3);
-                long createdRevision = SVNReader2.getLong(items, 4);
-                Date createdDate = SVNTimeUtil.parseDate(SVNReader2.getString(values, 5));
-                String lastAuthor = SVNReader2.getString(values, 6);
+                boolean hasProperties = SVNReader2.getBoolean(values, 2);
+                long createdRevision = SVNReader2.getLong(values, 3);
+                Date createdDate = SVNTimeUtil.parseDate(SVNReader2.getString(values, 4));
+                String lastAuthor = SVNReader2.getString(values, 5);
                 entry = new SVNDirEntry(url, SVNPathUtil.tail(path), kind, size, hasProperties, createdRevision, createdDate, lastAuthor);
             }
             return entry;

@@ -143,23 +143,24 @@ class SVNConnection {
                     auth = (SVNPasswordAuthentication) authManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm, location);
                 }
                 if (auth == null || auth.getUserName() == null || auth.getPassword() == null) {
-                    failureReason = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Can''t get password. Authentication is required for ''{0}''", realm);
+                    failureReason = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Can't get password. Authentication is required for ''{0}''", realm);
                     break;
                 }
                 write("(w())", new Object[]{"CRAM-MD5"});
                 while (true) {
                     authenticator.setUserCredentials(auth);
-                    items = readTuple("w(?c))", true);
-                    if (SUCCESS.equals(items.get(0))) {
+                    items = readTuple("w(?c)", true);
+                    String status = SVNReader2.getString(items, 0);
+                    if (SUCCESS.equals(status)) {
                         authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.PASSWORD, realm, null, auth);
                         receiveRepositoryCredentials(repository);
                         return;
-                    } else if (FAILURE.equals(items.get(0))) {
+                    } else if (FAILURE.equals(status)) {
                         failureReason = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication error from server: {0}", SVNReader2.getString(items, 1));
                         break;
-                    } else if (STEP.equals(items.get(0))) {
+                    } else if (STEP.equals(status)) {
                         try {
-                            byte[] response = authenticator.buildChallengeResponse((byte[]) items.get(1));
+                            byte[] response = authenticator.buildChallengeResponse(SVNReader2.getBytes(items, 1));
                             getOutputStream().write(response);
                             getOutputStream().flush();
                         } catch (IOException e) {

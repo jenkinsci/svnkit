@@ -288,7 +288,12 @@ public class SVNReader2 {
 
     public static List parseTuple(String template, Collection items, List values) throws SVNException {
         values = values == null ? new ArrayList() : values;
-        int index = 0;
+        parseTuple(template, 0, items, values);
+        return values;
+    }
+
+    private static int parseTuple(String template, int index, Collection items, List values) throws SVNException{
+        values = values == null ? new ArrayList() : values;
         for (Iterator iterator = items.iterator(); iterator.hasNext() && index < template.length(); index++) {
             SVNItem item = (SVNItem) iterator.next();
             char ch = template.charAt(index);
@@ -317,11 +322,10 @@ public class SVNReader2 {
                 values.add(item.getItems());
             } else if (ch == '(' && item.getKind() == SVNItem.LIST) {
                 index++;
-                template = template.substring(index);
-                values = parseTuple(template, item.getItems(), values);
-                index++;
+                index = parseTuple(template, index, item.getItems(), values);
             } else if (ch == ')') {
-                return values;
+                index++;
+                return index;
             } else {
                 break;
             }
@@ -339,7 +343,7 @@ public class SVNReader2 {
                     case'c':
                     case'w':
                     case'l':
-                        values.add(null);
+                        values.add(Collections.EMPTY_LIST);
                         break;
                     case'B':
                     case'n':
@@ -349,7 +353,7 @@ public class SVNReader2 {
                     case')':
                         nestingLevel--;
                         if (nestingLevel < 0) {
-                            return values;
+                            return index;
                         }
                         break;
                     default:
@@ -363,9 +367,8 @@ public class SVNReader2 {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA);
             SVNErrorManager.error(err);
         }
-        return values;
+        return index;
     }
-
     private static SVNItem readItem(InputStream is, SVNItem item, char ch) throws SVNException {
         if (item == null) {
             item = new SVNItem();
