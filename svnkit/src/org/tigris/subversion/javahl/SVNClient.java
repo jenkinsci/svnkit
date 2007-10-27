@@ -600,4 +600,13 @@ public class SVNClient implements SVNClientInterface {
     public void resolved(String path, int depth, int conflictResult) throws SubversionException {
         myDelegate.resolved(path, depth, conflictResult);
     }
+
+    public long doSwitch(String path, String url, Revision revision, Revision pegRevision, int depth, boolean ignoreExternals, boolean allowUnverObstructions) throws ClientException {
+        return myDelegate.doSwitch(path, url, revision, pegRevision, depth, ignoreExternals, allowUnverObstructions);
+    }
+
+    public void logMessages(String path, Revision pegRevision, Revision revisionStart, Revision revisionEnd, boolean stopOnCopy, boolean discoverPath, boolean includeMergedRevisions,
+            String[] revProps, long limit, LogMessageCallback callback) throws ClientException {
+        myDelegate.logMessages(path, pegRevision, revisionStart, revisionEnd, stopOnCopy, discoverPath, includeMergedRevisions, revProps, limit, callback);
+    }
 }

@@ -2259,6 +2259,16 @@ public class SVNClientImpl implements SVNClientInterface {
         notImplementedYet(null);//TODO: fixme        
     }
 
+    public long doSwitch(String path, String url, Revision revision, Revision pegRevision, int depth, boolean ignoreExternals, boolean allowUnverObstructions) throws ClientException {
+        notImplementedYet(null);//TODO: FIXME        
+        return 0;
+    }
+
+    public void logMessages(String path, Revision pegRevision, Revision revisionStart, Revision revisionEnd, boolean stopOnCopy, boolean discoverPath, boolean includeMergedRevisions,
+            String[] revProps, long limit, LogMessageCallback callback) throws ClientException {
+        notImplementedYet(null);//TODO: FIXME
+    }
+
     private void notImplementedYet() throws ClientException {
         notImplementedYet(null);
     }
