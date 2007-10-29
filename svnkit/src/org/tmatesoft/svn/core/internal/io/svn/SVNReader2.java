@@ -27,8 +27,8 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
@@ -86,8 +86,6 @@ public class SVNReader2 {
                         list.set(i, item.getWord());
                     } else if (item.getKind() == SVNItem.NUMBER) {
                         list.set(i, new Long(item.getNumber()));
-                    } else if (item.getKind() == SVNItem.LIST) {
-                        list.set(i, getList(list, i));
                     }
                 }
             }
@@ -97,11 +95,14 @@ public class SVNReader2 {
     }
 
     public static Map getProperties(List items, int index, Map properties) throws SVNException {
+        if (items == null || index >= items.size()) {
+            return properties;
+        }
         if (!(items.get(index) instanceof List)) {
             return properties;
         }
-        properties = properties == null ? new HashMap() : properties;
 
+        properties = properties == null ? new HashMap() : properties;
         List props = (List) items.get(index);
         for (Iterator prop = props.iterator(); prop.hasNext();) {
             SVNItem item = (SVNItem) prop.next();
@@ -116,6 +117,9 @@ public class SVNReader2 {
     }
 
     public static Map getPropertyDiffs(List items, int index, Map diffs) throws SVNException {
+        if (items == null || index >= items.size()) {
+            return diffs;
+        }
         if (!(items.get(index) instanceof List)) {
             return diffs;
         }
@@ -162,11 +166,6 @@ public class SVNReader2 {
             return (String) item;
         } else if (item instanceof Long || item instanceof Integer) {
             return item.toString();
-        } else if (item instanceof List) {
-            List values = getList(items, index);
-            if (values.size() == 1) {
-                return (String) values.get(0);
-            }
         }
         return null;
     }
@@ -178,22 +177,14 @@ public class SVNReader2 {
         Object item = items.get(index);
         if (item instanceof byte[]) {
             return (byte[]) item;
-        } else if (item instanceof String){
+        } else if (item instanceof String) {
             try {
                 return ((String) item).getBytes("UTF-8");
-            } catch (UnsupportedEncodingException e) {
+            } catch (IOException e) {
                 return null;
             }
         }
         return null;
-    }
-
-    public static boolean hasValue(List items, int index, boolean value) {
-        return hasValue(items, index, Boolean.valueOf(value));
-    }
-
-    public static boolean hasValue(List items, int index, int value) {
-        return hasValue(items, index, new Long(value));
     }
 
     public static boolean hasValue(List items, int index, Object value) {
@@ -231,7 +222,7 @@ public class SVNReader2 {
 
     public static List parse(InputStream is, String template, List values) throws SVNException {
         List readItems = readTuple(is, DEFAULT_TEMPLATE);
-        String word = (String) readItems.get(0);
+        String word = getString(readItems, 0);
         List list = (List) readItems.get(1);
 
         if ("success".equals(word)) {
@@ -292,7 +283,7 @@ public class SVNReader2 {
         return values;
     }
 
-    private static int parseTuple(String template, int index, Collection items, List values) throws SVNException{
+    private static int parseTuple(String template, int index, Collection items, List values) throws SVNException {
         values = values == null ? new ArrayList() : values;
         for (Iterator iterator = items.iterator(); iterator.hasNext() && index < template.length(); index++) {
             SVNItem item = (SVNItem) iterator.next();
@@ -305,9 +296,13 @@ public class SVNReader2 {
             if ((ch == 'n' || ch == 'r') && item.getKind() == SVNItem.NUMBER) {
                 values.add(new Long(item.getNumber()));
             } else if (ch == 's' && item.getKind() == SVNItem.STRING) {
-                values.add(item.getLine());
+                try {
+                    values.add(new String(item.getLine(), "UTF-8"));
+                } catch (UnsupportedEncodingException e) {
+                    values.add(item.getLine());
+                }
             } else if (ch == 'c' && item.getKind() == SVNItem.STRING) {
-                values.add(item.getLine().getBytes());
+                values.add(item.getLine());
             } else if (ch == 'w' && item.getKind() == SVNItem.WORD) {
                 values.add(item.getWord());
             } else if ((ch == 'b' || ch == 'B') && item.getKind() == SVNItem.WORD) {
@@ -342,6 +337,8 @@ public class SVNReader2 {
                     case's':
                     case'c':
                     case'w':
+                        values.add(null);
+                        break;
                     case'l':
                         values.add(Collections.EMPTY_LIST);
                         break;
@@ -369,6 +366,7 @@ public class SVNReader2 {
         }
         return index;
     }
+
     private static SVNItem readItem(InputStream is, SVNItem item, char ch) throws SVNException {
         if (item == null) {
             item = new SVNItem();
@@ -407,12 +405,8 @@ public class SVNReader2 {
                     SVNErrorManager.error(err);
                 }
                 item.setKind(SVNItem.STRING);
-                try {
-                    item.setLine(new String(buffer, 0, buffer.length, "UTF-8"));
-                } catch (UnsupportedEncodingException e) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA);
-                    SVNErrorManager.error(err);
-                }
+                item.setLine(buffer);
+
                 ch = readChar(is);
             } else {
                 // number.

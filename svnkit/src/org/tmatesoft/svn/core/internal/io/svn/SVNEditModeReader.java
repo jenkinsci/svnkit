@@ -218,9 +218,9 @@ public class SVNEditModeReader {
         } else if ("apply-textdelta".equals(commandName)) {
             lookupToken(SVNReader2.getString(params, 0), true);
             myEditor.applyTextDelta(myFilePath, SVNReader2.getString(params, 1));
-        } else if ("textdelta-chink".equals(commandName)) {
+        } else if ("textdelta-chunk".equals(commandName)) {
             lookupToken(SVNReader2.getString(params, 0), true);
-            byte[] chunk = SVNReader2.getBytes(params, 1);
+            byte[] chunk = SVNReader2.getBytes(params, 1);            
             myDeltaReader.nextWindow(chunk, 0, chunk.length, myFilePath, myEditor);
         } else if ("textdelta-end".equals(commandName)) {
             // reset delta reader,

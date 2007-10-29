@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.io.svn;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -29,7 +30,7 @@ public class SVNItem {
 
     private long myNumber = -1;
     private String myWord;  // success
-    private String myLine; // 3:abc
+    private byte[] myLine; // 3:abc
     private Collection myItems;
 
     public int getKind() {
@@ -56,11 +57,11 @@ public class SVNItem {
         myWord = word;
     }
 
-    public String getLine() {
+    public byte[] getLine() {
         return myLine;
     }
 
-    public void setLine(String line) {
+    public void setLine(byte[] line) {
         myLine = line;
     }
 
@@ -77,7 +78,13 @@ public class SVNItem {
         if (myKind == WORD) {
             result.append("W").append(myWord);
         } else if (myKind == STRING) {
-            result.append("S").append(myLine.length()).append(":").append(myLine).append(" ");
+            result.append("S").append(myLine.length).append(":");
+            try {
+                result.append(new String(myLine, "UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+                result.append(myLine);
+            }
+            result.append(" ");
         } else if (myKind == NUMBER) {
             result.append("N").append(myNumber);
         } else if (myKind == LIST) {
@@ -107,7 +114,7 @@ public class SVNItem {
             if (myKind == WORD) {
                 return myWord.getBytes().equals(o);
             } else if (myKind == STRING) {
-                return myLine.getBytes().equals(o);
+                return myLine.equals(o);
             }
             return false;
         } else if (o instanceof Long) {

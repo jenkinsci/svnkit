@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.internal.io.svn;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -325,19 +324,15 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Non-string as part of file contents");
                         SVNErrorManager.error(err);
                     }
-                    if (item.getLine().length() == 0) {
+                    if (item.getLine().length == 0) {
                         break;
                     }
                     if (expectedChecksum != null) {
-                        try {
-                            digest.update(item.getLine().getBytes("UTF-8"));
-                        } catch (IOException e) {
-                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getLocalizedMessage());
-                            SVNErrorManager.error(err);
-                        }
+                        digest.update(item.getLine());
+
                     }
                     try {
-                        contents.write(item.getLine().getBytes("UTF-8"));
+                        contents.write(item.getLine());
                     } catch (IOException e) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getLocalizedMessage());
                         SVNErrorManager.error(err);
@@ -571,7 +566,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Text delta chunk not a string");
                     SVNErrorManager.error(err);
                 }
-                boolean hasDelta = chunkItem.getLine().length() > 0;
+                boolean hasDelta = chunkItem.getLine().length > 0;
 
                 if (handler != null && fileRevision != null) {
                     handler.openRevision(fileRevision);
@@ -582,7 +577,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                         handler.applyTextDelta(name == null ? path : name, null);
                     }
                     while (true) {
-                        byte[] line = chunkItem.getLine().getBytes("UTF-8");
+                        byte[] line = chunkItem.getLine();
                         if (line == null || line.length == 0) {
                             break;
                         }
@@ -614,9 +609,6 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         } catch (SVNException e) {
             closeSession();
             handleUnsupportedCommand(e, "'get-file-revs' not implemented");
-        } catch (UnsupportedEncodingException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA);
-            SVNErrorManager.error(err);
         } finally {
             closeConnection();
         }
@@ -1407,7 +1399,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             editReader.driveEditor(false);
             write("(w())", new Object[]{"success"});
             read("", null, true);
-            
+
         } catch (SVNException e) {
             closeSession();
             throw e;
