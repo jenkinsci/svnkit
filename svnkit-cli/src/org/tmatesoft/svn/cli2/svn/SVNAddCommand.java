@@ -37,6 +37,7 @@ public class SVNAddCommand extends SVNCommand {
 
     protected Collection createSupportedOptions() {
         Collection options = new LinkedList();
+        options = SVNOption.addAuthOptions(options);
         options.add(SVNOption.TARGETS);
         options.add(SVNOption.NON_RECURSIVE);
         options.add(SVNOption.DEPTH);

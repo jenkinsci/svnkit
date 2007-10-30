@@ -33,6 +33,7 @@ public class SVNCleanupCommand extends SVNCommand {
 
     protected Collection createSupportedOptions() {
         Collection options = new LinkedList();
+        options = SVNOption.addAuthOptions(options);
         options.add(SVNOption.CONFIG_DIR);
         return options;
     }
