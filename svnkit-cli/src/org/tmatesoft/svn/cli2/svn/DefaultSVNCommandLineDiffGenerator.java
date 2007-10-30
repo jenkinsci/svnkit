@@ -1,0 +1,67 @@
+/*
+ * ====================================================================
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ *
+ * This software is licensed as described in the file COPYING, which
+ * you should have received as part of this distribution.  The terms
+ * are also available at http://svnkit.com/license.html.
+ * If newer versions of this license are posted there, you may use a
+ * newer version instead, at your option.
+ * ====================================================================
+ */
+package org.tmatesoft.svn.cli2.svn;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
+
+
+/**
+ * @version 1.1.2
+ * @author  TMate Software Ltd.
+ */
+public class DefaultSVNCommandLineDiffGenerator extends DefaultSVNDiffGenerator {
+    
+    private File myFile1;
+    private File myFile2;
+    
+    public DefaultSVNCommandLineDiffGenerator(File file1, File file2) {
+        myFile1 = file1;
+        myFile2 = file2;
+    }
+    
+    protected void displayHeaderFields(OutputStream os, String path1, String rev1, String path2, String rev2) throws IOException {
+        DateFormat df = new SimpleDateFormat("EEE' 'MMM' 'dd' 'HH:mm:ss' 'yyyy");
+        Date time1 = new Date(myFile1.lastModified());
+        Date time2 = new Date(myFile2.lastModified());
+        String timestamp1 = df.format(time1);
+        String timestamp2 = df.format(time2);
+        String file1 = myFile1.getAbsolutePath();
+        String file2 = myFile2.getAbsolutePath();
+        
+        os.write("--- ".getBytes(getEncoding()));
+        os.write(file1.getBytes(getEncoding()));
+        os.write("\t".getBytes(getEncoding()));
+        os.write(timestamp1.getBytes(getEncoding()));
+        os.write(EOL);
+        os.write("+++ ".getBytes(getEncoding()));
+        os.write(file2.getBytes(getEncoding()));
+        os.write("\t".getBytes(getEncoding()));
+        os.write(timestamp2.getBytes(getEncoding()));
+        os.write(EOL);
+    }
+    
+    protected boolean displayHeader(OutputStream os, String path, boolean deleted) throws IOException {
+        return false;
+    }
+
+    protected boolean isHeaderForced(File file1, File file2) {
+        return false;
+    }
+
+}

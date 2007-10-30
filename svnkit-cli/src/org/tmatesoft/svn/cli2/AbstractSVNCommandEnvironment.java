@@ -179,11 +179,11 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
     
     protected abstract String refineCommandName(String commandName) throws SVNException;
     
-    protected abstract ISVNOptions createClientOptions();
+    protected abstract ISVNOptions createClientOptions() throws SVNException;
 
     protected abstract ISVNAuthenticationManager createClientAuthenticationManager();
     
-    public void initClientManager() {
+    public void initClientManager() throws SVNException {
         myClientManager = SVNClientManager.newInstance(createClientOptions(), createClientAuthenticationManager());
         myClientManager.setEventHandler(new ISVNEventHandler() {
             public void handleEvent(SVNEvent event, double progress) throws SVNException {

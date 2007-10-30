@@ -407,4 +407,7 @@ public interface ISVNOptions extends ISVNTunnelProvider {
     public void setKeepLocks(boolean keep);
     
     public boolean isInteractiveConflictResolution();
+    
+    public void setConflictHandler(ISVNConflictHandler resolver);
+
 }

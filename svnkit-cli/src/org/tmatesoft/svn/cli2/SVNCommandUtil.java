@@ -11,10 +11,12 @@
  */
 package org.tmatesoft.svn.cli2;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.text.MessageFormat;
 import java.util.Iterator;
@@ -190,6 +192,17 @@ public class SVNCommandUtil {
             return bos.toByteArray();
         } finally {
             SVNFileUtil.deleteFile(tmpFile);
+        }
+    }
+    
+    public static String prompt(String promptMessage) {
+        System.out.print(promptMessage);
+        System.out.flush();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+        try {
+            return reader.readLine();
+        } catch (IOException e) {
+            return null;
         }
     }
     

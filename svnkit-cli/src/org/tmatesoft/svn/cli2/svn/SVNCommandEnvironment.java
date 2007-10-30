@@ -112,7 +112,6 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private boolean myIsStopOnCopy;
     private boolean myIsChangeOptionIsUsed;
     private boolean myIsWithAllRevprops;
-    private String myAcceptOption;
     
     public SVNCommandEnvironment(String programName, PrintStream out, PrintStream err, InputStream in) {
         super(programName, out, err, in);
@@ -125,7 +124,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         myEndRevision = SVNRevision.UNDEFINED;
     }
     
-    public void initClientManager() {
+    public void initClientManager() throws SVNException {
         super.initClientManager();
         getClientManager().setIgnoreExternals(myIsIgnoreExternals);
     }
@@ -157,7 +156,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         return commandName;
     }
 
-    protected ISVNOptions createClientOptions() {
+    protected ISVNOptions createClientOptions() throws SVNException {
         File configDir = myConfigDir != null ? new File(myConfigDir) : SVNWCUtil.getDefaultConfigurationDirectory();        
         ISVNOptions options = SVNWCUtil.createDefaultOptions(configDir, true);
         options.setAuthStorageEnabled(!myIsNoAuthCache);
@@ -169,6 +168,25 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         }
         if (myIsNoUnlock) {
             options.setKeepLocks(true);
+        }
+
+        if ((myResolveAccept == SVNWCAccept.INVALID && (!options.isInteractiveConflictResolution() || myIsNonInteractive))
+                || myResolveAccept == SVNWCAccept.POSTPONE) {
+            options.setConflictHandler(null);
+        } else {
+            if (myIsNonInteractive) {
+                if (myResolveAccept == SVNWCAccept.EDIT) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+                            "--accept=%s incompatible with --non-interactive", SVNWCAccept.EDIT);
+                    SVNErrorManager.error(err);
+                }
+                if (myResolveAccept == SVNWCAccept.LAUNCH) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+                            "--accept=%s incompatible with --non-interactive", SVNWCAccept.LAUNCH);
+                    SVNErrorManager.error(err);
+                }
+            }
+            options.setConflictHandler(new SVNCommandLineConflictHandler(myResolveAccept, this));
         }
         return options;
     }
