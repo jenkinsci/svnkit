@@ -402,6 +402,14 @@ public class SVNErrorCode implements Serializable {
      * @since SVN 1.5
      */
     public static final SVNErrorCode REVISION_NUMBER_PARSE_ERROR = new SVNErrorCode(MISC_CATEGORY, 22, "Revision number parse error");
+    /**
+     * @since SVN 1.5
+     */
+    public static final SVNErrorCode ITER_BREAK = new SVNErrorCode(MISC_CATEGORY, 23, "Iteration terminated before completion");
+    /**
+     * @since SVN 1.5
+     */
+    public static final SVNErrorCode UNKNOWN_CHANGELIST = new SVNErrorCode(MISC_CATEGORY, 24, "Unknown changelist");
     
     
     public static final SVNErrorCode CL_ARG_PARSING_ERROR = new SVNErrorCode(CL_CATEGORY, 0, "Client error in parsing arguments");
@@ -414,6 +422,9 @@ public class SVNErrorCode implements Serializable {
     public static final SVNErrorCode CL_NO_EXTERNAL_EDITOR = new SVNErrorCode(CL_CATEGORY, 7, "No external editor available");
     public static final SVNErrorCode CL_BAD_LOG_MESSAGE = new SVNErrorCode(CL_CATEGORY, 8, "Something is wrong with the log message's contents");
     public static final SVNErrorCode CL_UNNECESSARY_LOG_MESSAGE = new SVNErrorCode(CL_CATEGORY, 9, "A log message was given where none was necessary");
+    /**
+     * @since SVN 1.5
+     */
     public static final SVNErrorCode CL_NO_EXTERNAL_MERGE_TOOL = new SVNErrorCode(CL_CATEGORY, 10, "No external merge tool available");
 
 }
