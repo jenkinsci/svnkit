@@ -69,7 +69,7 @@ public class SVNRevertCommand extends SVNCommand {
         }
         SVNDepth depth = getSVNEnvironment().getDepth();
         if (depth == SVNDepth.UNKNOWN) {
-            depth = SVNDepth.fromRecurse(false);
+            depth = SVNDepth.EMPTY;
         }
         SVNWCClient client = getSVNEnvironment().getClientManager().getWCClient();
         if (!getSVNEnvironment().isQuiet()) {
@@ -91,7 +91,7 @@ public class SVNRevertCommand extends SVNCommand {
         }
         File[] paths = (File[]) pathsList.toArray(new File[pathsList.size()]);
         try {
-            client.doRevert(paths, depth.isRecursive());
+            client.doRevert(paths, depth);
         } catch (SVNException e) {
             SVNErrorMessage err = e.getErrorMessage();
             if (!depth.isRecursive() && err.getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {

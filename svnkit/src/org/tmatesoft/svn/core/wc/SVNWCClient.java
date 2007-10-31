@@ -24,7 +24,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.tmatesoft.svn.cli2.svn.SVNWCAccept;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDirEntry;
@@ -64,7 +63,6 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
-import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
@@ -1409,9 +1407,6 @@ public class SVNWCClient extends SVNBasicClient {
      *                         </ul>
      * @see #doRevert(File[], boolean)
      */
-    /* TODO(sd): "I don't see any reason to change this recurse parameter
-     * to a depth, but making a note to re-check this logic later."
-     */
     public void doRevert(File path, boolean recursive) throws SVNException {
         doRevert(new File[] {path}, recursive);
     }
@@ -1435,6 +1430,10 @@ public class SVNWCClient extends SVNBasicClient {
      *                         instance to get information on whether certain path was reverted or not.  
      */
     public void doRevert(File[] paths, boolean recursive) throws SVNException {
+        doRevert(paths, recursive ? SVNDepth.INFINITY : SVNDepth.EMPTY);
+    }
+    
+    public void doRevert(File[] paths, SVNDepth depth) throws SVNException {
         boolean reverted = false;
         try {
             for (int i = 0; i < paths.length; i++) {
@@ -1442,19 +1441,23 @@ public class SVNWCClient extends SVNBasicClient {
                 path = new File(SVNPathUtil.validateFilePath(path.getAbsolutePath()));
                 SVNWCAccess wcAccess = createWCAccess();
                 try {
-                    SVNAdminAreaInfo info = wcAccess.openAnchor(path, true, recursive ? SVNWCAccess.INFINITE_DEPTH : 0);
+                    int admLockLevel = SVNWCAccess.INFINITE_DEPTH;
+                    if (depth == SVNDepth.EMPTY || depth == SVNDepth.FILES) {
+                        admLockLevel = 0;
+                    }
+                    SVNAdminAreaInfo info = wcAccess.openAnchor(path, true, admLockLevel);
                     SVNEntry entry = wcAccess.getEntry(path, false);
                     if (entry != null && entry.isDirectory() && entry.isScheduledForAddition()) {
-                        if (!recursive) {
+                        if (depth != SVNDepth.INFINITY) {
                             getDebugLog().info("Forcing revert on path '" + path + "' to recurse");
-                            recursive = true;
+                            depth = SVNDepth.INFINITY;
                             wcAccess.close();
                             info = wcAccess.openAnchor(path, true, SVNWCAccess.INFINITE_DEPTH);
                         }
                     }
                     
                     boolean useCommitTimes = getOptions().isUseCommitTimes();
-                    reverted |= doRevert(path, info.getAnchor(), recursive, useCommitTimes);            
+                    reverted |= doRevert(path, info.getAnchor(), depth, useCommitTimes);            
                 } catch (SVNException e) {
                     reverted |= true;
                     SVNErrorCode code = e.getErrorMessage().getErrorCode();
@@ -1475,16 +1478,18 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
     
-    private boolean doRevert(File path, SVNAdminArea parent, boolean recursive, boolean useCommitTimes) throws SVNException {
+    private boolean doRevert(File path, SVNAdminArea parent, SVNDepth depth, boolean useCommitTimes) throws SVNException {
         checkCancelled();
-        SVNAdminArea dir = parent.getWCAccess().probeRetrieve(path);
+        SVNWCAccess wcAccess = parent.getWCAccess(); 
+        SVNAdminArea dir = wcAccess.probeRetrieve(path);
         SVNEntry entry = null;
         try {
-            entry = dir.getWCAccess().getVersionedEntry(path, false);
+            entry = wcAccess.getVersionedEntry(path, false);
         } catch (SVNException svne) {
             SVNErrorMessage err = svne.getErrorMessage().wrap("Cannot revert.");
             SVNErrorManager.error(err);
         }
+        
         if (entry.getKind() == SVNNodeKind.DIR) {
             SVNFileType fileType = SVNFileType.getType(path);
             if (fileType != SVNFileType.DIRECTORY && !entry.isScheduledForAddition()) {
@@ -1493,15 +1498,20 @@ public class SVNWCClient extends SVNBasicClient {
                 return false;
             }
         }
+        
         if (entry.getKind() != SVNNodeKind.DIR && entry.getKind() != SVNNodeKind.FILE) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Cannot revert ''{0}'': unsupported entry node kind", path);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                    "Cannot revert ''{0}'': unsupported entry node kind", path);
             SVNErrorManager.error(err);
         }
+        
         SVNFileType fileType = SVNFileType.getType(path);
         if (fileType == SVNFileType.UNKNOWN) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Cannot revert ''{0}'': unsupported node kind in working copy", path);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                    "Cannot revert ''{0}'': unsupported node kind in working copy", path);
             SVNErrorManager.error(err);
         }
+        
         boolean reverted = false;
         if (entry.isScheduledForAddition()) {
             boolean wasDeleted = false;
@@ -1513,15 +1523,16 @@ public class SVNWCClient extends SVNBasicClient {
                 if (entryInParent != null) {
                     wasDeleted = entryInParent.isDeleted();
                 }
-                if (fileType == SVNFileType.NONE) {
+                if (fileType == SVNFileType.NONE || wcAccess.isMissing(path)) {
                     parent.deleteEntry(path.getName());
                     parent.saveEntries(false);
                 } else {
                     dir.removeFromRevisionControl("", false, false);
                 }
             }
+
             reverted = true;
-            recursive = false;
+            depth = SVNDepth.EMPTY;
             if (wasDeleted) {
                 Map attributes = new HashMap();
                 attributes.put(SVNProperty.KIND, entry.getKind().toString());
@@ -1538,7 +1549,7 @@ public class SVNWCClient extends SVNBasicClient {
                     revert(parent, path.getName(), entryInParent, useCommitTimes);
                 }
                 if (entry.isScheduledForReplacement()) {
-                    recursive = true;
+                    depth = SVNDepth.INFINITY;
                 }
             }
         }
@@ -1546,14 +1557,18 @@ public class SVNWCClient extends SVNBasicClient {
             SVNEvent event = SVNEventFactory.createRevertedEvent(dir, entry);
             dispatchEvent(event);
         }
-        if (recursive && entry.getKind() == SVNNodeKind.DIR) {
+        if (entry.getKind() == SVNNodeKind.DIR && depth.compareTo(SVNDepth.EMPTY) > 0) {
+            SVNDepth depthBelowHere = depth;
+            if (depth == SVNDepth.FILES || depth == SVNDepth.IMMEDIATES) {
+                depth = SVNDepth.EMPTY;
+            }
             for(Iterator entries = dir.entries(false); entries.hasNext();) {
                 SVNEntry childEntry = (SVNEntry) entries.next();
                 if (dir.getThisDirName().equals(childEntry.getName())) {
                     continue;
                 }
                 File childPath = new File(path, childEntry.getName());
-                reverted |= doRevert(childPath, dir, true, useCommitTimes);
+                reverted |= doRevert(childPath, dir, depthBelowHere, useCommitTimes);
             }
         }
         return reverted;
@@ -1567,23 +1582,15 @@ public class SVNWCClient extends SVNBasicClient {
         boolean revertBase = false;
         
         if (entry.isScheduledForReplacement()) {
-            revertBase = true;
-            String propRevertPath = SVNAdminUtil.getPropRevertPath(name, entry.getKind(), false);
-            boolean exists = dir.getFile(propRevertPath).isFile(); 
-            if (!exists) {
-                propRevertPath = SVNAdminUtil.getPropBasePath(name, entry.getKind(), false);
-                exists = dir.getFile(propRevertPath).isFile();
-                revertBase = false;
+            revertBase = entry.isCopied();
+            baseProperties = revertBase ? dir.getRevertProperties(name) : dir.getBaseProperties(name);
+            if (revertBase) {
+                String propRevertPath = SVNAdminUtil.getPropRevertPath(name, entry.getKind(), false);
+                command.put(SVNLog.NAME_ATTR, propRevertPath);
+                log.addCommand(SVNLog.DELETE, command, false);
+                command.clear();
             }
-            if (exists) {
-                baseProperties = revertBase ? dir.getRevertProperties(name) : dir.getBaseProperties(name);
-                if (revertBase) {
-                    command.put(SVNLog.NAME_ATTR, propRevertPath);
-                    log.addCommand(SVNLog.DELETE, command, false);
-                    command.clear();
-                }
-                reverted = true;
-            }
+            reverted = true;
         }
         boolean reinstallWorkingFile = false;
         if (baseProperties == null) {
@@ -1707,8 +1714,14 @@ public class SVNWCClient extends SVNBasicClient {
         if (entry.isScheduledForReplacement()) {
             newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.COPIED), SVNProperty.toString(false));
             newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.COPYFROM_URL), null);
-            newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.COPYFROM_REVISION), SVNProperty.toString(SVNRepository.INVALID_REVISION));
-            reverted = true;
+            newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.COPYFROM_REVISION), 
+                    SVNProperty.toString(SVNRepository.INVALID_REVISION));
+            if (entry.isFile() && entry.getCopyFromURL() != null) {
+                String basePath = SVNAdminUtil.getTextRevertPath(name, false);
+                File baseFile = dir.getFile(basePath);
+                String digest = SVNFileUtil.computeChecksum(baseFile);
+                newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.CHECKSUM), digest);
+            }
         }
         
         if (entry.getSchedule() != null) {
