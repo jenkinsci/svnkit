@@ -21,7 +21,10 @@ import java.util.List;
 import org.tmatesoft.svn.cli2.SVNCommandTarget;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNCommitClient;
 
 
@@ -84,12 +87,20 @@ public class SVNCommitCommand extends SVNCommand {
         }        
         client.setCommitHandler(getSVNEnvironment());
         boolean keepLocks = getSVNEnvironment().getClientManager().getOptions().isKeepLocks();
-        SVNCommitInfo info = client.doCommit(files, keepLocks, getSVNEnvironment().getMessage(), 
-                                             getSVNEnvironment().getRevisionProperties(),
-                                             getSVNEnvironment().getChangelist(), 
-                                             getSVNEnvironment().isKeepChangelist(), 
-                                             getSVNEnvironment().isForce(), 
-                                             depth);
+        SVNCommitInfo info = null;
+        try {
+            info = client.doCommit(files, keepLocks, getSVNEnvironment().getMessage(), 
+                    getSVNEnvironment().getRevisionProperties(),
+                    getSVNEnvironment().getChangelist(), 
+                    getSVNEnvironment().isKeepChangelist(), 
+                    getSVNEnvironment().isForce(), depth);
+        } catch (SVNException svne) {
+            SVNErrorMessage err = svne.getErrorMessage().getRootErrorMessage();
+            if (err.getErrorCode() == SVNErrorCode.UNKNOWN_CHANGELIST) {
+                SVNErrorManager.error(err);
+            }
+            throw svne;
+        }
 
         if (!getSVNEnvironment().isQuiet()) {
             getSVNEnvironment().printCommitInfo(info);

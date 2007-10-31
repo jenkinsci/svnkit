@@ -399,4 +399,11 @@ public class SVNErrorMessage implements Serializable {
         return false;
     }
     
+    public SVNErrorMessage getRootErrorMessage() {
+        SVNErrorMessage err = this;
+        while (err.myChildErrorMessage != null) {
+            err = err.myChildErrorMessage;
+        }
+        return err;
+    }
 }

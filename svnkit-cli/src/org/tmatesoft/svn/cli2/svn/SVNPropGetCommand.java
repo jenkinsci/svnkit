@@ -70,7 +70,8 @@ public class SVNPropGetCommand extends SVNPropertiesCommand {
             SVNChangelistClient changelistClient = getSVNEnvironment().getClientManager().getChangelistClient();
             changelistClient.getChangelist(target.getFile(), getSVNEnvironment().getChangelist(), targets);
             if (targets.isEmpty()) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "no such changelist ''{0}''", getSVNEnvironment().getChangelist());
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN_CHANGELIST, 
+                        "Unknown changelist ''{0}''", getSVNEnvironment().getChangelist());
                 SVNErrorManager.error(err);
             }
         }
