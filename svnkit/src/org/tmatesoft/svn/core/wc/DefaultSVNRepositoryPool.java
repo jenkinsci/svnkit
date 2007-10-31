@@ -11,22 +11,16 @@
  */
 package org.tmatesoft.svn.core.wc;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
-
 import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.io.ISVNConnectionListener;
-import org.tmatesoft.svn.core.io.ISVNSession;
-import org.tmatesoft.svn.core.io.ISVNTunnelProvider;
-import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
+import org.tmatesoft.svn.core.io.*;
 import org.tmatesoft.svn.util.ISVNDebugLog;
+
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 /**
@@ -345,20 +339,26 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
     
     private class TimeoutTask extends TimerTask {
         public void run() {
-            long currentTime = System.currentTimeMillis();
-            synchronized (myInactiveRepositories) {
-                for (Iterator repositories = myInactiveRepositories.keySet().iterator(); repositories.hasNext();) {
-                    SVNRepository repos = (SVNRepository) repositories.next();
-                    long time = ((Long) myInactiveRepositories.get(repos)).longValue();
-                    if (currentTime - time >= getTimeout()) {
-                        repositories.remove();
-                        repos.closeSession();
+            try {
+                long currentTime = System.currentTimeMillis();
+                synchronized (myInactiveRepositories) {
+                    for (Iterator repositories = myInactiveRepositories.keySet().iterator(); repositories.hasNext();) {
+                        SVNRepository repos = (SVNRepository) repositories.next();
+                        long time = ((Long) myInactiveRepositories.get(repos)).longValue();
+                        if (currentTime - time >= getTimeout()) {
+                            repositories.remove();
+                            repos.closeSession();
+                        }
+                    }
+                    if (myTimer != null) {
+                        myTimer.schedule(new TimeoutTask(), 10000);
                     }
                 }
-                if (myTimer != null) {
-                    myTimer.schedule(new TimeoutTask(), 10000);
-                }
+            } catch(Throwable t) {
+                LOGGER.log(Level.SEVERE, "Timer task "+this+" failed",t);
             }
         }
     }
+
+    private static final Logger LOGGER = Logger.getLogger(DefaultSVNRepositoryPool.class.getName());
 }

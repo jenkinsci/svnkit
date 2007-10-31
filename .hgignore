@@ -1,0 +1,6 @@
+target
+svnkit/bin
+contrib/sequence/bin
+contrib/javahl/bin
+build
+svnkit.iwsa
