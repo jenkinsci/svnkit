@@ -1,0 +1,83 @@
+[<< Previous Page | Svnkit Architecture]
+
+[Next Page >> | Authentication]
+
+[{TableOfContents title='Table of Contents'}]
+
+!!!How to use different repository access protocols in SVNKit?
+When you have downloaded [the latest SVNKit binaries | http://svnkit.com/download/index.php] and ready to start using it, a question arises: what initialization 
+steps should be performed in order to set up the library? 
+
+Direct interacting with a Subversion repository is carried out by a low-level layer, where the main class representing a 
+repository access driver interface is an abstract [SVNRepository | http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html] class.
+There are several protocol specific realizations of this driver, one for each protocol. Each driver is created by an abstract factory class - 
+[SVNRepositoryFactory | http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepositoryFactory.html], which also has several protocol 
+specific realizations, each one for each protocol. The following table matches a protocol against a corresponding __SVNRepositoryFactory__ realization:
+
+||protocol||SVNRepositoryFactory realization
+|svn://|SVNRepositoryFactoryImpl
+|http://|DAVRepositoryFactory
+|file:///|FSRepositoryFactory
+
+!!Instructions on initializing SVNKit
+%%(color:red)Prior to using the library%% you must set up an appropriate [SVNRepositoryFactory | http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepositoryFactory.html] realization for a 
+particular protocol. For example, if you would like to work with a repository via the ''svn://'' protocol, you must 
+register the following factory:
+
+[{Java2HtmlPlugin 
+
+       try {
+            SVNRepositoryFactoryImpl.setup();
+            ...
+       } catch (SVNException e) {
+            //handle exception       		
+       }
+
+}]
+
+After this step [SVNRepositoryFactory | http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepositoryFactory.html] knows how to create [SVNRepository | http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html] drivers specific for the ''svn://'' protocol since
+it now contains the registered factory. And further you create a driver itself:
+
+[{Java2HtmlPlugin 
+
+       try {
+            ...
+            SVNURL url = SVNURL.parseURIDecoded( "svn://host/path_to_repository_root/inner_path" );
+            SVNRepository repository = SVNRepositoryFactory.create( url , null );
+            ...
+       } catch (SVNException e) {
+            //handle exception       		
+       }
+
+}]
+
+In __SVNKit__ all repository urls are represented by the [SVNURL | http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/SVNURL.html] 
+class. If a path string is not ''UTF-8'' encoded yet, use the __SVNURL__'s [parseURIDecoded() | http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/SVNURL.html#parseURIDecoded(java.lang.String)] 
+method to create a new url representation (it will be encoded if necessary).
+
+Then you pass the url representation to the [SVNRepositoryFactory | http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepositoryFactory.html] to create a new [SVNRepository | http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html] driver. So, 
+this way you can bind your driver to any repository location you would like. 
+
+[{Image src = 'SVNRepository_connection2.png'  caption = 'Connecting SVNRepository'}]
+
+The diagram above illustrates how different drivers are created for different repository paths: one for the repository 
+root (''svn://host/path_to_root''), one for a directory (''svn://host/path_to_root/dirA'') and one for a file 
+(''svn://host/path_to_root/dirB/fileB1''). Most operations which [SVNRepository | http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html] driver can perform against a 
+repository, accept a repository path which may be one of two types:
+* path that does not start with '/' - is always relative to the location the driver is bound to
+* path that does start with '/' - is always absolute to the repository root (always starts at the top of the repository tree)
+
+!!!Using high-level layer
+When you use __SVNKit__ for managing Working Copies you also should set up appropriate factory classes since 
+the high-level layer uses the low-level one for working with a repository. If you miss this initialization step 
+you may get an exception saying that __SVNKit__ could not create an [SVNRepository | http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html] object for the provided 
+url.
+
+!!SVN*Client classes
+All high-level operations for managing Working Copies are logically divided to [SVN*Client | http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/wc/package-summary.html] 
+classes: each __SVN*Client__ class joins a separate group of operations (for example, [SVNUpdateClient | http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/wc/SVNUpdateClient.html] 
+provides API on update operations, such as checkout, update, switch, export). There're two different ways of instantiating
+objects of these classes: 
+* Create only necessary __SVN*Client__ objects.
+* Create a single [SVNClientManager | http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/wc/SVNClientManager.html] instance which provides objects of necessary __SVN*Client__ types.
+

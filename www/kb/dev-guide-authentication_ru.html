@@ -1,0 +1,163 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>SVNKit&nbsp;::&nbsp;Authentication</title>
+
+
+<meta name="keywords" content="Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development">   
+<meta name="description" content="Pure Java Subversion Library. Open Source, provided by TMate Software">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1251">
+<link rel="stylesheet" type="text/css" media="screen" href="../css/home.css">
+<link rel="shortcut icon" href="/img/favicon.ico"/>
+</head><body>
+<table style="height: 100%;" align="center" bgcolor="white" border="0" cellpadding="0" cellspacing="0" width="900">
+<tbody><tr align="center" valign="top">
+<td colspan="1" rowspan="1">
+
+<div class="leftedge">
+<div class="rightedge">
+
+<table style="height: 1000px;" align="center" border="0" cellpadding="0" cellspacing="0" width="870">
+<tbody><tr align="center" valign="top">
+<td style="padding: 3px 20px 20px;" align="left" valign="top">
+
+<table style="width: 100%;" border="0" cellpadding="0" cellspacing="0">
+<tbody><tr>
+<td rowspan="2" colspan="1" width="50%">
+<a style="border-bottom: 0px none;" href="/"><img src="../img/svnkit_logo.jpg" border="0" height="97" width="415"></a>
+</td>
+<td rowspan="1" colspan="1" style="font-style: italic; font-size: 17px; padding-left: 15px;" align="left" valign="center" width="50%">
+The only pure Java&#153; Subversion library in the world!
+</td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" style="padding-right: 0px; padding-bottom: 12px; padding-left: 5px;" align="left" valign="bottom">
+<!--<span style="font-size: 140%; font-weight: bold;">Pure Java Subversion client library</span>-->
+<!--<hr color="#336699" style="padding-top: 20px" size="5"/>-->
+<table style="width: 100%;" border="0" cellpadding="0" cellspacing="0">
+<tbody><tr style="height: 10px;">
+
+<td style="border-right: 1px inset rgb(51, 102, 153); font-family: trebuchet ms,verdana,tahoma,arial; font-style: normal; font-variant: normal; font-weight: bold; font-size: 17px; line-height: 18px; font-size-adjust: none; font-stretch: normal;" align="center" valign="top">
+<a class="headitem" style="border-bottom: 0px none;" href="/">Home</a>
+</td>
+
+<td style="border-right: 1px inset rgb(51, 102, 153); font-family: trebuchet ms,verdana,tahoma,arial; font-style: normal; font-variant: normal; font-weight: bold; font-size: 17px; line-height: 18px; font-size-adjust: none; font-stretch: normal;" align="center" valign="top">
+<a class="headitem" style="border-bottom: 0px none;" href="/download/index.php">Get Library</a>
+</td>
+
+<td style="border-right: 1px inset rgb(51, 102, 153); font-family: trebuchet ms,verdana,tahoma,arial; font-style: normal; font-variant: normal; font-weight: bold; font-size: 17px; line-height: 17px; font-size-adjust: none; font-stretch: normal;" align="center" valign="top">
+<a class="headitem" style="border-bottom: 0px none;" href="/kb/index.html">Knowledge Base</a> 
+</td>
+
+<td style="font-family: trebuchet ms,verdana,tahoma,arial; font-style: normal; font-variant: normal; font-weight: bold; font-size: 17px; line-height: 18px; font-size-adjust: none; font-stretch: normal;" align="center" valign="top">
+<a class="headitem" style="border-bottom: 0px none;" href="/licensing/index.html">Licensing</a>
+</td>
+</tr>
+</tbody></table>
+</td>
+</tr>
+</tbody></table>
+<p>Этот перевод подготовил <a href="mailto:chidar@mgn.ru">Георгий Пращарук</a> из <a href="http://www.mindtech.ru">MindTech</a>.<p>
+
+<h1>Аутентификация</h1>
+<p>
+Для предоставления аутентификационной информации серверу репозиториев <code>SVNRepository</code> драйвера используют
+интерфейс <code>ISVNAuthenticationManager</code> (<b>org.tmatesoft.svn.core.auth</b>).
+</p>
+<p>
+Когда объект <code>SVNRepository</code> используется напрямую, вы должны предоставить менеджер аутентификации следующим способом:
+</p><pre class="javaCode">...
+<span class="javaKeyword">import</span> org.tmatesoft.svn.core.io.SVNRepository;
+<span class="javaKeyword">import</span> org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+...
+
+    SVNRepository repository;
+    ISVNAuthenticationManager authManager;
+    ...
+    
+    repository.setAuthenticationManager(authManager);
+</pre>
+
+<p>
+Если работаете с рабочими копиями (т.е. используете классы <code>SVN*Client</code>):
+</p><pre class="javaCode">...
+<span class="javaKeyword">import</span> org.tmatesoft.svn.core.wc.SVNUpdateClient;
+<span class="javaKeyword">import</span> org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+<span class="javaKeyword">import</span> org.tmatesoft.svn.core.wc.ISVNOptions;
+...
+    
+    ISVNAuthenticationManager authManager;
+    ISVNOptions options;
+    ...    
+    SVNUpdateClient updateClient = <span class="javaKeyword">new</span> SVNUpdateClient(authManager, options);
+</pre>
+или если вы используете единственный <code>SVNClientManager</code>:
+<pre class="javaCode">...
+<span class="javaKeyword">import</span> org.tmatesoft.svn.core.wc.SVNClientManager;
+...
+    SVNClientManager manager = 
+                     SVNClientManager.newInstance(options, authManager); 
+</pre>
+
+<p>Вы можете реализовать свой собственный менеджер аутентификации и соответственно использовать его в работе с SVNKit.
+</p>
+<h4>ISVNAuthenticationProvider и ISVNAuthenticationStorage</h4>
+<p>
+Собственно говоря, для предоставления клиентского мандата и приема сертификатов аутентификации сервера
+<code>ISVNAuthenticationManager</code> может использовать интерфейс <code>ISVNAuthenticationProvider</code>.
+Для осуществления аутентификации менеджер использует вашу реализацию провайдера аутентификации просто передавая его
+в менеджер примерно так:
+</p><pre class="javaCode"><span class="javaKeyword">import</span> org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
+
+    ISVNAuthenticationProvider yourAuthProvider;
+    ISVNAuthenticationManager authManager;
+    ...
+
+    authManager.setAuthenticationProvider(yourAuthProvider);
+</pre>
+
+<p>
+Также <code>ISVNAuthenticationManager</code> может быть сконфигурирован для использования с хранилищем аутентификации времени
+исполнения, которое может быть использовано для кэширования пользовательских мандатов во время исполнения:
+</p><pre class="javaCode"><span class="javaKeyword">import</span> org.tmatesoft.svn.core.auth.ISVNAuthenticationStorage;
+
+    ISVNAuthenticationStorage yourAuthStorage;
+    ISVNAuthenticationManager authManager;
+    ...
+
+    authManager.setAuthenticationProvider(yourAuthStorage);
+</pre>
+
+
+<h4>Использование штатной реализации</h4>
+<p>
+Для получения штатной реализации <code>ISVNAuthenticationManager</code> вы должны использовать
+методы <code>createDefaultAuthenticationManager()</code> класса <code>SVNWCUtil</code>
+class (<b>org.tmatesoft.svn.core.wc</b>).
+Прочтите <a href="/kb/javadoc/org/tmatesoft/svn/core/wc/SVNWCUtil.html">javadoc</a> 
+по данному классу.
+</p>
+<p>
+В дополнение штатная реализация провайдера аутентификации,<code>DefaultSVNAuthenticationManager</code>
+(<b>org.tmatesoft.svn.core.internal.wc</b>), также использует настройки и мандаты кэшированные 
+из штатной директории конфигурации Subversion или из директории конфигураций которая была предоставлена соответствующим 
+методом <code>createDefaultAuthenticationManager()</code>.
+</p>
+<br>
+<br>
+<p>Если у вас есть любые вопросы относительно SVNKit, хотите сообщите о баге или предоставить патч пожалуйста пишите 
+<a id="normal" href="mailto:support@svnkit.com">support@svnkit.com</a></p>
+<br>
+<table style="margin-top: 1em;" width="100%" cellpadding="0" cellspacing="0"><tr><td id="footer" align="left" valign="top">Copyright &copy; 
+2004-2007, TMate Software</td><td align="right" valign="top" id="footer">feedback is welcome at <a href="mailto:feedback%40svnkit.com">feedback@svnkit.com</a></td></tr>
+<tr><td colspan=2 id="footer2">Java&#153; and all Java-based marks are a trademark or registered trademark of Sun Microsystems, Inc, in the United States and other countries. 
+TMate Software and the website svnkit.com are independent of Sun Microsystems, Inc. and have no relationship, formal or informal.
+</td></tr>
+</table>
+</td>
+</tr>
+</tbody></table>
+</div>
+</div>
+</td>
+</tr>
+</tbody></table>
+</body></html>

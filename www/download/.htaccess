@@ -1,0 +1,11 @@
+AddHandler server-parsed .html
+AddType application/octet-stream .jar
+Action rss /download/rss.php
+Action rss2 /download/rss2.php
+
+<FilesMatch (rss.xml)>
+ForceType rss
+</FilesMatch>
+<FilesMatch (rss2.xml)>
+ForceType rss2
+</FilesMatch>

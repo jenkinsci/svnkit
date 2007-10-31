@@ -1,0 +1,206 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" >
+<head><title>SVNKit&nbsp;::&nbsp;Using&nbsp;SVNKit&nbsp;with&nbsp;Ant</title>
+<meta name="keywords" content="Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development">   
+<meta name="description" content="Pure Java Subversion Library. Open Source, provided by TMate Software">
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link rel="stylesheet" type="text/css" media="screen" href="../css/home.css">
+<link rel="shortcut icon" href="/img/favicon.ico"/>
+</head>
+
+<body>
+<table bgcolor="white" width="900" cellpadding="0" align="center" style="height: 100%;"  border="0" cellspacing="0" >
+<tr align="center" valign="top" >
+<td colspan="1" rowspan="1">
+
+<div class="leftedge" >
+<div class="rightedge">
+
+<table  cellpadding="0" align="center" width="870" border="0"  cellspacing="0">
+<tr align="center" valign="top">
+<td align="left" valign="top" style="padding: 3px 20px 20px 20px;">
+
+<table border="0" cellpadding="0" cellspacing="0" style="width: 100%;">
+<tr>
+<td rowspan="2" colspan="1" width="50%">
+<a style="border-bottom: 0px;" href="/"><img width="415" height="97" src="../img/svnkit_logo.jpg" border="0"></a>
+</td>
+<td rowspan="1" colspan="1" width="50%" style="font-style: italic; font-size: 17px; padding-left: 15px" align="left" valign="center">
+The only pure Java&#153; Subversion library in the world!
+</td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" align="left" valign="bottom" style="padding-right: 0px; padding-bottom: 12px; padding-left: 5px">
+<!--<span style="font-size: 140%; font-weight: bold;">Pure Java Subversion client library</span>-->
+<!--<hr color="#336699" style="padding-top: 20px" size="5"/>-->
+<table border="0" cellpadding="0" cellspacing="0" style="width: 100%;">
+<tr style="height: 10px;">
+
+<td valign="top" align="center" style="font: normal bold 17px/18px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="../index.html">Home</a>
+</td>
+
+<td valign="top" align="center" style="font: normal bold 17px/18px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="../download/index.php">Get Library</a>
+</td>
+
+<td valign="top" align="center" style="font: normal bold 17px/17px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="index.html">Knowledge Base</a> 
+</td>
+
+<td valign="top" align="center" style="font: normal bold 17px/18px trebuchet ms, verdana, tahoma, arial;">
+<a class="headitem" style="border-bottom: 0px;" href="../licensing/index.html">Licensing</a>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<h1>Using SVNKit with Ant</h1>
+<p>There are two ways of using SVNKit in Ant tasks. First way is using <b>svnant</b> - part of Subclipce project, how to do it
+you may read this <a href="user-guide-svnant.html">documentation page</a> for details. 
+Another way, that is described below, is using SVNKit command line interface.</p>
+<a name="sample-ant-tasks-that-uses-svnkit"></a><h4>Sample Ant tasks that uses SVNKit <i>(contributed by William Lovins)</i></h4>
+<p><b>Note:</b> There are areas where this library is very inefficient when working
+with large repositories which will be resolved in later versions.
+</p>
+<p><b>Note:</b> The easiest way to use this command is to treat the commands passed to
+the library the same way that you would the normal svn binary.
+There is no svn task at this time as there is in the <a href="http://subclipse.tigris.org/svnant.html">svnant
+library</a>. This too will be resolved in a later version.</p>
+<p>
+The main advantage to this library is that neither subversion nor any
+associated libraries need to be installed on the server.<br>
+Additionally, this documentation will be expanded and improved on later
+versions. This initial page is being made available for people who
+would like to either test this library or who would like to help
+improve it (e.g. - writing a proper &lt;svn&gt; task set or
+fixing bugs).</p>
+<h4>Parameters</h4>
+<p>Please see the svn documentation for assistance on what parameters the
+command accepts.
+A large subset of the command line arguments are available via the
+svnkit-cli.jar file, including lesser used switches such as "svn
+status -u".</p>
+<h4>Examples</h4>
+<b>Checking out files from a repository</b>
+<p>If you need to do an initial checkout, this target will checkout files
+from <code>http://sources.example.com/TESTING</code> to the local directory
+<code>/usr/src/TESTREPO</code>. The username and password arguments can be omitted if you have
+anonymous checkouts from your repository.</p>
+
+<pre style="color: rgb(0,0,128);" class="javaCode">
+  &lt;target name=<span class="javaCommentSingle">"svnCheckout"</span>&gt;
+    &lt;property name=<span class="javaCommentSingle">"source-root"</span> value=<span class="javaCommentSingle">"/usr/src"</span>/&gt;
+    &lt;property name=<span class="javaCommentSingle">"repository.URL"</span> value=<span class="javaCommentSingle">"http://sources.example.com"</span>/&gt;
+    &lt;java classname=<span class="javaCommentSingle">"org.tmatesoft.svn.cli.SVN"</span>
+       dir=<span class="javaCommentSingle">"${source-root}/TESTREPO"</span> fork=<span class="javaCommentSingle">"true"</span>&gt;
+      &lt;arg value=<span class="javaCommentSingle">"co"</span>/&gt;
+      &lt;arg value=<span class="javaCommentSingle">"--username"</span>/&gt;
+      &lt;arg value=<span class="javaCommentSingle">"admin"</span>/&gt;
+      &lt;arg value=<span class="javaCommentSingle">"--password"</span>/&gt;
+      &lt;arg value=<span class="javaCommentSingle">"admin"</span>/&gt;
+      &lt;arg value=<span class="javaCommentSingle">"${repository.URL}/TESTING"</span>/&gt;
+      &lt;classpath&gt;
+        &lt;pathelement location=<span class="javaCommentSingle">"${antroot}/LIB/ganymed.jar"</span> /&gt;
+        &lt;pathelement location=<span class="javaCommentSingle">"${antroot}/LIB/svnkit.jar"</span> /&gt;
+        &lt;pathelement location=<span class="javaCommentSingle">"${antroot}/LIB/svnkit-cli.jar"</span> /&gt;
+      &lt;/classpath&gt;
+    &lt;/java&gt;
+  &lt;/target&gt;
+</pre>
+Don't forget to put a <code>ganymed.jar</code> onto the classpath (if using an SSH tunnel).
+
+<p>
+<b>Checking out files from a repository via the svn+ssh:// protocol</b>
+<p>
+This is another example of checking out a working copy from a repository that uses 
+an svn+ssh:// protocol.</p>
+
+<pre style="color: rgb(0,0,128);" class="javaCode">
+  &lt;target name=<span class="javaCommentSingle">"svnCheckout"</span>&gt;
+    &lt;property name=<span class="javaCommentSingle">"source-root"</span> value=<span class="javaCommentSingle">"/tmp"</span> /&gt;
+    &lt;property name=<span class="javaCommentSingle">"repository.URL"</span> 
+              value=<span class="javaCommentSingle">"svn+ssh://my-svnserver/svn_rep/myproject"</span> /&gt;
+    &lt;java classname=<span class="javaCommentSingle">"org.tmatesoft.svn.cli.SVN"</span> 
+          dir=<span class="javaCommentSingle">"${source-root}/my_module"</span> 
+          fork=<span class="javaCommentSingle">"true"</span> 
+          failonerror=<span class="javaCommentSingle">"true"</span>&gt;
+      &lt;sysproperty key=<span class="javaCommentSingle">"svnkit.ssh2.key"</span> 
+                   value=<span class="javaCommentSingle">"/path/to/PuttyPrivateKey.openssh"</span> /&gt;
+      &lt;sysproperty key=<span class="javaCommentSingle">"svnkit.ssh2.username"</span> value=<span class="javaCommentSingle">"username"</span> /&gt;
+      &lt;sysproperty key=<span class="javaCommentSingle">"svnkit.ssh2.passphrase"</span> value=<span class="javaCommentSingle">"mypassword"</span> /&gt;
+      &lt;arg value=<span class="javaCommentSingle">"co"</span> /&gt;
+      &lt;arg value=<span class="javaCommentSingle">"${repository.URL}"</span> /&gt;
+        &lt;classpath&gt;
+          &lt;pathelement location=<span class="javaCommentSingle">"${! antroot}/ganymed.jar"</span> /&gt;
+          &lt;pathelement location=<span class="javaCommentSingle">"${antroot}/svnkit.jar"</span> /&gt;
+          &lt;pathelement location=<span class="javaCommentSingle">"${antroot}/svnkit-cli.jar"</span> /&gt;
+        &lt;/classpath&gt;
+    &lt;/java&gt;
+  &lt;/target&gt;
+</pre>
+<p>
+<b>Commiting files to a repository</b>
+
+<p>If you had an existing local copy of a repository that you want to
+check files into, you could use the following target to commit the
+files.
+The "-m" argument of "Testing" is set differently than the other
+arguments.
+Please use a single quote "&nbsp; '&nbsp;&nbsp; " to
+surround the
+double-quoted message, as shown in the example below.</p>
+
+<p>This example would commit all changed files from the local directory
+<code>/usr/src/TESTREPO</code> to the repository located at <code>http://sources.example.com/TESTING</code> 
+the same way that the command line
+version would.</p>
+<pre style="color: rgb(0,0,128);" class="javaCode">
+  &lt;target name=<span class="javaCommentSingle">"svnCommit"</span>&gt;
+    &lt;property name=<span class="javaCommentSingle">"source-root"</span> value=<span class="javaCommentSingle">"/usr/src"</span>/&gt;
+    &lt;property name=<span class="javaCommentSingle">"repository.URL"</span> value=<span class="javaCommentSingle">"http://sources.example.com"</span>/&gt;
+    &lt;java classname=<span class="javaCommentSingle">"org.tmatesoft.svn.cli.SVN"</span>
+      dir=<span class="javaCommentSingle">"${source-root}/TESTREPO"</span> fork=<span class="javaCommentSingle">"true"</span>&gt;
+      &lt;arg value=<span class="javaCommentSingle">"commit"</span>/&gt;
+      &lt;arg value=<span class="javaCommentSingle">"--username"</span>/&gt;
+      &lt;arg value=<span class="javaCommentSingle">"admin"</span>/&gt;
+      &lt;arg value=<span class="javaCommentSingle">"--password"</span>/&gt;
+      &lt;arg value=<span class="javaCommentSingle">"admin"</span>/&gt;
+      &lt;arg value=<span class="javaCommentSingle">"-m"</span>/&gt; 
+      &lt;arg value=<span class="javaCommentSingle">'"Testing"'</span>/&gt;
+      &lt;arg value=<span class="javaCommentSingle">"${repository.URL}/TESTING"</span>/&gt;
+      &lt;classpath&gt;
+        &lt;pathelement location=<span class="javaCommentSingle">"${antroot}/LIB/ganymed.jar"</span> /&gt;
+        &lt;pathelement location=<span class="javaCommentSingle">"${antroot}/LIB/svnkit.jar"</span> /&gt;
+        &lt;pathelement location=<span class="javaCommentSingle">"${antroot}/LIB/svnkit-cli.jar"</span> /&gt;
+      &lt;/classpath&gt;
+    &lt;/java&gt;
+  &lt;/target&gt;
+</pre>		              
+
+<br/>
+<br/>
+
+<p>If you have any questions regarding SVNKit, would like to report a bug or contribute a patch, please write to 
+<a id="normal" href="mailto:support@svnkit.com">support@svnkit.com</a></p>
+<br />
+<table style="margin-top: 1em;" width="100%" cellpadding="0" cellspacing="0"><tr><td id="footer" align="left" valign="top">Copyright &copy; 
+2004-2007, TMate Software</td><td align="right" valign="top" id="footer">feedback is welcome at <a href="mailto:feedback%40svnkit.com">feedback@svnkit.com</a></td></tr>
+<tr><td colspan=2 id="footer2">Java&#153; and all Java-based marks are a trademark or registered trademark of Sun Microsystems, Inc, in the United States and other countries. 
+TMate Software and the website svnkit.com are independent of Sun Microsystems, Inc. and have no relationship, formal or informal.
+</td></tr>
+</table>
+</td>
+</tr>
+</table>
+</div>
+</div>
+<!--</div>-->
+</td>
+</tr>
+</table>
+
+</body>
+</html>

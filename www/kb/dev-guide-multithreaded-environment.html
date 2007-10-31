@@ -1,0 +1,115 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" >
+<head><title>SVNKit&nbsp;::&nbsp;Using SVNKit in Multithreaded Environment</title>
+<meta name="keywords" content="Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development">   
+<meta name="description" content="Pure Java Subversion Library. Open Source, provided by TMate Software">
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link rel="stylesheet" type="text/css" media="screen" href="../css/home.css">
+<link rel="shortcut icon" href="/img/favicon.ico"/>
+</head>
+<body>
+<table bgcolor="white" width="900" cellpadding="0" align="center" style="height: 100%;"  border="0" cellspacing="0" >
+<tr align="center" valign="top" >
+<td colspan="1" rowspan="1">
+
+<div class="leftedge" >
+<div class="rightedge">
+
+<table  cellpadding="0" align="center" width="870" style="height: 900px" border="0"  cellspacing="0">
+<tr align="center" valign="top">
+<td align="left" valign="top" style="padding: 3px 20px 20px 20px;">
+
+<table border="0" cellpadding="0" cellspacing="0" style="width: 100%;">
+<tr>
+<td rowspan="2" colspan="1" width="50%">
+<a style="border-bottom: 0px;" href="/"><img width="415" height="97" src="../img/svnkit_logo.jpg" border="0"></a>
+</td>
+<td rowspan="1" colspan="1" width="50%" style="font-style: italic; font-size: 17px; padding-left: 15px" align="left" valign="center">
+The only pure Java&#153; Subversion library in the world!
+</td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" align="left" valign="bottom" style="padding-right: 0px; padding-bottom: 12px; padding-left: 5px">
+<table border="0" cellpadding="0" cellspacing="0" style="width: 100%;">
+<tr style="height: 10px;">
+
+<td valign="top" align="center" style="font: normal bold 17px/18px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="../index.html">Home</a>
+</td>
+
+<td valign="top" align="center" style="font: normal bold 17px/18px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="../download/index.php">Get Library</a>
+</td>
+
+<td valign="top" align="center" style="font: normal bold 17px/17px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="index.html">Knowledge Base</a> 
+</td>
+
+<td valign="top" align="center" style="font: normal bold 17px/18px trebuchet ms, verdana, tahoma, arial;">
+<a class="headitem" style="border-bottom: 0px;" href="../licensing/index.html">Licensing</a>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<h1>Using SVNKit in Multithreaded Environment</h1>
+<p>
+When using SVNKit in multithreaded applications one can have questions like these:
+</p>
+<p>
+<b>Q: Can I use one SVNRepository object in multiple threads? Is SVNRepository thread-safe?</b>
+</p>
+<p>
+<b>A:</b> No, you'd better not use one <code>SVNRepository</code> object in multiple threads. It may appear not thread
+safe. So, for every thread you have to instantiate a separate <code>SVNRepository</code> driver.
+</p>
+<p>
+Another thing you should be aware about <code>SVNRepository</code> is that you can not call its methods
+from within those handlers that are provided to its methods (like those <code>ISVNDirEntryHandler</code>, 
+<code>ISVNReposrterBaton</code>, etc.), since the repository 
+access methods of <code>SVNRepository</code> are not reenterable, i.e. if 
+an operation has been started, it must be already finished  before invoking the next operation.
+</p>
+<p>
+The same is for committing (<code>getCommitEditor()</code>): you must not make calls to your <code>SVNRepository</code> until you
+finish editing with calling an editor's <code>closeEdit()</code> method.
+</p>
+<br />
+<p>
+<b>Q: Can I use one SVN*Client object in multiple threads? Are SVN*Client objects thread-safe?</b>
+</p>
+<p>
+<b>A:</b> The answer is still no. <code>SVN*Client</code> objects use different handlers for processing events/data (such as 
+<code>ISVNEventHandler</code>, <code>ISVNCommitHandler</code>, etc.). For example, in one thread an <code>SVN*Client</code> object
+may be dispatching an event to the registered event handler in the same time as another thread tries to set a new event handler
+to that same <code>SVN*Client</code> object. What will be in result is unpredictable, it may cause your program to crash.
+</p>
+<p>
+Another advice (well, it seems to be even more than advice:)) of using <code>SVN*Client</code> objects synchronously comes
+from the format of a Working Copy itself: during writing operations a Working Copy is locked for a period
+until the operation finishes. All other write access operations will be denied until the Working Copy is unlocked.
+</p>
+
+<br />
+<br />
+<p>If you have any questions regarding SVNKit, would like to report a bug or contribute a patch, please write to 
+<a id="normal" href="mailto:support@svnkit.com">support@svnkit.com</a></p>
+<br />
+<table style="margin-top: 1em;" width="100%" cellpadding="0" cellspacing="0"><tr><td id="footer" align="left" valign="top">Copyright &copy; 
+2004-2007, TMate Software</td><td align="right" valign="top" id="footer">feedback is welcome at <a href="mailto:feedback%40svnkit.com">feedback@svnkit.com</a></td></tr>
+<tr><td colspan=2 id="footer2">Java&#153; and all Java-based marks are a trademark or registered trademark of Sun Microsystems, Inc, in the United States and other countries. 
+TMate Software and the website svnkit.com are independent of Sun Microsystems, Inc. and have no relationship, formal or informal.
+</td></tr>
+</table>
+</td>
+</tr>
+</table>
+</div>
+</div>
+</td>
+</tr>
+</table>
+</body>
+</html>

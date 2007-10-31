@@ -1,0 +1,27 @@
+authz ALL
+autoprop ALL
+basic ALL
+blame ALL
+cat ALL
+commit ALL
+copy ALL
+diff ALL
+export ALL
+externals ALL 
+history ALL
+import ALL
+lock ALL
+log ALL -11
+merge ALL -4
+prop ALL
+revert ALL
+schedule ALL
+special ALL
+stat ALL
+switch ALL
+trans ALL
+update ALL
+svnsync ALL
+svnadmin ALL -8 -9
+svnlook ALL
+svnversion ALL

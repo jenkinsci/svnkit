@@ -1,0 +1,221 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" >
+<head><title>SVNKit&nbsp;::&nbsp;How&nbsp;to&nbsp;obtain&nbsp;debug&nbsp;logs&nbsp;of&nbsp;SVNKit&nbsp;operations</title>
+<meta name="keywords" content="Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development">   
+<meta name="description" content="Pure Java Subversion Library. Open Source, provided by TMate Software">
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link rel="stylesheet" type="text/css" media="screen" href="../css/home.css">
+<link rel="shortcut icon" href="/img/favicon.ico"/>
+</head>
+<body>
+<table bgcolor="white" width="900" cellpadding="0" align="center" style="height: 100%;"  border="0" cellspacing="0" >
+<tr align="center" valign="top" >
+<td colspan="1" rowspan="1">
+
+<div class="leftedge" >
+<div class="rightedge">
+<!--<div style="width: 900px; background: url(bottombg.gif) repeat-x bottom; width: 99.5%;" >-->
+
+<table  cellpadding="0" align="center" width="870" border="0"  cellspacing="0">
+<tr align="center" valign="top">
+<td align="left" valign="top" style="padding: 20px 20px 20px 20px;">
+
+<p>
+<span class="svnkit"><a style="border-bottom: 0px; color: rgb(51, 102, 153);" href="/">SVNKit</a>&nbsp;</span><span style="font-size: 140%; font-weight: bold;">The only pure Java Subversion client library in the world!</span>
+</p>
+<p><div style="border-bottom: 1px solid #ccc;"></div></p>
+<!--<small><a href="../index.html" style="border-bottom: 0px;">Home</a> :: <a href="index.html" style="border-bottom: 0px;">Knowledge Base</a> :: How to obtain debug logs of SVNKit operations</small>-->
+
+<table border=0 cellpadding="0" cellspacing="0" style="width: 100%; margin-top: 0.7em">
+<tr style="height: 10px;">
+
+<td width="60%" valign="top" align="center">
+</td>
+
+<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="../index.html">Home</a>
+</td>
+
+<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="../download/index.php">Get Library</a>
+</td>
+
+<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="index.html">Knowledge Base</a> 
+</td>
+
+<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial;">
+<a class="headitem" style="border-bottom: 0px;" href="../licensing/index.html">Licensing</a>
+</td>
+</tr>
+</table>
+
+<!--
+<table border=0 cellpadding="0" cellspacing="0" style="width: 100%;">
+<tr>
+<td>
+<a style="border-bottom: 0px;" href="/"><img src="../img/svnkit_logo.jpg" border=0 align=bottom></a>
+</td>
+
+<td align="right">
+<span style="font-size: 140%; font-weight: bold;">The only pure Java Subversion client library in the world!</span>
+
+<table border=0 cellpadding="0" cellspacing="0" style="width: 100%; margin-top: 0.7em">
+<tr style="height: 10px;">
+
+<td width="40%" valign="top" align="center">
+</td>
+
+<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="../index.html">Home</a>
+</td>
+
+<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="../download/index.php">Get Library</a>
+</td>
+
+<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="index.html">Knowledge Base</a> 
+</td>
+
+<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial;">
+<a class="headitem" style="border-bottom: 0px;" href="../licensing/index.html">Licensing</a>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+-->
+
+<h1>Logging SVNKit operations</h1>
+<p>If you experience problems that you think are SVNKit related, it is always a 
+good idea to post a bug report into SVNKit <a href="http://svnkit.com/tracker/">Issue Tracker</a>. To provide
+more information with the bug report, please consider attaching SVNKit log file to it. 
+Below you will find detailed instructions on how to get SVNKit log file.
+</p>
+<h4>SVNKit is used as Eclipse plugin (works for Subclipse Extension as well)</h4>
+<p>When used within Eclipse SVNKit logs its operation using Eclipse built-in logging facilities.
+Logging is turned off by default. To enable SVNKit logging please do the following:
+</p>
+<ul>
+<li>Copy <code>ECLIPSE_HOME/plugins/org.tmatesoft.svnkit_version/.options</code> file to <code>ECLIPSE_HOME</code> directory</li>
+<li>Start Eclipse with -debug command line argument:<br/><pre>$eclipse -debug</pre></li>
+<li>In Eclipse, open standard 'Error Log' view - it will contain detailed log of SVNKit
+operations that you may export to a file.</li>
+</ul>
+<p><b>Note:</b> OS X users may find it useful to read this <a href="http://www.luisdelarosa.com/blog/2004/10/how_to_run_ecli.html">article</a>. It describes how to start Eclipse in "-debug" mode.</p>
+
+<h4>SVNKit is used as library in standalone application</h4>
+<p>By default SVNKit operations logging is switched off. To enable it,
+you should replace the contents of the <code>JAVA_HOME/jre/lib/logging.properties</code> file
+with the contents of the <code>logging.properties.disabled</code> file
+that you can find in your "standalone" archive or in the <code>svnkit/cli/</code> directory
+in case you've checked out the SVNKit sources. Or when launching the Java VM
+you can use the following system property:
+<pre>
+$java -Djava.util.logging.config.file=path/to/logging.properties.disabled
+</pre>
+</p>
+
+<p>
+The <code>logging.properties.disabled</code> 
+file contains a system property <code>svnkit.level</code> used to control the log level. Up to your needs
+you can specify the following values for that property:
+<ul>
+<li><code>FINE</code>(default) - the level for not detailed logging
+<li><code>FINER</code> - the level for more detailed logging
+<li><code>FINEST</code> - the level for full logging
+</ul>
+</p>
+
+<p>
+You may find a SVNKit log file at <code>USER_HOME/.svnkit/.svnkit.0.0.log</code>.
+</p>
+
+<h4>Setting up your own logger</h4>
+<p>When you're using SVNKit in your application it is not always an option to let
+SVNKit use JDK logging API. Instead you may like to have a fine-grained control over
+the way SVNKit logs its operations. The solution is to provide SVNKit with custom logger
+class that should extend <code>SVNDebugLoggerAdapter</code> class. The code below demonstrates
+how it could be done.
+</p> 
+<pre class="javaCode">
+....
+<span class="javaKeyword">import</span> org.tmatesoft.svn.util.<code>DebugLog</code>;
+<span class="javaKeyword">import</span> org.tmatesoft.svn.util.<code>SVNDebugLoggerAdapter</code>;
+....
+    <span class="javaKeyword">public static void</span> initSVNKitLogger() {
+        DebugLog.setLogger(<span class="javaKeyword">new</span> CustomSVNKitLogger());
+    }
+
+    <span class="javaKeyword">private static class</span> CustomSVNKitLogger 
+                                   <span class="javaKeyword">extends</span> <code>SVNDebugLoggerAdapter</code> {
+    	<span class="javaCommentMulti">/* Override superclass methods to redirect logging
+    	 * as you wish. Superclass implementaion is empty, i.e.
+    	 * all log messages are swallowed.
+    	 */</span>
+         
+         
+         <span class="javaKeyword">public void</span> log(String message, <span class="javaKeyword">byte</span>[] data) {
+             <span class="javaCommentMulti">/*
+              * Used to log all data received or transmitted 
+              * over network
+              */</span>
+             ...
+         }
+         
+         <span class="javaKeyword">public void</span> logInfo(String message) {
+             <span class="javaCommentMulti">/*
+              * Used to log information messages
+              */</span>
+             ...
+         }
+
+         <span class="javaKeyword">public void</span> logError(String message) {
+             <span class="javaCommentMulti">/*
+              * Used to log error messages
+              */</span>
+             ... 
+         }
+
+         <span class="javaKeyword">public void</span> logInfo(Throwable th) {
+             <span class="javaCommentMulti">/*
+              * Used to log information on exceptions
+              */</span>
+             ...
+         }
+
+         <span class="javaKeyword">public void</span> logError(Throwable th) {
+             <span class="javaCommentMulti">/*
+              * Used to log exceptions
+              */</span>
+             ...
+         }
+    }
+....
+</pre>
+<p><b>Note</b>: One have to set up the custom logger before any other calls are made to
+SVNKit, otherwise default logging will be used.</p>
+<br>
+<br>
+<p>If you have any questions regarding SVNKit, would like to report a bug or contribute a patch, please write to 
+<a id="normal" href="mailto:support@svnkit.com">support@svnkit.com</a></p>
+<br />
+<table style="margin-top: 1em;" width="100%" cellpadding="0" cellspacing="0"><tr><td id="footer" align="left" valign="top">Copyright &copy; 
+2004-2007, TMate Software</td><td align="right" valign="top" id="footer">feedback is welcome at <a href="mailto:feedback%40svnkit.com">feedback@svnkit.com</a></td></tr>
+<tr><td colspan=2 id="footer2">Java&#153; and all Java-based marks are a trademark or registered trademark of Sun Microsystems, Inc, in the United States and other countries. 
+TMate Software and the website svnkit.com are independent of Sun Microsystems, Inc. and have no relationship, formal or informal.
+</td></tr>
+</table>
+</td>
+</tr>
+</table>
+</div>
+</div>
+<!--</div>-->
+</td>
+</tr>
+</table>
+</body>
+</html>

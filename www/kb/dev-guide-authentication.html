@@ -1,0 +1,169 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" >
+<head><title>SVNKit&nbsp;::&nbsp;Authentication</title>
+<meta name="keywords" content="Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development">   
+<meta name="description" content="Pure Java Subversion Library. Open Source, provided by TMate Software">
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link rel="stylesheet" type="text/css" media="screen" href="../css/home.css">
+<link rel="shortcut icon" href="/img/favicon.ico"/>
+</head>
+<body>
+<table bgcolor="white" width="900" cellpadding="0" align="center" style="height: 100%;"  border="0" cellspacing="0" >
+<tr align="center" valign="top" >
+<td colspan="1" rowspan="1">
+
+<div class="leftedge" >
+<div class="rightedge">
+
+<table  cellpadding="0" align="center" width="870" style="height: 1000px" border="0"  cellspacing="0">
+<tr align="center" valign="top">
+<td align="left" valign="top" style="padding: 3px 20px 20px 20px;">
+
+<table border="0" cellpadding="0" cellspacing="0" style="width: 100%;">
+<tr>
+<td rowspan="2" colspan="1" width="50%">
+<a style="border-bottom: 0px;" href="/"><img width="415" height="97" src="../img/svnkit_logo.jpg" border="0"></a>
+</td>
+<td rowspan="1" colspan="1" width="50%" style="font-style: italic; font-size: 17px; padding-left: 15px" align="left" valign="center">
+The only pure Java&#153; Subversion library in the world!
+</td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" align="left" valign="bottom" style="padding-right: 0px; padding-bottom: 12px; padding-left: 5px">
+<!--<span style="font-size: 140%; font-weight: bold;">Pure Java Subversion client library</span>-->
+<!--<hr color="#336699" style="padding-top: 20px" size="5"/>-->
+<table border="0" cellpadding="0" cellspacing="0" style="width: 100%;">
+<tr style="height: 10px;">
+
+<td valign="top" align="center" style="font: normal bold 17px/18px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="../index.html">Home</a>
+</td>
+
+<td valign="top" align="center" style="font: normal bold 17px/18px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="../download/index.php">Get Library</a>
+</td>
+
+<td valign="top" align="center" style="font: normal bold 17px/17px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="index.html">Knowledge Base</a> 
+</td>
+
+<td valign="top" align="center" style="font: normal bold 17px/18px trebuchet ms, verdana, tahoma, arial;">
+<a class="headitem" style="border-bottom: 0px;" href="../licensing/index.html">Licensing</a>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<h1>Authentication</h1>
+<p>
+To provide user's authentication information to a repository server 
+<code>SVNRepository</code> drivers use the <code>ISVNAuthenticationManager</code> (<b>org.tmatesoft.svn.core.auth</b>)
+interface. 
+</p>
+<p>
+When directly using an <code>SVNRepository</code> object you should
+provide an authentication manager in the following way:
+<pre class="javaCode">
+...
+<span class="javaKeyword">import</span> org.tmatesoft.svn.core.io.SVNRepository;
+<span class="javaKeyword">import</span> org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+...
+
+    SVNRepository repository;
+    ISVNAuthenticationManager authManager;
+    ...
+    
+    repository.setAuthenticationManager(authManager);
+</pre>
+</p>
+<p>
+If managing Working Copies (i.e. using <code>SVN*Client</code> classes):
+<pre class="javaCode">
+...
+<span class="javaKeyword">import</span> org.tmatesoft.svn.core.wc.SVNUpdateClient;
+<span class="javaKeyword">import</span> org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+<span class="javaKeyword">import</span> org.tmatesoft.svn.core.wc.ISVNOptions;
+...
+    
+    ISVNAuthenticationManager authManager;
+    ISVNOptions options;
+    ...    
+    SVNUpdateClient updateClient = <span class="javaKeyword">new</span> SVNUpdateClient(authManager, options);
+</pre>
+or if using a single <code>SVNClientManager</code>:
+<pre class="javaCode">
+...
+<span class="javaKeyword">import</span> org.tmatesoft.svn.core.wc.SVNClientManager;
+...
+    SVNClientManager manager = 
+                     SVNClientManager.newInstance(options, authManager); 
+</pre>
+</p>
+<p>You may implement your own authentication manager and thus make SVNKit
+use it during runtime.
+</p>
+<h4>ISVNAuthenticationProvider and ISVNAuthenticationStorage</h4>
+<p>
+As a matter of fact, for providing client's credentials and accepting server's 
+authentication certificates <code>ISVNAuthenticationManager</code> may use the
+<code>ISVNAuthenticationProvider</code> interface. To make an authentication
+manager use your auth provider implementation simply pass it to the manager like this:
+<pre class="javaCode">
+<span class="javaKeyword">import</span> org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
+
+    ISVNAuthenticationProvider yourAuthProvider;
+    ISVNAuthenticationManager authManager;
+    ...
+
+    authManager.setAuthenticationProvider(yourAuthProvider);
+</pre>
+</p>
+<p>
+Also <code>ISVNAuthenticationManager</code> may be configured with a run-time authentication
+storage that can be used for credentials caching during runtime:
+<pre class="javaCode">
+<span class="javaKeyword">import</span> org.tmatesoft.svn.core.auth.ISVNAuthenticationStorage;
+
+    ISVNAuthenticationStorage yourAuthStorage;
+    ISVNAuthenticationManager authManager;
+    ...
+
+    authManager.setAuthenticationProvider(yourAuthStorage);
+</pre>
+
+</p>
+<h4>Using a default implementation</h4>
+<p>
+To get a default implementation of <code>ISVNAuthenticationManager</code> you should 
+use <code>createDefaultAuthenticationManager()</code> methods of the <code>SVNWCUtil</code>
+class (<b>org.tmatesoft.svn.core.wc</b>). Read the <a href="/kb/javadoc/org/tmatesoft/svn/core/wc/SVNWCUtil.html">javadoc</a> 
+for this class.
+</p>
+<p>
+In addition to an authentication provider the default implementation - <code>DefaultSVNAuthenticationManager</code> (<b>org.tmatesoft.svn.core.internal.wc</b>) - 
+also uses settings and credentials cache from either the default Subversion run-time configuration directory or
+from the config directory that was provided to an appropriate <code>createDefaultAuthenticationManager()</code> method. 
+</p>
+<br />
+<br />
+<p>If you have any questions regarding SVNKit, would like to report a bug or contribute a patch, please write to 
+<a id="normal" href="mailto:support@svnkit.com">support@svnkit.com</a></p>
+<br />
+<table style="margin-top: 1em;" width="100%" cellpadding="0" cellspacing="0"><tr><td id="footer" align="left" valign="top">Copyright &copy; 
+2004-2007, TMate Software</td><td align="right" valign="top" id="footer">feedback is welcome at <a href="mailto:feedback%40svnkit.com">feedback@svnkit.com</a></td></tr>
+<tr><td colspan=2 id="footer2">Java&#153; and all Java-based marks are a trademark or registered trademark of Sun Microsystems, Inc, in the United States and other countries. 
+TMate Software and the website svnkit.com are independent of Sun Microsystems, Inc. and have no relationship, formal or informal.
+</td></tr>
+</table>
+</td>
+</tr>
+</table>
+</div>
+</div>
+</td>
+</tr>
+</table>
+</body>
+</html>

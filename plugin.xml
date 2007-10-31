@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.0"?>
+<plugin
+   id="org.tmatesoft.svnkit"
+   name="SVNKit Library Plug-in"
+   version="1.1.4"
+   provider-name="TMate Software"
+   class="org.tmatesoft.svn.core.SVNKitPlugin">
+
+   <runtime>
+      <library name="svnkit.jar">
+         <export name="*"/>
+      </library>
+      <library name="contrib/ganymed/ganymed.jar"/>
+      <library name="contrib/junit/junit.jar"/>
+   </runtime>
+   <requires>
+      <import plugin="org.eclipse.core.runtime"/>
+   </requires>
+
+</plugin>
