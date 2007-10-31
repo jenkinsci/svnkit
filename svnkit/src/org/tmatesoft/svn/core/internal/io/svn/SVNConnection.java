@@ -88,7 +88,7 @@ class SVNConnection {
     }
 
     protected void handshake(SVNRepositoryImpl repository) throws SVNException {
-        List items = read("nnll", (List) null, true);
+        List items = read("nnll", null, true);
         Long minVer = (Long) items.get(0);
         Long maxVer = (Long) items.get(1);
         if (minVer.longValue() > 2) {
@@ -96,21 +96,21 @@ class SVNConnection {
         } else if (maxVer.longValue() < 2) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_BAD_VERSION, "Server requires maximum version {0,number,integer}", maxVer));
         }
-        if (!SVNReader2.hasValue(items, 3, EDIT_PIPELINE)) {
+        if (!SVNReader.hasValue(items, 3, EDIT_PIPELINE)) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_BAD_VERSION, "Only servers with 'edit-pipeline' capability is supported"));
         }
-        myIsSVNDiff1 = SVNReader2.hasValue(items, 3, SVNDIFF1);
-        myIsCommitRevprops = SVNReader2.hasValue(items, 3, COMMIT_REVPROPS);
-        myIsMergeInfo = SVNReader2.hasValue(items, 3, MERGE_INFO);
+        myIsSVNDiff1 = SVNReader.hasValue(items, 3, SVNDIFF1);
+        myIsCommitRevprops = SVNReader.hasValue(items, 3, COMMIT_REVPROPS);
+        myIsMergeInfo = SVNReader.hasValue(items, 3, MERGE_INFO);
         write("(n(www)s)", new Object[]{"2", EDIT_PIPELINE, SVNDIFF1, ABSENT_ENTRIES,
                 repository.getLocation().toString()});
     }
 
     public void authenticate(SVNRepositoryImpl repository) throws SVNException {
         SVNErrorMessage failureReason = null;
-        List items = read("lc", (List) null, true);
-        List mechs = SVNReader2.getList(items, 0);
-        myRealm = SVNReader2.getString(items, 1);
+        List items = read("lc", null, true);
+        List mechs = SVNReader.getList(items, 0);
+        myRealm = SVNReader.getString(items, 1);
         if (mechs == null || mechs.size() == 0) {
             receiveRepositoryCredentials(repository);
             return;
@@ -150,17 +150,17 @@ class SVNConnection {
                 while (true) {
                     authenticator.setUserCredentials(auth);
                     items = readTuple("w(?c)", true);
-                    String status = SVNReader2.getString(items, 0);
+                    String status = SVNReader.getString(items, 0);
                     if (SUCCESS.equals(status)) {
                         authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.PASSWORD, realm, null, auth);
                         receiveRepositoryCredentials(repository);
                         return;
                     } else if (FAILURE.equals(status)) {
-                        failureReason = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication error from server: {0}", SVNReader2.getString(items, 1));
+                        failureReason = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication error from server: {0}", SVNReader.getString(items, 1));
                         break;
                     } else if (STEP.equals(status)) {
                         try {
-                            byte[] response = authenticator.buildChallengeResponse(SVNReader2.getBytes(items, 1));
+                            byte[] response = authenticator.buildChallengeResponse(SVNReader.getBytes(items, 1));
                             getOutputStream().write(response);
                             getOutputStream().flush();
                         } catch (IOException e) {
@@ -183,31 +183,31 @@ class SVNConnection {
         if (myIsCredentialsReceived) {
             return;
         }
-        List creds = read("c?c", (List) null, true);
+        List creds = read("c?c", null, true);
         myIsCredentialsReceived = true;
         if (creds != null && creds.size() == 2 && creds.get(0) != null && creds.get(1) != null) {
-            SVNURL rootURL = creds.get(1) != null ? SVNURL.parseURIEncoded(SVNReader2.getString(creds, 1)) : null;
+            SVNURL rootURL = creds.get(1) != null ? SVNURL.parseURIEncoded(SVNReader.getString(creds, 1)) : null;
             if (rootURL != null && rootURL.toString().length() > repository.getLocation().toString().length()) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Impossibly long repository root from server"));
             }
             if (repository != null && repository.getRepositoryRoot(false) == null) {
-                repository.updateCredentials(SVNReader2.getString(creds, 0), rootURL);
+                repository.updateCredentials(SVNReader.getString(creds, 0), rootURL);
             }
             if (myRealm == null) {
-                myRealm = SVNReader2.getString(creds, 0);
+                myRealm = SVNReader.getString(creds, 0);
             }
             if (myRoot == null) {
-                myRoot = SVNReader2.getString(creds, 1);
+                myRoot = SVNReader.getString(creds, 1);
             }
         }
     }
 
     private SVNErrorMessage readAuthResponse() throws SVNException {
         List items = readTuple("w(?c)", true);
-        if (SUCCESS.equals(SVNReader2.getString(items, 0))) {
+        if (SUCCESS.equals(SVNReader.getString(items, 0))) {
             return null;
-        } else if (FAILURE.equals(SVNReader2.getString(items, 0))) {
-            return SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication error from server: {0}", SVNReader2.getString(items, 1));
+        } else if (FAILURE.equals(SVNReader.getString(items, 0))) {
+            return SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication error from server: {0}", SVNReader.getString(items, 1));
         }
         return SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Unexpected server response to authentication");
     }
@@ -218,8 +218,8 @@ class SVNConnection {
         myOutputStream = null;
         myConnector.close(myRepository);
     }
-    
-    public Object[] read(String template, Object[] items, boolean readMalformedData) throws SVNException {
+
+    public List read(String template, List items, boolean readMalformedData) throws SVNException {
         try {
             checkConnection();
             return SVNReader.parse(getInputStream(), template, items);
@@ -231,22 +231,10 @@ class SVNConnection {
         }
     }
 
-    public List read(String template, List items, boolean readMalformedData) throws SVNException {
-        try {
-            checkConnection();
-            return SVNReader2.parse(getInputStream(), template, items);
-        } catch (SVNException e) {
-            handleIOError(e, readMalformedData);
-            return null;
-        } finally {
-            myRepository.getDebugLog().flushStream(myLoggingInputStream);
-        }
-    }
-
     public List readTuple(String template, boolean readMalformedData) throws SVNException {
         try {
             checkConnection();
-            return SVNReader2.readTuple(getInputStream(), template);
+            return SVNReader.readTuple(getInputStream(), template);
         } catch (SVNException e) {
             handleIOError(e, readMalformedData);
             return null;
@@ -258,7 +246,7 @@ class SVNConnection {
     public SVNItem readItem(boolean readMalformedData) throws SVNException {
         try {
             checkConnection();
-            return SVNReader2.readItem(getInputStream());
+            return SVNReader.readItem(getInputStream());
         } catch (SVNException e) {
             handleIOError(e, readMalformedData);
             return null;
@@ -273,6 +261,7 @@ class SVNConnection {
                 try {
                     getInputStream().read(malfored);
                 } catch (IOException e1) {
+                    //
                 }
             }
             throw e;        
@@ -325,7 +314,6 @@ class SVNConnection {
             try {
                 myInputStream = myRepository.getDebugLog().createLogStream(new BufferedInputStream(myConnector.getInputStream()));
                 myLoggingInputStream = myInputStream;
-//                myInputStream = new SVNRollbackInputStream(myInputStream, 1024);
             } catch (IOException e) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getMessage()), e);
             }

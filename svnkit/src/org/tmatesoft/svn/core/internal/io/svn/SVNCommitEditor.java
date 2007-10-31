@@ -201,10 +201,10 @@ class SVNCommitEditor implements ISVNEditor {
             myRepository.authenticate();
 
             List items = myConnection.readTuple("r(?c)(?c)?(?c)", true);
-            long revision = SVNReader2.getLong(items, 0);
-            Date date = SVNReader2.getDate(items, 1);
-            String author = SVNReader2.getString(items, 2);
-            String errorMessage = SVNReader2.getString(items, 3);
+            long revision = SVNReader.getLong(items, 0);
+            Date date = SVNReader.getDate(items, 1);
+            String author = SVNReader.getString(items, 2);
+            String errorMessage = SVNReader.getString(items, 3);
             SVNErrorMessage err = errorMessage == null || errorMessage.length() == 0 ? null : SVNErrorMessage.create(SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED, errorMessage, SVNErrorMessage.TYPE_WARNING);            
 		    return new SVNCommitInfo(revision, author, date, err);
 	    } catch (SVNException exception) {

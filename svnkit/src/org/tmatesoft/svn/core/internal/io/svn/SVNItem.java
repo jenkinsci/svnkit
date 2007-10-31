@@ -119,21 +119,12 @@ public class SVNItem {
             return false;
         } else if (o instanceof Long) {
             long value = ((Long) o).longValue();
-            if (myKind == NUMBER) {
-                return myNumber == value;
-            }
-            return false;
+            return myKind == NUMBER && myNumber == value;
         } else if (o instanceof Integer) {
             long value = ((Integer) o).longValue();
-            if (myKind == NUMBER) {
-                return myNumber == value;
-            }
-            return false;
+            return myKind == NUMBER && myNumber == value;
         } else if (o instanceof Collection) {
-            if (myKind == LIST) {
-                return myItems.equals(o);
-            }
-            return false;
+            return myKind == LIST && myItems.equals(o);
         }
         return super.equals(o);
     }

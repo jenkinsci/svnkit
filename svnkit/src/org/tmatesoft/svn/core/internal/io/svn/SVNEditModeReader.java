@@ -12,7 +12,6 @@
 
 package org.tmatesoft.svn.core.internal.io.svn;
 
-import java.io.InputStream;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -22,8 +21,8 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaReader;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 
 /**
@@ -36,24 +35,24 @@ public class SVNEditModeReader {
 
     static {
         COMMANDS_MAP.put("target-rev", "r");
-        COMMANDS_MAP.put("open-root", "(?r)c");
-        COMMANDS_MAP.put("delete-entry", "c(?r)c");
-        COMMANDS_MAP.put("add-dir", "ccc(?cr)");
-        COMMANDS_MAP.put("open-dir", "ccc(?r)");
-        COMMANDS_MAP.put("change-dir-prop", "cc(?s)");
-        COMMANDS_MAP.put("close-dir", "c");
-        COMMANDS_MAP.put("add-file", "ccc(?cr)");
-        COMMANDS_MAP.put("open-file", "ccc(?r)");
-        COMMANDS_MAP.put("apply-textdelta", "c(?c)");
-        COMMANDS_MAP.put("textdelta-chunk", "cs");
-        COMMANDS_MAP.put("textdelta-end", "c");
-        COMMANDS_MAP.put("change-file-prop", "cc(?s)");
-        COMMANDS_MAP.put("close-file", "c(?c)");
+        COMMANDS_MAP.put("open-root", "(?r)s");
+        COMMANDS_MAP.put("delete-entry", "s(?r)s");
+        COMMANDS_MAP.put("add-dir", "sss(?sr)");
+        COMMANDS_MAP.put("open-dir", "sss(?r)");
+        COMMANDS_MAP.put("change-dir-prop", "ss(?s)");
+        COMMANDS_MAP.put("close-dir", "s");
+        COMMANDS_MAP.put("add-file", "sss(?sr)");
+        COMMANDS_MAP.put("open-file", "sss(?r)");
+        COMMANDS_MAP.put("apply-textdelta", "s(?c)");
+        COMMANDS_MAP.put("textdelta-chunk", "sc");
+        COMMANDS_MAP.put("textdelta-end", "s");
+        COMMANDS_MAP.put("change-file-prop", "ss(?s)");
+        COMMANDS_MAP.put("close-file", "s(?c)");
         COMMANDS_MAP.put("close-edit", "()");
         COMMANDS_MAP.put("abort-edit", "()");
         COMMANDS_MAP.put("finish-replay", "()");
-        COMMANDS_MAP.put("absent-dir", "cc");
-        COMMANDS_MAP.put("absent-file", "cc");
+        COMMANDS_MAP.put("absent-dir", "ss");
+        COMMANDS_MAP.put("absent-file", "ss");
     }
 
     private SVNConnection myConnection;
@@ -65,9 +64,6 @@ public class SVNEditModeReader {
     private boolean myAborted;
     private Map myTokens;
 
-    public SVNEditModeReader() {
-    }
-
     public SVNEditModeReader(SVNConnection connection, ISVNEditor editor) {
         myConnection = connection;
         myEditor = editor;
@@ -75,71 +71,6 @@ public class SVNEditModeReader {
         myDone = false;
         myAborted = false;
         myTokens = new HashMap();
-    }
-
-    public void setEditor(ISVNEditor editor) {
-        myEditor = editor;
-        myDeltaReader = new SVNDeltaReader();
-    }
-
-
-    public boolean processCommand(String commandName, InputStream parameters) throws SVNException {
-        String pattern = (String) COMMANDS_MAP.get(commandName);
-        if (pattern == null) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_UNKNOWN_CMD));
-        }
-        if ("textdelta-chunk".equals(commandName)) {
-            Object[] items = SVNReader.parse(parameters, "(SB))", null);
-            byte[] bytes = (byte[]) items[1];
-            myDeltaReader.nextWindow(bytes, 0, bytes.length, myFilePath, myEditor);
-            return true;
-        }
-
-        boolean last = "close-edit".equals(commandName) || "abort-edit".equals(commandName) || "finish-replay".equals(commandName);
-        Object[] items = SVNReader.parse(parameters, pattern, new Object[10]);
-        if ("target-rev".equals(commandName)) {
-            myEditor.targetRevision(SVNReader.getLong(items, 0));
-        } else if ("open-root".equals(commandName)) {
-            myEditor.openRoot(SVNReader.getLong(items, 0));
-        } else if ("delete-entry".equals(commandName)) {
-            myEditor
-                    .deleteEntry((String) items[0], SVNReader.getLong(items, 1));
-        } else if ("add-dir".equals(commandName)) {
-            myEditor.addDir((String) items[0], (String) items[3], SVNReader
-                    .getLong(items, 4));
-        } else if ("open-dir".equals(commandName)) {
-            myEditor.openDir((String) items[0], SVNReader.getLong(items, 3));
-        } else if ("change-dir-prop".equals(commandName)) {
-            myEditor.changeDirProperty((String) items[1], (String) items[2]);
-        } else if ("close-dir".equals(commandName)) {
-            myEditor.closeDir();
-        } else if ("add-file".equals(commandName)) {
-            myEditor.addFile((String) items[0], (String) items[3], SVNReader.getLong(items, 4));
-            myFilePath = (String) items[0];
-        } else if ("open-file".equals(commandName)) {
-            myEditor.openFile((String) items[0], SVNReader.getLong(items, 3));
-            myFilePath = (String) items[0];
-        } else if ("change-file-prop".equals(commandName)) {
-            myEditor.changeFileProperty(myFilePath, (String) items[1], (String) items[2]);
-        } else if ("close-file".equals(commandName)) {
-            myEditor.closeFile(myFilePath, (String) items[1]);
-        } else if ("apply-textdelta".equals(commandName)) {
-            myEditor.applyTextDelta(myFilePath, (String) items[1]);
-        } else if ("textdelta-end".equals(commandName)) {
-            // reset delta reader, 
-            // this should send empty window when diffstream contained only header. 
-            myDeltaReader.reset(myFilePath, myEditor);
-            myEditor.textDeltaEnd(myFilePath);
-        } else if ("close-edit".equals(commandName)) {
-            myEditor.closeEdit();
-        } else if ("abort-edit".equals(commandName)) {
-            myEditor.abortEdit();
-        } else if ("absent-dir".equals(commandName)) {
-            myEditor.absentDir((String) items[0]);
-        } else if ("absent-file".equals(commandName)) {
-            myEditor.absentFile((String) items[0]);
-        }
-        return !last;
     }
 
     private void storeToken(String token, boolean isFile) {
@@ -160,72 +91,72 @@ public class SVNEditModeReader {
 
     private void processCommand(String commandName, List params) throws SVNException {
         if ("target-rev".equals(commandName)) {
-            myEditor.targetRevision(SVNReader2.getLong(params, 0));
+            myEditor.targetRevision(SVNReader.getLong(params, 0));
         } else if ("open-root".equals(commandName)) {
-            myEditor.openRoot(SVNReader2.getLong(params, 0));
-            String token = SVNReader2.getString(params, 1);
+            myEditor.openRoot(SVNReader.getLong(params, 0));
+            String token = SVNReader.getString(params, 1);
             storeToken(token, false);
         } else if ("delete-entry".equals(commandName)) {
-            lookupToken(SVNReader2.getString(params, 2), false);
-            String path = SVNPathUtil.canonicalizePath(SVNReader2.getString(params, 0));
-            myEditor.deleteEntry(path, SVNReader2.getLong(params, 1));
+            lookupToken(SVNReader.getString(params, 2), false);
+            String path = SVNPathUtil.canonicalizePath(SVNReader.getString(params, 0));
+            myEditor.deleteEntry(path, SVNReader.getLong(params, 1));
         } else if ("add-dir".equals(commandName)) {
-            lookupToken(SVNReader2.getString(params, 1), false);
-            String path = SVNPathUtil.canonicalizePath(SVNReader2.getString(params, 0));
-            String copyFromPath = SVNReader2.getString(params, 3);
+            lookupToken(SVNReader.getString(params, 1), false);
+            String path = SVNPathUtil.canonicalizePath(SVNReader.getString(params, 0));
+            String copyFromPath = SVNReader.getString(params, 3);
             if (copyFromPath != null) {
                 copyFromPath = SVNPathUtil.canonicalizePath(copyFromPath);
             }
-            myEditor.addDir(path, copyFromPath, SVNReader2.getLong(params, 4));
-            storeToken(SVNReader2.getString(params, 2), false);
+            myEditor.addDir(path, copyFromPath, SVNReader.getLong(params, 4));
+            storeToken(SVNReader.getString(params, 2), false);
         } else if ("open-dir".equals(commandName)) {
-            lookupToken(SVNReader2.getString(params, 1), false);
-            String path = SVNPathUtil.canonicalizePath(SVNReader2.getString(params, 0));
-            myEditor.openDir(path, SVNReader2.getLong(params, 3));
-            storeToken(SVNReader2.getString(params, 2), false);
+            lookupToken(SVNReader.getString(params, 1), false);
+            String path = SVNPathUtil.canonicalizePath(SVNReader.getString(params, 0));
+            myEditor.openDir(path, SVNReader.getLong(params, 3));
+            storeToken(SVNReader.getString(params, 2), false);
         } else if ("change-dir-prop".equals(commandName)) {
-            lookupToken(SVNReader2.getString(params, 0), false);
-            myEditor.changeDirProperty(SVNReader2.getString(params, 1), SVNReader2.getString(params, 2));
+            lookupToken(SVNReader.getString(params, 0), false);
+            myEditor.changeDirProperty(SVNReader.getString(params, 1), SVNReader.getString(params, 2));
         } else if ("close-dir".equals(commandName)) {
-            String token = SVNReader2.getString(params, 0);
+            String token = SVNReader.getString(params, 0);
             lookupToken(token, false);
             myEditor.closeDir();
             removeToken(token);
         } else if ("add-file".equals(commandName)) {
-            lookupToken(SVNReader2.getString(params, 1), false);
-            String path = SVNPathUtil.canonicalizePath(SVNReader2.getString(params, 0));
-            String copyFromPath = SVNReader2.getString(params, 3);
+            lookupToken(SVNReader.getString(params, 1), false);
+            String path = SVNPathUtil.canonicalizePath(SVNReader.getString(params, 0));
+            String copyFromPath = SVNReader.getString(params, 3);
             if (copyFromPath != null) {
                 copyFromPath = SVNPathUtil.canonicalizePath(copyFromPath);
             }
-            storeToken(SVNReader2.getString(params, 2), true);
-            myEditor.addFile(path, copyFromPath, SVNReader2.getLong(params, 4));
+            storeToken(SVNReader.getString(params, 2), true);
+            myEditor.addFile(path, copyFromPath, SVNReader.getLong(params, 4));
             myFilePath = path;
         } else if ("open-file".equals(commandName)) {
-            lookupToken(SVNReader2.getString(params, 1), false);
-            String path = SVNPathUtil.canonicalizePath(SVNReader2.getString(params, 0));
-            storeToken(SVNReader2.getString(params, 2), true);
-            myEditor.openFile(SVNReader2.getString(params, 0), SVNReader2.getLong(params, 3));
+            lookupToken(SVNReader.getString(params, 1), false);
+            String path = SVNPathUtil.canonicalizePath(SVNReader.getString(params, 0));
+            storeToken(SVNReader.getString(params, 2), true);
+            myEditor.openFile(SVNReader.getString(params, 0), SVNReader.getLong(params, 3));
             myFilePath = path;
         } else if ("change-file-prop".equals(commandName)) {
-            lookupToken(SVNReader2.getString(params, 0), true);
-            myEditor.changeFileProperty(myFilePath, SVNReader2.getString(params, 1), SVNReader2.getString(params, 2));
+            lookupToken(SVNReader.getString(params, 0), true);
+            myEditor.changeFileProperty(myFilePath, SVNReader.getString(params, 1), SVNReader.getString(params, 2));
         } else if ("close-file".equals(commandName)) {
-            String token = SVNReader2.getString(params, 0);
+            String token = SVNReader.getString(params, 0);
             lookupToken(token, true);
-            myEditor.closeFile(myFilePath, SVNReader2.getString(params, 1));
+            myEditor.closeFile(myFilePath, SVNReader.getString(params, 1));
             removeToken(token);
         } else if ("apply-textdelta".equals(commandName)) {
-            lookupToken(SVNReader2.getString(params, 0), true);
-            myEditor.applyTextDelta(myFilePath, SVNReader2.getString(params, 1));
+            lookupToken(SVNReader.getString(params, 0), true);
+            myEditor.applyTextDelta(myFilePath, SVNReader.getString(params, 1));
         } else if ("textdelta-chunk".equals(commandName)) {
-            lookupToken(SVNReader2.getString(params, 0), true);
-            byte[] chunk = SVNReader2.getBytes(params, 1);            
+            lookupToken(SVNReader.getString(params, 0), true);
+            byte[] chunk = SVNReader.getBytes(params, 1);
             myDeltaReader.nextWindow(chunk, 0, chunk.length, myFilePath, myEditor);
         } else if ("textdelta-end".equals(commandName)) {
             // reset delta reader,
             // this should send empty window when diffstream contained only header.
-            lookupToken(SVNReader2.getString(params, 0), true);
+            lookupToken(SVNReader.getString(params, 0), true);
             myDeltaReader.reset(myFilePath, myEditor);
             myEditor.textDeltaEnd(myFilePath);
         } else if ("close-edit".equals(commandName)) {
@@ -237,11 +168,11 @@ public class SVNEditModeReader {
             myDone = true;
             myAborted = true;
         } else if ("absent-dir".equals(commandName)) {
-            lookupToken(SVNReader2.getString(params, 1), false);
-            myEditor.absentDir(SVNReader2.getString(params, 0));
+            lookupToken(SVNReader.getString(params, 1), false);
+            myEditor.absentDir(SVNReader.getString(params, 0));
         } else if ("absent-file".equals(commandName)) {
-            lookupToken(SVNReader2.getString(params, 1), false);
-            myEditor.absentFile(SVNReader2.getString(params, 0));
+            lookupToken(SVNReader.getString(params, 1), false);
+            myEditor.absentFile(SVNReader.getString(params, 0));
         } else if ("finish-replay".equals(commandName)){
             myDone = true;
             if (myAborted){
@@ -255,7 +186,7 @@ public class SVNEditModeReader {
         while (!myDone) {
             try {
                 List items = readTuple("wl", true);
-                String commandName = SVNReader2.getString(items, 0);
+                String commandName = SVNReader.getString(items, 0);
                 boolean allowFinishReplay = doReplay && "finish-replay".equals(commandName);
                 String template = (String) COMMANDS_MAP.get(commandName);
                 if (template == null) {
@@ -265,7 +196,7 @@ public class SVNEditModeReader {
                 }
                 List parameters = null;
                 if (!allowFinishReplay) {
-                    parameters = SVNReader2.parseTuple(template, (Collection) items.get(1), null);
+                    parameters = SVNReader.parseTuple(template, (Collection) items.get(1), null);
                 }
                 processCommand(commandName, parameters);
             } catch (SVNException e) {
@@ -281,7 +212,7 @@ public class SVNEditModeReader {
         }
         while (!myDone) {
             List items = readTuple("wl", true);
-            String command = SVNReader2.getString(items, 0);
+            String command = SVNReader.getString(items, 0);
             myDone = "abort-edit".equals(command);
         }
     }
