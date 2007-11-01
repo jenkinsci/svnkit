@@ -51,10 +51,11 @@ public class SVNReader {
         if (items == null || index >= items.size()) {
             return -1;
         }
-        if (items.get(index) instanceof Long) {
-            return ((Long) items.get(index)).longValue();
-        } else if (items.get(index) instanceof Integer) {
-            return ((Integer) items.get(index)).intValue();
+        Object item = items.get(index);
+        if (item instanceof Long) {
+            return ((Long) item).longValue();
+        } else if (item instanceof Integer) {
+            return ((Integer) item).intValue();
         }
         return -1;
     }
@@ -63,10 +64,11 @@ public class SVNReader {
         if (items == null || index >= items.size()) {
             return false;
         }
-        if (items.get(index) instanceof Boolean) {
-            return ((Boolean) items.get(index)).booleanValue();
-        } else if (items.get(index) instanceof String) {
-            return Boolean.valueOf((String) items.get(index)).booleanValue();
+        Object item = items.get(index);
+        if (item instanceof Boolean) {
+            return ((Boolean) item).booleanValue();
+        } else if (item instanceof String) {
+            return Boolean.valueOf((String) item).booleanValue();
         }
         return false;
     }
@@ -75,21 +77,32 @@ public class SVNReader {
         if (items == null || index >= items.size()) {
             return Collections.EMPTY_LIST;
         }
-        if (items.get(index) instanceof List) {
-            List list = (List) items.get(index);
+        Object item = items.get(index);
+        if (item instanceof List) {
+            List list = (List) item;
             for (int i = 0; i < list.size(); i++) {
                 if (list.get(i) instanceof SVNItem) {
-                    SVNItem item = (SVNItem) list.get(i);
-                    if (item.getKind() == SVNItem.STRING) {
-                        list.set(i, item.getLine());
-                    } else if (item.getKind() == SVNItem.WORD) {
-                        list.set(i, item.getWord());
-                    } else if (item.getKind() == SVNItem.NUMBER) {
-                        list.set(i, new Long(item.getNumber()));
+                    SVNItem svnItem = (SVNItem) list.get(i);
+                    if (svnItem.getKind() == SVNItem.STRING) {
+                        list.set(i, svnItem.getLine());
+                    } else if (svnItem.getKind() == SVNItem.WORD) {
+                        list.set(i, svnItem.getWord());
+                    } else if (svnItem.getKind() == SVNItem.NUMBER) {
+                        list.set(i, new Long(svnItem.getNumber()));
                     }
                 }
             }
             return list;
+        }
+        return Collections.EMPTY_LIST;
+    }
+
+    private static List getItemList(List items, int index){
+        if (items == null || index >= items.size()) {
+            return Collections.EMPTY_LIST;
+        }
+        if (items.get(index) instanceof List){
+            return (List) items.get(index);
         }
         return Collections.EMPTY_LIST;
     }
@@ -103,7 +116,7 @@ public class SVNReader {
         }
 
         properties = properties == null ? new HashMap() : properties;
-        List props = (List) items.get(index);
+        List props = getItemList(items, index);
         for (Iterator prop = props.iterator(); prop.hasNext();) {
             SVNItem item = (SVNItem) prop.next();
             if (item.getKind() != SVNItem.LIST) {
@@ -124,7 +137,7 @@ public class SVNReader {
             return diffs;
         }
         diffs = diffs == null ? new HashMap() : diffs;
-        items = (List) items.get(index);
+        items = getList(items, index);
         for (Iterator iterator = items.iterator(); iterator.hasNext();) {
             SVNItem item = (SVNItem) iterator.next();
             if (item.getKind() != SVNItem.LIST) {
@@ -223,7 +236,7 @@ public class SVNReader {
     public static List parse(InputStream is, String template, List values) throws SVNException {
         List readItems = readTuple(is, DEFAULT_TEMPLATE);
         String word = getString(readItems, 0);
-        List list = (List) readItems.get(1);
+        List list = getItemList(readItems, 1);
 
         if ("success".equals(word)) {
             return parseTuple(template, list, values);

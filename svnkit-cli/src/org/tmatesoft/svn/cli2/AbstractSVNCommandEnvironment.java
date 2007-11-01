@@ -293,9 +293,9 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
                 codes.add(err.getErrorCode());
             }
             Object[] objects = err.getRelatedObjects();
-            if (objects != null) {
+            if (objects != null && objects.length > 0) {
                 String template = err.getMessageTemplate();
-                for (int i = 0; objects != null && i < objects.length; i++) {
+                for (int i = 0; i < objects.length; i++) {
                     if (objects[i] instanceof File) {
                         objects[i] = SVNCommandUtil.getLocalPath(getRelativePath((File) objects[i]));
                     }
