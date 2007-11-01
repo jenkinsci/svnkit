@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.wc.admin;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -20,8 +21,10 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
@@ -186,6 +189,22 @@ public abstract class SVNLog {
         }
 */        
         logChangedEntryProperties(name, attributes);
+    }
+
+    public void logRemoveRevertFile(String name, SVNAdminArea adminArea, boolean isProp) throws SVNException {
+        String revertPath = null;
+        if (isProp) {
+            revertPath = SVNAdminUtil.getPropRevertPath(name, SVNNodeKind.FILE, false);
+        } else {
+            revertPath = SVNAdminUtil.getTextRevertPath(name, false);
+        }
+        File revertFile = adminArea.getFile(revertPath);
+        if (revertFile.isFile()) {
+            Map command = new HashMap();
+            command.put(SVNLog.NAME_ATTR, revertPath);
+            addCommand(SVNLog.DELETE, command, false);
+            command.clear();
+        }
     }
 
     public void run(SVNLogRunner runner) throws SVNException {

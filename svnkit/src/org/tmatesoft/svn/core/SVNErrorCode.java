@@ -237,6 +237,19 @@ public class SVNErrorCode implements Serializable {
      * @since SVN 1.5
      */
     public static final SVNErrorCode WC_MISMATCHED_CHANGELIST = new SVNErrorCode(WC_CATEGORY, 26, "Changelist doesn't match");
+    /**
+     * @since SVN 1.5
+     */
+    public static final SVNErrorCode WC_CONFLICT_RESOLVER_FAILURE = new SVNErrorCode(WC_CATEGORY, 27, "Conflict resolution failed");
+    /**
+     * @since SVN 1.5
+     */
+    public static final SVNErrorCode WC_COPYFROM_PATH_NOT_FOUND = new SVNErrorCode(WC_CATEGORY, 28, "Failed to locate 'copyfrom' path in working copy");
+    /**
+     * @since SVN 1.5
+     */
+    public static final SVNErrorCode WC_CHANGELIST_MOVE = new SVNErrorCode(WC_CATEGORY, 29, "Moving a path from one changelist to another");
+    
     
     public static final SVNErrorCode FS_GENERAL = new SVNErrorCode(FS_CATEGORY, 0, "General filesystem error");
     public static final SVNErrorCode FS_CLEANUP = new SVNErrorCode(FS_CATEGORY, 1, "Error closing filesystem");

@@ -146,6 +146,16 @@ public class SVNChangelistClient extends SVNBasicClient {
                     dispatchEvent(event);
                     continue;
                 }
+                
+                if (entry.isDirectory()) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_IS_DIRECTORY, 
+                            "''{0}'' is a directory, and thus cannot be a member of a changelist", path);
+                    SVNEvent event = SVNEventFactory.createChangelistEvent(path, adminArea, null, 
+                            SVNEventAction.CHANGELIST_FAILED, err);
+                    dispatchEvent(event);
+                    continue;
+                }
+                
                 if (matchingChangelistName != null) {
                     if (entry.getChangelistName() != null && 
                             !matchingChangelistName.equals(entry.getChangelistName())) {
@@ -160,6 +170,17 @@ public class SVNChangelistClient extends SVNBasicClient {
                         continue;
                     }
                 }
+                
+                if (entry.getChangelistName() != null && changelistName != null) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CHANGELIST_MOVE, 
+                            "Removing ''{0}'' from changelist ''{1}''.", new Object[] { path, 
+                            entry.getChangelistName() });
+                    SVNEvent event = SVNEventFactory.createChangelistEvent(path, adminArea, null, 
+                            SVNEventAction.CHANGELIST_MOVED, err);
+                    dispatchEvent(event);
+                    continue;
+                }
+                
                 Map attributes = new HashMap();
                 attributes.put(SVNProperty.CHANGELIST, changelistName);
                 entry = adminArea.modifyEntry(entry.getName(), attributes, true, false);

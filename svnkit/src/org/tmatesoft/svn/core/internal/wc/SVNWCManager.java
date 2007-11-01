@@ -188,6 +188,10 @@ public class SVNWCManager {
             dir.modifyEntry(entry.getName(), attributes, true, false);
             attributes.clear();
             
+            if (copied) {
+                SVNPropertiesManager.deleteWCProperties(dir, entry.getName(), false);
+            }
+            
             if (SVNProperty.SCHEDULE_DELETE.equals(schedule)) {
                 SVNEvent event = SVNEventFactory.createDeletedEvent(dir, entry.getName());
                 dir.getWCAccess().handleEvent(event);
@@ -494,6 +498,12 @@ public class SVNWCManager {
                 command.put(SVNLog.NAME_ATTR, SVNAdminUtil.getPropPath(name, kind, false));
                 log.addCommand(SVNLog.DELETE, command, false);
                 command.clear();
+                command.put(SVNLog.NAME_ATTR, SVNAdminUtil.getPropBasePath(name, kind, false));
+                log.addCommand(SVNLog.DELETE, command, false);
+                command.clear();
+                command.put(SVNLog.NAME_ATTR, SVNAdminUtil.getTextBasePath(name, false));
+                log.addCommand(SVNLog.DELETE, command, false);
+                command.clear();
             }
             log.save();
             root.runLogs();
@@ -513,6 +523,10 @@ public class SVNWCManager {
         if (fileType == SVNFileType.NONE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_FILENAME, "''{0}'' does not exist", path);
             SVNErrorManager.error(err);
+        } else if (fileType != SVNFileType.FILE && fileType != SVNFileType.DIRECTORY) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                    "Unsupported node kind for path ''{0}''", path);
+            SVNErrorManager.error(err);
         }
         if (deleteFiles) {
             SVNFileUtil.deleteAll(path, true, wcAccess.getEventHandler());
@@ -530,7 +544,16 @@ public class SVNWCManager {
                 SVNFileUtil.deleteFile(path);
             }
         } else if (kind == SVNNodeKind.DIR) {
-            SVNAdminArea childDir = dir.getWCAccess().retrieve(path);
+            SVNAdminArea childDir = null;
+            try {
+                childDir = dir.getWCAccess().retrieve(path);    
+            } catch (SVNException svne) {
+                if (!path.exists()) {
+                    return;
+                }
+                throw svne;
+            }
+            
             Collection versioned = new HashSet();
             for(Iterator entries = childDir.entries(false); entries.hasNext();) {
                 SVNEntry entry = (SVNEntry) entries.next();
@@ -540,7 +563,6 @@ public class SVNWCManager {
                 }
                 File childPath = childDir.getFile(entry.getName());
                 doEraseFromWC(childPath, childDir, entry.getKind(), deleteFiles);
-                
             }
             File[] children = SVNFileListUtil.listFiles(path);
             for(int i = 0; children != null && i < children.length; i++) {

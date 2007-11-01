@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.tmatesoft.svn.cli2.svn.SVNWCAccept;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -859,7 +858,7 @@ public abstract class SVNAdminArea {
         getWCAccess().checkCancelled();
         boolean isFile = !getThisDirName().equals(name);
         boolean leftSomething = false;
-        
+        SVNEntry entry = getVersionedEntry(name, true);
         if (isFile) {
             File path = getFile(name);
             boolean wcSpecial = getProperties(name).getPropertyValue(SVNProperty.SPECIAL) != null;
@@ -877,8 +876,8 @@ public abstract class SVNAdminArea {
             saveEntries(false);
             
             SVNFileUtil.deleteFile(getFile(SVNAdminUtil.getTextBasePath(name, false)));
-            SVNFileUtil.deleteFile(getFile(SVNAdminUtil.getPropPath(name, isFile ? SVNNodeKind.FILE : SVNNodeKind.DIR, false)));
-            SVNFileUtil.deleteFile(getFile(SVNAdminUtil.getPropBasePath(name, isFile ? SVNNodeKind.FILE : SVNNodeKind.DIR, false)));
+            SVNFileUtil.deleteFile(getFile(SVNAdminUtil.getPropBasePath(name, entry.getKind(), false)));
+            SVNFileUtil.deleteFile(getFile(SVNAdminUtil.getPropPath(name, entry.getKind(), false)));
             if (deleteWorkingFiles) {
                 if (textModified || (!wcSpecial && localSpecial)) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LEFT_LOCAL_MOD);
@@ -893,9 +892,9 @@ public abstract class SVNAdminArea {
             saveEntries(false);
             SVNPropertiesManager.deleteWCProperties(this, getThisDirName(), false);
             for(Iterator entries = entries(false); entries.hasNext();) {
-                SVNEntry entry = (SVNEntry) entries.next();
-                String entryName = getThisDirName().equals(entry.getName()) ? null : entry.getName();
-                if (entry.isFile()) {
+                SVNEntry nextEntry = (SVNEntry) entries.next();
+                String entryName = getThisDirName().equals(nextEntry.getName()) ? null : nextEntry.getName();
+                if (nextEntry.isFile()) {
                     try {
                         removeFromRevisionControl(entryName, deleteWorkingFiles, reportInstantError);
                     } catch (SVNException e) {
@@ -908,7 +907,7 @@ public abstract class SVNAdminArea {
                             throw e;
                         }
                     }
-                } else if (entryName != null && entry.isDirectory()) {
+                } else if (entryName != null && nextEntry.isDirectory()) {
                     File entryPath = getFile(entryName);
                     if (getWCAccess().isMissing(entryPath)) {
                         deleteEntry(entryName);
@@ -1435,8 +1434,8 @@ public abstract class SVNAdminArea {
         SVNLog log = getLog();
         String checksum = null;
         if (!getThisDirName().equals(target)) {
-            loggyRemoveRevertFile(target, true, log);
-            loggyRemoveRevertFile(target, false, log);
+            log.logRemoveRevertFile(target, this, true);
+            log.logRemoveRevertFile(target, this, false);
             
             File baseFile = getBaseFile(target, true);
             SVNFileType baseType = SVNFileType.getType(baseFile);
@@ -1614,23 +1613,6 @@ public abstract class SVNAdminArea {
 
     protected void setLocked(boolean locked) {
         myWasLocked = locked;
-    }
-    
-    private void loggyRemoveRevertFile(String name, boolean isProp, SVNLog log) throws SVNException {
-        String revertPath = null;
-        if (isProp) {
-            revertPath = SVNAdminUtil.getPropRevertPath(name, SVNNodeKind.FILE, false);
-        } else {
-            revertPath = SVNAdminUtil.getTextRevertPath(name, false);
-        }
-
-        File revertFile = getFile(revertPath);
-        if (revertFile.isFile()) {
-            Map command = new HashMap();
-            command.put(SVNLog.NAME_ATTR, revertPath);
-            log.addCommand(SVNLog.DELETE, command, false);
-            command.clear();
-        }
     }
     
 }
