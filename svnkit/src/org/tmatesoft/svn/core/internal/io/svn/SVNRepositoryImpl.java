@@ -529,7 +529,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     srev, erev, Boolean.toString(includeMergedRevisions)};
             write("(w(s(n)(n)w))", buffer);
             authenticate();
-            boolean hasRevision;
+            boolean hasRevision = false;
             int count = 0;
             while (true) {
                 SVNItem item = readItem(true);
@@ -595,12 +595,12 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     handler.closeRevision(name == null ? path : name);
                     count++;
                 }
-                read("", null, true);
+            }
+            read("", null, true);
 
-                if (!hasRevision) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "The get-file-revs command didn't return any revisions");
-                    SVNErrorManager.error(err);
-                }
+            if (!hasRevision) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "The get-file-revs command didn't return any revisions");
+                SVNErrorManager.error(err);
             }
             return count;
         } catch (SVNException e) {
