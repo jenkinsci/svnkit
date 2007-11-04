@@ -735,7 +735,7 @@ public abstract class SVNRepository {
      * If <code>targetPaths</code> has one or more elements, then
      * only those revisions are processed in which at least one of <code>targetPaths</code> was
      * changed (i.e., if a file text or properties changed; if dir properties
-     * changed or an entry was added or deleted). Each path is relative 
+     * changed or an entry was added or deleted). Each path can be either absolute or relative 
      * to the repository location that this object is set to.
      * 
      * <p>

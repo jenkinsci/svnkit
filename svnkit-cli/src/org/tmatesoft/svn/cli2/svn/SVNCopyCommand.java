@@ -95,12 +95,14 @@ public class SVNCopyCommand extends SVNCommand {
         SVNCopySource[] copySources = (SVNCopySource[]) sources.toArray(new SVNCopySource[sources.size()]);
         if (dst.isURL()) {
             SVNCommitInfo info = client.doCopy(copySources, dst.getURL(), false, false, 
-                    getSVNEnvironment().isParents(), getSVNEnvironment().getMessage(), getSVNEnvironment().getRevisionProperties());
+                    getSVNEnvironment().isParents(), getSVNEnvironment().getMessage(), 
+                    getSVNEnvironment().getRevisionProperties());
             if (!getSVNEnvironment().isQuiet()) {
                 getSVNEnvironment().printCommitInfo(info);
             }
         } else {
-            client.doCopy(copySources, dst.getFile(), false, getSVNEnvironment().isParents());
+            client.doCopy(copySources, dst.getFile(), false, getSVNEnvironment().isParents(), 
+                    getSVNEnvironment().isUseMergeHistory());
         }
     }
 

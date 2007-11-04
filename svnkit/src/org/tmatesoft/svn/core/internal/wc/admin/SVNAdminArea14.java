@@ -62,17 +62,17 @@ public class SVNAdminArea14 extends SVNAdminArea {
         SVNProperty.NEEDS_LOCK
     };
     
-    public static final int WC_FORMAT = 8;
+    public static final int WC_FORMAT = 9;
     
-    private static final String ATTRIBUTE_COPIED = "copied";
-    private static final String ATTRIBUTE_DELETED = "deleted";
-    private static final String ATTRIBUTE_ABSENT = "absent";
-    private static final String ATTRIBUTE_INCOMPLETE = "incomplete";
-    private static final String ATTRIBUTE_KEEP_LOCAL = "keep-local";
-    private static final String ATTRIBUTE_HAS_PROPS = "has-props";
-    private static final String ATTRIBUTE_HAS_PROP_MODS = "has-prop-mods";
-    private static final String KILL_ADM_ONLY = "adm-only";
-    private static final String THIS_DIR = "";
+    protected static final String ATTRIBUTE_COPIED = "copied";
+    protected static final String ATTRIBUTE_DELETED = "deleted";
+    protected static final String ATTRIBUTE_ABSENT = "absent";
+    protected static final String ATTRIBUTE_INCOMPLETE = "incomplete";
+    protected static final String ATTRIBUTE_KEEP_LOCAL = "keep-local";
+    protected static final String ATTRIBUTE_HAS_PROPS = "has-props";
+    protected static final String ATTRIBUTE_HAS_PROP_MODS = "has-prop-mods";
+    protected static final String KILL_ADM_ONLY = "adm-only";
+    protected static final String THIS_DIR = "";
 
     private File myLockFile;
     private File myEntriesFile;

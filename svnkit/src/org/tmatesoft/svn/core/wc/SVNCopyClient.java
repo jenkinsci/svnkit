@@ -351,21 +351,24 @@ public class SVNCopyClient extends SVNBasicClient {
     }
     
     public SVNCommitInfo doCopy(SVNCopySource[] sources, SVNURL dstURL, boolean isMove, boolean failWhenDstExists, boolean makeParents, String commitMessage, Map revisionProperties) throws SVNException {
-        boolean srcsAreURLs = sources[0].isURL();
         for (int i = 0; i < sources.length; i++) {
             SVNCopySource source = sources[i]; 
             SVNRevision pegRevision = source.getPegRevision();
             if (source.isURL() && (pegRevision == SVNRevision.COMMITTED || 
                     pegRevision == SVNRevision.BASE || pegRevision == SVNRevision.PREVIOUS)) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Revision type requires a working copy path, not a URL");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, 
+                        "Revision type requires a working copy path, not a URL");
                 SVNErrorManager.error(err);
             }
         }
+
+        boolean srcsAreURLs = sources[0].isURL();
         if (sources.length > 1) {
             for (int i = 0; i < sources.length; i++) {
                 SVNCopySource source = sources[i];
                 if (srcsAreURLs != source.isURL()) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Cannot mix repository and working copy sources");
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                            "Cannot mix repository and working copy sources");
                     SVNErrorManager.error(err);
                 }
                 resolveRevisions(source);
@@ -394,14 +397,22 @@ public class SVNCopyClient extends SVNBasicClient {
         } else {
             if (!srcsAreURLs) {
                 boolean needRepoRevision = false;
+                boolean needRepoPegRevision = false;
                 for (int i = 0; i < sources.length; i++) {
                     SVNCopySource source = sources[i];
-                    if (source.getRevision() != SVNRevision.UNDEFINED && source.getRevision() != SVNRevision.WORKING) {
+                    if (source.getRevision() != SVNRevision.UNDEFINED && 
+                            source.getRevision() != SVNRevision.WORKING) {
                         needRepoRevision = true;
+                    }
+                    if (source.getPegRevision() != SVNRevision.UNDEFINED && 
+                            source.getPegRevision() != SVNRevision.WORKING) {
+                        needRepoPegRevision = true;
+                    }
+                    if (needRepoRevision || needRepoPegRevision) {
                         break;
                     }
                 }
-                if (needRepoRevision) {
+                if (needRepoRevision || needRepoPegRevision) {
                     SVNWCAccess wcAccess = createWCAccess();
                     for (int i = 0; i < sources.length; i++) {
                         SVNCopySource source = sources[i];
@@ -412,13 +423,21 @@ public class SVNCopyClient extends SVNBasicClient {
                         } finally {
                             wcAccess.close();
                         }
-                        if (srcEntry.getURL() == null) {
-                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' does not seem to have a URL associated with it", source.getPath());
+                        SVNURL url = srcEntry.isCopied() ? srcEntry.getCopyFromSVNURL() : srcEntry.getSVNURL();
+                        if (url == null) {
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, 
+                                    "''{0}'' does not have a URL associated with it", source.getPath());
                             SVNErrorManager.error(err);
                         }
                         source.setPath(null);
-                        source.setURL(srcEntry.getSVNURL());
-                        source.setPegRevision(SVNRevision.create(srcEntry.getRevision()));
+                        source.setURL(url);
+                        if (!needRepoPegRevision) {
+                            if (srcEntry.isCopied()) {
+                                source.setPegRevision(SVNRevision.create(srcEntry.getCopyFromRevision()));
+                            } else {
+                                source.setPegRevision(SVNRevision.create(srcEntry.getRevision()));
+                            }
+                        }
                     }
                     srcsAreURLs = true;
                 }
@@ -555,18 +574,19 @@ public class SVNCopyClient extends SVNBasicClient {
                 SVNUpdateClient updateClient = new SVNUpdateClient(getRepositoryPool(), getOptions());
                 updateClient.setEventHandler(getEventDispatcher());
     
-                revision = updateClient.doCheckout(srcURL, dstPath, srcRevision, srcRevision, SVNDepth.INFINITY, false);
+                revision = updateClient.doCheckout(srcURL, dstPath, srcRevision, srcRevision, 
+                        SVNDepth.INFINITY, false);
                 
                 if (sameRepositories) {
                     SVNAdminArea dstArea = dstAccess.open(dstPath, true, SVNWCAccess.INFINITE_DEPTH);
                     SVNEntry dstRootEntry = dstArea.getEntry(dstArea.getThisDirName(), false);
                     if (srcRevision == SVNRevision.HEAD) {
-                        revision = dstRootEntry.getRevision();
+                        revision = srcRevisionNumber = dstRootEntry.getRevision();
                     }
-                    SVNWCManager.add(dstPath, adminArea, srcURL, revision);
-                    Map srcMergeInfo = calculateTargetMergeInfo(srcURL, null, null, "", 
-                                                                srcRevisionNumber, 
-                                                                repository);
+                    SVNWCManager.add(dstPath, adminArea, srcURL, srcRevisionNumber);
+                    String relPath = getPathRelativeToRoot(null, srcURL, null, null, repository);
+                    Map srcMergeInfo = calculateTargetMergeInfo(null, null, srcURL, relPath, srcRevisionNumber, 
+                            repository);
                     extendWCMergeInfo(dstPath, dstRootEntry, srcMergeInfo, dstArea);
                 } else {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Source URL ''{0}'' is from foreign repository; leaving it as a disjoint WC", srcURL);
@@ -594,8 +614,9 @@ public class SVNCopyClient extends SVNBasicClient {
                         sameRepositories ? srcURL.toString() : null, 
                         sameRepositories ? srcRevisionNumber : -1);
                 
-                Map srcMergeInfo = calculateTargetMergeInfo(srcURL, null, null, "", 
-                                                            srcRevisionNumber, 
+                dstEntry = dstAccess.getEntry(dstPath, false);
+                String relPath = getPathRelativeToRoot(null, srcURL, null, null, repository);
+                Map srcMergeInfo = calculateTargetMergeInfo(null, null, srcURL, relPath, srcRevisionNumber, 
                                                             repository);
                 
                 extendWCMergeInfo(dstPath, dstEntry, srcMergeInfo, adminArea);
@@ -610,28 +631,35 @@ public class SVNCopyClient extends SVNBasicClient {
         return revision;
     }
 
-    public void doCopy(SVNCopySource[] sources, File dstPath, boolean isMove, boolean makeParents) throws SVNException {
+    public void doCopy(SVNCopySource[] sources, File dstPath, boolean isMove, boolean makeParents, 
+            boolean includeMergeHistory) throws SVNException {
         dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath())).getAbsoluteFile();
 
-        boolean srcsAreURLs = sources[0].isURL();
         for (int i = 0; i < sources.length; i++) {
             SVNCopySource source = sources[i]; 
             SVNRevision pegRevision = source.getPegRevision();
             if (source.isURL() && (pegRevision == SVNRevision.COMMITTED || 
                     pegRevision == SVNRevision.BASE || pegRevision == SVNRevision.PREVIOUS)) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Revision type requires a working copy path, not a URL");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, 
+                        "Revision type requires a working copy path, not a URL");
                 SVNErrorManager.error(err);
             }
         }
+
+        boolean srcsAreURLs = sources[0].isURL();
         if (sources.length > 1) {
             for (int i = 0; i < sources.length; i++) {
                 SVNCopySource source = sources[i];
                 if (srcsAreURLs != source.isURL()) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Cannot mix repository and working copy sources");
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                            "Cannot mix repository and working copy sources");
                     SVNErrorManager.error(err);
                 }
                 resolveRevisions(source);
                 String name = source.getName();
+                if (srcsAreURLs) {
+                    name = SVNEncodingUtil.uriDecode(name);
+                }
                 source.setDestinationPath(new File(dstPath, name));
             }            
         } else {
@@ -664,14 +692,22 @@ public class SVNCopyClient extends SVNBasicClient {
         } else {
             if (!srcsAreURLs) {
                 boolean needRepoRevision = false;
+                boolean needRepoPegRevision = false;
                 for (int i = 0; i < sources.length; i++) {
                     SVNCopySource source = sources[i];
-                    if (source.getRevision() != SVNRevision.UNDEFINED && source.getRevision() != SVNRevision.WORKING) {
+                    if (source.getRevision() != SVNRevision.UNDEFINED && 
+                            source.getRevision() != SVNRevision.WORKING) {
                         needRepoRevision = true;
+                    }
+                    if (source.getPegRevision() != SVNRevision.UNDEFINED && 
+                            source.getPegRevision() != SVNRevision.WORKING) {
+                        needRepoPegRevision = true;
+                    }
+                    if (needRepoRevision || needRepoPegRevision) {
                         break;
                     }
                 }
-                if (needRepoRevision) {
+                if (needRepoRevision || needRepoPegRevision) {
                     SVNWCAccess wcAccess = createWCAccess();
                     for (int i = 0; i < sources.length; i++) {
                         SVNCopySource source = sources[i];
@@ -682,13 +718,21 @@ public class SVNCopyClient extends SVNBasicClient {
                         } finally {
                             wcAccess.close();
                         }
-                        if (srcEntry.getURL() == null) {
-                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' does not seem to have a URL associated with it", source.getPath());
+                        SVNURL url = srcEntry.isCopied() ? srcEntry.getCopyFromSVNURL() : srcEntry.getSVNURL();
+                        if (url == null) {
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, 
+                                    "''{0}'' does not have a URL associated with it", source.getPath());
                             SVNErrorManager.error(err);
                         }
                         source.setPath(null);
-                        source.setURL(srcEntry.getSVNURL());
-                        source.setPegRevision(SVNRevision.create(srcEntry.getRevision()));
+                        source.setURL(url);
+                        if (!needRepoPegRevision) {
+                            if (srcEntry.isCopied()) {
+                                source.setPegRevision(SVNRevision.create(srcEntry.getCopyFromRevision()));    
+                            } else {
+                                source.setPegRevision(SVNRevision.create(srcEntry.getRevision()));    
+                            }
+                        }
                     }
                     srcsAreURLs = true;
                 }
@@ -700,7 +744,8 @@ public class SVNCopyClient extends SVNBasicClient {
             if (srcsAreURLs) {
                 doCopy(source.getURL(), source.getPegRevision(), source.getRevision(), source.getDstFile(), makeParents);
             } else {
-                doCopy(source.getPath(), source.getRevision(), isMove, makeParents, source.getDstFile());
+                doCopy(source.getPath(), source.getRevision(), isMove, makeParents, includeMergeHistory, 
+                        source.getDstFile());
             }        
         }
     }
@@ -762,10 +807,11 @@ public class SVNCopyClient extends SVNBasicClient {
      * @deprecated
      */
     public void doCopy(File srcPath, SVNRevision srcRevision, File dstPath, boolean force, boolean isMove) throws SVNException {
-        doCopy(srcPath, srcRevision, isMove, false, dstPath);
+        doCopy(srcPath, srcRevision, isMove, false, false, dstPath);
     }
     
-    public void doCopy(File srcPath, SVNRevision srcRevision, boolean isMove, boolean makeParents, File dstPath) throws SVNException {
+    public void doCopy(File srcPath, SVNRevision srcRevision, boolean isMove, boolean makeParents, 
+            boolean includeMergeHistory, File dstPath) throws SVNException {
         srcPath = new File(SVNPathUtil.validateFilePath(srcPath.getAbsolutePath())).getAbsoluteFile();
         dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath())).getAbsoluteFile();
         if (srcRevision.isValid() && srcRevision != SVNRevision.WORKING && !isMove) {
@@ -853,11 +899,11 @@ public class SVNCopyClient extends SVNBasicClient {
                 adminArea = wcAccess.open(dstParent, true, 0);
             }
             
-            SVNWCAccess copyAccess = createWCAccess();
+            SVNWCAccess srcAccess = createWCAccess();
             try {
-                SVNAdminArea srcArea = copyAccess.probeOpen(srcPath, false, SVNWCAccess.INFINITE_DEPTH);
+                SVNAdminArea srcArea = srcAccess.probeOpen(srcPath, false, SVNWCAccess.INFINITE_DEPTH);
                 SVNEntry dstEntry = adminArea.getVersionedEntry(adminArea.getThisDirName(), false);
-                SVNEntry srcEntry = copyAccess.getVersionedEntry(srcPath, false);
+                SVNEntry srcEntry = srcAccess.getVersionedEntry(srcPath, false);
 
                 if (srcEntry.getRepositoryRoot() != null && dstEntry.getRepositoryRoot() != null &&
                         !srcEntry.getRepositoryRoot().equals(dstEntry.getRepositoryRoot())) {
@@ -884,15 +930,32 @@ public class SVNCopyClient extends SVNBasicClient {
                     }
                 }
             } finally {
-                copyAccess.close();
+                srcAccess.close();
             }
+            
+            try {
+                SVNAdminArea srcArea = null;
+                if (srcParent.equals(dstParent)) {
+                    if (srcType == SVNFileType.DIRECTORY) {
+                        srcArea = srcAccess.open(srcPath, false, SVNWCAccess.INFINITE_DEPTH);
+                    } else {
+                        srcArea = adminArea; 
+                    }
+                } else {
+                    srcArea = srcAccess.open(srcParent, false, srcType == SVNFileType.DIRECTORY ? 
+                            SVNWCAccess.INFINITE_DEPTH : 0);
+                }
+                propagateMergeInfoWithWC(srcPath, dstPath, srcArea, adminArea, includeMergeHistory);
+            } finally {
+                srcAccess.close();
+            }
+            
             if (isMove) {
                 SVNWCManager.delete(srcParentArea.getWCAccess(), srcParentArea, srcPath, true, false);
             }
         } finally {
             wcAccess.close();
         }
-        
     }
 
     private void copyAddedFile(SVNAdminArea dstParent, File srcPath, String dstName, boolean isAdded) throws SVNException {
@@ -1197,13 +1260,9 @@ public class SVNCopyClient extends SVNBasicClient {
                                                  SVNDepth.INFINITY, false, null, getCommitParameters());
                 
                 SVNCommitItem item = (SVNCommitItem) commitables.get(source.getPath());
-                SVNURL reposRoot = entry.getRepositoryRootURL();
                 SVNURL srcURL = entry.getSVNURL();
-                Map mergeInfo = calculateTargetMergeInfo(srcURL, reposRoot, 
-                                                         source.getSrcPath(), 
-                                                         source.getSrcPath(), 
-                                                         source.getSrcRevisionNumber(), 
-                                                         repository);
+                Map mergeInfo = calculateTargetMergeInfo(source.getPath(), wcAccess, srcURL,  
+                        source.getSrcPath(), source.getSrcRevisionNumber(), repository);
                 Map fileToProp = SVNPropertiesManager.getWorkingCopyPropertyValues(entry, 
                                                                                    SVNProperty.MERGE_INFO, 
                                                                                    SVNDepth.EMPTY, 
@@ -1416,9 +1475,8 @@ public class SVNCopyClient extends SVNBasicClient {
             SVNCopySource source = sources[i];
             PathDriverInfo info = (PathDriverInfo) actionHash.get(source.getDstPath());
             if (info != null && !info.isDirAdded) {
-                Map mergeInfo = calculateTargetMergeInfo(source.getURL(), repositoryRoot, null,
-                                                         info.mySrcPath, info.mySrcRevisionNumber, 
-                                                         repository);
+                Map mergeInfo = calculateTargetMergeInfo(null, null, source.getURL(), info.mySrcPath, 
+                        info.mySrcRevisionNumber, repository);
                 info.myMergeInfoProp = SVNMergeInfoManager.formatMergeInfoToString(mergeInfo);
             }
             paths.add(source.getDstPath());
@@ -1501,34 +1559,93 @@ public class SVNCopyClient extends SVNBasicClient {
                                          mergeInfoString, true);
     }
     
-    private Map calculateTargetMergeInfo(SVNURL srcURL, SVNURL reposRoot,
-                                         String srcPath, String srcRelativePath,  
-                                         long srcRevision, SVNRepository repository) throws SVNException {
-        if (srcPath == null) {
-            reposRoot = reposRoot == null ? repository.getRepositoryRoot(true) : reposRoot;
-            srcPath = srcURL.getPath().substring(reposRoot.getPath().length());
-            if (!srcPath.startsWith("/")) {
-                srcPath = "/" + srcPath;
+    private Map calculateTargetMergeInfo(File srcFile, SVNWCAccess access, SVNURL srcURL,
+            String srcRelativePath, long srcRevision, SVNRepository repository) throws SVNException {
+        
+        Map targetMergeInfo = null;
+        boolean isLocallyAdded = false;
+        SVNEntry entry = null;
+        if (access != null) {
+            entry = access.getVersionedEntry(srcFile, false);
+            if (entry.isScheduledForAddition() && !entry.isCopied()) {
+                isLocallyAdded = true;
+            }
+        }
+
+        if (!isLocallyAdded) {
+            if (access != null) {
+                if (entry.isScheduledForAddition() || entry.isScheduledForReplacement()) {
+                    if (entry.getCopyFromURL() != null) {
+                        srcURL = entry.getCopyFromSVNURL();
+                        srcRevision = entry.getCopyFromRevision();
+                    } else {
+                        srcURL = entry.getSVNURL();
+                        srcRevision = entry.getRevision();
+                    }
+                } else {
+                    srcURL = entry.getSVNURL();
+                    srcRevision = entry.getRevision();
+                }
+            }
+            
+            String srcAbsPath = getPathRelativeToRoot(srcFile, srcURL, null, access, repository);
+            targetMergeInfo = getImpliedMergeInfo(repository, srcRelativePath, srcAbsPath, srcRevision);
+            Map srcMergeInfo = repository.getMergeInfo(new String[] { srcAbsPath }, srcRevision, 
+                    SVNMergeInfoInheritance.INHERITED);
+
+            SVNMergeInfo srcInfo = (SVNMergeInfo) srcMergeInfo.get(srcAbsPath);
+            if (srcInfo != null) {
+                srcMergeInfo = srcInfo.getMergeSourcesToMergeLists();
+                targetMergeInfo = SVNMergeInfoManager.mergeMergeInfos(targetMergeInfo, srcMergeInfo, 
+                           SVNMergeRangeInheritance.EQUAL_INHERITANCE);
+            }
+        } else {
+            targetMergeInfo = new TreeMap();
+        }
+        return targetMergeInfo;
+    }
+    
+    private Map getImpliedMergeInfo(SVNRepository repos, String relPath, String path, long revision) throws SVNException {
+        Map impliedMergeInfo = new TreeMap();
+        long oldestRev = getPathLastChangeRevision(relPath, revision, repos);
+        if (!SVNRevision.isValidRevisionNumber(oldestRev)) {
+            return impliedMergeInfo;
+        }
+        SVNMergeRange range = new SVNMergeRange(oldestRev - 1, revision, true);
+        SVNMergeRangeList rangeList = new SVNMergeRangeList(new SVNMergeRange[] { range });
+        impliedMergeInfo.put(path, rangeList);
+        return impliedMergeInfo;
+    }
+    
+    private void propagateMergeInfoWithWC(File srcFile, File dstFile, SVNAdminArea srcArea, 
+            SVNAdminArea dstArea, boolean includeMergeHistory) throws SVNException {
+        Map mergeInfo = null;
+        SVNWCAccess srcAccess = srcArea.getWCAccess();
+        SVNWCAccess dstAccess = dstArea.getWCAccess();
+        SVNEntry srcEntry = srcAccess.getVersionedEntry(srcFile, false);
+        if (includeMergeHistory) {
+            if (srcEntry.getSchedule() == null || (srcEntry.isScheduledForAddition() && srcEntry.isCopied())) {
+                SVNRepository repos = createRepository(srcEntry.getSVNURL(), true);
+                String absPath = getPathRelativeToRoot(srcFile, null, null, srcAccess, repos);
+                mergeInfo = calculateTargetMergeInfo(srcFile, srcAccess, null, absPath, srcEntry.getRevision(), 
+                        repos);
+                SVNEntry dstEntry = dstAccess.getVersionedEntry(dstFile, false);
+                extendWCMergeInfo(dstFile, dstEntry, mergeInfo, dstArea);
+                return;
             }
         }
         
-        Map targetMergeInfo = new TreeMap();
-        long oldestRev = getPathLastChangeRevision(srcRelativePath, srcRevision, repository);
-        
-        if (SVNRevision.isValidRevisionNumber(oldestRev)) {
-            SVNMergeRange range = new SVNMergeRange(oldestRev - 1, srcRevision, true);
-            targetMergeInfo.put(srcPath, new SVNMergeRangeList(new SVNMergeRange[] {range}));
+        Map fileToProp = SVNPropertiesManager.getWorkingCopyPropertyValues(srcEntry, SVNProperty.MERGE_INFO, 
+                SVNDepth.EMPTY, false);
+
+        String mergeInfoString = (String) fileToProp.get(srcFile);
+        if (mergeInfoString != null) {
+            mergeInfo = SVNMergeInfoManager.parseMergeInfo(new StringBuffer(mergeInfoString), null);
         }
         
-        Map srcMergeInfo = repository.getMergeInfo(new String[] {srcPath}, srcRevision, 
-                                                           SVNMergeInfoInheritance.INHERITED);
-        SVNMergeInfo srcInfo = (SVNMergeInfo) srcMergeInfo.get(srcPath);
-        if (srcInfo != null) {
-            srcMergeInfo = srcInfo.getMergeSourcesToMergeLists();
-            targetMergeInfo = SVNMergeInfoManager.mergeMergeInfos(targetMergeInfo, srcMergeInfo, 
-                                                                  SVNMergeRangeInheritance.EQUAL_INHERITANCE);
-        }
-        return targetMergeInfo;
+        if (mergeInfo == null) {
+            SVNPropertiesManager.setProperty(dstAccess, dstFile, SVNProperty.MERGE_INFO, "", true);
+        } 
     }
     
     private static class CopyCommitPathHandler2 implements ISVNCommitPathHandler {

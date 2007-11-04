@@ -2097,7 +2097,7 @@ public class SVNClientImpl implements SVNClientInterface {
             if(isURL(destPath)){
                 client.doCopy(srcs, SVNURL.parseURIEncoded(destPath), false, !copyAsChild, makeParents, message, null);
             } else {
-                client.doCopy(srcs, new File(destPath).getAbsoluteFile(), false, makeParents);
+                client.doCopy(srcs, new File(destPath).getAbsoluteFile(), false, makeParents, false);
             } 
         } catch (SVNException e) {
             throwException(e);
@@ -2160,7 +2160,7 @@ public class SVNClientImpl implements SVNClientInterface {
             if(isURL(destPath)){
                 client.doCopy(sources, SVNURL.parseURIEncoded(destPath), true, !moveAsChild, makeParents, message, null);
             } else {
-                client.doCopy(sources, new File(destPath).getAbsoluteFile(), true, makeParents);
+                client.doCopy(sources, new File(destPath).getAbsoluteFile(), true, makeParents, false);
             }
         } catch (SVNException e) {
             throwException(e);

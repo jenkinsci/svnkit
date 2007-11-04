@@ -670,20 +670,61 @@ public class SVNBasicClient implements ISVNEventHandler {
         final long[] rev = new long[1];
         rev[0] = SVNRepository.INVALID_REVISION;
 
-        try {
-            repository.log(new String[] {relPath}, 1, revision, false, true, 1, new ISVNLogEntryHandler() {
+            repository.log(new String[] { relPath }, 1, revision, false, true, 1, false, null, 
+                    new ISVNLogEntryHandler() {
                 public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
                     rev[0] = logEntry.getRevision();
                 }
             });
-        } catch (SVNException svne) {
-            SVNErrorCode errCode = svne.getErrorMessage().getErrorCode(); 
-            if (errCode != SVNErrorCode.FS_NOT_FOUND && 
-                errCode != SVNErrorCode.RA_DAV_REQUEST_FAILED) {
-                throw svne;
+        return rev[0];
+    }
+    
+    protected String getPathRelativeToRoot(File path, SVNURL url, SVNURL reposRootURL, SVNWCAccess wcAccess,
+            SVNRepository repos) throws SVNException {
+        if (path != null) {
+            boolean cleanUp = false;
+            try {
+                if (wcAccess == null) {
+                    wcAccess = createWCAccess();
+                }
+                if (wcAccess.getAdminArea(path) == null) {
+                    wcAccess.probeOpen(path, false, 0);
+                    cleanUp = true;
+                }
+                SVNEntry entry = wcAccess.getVersionedEntry(path, false);
+                if (entry.getURL() == null) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, 
+                            "Entry ''{0}'' has no URL", path);
+                    SVNErrorManager.error(err);
+                }
+                url = entry.getSVNURL();
+                if (reposRootURL == null) {
+                    reposRootURL = entry.getRepositoryRootURL();
+                }
+            } finally {
+                if (cleanUp) {
+                    wcAccess.closeAdminArea(path);
+                }
             }
         }
-        return rev[0];
+        
+        if (reposRootURL == null) {
+            reposRootURL = repos.getRepositoryRoot(true);
+        }
+        
+        String reposRootPath = reposRootURL.getPath();
+        String absPath = url.getPath();
+        if (!absPath.startsWith(reposRootPath)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_UNRELATED_RESOURCES, 
+                    "URL ''{0}'' is not a child of repository root URL ''{1}''", new Object[] { url, 
+                    reposRootURL});
+            SVNErrorManager.error(err);
+        }
+        absPath = absPath.substring(reposRootPath.length());
+        if (!absPath.startsWith("/")) {
+            absPath = "/" + absPath;
+        }
+        return absPath;
     }
     
     protected SVNRepositoryLocation[] getLocations(SVNURL url, File path, SVNRepository repository, SVNRevision revision, SVNRevision start, SVNRevision end) throws SVNException {
