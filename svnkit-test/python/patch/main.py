@@ -125,6 +125,7 @@ command_line_parsed = False
 # The locations of the svn, svnadmin and svnlook binaries, relative to
 # the only scripts that import this file right now (they live in ../).
 # Use --bin to override these defaults.
+#svn_binary = os.path.abspath('/home/alex/workspace/svn_trunk_latest/subversion/svn/svn' + _exe)
 #svn_binary = 'svn' + _exe
 svn_binary = os.path.abspath('%ant.dir%/build/lib/jsvn' + _bat)
 #svnadmin_binary = 'svnadmin' + _exe
@@ -147,7 +148,7 @@ verbose_mode = True
 quiet_mode = False
 
 # Global variable indicating if we want test data cleaned up after success
-cleanup_mode = True
+cleanup_mode = False
 
 # Global variable indicating if svnserve should use Cyrus SASL
 enable_sasl = False
@@ -696,6 +697,14 @@ def write_restrictive_svnserve_conf(repo_dir, anon_access="none"):
     fp.write("password-db = passwd\n")
   fp.close()
 
+# Warning: because mod_dav_svn uses one shared authz file for all
+# repositories, you *cannot* use write_authz_file in any test that
+# might be run in parallel.
+# 
+# write_authz_file can *only* be used in test suites which disable
+# parallel execution at the bottom like so
+#   if __name__ == '__main__':
+#     svntest.main.run_tests(test_list, serial_only = True)
 def write_authz_file(sbox, rules, sections=None):
   """Write an authz file to SBOX, appropriate for the RA method used,
 with authorizations rules RULES mapping paths to strings containing

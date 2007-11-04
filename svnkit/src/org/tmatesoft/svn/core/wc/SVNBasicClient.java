@@ -686,8 +686,6 @@ public class SVNBasicClient implements ISVNEventHandler {
             try {
                 if (wcAccess == null) {
                     wcAccess = createWCAccess();
-                }
-                if (wcAccess.getAdminArea(path) == null) {
                     wcAccess.probeOpen(path, false, 0);
                     cleanUp = true;
                 }
