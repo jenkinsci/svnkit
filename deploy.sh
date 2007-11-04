@@ -3,7 +3,7 @@ tiger
 ant clean build-src build-library
 
 dir=/kohsuke/projects/hudson/hudson/main/lib/org.tmatesoft
-version=1.1.4-hudson-3
+version=1.1.4-hudson-4
 
 # be sure to update pom.xml and svnkit.build.properties
 
