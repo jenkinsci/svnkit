@@ -148,7 +148,7 @@ verbose_mode = True
 quiet_mode = False
 
 # Global variable indicating if we want test data cleaned up after success
-cleanup_mode = False
+cleanup_mode = True
 
 # Global variable indicating if svnserve should use Cyrus SASL
 enable_sasl = False
