@@ -1083,6 +1083,8 @@ public class SVNClientImpl implements SVNClientInterface {
                 SVNGanymedSession.shutdown();
             }
         }
+        // stop tracking me!
+        SVNClientImplTracker.deregisterClient(this);
     }
 
     public void setConfigDirectory(String configDir) throws ClientException {

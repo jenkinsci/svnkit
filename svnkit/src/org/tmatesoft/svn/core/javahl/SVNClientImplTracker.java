@@ -15,6 +15,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 
@@ -42,6 +43,20 @@ public class SVNClientImplTracker implements Runnable {
             }
         }
         
+    }
+    
+    public static void deregisterClient(SVNClientImpl impl) {
+        synchronized (ourReferences) {
+            for (Iterator clients = ourReferences.values().iterator(); clients.hasNext();) {
+                // get all clients already registered from the current thread.
+                // but there could be a lot of them?
+                // call tracker on client dispose!
+                Object client = clients.next();
+                if (impl == client) {
+                    clients.remove();
+                }
+            }
+        }
     }
 
     public void run() {
