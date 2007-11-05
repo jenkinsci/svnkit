@@ -37,7 +37,6 @@ import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNChangelistClient;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
-import org.tmatesoft.svn.core.wc.SVNPathList;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 
@@ -195,12 +194,10 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
         }
 
         if (target.isFile()) {
-            SVNPathList list = SVNPathList.create(new File[] {target.getFile()}, target.getPegRevision());
-            client.doLog(list, start, end, 
-                    getSVNEnvironment().isStopOnCopy(), 
-                    getSVNEnvironment().isVerbose(), 
-                    getSVNEnvironment().isUseMergeHistory(),
-                    getSVNEnvironment().getLimit(), revProps, this);
+            client.doLog(new File[] {target.getFile()}, start, end, target.getPegRevision(), 
+                    getSVNEnvironment().isStopOnCopy(), getSVNEnvironment().isVerbose(), 
+                    getSVNEnvironment().isUseMergeHistory(), getSVNEnvironment().getLimit(), 
+                    revProps, this);
         } else {
             targets.remove(0);
             String[] paths = (String[]) targets.toArray(new String[targets.size()]);

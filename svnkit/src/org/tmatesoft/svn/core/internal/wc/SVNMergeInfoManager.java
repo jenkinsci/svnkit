@@ -123,7 +123,7 @@ public class SVNMergeInfoManager {
         }
     }
 
-    private void  indexPathMergeInfo(long revision, String path, String mergeInfoToParse) throws SVNException {
+    private void indexPathMergeInfo(long revision, String path, String mergeInfoToParse) throws SVNException {
         boolean removeMergeInfo = false;
         Map mergeInfo = SVNMergeInfoManager.parseMergeInfo(new StringBuffer(mergeInfoToParse), null);
         if (mergeInfo.isEmpty()) {

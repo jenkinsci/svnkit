@@ -155,7 +155,7 @@ public class SVNLogCommand extends SVNCommand implements ISVNLogEntryHandler {
             File[] paths = (File[]) targets.toArray(new File[targets.size()]);
             SVNPathList pathList = SVNPathList.create(paths, pegRevision);
             SVNCompositePathList combinedPathList = SVNCompositePathList.create(pathList, changelist, false);
-            logClient.doLog(combinedPathList, startRevision, endRevision, stopOnCopy, 
+            logClient.doLog(combinedPathList.getPaths(), startRevision, endRevision, pegRevision, stopOnCopy, 
                             myReportPaths, useMergeHistory, limit, null, handler);
         }
         if (getCommandLine().hasArgument(SVNArgument.XML)) {

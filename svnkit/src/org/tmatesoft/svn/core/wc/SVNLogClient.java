@@ -407,16 +407,9 @@ public class SVNLogClient extends SVNBasicClient {
         doLog(paths, SVNRevision.UNDEFINED, startRevision, endRevision, stopOnCopy, reportPaths, limit, handler);
     }
     
-    public void doLog(ISVNPathList pathList, SVNRevision startRevision, SVNRevision endRevision, 
+    public void doLog(File[] paths, SVNRevision startRevision, SVNRevision endRevision, SVNRevision pegRevision,
                       boolean stopOnCopy, boolean reportPaths, boolean includeMergedRevisions, 
                       long limit, String[] revisionProperties, final ISVNLogEntryHandler handler) throws SVNException {
-        if (pathList == null) {
-            return;
-        }
-
-        File[] paths = pathList.getPaths();
-        
-        SVNRevision pegRevision = pathList.getPegRevision();
         if (paths == null || paths.length == 0 || handler == null) {
             return;
         }
@@ -433,12 +426,14 @@ public class SVNLogClient extends SVNBasicClient {
                 endRevision = SVNRevision.create(0);
             }
         }
+
         ISVNLogEntryHandler wrappingHandler = new ISVNLogEntryHandler() {
             public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
                 checkCancelled();
                 handler.handleLogEntry(logEntry);
             }
         };
+        
         SVNURL[] urls = new SVNURL[paths.length];
         SVNWCAccess wcAccess = createWCAccess();
         for (int i = 0; i < paths.length; i++) {
@@ -543,9 +538,10 @@ public class SVNLogClient extends SVNBasicClient {
      *                         different repositories
      *                         </ul>
      */
-    public void doLog(File[] paths, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean reportPaths, long limit, final ISVNLogEntryHandler handler) throws SVNException {
-        SVNPathList pathList = SVNPathList.create(paths, pegRevision);
-        doLog(pathList, startRevision, endRevision, stopOnCopy, reportPaths, 
+    public void doLog(File[] paths, SVNRevision pegRevision, SVNRevision startRevision, 
+            SVNRevision endRevision, boolean stopOnCopy, boolean reportPaths, long limit, 
+            final ISVNLogEntryHandler handler) throws SVNException {
+        doLog(paths, startRevision, endRevision, pegRevision, stopOnCopy, reportPaths, 
               false, limit, null, handler);
     }
     
