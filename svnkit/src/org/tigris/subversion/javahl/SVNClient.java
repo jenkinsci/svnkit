@@ -166,9 +166,6 @@ public class SVNClient implements SVNClientInterface {
     public void cleanup(String path) throws ClientException {
         myDelegate.cleanup(path);
     }
-    public void resolved(String path, int depth) throws SubversionException {
-        myDelegate.resolved(path, depth);
-    }
 
     public void resolved(String path, boolean recurse) throws ClientException {
         myDelegate.resolved(path, recurse);
@@ -389,10 +386,6 @@ public class SVNClient implements SVNClientInterface {
         return myDelegate.checkout(moduleName, destPath, revision, pegRevision, recurse, ignoreExternals, allowUnverObstructions);
     }
 
-    public void copy(CopySource[] sources, String destPath, String message, boolean copyAsChild) throws ClientException {
-        myDelegate.copy(sources, destPath, message, copyAsChild);
-    }
-
     public void diffSummarize(String target1, Revision revision1, String target2, Revision revision2, boolean recurse, boolean ignoreAncestry, DiffSummaryReceiver receiver) throws ClientException {
         myDelegate.diffSummarize(target1, revision1, target2, revision2, recurse, ignoreAncestry, receiver);
     }
@@ -401,20 +394,8 @@ public class SVNClient implements SVNClientInterface {
         return myDelegate.doSwitch(path, url, revision, recurse, allowUnverObstructions);
     }
 
-    public void move(String[] srcPaths, String destPath, String message, boolean force, boolean moveAsChild) throws ClientException {
-        myDelegate.move(srcPaths, destPath, message, force, moveAsChild);
-    }
-
     public void setProgressListener(ProgressListener listener) {
         myDelegate.setProgressListener(listener);
-    }
-
-    public long update(String path, Revision revision, boolean recurse, boolean ignoreExternals, boolean allowUnverObstructions) throws ClientException {
-        return myDelegate.update(path, revision, recurse, ignoreExternals, allowUnverObstructions);
-    }
-
-    public long[] update(String[] path, Revision revision, boolean recurse, boolean ignoreExternals, boolean allowUnverObstructions) throws ClientException {
-        return myDelegate.update(path, revision, recurse, ignoreExternals, allowUnverObstructions);
     }
 
     public void addToChangelist(String[] paths, String changelist) throws ClientException {
@@ -439,14 +420,6 @@ public class SVNClient implements SVNClientInterface {
 
     public void blame(String path, Revision pegRevision, Revision revisionStart, Revision revisionEnd, boolean ignoreMimeType, BlameCallback callback) throws ClientException {
         myDelegate.blame(path, pegRevision, revisionStart, revisionEnd, ignoreMimeType, callback);
-    }
-
-    public LogMessage[] logMessages(String path, Revision pegRevision, Revision revisionStart, Revision revisionEnd, boolean stopOnCopy, boolean discoverPath, long limit) throws ClientException {
-        return myDelegate.logMessages(path, pegRevision, revisionStart, revisionEnd, stopOnCopy, discoverPath, limit);
-    }
-
-    public void properties(String path, Revision revision, Revision pegRevision, boolean recurse, ProplistCallback callback) throws ClientException {
-        myDelegate.properties(path, revision, pegRevision, recurse, callback);
     }
 
     public long checkout(String moduleName, String destPath, Revision revision, Revision pegRevision, int depth, boolean ignoreExternals, boolean allowUnverObstructions) throws ClientException {
@@ -485,10 +458,6 @@ public class SVNClient implements SVNClientInterface {
         myDelegate.info2(pathOrUrl, revision, pegRevision, recurse, callback);
     }
 
-    public void logMessages(String path, Revision pegRevision, Revision revisionStart, Revision revisionEnd, boolean stopOnCopy, boolean discoverPath, long limit, LogMessageCallback callback) throws ClientException {
-        myDelegate.logMessages(path, pegRevision, revisionStart, revisionEnd, stopOnCopy, discoverPath, limit, callback);
-    }
-
     public void merge(String path1, Revision revision1, String path2, Revision revision2, String localPath, boolean force, int depth, boolean ignoreAncestry, boolean dryRun) throws ClientException {
         myDelegate.merge(path1, revision1, path2, revision2, localPath, force, depth, ignoreAncestry, dryRun);
     }
@@ -499,10 +468,6 @@ public class SVNClient implements SVNClientInterface {
 
     public void merge(String path, Revision pegRevision, RevisionRange[] revisions, String localPath, boolean force, int depth, boolean ignoreAncestry, boolean dryRun) throws ClientException {
         myDelegate.merge(path, pegRevision, revisions, localPath, force, depth, ignoreAncestry, dryRun);
-    }
-
-    public Status[] status(String path, int depth, boolean onServer, boolean getAll, boolean noIgnore, boolean ignoreExternals) throws ClientException {
-        return myDelegate.status(path, depth, onServer, getAll, noIgnore, ignoreExternals);
     }
 
     public long update(String path, Revision revision, int depth, boolean ignoreExternals, boolean allowUnverObstructions) throws ClientException {
@@ -521,40 +486,16 @@ public class SVNClient implements SVNClientInterface {
         myDelegate.list(url, revision, pegRevision, depth, direntFields, fetchLocks, callback);
     }
 
-    public void copy(CopySource[] sources, String destPath, String message, boolean copyAsChild, boolean makeParents) throws ClientException {
-        myDelegate.copy(sources, destPath, message, copyAsChild, makeParents);
-    }
-
     public void mkdir(String[] path, String message, boolean makeParents) throws ClientException {
         myDelegate.mkdir(path, message, makeParents);
-    }
-
-    public void move(String[] srcPaths, String destPath, String message, boolean force, boolean moveAsChild, boolean makeParents) throws ClientException {
-        myDelegate.move(srcPaths, destPath, message, force, moveAsChild, makeParents);
     }
 
     public void properties(String path, Revision revision, Revision pegRevision, int depth, ProplistCallback callback) throws ClientException {
         myDelegate.properties(path, revision, pegRevision, depth, callback);
     }
 
-    public void add(String path, boolean recurse, boolean force, boolean noIgnores, boolean addParents) throws ClientException {
-        myDelegate.add(path, recurse, force, noIgnores, addParents);
-    }
-
-    public void logMessages(String path, Revision pegRevision, Revision revisionStart, Revision revisionEnd, boolean stopOnCopy, boolean discoverPath, boolean includeMergedRevisions, long limit, LogMessageCallback callback) throws ClientException {
-        myDelegate.logMessages(path, pegRevision, revisionStart, revisionEnd, stopOnCopy, discoverPath, includeMergedRevisions, limit, callback);
-    }
-
-    public void logMessages(String path, Revision pegRevision, Revision revisionStart, Revision revisionEnd, boolean stopOnCopy, boolean discoverPath, boolean includeMergedRevisions, boolean omitLogText, long limit, LogMessageCallback callback) throws ClientException {
-        myDelegate.logMessages(path, pegRevision, revisionStart, revisionEnd, stopOnCopy, discoverPath, includeMergedRevisions, omitLogText, limit, callback);
-    }
-
     public void setConflictResolver(ConflictResolverCallback listener) {
         myDelegate.setConflictResolver(listener);
-    }
-
-    public long doSwitch(String path, String url, Revision revision, int depth, boolean ignoreExternals, boolean allowUnverObstructions) throws ClientException {
-        return myDelegate.doSwitch(path, url, revision, depth, ignoreExternals, allowUnverObstructions);
     }
 
     public void blame(String path, Revision pegRevision, Revision revisionStart, Revision revisionEnd, boolean ignoreMimeType, boolean includeMergedRevisions, BlameCallback2 callback) throws ClientException {

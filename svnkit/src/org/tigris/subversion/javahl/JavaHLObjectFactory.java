@@ -39,6 +39,7 @@ import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.SVNConflictChoice;
 
 /**
  * @version 1.1.1
@@ -231,7 +232,24 @@ public class JavaHLObjectFactory {
                 return SVNDepth.UNKNOWN;
         }
     }
-    
+
+    public static SVNConflictChoice getConflictChoice(int conflictResult){
+        switch (conflictResult) {
+            case ConflictResult.chooseBase:
+                return SVNConflictChoice.BASE;
+            case ConflictResult.chooseMerged:
+                return SVNConflictChoice.MERGED;
+            case ConflictResult.chooseMine:
+                return SVNConflictChoice.MINE;
+            case ConflictResult.chooseTheirs:
+                return SVNConflictChoice.THEIRS;
+            case ConflictResult.postpone:
+                return SVNConflictChoice.POSTPONE;
+            default:
+                return SVNConflictChoice.MERGED;
+        }
+    }
+
     public static DiffSummary createDiffSummary(SVNDiffStatus status) {
         int diffStatus = -1;
         if (status.getModificationType() == SVNStatusType.STATUS_NORMAL || 
