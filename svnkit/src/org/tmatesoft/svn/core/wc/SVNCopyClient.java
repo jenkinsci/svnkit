@@ -351,6 +351,11 @@ public class SVNCopyClient extends SVNBasicClient {
     }
     
     public SVNCommitInfo doCopy(SVNCopySource[] sources, SVNURL dstURL, boolean isMove, boolean failWhenDstExists, boolean makeParents, String commitMessage, Map revisionProperties) throws SVNException {
+        if (sources.length > 1 && failWhenDstExists) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_MULTIPLE_SOURCES_DISALLOWED);
+            SVNErrorManager.error(err);
+        }
+        
         for (int i = 0; i < sources.length; i++) {
             SVNCopySource source = sources[i]; 
             SVNRevision pegRevision = source.getPegRevision();
@@ -474,10 +479,11 @@ public class SVNCopyClient extends SVNBasicClient {
     }
     
     public long doCopy(SVNURL srcURL, SVNRevision pegRevision, SVNRevision srcRevision, File dstPath) throws SVNException {
-        return doCopy(srcURL, pegRevision, srcRevision, dstPath, false);
+        return doCopy(srcURL, pegRevision, srcRevision, dstPath, false, false);
     }
     
-    public long doCopy(SVNURL srcURL, SVNRevision pegRevision, SVNRevision srcRevision, File dstPath, boolean makeParents) throws SVNException {
+    public long doCopy(SVNURL srcURL, SVNRevision pegRevision, SVNRevision srcRevision, File dstPath, 
+            boolean makeParents, boolean failWhenDstExists) throws SVNException {
         dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath())).getAbsoluteFile();
 
         if (pegRevision == SVNRevision.BASE || pegRevision == SVNRevision.COMMITTED || pegRevision == SVNRevision.PREVIOUS) {
@@ -511,6 +517,10 @@ public class SVNCopyClient extends SVNBasicClient {
         
         SVNFileType dstFileType = SVNFileType.getType(dstPath);
         if (dstFileType == SVNFileType.DIRECTORY) {
+            if (failWhenDstExists) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, "Path ''{0}'' already exists", dstPath);
+                SVNErrorManager.error(err);
+            }
             dstPath = new File(dstPath, SVNPathUtil.tail(srcURL.getPath()));
         } else if (dstFileType != SVNFileType.NONE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "File ''{0}'' already exists", dstPath);
@@ -632,7 +642,12 @@ public class SVNCopyClient extends SVNBasicClient {
     }
 
     public void doCopy(SVNCopySource[] sources, File dstPath, boolean isMove, boolean makeParents, 
-            boolean includeMergeHistory) throws SVNException {
+            boolean failWhenDstExists, boolean includeMergeHistory) throws SVNException {
+        if (sources.length > 1 && failWhenDstExists) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_MULTIPLE_SOURCES_DISALLOWED);
+            SVNErrorManager.error(err);
+        }
+        
         dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath())).getAbsoluteFile();
 
         for (int i = 0; i < sources.length; i++) {
@@ -742,10 +757,11 @@ public class SVNCopyClient extends SVNBasicClient {
         for (int i = 0; i < sources.length; i++) {
             SVNCopySource source = sources[i];
             if (srcsAreURLs) {
-                doCopy(source.getURL(), source.getPegRevision(), source.getRevision(), source.getDstFile(), makeParents);
+                doCopy(source.getURL(), source.getPegRevision(), source.getRevision(), source.getDstFile(), 
+                        makeParents, failWhenDstExists);
             } else {
                 doCopy(source.getPath(), source.getRevision(), isMove, makeParents, includeMergeHistory, 
-                        source.getDstFile());
+                        failWhenDstExists, source.getDstFile());
             }        
         }
     }
@@ -807,11 +823,11 @@ public class SVNCopyClient extends SVNBasicClient {
      * @deprecated
      */
     public void doCopy(File srcPath, SVNRevision srcRevision, File dstPath, boolean force, boolean isMove) throws SVNException {
-        doCopy(srcPath, srcRevision, isMove, false, false, dstPath);
+        doCopy(srcPath, srcRevision, isMove, false, false, false, dstPath);
     }
     
     public void doCopy(File srcPath, SVNRevision srcRevision, boolean isMove, boolean makeParents, 
-            boolean includeMergeHistory, File dstPath) throws SVNException {
+            boolean includeMergeHistory, boolean failWhenDstExists, File dstPath) throws SVNException {
         srcPath = new File(SVNPathUtil.validateFilePath(srcPath.getAbsolutePath())).getAbsoluteFile();
         dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath())).getAbsoluteFile();
         if (srcRevision.isValid() && srcRevision != SVNRevision.WORKING && !isMove) {
@@ -854,6 +870,11 @@ public class SVNCopyClient extends SVNBasicClient {
         // 4. if dst exists - use its child
         SVNFileType dstType = SVNFileType.getType(dstPath);
         if (dstType == SVNFileType.DIRECTORY) {
+            if (failWhenDstExists) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, "Path ''{0}'' already exists", dstPath);
+                SVNErrorManager.error(err);
+            }
+
             dstPath = new File(dstPath, srcPath.getName());
             dstType = SVNFileType.getType(dstPath);
             if (dstType != SVNFileType.NONE) {

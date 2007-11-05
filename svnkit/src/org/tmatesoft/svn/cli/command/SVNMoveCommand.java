@@ -116,6 +116,6 @@ public class SVNMoveCommand extends SVNCommand {
 
         getClientManager().setEventHandler(new SVNCommandEventProcessor(out, err, false));
         SVNCopyClient updater = getClientManager().getCopyClient();
-        updater.doCopy(sources, absoluteDstFile, true, makeParents, false);
+        updater.doCopy(sources, absoluteDstFile, true, makeParents, false, false);
     }
 }

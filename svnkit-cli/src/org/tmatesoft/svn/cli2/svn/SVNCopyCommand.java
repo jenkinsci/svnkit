@@ -102,7 +102,7 @@ public class SVNCopyCommand extends SVNCommand {
                 getSVNEnvironment().printCommitInfo(info);
             }
         } else {
-            client.doCopy(copySources, dst.getFile(), false, getSVNEnvironment().isParents(), 
+            client.doCopy(copySources, dst.getFile(), false, getSVNEnvironment().isParents(), false, 
                     getSVNEnvironment().isUseMergeHistory());
         }
     }

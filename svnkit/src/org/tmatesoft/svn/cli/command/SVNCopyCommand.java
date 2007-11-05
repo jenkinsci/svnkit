@@ -103,7 +103,7 @@ public class SVNCopyCommand extends SVNCommand {
             SVNRevision srcRevision = SVNRevision.parse((String) getCommandLine().getArgumentValue(SVNArgument.REVISION));
             sources[i] = new SVNCopySource(pegRevision, srcRevision, new File(absoluteSrcPath));
         }
-        updater.doCopy(sources, absoluteDstFile, false, makeParents, false);
+        updater.doCopy(sources, absoluteDstFile, false, makeParents, false, false);
     }
 
     private void runRemote(PrintStream out, PrintStream err) throws SVNException {
@@ -161,7 +161,7 @@ public class SVNCopyCommand extends SVNCommand {
             SVNRevision revision = SVNRevision.parse((String) getCommandLine().getArgumentValue(SVNArgument.REVISION));
             sources[i] = new SVNCopySource(pegRevision, revision, SVNURL.parseURIEncoded(srcURL));
         }
-        updater.doCopy(sources, new File(dstPath), false, makeParents, false);
+        updater.doCopy(sources, new File(dstPath), false, makeParents, false, false);
     }
     
     private void runLocalToRemote(final PrintStream out, PrintStream err) throws SVNException {
