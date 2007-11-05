@@ -48,6 +48,7 @@ public class SVNCopyCommand extends SVNCommand {
         options = SVNOption.addLogMessageOptions(options);
         options = SVNOption.addAuthOptions(options);
         options.add(SVNOption.CONFIG_DIR);
+        options.add(SVNOption.USE_MERGE_HISTORY);
         return options;
     }
 
