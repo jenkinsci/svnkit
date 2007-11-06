@@ -214,6 +214,8 @@ svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNRemoteStatusEditor.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNSQLiteDBProcessor.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNWinCryptPasswordCipher.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/ISVNEntryHandler.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/SVNAdminArea15.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/SVNAdminArea15Factory.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/SVNTranslator.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/config/README.txt eol=lf
 svnkit/src/org/tmatesoft/svn/core/internal/wc/config/config eol=lf

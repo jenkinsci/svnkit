@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.wc.admin;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -1272,6 +1273,10 @@ public abstract class SVNAdminArea {
     protected abstract int getFormatVersion();
 
     protected abstract Map fetchEntries() throws SVNException;
+
+    protected abstract boolean readExtraOptions(BufferedReader reader, Map entryAttrs) throws SVNException, IOException;
+
+    protected abstract void writeExtraOptions(Writer writer, String entryName, Map entryAttrs, int emptyFields) throws SVNException, IOException;
 
     protected SVNAdminArea(File dir){
         myDirectory = dir;

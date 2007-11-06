@@ -313,7 +313,6 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                 myEntries = null;
             }
         }
-    
     }
 
     public void saveVersionedProperties(SVNLog log, boolean close) throws SVNException {
@@ -1040,6 +1039,13 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         return propName != null && !SVNProperty.CACHABLE_PROPS.equals(propName) && 
                !SVNProperty.PRESENT_PROPS.equals(propName) && !SVNProperty.HAS_PROP_MODS.equals(propName) && 
                !SVNProperty.HAS_PROPS.equals(propName);
+    }
+
+    protected boolean readExtraOptions(BufferedReader reader, Map entryAttrs) throws SVNException, IOException {
+        return false;
+    }
+
+    protected void writeExtraOptions(Writer writer, String entryName, Map entryAttrs, int emptyFields) throws SVNException, IOException {
     }
 
 }

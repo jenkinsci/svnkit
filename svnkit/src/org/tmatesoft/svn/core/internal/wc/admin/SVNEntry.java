@@ -11,7 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.wc.admin;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 

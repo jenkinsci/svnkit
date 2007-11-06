@@ -62,13 +62,12 @@ public class SVNAdminArea14 extends SVNAdminArea {
         SVNProperty.NEEDS_LOCK
     };
     
-    public static final int WC_FORMAT = 9;
+    public static final int WC_FORMAT = 8;
     
     protected static final String ATTRIBUTE_COPIED = "copied";
     protected static final String ATTRIBUTE_DELETED = "deleted";
     protected static final String ATTRIBUTE_ABSENT = "absent";
     protected static final String ATTRIBUTE_INCOMPLETE = "incomplete";
-    protected static final String ATTRIBUTE_KEEP_LOCAL = "keep-local";
     protected static final String ATTRIBUTE_HAS_PROPS = "has-props";
     protected static final String ATTRIBUTE_HAS_PROP_MODS = "has-prop-mods";
     protected static final String KILL_ADM_ONLY = "adm-only";
@@ -646,7 +645,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         return entries;
     }
 
-    private SVNEntry readEntry(BufferedReader reader, int entryNumber) throws IOException, SVNException {
+    protected SVNEntry readEntry(BufferedReader reader, int entryNumber) throws IOException, SVNException {
         String line = reader.readLine();
         if (line == null && entryNumber > 1) {
             return null;
@@ -936,44 +935,10 @@ public class SVNAdminArea14 extends SVNAdminArea {
             entryAttrs.put(SVNProperty.LOCK_CREATION_DATE, lockCreationDate);
         }
 
-        line = reader.readLine();
-        if (isEntryFinished(line)) {
+        if (readExtraOptions(reader, entryAttrs)) {
             return entry;
-        }
-        String changelist = parseString(line);
-        if (changelist != null) {
-            entryAttrs.put(SVNProperty.CHANGELIST, changelist);
-        }
-
-        line = reader.readLine();
-        if (isEntryFinished(line)) {
-            return entry;
-        }
-        boolean keepLocal = parseBoolean(line, ATTRIBUTE_KEEP_LOCAL);
-        if (keepLocal) {
-            entryAttrs.put(SVNProperty.KEEP_LOCAL, SVNProperty.toString(keepLocal));
         }
         
-        line = reader.readLine();
-        if (isEntryFinished(line)) {
-            return entry;
-        }
-        String workingSize = parseString(line);
-        if (workingSize != null) {
-            entryAttrs.put(SVNProperty.WORKING_SIZE, workingSize);
-        }
-        
-        line = reader.readLine();
-        if (isEntryFinished(line)) {
-            return entry;
-        }
-        String depthStr = parseValue(line);
-        if (depthStr == null) {
-            entryAttrs.put(SVNProperty.DEPTH, SVNDepth.INFINITY.getName());
-        } else {
-            entryAttrs.put(SVNProperty.DEPTH, depthStr);
-        }
-
         do {
             line = reader.readLine();
             if (line == null) {
@@ -987,11 +952,11 @@ public class SVNAdminArea14 extends SVNAdminArea {
         return entry;
     }
     
-    private boolean isEntryFinished(String line) {
+    protected boolean isEntryFinished(String line) {
         return line != null && line.length() > 0 && line.charAt(0) == '\f';
     }
     
-    private boolean parseBoolean(String line, String field) throws SVNException {
+    protected boolean parseBoolean(String line, String field) throws SVNException {
         line = parseValue(line);
         if (line != null) {
             if (!line.equals(field)) {
@@ -1003,7 +968,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         return false;
     }
     
-    private String parseString(String line) throws SVNException {
+    protected String parseString(String line) throws SVNException {
         if (line == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Unexpected end of entry");
             SVNErrorManager.error(err);
@@ -1045,7 +1010,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         return line;
     }
     
-    private String parseValue(String line) throws SVNException {
+    protected String parseValue(String line) throws SVNException {
         if (line == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Unexpected end of entry");
             SVNErrorManager.error(err);
@@ -1057,6 +1022,10 @@ public class SVNAdminArea14 extends SVNAdminArea {
     
     public String getThisDirName() {
         return THIS_DIR;
+    }
+    
+    protected boolean readExtraOptions(BufferedReader reader, Map entryAttrs) throws SVNException, IOException {
+        return false;
     }
     
     protected void writeEntries(Writer writer) throws IOException, SVNException {
@@ -1362,41 +1331,15 @@ public class SVNAdminArea14 extends SVNAdminArea {
             ++emptyFields;
         }
         
-        String changelist = (String)entry.get(SVNProperty.CHANGELIST); 
-        if (writeString(writer, changelist, emptyFields)) {
-            emptyFields = 0;
-        } else {
-            ++emptyFields;
-        }
-        
-        String keepLocalAttr = (String)entry.get(SVNProperty.KEEP_LOCAL);
-        if (SVNProperty.booleanValue(keepLocalAttr)) {
-            writeValue(writer, ATTRIBUTE_KEEP_LOCAL, emptyFields);
-            emptyFields = 0;
-        } else {
-            ++emptyFields;
-        }
-
-        String workingSize = (String)entry.get(SVNProperty.WORKING_SIZE);
-        if (writeString(writer, workingSize, emptyFields)) {
-            emptyFields = 0;
-        } else {
-            ++emptyFields;
-        }
-        
-        String depth = (String)entry.get(SVNProperty.DEPTH);
-        if (!isSubDir && SVNDepth.fromString(depth) != SVNDepth.INFINITY) {
-            writeValue(writer, depth, emptyFields);
-            emptyFields = 0;
-        } else {
-            ++emptyFields;
-        }
-        
+        writeExtraOptions(writer, name, entry, emptyFields);
         writer.write("\f\n");
         writer.flush();
     }
     
-    private boolean writeString(Writer writer, String str, int emptyFields) throws IOException {
+    protected void writeExtraOptions(Writer writer, String entryName, Map entryAttrs, int emptyFields) throws SVNException, IOException {
+    }
+    
+    protected boolean writeString(Writer writer, String str, int emptyFields) throws IOException {
         if (str != null && str.length() > 0) {
             for (int i = 0; i < emptyFields; i++) {
                 writer.write('\n');
@@ -1416,7 +1359,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         return false;
     }
     
-    private boolean writeValue(Writer writer, String val, int emptyFields) throws IOException {
+    protected boolean writeValue(Writer writer, String val, int emptyFields) throws IOException {
         if (val != null && val.length() > 0) {
             for (int i = 0; i < emptyFields; i++) {
                 writer.write('\n');
@@ -1428,7 +1371,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         return false;
     }
     
-    private boolean writeTime(Writer writer, String val, int emptyFields) throws IOException, SVNException {
+    protected boolean writeTime(Writer writer, String val, int emptyFields) throws IOException, SVNException {
         if (val != null && val.length() > 0) {
             long time = SVNDate.parseDatestamp(val).getTime();
             if (time > 0) {
@@ -1443,7 +1386,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         return false;
     }
 
-    private boolean writeRevision(Writer writer, String rev, int emptyFields) throws IOException {
+    protected boolean writeRevision(Writer writer, String rev, int emptyFields) throws IOException {
         if (rev != null && rev.length() > 0 && Long.parseLong(rev) >= 0) {
             for (int i = 0; i < emptyFields; i++) {
                 writer.write('\n');
@@ -1513,7 +1456,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         try {
             formatFile = createMyself ? getAdminFile("format") : formatFile;
             os = SVNFileUtil.openFileForWriting(formatFile);
-            os.write(String.valueOf(WC_FORMAT).getBytes("UTF-8"));
+            os.write(String.valueOf(getFormatVersion()).getBytes("UTF-8"));
             os.write('\n');            
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
@@ -1523,7 +1466,8 @@ public class SVNAdminArea14 extends SVNAdminArea {
         }
     }
     
-    public SVNAdminArea createVersionedDirectory(File dir, String url, String rootURL, String uuid, long revNumber, boolean createMyself, SVNDepth depth) throws SVNException {
+    public SVNAdminArea createVersionedDirectory(File dir, String url, String rootURL, String uuid, 
+            long revNumber, boolean createMyself, SVNDepth depth) throws SVNException {
         dir = createMyself ? getRoot() : dir;
         dir.mkdirs();
         File adminDir = createMyself ? getAdminDirectory() : new File(dir, SVNFileUtil.getAdminDirectoryName());
@@ -1549,7 +1493,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         // for backward compatibility 
         createFormatFile(createMyself ? null : new File(adminDir, "format"), createMyself);
 
-        SVNAdminArea adminArea = createMyself ? this : new SVNAdminArea14(dir);
+        SVNAdminArea adminArea = createMyself ? this : createAdminAreaForDir(dir);
         adminArea.setLocked(true);
         SVNEntry rootEntry = adminArea.getEntry(adminArea.getThisDirName(), true);
         if (rootEntry == null) {
@@ -1648,13 +1592,15 @@ public class SVNAdminArea14 extends SVNAdminArea {
     }
 
     public void postUpgradeFormat(int format) throws SVNException {
-        if (format == WC_FORMAT) {
+        if (format == getFormatVersion()) {
             createFormatFile(null, true);
             return;
         }
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Unexpected format number:\n" + 
-                                                                           "   expected: {0,number,integer}\n" + 
-                                                                           "     actual: {1,number,integer}", new Object[]{new Integer(WC_FORMAT), new Integer(format)});
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
+                "Unexpected format number:\n" + 
+                "   expected: {0,number,integer}\n" + 
+                "     actual: {1,number,integer}", 
+                new Object[] { new Integer(getFormatVersion()), new Integer(format) });
         SVNErrorManager.error(err);
     }
 
@@ -1699,8 +1645,9 @@ public class SVNAdminArea14 extends SVNAdminArea {
                 if (currentEntry.getKind() == SVNNodeKind.FILE || currentEntry.getKind() == SVNNodeKind.DIR) {
                     removeFromRevisionControl(currentEntry.getName(), false, false);
                 }
-                }
+                
             }
+        }
 
         long fileLength = 0;
         if (!getThisDirName().equals(fileName)) {
@@ -1962,8 +1909,14 @@ public class SVNAdminArea14 extends SVNAdminArea {
         return WC_FORMAT;
     }
 
-    protected boolean isEntryPropertyApplicable(String name) {
-        return true;
+    protected SVNAdminArea createAdminAreaForDir(File dir) {
+        return new SVNAdminArea14(dir);
+    }
+    
+    protected boolean isEntryPropertyApplicable(String propName) {
+        return propName != null && !SVNProperty.KEEP_LOCAL.equals(propName) && 
+        !SVNProperty.CHANGELIST.equals(propName) && !SVNProperty.WORKING_SIZE.equals(propName) && 
+        !SVNProperty.DEPTH.equals(propName);
     }
 
 }
