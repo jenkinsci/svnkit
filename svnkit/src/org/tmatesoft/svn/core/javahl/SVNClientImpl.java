@@ -65,6 +65,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationStorage;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
@@ -105,6 +106,7 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.core.wc.SVNCommitPacket;
 import org.tmatesoft.svn.util.Version;
 
 
@@ -624,6 +626,43 @@ public class SVNClientImpl implements SVNClientInterface {
             throwException(e);
         }
         return -1;
+    }
+
+    public long[] commit(String[] path, String message, boolean recurse, boolean noUnlock, boolean atomicCommit) throws ClientException {
+        if(path == null || path.length == 0){
+            return new long[0];
+        }
+        SVNCommitClient client = getSVNCommitClient();
+        File[] files = new File[path.length];
+        for (int i = 0; i < path.length; i++) {
+            files[i] = new File(path[i]).getAbsoluteFile();
+        }
+        SVNCommitPacket[] packets = null;
+        SVNCommitInfo[] commitResults = null;
+        try {
+            if(myMessageHandler != null){
+                client.setCommitHandler(new ISVNCommitHandler(){
+                    public String getCommitMessage(String cmessage, SVNCommitItem[] commitables) {
+                        CommitItem[] items = JavaHLObjectFactory.getCommitItems(commitables);
+                        return myMessageHandler.getLogMessage(items);
+                    }
+                });
+            }
+            packets = client.doCollectCommitItems(files, noUnlock, !recurse, recurse, atomicCommit);
+            commitResults = client.doCommit(packets, noUnlock, message);
+        } catch (SVNException e) {
+            throwException(e);
+        }
+        if (commitResults != null && commitResults.length > 0) {
+            long[] revisions = new long[commitResults.length];
+            for (int i = 0; i < commitResults.length; i++) {
+                SVNCommitInfo result = commitResults[i];
+                revisions[i] = result.getNewRevision();
+            }
+            return revisions;
+
+        }
+        return new long[0];
     }
 
     public void copy(String srcPath, String destPath, String message, Revision revision) throws ClientException {
