@@ -12,12 +12,16 @@
 package org.tmatesoft.svn.core.io;
 
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.ISVNCanceller;
@@ -1519,6 +1523,23 @@ public abstract class SVNRepository {
                         reporter.finishReport();
                     }            
                 }, editor);
+    }
+    
+    public void checkoutFiles(long revision, String[] paths, ISVNFileCheckoutTarget target) throws SVNException {
+        final long lastRev = revision >= 0 ? revision : getLatestRevision();
+        final List pathsList = new ArrayList(Arrays.asList(paths));
+        Collections.sort(pathsList, SVNPathUtil.PATH_COMPARATOR);
+        ISVNReporterBaton reporterBaton = new ISVNReporterBaton() {
+            public void report(ISVNReporter reporter) throws SVNException {
+                reporter.setPath("", null, lastRev, false);
+                for (Iterator ps = pathsList.iterator(); ps.hasNext();) {
+                    String path = (String) ps.next();
+                    reporter.deletePath(path);
+                }
+                reporter.finishReport();
+            }
+        };
+        update(lastRev, null, SVNDepth.INFINITY, false, reporterBaton, new SVNFileCheckoutEditor(target));
     }
     
     /**
