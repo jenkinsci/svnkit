@@ -382,18 +382,6 @@ public class SVNClient implements SVNClientInterface {
     public static void initNative() {
     }
 
-    public long checkout(String moduleName, String destPath, Revision revision, Revision pegRevision, boolean recurse, boolean ignoreExternals, boolean allowUnverObstructions) throws ClientException {
-        return myDelegate.checkout(moduleName, destPath, revision, pegRevision, recurse, ignoreExternals, allowUnverObstructions);
-    }
-
-    public void diffSummarize(String target1, Revision revision1, String target2, Revision revision2, boolean recurse, boolean ignoreAncestry, DiffSummaryReceiver receiver) throws ClientException {
-        myDelegate.diffSummarize(target1, revision1, target2, revision2, recurse, ignoreAncestry, receiver);
-    }
-
-    public long doSwitch(String path, String url, Revision revision, boolean recurse, boolean allowUnverObstructions) throws ClientException {
-        return myDelegate.doSwitch(path, url, revision, recurse, allowUnverObstructions);
-    }
-
     public void setProgressListener(ProgressListener listener) {
         myDelegate.setProgressListener(listener);
     }
@@ -416,10 +404,6 @@ public class SVNClient implements SVNClientInterface {
 
     public void remove(String[] path, String message, boolean force, boolean keepLocal) throws ClientException {
         myDelegate.remove(path, message, force, keepLocal);
-    }
-
-    public void blame(String path, Revision pegRevision, Revision revisionStart, Revision revisionEnd, boolean ignoreMimeType, BlameCallback callback) throws ClientException {
-        myDelegate.blame(path, pegRevision, revisionStart, revisionEnd, ignoreMimeType, callback);
     }
 
     public long checkout(String moduleName, String destPath, Revision revision, Revision pegRevision, int depth, boolean ignoreExternals, boolean allowUnverObstructions) throws ClientException {
@@ -446,24 +430,12 @@ public class SVNClient implements SVNClientInterface {
         return myDelegate.doExport(srcPath, destPath, revision, pegRevision, force, ignoreExternals, depth, nativeEOL);
     }
 
-    public long doSwitch(String path, String url, Revision revision, int depth, boolean allowUnverObstructions) throws ClientException {
-        return myDelegate.doSwitch(path, url, revision, depth, allowUnverObstructions);
-    }
-
     public MergeInfo getMergeInfo(String path, Revision revision) throws SubversionException {
         return myDelegate.getMergeInfo(path, revision);
     }
 
-    public void info2(String pathOrUrl, Revision revision, Revision pegRevision, boolean recurse, InfoCallback callback) throws ClientException {
-        myDelegate.info2(pathOrUrl, revision, pegRevision, recurse, callback);
-    }
-
     public void merge(String path1, Revision revision1, String path2, Revision revision2, String localPath, boolean force, int depth, boolean ignoreAncestry, boolean dryRun) throws ClientException {
         myDelegate.merge(path1, revision1, path2, revision2, localPath, force, depth, ignoreAncestry, dryRun);
-    }
-
-    public void merge(String path, Revision pegRevision, Revision revision1, Revision revision2, String localPath, boolean force, int depth, boolean ignoreAncestry, boolean dryRun) throws ClientException {
-        myDelegate.merge(path, pegRevision, revision1, revision2, localPath, force, depth, ignoreAncestry, dryRun);
     }
 
     public void merge(String path, Revision pegRevision, RevisionRange[] revisions, String localPath, boolean force, int depth, boolean ignoreAncestry, boolean dryRun) throws ClientException {

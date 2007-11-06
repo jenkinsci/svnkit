@@ -550,4 +550,11 @@ public class JavaHLObjectFactory {
         return Depth.infinityOrImmediates(recurse);
     }
 
+    public static final int unknownOrFiles(boolean recurse) {
+        return Depth.unknownOrFiles(recurse);
+    }
+
+    public static final int unknownOrImmediates(boolean recurse) {
+        return Depth.unknownOrImmediates(recurse);
+    }
 }
