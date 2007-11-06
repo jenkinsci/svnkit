@@ -36,11 +36,7 @@ import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
-import org.tmatesoft.svn.core.wc.ISVNPathList;
-import org.tmatesoft.svn.core.wc.SVNChangeList;
-import org.tmatesoft.svn.core.wc.SVNCompositePathList;
 import org.tmatesoft.svn.core.wc.SVNInfo;
-import org.tmatesoft.svn.core.wc.SVNPathList;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.core.wc.xml.SVNXMLInfoHandler;
@@ -92,9 +88,8 @@ public class SVNInfoCommand extends SVNCommand implements ISVNInfoHandler {
         ISVNInfoHandler infoHandler = getCommandLine().hasArgument(SVNArgument.XML) ? handler : (ISVNInfoHandler) this;
         
         String changelistName = (String) getCommandLine().getArgumentValue(SVNArgument.CHANGELIST); 
-        SVNChangeList changelist = null;
         if (changelistName != null) {
-            changelist = SVNChangeList.create(changelistName, new File(".").getAbsoluteFile());
+/*            changelist = SVNChangeList.create(changelistName, new File(".").getAbsoluteFile());
             changelist.setOptions(getClientManager().getOptions());
             changelist.setRepositoryPool(getClientManager().getRepositoryPool());
             if (changelist.getPaths() == null || changelist.getPathsCount() == 0) {
@@ -102,6 +97,7 @@ public class SVNInfoCommand extends SVNCommand implements ISVNInfoHandler {
                                     "no such changelist ''{0}''", changelistName); 
                 SVNErrorManager.error(error);
             }
+*/            
         }
 
         LinkedList paths = new LinkedList();
@@ -110,19 +106,19 @@ public class SVNInfoCommand extends SVNCommand implements ISVNInfoHandler {
             paths.add(new File(getCommandLine().getPathAt(i)).getAbsoluteFile());
             pegRevisions.add(getCommandLine().getPathPegRevision(i));
         }
-        if (paths.isEmpty() && (changelist == null || changelist.getPathsCount() == 0) && 
+/*        if (paths.isEmpty() && (changelist == null || changelist.getPathsCount() == 0) && 
                 !getCommandLine().hasURLs()) {
             paths.add(new File(".").getAbsoluteFile());
             pegRevisions.add(SVNRevision.UNDEFINED);
         }
-        
+*/        
         File[] pathsArray = (File[]) paths.toArray(new File[paths.size()]); 
-        SVNPathList pathList = SVNPathList.create(pathsArray, (SVNRevision[]) pegRevisions.toArray(new SVNRevision[pegRevisions.size()]));
-        SVNCompositePathList combinedPathList = SVNCompositePathList.create(pathList, changelist, false); 
-        if (combinedPathList != null) {
-            PathListWrapper wrappedPathList = new PathListWrapper(combinedPathList, handler);
-            wcClient.doInfo(wrappedPathList, revision, isRecursive, infoHandler);
-        }
+//        SVNPathList pathList = SVNPathList.create(pathsArray, (SVNRevision[]) pegRevisions.toArray(new SVNRevision[pegRevisions.size()]));
+//        SVNCompositePathList combinedPathList = SVNCompositePathList.create(pathList, changelist, false); 
+//        if (combinedPathList != null) {
+//            PathListWrapper wrappedPathList = new PathListWrapper(combinedPathList, handler);
+//            wcClient.doInfo(wrappedPathList, revision, isRecursive, infoHandler);
+//        }
 
         myBaseFile = null;
         for (int i = 0; i < getCommandLine().getURLCount(); i++) {
@@ -281,7 +277,7 @@ public class SVNInfoCommand extends SVNCommand implements ISVNInfoHandler {
         return DATE_FORMAT.format(date);
     }
     
-    private class PathListWrapper implements ISVNPathList, Iterator {
+/*    private class PathListWrapper implements ISVNPathList, Iterator {
         private SVNCompositePathList myRealPathList;
         private SVNXMLInfoHandler myXMLHandler;
 
@@ -323,6 +319,6 @@ public class SVNInfoCommand extends SVNCommand implements ISVNInfoHandler {
         public void remove() {
             myRealPathList.remove();
         }
-        
     }
+*/    
 }

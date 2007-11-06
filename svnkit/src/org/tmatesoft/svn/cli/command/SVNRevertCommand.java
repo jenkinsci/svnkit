@@ -26,9 +26,6 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.wc.SVNChangeList;
-import org.tmatesoft.svn.core.wc.SVNCompositePathList;
-import org.tmatesoft.svn.core.wc.SVNPathList;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -46,9 +43,8 @@ public class SVNRevertCommand extends SVNCommand {
 
     public final void run(final PrintStream out, final PrintStream err) throws SVNException {
         String changelistName = (String) getCommandLine().getArgumentValue(SVNArgument.CHANGELIST); 
-        SVNChangeList changelist = null;
         if (changelistName != null) {
-            changelist = SVNChangeList.create(changelistName, new File(".").getAbsoluteFile());
+/*            changelist = SVNChangeList.create(changelistName, new File(".").getAbsoluteFile());
             changelist.setOptions(getClientManager().getOptions());
             changelist.setRepositoryPool(getClientManager().getRepositoryPool());
             if (changelist.getPaths() == null || changelist.getPathsCount() == 0) {
@@ -56,6 +52,7 @@ public class SVNRevertCommand extends SVNCommand {
                                     "no such changelist ''{0}''", changelistName); 
                 SVNErrorManager.error(error);
             }
+*/            
         }
 
         SVNDepth depth = SVNDepth.UNKNOWN;
@@ -97,10 +94,10 @@ public class SVNRevertCommand extends SVNCommand {
             targets.add(new File(getCommandLine().getPathAt(i)).getAbsoluteFile());
         }
         File[] paths = (File[]) targets.toArray(new File[targets.size()]);
-        SVNPathList pathList = SVNPathList.create(paths, SVNRevision.UNDEFINED);
-        SVNCompositePathList combinedPathList = SVNCompositePathList.create(pathList, changelist, false);
+//        SVNPathList pathList = SVNPathList.create(paths, SVNRevision.UNDEFINED);
+//        SVNCompositePathList combinedPathList = SVNCompositePathList.create(pathList, changelist, false);
 
-        try {
+/*        try {
             wcClient.doRevert(combinedPathList, recursive);
         } catch (SVNException svne) {
             if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_LOCKED && !recursive) {
@@ -109,5 +106,6 @@ public class SVNRevertCommand extends SVNCommand {
             }
             throw svne;
         }
+*/        
     }
 }

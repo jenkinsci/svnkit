@@ -27,10 +27,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.SVNChangeList;
-import org.tmatesoft.svn.core.wc.SVNCompositePathList;
 import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNPathList;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.util.ISVNDebugLog;
@@ -53,9 +50,9 @@ public class SVNUpdateCommand extends SVNCommand implements ISVNEventHandler {
 
     public void run(final PrintStream out, final PrintStream err) throws SVNException {
         String changelistName = (String) getCommandLine().getArgumentValue(SVNArgument.CHANGELIST); 
-        SVNChangeList changelist = null;
+//        SVNChangeList changelist = null;
         if (changelistName != null) {
-            changelist = SVNChangeList.create(changelistName, new File(".").getAbsoluteFile());
+/*            changelist = SVNChangeList.create(changelistName, new File(".").getAbsoluteFile());
             changelist.setOptions(getClientManager().getOptions());
             changelist.setRepositoryPool(getClientManager().getRepositoryPool());
             if (changelist.getPaths() == null || changelist.getPathsCount() == 0) {
@@ -63,18 +60,21 @@ public class SVNUpdateCommand extends SVNCommand implements ISVNEventHandler {
                                     "no such changelist ''{0}''", changelistName); 
                 SVNErrorManager.error(error);
             }
+*/            
         }
         Collection targets = new LinkedList();
         for (int i = 0; i < getCommandLine().getPathCount(); i++) {
             targets.add(new File(getCommandLine().getPathAt(i)).getAbsoluteFile());
         }
-        if (targets.size() == 0 && (changelist == null || changelist.getPathsCount() == 0) &&
+
+/*        if (targets.size() == 0 && (changelist == null || changelist.getPathsCount() == 0) &&
                 !getCommandLine().hasURLs()) {
             targets.add(new File(".").getAbsoluteFile());
         }
+*/        
         File[] paths = (File[]) targets.toArray(new File[targets.size()]);
-        SVNPathList pathList = SVNPathList.create(paths, SVNRevision.UNDEFINED);
-        SVNCompositePathList combinedPathList = SVNCompositePathList.create(pathList, changelist, false);
+//        SVNPathList pathList = SVNPathList.create(paths, SVNRevision.UNDEFINED);
+//        SVNCompositePathList combinedPathList = SVNCompositePathList.create(pathList, changelist, false);
 
         SVNDepth depth = SVNDepth.UNKNOWN;
         if (getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE)) {
@@ -98,7 +98,7 @@ public class SVNUpdateCommand extends SVNCommand implements ISVNEventHandler {
         myHasErrors = false;
         myErrorOutput = err;
         SVNRevision revision = parseRevision(getCommandLine());
-        updater.doUpdate(combinedPathList, revision, depth, force);
+//        updater.doUpdate(combinedPathList.getPaths(), revision, depth, force);
         
         for (int i = 0; i < getCommandLine().getURLCount(); i++) {
             String url = getCommandLine().getURL(i);

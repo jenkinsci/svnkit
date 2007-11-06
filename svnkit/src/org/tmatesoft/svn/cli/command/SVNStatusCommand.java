@@ -33,13 +33,9 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.ISVNPathList;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
-import org.tmatesoft.svn.core.wc.SVNChangeList;
-import org.tmatesoft.svn.core.wc.SVNCompositePathList;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.core.wc.SVNPathList;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusClient;
@@ -71,15 +67,15 @@ public class SVNStatusCommand extends SVNCommand implements ISVNStatusHandler, I
         SVNCommandLine line = getCommandLine();
 
         String changelistName = (String) line.getArgumentValue(SVNArgument.CHANGELIST); 
-        SVNChangeList changelist = null;
         if (changelistName != null) {
-            changelist = SVNChangeList.create(changelistName, new File(".").getAbsoluteFile());
+/*            changelist = SVNChangeList.create(changelistName, new File(".").getAbsoluteFile());
             changelist.setOptions(getClientManager().getOptions());
             changelist.setRepositoryPool(getClientManager().getRepositoryPool());
             if (changelist.getPaths() == null || changelist.getPathsCount() == 0) {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "no such changelist ''{0}''", changelistName); 
                 SVNErrorManager.error(error);
             }
+*/            
         }
         
         String paths[] = new String[line.getPathCount()];
@@ -112,17 +108,18 @@ public class SVNStatusCommand extends SVNCommand implements ISVNStatusHandler, I
                 targets.add(new File(paths[i]).getAbsoluteFile());
             }
         }
-        if (targets.size() == 0 && (changelist == null || changelist.getPathsCount() == 0) &&  !getCommandLine().hasURLs()) {
+/*        if (targets.size() == 0 && (changelist == null || changelist.getPathsCount() == 0) &&  !getCommandLine().hasURLs()) {
             targets.add(new File(".").getAbsoluteFile());
         }
+*/        
         File[] files = (File[]) targets.toArray(new File[targets.size()]);
-        SVNPathList pathList = SVNPathList.create(files, SVNRevision.UNDEFINED);
-        SVNCompositePathList combinedPathList = SVNCompositePathList.create(pathList, changelist, false);
+//        SVNPathList pathList = SVNPathList.create(files, SVNRevision.UNDEFINED);
+//        SVNCompositePathList combinedPathList = SVNCompositePathList.create(pathList, changelist, false);
         
-        if (combinedPathList == null || combinedPathList.getPathsCount() == 0) {
+/*        if (combinedPathList == null || combinedPathList.getPathsCount() == 0) {
             return;
         }
-
+*/
         boolean showUpdates = getCommandLine().hasArgument(SVNArgument.SHOW_UPDATES);
 
         SVNDepth depth = SVNDepth.UNKNOWN;
@@ -156,9 +153,9 @@ public class SVNStatusCommand extends SVNCommand implements ISVNStatusHandler, I
         myHasErrors = false;
         myChangeListToStatuses = new HashMap();
 
-        PathListWrapper wrappedPathList = new PathListWrapper(combinedPathList, myIsXML ? (SVNXMLStatusHandler) handler : null);
-        stClient.doStatus(wrappedPathList, SVNRevision.HEAD, depth, showUpdates, reportAll, ignored, false, this);
-        wrappedPathList.maybeCloseOpenedTag();
+//        PathListWrapper wrappedPathList = new PathListWrapper(combinedPathList, myIsXML ? (SVNXMLStatusHandler) handler : null);
+//        stClient.doStatus(wrappedPathList, SVNRevision.HEAD, depth, showUpdates, reportAll, ignored, false, this);
+//        wrappedPathList.maybeCloseOpenedTag();
         
         for (Iterator changelists = myChangeListToStatuses.keySet().iterator(); changelists.hasNext();) {
             String changeListName = (String) changelists.next();
@@ -218,6 +215,7 @@ public class SVNStatusCommand extends SVNCommand implements ISVNStatusHandler, I
     public void checkCancelled() throws SVNCancelException {
     }
 
+/*
     private class PathListWrapper implements ISVNPathList, Iterator {
         private SVNCompositePathList myRealPathList;
         private SVNXMLStatusHandler myXMLHandler;
@@ -279,5 +277,5 @@ public class SVNStatusCommand extends SVNCommand implements ISVNStatusHandler, I
         }
         
     }
-    
+*/    
 }

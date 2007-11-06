@@ -24,9 +24,6 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.wc.SVNChangeList;
-import org.tmatesoft.svn.core.wc.SVNCompositePathList;
-import org.tmatesoft.svn.core.wc.SVNPathList;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
@@ -42,9 +39,8 @@ public class SVNUnlockCommand extends SVNCommand {
 
     public void run(PrintStream out, PrintStream err) throws SVNException {
         String changelistName = (String) getCommandLine().getArgumentValue(SVNArgument.CHANGELIST); 
-        SVNChangeList changelist = null;
         if (changelistName != null) {
-            changelist = SVNChangeList.create(changelistName, new File(".").getAbsoluteFile());
+/*            changelist = SVNChangeList.create(changelistName, new File(".").getAbsoluteFile());
             changelist.setOptions(getClientManager().getOptions());
             changelist.setRepositoryPool(getClientManager().getRepositoryPool());
             if (changelist.getPaths() == null || changelist.getPathsCount() == 0) {
@@ -52,6 +48,7 @@ public class SVNUnlockCommand extends SVNCommand {
                                     "no such changelist ''{0}''", changelistName); 
                 SVNErrorManager.error(error);
             }
+*/            
         }
         
         boolean force = getCommandLine().hasArgument(SVNArgument.FORCE);
@@ -72,23 +69,22 @@ public class SVNUnlockCommand extends SVNCommand {
             svnURLs[i] = SVNURL.parseURIEncoded(urls[i]);
         }
         
-        SVNPathList pathList = SVNPathList.create(filesArray, SVNRevision.UNDEFINED);
-        SVNCompositePathList combinedPathList = SVNCompositePathList.create(pathList, changelist, false); 
+//        SVNPathList pathList = SVNPathList.create(filesArray, SVNRevision.UNDEFINED);
+//        SVNCompositePathList combinedPathList = SVNCompositePathList.create(pathList, changelist, false); 
 
-        int targetsNum = (combinedPathList != null ? combinedPathList.getPathsCount() : 0)  +
-                          urls.length;
+/*        int targetsNum = (combinedPathList != null ? combinedPathList.getPathsCount() : 0)  + urls.length;
         if (targetsNum < 1) {
             SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS);
             SVNErrorManager.error(error);
         }
-        
+*/        
         getClientManager().setEventHandler(new SVNCommandEventProcessor(out, err, false));
         SVNWCClient wcClient = getClientManager().getWCClient();
         
-        if (combinedPathList != null) {
+/*        if (combinedPathList != null) {
             wcClient.doUnlock(pathList, force);
         }
-
+*/
         if (urls.length > 0) {
             wcClient.doUnlock(svnURLs, force);
         }

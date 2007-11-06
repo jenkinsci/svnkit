@@ -34,10 +34,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
-import org.tmatesoft.svn.core.wc.SVNChangeList;
-import org.tmatesoft.svn.core.wc.SVNCompositePathList;
 import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNPathList;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
@@ -62,9 +59,8 @@ public class SVNPropsetCommand extends SVNCommand implements ISVNEventHandler {
         String propertyValue = getCommandLine().getPathAt(1);
         
         String changelistName = (String) getCommandLine().getArgumentValue(SVNArgument.CHANGELIST); 
-        SVNChangeList changelist = null;
         if (changelistName != null) {
-            changelist = SVNChangeList.create(changelistName, new File(".").getAbsoluteFile());
+/*            changelist = SVNChangeList.create(changelistName, new File(".").getAbsoluteFile());
             changelist.setOptions(getClientManager().getOptions());
             changelist.setRepositoryPool(getClientManager().getRepositoryPool());
             if (changelist.getPaths() == null || changelist.getPathsCount() == 0) {
@@ -72,6 +68,7 @@ public class SVNPropsetCommand extends SVNCommand implements ISVNEventHandler {
                                     "no such changelist ''{0}''", changelistName); 
                 SVNErrorManager.error(error);
             }
+*/            
         }
         
         SVNDepth depth = SVNDepth.UNKNOWN;
@@ -121,8 +118,8 @@ public class SVNPropsetCommand extends SVNCommand implements ISVNEventHandler {
             targets.add(new File(getCommandLine().getPathAt(i)).getAbsoluteFile());
         }
         File[] paths = (File[]) targets.toArray(new File[targets.size()]);
-        SVNPathList pathList = SVNPathList.create(paths, SVNRevision.UNDEFINED);
-        SVNCompositePathList combinedPathList = SVNCompositePathList.create(pathList, changelist, false);
+//        SVNPathList pathList = SVNPathList.create(paths, SVNRevision.UNDEFINED);
+//        SVNCompositePathList combinedPathList = SVNCompositePathList.create(pathList, changelist, false);
 
         SVNRevision revision = SVNRevision.UNDEFINED;
         if (getCommandLine().hasArgument(SVNArgument.REVISION)) {
@@ -136,7 +133,7 @@ public class SVNPropsetCommand extends SVNCommand implements ISVNEventHandler {
                 wcClient.doSetRevisionProperty(SVNURL.parseURIEncoded(getCommandLine().getURL(0)),
                         revision, propertyName, propertyValue, force, new PropertyHandler(out, propertyName));
             } else {
-                File[] combinedPaths = combinedPathList != null ? combinedPathList.getPaths() : null; 
+                File[] combinedPaths = null;//combinedPathList != null ? combinedPathList.getPaths() : null; 
                 File tgt = combinedPaths != null ? combinedPaths[0] : new File(".").getAbsoluteFile();
                 wcClient.doSetRevisionProperty(tgt, revision, propertyName, propertyValue, 
                                                force, new PropertyHandler(out, propertyName));
@@ -146,12 +143,13 @@ public class SVNPropsetCommand extends SVNCommand implements ISVNEventHandler {
             SVNErrorManager.error(error);
         } else {
             PropertyHandler handler = new PropertyHandler(out, propertyName);
-            wcClient.doSetProperty(combinedPathList, propertyName, propertyValue, force, myIsRecursive, handler);             
+//            wcClient.doSetProperty(combinedPathList, propertyName, propertyValue, force, myIsRecursive, handler);             
             handler.handlePendingFile();
-            if ((combinedPathList == null || combinedPathList.getPathsCount() == 0) && getCommandLine().hasURLs()) {
+/*            if ((combinedPathList == null || combinedPathList.getPathsCount() == 0) && getCommandLine().hasURLs()) {
                 err.println("Setting property on non-local target '" + getCommandLine().getURL(0) + "' is not supported");
                 System.exit(1);
             }
+*/            
         }
     }
 

@@ -504,25 +504,6 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
 
-    public void doSetProperty(ISVNPathList pathList, String propName, String propValue, boolean force, boolean recursive, ISVNPropertyHandler handler) throws SVNException {
-        if (pathList == null) {
-            return;
-        }
-        for (Iterator paths = pathList.getPathsIterator(); paths.hasNext();) {
-            checkCancelled();
-            File path = (File) paths.next();
-            try {
-                doSetProperty(path, propName, propValue, force, recursive, handler);
-            } catch (SVNException svne) {
-                if (svne.getErrorMessage().isWarning()) {
-                    dispatchEvent(new SVNEvent(svne.getErrorMessage()));
-                } else {
-                    throw svne;
-        }
-    }
-        }
-    }
-    
     public SVNCommitInfo doSetProperty(SVNURL url, String propName, String propValue, SVNRevision baseRevision, String commitMessage, Map revisionProperties, boolean force, ISVNPropertyHandler handler) throws SVNException {
         propName = validatePropertyName(propName);
         if (SVNRevisionProperty.isRevisionProperty(propName)) {
@@ -911,26 +892,6 @@ public class SVNWCClient extends SVNBasicClient {
             }
         } finally {
             wcAccess.close();
-        }
-    }
-    
-    public void doGetProperty(ISVNPathList pathList, String propName, SVNRevision revision, SVNDepth depth, ISVNPropertyHandler handler) throws SVNException {
-        if (pathList == null) {
-            return;
-        }
-
-        for (Iterator paths = pathList.getPathsIterator(); paths.hasNext();) {
-            checkCancelled();
-            File path = (File) paths.next();
-            try {
-                doGetProperty(path, propName, pathList.getPegRevision(path), revision, depth, handler);
-            } catch (SVNException svne) {
-                if (svne.getErrorMessage().isWarning()) {
-                    dispatchEvent(new SVNEvent(svne.getErrorMessage()));
-                } else {
-                    throw svne;
-                }
-            }
         }
     }
     
@@ -1379,17 +1340,6 @@ public class SVNWCClient extends SVNBasicClient {
         }
         SVNEvent event = SVNEventFactory.createAddedEvent(dir, path.getName(), SVNNodeKind.FILE, mimeType);
         dispatchEvent(event);
-    }
-    
-    public void doRevert(ISVNPathList pathList, boolean recursive) throws SVNException {
-        if (pathList == null) {
-            return;
-        }
-        for (Iterator paths = pathList.getPathsIterator(); paths.hasNext();) {
-            checkCancelled();
-            File path = (File) paths.next();
-            doRevert(path, recursive);
-        }
     }
     
     /**
@@ -1884,14 +1834,6 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
     
-    public void doLock(ISVNPathList pathList, boolean stealLock, String lockMessage) throws SVNException {
-        if (pathList == null) {
-            return;
-        }
-        File[] paths = pathList.getPaths();
-        doLock(paths, stealLock, lockMessage);
-    }
-    
     /**
      * Locks file items in a repository so that no other user can commit 
      * changes to them.
@@ -1992,14 +1934,6 @@ public class SVNWCClient extends SVNBasicClient {
         } finally {
             wcAccess.close();
         }
-    }
-
-    public void doUnlock(ISVNPathList pathList, boolean breakLock) throws SVNException {
-        if (pathList == null) {
-            return;
-        }
-        File[] paths = pathList.getPaths();
-        doUnlock(paths, breakLock);
     }
 
     /**
@@ -2222,26 +2156,6 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
     
-    public void doInfo(ISVNPathList pathList, SVNRevision revision, boolean recursive, ISVNInfoHandler handler) throws SVNException {
-        if (handler == null || pathList == null) {
-            return;
-        }
-        
-        for (Iterator paths = pathList.getPathsIterator(); paths.hasNext();) {
-            File path = (File) paths.next();
-            SVNRevision pegRevision = pathList.getPegRevision(path);
-            try {
-                doInfo(path, pegRevision, revision, recursive, handler);
-            } catch (SVNException svne) {
-                if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.UNVERSIONED_RESOURCE) {
-                    handler.handleInfo(SVNInfo.createInfo(path, svne.getErrorMessage()));
-                    continue;
-                }
-                throw svne;
-            }
-        }
-    }
-
     private void reportEntry(File path, SVNEntry entry, ISVNInfoHandler handler) throws SVNException {
         if (entry.isDirectory() && !"".equals(entry.getName())) {
             return;

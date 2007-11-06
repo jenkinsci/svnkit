@@ -150,14 +150,14 @@ public class SVNUpdateClient extends SVNBasicClient {
         return doUpdate(file, revision, SVNDepth.fromRecurse(recursive), force);
     }    
     
-    public long[] doUpdate(ISVNPathList pathList, SVNRevision revision, SVNDepth depth, boolean force) throws SVNException {
-        if (pathList == null) {
+    public long[] doUpdate(File[] paths, SVNRevision revision, SVNDepth depth, boolean force) throws SVNException {
+        if (paths == null) {
             return new long[0];
         }
         Collection revisions = new LinkedList();
-        for (Iterator paths = pathList.getPathsIterator(); paths.hasNext();) {
+        for (int i = 0; i < paths.length; i++) {
             checkCancelled();
-            File path = (File) paths.next();
+            File path = paths[i];
             try {
                 setEventPathPrefix("");
                 handlePathListItem(path);

@@ -32,7 +32,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.ISVNDiffStatusHandler;
-import org.tmatesoft.svn.core.wc.SVNChangeList;
+import org.tmatesoft.svn.core.wc.SVNChangelistClient;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNDiffStatus;
@@ -53,12 +53,11 @@ public class SVNDiffCommand extends SVNCommand implements ISVNDiffStatusHandler 
 
     public void run(final PrintStream out, PrintStream err) throws SVNException {
         String changelistName = (String) getCommandLine().getArgumentValue(SVNArgument.CHANGELIST); 
-        SVNChangeList changelist = null;
+        Collection targets = new LinkedList();
+        SVNChangelistClient clClient = getClientManager().getChangelistClient();
         if (changelistName != null) {
-            changelist = SVNChangeList.create(changelistName, new File(".").getAbsoluteFile());
-            changelist.setOptions(getClientManager().getOptions());
-            changelist.setRepositoryPool(getClientManager().getRepositoryPool());
-            if (changelist.getPaths() == null || changelist.getPathsCount() == 0) {
+            clClient.getChangelist(new File(".").getAbsoluteFile(), changelistName, targets);
+            if (targets.isEmpty()) {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                                     "no such changelist ''{0}''", changelistName); 
                 SVNErrorManager.error(error);
@@ -176,7 +175,7 @@ public class SVNDiffCommand extends SVNCommand implements ISVNDiffStatusHandler 
                     }
                     paths.add(p);
                 }
-                if (changelist != null) {
+/*                if (changelist != null) {
                     File[] files = changelist.getPaths();
                     String currentDir = new File(".").getAbsolutePath().replace(File.separatorChar, '/'); 
                     for (int i = 0; i < changelist.getPathsCount(); i++) {
@@ -185,8 +184,8 @@ public class SVNDiffCommand extends SVNCommand implements ISVNDiffStatusHandler 
                         relativePath = relativePath.startsWith("/") ? relativePath.substring(1) : relativePath;
                         paths.add(relativePath);
                     }
-                    }
-                
+                }
+*/                
                 String[] pathsArray = (String[]) paths.toArray(new String[paths.size()]); 
                 for (int i = 0; i < pathsArray.length; i++) {
                     String p = pathsArray[i];
@@ -252,13 +251,13 @@ public class SVNDiffCommand extends SVNCommand implements ISVNDiffStatusHandler 
                     File p = new File(getCommandLine().getPathAt(i)).getAbsoluteFile();
                     paths.add(p);
                 }
-                if (changelist != null) {
+/*                if (changelist != null) {
                     File[] files = changelist.getPaths();
                     for (int i = 0; i < changelist.getPathsCount(); i++) {
                         paths.add(files[i]);
                     }
                 }
-                
+*/                
                 File[] pathsArray = (File[]) paths.toArray(new File[paths.size()]); 
                 for(int i = 0; i < pathsArray.length; i++) {
                     File path1 = pathsArray[i];

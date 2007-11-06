@@ -231,17 +231,13 @@ svnkit/src/org/tmatesoft/svn/core/wc/ISVNChangelistHandler.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/ISVNCommitParameters.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/ISVNMerger.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/ISVNMergerFactory.java -text
-svnkit/src/org/tmatesoft/svn/core/wc/ISVNPathList.java -text
-svnkit/src/org/tmatesoft/svn/core/wc/SVNChangeList.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/SVNChangelistClient.java -text
-svnkit/src/org/tmatesoft/svn/core/wc/SVNCompositePathList.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/SVNConflictAction.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/SVNConflictChoice.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/SVNConflictDescription.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/SVNConflictReason.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/SVNConflictResult.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/SVNCopySource.java -text
-svnkit/src/org/tmatesoft/svn/core/wc/SVNPathList.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/package.html -text
 svnkit/src/org/tmatesoft/svn/core/wc/xml/SVNXMLInfoHandler.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/xml/package.html -text

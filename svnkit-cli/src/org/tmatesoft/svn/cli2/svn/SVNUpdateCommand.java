@@ -23,10 +23,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.wc.ISVNPathList;
 import org.tmatesoft.svn.core.wc.SVNChangelistClient;
-import org.tmatesoft.svn.core.wc.SVNPathList;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 
 
@@ -88,8 +85,7 @@ public class SVNUpdateCommand extends SVNCommand {
             files.add(target.getFile());
         }
         File[] filesArray = (File[]) files.toArray(new File[files.size()]);
-        ISVNPathList pathList = SVNPathList.create(filesArray, SVNRevision.UNDEFINED);
-        client.doUpdate(pathList, getSVNEnvironment().getStartRevision(), getSVNEnvironment().getDepth(), getSVNEnvironment().isForce()); 
+        client.doUpdate(filesArray, getSVNEnvironment().getStartRevision(), getSVNEnvironment().getDepth(), getSVNEnvironment().isForce()); 
     } 
 
 }

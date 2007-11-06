@@ -35,10 +35,7 @@ import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.wc.SVNChangeList;
-import org.tmatesoft.svn.core.wc.SVNCompositePathList;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
-import org.tmatesoft.svn.core.wc.SVNPathList;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.xml.AbstractXMLHandler;
 import org.tmatesoft.svn.core.wc.xml.SVNXMLLogHandler;
@@ -64,8 +61,8 @@ public class SVNLogCommand extends SVNCommand implements ISVNLogEntryHandler {
     
     public void run(PrintStream out, PrintStream err) throws SVNException {
         String changelistName = (String) getCommandLine().getArgumentValue(SVNArgument.CHANGELIST); 
-        SVNChangeList changelist = null;
         if (changelistName != null) {
+/*
             changelist = SVNChangeList.create(changelistName, new File(".").getAbsoluteFile());
             changelist.setOptions(getClientManager().getOptions());
             changelist.setRepositoryPool(getClientManager().getRepositoryPool());
@@ -74,6 +71,7 @@ public class SVNLogCommand extends SVNCommand implements ISVNLogEntryHandler {
                                     "no such changelist ''{0}''", changelistName); 
                 SVNErrorManager.error(error);
             }
+*/            
         }
         
         SVNRevision[] revRange = getStartEndRevisions();
@@ -122,7 +120,7 @@ public class SVNLogCommand extends SVNCommand implements ISVNLogEntryHandler {
             for(int i = 0; i < getCommandLine().getPathCount(); i++) {
                 targets.add(getCommandLine().getPathAt(i));
             }
-            if (changelist != null) {
+/*            if (changelist != null) {
                 File[] paths = changelist.getPaths();
                 String thisPath = new File(".").getAbsolutePath().replace(File.separatorChar, '/');
                 for (int i = 0; i < changelist.getPathsCount(); i++) {
@@ -132,6 +130,7 @@ public class SVNLogCommand extends SVNCommand implements ISVNLogEntryHandler {
                     targets.add(relativePath);
                 }
             }
+*/            
             String[] paths = (String[]) targets.toArray(new String[targets.size()]);
             logClient.doLog(SVNURL.parseURIEncoded(url), paths, pegRevision, startRevision, 
                             endRevision, stopOnCopy, myReportPaths, useMergeHistory,  
@@ -147,16 +146,17 @@ public class SVNLogCommand extends SVNCommand implements ISVNLogEntryHandler {
                 targets.add(new File(getCommandLine().getPathAt(i)).getAbsoluteFile());
                 if (i == 0) {
                     pegRevision = getCommandLine().getPathPegRevision(i);
-                    if (changelist != null) {
-                        changelist.setPegRevision(pegRevision);
-                    }
+//                    if (changelist != null) {
+//                        changelist.setPegRevision(pegRevision);
+//                    }
                 }
             }
             File[] paths = (File[]) targets.toArray(new File[targets.size()]);
-            SVNPathList pathList = SVNPathList.create(paths, pegRevision);
+/*            SVNPathList pathList = SVNPathList.create(paths, pegRevision);
             SVNCompositePathList combinedPathList = SVNCompositePathList.create(pathList, changelist, false);
             logClient.doLog(combinedPathList.getPaths(), startRevision, endRevision, pegRevision, stopOnCopy, 
                             myReportPaths, useMergeHistory, limit, null, handler);
+*/                            
         }
         if (getCommandLine().hasArgument(SVNArgument.XML)) {
             if (!getCommandLine().hasArgument(SVNArgument.INCREMENTAL)) {

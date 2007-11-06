@@ -209,23 +209,6 @@ public class SVNStatusClient extends SVNBasicClient {
         return doStatus(path, revision, SVNDepth.fromRecurse(recursive), remote, reportAll, includeIgnored, collectParentExternals, handler);
     }
     
-    public void doStatus(ISVNPathList pathList, SVNRevision revision, SVNDepth depth, boolean remote, boolean reportAll, boolean includeIgnored, boolean collectParentExternals, final ISVNStatusHandler handler) throws SVNException {
-        if (pathList == null) {
-            return;
-        }
-        
-        for (Iterator paths = pathList.getPathsIterator(); paths.hasNext();) {
-            checkCancelled();
-            File path = (File) paths.next();
-            try {
-                doStatus(path, revision, depth, remote, reportAll, includeIgnored, collectParentExternals, handler);
-            } catch (SVNException svne) {
-                dispatchEvent(new SVNEvent(svne.getErrorMessage()));
-                continue;
-            }
-        }
-    }
-    
     public long doStatus(File path, SVNRevision revision, SVNDepth depth, boolean remote, boolean reportAll, boolean includeIgnored, boolean collectParentExternals, final ISVNStatusHandler handler) throws SVNException {
         if (handler == null) {
             return -1;
