@@ -25,6 +25,8 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
+import org.tmatesoft.svn.core.SVNMergeInfo;
+import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
@@ -32,6 +34,11 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.javahl.SVNClientImpl;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
+import org.tmatesoft.svn.core.wc.SVNConflictAction;
+import org.tmatesoft.svn.core.wc.SVNConflictChoice;
+import org.tmatesoft.svn.core.wc.SVNConflictDescription;
+import org.tmatesoft.svn.core.wc.SVNConflictReason;
+import org.tmatesoft.svn.core.wc.SVNConflictResult;
 import org.tmatesoft.svn.core.wc.SVNDiffStatus;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
@@ -39,7 +46,6 @@ import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.core.wc.SVNConflictChoice;
 
 /**
  * @version 1.1.1
@@ -51,6 +57,7 @@ public class JavaHLObjectFactory {
     private static final Map REVISION_KIND_CONVERSION_MAP = new HashMap();
     private static final Map ACTION_CONVERSION_MAP = new HashMap();
     private static final Map LOCK_CONVERSION_MAP = new HashMap();
+    private static final Map CONFLICT_REASON_CONVERSATION_MAP = new HashMap();
 
     static{
         STATUS_CONVERSION_MAP.put(SVNStatusType.STATUS_ADDED, new Integer(StatusKind.added));
@@ -125,6 +132,12 @@ public class JavaHLObjectFactory {
         
         // undocumented thing.
         ACTION_CONVERSION_MAP.put(SVNEventAction.COMMIT_COMPLETED, new Integer(-11));
+
+        CONFLICT_REASON_CONVERSATION_MAP.put(SVNConflictReason.DELETED, new Integer(ConflictDescriptor.Reason.deleted));
+        CONFLICT_REASON_CONVERSATION_MAP.put(SVNConflictReason.EDITED, new Integer(ConflictDescriptor.Reason.edited));
+        CONFLICT_REASON_CONVERSATION_MAP.put(SVNConflictReason.MISSING, new Integer(ConflictDescriptor.Reason.missing));
+        CONFLICT_REASON_CONVERSATION_MAP.put(SVNConflictReason.OBSTRUCTED, new Integer(ConflictDescriptor.Reason.obstructed));
+        CONFLICT_REASON_CONVERSATION_MAP.put(SVNConflictReason.UNVERSIONED, new Integer(ConflictDescriptor.Reason.unversioned));
     }
 
     public static Status createStatus(String path, SVNStatus status) {
@@ -233,7 +246,54 @@ public class JavaHLObjectFactory {
         }
     }
 
-    public static SVNConflictChoice getConflictChoice(int conflictResult){
+    public static ConflictDescriptor createConflictDescription(SVNConflictDescription conflictDescription) {
+        if (conflictDescription == null){
+            return null;
+        }
+        
+        String basePath = null;
+        String repositoryPath = null;
+        try {
+            basePath = conflictDescription.getMergeFiles().getBasePath();
+            repositoryPath = conflictDescription.getMergeFiles().getRepositoryPath();
+        } catch (SVNException e) {
+        }
+
+        return new ConflictDescriptor(conflictDescription.getMergeFiles().getLocalPath(),
+                getConflictKind(conflictDescription.isPropertyConflict()),
+                getNodeKind(conflictDescription.getNodeKind()),
+                conflictDescription.getPropertyName(),
+                conflictDescription.getMergeFiles().isBinary(),
+                conflictDescription.getMergeFiles().getMimeType(),
+                getConflictAction(conflictDescription.getConflictAction()),
+                getConflictReason(conflictDescription.getConflictReason()),
+                basePath,
+                repositoryPath,
+                conflictDescription.getMergeFiles().getWCPath(),
+                conflictDescription.getMergeFiles().getResultPath()
+
+                );
+    }
+
+    public static SVNConflictResult getSVNConflictResult(ConflictResult conflictResult) {
+        if (conflictResult == null){
+            return null;
+        }
+        return new SVNConflictResult(getSVNConflictChoice(conflictResult.getChoice()), new File(conflictResult.getMergedPath()).getAbsoluteFile());
+    }
+
+    public static int getConflictAction(SVNConflictAction conflictAction){
+        if (conflictAction == SVNConflictAction.ADD){
+            return ConflictDescriptor.Action.add;
+        } else if (conflictAction == SVNConflictAction.DELETE) {
+            return ConflictDescriptor.Action.delete;
+        } else if (conflictAction == SVNConflictAction.EDIT) {
+            return ConflictDescriptor.Action.edit;            
+        }
+        return -1;
+    }
+
+    public static SVNConflictChoice getSVNConflictChoice(int conflictResult){
         switch (conflictResult) {
             case ConflictResult.chooseBase:
                 return SVNConflictChoice.BASE;
@@ -246,8 +306,20 @@ public class JavaHLObjectFactory {
             case ConflictResult.postpone:
                 return SVNConflictChoice.POSTPONE;
             default:
-                return SVNConflictChoice.MERGED;
+                return null;
         }
+    }
+
+    public static int getConflictReason(SVNConflictReason conflictReason){
+        Object reason = CONFLICT_REASON_CONVERSATION_MAP.get(conflictReason);
+        if (reason != null){
+            return ((Integer) reason).intValue();
+        }
+        return -1;
+    }
+
+    public static int getConflictKind(boolean isPropertyConflict){
+        return isPropertyConflict ? ConflictDescriptor.Kind.property : ConflictDescriptor.Kind.text;        
     }
 
     public static DiffSummary createDiffSummary(SVNDiffStatus status) {
@@ -344,6 +416,30 @@ public class JavaHLObjectFactory {
             }
         }
         return new LogMessage(cp, logEntry.getRevision(), logEntry.getAuthor(), time, logEntry.getMessage());
+    }
+
+    public static MergeInfo createMergeInfo(SVNMergeInfo mergeInfo) {
+        if (mergeInfo == null) {
+            return null;
+        }
+        MergeInfo result = new MergeInfo();
+        for (Iterator iterator = mergeInfo.getMergeSourcesToMergeLists().entrySet().iterator(); iterator.hasNext();) {
+            Map.Entry entry = (Map.Entry) iterator.next();
+            String path = (String) entry.getKey();
+            SVNMergeRange[] ranges = (SVNMergeRange[]) entry.getValue();
+            for (int i = 0; i < ranges.length; i++) {
+                SVNMergeRange range = ranges[i];
+                result.addRevisionRange(path, createRevisionRange(range));
+            }
+        }
+        return result;
+    }
+
+    public static RevisionRange createRevisionRange(SVNMergeRange range){
+        if (range == null){
+            return null;
+        }
+        return new RevisionRange(new Revision.Number(range.getStartRevision()), new Revision.Number(range.getEndRevision()));
     }
 
     public static void handleLogMessage(SVNLogEntry logEntry, LogMessageCallback handler) {

@@ -27,6 +27,7 @@ import org.tigris.subversion.javahl.BlameCallback2;
 import org.tigris.subversion.javahl.ClientException;
 import org.tigris.subversion.javahl.CommitItem;
 import org.tigris.subversion.javahl.CommitMessage;
+import org.tigris.subversion.javahl.ConflictDescriptor;
 import org.tigris.subversion.javahl.ConflictResolverCallback;
 import org.tigris.subversion.javahl.CopySource;
 import org.tigris.subversion.javahl.DiffSummaryReceiver;
@@ -57,15 +58,16 @@ import org.tigris.subversion.javahl.SubversionException;
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
+import org.tmatesoft.svn.core.SVNMergeInfo;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationStorage;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
@@ -81,6 +83,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.DefaultSVNRepositoryPool;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
+import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
 import org.tmatesoft.svn.core.wc.ISVNDiffStatusHandler;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
@@ -91,7 +94,10 @@ import org.tmatesoft.svn.core.wc.SVNChangelistClient;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNCommitClient;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
+import org.tmatesoft.svn.core.wc.SVNCommitPacket;
 import org.tmatesoft.svn.core.wc.SVNConflictChoice;
+import org.tmatesoft.svn.core.wc.SVNConflictDescription;
+import org.tmatesoft.svn.core.wc.SVNConflictResult;
 import org.tmatesoft.svn.core.wc.SVNCopyClient;
 import org.tmatesoft.svn.core.wc.SVNCopySource;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
@@ -106,7 +112,6 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
-import org.tmatesoft.svn.core.wc.SVNCommitPacket;
 import org.tmatesoft.svn.util.Version;
 
 
@@ -123,11 +128,13 @@ public class SVNClientImpl implements SVNClientInterface {
     private String myUserName;
     private String myPassword;
     private ISVNEventHandler mySVNEventListener;
+    private ISVNConflictHandler mySVNConflictHandler;
     /**
      * @deprecated
      */
     private Notify myNotify;
     private Notify2 myNotify2;
+    private ConflictResolverCallback myConflictResolverCallback;
     private CommitMessage myMessageHandler;
     private ISVNOptions myOptions;
     private boolean myCancelOperation = false;
@@ -212,7 +219,6 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public String getLastPath() {
-        //TODO: implement
         return null;
     }
 
@@ -356,6 +362,7 @@ public class SVNClientImpl implements SVNClientInterface {
     private void updateClientManager() {
         File configDir = myConfigDir == null ? null : new File(myConfigDir);
         myOptions = SVNWCUtil.createDefaultOptions(configDir, true);
+        myOptions.setConflictHandler(getConflictHandler());
         myAuthenticationManager = SVNWCUtil.createDefaultAuthenticationManager(configDir, myUserName, myPassword, myOptions.isAuthStorageEnabled());
         if (myPrompt != null) {
             myAuthenticationManager.setAuthenticationProvider(new JavaHLAuthenticationProvider(myPrompt));
@@ -447,8 +454,15 @@ public class SVNClientImpl implements SVNClientInterface {
         myNotify2 = notify;
     }
 
+    public void setProgressListener(ProgressListener listener) {
+    }
+
     public void commitMessageHandler(CommitMessage messageHandler) {
         myMessageHandler = messageHandler;
+    }
+
+    public void setConflictResolver(ConflictResolverCallback listener) {
+        myConflictResolverCallback = listener;
     }
 
     public void remove(String[] path, String message, boolean force) throws ClientException {
@@ -803,7 +817,7 @@ public class SVNClientImpl implements SVNClientInterface {
     public void resolved(String path, int depth, int conflictResult) throws ClientException {
         SVNWCClient client = getSVNWCClient();
         try {
-            client.doResolve(new File(path).getAbsoluteFile(), JavaHLObjectFactory.getSVNDepth(depth), JavaHLObjectFactory.getConflictChoice(conflictResult));
+            client.doResolve(new File(path).getAbsoluteFile(), JavaHLObjectFactory.getSVNDepth(depth), JavaHLObjectFactory.getSVNConflictChoice(conflictResult));
         } catch (SVNException e) {
             throwException(e);
         }
@@ -1461,6 +1475,27 @@ public class SVNClientImpl implements SVNClientInterface {
         }
         return mySVNEventListener;
     }
+
+    protected ISVNConflictHandler getConflictHandler(){
+        if (mySVNConflictHandler == null) {
+            mySVNConflictHandler = new ISVNConflictHandler() {
+
+                public SVNConflictResult handleConflict(SVNConflictDescription conflictDescription) throws SVNException {
+                    SVNConflictResult result = null;
+                    if (myConflictResolverCallback != null){
+                        ConflictDescriptor descriptor = JavaHLObjectFactory.createConflictDescription(conflictDescription);
+                        try {
+                            result = JavaHLObjectFactory.getSVNConflictResult(myConflictResolverCallback.resolve(descriptor));
+                        } catch (SubversionException e) {
+                            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, e), e);
+                        }
+                    }
+                    return result;
+                }
+            };
+        }
+        return mySVNConflictHandler;
+    }
     
     public SVNClientManager getClientManager() {
         if (myClientManager == null) {
@@ -1509,7 +1544,7 @@ public class SVNClientImpl implements SVNClientInterface {
 
     protected void throwException(SVNException e) throws ClientException {
         JavaHLObjectFactory.throwException(e, this);
-    }
+    }     
 
     protected static boolean isURL(String pathOrUrl){
         pathOrUrl = pathOrUrl != null ? pathOrUrl.toLowerCase() : null;
@@ -1815,16 +1850,20 @@ public class SVNClientImpl implements SVNClientInterface {
             }
     }
 
-    public void setProgressListener(ProgressListener listener) {
-        // TODO implement
-    }
-
-    public void setConflictResolver(ConflictResolverCallback listener) {
-        //TODO: implement
-    }
-
     public MergeInfo getMergeInfo(String path, Revision revision) throws SubversionException {
-        notImplementedYet();//TODO: implement
+        SVNDiffClient client = getSVNDiffClient();
+        SVNMergeInfo mergeInfo = null;
+        try {
+            if (isURL(path)) {
+                mergeInfo = client.getMergeInfo(SVNURL.parseURIEncoded(path),
+                        JavaHLObjectFactory.getSVNRevision(revision));
+            } else {
+                mergeInfo = client.getMergeInfo(new File(path).getAbsoluteFile());
+            }
+            return JavaHLObjectFactory.createMergeInfo(mergeInfo);
+        } catch (SVNException e) {
+            throwException(e);
+        }
         return null;
     }
 
