@@ -119,7 +119,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         File clientCertFile = sslClientCert != null ? new File(sslClientCert) : null;
         Collection trustStorages = new ArrayList();
         if (sslAuthorityFiles != null) {
-            for(StringTokenizer files = new StringTokenizer(sslAuthorityFiles, ","); files.hasMoreTokens();) {
+            for(StringTokenizer files = new StringTokenizer(sslAuthorityFiles, ";"); files.hasMoreTokens();) {
                 String fileName = files.nextToken();
                 if (fileName != null && !"".equals(fileName.trim())) {
                     trustStorages.add(new File(fileName));
