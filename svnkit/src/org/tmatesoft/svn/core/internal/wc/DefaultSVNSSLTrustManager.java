@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
+import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
 
 /**
  * @author TMate Software Ltd.
@@ -116,7 +117,7 @@ public class DefaultSVNSSLTrustManager implements X509TrustManager {
 	public void checkServerTrusted(X509Certificate[] certs, String algorithm) throws CertificateException {
 		if (certs != null && certs.length > 0 && certs[0] != null) {
 			String data = SVNBase64.byteArrayToBase64(certs[0].getEncoded());
-			String stored = (String)myAuthManager.getRuntimeAuthStorage().getData("svn.ssl.server", myRealm);
+			String stored = (String) myAuthManager.getRuntimeAuthStorage().getData("svn.ssl.server", myRealm);
 			if (data.equals(stored)) {
 				return;
 			}
@@ -136,16 +137,15 @@ public class DefaultSVNSSLTrustManager implements X509TrustManager {
 				if (result == ISVNAuthenticationProvider.ACCEPTED && store) {
 					try {
 						storeServerCertificate(myRealm, data, failures);
-					}
-					catch (SVNException e) {
-						throw new CertificateException("svn: Server SSL ceritificate for '" + myRealm + "' cannot be saved");
+					} catch (SVNException e) {
+						throw new SVNSSLUtil.CertificateNotTrustedException("svn: Server SSL ceritificate for '" + myRealm + "' cannot be saved");
 					}
 				}
 				if (result != ISVNAuthenticationProvider.REJECTED) {
 					myAuthManager.getRuntimeAuthStorage().putData("svn.ssl.server", myRealm, data);
 					return;
 				}
-				throw new CertificateException("svn: Server SSL ceritificate for '" + myRealm + "' rejected");
+				throw new SVNSSLUtil.CertificateNotTrustedException("svn: Server SSL ceritificate for '" + myRealm + "' rejected");
 			}
 			// like as tmp. accepted.
 			return;
