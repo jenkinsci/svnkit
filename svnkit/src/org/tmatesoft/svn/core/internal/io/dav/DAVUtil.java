@@ -63,14 +63,8 @@ public class DAVUtil {
         if (status.getError() != null) {
             SVNErrorManager.error(status.getError());
         }
-        if (label != null || true) {
-            if (!resultMap.isEmpty()) {
-                return (DAVProperties) resultMap.values().iterator().next();
-            }
-        } else {
-            if (resultMap.containsKey(path)) {
-                return (DAVProperties) resultMap.get(path);
-            }
+        if (!resultMap.isEmpty()) {
+            return (DAVProperties) resultMap.values().iterator().next();
         }
         label = label == null ? "NULL" : label;
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Failed to find label ''{0}'' for URL ''{1}''", new Object[] {label, path});
