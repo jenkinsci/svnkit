@@ -1778,7 +1778,7 @@ public class SVNDiffClient extends SVNBasicClient {
         }
     }
     
-    private LinkedList suggestMergeSources(File path, SVNRevision revision) throws SVNException {
+    public LinkedList suggestMergeSources(File path, SVNRevision revision) throws SVNException {
         LinkedList suggestions = new LinkedList();
         SVNLogClient logClient = new SVNLogClient(getRepositoryPool(), getOptions());
         SVNLocationEntry copyFromInfo = logClient.getCopySource(path, revision);

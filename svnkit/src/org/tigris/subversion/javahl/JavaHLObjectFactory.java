@@ -271,7 +271,6 @@ public class JavaHLObjectFactory {
                 repositoryPath,
                 conflictDescription.getMergeFiles().getWCPath(),
                 conflictDescription.getMergeFiles().getResultPath()
-
                 );
     }
 
@@ -279,7 +278,8 @@ public class JavaHLObjectFactory {
         if (conflictResult == null){
             return null;
         }
-        return new SVNConflictResult(getSVNConflictChoice(conflictResult.getChoice()), new File(conflictResult.getMergedPath()).getAbsoluteFile());
+        return new SVNConflictResult(getSVNConflictChoice(conflictResult.getChoice()),
+                new File(conflictResult.getMergedPath()).getAbsoluteFile());
     }
 
     public static int getConflictAction(SVNConflictAction conflictAction){
@@ -463,7 +463,8 @@ public class JavaHLObjectFactory {
         }
         handler.singleMessage(cp, logEntry.getRevision(), logEntry.getAuthor(), 
                               logEntry.getDate().getTime() * 1000, logEntry.getMessage(), 
-                              logEntry.hasChildren());
+                              logEntry.hasChildren()
+        );
     }
 
     public static CommitItem[] getCommitItems(SVNCommitItem[] commitables) {
@@ -492,7 +493,8 @@ public class JavaHLObjectFactory {
                 }
                 items[i] = new CommitItem(sc.getPath(), getNodeKind(sc.getKind()), stateFlag, 
                         sc.getURL() != null ? sc.getURL().toString() : null, 
-                        sc.getCopyFromURL() != null ? sc.getCopyFromURL().toString() : null, sc.getRevision().getNumber());
+                        sc.getCopyFromURL() != null ? sc.getCopyFromURL().toString() : null, sc.getRevision().getNumber()
+                );
             }
         }
         return items;
