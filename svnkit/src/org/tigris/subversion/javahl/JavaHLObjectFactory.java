@@ -433,6 +433,7 @@ public class JavaHLObjectFactory {
             code = e.getErrorMessage().getErrorCode().getCode();
         }
         ClientException ec = new ClientException(e.getMessage(), "", code);
+        ec.initCause(e);
         svnClient.getClientManager().getDebugLog().info(ec);
         svnClient.getClientManager().getDebugLog().info(e);
         throw ec;
