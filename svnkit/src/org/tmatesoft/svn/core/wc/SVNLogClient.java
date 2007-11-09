@@ -636,27 +636,14 @@ public class SVNLogClient extends SVNBasicClient {
                   includeMergeInfo, revisionProperties, wrappingHandler);
     }
     
-    public SVNLocationEntry getCopySource(File path, SVNRevision revision) throws SVNException {
-        SVNRepository repos = createRepository(null, path, revision, revision);
-        SVNWCAccess access = createWCAccess();
+    public SVNLocationEntry getCopySource(File path, SVNURL url, SVNRevision revision) throws SVNException {
+        SVNRepository repos = createRepository(url, path, revision, revision);
         SVNLocationEntry copyFromEntry = null;
-        try {
-            access.probeOpen(path, false, 0);
-            SVNEntry entry = access.getVersionedEntry(path, false);
-            SVNURL url = entry.getSVNURL();
-            SVNURL reposRoot = entry.getRepositoryRootURL();
-            if (reposRoot == null) {
-                reposRoot = repos.getRepositoryRoot(true);
-            }
-            String targetPath = url.getPath().substring(reposRoot.getPath().length());
-            if (!targetPath.startsWith("/")) {
-                targetPath = "/" + targetPath;
-            }
-            
-            SVNRevision oldestRevision = SVNRevision.create(1);
-            CopyFromReceiver receiver = new CopyFromReceiver(targetPath); 
+        String targetPath = getPathRelativeToRoot(path, url, null, null, repos);
+        SVNRevision oldestRevision = SVNRevision.create(1);
+        CopyFromReceiver receiver = new CopyFromReceiver(targetPath); 
             try {
-                doLog(new File[] {path}, revision, revision, oldestRevision, true, true, 0, receiver);
+                doLog(new File[] { path }, revision, revision, oldestRevision, true, true, 0, receiver);
                 copyFromEntry = receiver.getCopyFromLocation();
             } catch (SVNException e) {
                 SVNErrorCode errCode = e.getErrorMessage().getErrorCode();
@@ -665,9 +652,6 @@ public class SVNLogClient extends SVNBasicClient {
                 }
                 throw e;
             }
-        } finally {
-            access.close();
-        }
 
         return copyFromEntry == null ? new SVNLocationEntry(SVNRepository.INVALID_REVISION, null) 
                                      : copyFromEntry;

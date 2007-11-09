@@ -292,6 +292,26 @@ public class SVNPropertiesManager {
         return pathsToPropValues;
     }
 
+    public static void recordWCMergeInfo(File path, Map mergeInfo, SVNWCAccess wcAccess) throws SVNException {
+        String value = null;
+        if (mergeInfo != null) {
+            value = SVNMergeInfoManager.formatMergeInfoToString(mergeInfo); 
+        }
+        setProperty(wcAccess, path, SVNProperty.MERGE_INFO, value, true);
+    }
+    
+    public static Map parseMergeInfo(File path, SVNEntry entry, boolean base) throws SVNException {
+        Map fileToProp = SVNPropertiesManager.getWorkingCopyPropertyValues(entry, SVNProperty.MERGE_INFO, 
+                SVNDepth.EMPTY, base); 
+
+        Map result = null;
+        String propValue = (String) fileToProp.get(path);
+        if (propValue != null) {
+            result = SVNMergeInfoManager.parseMergeInfo(new StringBuffer(propValue), result);
+        }
+        return result;
+    }
+    
     private static void validatePropertyName(File path, String name, SVNNodeKind kind) throws SVNException {
         SVNErrorMessage err = null;
         if (kind == SVNNodeKind.DIR) {

@@ -228,7 +228,7 @@ public class FSCommitEditor implements ISVNEditor {
             }
 
             if (propName.equals(SVNProperty.MERGE_INFO)) {
-                
+                //TODO: FIXME
             }
 
             if (propValue == null) {

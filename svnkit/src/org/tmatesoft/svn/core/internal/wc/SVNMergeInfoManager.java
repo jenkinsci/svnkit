@@ -168,7 +168,7 @@ public class SVNMergeInfoManager {
             lastMergedRevision = myDBProcessor.getMaxRevisionForPathFromMergeInfoChangedTable(path, revision);
             if (lastMergedRevision > 0) {
                 Map mergeSrcsToMergeRangeLists = myDBProcessor.parseMergeInfoFromDB(path, lastMergedRevision);
-                if (!mergeSrcsToMergeRangeLists.isEmpty()) {
+                if (mergeSrcsToMergeRangeLists != null) {
                     SVNMergeInfo mergeInfo = new SVNMergeInfo(path, mergeSrcsToMergeRangeLists);
                     result.put(path, mergeInfo);
                     mergeInfoCache.put(path, mergeInfo);
@@ -389,17 +389,16 @@ public class SVNMergeInfoManager {
 
     public static void elideMergeInfo(Map parentMergeInfo, Map childMergeInfo, File path, 
                                       String pathSuffix, SVNWCAccess access) throws SVNException {
-        if (childMergeInfo == null || childMergeInfo.isEmpty()) {
+        if (childMergeInfo == null) {
             return;
         }
         
         boolean noElide = true;
         boolean elidePartially = false;
         boolean elideFull = false;
-        parentMergeInfo = parentMergeInfo == null ? Collections.EMPTY_MAP : parentMergeInfo;
         
         Map mergeInfo = parentMergeInfo;
-        if (pathSuffix != null && !parentMergeInfo.isEmpty()) {
+        if (pathSuffix != null && parentMergeInfo != null) {
             mergeInfo = new TreeMap();
             for (Iterator paths = parentMergeInfo.keySet().iterator(); paths.hasNext();) {
                 String mergeSrcPath = (String) paths.next();
@@ -409,8 +408,8 @@ public class SVNMergeInfoManager {
         
         Map childEmptyMergeInfo = new HashMap();
         Map childNonEmptyMergeInfo = new TreeMap();
-        fillEmptyRangeListsUniqueToChild(childEmptyMergeInfo, childNonEmptyMergeInfo, 
-                                         childMergeInfo, mergeInfo);
+        getEmptyRangeListsUniqueToChild(childEmptyMergeInfo, childNonEmptyMergeInfo, 
+                childMergeInfo, mergeInfo);
         
         if (!childEmptyMergeInfo.isEmpty()) {
             noElide = false;
@@ -421,10 +420,10 @@ public class SVNMergeInfoManager {
             }
         }
         
-        if (noElide && !mergeInfo.isEmpty()) {
+        if (noElide && mergeInfo != null) {
             Map parentNonEmptyMergeInfo = new TreeMap();
-            fillEmptyRangeListsUniqueToChild(null, parentNonEmptyMergeInfo, 
-                                             mergeInfo, childMergeInfo);
+            getEmptyRangeListsUniqueToChild(null, parentNonEmptyMergeInfo, 
+                    mergeInfo, childMergeInfo);
             if (mergeInfoEquals(parentNonEmptyMergeInfo, childMergeInfo, 
                 SVNMergeRangeInheritance.ONLY_INHERITABLE)) {
                 noElide = false;
@@ -432,7 +431,7 @@ public class SVNMergeInfoManager {
             }
         }
         
-        if (!elideFull && !mergeInfo.isEmpty()) {
+        if (!elideFull && mergeInfo != null) {
             if (mergeInfoEquals(childNonEmptyMergeInfo, mergeInfo, 
                 SVNMergeRangeInheritance.ONLY_INHERITABLE)) {
                 elideFull = true;
@@ -443,14 +442,15 @@ public class SVNMergeInfoManager {
         if (elideFull) {
             SVNPropertiesManager.setProperty(access, path, SVNProperty.MERGE_INFO, null, true);
         } else if (elidePartially) {
-            String value = childNonEmptyMergeInfo.isEmpty() ? 
-                                            null : formatMergeInfoToString(childNonEmptyMergeInfo);
-            SVNPropertiesManager.setProperty(access, path, SVNProperty.MERGE_INFO, value, true);
+            SVNPropertiesManager.recordWCMergeInfo(path, childNonEmptyMergeInfo, access);
         }
     }
     
     public static boolean mergeInfoEquals(Map mergeInfo1, Map mergeInfo2, 
                                           SVNMergeRangeInheritance considerInheritance) {
+        mergeInfo1 = mergeInfo1 == null ? Collections.EMPTY_MAP : mergeInfo1;
+        mergeInfo2 = mergeInfo2 == null ? Collections.EMPTY_MAP : mergeInfo2;
+        
         if (mergeInfo1.size() == mergeInfo2.size()) {
             Map deleted = new HashMap();
             Map added = new HashMap();
@@ -473,35 +473,37 @@ public class SVNMergeInfoManager {
     
     public static Map getInheritableMergeInfo(Map mergeInfo, String path, long startRev, long endRev) {
         Map inheritableMergeInfo = new TreeMap();
-        for (Iterator paths = mergeInfo.keySet().iterator(); paths.hasNext();) {
-            String mergeSrcPath = (String) paths.next();
-            SVNMergeRangeList rangeList = (SVNMergeRangeList) mergeInfo.get(mergeSrcPath);
-            SVNMergeRangeList inheritableRangeList = null;
-            if (path == null || path.equals(mergeSrcPath)) {
-                inheritableRangeList = rangeList.getInheritableRangeList(startRev, endRev);
-            } else {
-                inheritableRangeList = rangeList.dup();
+        if (mergeInfo != null) {
+            for (Iterator paths = mergeInfo.keySet().iterator(); paths.hasNext();) {
+                String mergeSrcPath = (String) paths.next();
+                SVNMergeRangeList rangeList = (SVNMergeRangeList) mergeInfo.get(mergeSrcPath);
+                SVNMergeRangeList inheritableRangeList = null;
+                if (path == null || path.equals(mergeSrcPath)) {
+                    inheritableRangeList = rangeList.getInheritableRangeList(startRev, endRev);
+                } else {
+                    inheritableRangeList = rangeList.dup();
+                }
+                inheritableMergeInfo.put(mergeSrcPath, inheritableRangeList);
             }
-            inheritableMergeInfo.put(mergeSrcPath, inheritableRangeList);
         }
         return inheritableMergeInfo;
     }
     
-    private static void fillEmptyRangeListsUniqueToChild(Map emptyRangeMergeInfo, 
-                                                        Map nonEmptyRangeMergeInfo, 
-                                                        Map childMergeInfo, 
-                                                        Map parentMergeInfo) {
-        for (Iterator paths = childMergeInfo.keySet().iterator(); paths.hasNext();) {
-            String childPath = (String) paths.next();
-            SVNMergeRangeList childRangeList = (SVNMergeRangeList) childMergeInfo.get(childPath);
-            if (childRangeList.getSize() == 0 && (parentMergeInfo.isEmpty() || 
-                !parentMergeInfo.containsKey(childPath))) {
-                if (emptyRangeMergeInfo != null) {
-                    emptyRangeMergeInfo.put(childPath, childRangeList.dup());
-                }
-            } else {
-                if (nonEmptyRangeMergeInfo != null) {
-                    nonEmptyRangeMergeInfo.put(childPath, childRangeList.dup());
+    private static void getEmptyRangeListsUniqueToChild(Map emptyRangeMergeInfo, Map nonEmptyRangeMergeInfo, 
+            Map childMergeInfo, Map parentMergeInfo) {
+        if (childMergeInfo != null) {
+            for (Iterator paths = childMergeInfo.keySet().iterator(); paths.hasNext();) {
+                String childPath = (String) paths.next();
+                SVNMergeRangeList childRangeList = (SVNMergeRangeList) childMergeInfo.get(childPath);
+                if (childRangeList.isEmpty() && (parentMergeInfo == null || 
+                    !parentMergeInfo.containsKey(childPath))) {
+                    if (emptyRangeMergeInfo != null) {
+                        emptyRangeMergeInfo.put(childPath, childRangeList.dup());
+                    }
+                } else {
+                    if (nonEmptyRangeMergeInfo != null) {
+                        nonEmptyRangeMergeInfo.put(childPath, childRangeList.dup());
+                    }
                 }
             }
         }

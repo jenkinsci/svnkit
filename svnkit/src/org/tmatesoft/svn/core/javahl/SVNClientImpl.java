@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -66,7 +67,6 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
-import org.tmatesoft.svn.core.SVNMergeInfo;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
@@ -1810,13 +1810,14 @@ public class SVNClientImpl implements SVNClientInterface {
 
     public MergeInfo getMergeInfo(String path, Revision revision) throws SubversionException {
         SVNDiffClient client = getSVNDiffClient();
-        SVNMergeInfo mergeInfo = null;
+        Map mergeInfo = null;
         try {
             if (isURL(path)) {
                 mergeInfo = client.getMergeInfo(SVNURL.parseURIEncoded(path),
                         JavaHLObjectFactory.getSVNRevision(revision));
             } else {
-                mergeInfo = client.getMergeInfo(new File(path).getAbsoluteFile());
+                mergeInfo = client.getMergeInfo(new File(path).getAbsoluteFile(), 
+                        JavaHLObjectFactory.getSVNRevision(revision));
             }
             return JavaHLObjectFactory.createMergeInfo(mergeInfo);
         } catch (SVNException e) {
@@ -1827,10 +1828,20 @@ public class SVNClientImpl implements SVNClientInterface {
 
     public String[] suggestMergeSources(String path, Revision pegRevision) throws SubversionException {
         SVNDiffClient client = getSVNDiffClient();
-        List paths = null;
+        List mergeSrcURLs = null;
         try {
-            paths = client.suggestMergeSources(new File(path).getAbsoluteFile(), JavaHLObjectFactory.getSVNRevision(pegRevision));
-            return (String[]) paths.toArray(new String[paths.size()]);
+            mergeSrcURLs = client.suggestMergeSources(new File(path).getAbsoluteFile(), 
+                    JavaHLObjectFactory.getSVNRevision(pegRevision));
+            if (mergeSrcURLs != null) {
+                String[] stringURLs = new String[mergeSrcURLs.size()];
+                int i = 0;
+                for (Iterator urls = mergeSrcURLs.iterator(); urls.hasNext();) {
+                    SVNURL mergeSrcURL = (SVNURL) urls.next();
+                    stringURLs[i++] = mergeSrcURL.toString();
+                }
+                return stringURLs; 
+            }
+            return null;
         } catch (SVNException e) {
             throwException(e);
         }

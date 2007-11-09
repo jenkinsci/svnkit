@@ -124,7 +124,7 @@ public class SVNSQLiteDBProcessor implements ISVNDBProcessor {
     }
 
     public Map parseMergeInfoFromDB(String path, long lastMergedRevision) throws SVNException {
-        Map result = new TreeMap();
+        Map result = null;
         PreparedStatement statement = createSelectMergeInfoStatement();
         try {
             statement.setString(1, path);
@@ -133,7 +133,8 @@ public class SVNSQLiteDBProcessor implements ISVNDBProcessor {
             if (!rows.isBeforeFirst()) {
                 return result;
             } 
-            
+
+            result = new TreeMap();
             String lastMergedFrom = null;
             String mergedFrom = null;
             Collection ranges = new LinkedList(); 

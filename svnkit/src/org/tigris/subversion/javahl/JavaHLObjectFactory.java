@@ -25,10 +25,11 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
-import org.tmatesoft.svn.core.SVNMergeInfo;
 import org.tmatesoft.svn.core.SVNMergeRange;
+import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
@@ -418,18 +419,21 @@ public class JavaHLObjectFactory {
         return new LogMessage(cp, logEntry.getRevision(), logEntry.getAuthor(), time, logEntry.getMessage());
     }
 
-    public static MergeInfo createMergeInfo(SVNMergeInfo mergeInfo) {
+    public static MergeInfo createMergeInfo(Map mergeInfo) {
         if (mergeInfo == null) {
             return null;
         }
+        
         MergeInfo result = new MergeInfo();
-        for (Iterator iterator = mergeInfo.getMergeSourcesToMergeLists().entrySet().iterator(); iterator.hasNext();) {
+        for (Iterator iterator = mergeInfo.entrySet().iterator(); iterator.hasNext();) {
             Map.Entry entry = (Map.Entry) iterator.next();
-            String path = (String) entry.getKey();
-            SVNMergeRange[] ranges = (SVNMergeRange[]) entry.getValue();
+            SVNURL mergeSrcURL = (SVNURL) entry.getKey();
+            String url = mergeSrcURL.toString();
+            SVNMergeRangeList rangeList = (SVNMergeRangeList) entry.getValue();
+            SVNMergeRange[] ranges = rangeList.getRanges();
             for (int i = 0; i < ranges.length; i++) {
                 SVNMergeRange range = ranges[i];
-                result.addRevisionRange(path, createRevisionRange(range));
+                result.addRevisionRange(url, createRevisionRange(range));
             }
         }
         return result;
