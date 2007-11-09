@@ -19,15 +19,25 @@ import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertPath;
+import java.security.cert.CertPathValidator;
+import java.security.cert.CertPathValidatorException;
+import java.security.cert.CertPathValidatorResult;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.security.cert.PKIXCertPathValidatorResult;
 import java.security.cert.PKIXParameters;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -67,6 +77,7 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
     private boolean myIsPromptForClientCert;
     private SVNSSLAuthentication myClientAuthentication;
     private Throwable myClientCertError;
+    private TrustAnchor[] myTrustedAnchors;
 
     public DefaultSVNSSLManager(File authDir, SVNURL url, 
             File[] serverCertFiles, boolean useKeyStore, File clientFile, String clientPassword,
@@ -96,11 +107,13 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
             return;
         }
         Collection trustedCerts = new ArrayList();
+        Collection trustedAnchors = new ArrayList();
         // load trusted certs from files.
         for (int i = 0; i < myServerCertFiles.length; i++) {
             X509Certificate cert = loadCertificate(myServerCertFiles[i]);
             if (cert != null) {
                 trustedCerts.add(cert);
+                trustedAnchors.add(new TrustAnchor(cert, null));
             }
         }
         // load from 'default' keystore
@@ -127,6 +140,7 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
                     PKIXParameters params = new PKIXParameters(keyStore);
                     for (Iterator anchors = params.getTrustAnchors().iterator(); anchors.hasNext(); ) {
                         TrustAnchor ta = (TrustAnchor) anchors.next();
+                        trustedAnchors.add(ta);
                         X509Certificate cert = ta.getTrustedCert();
                         if (cert != null) {
                             trustedCerts.add(cert);
@@ -139,6 +153,7 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
             }
         }
         myTrustedCerts = (X509Certificate[]) trustedCerts.toArray(new X509Certificate[trustedCerts.size()]);
+        myTrustedAnchors = (TrustAnchor[]) trustedAnchors.toArray(new TrustAnchor[trustedAnchors.size()]);
     }
 
     public SSLContext getSSLContext() throws IOException {
@@ -151,8 +166,27 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
                 }
                 public void checkClientTrusted(X509Certificate[] certs, String arg1) throws CertificateException {
                 }
+
                 public void checkServerTrusted(X509Certificate[] certs, String algorithm) throws CertificateException {
                     if (certs != null && certs.length > 0 && certs[0] != null) {
+                        init();
+                        // check with our trust anchors.
+                        if (myTrustedAnchors != null && myTrustedAnchors.length > 0) {
+                            try {
+                                CertPathValidator validator = CertPathValidator.getInstance("PKIX");
+                                CertPath path = CertificateFactory.getInstance("X509").generateCertPath(Arrays.asList(certs));
+                                PKIXParameters params = new PKIXParameters(new HashSet(Arrays.asList(myTrustedAnchors)));
+                                params.setRevocationEnabled(false);
+                                PKIXCertPathValidatorResult result = (PKIXCertPathValidatorResult) validator.validate(path, params);
+                                if (result != null && result.getTrustAnchor() != null) {
+                                    return;
+                                }                        
+                            } catch (NoSuchAlgorithmException e1) {
+                            } catch (CertPathValidatorException e) {
+                            } catch (InvalidAlgorithmParameterException e) {
+                            }
+                        }
+
                         String data = SVNBase64.byteArrayToBase64(certs[0].getEncoded());
                         String stored = (String) myAuthManager.getRuntimeAuthStorage().getData("svn.ssl.server", myRealm);
                         if (data.equals(stored)) {
@@ -203,6 +237,7 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
             myClientCertError = null;
             myKeyManagers = null;
             myTrustedCerts = null;
+            myTrustedAnchors = null;
         }
     }
     
