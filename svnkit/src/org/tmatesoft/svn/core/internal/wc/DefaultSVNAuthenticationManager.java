@@ -539,7 +539,9 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                 values.put("password", cipher.encrypt(passwordAuth.getPassword()));
             } else if (ISVNAuthenticationManager.SSH.equals(kind)) {
                 SVNSSHAuthentication sshAuth = (SVNSSHAuthentication) auth;
-                values.put("password", cipher.encrypt(sshAuth.getPassword()));
+                if (sshAuth.getPassword() != null) {
+                    values.put("password", cipher.encrypt(sshAuth.getPassword()));
+                }
                 int port = sshAuth.getPortNumber();
                 if (sshAuth.getPortNumber() < 0) {
                     port = getDefaultSSHPortNumber() ;
@@ -547,8 +549,12 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                 values.put("port", Integer.toString(port));
                 if (sshAuth.getPrivateKeyFile() != null) { 
                     String path = SVNPathUtil.validateFilePath(sshAuth.getPrivateKeyFile().getAbsolutePath());
-                    values.put("passphrase", cipher.encrypt(sshAuth.getPassphrase()));
-                    values.put("key", path);
+                    if (sshAuth.getPassphrase() != null) {
+                        values.put("passphrase", cipher.encrypt(sshAuth.getPassphrase()));
+                    }
+                    if (path != null) {
+                        values.put("key", path);
+                    }
                 }
             }
             // get file name for auth and store password.
