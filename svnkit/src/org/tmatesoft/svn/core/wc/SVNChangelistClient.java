@@ -142,7 +142,7 @@ public class SVNChangelistClient extends SVNBasicClient {
                 SVNEntry entry = wcAccess.getEntry(path, false);
                 if (entry == null) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", path);
-                    SVNEvent event = SVNEventFactory.createChangelistEvent(path, adminArea, null, SVNEventAction.CHANGELIST_FAILED, err);
+                    SVNEvent event = SVNEventFactory.createSVNEvent(path, SVNEventAction.CHANGELIST_FAILED, err);
                     dispatchEvent(event);
                     continue;
                 }
@@ -150,8 +150,7 @@ public class SVNChangelistClient extends SVNBasicClient {
                 if (entry.isDirectory()) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_IS_DIRECTORY, 
                             "''{0}'' is a directory, and thus cannot be a member of a changelist", path);
-                    SVNEvent event = SVNEventFactory.createChangelistEvent(path, adminArea, null, 
-                            SVNEventAction.CHANGELIST_FAILED, err);
+                    SVNEvent event = SVNEventFactory.createSVNEvent(path, SVNEventAction.CHANGELIST_FAILED, err);
                     dispatchEvent(event);
                     continue;
                 }
@@ -164,8 +163,7 @@ public class SVNChangelistClient extends SVNBasicClient {
                                 "''{0}'' is not currently a member of changelist ''{1}''.", 
                                 new Object[] {path, matchingChangelistName});
                         SVNEvent event = 
-                            SVNEventFactory.createChangelistEvent(path, 
-                                adminArea, null, SVNEventAction.CHANGELIST_FAILED, err);
+                            SVNEventFactory.createSVNEvent(path, SVNEventAction.CHANGELIST_FAILED, err);
                         dispatchEvent(event);
                         continue;
                     }
@@ -175,8 +173,7 @@ public class SVNChangelistClient extends SVNBasicClient {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CHANGELIST_MOVE, 
                             "Removing ''{0}'' from changelist ''{1}''.", new Object[] { path, 
                             entry.getChangelistName() });
-                    SVNEvent event = SVNEventFactory.createChangelistEvent(path, adminArea, null, 
-                            SVNEventAction.CHANGELIST_MOVED, err);
+                    SVNEvent event = SVNEventFactory.createSVNEvent(path, SVNEventAction.CHANGELIST_MOVED, err);
                     dispatchEvent(event);
                     continue;
                 }
@@ -185,10 +182,7 @@ public class SVNChangelistClient extends SVNBasicClient {
                 attributes.put(SVNProperty.CHANGELIST, changelistName);
                 entry = adminArea.modifyEntry(entry.getName(), attributes, true, false);
 
-                SVNEvent event = SVNEventFactory.createChangelistEvent(path, 
-                        adminArea, changelistName, 
-                        changelistName != null ? SVNEventAction.CHANGELIST_SET : 
-                            SVNEventAction.CHANGELIST_CLEAR, null);
+                SVNEvent event = SVNEventFactory.createSVNEvent(path, changelistName != null ? SVNEventAction.CHANGELIST_SET :SVNEventAction.CHANGELIST_CLEAR, null, changelistName);
 
                 dispatchEvent(event);
 

@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
+import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 
@@ -227,7 +228,6 @@ public class SVNReporter implements ISVNReporterBaton {
         }
         adminArea.restoreFile(name);
         SVNEntry entry = adminArea.getEntry(name, true);
-        myInfo.getWCAccess().handleEvent(SVNEventFactory.createRestoredEvent(adminArea, entry));
-    }
-    
+        myInfo.getWCAccess().handleEvent(SVNEventFactory.createSVNEvent(adminArea.getFile(entry.getName()), entry.getKind(), entry.getRevision(), SVNEventAction.RESTORE));
+    }    
 }

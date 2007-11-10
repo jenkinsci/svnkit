@@ -115,7 +115,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             }
         }
         if (myEventHandler != null) {
-            SVNEvent event = SVNEventFactory.createMergeEvent(myAdminArea, path, action, expectedAction, type, type, nodeKind);
+            SVNEvent event = SVNEventFactory.createSVNEvent(myAdminArea.getFile(path), nodeKind, type, type, action, expectedAction);
             myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
         }
     }
@@ -132,7 +132,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
                 action = SVNEventAction.SKIP; 
             }
             // TODO prop type?
-            SVNEvent event = SVNEventFactory.createMergeEvent(myAdminArea, path, action, expectedAction, type, type, SVNNodeKind.DIR);
+            SVNEvent event = SVNEventFactory.createSVNEvent(myAdminArea.getFile(path), SVNNodeKind.DIR, type, type, action, expectedAction);
             myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
         }
     }
@@ -163,8 +163,8 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
                 if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
                     if (myEventHandler != null) {
                         action = SVNEventAction.SKIP;
-                        SVNEvent event = SVNEventFactory.createMergeEvent(myAdminArea, myCurrentDirectory.myRepositoryPath, action, 
-                                expectedAction, SVNStatusType.MISSING, SVNStatusType.MISSING, SVNNodeKind.DIR);
+                        SVNEvent event = SVNEventFactory.createSVNEvent(myAdminArea.getFile(myCurrentDirectory.myRepositoryPath), SVNNodeKind.DIR,
+                                SVNStatusType.MISSING, SVNStatusType.MISSING, action, expectedAction);
                         myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
                     }
                     return;
@@ -180,8 +180,8 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             if (type == SVNStatusType.UNKNOWN) {
                 action = SVNEventAction.UPDATE_NONE;
             }
-            SVNEvent event = SVNEventFactory.createMergeEvent(myAdminArea, myCurrentDirectory.myRepositoryPath, action, 
-                    expectedAction, SVNStatusType.INAPPLICABLE, type, SVNNodeKind.DIR);
+            SVNEvent event = SVNEventFactory.createSVNEvent(myAdminArea.getFile(myCurrentDirectory.myRepositoryPath), SVNNodeKind.DIR, 
+                    SVNStatusType.INAPPLICABLE, type, action, expectedAction);
             myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
         }
         myCurrentDirectory = myCurrentDirectory.myParent;
@@ -233,8 +233,8 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
                 if (myEventHandler != null) {
                     action = SVNEventAction.SKIP;
-                    SVNEvent event = SVNEventFactory.createMergeEvent(myAdminArea, commitPath, action, 
-                            expectedAction, SVNStatusType.MISSING, SVNStatusType.UNKNOWN, SVNNodeKind.FILE);
+                    SVNEvent event = SVNEventFactory.createSVNEvent(myAdminArea.getFile(commitPath), SVNNodeKind.FILE,
+                            SVNStatusType.MISSING, SVNStatusType.UNKNOWN, action, expectedAction);
                     myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
                 }
                 return;
@@ -264,8 +264,8 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             } else {
                 action = SVNEventAction.UPDATE_UPDATE;
             }
-            SVNEvent event = SVNEventFactory.createMergeEvent(myAdminArea, commitPath, action, 
-                    expectedAction, type[0], type[1], SVNNodeKind.FILE);
+            SVNEvent event = SVNEventFactory.createSVNEvent(myAdminArea.getFile(commitPath), SVNNodeKind.FILE,
+                    type[0], type[1],action, expectedAction);
             myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
         }
     }

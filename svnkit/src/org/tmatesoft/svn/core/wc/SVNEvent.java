@@ -17,7 +17,6 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 
 /**
  * The <b>SVNEvent</b> class is used to provide detailed information on 
@@ -102,23 +101,21 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
  */
 public class SVNEvent {
 
-    private String myMimeType;
-    private SVNErrorMessage myErrorMessage;
-    private SVNEventAction myAction;
+    private File myFile;
     private SVNNodeKind myNodeKind;
+    private String myMimeType;
     private long myRevision;
     private SVNStatusType myContentsStatus;
     private SVNStatusType myPropertiesStatus;
     private SVNStatusType myLockStatus;
     private SVNLock myLock;
-    private SVNAdminArea myAdminArea;
-    private String myName;
-    private String myPath;
-    private File myRoot;
-    private File myRootFile;
+    private SVNErrorMessage myErrorMessage;
+    private SVNEventAction myAction;
     private SVNEventAction myExpectedAction;
     private String myChangelistName;
     private SVNMergeRange myRange;
+
+    private String myPath;
 
     /**
      * Constructs an <b>SVNEvent</b> object given
@@ -154,107 +151,31 @@ public class SVNEvent {
      * @param lock           the item's lock
      * @param error          an error message
      */
-    public SVNEvent(SVNAdminArea adminArea, String name, SVNEventAction action, 
-                    SVNEventAction expectedAction, SVNNodeKind kind, 
-                    long revision, String mimetype, SVNStatusType cstatus, SVNStatusType pstatus,
-                    SVNStatusType lstatus, SVNLock lock, SVNErrorMessage error) {
-        myMimeType = mimetype;
-        myErrorMessage = error;
-        myExpectedAction = expectedAction != null ? expectedAction : action;
-        myAction = action;
+
+    public SVNEvent(File file, SVNNodeKind kind, String mimetype, long revision, SVNStatusType cstatus, SVNStatusType pstatus,
+            SVNStatusType lstatus, SVNLock lock, SVNEventAction action, SVNEventAction expected, SVNErrorMessage error, SVNMergeRange range, String changelistName) {
+        myFile = file != null ? file.getAbsoluteFile() : null;
         myNodeKind = kind == null ? SVNNodeKind.UNKNOWN : kind;
+        myMimeType = mimetype;
         myRevision = revision;
         myContentsStatus = cstatus == null ? SVNStatusType.INAPPLICABLE : cstatus;
         myPropertiesStatus = pstatus == null ? SVNStatusType.INAPPLICABLE : pstatus;
         myLockStatus = lstatus == null ? SVNStatusType.INAPPLICABLE : lstatus;
         myLock = lock;
-        myAdminArea = adminArea;
-        myRoot = adminArea != null ? adminArea.getRoot() : null;
-        myName = name;
-    }
-
-    /**
-     * Constructs an <b>SVNEvent</b> object.
-     * <p>
-     * Used by SVNKit internals to construct and initialize an 
-     * <b>SVNEvent</b> object. It's not intended for users (from an API point of view).
-     * 
-     * @param adminArea  admin area the item belongs to
-     * @param name       the item's name
-     * @param action     the type of action the item is exposed to
-     * @param kind       the item's node kind
-     * @param revision   a revision number
-     * @param mimetype   the item's MIME type
-     * @param cstatus    the item's contents status
-     * @param pstatus    the item's properties status
-     * @param lstatus    the item's lock status
-     * @param lock       the item's lock
-     * @param error      an error message
-     */
-    public SVNEvent(SVNAdminArea adminArea, String name, SVNEventAction action, SVNNodeKind kind, 
-                    long revision, String mimetype, SVNStatusType cstatus, SVNStatusType pstatus,
-                    SVNStatusType lstatus, SVNLock lock, SVNErrorMessage error) {
-        this(adminArea, name, action, null, kind, revision, mimetype, cstatus, pstatus, lstatus, 
-             lock, error);
-    }
-    
-    /**
-     * Constructs an <b>SVNEvent</b> object filling it with informational 
-     * details most of that would be retrieved and analized by an 
-     * <b>ISVNEventHandler</b> implementation. 
-     * 
-     * <p>
-     * Used by SVNKit internals to construct and initialize an 
-     * <b>SVNEvent</b> object. It's not intended for users (from an API point of view).
-     *
-     * <p>
-     * If <code>action</code> is {@link SVNEventAction#SKIP} (i.e. operation is skipped) 
-     * then the expected action (that would have occurred if the operation hadn't been skipped) 
-     * is provided in <code>expected</code>. 
-     * 
-     * @param rootFile   the item's root directory
-     * @param file       the item's path itself
-     * @param action     the type of action the item is exposed to
-     * @param expected   the action that is expected to happen, but may
-     *                   be skipped in real for some reason
-     * @param kind       the item's node kind
-     * @param revision   a revision number
-     * @param mimetype   the item's MIME type
-     * @param cstatus    the item's contents status
-     * @param pstatus    the item's properties status
-     * @param lstatus    the item's lock status
-     * @param lock       the item's lock
-     * @param error      an error message
-     */
-    public SVNEvent(File rootFile, File file, SVNEventAction action, SVNEventAction expected,
-            SVNNodeKind kind, long revision, String mimetype,
-            SVNStatusType cstatus, SVNStatusType pstatus,
-            SVNStatusType lstatus, SVNLock lock, SVNErrorMessage error) {
-        myMimeType = mimetype;
-        myExpectedAction = expected != null ? expected : action;
-        myErrorMessage = error;
         myAction = action;
-        myNodeKind = kind == null ? SVNNodeKind.UNKNOWN : kind;
-        myRevision = revision;
-        myContentsStatus = cstatus == null ? SVNStatusType.INAPPLICABLE
-                : cstatus;
-        myPropertiesStatus = pstatus == null ? SVNStatusType.INAPPLICABLE
-                : pstatus;
-        myLockStatus = lstatus == null ? SVNStatusType.INAPPLICABLE : lstatus;
-        myLock = lock;
-
-        myRoot = file != null ? file.getParentFile() : null;
-        myRootFile = rootFile;
-        myName = file != null ? file.getName() : "";
+        myExpectedAction = expected == null ? action : expected;
+        myErrorMessage = error;
+        myRange = range;
+        myChangelistName = changelistName;
     }
-    
+
     /**
-     * Constructs an <b>SVNEvent</b> object filling it with informational 
-     * details most of that would be retrieved and analized by an 
-     * <b>ISVNEventHandler</b> implementation. 
-     * 
+     * Constructs an <b>SVNEvent</b> object filling it with informational
+     * details most of that would be retrieved and analized by an
+     * <b>ISVNEventHandler</b> implementation.
+     *
      * <p>
-     * Used by SVNKit internals to construct and initialize an 
+     * Used by SVNKit internals to construct and initialize an
      * <b>SVNEvent</b> object. It's not intended for users (from an API point of view).
      *
      * @param rootFile   the item's root directory
@@ -269,59 +190,41 @@ public class SVNEvent {
      * @param lock       the item's lock
      * @param error      an error message
      */
-    public SVNEvent(File rootFile, File file, SVNEventAction action,            
-            SVNNodeKind kind, long revision, String mimetype,
-            SVNStatusType cstatus, SVNStatusType pstatus,
-            SVNStatusType lstatus, SVNLock lock, SVNErrorMessage error) {
-        this(rootFile, file, action, null, kind, revision, mimetype, cstatus, pstatus, lstatus, lock, error);
+
+    public SVNEvent(File file, SVNNodeKind kind, String mimetype, long revision, SVNStatusType cstatus, SVNStatusType pstatus,
+            SVNStatusType lstatus, SVNLock lock, SVNEventAction action, SVNEventAction expected, SVNErrorMessage error, SVNMergeRange range) {
+        this(file, kind, mimetype, revision, cstatus, pstatus, lstatus, lock, action, expected, error, range, null);
     }
 
-    public SVNEvent(File rootFile, File file, SVNEventAction action, 
-                    SVNNodeKind kind, long revision, String mimetype,
-                    SVNStatusType cstatus, SVNStatusType pstatus,
-                    SVNStatusType lstatus, SVNLock lock, 
-                    SVNMergeRange range, SVNErrorMessage error) {
-                        
-        this(rootFile, file, action, kind, revision, mimetype, cstatus, pstatus, lstatus, lock, 
-             error);
-        myRange = range;
+    public SVNEvent(File file, SVNNodeKind kind, String mimetype, long revision, SVNStatusType cstatus, SVNStatusType pstatus,
+            SVNStatusType lstatus, SVNLock lock, SVNEventAction action, SVNErrorMessage error, SVNMergeRange range) {
+        this(file, kind, mimetype, revision, cstatus, pstatus, lstatus, lock, action, null, error, range);
     }
-    
-    /**
-     * Gets the item's path relative to the Working Copy root directory.
-     * 
-     * @return a string representation of the item's path
-     */
+
+    public SVNEvent(File file, SVNNodeKind kind, String mimetype, long revision, SVNStatusType cstatus, SVNStatusType pstatus,
+            SVNStatusType lstatus, SVNLock lock, SVNEventAction action, SVNEventAction expected, SVNErrorMessage error) {
+        this(file, kind, mimetype, revision, cstatus, pstatus, lstatus, lock, action, expected, error, null);
+    }
+
+    public SVNEvent(File file, SVNNodeKind kind, String mimetype, long revision, SVNStatusType cstatus, SVNStatusType pstatus,
+            SVNStatusType lstatus, SVNLock lock, SVNEventAction action, SVNErrorMessage error) {
+        this(file, kind, mimetype, revision, cstatus, pstatus, lstatus, lock, action, null, error, null);
+    }
+
+    public SVNEvent(File file, SVNNodeKind kind, String mimetype, long revision, SVNStatusType cstatus, SVNStatusType pstatus,
+            SVNStatusType lstatus, SVNLock lock, SVNEventAction action) {
+        this(file, kind, mimetype, revision, cstatus, pstatus, lstatus, lock, action, null, null, null);
+    }
+
     public String getPath() {
-        if (myPath != null) {
-            return myPath;
-        }
-        if (myAdminArea == null && myRootFile == null) {
-            return myName;
-        }
-        File file = getFile();
-        File root = myAdminArea != null ? myAdminArea.getRoot() : myRootFile;
-        String rootPath = root.getAbsolutePath().replace(File.separatorChar, '/');
-        String filePath = file.getAbsolutePath().replace(File.separatorChar, '/');
-        myPath = filePath.substring(rootPath.length());
-        if (myPath.startsWith("/")) {
-            myPath = myPath.substring(1);
-        }
-        return myPath;
-    }
-    
-    /**
-     * Gets a java.io.File representation of the item's path.
-     * 
-     * @return the item's path
-     */
-    public File getFile() {
-        if (myRoot != null) {
-            return ("".equals(myName) || ".".equals(myName) || myName == null) ? myRoot : new File(myRoot, myName);
-        } else if (myAdminArea != null && getPath() != null) {
-            return new File(myAdminArea.getRoot(), getPath());
+        if (myFile != null){
+            return myFile.getAbsolutePath();            
         }
         return null;
+    }
+
+    public File getFile() {
+        return myFile;
     }
     
     /**
@@ -369,10 +272,6 @@ public class SVNEvent {
      */
     public SVNErrorMessage getErrorMessage() {
         return myErrorMessage;
-    }
-    
-    public void setErrorMessage(SVNErrorMessage errorMessage) {
-        myErrorMessage = errorMessage;
     }
     
     /**
@@ -467,16 +366,11 @@ public class SVNEvent {
         myPath = path;
     }
     
-    public void setChangelistName(String changelistName) {
-        myChangelistName = changelistName;
-    }
-    
     public String getChangelistName() {
         return myChangelistName;
     }
     
     public SVNMergeRange getMergeRange() {
         return myRange;
-    }
-    
+    }    
 }

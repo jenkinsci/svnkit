@@ -289,7 +289,7 @@ public class SVNCommitClient extends SVNBasicClient {
             throw e;
         }
         if (info != null && info.getNewRevision() >= 0) { 
-            dispatchEvent(SVNEventFactory.createCommitCompletedEvent(null, info.getNewRevision()), ISVNEventHandler.UNKNOWN);
+            dispatchEvent(SVNEventFactory.createSVNEvent(null, SVNNodeKind.NONE, info.getNewRevision(), SVNEventAction.COMMIT_COMPLETED), ISVNEventHandler.UNKNOWN);
         }
         return info != null ? info : SVNCommitInfo.NULL;
     }
@@ -387,7 +387,7 @@ public class SVNCommitClient extends SVNBasicClient {
             throw e;
         }
         if (info != null && info.getNewRevision() >= 0) { 
-            dispatchEvent(SVNEventFactory.createCommitCompletedEvent(null, info.getNewRevision()), ISVNEventHandler.UNKNOWN);
+            dispatchEvent(SVNEventFactory.createSVNEvent(null, SVNNodeKind.NONE, info.getNewRevision(), SVNEventAction.COMMIT_COMPLETED), ISVNEventHandler.UNKNOWN);
         }
         return info != null ? info : SVNCommitInfo.NULL;
     }
@@ -555,7 +555,7 @@ public class SVNCommitClient extends SVNBasicClient {
             }
         }
         if (info != null && info.getNewRevision() >= 0) { 
-            dispatchEvent(SVNEventFactory.createCommitCompletedEvent(null, info.getNewRevision()), ISVNEventHandler.UNKNOWN);
+            dispatchEvent(SVNEventFactory.createSVNEvent(null, SVNNodeKind.NONE, info.getNewRevision(), SVNEventAction.COMMIT_COMPLETED), ISVNEventHandler.UNKNOWN);
         }
         return info != null ? info : SVNCommitInfo.NULL;
     }
@@ -776,14 +776,14 @@ public class SVNCommitClient extends SVNBasicClient {
                 } 
                 needsSleepForTimeStamp = true;
                 // commit completed, include revision number.
-                dispatchEvent(SVNEventFactory.createCommitCompletedEvent(null, info.getNewRevision()), ISVNEventHandler.UNKNOWN);
+                dispatchEvent(SVNEventFactory.createSVNEvent(null, SVNNodeKind.NONE, info.getNewRevision(), SVNEventAction.COMMIT_COMPLETED), ISVNEventHandler.UNKNOWN);
             } catch (SVNException e) {
                 if (e instanceof SVNCancelException) {
                     throw e;
                 }
                 SVNErrorMessage err = e.getErrorMessage().wrap("Commit failed (details follow):");
                 infos.add(new SVNCommitInfo(-1, null, null, err));
-                dispatchEvent(new SVNEvent(err), ISVNEventHandler.UNKNOWN);
+                dispatchEvent(SVNEventFactory.createErrorEvent(err), ISVNEventHandler.UNKNOWN);
                 continue;
             } finally {
                 if (info == null && commitEditor != null) {
@@ -1092,8 +1092,7 @@ public class SVNCommitClient extends SVNBasicClient {
         for (int i = 0; children != null && i < children.length; i++) {
             File file = children[i];
             if (SVNFileUtil.getAdminDirectoryName().equals(file.getName())) {
-                SVNEvent skippedEvent = SVNEventFactory.createSkipEvent(
-                        rootFile, file, SVNEventAction.SKIP, SVNEventAction.COMMIT_ADDED, SVNNodeKind.NONE);
+                SVNEvent skippedEvent = SVNEventFactory.createSVNEvent(new File(rootFile, file.getPath()), SVNNodeKind.NONE, SVNEventAction.SKIP, SVNEventAction.COMMIT_ADDED);
                 handleEvent(skippedEvent, ISVNEventHandler.UNKNOWN);
                 continue;
             }
@@ -1105,9 +1104,7 @@ public class SVNCommitClient extends SVNBasicClient {
             if (fileType == SVNFileType.DIRECTORY && depth.compareTo(SVNDepth.IMMEDIATES) >= 0) {
                 editor.addDir(path, null, -1);
                 changed |= true;
-                SVNEvent event = SVNEventFactory.createCommitEvent(rootFile,
-                        file, SVNEventAction.COMMIT_ADDED, SVNNodeKind.DIR,
-                        null);
+                SVNEvent event = SVNEventFactory.createSVNEvent(new File(rootFile, file.getPath()), SVNNodeKind.DIR, SVNEventAction.COMMIT_ADDED);
                 handleEvent(event, ISVNEventHandler.UNKNOWN);
                 SVNDepth depthBelowHere = depth;
                 if (depth == SVNDepth.IMMEDIATES) {
@@ -1121,8 +1118,7 @@ public class SVNCommitClient extends SVNBasicClient {
                 changed |= importFile(deltaGenerator, rootFile, file, fileType, path, editor);
             } else if (fileType != SVNFileType.DIRECTORY && fileType != SVNFileType.FILE) {
                 if (ignoreUnknownNodeTypes) {
-                    SVNEvent skippedEvent = SVNEventFactory.createSkipEvent(rootFile, file, SVNEventAction.SKIP, 
-                            SVNEventAction.COMMIT_ADDED, SVNNodeKind.NONE);
+                    SVNEvent skippedEvent = SVNEventFactory.createSVNEvent(new File(rootFile, file.getPath()), SVNNodeKind.NONE, SVNEventAction.SKIP, SVNEventAction.COMMIT_ADDED);
                     handleEvent(skippedEvent, ISVNEventHandler.UNKNOWN);
                 } else {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, 
@@ -1173,7 +1169,7 @@ public class SVNCommitClient extends SVNBasicClient {
             editor.changeFileProperty(filePath, name, value);
         }
         // send "adding"
-        SVNEvent addedEvent = SVNEventFactory.createCommitEvent(rootFile, file, SVNEventAction.COMMIT_ADDED, SVNNodeKind.FILE, mimeType);
+        SVNEvent addedEvent = SVNEventFactory.createSVNEvent(new File(rootFile, file.getPath()), SVNNodeKind.FILE, mimeType, SVNEventAction.COMMIT_ADDED);
         handleEvent(addedEvent, ISVNEventHandler.UNKNOWN);
         // translate and send file.
         String eolStyle = (String) autoProperties.get(SVNProperty.EOL_STYLE);

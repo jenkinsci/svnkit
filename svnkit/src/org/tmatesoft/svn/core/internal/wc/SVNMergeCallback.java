@@ -183,9 +183,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                         return;
                     }
                     if (event.getAction() == SVNEventAction.DELETE) {
-                        event = SVNEventFactory.createMergeEvent(getAdminArea(), event.getFile(), 
-                                SVNEventAction.UPDATE_DELETE, SVNEventAction.UPDATE_DELETE, 
-                                SVNStatusType.UNKNOWN, SVNStatusType.UNKNOWN, event.getNodeKind());
+                        event = SVNEventFactory.createSVNEvent(event.getFile(), event.getNodeKind(), SVNStatusType.UNKNOWN, SVNStatusType.UNKNOWN, SVNEventAction.UPDATE_DELETE, SVNEventAction.UPDATE_DELETE);
                     }
                     oldEventHandler.handleEvent(event, progress);
                 }

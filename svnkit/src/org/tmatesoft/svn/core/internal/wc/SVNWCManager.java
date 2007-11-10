@@ -19,8 +19,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -40,6 +40,7 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusClient;
@@ -155,7 +156,7 @@ public class SVNWCManager {
                 SVNPropertiesManager.deleteWCProperties(dir, null, true);
             }
         }
-        SVNEvent event = SVNEventFactory.createAddedEvent(parentDir, name, kind, null);
+        SVNEvent event = SVNEventFactory.createSVNEvent(parentDir.getFile(name), kind, 0, SVNEventAction.ADD);
         parentDir.getWCAccess().handleEvent(event);
     }
     
@@ -193,7 +194,7 @@ public class SVNWCManager {
             }
             
             if (SVNProperty.SCHEDULE_DELETE.equals(schedule)) {
-                SVNEvent event = SVNEventFactory.createDeletedEvent(dir, entry.getName());
+                SVNEvent event = SVNEventFactory.createSVNEvent(dir.getFile(entry.getName()), 0, SVNEventAction.DELETE);
                 dir.getWCAccess().handleEvent(event);
             }
         }
@@ -244,7 +245,7 @@ public class SVNWCManager {
             dir.modifyEntry(entry.getName(), attributes, true, false);
             attributes.clear();
             if (SVNProperty.SCHEDULE_DELETE.equals(schedule)) {
-                SVNEvent event = SVNEventFactory.createDeletedEvent(dir, entry.getName());
+                SVNEvent event = SVNEventFactory.createSVNEvent(dir.getFile(entry.getName()), 0, SVNEventAction.DELETE);
                 dir.getWCAccess().handleEvent(event);
             }
         }
@@ -281,7 +282,7 @@ public class SVNWCManager {
             dir.modifyEntry(entryName, attributes, true, false);
             attributes.clear();
             if (SVNProperty.SCHEDULE_DELETE.equals(schedule)) {
-                SVNEvent event = SVNEventFactory.createDeletedEvent(dir, entryName);
+                SVNEvent event = SVNEventFactory.createSVNEvent(dir.getFile(entryName), 0, SVNEventAction.DELETE);
                 dir.getWCAccess().handleEvent(event);
             }
             dir.saveEntries(false);
@@ -351,7 +352,7 @@ public class SVNWCManager {
                     if (removeMissingDirs && dir.getWCAccess().isMissing(path)) {
                         if (!entry.isScheduledForAddition() && !isExcluded) {
                             dir.deleteEntry(entry.getName());
-                            dir.getWCAccess().handleEvent(SVNEventFactory.createUpdateDeleteEvent(dir, entry));
+                            dir.getWCAccess().handleEvent(SVNEventFactory.createSVNEvent(dir.getFile(entry.getName()), entry.getKind(), entry.getRevision(), SVNEventAction.UPDATE_DELETE));
                         }
                     } else {
                         SVNAdminArea childDir = dir.getWCAccess().retrieve(path);
@@ -508,7 +509,7 @@ public class SVNWCManager {
             log.save();
             root.runLogs();
         }
-        SVNEvent event = SVNEventFactory.createDeletedEvent(root, name);
+        SVNEvent event = SVNEventFactory.createSVNEvent(root.getFile(name), 0, SVNEventAction.DELETE);
         wcAccess.handleEvent(event);
         if (SVNProperty.SCHEDULE_ADD.equals(schedule)) {
             SVNWCManager.doDeleteUnversionedFiles(wcAccess, path, deleteFiles);

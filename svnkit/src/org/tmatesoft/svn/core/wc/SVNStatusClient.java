@@ -284,9 +284,7 @@ public class SVNStatusClient extends SVNBasicClient {
                     repository.status(rev, target, depth, statusReporter, SVNCancellableEditor.newInstance((ISVNEditor) editor, getEventDispatcher(), getDebugLog()));
                 }
                 if (getEventDispatcher() != null) {
-                    SVNEvent event = SVNEventFactory.createStatusCompletedEvent(info.getAnchor(),
-                                                                                info.getTargetName(),
-                                                                                editor.getTargetRevision());
+                    SVNEvent event = SVNEventFactory.createSVNEvent(info.getAnchor().getFile(info.getTargetName()), SVNNodeKind.NONE, editor.getTargetRevision(), SVNEventAction.STATUS_COMPLETED);
                     getEventDispatcher().handleEvent(event, ISVNEventHandler.UNKNOWN);
                 }
             } else {
@@ -311,8 +309,7 @@ public class SVNStatusClient extends SVNBasicClient {
                     } catch (SVNException e) {
                         continue;
                     }
-                    handleEvent(SVNEventFactory.createStatusExternalEvent(info.getAnchor(), 
-                                                                          externalPath), 
+                    handleEvent(SVNEventFactory.createSVNEvent(info.getAnchor().getFile(externalPath), SVNNodeKind.DIR, SVNEventAction.STATUS_EXTERNAL), 
                                 ISVNEventHandler.UNKNOWN);
                     setEventPathPrefix(externalPath);
                     try {

@@ -24,6 +24,16 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import de.regnis.q.sequence.QSequenceDifferenceBlock;
+import de.regnis.q.sequence.line.QSequenceLineMedia;
+import de.regnis.q.sequence.line.QSequenceLineRAFileData;
+import de.regnis.q.sequence.line.QSequenceLineResult;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineDummySimplifier;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineEOLUnifyingSimplifier;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineSimplifier;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineTeeSimplifier;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineWhiteSpaceReducingSimplifier;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineWhiteSpaceSkippingSimplifier;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
@@ -39,18 +49,8 @@ import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.util.SVNDebugLog;
-
-import de.regnis.q.sequence.QSequenceDifferenceBlock;
-import de.regnis.q.sequence.line.QSequenceLineMedia;
-import de.regnis.q.sequence.line.QSequenceLineRAFileData;
-import de.regnis.q.sequence.line.QSequenceLineResult;
-import de.regnis.q.sequence.line.simplifier.QSequenceLineDummySimplifier;
-import de.regnis.q.sequence.line.simplifier.QSequenceLineEOLUnifyingSimplifier;
-import de.regnis.q.sequence.line.simplifier.QSequenceLineSimplifier;
-import de.regnis.q.sequence.line.simplifier.QSequenceLineTeeSimplifier;
-import de.regnis.q.sequence.line.simplifier.QSequenceLineWhiteSpaceReducingSimplifier;
-import de.regnis.q.sequence.line.simplifier.QSequenceLineWhiteSpaceSkippingSimplifier;
 
 
 /**
@@ -206,7 +206,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         myCurrentRevision = fileRevision.getRevision();
         boolean known = fileRevision.getRevision() >= myStartRevision;
         if (myCancelBaton != null) {
-            SVNEvent event = SVNEventFactory.createAnnotateEvent(myPath, myCurrentRevision);
+            SVNEvent event = SVNEventFactory.createSVNEvent(new File(myPath), SVNNodeKind.NONE, myCurrentRevision, SVNEventAction.ANNOTATE);
             myCancelBaton.handleEvent(event, ISVNEventHandler.UNKNOWN);
             myCancelBaton.checkCancelled();
         }

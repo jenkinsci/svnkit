@@ -284,7 +284,7 @@ public class SVNDiffClient extends SVNBasicClient {
             try {
                 doDiff(path, pegRevision, rN, rM, depth, useAncestry, result);
             } catch (SVNException svne) {
-                dispatchEvent(new SVNEvent(svne.getErrorMessage()));
+                dispatchEvent(SVNEventFactory.createErrorEvent(svne.getErrorMessage()));
                 continue;
             }
         }
@@ -2029,9 +2029,8 @@ public class SVNDiffClient extends SVNBasicClient {
             
             for (int i = 0; i < remainingRanges.length; i++) {
                 SVNMergeRange nextRange = remainingRanges[i];
-                this.handleEvent(SVNEventFactory.createMergeBeginEvent(dstPath, myIsSameURLs ? nextRange : null), 
-                                 ISVNEventHandler.UNKNOWN);
-                
+                this.handleEvent(SVNEventFactory.createSVNEvent(dstPath, SVNNodeKind.NONE, SVNEventAction.MERGE_BEGIN, null, null, myIsSameURLs ? nextRange : null), ISVNEventHandler.UNKNOWN);
+
                 Map props1 = new HashMap();
                 Map props2 = new HashMap();
                 File f1 = null;
@@ -2120,7 +2119,7 @@ public class SVNDiffClient extends SVNBasicClient {
             SVNMergeRange range = new SVNMergeRange(revision1, revision2, !targetMissingChild && 
                     (depth == SVNDepth.INFINITY || depth == SVNDepth.IMMEDIATES));
             
-            this.handleEvent(SVNEventFactory.createMergeBeginEvent(dstPath, myIsSameURLs ? range : null), 
+            this.handleEvent(SVNEventFactory.createSVNEvent(dstPath, SVNNodeKind.NONE, SVNEventAction.MERGE_BEGIN, null, null, myIsSameURLs ? range : null),
                     ISVNEventHandler.UNKNOWN);
    
             SVNMergeCallback mergeCallback = new SVNMergeCallback(adminArea, myURL, myIsForce, myIsDryRun, 
@@ -2832,10 +2831,7 @@ public class SVNDiffClient extends SVNBasicClient {
         private void notifyFileMerge(SVNAdminArea adminArea, String name, SVNEventAction action, 
                                      SVNStatusType cstate, SVNStatusType pstate, String mimeType) throws SVNException {
             action = cstate == SVNStatusType.MISSING ? SVNEventAction.SKIP : action;
-            SVNEvent event = SVNEventFactory.createUpdateModifiedEvent(adminArea, name, 
-                                                                       SVNNodeKind.FILE, action,
-                                                                       mimeType, cstate, pstate, 
-                                                                       SVNStatusType.LOCK_INAPPLICABLE);
+            SVNEvent event = SVNEventFactory.createSVNEvent(adminArea.getFile(name), SVNNodeKind.FILE, mimeType, cstate, pstate, SVNStatusType.LOCK_INAPPLICABLE, action);
             this.handleEvent(event, ISVNEventHandler.UNKNOWN);
         }
         

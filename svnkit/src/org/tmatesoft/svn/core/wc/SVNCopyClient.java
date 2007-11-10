@@ -630,8 +630,14 @@ public class SVNCopyClient extends SVNBasicClient {
                                                             repository);
                 
                 extendWCMergeInfo(dstPath, dstEntry, srcMergeInfo, adminArea);
-                
-                dispatchEvent(SVNEventFactory.createAddedEvent(adminArea, dstAccess.getEntry(dstPath, false)));
+
+                String mimeType = null;
+                try {
+                    mimeType = adminArea.getProperties(dstEntry.getName()).getPropertyValue(SVNProperty.MIME_TYPE);
+                } catch (SVNException e) {
+                    //
+                }
+                dispatchEvent(SVNEventFactory.createSVNEvent(adminArea.getFile(dstEntry.getName()), dstEntry.getKind(),mimeType, 0, SVNEventAction.ADD));
                 revision = srcRevisionNumber;
                 sleepForTimeStamp();
             }
@@ -1075,7 +1081,7 @@ public class SVNCopyClient extends SVNBasicClient {
        
         SVNWCManager.addRepositoryFile(dstParent, dstName, tmpFile, tmpTextBase, baseProperties, properties, copyFromURL, copyFromRevision);
     
-        SVNEvent event = SVNEventFactory.createAddedEvent(dstParent, dstName, SVNNodeKind.FILE, null);
+        SVNEvent event = SVNEventFactory.createSVNEvent(dstParent.getFile(dstName), SVNNodeKind.FILE, SVNEventAction.ADD);
         dstParent.getWCAccess().handleEvent(event);
 
     }
@@ -1344,7 +1350,7 @@ public class SVNCopyClient extends SVNBasicClient {
             }
         }
         if (info != null && info.getNewRevision() >= 0) { 
-            dispatchEvent(SVNEventFactory.createCommitCompletedEvent(null, info.getNewRevision()), ISVNEventHandler.UNKNOWN);
+            dispatchEvent(SVNEventFactory.createSVNEvent(null, SVNNodeKind.NONE, info.getNewRevision(), SVNEventAction.COMMIT_COMPLETED), ISVNEventHandler.UNKNOWN);
         }
         return info != null ? info : SVNCommitInfo.NULL;
     }
@@ -1524,7 +1530,7 @@ public class SVNCopyClient extends SVNBasicClient {
             SVNErrorManager.error(err);
         }
         if (result != null && result.getNewRevision() >= 0) { 
-            dispatchEvent(SVNEventFactory.createCommitCompletedEvent(null, result.getNewRevision()), ISVNEventHandler.UNKNOWN);
+            dispatchEvent(SVNEventFactory.createSVNEvent(null, SVNNodeKind.NONE, result.getNewRevision(), SVNEventAction.COMMIT_COMPLETED), ISVNEventHandler.UNKNOWN);
         }
         return result != null ? result : SVNCommitInfo.NULL;
     }
