@@ -70,6 +70,7 @@ import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationStorage;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
@@ -1849,7 +1850,13 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public RevisionRange[] getAvailableMerges(String path, Revision pegRevision, String mergeSource) throws SubversionException {
-        notImplementedYet();//TODO: implement
+        SVNDiffClient client = getSVNDiffClient();
+        try {
+            SVNMergeRangeList rangeList = client.getAvailableMergeInfo(new File(path).getAbsoluteFile(), JavaHLObjectFactory.getSVNRevision(pegRevision), SVNURL.parseURIEncoded(mergeSource));
+            return JavaHLObjectFactory.createRevisionRanges(rangeList);
+        } catch (SVNException e) {
+            throwException(e);
+        }
         return null;
     }
 

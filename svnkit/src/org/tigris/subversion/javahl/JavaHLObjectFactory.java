@@ -446,6 +446,18 @@ public class JavaHLObjectFactory {
         return new RevisionRange(new Revision.Number(range.getStartRevision()), new Revision.Number(range.getEndRevision()));
     }
 
+    public static RevisionRange[] createRevisionRanges(SVNMergeRangeList rangeList) {
+        if (rangeList == null) {
+            return null;
+        }
+        SVNMergeRange[] ranges = rangeList.getRanges();
+        RevisionRange[] result = new RevisionRange[ranges.length];
+        for (int i = 0; i < ranges.length; i++) {
+            result[i] = createRevisionRange(ranges[i]);
+        }
+        return result;
+    }
+
     public static void handleLogMessage(SVNLogEntry logEntry, LogMessageCallback handler) {
         if(logEntry == null || handler == null) {
             return;
