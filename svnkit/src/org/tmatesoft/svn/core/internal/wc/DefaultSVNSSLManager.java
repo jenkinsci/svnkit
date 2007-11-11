@@ -41,6 +41,8 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -205,14 +207,18 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
                                 try {
                                     storeServerCertificate(myRealm, data, failures);
                                 } catch (SVNException e) {
-                                    throw new CertificateException("svn: Server SSL ceritificate for '" + myRealm + "' cannot be saved");
+                                    CertificateException ce = new CertificateException("svn: Server SSL ceritificate for '" + myRealm + "' cannot be saved");
+                                    ce.initCause(new SVNCancelException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, ce.getMessage())));
+                                    throw ce;
                                 }
                             }
                             if (result != ISVNAuthenticationProvider.REJECTED) {
                                 myAuthManager.getRuntimeAuthStorage().putData("svn.ssl.server", myRealm, data);
                                 return;
                             } 
-                            throw new CertificateException("svn: Server SSL ceritificate for '" + myRealm + "' rejected");
+                            CertificateException ce = new CertificateException("svn: Server SSL ceritificate for '" + myRealm + "' rejected");
+                            ce.initCause(new SVNCancelException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, ce.getMessage())));
+                            throw ce;
                         } 
                         // like as tmp. accepted.
                         return;
