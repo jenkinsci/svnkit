@@ -200,7 +200,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             // notification.
             return;
         }
-        myWCAccess.handleEvent(SVNEventFactory.createSVNEvent(parentArea.getFile(name), kind, SVNEventAction.UPDATE_ADD));
+        myWCAccess.handleEvent(SVNEventFactory.createSVNEvent(parentArea.getFile(name), kind, SVNEventAction.UPDATE_DELETE));
     }
 
     private void handleLeftLocalModificationsError(SVNException originalError, SVNLog log, SVNAdminArea adminArea) throws SVNException {
@@ -308,7 +308,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         myWCAccess.registerCleanupHandler(childArea, myCurrentDirectory);
         if (!myCurrentDirectory.isAddExisted) {
             SVNEvent event = SVNEventFactory.createSVNEvent(parentArea.getFile(entry.getName()), SVNNodeKind.DIR, entry.getRevision(),
-                    myCurrentDirectory.isExisted ? SVNEventAction.UPDATE_ADD : SVNEventAction.UPDATE_EXISTS);
+                    myCurrentDirectory.isExisted ? SVNEventAction.UPDATE_EXISTS : SVNEventAction.UPDATE_ADD);
             myWCAccess.handleEvent(event);
         }
     }

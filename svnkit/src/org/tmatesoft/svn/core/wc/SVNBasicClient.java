@@ -262,17 +262,6 @@ public class SVNBasicClient implements ISVNEventHandler {
 
     protected void dispatchEvent(SVNEvent event, double progress) throws SVNException {
         if (myEventDispatcher != null) {
-            String path = "";
-            if (!myPathPrefixesStack.isEmpty()) {
-                for (Iterator paths = myPathPrefixesStack.iterator(); paths.hasNext();) {
-                    String segment = (String) paths.next();
-                    path = SVNPathUtil.append(path, segment);
-                }
-            }
-            if (path != null && !"".equals(path)) {
-                path = SVNPathUtil.append(path, event.getPath());
-                event.setPath(path);
-            }
             try {
                 myEventDispatcher.handleEvent(event, progress);
             } catch (SVNException e) {
@@ -311,8 +300,6 @@ public class SVNBasicClient implements ISVNEventHandler {
         if (pathPrefix != null) {
             eventHandler = new ISVNEventHandler() {
                 public void handleEvent(SVNEvent event, double progress) throws SVNException {
-                    String fullPath = SVNPathUtil.append(pathPrefix, event.getPath());
-                    event.setPath(fullPath);
                     dispatchEvent(event, progress);
                 }
 

@@ -115,8 +115,6 @@ public class SVNEvent {
     private String myChangelistName;
     private SVNMergeRange myRange;
 
-    private String myPath;
-
     /**
      * Constructs an <b>SVNEvent</b> object given
      * an error message for a filed operation. 
@@ -214,13 +212,6 @@ public class SVNEvent {
     public SVNEvent(File file, SVNNodeKind kind, String mimetype, long revision, SVNStatusType cstatus, SVNStatusType pstatus,
             SVNStatusType lstatus, SVNLock lock, SVNEventAction action) {
         this(file, kind, mimetype, revision, cstatus, pstatus, lstatus, lock, action, null, null, null);
-    }
-
-    public String getPath() {
-        if (myFile != null){
-            return myFile.getAbsolutePath();            
-        }
-        return null;
     }
 
     public File getFile() {
@@ -362,9 +353,6 @@ public class SVNEvent {
      * 
      * @param path  the item's relative path
      */
-    public void setPath(String path) {
-        myPath = path;
-    }
     
     public String getChangelistName() {
         return myChangelistName;

@@ -66,7 +66,7 @@ public class SVNCommandEventProcessor implements ISVNEventHandler {
                 if (root.getCanonicalFile().equals(file.getCanonicalFile()) || SVNPathUtil.isChildOf(root, file)) {
                     commitPath = SVNFormatUtil.formatPath(event.getFile());
                 } else {
-                    commitPath = event.getPath();
+                    commitPath = event.getFile().getAbsolutePath();
                     if ("".equals(commitPath)) {
                         commitPath = ".";
                     }
@@ -99,14 +99,14 @@ public class SVNCommandEventProcessor implements ISVNEventHandler {
         } else if (event.getAction() == SVNEventAction.FAILED_REVERT) {
             SVNCommand.println(myPrintStream, "Failed to revert '" + SVNFormatUtil.formatPath(event.getFile()) + "' -- try updating instead.");
         } else if (event.getAction() == SVNEventAction.LOCKED) {
-            String path = event.getPath();
+            String path = event.getFile().getAbsolutePath();
             if (event.getFile() != null) {
                 path = SVNFormatUtil.formatPath(event.getFile());
             }
             SVNLock lock = event.getLock();
             SVNCommand.println(myPrintStream, "'" + path + "' locked by user '" + lock.getOwner() + "'.");
         } else if (event.getAction() == SVNEventAction.UNLOCKED) {
-            String path = event.getPath();
+            String path = event.getFile().getAbsolutePath();
             if (event.getFile() != null) {
                 path = SVNFormatUtil.formatPath(event.getFile());
             }
@@ -118,13 +118,13 @@ public class SVNCommandEventProcessor implements ISVNEventHandler {
             event.getErrorMessage().setType(SVNErrorMessage.TYPE_WARNING);
             SVNCommand.println(myErrStream, event.getErrorMessage().toString());
         } else if (event.getAction() == SVNEventAction.CHANGELIST_SET) {
-            String path = event.getPath();
+            String path = event.getFile().getAbsolutePath();
             if (event.getFile() != null) {
                 path = SVNFormatUtil.formatPath(event.getFile());
             }
             SVNCommand.println(myPrintStream, "Path '" + path + "' is now a member of changelist '" + event.getChangelistName() + "'.");
         } else if (event.getAction() == SVNEventAction.CHANGELIST_CLEAR) {
-            String path = event.getPath();
+            String path = event.getFile().getAbsolutePath();
             if (event.getFile() != null) {
                 path = SVNFormatUtil.formatPath(event.getFile());
             }
@@ -276,7 +276,7 @@ public class SVNCommandEventProcessor implements ISVNEventHandler {
             }
         } else if (event.getAction() == SVNEventAction.UPDATE_EXTERNAL) {
             SVNCommand.println(myPrintStream);
-            String path = event.getPath().replace('/', File.separatorChar);
+            String path = event.getFile().getAbsolutePath().replace('/', File.separatorChar);
             if (myIsCheckout) {
                 SVNCommand.println(myPrintStream, "Fetching external item into '" + path + "'");
             } else {
@@ -285,7 +285,7 @@ public class SVNCommandEventProcessor implements ISVNEventHandler {
             myIsExternal = true;
         } else if (event.getAction() == SVNEventAction.STATUS_EXTERNAL) {
             SVNCommand.println(myPrintStream);
-            String path = event.getPath().replace('/', File.separatorChar);
+            String path = event.getFile().getAbsolutePath().replace('/', File.separatorChar);
             SVNCommand.println(myPrintStream, "Performing status on external item at '" + path + "'");
             myIsExternal = true;
         } else if (event.getAction() == SVNEventAction.RESTORE) {

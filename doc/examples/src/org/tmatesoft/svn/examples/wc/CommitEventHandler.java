@@ -43,11 +43,11 @@ public class CommitEventHandler implements ISVNEventHandler {
          */
         SVNEventAction action = event.getAction();
         if (action == SVNEventAction.COMMIT_MODIFIED) {
-            System.out.println("Sending   " + event.getPath());
+            System.out.println("Sending   " + event.getFile());
         } else if (action == SVNEventAction.COMMIT_DELETED) {
-            System.out.println("Deleting   " + event.getPath());
+            System.out.println("Deleting   " + event.getFile());
         } else if (action == SVNEventAction.COMMIT_REPLACED) {
-            System.out.println("Replacing   " + event.getPath());
+            System.out.println("Replacing   " + event.getFile());
         } else if (action == SVNEventAction.COMMIT_DELTA_SENT) {
             System.out.println("Transmitting file data....");
         } else if (action == SVNEventAction.COMMIT_ADDED) {
@@ -60,10 +60,10 @@ public class CommitEventHandler implements ISVNEventHandler {
                  * If the item is a binary file
                  */
                 System.out.println("Adding  (bin)  "
-                        + event.getPath());
+                        + event.getFile());
             } else {
                 System.out.println("Adding         "
-                        + event.getPath());
+                        + event.getFile());
             }
         }
 

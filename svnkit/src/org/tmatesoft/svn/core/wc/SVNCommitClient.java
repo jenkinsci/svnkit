@@ -523,11 +523,11 @@ public class SVNCommitClient extends SVNBasicClient {
             changed = newPaths.size() > 0;
             SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
             if (srcKind == SVNFileType.DIRECTORY) {
-                changed |= importDir(deltaGenerator, path, path, newDirPath, useGlobalIgnores, 
+                changed |= importDir(deltaGenerator, path, newDirPath, useGlobalIgnores, 
                         ignoreUnknownNodeTypes, depth, commitEditor);
             } else if (srcKind == SVNFileType.FILE) {
                 if (!useGlobalIgnores || !getOptions().isIgnored(path)) {
-                    changed |= importFile(deltaGenerator, path.getParentFile(), path, srcKind, filePath, commitEditor);
+                    changed |= importFile(deltaGenerator, path, srcKind, filePath, commitEditor);
                 }
             } else if (srcKind == SVNFileType.NONE || srcKind == SVNFileType.UNKNOWN) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, 
@@ -1084,7 +1084,7 @@ public class SVNCommitClient extends SVNBasicClient {
         targets.add(url);
     }
 
-    private boolean importDir(SVNDeltaGenerator deltaGenerator, File rootFile, File dir, String importPath, 
+    private boolean importDir(SVNDeltaGenerator deltaGenerator, File dir, String importPath, 
             boolean useGlobalIgnores, boolean ignoreUnknownNodeTypes, SVNDepth depth, ISVNEditor editor) throws SVNException {
         checkCancelled();
         File[] children = SVNFileListUtil.listFiles(dir);
@@ -1092,7 +1092,7 @@ public class SVNCommitClient extends SVNBasicClient {
         for (int i = 0; children != null && i < children.length; i++) {
             File file = children[i];
             if (SVNFileUtil.getAdminDirectoryName().equals(file.getName())) {
-                SVNEvent skippedEvent = SVNEventFactory.createSVNEvent(new File(rootFile, file.getPath()), SVNNodeKind.NONE, SVNEventAction.SKIP, SVNEventAction.COMMIT_ADDED);
+                SVNEvent skippedEvent = SVNEventFactory.createSVNEvent(file, SVNNodeKind.NONE, SVNEventAction.SKIP, SVNEventAction.COMMIT_ADDED);
                 handleEvent(skippedEvent, ISVNEventHandler.UNKNOWN);
                 continue;
             }
@@ -1104,21 +1104,21 @@ public class SVNCommitClient extends SVNBasicClient {
             if (fileType == SVNFileType.DIRECTORY && depth.compareTo(SVNDepth.IMMEDIATES) >= 0) {
                 editor.addDir(path, null, -1);
                 changed |= true;
-                SVNEvent event = SVNEventFactory.createSVNEvent(new File(rootFile, file.getPath()), SVNNodeKind.DIR, SVNEventAction.COMMIT_ADDED);
+                SVNEvent event = SVNEventFactory.createSVNEvent(file, SVNNodeKind.DIR, SVNEventAction.COMMIT_ADDED);
                 handleEvent(event, ISVNEventHandler.UNKNOWN);
                 SVNDepth depthBelowHere = depth;
                 if (depth == SVNDepth.IMMEDIATES) {
                     depthBelowHere = SVNDepth.EMPTY;
                 }
-                importDir(deltaGenerator, rootFile, file, path, useGlobalIgnores, ignoreUnknownNodeTypes, 
+                importDir(deltaGenerator, file, path, useGlobalIgnores, ignoreUnknownNodeTypes, 
                         depthBelowHere, editor);
                 editor.closeDir();
             } else if ((fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) && 
                     depth.compareTo(SVNDepth.FILES) >= 0) {
-                changed |= importFile(deltaGenerator, rootFile, file, fileType, path, editor);
+                changed |= importFile(deltaGenerator, file, fileType, path, editor);
             } else if (fileType != SVNFileType.DIRECTORY && fileType != SVNFileType.FILE) {
                 if (ignoreUnknownNodeTypes) {
-                    SVNEvent skippedEvent = SVNEventFactory.createSVNEvent(new File(rootFile, file.getPath()), SVNNodeKind.NONE, SVNEventAction.SKIP, SVNEventAction.COMMIT_ADDED);
+                    SVNEvent skippedEvent = SVNEventFactory.createSVNEvent(file, SVNNodeKind.NONE, SVNEventAction.SKIP, SVNEventAction.COMMIT_ADDED);
                     handleEvent(skippedEvent, ISVNEventHandler.UNKNOWN);
                 } else {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, 
@@ -1131,7 +1131,7 @@ public class SVNCommitClient extends SVNBasicClient {
         return changed;
     }
 
-    private boolean importFile(SVNDeltaGenerator deltaGenerator, File rootFile, File file, SVNFileType fileType, String filePath, ISVNEditor editor) throws SVNException {
+    private boolean importFile(SVNDeltaGenerator deltaGenerator, File file, SVNFileType fileType, String filePath, ISVNEditor editor) throws SVNException {
         if (fileType == null || fileType == SVNFileType.UNKNOWN) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "unknown or unversionable type for ''{0}''", file);
             SVNErrorManager.error(err);
@@ -1169,7 +1169,7 @@ public class SVNCommitClient extends SVNBasicClient {
             editor.changeFileProperty(filePath, name, value);
         }
         // send "adding"
-        SVNEvent addedEvent = SVNEventFactory.createSVNEvent(new File(rootFile, file.getPath()), SVNNodeKind.FILE, mimeType, SVNEventAction.COMMIT_ADDED);
+        SVNEvent addedEvent = SVNEventFactory.createSVNEvent(file, SVNNodeKind.FILE, mimeType, SVNEventAction.COMMIT_ADDED);
         handleEvent(addedEvent, ISVNEventHandler.UNKNOWN);
         // translate and send file.
         String eolStyle = (String) autoProperties.get(SVNProperty.EOL_STYLE);

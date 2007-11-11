@@ -43,32 +43,32 @@ public class WCEventHandler implements ISVNEventHandler {
             /*
              * The item is scheduled for addition.
              */
-            System.out.println("A     " + event.getPath());
+            System.out.println("A     " + event.getFile());
             return;
         }else if (action == SVNEventAction.COPY){
             /*
              * The  item  is  scheduled for addition  with history (copied,  in 
              * other words).
              */
-            System.out.println("A  +  " + event.getPath());
+            System.out.println("A  +  " + event.getFile());
             return;
         }else if (action == SVNEventAction.DELETE){
             /*
              * The item is scheduled for deletion. 
              */
-            System.out.println("D     " + event.getPath());
+            System.out.println("D     " + event.getFile());
             return;
         } else if (action == SVNEventAction.LOCKED){
             /*
              * The item is locked.
              */
-            System.out.println("L     " + event.getPath());
+            System.out.println("L     " + event.getFile());
             return;
         } else if (action == SVNEventAction.LOCK_FAILED){
             /*
              * Locking operation failed.
              */
-            System.out.println("failed to lock    " + event.getPath());
+            System.out.println("failed to lock    " + event.getFile());
             return;
         }
     }

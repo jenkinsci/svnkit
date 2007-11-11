@@ -31,7 +31,7 @@ public class UpdateHandler implements ISVNEventHandler {
 
     public void handleEvent(SVNEvent event, double progress) throws SVNException {
         if (myEvents != null) {
-            myEvents.put(event.getPath(), event);
+            myEvents.put(event.getFile().getAbsolutePath(), event);
         }
     }
 

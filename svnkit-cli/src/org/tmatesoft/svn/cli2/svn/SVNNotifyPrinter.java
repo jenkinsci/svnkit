@@ -61,9 +61,7 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
         if (file != null) {
             path = myEnvironment.getRelativePath(file);
             path = SVNCommandUtil.getLocalPath(path);
-        } else if (event.getPath() != null) {
-            path = event.getPath();
-        }
+        } 
         PrintStream out = myEnvironment.getOut();
         StringBuffer buffer = new StringBuffer();
         if (event.getAction() == SVNEventAction.STATUS_EXTERNAL) {
