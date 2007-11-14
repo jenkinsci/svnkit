@@ -66,6 +66,7 @@ public class SVN extends AbstractSVNLauncher {
         AbstractSVNCommand.registerCommand(new SVNRevertCommand());
         AbstractSVNCommand.registerCommand(new SVNUnLockCommand());
         AbstractSVNCommand.registerCommand(new SVNUpdateCommand());
+        AbstractSVNCommand.registerCommand(new SVNMergeInfoCommand());
     }
 
     protected void registerOptions() {

@@ -1852,7 +1852,17 @@ public class SVNClientImpl implements SVNClientInterface {
     public RevisionRange[] getAvailableMerges(String path, Revision pegRevision, String mergeSource) throws SubversionException {
         SVNDiffClient client = getSVNDiffClient();
         try {
-            SVNMergeRangeList rangeList = client.getAvailableMergeInfo(new File(path).getAbsoluteFile(), JavaHLObjectFactory.getSVNRevision(pegRevision), SVNURL.parseURIEncoded(mergeSource));
+            SVNMergeRangeList rangeList = null;
+            if (isURL(path)) {
+                rangeList = client.getAvailableMergeInfo(SVNURL.parseURIEncoded(path), 
+                        JavaHLObjectFactory.getSVNRevision(pegRevision), 
+                        SVNURL.parseURIEncoded(mergeSource)); 
+            } else {
+                rangeList = client.getAvailableMergeInfo(new File(path).getAbsoluteFile(), 
+                        JavaHLObjectFactory.getSVNRevision(pegRevision), 
+                        SVNURL.parseURIEncoded(mergeSource)); 
+            }
+             
             return JavaHLObjectFactory.createRevisionRanges(rangeList);
         } catch (SVNException e) {
             throwException(e);

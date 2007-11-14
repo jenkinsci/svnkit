@@ -233,6 +233,38 @@ public class SVNBasicClient implements ISVNEventHandler {
         return myDebugLog;
     }
     
+    public SVNURL getReposRoot(File path, SVNURL url, SVNRevision pegRevision, SVNAdminArea adminArea, 
+            SVNWCAccess access) throws SVNException {
+        SVNURL reposRoot = null;
+        if (path != null && (pegRevision == SVNRevision.WORKING ||pegRevision == SVNRevision.BASE )) {
+            if (access == null) {
+                access = createWCAccess();
+            } 
+            
+            boolean needCleanUp = false; 
+            try {
+                if (adminArea == null) {
+                    adminArea = access.probeOpen(path, false, 0);
+                    needCleanUp = true;
+                }
+                SVNEntry entry = access.getVersionedEntry(path, false);
+                url = entry.getSVNURL();
+                reposRoot = entry.getRepositoryRootURL();
+            } finally {
+                if (needCleanUp) {
+                    access.closeAdminArea(path);
+                }
+            }
+        }
+       
+        if (reposRoot == null) {
+            SVNRepository repos = createRepository(url, path, pegRevision, pegRevision);
+            reposRoot = repos.getRepositoryRoot(true);
+        }
+        
+        return reposRoot;
+    }
+    
     protected void sleepForTimeStamp() {
         if (myPathPrefixesStack == null || myPathPrefixesStack.isEmpty()) {
             SVNFileUtil.sleepForTimestamp();
@@ -692,38 +724,6 @@ public class SVNBasicClient implements ISVNEventHandler {
             absPath = "/" + absPath;
         }
         return absPath;
-    }
-    
-    protected SVNURL getReposRoot(File path, SVNURL url, SVNRevision pegRevision, SVNAdminArea adminArea, 
-            SVNWCAccess access) throws SVNException {
-        SVNURL reposRoot = null;
-        if (path != null && (pegRevision == SVNRevision.WORKING ||pegRevision == SVNRevision.BASE )) {
-            if (access == null) {
-                access = createWCAccess();
-            } 
-            
-            boolean needCleanUp = false; 
-            try {
-                if (adminArea == null) {
-                    adminArea = access.probeOpen(path, false, 0);
-                    needCleanUp = true;
-                }
-                SVNEntry entry = access.getVersionedEntry(path, false);
-                url = entry.getSVNURL();
-                reposRoot = entry.getRepositoryRootURL();
-            } finally {
-                if (needCleanUp) {
-                    access.closeAdminArea(path);
-                }
-            }
-        }
-       
-        if (reposRoot == null) {
-            SVNRepository repos = createRepository(url, path, pegRevision, pegRevision);
-            reposRoot = repos.getRepositoryRoot(true);
-        }
-        
-        return reposRoot;
     }
     
     protected SVNRepositoryLocation[] getLocations(SVNURL url, File path, SVNRepository repository, SVNRevision revision, SVNRevision start, SVNRevision end) throws SVNException {

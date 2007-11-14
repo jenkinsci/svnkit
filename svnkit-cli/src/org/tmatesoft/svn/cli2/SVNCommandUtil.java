@@ -287,6 +287,11 @@ public class SVNCommandUtil {
                 } else {
                     optionDesc = "--" + option.getName();
                 }
+                
+                if (!option.isUnary()) {
+                    optionDesc += " ARG";
+                }
+            
                 help.append(formatString(optionDesc, 24, true));
                 help.append(" : ");
                 help.append(option.getDescription(command));

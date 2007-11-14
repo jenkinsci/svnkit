@@ -1473,7 +1473,27 @@ public class SVNDiffClient extends SVNMergeDriver {
         }
         return rangeList;
     }
-    
+
+    public SVNMergeRangeList getAvailableMergeInfo(SVNURL url, SVNRevision pegRevision, SVNURL mergeSrcURL) throws SVNException {
+        Map mergeInfo = getMergeInfo(url, pegRevision);
+        SVNMergeRangeList alreadyMergedRanges = null;
+        if (mergeInfo != null) {
+            alreadyMergedRanges = (SVNMergeRangeList) mergeInfo.get(mergeSrcURL);
+        }
+        SVNRepository repos = createRepository(mergeSrcURL, true);
+        long endRev = getRevisionNumber(SVNRevision.HEAD, repos, null);
+        long startRev = getPathLastChangeRevision("", endRev, repos);
+        SVNMergeRange fullRange = new SVNMergeRange(startRev, endRev, true);
+        SVNMergeRangeList fullRangeList = new SVNMergeRangeList(new SVNMergeRange[] { fullRange });
+        SVNMergeRangeList rangeList = null;
+        if (alreadyMergedRanges != null) {
+            rangeList = fullRangeList;
+        } else {
+            rangeList = fullRangeList.diff(alreadyMergedRanges, SVNMergeRangeInheritance.EQUAL_INHERITANCE);
+        }
+        return rangeList;
+    }
+
     public LinkedList suggestMergeSources(File path, SVNRevision pegRevision) throws SVNException {
         LinkedList suggestions = new LinkedList();
         SVNURL reposRoot = getReposRoot(path, null, pegRevision, null, null);
