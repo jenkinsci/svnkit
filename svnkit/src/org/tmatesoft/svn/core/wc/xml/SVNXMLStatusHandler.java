@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.util.ISVNDebugLog;
+
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 

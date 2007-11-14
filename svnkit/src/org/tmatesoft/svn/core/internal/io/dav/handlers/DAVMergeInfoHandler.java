@@ -19,6 +19,7 @@ import org.tmatesoft.svn.core.SVNMergeInfo;
 import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.wc.SVNMergeInfoManager;
+
 import org.xml.sax.Attributes;
 
 

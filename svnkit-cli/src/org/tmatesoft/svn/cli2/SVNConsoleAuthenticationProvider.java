@@ -9,7 +9,7 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.cli;
+package org.tmatesoft.svn.cli2;
 
 import java.io.BufferedReader;
 import java.io.File;

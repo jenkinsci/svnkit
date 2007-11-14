@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+
 import org.xml.sax.Attributes;
 
 /**

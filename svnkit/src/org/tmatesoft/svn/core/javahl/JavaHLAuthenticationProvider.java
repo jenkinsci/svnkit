@@ -14,9 +14,6 @@ package org.tmatesoft.svn.core.javahl;
 import java.io.File;
 import java.security.cert.X509Certificate;
 
-import org.tigris.subversion.javahl.PromptUserPassword;
-import org.tigris.subversion.javahl.PromptUserPassword2;
-import org.tigris.subversion.javahl.PromptUserPassword3;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
@@ -27,6 +24,10 @@ import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
+
+import org.tigris.subversion.javahl.PromptUserPassword;
+import org.tigris.subversion.javahl.PromptUserPassword2;
+import org.tigris.subversion.javahl.PromptUserPassword3;
 
 /**
  * @version 1.1.1

@@ -12,14 +12,26 @@
 
 package org.tmatesoft.svn.core.internal.wc;
 
-import java.io.*;
-import java.util.*;
-import org.tmatesoft.svn.core.wc.*;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
-import de.regnis.q.sequence.*;
-import de.regnis.q.sequence.core.*;
-import de.regnis.q.sequence.line.*;
-import de.regnis.q.sequence.line.simplifier.*;
+import org.tmatesoft.svn.core.wc.SVNDiffOptions;
+
+import de.regnis.q.sequence.QSequenceDifferenceBlock;
+import de.regnis.q.sequence.core.QSequenceException;
+import de.regnis.q.sequence.line.QSequenceLine;
+import de.regnis.q.sequence.line.QSequenceLineCache;
+import de.regnis.q.sequence.line.QSequenceLineMedia;
+import de.regnis.q.sequence.line.QSequenceLineRAData;
+import de.regnis.q.sequence.line.QSequenceLineResult;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineDummySimplifier;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineEOLUnifyingSimplifier;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineSimplifier;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineTeeSimplifier;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineWhiteSpaceReducingSimplifier;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineWhiteSpaceSkippingSimplifier;
 
 
 /**

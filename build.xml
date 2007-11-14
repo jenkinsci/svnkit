@@ -252,7 +252,7 @@
             </fileset>
         </jar>
         <copy todir="build/lib">
-            <fileset dir="svnkit/cli">
+            <fileset dir="svnkit-cli/scripts">
                 <include name="**" />
             </fileset>
         </copy>

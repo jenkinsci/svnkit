@@ -12,12 +12,12 @@
 
 package org.tmatesoft.svn.core.internal.io.svn;
 
-import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
-
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+
+import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 
 /**
  * @version 1.1.1

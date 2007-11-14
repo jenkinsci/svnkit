@@ -11,11 +11,11 @@
  */
 package org.tmatesoft.svn.util;
 
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 /**
  * @version 1.1.1

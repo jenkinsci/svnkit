@@ -13,14 +13,13 @@ package org.tmatesoft.svn.core.internal.io.fs;
 
 import java.io.File;
 
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.internal.util.*;
-import org.tmatesoft.svn.core.internal.io.fs.FSRevisionNode;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 /**
  * @version 1.1.1

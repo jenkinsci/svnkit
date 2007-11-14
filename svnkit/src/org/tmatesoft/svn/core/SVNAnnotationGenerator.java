@@ -24,16 +24,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import de.regnis.q.sequence.QSequenceDifferenceBlock;
-import de.regnis.q.sequence.line.QSequenceLineMedia;
-import de.regnis.q.sequence.line.QSequenceLineRAFileData;
-import de.regnis.q.sequence.line.QSequenceLineResult;
-import de.regnis.q.sequence.line.simplifier.QSequenceLineDummySimplifier;
-import de.regnis.q.sequence.line.simplifier.QSequenceLineEOLUnifyingSimplifier;
-import de.regnis.q.sequence.line.simplifier.QSequenceLineSimplifier;
-import de.regnis.q.sequence.line.simplifier.QSequenceLineTeeSimplifier;
-import de.regnis.q.sequence.line.simplifier.QSequenceLineWhiteSpaceReducingSimplifier;
-import de.regnis.q.sequence.line.simplifier.QSequenceLineWhiteSpaceSkippingSimplifier;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
@@ -51,6 +41,17 @@ import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.util.SVNDebugLog;
+
+import de.regnis.q.sequence.QSequenceDifferenceBlock;
+import de.regnis.q.sequence.line.QSequenceLineMedia;
+import de.regnis.q.sequence.line.QSequenceLineRAFileData;
+import de.regnis.q.sequence.line.QSequenceLineResult;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineDummySimplifier;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineEOLUnifyingSimplifier;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineSimplifier;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineTeeSimplifier;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineWhiteSpaceReducingSimplifier;
+import de.regnis.q.sequence.line.simplifier.QSequenceLineWhiteSpaceSkippingSimplifier;
 
 
 /**

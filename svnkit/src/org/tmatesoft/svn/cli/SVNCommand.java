@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.tmatesoft.svn.cli2.SVNConsoleAuthenticationProvider;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -256,39 +257,7 @@ public abstract class SVNCommand {
     }
 
     static {
-//        Locale.setDefault(Locale.ENGLISH);
-
         ourCommands = new HashMap();
-        ourCommands.put(new String[] { "status", "st", "stat" }, "org.tmatesoft.svn.cli.command.SVNStatusCommand");
-        ourCommands.put(new String[] { "import" }, "org.tmatesoft.svn.cli.command.SVNImportCommand");
-        ourCommands.put(new String[] { "checkout", "co" }, "org.tmatesoft.svn.cli.command.SVNCheckoutCommand");
-        ourCommands.put(new String[] { "add" }, "org.tmatesoft.svn.cli.command.SVNAddCommand");
-        ourCommands.put(new String[] { "commit", "ci" }, "org.tmatesoft.svn.cli.command.SVNCommitCommand");
-        ourCommands.put(new String[] { "update", "up" }, "org.tmatesoft.svn.cli.command.SVNUpdateCommand");
-        ourCommands.put(new String[] { "delete", "rm", "remove", "del" }, "org.tmatesoft.svn.cli.command.SVNDeleteCommand");
-        ourCommands.put(new String[] { "move", "mv", "rename", "ren" }, "org.tmatesoft.svn.cli.command.SVNMoveCommand");
-        ourCommands.put(new String[] { "copy", "cp" }, "org.tmatesoft.svn.cli.command.SVNCopyCommand");
-        ourCommands.put(new String[] { "revert" }, "org.tmatesoft.svn.cli.command.SVNRevertCommand");
-        ourCommands.put(new String[] { "mkdir" }, "org.tmatesoft.svn.cli.command.SVNMkDirCommand");
-        ourCommands.put(new String[] { "propset", "pset", "ps" }, "org.tmatesoft.svn.cli.command.SVNPropsetCommand");
-        ourCommands.put(new String[] { "propdel", "pdel", "pd" }, "org.tmatesoft.svn.cli.command.SVNPropdelCommand");
-        ourCommands.put(new String[] { "propget", "pget", "pg" }, "org.tmatesoft.svn.cli.command.SVNPropgetCommand");
-        ourCommands.put(new String[] { "propedit", "pedit", "pe" }, "org.tmatesoft.svn.cli.command.SVNPropeditCommand");
-        ourCommands.put(new String[] { "proplist", "plist", "pl" }, "org.tmatesoft.svn.cli.command.SVNProplistCommand");
-        ourCommands.put(new String[] { "info" }, "org.tmatesoft.svn.cli.command.SVNInfoCommand");
-        ourCommands.put(new String[] { "resolved" }, "org.tmatesoft.svn.cli.command.SVNResolvedCommand");
-        ourCommands.put(new String[] { "cat" }, "org.tmatesoft.svn.cli.command.SVNCatCommand");
-        ourCommands.put(new String[] { "ls", "list" }, "org.tmatesoft.svn.cli.command.SVNLsCommand");
-        ourCommands.put(new String[] { "log" }, "org.tmatesoft.svn.cli.command.SVNLogCommand");
-        ourCommands.put(new String[] { "switch", "sw" }, "org.tmatesoft.svn.cli.command.SVNSwitchCommand");
-        ourCommands.put(new String[] { "diff", "di" }, "org.tmatesoft.svn.cli.command.SVNDiffCommand");
-        ourCommands.put(new String[] { "merge" }, "org.tmatesoft.svn.cli.command.SVNMergeCommand");
-        ourCommands.put(new String[] { "export" }, "org.tmatesoft.svn.cli.command.SVNExportCommand");
-        ourCommands.put(new String[] { "cleanup" }, "org.tmatesoft.svn.cli.command.SVNCleanupCommand");
-        ourCommands.put(new String[] { "lock" }, "org.tmatesoft.svn.cli.command.SVNLockCommand");
-        ourCommands.put(new String[] { "unlock" }, "org.tmatesoft.svn.cli.command.SVNUnlockCommand");
-        ourCommands.put(new String[] { "annotate", "blame", "praise", "ann" }, "org.tmatesoft.svn.cli.command.SVNAnnotateCommand");
-        ourCommands.put(new String[] { "changelist", "cl" }, "org.tmatesoft.svn.cli.command.SVNChangelistCommand");
         
         ourPegCommands = new HashSet();
         ourPegCommands.addAll(Arrays.asList(new String[] {"cat", "annotate", "checkout", "diff", "export", "info", "ls", "merge", "propget", "proplist", "log", "copy"}));

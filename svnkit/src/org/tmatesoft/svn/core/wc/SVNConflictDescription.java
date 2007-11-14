@@ -11,8 +11,6 @@
  */
 package org.tmatesoft.svn.core.wc;
 
-import java.io.File;
-
 import org.tmatesoft.svn.core.SVNNodeKind;
 
 
