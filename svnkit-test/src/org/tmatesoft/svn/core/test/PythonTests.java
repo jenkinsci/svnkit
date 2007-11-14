@@ -46,6 +46,10 @@ public class PythonTests {
 
     public static void main(String[] args) {
 		String fileName = args[0];
+		String libPath = args[1];
+		if (libPath == null) {
+		    libPath = "";
+		}
 		ourPropertiesFile = new File(fileName);
         ourLoggers = new AbstractPythonTestLogger[] {new ConsoleLogger(), new XMLLogger()};
 
@@ -83,7 +87,7 @@ public class PythonTests {
                     ourLoggers[i].startServer("file", url);
                 }
                 started = true;
-                runPythonTests(properties, defaultTestSuite, url);
+                runPythonTests(properties, defaultTestSuite, url, libPath);
             } catch (Throwable th) {
                 th.printStackTrace();
             } finally {
@@ -105,7 +109,7 @@ public class PythonTests {
                     ourLoggers[i].startServer("svnserve", url);
                 }
                 started = true;
-				runPythonTests(properties, defaultTestSuite, url);
+				runPythonTests(properties, defaultTestSuite, url, libPath);
 			} catch (Throwable th) {
 				th.printStackTrace();
 			} finally {
@@ -129,7 +133,7 @@ public class PythonTests {
                     ourLoggers[i].startServer("apache", url);
                 }
                 started = true;
-				runPythonTests(properties, defaultTestSuite, url);
+				runPythonTests(properties, defaultTestSuite, url, libPath);
 			} catch (Throwable th) {
 				th.printStackTrace();
 			} finally {
@@ -150,7 +154,8 @@ public class PythonTests {
         }
 	}
 
-	private static void runPythonTests(Properties properties, String defaultTestSuite, String url) throws IOException {
+	private static void runPythonTests(Properties properties, String defaultTestSuite, String url, 
+	        String libPath) throws IOException {
 		System.out.println("RUNNING TESTS AGAINST '" + url + "'");
 		String pythonLauncher = properties.getProperty("python.launcher");
 		String testSuite = properties.getProperty("python.tests.suite", defaultTestSuite);
@@ -173,7 +178,7 @@ public class PythonTests {
 			System.out.println("PROCESSING " + testFile + " " + testCases);
 			for (Iterator it = testCases.iterator(); it.hasNext();) {
 				final Integer testCase = (Integer)it.next();
-				processTestCase(pythonLauncher, testFile, options, String.valueOf(testCase), url);
+				processTestCase(pythonLauncher, testFile, options, String.valueOf(testCase), url, libPath);
 			}
             for (int i = 0; i < ourLoggers.length; i++) {
                 ourLoggers[i].endSuite(suiteName);
@@ -181,11 +186,15 @@ public class PythonTests {
 		}
 	}
 
-	private static void processTestCase(String pythonLauncher, String testFile, String options, String testCase, String url) {
+	private static void processTestCase(String pythonLauncher, String testFile, String options, String testCase, 
+	        String url, String libPath) {
 	    Collection commandsList = new ArrayList();
         commandsList.add(pythonLauncher);
         commandsList.add(testFile);
         commandsList.add("--v");
+        commandsList.add("--cleanup");
+        commandsList.add("--use-jsvn");        
+        commandsList.add("--bin=" + libPath);        
         commandsList.add("--url=" + url);
         if (options != null && !"".equals(options.trim())) {
             commandsList.add(options);

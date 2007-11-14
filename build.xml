@@ -630,11 +630,6 @@
     			<exclude name=".svn/**"/>
     		</fileset>
         </copy>
-        <copy file="svnkit-test/python/patch/main.py"
-              overwrite="true"
-              tofile="${python.test.home}/python/cmdline/svntest/main.py"
-              failonerror="true"
-        />
     	<chmod perm="ugo+x">
     		<fileset dir="${python.test.home}/python/cmdline">
     			<include name="**/*.py"/>
@@ -643,7 +638,6 @@
     	<pathconvert targetos="unix" property="basedir.unix">
     		<path location="${basedir}"></path>
     	</pathconvert>
-    	<replace token="%ant.dir%" value="${basedir.unix}" file="${python.test.home}/python/cmdline/svntest/main.py"></replace>
 
     	<path id="python.classpath">
             <pathelement path="build/lib/svnkit.jar" />
@@ -677,7 +671,8 @@
               classname="org.tmatesoft.svn.core.test.PythonTests">        
          <jvmarg value="-Djava.util.logging.config.file=${python.test.home}/logging.python.properties" />
          <arg line="${python.test.home}/test.properties" />
-        </java>
+         <arg path="${basedir}/build/lib" />
+    	</java>
     	<delete file="build/lib/logging.properties" failonerror="false"></delete>
     	<delete file="build/lib/logging.python.properties" failonerror="false"></delete>
     	<delete failonerror="false">
