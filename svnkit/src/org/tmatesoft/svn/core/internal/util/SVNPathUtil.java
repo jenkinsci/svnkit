@@ -47,9 +47,60 @@ public class SVNPathUtil {
             String p1 = (String) o1;
             String p2 = (String) o2;
             return p1.replace('/', '\0').toLowerCase().compareTo(p2.toLowerCase().replace('/', '\0'));
-        }
-        
+        }        
     };
+
+    public static boolean isCanonical(String path) {
+        return (path != null && !(path.length() == 1 && path.charAt(0) == '.') && (path.length() <= 1 || path.charAt(path.length() - 1) != '/'));
+    }
+
+    public static void checkPathIsValid(String path) throws SVNException {
+        for (int i = 0; i < path.length(); i++) {
+            char ch = path.charAt(i);
+            if (SVNEncodingUtil.isASCIIControlChar(ch)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_PATH_SYNTAX, "Invalid control character ''{0}'' in path ''{1}''", new String[] {"0x" + SVNFormatUtil.getHexNumberFromByte((byte)ch), path});
+                SVNErrorManager.error(err);
+            }
+        }
+    }
+
+    public static String validateFilePath(String path) {
+        path = path.replace(File.separatorChar, '/');
+        StringBuffer result = new StringBuffer();
+        List segments = new LinkedList();
+        for (StringTokenizer tokens = new StringTokenizer(path, "/", false); tokens.hasMoreTokens();) {
+            String segment = tokens.nextToken();
+            if ("..".equals(segment)) {
+                if (!segments.isEmpty()) {
+                    segments.remove(segments.size() - 1);
+                } else {
+                    File root = new File(System.getProperty("user.dir"));
+                    while (root.getParentFile() != null) {
+                        segments.add(0, root.getParentFile().getName());
+                        root = root.getParentFile();
+                    }
+                }
+                continue;
+            } else if (".".equals(segment) || segment.length() == 0) {
+                continue;
+            }
+            segments.add(segment);
+        }
+        if (path.length() > 0 && path.charAt(0) == '/') {
+            result.append("/");
+        }
+        if (path.length() > 1 && path.charAt(1) == '/') {
+            result.append("/");
+        }
+        for (Iterator tokens = segments.iterator(); tokens.hasNext();) {
+            String token = (String) tokens.next();
+            result.append(token);
+            if (tokens.hasNext()) {
+                result.append('/');
+            }
+        }
+        return result.toString();
+    }
     
     public static String append(String f, String s) {
         f = f == null ? "" : f;
@@ -77,24 +128,11 @@ public class SVNPathUtil {
         }
         return new String(r, 0, index);
     }
-    
-    public static boolean isSinglePathComponent(String name){
-        /* Can't be empty or `..'  */
-        if(name == null || "".equals(name) || "..".equals(name)){
-            return true;
-        }
-        /* Slashes are bad */
-        if(name.indexOf('/') != -1){
-            return false;
-        }
-        /* It is valid.  */
-        return true; 
-    }
-    
+
     public static String concatToAbs(String f, String s) throws SVNException {
         f = f == null || "".equals(f) ? "/" : f;
         s = s == null ? "" : s;
-        
+
         if (!isCanonical(f)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_PATH_SYNTAX, "path component ''{0}'' is not canonical", f);
             SVNErrorManager.error(err);
@@ -114,8 +152,55 @@ public class SVNPathUtil {
         return append(f, s);
     }
     
-    public static boolean isCanonical(String path) {
-        return (path != null && !(path.length() == 1 && path.charAt(0) == '.') && (path.length() <= 1 || path.charAt(path.length() - 1) != '/'));
+    public static boolean isSinglePathComponent(String name){
+        /* Can't be empty or `..'  */
+        if(name == null || "".equals(name) || "..".equals(name)){
+            return true;
+        }
+        /* Slashes are bad */
+        if(name.indexOf('/') != -1){
+            return false;
+        }
+        /* It is valid.  */
+        return true; 
+    }
+
+    public static String head(String path) {
+        for(int i = 0; i < path.length(); i++) {
+            if (path.charAt(i) == '/') {
+                return path.substring(0, i);
+            }
+        }
+        return path;
+    }
+
+    public static String removeHead(String path) {
+        for(int i = 0; i < path.length(); i++) {
+            if (path.charAt(i) == '/') {
+                int ind = i;
+                for(; ind < path.length(); ind++){
+                    if(path.charAt(ind) == '/'){
+                        continue;
+                    }
+                    break;
+                }
+                return path.substring(ind);
+            }
+        }
+        return "";
+    }
+
+    public static String tail(String path) {
+        int index = path.length() - 1;
+        if (index >= 0 && index < path.length() && path.charAt(index) == '/') {
+            index--;
+        }
+        for(int i = index; i >= 0; i--) {
+            if (path.charAt(i) == '/') {
+                return path.substring(i + 1, index + 1);
+            }
+        }
+        return path;
     }
     
     public static String removeTail(String path) {
@@ -195,16 +280,59 @@ public class SVNPathUtil {
         }
         
         return newString.toString();
-    }    
-    
-    public static void checkPathIsValid(String path) throws SVNException {
-        for (int i = 0; i < path.length(); i++) {
-            char ch = path.charAt(i);
-            if (SVNEncodingUtil.isASCIIControlChar(ch)) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_PATH_SYNTAX, "Invalid control character ''{0}'' in path ''{1}''", new String[] {"0x" + SVNFormatUtil.getHexNumberFromByte((byte)ch), path});
-                SVNErrorManager.error(err);
+    }
+
+    public static String canonicalizePath(String path) {
+        StringBuffer result = new StringBuffer();
+        int i = 0;
+        for(;i < path.length(); i++) {
+            if (path.charAt(i) == '/' || path.charAt(i) == ':') {
+                break;
             }
         }
+        String scheme = null;
+        int index = 0;
+        if (i > 0 && i + 2 < path.length() && path.charAt(i) == ':' && path.charAt(i + 1) == '/' && path.charAt(i + 2) == '/') {
+            scheme = path.substring(0, i + 3);
+            result.append(scheme);
+            index = i + 3;
+        }
+        if (index < path.length() && path.charAt(index) == '/') {
+            result.append('/');
+            index++;
+            if (SVNFileUtil.isWindows && scheme == null && index < path.length() && path.charAt(index) == '/') {
+                result.append('/');
+                index++;
+            }
+        }
+        int segmentCount = 0;
+        while(index < path.length()) {
+            int nextIndex = index;
+            while(nextIndex < path.length() && path.charAt(nextIndex) != '/') {
+                nextIndex++;
+            }
+            int segmentLength = nextIndex - index;
+            if (segmentLength == 0 || (segmentLength == 1 && path.charAt(index) == '.')) {
+
+            } else {
+                if (nextIndex < path.length()) {
+                    segmentLength++;
+                }
+                result.append(path.substring(index, index + segmentLength));
+                segmentCount++;
+            }
+            index = nextIndex;
+            if (index < path.length()) {
+                index++;
+            }
+        }
+        if ((segmentCount > 0 || scheme != null) && result.charAt(result.length() - 1) == '/') {
+            result = result.delete(result.length() - 1, result.length());
+        }
+        if (SVNFileUtil.isWindows && segmentCount < 2 && result.length() >= 2 && result.charAt(0) == '/' && result.charAt(1) == '/') {
+            result = result.delete(0, 1);
+        }
+        return result.toString();
     }
     
     public static String getCommonURLAncestor(String url1, String url2) {
@@ -233,70 +361,6 @@ public class SVNPathUtil {
         protocol.append(getCommonPathAncestor(url1.substring(index), url2
                 .substring(index)));
         return protocol.toString();
-    }
-
-    public static String condenceURLs(String[] urls, Collection condencedPaths,
-            boolean removeRedundantURLs) {
-        if (urls == null || urls.length == 0) {
-            return null;
-        }
-        if (urls.length == 1) {
-            return urls[0];
-        }
-        String rootURL = urls[0];
-        for (int i = 0; i < urls.length; i++) {
-            String url = urls[i];
-            rootURL = getCommonURLAncestor(rootURL, url);
-        }
-        if (condencedPaths != null && removeRedundantURLs) {
-            for (int i = 0; i < urls.length; i++) {
-                String url1 = urls[i];
-                if (url1 == null) {
-                    continue;
-                }
-                for (int j = 0; j < urls.length; j++) {
-                    if (i == j) {
-                        continue;
-                    }
-                    String url2 = urls[j];
-                    if (url2 == null) {
-                        continue;
-                    }
-                    String common = getCommonURLAncestor(url1, url2);
-                    if ("".equals(common) || common == null) {
-                        continue;
-                    }
-                    if (common.equals(url1)) {
-                        urls[j] = null;
-                    } else if (common.equals(url2)) {
-                        urls[i] = null;
-                    }
-                }
-            }
-            for (int j = 0; j < urls.length; j++) {
-                String url = urls[j];
-                if (url != null && url.equals(rootURL)) {
-                    urls[j] = null;
-                }
-            }
-        }
-    
-        if (condencedPaths != null) {
-            for (int i = 0; i < urls.length; i++) {
-                String url = urls[i];
-                if (url == null) {
-                    continue;
-                }
-                if (rootURL != null && !"".equals(rootURL)) {
-                    url = url.substring(rootURL.length());
-                    if (url.startsWith("/")) {
-                        url = url.substring(1);
-                    }
-                }
-                condencedPaths.add(url);
-            }
-        }
-        return rootURL;
     }
 
     public static String condencePaths(String[] paths, Collection condencedPaths, boolean removeRedundantPaths) {
@@ -364,44 +428,6 @@ public class SVNPathUtil {
         return rootPath;
     }
 
-    public static String validateFilePath(String path) {
-        path = path.replace(File.separatorChar, '/');
-        StringBuffer result = new StringBuffer();
-        List segments = new LinkedList();
-        for (StringTokenizer tokens = new StringTokenizer(path, "/", false); tokens.hasMoreTokens();) {
-            String segment = tokens.nextToken();
-            if ("..".equals(segment)) {
-                if (!segments.isEmpty()) {
-                    segments.remove(segments.size() - 1);
-                } else {
-                    File root = new File(System.getProperty("user.dir"));
-                    while (root.getParentFile() != null) {
-                        segments.add(0, root.getParentFile().getName());
-                        root = root.getParentFile();
-                    }
-                }
-                continue;
-            } else if (".".equals(segment) || segment.length() == 0) {
-                continue;
-            }
-            segments.add(segment);
-        }
-        if (path.length() > 0 && path.charAt(0) == '/') {
-            result.append("/");
-        }
-        if (path.length() > 1 && path.charAt(1) == '/') {
-            result.append("/");
-        }
-        for (Iterator tokens = segments.iterator(); tokens.hasNext();) {
-            String token = (String) tokens.next();
-            result.append(token);
-            if (tokens.hasNext()) {
-                result.append('/');
-            }
-        }
-        return result.toString();
-    }
-
     public static boolean isChildOf(File parentFile, File childFile) {
         if (parentFile == null || childFile == null) {
             return false;
@@ -417,51 +443,6 @@ public class SVNPathUtil {
             childFile = childFile.getParentFile();
         }
         return false;
-    }
-
-    public static boolean isChildOf(String parent, String child) {
-        if (parent == null || child == null) {
-            return false;
-        }
-        return child.startsWith(parent) && (child.length() == parent.length() || child.charAt(parent.length()) == '/');
-    }
-
-    public static String tail(String path) {
-        int index = path.length() - 1;
-        if (index >= 0 && index < path.length() && path.charAt(index) == '/') {
-            index--;
-        }
-        for(int i = index; i >= 0; i--) {
-            if (path.charAt(i) == '/') {
-                return path.substring(i + 1, index + 1); 
-            }
-        }
-        return path;
-    }
-
-    public static String head(String path) {
-        for(int i = 0; i < path.length(); i++) {
-            if (path.charAt(i) == '/') {
-                return path.substring(0, i); 
-            }
-        }
-        return path;
-    }
-
-    public static String removeHead(String path) {
-        for(int i = 0; i < path.length(); i++) {
-            if (path.charAt(i) == '/') {
-                int ind = i;
-                for(; ind < path.length(); ind++){
-                    if(path.charAt(ind) == '/'){
-                        continue;
-                    }
-                    break;
-                }
-                return path.substring(ind); 
-            }
-        }
-        return "";
     }
 
     public static int getSegmentsCount(String path) {
@@ -507,97 +488,34 @@ public class SVNPathUtil {
      * @param pathChild
      * @return
      */
-    public static String getPathAsChild(String path, String pathChild){
-    	if(path == null || pathChild == null){
-    		return null;
-    	}
-    	if(pathChild.compareTo(path) == 0){
-    		return null;
-    	}
-    	int count = 0;
-    	for(count = 0; count < path.length() && count < pathChild.length(); count++ ){
-    		if(path.charAt(count) != pathChild.charAt(count)){
-    			return null;
-    		}
-    	}    
-    	if(count == path.length() && count < pathChild.length()){
-            if(pathChild.charAt(count) == '/'){
-                return pathChild.substring(count + 1);                      
-            }else if(count == 1 && path.charAt(0) == '/'){
+    public static String getPathAsChild(String path, String pathChild) {
+        if (path == null || pathChild == null) {
+            return null;
+        }
+        if (pathChild.compareTo(path) == 0) {
+            return null;
+        }
+        int count = 0;
+        for (count = 0; count < path.length() && count < pathChild.length(); count++) {
+            if (path.charAt(count) != pathChild.charAt(count)) {
+                return null;
+            }
+        }
+        if (count == path.length() && count < pathChild.length()) {
+            if (pathChild.charAt(count) == '/') {
+                return pathChild.substring(count + 1);
+            } else if (count == 1 && path.charAt(0) == '/') {
                 return pathChild.substring(1);
             }
         }
-    	return null;
+        return null;
     }
 
     public static String getRelativePath(File parent, File child) {
         String parentPath = parent.getAbsolutePath().replace(File.separatorChar, '/');
         String childPath = child.getAbsolutePath().replace(File.separatorChar, '/');
-        return getRelativePath(parentPath, childPath);
-    }
-
-    public static String getRelativePath(String parent, String child){
-        if (parent.length() >= child.length()){
-            return "";            
-        }
-        String realtivePath = child.substring(parent.length());
-        if (realtivePath.startsWith("/")) {
-            realtivePath = realtivePath.substring(1);
-        }
-        return realtivePath;
-    }
-    
-    public static String canonicalizePath(String path) {
-        StringBuffer result = new StringBuffer();
-        int i = 0;
-        for(;i < path.length(); i++) {
-            if (path.charAt(i) == '/' || path.charAt(i) == ':') {
-                break;
-            }
-        }
-        String scheme = null;
-        int index = 0;
-        if (i > 0 && i + 2 < path.length() && path.charAt(i) == ':' && path.charAt(i + 1) == '/' && path.charAt(i + 2) == '/') {
-            scheme = path.substring(0, i + 3);
-            result.append(scheme);
-            index = i + 3;
-        }
-        if (index < path.length() && path.charAt(index) == '/') {
-            result.append('/');
-            index++;
-            if (SVNFileUtil.isWindows && scheme == null && index < path.length() && path.charAt(index) == '/') {
-                result.append('/');
-                index++;
-            }
-        }
-        int segmentCount = 0;
-        while(index < path.length()) {
-            int nextIndex = index;
-            while(nextIndex < path.length() && path.charAt(nextIndex) != '/') {
-                nextIndex++;
-            }
-            int segmentLength = nextIndex - index;
-            if (segmentLength == 0 || (segmentLength == 1 && path.charAt(index) == '.')) {
-                
-            } else {
-                if (nextIndex < path.length()) {
-                    segmentLength++;
-                }
-                result.append(path.substring(index, index + segmentLength));
-                segmentCount++;
-            }
-            index = nextIndex;
-            if (index < path.length()) {
-                index++;
-            }
-        }
-        if ((segmentCount > 0 || scheme != null) && result.charAt(result.length() - 1) == '/') {
-            result = result.delete(result.length() - 1, result.length());
-        }
-        if (SVNFileUtil.isWindows && segmentCount < 2 && result.length() >= 2 && result.charAt(0) == '/' && result.charAt(1) == '/') {
-            result = result.delete(0, 1);
-        }
-        return result.toString();
+        String relativePath = getPathAsChild(parentPath, childPath);
+        return relativePath == null ? "" : relativePath;
     }
     
 }
