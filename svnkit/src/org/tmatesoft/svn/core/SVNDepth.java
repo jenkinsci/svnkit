@@ -110,4 +110,27 @@ public class SVNDepth implements Comparable {
         }
     }
 
+    public static SVNDepth getInfinityOrEmptyDepth(boolean recurse) {
+        return recurse ? INFINITY : EMPTY;
+    }
+
+    public static SVNDepth getInfinityOrFilesDepth(boolean recurse) {
+        return recurse ? INFINITY : FILES;
+    }
+
+    public static SVNDepth getInfinityOrImmediatesDepth(boolean recurse) {
+        return recurse ? INFINITY : IMMEDIATES;
+    }
+
+    public static SVNDepth getUnknownOrEmptyDepth(boolean recurse) {
+        return recurse ? UNKNOWN : EMPTY;
+    }
+
+    public static SVNDepth getUnknownOrFilesDepth(boolean recurse) {
+        return recurse ? UNKNOWN : FILES;
+    }
+
+    public static SVNDepth getUnknownOrImmediatesDepth(boolean recurse) {
+        return recurse ? UNKNOWN : IMMEDIATES;
+    }
 }

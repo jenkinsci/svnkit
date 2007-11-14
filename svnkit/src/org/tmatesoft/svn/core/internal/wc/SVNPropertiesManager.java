@@ -56,13 +56,17 @@ public class SVNPropertiesManager {
         NOT_ALLOWED_FOR_DIR.add(SVNProperty.MIME_TYPE);
     }
 
-    public static void setWCProperty(SVNWCAccess access, File path, String propName, String propValue, boolean write) throws SVNException {
+    public static boolean setWCProperty(SVNWCAccess access, File path, String propName, String propValue, 
+            boolean write) throws SVNException {
         SVNEntry entry = access.getVersionedEntry(path, false);
         SVNAdminArea dir = entry.getKind() == SVNNodeKind.DIR ? access.retrieve(path) : access.retrieve(path.getParentFile());
-        dir.getWCProperties(entry.getName()).setPropertyValue(propName, propValue);
+        SVNVersionedProperties wcProps = dir.getWCProperties(entry.getName());
+        String oldValue = wcProps.getPropertyValue(propName);
+        wcProps.setPropertyValue(propName, propValue);
         if (write) {
             dir.saveWCProperties(false);
         }
+        return oldValue == null ? propValue != null : !oldValue.equals(propValue);
     }
 
     public static String getWCProperty(SVNWCAccess access, File path, String propName) throws SVNException {
@@ -125,10 +129,10 @@ public class SVNPropertiesManager {
         return dir.getProperties(entry.getName()).getPropertyValue(propName);
     }
 
-    public static void setProperty(SVNWCAccess access, File path, String propName, String propValue, boolean skipChecks) throws SVNException {
+    public static boolean setProperty(SVNWCAccess access, File path, String propName, String propValue, 
+            boolean skipChecks) throws SVNException {
         if (SVNProperty.isWorkingCopyProperty(propName)) {
-            setWCProperty(access, path, propName, propValue, true);
-            return;
+            return setWCProperty(access, path, propName, propValue, true);
         } else if (SVNProperty.isEntryProperty(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_PROP_KIND, "Property ''{0}'' is an entry property", propName);
             SVNErrorManager.error(err);
@@ -171,8 +175,8 @@ public class SVNPropertiesManager {
             }
         }
         SVNVersionedProperties properties = dir.getProperties(entry.getName());
+        String oldValue = properties.getPropertyValue(propName);
         if (!updateTimeStamp && (entry.getKind() == SVNNodeKind.FILE && SVNProperty.KEYWORDS.equals(propName))) {
-            String oldValue = properties.getPropertyValue(SVNProperty.KEYWORDS);
             Collection oldKeywords = getKeywords(oldValue);
             Collection newKeywords = getKeywords(propValue);
             updateTimeStamp = !oldKeywords.equals(newKeywords); 
@@ -188,6 +192,7 @@ public class SVNPropertiesManager {
         dir.saveVersionedProperties(log, false);
         log.save();
         dir.runLogs();
+        return oldValue == null ? propValue != null : !oldValue.equals(propValue);
     }
     
     public static SVNStatusType mergeProperties(SVNWCAccess wcAccess, File path, Map baseProperties, Map diff, boolean baseMerge, boolean dryRun) throws SVNException {

@@ -21,6 +21,7 @@ import java.util.LinkedList;
 import org.tmatesoft.svn.cli2.SVNCommandTarget;
 import org.tmatesoft.svn.cli2.SVNCommandUtil;
 import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -146,7 +147,10 @@ public class SVNPropEditCommand extends SVNPropertiesCommand {
                     if (newPropertyValue != null && !newPropertyValue.equals(propertyValue)) {
                         checkBooleanProperty(propertyValue, newPropertyValue);
                         client.setCommitHandler(getSVNEnvironment());
-                        SVNCommitInfo info = client.doSetProperty(target.getURL(), propertyName, newPropertyValue, SVNRevision.HEAD, getSVNEnvironment().getMessage(), getSVNEnvironment().getRevisionProperties(), getSVNEnvironment().isForce(), this);
+                        SVNCommitInfo info = client.doSetProperty(target.getURL(), propertyName, 
+                                newPropertyValue, SVNRevision.HEAD, getSVNEnvironment().getMessage(), 
+                                getSVNEnvironment().getRevisionProperties(), getSVNEnvironment().isForce(), 
+                                SVNDepth.EMPTY, this);
                         String message = "Set new value for property ''{0}'' on ''{1}''";
                         message = MessageFormat.format(message, new Object[] {propertyName, targetName});
                         getSVNEnvironment().getOut().println(message);
