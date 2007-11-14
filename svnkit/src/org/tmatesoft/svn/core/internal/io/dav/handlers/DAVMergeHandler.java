@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.xml.sax.Attributes;
 
@@ -58,10 +59,10 @@ public class DAVMergeHandler extends BasicDAVHandler {
         target.append("<S:lock-token-list xmlns:S=\"svn:\">");
         for (Iterator paths = locks.keySet().iterator(); paths.hasNext();) {
             String lockPath = (String) paths.next();
-            if (path == null || isChildPath(path, lockPath)) {
+            if (path == null || SVNPathUtil.isChildOf(path, lockPath)) {
                 String token = (String) locks.get(lockPath);
                 target.append("<S:lock><S:lock-path>");
-                lockPath = getRelativePath(lockPath, root);
+                lockPath = SVNPathUtil.getRelativePath(root, lockPath);
                 
                 target.append(SVNEncodingUtil.xmlEncodeCDATA(SVNEncodingUtil.uriDecode(lockPath)));
                 target.append("</S:lock-path><S:lock-token>");
@@ -73,29 +74,14 @@ public class DAVMergeHandler extends BasicDAVHandler {
         return target;
     }
     
-    // both paths shouldn't end with '/'
-    private static String getRelativePath(String path, String root) {
-        if (path.length() <= root.length()) {
-            return "";
-        }
-        return path.substring(root.length() + 1);
-    }
-    
     public static boolean hasChildPaths(String path, Map locks) {
         for (Iterator paths = locks.keySet().iterator(); paths.hasNext();) {
             String lockPath = (String) paths.next();
-            if (isChildPath(path, lockPath)) {
+            if (SVNPathUtil.isChildOf(path, lockPath)) {
                 return true;
             }
         }
         return false;
-    }
-    
-    private static boolean isChildPath(String path, String childPath) {
-        if (path.equals(childPath)) {
-            return true;
-        }
-        return childPath.startsWith(path + "/");
     }
     
     private ISVNWorkspaceMediator myMediator;

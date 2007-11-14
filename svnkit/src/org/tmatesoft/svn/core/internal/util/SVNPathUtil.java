@@ -419,6 +419,13 @@ public class SVNPathUtil {
         return false;
     }
 
+    public static boolean isChildOf(String parent, String child) {
+        if (parent == null || child == null) {
+            return false;
+        }
+        return child.startsWith(parent) && (child.length() == parent.length() || child.charAt(parent.length()) == '/');
+    }
+
     public static String tail(String path) {
         int index = path.length() - 1;
         if (index >= 0 && index < path.length() && path.charAt(index) == '/') {
@@ -526,11 +533,18 @@ public class SVNPathUtil {
     public static String getRelativePath(File parent, File child) {
         String parentPath = parent.getAbsolutePath().replace(File.separatorChar, '/');
         String childPath = child.getAbsolutePath().replace(File.separatorChar, '/');
-        String relPath = childPath.substring(parentPath.length());
-        if (relPath.startsWith("/")) {
-            relPath = relPath.substring(1);
+        return getRelativePath(parentPath, childPath);
+    }
+
+    public static String getRelativePath(String parent, String child){
+        if (parent.length() >= child.length()){
+            return "";            
         }
-        return relPath;
+        String realtivePath = child.substring(parent.length());
+        if (realtivePath.startsWith("/")) {
+            realtivePath = realtivePath.substring(1);
+        }
+        return realtivePath;
     }
     
     public static String canonicalizePath(String path) {
