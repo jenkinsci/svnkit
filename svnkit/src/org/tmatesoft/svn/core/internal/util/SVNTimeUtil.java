@@ -35,27 +35,43 @@ public class SVNTimeUtil {
 
     private static final Calendar CALENDAR = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
 
+    static final DateFormat SVN_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
+
     private static final DateFormat ISO8601_FORMAT = new SimpleDateFormat(
             "yyyy-MM-dd'T'HH:mm:ss.SSS'000Z'");
 
     private static final DateFormat RFC1123_FORMAT = new SimpleDateFormat(
             "EEE, d MMM yyyy HH:mm:ss z", Locale.US);
 
-    private static final DateFormat HUMAN_DATE_FORMAT = new SimpleDateFormat(
+    public static final DateFormat CUSTOM_FORMAT = new SimpleDateFormat(
+            "yyyy-MM-dd HH:mm:ss Z (EE, d MMM yyyy)", Locale.getDefault());
+
+    private static final DateFormat HUMAN_FORMAT = new SimpleDateFormat(
             "yyyy-MM-dd' 'HH:mm:ss' 'ZZZZ' ('E', 'dd' 'MMM' 'yyyy')'");
-    
-    private static final DateFormat SHORT_DATE_FORMAT =
-            new SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss'Z'");
+
+    private static final DateFormat SHORT_FORMAT = new SimpleDateFormat(
+            "yyyy-MM-dd' 'HH:mm:ss'Z'");
 
     private static final Date NULL_DATE = new Date(0);
 
-    private static final char[] DATE_SEPARATORS = {'-', '-', 'T', ':', ':', '.', 'Z'};
+    public static final char[] DATE_SEPARATORS = {'-', '-', 'T', ':', ':', '.', 'Z'};
 
     static {
+        SVN_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
         ISO8601_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
         RFC1123_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
-        HUMAN_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
-        SHORT_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
+        HUMAN_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
+        SHORT_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
+        CUSTOM_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
+    }
+
+    public static String formatSVNDate(Date date) {
+        if (date == null) {
+            return null;
+        }
+        synchronized (SVN_FORMAT) {
+            return SVN_FORMAT.format(date);
+        }
     }
 
     public static void formatDate(Date date, StringBuffer buffer) {
@@ -97,10 +113,10 @@ public class SVNTimeUtil {
     public static String formatHumanDate(Date date, ISVNOptions options) {
         DateFormat df = options == null ? null : options.getKeywordDateFormat();
         if (df == null) {
-            df = SVNTimeUtil.HUMAN_DATE_FORMAT;
+            df = HUMAN_FORMAT;
         }
         synchronized (df) {
-            return df.format(date != null ? date : SVNTimeUtil.NULL_DATE);
+            return df.format(date != null ? date : NULL_DATE);
         }
     }
 
@@ -108,8 +124,17 @@ public class SVNTimeUtil {
         if (date == null) {
             return null;
         }
-        synchronized (SVNTimeUtil.SHORT_DATE_FORMAT) {
-            return SVNTimeUtil.SHORT_DATE_FORMAT.format(date != null ? date : SVNTimeUtil.NULL_DATE);
+        synchronized (SHORT_FORMAT) {
+            return SHORT_FORMAT.format(date != null ? date : NULL_DATE);
+        }
+    }
+
+    public static String formatCustomDate(Date date) {
+        if (date == null) {
+            return null;
+        }
+        synchronized (CUSTOM_FORMAT) {
+            return CUSTOM_FORMAT.format(date);
         }
     }
 

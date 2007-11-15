@@ -11,8 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.util;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
@@ -31,14 +29,8 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 public class SVNDate extends Date {
     
     public static final SVNDate NULL = new SVNDate(0,0);
-    
-    private static final DateFormat FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
 
-    static {
-        FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
-    }
     private static final Calendar CALENDAR = Calendar.getInstance(TimeZone.getTimeZone("GMT"), new Locale("en", "US"));
-    private static final char[] DATE_SEPARATORS = {'-','-','T',':',':','.','Z'}; 
 
     private int myMicroSeconds;
     
@@ -48,10 +40,7 @@ public class SVNDate extends Date {
     }
     
     public String format() {
-        String formatted = null;
-        synchronized (FORMAT) {
-             formatted = FORMAT.format(this);
-        }
+        String formatted = SVNTimeUtil.formatSVNDate(this);        
         int micros = myMicroSeconds;
         int m1 = micros%10;
         int m2 = (micros/10)%10;
@@ -75,7 +64,7 @@ public class SVNDate extends Date {
         int[] result = new int[7];
         int microseconds = 0;
         int timeZoneInd = -1;
-        while(index < DATE_SEPARATORS.length && charIndex < str.length()) {
+        while(index < SVNTimeUtil.DATE_SEPARATORS.length && charIndex < str.length()) {
             if (str.charAt(charIndex) == '-') {
                 if (index > 1) {
                     timeZoneInd = charIndex;
@@ -83,15 +72,15 @@ public class SVNDate extends Date {
             } else if (str.charAt(charIndex) == '+') {
                 timeZoneInd = charIndex;
             }
-            if (str.charAt(charIndex) == DATE_SEPARATORS[index] || 
-                    (index == 5 && str.charAt(charIndex) == DATE_SEPARATORS[index + 1])) {
-                if (index == 5 && str.charAt(charIndex) == DATE_SEPARATORS[index + 1]) {
+            if (str.charAt(charIndex) == SVNTimeUtil.DATE_SEPARATORS[index] ||
+                    (index == 5 && str.charAt(charIndex) == SVNTimeUtil.DATE_SEPARATORS[index + 1])) {
+                if (index == 5 && str.charAt(charIndex) == SVNTimeUtil.DATE_SEPARATORS[index + 1]) {
                     index++;
                 }
                 String segment = str.substring(startIndex, charIndex);
                 if (segment.length() == 0) {
                     result[index] = 0;
-                } else if (index + 1 < DATE_SEPARATORS.length) {
+                } else if (index + 1 < SVNTimeUtil.DATE_SEPARATORS.length) {
                     result[index] = Integer.parseInt(segment);
                 } else {
                     result[index] = Integer.parseInt(segment.substring(0, Math.min(3, segment.length())));
@@ -104,7 +93,7 @@ public class SVNDate extends Date {
             }
             charIndex++;
         }
-        if (index < DATE_SEPARATORS.length) {
+        if (index < SVNTimeUtil.DATE_SEPARATORS.length) {
             String segment = str.substring(startIndex);
             if (segment.length() == 0) {
                 result[index] = 0;

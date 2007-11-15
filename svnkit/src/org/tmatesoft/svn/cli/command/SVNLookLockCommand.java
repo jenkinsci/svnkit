@@ -19,6 +19,7 @@ import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
 
 
@@ -44,8 +45,8 @@ public class SVNLookLockCommand extends SVNCommand {
         SVNLookClient lookClient = getClientManager().getLookClient();
         SVNLock lock = lookClient.doGetLock(reposRoot, path);
         if (lock != null) {
-            String creationTime = SVNLookDateCommand.formatDate(lock.getCreationDate());
-            String expirationTime = lock.getExpirationDate() != null ? SVNLookDateCommand.formatDate(lock.getExpirationDate()) : "";
+            String creationTime = SVNTimeUtil.formatCustomDate(lock.getCreationDate());
+            String expirationTime = lock.getExpirationDate() != null ? SVNTimeUtil.formatCustomDate(lock.getExpirationDate()) : "";
             int commentLines = 0; 
             if (lock.getComment() != null) {
                 commentLines = getLinesCount(lock.getComment());

@@ -14,14 +14,12 @@ package org.tmatesoft.svn.cli.command;
 import java.io.File;
 import java.io.InputStream;
 import java.io.PrintStream;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Locale;
 
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
 
@@ -32,7 +30,6 @@ import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
  * @since   1.1.1
  */
 public class SVNLookDateCommand extends SVNCommand {
-    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z (EE, d MMM yyyy)", Locale.getDefault());
 
     public void run(PrintStream out, PrintStream err) throws SVNException {
         if (!getCommandLine().hasPaths()) {
@@ -47,23 +44,19 @@ public class SVNLookDateCommand extends SVNCommand {
         if (getCommandLine().hasArgument(SVNArgument.TRANSACTION)) {
             String transactionName = (String) getCommandLine().getArgumentValue(SVNArgument.TRANSACTION);
             Date date = lookClient.doGetDate(reposRoot, transactionName);
-            String dateStamp = date != null ? formatDate(date) : ""; 
+            String dateStamp = date != null ? SVNTimeUtil.formatCustomDate(date) : ""; 
             SVNCommand.println(out, dateStamp);
             return;
         } else if (getCommandLine().hasArgument(SVNArgument.REVISION)) {
             revision = SVNRevision.parse((String) getCommandLine().getArgumentValue(SVNArgument.REVISION));
         } 
         Date date = lookClient.doGetDate(reposRoot, revision);
-        String dateStamp = date != null ? formatDate(date) : ""; 
+        String dateStamp = date != null ? SVNTimeUtil.formatCustomDate(date) : ""; 
         SVNCommand.println(out, dateStamp);
     }
 
     public void run(InputStream in, PrintStream out, PrintStream err) throws SVNException {
         run(out, err);
-    }
-
-    public static String formatDate(Date date) {
-        return DATE_FORMAT.format(date);
     }
 
 }
