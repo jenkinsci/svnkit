@@ -954,10 +954,6 @@ public class SVNClientImpl implements SVNClientInterface {
         return propHandler.getAllPropertyData();
     }
 
-    public void propertySet(String path, String name, String value, int depth, boolean force) throws ClientException {
-        propertySet(path, name, value, JavaHLObjectFactory.getSVNDepth(depth).isRecursive(), force);
-    }
-
     public void propertySet(String path, String name, byte[] value, boolean recurse) throws ClientException {
         propertySet(path, name, value, recurse, false);
     }
@@ -971,22 +967,26 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public void propertySet(String path, String name, String value, boolean recurse, boolean force) throws ClientException {
+        propertySet(path, name, value, JavaHLObjectFactory.infinityOrEmpty(recurse), force);
+    }
+
+    public void propertySet(String path, String name, String value, int depth, boolean force) throws ClientException {
         SVNWCClient client = getSVNWCClient();
         try {
-            client.doSetProperty(new File(path).getAbsoluteFile(), name, value, force, recurse, ISVNPropertyHandler.NULL);
+            client.doSetProperty(new File(path).getAbsoluteFile(), name, value, force, JavaHLObjectFactory.getSVNDepth(depth), ISVNPropertyHandler.NULL);
         } catch (SVNException e) {
             throwException(e);
         }
     }
 
-    public void propertyRemove(String path, String name, int depth) throws ClientException {
-        propertyRemove(path, name, JavaHLObjectFactory.getSVNDepth(depth).isRecursive());
+    public void propertyRemove(String path, String name, boolean recurse) throws ClientException {
+        propertyRemove(path, name, JavaHLObjectFactory.infinityOrEmpty(recurse));
     }
 
-    public void propertyRemove(String path, String name, boolean recurse) throws ClientException {
+    public void propertyRemove(String path, String name, int depth) throws ClientException {
         SVNWCClient client = getSVNWCClient();
         try {
-            client.doSetProperty(new File(path).getAbsoluteFile(), name, null, false, recurse, ISVNPropertyHandler.NULL);
+            client.doSetProperty(new File(path).getAbsoluteFile(), name, null, false, JavaHLObjectFactory.getSVNDepth(depth), ISVNPropertyHandler.NULL);
         } catch (SVNException e) {
             throwException(e);
         }
