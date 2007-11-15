@@ -17,12 +17,12 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.tmatesoft.svn.cli2.SVNCommandTarget;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -64,7 +64,7 @@ public class SVNAdminSetRevPropCommand extends SVNAdminCommand {
                 "Exactly one property name and one file argument required"));
         }
         String propertyName = (String) targets.get(0);
-        SVNCommandTarget target = new SVNCommandTarget((String) targets.get(1));
+        SVNPath target = new SVNPath((String) targets.get(1));
         if (!target.isFile()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                 "Exactly one property name and one file argument required"));

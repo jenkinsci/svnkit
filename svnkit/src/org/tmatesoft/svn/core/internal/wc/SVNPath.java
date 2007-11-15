@@ -9,17 +9,17 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.cli2;
+package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
 
+import org.tmatesoft.svn.cli2.SVNCommandUtil;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 
@@ -27,18 +27,18 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
  * @version 1.1.2
  * @author  TMate Software Ltd.
  */
-public class SVNCommandTarget {
+public class SVNPath {
     
     private boolean myHasPegRevision;
     private String myTarget;
     private SVNRevision myPegRevision = SVNRevision.UNDEFINED;
     private File myFile;
 
-    public SVNCommandTarget(String target) throws SVNException {
+    public SVNPath(String target) throws SVNException {
         this(target, false);
     }
 
-    public SVNCommandTarget(String target, boolean hasPegRevision) throws SVNException {
+    public SVNPath(String target, boolean hasPegRevision) throws SVNException {
         myTarget = target;
         myHasPegRevision = hasPegRevision;
         if (myHasPegRevision) {

@@ -18,12 +18,12 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.tmatesoft.svn.cli2.SVNCommandTarget;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNCommitClient;
 
@@ -70,7 +70,7 @@ public class SVNCommitCommand extends SVNCommand {
         Collection filesList = new ArrayList();
         for (Iterator ts = targets.iterator(); ts.hasNext();) {
             String targetName = (String) ts.next();
-            SVNCommandTarget target = new SVNCommandTarget(targetName);
+            SVNPath target = new SVNPath(targetName);
             if (target.isFile()) {
                 filesList.add(target.getFile());
             } else {

@@ -18,12 +18,12 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.tmatesoft.svn.cli2.SVNCommandTarget;
 import org.tmatesoft.svn.cli2.SVNCommandUtil;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNChangelistClient;
@@ -68,7 +68,7 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
     public void run() throws SVNException {
         Collection targets = new ArrayList(); 
         if (getSVNEnvironment().getChangelist() != null) {
-            SVNCommandTarget target = new SVNCommandTarget("");
+            SVNPath target = new SVNPath("");
             SVNChangelistClient changelistClient = getSVNEnvironment().getClientManager().getChangelistClient();
             changelistClient.getChangelist(target.getFile(), getSVNEnvironment().getChangelist(), targets);
             if (targets.isEmpty()) {
@@ -96,7 +96,7 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
         }
         for (Iterator ts = targets.iterator(); ts.hasNext();) {
             String target = (String) ts.next();
-            SVNCommandTarget commandTarget = new SVNCommandTarget(target);
+            SVNPath commandTarget = new SVNPath(target);
 
             if (getSVNEnvironment().isXML()) {
                 StringBuffer xmlBuffer = openXMLTag("target", XML_STYLE_NORMAL, "path", SVNCommandUtil.getLocalPath(target), null);

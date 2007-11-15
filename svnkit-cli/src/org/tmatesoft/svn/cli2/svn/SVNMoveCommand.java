@@ -17,11 +17,11 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.tmatesoft.svn.cli2.SVNCommandTarget;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNCopyClient;
 import org.tmatesoft.svn.core.wc.SVNCopySource;
@@ -65,7 +65,7 @@ public class SVNMoveCommand extends SVNCommand {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
                     "Cannot specify revision (except HEAD) with move operation"));
         }
-        SVNCommandTarget dst = new SVNCommandTarget((String) targets.remove(targets.size() - 1));
+        SVNPath dst = new SVNPath((String) targets.remove(targets.size() - 1));
         if (!dst.isURL()) {
             if (getSVNEnvironment().getMessage() != null || getSVNEnvironment().getFileData() != null || getSVNEnvironment().getRevisionProperties() != null) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_UNNECESSARY_LOG_MESSAGE,
@@ -81,7 +81,7 @@ public class SVNMoveCommand extends SVNCommand {
         Collection sources = new ArrayList();
         for (Iterator ts = targets.iterator(); ts.hasNext();) {
             String targetName = (String) ts.next();
-            SVNCommandTarget source = new SVNCommandTarget(targetName);
+            SVNPath source = new SVNPath(targetName);
             if (source.isURL()) {
                 sources.add(new SVNCopySource(SVNRevision.HEAD, SVNRevision.UNDEFINED, source.getURL()));
             } else {

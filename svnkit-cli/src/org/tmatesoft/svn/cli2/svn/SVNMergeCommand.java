@@ -16,13 +16,13 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.tmatesoft.svn.cli2.SVNCommandTarget;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
@@ -65,17 +65,17 @@ public class SVNMergeCommand extends SVNCommand {
 
     public void run() throws SVNException {
         List targets = getSVNEnvironment().combineTargets(new ArrayList());
-        SVNCommandTarget source1 = null;
-        SVNCommandTarget source2 = null;
-        SVNCommandTarget target = null;
+        SVNPath source1 = null;
+        SVNPath source2 = null;
+        SVNPath target = null;
         SVNRevision pegRevision1 = null;
         SVNRevision pegRevision2 = null;
         
         if (targets.size() >= 1) {
-            source1 = new SVNCommandTarget((String) targets.get(0), true);
+            source1 = new SVNPath((String) targets.get(0), true);
             pegRevision1 = source1.getPegRevision();
             if (targets.size() >= 2) {
-                source2 = new SVNCommandTarget((String) targets.get(1), true);
+                source2 = new SVNPath((String) targets.get(1), true);
                 pegRevision2 = source2.getPegRevision();
             }
         }
@@ -106,7 +106,7 @@ public class SVNMergeCommand extends SVNCommand {
                     pegRevision1 = source1.isURL() ? SVNRevision.HEAD : SVNRevision.WORKING;
                 }
                 if (targets.size() == 2) {
-                    target = new SVNCommandTarget((String) targets.get(1));
+                    target = new SVNPath((String) targets.get(1));
                 }
             }
         } else {
@@ -126,7 +126,7 @@ public class SVNMergeCommand extends SVNCommand {
                 pegRevision2 = SVNRevision.HEAD;
             }
             if (targets.size() >= 3) {
-                target = new SVNCommandTarget((String) targets.get(2));
+                target = new SVNPath((String) targets.get(2));
             }
         }
         if (source1 != null && source2 != null && target == null) {
@@ -135,21 +135,21 @@ public class SVNMergeCommand extends SVNCommand {
                 String name2 = SVNPathUtil.tail(source2.getTarget());
                 if (name1.equals(name2)) {
                     String decodedPath = SVNEncodingUtil.uriDecode(name1);
-                    SVNCommandTarget decodedPathTarget = new SVNCommandTarget(decodedPath); 
+                    SVNPath decodedPathTarget = new SVNPath(decodedPath); 
                     if (SVNFileType.getType(decodedPathTarget.getFile()) == SVNFileType.FILE) {
                         target = decodedPathTarget;
                     }
                 }
             } else if (source1.equals(source2)) {
                 String decodedPath = SVNEncodingUtil.uriDecode(source1.getTarget());
-                SVNCommandTarget decodedPathTarget = new SVNCommandTarget(decodedPath); 
+                SVNPath decodedPathTarget = new SVNPath(decodedPath); 
                 if (SVNFileType.getType(decodedPathTarget.getFile()) == SVNFileType.FILE) {
                     target = decodedPathTarget;
                 }
             } 
         }
         if (target == null) {
-            target = new SVNCommandTarget("");
+            target = new SVNPath("");
         }
         SVNDiffClient client = getSVNEnvironment().getClientManager().getDiffClient();
         if (!getSVNEnvironment().isQuiet()) {

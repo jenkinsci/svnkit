@@ -19,7 +19,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.tmatesoft.svn.cli.SVNCommand;
-import org.tmatesoft.svn.cli2.SVNCommandTarget;
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNDirEntry;
@@ -29,6 +28,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 
@@ -86,7 +86,7 @@ public class SVNListCommand extends SVNXMLCommand implements ISVNDirEntryHandler
         SVNLogClient client = getSVNEnvironment().getClientManager().getLogClient();
         for (int i = 0; i < targets.size(); i++) {
             String targetName = (String) targets.get(i);
-            SVNCommandTarget target = new SVNCommandTarget(targetName, true);
+            SVNPath target = new SVNPath(targetName, true);
             if (getSVNEnvironment().isXML()) {
                 StringBuffer buffer = openXMLTag("list", XML_STYLE_NORMAL, "path", 
                         "".equals(target.getTarget()) ? "." : target.getTarget(), new StringBuffer());

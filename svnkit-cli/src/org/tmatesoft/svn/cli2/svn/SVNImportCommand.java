@@ -16,12 +16,12 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.tmatesoft.svn.cli2.SVNCommandTarget;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNCommitClient;
 
@@ -57,8 +57,8 @@ public class SVNImportCommand extends SVNCommand {
 
     public void run() throws SVNException {
         List targets = getSVNEnvironment().combineTargets(new ArrayList());
-        SVNCommandTarget url = null;
-        SVNCommandTarget src = null;
+        SVNPath url = null;
+        SVNPath src = null;
         if (targets.isEmpty()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS,
                     "Repository URL required when importing"));
@@ -66,11 +66,11 @@ public class SVNImportCommand extends SVNCommand {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR,
                 "Too many arguments to import command"));
         } else if (targets.size() == 1) {
-            src = new SVNCommandTarget("");
-            url = new SVNCommandTarget((String) targets.get(0));
+            src = new SVNPath("");
+            url = new SVNPath((String) targets.get(0));
         } else {
-            src = new SVNCommandTarget((String) targets.get(0));
-            url = new SVNCommandTarget((String) targets.get(1));
+            src = new SVNPath((String) targets.get(0));
+            url = new SVNPath((String) targets.get(1));
         }
         if (!url.isURL()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR,

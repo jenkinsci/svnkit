@@ -16,8 +16,8 @@ import java.util.Collection;
 import java.util.List;
 
 import org.tmatesoft.svn.cli2.AbstractSVNCommand;
-import org.tmatesoft.svn.cli2.SVNCommandTarget;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 
 
@@ -53,9 +53,9 @@ public class SVNVersionCommand extends AbstractSVNCommand {
         if (targets.isEmpty()) {
             targets.add("");
         }
-        SVNCommandTarget target = new SVNCommandTarget((String) targets.get(0));
+        SVNPath target = new SVNPath((String) targets.get(0));
         if (target.isURL()) {
-            target = new SVNCommandTarget("");
+            target = new SVNPath("");
             targets.add(0, "");
         }
         String trailURL = (String) (targets.size() > 1 ? targets.get(1) : null);

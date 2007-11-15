@@ -16,13 +16,13 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.tmatesoft.svn.cli2.SVNCommandTarget;
 import org.tmatesoft.svn.cli2.SVNCommandUtil;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNCommitClient;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
@@ -104,7 +104,7 @@ public class SVNMkDirCommand extends SVNCommand {
             try {
                 for (Iterator ts = targets.iterator(); ts.hasNext();) {
                     String targetName = (String) ts.next();
-                    SVNCommandTarget target = new SVNCommandTarget(targetName);
+                    SVNPath target = new SVNPath(targetName);
                     client.doAdd(target.getFile(), false, true, false, true, false, getSVNEnvironment().isParents());
                 }
             } catch (SVNException e) {

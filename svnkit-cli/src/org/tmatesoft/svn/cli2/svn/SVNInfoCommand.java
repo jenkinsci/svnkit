@@ -19,7 +19,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.tmatesoft.svn.cli2.SVNCommandTarget;
 import org.tmatesoft.svn.cli2.SVNCommandUtil;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -30,6 +29,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
 import org.tmatesoft.svn.core.wc.SVNChangelistClient;
@@ -65,7 +65,7 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
     public void run() throws SVNException {
         List targets = new ArrayList(); 
         if (getSVNEnvironment().getChangelist() != null) {
-            SVNCommandTarget target = new SVNCommandTarget("");
+            SVNPath target = new SVNPath("");
             SVNChangelistClient changelistClient = getSVNEnvironment().getClientManager().getChangelistClient();
             changelistClient.getChangelist(target.getFile(), getSVNEnvironment().getChangelist(), targets);
             if (targets.isEmpty()) {
@@ -95,7 +95,7 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
         SVNWCClient client = getSVNEnvironment().getClientManager().getWCClient();
         for(int i = 0; i < targets.size(); i++) {
             String targetName = (String) targets.get(i);
-            SVNCommandTarget target = new SVNCommandTarget(targetName, true);
+            SVNPath target = new SVNPath(targetName, true);
             SVNRevision pegRevision = target.getPegRevision();
             if (target.isURL() && pegRevision == SVNRevision.UNDEFINED) {
                 pegRevision = SVNRevision.HEAD;

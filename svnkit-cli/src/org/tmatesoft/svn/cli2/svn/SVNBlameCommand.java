@@ -18,13 +18,13 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.tmatesoft.svn.cli2.SVNCommandTarget;
 import org.tmatesoft.svn.cli2.SVNCommandUtil;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
@@ -93,7 +93,7 @@ public class SVNBlameCommand extends SVNXMLCommand implements ISVNAnnotateHandle
         client.setDiffOptions(getSVNEnvironment().getDiffOptions());
         for (Iterator ts = targets.iterator(); ts.hasNext();) {
             String targetName = (String) ts.next();
-            SVNCommandTarget target = new SVNCommandTarget(targetName, true);
+            SVNPath target = new SVNPath(targetName, true);
             SVNRevision endRev = end;
             if (endRev == SVNRevision.UNDEFINED) {
                 if (target.getPegRevision() != SVNRevision.UNDEFINED) {

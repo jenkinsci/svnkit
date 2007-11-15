@@ -16,10 +16,10 @@ import java.util.List;
 
 import org.tmatesoft.svn.cli2.AbstractSVNCommand;
 import org.tmatesoft.svn.cli2.AbstractSVNOption;
-import org.tmatesoft.svn.cli2.SVNCommandTarget;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -47,7 +47,7 @@ public abstract class SVNAdminCommand extends AbstractSVNCommand {
         if (targets.isEmpty()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Repository argument required"));
         }
-        SVNCommandTarget target = new SVNCommandTarget((String) targets.get(0));
+        SVNPath target = new SVNPath((String) targets.get(0));
         if (target.isURL()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                     "'" + target.getTarget() + "' is an URL when it should be a path"));

@@ -18,10 +18,10 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.tmatesoft.svn.cli2.SVNCommandTarget;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNChangelistClient;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
@@ -54,7 +54,7 @@ public class SVNUpdateCommand extends SVNCommand {
     public void run() throws SVNException {
         List targets = new ArrayList(); 
         if (getSVNEnvironment().getChangelist() != null) {
-            SVNCommandTarget target = new SVNCommandTarget("");
+            SVNPath target = new SVNPath("");
             SVNChangelistClient changelistClient = getSVNEnvironment().getClientManager().getChangelistClient();
             changelistClient.getChangelist(target.getFile(), getSVNEnvironment().getChangelist(), targets);
             if (targets.isEmpty()) {
@@ -75,7 +75,7 @@ public class SVNUpdateCommand extends SVNCommand {
         List files = new ArrayList(targets.size());
         for (Iterator ts = targets.iterator(); ts.hasNext();) {
             String targetName = (String) ts.next();
-            SVNCommandTarget target = new SVNCommandTarget(targetName);
+            SVNPath target = new SVNPath(targetName);
             if (!target.isFile()) {
                 // skip it.
                 getSVNEnvironment().getOut().println("Skipped '" + targetName + "'");

@@ -18,13 +18,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.tmatesoft.svn.cli2.SVNCommandTarget;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -55,7 +55,7 @@ public class SVNMergeInfoCommand extends SVNCommand {
 
         SVNDiffClient client = getSVNEnvironment().getClientManager().getDiffClient();
         for(int i = 0; i < targets.size(); i++) {
-            SVNCommandTarget target = new SVNCommandTarget((String) targets.get(i), true);
+            SVNPath target = new SVNPath((String) targets.get(i), true);
             SVNRevision pegRevision = target.getPegRevision();
             if (pegRevision == SVNRevision.UNDEFINED) {
                 if (target.isURL()) {

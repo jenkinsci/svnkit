@@ -16,12 +16,12 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.tmatesoft.svn.cli2.SVNCommandTarget;
 import org.tmatesoft.svn.cli2.SVNCommandUtil;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
@@ -57,7 +57,7 @@ public class SVNCheckoutCommand extends SVNCommand {
         String lastTarget = (String) targets.get(targets.size() - 1);
         if (SVNCommandUtil.isURL(lastTarget)) {
             if (targets.size() == 1) {
-                SVNCommandTarget target = new SVNCommandTarget(lastTarget, true);
+                SVNPath target = new SVNPath(lastTarget, true);
                 lastTarget = target.getURL().getPath();
                 lastTarget = SVNPathUtil.tail(lastTarget);
             } else {
@@ -75,22 +75,22 @@ public class SVNCheckoutCommand extends SVNCommand {
         SVNRevision revision = getSVNEnvironment().getStartRevision();
         for (int i = 0; i < targets.size() - 1; i++) {
             String targetName = (String) targets.get(i);
-            SVNCommandTarget target = new SVNCommandTarget(targetName, true);
+            SVNPath target = new SVNPath(targetName, true);
             if (!target.isURL()) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.BAD_URL, "''{0}'' doesn not appear to be a URL", targetName));
             }
             String targetDir;
-            SVNCommandTarget dstTarget;
+            SVNPath dstTarget;
             if (targets.size() == 2) {
                 // url + path
                 targetDir = lastTarget;
-                dstTarget = new SVNCommandTarget(targetDir);
+                dstTarget = new SVNPath(targetDir);
             } else {
                 // all urls + base dst.
                 targetDir = target.getURL().getPath();
                 targetDir = SVNPathUtil.tail(targetDir);
                 targetDir = SVNPathUtil.append(lastTarget, targetDir);
-                dstTarget = new SVNCommandTarget(targetDir);
+                dstTarget = new SVNPath(targetDir);
             }
             SVNRevision pegRevision = target.getPegRevision();
             if (revision == SVNRevision.UNDEFINED) {

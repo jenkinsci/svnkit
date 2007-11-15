@@ -17,11 +17,11 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.tmatesoft.svn.cli2.SVNCommandTarget;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
@@ -55,7 +55,7 @@ public class SVNRevertCommand extends SVNCommand {
     public void run() throws SVNException {
         List targets = getSVNEnvironment().combineTargets(getSVNEnvironment().getTargets());
         if (getSVNEnvironment().getChangelist() != null) {
-            SVNCommandTarget target = new SVNCommandTarget("");
+            SVNPath target = new SVNPath("");
             SVNChangelistClient changelistClient = getSVNEnvironment().getClientManager().getChangelistClient();
             changelistClient.getChangelist(target.getFile(), getSVNEnvironment().getChangelist(), targets);
             if (targets.isEmpty()) {
@@ -77,7 +77,7 @@ public class SVNRevertCommand extends SVNCommand {
         }
         Collection pathsList = new ArrayList(targets.size());
         for(int i = 0; i < targets.size(); i++) {
-            SVNCommandTarget target = new SVNCommandTarget((String) targets.get(i));
+            SVNPath target = new SVNPath((String) targets.get(i));
             if (target.isFile()) {
                 if ("".equals(target.getTarget())) {
                     if (isScheduledForAddition(target.getFile())) {

@@ -16,11 +16,11 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.tmatesoft.svn.cli2.SVNCommandTarget;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
@@ -67,15 +67,15 @@ public class SVNSwitchCommand extends SVNCommand {
         if (targets.size() > 2) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR));
         }
-        SVNCommandTarget switchURL = new SVNCommandTarget((String) targets.get(0));;
+        SVNPath switchURL = new SVNPath((String) targets.get(0));;
         if (!switchURL.isURL()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.BAD_URL, "''{0}'' doesn not appear to be a URL", switchURL.getTarget()));
         }
-        SVNCommandTarget target;
+        SVNPath target;
         if (targets.size() == 1) {
-            target = new SVNCommandTarget("");
+            target = new SVNPath("");
         } else {
-            target = new SVNCommandTarget((String) targets.get(1));
+            target = new SVNPath((String) targets.get(1));
         }
         if (!getSVNEnvironment().isVersioned(target.getTarget())) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND,
@@ -93,8 +93,8 @@ public class SVNSwitchCommand extends SVNCommand {
         if (targets.size() < 2) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS));
         }
-        SVNCommandTarget from = new SVNCommandTarget((String) targets.get(0));
-        SVNCommandTarget to = new SVNCommandTarget((String) targets.get(1));
+        SVNPath from = new SVNPath((String) targets.get(0));
+        SVNPath to = new SVNPath((String) targets.get(1));
         if (from.isURL() != to.isURL() || !from.isURL()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, 
                     "''{0}'' to ''{1}'' is not a valid relocation", new Object[] {from.getTarget(), to.getTarget()});
@@ -102,11 +102,11 @@ public class SVNSwitchCommand extends SVNCommand {
         }
         SVNUpdateClient client = getSVNEnvironment().getClientManager().getUpdateClient();
         if (targets.size() == 2) {
-            SVNCommandTarget target = new SVNCommandTarget("");
+            SVNPath target = new SVNPath("");
             client.doRelocate(target.getFile(), from.getURL(), to.getURL(), getSVNEnvironment().getDepth().isRecursive());
         } else {
             for(int i = 2; i < targets.size(); i++) {
-                SVNCommandTarget target = new SVNCommandTarget((String) targets.get(i));
+                SVNPath target = new SVNPath((String) targets.get(i));
                 client.doRelocate(target.getFile(), from.getURL(), to.getURL(), getSVNEnvironment().getDepth().isRecursive());
             }
         }

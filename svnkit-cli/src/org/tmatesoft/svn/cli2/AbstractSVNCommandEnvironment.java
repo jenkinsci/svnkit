@@ -34,6 +34,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
@@ -352,7 +353,7 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
             return SVNURL.parseURIEncoded(target);
         }
         SVNWCAccess wcAccess = null;
-        SVNCommandTarget commandTarget = new SVNCommandTarget(target);
+        SVNPath commandTarget = new SVNPath(target);
         try {
             wcAccess = SVNWCAccess.newInstance(null);
             wcAccess.probeOpen(commandTarget.getFile(), false, 0);
@@ -368,7 +369,7 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
 
     public boolean isVersioned(String target) throws SVNException {
         SVNWCAccess wcAccess = null;
-        SVNCommandTarget commandTarget = new SVNCommandTarget(target);
+        SVNPath commandTarget = new SVNPath(target);
         try {
             wcAccess = SVNWCAccess.newInstance(null);
             wcAccess.probeOpen(commandTarget.getFile(), false, 0);

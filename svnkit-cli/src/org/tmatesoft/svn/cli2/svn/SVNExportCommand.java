@@ -16,13 +16,13 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.tmatesoft.svn.cli2.SVNCommandTarget;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
@@ -59,7 +59,7 @@ public class SVNExportCommand extends SVNCommand {
         if (targets.size() > 2) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR));
         }
-        SVNCommandTarget from = new SVNCommandTarget((String) targets.get(0), true);
+        SVNPath from = new SVNPath((String) targets.get(0), true);
         SVNRevision pegRevision = from.getPegRevision();
         String to;
         if (targets.size() == 1) {
@@ -79,7 +79,7 @@ public class SVNExportCommand extends SVNCommand {
             depth = SVNDepth.INFINITY;
         }
         try {
-            SVNCommandTarget dst = new SVNCommandTarget(to);
+            SVNPath dst = new SVNPath(to);
             String eol = getSVNEnvironment().getNativeEOL();
             SVNRevision revision = getSVNEnvironment().getStartRevision();
             if (from.isFile()) {

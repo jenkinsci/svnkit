@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.tmatesoft.svn.cli2.SVNCommandTarget;
 import org.tmatesoft.svn.cli2.SVNCommandUtil;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -34,6 +33,7 @@ import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNChangelistClient;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
@@ -93,7 +93,7 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
         
         List targets = new ArrayList(); 
         if (getSVNEnvironment().getChangelist() != null) {
-            SVNCommandTarget target = new SVNCommandTarget("");
+            SVNPath target = new SVNPath("");
             SVNChangelistClient changelistClient = getSVNEnvironment().getClientManager().getChangelistClient();
             changelistClient.getChangelist(target.getFile(), getSVNEnvironment().getChangelist(), targets);
             if (targets.isEmpty()) {
@@ -108,7 +108,7 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
         if (targets.isEmpty()) {
             targets.add("");
         }
-        SVNCommandTarget target = new SVNCommandTarget((String) targets.get(0), true);
+        SVNPath target = new SVNPath((String) targets.get(0), true);
         
         SVNRevision start = getSVNEnvironment().getStartRevision();
         SVNRevision end = getSVNEnvironment().getEndRevision();

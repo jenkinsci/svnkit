@@ -18,10 +18,10 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.tmatesoft.svn.cli2.SVNCommandTarget;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNChangelistClient;
 
@@ -49,7 +49,7 @@ public class SVNChangeListCommand extends SVNCommand {
         List targets = new ArrayList(); 
         String changelist = null;
         if (getSVNEnvironment().getChangelist() != null) {
-            SVNCommandTarget target = new SVNCommandTarget("");
+            SVNPath target = new SVNPath("");
             SVNChangelistClient changelistClient = getSVNEnvironment().getClientManager().getChangelistClient();
             changelistClient.getChangelist(target.getFile(), getSVNEnvironment().getChangelist(), targets);
             if (targets.isEmpty()) {
@@ -76,7 +76,7 @@ public class SVNChangeListCommand extends SVNCommand {
         Collection paths = new ArrayList();
         for (Iterator ts = targets.iterator(); ts.hasNext();) {
             String targetName = (String) ts.next();
-            SVNCommandTarget target = new SVNCommandTarget(targetName);
+            SVNPath target = new SVNPath(targetName);
             if (target.isFile()) {
                 paths.add(target.getFile());
             }
