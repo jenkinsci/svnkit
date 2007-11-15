@@ -24,27 +24,38 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
+ * @author TMate Software Ltd.
  * @version 1.1.1
- * @author  TMate Software Ltd.
  */
 public class SVNTimeUtil {
 
-//    private static final Date NULL = new Date(0);
-
-    private static final DateFormat ISO8601_FORMAT_OUT = new SimpleDateFormat(
-            "yyyy-MM-dd'T'HH:mm:ss.SSS'000Z'");
-
-    public static final DateFormat RFC1123_FORMAT = new SimpleDateFormat(
-            "EEE, d MMM yyyy HH:mm:ss z", Locale.US);
-
     private static final Calendar CALENDAR = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
 
+    private static final DateFormat ISO8601_FORMAT = new SimpleDateFormat(
+            "yyyy-MM-dd'T'HH:mm:ss.SSS'000Z'");
+
+    private static final DateFormat RFC1123_FORMAT = new SimpleDateFormat(
+            "EEE, d MMM yyyy HH:mm:ss z", Locale.US);
+
+    private static final DateFormat HUMAN_DATE_FORMAT = new SimpleDateFormat(
+            "yyyy-MM-dd' 'HH:mm:ss' 'ZZZZ' ('E', 'dd' 'MMM' 'yyyy')'");
+    
+    private static final DateFormat SHORT_DATE_FORMAT =
+            new SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss'Z'");
+
+    private static final Date NULL_DATE = new Date(0);
+
+    private static final char[] DATE_SEPARATORS = {'-', '-', 'T', ':', ':', '.', 'Z'};
+
     static {
-        ISO8601_FORMAT_OUT.setTimeZone(TimeZone.getTimeZone("GMT"));
+        ISO8601_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
         RFC1123_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
+        HUMAN_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
+        SHORT_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
     }
 
     public static void formatDate(Date date, StringBuffer buffer) {
@@ -54,9 +65,24 @@ public class SVNTimeUtil {
             return;
         }
 
-        synchronized (ISO8601_FORMAT_OUT) {
-            ISO8601_FORMAT_OUT.format(date, buffer, new FieldPosition(0));
+        synchronized (ISO8601_FORMAT) {
+            ISO8601_FORMAT.format(date, buffer, new FieldPosition(0));
         }
+    }
+
+    public static String formatDate(Date date, boolean formatZeroDate) {
+        if (date == null) {
+            return null;
+        } else if (!formatZeroDate && date.getTime() == 0) {
+            return null;
+        }
+        StringBuffer buffer = new StringBuffer();
+        formatDate(date, buffer);
+        return buffer.toString();
+    }
+
+    public static String formatDate(Date date) {
+        return formatDate(date, false);
     }
 
     public static String formatRFC1123Date(Date date) {
@@ -68,24 +94,22 @@ public class SVNTimeUtil {
         }
     }
 
-    public static String formatDate(Date date) {
-        return formatDate(date, false);
+    public static String formatHumanDate(Date date, ISVNOptions options) {
+        DateFormat df = options == null ? null : options.getKeywordDateFormat();
+        if (df == null) {
+            df = SVNTimeUtil.HUMAN_DATE_FORMAT;
+        }
+        synchronized (df) {
+            return df.format(date != null ? date : SVNTimeUtil.NULL_DATE);
+        }
     }
 
-    public static String formatDate(Date date, boolean formatZeroDate) {
+    public static String formatShortDate(Date date) {
         if (date == null) {
             return null;
-        } else if (!formatZeroDate && date.getTime() == 0) {
-            return null;
         }
-        
-        if (date instanceof SVNDate) {
-            SVNDate extendedDate = (SVNDate) date;
-            return extendedDate.format();
-        }
-        
-        synchronized (ISO8601_FORMAT_OUT) {
-            return ISO8601_FORMAT_OUT.format(date);
+        synchronized (SVNTimeUtil.SHORT_DATE_FORMAT) {
+            return SVNTimeUtil.SHORT_DATE_FORMAT.format(date != null ? date : SVNTimeUtil.NULL_DATE);
         }
     }
 
@@ -98,7 +122,7 @@ public class SVNTimeUtil {
         } catch (Throwable th) {
             SVNDebugLog.getDefaultLog().info(th);
         }
-        return SVNDate.NULL;        
+        return SVNDate.NULL;
     }
 
     public static Date parseDateString(String str) throws SVNException {
@@ -110,10 +134,8 @@ public class SVNTimeUtil {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_DATE);
             SVNErrorManager.error(err, th);
         }
-        return SVNDate.NULL;        
+        return SVNDate.NULL;
     }
-    
-    private static final char[] DATE_SEPARATORS = {'-','-','T',':',':','.','Z'}; 
 
     public static long parseDateAsLong(String str) {
         if (str == null) {
@@ -123,7 +145,7 @@ public class SVNTimeUtil {
         int charIndex = 0;
         int startIndex = 0;
         int[] result = new int[7];
-        while(index < DATE_SEPARATORS.length && charIndex < str.length()) {
+        while (index < DATE_SEPARATORS.length && charIndex < str.length()) {
             if (str.charAt(charIndex) == DATE_SEPARATORS[index]) {
                 String segment = str.substring(startIndex, charIndex);
                 if (segment.length() == 0) {

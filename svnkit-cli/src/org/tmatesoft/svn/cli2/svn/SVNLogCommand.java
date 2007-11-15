@@ -33,7 +33,7 @@ import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
+import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNChangelistClient;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
@@ -246,7 +246,7 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
             author = "(no author)";
         }
             
-        String date = dateObject == null ? "(no date)" : SVNFormatUtil.formatHumanDate(dateObject, 
+        String date = dateObject == null ? "(no date)" : SVNTimeUtil.formatHumanDate(dateObject, 
                 getSVNEnvironment().getClientManager().getOptions());
         if (!getSVNEnvironment().isQuiet() && message == null) {
             message = "";
