@@ -18,8 +18,8 @@ import org.tmatesoft.svn.core.SVNURL;
 
 
 /**
+ * @author TMate Software Ltd.
  * @version 1.1.1
- * @author  TMate Software Ltd.
  */
 public class SVNURLUtil {
 
@@ -28,7 +28,7 @@ public class SVNURLUtil {
         if (url1 == null || url2 == null) {
             return null;
         }
-        if (!url1.getProtocol().equals(url2.getProtocol()) || !url1.getHost().equals(url2.getHost()) || 
+        if (!url1.getProtocol().equals(url2.getProtocol()) || !url1.getHost().equals(url2.getHost()) ||
                 url1.getPort() != url2.getPort()) {
             return null;
         }
@@ -37,7 +37,7 @@ public class SVNURLUtil {
                 return null;
             }
         } else {
-            if (url1.getUserInfo() != url2.getUserInfo()) {
+            if (url2.getUserInfo() != null) {
                 return null;
             }
         }
@@ -62,7 +62,7 @@ public class SVNURLUtil {
         for (int i = 0; i < urls.length; i++) {
             rootURL = getCommonURLAncestor(rootURL, urls[i]);
         }
-        
+
         if (condencedPaths != null && removeRedundantURLs) {
             for (int i = 0; i < urls.length; i++) {
                 SVNURL url1 = urls[i];
@@ -95,7 +95,7 @@ public class SVNURLUtil {
                 }
             }
         }
-    
+
         if (condencedPaths != null) {
             for (int i = 0; i < urls.length; i++) {
                 SVNURL url = urls[i];

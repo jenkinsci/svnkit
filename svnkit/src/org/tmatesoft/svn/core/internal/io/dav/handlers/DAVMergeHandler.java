@@ -60,8 +60,8 @@ public class DAVMergeHandler extends BasicDAVHandler {
         target.append("<S:lock-token-list xmlns:S=\"svn:\">");
         for (Iterator paths = locks.keySet().iterator(); paths.hasNext();) {
             String lockPath = (String) paths.next();
-            String relativePath = SVNPathUtil.getPathAsChild(path, lockPath);
-            if (path == null || relativePath != null) {
+            if (path == null || SVNPathUtil.getPathAsChild(path, lockPath) != null) {
+                String relativePath = SVNPathUtil.getRelativePath(root, lockPath);
                 String token = (String) locks.get(lockPath);
                 target.append("<S:lock><S:lock-path>");
                 target.append(SVNEncodingUtil.xmlEncodeCDATA(SVNEncodingUtil.uriDecode(relativePath)));

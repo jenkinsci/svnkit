@@ -11,11 +11,9 @@
  */
 package org.tmatesoft.svn.core.internal.util;
 
-import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.StringTokenizer;
 import java.util.TimeZone;
 
 import org.tmatesoft.svn.core.wc.ISVNOptions;
@@ -70,52 +68,10 @@ public class SVNFormatUtil {
         }
         return formatted.toString();
     }
-    
-    // path relative to the program home directory, or absolute path
-    public static String formatPath(File file) {
-        String path;
-        String rootPath;
-        path = file.getAbsolutePath();
-        rootPath = new File("").getAbsolutePath();
-        path = path.replace(File.separatorChar, '/');
-        rootPath = rootPath.replace(File.separatorChar, '/');
-        if (path.equals(rootPath)) {
-            path  = "";
-        } else if (path.startsWith(rootPath + "/")) {
-            path = path.substring(rootPath.length() + 1);
-        }
-        // remove all "./"
-        path = condensePath(path);
-        path = path.replace('/', File.separatorChar);
-        if (path.trim().length() == 0) {
-            path = ".";
-        }
-        return path;
-    }
-
-    private static String condensePath(String path) {
-        StringBuffer result = new StringBuffer();
-        for (StringTokenizer tokens = new StringTokenizer(path, "/", true); tokens
-                .hasMoreTokens();) {
-            String token = tokens.nextToken();
-            if (".".equals(token)) {
-                if (tokens.hasMoreTokens()) {
-                    String nextToken = tokens.nextToken();
-                    if (!nextToken.equals("/")) {
-                        result.append(nextToken);
-                    }
-                }
-                continue;
-            }
-            result.append(token);
-        }
-        return result.toString();
-    }
 
     public static String getHexNumberFromByte(byte b) {
         int lo = b & 0xf;
         int hi = (b >> 4) & 0xf;
-        String hex = Integer.toHexString(hi) + Integer.toHexString(lo);
-        return hex;
+        return Integer.toHexString(hi) + Integer.toHexString(lo);
     }
 }

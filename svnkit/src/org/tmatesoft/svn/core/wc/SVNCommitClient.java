@@ -691,10 +691,10 @@ public class SVNCommitClient extends SVNBasicClient {
                 }
                 commitMessage = validateCommitMessage(commitMessage);
                 Map commitables = new TreeMap();
-                String baseURL = SVNCommitUtil.translateCommitables(commitPacket.getCommitItems(), commitables);
-                Map lockTokens = SVNCommitUtil.translateLockTokens(commitPacket.getLockTokens(), baseURL);
+                SVNURL baseURL = SVNCommitUtil.translateCommitables(commitPacket.getCommitItems(), commitables);
+                Map lockTokens = SVNCommitUtil.translateLockTokens(commitPacket.getLockTokens(), baseURL.toString());
 
-                SVNRepository repository = createRepository(SVNURL.parseURIEncoded(baseURL), true);
+                SVNRepository repository = createRepository(baseURL, true);
                 SVNCommitMediator mediator = new SVNCommitMediator(commitables);
                 tmpFiles = mediator.getTmpFiles();
                 String repositoryRoot = repository.getRepositoryRoot(true).getPath();

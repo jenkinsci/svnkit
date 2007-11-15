@@ -34,6 +34,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
@@ -497,42 +498,42 @@ public class SVNCommitUtil {
         return (SVNCommitItem[]) commitables.values().toArray(new SVNCommitItem[commitables.values().size()]);
     }
 
-    public static String translateCommitables(SVNCommitItem[] items,
+    public static SVNURL translateCommitables(SVNCommitItem[] items,
             Map decodedPaths) throws SVNException {
-        Map itemsMap = new TreeMap();
+        Map itemsMap = new HashMap();
         for (int i = 0; i < items.length; i++) {
             SVNCommitItem item = items[i];
-            if (itemsMap.containsKey(item.getURL().toString())) {
-                SVNCommitItem oldItem = (SVNCommitItem) itemsMap.get(item.getURL().toString());
+            if (itemsMap.containsKey(item.getURL())) {
+                SVNCommitItem oldItem = (SVNCommitItem) itemsMap.get(item.getURL());
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_DUPLICATE_COMMIT_URL, 
                         "Cannot commit both ''{0}'' and ''{1}'' as they refer to the same URL",
                         new Object[] {item.getFile(), oldItem.getFile()});
                 SVNErrorManager.error(err);
             }
-            itemsMap.put(item.getURL().toString(), item);
+            itemsMap.put(item.getURL(), item);
         }
 
         Iterator urls = itemsMap.keySet().iterator();
-        String baseURL = (String) urls.next();
+        SVNURL baseURL = (SVNURL) urls.next();
         while (urls.hasNext()) {
-            String url = (String) urls.next();
-            baseURL = SVNPathUtil.getCommonURLAncestor(baseURL, url);
+            SVNURL url = (SVNURL) urls.next();
+            baseURL = SVNURLUtil.getCommonURLAncestor(baseURL, url);
         }
         if (itemsMap.containsKey(baseURL)) {
             SVNCommitItem root = (SVNCommitItem) itemsMap.get(baseURL);
             if (root.getKind() != SVNNodeKind.DIR) {
-                baseURL = SVNPathUtil.removeTail(baseURL);
+                baseURL = baseURL.removePathTail();
             } else if (root.getKind() == SVNNodeKind.DIR
                     && (root.isAdded() || root.isDeleted() || root.isCopied() || root
                             .isLocked())) {
-                baseURL = SVNPathUtil.removeTail(baseURL);
+                baseURL = baseURL.removePathTail();
             }
         }
-        urls = itemsMap.keySet().iterator();
-        while (urls.hasNext()) {
-            String url = (String) urls.next();
-            SVNCommitItem item = (SVNCommitItem) itemsMap.get(url);
-            String realPath = url.equals(baseURL) ? "" : url.substring(baseURL.length() + 1);
+        for (Iterator iterator = itemsMap.entrySet().iterator(); iterator.hasNext();) {
+            Map.Entry entry  = (Map.Entry) iterator.next();
+            SVNURL url = (SVNURL) entry.getKey();
+            SVNCommitItem item = (SVNCommitItem) entry.getValue();
+            String realPath = url.equals(baseURL) ? "" : SVNPathUtil.getRelativePath(baseURL.getPath(), url.getPath());
             decodedPaths.put(SVNEncodingUtil.uriDecode(realPath), item);
         }
         return baseURL;

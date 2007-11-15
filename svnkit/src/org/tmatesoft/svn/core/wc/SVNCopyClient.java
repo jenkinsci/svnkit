@@ -1324,7 +1324,7 @@ public class SVNCopyClient extends SVNBasicClient {
             SVNCommitItem[] items = (SVNCommitItem[]) cmtItems.toArray(new SVNCommitItem[cmtItems.size()]);
             
             commitables = new TreeMap();
-            topDstURL = SVNURL.parseURIEncoded(SVNCommitUtil.translateCommitables(items, commitables));
+            topDstURL = SVNCommitUtil.translateCommitables(items, commitables);
 
             repository = createRepository(topDstURL, true);
             SVNCommitMediator mediator = new SVNCommitMediator(commitables);
