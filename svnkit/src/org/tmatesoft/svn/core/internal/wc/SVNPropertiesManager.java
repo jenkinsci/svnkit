@@ -239,7 +239,7 @@ public class SVNPropertiesManager {
         return properties;
     }
     
-    public static Map getWorkingCopyPropertyValues(SVNEntry entry, final String propName, 
+    public static Map getWorkingCopyPropertyValues(File path, SVNEntry entry, final String propName, 
             SVNDepth depth, final boolean base) throws SVNException {
         final Map pathsToPropValues = new HashMap();
         
@@ -285,7 +285,6 @@ public class SVNPropertiesManager {
         }
         
         SVNAdminArea adminArea = entry.getAdminArea();
-        File path = adminArea.getFile(entry.getName());
         if (entry.isDirectory() && depth.compareTo(SVNDepth.FILES) >= 0) {
             SVNWCAccess wcAccess = adminArea.getWCAccess(); 
             wcAccess.walkEntries(path, handler, false, depth);    
@@ -305,7 +304,7 @@ public class SVNPropertiesManager {
     }
     
     public static Map parseMergeInfo(File path, SVNEntry entry, boolean base) throws SVNException {
-        Map fileToProp = SVNPropertiesManager.getWorkingCopyPropertyValues(entry, SVNProperty.MERGE_INFO, 
+        Map fileToProp = SVNPropertiesManager.getWorkingCopyPropertyValues(path, entry, SVNProperty.MERGE_INFO, 
                 SVNDepth.EMPTY, base); 
 
         Map result = null;

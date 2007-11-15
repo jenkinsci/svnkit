@@ -1290,19 +1290,14 @@ public class SVNCopyClient extends SVNBasicClient {
                 SVNURL srcURL = entry.getSVNURL();
                 Map mergeInfo = calculateTargetMergeInfo(source.getPath(), wcAccess, srcURL,  
                         source.getSrcPath(), source.getSrcRevisionNumber(), repository);
-                Map fileToProp = SVNPropertiesManager.getWorkingCopyPropertyValues(entry, 
-                                                                                   SVNProperty.MERGE_INFO, 
-                                                                                   SVNDepth.EMPTY, 
-                                                                                   false);
-
-                String mergeInfoString = (String) fileToProp.get(source.getPath());
-                if (mergeInfoString != null) {
-                    Map wcMergeInfo = SVNMergeInfoManager.parseMergeInfo(new StringBuffer(mergeInfoString), null);
+                
+                Map wcMergeInfo = SVNPropertiesManager.parseMergeInfo(source.getPath(), entry, false);
+                if (wcMergeInfo != null) {
                     mergeInfo = SVNMergeInfoManager.mergeMergeInfos(mergeInfo, wcMergeInfo,
                                                                     SVNMergeRangeInheritance.EQUAL_INHERITANCE);
                 }
                 
-                mergeInfoString = SVNMergeInfoManager.formatMergeInfoToString(mergeInfo); 
+                String mergeInfoString = SVNMergeInfoManager.formatMergeInfoToString(mergeInfo); 
                 item.setMergeInfoProp(mergeInfoString);
             }
             
@@ -1568,16 +1563,12 @@ public class SVNCopyClient extends SVNBasicClient {
     private void extendWCMergeInfo(File path, SVNEntry entry, Map mergeInfo, 
             SVNAdminArea adminArea) throws SVNException {
 
-        Map fileToProp = SVNPropertiesManager.getWorkingCopyPropertyValues(entry, 
-                                                                           SVNProperty.MERGE_INFO, 
-                                                                           SVNDepth.EMPTY, 
-                                                                           false);
-        String mergeInfoString = (String) fileToProp.get(path);
-        Map wcMergeInfo = mergeInfo;
-        if (mergeInfoString != null) {
-            wcMergeInfo = SVNMergeInfoManager.parseMergeInfo(new StringBuffer(mergeInfoString), null);
+        Map wcMergeInfo = SVNPropertiesManager.parseMergeInfo(path, entry, false);
+        if (wcMergeInfo != null) {
             wcMergeInfo = SVNMergeInfoManager.mergeMergeInfos(wcMergeInfo, mergeInfo, 
                                                               SVNMergeRangeInheritance.EQUAL_INHERITANCE);
+        } else {
+            wcMergeInfo = mergeInfo;
         }
         
         SVNPropertiesManager.recordWCMergeInfo(path, wcMergeInfo, adminArea.getWCAccess());
@@ -1659,14 +1650,7 @@ public class SVNCopyClient extends SVNBasicClient {
             }
         }
         
-        Map fileToProp = SVNPropertiesManager.getWorkingCopyPropertyValues(srcEntry, SVNProperty.MERGE_INFO, 
-                SVNDepth.EMPTY, false);
-
-        String mergeInfoString = (String) fileToProp.get(srcFile);
-        if (mergeInfoString != null) {
-            mergeInfo = SVNMergeInfoManager.parseMergeInfo(new StringBuffer(mergeInfoString), null);
-        }
-        
+        mergeInfo = SVNPropertiesManager.parseMergeInfo(srcFile, srcEntry, false);
         if (mergeInfo == null) {
             mergeInfo = new TreeMap();
             SVNPropertiesManager.recordWCMergeInfo(dstFile, mergeInfo, dstAccess);

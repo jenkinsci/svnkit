@@ -348,7 +348,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             wcAccess.probeRetrieve(file);
             Map childrenMergeInfo = null;
             try {
-                childrenMergeInfo = SVNPropertiesManager.getWorkingCopyPropertyValues(entry, 
+                childrenMergeInfo = SVNPropertiesManager.getWorkingCopyPropertyValues(file, entry, 
                         SVNProperty.MERGE_INFO, depth, false);
             } catch (SVNException svne) {
                 if (svne.getErrorMessage().getErrorCode() != SVNErrorCode.UNVERSIONED_RESOURCE) {

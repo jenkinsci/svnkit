@@ -1600,7 +1600,6 @@ public abstract class SVNAdminArea {
                 if (depth == SVNDepth.IMMEDIATES) {
                     depthBelowHere = SVNDepth.EMPTY;
                 }
-                
                 try {
                     childArea = getWCAccess().retrieve(childPath);
                 } catch (SVNException svne) {

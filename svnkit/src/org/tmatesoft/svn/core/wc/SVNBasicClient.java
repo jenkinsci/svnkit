@@ -540,8 +540,8 @@ public class SVNBasicClient implements ISVNEventHandler {
         
         if (mergeInfo == null) {
             if (!entry.isScheduledForAddition()) {
-                Map fileToProp = SVNPropertiesManager.getWorkingCopyPropertyValues(entry, SVNProperty.MERGE_INFO, 
-                        SVNDepth.EMPTY, true);
+                Map fileToProp = SVNPropertiesManager.getWorkingCopyPropertyValues(path, entry, 
+                        SVNProperty.MERGE_INFO, SVNDepth.EMPTY, true);
                 String mergeInfoProp = (String) fileToProp.get(path);
                 if (mergeInfoProp == null) {
                     boolean closeRepository = repository == null;

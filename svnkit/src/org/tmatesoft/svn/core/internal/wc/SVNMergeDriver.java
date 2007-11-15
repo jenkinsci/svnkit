@@ -615,15 +615,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     
     protected void elideChildren(LinkedList childrenWithMergeInfo, File dstPath, SVNEntry entry) throws SVNException {
         if (childrenWithMergeInfo != null && !childrenWithMergeInfo.isEmpty()) {
-            Map filesToValues = SVNPropertiesManager.getWorkingCopyPropertyValues(entry, 
-                                                                                  SVNProperty.MERGE_INFO, 
-                                                                                  SVNDepth.EMPTY, false); 
-            String mergeInfoStr = (String) filesToValues.get(dstPath);
-            Map targetMergeInfo = null;
-            if (mergeInfoStr != null) {
-                targetMergeInfo = SVNMergeInfoManager.parseMergeInfo(new StringBuffer(mergeInfoStr), 
-                                                                     null);
-            }
+            Map targetMergeInfo = SVNPropertiesManager.parseMergeInfo(dstPath, entry, false);
             File lastImmediateChild = null;
             for (ListIterator childrenMergePaths = childrenWithMergeInfo.listIterator(); 
                  childrenMergePaths.hasNext();) {
@@ -656,15 +648,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 SVNAdminArea adminArea = childEntry.getAdminArea();
                 boolean isSwitched = adminArea.isEntrySwitched(childEntry); 
                 if (!isSwitched) {
-                    Map childFileToValue = SVNPropertiesManager.getWorkingCopyPropertyValues(childEntry, 
-                                                                                             SVNProperty.MERGE_INFO, 
-                                                                                             SVNDepth.EMPTY, false); 
-                    String childMergeInfoStr = (String) childFileToValue.get(childMergePath.myPath);
-                    Map childMergeInfo = null;
-                    if (childMergeInfoStr != null) {
-                        childMergeInfo = SVNMergeInfoManager.parseMergeInfo(new StringBuffer(childMergeInfoStr), 
-                                                                            null);
-                    }
+                    Map childMergeInfo = SVNPropertiesManager.parseMergeInfo(childMergePath.myPath, childEntry, 
+                            false);
                     
                     String childRelPath = childMergePath.myPath.getName();
                     File childParent = childMergePath.myPath.getParentFile();
@@ -1345,18 +1330,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         for (Iterator paths = merges.keySet().iterator(); paths.hasNext();) {
             File path = (File) paths.next();
             SVNMergeRangeList ranges = (SVNMergeRangeList) merges.get(path);
-            Map fileToProp = SVNPropertiesManager.getWorkingCopyPropertyValues(entry, 
-                                                                               SVNProperty.MERGE_INFO, 
-                                                                               SVNDepth.EMPTY, 
-                                                                               false); 
-
-            String propValue = (String) fileToProp.get(path);
-            Map mergeInfo = null;
-            if (propValue != null) {
-                mergeInfo = SVNMergeInfoManager.parseMergeInfo(new StringBuffer(propValue), 
-                        mergeInfo);
-            }
             
+            Map mergeInfo = SVNPropertiesManager.parseMergeInfo(path, entry, false);
             if (mergeInfo == null && ranges.getSize() == 0) {
                 mergeInfo = getWCMergeInfo(path, entry, null, 
                         SVNMergeInfoInheritance.NEAREST_ANCESTOR, true, new boolean[1]);

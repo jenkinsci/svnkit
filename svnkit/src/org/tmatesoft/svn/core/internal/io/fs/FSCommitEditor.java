@@ -146,7 +146,7 @@ public class FSCommitEditor implements ISVNEditor {
         FSRevisionNode existingNode = myTxnRoot.getRevisionNode(fullPath);
         long createdRev = existingNode.getCreatedRevision();
         if (FSRepository.isValidRevision(revision) && revision < createdRev) {
-            SVNErrorManager.error(FSErrors.errorOutOfDate(fullPath, myTxnRoot.getTxnID()));
+            SVNErrorManager.error(FSErrors.errorOutOfDate(fullPath, kind));
         }
         myCommitter.deleteNode(fullPath);
     }
@@ -169,7 +169,7 @@ public class FSCommitEditor implements ISVNEditor {
         } else if (copyFromPath != null) {
             SVNNodeKind kind = myTxnRoot.checkNodeKind(fullPath);
             if (kind != SVNNodeKind.NONE && !parentBaton.isCopied()) {
-                SVNErrorManager.error(FSErrors.errorOutOfDate(fullPath, myTxnRoot.getTxnID()));
+                SVNErrorManager.error(FSErrors.errorOutOfDate(fullPath, kind));
             }
             copyFromPath = myRepository.getRepositoryPath(copyFromPath);
 
@@ -190,7 +190,7 @@ public class FSCommitEditor implements ISVNEditor {
             FSRevisionNode existingNode = myTxnRoot.getRevisionNode(dirBaton.getPath());
             long createdRev = existingNode.getCreatedRevision();
             if (dirBaton.getBaseRevision() < createdRev) {
-                SVNErrorManager.error(FSErrors.errorOutOfDate(dirBaton.getPath(), myTxnRoot.getTxnID()));
+                SVNErrorManager.error(FSErrors.errorOutOfDate(dirBaton.getPath(), SVNNodeKind.DIR));
             }
         }
         myCommitter.changeNodeProperty(dirBaton.getPath(), name, value);
@@ -262,7 +262,7 @@ public class FSCommitEditor implements ISVNEditor {
         } else if (copyFromPath != null) {
             SVNNodeKind kind = myTxnRoot.checkNodeKind(fullPath);
             if (kind != SVNNodeKind.NONE && !parentBaton.isCopied()) {
-                SVNErrorManager.error(FSErrors.errorOutOfDate(fullPath, myTxnRoot.getTxnID()));
+                SVNErrorManager.error(FSErrors.errorOutOfDate(fullPath, kind));
             }
             copyFromPath = myRepository.getRepositoryPath(copyFromPath);
 
@@ -278,7 +278,7 @@ public class FSCommitEditor implements ISVNEditor {
         FSRevisionNode revNode = myTxnRoot.getRevisionNode(fullPath);
 
         if (FSRepository.isValidRevision(revision) && revision < revNode.getCreatedRevision()) {
-            SVNErrorManager.error(FSErrors.errorOutOfDate(fullPath, myTxnRoot.getTxnID()));
+            SVNErrorManager.error(FSErrors.errorOutOfDate(fullPath, SVNNodeKind.FILE));
         }
     }
 
