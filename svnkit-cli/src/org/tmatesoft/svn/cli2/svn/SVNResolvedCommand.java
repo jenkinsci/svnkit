@@ -49,15 +49,15 @@ public class SVNResolvedCommand extends SVNCommand {
     }
 
     public void run() throws SVNException {
-        SVNWCAccept accept = getSVNEnvironment().getResolveAccept();
+        SVNConflictAcceptPolicy accept = getSVNEnvironment().getResolveAccept();
         SVNConflictChoice choice = null;
-        if (accept == SVNWCAccept.INVALID) {
+        if (accept == SVNConflictAcceptPolicy.INVALID) {
             choice = SVNConflictChoice.MERGED;
-        } else if (accept == SVNWCAccept.BASE) {
+        } else if (accept == SVNConflictAcceptPolicy.BASE) {
             choice = SVNConflictChoice.BASE;
-        } else if (accept == SVNWCAccept.THEIRS) {
+        } else if (accept == SVNConflictAcceptPolicy.THEIRS) {
             choice = SVNConflictChoice.THEIRS;
-        } else if (accept == SVNWCAccept.MINE) {
+        } else if (accept == SVNConflictAcceptPolicy.MINE) {
             choice = SVNConflictChoice.MINE;
         } else {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "invalid 'accept' ARG");

@@ -34,26 +34,26 @@ import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
  * @author  TMate Software Ltd.
  */
 public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
-    private SVNWCAccept myAccept;
+    private SVNConflictAcceptPolicy myAccept;
     private SVNCommandEnvironment mySVNEnvironment;
     private boolean myIsExternalFailed;
     
-    public SVNCommandLineConflictHandler(SVNWCAccept accept, SVNCommandEnvironment environment) {
+    public SVNCommandLineConflictHandler(SVNConflictAcceptPolicy accept, SVNCommandEnvironment environment) {
         myAccept = accept;
         mySVNEnvironment = environment;
     }
     
     public SVNConflictResult handleConflict(SVNConflictDescription conflictDescription) throws SVNException {
         SVNMergeFileSet files = conflictDescription.getMergeFiles();
-        if (myAccept == SVNWCAccept.POSTPONE) {
+        if (myAccept == SVNConflictAcceptPolicy.POSTPONE) {
             return new SVNConflictResult(SVNConflictChoice.POSTPONE, null);
-        } else if (myAccept == SVNWCAccept.BASE) {
+        } else if (myAccept == SVNConflictAcceptPolicy.BASE) {
             return new SVNConflictResult(SVNConflictChoice.BASE, null);
-        } else if (myAccept == SVNWCAccept.MINE) {
+        } else if (myAccept == SVNConflictAcceptPolicy.MINE) {
             return new SVNConflictResult(SVNConflictChoice.MINE, null);
-        } else if (myAccept == SVNWCAccept.THEIRS) {
+        } else if (myAccept == SVNConflictAcceptPolicy.THEIRS) {
             return new SVNConflictResult(SVNConflictChoice.THEIRS, null);
-        } else if (myAccept == SVNWCAccept.EDIT) {
+        } else if (myAccept == SVNConflictAcceptPolicy.EDIT) {
             if (files.getResultFile() != null) {
                 if (myIsExternalFailed) {
                     return new SVNConflictResult(SVNConflictChoice.POSTPONE, null);
@@ -77,7 +77,7 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                 }
                 return new SVNConflictResult(SVNConflictChoice.MERGED, null);
             }
-        } else if (myAccept == SVNWCAccept.LAUNCH) {
+        } else if (myAccept == SVNConflictAcceptPolicy.LAUNCH) {
             if (files.getBaseFile() != null && files.getLocalFile() != null && files.getRepositoryFile() != null &&
                     files.getResultFile() != null) {
                 if (myIsExternalFailed) {

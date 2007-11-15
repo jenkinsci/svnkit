@@ -101,7 +101,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private boolean myIsKeepChangelist;
     private boolean myIsParents;
     private boolean myIsKeepLocal;
-    private SVNWCAccept myResolveAccept;
+    private SVNConflictAcceptPolicy myResolveAccept;
     private boolean myIsRemove;
     private String myNewTarget;
     private String myOldTarget;
@@ -117,7 +117,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         super(programName, out, err, in);
         myIsDescend = true;
         myLimit = -1;
-        myResolveAccept = SVNWCAccept.INVALID;
+        myResolveAccept = SVNConflictAcceptPolicy.INVALID;
         myExtensions = new HashSet();
         myDepth = SVNDepth.UNKNOWN;
         myStartRevision = SVNRevision.UNDEFINED;
@@ -170,19 +170,19 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             options.setKeepLocks(true);
         }
 
-        if ((myResolveAccept == SVNWCAccept.INVALID && (!options.isInteractiveConflictResolution() || myIsNonInteractive))
-                || myResolveAccept == SVNWCAccept.POSTPONE) {
+        if ((myResolveAccept == SVNConflictAcceptPolicy.INVALID && (!options.isInteractiveConflictResolution() || myIsNonInteractive))
+                || myResolveAccept == SVNConflictAcceptPolicy.POSTPONE) {
             options.setConflictHandler(null);
         } else {
             if (myIsNonInteractive) {
-                if (myResolveAccept == SVNWCAccept.EDIT) {
+                if (myResolveAccept == SVNConflictAcceptPolicy.EDIT) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                            "--accept=%s incompatible with --non-interactive", SVNWCAccept.EDIT);
+                            "--accept=%s incompatible with --non-interactive", SVNConflictAcceptPolicy.EDIT);
                     SVNErrorManager.error(err);
                 }
-                if (myResolveAccept == SVNWCAccept.LAUNCH) {
+                if (myResolveAccept == SVNConflictAcceptPolicy.LAUNCH) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                            "--accept=%s incompatible with --non-interactive", SVNWCAccept.LAUNCH);
+                            "--accept=%s incompatible with --non-interactive", SVNConflictAcceptPolicy.LAUNCH);
                     SVNErrorManager.error(err);
                 }
             }
@@ -414,8 +414,8 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         } else if (option == SVNOption.USE_MERGE_HISTORY) {
             myIsUseMergeHistory = true;
         } else if (option == SVNOption.ACCEPT) {
-            SVNWCAccept accept = SVNWCAccept.fromString(optionValue.getValue());
-            if (accept == SVNWCAccept.INVALID) {
+            SVNConflictAcceptPolicy accept = SVNConflictAcceptPolicy.fromString(optionValue.getValue());
+            if (accept == SVNConflictAcceptPolicy.INVALID) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR,
                         "'" + optionValue.getValue() + "' is not a valid accept value;");
                 SVNErrorManager.error(err);
@@ -587,7 +587,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         return myIsKeepLocal;
     }
     
-    public SVNWCAccept getResolveAccept() {
+    public SVNConflictAcceptPolicy getResolveAccept() {
         return myResolveAccept;
     }
     

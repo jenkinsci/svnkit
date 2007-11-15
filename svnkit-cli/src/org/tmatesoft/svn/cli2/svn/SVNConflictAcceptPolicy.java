@@ -16,29 +16,29 @@ package org.tmatesoft.svn.cli2.svn;
  * @version 1.1.2
  * @author  TMate Software Ltd.
  */
-public class SVNWCAccept {
-    public static SVNWCAccept INVALID = new SVNWCAccept("invalid");  
+public class SVNConflictAcceptPolicy {
+    public static SVNConflictAcceptPolicy INVALID = new SVNConflictAcceptPolicy("invalid");  
     /**
      * Resolve the conflict with the pre-conflict base file.
      */
-    public static SVNWCAccept BASE = new SVNWCAccept("base");
+    public static SVNConflictAcceptPolicy BASE = new SVNConflictAcceptPolicy("base");
     /**
      * Resolve the conflict with the pre-conflict working copy file.
      */
-    public static SVNWCAccept MINE = new SVNWCAccept("mine");
+    public static SVNConflictAcceptPolicy MINE = new SVNConflictAcceptPolicy("mine");
     /**
      * Resolve the conflict with the post-conflict base file.
      */
-    public static SVNWCAccept THEIRS = new SVNWCAccept("theirs");
+    public static SVNConflictAcceptPolicy THEIRS = new SVNConflictAcceptPolicy("theirs");
 
-    public static SVNWCAccept POSTPONE = new SVNWCAccept("postpone");
+    public static SVNConflictAcceptPolicy POSTPONE = new SVNConflictAcceptPolicy("postpone");
     
-    public static SVNWCAccept EDIT = new SVNWCAccept("edit");
+    public static SVNConflictAcceptPolicy EDIT = new SVNConflictAcceptPolicy("edit");
     
-    public static SVNWCAccept LAUNCH = new SVNWCAccept("launch");
+    public static SVNConflictAcceptPolicy LAUNCH = new SVNConflictAcceptPolicy("launch");
     
     private String myName;
-    private SVNWCAccept(String name) {
+    private SVNConflictAcceptPolicy(String name) {
         myName = name;
     }
     
@@ -46,21 +46,21 @@ public class SVNWCAccept {
         return myName;
     }
     
-    public static SVNWCAccept fromString(String accept) {
+    public static SVNConflictAcceptPolicy fromString(String accept) {
         if (POSTPONE.myName.equals(accept)) {
-            return SVNWCAccept.POSTPONE;
+            return SVNConflictAcceptPolicy.POSTPONE;
         } else if (BASE.myName.equals(accept)) {
-            return SVNWCAccept.BASE;
+            return SVNConflictAcceptPolicy.BASE;
         } else if (MINE.myName.equals(accept)) {
-            return SVNWCAccept.MINE;
+            return SVNConflictAcceptPolicy.MINE;
         } else if (THEIRS.myName.equals(accept)) {
-            return SVNWCAccept.THEIRS;
+            return SVNConflictAcceptPolicy.THEIRS;
         } else if (EDIT.myName.equals(accept)) {
-            return SVNWCAccept.EDIT;
+            return SVNConflictAcceptPolicy.EDIT;
         } else if (LAUNCH.myName.equals(accept)) {
-            return SVNWCAccept.LAUNCH;
+            return SVNConflictAcceptPolicy.LAUNCH;
         }
-        return SVNWCAccept.INVALID;
+        return SVNConflictAcceptPolicy.INVALID;
     }
 
 }

@@ -110,10 +110,10 @@ doc/wiki/svnkit_architecture.png -text
 doc/wiki/svnrepository_connection.png -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svn/DefaultSVNCommandLineDiffGenerator.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svn/SVNCommandLineConflictHandler.java -text
+svnkit-cli/src/org/tmatesoft/svn/cli2/svn/SVNConflictAcceptPolicy.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svn/SVNMergeInfoCommand.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svn/SVNPropEditCommand.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svn/SVNRevertCommand.java -text
-svnkit-cli/src/org/tmatesoft/svn/cli2/svn/SVNWCAccept.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svn/commands.properties eol=lf
 svnkit-cli/src/org/tmatesoft/svn/cli2/svn/options.properties eol=lf
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnadmin/commands.properties -text
