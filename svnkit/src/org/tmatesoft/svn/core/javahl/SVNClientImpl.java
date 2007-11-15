@@ -46,6 +46,7 @@ import org.tmatesoft.svn.core.internal.io.svn.ISVNConnectorFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNGanymedSession;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -1507,13 +1508,7 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     protected static boolean isURL(String pathOrUrl) {
-        pathOrUrl = pathOrUrl != null ? pathOrUrl.toLowerCase() : null;
-        return pathOrUrl != null
-                && (pathOrUrl.startsWith("http://")
-                || pathOrUrl.startsWith("https://")
-                || pathOrUrl.startsWith("svn://")
-                || (pathOrUrl.startsWith("svn+") && pathOrUrl.indexOf("://") > 4)
-                || pathOrUrl.startsWith("file://"));
+        return SVNPathUtil.isURL(pathOrUrl);
     }
 
     public String getAdminDirectoryName() {
@@ -1870,15 +1865,4 @@ public class SVNClientImpl implements SVNClientInterface {
         }
         return null;
     }
-
-    private void notImplementedYet() throws ClientException {
-        notImplementedYet(null);
-    }
-
-    private void notImplementedYet(String message) throws ClientException {
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
-                message == null ? "Requested SVNAdmin functionality is not yet implemented" : message);
-        JavaHLObjectFactory.throwException(new SVNException(err), this);
-    }
-
 }

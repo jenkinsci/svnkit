@@ -24,6 +24,7 @@ import java.util.Iterator;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.Version;
@@ -61,13 +62,7 @@ public class SVNCommandUtil {
     }
 
     public static boolean isURL(String pathOrUrl){
-        pathOrUrl = pathOrUrl != null ? pathOrUrl.toLowerCase() : null;
-        return pathOrUrl != null
-                && (pathOrUrl.startsWith("http://")
-                        || pathOrUrl.startsWith("https://")
-                        || pathOrUrl.startsWith("svn://") 
-                        || (pathOrUrl.startsWith("svn+") && pathOrUrl.indexOf("://") > 4)
-                        || pathOrUrl.startsWith("file://"));
+        return SVNPathUtil.isURL(pathOrUrl);
     }
     
     public static void mergeFileExternally(AbstractSVNCommandEnvironment env, String basePath, String repositoryPath, 
