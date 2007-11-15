@@ -1593,7 +1593,8 @@ public abstract class SVNAdminArea {
                 } catch (SVNException svne) {
                     handler.handleError(childPath, svne.getErrorMessage());
                 }
-            } else if (entry.isDirectory() && depth.compareTo(SVNDepth.IMMEDIATES) >= 0) {
+            } 
+            if (entry.isDirectory() && depth.compareTo(SVNDepth.IMMEDIATES) >= 0) {
                 SVNAdminArea childArea = null;
                 SVNDepth depthBelowHere = depth;
                 if (depth == SVNDepth.IMMEDIATES) {
