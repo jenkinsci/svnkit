@@ -112,8 +112,8 @@ public class SVNPropDelCommand extends SVNPropertiesCommand {
                         if (success) {
                             String path = SVNCommandUtil.getLocalPath(targetName);
                             String message = depth.isRecursive() ? 
-                                    "property ''{0}'' deleted (recursively) from ''{1}''" :
-                                    "property ''{0}'' deleted from ''{1}''";
+                                    "property ''{0}'' deleted (recursively) from ''{1}''." :
+                                    "property ''{0}'' deleted from ''{1}''.";
                             message = MessageFormat.format(message, new Object[] {propertyName, path});
                             getSVNEnvironment().getOut().println(message);
                         }

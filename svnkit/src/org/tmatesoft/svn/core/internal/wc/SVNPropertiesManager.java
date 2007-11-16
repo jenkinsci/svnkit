@@ -315,6 +315,26 @@ public class SVNPropertiesManager {
         return result;
     }
     
+    public static boolean isValidPropertyName(String name) throws SVNException {
+        if (name == null || name.length() == 0) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, 
+            "Property name is empty");
+            SVNErrorManager.error(err);
+        }
+
+        if (!(Character.isLetter(name.charAt(0)) || name.charAt(0) == ':' || name.charAt(0) == '_')) {
+            return false;
+        }
+        for (int i = 1; i < name.length(); i++) {
+            if (!(Character.isLetterOrDigit(name.charAt(i))
+                    || name.charAt(i) == '-' || name.charAt(i) == '.'
+                    || name.charAt(i) == ':' || name.charAt(i) == '_')) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private static void validatePropertyName(File path, String name, SVNNodeKind kind) throws SVNException {
         SVNErrorMessage err = null;
         if (kind == SVNNodeKind.DIR) {

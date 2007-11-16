@@ -493,7 +493,13 @@ public class SVNWCClient extends SVNBasicClient {
         if (depth == SVNDepth.EMPTY || depth == SVNDepth.FILES) {
             admLockLevel = 0;
         }
-        propName = validatePropertyName(propName);
+        
+        if (propValue != null && !SVNPropertiesManager.isValidPropertyName(propName)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, 
+                    "Bad property name ''{0}''", propName);
+            SVNErrorManager.error(err);
+        }
+
         if (SVNRevisionProperty.isRevisionProperty(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, 
                     "Revision property ''{0}'' not allowed in this context", propName);
@@ -530,7 +536,11 @@ public class SVNWCClient extends SVNBasicClient {
             SVNRevision baseRevision, String commitMessage, Map revisionProperties, 
             boolean force, SVNDepth depth, ISVNPropertyHandler handler) throws SVNException {
         depth = depth == null ? SVNDepth.UNKNOWN : depth;
-        propName = validatePropertyName(propName);
+        if (propValue != null && !SVNPropertiesManager.isValidPropertyName(propName)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, 
+                    "Bad property name ''{0}''", propName);
+            SVNErrorManager.error(err);
+        }
         if (SVNRevisionProperty.isRevisionProperty(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, 
                     "Revision property ''{0}'' not allowed in this context", propName);
@@ -636,7 +646,11 @@ public class SVNWCClient extends SVNBasicClient {
      * @see                    #doGetRevisionProperty(File, String, SVNRevision, ISVNPropertyHandler)                         
      */
     public void doSetRevisionProperty(File path, SVNRevision revision, String propName, String propValue, boolean force, ISVNPropertyHandler handler) throws SVNException {
-        propName = validatePropertyName(propName);
+        if (propValue != null && !SVNPropertiesManager.isValidPropertyName(propName)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, 
+                    "Bad property name ''{0}''", propName);
+            SVNErrorManager.error(err);
+        }
         propValue = validatePropertyValue(propName, propValue, force);
         SVNURL url = getURL(path);
         doSetRevisionProperty(url, revision, propName, propValue, force, handler);
@@ -675,7 +689,11 @@ public class SVNWCClient extends SVNBasicClient {
      * @see                    #doGetRevisionProperty(File, String, SVNRevision, ISVNPropertyHandler)                         
      */
     public void doSetRevisionProperty(SVNURL url, SVNRevision revision, String propName, String propValue, boolean force, ISVNPropertyHandler handler) throws SVNException {
-        propName = validatePropertyName(propName);
+        if (propValue != null && !SVNPropertiesManager.isValidPropertyName(propName)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, 
+                    "Bad property name ''{0}''", propName);
+            SVNErrorManager.error(err);
+        }
         propValue = validatePropertyValue(propName, propValue, force);
         if (!force && SVNRevisionProperty.AUTHOR.equals(propName) && propValue != null && propValue.indexOf('\n') >= 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_REVISION_AUTHOR_CONTAINS_NEWLINE, "Value will not be set unless forced");
@@ -2648,128 +2666,6 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
 
-/*    private void doSetLocalProperty(SVNAdminArea anchor, String name, String propName, String propValue, 
-            boolean force, SVNDepth depth, boolean cancel, ISVNPropertyHandler handler) throws SVNException {
-        if (cancel) {
-            checkCancelled();
-        }
-        if (!"".equals(name)) {
-            SVNEntry entry = anchor.getEntry(name, true);
-            if (entry == null || (recursive && entry.isDeleted())) {
-                return;
-            }
-            if (entry.getKind() == SVNNodeKind.DIR) {
-                File path = anchor.getFile(name);
-                SVNAdminArea dir = anchor.getWCAccess().retrieve(path);
-                if (dir != null) {
-                    doSetLocalProperty(dir, "", propName, propValue, force, recursive, cancel, handler);
-                }
-            } else if (entry.getKind() == SVNNodeKind.FILE) {
-                File wcFile = anchor.getFile(name);
-                if ((SVNProperty.IGNORE.equals(propName) || SVNProperty.EXTERNALS.equals(propName)) && propValue != null) {
-                    if (!recursive) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Cannot set ''{0}'' on a file (''{1}'')",
-                                new Object[] {propName, wcFile});
-                        SVNErrorManager.error(err);
-                    }
-                    return;
-                }
-                SVNVersionedProperties props = anchor.getProperties(name);
-                if (SVNProperty.EXECUTABLE.equals(propName)) {
-                    SVNFileUtil.setExecutable(wcFile, propValue != null);
-                }
-                if (!force && SVNProperty.EOL_STYLE.equals(propName) && propValue != null) {
-                    if (SVNProperty.isBinaryMimeType(props.getPropertyValue(SVNProperty.MIME_TYPE))) {
-                        if (!recursive) {
-                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "File ''{0}'' has binary mime type property", wcFile);
-                            SVNErrorManager.error(err);
-                        }
-                        return;
-                    }
-                    if (!SVNTranslator.checkNewLines(wcFile)) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "File ''{0}'' has incosistent newlines", wcFile);
-                        SVNErrorManager.error(err);
-                    } 
-                }
-                String oldValue = props.getPropertyValue(propName);
-                boolean modified = oldValue == null ? propValue != null : !oldValue.equals(propValue);
-                props.setPropertyValue(propName, propValue);
-
-                if (SVNProperty.EOL_STYLE.equals(propName) || SVNProperty.KEYWORDS.equals(propName)) {
-                    entry.setTextTime(null);
-                } else if (SVNProperty.NEEDS_LOCK.equals(propName) && propValue == null) {
-                    SVNFileUtil.setReadonly(wcFile, false);
-                }
-                if (modified && handler != null) {
-                    handler.handleProperty(anchor.getFile(name), new SVNPropertyData(propName, propValue));
-                }
-            }
-            SVNLog log = anchor.getLog();
-            anchor.saveVersionedProperties(log, true);
-            anchor.saveEntries(false);
-            log.save();
-            anchor.runLogs();
-            return;
-        }
-        SVNVersionedProperties props = anchor.getProperties(name);
-        if ((SVNProperty.KEYWORDS.equals(propName)
-                || SVNProperty.EOL_STYLE.equals(propName)
-                || SVNProperty.MIME_TYPE.equals(propName)
-                || SVNProperty.EXECUTABLE.equals(propName)) && propValue != null) {
-            if (!recursive) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Cannot set ''{0}'' on a directory (''{1}'')",
-                        new Object[] {propName, anchor.getRoot()});
-                SVNErrorManager.error(err);
-            }
-        } else {
-            String oldValue = props.getPropertyValue(propName);
-            boolean modified = oldValue == null ? propValue != null : !oldValue.equals(propValue);
-            props.setPropertyValue(propName, propValue);
-            SVNLog log = anchor.getLog();
-            anchor.saveVersionedProperties(log, true);
-            log.save();
-            anchor.runLogs();
-            if (modified && handler != null) {
-                handler.handleProperty(anchor.getFile(name), new SVNPropertyData(propName, propValue));
-            }
-        }
-        if (!recursive) {
-            return;
-        }
-        for (Iterator ents = anchor.entries(true); ents.hasNext();) {
-            SVNEntry entry = (SVNEntry) ents.next();
-            if ("".equals(entry.getName())) {
-                continue;
-            }
-            doSetLocalProperty(anchor, entry.getName(), propName, propValue,
-                    force, recursive, cancel, handler);
-        }
-    }
-*/
-    private static String validatePropertyName(String name) throws SVNException {
-        if (name == null || name.trim().length() == 0) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, 
-                    "Property name is empty");
-            SVNErrorManager.error(err);
-            return name;
-        }
-        name = name.trim();
-        if (!(Character.isLetter(name.charAt(0)) || name.charAt(0) == ':' || name.charAt(0) == '_')) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, 
-                    "Bad property name ''{0}''", name);
-            SVNErrorManager.error(err);
-        }
-        for (int i = 1; i < name.length(); i++) {
-            if (!(Character.isLetterOrDigit(name.charAt(i))
-                    || name.charAt(i) == '-' || name.charAt(i) == '.'
-                    || name.charAt(i) == ':' || name.charAt(i) == '_')) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, 
-                        "Bad property name ''{0}''", name);
-                SVNErrorManager.error(err);
-            }
-        }
-        return name;
-    }
 
     private static String validatePropertyValue(String name, String value, boolean force) throws SVNException {
         if (value == null) {

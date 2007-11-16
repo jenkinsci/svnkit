@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.wc.SVNChangelistClient;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -61,6 +62,11 @@ public class SVNPropGetCommand extends SVNPropertiesCommand {
         String propertyName = getSVNEnvironment().popArgument();
         if (propertyName == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS);
+            SVNErrorManager.error(err);
+        }
+        if (!SVNPropertiesManager.isValidPropertyName(propertyName)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, 
+                    "''{0}'' is not a valid Subversion property name", propertyName);
             SVNErrorManager.error(err);
         }
 

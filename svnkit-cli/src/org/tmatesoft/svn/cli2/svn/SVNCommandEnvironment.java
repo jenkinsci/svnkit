@@ -39,6 +39,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
+import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
@@ -395,20 +396,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         } else if (option == SVNOption.WITH_ALL_REVPROPS) {
             myIsWithAllRevprops = true;
         } else if (option == SVNOption.WITH_REVPROP) {
-            if (myRevisionProperties == null) {
-                myRevisionProperties = new LinkedHashMap();
-            }
-            String revProp = optionValue.getValue();
-            if ("".equals(revProp.trim())) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Revision property pair is empty");
-                SVNErrorManager.error(err);
-            }
-            int index = revProp.indexOf('='); 
-            if (index >= 0) {
-                myRevisionProperties.put(revProp.substring(0, index), revProp.substring(index + 1));
-            } else {
-                myRevisionProperties.put(revProp, "");
-            }
+            parseRevisionProperty(optionValue);
         } else if (option == SVNOption.PARENTS) {
             myIsParents = true;
         } else if (option == SVNOption.USE_MERGE_HISTORY) {
@@ -708,6 +696,34 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         }
         SVNErrorManager.cancel("");
         return null;
+    }
+    
+    private void parseRevisionProperty(SVNOptionValue optionValue) throws SVNException {
+        if (myRevisionProperties == null) {
+            myRevisionProperties = new LinkedHashMap();
+        }
+        String revProp = optionValue.getValue();
+        if (revProp == null || "".equals(revProp)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+                    "Revision property pair is empty");
+            SVNErrorManager.error(err);
+        }
+        int index = revProp.indexOf('='); 
+        String revPropName = null;
+        String revPropValue = null;
+        if (index >= 0) {
+            revPropName = revProp.substring(0, index);
+            revPropValue = revProp.substring(index + 1);
+        } else {
+            revPropName = revProp;
+            revPropValue = "";
+        }
+        if (!SVNPropertiesManager.isValidPropertyName(revPropName)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, 
+                    "''{0}'' is not a valid Subversion property name", revPropName);
+            SVNErrorManager.error(err);
+        }
+        myRevisionProperties.put(revPropName, revPropValue);
     }
     
     private String createCommitMessageTemplate(SVNCommitItem[] items) {
