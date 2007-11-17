@@ -16,20 +16,20 @@ package org.tmatesoft.svn.core.internal.util;
  * @author  TMate Software Ltd.
  */
 public class SVNFormatUtil {
-    
-    public static String formatString(String src, int width, boolean left) {
-        if (src.length() > width) {
-            return src.substring(0, width);
+
+    public static String formatString(String str, int chars, boolean left) {
+        if (str.length() > chars) {
+            return str.substring(0, chars);
         }
         StringBuffer formatted = new StringBuffer();
         if (left) {
-            formatted.append(src);
+            formatted.append(str);
         }
-        for (int i = 0; i < width - src.length(); i++) {
+        for(int i = 0; i < chars - str.length(); i++) {
             formatted.append(' ');
         }
         if (!left) {
-            formatted.append(src);
+            formatted.append(str);
         }
         return formatted.toString();
     }

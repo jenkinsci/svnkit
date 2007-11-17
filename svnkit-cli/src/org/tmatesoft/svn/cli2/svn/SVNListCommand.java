@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
@@ -127,13 +128,13 @@ public class SVNListCommand extends SVNXMLCommand implements ISVNDirEntryHandler
         }
         StringBuffer buffer = new StringBuffer();
         if (getSVNEnvironment().isVerbose()) {
-            buffer.append(SVNCommand.formatString(dirEntry.getRevision() + "", 7, false));
+            buffer.append(SVNFormatUtil.formatString(dirEntry.getRevision() + "", 7, false));
             buffer.append(' ');
-            buffer.append(SVNCommand.formatString(dirEntry.getAuthor() == null ? " ? " : dirEntry.getAuthor(), 16, true));
+            buffer.append(SVNFormatUtil.formatString(dirEntry.getAuthor() == null ? " ? " : dirEntry.getAuthor(), 16, true));
             buffer.append(' ');
             buffer.append(dirEntry.getLock() != null ? 'O' : ' ');
             buffer.append(' ');
-            buffer.append(SVNCommand.formatString(dirEntry.getKind() == SVNNodeKind.DIR ? "" : dirEntry.getSize() + "", 10, false));
+            buffer.append(SVNFormatUtil.formatString(dirEntry.getKind() == SVNNodeKind.DIR ? "" : dirEntry.getSize() + "", 10, false));
             buffer.append(' ');
             // time now.
             Date d = dirEntry.getDate();
@@ -145,7 +146,7 @@ public class SVNListCommand extends SVNXMLCommand implements ISVNDirEntryHandler
                     timeStr = LONG_DATE_FORMAT.format(d);
                 }
             }
-            buffer.append(SVNCommand.formatString(timeStr, 12, false));
+            buffer.append(SVNFormatUtil.formatString(timeStr, 12, false));
             buffer.append(' ');
         }
         buffer.append(path);

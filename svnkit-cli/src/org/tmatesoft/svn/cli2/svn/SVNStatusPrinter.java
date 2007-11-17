@@ -14,6 +14,7 @@ package org.tmatesoft.svn.cli2.svn;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 
 /**
  * @version 1.1.2
@@ -91,11 +92,11 @@ public class SVNStatusPrinter {
                 result.append(" ");
                 result.append(remoteStatus);
                 result.append("   ");
-                result.append(SVNCommand.formatString(wcRevision, 6, false)); // 6 chars
+                result.append(SVNFormatUtil.formatString(wcRevision, 6, false)); // 6 chars
                 result.append("   ");
-                result.append(SVNCommand.formatString(commitRevision, 6, false)); // 6 chars
+                result.append(SVNFormatUtil.formatString(commitRevision, 6, false)); // 6 chars
                 result.append(" ");
-                result.append(SVNCommand.formatString(commitAuthor, 12, true)); // 12 chars
+                result.append(SVNFormatUtil.formatString(commitAuthor, 12, true)); // 12 chars
                 result.append(" ");
                 result.append(path);
             }  else {
@@ -108,7 +109,7 @@ public class SVNStatusPrinter {
                 result.append(" ");
                 result.append(remoteStatus);
                 result.append("   ");
-                result.append(SVNCommand.formatString(wcRevision, 6, false)); // 6 chars
+                result.append(SVNFormatUtil.formatString(wcRevision, 6, false)); // 6 chars
                 result.append("   ");
                 result.append(path);
             }

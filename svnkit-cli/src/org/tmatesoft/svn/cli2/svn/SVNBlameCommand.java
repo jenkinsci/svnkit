@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
@@ -182,8 +183,8 @@ public class SVNBlameCommand extends SVNXMLCommand implements ISVNAnnotateHandle
                 author = mergedAuthor;
             } 
            
-            String revStr = revision >= 0 ? SVNCommandUtil.formatString(Long.toString(revision), 6, false) : "     -";
-            String authorStr = author != null ? SVNCommandUtil.formatString(author, 10, false) : "         -";
+            String revStr = revision >= 0 ? SVNFormatUtil.formatString(Long.toString(revision), 6, false) : "     -";
+            String authorStr = author != null ? SVNFormatUtil.formatString(author, 10, false) : "         -";
             if (getSVNEnvironment().isVerbose()) {
                 String dateStr = "                                           -"; 
                 if (date != null) {
@@ -191,7 +192,7 @@ public class SVNBlameCommand extends SVNXMLCommand implements ISVNAnnotateHandle
                 }
                 getSVNEnvironment().getOut().print(mergedStr + revStr + " " + authorStr + " " + dateStr + " ");
                 if (getSVNEnvironment().isUseMergeHistory() && mergedPath != null) {
-                    String pathStr = SVNCommandUtil.formatString(mergedPath, 14, true);
+                    String pathStr = SVNFormatUtil.formatString(mergedPath, 14, true);
                     getSVNEnvironment().getOut().print(pathStr + " ");
                 }
                 getSVNEnvironment().getOut().println(line);

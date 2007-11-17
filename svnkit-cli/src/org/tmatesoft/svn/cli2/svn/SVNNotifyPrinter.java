@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
@@ -68,7 +69,7 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
             buffer.append("\nPerforming status on external item at '" + path + "'\n");
         } else if (event.getAction() == SVNEventAction.STATUS_COMPLETED) {
             String revStr = Long.toString(event.getRevision());
-            buffer.append("Status against revision: " + SVNCommandUtil.formatString(revStr, 6, false) + "\n");
+            buffer.append("Status against revision: " + SVNFormatUtil.formatString(revStr, 6, false) + "\n");
         } else if (event.getAction() == SVNEventAction.SKIP) {
             if (event.getContentsStatus() == SVNStatusType.MISSING) {
                 buffer.append("Skipped missing target: '" + path + "'\n");

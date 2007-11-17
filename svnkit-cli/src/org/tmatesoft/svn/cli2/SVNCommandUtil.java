@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.Version;
@@ -42,23 +43,6 @@ public class SVNCommandUtil {
             path = ".";
         }
         return path;
-    }
-
-    public static String formatString(String str, int chars, boolean left) {
-        if (str.length() > chars) {
-            return str.substring(0, chars);
-        }
-        StringBuffer formatted = new StringBuffer();
-        if (left) {
-            formatted.append(str);
-        }
-        for(int i = 0; i < chars - str.length(); i++) {
-            formatted.append(' ');
-        }
-        if (!left) {
-            formatted.append(str);
-        }
-        return formatted.toString();
     }
 
     public static boolean isURL(String pathOrUrl){
@@ -287,7 +271,7 @@ public class SVNCommandUtil {
                     optionDesc += " ARG";
                 }
             
-                help.append(formatString(optionDesc, 24, true));
+                help.append(SVNFormatUtil.formatString(optionDesc, 24, true));
                 help.append(" : ");
                 help.append(option.getDescription(command));
                 help.append("\n");

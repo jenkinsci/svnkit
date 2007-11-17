@@ -40,6 +40,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.jna.SVNJNAUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
@@ -752,10 +753,7 @@ public class SVNFileUtil {
         byte[] result = digest.digest();
         String hexDigest = "";
         for (int i = 0; i < result.length; i++) {
-            byte b = result[i];
-            int lo = b & 0xf;
-            int hi = (b >> 4) & 0xf;
-            hexDigest += Integer.toHexString(hi) + Integer.toHexString(lo);
+            hexDigest += SVNFormatUtil.getHexNumberFromByte(result[i]);
         }
         return hexDigest;
     }
@@ -767,10 +765,7 @@ public class SVNFileUtil {
 
         String hexDigest = "";
         for (int i = 0; i < digest.length; i++) {
-            byte b = digest[i];
-            int lo = b & 0xf;
-            int hi = (b >> 4) & 0xf;
-            hexDigest += Integer.toHexString(hi) + Integer.toHexString(lo);
+            hexDigest += SVNFormatUtil.getHexNumberFromByte(digest[i]);
         }
         return hexDigest;
     }
