@@ -123,7 +123,7 @@ public class SVNCommitUtil {
         for (int i = 0; i < paths.length; i++) {
             statusClient.checkCancelled();
             File file = paths[i];
-            validatedPaths[i] = SVNPathUtil.validateFilePath(file.getAbsolutePath());
+            validatedPaths[i] = file.getAbsolutePath();
         }
         String rootPath = SVNPathUtil.condencePaths(validatedPaths, relativePaths, depth == SVNDepth.INFINITY);
         
@@ -254,7 +254,7 @@ public class SVNCommitUtil {
             
             for(int i = 0; i < paths.length; i++) {
                 statusClient.checkCancelled();
-                File path = new File(SVNPathUtil.validateFilePath(paths[i].getAbsolutePath()));
+                File path = paths[i].getAbsoluteFile();
                 path = path.getAbsoluteFile();
                 try {
                     baseAccess.probeRetrieve(path);

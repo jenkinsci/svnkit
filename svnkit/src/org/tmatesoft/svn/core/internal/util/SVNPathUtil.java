@@ -14,10 +14,6 @@ package org.tmatesoft.svn.core.internal.util;
 import java.io.File;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -62,44 +58,6 @@ public class SVNPathUtil {
                 SVNErrorManager.error(err);
             }
         }
-    }
-
-    public static String validateFilePath(String path) {
-        path = path.replace(File.separatorChar, '/');
-        StringBuffer result = new StringBuffer();
-        List segments = new LinkedList();
-        for (StringTokenizer tokens = new StringTokenizer(path, "/", false); tokens.hasMoreTokens();) {
-            String segment = tokens.nextToken();
-            if ("..".equals(segment)) {
-                if (!segments.isEmpty()) {
-                    segments.remove(segments.size() - 1);
-                } else {
-                    File root = new File(System.getProperty("user.dir"));
-                    while (root.getParentFile() != null) {
-                        segments.add(0, root.getParentFile().getName());
-                        root = root.getParentFile();
-                    }
-                }
-                continue;
-            } else if (".".equals(segment) || segment.length() == 0) {
-                continue;
-            }
-            segments.add(segment);
-        }
-        if (path.length() > 0 && path.charAt(0) == '/') {
-            result.append("/");
-        }
-        if (path.length() > 1 && path.charAt(1) == '/') {
-            result.append("/");
-        }
-        for (Iterator tokens = segments.iterator(); tokens.hasNext();) {
-            String token = (String) tokens.next();
-            result.append(token);
-            if (tokens.hasNext()) {
-                result.append('/');
-            }
-        }
-        return result.toString();
     }
 
     public static String canonicalizeAbsPath(String path) {
@@ -415,10 +373,8 @@ public class SVNPathUtil {
         if (parentFile == null || childFile == null) {
             return false;
         }
-        childFile = new File(SVNPathUtil.validateFilePath(childFile
-                .getParentFile().getAbsolutePath()));
-        parentFile = new File(SVNPathUtil.validateFilePath(parentFile
-                .getAbsolutePath()));
+        childFile = childFile.getParentFile().getAbsoluteFile();
+        parentFile = parentFile.getAbsoluteFile();
         while (childFile != null) {
             if (childFile.equals(parentFile)) {
                 return true;

@@ -1137,7 +1137,7 @@ public class SVNWCClient extends SVNBasicClient {
      */
     public void doDelete(File path, boolean force, boolean deleteFiles, boolean dryRun) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess();
-        path = new File(SVNPathUtil.validateFilePath(path.getAbsolutePath())).getAbsoluteFile();
+        path = path.getAbsoluteFile();
         try {
             if (!force) {
                 SVNWCManager.canDelete(path, getOptions(), this);
@@ -1236,7 +1236,7 @@ public class SVNWCClient extends SVNBasicClient {
      * for now."
      */
     public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, boolean recursive, boolean includeIgnored, boolean makeParents) throws SVNException {
-        path = new File(SVNPathUtil.validateFilePath(path.getAbsolutePath()));
+        path = path.getAbsoluteFile();
         if (!mkdir && (climbUnversionedParents || makeParents) && path.getParentFile() != null) {
             // check if parent is versioned. if not, add it.
             SVNWCAccess wcAccess = createWCAccess();
@@ -1448,7 +1448,7 @@ public class SVNWCClient extends SVNBasicClient {
         try {
             for (int i = 0; i < paths.length; i++) {
                 File path = paths[i];
-                path = new File(SVNPathUtil.validateFilePath(path.getAbsolutePath()));
+                path = path.getAbsoluteFile();
                 SVNWCAccess wcAccess = createWCAccess();
                 try {
                     int admLockLevel = SVNWCAccess.INFINITE_DEPTH;

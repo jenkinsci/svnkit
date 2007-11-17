@@ -23,7 +23,6 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
@@ -76,7 +75,7 @@ public class SVNChangelistClient extends SVNBasicClient {
     }
     
     public void getChangelist(File path, final String changelistName, ISVNChangelistHandler handler) throws SVNException {
-        path = new File(SVNPathUtil.validateFilePath(path.getAbsolutePath())).getAbsoluteFile();
+        path = path.getAbsoluteFile();
         SVNWCAccess wcAccess = createWCAccess();
         try {
             SVNAdminArea adminArea = wcAccess.probeOpen(path, false, SVNWCAccess.INFINITE_DEPTH);
@@ -136,7 +135,7 @@ public class SVNChangelistClient extends SVNBasicClient {
         SVNWCAccess wcAccess = createWCAccess();
         for (int i = 0; i < paths.length; i++) {
             checkCancelled();
-            File path = new File(SVNPathUtil.validateFilePath(paths[i].getAbsolutePath())).getAbsoluteFile();;
+            File path = paths[i].getAbsoluteFile();
             try {
                 SVNAdminArea adminArea = wcAccess.probeOpen(path, true, 0); 
                 SVNEntry entry = wcAccess.getEntry(path, false);

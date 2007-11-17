@@ -187,7 +187,7 @@ public class SVNUpdateClient extends SVNBasicClient {
 
     public long doUpdate(File file, SVNRevision revision, SVNDepth depth, boolean force) throws SVNException {
         depth = depth == null ? SVNDepth.UNKNOWN : depth;
-        file = new File(SVNPathUtil.validateFilePath(file.getAbsolutePath()));
+        file = file.getAbsoluteFile();
         SVNWCAccess wcAccess = createWCAccess();
         SVNAdminAreaInfo adminInfo = null;
         int admOpenDepth = SVNWCAccess.INFINITE_DEPTH;

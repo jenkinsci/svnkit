@@ -33,7 +33,6 @@ import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
@@ -552,7 +551,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                 }
                 values.put("port", Integer.toString(port));
                 if (sshAuth.getPrivateKeyFile() != null) { 
-                    String path = SVNPathUtil.validateFilePath(sshAuth.getPrivateKeyFile().getAbsolutePath());
+                    String path = sshAuth.getPrivateKeyFile().getAbsolutePath();
                     values.put("passphrase", cipher.encrypt(sshAuth.getPassphrase()));
                     values.put("key", path);
                 }

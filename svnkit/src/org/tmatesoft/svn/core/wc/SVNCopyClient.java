@@ -484,7 +484,7 @@ public class SVNCopyClient extends SVNBasicClient {
     
     public long doCopy(SVNURL srcURL, SVNRevision pegRevision, SVNRevision srcRevision, File dstPath, 
             boolean makeParents, boolean failWhenDstExists) throws SVNException {
-        dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath())).getAbsoluteFile();
+        dstPath = dstPath.getAbsoluteFile();
 
         if (pegRevision == SVNRevision.BASE || pegRevision == SVNRevision.COMMITTED || pegRevision == SVNRevision.PREVIOUS) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Revision type requires a working copy path, not a URL");
@@ -654,7 +654,7 @@ public class SVNCopyClient extends SVNBasicClient {
             SVNErrorManager.error(err);
         }
         
-        dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath())).getAbsoluteFile();
+        dstPath = dstPath.getAbsoluteFile();
 
         for (int i = 0; i < sources.length; i++) {
             SVNCopySource source = sources[i]; 
@@ -834,8 +834,8 @@ public class SVNCopyClient extends SVNBasicClient {
     
     public void doCopy(File srcPath, SVNRevision srcRevision, boolean isMove, boolean makeParents, 
             boolean includeMergeHistory, boolean failWhenDstExists, File dstPath) throws SVNException {
-        srcPath = new File(SVNPathUtil.validateFilePath(srcPath.getAbsolutePath())).getAbsoluteFile();
-        dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath())).getAbsoluteFile();
+        srcPath = srcPath.getAbsoluteFile();
+        dstPath = dstPath.getAbsoluteFile();
         if (srcRevision.isValid() && srcRevision != SVNRevision.WORKING && !isMove) {
             // url->wc copy
             SVNWCAccess wcAccess = createWCAccess();

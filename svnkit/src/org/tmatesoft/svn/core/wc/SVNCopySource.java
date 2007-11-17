@@ -38,7 +38,7 @@ public class SVNCopySource {
     public SVNCopySource(SVNRevision pegRevision, SVNRevision revision, File path) {
         myPegRevision = pegRevision;
         myRevision = revision;
-        myPath = new File(SVNPathUtil.validateFilePath(path.getAbsolutePath())).getAbsoluteFile();
+        myPath = path.getAbsoluteFile();
     }
 
     public SVNCopySource(SVNRevision pegRevision, SVNRevision revision, SVNURL url) {

@@ -125,9 +125,9 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             SVNRevision revision1, SVNRevision revision2, File dstPath, SVNDepth depth, boolean dryRun, 
             boolean force, boolean ignoreAncestry, boolean recordOnly) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess();
-        dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath()));
+        dstPath = dstPath.getAbsoluteFile();
         try {
-            dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath()));
+            dstPath = dstPath.getAbsoluteFile();
             SVNAdminArea adminArea = wcAccess.probeOpen(dstPath, !dryRun, SVNWCAccess.INFINITE_DEPTH);
 
             SVNEntry targetEntry = wcAccess.getVersionedEntry(dstPath, false);
@@ -238,9 +238,9 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             File dstPath, SVNDepth depth, boolean dryRun, boolean force, 
             boolean ignoreAncestry, boolean recordOnly) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess();
-        dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath()));
+        dstPath = dstPath.getAbsoluteFile();
         try {
-            dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath()));
+            dstPath = dstPath.getAbsoluteFile();
             SVNAdminArea adminArea = wcAccess.probeOpen(dstPath, !dryRun, SVNWCAccess.INFINITE_DEPTH);
 
             SVNEntry targetEntry = wcAccess.getVersionedEntry(dstPath, false);

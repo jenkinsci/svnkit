@@ -293,7 +293,7 @@ public class SVNDiffClient extends SVNMergeDriver {
                     "a pegged diff");            
             SVNErrorManager.error(err);
         }
-        path = new File(SVNPathUtil.validateFilePath(path.getAbsolutePath())).getAbsoluteFile();
+        path = path.getAbsoluteFile();
         getDiffGenerator().init(path.getAbsolutePath(), path.getAbsolutePath());
         if (!(rM == SVNRevision.BASE || rM == SVNRevision.WORKING || rM == SVNRevision.COMMITTED)) {
             if ((rN == SVNRevision.BASE || rN == SVNRevision.WORKING || rN == SVNRevision.COMMITTED)) {
@@ -1068,9 +1068,9 @@ public class SVNDiffClient extends SVNMergeDriver {
     public void doMerge(File path1, SVNRevision revision1, File path2, SVNRevision revision2, 
                         File dstPath, SVNDepth depth, boolean useAncestry, boolean force, 
                         boolean dryRun, boolean recordOnly) throws SVNException {
-        path1 = new File(SVNPathUtil.validateFilePath(path1.getAbsolutePath())).getAbsoluteFile();
-        path2 = new File(SVNPathUtil.validateFilePath(path2.getAbsolutePath())).getAbsoluteFile();
-        dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath())).getAbsoluteFile();
+        path1 = path1.getAbsoluteFile();
+        path2 = path2.getAbsoluteFile();
+        dstPath = dstPath.getAbsoluteFile();
         /*
          * Same as 2. merge sourceWCPATH1@N sourceWCPATH2@M [WCPATH]
          * or      3. merge -r N:M SOURCE[@REV] [WCPATH]
@@ -1140,8 +1140,8 @@ public class SVNDiffClient extends SVNMergeDriver {
     public void doMerge(File path1, SVNRevision revision1, SVNURL url2, SVNRevision revision2, 
                         File dstPath, SVNDepth depth, boolean useAncestry, boolean force, 
                         boolean dryRun, boolean recordOnly) throws SVNException {
-        path1 = new File(SVNPathUtil.validateFilePath(path1.getAbsolutePath())).getAbsoluteFile();
-        dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath())).getAbsoluteFile();
+        path1 = path1.getAbsoluteFile();
+        dstPath = dstPath.getAbsoluteFile();
         SVNURL url1 = getURL(path1);
         if (url1 == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path1);
@@ -1200,8 +1200,8 @@ public class SVNDiffClient extends SVNMergeDriver {
     public void doMerge(SVNURL url1, SVNRevision revision1, File path2, SVNRevision revision2, 
                         File dstPath, SVNDepth depth, boolean useAncestry, boolean force, 
                         boolean dryRun, boolean recordOnly) throws SVNException {
-        path2 = new File(SVNPathUtil.validateFilePath(path2.getAbsolutePath())).getAbsoluteFile();
-        dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath())).getAbsoluteFile();
+        path2 = path2.getAbsoluteFile();
+        dstPath = dstPath.getAbsoluteFile();
         SVNURL url2 = getURL(path2);
         if (url2 == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path2);
