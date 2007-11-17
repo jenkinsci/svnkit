@@ -207,8 +207,16 @@ public class SVNClient implements SVNClientInterface {
         myDelegate.diff(target1, revision1, target2, revision2, outFileName, recurse, ignoreAncestry, noDiffDeleted, force);
     }
 
+    public void diff(String target1, Revision revision1, String target2, Revision revision2, String relativeToDir, String outFileName, int depth, boolean ignoreAncestry, boolean noDiffDeleted, boolean force) throws ClientException {
+        myDelegate.diff(target1, revision1,  target2, revision2, relativeToDir, outFileName, depth, ignoreAncestry, noDiffDeleted, force);
+    }
+
     public void diff(String target, Revision pegRevision, Revision startRevision, Revision endRevision, String outFileName, boolean recurse, boolean ignoreAncestry, boolean noDiffDeleted, boolean force) throws ClientException {
         myDelegate.diff(target, pegRevision, startRevision, endRevision, outFileName, recurse, ignoreAncestry, noDiffDeleted, force);
+    }
+
+    public void diff(String target, Revision pegRevision, Revision startRevision, Revision endRevision, String relativeToDir, String outFileName, int depth, boolean ignoreAncestry, boolean noDiffDeleted, boolean force) throws ClientException {
+        myDelegate.diff(target, pegRevision, startRevision, endRevision, relativeToDir, outFileName, depth, ignoreAncestry, noDiffDeleted, force);
     }
 
     public PropertyData[] properties(String path) throws ClientException {

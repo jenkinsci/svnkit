@@ -1635,10 +1635,20 @@ public class SVNClientImpl implements SVNClientInterface {
                 noDiffDeleted, force);
     }
 
+    public void diff(String target1, Revision revision1, String target2, Revision revision2, String relativeToDir, String outFileName, int depth, boolean ignoreAncestry, boolean noDiffDeleted, boolean force) throws ClientException {
+        notImplementedYet();
+        //TODO: Implement
+    }
+
     public void diff(String target, Revision pegRevision, Revision startRevision, Revision endRevision,
                      String outFileName, boolean recurse, boolean ignoreAncestry, boolean noDiffDeleted, boolean force) throws ClientException {
         diff(target, pegRevision, startRevision, endRevision, outFileName,
                 JavaHLObjectFactory.unknownOrFiles(recurse), ignoreAncestry, noDiffDeleted, force);
+    }
+
+    public void diff(String target, Revision pegRevision, Revision startRevision, Revision endRevision, String relativeToDir, String outFileName, int depth, boolean ignoreAncestry, boolean noDiffDeleted, boolean force) throws ClientException {
+        notImplementedYet();
+        //TODO: Implement
     }
 
     public void diff(String target1, Revision revision1, String target2, Revision revision2, String outFileName, int depth, boolean ignoreAncestry, boolean noDiffDeleted, boolean force) throws ClientException {
@@ -1864,5 +1874,15 @@ public class SVNClientImpl implements SVNClientInterface {
             throwException(e);
         }
         return null;
+    }
+
+    private void notImplementedYet() throws ClientException {
+        notImplementedYet(null);
+    }
+
+    private void notImplementedYet(String message) throws ClientException {
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
+                message == null ? "Requested SVNAdmin functionality is not yet implemented" : message);
+        JavaHLObjectFactory.throwException(new SVNException(err), this);
     }
 }
