@@ -431,7 +431,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                 }
                 
                 String remainder = path.equals(cpath) ? "" : SVNPathUtil.getPathAsChild(cpath, path);
-                path = SVNPathUtil.concatToAbs(copyfromPath, remainder);
+                path = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(copyfromPath, remainder));
                 revision = copyfromRevision;
             }
             
@@ -896,7 +896,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
         
         String anchor = getRepositoryPath("");
-        String fullTargetPath = switchPath != null ? switchPath : SVNPathUtil.concatToAbs(anchor, target);
+        String fullTargetPath = switchPath != null ? switchPath : SVNPathUtil.getAbsolutePath(SVNPathUtil.append(anchor, target));
 
         if (myReporterContext == null) {
             myReporterContext = new FSUpdateContext(this, myFSFS, targetRevision, 

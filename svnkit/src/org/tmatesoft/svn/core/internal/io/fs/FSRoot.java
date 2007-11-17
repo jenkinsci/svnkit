@@ -81,7 +81,7 @@ public abstract class FSRoot {
         while (true) {
             String entry = SVNPathUtil.head(rest);
             String next = SVNPathUtil.removeHead(rest);
-            pathSoFar = SVNPathUtil.concatToAbs(pathSoFar, entry);
+            pathSoFar = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(pathSoFar, entry));
             FSRevisionNode child = null;
             if (entry == null || "".equals(entry)) {
                 child = here;

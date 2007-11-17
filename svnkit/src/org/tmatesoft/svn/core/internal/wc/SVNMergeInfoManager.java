@@ -402,7 +402,7 @@ public class SVNMergeInfoManager {
             mergeInfo = new TreeMap();
             for (Iterator paths = parentMergeInfo.keySet().iterator(); paths.hasNext();) {
                 String mergeSrcPath = (String) paths.next();
-                mergeInfo.put(SVNPathUtil.concatToAbs(mergeSrcPath, pathSuffix), parentMergeInfo.get(mergeSrcPath));
+                mergeInfo.put(SVNPathUtil.getAbsolutePath(SVNPathUtil.append(mergeSrcPath, pathSuffix)), parentMergeInfo.get(mergeSrcPath));
             }
         } 
         

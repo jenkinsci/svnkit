@@ -980,7 +980,8 @@ public class SVNLookClient extends SVNBasicClient {
         for (Iterator names = entries.keySet().iterator(); names.hasNext();) {
             String name = (String) names.next();
             FSEntry entry = (FSEntry) entries.get(name);
-            getTree(fsfs, root, SVNPathUtil.concatToAbs(path, entry.getName()), entry.getType(), includeIDs ? entry.getId() : null, includeIDs, depth + 1, handler);
+            getTree(fsfs, root, SVNPathUtil.getAbsolutePath(SVNPathUtil.append(path, entry.getName())),
+                    entry.getType(), includeIDs ? entry.getId() : null, includeIDs, depth + 1, handler);
         }
     }
     

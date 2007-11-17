@@ -50,7 +50,8 @@ public class SVNLookProplistCommand extends SVNCommand {
             if (isRevProp) {
                 props = lookClient.doGetRevisionProperties(reposRoot, transactionName);
             } else {
-                String path = getCommandLine().getPathCount() < 2 ? null : SVNPathUtil.canonicalizeAbsPath(getCommandLine().getPathAt(2));
+                String path = getCommandLine().getPathCount() < 2 ? null : SVNPathUtil.canonicalizePath(getCommandLine().getPathAt(2));
+                path = SVNPathUtil.getAbsolutePath(path);
                 props = lookClient.doGetProperties(reposRoot, path, transactionName);
             }
             printProps(out, props, isVerbose);
@@ -63,7 +64,8 @@ public class SVNLookProplistCommand extends SVNCommand {
         if (isRevProp) {
             props = lookClient.doGetRevisionProperties(reposRoot, revision);
         } else {
-            String path = getCommandLine().getPathCount() < 2 ? null : SVNPathUtil.canonicalizeAbsPath(getCommandLine().getPathAt(2));
+            String path = getCommandLine().getPathCount() < 2 ? null : SVNPathUtil.canonicalizePath(getCommandLine().getPathAt(2));
+            path = SVNPathUtil.getAbsolutePath(path);
             props = lookClient.doGetProperties(reposRoot, path, revision);
         }
         printProps(out, props, isVerbose);

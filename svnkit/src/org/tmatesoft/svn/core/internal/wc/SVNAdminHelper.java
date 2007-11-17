@@ -133,7 +133,7 @@ public class SVNAdminHelper {
             SVNErrorManager.error(err);
         }
         
-        String srcFullPath = SVNPathUtil.concatToAbs(srcParentDir, srcEntry);
+        String srcFullPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(srcParentDir, srcEntry));
         SVNNodeKind tgtKind = tgtRoot.checkNodeKind(tgtFullPath); 
         SVNNodeKind srcKind = srcRoot.checkNodeKind(srcFullPath);
         
@@ -282,12 +282,12 @@ public class SVNAdminHelper {
             FSEntry tgtEntry = (FSEntry) targetEntries.get(name);
             
             SVNNodeKind tgtKind = tgtEntry.getType();
-            String targetFullPath = SVNPathUtil.concatToAbs(tgtPath, tgtEntry.getName());
-            String editFullPath = SVNPathUtil.concatToAbs(editPath, tgtEntry.getName());
+            String targetFullPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(tgtPath, tgtEntry.getName()));
+            String editFullPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(editPath, tgtEntry.getName()));
             
             if (sourceEntries != null && sourceEntries.containsKey(name)) {
                 FSEntry srcEntry = (FSEntry) sourceEntries.get(name);
-                String sourceFullPath = SVNPathUtil.concatToAbs(srcPath, tgtEntry.getName());
+                String sourceFullPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(srcPath, tgtEntry.getName()));
                 SVNNodeKind srcKind = srcEntry.getType();
                 
                 int distance = srcEntry.getId().compareTo(tgtEntry.getId());
@@ -307,7 +307,7 @@ public class SVNAdminHelper {
             for (Iterator srcEntries = sourceEntries.keySet().iterator(); srcEntries.hasNext();) {
                 String name = (String) srcEntries.next();
                 FSEntry entry = (FSEntry) sourceEntries.get(name);
-                String editFullPath = SVNPathUtil.concatToAbs(editPath, entry.getName());
+                String editFullPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(editPath, entry.getName()));
                 editor.deleteEntry(editFullPath, -1);
             }
         }

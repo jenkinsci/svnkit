@@ -649,7 +649,7 @@ public class SVNBasicClient implements ISVNEventHandler {
                 for (Iterator paths = wcMergeInfo.keySet().iterator(); paths.hasNext();) {
                     String srcMergePath = (String) paths.next();
                     SVNMergeRangeList rangeList = (SVNMergeRangeList) wcMergeInfo.get(srcMergePath); 
-                    mergeInfo.put(SVNPathUtil.concatToAbs(srcMergePath, walkPath), rangeList);
+                    mergeInfo.put(SVNPathUtil.getAbsolutePath(SVNPathUtil.append(srcMergePath, walkPath)), rangeList);
                 }
                 inherited[0] = true;
             } else {

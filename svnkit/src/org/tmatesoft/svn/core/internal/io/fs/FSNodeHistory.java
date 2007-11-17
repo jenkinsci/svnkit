@@ -138,7 +138,7 @@ public class FSNodeHistory {
             }
             if (reminder != null) {
                 String copySrc = revNode.getCopyFromPath();
-                srcEntry = new SVNLocationEntry(revNode.getCopyFromRevision(), SVNPathUtil.concatToAbs(copySrc, reminder));
+                srcEntry = new SVNLocationEntry(revNode.getCopyFromRevision(), SVNPathUtil.getAbsolutePath(SVNPathUtil.append(copySrc, reminder)));
                 dstRev = copyrootEntry.getRevision();
             }
         }
@@ -147,8 +147,8 @@ public class FSNodeHistory {
             if ((dstRev == revision) && reported) {
                 retry = true;
             }
-            return new FSNodeHistory(new SVNLocationEntry(dstRev, path), 
-                                     retry ? false : true, 
+            return new FSNodeHistory(new SVNLocationEntry(dstRev, path),
+                                     retry ? false : true,
                                      new SVNLocationEntry(srcEntry.getRevision(), srcEntry.getPath()), 
                                      myFSFS);
         }

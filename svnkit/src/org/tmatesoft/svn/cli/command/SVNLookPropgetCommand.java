@@ -51,7 +51,8 @@ public class SVNLookPropgetCommand extends SVNCommand {
             if (isRevProp) {
                 value = lookClient.doGetRevisionProperty(reposRoot, propertyName, transactionName);
             } else {
-                path = getCommandLine().getPathCount() < 3 ? null : SVNPathUtil.canonicalizeAbsPath(getCommandLine().getPathAt(2));
+                path = getCommandLine().getPathCount() < 3 ? null : SVNPathUtil.canonicalizePath(getCommandLine().getPathAt(2));
+                path = SVNPathUtil.getAbsolutePath(path);
                 value = lookClient.doGetProperty(reposRoot, propertyName, path, transactionName);
             }
             if (value == null) {
@@ -74,7 +75,8 @@ public class SVNLookPropgetCommand extends SVNCommand {
         if (isRevProp) {
             value = lookClient.doGetRevisionProperty(reposRoot, propertyName, revision);
         } else {
-            path = getCommandLine().getPathCount() < 3 ? null : SVNPathUtil.canonicalizeAbsPath(getCommandLine().getPathAt(2));
+            path = getCommandLine().getPathCount() < 3 ? null : SVNPathUtil.canonicalizePath(getCommandLine().getPathAt(2));
+            path = SVNPathUtil.getAbsolutePath(path);
             value = lookClient.doGetProperty(reposRoot, propertyName, path, revision);
         }
         if (value == null) {

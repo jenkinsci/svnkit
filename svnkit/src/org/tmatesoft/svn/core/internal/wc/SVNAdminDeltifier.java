@@ -77,7 +77,7 @@ public class SVNAdminDeltifier {
             SVNErrorManager.error(err);
         }
 
-        String srcFullPath = SVNPathUtil.concatToAbs(srcParentDir, srcEntry);
+        String srcFullPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(srcParentDir, srcEntry));
         SVNNodeKind tgtKind = tgtRoot.checkNodeKind(tgtFullPath); 
         SVNNodeKind srcKind = srcRoot.checkNodeKind(srcFullPath);
 
@@ -171,12 +171,12 @@ public class SVNAdminDeltifier {
             FSEntry tgtEntry = (FSEntry) targetEntries.get(name);
             
             SVNNodeKind tgtKind = tgtEntry.getType();
-            String targetFullPath = SVNPathUtil.concatToAbs(tgtPath, tgtEntry.getName());
-            String editFullPath = SVNPathUtil.concatToAbs(editPath, tgtEntry.getName());
+            String targetFullPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(tgtPath, tgtEntry.getName()));
+            String editFullPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(editPath, tgtEntry.getName()));
             
             if (sourceEntries != null && sourceEntries.containsKey(name)) {
                 FSEntry srcEntry = (FSEntry) sourceEntries.get(name);
-                String sourceFullPath = SVNPathUtil.concatToAbs(srcPath, tgtEntry.getName());
+                String sourceFullPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(srcPath, tgtEntry.getName()));
                 SVNNodeKind srcKind = srcEntry.getType();
                 
                 if (myDepth == SVNDepth.INFINITY || srcKind != SVNNodeKind.DIR) {
@@ -202,7 +202,7 @@ public class SVNAdminDeltifier {
             for (Iterator srcEntries = sourceEntries.keySet().iterator(); srcEntries.hasNext();) {
                 String name = (String) srcEntries.next();
                 FSEntry srcEntry = (FSEntry) sourceEntries.get(name);
-                String editFullPath = SVNPathUtil.concatToAbs(editPath, srcEntry.getName());
+                String editFullPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(editPath, srcEntry.getName()));
                 if (myDepth == SVNDepth.INFINITY || srcEntry.getType() != SVNNodeKind.DIR) {
                     myEditor.deleteEntry(editFullPath, -1);
                 }

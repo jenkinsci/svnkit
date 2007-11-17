@@ -46,10 +46,6 @@ public class SVNPathUtil {
         }
     };
 
-    public static boolean isCanonical(String path) {
-        return (path != null && !(path.length() == 1 && path.charAt(0) == '.') && (path.length() <= 1 || path.charAt(path.length() - 1) != '/'));
-    }
-
     public static void checkPathIsValid(String path) throws SVNException {
         for (int i = 0; i < path.length(); i++) {
             char ch = path.charAt(i);
@@ -60,47 +56,23 @@ public class SVNPathUtil {
         }
     }
 
-    public static String canonicalizeAbsPath(String path) {
-        //No path, no problem
-        if (path == null) {
+    public static String getAbsolutePath(String path){
+        if (path == null){
             return null;
+        }        
+        if ("".equals(path)){
+            return "/";           
         }
-
-        //If no content in path
-        if ("".equals(path)) {
-            return "/";
+        if (isURL(path)){
+            return path;            
         }
-
-        StringBuffer newString = new StringBuffer();
-        //Set leading '/' character
-        if (!path.startsWith("/")) {
-            newString.append('/');
-        }
-
-        //dispose of slashes number of that is
-        boolean eatingSlashes = false;
-        for (int count = 0; count < path.length(); count++) {
-            if (path.charAt(count) == '/') {
-                if (eatingSlashes) {
-                    continue;
-                }
-                eatingSlashes = true;
-            } else {
-                if (eatingSlashes) {
-                    eatingSlashes = false;
-                }
-            }
-            newString.append(path.charAt(count));
-        }
-
-        if (newString.length() > 1 && newString.charAt(newString.length() - 1) == '/') {
-            newString.deleteCharAt(newString.length() - 1);
-        }
-
-        return newString.toString();
+        return path.startsWith("/") ? path : "/" + path;       
     }
 
     public static String canonicalizePath(String path) {
+        if (path == null){
+            return null;           
+        }
         StringBuffer result = new StringBuffer();
         int i = 0;
         for (; i < path.length(); i++) {
@@ -178,29 +150,6 @@ public class SVNPathUtil {
             r[index++] = ch;
         }
         return new String(r, 0, index);
-    }
-
-    public static String concatToAbs(String f, String s) throws SVNException {
-        f = f == null || "".equals(f) ? "/" : f;
-        s = s == null ? "" : s;
-
-        if (!isCanonical(f)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_PATH_SYNTAX, "path component ''{0}'' is not canonical", f);
-            SVNErrorManager.error(err);
-        }
-
-        if (!isCanonical(s)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_PATH_SYNTAX, "path component ''{0}'' is not canonical", s);
-            SVNErrorManager.error(err);
-        }
-
-        if ("/".equals(f)) {
-            if (s.startsWith("/")) {
-                return s;
-            }
-            return "/" + s;
-        }
-        return append(f, s);
     }
 
     public static boolean isSinglePathComponent(String name) {
@@ -425,14 +374,10 @@ public class SVNPathUtil {
     }
 
     public static String getRelativePath(String parent, String child) {
+        parent = parent.replace(File.separatorChar, '/');
+        child = child.replace(File.separatorChar, '/');
         String relativePath = getPathAsChild(parent, child);
         return relativePath == null ? "" : relativePath;
-    }
-
-    public static String getRelativePath(File parent, File child) {
-        String parentPath = parent.getAbsolutePath().replace(File.separatorChar, '/');
-        String childPath = child.getAbsolutePath().replace(File.separatorChar, '/');
-        return getRelativePath(parentPath, childPath);
     }
     
     public static boolean isURL(String pathOrUrl) {
@@ -443,7 +388,5 @@ public class SVNPathUtil {
                         || pathOrUrl.startsWith("svn://")
                         || (pathOrUrl.startsWith("svn+") && pathOrUrl.indexOf("://") > 4)
                         || pathOrUrl.startsWith("file://"));
-    }
-
-    
+    }    
 }

@@ -596,7 +596,7 @@ public class FSTransactionRoot extends FSRoot {
             if (childNode.getCount() != -1) {
                 childNode.setCount(childNode.getCount() + 1);
             }
-            childNode.setCreatedPath(SVNPathUtil.concatToAbs(parentPath, childName));
+            childNode.setCreatedPath(SVNPathUtil.getAbsolutePath(SVNPathUtil.append(parentPath, childName)));
             newNodeId = createSuccessor(childNode.getId(), childNode, copyId);
             setEntry(parent, childName, newNodeId, childNode.getType());
         }

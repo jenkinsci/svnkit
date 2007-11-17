@@ -924,7 +924,7 @@ public class SVNLogClient extends SVNBasicClient {
                             if (relPath.startsWith("/")) {
                                 relPath = relPath.substring(1);
                             }
-                            copyFromPath = SVNPathUtil.concatToAbs(logEntryPath.getCopyPath(), relPath);
+                            copyFromPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(logEntryPath.getCopyPath(), relPath));
                         }
                         myCopyFromLocation = new SVNLocationEntry(logEntryPath.getCopyRevision(), copyFromPath);
                         break;

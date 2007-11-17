@@ -188,12 +188,13 @@ public class SVNDumpEditor implements ISVNEditor {
                 comparePath = cmpPath;
                 compareRevision = cmpRev;
             }
-            comparePath = SVNPathUtil.canonicalizeAbsPath(comparePath);
+            comparePath = SVNPathUtil.canonicalizePath(comparePath);
+            comparePath = SVNPathUtil.getAbsolutePath(comparePath);
             
-            FSRevisionRoot compareRoot = null; 
+            FSRevisionRoot compareRoot = null;
             boolean mustDumpProps = false;
             boolean mustDumpText = false;
-            String canonicalPath = SVNPathUtil.canonicalizeAbsPath(path);
+            String canonicalPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.canonicalizePath(path));
             switch(nodeAction) {
                 case SVNAdminHelper.NODE_ACTION_CHANGE:
                     writeDumpData(SVNAdminHelper.DUMPFILE_NODE_ACTION + ": change\n");
@@ -385,7 +386,7 @@ public class SVNDumpEditor implements ISVNEditor {
     private DirectoryInfo createDirectoryInfo(String path, String copyFromPath, long copyFromRev, boolean added, DirectoryInfo parent) throws SVNException {
         String fullPath = null;
         if (parent != null) {
-            fullPath = SVNPathUtil.concatToAbs(myRootPath, path);
+            fullPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(myRootPath, path));
         } else {
             fullPath = myRootPath;
         }

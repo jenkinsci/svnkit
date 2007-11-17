@@ -68,7 +68,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
         myIsUsePreCommitHook = usePreCommitHook;
         myIsUsePostCommitHook = usePostCommitHook;
         myUUIDAction = uuidAction;
-        myParentDir = SVNPathUtil.canonicalizeAbsPath(parentDir);
+//        myParentDir = SVNPathUtil.getAbsolutePath(SVNPathUtil.canonicalizePath(parentDir));
         myRevisionsMap = new HashMap();
         myDecoder = decoder;
     }
@@ -471,9 +471,9 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
         if (headers.containsKey(SVNAdminHelper.DUMPFILE_NODE_PATH)) {
             String nodePath = (String) headers.get(SVNAdminHelper.DUMPFILE_NODE_PATH); 
             if (myParentDir != null) {
-                baton.myPath = SVNPathUtil.concatToAbs(myParentDir, nodePath.startsWith("/") ? nodePath.substring(1) : nodePath);
+                baton.myPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(myParentDir, nodePath));
             } else {
-                baton.myPath = SVNPathUtil.canonicalizeAbsPath(nodePath);
+                baton.myPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.canonicalizePath(nodePath));
             }
         }
         
@@ -508,10 +508,11 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
         if (headers.containsKey(SVNAdminHelper.DUMPFILE_NODE_COPYFROM_PATH)) {
             String copyFromPath = (String) headers.get(SVNAdminHelper.DUMPFILE_NODE_COPYFROM_PATH);
             if (myParentDir != null) {
-                baton.myCopyFromPath = SVNPathUtil.concatToAbs(myParentDir, copyFromPath.startsWith("/") ? copyFromPath.substring(1) : copyFromPath);
+                baton.myCopyFromPath = SVNPathUtil.append(myParentDir, copyFromPath);
             } else {
-                baton.myCopyFromPath = SVNPathUtil.canonicalizeAbsPath(copyFromPath);
+                baton.myCopyFromPath = SVNPathUtil.canonicalizePath(copyFromPath);
             }
+            baton.myCopyFromPath = SVNPathUtil.getAbsolutePath(baton.myCopyFromPath);
         }
         
         if (headers.containsKey(SVNAdminHelper.DUMPFILE_TEXT_CONTENT_LENGTH)) {

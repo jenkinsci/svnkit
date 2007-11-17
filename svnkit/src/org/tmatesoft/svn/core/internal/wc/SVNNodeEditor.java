@@ -306,8 +306,8 @@ public class SVNNodeEditor implements ISVNEditor {
         
         for (Iterator children = node.myChildren.iterator(); children.hasNext();) {
             Node childNode = (Node) children.next();
-            String childPath = SVNPathUtil.concatToAbs(path, childNode.myName);
-            String childBasePath = SVNPathUtil.concatToAbs(basePath, childNode.myName);
+            String childPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(path, childNode.myName));
+            String childBasePath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(basePath, childNode.myName));
             diffImpl(root, baseRoot, childPath, childBasePath, childNode, generator, os);
         }
     }
@@ -393,7 +393,7 @@ public class SVNNodeEditor implements ISVNEditor {
         
         for (Iterator children = node.myChildren.iterator(); children.hasNext();) {
             Node childNode = (Node) children.next();
-            String fullPath = SVNPathUtil.concatToAbs(path, childNode.myName);
+            String fullPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(path, childNode.myName));
             traverseChangedDirsImpl(childNode, fullPath, handler);
         }
     }
@@ -430,7 +430,7 @@ public class SVNNodeEditor implements ISVNEditor {
         
         for (Iterator children = node.myChildren.iterator(); children.hasNext();) {
             Node childNode = (Node) children.next();
-            String fullPath = SVNPathUtil.concatToAbs(path, childNode.myName);
+            String fullPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(path, childNode.myName));
             traverseChangedTreeImpl(childNode, fullPath, includeCopyInfo, handler);
         }
     }
@@ -442,7 +442,7 @@ public class SVNNodeEditor implements ISVNEditor {
         
         if (node.myParent != null) {
             SVNLocationEntry location = findRealBaseLocation(node.myParent);
-            return new SVNLocationEntry(location.getRevision(), SVNPathUtil.concatToAbs(location.getPath(), node.myName));
+            return new SVNLocationEntry(location.getRevision(), SVNPathUtil.getAbsolutePath(SVNPathUtil.append(location.getPath(), node.myName)));
         }
 
         return new SVNLocationEntry(-1, "/");

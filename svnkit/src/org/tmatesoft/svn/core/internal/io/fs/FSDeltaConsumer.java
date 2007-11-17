@@ -55,7 +55,7 @@ public class FSDeltaConsumer implements ISVNDeltaConsumer {
     }
 
     public void applyTextDelta(String path, String baseChecksum) throws SVNException {
-        String fullPath = SVNPathUtil.concatToAbs(myBasePath, path);
+        String fullPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(myBasePath, path));
         FSParentPath parentPath = myTxnRoot.openPath(fullPath, true, true);
 
         if ((myTxnRoot.getTxnFlags() & FSTransactionRoot.SVN_FS_TXN_CHECK_LOCKS) != 0) {
@@ -97,7 +97,7 @@ public class FSDeltaConsumer implements ISVNDeltaConsumer {
     }
 
     public void applyText(String path) throws SVNException {
-        String fullPath = SVNPathUtil.concatToAbs(myBasePath, path);
+        String fullPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(myBasePath, path));
         FSParentPath parentPath = myTxnRoot.openPath(fullPath, true, true);
 
         if ((myTxnRoot.getTxnFlags() & FSTransactionRoot.SVN_FS_TXN_CHECK_LOCKS) != 0) {

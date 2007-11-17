@@ -166,7 +166,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
     private void addToPathMap(String path, String linkPath) {
         String normalizedPath = DAVPathUtil.normalize(path);
         String repositoryPath = linkPath == null ? normalizedPath : linkPath;
-        getPathMap().put(SVNPathUtil.canonicalizeAbsPath(path), repositoryPath);
+        getPathMap().put(SVNPathUtil.getAbsolutePath(path), repositoryPath);
     }
 
     private boolean isInitialized() {
@@ -285,7 +285,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
                 dstPath = getRepositoryManager().getRepositoryRelativePath(dstURL);
                 setDstPath(dstPath);
                 setDstURL(getRepositoryManager().convertHttpToFile(dstURL));
-                addToPathMap(SVNPathUtil.concatToAbs(srcPath, getUpdateRequest().getTarget()), dstPath);
+                addToPathMap(SVNPathUtil.getAbsolutePath(SVNPathUtil.append(srcPath, getUpdateRequest().getTarget())), dstPath);
             }
 
             SVNURL repositoryURL = getRepositoryManager().convertHttpToFile(getUpdateRequest().getSrcURL());
@@ -369,7 +369,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
     }
 
     private String getRealPath(String path) throws SVNException {
-        path = SVNPathUtil.concatToAbs(getAnchor(), path);
+        path = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(getAnchor(), path));
         if (getPathMap().isEmpty()) {
             return path;
         }

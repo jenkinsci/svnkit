@@ -40,7 +40,8 @@ public class SVNLookCatCommand extends SVNCommand {
             System.exit(1);
         }
         File reposRoot = new File(getCommandLine().getPathAt(0));  
-        String path = SVNPathUtil.canonicalizeAbsPath(getCommandLine().getPathAt(1));
+        String path = SVNPathUtil.canonicalizePath(getCommandLine().getPathAt(1));
+        path = SVNPathUtil.getAbsolutePath(path);
         
         SVNRevision revision = SVNRevision.HEAD;
         SVNLookClient lookClient = getClientManager().getLookClient();

@@ -48,7 +48,8 @@ public class SVNLookHistoryCommand extends SVNCommand implements ISVNHistoryHand
         File reposRoot = new File(getCommandLine().getPathAt(0));  
         String path = null;
         if (getCommandLine().getPathCount() > 1) {
-            path = SVNPathUtil.canonicalizeAbsPath(getCommandLine().getPathAt(1));
+            path = SVNPathUtil.canonicalizePath(getCommandLine().getPathAt(1));
+            path = SVNPathUtil.getAbsolutePath(path);
         }
         myIsIncludeIDs = getCommandLine().hasArgument(SVNArgument.SHOW_IDS);
         

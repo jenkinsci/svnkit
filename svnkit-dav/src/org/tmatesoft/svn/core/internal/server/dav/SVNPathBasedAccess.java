@@ -513,7 +513,7 @@ public class SVNPathBasedAccess {
                 } else {
                     String currentPath = path;
                     while (currentPath.length() > 0 && !"/".equals(currentPath)) {
-                        currentPath = SVNPathUtil.canonicalizeAbsPath(SVNPathUtil.removeTail(currentPath));
+                        currentPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.removeTail(currentPath));
                         pathAccess = checkCurrentPath(currentPath, user);
                         if (isAccessDetermined(pathAccess, requestedAccess)) {
                             accessGranted = isAccessGranted(pathAccess, requestedAccess);

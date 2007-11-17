@@ -98,7 +98,8 @@ public class FSCommitter {
         }
 
         if (propName.equals(SVNProperty.MERGE_INFO)) {
-            String canonicalPath = SVNPathUtil.canonicalizeAbsPath(path);
+            String canonicalPath = SVNPathUtil.canonicalizePath(path);
+            canonicalPath = SVNPathUtil.getAbsolutePath(canonicalPath);
             myTxnRoot.setTxnMergeInfo(canonicalPath, propValue);
             myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNProperty.TXN_CONTAINS_MERGEINFO, 
                                           SVNProperty.toString(true));
@@ -204,7 +205,8 @@ public class FSCommitter {
 
         FSRevisionNode newRevNode = new FSRevisionNode();
         newRevNode.setType(isDir ? SVNNodeKind.DIR : SVNNodeKind.FILE);
-        newRevNode.setCreatedPath(SVNPathUtil.concatToAbs(parentPath, entryName));
+        String createdPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(parentPath, entryName));
+        newRevNode.setCreatedPath(createdPath);
         newRevNode.setCopyRootPath(parent.getCopyRootPath());
         newRevNode.setCopyRootRevision(parent.getCopyRootRevision());
         newRevNode.setCopyFromRevision(SVNRepository.INVALID_REVISION);
@@ -346,7 +348,8 @@ public class FSCommitter {
             if (toRevNode.getCount() != -1) {
                 toRevNode.setCount(toRevNode.getCount() + 1);
             }
-            toRevNode.setCreatedPath(SVNPathUtil.concatToAbs(toNode.getCreatedPath(), entryName));
+            String createdPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(toNode.getCreatedPath(), entryName));
+            toRevNode.setCreatedPath(createdPath);
             toRevNode.setCopyFromPath(fromPath);
             toRevNode.setCopyFromRevision(fromRevision);
 
@@ -514,22 +517,22 @@ public class FSCommitter {
                 }
             } else {
                 if (sourceEntry == null || targetEntry == null) {
-                    SVNErrorManager.error(FSErrors.errorConflict(SVNPathUtil.concatToAbs(targetPath, ancestorEntryName)));
+                    SVNErrorManager.error(FSErrors.errorConflict(SVNPathUtil.getAbsolutePath(SVNPathUtil.append(targetPath, ancestorEntryName))));
                 }
 
                 if (sourceEntry.getType() == SVNNodeKind.FILE || targetEntry.getType() == SVNNodeKind.FILE || ancestorEntry.getType() == SVNNodeKind.FILE) {
-                    SVNErrorManager.error(FSErrors.errorConflict(SVNPathUtil.concatToAbs(targetPath, ancestorEntryName)));
+                    SVNErrorManager.error(FSErrors.errorConflict(SVNPathUtil.getAbsolutePath(SVNPathUtil.append(targetPath, ancestorEntryName))));
                 }
 
                 if (!sourceEntry.getId().getNodeID().equals(ancestorEntry.getId().getNodeID()) || !sourceEntry.getId().getCopyID().equals(ancestorEntry.getId().getCopyID())
                         || !targetEntry.getId().getNodeID().equals(ancestorEntry.getId().getNodeID()) || !targetEntry.getId().getCopyID().equals(ancestorEntry.getId().getCopyID())) {
-                    SVNErrorManager.error(FSErrors.errorConflict(SVNPathUtil.concatToAbs(targetPath, ancestorEntryName)));
+                    SVNErrorManager.error(FSErrors.errorConflict(SVNPathUtil.getAbsolutePath(SVNPathUtil.append(targetPath, ancestorEntryName))));
                 }
 
                 FSRevisionNode sourceEntryNode = myFSFS.getRevisionNode(sourceEntry.getId());
                 FSRevisionNode targetEntryNode = myFSFS.getRevisionNode(targetEntry.getId());
                 FSRevisionNode ancestorEntryNode = myFSFS.getRevisionNode(ancestorEntry.getId());
-                String childTargetPath = SVNPathUtil.concatToAbs(targetPath, targetEntry.getName());
+                String childTargetPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(targetPath, targetEntry.getName()));
                 merge(childTargetPath, targetEntryNode, sourceEntryNode, ancestorEntryNode, txnId);
             }
 
@@ -541,7 +544,7 @@ public class FSCommitter {
             FSEntry sourceEntry = (FSEntry) sourceEntries.get(sourceEntryName);
             FSEntry targetEntry = (FSEntry) targetEntries.get(sourceEntryName);
             if (targetEntry != null) {
-                SVNErrorManager.error(FSErrors.errorConflict(SVNPathUtil.concatToAbs(targetPath, targetEntry.getName())));
+                SVNErrorManager.error(FSErrors.errorConflict(SVNPathUtil.getAbsolutePath(SVNPathUtil.append(targetPath, targetEntry.getName()))));
             }
             myTxnRoot.setEntry(target, sourceEntry.getName(), sourceEntry.getId(), sourceEntry.getType());
         }

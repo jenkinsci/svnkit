@@ -577,11 +577,11 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 if (myTarget.equals(child.myPath)) {
                     childRelPath = "";
                 } else {
-                    childRelPath = SVNPathUtil.getRelativePath(myTarget, child.myPath);
+                    childRelPath = SVNPathUtil.getRelativePath(myTarget.getAbsolutePath(), child.myPath.getAbsolutePath());
                 }
                 
                 SVNEntry childEntry = myWCAccess.getVersionedEntry(child.myPath, false);
-                String childMergeSourcePath = SVNPathUtil.concatToAbs(parentMergeSourcePath, childRelPath);
+                String childMergeSourcePath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(parentMergeSourcePath, childRelPath));
                 if (myIsOperativeMerge) {
                     TreeMap childMerges = new TreeMap();
                     SVNMergeRange childMergeRange = new SVNMergeRange(range.getStartRevision(), 
@@ -985,9 +985,9 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             if (myTarget.equals(childMergePath.myPath)) {
                 childRelativePath = "";
             } else {
-                childRelativePath = SVNPathUtil.getRelativePath(myTarget, childMergePath.myPath);
+                childRelativePath = SVNPathUtil.getRelativePath(myTarget.getAbsolutePath(), childMergePath.myPath.getAbsolutePath());
             }
-            String childMergeSrcPath = SVNPathUtil.concatToAbs(parentMergeSrcPath, childRelativePath); 
+            String childMergeSrcPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(parentMergeSrcPath, childRelativePath));
             SVNEntry childEntry = myWCAccess.getVersionedEntry(childMergePath.myPath, false);
             boolean[] indirect = new boolean[1];
             indirect[0] = false;
@@ -1127,9 +1127,9 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                     SVNVersionedProperties props = adminArea.getProperties(entry.getName());
                     mergeInfoProp = props.getPropertyValue(SVNProperty.MERGE_INFO);
                     if (mergeInfoProp != null) {
-                        String relToTargetPath = SVNPathUtil.getRelativePath(target, path);
-                        String mergeSrcChildPath = SVNPathUtil.concatToAbs(mergeSrcPath, 
-                                                                           relToTargetPath);
+                        String relToTargetPath = SVNPathUtil.getRelativePath(target.getAbsolutePath(), path.getAbsolutePath());
+                        String mergeSrcChildPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(mergeSrcPath,
+                                                                           relToTargetPath));
                         Map mergeInfo = SVNMergeInfoManager.parseMergeInfo(new StringBuffer(mergeInfoProp), 
                                 null);
                         if (mergeInfo.containsKey(mergeSrcChildPath)) {
@@ -1351,7 +1351,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 if (childRelPath.startsWith("/")) {
                     childRelPath = childRelPath.substring(1);
                 }
-                reposPath = SVNPathUtil.concatToAbs(parentReposPath, childRelPath);
+                reposPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(parentReposPath, childRelPath));
             } else {
                 reposPath = parentReposPath;
             }

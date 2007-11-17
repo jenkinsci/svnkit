@@ -264,7 +264,7 @@ public class FSUpdateContext {
         getEditor().targetRevision(getTargetRevision());
 
         String fullTargetPath = getReportTargetPath();
-        String fullSourcePath = SVNPathUtil.concatToAbs(myRepository.getRepositoryPath(""), getReportTarget());
+        String fullSourcePath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(myRepository.getRepositoryPath(""), getReportTarget()));
         FSEntry targetEntry = fakeDirEntry(fullTargetPath, getTargetRoot());
         FSRevisionRoot srcRoot = getSourceRoot(sourceRevision);
         FSEntry sourceEntry = fakeDirEntry(fullSourcePath, srcRoot);
@@ -329,9 +329,9 @@ public class FSUpdateContext {
                 }
 
                 String entryEditPath = SVNPathUtil.append(editPath, entryName);
-                String entryTargetPath = SVNPathUtil.concatToAbs(targetPath, entryName);
+                String entryTargetPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(targetPath, entryName));
                 FSEntry targetEntry = (FSEntry) targetEntries.get(entryName);
-                String entrySourcePath = sourcePath != null ? SVNPathUtil.concatToAbs(sourcePath, entryName) : null;
+                String entrySourcePath = sourcePath != null ? SVNPathUtil.getAbsolutePath(SVNPathUtil.append(sourcePath, entryName)) : null;
                 FSEntry sourceEntry = sourceEntries != null ? (FSEntry) sourceEntries.get(entryName) : null;
                 
                 if (requestedDepth != SVNDepth.FILES || ((targetEntry == null || 
@@ -407,11 +407,11 @@ public class FSUpdateContext {
                         continue;
                     }
                     srcEntry = sourceEntries != null ? (FSEntry) sourceEntries.get(tgtEntry.getName()) : null;                    
-                    entrySourcePath = srcEntry != null ? SVNPathUtil.concatToAbs(sourcePath, tgtEntry.getName()) : null;
+                    entrySourcePath = srcEntry != null ? SVNPathUtil.getAbsolutePath(SVNPathUtil.append(sourcePath, tgtEntry.getName())) : null;
                 }
 
                 String entryEditPath = SVNPathUtil.append(editPath, tgtEntry.getName());
-                String entryTargetPath = SVNPathUtil.concatToAbs(targetPath, tgtEntry.getName());
+                String entryTargetPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(targetPath, tgtEntry.getName()));
                 updateEntry(sourceRevision, entrySourcePath, srcEntry, entryTargetPath, 
                             tgtEntry, entryEditPath, null, getDepthBelow(wcDepth), 
                             getDepthBelow(requestedDepth));
