@@ -15,7 +15,10 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -34,12 +37,20 @@ public class SVNExternal {
     
     private SVNRevision myRevision;
     private SVNRevision myPegRevision;
-    private SVNURL myURL;
+    private String myURL;
     private String myPath;
+    private SVNURL myResolvedURL;
 
     private SVNExternal() {
         myRevision = SVNRevision.UNDEFINED;
         myPegRevision = SVNRevision.UNDEFINED;
+    }
+    
+    public SVNExternal(String target, String url, SVNRevision pegRevision, SVNRevision revision) {
+        myPath = target;
+        myURL = url;
+        myRevision = revision;
+        myPegRevision = pegRevision;
     }
     
     public SVNRevision getRevision() {
@@ -50,24 +61,87 @@ public class SVNExternal {
         return myPegRevision;
     }
     
-    public SVNURL getURL() {
-        return myURL;
-    }
-    
     public String getPath() {
         return myPath;
     }
+    
+    public SVNURL resolveURL(SVNURL rootURL, SVNURL ownerURL) throws SVNException {
+        String canonicalURL = SVNPathUtil.canonicalizePath(myURL);
+        if (SVNPathUtil.isURL(canonicalURL)) {
+            myResolvedURL = SVNURL.parseURIEncoded(canonicalURL); 
+            return getResolvedURL();
+        }
+        if (myURL.startsWith("../") || myURL.startsWith("^/")) {
+            // ../ relative to the parent directory of the external
+            // ^/     relative to the repository root
+            String[] base = myURL.startsWith("../") ? ownerURL.getPath().split("/") : rootURL.getPath().split("/");
+            LinkedList baseList = new LinkedList(Arrays.asList(base));
+            if (canonicalURL.startsWith("^/")) {
+                canonicalURL = canonicalURL.substring("^/".length());
+            }
+            String[] relative = canonicalURL.split("/");
+            for (int i = 0; i < relative.length; i++) {
+                if ("..".equals(relative[i])) {
+                    // remove last from base.
+                    if (!baseList.isEmpty()) {
+                        baseList.removeLast();
+                    }
+                } else {
+                    baseList.add(relative[i]);
+                }
+            }
+            String finalPath = "/";
+            for (Iterator segments = baseList.iterator(); segments.hasNext();) {
+                String segment = (String) segments.next();
+                finalPath = SVNPathUtil.append(finalPath, segment);
+            }
+            myResolvedURL = ownerURL.setPath(finalPath, true);
+            return getResolvedURL();
+        }
+        
+        if (myURL.indexOf("/../") >= 0 || myURL.startsWith("../") || myURL.endsWith("/..")) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "The external relative URL ''{0}'' cannot have backpaths, i.e. ''..''.", myURL);
+            SVNErrorManager.error(err);
+        }
+        
+        if (myURL.startsWith("//")) {
+            // //     relative to the scheme
+            myResolvedURL = SVNURL.parseURIEncoded(SVNPathUtil.canonicalizePath(rootURL.getProtocol() + ":" + myURL));
+            return getResolvedURL();
+        } else if (myURL.startsWith("/")) {
+            // /      relative to the server's host
+            myResolvedURL = ownerURL.setPath(myURL, true);
+            return getResolvedURL();
+        }
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Unrecognized format for the relative external URL ''{0}''.", myURL);
+        SVNErrorManager.error(err);
+        return null;
+    }
+
+    public SVNURL getResolvedURL() {
+        return myResolvedURL;
+    }
+
+
+    public String toString() {
+        return myPath + " -r" +myRevision + " " + myURL + "@[" + myPegRevision + "]";
+    }
 
     public static SVNExternal[] parseExternals(String owner, String description) throws SVNException {
-        String[] lines = description.split("\r\n");
+        List lines = new ArrayList();
+        for(StringTokenizer tokenizer = new StringTokenizer(description, "\r\n"); tokenizer.hasMoreTokens();) {
+            lines.add(tokenizer.nextToken());
+        }
         Collection externals = new ArrayList();
-        for (int i = 0; i < lines.length; i++) {
-            String line = lines[i].trim();
+        for (int i = 0; i < lines.size(); i++) {
+            String line = ((String) lines.get(i)).trim();
             if ("".equals(line) || line.startsWith("#")) {
                 continue;
             }
-            String[] lineParts = line.split(" \t");
-            List tokens = new ArrayList(Arrays.asList(lineParts));
+            List tokens = new ArrayList();
+            for(StringTokenizer tokenizer = new StringTokenizer(line, " \t"); tokenizer.hasMoreTokens();) {
+                tokens.add(tokenizer.nextToken());
+            }
             if (tokens.size() < 2 || tokens.size() > 4) {
                 reportParsingError(owner, line);
             }
@@ -78,14 +152,17 @@ public class SVNExternal {
             boolean token0isURL = SVNPathUtil.isURL(token0); 
             boolean token1isURL = SVNPathUtil.isURL(token1);
             
-            if (revisionToken == 0 || token0isURL || token1isURL) {
+            if (revisionToken == 0 || token0isURL || !token1isURL) {
                 external.myPath = token1;
                 SVNPath path = new SVNPath(token0, true);
-                external.myURL = path.getURL();
+                external.myURL = path.getTarget();
                 external.myPegRevision = path.getPegRevision();
+                if (external.myPegRevision == SVNRevision.BASE) {
+                    external.myPegRevision = SVNRevision.HEAD;
+                }
             } else {
                 external.myPath = token0;
-                external.myURL = SVNURL.parseURIEncoded(token1);
+                external.myURL = token1;
                 external.myPegRevision = external.myRevision;
             }
             if (external.myPegRevision == SVNRevision.UNDEFINED) {
@@ -118,14 +195,19 @@ public class SVNExternal {
                 } else if (tokens.size() == 3) {
                     revisionStr = ((String) tokens.get(i)).substring(2); 
                 }
-                if (revisionStr == null) {
+                if (revisionStr == null || "".equals(revisionStr)) {
                     reportParsingError(owner, line);
                 }
                 long revNumber = -1;
                 try {
                     revNumber = Long.parseLong(revisionStr);
+                    if (revNumber < 0) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REVISION_NUMBER_PARSE_ERROR, "Negative revision number found parsing ''{0}''", revisionStr);
+                        SVNErrorManager.error(err);
+                    }
                 } catch (NumberFormatException nfe) {
-                    reportParsingError(owner, line);
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REVISION_NUMBER_PARSE_ERROR, "Invalid revision number found parsing ''{0}''", revisionStr);
+                    SVNErrorManager.error(err);
                 }
                 external.myRevision = SVNRevision.create(revNumber);
                 tokens.remove(i);
@@ -144,5 +226,4 @@ public class SVNExternal {
                 "Error parsing {0} property on ''{1}'': ''{2}''", new Object[] {SVNProperty.EXTERNALS, owner, line});
         SVNErrorManager.error(err);
     }
-
 }

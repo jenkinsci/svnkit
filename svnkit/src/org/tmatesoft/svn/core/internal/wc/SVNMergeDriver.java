@@ -1265,7 +1265,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         SVNEvent event = SVNEventFactory.createSVNEvent(adminArea.getFile(name), SVNNodeKind.FILE, mimeType, cstate, pstate, SVNStatusType.LOCK_INAPPLICABLE, action);
         this.handleEvent(event, ISVNEventHandler.UNKNOWN);
     }
-    
+    /*
     private void cleanUpNoOpMerge(LinkedList childrenWithMergeInfo) throws SVNException {
         if (childrenWithMergeInfo != null && !myIsOperativeMerge && !myIsDryRun &&
             myIsSameRepository && !myIsRecordOnly) {
@@ -1279,7 +1279,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 }
             }
         }
-    }
+    }*/
     
     private Map determinePerformedMerges(File targetPath, SVNMergeRange range, SVNDepth depth) throws SVNException {
         int numberOfSkippedPaths = mySkippedPaths != null ? mySkippedPaths.size() : 0;

@@ -21,7 +21,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
-import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
+import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
@@ -375,10 +375,10 @@ public class SVNWCUtil {
                 try {
                     SVNAdminArea dir = parentAccess.open(parent, false, 0);
                     SVNVersionedProperties props = dir.getProperties(dir.getThisDirName());
-                    SVNExternalInfo[] externals = SVNWCAccess.parseExternals("", props.getPropertyValue(SVNProperty.EXTERNALS));
+                    SVNExternal[] externals = SVNExternal.parseExternals(dir.getRoot().getAbsolutePath(), props.getPropertyValue(SVNProperty.EXTERNALS));
                     // now externals could point to our dir.
                     for (int i = 0; i < externals.length; i++) {
-                        SVNExternalInfo external = externals[i];
+                        SVNExternal external = externals[i];
                         File externalFile = new File(parent, external.getPath());
                         if (externalFile.equals(versionedDir)) {
                             return parentRoot;

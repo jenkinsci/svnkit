@@ -383,7 +383,7 @@ public class SVNDumpEditor implements ISVNEditor {
         return myDeltaCombiner;
     }
 
-    private DirectoryInfo createDirectoryInfo(String path, String copyFromPath, long copyFromRev, boolean added, DirectoryInfo parent) throws SVNException {
+    private DirectoryInfo createDirectoryInfo(String path, String copyFromPath, long copyFromRev, boolean added, DirectoryInfo parent) {
         String fullPath = null;
         if (parent != null) {
             fullPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(myRootPath, path));

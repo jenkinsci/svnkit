@@ -24,7 +24,6 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
-import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
@@ -125,12 +124,15 @@ public class SVNReporter implements ISVNReporterBaton {
 
     private void reportEntries(ISVNReporter reporter, SVNAdminArea adminArea, String dirPath, long dirRevision, boolean reportAll, SVNDepth depth) throws SVNException {
         SVNWCAccess wcAccess = myInfo.getWCAccess();
-        SVNExternalInfo[] externals = myInfo.addExternals(adminArea, adminArea.getProperties(adminArea.getThisDirName()).getPropertyValue(SVNProperty.EXTERNALS));
-        for (int i = 0; externals != null && i < externals.length; i++) {
-            externals[i].setOldExternal(externals[i].getNewURL(), externals[i].getNewRevision());
+        String externalsProperty = adminArea.getProperties(adminArea.getThisDirName()).getPropertyValue(SVNProperty.EXTERNALS);
+        SVNEntry thisEntry = adminArea.getEntry(adminArea.getThisDirName(), true);
+        if (externalsProperty != null) {
+            // use owners path as a key.
+            String areaPath = adminArea.getRelativePath(myInfo.getAnchor());
+            myInfo.addExternal(areaPath, externalsProperty, externalsProperty);
+            myInfo.addDepth(areaPath, thisEntry.getDepth());
         }
 
-        SVNEntry thisEntry = adminArea.getEntry(adminArea.getThisDirName(), true);
         String parentURL = thisEntry.getURL();
         for (Iterator e = adminArea.entries(true); e.hasNext();) {
             SVNEntry entry = (SVNEntry) e.next();

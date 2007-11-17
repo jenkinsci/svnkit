@@ -12,13 +12,9 @@
 package org.tmatesoft.svn.core.internal.wc.admin;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -31,7 +27,6 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
@@ -574,7 +569,7 @@ public class SVNWCAccess implements ISVNEventHandler {
         }
         return adminArea;
     }
-
+/*
     public static SVNExternalInfo[] parseExternals(String rootPath, String externals) throws SVNException {
         Collection result = new ArrayList();
         if (externals == null) {
@@ -645,7 +640,7 @@ public class SVNWCAccess implements ISVNEventHandler {
         }
         return (SVNExternalInfo[]) result.toArray(new SVNExternalInfo[result.size()]);
     }
-
+*/
     //analogous to retrieve_internal
     public SVNAdminArea getAdminArea(File path) {
         //internal retrieve

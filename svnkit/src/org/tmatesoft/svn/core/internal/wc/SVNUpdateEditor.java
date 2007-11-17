@@ -421,8 +421,21 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         if (modifiedWCProps != null || modifiedEntryProps != null || modifiedProps != null) {
             SVNLog log = myCurrentDirectory.getLog();
             if (modifiedProps != null && !modifiedProps.isEmpty()) {
-                myAdminInfo.addExternals(adminArea, (String) modifiedProps.get(SVNProperty.EXTERNALS));
-
+                if (modifiedProps.containsKey(SVNProperty.EXTERNALS)) {
+                    String oldExternal = adminArea.getProperties(adminArea.getThisDirName()).getPropertyValue(SVNProperty.EXTERNALS);
+                    String newExternal = (String) modifiedProps.get(SVNProperty.EXTERNALS);
+                    String path = myCurrentDirectory.getPath();
+                    if (oldExternal == null && newExternal != null) {
+                        myAdminInfo.addExternal(path, oldExternal, newExternal);
+                        myAdminInfo.addDepth(path, myCurrentDirectory.myDepth);
+                    } else if (oldExternal != null && newExternal == null) {
+                        myAdminInfo.addExternal(path, oldExternal, newExternal);
+                        myAdminInfo.addDepth(path, myCurrentDirectory.myDepth);
+                    } else if (!oldExternal.equals(newExternal)) {
+                        myAdminInfo.addExternal(path, oldExternal, newExternal);
+                        myAdminInfo.addDepth(path, myCurrentDirectory.myDepth);
+                    }
+                }
                 SVNVersionedProperties oldBaseProps = adminArea.getBaseProperties(adminArea.getThisDirName());
                 try {
                     propStatus = adminArea.mergeProperties(adminArea.getThisDirName(), oldBaseProps.asMap(), modifiedProps, true, false, log);

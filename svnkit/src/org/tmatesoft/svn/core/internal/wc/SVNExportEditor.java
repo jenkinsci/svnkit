@@ -104,7 +104,7 @@ public class SVNExportEditor implements ISVNEditor {
     public void changeDirProperty(String name, String value)
             throws SVNException {
         if (SVNProperty.EXTERNALS.equals(name) && value != null) {
-            myExternals.put(myCurrentDirectory, value);
+            myExternals.put(myCurrentPath, value);
         }
     }
 

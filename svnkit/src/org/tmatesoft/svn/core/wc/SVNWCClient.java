@@ -46,6 +46,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableOutputStream;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
+import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -513,7 +514,7 @@ public class SVNWCClient extends SVNBasicClient {
                     "''{0}'' is an entry property, thus not accessible to clients", propName);
             SVNErrorManager.error(err);
         }
-        propValue = validatePropertyValue(propName, propValue, force);
+        propValue = validatePropertyValue(path.getAbsolutePath(), propName, propValue, force);
         SVNWCAccess wcAccess = createWCAccess();
         try {
             wcAccess.probeOpen(path, true, admLockLevel);
@@ -554,7 +555,7 @@ public class SVNWCClient extends SVNBasicClient {
                     "''{0}'' is an entry property, thus not accessible to clients", propName);
             SVNErrorManager.error(err);
         }
-        propValue = validatePropertyValue(propName, propValue, force);
+        propValue = validatePropertyValue(url.toString(), propName, propValue, force);
         SVNRepository repos = createRepository(url, true);
         long revNumber = SVNRepository.INVALID_REVISION;
         try {
@@ -651,7 +652,7 @@ public class SVNWCClient extends SVNBasicClient {
                     "Bad property name ''{0}''", propName);
             SVNErrorManager.error(err);
         }
-        propValue = validatePropertyValue(propName, propValue, force);
+        propValue = validatePropertyValue(path.getAbsolutePath(), propName, propValue, force);
         SVNURL url = getURL(path);
         doSetRevisionProperty(url, revision, propName, propValue, force, handler);
     }
@@ -694,7 +695,7 @@ public class SVNWCClient extends SVNBasicClient {
                     "Bad property name ''{0}''", propName);
             SVNErrorManager.error(err);
         }
-        propValue = validatePropertyValue(propName, propValue, force);
+        propValue = validatePropertyValue(url.toString(), propName, propValue, force);
         if (!force && SVNRevisionProperty.AUTHOR.equals(propName) && propValue != null && propValue.indexOf('\n') >= 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_REVISION_AUTHOR_CONTAINS_NEWLINE, "Value will not be set unless forced");
             SVNErrorManager.error(err);
@@ -2666,8 +2667,7 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
 
-
-    private static String validatePropertyValue(String name, String value, boolean force) throws SVNException {
+    private static String validatePropertyValue(String owner, String name, String value, boolean force) throws SVNException {
         if (value == null) {
             return value;
         }
@@ -2684,7 +2684,7 @@ public class SVNWCClient extends SVNBasicClient {
                 value += "\n";
             }
             if (SVNProperty.EXTERNALS.equals(name)) {
-                SVNWCAccess.parseExternals("", value);
+                SVNExternal.parseExternals(owner, value);
             }
         } else if (SVNProperty.KEYWORDS.equals(name)) {
             value = value.trim();

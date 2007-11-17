@@ -153,7 +153,7 @@ public class SVNPropertiesManager {
                     propValue += "\n";
                 }
                 if (SVNProperty.EXTERNALS.equals(propName)) {
-                    SVNWCAccess.parseExternals("", propValue);
+                    SVNExternal.parseExternals(path.getAbsolutePath(), propValue);
                 }
             } else if (SVNProperty.KEYWORDS.equals(propName)) {
                 propValue = propValue.trim();

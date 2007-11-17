@@ -63,7 +63,6 @@ public class SVNStatusEditor {
     private SVNURL myRepositoryRoot;
     private Map myRepositoryLocks;
     private long myTargetRevision;
-    private Map myExternalsInfo;
     
     public SVNStatusEditor(ISVNOptions options, SVNWCAccess wcAccess, SVNAdminAreaInfo info, boolean noIgnore, boolean reportAll, SVNDepth depth,
             ISVNStatusHandler handler) {
@@ -74,19 +73,8 @@ public class SVNStatusEditor {
         myDepth = depth;
         myStatusHandler = handler;
         myExternalsMap = new HashMap();
-        myExternalsInfo = new HashMap();
         myGlobalIgnores = getGlobalIgnores(options);
         myTargetRevision = -1;
-    }
-    
-    public void setExternals(Map externals) {
-        if (externals != null) {
-            myExternalsMap = externals;
-        }
-    }
-    
-    public Map getExternals() {
-        return myExternalsMap;
     }
     
     public long getTargetRevision() {
@@ -120,12 +108,6 @@ public class SVNStatusEditor {
                         myDepth, myIsReportAll, myIsNoIgnore, null, false, myStatusHandler);
             }
         } finally {
-            if (hasTarget() && myExternalsInfo.containsKey(myAdminInfo.getAnchor())) {
-                SVNExternalInfo[] anchorExternals = (SVNExternalInfo[]) myExternalsInfo.get(myAdminInfo.getAnchor());
-                for (int i = 0; i < anchorExternals.length; i++) {
-                    myExternalsMap.remove(anchorExternals[i].getPath());
-                }
-            }
             cleanup();
         }
         return null;
@@ -146,12 +128,15 @@ public class SVNStatusEditor {
 
         String externals = dir.getProperties(dir.getThisDirName()).getPropertyValue(SVNProperty.EXTERNALS);
         if (externals != null) {
-            SVNExternalInfo[] externalsInfo = SVNWCAccess.parseExternals(dir.getRelativePath(myAdminInfo.getAnchor()), externals);
+            String path = dir.getRelativePath(myAdminInfo.getAnchor());
+            myAdminInfo.addExternal(path, externals, externals);
+            myAdminInfo.addDepth(path, dirEntry.getDepth());
+            
+            SVNExternal[] externalsInfo = SVNExternal.parseExternals(dir.getRelativePath(myAdminInfo.getAnchor()), externals);
             for (int i = 0; i < externalsInfo.length; i++) {
-                SVNExternalInfo external = externalsInfo[i];
-                myExternalsMap.put(external.getPath(), external);
+                SVNExternal external = externalsInfo[i];
+                myExternalsMap.put(SVNPathUtil.append(path, external.getPath()), external);
             }
-            myExternalsInfo.put(dir, externalsInfo);
         }
         if (entryName != null) {
             File file = (File) childrenFiles.get(entryName);
@@ -218,7 +203,8 @@ public class SVNStatusEditor {
 
     protected void cleanup() {
         if (hasTarget()) { 
-            myExternalsMap.remove(myAdminInfo.getAnchor().getRoot());
+            myAdminInfo.removeExternal("");
+            myAdminInfo.removeDepth("");
         }
     }
     

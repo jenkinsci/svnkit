@@ -71,6 +71,10 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
             String revStr = Long.toString(event.getRevision());
             buffer.append("Status against revision: " + SVNFormatUtil.formatString(revStr, 6, false) + "\n");
         } else if (event.getAction() == SVNEventAction.SKIP) {
+            if (event.getErrorMessage() != null && event.getExpectedAction() == SVNEventAction.UPDATE_EXTERNAL) {
+                // hack to let external test #14 work.
+                myEnvironment.getErr().println(event.getErrorMessage());
+            }
             if (event.getContentsStatus() == SVNStatusType.MISSING) {
                 buffer.append("Skipped missing target: '" + path + "'\n");
             } else {
