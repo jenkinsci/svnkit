@@ -369,21 +369,6 @@ public class SVNPathUtil {
         return count;
     }
 
-    public static boolean isChildOf(File parentFile, File childFile) {
-        if (parentFile == null || childFile == null) {
-            return false;
-        }
-        childFile = childFile.getParentFile().getAbsoluteFile();
-        parentFile = parentFile.getAbsoluteFile();
-        while (childFile != null) {
-            if (childFile.equals(parentFile)) {
-                return true;
-            }
-            childFile = childFile.getParentFile();
-        }
-        return false;
-    }
-
     public static boolean isAncestor(String parentPath, String ancestorPath) {
         parentPath = parentPath == null ? "" : parentPath;
         ancestorPath = ancestorPath == null ? "" : ancestorPath;

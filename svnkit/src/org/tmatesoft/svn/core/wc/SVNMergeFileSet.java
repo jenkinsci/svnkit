@@ -76,13 +76,13 @@ public class SVNMergeFileSet {
         myIsBinary = binary;
         
         if (myBaseFile != null) {
-            myBaseFilePath = SVNPathUtil.isChildOf(myAdminArea.getAdminDirectory(), myBaseFile) ? SVNFileUtil.getBasePath(myBaseFile) : null;
+            myBaseFilePath = SVNPathUtil.isAncestor(myAdminArea.getAdminDirectory().getAbsolutePath(), myBaseFile.getAbsolutePath()) ? SVNFileUtil.getBasePath(myBaseFile) : null;
         }
         if (myLocalFile != null) {
             myLocalFilePath = SVNFileUtil.getBasePath(myLocalFile);
         }
         if (myRepositoryFile != null) {
-            myRepositoryFilePath = SVNPathUtil.isChildOf(myAdminArea.getAdminDirectory(), myRepositoryFile) ? SVNFileUtil.getBasePath(myRepositoryFile) : null;
+            myRepositoryFilePath = SVNPathUtil.isAncestor(myAdminArea.getAdminDirectory().getAbsolutePath(), myRepositoryFile.getAbsolutePath()) ? SVNFileUtil.getBasePath(myRepositoryFile) : null;
         }
         if (myMergeResultFile != null) {
             myMergeResultFilePath = SVNFileUtil.getBasePath(myMergeResultFile);

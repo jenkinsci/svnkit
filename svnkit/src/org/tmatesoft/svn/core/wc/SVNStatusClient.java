@@ -415,7 +415,7 @@ public class SVNStatusClient extends SVNBasicClient {
                         // info's path is relative to path, we should make it relative to the root,
                         // and only if it is child of the root.
                         File ext = new File(path, infos[i].getPath());
-                        if (SVNPathUtil.isChildOf(target, ext)) {
+                        if (SVNPathUtil.isAncestor(target.getAbsolutePath(), ext.getAbsolutePath())) {
                             // put into the map - path relative to root is a key.
                             String extPath = ext.getAbsolutePath().replace(File.separatorChar, '/');
                             String rootPath = root.getAbsolutePath().replace(File.separatorChar, '/');

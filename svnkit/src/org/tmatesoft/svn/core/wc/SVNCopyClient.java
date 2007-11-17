@@ -857,7 +857,7 @@ public class SVNCopyClient extends SVNBasicClient {
             return;
         }
         // 1. can't copy src to its own child
-        if (SVNPathUtil.isChildOf(srcPath, dstPath) || srcPath.equals(dstPath)) {
+        if (SVNPathUtil.isAncestor(srcPath.getAbsolutePath(), dstPath.getAbsolutePath()) || srcPath.equals(dstPath)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Cannot copy ''{0}'' into its own child ''{1}''",
                     new Object[] {srcPath, dstPath});
             SVNErrorManager.error(err);
@@ -916,7 +916,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 if (srcParent.equals(dstParent)) {
                     adminArea = srcParentArea;
                 } else {
-                    if (srcType == SVNFileType.DIRECTORY && SVNPathUtil.isChildOf(srcParent, dstParent)) {
+                    if (srcType == SVNFileType.DIRECTORY && SVNPathUtil.isAncestor(srcParent.getAbsolutePath(), dstParent.getAbsolutePath())) {
                         adminArea = wcAccess.retrieve(dstParent);
                     } else {
                         adminArea = wcAccess.open(dstParent, true, 0);
@@ -1537,7 +1537,7 @@ public class SVNCopyClient extends SVNBasicClient {
         String name = path.getName();
         while (copyFromURL == null) {
             SVNEntry entry = null;
-            if (parentPath.equals(adminArea.getRoot()) || SVNPathUtil.isChildOf(adminArea.getRoot(), parentPath)) {
+            if (parentPath.equals(adminArea.getRoot()) || SVNPathUtil.isAncestor(adminArea.getRoot().getAbsolutePath(), parentPath.getAbsolutePath())) {
                 SVNAdminArea parentArea = adminArea.getWCAccess().retrieve(parentPath);
                 entry = parentArea.getVersionedEntry(parentArea.getThisDirName(), false);
             } else {
