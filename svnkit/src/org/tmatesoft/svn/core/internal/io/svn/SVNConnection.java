@@ -107,18 +107,6 @@ class SVNConnection {
         try {
             checkConnection();
             items = SVNReader.parse(is, "[(*N(*W)(*W))]", null);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_SVN_MALFORMED_DATA) {
-                // read let's say next 255 bytes into the logging stream.
-                byte[] malfored = new byte[1024];
-                try {
-                    // could it hang here for timeout?
-                    is.read(malfored);
-                } catch (IOException e1) {
-                    // ignore.
-                }
-            }
-            throw e;
         } finally {
             myRepository.getDebugLog().flushStream(myLoggingInputStream);
         }
