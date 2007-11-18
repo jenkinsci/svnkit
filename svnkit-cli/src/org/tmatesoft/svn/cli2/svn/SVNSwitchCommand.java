@@ -20,9 +20,8 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 
 
@@ -67,7 +66,7 @@ public class SVNSwitchCommand extends SVNCommand {
         if (targets.size() > 2) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR));
         }
-        SVNPath switchURL = new SVNPath((String) targets.get(0));;
+        SVNPath switchURL = new SVNPath((String) targets.get(0), true);
         if (!switchURL.isURL()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.BAD_URL, "''{0}'' doesn not appear to be a URL", switchURL.getTarget()));
         }
@@ -86,7 +85,7 @@ public class SVNSwitchCommand extends SVNCommand {
         if (!getSVNEnvironment().isQuiet()) {
             client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment(), false, false, false));
         }
-        client.doSwitch(target.getFile(), switchURL.getURL(), SVNRevision.UNDEFINED, getSVNEnvironment().getStartRevision(), getSVNEnvironment().getDepth(), getSVNEnvironment().isForce());    
+        client.doSwitch(target.getFile(), switchURL.getURL(), switchURL.getPegRevision(), getSVNEnvironment().getStartRevision(), getSVNEnvironment().getDepth(), getSVNEnvironment().isForce());    
     }
     
     protected void relocate(List targets) throws SVNException {

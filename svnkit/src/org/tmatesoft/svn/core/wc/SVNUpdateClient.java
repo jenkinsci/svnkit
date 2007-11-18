@@ -314,32 +314,20 @@ public class SVNUpdateClient extends SVNBasicClient {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "Directory ''{0}'' has no URL", anchorArea.getRoot());
                 SVNErrorManager.error(err);
             }
-            SVNRepository repository = createRepository(sourceURL, true);
-            long revNumber = getRevisionNumber(revision, repository, file);
-            if (pegRevision != null && pegRevision.isValid()) {
-                SVNRepositoryLocation[] locs = getLocations(url, null, null, pegRevision, SVNRevision.create(revNumber), SVNRevision.UNDEFINED);
-                url = locs[0].getURL();
-            }
-
+            long[] revs = new long[1];
+            // should fail on missing repository.
+            SVNRepository repository = createRepository(url, null, pegRevision, revision, revs);
+            long revNumber = revs[0];
+            url = repository.getLocation();
+            // root of the switched repos.
             SVNURL sourceRoot = repository.getRepositoryRoot(true);
-            if (!SVNPathUtil.isAncestor(sourceRoot.toString(), url.toString())) {
+            if (!SVNPathUtil.isAncestor(sourceRoot.toString(), sourceURL.toString())) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_SWITCH, "''{0}''\nis not the same repository as\n''{1}''",
                         new Object[] {url.toString(), sourceRoot.toString()});
                 SVNErrorManager.error(err);
-                repository = createRepository(sourceRoot, true);
             }
-            String path = SVNPathUtil.getPathAsChild(sourceRoot.toDecodedString(), url.toDecodedString());
-            if (!path.startsWith("/")) {
-                // should be treated as a path relative to repository root.
-                path = "/" + path;
-            }
-            SVNNodeKind targetKind = repository.checkPath(path, revNumber);
-            if (targetKind == SVNNodeKind.NONE) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_SWITCH, "Destination does not exist: ''{0}''", url.toString());
-                SVNErrorManager.error(err);
-            }
-            repository = createRepository(sourceURL, true);
-
+            // reparent to the sourceURL
+            repository.setLocation(sourceURL, false);
             String[] preservedExts = getOptions().getPreservedConflictFileExtensions();
             SVNUpdateEditor editor = new SVNUpdateEditor(info, url.toString(),                                                         
                                                          force, depth, preservedExts, 
