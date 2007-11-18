@@ -13,6 +13,8 @@
 package org.tmatesoft.svn.core.internal.io.svn;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -53,6 +55,8 @@ class SVNConnection {
     private static final String ABSENT_ENTRIES = "absent-entries";
     private static final String COMMIT_REVPROPS = "commit-revprops";
     private static final String MERGE_INFO = "mergeinfo";
+    private static final String DEPTH = "depth";
+    private static final String LOG_REVPROPS = "log-revprops";
 
     public SVNConnection(ISVNConnector connector, SVNRepositoryImpl repository) {
         myConnector = connector;
@@ -86,9 +90,44 @@ class SVNConnection {
     public boolean isMergeInfo() {
         return myIsMergeInfo;
     }
+    
+    private InputStream skipLeadingGrabage() throws SVNException {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream(256);
+        // buffer should be large enough to receive complete greeting. 
+        byte[] bytes = new byte[8192];
+        int r = 0;
+        try {
+            r = getInputStream().read(bytes);
+        } catch (IOException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Handshake failed: ''{0}''", e.getMessage());
+            SVNErrorManager.error(err);
+        }
+        if (r >= 0) {
+            buffer.write(bytes, 0, r);
+        }
+        bytes = buffer.toByteArray();
+        // look for '( '.
+        for (int i = 0; i < bytes.length - 1; i++) {
+            if (bytes[i] == '(' && bytes[i + 1] == ' ') {
+                return new ByteArrayInputStream(bytes, i, bytes.length - i);
+            }
+        }
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Handshake failed, received: ''{0}''", new String(bytes));
+        SVNErrorManager.error(err);
+        return null;
+    }
 
     protected void handshake(SVNRepositoryImpl repository) throws SVNException {
-        List items = read("nnll", null, true);
+        checkConnection();
+        InputStream is = skipLeadingGrabage();
+        List items = null;
+        try {
+            items = SVNReader.parse(is, "nnll", null);
+        } catch (SVNException e) {
+            handleIOError(e, true);
+        } finally {
+            myRepository.getDebugLog().flushStream(myLoggingInputStream);
+        }
         Long minVer = (Long) items.get(0);
         Long maxVer = (Long) items.get(1);
         if (minVer.longValue() > 2) {
@@ -102,7 +141,7 @@ class SVNConnection {
         myIsSVNDiff1 = SVNReader.hasValue(items, 3, SVNDIFF1);
         myIsCommitRevprops = SVNReader.hasValue(items, 3, COMMIT_REVPROPS);
         myIsMergeInfo = SVNReader.hasValue(items, 3, MERGE_INFO);
-        write("(n(www)s)", new Object[]{"2", EDIT_PIPELINE, SVNDIFF1, ABSENT_ENTRIES,
+        write("(n(wwwwww)s)", new Object[]{"2", EDIT_PIPELINE, SVNDIFF1, ABSENT_ENTRIES, DEPTH, MERGE_INFO, LOG_REVPROPS,
                 repository.getLocation().toString()});
     }
 
