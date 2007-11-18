@@ -13,6 +13,8 @@
 package org.tmatesoft.svn.core.internal.io.svn;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -73,8 +75,53 @@ class SVNConnection {
         return myIsSVNDiff1;
     }
 
+    private InputStream skipLeadingGrabage() throws SVNException {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream(256);
+        // buffer should be large enough to receive complete greeting. 
+        byte[] bytes = new byte[8192];
+        int r = 0;
+        try {
+            r = getInputStream().read(bytes);
+        } catch (IOException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Handshake failed: ''{0}''", e.getMessage());
+            SVNErrorManager.error(err);
+        }
+        if (r >= 0) {
+            buffer.write(bytes, 0, r);
+        }
+        bytes = buffer.toByteArray();
+        // look for '( '.
+        for (int i = 0; i < bytes.length - 1; i++) {
+            if (bytes[i] == '(' && bytes[i + 1] == ' ') {
+                return new ByteArrayInputStream(bytes, i, bytes.length - i);
+            }
+        }
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Handshake failed, received: ''{0}''", new String(bytes));
+        SVNErrorManager.error(err);
+        return null;
+    }
+    
     protected void handshake(SVNRepositoryImpl repository) throws SVNException {
-        Object[] items = read("[(*N(*W)(*W))]", null, true);
+        InputStream is = skipLeadingGrabage();
+        Object[] items = null;
+        try {
+            checkConnection();
+            items = SVNReader.parse(is, "[(*N(*W)(*W))]", null);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_SVN_MALFORMED_DATA) {
+                // read let's say next 255 bytes into the logging stream.
+                byte[] malfored = new byte[1024];
+                try {
+                    // could it hang here for timeout?
+                    is.read(malfored);
+                } catch (IOException e1) {
+                    // ignore.
+                }
+            }
+            throw e;
+        } finally {
+            myRepository.getDebugLog().flushStream(myLoggingInputStream);
+        }
         if (!SVNReader.hasValue(items, 0, 2)) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_BAD_VERSION, "Only protocol of version '2' or older is supported"));
         } else if (!SVNReader.hasValue(items, 2, EDIT_PIPELINE)) {
