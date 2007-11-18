@@ -123,8 +123,6 @@ class SVNConnection {
         List items = null;
         try {
             items = SVNReader.parse(is, "nnll", null);
-        } catch (SVNException e) {
-            handleIOError(e, true);
         } finally {
             myRepository.getDebugLog().flushStream(myLoggingInputStream);
         }
@@ -296,14 +294,14 @@ class SVNConnection {
 
     private void handleIOError(SVNException e, boolean readMalformedData) throws SVNException {
         if (readMalformedData && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_SVN_MALFORMED_DATA) {
-                byte[] malfored = new byte[1024];
-                try {
-                    getInputStream().read(malfored);
-                } catch (IOException e1) {
-                    //
-                }
+            byte[] malfored = new byte[1024];
+            try {
+                getInputStream().read(malfored);
+            } catch (IOException e1) {
+                //
             }
-            throw e;        
+        }
+        throw e;        
     }
     
     public void write(String template, Object[] items) throws SVNException {
