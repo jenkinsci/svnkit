@@ -397,7 +397,6 @@ public class SVNCommitUtil {
                     danglers.add(targetFile.getParentFile());
                 }
             }
-//            boolean recurse = recursive;
             SVNDepth forcedDepth = depth;
             if (entry.isCopied() && entry.getSchedule() == null) {
                 // if commit is forced => we could collect this entry, assuming
@@ -417,8 +416,7 @@ public class SVNCommitUtil {
                 }
             } else if (entry.isCopied() && entry.isScheduledForAddition()) {
                 if (force) {
-                    isRecursionForced = depth != SVNDepth.INFINITY;//!recursive;
-                    //recurse = true;
+                    isRecursionForced = depth != SVNDepth.INFINITY;
                     forcedDepth = SVNDepth.INFINITY;
                 }
             } else if (entry.isScheduledForDeletion() && force && depth != SVNDepth.INFINITY) {
@@ -443,7 +441,6 @@ public class SVNCommitUtil {
                 }
                 // this recursion is not considered as "forced", all children should be 
                 // deleted anyway.
-                //recurse = true;
                 forcedDepth = SVNDepth.INFINITY;
             }
 //            String relativePath = entry.getKind() == SVNNodeKind.DIR ? target : SVNPathUtil.removeTail(target);
@@ -452,6 +449,11 @@ public class SVNCommitUtil {
                                forcedDepth, isRecursionForced, changelistName, params);
         } while (targets.hasNext());
 
+        if (changelistName != null && commitables.isEmpty()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN_CHANGELIST, "Unknown changelist ''{0}''", changelistName);
+            SVNErrorManager.error(err);
+        }
+        
         for (Iterator ds = danglers.iterator(); ds.hasNext();) {
             baseAccess.checkCancelled();
             File file = (File) ds.next();
@@ -611,7 +613,7 @@ public class SVNCommitUtil {
         }
         
         if (propConflicts || textConflicts) {
-            if (changelistName == null || changelistName.equals(entry.getChangelistName())) {
+            if (isConsideredCommitable(changelistName, entry)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT, 
                         "Aborting commit: ''{0}'' remains in conflict", path);                    
                 SVNErrorManager.error(err);
@@ -714,7 +716,7 @@ public class SVNCommitUtil {
 
         if (commitAddition || commitDeletion || textModified || propsModified
                 || commitCopy || commitLock) {
-            if (changelistName == null || changelistName.equals(entry.getChangelistName())) {
+            if (isConsideredCommitable(changelistName, entry)) {
                 SVNCommitItem item = new SVNCommitItem(path, 
                         SVNURL.parseURIEncoded(url), cfURL != null ? SVNURL.parseURIEncoded(cfURL) : null, entry.getKind(), 
                         SVNRevision.create(entry.getRevision()), SVNRevision.create(cfRevision), 
@@ -776,7 +778,7 @@ public class SVNCommitUtil {
                     if (childDir == null) {
                         SVNFileType currentType = SVNFileType.getType(currentFile);
                         if (currentType == SVNFileType.NONE && currentEntry.isScheduledForDeletion()) {
-                            if (changelistName == null || changelistName.equals(entry.getChangelistName())) {
+                            if (isConsideredCommitable(changelistName, entry)) {
                                 SVNCommitItem item = new SVNCommitItem(currentFile,
                                         SVNURL.parseURIEncoded(currentURL), null, currentEntry.getKind(),
                                         SVNRevision.UNDEFINED, SVNRevision.UNDEFINED, false, true, false,
@@ -831,6 +833,10 @@ public class SVNCommitUtil {
         }
     }
 
+    private static boolean isConsideredCommitable(String changeListName, SVNEntry entry) {
+        return changeListName == null || (entry != null && changeListName.equals(entry.getChangelistName())); 
+    }
+    
     private static void collectLocks(SVNAdminArea adminArea, Map lockTokens) throws SVNException {
         for (Iterator ents = adminArea.entries(false); ents.hasNext();) {
             SVNEntry entry = (SVNEntry) ents.next();
