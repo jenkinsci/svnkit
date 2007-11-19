@@ -156,7 +156,7 @@ public class SVNWCManager {
                 SVNPropertiesManager.deleteWCProperties(dir, null, true);
             }
         }
-        SVNEvent event = SVNEventFactory.createSVNEvent(parentDir.getFile(name), kind, 0, SVNEventAction.ADD);
+        SVNEvent event = SVNEventFactory.createSVNEvent(parentDir.getFile(name), kind, null, 0, SVNEventAction.ADD, null, null, null);
         parentDir.getWCAccess().handleEvent(event);
     }
     
@@ -194,7 +194,7 @@ public class SVNWCManager {
             }
             
             if (SVNProperty.SCHEDULE_DELETE.equals(schedule)) {
-                SVNEvent event = SVNEventFactory.createSVNEvent(dir.getFile(entry.getName()), 0, SVNEventAction.DELETE);
+                SVNEvent event = SVNEventFactory.createSVNEvent(dir.getFile(entry.getName()), SVNNodeKind.UNKNOWN, null, 0, SVNEventAction.DELETE, null, null, null);
                 dir.getWCAccess().handleEvent(event);
             }
         }
@@ -245,7 +245,7 @@ public class SVNWCManager {
             dir.modifyEntry(entry.getName(), attributes, true, false);
             attributes.clear();
             if (SVNProperty.SCHEDULE_DELETE.equals(schedule)) {
-                SVNEvent event = SVNEventFactory.createSVNEvent(dir.getFile(entry.getName()), 0, SVNEventAction.DELETE);
+                SVNEvent event = SVNEventFactory.createSVNEvent(dir.getFile(entry.getName()), SVNNodeKind.UNKNOWN, null, 0, SVNEventAction.DELETE, null, null, null);
                 dir.getWCAccess().handleEvent(event);
             }
         }
@@ -282,7 +282,7 @@ public class SVNWCManager {
             dir.modifyEntry(entryName, attributes, true, false);
             attributes.clear();
             if (SVNProperty.SCHEDULE_DELETE.equals(schedule)) {
-                SVNEvent event = SVNEventFactory.createSVNEvent(dir.getFile(entryName), 0, SVNEventAction.DELETE);
+                SVNEvent event = SVNEventFactory.createSVNEvent(dir.getFile(entryName), SVNNodeKind.UNKNOWN, null, 0, SVNEventAction.DELETE, null, null, null);
                 dir.getWCAccess().handleEvent(event);
             }
             dir.saveEntries(false);
@@ -352,7 +352,7 @@ public class SVNWCManager {
                     if (removeMissingDirs && dir.getWCAccess().isMissing(path)) {
                         if (!entry.isScheduledForAddition() && !isExcluded) {
                             dir.deleteEntry(entry.getName());
-                            dir.getWCAccess().handleEvent(SVNEventFactory.createSVNEvent(dir.getFile(entry.getName()), entry.getKind(), entry.getRevision(), SVNEventAction.UPDATE_DELETE));
+                            dir.getWCAccess().handleEvent(SVNEventFactory.createSVNEvent(dir.getFile(entry.getName()), entry.getKind(), null, entry.getRevision(), SVNEventAction.UPDATE_DELETE, null, null, null));
                         }
                     } else {
                         SVNAdminArea childDir = dir.getWCAccess().retrieve(path);
@@ -509,7 +509,7 @@ public class SVNWCManager {
             log.save();
             root.runLogs();
         }
-        SVNEvent event = SVNEventFactory.createSVNEvent(root.getFile(name), 0, SVNEventAction.DELETE);
+        SVNEvent event = SVNEventFactory.createSVNEvent(root.getFile(name), SVNNodeKind.UNKNOWN, null, 0, SVNEventAction.DELETE, null, null, null);
         wcAccess.handleEvent(event);
         if (SVNProperty.SCHEDULE_ADD.equals(schedule)) {
             SVNWCManager.doDeleteUnversionedFiles(wcAccess, path, deleteFiles);

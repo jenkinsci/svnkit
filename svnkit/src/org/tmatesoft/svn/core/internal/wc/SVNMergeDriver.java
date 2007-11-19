@@ -398,7 +398,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         
         for (int i = 0; i < remainingRanges.length; i++) {
             SVNMergeRange nextRange = remainingRanges[i];
-            this.handleEvent(SVNEventFactory.createSVNEvent(dstPath, SVNNodeKind.NONE, SVNEventAction.MERGE_BEGIN, null, null, myIsSameURLs ? nextRange : null), ISVNEventHandler.UNKNOWN);
+            this.handleEvent(SVNEventFactory.createSVNEvent(dstPath, SVNNodeKind.NONE, null, SVNRepository.INVALID_REVISION, SVNEventAction.MERGE_BEGIN, null, null, myIsSameURLs ? nextRange : null), ISVNEventHandler.UNKNOWN);
 
             Map props1 = new HashMap();
             Map props2 = new HashMap();
@@ -488,7 +488,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         SVNMergeRange range = new SVNMergeRange(revision1, revision2, !targetMissingChild && 
                 (depth == SVNDepth.INFINITY || depth == SVNDepth.IMMEDIATES));
         
-        this.handleEvent(SVNEventFactory.createSVNEvent(dstPath, SVNNodeKind.NONE, SVNEventAction.MERGE_BEGIN, null, null, myIsSameURLs ? range : null),
+        this.handleEvent(SVNEventFactory.createSVNEvent(dstPath, SVNNodeKind.NONE, null, SVNRepository.INVALID_REVISION, SVNEventAction.MERGE_BEGIN, null, null, myIsSameURLs ? range : null),
                 ISVNEventHandler.UNKNOWN);
 
         SVNMergeCallback mergeCallback = new SVNMergeCallback(adminArea, myURL, myIsForce, myIsDryRun, 
@@ -1262,7 +1262,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     private void notifyFileMerge(SVNAdminArea adminArea, String name, SVNEventAction action, 
                                  SVNStatusType cstate, SVNStatusType pstate, String mimeType) throws SVNException {
         action = cstate == SVNStatusType.MISSING ? SVNEventAction.SKIP : action;
-        SVNEvent event = SVNEventFactory.createSVNEvent(adminArea.getFile(name), SVNNodeKind.FILE, mimeType, cstate, pstate, SVNStatusType.LOCK_INAPPLICABLE, action);
+        SVNEvent event = SVNEventFactory.createSVNEvent(adminArea.getFile(name), SVNNodeKind.FILE, mimeType, SVNRepository.INVALID_REVISION, cstate, pstate, SVNStatusType.LOCK_INAPPLICABLE, action, null, null, null);
         this.handleEvent(event, ISVNEventHandler.UNKNOWN);
     }
     /*

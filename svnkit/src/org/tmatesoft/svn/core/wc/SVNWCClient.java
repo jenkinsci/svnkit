@@ -1371,7 +1371,7 @@ public class SVNWCClient extends SVNBasicClient {
                 mimeType = (String) props.get(SVNProperty.MIME_TYPE);
             }
         }
-        SVNEvent event = SVNEventFactory.createSVNEvent(dir.getFile(path.getName()), SVNNodeKind.FILE, mimeType, SVNEventAction.ADD);
+        SVNEvent event = SVNEventFactory.createSVNEvent(dir.getFile(path.getName()), SVNNodeKind.FILE, mimeType, SVNRepository.INVALID_REVISION, SVNEventAction.ADD, null, null, null);
         dispatchEvent(event);
     }
     
@@ -1445,7 +1445,7 @@ public class SVNWCClient extends SVNBasicClient {
                     reverted |= true;
                     SVNErrorCode code = e.getErrorMessage().getErrorCode();
                     if (code == SVNErrorCode.ENTRY_NOT_FOUND || code == SVNErrorCode.UNVERSIONED_RESOURCE) {
-                        SVNEvent event = SVNEventFactory.createSVNEvent(path, SVNEventAction.SKIP, SVNEventAction.REVERT);
+                        SVNEvent event = SVNEventFactory.createSVNEvent(path, SVNNodeKind.UNKNOWN, null, SVNRepository.INVALID_REVISION, SVNEventAction.SKIP, SVNEventAction.REVERT, null, null);
                         dispatchEvent(event);
                         continue;
                     }
@@ -1476,7 +1476,7 @@ public class SVNWCClient extends SVNBasicClient {
         if (entry.getKind() == SVNNodeKind.DIR) {
             SVNFileType fileType = SVNFileType.getType(path);
             if (fileType != SVNFileType.DIRECTORY && !entry.isScheduledForAddition()) {
-                SVNEvent event = SVNEventFactory.createSVNEvent(dir.getFile(entry.getName()), entry.getKind(), entry.getRevision(), SVNEventAction.FAILED_REVERT);
+                SVNEvent event = SVNEventFactory.createSVNEvent(dir.getFile(entry.getName()), entry.getKind(), null, entry.getRevision(), SVNEventAction.FAILED_REVERT, null, null, null);
                 dispatchEvent(event);
                 return false;
             }
@@ -1537,7 +1537,7 @@ public class SVNWCClient extends SVNBasicClient {
             }
         }
         if (reverted) {
-            SVNEvent event = SVNEventFactory.createSVNEvent(dir.getFile(entry.getName()), entry.getKind(), entry.getRevision(), SVNEventAction.REVERT);
+            SVNEvent event = SVNEventFactory.createSVNEvent(dir.getFile(entry.getName()), entry.getKind(), null, entry.getRevision(), SVNEventAction.REVERT, null, null, null);
             dispatchEvent(event);
         }
         if (entry.getKind() == SVNNodeKind.DIR && depth.compareTo(SVNDepth.EMPTY) > 0) {
@@ -1754,7 +1754,7 @@ public class SVNWCClient extends SVNBasicClient {
                     File conflictDir = entry.isDirectory() ? path : path.getParentFile();
                     SVNAdminArea conflictArea = wcAccess.retrieve(conflictDir);
                     if (conflictArea.markResolved(entry.getName(), true, true, choice)) {
-                        SVNEvent event = SVNEventFactory.createSVNEvent(conflictArea.getFile(entry.getName()), entry.getKind(), entry.getRevision(), SVNEventAction.RESOLVED);
+                        SVNEvent event = SVNEventFactory.createSVNEvent(conflictArea.getFile(entry.getName()), entry.getKind(), null, entry.getRevision(), SVNEventAction.RESOLVED, null, null, null);
                         dispatchEvent(event);
                     }
                 }
@@ -1852,7 +1852,7 @@ public class SVNWCClient extends SVNBasicClient {
                         }
                         SVNFileUtil.setExecutable(dir.getFile(entry.getName()), props.getPropertyValue(SVNProperty.EXECUTABLE) != null);
                         dir.saveEntries(false);
-                        handleEvent(SVNEventFactory.createLockEvent(dir.getFile(entry.getName()), SVNEventAction.LOCKED, lock),
+                        handleEvent(SVNEventFactory.createLockEvent(dir.getFile(entry.getName()), SVNEventAction.LOCKED, lock, null),
                                 ISVNEventHandler.UNKNOWN);
                     } else {
                         handleEvent(SVNEventFactory.createLockEvent(dir.getFile(lockInfo.myFile.getName()), SVNEventAction.LOCK_FAILED, lock, error), 
@@ -1897,7 +1897,7 @@ public class SVNWCClient extends SVNBasicClient {
                 if (error != null) {
                     handleEvent(SVNEventFactory.createLockEvent(new File(path), SVNEventAction.LOCK_FAILED, lock, error), ISVNEventHandler.UNKNOWN);
                 } else {
-                    handleEvent(SVNEventFactory.createLockEvent(new File(path), SVNEventAction.LOCKED, lock), ISVNEventHandler.UNKNOWN);
+                    handleEvent(SVNEventFactory.createLockEvent(new File(path), SVNEventAction.LOCKED, lock, null), ISVNEventHandler.UNKNOWN);
                 }
             }
             public void handleUnlock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
@@ -2004,7 +2004,7 @@ public class SVNWCClient extends SVNBasicClient {
                 if (error != null) {
                     handleEvent(SVNEventFactory.createLockEvent(new File(path), SVNEventAction.UNLOCK_FAILED, null, error), ISVNEventHandler.UNKNOWN);
                 } else {
-                    handleEvent(SVNEventFactory.createLockEvent(new File(path), SVNEventAction.UNLOCKED, null), ISVNEventHandler.UNKNOWN);
+                    handleEvent(SVNEventFactory.createLockEvent(new File(path), SVNEventAction.UNLOCKED, null, null), ISVNEventHandler.UNKNOWN);
                 }
             }
         });

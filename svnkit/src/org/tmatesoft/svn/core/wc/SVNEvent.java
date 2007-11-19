@@ -167,53 +167,6 @@ public class SVNEvent {
         myChangelistName = changelistName;
     }
 
-    /**
-     * Constructs an <b>SVNEvent</b> object filling it with informational
-     * details most of that would be retrieved and analized by an
-     * <b>ISVNEventHandler</b> implementation.
-     *
-     * <p>
-     * Used by SVNKit internals to construct and initialize an
-     * <b>SVNEvent</b> object. It's not intended for users (from an API point of view).
-     *
-     * @param rootFile   the item's root directory
-     * @param file       the item's path itself
-     * @param action     the type of action the item is exposed to
-     * @param kind       the item's node kind
-     * @param revision   a revision number
-     * @param mimetype   the item's MIME type
-     * @param cstatus    the item's contents status
-     * @param pstatus    the item's properties status
-     * @param lstatus    the item's lock status
-     * @param lock       the item's lock
-     * @param error      an error message
-     */
-
-    public SVNEvent(File file, SVNNodeKind kind, String mimetype, long revision, SVNStatusType cstatus, SVNStatusType pstatus,
-            SVNStatusType lstatus, SVNLock lock, SVNEventAction action, SVNEventAction expected, SVNErrorMessage error, SVNMergeRange range) {
-        this(file, kind, mimetype, revision, cstatus, pstatus, lstatus, lock, action, expected, error, range, null);
-    }
-
-    public SVNEvent(File file, SVNNodeKind kind, String mimetype, long revision, SVNStatusType cstatus, SVNStatusType pstatus,
-            SVNStatusType lstatus, SVNLock lock, SVNEventAction action, SVNErrorMessage error, SVNMergeRange range) {
-        this(file, kind, mimetype, revision, cstatus, pstatus, lstatus, lock, action, null, error, range);
-    }
-
-    public SVNEvent(File file, SVNNodeKind kind, String mimetype, long revision, SVNStatusType cstatus, SVNStatusType pstatus,
-            SVNStatusType lstatus, SVNLock lock, SVNEventAction action, SVNEventAction expected, SVNErrorMessage error) {
-        this(file, kind, mimetype, revision, cstatus, pstatus, lstatus, lock, action, expected, error, null);
-    }
-
-    public SVNEvent(File file, SVNNodeKind kind, String mimetype, long revision, SVNStatusType cstatus, SVNStatusType pstatus,
-            SVNStatusType lstatus, SVNLock lock, SVNEventAction action, SVNErrorMessage error) {
-        this(file, kind, mimetype, revision, cstatus, pstatus, lstatus, lock, action, null, error, null);
-    }
-
-    public SVNEvent(File file, SVNNodeKind kind, String mimetype, long revision, SVNStatusType cstatus, SVNStatusType pstatus,
-            SVNStatusType lstatus, SVNLock lock, SVNEventAction action) {
-        this(file, kind, mimetype, revision, cstatus, pstatus, lstatus, lock, action, null, null, null);
-    }
-
     public File getFile() {
         return myFile;
     }

@@ -207,7 +207,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         myCurrentRevision = fileRevision.getRevision();
         boolean known = fileRevision.getRevision() >= myStartRevision;
         if (myCancelBaton != null) {
-            SVNEvent event = SVNEventFactory.createSVNEvent(new File(myPath), SVNNodeKind.NONE, myCurrentRevision, SVNEventAction.ANNOTATE);
+            SVNEvent event = SVNEventFactory.createSVNEvent(new File(myPath), SVNNodeKind.NONE, null, myCurrentRevision, SVNEventAction.ANNOTATE, null, null, null);
             myCancelBaton.handleEvent(event, ISVNEventHandler.UNKNOWN);
             myCancelBaton.checkCancelled();
         }

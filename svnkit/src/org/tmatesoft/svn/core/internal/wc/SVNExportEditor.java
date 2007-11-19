@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
@@ -98,7 +99,7 @@ public class SVNExportEditor implements ISVNEditor {
                 SVNErrorManager.error(err);
             }
         }
-        myEventDispatcher.handleEvent(SVNEventFactory.createSVNEvent(myCurrentDirectory, SVNNodeKind.DIR, SVNEventAction.UPDATE_ADD), ISVNEventHandler.UNKNOWN);
+        myEventDispatcher.handleEvent(SVNEventFactory.createSVNEvent(myCurrentDirectory, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_ADD, null, null, null), ISVNEventHandler.UNKNOWN);
     }
 
     public void changeDirProperty(String name, String value)
@@ -198,7 +199,7 @@ public class SVNExportEditor implements ISVNEditor {
             if (!special && date != null) {
                 myCurrentFile.setLastModified(SVNDate.parseDate(date).getTime());
             }
-            myEventDispatcher.handleEvent(SVNEventFactory.createSVNEvent(myCurrentFile, SVNNodeKind.FILE, SVNEventAction.UPDATE_ADD), ISVNEventHandler.UNKNOWN);
+            myEventDispatcher.handleEvent(SVNEventFactory.createSVNEvent(myCurrentFile, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_ADD, null, null, null), ISVNEventHandler.UNKNOWN);
         } finally {
             myCurrentTmpFile.delete();
         }

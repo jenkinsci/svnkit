@@ -29,78 +29,25 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
  */
 public class SVNEventFactory {
 
+    public static SVNEvent createErrorEvent(SVNErrorMessage error){
+        return new SVNEvent(error);
+    }
+
+    public static SVNEvent createLockEvent(File file, SVNEventAction action, SVNLock lock, SVNErrorMessage error){
+        return new SVNEvent(file, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, null, null, null, lock, action, null, error, null, null);
+    }
+
     public static SVNEvent createSVNEvent(File file, SVNNodeKind kind , String mimetype, long revision, SVNStatusType cstatus, SVNStatusType pstatus,
             SVNStatusType lstatus, SVNEventAction action, SVNEventAction expected, SVNErrorMessage error, SVNMergeRange range, String changelistName){
         return new SVNEvent(file, kind, mimetype, revision, cstatus, pstatus, lstatus, null, action, expected, error, range, changelistName);
     }
 
-    public static SVNEvent createSVNEvent(File file, SVNEventAction action, SVNErrorMessage error, String changelistName){
-        return createSVNEvent(file, SVNNodeKind.UNKNOWN, null, -1, null, null, null, action, null, error, null, changelistName);
+    public static SVNEvent createSVNEvent(File file, SVNNodeKind kind , String mimetype, long revision, SVNStatusType cstatus, SVNStatusType pstatus,
+            SVNStatusType lstatus, SVNEventAction action, SVNEventAction expected, SVNErrorMessage error, SVNMergeRange range){
+        return new SVNEvent(file, kind, mimetype, revision, cstatus, pstatus, lstatus, null, action, expected, error, range, null);
     }
 
-    public static SVNEvent createSVNEvent(File file, SVNNodeKind kind , SVNEventAction action, SVNEventAction expected, SVNErrorMessage error, SVNMergeRange range){
-        return createSVNEvent(file, kind, null, SVNRepository.INVALID_REVISION, SVNStatusType.INAPPLICABLE, SVNStatusType.INAPPLICABLE, SVNStatusType.LOCK_INAPPLICABLE, action, expected, error, range, null);
-    }
-
-    public static SVNEvent createSVNEvent(File file, SVNNodeKind kind , String mimetype, SVNStatusType cstatus, SVNStatusType pstatus, SVNStatusType lstatus, SVNEventAction action){
-        return createSVNEvent(file, kind, mimetype, SVNRepository.INVALID_REVISION, cstatus, pstatus, lstatus, action, null, null, null, null);
-    }
-
-    public static SVNEvent createSVNEvent(File file, SVNNodeKind kind , SVNStatusType cstatus, SVNStatusType pstatus,
-            SVNStatusType lstatus, SVNEventAction action, SVNEventAction expected){
-        return createSVNEvent(file, kind, null, SVNRepository.INVALID_REVISION, cstatus, pstatus, lstatus, action, expected, null, null, null);
-    }
-
-    public static SVNEvent createSVNEvent(File file, long revision, SVNEventAction action) {
-        return createSVNEvent(file, SVNNodeKind.UNKNOWN, null, revision, action, null, null);
-    }
-
-    public static SVNEvent createSVNEvent(File file, SVNNodeKind kind, SVNStatusType cstatus, SVNStatusType pstatus,
-             SVNEventAction action, SVNEventAction expected) {
-        return createSVNEvent(file, kind, null, SVNRepository.INVALID_REVISION, cstatus, pstatus, null, action, expected, null, null, null);
-    }
-
-    public static SVNEvent createSVNEvent(File file, SVNNodeKind kind , String mimetype, long revision, SVNEventAction action, SVNEventAction expected, SVNErrorMessage error){
-        return createSVNEvent(file, kind, mimetype, revision, SVNStatusType.INAPPLICABLE, SVNStatusType.INAPPLICABLE, SVNStatusType.LOCK_INAPPLICABLE, action, expected, error, null, null);
-    }
-
-    public static SVNEvent createSVNEvent(File file, SVNNodeKind kind , SVNEventAction action, SVNEventAction expected){
-        return createSVNEvent(file, kind, null, SVNRepository.INVALID_REVISION, action, expected, null);
-    }
-
-    public static SVNEvent createSVNEvent(File file, SVNNodeKind kind , String mimetype, long revision, SVNEventAction action){
-        return createSVNEvent(file, kind, mimetype, revision, action, null, null);
-    }
-
-    public static SVNEvent createSVNEvent(File file, SVNNodeKind kind , String mimetype, SVNEventAction action){
-        return createSVNEvent(file, kind, mimetype, SVNRepository.INVALID_REVISION, action, null, null);
-    }
-
-    public static SVNEvent createSVNEvent(File file, SVNNodeKind kind , long revision, SVNEventAction action){
-        return createSVNEvent(file, kind, null, revision, action);
-    }
-
-    public static SVNEvent createSVNEvent(File file, SVNEventAction action, SVNEventAction expected){
-        return createSVNEvent(file, null, null, SVNRepository.INVALID_REVISION, action, expected, null);
-    }
-
-    public static SVNEvent createSVNEvent(File file, SVNNodeKind kind , SVNEventAction action){
-        return createSVNEvent(file, kind, null, SVNRepository.INVALID_REVISION, action);
-    }
-
-    public static SVNEvent createSVNEvent(File file, SVNEventAction action, SVNErrorMessage error){
-        return new SVNEvent(file, SVNNodeKind.UNKNOWN, null, SVNRepository.INVALID_REVISION, null, null, null, null, action, null, error);
-    }
-
-    public static SVNEvent createLockEvent(File file, SVNEventAction action, SVNLock lock, SVNErrorMessage error){
-        return new SVNEvent(file, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, null, null, null, lock, action, null, error);
-    }
-
-    public static SVNEvent createLockEvent(File file, SVNEventAction action, SVNLock lock){
-        return createLockEvent(file, action, lock, null);
-    }
-
-    public static SVNEvent createErrorEvent(SVNErrorMessage error){
-        return new SVNEvent(error);
+    public static SVNEvent createSVNEvent(File file, SVNNodeKind kind , String mimetype, long revision, SVNEventAction action, SVNEventAction expected, SVNErrorMessage error, SVNMergeRange range){
+        return new SVNEvent(file, kind, mimetype, revision, SVNStatusType.INAPPLICABLE, SVNStatusType.INAPPLICABLE, SVNStatusType.LOCK_INAPPLICABLE, null, action, expected, error, range, null);
     }
 }

@@ -115,7 +115,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             }
         }
         if (myEventHandler != null) {
-            SVNEvent event = SVNEventFactory.createSVNEvent(myAdminArea.getFile(path), nodeKind, type, type, action, expectedAction);
+            SVNEvent event = SVNEventFactory.createSVNEvent(myAdminArea.getFile(path), nodeKind, null, SVNRepository.INVALID_REVISION, type, type, null, action, expectedAction, null, null);
             myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
         }
     }
@@ -132,7 +132,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
                 action = SVNEventAction.SKIP; 
             }
             // TODO prop type?
-            SVNEvent event = SVNEventFactory.createSVNEvent(myAdminArea.getFile(path), SVNNodeKind.DIR, type, type, action, expectedAction);
+            SVNEvent event = SVNEventFactory.createSVNEvent(myAdminArea.getFile(path), SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, type, type, null, action, expectedAction, null, null);
             myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
         }
     }
@@ -163,8 +163,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
                 if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
                     if (myEventHandler != null) {
                         action = SVNEventAction.SKIP;
-                        SVNEvent event = SVNEventFactory.createSVNEvent(myAdminArea.getFile(myCurrentDirectory.myRepositoryPath), SVNNodeKind.DIR,
-                                SVNStatusType.MISSING, SVNStatusType.MISSING, action, expectedAction);
+                        SVNEvent event = SVNEventFactory.createSVNEvent(myAdminArea.getFile(myCurrentDirectory.myRepositoryPath), SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNStatusType.MISSING, SVNStatusType.MISSING, null, action, expectedAction, null, null);
                         myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
                     }
                     return;
@@ -180,8 +179,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             if (type == SVNStatusType.UNKNOWN) {
                 action = SVNEventAction.UPDATE_NONE;
             }
-            SVNEvent event = SVNEventFactory.createSVNEvent(myAdminArea.getFile(myCurrentDirectory.myRepositoryPath), SVNNodeKind.DIR, 
-                    SVNStatusType.INAPPLICABLE, type, action, expectedAction);
+            SVNEvent event = SVNEventFactory.createSVNEvent(myAdminArea.getFile(myCurrentDirectory.myRepositoryPath), SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNStatusType.INAPPLICABLE, type, null, action, expectedAction, null, null);
             myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
         }
         myCurrentDirectory = myCurrentDirectory.myParent;
@@ -233,8 +231,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
                 if (myEventHandler != null) {
                     action = SVNEventAction.SKIP;
-                    SVNEvent event = SVNEventFactory.createSVNEvent(myAdminArea.getFile(commitPath), SVNNodeKind.FILE,
-                            SVNStatusType.MISSING, SVNStatusType.UNKNOWN, action, expectedAction);
+                    SVNEvent event = SVNEventFactory.createSVNEvent(myAdminArea.getFile(commitPath), SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, SVNStatusType.MISSING, SVNStatusType.UNKNOWN, null, action, expectedAction, null, null);
                     myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
                 }
                 return;
@@ -264,8 +261,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             } else {
                 action = SVNEventAction.UPDATE_UPDATE;
             }
-            SVNEvent event = SVNEventFactory.createSVNEvent(myAdminArea.getFile(commitPath), SVNNodeKind.FILE,
-                    type[0], type[1],action, expectedAction);
+            SVNEvent event = SVNEventFactory.createSVNEvent(myAdminArea.getFile(commitPath), SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, type[0], type[1], null, action, expectedAction, null, null);
             myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
         }
     }

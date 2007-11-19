@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
@@ -183,7 +184,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                         return;
                     }
                     if (event.getAction() == SVNEventAction.DELETE) {
-                        event = SVNEventFactory.createSVNEvent(event.getFile(), event.getNodeKind(), SVNStatusType.UNKNOWN, SVNStatusType.UNKNOWN, SVNEventAction.UPDATE_DELETE, SVNEventAction.UPDATE_DELETE);
+                        event = SVNEventFactory.createSVNEvent(event.getFile(), event.getNodeKind(), null, SVNRepository.INVALID_REVISION, SVNStatusType.UNKNOWN, SVNStatusType.UNKNOWN, null, SVNEventAction.UPDATE_DELETE, SVNEventAction.UPDATE_DELETE, null, null);
                     }
                     oldEventHandler.handleEvent(event, progress);
                 }

@@ -34,6 +34,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
@@ -77,18 +78,18 @@ public class SVNCommitter implements ISVNCommitPathHandler {
         boolean closeDir = false;
 
         if (item.isAdded() && item.isDeleted()) {
-            event = SVNEventFactory.createSVNEvent(new File(wcAccess.getAnchor(), item.getPath()), item.getKind(), SVNEventAction.COMMIT_REPLACED);
+            event = SVNEventFactory.createSVNEvent(new File(wcAccess.getAnchor(), item.getPath()), item.getKind(), null, SVNRepository.INVALID_REVISION, SVNEventAction.COMMIT_REPLACED, null, null, null);
         } else if (item.isAdded()) {
             String mimeType = null;
             if (item.getKind() == SVNNodeKind.FILE) {
                 SVNAdminArea dir = item.getWCAccess().retrieve(item.getFile().getParentFile());
                 mimeType = dir.getProperties(item.getFile().getName()).getPropertyValue(SVNProperty.MIME_TYPE);
             }
-            event = SVNEventFactory.createSVNEvent(new File(wcAccess.getAnchor(), item.getPath()), item.getKind(), mimeType, SVNEventAction.COMMIT_ADDED);
+            event = SVNEventFactory.createSVNEvent(new File(wcAccess.getAnchor(), item.getPath()), item.getKind(), mimeType, SVNRepository.INVALID_REVISION, SVNEventAction.COMMIT_ADDED, null, null, null);
         } else if (item.isDeleted()) {
-            event = SVNEventFactory.createSVNEvent(new File(wcAccess.getAnchor(), item.getPath()), item.getKind(), SVNEventAction.COMMIT_DELETED);
+            event = SVNEventFactory.createSVNEvent(new File(wcAccess.getAnchor(), item.getPath()), item.getKind(), null, SVNRepository.INVALID_REVISION, SVNEventAction.COMMIT_DELETED, null, null, null);
         } else if (item.isContentsModified() || item.isPropertiesModified()) {
-            event = SVNEventFactory.createSVNEvent(new File(wcAccess.getAnchor(), item.getPath()), item.getKind(), SVNEventAction.COMMIT_MODIFIED);
+            event = SVNEventFactory.createSVNEvent(new File(wcAccess.getAnchor(), item.getPath()), item.getKind(), null, SVNRepository.INVALID_REVISION, SVNEventAction.COMMIT_MODIFIED, null, null, null);
         }
         if (event != null) {
             wcAccess.handleEvent(event, ISVNEventHandler.UNKNOWN);
@@ -144,7 +145,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
             SVNWCAccess wcAccess = item.getWCAccess();
             wcAccess.checkCancelled();
 
-            SVNEvent event = SVNEventFactory.createSVNEvent(new File(wcAccess.getAnchor(), item.getPath()),SVNNodeKind.FILE, SVNEventAction.COMMIT_DELTA_SENT);
+            SVNEvent event = SVNEventFactory.createSVNEvent(new File(wcAccess.getAnchor(), item.getPath()),SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, SVNEventAction.COMMIT_DELTA_SENT, null, null, null);
             wcAccess.handleEvent(event, ISVNEventHandler.UNKNOWN);
 
             SVNAdminArea dir = wcAccess.retrieve(item.getFile().getParentFile());
