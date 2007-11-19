@@ -38,6 +38,7 @@ public class SVNChangeListCommand extends SVNCommand {
 
     protected Collection createSupportedOptions() {
         Collection options = new LinkedList();
+        options = SVNOption.addAuthOptions(options);
         options.add(SVNOption.REMOVE);
         options.add(SVNOption.TARGETS);
         options.add(SVNOption.CONFIG_DIR);
