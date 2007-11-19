@@ -478,10 +478,6 @@ public class SVNWCClient extends SVNBasicClient {
      * @see                     #doGetProperty(File, String, SVNRevision, SVNRevision, boolean)
      * @see                     #doGetRevisionProperty(File, String, SVNRevision, ISVNPropertyHandler)
      */
-    /* TODO(sd): "I don't see any reason to change this recurse parameter
-     * to a depth right now; it's not exactly part of the
-     * sparse-directories feature, although it's related."
-     */
     public void doSetProperty(File path, String propName, String propValue, boolean force, boolean recursive, 
             ISVNPropertyHandler handler) throws SVNException {
         doSetProperty(path, propName, propValue, force, SVNDepth.getInfinityOrEmptyDepth(recursive), handler);
@@ -746,12 +742,6 @@ public class SVNWCClient extends SVNBasicClient {
      * @see                   #doGetProperty(File, String, SVNRevision, SVNRevision, boolean, ISVNPropertyHandler)
      * @see                   #doSetProperty(File, String, String, boolean, boolean, ISVNPropertyHandler)
      */
-    /* TODO(sd): "I don't see any reason to change this recurse parameter
-     * to a depth right now; it's not exactly part of the
-     * sparse-directories feature, although it's related.  Usually
-     * you would just name the target carefully... Is there a
-     * situation where depth support would be useful here?"
-     */
     public SVNPropertyData doGetProperty(final File path, String propName,
             SVNRevision pegRevision, SVNRevision revision, boolean recursive)
             throws SVNException {
@@ -789,12 +779,6 @@ public class SVNWCClient extends SVNBasicClient {
      *                         svn:wc:} prefix
      * @see                    #doGetProperty(SVNURL, String, SVNRevision, SVNRevision, boolean, ISVNPropertyHandler)
      * @see                    #doSetProperty(File, String, String, boolean, boolean, ISVNPropertyHandler)
-     */
-    /* TODO(sd): "I don't see any reason to change this recurse parameter
-     * to a depth right now; it's not exactly part of the
-     * sparse-directories feature, although it's related.  Usually
-     * you would just name the target carefully... Is there a
-     * situation where depth support would be useful here?"
      */
     public SVNPropertyData doGetProperty(final SVNURL url, String propName,
             SVNRevision pegRevision, SVNRevision revision, boolean recursive)
@@ -849,14 +833,8 @@ public class SVNWCClient extends SVNBasicClient {
      * @see                   #doGetProperty(File, String, SVNRevision, SVNRevision, boolean)
      * @see                   #doSetProperty(File, String, String, boolean, boolean, ISVNPropertyHandler)
      */
-    /* TODO(sd): "I don't see any reason to change this recurse parameter
-     * to a depth right now; it's not exactly part of the
-     * sparse-directories feature, although it's related.  Usually
-     * you would just name the target carefully... Is there a
-     * situation where depth support would be useful here?"
-     */
     public void doGetProperty(File path, String propName, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNPropertyHandler handler) throws SVNException {
-        doGetProperty(path, propName, pegRevision, revision, recursive ? SVNDepth.INFINITY : SVNDepth.EMPTY, handler);
+        doGetProperty(path, propName, pegRevision, revision, SVNDepth.getInfinityOrEmptyDepth(recursive), handler);
     }
     
     public void doGetProperty(File path, String propName, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, ISVNPropertyHandler handler) throws SVNException {
@@ -978,14 +956,8 @@ public class SVNWCClient extends SVNBasicClient {
      * @see                    #doGetProperty(SVNURL, String, SVNRevision, SVNRevision, boolean)
      * @see                    #doSetProperty(File, String, String, boolean, boolean, ISVNPropertyHandler)
      */
-    /* TODO(sd): "I don't see any reason to change this recurse parameter
-     * to a depth right now; it's not exactly part of the
-     * sparse-directories feature, although it's related.  Usually
-     * you would just name the target carefully... Is there a
-     * situation where depth support would be useful here?"
-     */
     public void doGetProperty(SVNURL url, String propName, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNPropertyHandler handler) throws SVNException {
-        doGetProperty(url, propName, pegRevision, revision, recursive ? SVNDepth.INFINITY : SVNDepth.EMPTY, handler);
+        doGetProperty(url, propName, pegRevision, revision, SVNDepth.getInfinityOrEmptyDepth(recursive), handler);
     }
 
     public void doGetProperty(SVNURL url, String propName, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, ISVNPropertyHandler handler) throws SVNException {
@@ -2567,8 +2539,8 @@ public class SVNWCClient extends SVNBasicClient {
         SVNNodeKind kind = repos.checkPath(path, revNumber);
         Map props = new HashMap();
         if (kind == SVNNodeKind.DIR) {
-            Collection children = repos.getDir(path, revNumber, props,
-                    SVNDepth.EMPTY.compareTo(depth) < 0 ? new ArrayList() : null);
+            Collection children = repos.getDir(path, revNumber, props, SVNDirEntry.DIRENT_KIND, 
+                    SVNDepth.FILES.compareTo(depth) <= 0 ? new ArrayList() : null);
             if (propName != null) {
                 String value = (String) props.get(propName);
                 if (value != null) {
@@ -2585,19 +2557,20 @@ public class SVNWCClient extends SVNBasicClient {
                     handler.handleProperty(url, new SVNPropertyData(name, value));
                 }
             }
-            if (SVNDepth.EMPTY.compareTo(depth) < 0) {
+            if (SVNDepth.FILES.compareTo(depth) <= 0) {
                 checkCancelled();
                 for (Iterator entries = children.iterator(); entries.hasNext();) {
                     SVNDirEntry child = (SVNDirEntry) entries.next();
                     SVNURL childURL = url.appendPath(child.getName(), false);
                     String childPath = "".equals(path) ? child.getName() : SVNPathUtil.append(path, child.getName());
-                    if (child.getKind() == SVNNodeKind.FILE || SVNDepth.FILES.compareTo(depth) < 0) {
-                        SVNDepth depthBelowHere = depth;
-                        if (depth == SVNDepth.IMMEDIATES) {
-                            depthBelowHere = SVNDepth.EMPTY;
-                        }
-                        doGetRemoteProperty(childURL, childPath, repos, propName, rev, depthBelowHere, handler);
+                    SVNDepth depthBelowHere = depth;
+                    if (child.getKind() == SVNNodeKind.DIR && depth == SVNDepth.FILES) {
+                        continue;
                     }
+                    if (depth == SVNDepth.FILES || depth == SVNDepth.IMMEDIATES) {
+                        depthBelowHere = SVNDepth.EMPTY;
+                    }
+                    doGetRemoteProperty(childURL, childPath, repos, propName, rev, depthBelowHere, handler);
                 }
             }
         } else if (kind == SVNNodeKind.FILE) {
