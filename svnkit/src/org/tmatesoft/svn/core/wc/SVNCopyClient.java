@@ -272,7 +272,7 @@ public class SVNCopyClient extends SVNBasicClient {
      *                           </ul>
      */
     public SVNCommitInfo doCopy(SVNURL srcURL, SVNRevision srcRevision, SVNURL dstURL, boolean isMove, boolean failWhenDstExists, String commitMessage) throws SVNException {
-        return doCopy(srcURL, SVNRevision.UNDEFINED, srcRevision, dstURL, isMove, failWhenDstExists, false, commitMessage, null);
+        return doCopy(srcURL, srcRevision, srcRevision, dstURL, isMove, failWhenDstExists, false, commitMessage, null);
     }
     
 
