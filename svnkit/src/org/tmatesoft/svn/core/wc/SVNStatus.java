@@ -542,7 +542,7 @@ public class SVNStatus {
                 propFile = new File(getFile().getAbsoluteFile().getParentFile(), SVNFileUtil.getAdminDirectoryName());
                 propFile = new File(propFile, "props/" + getFile().getName() + ".svn-work");
             }
-            myLocalContentsDate = propFile != null ? new Date(propFile.lastModified()) : new Date(0);
+            myLocalPropertiesDate = propFile != null ? new Date(propFile.lastModified()) : new Date(0);
         }
         return myLocalPropertiesDate;
     }
