@@ -32,8 +32,8 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
@@ -467,7 +467,7 @@ public abstract class SVNRepositoryFactory {
             // set creation date.
             File rev0File = new File(path, maxFilesPerDir > 0 ? "db/revprops/0/0" : "db/revprops/0");
             SVNProperties props = new SVNProperties(rev0File, null);
-            String date = SVNTimeUtil.formatDate(new Date(System.currentTimeMillis()), true);
+            String date = SVNDate.formatDate(new Date(System.currentTimeMillis()), true);
             props.setPropertyValue(SVNRevisionProperty.DATE, date);
             
             SVNMergeInfoManager mergeInfoManager = SVNMergeInfoManager.createMergeInfoManager(null);

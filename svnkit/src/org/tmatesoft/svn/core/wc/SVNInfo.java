@@ -21,7 +21,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 
 /**
@@ -108,8 +108,8 @@ public class SVNInfo {
         SVNLock lock = null;
         if (entry.getLockToken() != null) {
             lock = new SVNLock(null, entry.getLockToken(),
-                    entry.getLockOwner(), entry.getLockComment(), SVNTimeUtil
-                            .parseDate(entry.getLockCreationDate()), null);
+                    entry.getLockOwner(), entry.getLockComment(), SVNDate
+                    .parseDate(entry.getLockCreationDate()), null);
         }
         return new SVNInfo(file, entry.getSVNURL(), entry.getRepositoryRootURL(), 
                 entry.getRevision(), entry.getKind(), entry.getUUID(), entry.getCommittedRevision(),
@@ -156,14 +156,14 @@ public class SVNInfo {
         myRepositoryRootURL = rootURL;
 
         myCommittedRevision = SVNRevision.create(committedRevision);
-        myCommittedDate = committedDate != null ? SVNTimeUtil
+        myCommittedDate = committedDate != null ? SVNDate
                 .parseDate(committedDate) : null;
         myAuthor = author;
 
         mySchedule = schedule;
         myChecksum = checksum;
-        myTextTime = textTime != null ? SVNTimeUtil.parseDate(textTime) : null;
-        myPropTime = propTime != null ? SVNTimeUtil.parseDate(propTime) : null;
+        myTextTime = textTime != null ? SVNDate.parseDate(textTime) : null;
+        myPropTime = propTime != null ? SVNDate.parseDate(propTime) : null;
 
         myCopyFromURL = copyFromURL;
         myCopyFromRevision = SVNRevision.create(copyFromRevision);

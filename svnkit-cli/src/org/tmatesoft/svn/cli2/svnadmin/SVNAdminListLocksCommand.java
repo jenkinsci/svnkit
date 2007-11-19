@@ -18,7 +18,7 @@ import org.tmatesoft.svn.cli2.SVNCommandUtil;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
@@ -57,8 +57,8 @@ public class SVNAdminListLocksCommand extends SVNAdminCommand {
                 comment = "(" + comment + "):\n" + lock.getComment();
             }
             
-            String created = lock.getCreationDate() != null ? SVNTimeUtil.formatHumanDate(lock.getCreationDate(), options) : "";
-            String expires = lock.getExpirationDate() != null ? SVNTimeUtil.formatHumanDate(lock.getExpirationDate(), options) : "";
+            String created = lock.getCreationDate() != null ? SVNDate.formatHumanDate(lock.getCreationDate(), options) : "";
+            String expires = lock.getExpirationDate() != null ? SVNDate.formatHumanDate(lock.getExpirationDate(), options) : "";
             
             buffer.append("Path: " + lock.getPath() + "\n");
             buffer.append("UUID Token: " + lock.getID() + "\n");

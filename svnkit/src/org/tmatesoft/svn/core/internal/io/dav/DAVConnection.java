@@ -32,8 +32,8 @@ import org.tmatesoft.svn.core.internal.io.dav.http.HTTPStatus;
 import org.tmatesoft.svn.core.internal.io.dav.http.IHTTPConnection;
 import org.tmatesoft.svn.core.internal.io.dav.http.IHTTPConnectionFactory;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
@@ -121,7 +121,7 @@ public class DAVConnection {
         String comment = handler.getComment();
         String owner = rc.getHeader().getFirstHeaderValue(HTTPHeader.LOCK_OWNER_HEADER);
         String created = rc.getHeader().getFirstHeaderValue(HTTPHeader.CREATION_DATE_HEADER);
-        Date createdDate = created != null ? SVNTimeUtil.parseDate(created) : null;
+        Date createdDate = created != null ? SVNDate.parseDate(created) : null;
         path = SVNEncodingUtil.uriDecode(info.baselinePath);
         if (!path.startsWith("/")) {
             path = "/" + path;
@@ -186,7 +186,7 @@ public class DAVConnection {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Incomplete lock data returned");
                 SVNErrorManager.error(err);
             }
-            Date createdDate = created != null ? SVNTimeUtil.parseDate(created) : null;            
+            Date createdDate = created != null ? SVNDate.parseDate(created) : null;
             return new SVNLock(info.baselinePath, handler.getID(), userName, comment, createdDate, null);
         }
         return null;

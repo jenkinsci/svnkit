@@ -19,7 +19,7 @@ import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
 
@@ -59,7 +59,7 @@ public class SVNLookInfoCommand extends SVNCommand {
 
     private void printInfo(SVNLogEntry entry, PrintStream out) {
         String author = entry.getAuthor() != null ? entry.getAuthor() : "";
-        String date = entry.getDate() != null ? SVNTimeUtil.formatCustomDate(entry.getDate()) : ""; 
+        String date = entry.getDate() != null ? SVNDate.formatCustomDate(entry.getDate()) : "";
         String log = entry.getMessage() != null ? entry.getMessage() : ""; 
         SVNCommand.println(out, author);
         SVNCommand.println(out, date);

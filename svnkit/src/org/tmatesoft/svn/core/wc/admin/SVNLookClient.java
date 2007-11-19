@@ -38,7 +38,7 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNGNUDiffGenerator;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminHelper;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -183,7 +183,7 @@ public class SVNLookClient extends SVNBasicClient {
         String date = (String) revProps.get(SVNRevisionProperty.DATE);
         String author = (String) revProps.get(SVNRevisionProperty.AUTHOR);
         String logMessage = (String) revProps.get(SVNRevisionProperty.LOG);
-        return new SVNLogEntry(null, revNum, author, SVNTimeUtil.parseDateString(date), logMessage);
+        return new SVNLogEntry(null, revNum, author, SVNDate.parseDateString(date), logMessage);
     }
 
     /**
@@ -221,7 +221,7 @@ public class SVNLookClient extends SVNBasicClient {
         String date = (String) txnProps.get(SVNRevisionProperty.DATE);
         String author = (String) txnProps.get(SVNRevisionProperty.AUTHOR);
         String logMessage = (String) txnProps.get(SVNRevisionProperty.LOG);
-        return new SVNLogEntry(null, -1, author, SVNTimeUtil.parseDateString(date), logMessage);
+        return new SVNLogEntry(null, -1, author, SVNDate.parseDateString(date), logMessage);
     }
 
     /**
@@ -364,7 +364,7 @@ public class SVNLookClient extends SVNBasicClient {
         Map revProps = fsfs.getRevisionProperties(revNum);
         String date = (String) revProps.get(SVNRevisionProperty.DATE);
         if (date != null) {
-            return SVNTimeUtil.parseDate(date);
+            return SVNDate.parseDate(date);
         }
         return null;
     }
@@ -389,7 +389,7 @@ public class SVNLookClient extends SVNBasicClient {
         Map txnProps = fsfs.getTransactionProperties(txn.getTxnId());
         String date = (String) txnProps.get(SVNRevisionProperty.DATE);
         if (date != null) {
-            return SVNTimeUtil.parseDate(date);
+            return SVNDate.parseDate(date);
         }
         return null;
     }

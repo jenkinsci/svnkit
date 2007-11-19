@@ -28,7 +28,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
@@ -161,7 +161,7 @@ public class FSTransactionRoot extends FSRoot {
 
     public static FSTransactionInfo beginTransaction(long baseRevision, int flags, FSFS owner) throws SVNException {
         FSTransactionInfo txn = createTxn(baseRevision, owner);
-        String commitTime = SVNTimeUtil.formatDate(new Date(System.currentTimeMillis()));
+        String commitTime = SVNDate.formatDate(new Date(System.currentTimeMillis()));
         owner.setTransactionProperty(txn.getTxnId(), SVNRevisionProperty.DATE, commitTime);
 
         if ((flags & SVN_FS_TXN_CHECK_OUT_OF_DATENESS) != 0) {

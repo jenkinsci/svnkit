@@ -22,7 +22,7 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 /**
@@ -59,7 +59,7 @@ public class SVNWriter {
                     continue;
                 }
                 if (item instanceof Date) {
-                    item = SVNTimeUtil.formatDate((Date) item, true);
+                    item = SVNDate.formatDate((Date) item, true);
                 }
                 if (ch == 'i') {
 

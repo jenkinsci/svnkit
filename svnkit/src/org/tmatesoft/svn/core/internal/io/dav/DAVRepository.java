@@ -50,7 +50,7 @@ import org.tmatesoft.svn.core.internal.io.dav.http.HTTPStatus;
 import org.tmatesoft.svn.core.internal.io.dav.http.IHTTPConnectionFactory;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
@@ -391,7 +391,7 @@ public class DAVRepository extends SVNRepository {
                     if ((entryFields & SVNDirEntry.DIRENT_TIME) != 0) {
                         String dateStr = child.getPropertyValue(DAVElement.CREATION_DATE);
                         if (dateStr != null) {
-                            date = SVNTimeUtil.parseDate(dateStr);    
+                            date = SVNDate.parseDate(dateStr);
                         }
                     }
 
@@ -467,7 +467,7 @@ public class DAVRepository extends SVNRepository {
                 }
                 String author = child.getPropertyValue(DAVElement.CREATOR_DISPLAY_NAME);
                 String dateStr = child.getPropertyValue(DAVElement.CREATION_DATE);
-                Date date = dateStr != null ? SVNTimeUtil.parseDate(dateStr) : null;
+                Date date = dateStr != null ? SVNDate.parseDate(dateStr) : null;
                 SVNURL childURL = getLocation().setPath(fullPath, true);
                 if ("".equals(name)) {
                     parent[0] = new SVNDirEntry(childURL, name, kind, size, false, lastRevision, date, author);
@@ -952,7 +952,7 @@ public class DAVRepository extends SVNRepository {
         }
         String author = child.getPropertyValue(DAVElement.CREATOR_DISPLAY_NAME);
         String dateStr = child.getPropertyValue(DAVElement.CREATION_DATE);
-        Date date = dateStr != null ? SVNTimeUtil.parseDate(dateStr) : null;
+        Date date = dateStr != null ? SVNDate.parseDate(dateStr) : null;
         boolean hasProperties = false;
         for(Iterator props = child.getProperties().keySet().iterator(); props.hasNext();) {
             DAVElement property = (DAVElement) props.next();

@@ -25,7 +25,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 /**
@@ -81,9 +81,9 @@ public class DAVGetLocksHandler extends DAVReportHandler {
         XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "lock", XMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
         XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "path", lock.getPath(), xmlBuffer);
         XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "token", lock.getID(), xmlBuffer);
-        XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "creationdate", SVNTimeUtil.formatDate(lock.getCreationDate()), xmlBuffer);
+        XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "creationdate", SVNDate.formatDate(lock.getCreationDate()), xmlBuffer);
         if (lock.getExpirationDate() != null) {
-            XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "expirationdate", SVNTimeUtil.formatDate(lock.getExpirationDate()), xmlBuffer);
+            XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "expirationdate", SVNDate.formatDate(lock.getExpirationDate()), xmlBuffer);
         }
         if (lock.getOwner() != null) {
             if (SVNEncodingUtil.isXMLSafe(lock.getOwner())) {

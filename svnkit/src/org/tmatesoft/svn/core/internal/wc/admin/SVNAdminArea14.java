@@ -42,7 +42,6 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
@@ -1373,7 +1372,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
     
     protected boolean writeTime(Writer writer, String val, int emptyFields) throws IOException, SVNException {
         if (val != null && val.length() > 0) {
-            long time = SVNDate.parseDatestamp(val).getTime();
+            long time = SVNDate.parseDateAsMilliseconds(val);
             if (time > 0) {
                 for (int i = 0; i < emptyFields; i++) {
                     writer.write('\n');
@@ -1571,7 +1570,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
             dstProps.setModified(true);
             
             command.put(SVNLog.NAME_ATTR, entry.getName());
-            command.put(SVNProperty.shortPropertyName(SVNProperty.PROP_TIME), SVNTimeUtil.formatDate(new Date(0), true));
+            command.put(SVNProperty.shortPropertyName(SVNProperty.PROP_TIME), SVNDate.formatDate(new Date(0), true));
             log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
             command.clear();
             
@@ -1786,7 +1785,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         entryAttrs.put(SVNProperty.COPIED, SVNProperty.toString(false));
         entryAttrs.put(SVNProperty.DELETED, SVNProperty.toString(false));
         if (textTime != 0 && !implicit) {
-            entryAttrs.put(SVNProperty.TEXT_TIME, SVNTimeUtil.formatDate(new Date(textTime)));
+            entryAttrs.put(SVNProperty.TEXT_TIME, SVNDate.formatDate(new Date(textTime)));
         }
         entryAttrs.put(SVNProperty.CONFLICT_NEW, null);
         entryAttrs.put(SVNProperty.CONFLICT_OLD, null);

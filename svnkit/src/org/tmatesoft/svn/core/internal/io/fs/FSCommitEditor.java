@@ -29,7 +29,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -367,7 +367,7 @@ public class FSCommitEditor implements ISVNEditor {
 
         Map revProps = myFSFS.getRevisionProperties(committedRev);
         String dateProp = (String) revProps.get(SVNRevisionProperty.DATE);
-        Date datestamp = dateProp != null ? SVNTimeUtil.parseDateString(dateProp) : null;
+        Date datestamp = dateProp != null ? SVNDate.parseDateString(dateProp) : null;
         
         SVNCommitInfo info = new SVNCommitInfo(committedRev, getAuthor(), datestamp, errorMessage);
         releaseLocks();

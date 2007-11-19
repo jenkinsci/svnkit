@@ -20,7 +20,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 
@@ -104,7 +104,7 @@ public class SVNXMLLogHandler extends AbstractXMLHandler implements ISVNLogEntry
             addTag(AUTHOR_TAG, logEntry.getAuthor());
         }
         if (logEntry.getDate() != null && logEntry.getDate().getTime() != 0) {
-            addTag(DATE_TAG, SVNTimeUtil.formatDate(logEntry.getDate()));
+            addTag(DATE_TAG, SVNDate.formatDate(logEntry.getDate()));
         }
         if (logEntry.getChangedPaths() != null && !logEntry.getChangedPaths().isEmpty()) {
             openTag(PATHS_TAG);

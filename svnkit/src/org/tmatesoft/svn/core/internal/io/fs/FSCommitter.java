@@ -31,7 +31,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNMergeInfoManager;
@@ -434,7 +434,7 @@ public class FSCommitter {
         File dstRevFile = myFSFS.getNewRevisionFile(newRevision);
         SVNFileUtil.rename(revisionPrototypeFile, dstRevFile);
 
-        String commitTime = SVNTimeUtil.formatDate(new Date(System.currentTimeMillis()));
+        String commitTime = SVNDate.formatDate(new Date(System.currentTimeMillis()));
         myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNRevisionProperty.DATE, commitTime);
         
         File txnPropsFile = myFSFS.getTransactionPropertiesFile(myTxn.getTxnId());

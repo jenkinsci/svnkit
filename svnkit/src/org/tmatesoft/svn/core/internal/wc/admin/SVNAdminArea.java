@@ -40,7 +40,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
@@ -180,7 +180,7 @@ public abstract class SVNAdminArea {
                 if (textTime == null) {
                     compare = true;
                 } else {
-                    long textTimeAsLong = SVNFileUtil.roundTimeStamp(SVNTimeUtil.parseDateAsLong(textTime));
+                    long textTimeAsLong = SVNFileUtil.roundTimeStamp(SVNDate.parseDateAsMilliseconds(textTime));
                     long tstamp = SVNFileUtil.roundTimeStamp(textFile.lastModified());
                     if (textTimeAsLong != tstamp ) {
                         compare = true;
@@ -202,7 +202,7 @@ public abstract class SVNAdminArea {
         if (!differs && isLocked()) {
             Map attributes = new HashMap();
             attributes.put(SVNProperty.WORKING_SIZE, Long.toString(textFile.length()));
-            attributes.put(SVNProperty.TEXT_TIME, SVNTimeUtil.formatDate(new Date(textFile.lastModified())));
+            attributes.put(SVNProperty.TEXT_TIME, SVNDate.formatDate(new Date(textFile.lastModified())));
             modifyEntry(name, attributes, true, false);
         }
         return differs;
@@ -455,12 +455,12 @@ public abstract class SVNAdminArea {
         long tstamp;
         if (myWCAccess.getOptions().isUseCommitTimes() && !special) {
             entry.setTextTime(entry.getCommittedDate());
-            tstamp = SVNTimeUtil.parseDate(entry.getCommittedDate()).getTime();
+            tstamp = SVNDate.parseDate(entry.getCommittedDate()).getTime();
             dst.setLastModified(tstamp);
         } else {
             tstamp = System.currentTimeMillis();
             dst.setLastModified(tstamp);
-            entry.setTextTime(SVNTimeUtil.formatDate(new Date(tstamp)));
+            entry.setTextTime(SVNDate.formatDate(new Date(tstamp)));
         }
         saveEntries(false);
     }
@@ -791,7 +791,7 @@ public abstract class SVNAdminArea {
     public String getPropertyTime(String name) {
         String path = getThisDirName().equals(name) ? "dir-props" : "props/" + name + ".svn-work";
         File file = getAdminFile(path);
-        return SVNTimeUtil.formatDate(new Date(file.lastModified()));
+        return SVNDate.formatDate(new Date(file.lastModified()));
     }
     
     public SVNLog getLog() {
@@ -1458,7 +1458,7 @@ public abstract class SVNAdminArea {
         if (info != null) {
             command.put(SVNLog.NAME_ATTR, target);
             command.put(SVNProperty.shortPropertyName(SVNProperty.COMMITTED_REVISION), Long.toString(info.getNewRevision()));
-            command.put(SVNProperty.shortPropertyName(SVNProperty.COMMITTED_DATE), SVNTimeUtil.formatDate(info.getDate()));
+            command.put(SVNProperty.shortPropertyName(SVNProperty.COMMITTED_DATE), SVNDate.formatDate(info.getDate()));
             command.put(SVNProperty.shortPropertyName(SVNProperty.LAST_AUTHOR), info.getAuthor());
             log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
             command.clear();

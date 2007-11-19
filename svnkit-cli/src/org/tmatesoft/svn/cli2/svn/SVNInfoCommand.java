@@ -28,7 +28,6 @@ import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
@@ -181,16 +180,16 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
         }
         if (info.getCommittedDate() != null) {
             buffer.append("Last Changed Date: " + 
-                    SVNTimeUtil.formatHumanDate(info.getCommittedDate(), getSVNEnvironment().getClientManager().getOptions()) + "\n");
+                    SVNDate.formatHumanDate(info.getCommittedDate(), getSVNEnvironment().getClientManager().getOptions()) + "\n");
         }
         if (!info.isRemote()) {
             if (info.getTextTime() != null) {
                 buffer.append("Text Last Updated: " + 
-                        SVNTimeUtil.formatHumanDate(info.getTextTime(), getSVNEnvironment().getClientManager().getOptions()) + "\n");
+                        SVNDate.formatHumanDate(info.getTextTime(), getSVNEnvironment().getClientManager().getOptions()) + "\n");
             }
             if (info.getPropTime() != null) {
                 buffer.append("Properties Last Updated: " + 
-                        SVNTimeUtil.formatHumanDate(info.getPropTime(), getSVNEnvironment().getClientManager().getOptions()) + "\n");
+                        SVNDate.formatHumanDate(info.getPropTime(), getSVNEnvironment().getClientManager().getOptions()) + "\n");
             }
             if (info.getChecksum() != null) {
                 buffer.append("Checksum: " + info.getChecksum() + "\n");
@@ -218,11 +217,11 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
             }
             if (lock.getCreationDate() != null && lock.getCreationDate().getTime() != 0) {
                 buffer.append("Lock Created: " + 
-                        SVNTimeUtil.formatHumanDate(lock.getCreationDate(), getSVNEnvironment().getClientManager().getOptions()) + "\n");
+                        SVNDate.formatHumanDate(lock.getCreationDate(), getSVNEnvironment().getClientManager().getOptions()) + "\n");
             }
             if (lock.getExpirationDate() != null && lock.getExpirationDate().getTime() != 0) {
                 buffer.append("Lock Expires: " + 
-                        SVNTimeUtil.formatHumanDate(lock.getExpirationDate(), getSVNEnvironment().getClientManager().getOptions()) + "\n");
+                        SVNDate.formatHumanDate(lock.getExpirationDate(), getSVNEnvironment().getClientManager().getOptions()) + "\n");
             }
             if (lock.getComment() != null) {
                 buffer.append("Lock Comment "); 

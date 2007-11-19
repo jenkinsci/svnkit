@@ -25,7 +25,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -95,7 +95,7 @@ public class SVNLogRunner {
                     String value = (String) entryAttrs.get(SVNProperty.TEXT_TIME); 
                     if (SVNLog.WC_TIMESTAMP.equals(value)) {
                         File file = adminArea.getFile(fileName);
-                        value = SVNTimeUtil.formatDate(new Date(file.lastModified()));
+                        value = SVNDate.formatDate(new Date(file.lastModified()));
                         entryAttrs.put(SVNProperty.TEXT_TIME, value);
                     }
                 }
@@ -240,7 +240,7 @@ public class SVNLogRunner {
                     SVNErrorMessage err = SVNErrorMessage.create(code, "Missing 'timestamp' attribute in ''{0}''", adminArea.getRoot());
                     SVNErrorManager.error(err);
                 }
-                Date time = SVNTimeUtil.parseDate(timestamp);
+                Date time = SVNDate.parseDate(timestamp);
                 //TODO: what about special files (do not set for them).
                 if (!file.setLastModified(time.getTime())) {
                     if (!file.canWrite() && file.isFile()) {

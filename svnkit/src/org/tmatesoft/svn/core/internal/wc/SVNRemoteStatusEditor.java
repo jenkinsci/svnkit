@@ -27,7 +27,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
@@ -121,7 +121,7 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
                 myDirectoryInfo.myRemoteRevision = SVNRevision.UNDEFINED;
             }
         } else if (SVNProperty.COMMITTED_DATE.equals(name) && value != null) {
-            myDirectoryInfo.myRemoteDate = SVNTimeUtil.parseDate(value);
+            myDirectoryInfo.myRemoteDate = SVNDate.parseDate(value);
         } else if (SVNProperty.LAST_AUTHOR.equals(name)) {
             myDirectoryInfo.myRemoteAuthor = value;
         }
@@ -204,7 +204,7 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
                 myFileInfo.myRemoteRevision = SVNRevision.UNDEFINED;
             }
         } else if (SVNProperty.COMMITTED_DATE.equals(name) && value != null) {
-            myFileInfo.myRemoteDate = SVNTimeUtil.parseDate(value);
+            myFileInfo.myRemoteDate = SVNDate.parseDate(value);
         } else if (SVNProperty.LAST_AUTHOR.equals(name)) {
             myFileInfo.myRemoteAuthor = value;
         }

@@ -23,7 +23,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -239,7 +239,7 @@ public class SVNRepositoryReplicator implements ISVNEventHandler {
             try {
                 updateRevisionProperties(dst, i, revisionProps);
                 String author = (String) revisionProps.get(SVNRevisionProperty.AUTHOR);
-                Date date = SVNTimeUtil.parseDate((String) revisionProps.get(SVNRevisionProperty.DATE));
+                Date date = SVNDate.parseDate((String) revisionProps.get(SVNRevisionProperty.DATE));
                 commitInfo = new SVNCommitInfo(i, author, date); 
             } catch (SVNException e) {
                 // skip revprop set failures.

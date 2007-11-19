@@ -39,8 +39,8 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepository;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
@@ -822,7 +822,7 @@ public class SVNLogClient extends SVNBasicClient {
                     String dateStr = (String) revProps.get(SVNRevisionProperty.DATE);
                     Date datestamp = null;
                     if (dateStr != null) {
-                        datestamp = SVNTimeUtil.parseDateString(dateStr);
+                        datestamp = SVNDate.parseDateString(dateStr);
                     }
                     entry = new SVNDirEntry(url, "", kind, 0, !props.isEmpty(), rev, datestamp, author);
                     entry.setRelativePath("");

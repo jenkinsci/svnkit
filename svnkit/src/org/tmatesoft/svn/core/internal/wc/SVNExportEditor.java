@@ -24,7 +24,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
@@ -196,7 +196,7 @@ public class SVNExportEditor implements ISVNEditor {
                 SVNFileUtil.setExecutable(myCurrentFile, true);
             }
             if (!special && date != null) {
-                myCurrentFile.setLastModified(SVNTimeUtil.parseDate(date).getTime());
+                myCurrentFile.setLastModified(SVNDate.parseDate(date).getTime());
             }
             myEventDispatcher.handleEvent(SVNEventFactory.createSVNEvent(myCurrentFile, SVNNodeKind.FILE, SVNEventAction.UPDATE_ADD), ISVNEventHandler.UNKNOWN);
         } finally {

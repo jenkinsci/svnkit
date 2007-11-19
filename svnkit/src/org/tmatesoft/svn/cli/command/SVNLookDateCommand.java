@@ -19,7 +19,7 @@ import java.util.Date;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
 
@@ -44,14 +44,14 @@ public class SVNLookDateCommand extends SVNCommand {
         if (getCommandLine().hasArgument(SVNArgument.TRANSACTION)) {
             String transactionName = (String) getCommandLine().getArgumentValue(SVNArgument.TRANSACTION);
             Date date = lookClient.doGetDate(reposRoot, transactionName);
-            String dateStamp = date != null ? SVNTimeUtil.formatCustomDate(date) : ""; 
+            String dateStamp = date != null ? SVNDate.formatCustomDate(date) : "";
             SVNCommand.println(out, dateStamp);
             return;
         } else if (getCommandLine().hasArgument(SVNArgument.REVISION)) {
             revision = SVNRevision.parse((String) getCommandLine().getArgumentValue(SVNArgument.REVISION));
         } 
         Date date = lookClient.doGetDate(reposRoot, revision);
-        String dateStamp = date != null ? SVNTimeUtil.formatCustomDate(date) : ""; 
+        String dateStamp = date != null ? SVNDate.formatCustomDate(date) : "";
         SVNCommand.println(out, dateStamp);
     }
 

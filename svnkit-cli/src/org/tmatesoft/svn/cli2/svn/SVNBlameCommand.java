@@ -23,7 +23,6 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -188,7 +187,7 @@ public class SVNBlameCommand extends SVNXMLCommand implements ISVNAnnotateHandle
             if (getSVNEnvironment().isVerbose()) {
                 String dateStr = "                                           -"; 
                 if (date != null) {
-                    dateStr = SVNTimeUtil.formatHumanDate(date, getSVNEnvironment().getClientManager().getOptions());
+                    dateStr = SVNDate.formatHumanDate(date, getSVNEnvironment().getClientManager().getOptions());
                 }
                 getSVNEnvironment().getOut().print(mergedStr + revStr + " " + authorStr + " " + dateStr + " ");
                 if (getSVNEnvironment().isUseMergeHistory() && mergedPath != null) {

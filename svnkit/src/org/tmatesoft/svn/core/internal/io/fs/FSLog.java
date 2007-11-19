@@ -29,7 +29,7 @@ import org.tmatesoft.svn.core.SVNMergeRangeInheritance;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.ISVNMergeInfoFilter;
 import org.tmatesoft.svn.core.internal.wc.SVNMergeInfoManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -218,7 +218,7 @@ public class FSLog {
             if (revisionProps != null) {
                 String author = (String) revisionProps.get(SVNRevisionProperty.AUTHOR);
                 String datestamp = (String) revisionProps.get(SVNRevisionProperty.DATE);
-                Date date = datestamp != null ? SVNTimeUtil.parseDateString(datestamp) : null;
+                Date date = datestamp != null ? SVNDate.parseDateString(datestamp) : null;
 
                 if (myRevPropNames == null || myRevPropNames.length == 0) {
                     if (censorRevProps) {

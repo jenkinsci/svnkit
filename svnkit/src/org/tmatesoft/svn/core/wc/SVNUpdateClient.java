@@ -34,7 +34,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.ISVNFileFetcher;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableOutputStream;
@@ -688,7 +688,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         if (modified && !special) {
             timestamp = adminArea.getFile(fileName).lastModified();
         } else {
-            timestamp = SVNTimeUtil.parseDateAsLong(entry.getCommittedDate());
+            timestamp = SVNDate.parseDateAsMilliseconds(entry.getCommittedDate());
         }
         Map keywordsMap = null;
         if (keywords != null) {

@@ -31,7 +31,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 
 /**
  * @author TMate Software Ltd.
@@ -113,7 +113,7 @@ public class DAVLogHandler extends DAVReportHandler implements ISVNLogEntryHandl
             if (property.equals(SVNRevisionProperty.AUTHOR)) {
                 XMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.CREATOR_DISPLAY_NAME.getName(), (String) value, xmlBuffer);
             } else if (property.equals(SVNRevisionProperty.DATE)) {
-                XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "date", SVNTimeUtil.formatDate((Date) value), xmlBuffer);
+                XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "date", SVNDate.formatDate((Date) value), xmlBuffer);
             } else if (property.equals(SVNRevisionProperty.LOG)) {
                 XMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.COMMENT.getName(), (String) value, xmlBuffer);
             } else {

@@ -1012,7 +1012,7 @@ public class SVNAdminClient extends SVNBasicClient {
         
         String revisionDate = (String) revProps.get(SVNRevisionProperty.DATE);
         if (revisionDate != null) {
-            SVNDate date = SVNDate.parseDatestamp(revisionDate);
+            SVNDate date = SVNDate.parseDate(revisionDate);
             revProps.put(SVNRevisionProperty.DATE, date.format());
         }
         

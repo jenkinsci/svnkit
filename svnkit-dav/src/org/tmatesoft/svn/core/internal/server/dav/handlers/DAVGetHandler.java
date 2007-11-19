@@ -30,7 +30,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceType;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.Version;
 
@@ -128,7 +128,7 @@ public class DAVGetHandler extends ServletDAVHandler {
         try {
             Date lastModifiedTime = resource.getLastModified();
             if (lastModifiedTime != null) {
-                setResponseHeader(LAST_MODIFIED_HEADER, SVNTimeUtil.formatRFC1123Date(lastModifiedTime));
+                setResponseHeader(LAST_MODIFIED_HEADER, SVNDate.formatRFC1123Date(lastModifiedTime));
             }
         } catch (SVNException e) {
             //nothing to do we just skip this header

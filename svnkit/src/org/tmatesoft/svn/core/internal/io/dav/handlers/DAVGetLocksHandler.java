@@ -20,7 +20,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 
 import org.xml.sax.Attributes;
 
@@ -115,9 +115,9 @@ public class DAVGetLocksHandler extends BasicDAVHandler {
                 }
             }
         } else if (element == DAVElement.SVN_LOCK_CREATION_DATE && cdata != null) {
-            myCreationDate = SVNTimeUtil.parseDate(cdata.toString());
+            myCreationDate = SVNDate.parseDate(cdata.toString());
         } else if (element == DAVElement.SVN_LOCK_EXPIRATION_DATE && cdata != null) {
-            myExpirationDate = SVNTimeUtil.parseDate(cdata.toString());
+            myExpirationDate = SVNDate.parseDate(cdata.toString());
         }
         myIsBase64 = false;
     }

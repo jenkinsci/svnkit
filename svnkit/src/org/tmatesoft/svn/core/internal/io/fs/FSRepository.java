@@ -45,7 +45,7 @@ import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNMergeInfoManager;
@@ -857,7 +857,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                 lastAuthor = (String) revProps.get(SVNRevisionProperty.AUTHOR);
                 log = (String) revProps.get(SVNRevisionProperty.LOG);
                 String timeString = (String) revProps.get(SVNRevisionProperty.DATE);
-                lastCommitDate = timeString != null ? SVNTimeUtil.parseDateString(timeString) : null;
+                lastCommitDate = timeString != null ? SVNDate.parseDateString(timeString) : null;
             }
         }
 

@@ -17,7 +17,7 @@ import java.util.Date;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
 import org.tmatesoft.svn.util.ISVNDebugLog;
@@ -117,7 +117,7 @@ public class SVNXMLAnnotateHandler extends AbstractXMLHandler implements ISVNAnn
                 addAttribute(REVISION_ATTR, revision + "");
                 openTag(COMMIT_TAG);
                 addTag(AUTHOR_TAG, author);
-                addTag(DATE_TAG, SVNTimeUtil.formatDate(date));
+                addTag(DATE_TAG, SVNDate.formatDate(date));
                 closeTag(COMMIT_TAG);
             }
             closeTag(ENTRY_TAG);
@@ -140,7 +140,7 @@ public class SVNXMLAnnotateHandler extends AbstractXMLHandler implements ISVNAnn
                 addAttribute(REVISION_ATTR, revision + "");
                 openTag(COMMIT_TAG);
                 addTag(AUTHOR_TAG, author);
-                addTag(DATE_TAG, SVNTimeUtil.formatDate(date));
+                addTag(DATE_TAG, SVNDate.formatDate(date));
                 closeTag(COMMIT_TAG);
             }
             if (myIsUseMergeHistory && mergedRevision >= 0) {
@@ -149,7 +149,7 @@ public class SVNXMLAnnotateHandler extends AbstractXMLHandler implements ISVNAnn
                 addAttribute(REVISION_ATTR, mergedRevision + "");
                 openTag(COMMIT_TAG);
                 addTag(AUTHOR_TAG, mergedAuthor);
-                addTag(DATE_TAG, SVNTimeUtil.formatDate(mergedDate));
+                addTag(DATE_TAG, SVNDate.formatDate(mergedDate));
                 closeTag(COMMIT_TAG);
                 closeTag(MERGED_TAG);
             }

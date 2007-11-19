@@ -37,7 +37,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
@@ -492,7 +492,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         if (propLength != baseFile.length()) {
             return true;
         }
-        String realTimestamp = SVNTimeUtil.formatDate(new Date(propFile.lastModified()));
+        String realTimestamp = SVNDate.formatDate(new Date(propFile.lastModified()));
         String fullRealTimestamp = realTimestamp;
         realTimestamp = realTimestamp.substring(0, 23);
         String timeStamp = entry.getPropTime();
@@ -525,7 +525,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         }
         if (!forceComparison) {
             String textTime = entry.getTextTime();
-            long textTimeAsLong = SVNFileUtil.roundTimeStamp(SVNTimeUtil.parseDateAsLong(textTime));
+            long textTimeAsLong = SVNFileUtil.roundTimeStamp(SVNDate.parseDateAsMilliseconds(textTime));
             long tstamp = SVNFileUtil.roundTimeStamp(getFile(name).lastModified());
             if (textTimeAsLong == tstamp ) {
                 return false;
@@ -568,7 +568,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         }
 
         if (equals && isLocked()) {
-            entry.setTextTime(SVNTimeUtil.formatDate(new Date(versionedFile.lastModified())));
+            entry.setTextTime(SVNDate.formatDate(new Date(versionedFile.lastModified())));
             saveEntries(false);
         }
         return !equals;
@@ -969,10 +969,10 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         entryAttrs.put(SVNProperty.COPIED, SVNProperty.toString(false));
         entryAttrs.put(SVNProperty.DELETED, SVNProperty.toString(false));
         if (textTime != 0 && !implicit) {
-            entryAttrs.put(SVNProperty.TEXT_TIME, SVNTimeUtil.formatDate(new Date(textTime)));
+            entryAttrs.put(SVNProperty.TEXT_TIME, SVNDate.formatDate(new Date(textTime)));
         }
         if (propTime != 0 && !implicit) {
-            entryAttrs.put(SVNProperty.PROP_TIME, SVNTimeUtil.formatDate(new Date(propTime)));
+            entryAttrs.put(SVNProperty.PROP_TIME, SVNDate.formatDate(new Date(propTime)));
         }
 
         entryAttrs.put(SVNProperty.CONFLICT_NEW, null);

@@ -24,7 +24,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -218,7 +218,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             myCurrentAuthor = null;
         }
         if (known && props != null && props.get(SVNRevisionProperty.DATE) != null) {
-            myCurrentDate = SVNTimeUtil.parseDate(fileRevision.getRevisionProperties().get(SVNRevisionProperty.DATE).toString());
+            myCurrentDate = SVNDate.parseDate(fileRevision.getRevisionProperties().get(SVNRevisionProperty.DATE).toString());
         } else {
             myCurrentDate = null;
         }

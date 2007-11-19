@@ -30,7 +30,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
@@ -438,7 +438,7 @@ public class SVNStatusEditor {
         SVNLock localLock = null;
         if (entry.getLockToken() != null) {
             localLock = new SVNLock(null, entry.getLockToken(), entry.getLockOwner(), entry.getLockComment(),
-                    SVNTimeUtil.parseDate(entry.getLockCreationDate()), null);
+                    SVNDate.parseDate(entry.getLockCreationDate()), null);
         }
         File conflictNew = dir != null ? dir.getFile(entry.getConflictNew()) : null;
         File conflictOld = dir != null ? dir.getFile(entry.getConflictOld()) : null;
@@ -446,7 +446,7 @@ public class SVNStatusEditor {
         File conflictProp = dir != null ? dir.getFile(entry.getPropRejectFile()) : null;
         SVNStatus status = new SVNStatus(entry.getSVNURL(), file, entry.getKind(),
                 SVNRevision.create(entry.getRevision()), SVNRevision.create(entry.getCommittedRevision()),
-                SVNTimeUtil.parseDate(entry.getCommittedDate()), entry.getAuthor(), 
+                SVNDate.parseDate(entry.getCommittedDate()), entry.getAuthor(),
                 textStatus,  propStatus, 
                 SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, 
                 isLocked, entry.isCopied(), isSwitched, 

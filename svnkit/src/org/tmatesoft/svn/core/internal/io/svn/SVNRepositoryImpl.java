@@ -48,7 +48,6 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaReader;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNDepthFilterEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -415,7 +414,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     long size = SVNReader.getLong(direntProps, 2);
                     boolean hasProps = SVNReader.getBoolean(direntProps, 3);
                     long createdRevision = SVNReader.getLong(direntProps, 4);
-                    Date createdDate = SVNTimeUtil.parseDate(SVNReader.getString(direntProps, 5));
+                    Date createdDate = SVNDate.parseDate(SVNReader.getString(direntProps, 5));
                     String lastAuthor = SVNReader.getString(direntProps, 6);
                     handler.handleDirEntry(new SVNDirEntry(url.appendPath(name, false), name, kind, size, hasProps, createdRevision, createdDate, lastAuthor));
                 }
@@ -458,7 +457,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 long size = SVNReader.getLong(direntProps, 1);
                 boolean hasProps = SVNReader.getBoolean(direntProps, 2);
                 long createdRevision = SVNReader.getLong(direntProps, 3);
-                Date createdDate = SVNTimeUtil.parseDate(SVNReader.getString(direntProps, 4));
+                Date createdDate = SVNDate.parseDate(SVNReader.getString(direntProps, 4));
                 String lastAuthor = SVNReader.getString(direntProps, 5);
                 parentEntry = new SVNDirEntry(url, "", kind, size, hasProps, createdRevision, createdDate, lastAuthor);
             }
@@ -484,7 +483,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     long size = SVNReader.getLong(direntProps, 2);
                     boolean hasProps = SVNReader.getBoolean(direntProps, 3);
                     long createdRevision = SVNReader.getLong(direntProps, 4);
-                    Date createdDate = SVNTimeUtil.parseDate(SVNReader.getString(direntProps, 5));
+                    Date createdDate = SVNDate.parseDate(SVNReader.getString(direntProps, 5));
                     String lastAuthor = SVNReader.getString(direntProps, 6);
                     handler.handleDirEntry(new SVNDirEntry(url.appendPath(name, false), name, kind, size, hasProps, createdRevision, createdDate, lastAuthor));
                 }
@@ -1115,7 +1114,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 long size = SVNReader.getLong(values, 1);
                 boolean hasProperties = SVNReader.getBoolean(values, 2);
                 long createdRevision = SVNReader.getLong(values, 3);
-                Date createdDate = SVNTimeUtil.parseDate(SVNReader.getString(values, 4));
+                Date createdDate = SVNDate.parseDate(SVNReader.getString(values, 4));
                 String lastAuthor = SVNReader.getString(values, 5);
                 entry = new SVNDirEntry(url, SVNPathUtil.tail(path), kind, size, hasProperties, createdRevision, createdDate, lastAuthor);
             }

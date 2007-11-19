@@ -24,7 +24,7 @@ import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 import org.xml.sax.Attributes;
@@ -234,7 +234,7 @@ public class DAVLogHandler extends BasicDAVHandler {
             }
 		} else if (element == DAVElement.DATE && cdata != null) {
 			if (myIsWantDate) {
-                myDate = SVNTimeUtil.parseDate(cdata.toString());    
+                myDate = SVNDate.parseDate(cdata.toString());
             }
 		} else if (element == ADDED_PATH || element == MODIFIED_PATH || element == REPLACED_PATH ||
 				element == DELETED_PATH) {

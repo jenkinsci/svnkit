@@ -30,7 +30,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
@@ -296,7 +296,7 @@ public class DAVResource {
 
 
     public Date getRevisionDate(long revision) throws SVNException {
-        return SVNTimeUtil.parseDate(getRevisionProperty(revision, SVNRevisionProperty.DATE));
+        return SVNDate.parseDate(getRevisionProperty(revision, SVNRevisionProperty.DATE));
     }
 
     public String getETag() throws SVNException {

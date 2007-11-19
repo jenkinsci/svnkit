@@ -15,7 +15,7 @@ import java.util.Date;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 
 /**
  * @author TMate Software Ltd.
@@ -35,6 +35,6 @@ public class DAVDatedRevisionRequest extends DAVRequest {
 
     protected void init() throws SVNException {
         String dateString = getProperty(getProperties(), DAVElement.CREATION_DATE).getFirstValue();
-        setDate(SVNTimeUtil.parseDate(dateString));
+        setDate(SVNDate.parseDate(dateString));
     }
 }

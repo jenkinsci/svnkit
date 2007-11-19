@@ -27,7 +27,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
@@ -44,7 +44,7 @@ public class SVNReader {
 
     public static Date getDate(List items, int index) {
         String str = getString(items, index);
-        return SVNTimeUtil.parseDate(str);
+        return SVNDate.parseDate(str);
     }
 
     public static long getLong(List items, int index) {

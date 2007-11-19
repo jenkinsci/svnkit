@@ -34,8 +34,8 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
@@ -901,11 +901,11 @@ public class FSFS {
             if (creationTime == null) {
                 SVNErrorManager.error(FSErrors.errorCorruptLockFile(lockPath, this));
             }
-            Date creationDate = SVNTimeUtil.parseDateString(creationTime);
+            Date creationDate = SVNDate.parseDateString(creationTime);
             String expirationTime = (String) lockProps.get(FSFS.EXPIRATION_DATE_LOCK_KEY);
             Date expirationDate = null;
             if (expirationTime != null) {
-                expirationDate = SVNTimeUtil.parseDateString(expirationTime);
+                expirationDate = SVNDate.parseDateString(expirationTime);
             }
             String comment = (String) lockProps.get(FSFS.COMMENT_LOCK_KEY);
             lock = new SVNLock(lockPath, lockToken, lockOwner, comment, creationDate, expirationDate);
@@ -1377,10 +1377,10 @@ public class FSFS {
                 props.put(FSFS.COMMENT_LOCK_KEY, lock.getComment());
             }
             if (lock.getCreationDate() != null) {
-                props.put(FSFS.CREATION_DATE_LOCK_KEY, SVNTimeUtil.formatDate(lock.getCreationDate()));
+                props.put(FSFS.CREATION_DATE_LOCK_KEY, SVNDate.formatDate(lock.getCreationDate()));
             }
             if (lock.getExpirationDate() != null) {
-                props.put(FSFS.EXPIRATION_DATE_LOCK_KEY, SVNTimeUtil.formatDate(lock.getExpirationDate()));
+                props.put(FSFS.EXPIRATION_DATE_LOCK_KEY, SVNDate.formatDate(lock.getExpirationDate()));
             }
         }
         if (children != null && children.size() > 0) {
@@ -1459,7 +1459,7 @@ public class FSFS {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_GENERAL, "Failed to find time on revision {0,number,integer}", new Long(revision));
             SVNErrorManager.error(err);
         }
-        return SVNTimeUtil.parseDateString(timeString);
+        return SVNDate.parseDateString(timeString);
     }
 
     private static boolean isRepositoryRoot(File candidatePath) {

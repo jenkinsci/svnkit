@@ -39,8 +39,8 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableOutputStream;
@@ -1671,7 +1671,7 @@ public class SVNWCClient extends SVNBasicClient {
                     command.clear();                    
                 } else {
                     command.put(SVNLog.NAME_ATTR, name);
-                    command.put(SVNLog.TIMESTAMP_ATTR, SVNTimeUtil.formatDate(new Date(System.currentTimeMillis())));
+                    command.put(SVNLog.TIMESTAMP_ATTR, SVNDate.formatDate(new Date(System.currentTimeMillis())));
                     log.addCommand(SVNLog.SET_TIMESTAMP, command, false);
                     command.clear();                    
                 }
@@ -1871,7 +1871,7 @@ public class SVNWCClient extends SVNBasicClient {
                         entry.setLockToken(lock.getID());
                         entry.setLockComment(lock.getComment());
                         entry.setLockOwner(lock.getOwner());
-                        entry.setLockCreationDate(SVNTimeUtil.formatDate(lock.getCreationDate()));
+                        entry.setLockCreationDate(SVNDate.formatDate(lock.getCreationDate()));
                         // get properties and values.
                         SVNVersionedProperties props = dir.getProperties(entry.getName());
                         
@@ -2744,7 +2744,7 @@ public class SVNWCClient extends SVNBasicClient {
                 eols = SVNTranslator.getEOL(eolStyle);
             }
             if (hasMods && !special) {
-                time = SVNTimeUtil.formatDate(new Date(path.lastModified()));
+                time = SVNDate.formatDate(new Date(path.lastModified()));
             } else {
                 time = entry.getCommittedDate();
             }
