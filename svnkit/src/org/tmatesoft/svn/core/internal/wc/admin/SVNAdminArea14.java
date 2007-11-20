@@ -1370,7 +1370,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         return false;
     }
     
-    protected boolean writeTime(Writer writer, String val, int emptyFields) throws IOException, SVNException {
+    protected boolean writeTime(Writer writer, String val, int emptyFields) throws IOException {
         if (val != null && val.length() > 0) {
             long time = SVNDate.parseDateAsMilliseconds(val);
             if (time > 0) {

@@ -63,6 +63,7 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
         options.add(SVNOption.QUIET);
         options.add(SVNOption.VERBOSE);
         options.add(SVNOption.USE_MERGE_HISTORY);
+        options.add(SVNOption.CHANGE);
         options.add(SVNOption.TARGETS);
         options.add(SVNOption.STOP_ON_COPY);
         options.add(SVNOption.INCREMENTAL);
@@ -111,6 +112,13 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
         
         SVNRevision start = getSVNEnvironment().getStartRevision();
         SVNRevision end = getSVNEnvironment().getEndRevision();
+        if (getSVNEnvironment().isChangeOptionUsed()) {
+            if (start.getNumber() < end.getNumber()) {
+                start = end;
+            } else {
+                end = start;
+            }
+        }
         if (start != SVNRevision.UNDEFINED && end == SVNRevision.UNDEFINED) {
             end = start;
         } else if (start == SVNRevision.UNDEFINED) {

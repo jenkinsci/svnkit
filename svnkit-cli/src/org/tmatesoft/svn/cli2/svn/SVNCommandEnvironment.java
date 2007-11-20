@@ -111,7 +111,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private boolean myIsNoDiffDeleted;
     private long myLimit;
     private boolean myIsStopOnCopy;
-    private boolean myIsChangeOptionIsUsed;
+    private boolean myIsChangeOptionUsed;
     private boolean myIsWithAllRevprops;
     
     public SVNCommandEnvironment(String programName, PrintStream out, PrintStream err, InputStream in) {
@@ -243,7 +243,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                 myStartRevision = SVNRevision.create(change);
                 myEndRevision = SVNRevision.create(change - 1);
             }
-            myIsChangeOptionIsUsed = true;
+            myIsChangeOptionUsed = true;
         } else if (option == SVNOption.REVISION) {
             if (myStartRevision != SVNRevision.UNDEFINED) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Multiple revision argument encountered; " +
@@ -357,7 +357,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         } else if (option == SVNOption.EDITOR_CMD) {
             myEditorCommand = optionValue.getValue();
         } else if (option == SVNOption.OLD) {
-            if (myIsChangeOptionIsUsed) {
+            if (myIsChangeOptionUsed) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Can't specify -c with --old"));
             }
             myOldTarget = optionValue.getValue();
@@ -445,6 +445,10 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                 myDepth = SVNDepth.fromRecurse(myIsDescend);
             }
         }
+    }
+    
+    public boolean isChangeOptionUsed() {
+        return myIsChangeOptionUsed;
     }
 
     public String getChangelist() {
