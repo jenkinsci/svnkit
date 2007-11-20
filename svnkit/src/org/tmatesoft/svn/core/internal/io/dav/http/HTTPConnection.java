@@ -23,6 +23,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.security.cert.CertificateException;
 import java.text.ParseException;
 import java.util.Collection;
@@ -302,25 +303,28 @@ class HTTPConnection implements IHTTPConnection {
                     continue;
                 }
                 err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, ssl);
+            } catch (UnknownHostException ioe) {
+                myRepository.getDebugLog().info(ioe);
+                err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, ioe);
+            } catch (SocketTimeoutException timeout) {
+                myRepository.getDebugLog().info(timeout);
+                err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "timed out waiting for server");
+            } catch (SVNCancellableOutputStream.IOCancelException cancel) {
+                myRepository.getDebugLog().info(cancel);
+                SVNErrorManager.cancel(cancel.getMessage());
             } catch (IOException e) {
                 myRepository.getDebugLog().info(e);
-                if (e instanceof SocketTimeoutException) {
-                    err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "timed out waiting for server");
-                } else if (e instanceof SVNCancellableOutputStream.IOCancelException) {
-                    SVNErrorManager.cancel(e.getMessage());
-                } else {
-                    if (sslManager != null) {
-                        close();
-                        SVNSSLAuthentication sslAuth = sslManager.getClientAuthentication();
-                        if (sslAuth != null) {
-                            SVNErrorMessage sslErr = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "SSL handshake failed: ''{0}''", e.getMessage());
-                            myRepository.getAuthenticationManager().acknowledgeAuthentication(false, ISVNAuthenticationManager.SSL, sslRealm, sslErr, sslAuth);
-                        }
-                        sslManager = promptSSLClientCertificate(sslAuth == null, true);
-                        continue;
+                if (sslManager != null) {
+                    close();
+                    SVNSSLAuthentication sslAuth = sslManager.getClientAuthentication();
+                    if (sslAuth != null) {
+                        SVNErrorMessage sslErr = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "SSL handshake failed: ''{0}''", e.getMessage());
+                        myRepository.getAuthenticationManager().acknowledgeAuthentication(false, ISVNAuthenticationManager.SSL, sslRealm, sslErr, sslAuth);
                     }
-                    err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e.getMessage());
+                    sslManager = promptSSLClientCertificate(sslAuth == null, true);
+                    continue;
                 }
+                err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e.getMessage());
             } catch (SVNException e) {
                 myRepository.getDebugLog().info(e);
                 // force connection close on SVNException 
