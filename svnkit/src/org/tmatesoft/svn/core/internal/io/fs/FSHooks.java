@@ -170,35 +170,45 @@ public class FSHooks {
 
     public static void runStartCommitHook(File reposRootDir, String author) throws SVNException {
         author = author == null ? "" : author;
-        runCommitHook(reposRootDir, SVN_REPOS_HOOK_START_COMMIT, author);
+        runCommitHook(reposRootDir, SVN_REPOS_HOOK_START_COMMIT, new String[] {author, "mergeinfo"});
     }
 
     public static void runPreCommitHook(File reposRootDir, String txnName) throws SVNException {
-        runCommitHook(reposRootDir, SVN_REPOS_HOOK_PRE_COMMIT, txnName);
+        runCommitHook(reposRootDir, SVN_REPOS_HOOK_PRE_COMMIT, new String[] {txnName});
     }
 
     public static void runPostCommitHook(File reposRootDir, long committedRevision) throws SVNException {
-        runCommitHook(reposRootDir, SVN_REPOS_HOOK_POST_COMMIT, String.valueOf(committedRevision));
+        runCommitHook(reposRootDir, SVN_REPOS_HOOK_POST_COMMIT, new String[] {String.valueOf(committedRevision)});
     }
 
-    private static void runCommitHook(File reposRootDir, String hookName, String secondArg) throws SVNException {
+    private static void runCommitHook(File reposRootDir, String hookName, String[] args) throws SVNException {
         File hookFile = getHookFile(reposRootDir, hookName);
         if (hookFile == null) {
             return;
         }
+        if (args == null) {
+            args = new String[0];
+        }
         Process hookProc = null;
         String reposPath = reposRootDir.getAbsolutePath().replace(File.separatorChar, '/');
+        String executableName = hookFile.getName().toLowerCase();
+        boolean useCmd = (executableName.endsWith(".bat") || executableName.endsWith(".cmd")) && SVNFileUtil.isWindows;
+        String[] cmd = useCmd ? new String[4 + args.length] : new String[2 + args.length];
+        int i = 0;
+        if (useCmd) {
+            cmd[0] = "cmd";
+            cmd[1] = "/C";
+            i = 2;
+        }
+        cmd[i] = hookFile.getAbsolutePath();
+        i++;
+        cmd[i] = reposPath;
+        i++;
+        for(int j = 0; j < args.length; j++) {
+            cmd[i + j] = args[j];
+        }
         try {
-            String executableName = hookFile.getName().toLowerCase();
-            if ((executableName.endsWith(".bat") || executableName.endsWith(".cmd")) && SVNFileUtil.isWindows) {
-                String cmd = "cmd /C \"" + "\"" + hookFile.getAbsolutePath() + "\" " + "\"" + reposPath + "\" " + "\"" + secondArg + "\"";
-                hookProc = Runtime.getRuntime().exec(cmd);
-            } else {
-                String[] cmd = {
-                        hookFile.getAbsolutePath(), reposPath, secondArg != null && !"".equals(secondArg) ? secondArg : "\"\""
-                };
-                hookProc = Runtime.getRuntime().exec(cmd);
-            }
+            hookProc = Runtime.getRuntime().exec(cmd);
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "Failed to start ''{0}'' hook: {1}", new Object[] {
                     hookFile, ioe.getLocalizedMessage()
