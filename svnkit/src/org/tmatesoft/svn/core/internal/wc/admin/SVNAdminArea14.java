@@ -1644,7 +1644,6 @@ public class SVNAdminArea14 extends SVNAdminArea {
                 if (currentEntry.getKind() == SVNNodeKind.FILE || currentEntry.getKind() == SVNNodeKind.DIR) {
                     removeFromRevisionControl(currentEntry.getName(), false, false);
                 }
-                
             }
         }
 
@@ -1822,8 +1821,9 @@ public class SVNAdminArea14 extends SVNAdminArea {
             if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
                 parentArea = getWCAccess().open(dirFile.getParentFile(), true, false, 0);
                 unassociated = true;
+            } else {
+                throw svne;
             }
-            throw svne;
         }
         
         SVNEntry entryInParent = parentArea.getEntry(dirFile.getName(), false);
