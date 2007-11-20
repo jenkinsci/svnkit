@@ -18,7 +18,6 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNDirEntry;
@@ -29,8 +28,8 @@ import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 
 
@@ -130,7 +129,11 @@ public class SVNListCommand extends SVNXMLCommand implements ISVNDirEntryHandler
         if (getSVNEnvironment().isVerbose()) {
             buffer.append(SVNFormatUtil.formatString(dirEntry.getRevision() + "", 7, false));
             buffer.append(' ');
-            buffer.append(SVNFormatUtil.formatString(dirEntry.getAuthor() == null ? " ? " : dirEntry.getAuthor(), 16, true));
+            String author = dirEntry.getAuthor() == null ? " ? " : dirEntry.getAuthor();
+            if (author.length() > 8) {
+                author = author.substring(0, 8);
+            }
+            buffer.append(SVNFormatUtil.formatString(author, 8, true));
             buffer.append(' ');
             buffer.append(dirEntry.getLock() != null ? 'O' : ' ');
             buffer.append(' ');
@@ -150,7 +153,7 @@ public class SVNListCommand extends SVNXMLCommand implements ISVNDirEntryHandler
             buffer.append(' ');
         }
         buffer.append(path);
-        if (dirEntry.getKind() == SVNNodeKind.DIR && !".".equals(path)) {
+        if (dirEntry.getKind() == SVNNodeKind.DIR) {
             buffer.append('/');
         }
         buffer.append('\n');
