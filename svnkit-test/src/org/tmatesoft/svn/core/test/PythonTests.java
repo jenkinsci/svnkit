@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
@@ -193,8 +194,9 @@ public class PythonTests {
         commandsList.add(String.valueOf(testCase));
         String[] commands = (String[]) commandsList.toArray(new String[commandsList.size()]); 
 
+        Process process = null;
 		try {
-			Process process = Runtime.getRuntime().exec(commands, null, new File("python/cmdline"));
+            process = Runtime.getRuntime().exec(commands, null, new File("python/cmdline"));
 			new ReaderThread(process.getInputStream(), null).start();
 			new ReaderThread(process.getErrorStream(), null).start();
 			try {
@@ -202,10 +204,11 @@ public class PythonTests {
 			}
 			catch (InterruptedException e) {
 			}
-		}
-		catch (Throwable th) {
+		} catch (Throwable th) {
 			System.err.println("ERROR: " + th.getMessage());
 			th.printStackTrace(System.err);
+		} finally {
+		    SVNFileUtil.destroyProcess(process);
 		}
 	}
 
@@ -272,8 +275,9 @@ public class PythonTests {
 	private static List getAvailableTestCases(String pythonLauncher, String testFile) throws IOException {
 		final String[] commands = new String[]{pythonLauncher, testFile, "list"};
 		final ByteArrayOutputStream os = new ByteArrayOutputStream();
+        Process process = null;
 		try {
-			Process process = Runtime.getRuntime().exec(commands, null, new File("python/cmdline"));
+            process = Runtime.getRuntime().exec(commands, null, new File("python/cmdline"));
             Thread readerThread = new ReaderThread(process.getInputStream(), new PrintStream(os));
             readerThread.start();
 			new ReaderThread(process.getErrorStream(), null).start();
@@ -284,10 +288,11 @@ public class PythonTests {
 			catch (InterruptedException e) {
 			}
             os.close();
-		}
-		catch (Throwable th) {
+		} catch (Throwable th) {
 			System.err.println("ERROR: " + th.getMessage());
 			th.printStackTrace(System.err);
+		} finally {
+		    SVNFileUtil.destroyProcess(process);
 		}
 
 		final String listString = new String(os.toByteArray());
@@ -350,9 +355,8 @@ public class PythonTests {
 						myHelpStream.flush();
 					}
 				}
-			}
-			catch (IOException e) {
-				e.printStackTrace();
+			} catch (IOException e) {
+			    // we could expect exception here, when process is destroyed.
 			}
 		}
 	}
@@ -403,7 +407,7 @@ public class PythonTests {
     
     public static void stopSVNServe() {
         if (ourSVNServer != null) {
-            ourSVNServer.destroy();
+            SVNFileUtil.destroyProcess(ourSVNServer);
         }
     }
 

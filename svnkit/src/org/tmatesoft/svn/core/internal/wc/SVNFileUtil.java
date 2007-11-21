@@ -253,8 +253,13 @@ public class SVNFileUtil {
                 deleteFile(tmp);
             } else {
                 if (isWindows) {
-                    Process p = Runtime.getRuntime().exec(ATTRIB_COMMAND + " -R \"" + file.getAbsolutePath() + "\"");
-                    p.waitFor();
+                    Process p = null;
+                    try {
+                        p = Runtime.getRuntime().exec(ATTRIB_COMMAND + " -R \"" + file.getAbsolutePath() + "\"");
+                        p.waitFor();
+                    } finally {
+                        destroyProcess(p);
+                    }
                 } else {
                     execCommand(new String[] {
                             CHMOD_COMMAND, "ugo+w", file.getAbsolutePath()
@@ -1058,6 +1063,15 @@ public class SVNFileUtil {
             //
         }
     }
+    
+    public static void destroyProcess(Process process) {
+        if (process != null) {
+            closeFile(process.getInputStream());
+            closeFile(process.getOutputStream());
+            closeFile(process.getErrorStream());
+            process.destroy();
+        }
+    }
 
     public static String execCommand(String[] commandLine) {
         return execCommand(commandLine, false);
@@ -1066,8 +1080,9 @@ public class SVNFileUtil {
     private static String execCommand(String[] commandLine, boolean waitAfterRead) {
         InputStream is = null;
         StringBuffer result = new StringBuffer();
+        Process process = null;
         try {
-            Process process = Runtime.getRuntime().exec(commandLine);
+            process = Runtime.getRuntime().exec(commandLine);
             is = process.getInputStream();
             if (!waitAfterRead) {
                 int rc = process.waitFor();
@@ -1091,7 +1106,7 @@ public class SVNFileUtil {
         } catch (InterruptedException e) {
             SVNDebugLog.getDefaultLog().info(e);
         } finally {
-            closeFile(is);
+            destroyProcess(process);
         }
         return null;
     }
@@ -1219,27 +1234,31 @@ public class SVNFileUtil {
         Process p = null;
         Properties envVars = new Properties();
         Runtime r = Runtime.getRuntime();
-        if (isWindows) {
-            if (System.getProperty("os.name").toLowerCase().indexOf("windows 9") >= 0) {
-                p = r.exec("command.com /c set");
+        try {
+            if (isWindows) {
+                if (System.getProperty("os.name").toLowerCase().indexOf("windows 9") >= 0) {
+                    p = r.exec("command.com /c set");
+                } else {
+                    p = r.exec("cmd.exe /c set");
+                }
             } else {
-                p = r.exec("cmd.exe /c set");
+                p = r.exec(ENV_COMMAND); // if OpenVMS ENV_COMMAND could be "mcr
+                                         // gnu:[bin]env"
             }
-        } else {
-            p = r.exec(ENV_COMMAND); // if OpenVMS ENV_COMMAND could be "mcr
-                                     // gnu:[bin]env"
-        }
-        if (p != null) {
-            BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            String line;
-            while ((line = br.readLine()) != null) {
-                int idx = line.indexOf('=');
-                if (idx >= 0) {
-                    String key = line.substring(0, idx);
-                    String value = line.substring(idx + 1);
-                    envVars.setProperty(key, value);
+            if (p != null) {
+                BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                String line;
+                while ((line = br.readLine()) != null) {
+                    int idx = line.indexOf('=');
+                    if (idx >= 0) {
+                        String key = line.substring(0, idx);
+                        String value = line.substring(idx + 1);
+                        envVars.setProperty(key, value);
+                    }
                 }
             }
+        } finally {
+            destroyProcess(p);
         }
         return envVars;
     }

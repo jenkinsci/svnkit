@@ -152,6 +152,7 @@ public class FSHooks {
                 }
             }
         } catch (IOException ioe) {
+            SVNFileUtil.destroyProcess(hookProc);
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "Failed to start ''{0}'' hook: {1}", new Object[] {
                     hookFile, ioe.getLocalizedMessage()
             });
@@ -200,6 +201,7 @@ public class FSHooks {
                 hookProc = Runtime.getRuntime().exec(cmd);
             }
         } catch (IOException ioe) {
+            SVNFileUtil.destroyProcess(hookProc);
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "Failed to start ''{0}'' hook: {1}", new Object[] {
                     hookFile, ioe.getLocalizedMessage()
             });
@@ -233,6 +235,7 @@ public class FSHooks {
                 hookProc = Runtime.getRuntime().exec(cmd);
             }
         } catch (IOException ioe) {
+            SVNFileUtil.destroyProcess(hookProc);
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "Failed to start ''{0}'' hook: {1}", new Object[] {
                     hookFile, ioe.getLocalizedMessage()
             });
@@ -277,7 +280,7 @@ public class FSHooks {
         } finally {
             errorGobbler.close();
             inputGobbler.close();
-            hookProcess.destroy();
+            SVNFileUtil.destroyProcess(hookProcess);
         }
 
         if (errorGobbler.getError() != null) {
