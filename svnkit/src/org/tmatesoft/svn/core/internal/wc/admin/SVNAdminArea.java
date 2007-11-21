@@ -757,10 +757,13 @@ public abstract class SVNAdminArea {
         
         if (isFile) {
             File path = getFile(name);
-            boolean textModified = hasTextModifications(name, false);
-            if (reportInstantError && textModified) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LEFT_LOCAL_MOD, "File ''{0}'' has local modifications", path);
-                SVNErrorManager.error(err);
+            boolean textModified = false;
+            if (deleteWorkingFiles) {
+                textModified = hasTextModifications(name, false);
+                if (reportInstantError && textModified) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LEFT_LOCAL_MOD, "File ''{0}'' has local modifications", path);
+                    SVNErrorManager.error(err);
+                }
             }
             SVNPropertiesManager.deleteWCProperties(this, name, false);
             deleteEntry(name);
