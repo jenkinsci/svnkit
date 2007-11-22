@@ -14,10 +14,9 @@ package org.tmatesoft.svn.cli2.svn;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
 
 
@@ -36,11 +35,10 @@ public class DefaultSVNCommandLineDiffGenerator extends DefaultSVNDiffGenerator 
     }
     
     protected void displayHeaderFields(OutputStream os, String path1, String rev1, String path2, String rev2) throws IOException {
-        DateFormat df = new SimpleDateFormat("EEE' 'MMM' 'dd' 'HH:mm:ss' 'yyyy");
         Date time1 = new Date(myFile1.lastModified());
         Date time2 = new Date(myFile2.lastModified());
-        String timestamp1 = df.format(time1);
-        String timestamp2 = df.format(time2);
+        String timestamp1 = SVNDate.formatConsoleDiffDate(time1);
+        String timestamp2 = SVNDate.formatConsoleDiffDate(time2);
         String file1 = myFile1.getAbsolutePath();
         String file2 = myFile2.getAbsolutePath();
         

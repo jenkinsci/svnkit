@@ -40,20 +40,29 @@ public class SVNDate extends Date {
     static final DateFormat SVN_FORMAT = new SimpleDateFormat(
             "yyyy-MM-dd'T'HH:mm:ss.SSS");
 
-    public static final DateFormat ISO8601_FORMAT = new SimpleDateFormat(
+    private static final DateFormat ISO8601_FORMAT = new SimpleDateFormat(
             "yyyy-MM-dd'T'HH:mm:ss.SSS'000Z'");
 
-    public static final DateFormat RFC1123_FORMAT = new SimpleDateFormat(
+    private static final DateFormat RFC1123_FORMAT = new SimpleDateFormat(
             "EEE, d MMM yyyy HH:mm:ss z", Locale.US);
 
-    public static final DateFormat CUSTOM_FORMAT = new SimpleDateFormat(
+    private static final DateFormat CUSTOM_FORMAT = new SimpleDateFormat(
             "yyyy-MM-dd HH:mm:ss Z (EE, d MMM yyyy)", Locale.getDefault());
 
-    public static final DateFormat HUMAN_FORMAT = new SimpleDateFormat(
+    private static final DateFormat HUMAN_FORMAT = new SimpleDateFormat(
             "yyyy-MM-dd' 'HH:mm:ss' 'ZZZZ' ('E', 'dd' 'MMM' 'yyyy')'");
 
-    public static final DateFormat SHORT_FORMAT = new SimpleDateFormat(
+    private static final DateFormat SHORT_FORMAT = new SimpleDateFormat(
             "yyyy-MM-dd' 'HH:mm:ss'Z'");
+
+    private static final DateFormat CONSOLE_DIFF_DATE_FORMAT = new SimpleDateFormat(
+            "EEE' 'MMM' 'dd' 'HH:mm:ss' 'yyyy");
+
+    private static final DateFormat CONSOLE_LONG_DATE_FORMAT = new SimpleDateFormat(
+            "MM' 'dd'  'yyyy");
+
+    private static final DateFormat CONSOLE_SHORT_DATE_FORMAT = new SimpleDateFormat(
+            "MM' 'dd'  'HH:mm");
 
     public static final char[] DATE_SEPARATORS = {'-', '-', 'T', ':', ':', '.', 'Z'};
 
@@ -138,6 +147,33 @@ public class SVNDate extends Date {
         }
         synchronized (CUSTOM_FORMAT) {
             return CUSTOM_FORMAT.format(date);
+        }
+    }
+
+    public static String formatConsoleDiffDate(Date date){
+        if (date == null) {
+            return null;
+        }
+        synchronized (CONSOLE_DIFF_DATE_FORMAT) {
+            return CONSOLE_DIFF_DATE_FORMAT.format(date);
+        }
+    }
+
+    public static String formatConsoleLongDate(Date date){
+        if (date == null) {
+            return null;
+        }
+        synchronized (CONSOLE_LONG_DATE_FORMAT) {
+            return CONSOLE_LONG_DATE_FORMAT.format(date);
+        }
+    }
+
+    public static String formatConsoleShortDate(Date date){
+        if (date == null) {
+            return null;
+        }
+        synchronized (CONSOLE_SHORT_DATE_FORMAT) {
+            return CONSOLE_SHORT_DATE_FORMAT.format(date);
         }
     }
 

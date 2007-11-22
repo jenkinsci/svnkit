@@ -11,8 +11,6 @@
  */
 package org.tmatesoft.svn.cli2.svn;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
@@ -39,10 +37,6 @@ import org.tmatesoft.svn.core.wc.SVNLogClient;
  * @author  TMate Software Ltd.
  */
 public class SVNListCommand extends SVNXMLCommand implements ISVNDirEntryHandler {
-
-    private static final DateFormat LONG_DATE_FORMAT = new SimpleDateFormat("MM' 'dd'  'yyyy");
-    private static final DateFormat SHORT_DATE_FORMAT = new SimpleDateFormat("MM' 'dd'  'HH:mm");
-
 
     public SVNListCommand() {
         super("list", new String[] {"ls"});
@@ -145,9 +139,9 @@ public class SVNListCommand extends SVNXMLCommand implements ISVNDirEntryHandler
             String timeStr = "";
             if (d != null) {
                 if (System.currentTimeMillis() - d.getTime() < 365 * 1000 * 86400 / 2) {
-                    timeStr = SHORT_DATE_FORMAT.format(d);
+                    timeStr = SVNDate.formatConsoleShortDate(d);
                 } else {
-                    timeStr = LONG_DATE_FORMAT.format(d);
+                    timeStr = SVNDate.formatConsoleLongDate(d);
                 }
             }
             buffer.append(SVNFormatUtil.formatString(timeStr, 12, false));
