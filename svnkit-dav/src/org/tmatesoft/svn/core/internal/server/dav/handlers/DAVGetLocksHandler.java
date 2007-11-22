@@ -22,7 +22,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
-import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
@@ -78,16 +78,16 @@ public class DAVGetLocksHandler extends DAVReportHandler {
     }
 
     private void addLock(SVNLock lock, StringBuffer xmlBuffer) {
-        XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "lock", XMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
-        XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "path", lock.getPath(), xmlBuffer);
-        XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "token", lock.getID(), xmlBuffer);
-        XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "creationdate", SVNDate.formatDate(lock.getCreationDate()), xmlBuffer);
+        SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "lock", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
+        SVNXMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "path", lock.getPath(), xmlBuffer);
+        SVNXMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "token", lock.getID(), xmlBuffer);
+        SVNXMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "creationdate", SVNDate.formatDate(lock.getCreationDate()), xmlBuffer);
         if (lock.getExpirationDate() != null) {
-            XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "expirationdate", SVNDate.formatDate(lock.getExpirationDate()), xmlBuffer);
+            SVNXMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "expirationdate", SVNDate.formatDate(lock.getExpirationDate()), xmlBuffer);
         }
         if (lock.getOwner() != null) {
             if (SVNEncodingUtil.isXMLSafe(lock.getOwner())) {
-                XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "owner", lock.getOwner(), xmlBuffer);
+                SVNXMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "owner", lock.getOwner(), xmlBuffer);
             } else {
                 String ownerEncoded = null;
                 try {
@@ -95,14 +95,14 @@ public class DAVGetLocksHandler extends DAVReportHandler {
                 } catch (UnsupportedEncodingException e) {
                     ownerEncoded = SVNBase64.byteArrayToBase64(lock.getOwner().getBytes());
                 }
-                XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "owner", XMLUtil.XML_STYLE_PROTECT_PCDATA, ENCODING_ATTR, BASE64_ENCODING, xmlBuffer);
+                SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "owner", SVNXMLUtil.XML_STYLE_PROTECT_PCDATA, ENCODING_ATTR, BASE64_ENCODING, xmlBuffer);
                 xmlBuffer.append(ownerEncoded);
-                XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "owner", xmlBuffer);
+                SVNXMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "owner", xmlBuffer);
             }
         }
         if (lock.getComment() != null) {
             if (SVNEncodingUtil.isXMLSafe(lock.getComment())) {
-                XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "comment", lock.getComment(), xmlBuffer);
+                SVNXMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "comment", lock.getComment(), xmlBuffer);
             } else {
                 String commentEncoded = null;
                 try {
@@ -110,11 +110,11 @@ public class DAVGetLocksHandler extends DAVReportHandler {
                 } catch (UnsupportedEncodingException e) {
                     commentEncoded = SVNBase64.byteArrayToBase64(lock.getComment().getBytes());
                 }
-                XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "comment", XMLUtil.XML_STYLE_PROTECT_PCDATA, ENCODING_ATTR, BASE64_ENCODING, xmlBuffer);
+                SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "comment", SVNXMLUtil.XML_STYLE_PROTECT_PCDATA, ENCODING_ATTR, BASE64_ENCODING, xmlBuffer);
                 xmlBuffer.append(commentEncoded);
-                XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "comment", xmlBuffer);
+                SVNXMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "comment", xmlBuffer);
             }
         }
-        XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "lock", xmlBuffer);
+        SVNXMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "lock", xmlBuffer);
     }
 }

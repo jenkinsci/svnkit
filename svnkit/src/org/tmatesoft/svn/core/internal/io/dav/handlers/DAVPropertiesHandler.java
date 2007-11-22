@@ -25,37 +25,36 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.dav.DAVProperties;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPStatus;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 
 import org.xml.sax.Attributes;
 
 
 /**
+ * @author TMate Software Ltd.
  * @version 1.1.1
- * @author  TMate Software Ltd.
  */
 public class DAVPropertiesHandler extends BasicDAVHandler {
-	
-	public static StringBuffer generatePropertiesRequest(StringBuffer body, DAVElement[] properties) {
-        body = body == null ? new StringBuffer() : body;
-        body.append("<?xml version=\"1.0\" encoding=\"utf-8\"?><propfind xmlns=\"DAV:\">");
-        if (properties != null) {
-            body.append("<prop>");
-            for (int i = 0; i < properties.length; i++) {
-                body.append("<");
-                body.append(properties[i].getName());
-                body.append(" xmlns=\"");
-                body.append(properties[i].getNamespace());
-                body.append("\"/>");
-            }
-            body.append("</prop></propfind>");
-        } else {
-            body.append("<allprop/></propfind>");
-        }
-        return body;
 
-	}
-    
+    public static StringBuffer generatePropertiesRequest(StringBuffer xmlBuffer, DAVElement[] properties) {
+        xmlBuffer = xmlBuffer == null ? new StringBuffer() : xmlBuffer;
+        SVNXMLUtil.addXMLHeader(xmlBuffer);
+        SVNXMLUtil.openNamespaceDeclarationTag(null, "propfind", DAV_NAMESPACES_LIST, null, xmlBuffer);
+        if (properties != null) {
+            xmlBuffer.append("<prop>");
+            for (int i = 0; i < properties.length; i++) {
+                SVNXMLUtil.openXMLTag(null, properties[i].getName(), SVNXMLUtil.XML_STYLE_SELF_CLOSING, "xmlns", properties[i].getNamespace(), xmlBuffer);
+            }
+            SVNXMLUtil.closeXMLTag(null, "prop", xmlBuffer);
+        } else {
+            SVNXMLUtil.openXMLTag(null, "allprop", SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
+        }
+        SVNXMLUtil.addXMLFooter(null, "propfind", xmlBuffer);
+        return xmlBuffer;
+    }
+
     private static final Set PROP_ELEMENTS = new HashSet();
+
     static {
         PROP_ELEMENTS.add(DAVElement.HREF);
         PROP_ELEMENTS.add(DAVElement.STATUS);
@@ -70,17 +69,17 @@ public class DAVPropertiesHandler extends BasicDAVHandler {
         PROP_ELEMENTS.add(DAVElement.MD5_CHECKSUM);
         PROP_ELEMENTS.add(DAVElement.REPOSITORY_UUID);
     }
-    
+
     private DAVProperties myCurrentResource;
     private int myStatusCode;
     private String myEncoding;
     private Map myResources;
     private Map myCurrentProperties;
-    
+
     public DAVPropertiesHandler() {
         init();
     }
-    
+
     public Map getDAVProperties() {
         return myResources;
     }
@@ -100,9 +99,9 @@ public class DAVPropertiesHandler extends BasicDAVHandler {
         } else {
             myEncoding = attrs.getValue("encoding");
         }
-	}
+    }
 
-	protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
+    protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
         DAVElement name = null;
         String value = null;
         if (element == DAVElement.RESPONSE) {
@@ -110,7 +109,7 @@ public class DAVPropertiesHandler extends BasicDAVHandler {
                 invalidXML();
             }
             myResources.put(myCurrentResource.getURL(), myCurrentResource);
-            myCurrentResource = null;            
+            myCurrentResource = null;
             return;
         } else if (element == DAVElement.PROPSTAT) {
             if (myStatusCode != 0) {
@@ -164,13 +163,13 @@ public class DAVPropertiesHandler extends BasicDAVHandler {
             if (myEncoding == null) {
                 value = cdata.toString();
             } else if ("base64".equals(myEncoding)) {
-                byte[] buffer = allocateBuffer(cdata.length()); 
+                byte[] buffer = allocateBuffer(cdata.length());
                 int length = SVNBase64.base64ToByteArray(new StringBuffer(cdata.toString().trim()), buffer);
                 try {
                     value = new String(buffer, 0, length, "UTF-8");
                 } catch (UnsupportedEncodingException e) {
                     value = new String(buffer, 0, length);
-                }                
+                }
             } else {
                 invalidXML();
             }
@@ -179,8 +178,8 @@ public class DAVPropertiesHandler extends BasicDAVHandler {
         if (name != null && value != null) {
             myCurrentProperties.put(name, value);
         }
-	}
-    
+    }
+
     public void setDAVProperties(Map result) {
         myResources = result;
     }

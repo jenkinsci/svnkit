@@ -21,45 +21,44 @@ import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 
 import org.xml.sax.Attributes;
 
 /**
+ * @author TMate Software Ltd.
  * @version 1.1.1
- * @author  TMate Software Ltd.
  */
 public class DAVGetLocksHandler extends BasicDAVHandler {
-    
+
     private static final String LOCK_COMMENT_SUFFIX = "</ns0:owner>";
     private static final String LOCK_COMMENT_PREFIX = "<ns0:owner xmlns:ns0=\"DAV:\">";
     private static final String EMPTY_LOCK_COMMENT = "<ns0:owner xmlns:ns0=\"DAV:\"/>";
 
-    public static StringBuffer generateGetLocksRequest(StringBuffer body) {
-        body = body == null ? new StringBuffer() : body;
-
-        body.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
-        body.append("<S:get-locks-report xmlns:S=\"svn:\" xmlns:D=\"DAV:\">");
-        body.append("</S:get-locks-report>");
-        
-        return body;
+    public static StringBuffer generateGetLocksRequest(StringBuffer xmlBuffer) {
+        xmlBuffer = xmlBuffer == null ? new StringBuffer() : xmlBuffer;
+        SVNXMLUtil.addXMLHeader(xmlBuffer);
+        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "get-locks-report", SVN_DAV_NAMESPACES_LIST, SVNXMLUtil.PREFIX_MAP, xmlBuffer);
+        SVNXMLUtil.addXMLFooter(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "get-locks-report", xmlBuffer);
+        return xmlBuffer;
     }
-    
+
     private Collection myLocks;
-    
+
     private String myPath;
     private String myToken;
     private String myComment;
     private String myOwner;
     private Date myExpirationDate;
     private Date myCreationDate;
-    
+
     private boolean myIsBase64;
-    
+
     public DAVGetLocksHandler() {
         myLocks = new ArrayList();
         init();
     }
-    
+
     public SVNLock[] getLocks() {
         return (SVNLock[]) myLocks.toArray(new SVNLock[myLocks.size()]);
     }
@@ -99,7 +98,7 @@ public class DAVGetLocksHandler extends BasicDAVHandler {
                 }
             }
         } else if (element == DAVElement.SVN_LOCK_COMMENT && cdata != null) {
-            myComment = cdata.toString();            
+            myComment = cdata.toString();
             if (myComment != null && myComment.trim().startsWith(LOCK_COMMENT_PREFIX) && myComment.trim().endsWith(LOCK_COMMENT_SUFFIX)) {
                 myComment = myComment.trim().substring(LOCK_COMMENT_PREFIX.length(), myComment.trim().length() - LOCK_COMMENT_SUFFIX.length());
             } else if (myComment.trim().equals(EMPTY_LOCK_COMMENT)) {

@@ -33,7 +33,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceType;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
-import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
@@ -97,12 +97,12 @@ public class DAVPropfindHandler extends ServletDAVHandler {
             getSupportedLiveProperties(resource, properties);
         }
 
-        XMLUtil.addXMLHeader(xmlBuffer);
+        SVNXMLUtil.addXMLHeader(xmlBuffer);
         DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "multistatus", null, xmlBuffer);
 
         generateResponse(xmlBuffer, resource, properties, depth);
 
-        XMLUtil.closeXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "multistatus", xmlBuffer);
+        SVNXMLUtil.closeXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "multistatus", xmlBuffer);
     }
 
     private void generateResponse(StringBuffer xmlBuffer, DAVResource resource, Collection properties, DAVDepth depth) throws SVNException {
@@ -126,19 +126,19 @@ public class DAVPropfindHandler extends ServletDAVHandler {
 
     private void addResponse(StringBuffer xmlBuffer, DAVResource resource, Collection properties) throws SVNException {
         DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "response", properties, xmlBuffer);
-        XMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "href", resource.getResourceURI().getRequestURI(), xmlBuffer);
+        SVNXMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "href", resource.getResourceURI().getRequestURI(), xmlBuffer);
 
         Collection badProperties = addPropstat(xmlBuffer, properties, resource, !getPropfindRequest().isPropNameRequest(), HTTP_STATUS_OK_LINE);
         if (badProperties != null && !badProperties.isEmpty()) {
             addPropstat(xmlBuffer, badProperties, resource, false, HTTP_NOT_FOUND_LINE);
         }
 
-        XMLUtil.closeXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "response", xmlBuffer);
+        SVNXMLUtil.closeXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "response", xmlBuffer);
     }
 
     private Collection addPropstat(StringBuffer xmlBuffer, Collection properties, DAVResource resource, boolean addValue, String statusLine) throws SVNException {
-        XMLUtil.openXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "propstat", XMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
-        XMLUtil.openXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "prop", XMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
+        SVNXMLUtil.openXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "propstat", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
+        SVNXMLUtil.openXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "prop", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
 
         Collection badProperties = null;
         for (Iterator elements = properties.iterator(); elements.hasNext();) {
@@ -155,9 +155,9 @@ public class DAVPropfindHandler extends ServletDAVHandler {
             }
         }
 
-        XMLUtil.closeXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "prop", xmlBuffer);
-        XMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "status", statusLine, xmlBuffer);
-        XMLUtil.closeXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "propstat", xmlBuffer);
+        SVNXMLUtil.closeXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "prop", xmlBuffer);
+        SVNXMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "status", statusLine, xmlBuffer);
+        SVNXMLUtil.closeXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "propstat", xmlBuffer);
         return badProperties;
     }
 
@@ -219,17 +219,17 @@ public class DAVPropfindHandler extends ServletDAVHandler {
         }
 
         if (value == null || value.length() == 0) {
-            XMLUtil.openXMLTag(prefix, name, XMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
+            SVNXMLUtil.openXMLTag(prefix, name, SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
         } else if (isHref) {
-            XMLUtil.openXMLTag(prefix, name, XMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
-            XMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "href", value, xmlBuffer);
-            XMLUtil.closeXMLTag(prefix, name, xmlBuffer);
+            SVNXMLUtil.openXMLTag(prefix, name, SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
+            SVNXMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "href", value, xmlBuffer);
+            SVNXMLUtil.closeXMLTag(prefix, name, xmlBuffer);
         } else if (!isCData) {
-            XMLUtil.openXMLTag(prefix, name, XMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
+            SVNXMLUtil.openXMLTag(prefix, name, SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
             xmlBuffer.append(value);
-            XMLUtil.closeXMLTag(prefix, name, xmlBuffer);
+            SVNXMLUtil.closeXMLTag(prefix, name, xmlBuffer);
         } else {
-            XMLUtil.openCDataTag(prefix, name, value, xmlBuffer);
+            SVNXMLUtil.openCDataTag(prefix, name, value, xmlBuffer);
         }
     }
 

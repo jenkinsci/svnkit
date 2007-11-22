@@ -22,7 +22,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
-import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
@@ -72,7 +72,7 @@ public class DAVFileRevisionsHandler extends DAVReportHandler implements ISVNFil
         Map attrs = new HashMap();
         attrs.put(PATH_ATTR, fileRevision.getPath());
         attrs.put(REVISION_ATTR, String.valueOf(fileRevision.getRevision()));
-        StringBuffer xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, FILE_REVISION_ATTR, XMLUtil.XML_STYLE_NORMAL, attrs, null);
+        StringBuffer xmlBuffer = SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, FILE_REVISION_ATTR, SVNXMLUtil.XML_STYLE_NORMAL, attrs, null);
         write(xmlBuffer);
         for (Iterator iterator = fileRevision.getRevisionProperties().entrySet().iterator(); iterator.hasNext();) {
             Map.Entry entry = (Map.Entry) iterator.next();
@@ -87,19 +87,19 @@ public class DAVFileRevisionsHandler extends DAVReportHandler implements ISVNFil
             if (propertyValue != null) {
                 writePropertyTag(SET_PROPERTY_ATTR, propertyName, propertyValue);
             } else {
-                xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, REMOVE_PROPERTY_ATTR, XMLUtil.XML_STYLE_SELF_CLOSING, "name", propertyName, null);
+                xmlBuffer = SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, REMOVE_PROPERTY_ATTR, SVNXMLUtil.XML_STYLE_SELF_CLOSING, "name", propertyName, null);
                 write(xmlBuffer);
             }
         }
     }
 
     public void closeRevision(String token) throws SVNException {
-        StringBuffer xmlBuffer = XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, FILE_REVISION_ATTR, null);
+        StringBuffer xmlBuffer = SVNXMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, FILE_REVISION_ATTR, null);
         write(xmlBuffer);
     }
 
     public void applyTextDelta(String path, String baseChecksum) throws SVNException {
-        StringBuffer xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, TXDELTA_ATTR, XMLUtil.XML_STYLE_NORMAL, null, null);
+        StringBuffer xmlBuffer = SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, TXDELTA_ATTR, SVNXMLUtil.XML_STYLE_NORMAL, null, null);
         write(xmlBuffer);
     }
 
@@ -111,7 +111,7 @@ public class DAVFileRevisionsHandler extends DAVReportHandler implements ISVNFil
     public void textDeltaEnd(String path) throws SVNException {
         textDeltaChunkEnd();
         setWriteTextDeltaHeader(true);
-        StringBuffer xmlBuffer = XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, TXDELTA_ATTR, null);
+        StringBuffer xmlBuffer = SVNXMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, TXDELTA_ATTR, null);
         write(xmlBuffer);
     }
 }

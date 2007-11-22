@@ -22,8 +22,8 @@ import org.xml.sax.SAXException;
 
 
 /**
+ * @author TMate Software Ltd.
  * @version 1.1.1
- * @author  TMate Software Ltd.
  */
 public abstract class BasicDAVDeltaHandler extends BasicDAVHandler {
 
@@ -43,7 +43,7 @@ public abstract class BasicDAVDeltaHandler extends BasicDAVHandler {
             myDeltaOutputStream.delete(0, myDeltaOutputStream.length());
         }
     }
-    
+
     protected void init() {
         myDeltaReader = new SVNDeltaReader();
         myDeltaOutputStream = new StringBuffer();
@@ -53,8 +53,8 @@ public abstract class BasicDAVDeltaHandler extends BasicDAVHandler {
     public void characters(char[] ch, int start, int length) throws SAXException {
         if (myIsDeltaProcessing) {
             int offset = start;
-            
-            for(int i = start; i < start + length; i++) {
+
+            for (int i = start; i < start + length; i++) {
                 if (ch[i] == '\r' || ch[i] == '\n') {
                     myDeltaOutputStream.append(ch, offset, i - offset);
                     offset = i + 1;
@@ -72,22 +72,22 @@ public abstract class BasicDAVDeltaHandler extends BasicDAVHandler {
             if (stored < 4) {
                 return;
             }
-            int segmentsCount = stored/4;
-            int remains = stored - (segmentsCount*4);
-            
+            int segmentsCount = stored / 4;
+            int remains = stored - (segmentsCount * 4);
+
             StringBuffer toDecode = new StringBuffer();
             toDecode.append(myDeltaOutputStream);
             toDecode.delete(myDeltaOutputStream.length() - remains, myDeltaOutputStream.length());
-            
+
             int index = 0;
-            while(index < toDecode.length() && Character.isWhitespace(toDecode.charAt(index))) {
+            while (index < toDecode.length() && Character.isWhitespace(toDecode.charAt(index))) {
                 index++;
             }
-            if  (index > 0) {
+            if (index > 0) {
                 toDecode = toDecode.delete(0, index);
-            }   
+            }
             index = toDecode.length() - 1;
-            while(index >= 0 && Character.isWhitespace(toDecode.charAt(index))) {
+            while (index >= 0 && Character.isWhitespace(toDecode.charAt(index))) {
                 toDecode.delete(index, toDecode.length());
                 index--;
             }

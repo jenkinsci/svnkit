@@ -20,7 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
-import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
@@ -64,7 +64,7 @@ public class DAVGetLocationsHandler extends DAVReportHandler implements ISVNLoca
         locationEntry.getPath();
         attrs.put(PATH_ATTR, locationEntry.getPath());
         attrs.put(REVISION_ATTR, String.valueOf(locationEntry.getRevision()));
-        StringBuffer xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "location", XMLUtil.XML_STYLE_SELF_CLOSING, attrs, null);
+        StringBuffer xmlBuffer = SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "location", SVNXMLUtil.XML_STYLE_SELF_CLOSING, attrs, null);
         write(xmlBuffer);
     }
 }

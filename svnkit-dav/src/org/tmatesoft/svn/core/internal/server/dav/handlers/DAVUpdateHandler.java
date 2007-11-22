@@ -42,7 +42,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
-import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminDeltifier;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -410,7 +410,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
         }
 
         if (isResourceWalk()) {
-            StringBuffer xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "resource-walk", XMLUtil.XML_STYLE_NORMAL, null, null);
+            StringBuffer xmlBuffer = SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "resource-walk", SVNXMLUtil.XML_STYLE_NORMAL, null, null);
             write(xmlBuffer);
 
             FSFS fsfs = getSourceRepository().getFSFS();
@@ -420,7 +420,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
             FSRevisionRoot requestedRoot = fsfs.createRevisionRoot(getRevision());
             deltifier.deltifyDir(zeroRoot, "", getUpdateRequest().getTarget(), requestedRoot, getDstPath());
 
-            xmlBuffer = XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "resource-walk", null);
+            xmlBuffer = SVNXMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "resource-walk", null);
             write(xmlBuffer);
         }
         writeXMLFooter();
@@ -432,13 +432,13 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
         if (getUpdateRequest().isSendAll()) {
             attrs.put(SEND_ALL_ATTR, Boolean.TRUE.toString());
         }
-        XMLUtil.addXMLHeader(xmlBuffer);
+        SVNXMLUtil.addXMLHeader(xmlBuffer);
         DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, getDAVRequest().getRootElement().getName(), UPDATE_REPORT_NAMESPACES, attrs, xmlBuffer);
     }
 
     public void targetRevision(long revision) throws SVNException {
         if (!isResourceWalk()) {
-            StringBuffer xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "target-revision", XMLUtil.XML_STYLE_SELF_CLOSING, REVISION_ATTR, String.valueOf(revision), null);
+            StringBuffer xmlBuffer = SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "target-revision", SVNXMLUtil.XML_STYLE_SELF_CLOSING, REVISION_ATTR, String.valueOf(revision), null);
             write(xmlBuffer);
         }
     }
@@ -451,7 +451,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
         if (isResourceWalk()) {
             xmlBuffer = openResourceTag("", xmlBuffer);
         } else {
-            xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "open-directory", XMLUtil.XML_STYLE_NORMAL, REVISION_ATTR, String.valueOf(revision), null);
+            xmlBuffer = SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "open-directory", SVNXMLUtil.XML_STYLE_NORMAL, REVISION_ATTR, String.valueOf(revision), null);
         }
         if (getUpdateRequest().getTarget().length() == 0) {
             addVersionURL(getRealPath(""), xmlBuffer);
@@ -520,7 +520,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
 
     public void closeFile(String path, String textChecksum) throws SVNException {
         if (!getUpdateRequest().isSendAll() && !getFileEditorEntry().isAdded() && isFileTextChanged()) {
-            StringBuffer xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "fetch-file", XMLUtil.XML_STYLE_SELF_CLOSING, BASE_CHECKSUM_ATTR, getFileBaseChecksum(), null);
+            StringBuffer xmlBuffer = SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "fetch-file", SVNXMLUtil.XML_STYLE_SELF_CLOSING, BASE_CHECKSUM_ATTR, getFileBaseChecksum(), null);
             write(xmlBuffer);
         }
 
@@ -543,7 +543,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
         if (isResourceWalk()) {
             return;
         }
-        StringBuffer xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "txdelta", XMLUtil.XML_STYLE_NORMAL, null, null);
+        StringBuffer xmlBuffer = SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "txdelta", SVNXMLUtil.XML_STYLE_NORMAL, null, null);
         write(xmlBuffer);
     }
 
@@ -558,22 +558,22 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
         if (!isResourceWalk()) {
             textDeltaChunkEnd();
             setWriteTextDeltaHeader(true);
-            StringBuffer xmlBuffer = XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "txdelta", null);
+            StringBuffer xmlBuffer = SVNXMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "txdelta", null);
             write(xmlBuffer);
         }
     }
 
     private StringBuffer openResourceTag(String path, StringBuffer xmlBuffer) {
-        return XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "resource", XMLUtil.XML_STYLE_NORMAL, PATH_ATTR, path, xmlBuffer);
+        return SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "resource", SVNXMLUtil.XML_STYLE_NORMAL, PATH_ATTR, path, xmlBuffer);
     }
 
     private StringBuffer closeResourceTag(StringBuffer xmlBuffer) {
-        return XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "resource", xmlBuffer);
+        return SVNXMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "resource", xmlBuffer);
     }
 
     private void writeEntryTag(String tagName, String path) throws SVNException {
         String directoryName = SVNPathUtil.tail(path);
-        StringBuffer xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, XMLUtil.XML_STYLE_SELF_CLOSING, NAME_ATTR, directoryName, null);
+        StringBuffer xmlBuffer = SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, SVNXMLUtil.XML_STYLE_SELF_CLOSING, NAME_ATTR, directoryName, null);
         write(xmlBuffer);
     }
 
@@ -581,7 +581,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
         Map attrs = new HashMap();
         attrs.put(NAME_ATTR, SVNPathUtil.tail(path));
         attrs.put(REVISION_ATTR, String.valueOf(revision));
-        StringBuffer xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, XMLUtil.XML_STYLE_NORMAL, attrs, null);
+        StringBuffer xmlBuffer = SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, SVNXMLUtil.XML_STYLE_NORMAL, attrs, null);
         addVersionURL(getRealPath(path), xmlBuffer);
         write(xmlBuffer);
     }
@@ -606,7 +606,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
                 attrs.put(COPYFROM_REVISION_ATTR, String.valueOf(copyFromRevision));
             }
             String tagName = isDirectory ? "add-directory" : "add-file";
-            xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, XMLUtil.XML_STYLE_NORMAL, attrs, null);
+            xmlBuffer = SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, SVNXMLUtil.XML_STYLE_NORMAL, attrs, null);
         }
         addVersionURL(realPath, xmlBuffer);
         if (isResourceWalk()) {
@@ -647,41 +647,41 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
         if (!entry.removedPropertiesCollectionIsEmpty() && !entry.isAdded()) {
             for (Iterator iterator = entry.getRemovedProperies(); iterator.hasNext();) {
                 String name = (String) iterator.next();
-                XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "remove-prop", XMLUtil.XML_STYLE_SELF_CLOSING, NAME_ATTR, name, xmlBuffer);
+                SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "remove-prop", SVNXMLUtil.XML_STYLE_SELF_CLOSING, NAME_ATTR, name, xmlBuffer);
             }
         }
         if (!getUpdateRequest().isSendAll() && !entry.hasChangedProperties() && !entry.isAdded()) {
-            XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "fetch-props", XMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
+            SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "fetch-props", SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
         }
-        XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "prop", XMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
+        SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "prop", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
 
         if (textCheckSum != null) {
-            XMLUtil.openCDataTag(DAVXMLUtil.SVN_DAV_PROPERTY_PREFIX, "md5-checksum", textCheckSum, xmlBuffer);
+            SVNXMLUtil.openCDataTag(DAVXMLUtil.SVN_DAV_PROPERTY_PREFIX, "md5-checksum", textCheckSum, xmlBuffer);
         }
         if (entry.getCommitedRevision() != null) {
-            XMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.VERSION_NAME.getName(), entry.getCommitedRevision(), xmlBuffer);
+            SVNXMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.VERSION_NAME.getName(), entry.getCommitedRevision(), xmlBuffer);
         }
         if (entry.getCommitedDate() != null) {
-            XMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.CREATION_DATE.getName(), entry.getCommitedDate(), xmlBuffer);
+            SVNXMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.CREATION_DATE.getName(), entry.getCommitedDate(), xmlBuffer);
         }
         if (entry.getLastAuthor() != null) {
-            XMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.CREATOR_DISPLAY_NAME.getName(), entry.getLastAuthor(), xmlBuffer);
+            SVNXMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.CREATOR_DISPLAY_NAME.getName(), entry.getLastAuthor(), xmlBuffer);
         }
 
-        XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "prop", xmlBuffer);
+        SVNXMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "prop", xmlBuffer);
 
         String tagName = entry.isAdded() ? "add-" : "open-";
         tagName += isDirectory ? "directory" : "file";
-        XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, xmlBuffer);
+        SVNXMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, xmlBuffer);
         write(xmlBuffer);
     }
 
     private StringBuffer addVersionURL(String path, StringBuffer xmlBuffer) throws SVNException {
         long revision = getDAVResource().getCreatedRevision(path, getRevision());
         String url = DAVPathUtil.buildURI(getDAVResource().getResourceURI().getContext(), DAVResourceKind.VERSION, revision, path);
-        xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "checked-in", XMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
-        XMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "href", url, xmlBuffer);
-        XMLUtil.closeXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "checked-in", xmlBuffer);
+        xmlBuffer = SVNXMLUtil.openXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "checked-in", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
+        SVNXMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "href", url, xmlBuffer);
+        SVNXMLUtil.closeXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "checked-in", xmlBuffer);
         return xmlBuffer;
     }
 

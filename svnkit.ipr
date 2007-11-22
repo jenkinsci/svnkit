@@ -265,7 +265,9 @@
       <module fileurl="file://$PROJECT_DIR$/svnkit/svnkit.iml" filepath="$PROJECT_DIR$/svnkit/svnkit.iml" />
       <module fileurl="file://$PROJECT_DIR$/svnkit-cli/svnkit-cli.iml" filepath="$PROJECT_DIR$/svnkit-cli/svnkit-cli.iml" />
       <module fileurl="file://$PROJECT_DIR$/svnkit-dav/svnkit-dav.iml" filepath="$PROJECT_DIR$/svnkit-dav/svnkit-dav.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../svnkit-ext/svnkit-ext.iml" filepath="$PROJECT_DIR$/../svnkit-ext/svnkit-ext.iml" />
       <module fileurl="file://$PROJECT_DIR$/svnkit-test/svnkit-test.iml" filepath="$PROJECT_DIR$/svnkit-test/svnkit-test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../vs-test/vs-test.iml" filepath="$PROJECT_DIR$/../vs-test/vs-test.iml" />
     </modules>
   </component>
   <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="false" project-jdk-name="1.4" project-jdk-type="JavaSDK" />

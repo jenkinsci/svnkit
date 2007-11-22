@@ -22,7 +22,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
@@ -32,34 +32,33 @@ import org.xml.sax.Attributes;
 
 
 /**
+ * @author TMate Software Ltd.
  * @version 1.1.1
- * @author  TMate Software Ltd.
  */
 public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
-	
-	public static StringBuffer generateFileRevisionsRequest(StringBuffer buffer, 
-                                                            long startRevision, 
+
+    public static StringBuffer generateFileRevisionsRequest(StringBuffer xmlBuffer,
+                                                            long startRevision,
                                                             long endRevision,
-                                                            String path, 
+                                                            String path,
                                                             boolean includeMergedRevisions) {
-		buffer = buffer == null ? new StringBuffer() : buffer;
-        buffer.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
-        buffer.append("<S:file-revs-report xmlns:S=\"svn:\">");
+        xmlBuffer = xmlBuffer == null ? new StringBuffer() : xmlBuffer;
+        SVNXMLUtil.addXMLHeader(xmlBuffer);
+        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "file-revs-report", SVN_NAMESPACES_LIST, SVNXMLUtil.PREFIX_MAP, xmlBuffer);
         if (startRevision >= 0) {
-        	buffer.append("<S:start-revision>"  + startRevision + "</S:start-revision>");
-        } 
+            SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "start-revision", String.valueOf(startRevision), xmlBuffer);
+        }
         if (endRevision >= 0) {
-        	buffer.append("<S:end-revision>"  + endRevision + "</S:end-revision>");
+            SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "end-revision", String.valueOf(endRevision), xmlBuffer);
         }
         if (includeMergedRevisions) {
-            buffer.append("<S:include-merged-revisions/>");
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "include-merged-revisions", SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
         }
-       
-        buffer.append("<S:path>"  + SVNEncodingUtil.xmlEncodeCDATA(path) + "</S:path>");
-        buffer.append("</S:file-revs-report>");
-        return buffer;
-	}
-    
+        SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "path", path, xmlBuffer);
+        SVNXMLUtil.addXMLFooter(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "file-revs-report", xmlBuffer);
+        return xmlBuffer;
+    }
+
     private static final DAVElement REVISION_PROPERTY = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "rev-prop");
     private static final DAVElement FILE_REVISION = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "file-rev");
 
@@ -67,7 +66,7 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
     private static final DAVElement DELETE_PROPERTY = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "remove-prop");
     private static final DAVElement MERGED_REVISION = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "merged-revision");
 
-	private ISVNFileRevisionHandler myFileRevisionsHandler;
+    private ISVNFileRevisionHandler myFileRevisionsHandler;
     private String myPath;
     private long myRevision;
     private Map myProperties;
@@ -77,13 +76,13 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
     private boolean myIsMergedRevision;
     private int myCount;
 
-	public DAVFileRevisionHandler(ISVNFileRevisionHandler handler) {
+    public DAVFileRevisionHandler(ISVNFileRevisionHandler handler) {
         myFileRevisionsHandler = handler;
         myCount = 0;
         init();
     }
 
-	protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
+    protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
         if (element == FILE_REVISION) {
             myPath = attrs.getValue("path");
             if (myPath == null) {
@@ -109,24 +108,24 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
                 if (myPropertiesDelta == null) {
                     myPropertiesDelta = Collections.EMPTY_MAP;
                 }
-                SVNFileRevision revision = new SVNFileRevision(myPath, 
-                                                               myRevision, 
-                                                               myProperties, 
-                                                               myPropertiesDelta, 
-                                                               myIsMergedRevision);
+                SVNFileRevision revision = new SVNFileRevision(myPath,
+                        myRevision,
+                        myProperties,
+                        myPropertiesDelta,
+                        myIsMergedRevision);
                 myFileRevisionsHandler.openRevision(revision);
                 myProperties = null;
                 myPropertiesDelta = null;
                 myPath = null;
                 myFileRevisionsHandler.applyTextDelta(myPath, null);
-            } 
+            }
             setDeltaProcessing(true);
-		} else if (element == MERGED_REVISION) {
+        } else if (element == MERGED_REVISION) {
             myIsMergedRevision = true;
         }
-	}
-    
-	protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
+    }
+
+    protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
         if (element == FILE_REVISION) {
             if (myPath != null && myFileRevisionsHandler != null) {
                 // handle file revision if was not handled yet (no tx delta).
@@ -136,10 +135,10 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
                 if (myPropertiesDelta == null) {
                     myPropertiesDelta = Collections.EMPTY_MAP;
                 }
-                SVNFileRevision revision = new SVNFileRevision(myPath, 
-                                                               myRevision, 
-                                                               myProperties, 
-                                                               myPropertiesDelta);
+                SVNFileRevision revision = new SVNFileRevision(myPath,
+                        myRevision,
+                        myProperties,
+                        myPropertiesDelta);
                 myFileRevisionsHandler.openRevision(revision);
             }
             // handle close revision with props?
@@ -193,22 +192,22 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
         }
     }
 
-	public int getEntriesCount() {
-		return myCount;
-	}
-    
+    public int getEntriesCount() {
+        return myCount;
+    }
+
     protected ISVNDeltaConsumer getDeltaConsumer() {
         return myFileRevisionsHandler;
     }
-    
+
     protected String getCurrentPath() {
         return myPath;
     }
-    
+
     private void missingAttributeError(DAVElement element, String attr) throws SVNException {
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
-                                                     "Missing attribute ''{0}'' on element {1}", 
-                                                     new Object[] { attr, element });
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA,
+                "Missing attribute ''{0}'' on element {1}",
+                new Object[]{attr, element});
         SVNErrorManager.error(err);
     }
 }

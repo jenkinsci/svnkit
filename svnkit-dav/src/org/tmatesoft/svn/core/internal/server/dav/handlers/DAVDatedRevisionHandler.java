@@ -20,7 +20,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
-import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 
 /**
  * @author TMate Software Ltd.
@@ -63,7 +63,7 @@ public class DAVDatedRevisionHandler extends DAVReportHandler {
         StringBuffer xmlBuffer = new StringBuffer();
         long revision = getDatedRevision();
         addXMLHeader(xmlBuffer);
-        XMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.VERSION_NAME.getName(), String.valueOf(revision), xmlBuffer);
+        SVNXMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.VERSION_NAME.getName(), String.valueOf(revision), xmlBuffer);
         addXMLFooter(xmlBuffer);
         return xmlBuffer.toString();
     }

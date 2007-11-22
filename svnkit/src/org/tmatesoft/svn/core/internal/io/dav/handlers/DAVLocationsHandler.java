@@ -14,7 +14,7 @@ package org.tmatesoft.svn.core.internal.io.dav.handlers;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 
@@ -22,43 +22,37 @@ import org.xml.sax.Attributes;
 
 
 /**
+ * @author TMate Software Ltd.
  * @version 1.1.1
- * @author  TMate Software Ltd.
  */
 public class DAVLocationsHandler extends BasicDAVHandler {
-	
-	public static StringBuffer generateLocationsRequest(StringBuffer buffer, String path, long pegRevision, long[] revisions) {
-		buffer = buffer == null ? new StringBuffer() : buffer;
-        buffer.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
-        buffer.append("<S:get-locations xmlns:S=\"svn:\" xmlns:D=\"DAV:\" >");
-        buffer.append("<S:path>");
-        buffer.append(SVNEncodingUtil.xmlEncodeCDATA(path));
-        buffer.append("</S:path>");
-        buffer.append("<S:peg-revision>");
-        buffer.append(pegRevision);
-        buffer.append("</S:peg-revision>");
-        for(int i = 0; i < revisions.length; i++) {
-            buffer.append("<S:location-revision>");
-            buffer.append(revisions[i]);
-            buffer.append("</S:location-revision>");
+
+    public static StringBuffer generateLocationsRequest(StringBuffer xmlBuffer, String path, long pegRevision, long[] revisions) {
+        xmlBuffer = xmlBuffer == null ? new StringBuffer() : xmlBuffer;
+        SVNXMLUtil.addXMLHeader(xmlBuffer);
+        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "get-locations", SVN_DAV_NAMESPACES_LIST, SVNXMLUtil.PREFIX_MAP, xmlBuffer);
+        SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "path", path, xmlBuffer);
+        SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "peg-revision", String.valueOf(pegRevision), xmlBuffer);
+        for (int i = 0; i < revisions.length; i++) {
+            SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "location-revision", String.valueOf(revisions[i]), xmlBuffer);
         }
-        buffer.append("</S:get-locations>");
-        return buffer;
-	}
-	
+        SVNXMLUtil.addXMLFooter(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "get-locations", xmlBuffer);
+        return xmlBuffer;
+    }
+
     private static final DAVElement LOCATION_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "get-locations-report");
     private static final DAVElement LOCATION = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "location");
-	
-	private ISVNLocationEntryHandler myLocationEntryHandler;
-	private int myCount;
+
+    private ISVNLocationEntryHandler myLocationEntryHandler;
+    private int myCount;
 
 
-	public DAVLocationsHandler(ISVNLocationEntryHandler handler) {
-		myLocationEntryHandler = handler;
-		init();
-	}
-	
-	protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
+    public DAVLocationsHandler(ISVNLocationEntryHandler handler) {
+        myLocationEntryHandler = handler;
+        init();
+    }
+
+    protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
         if (parent == LOCATION_REPORT && element == LOCATION) {
             String revStr = attrs.getValue("rev");
             if (revStr != null) {
@@ -69,11 +63,12 @@ public class DAVLocationsHandler extends BasicDAVHandler {
                 }
             }
         }
-	}
+    }
+
     protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
     }
-	
-	public int getEntriesCount() {
-		return myCount;
-	}
+
+    public int getEntriesCount() {
+        return myCount;
+    }
 }

@@ -18,58 +18,49 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNMergeInfo;
 import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNMergeInfoManager;
 
 import org.xml.sax.Attributes;
 
 
 /**
+ * @author TMate Software Ltd.
  * @version 1.1.2
- * @author  TMate Software Ltd.
  */
 public class DAVMergeInfoHandler extends BasicDAVHandler {
 
-    public static StringBuffer generateMergeInfoRequest(StringBuffer buffer,  
-                                                        long revision, 
-                                                        String[] paths, 
+    public static StringBuffer generateMergeInfoRequest(StringBuffer xmlBuffer,
+                                                        long revision,
+                                                        String[] paths,
                                                         SVNMergeInfoInheritance inherit) {
-        buffer = buffer == null ? new StringBuffer() : buffer;
-        buffer.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
-        buffer.append("<S:mergeinfo-report xmlns:S=\"svn:\">\n");
-        
-        buffer.append("<S:revision>");
-        buffer.append(revision);
-        buffer.append("</S:revision>");
-        
-        buffer.append("<S:inherit>");
-        buffer.append(inherit.toString());
-        buffer.append("</S:inherit>");
-        
+        xmlBuffer = xmlBuffer == null ? new StringBuffer() : xmlBuffer;
+        SVNXMLUtil.addXMLHeader(xmlBuffer);
+        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "mergeinfo-report", SVN_NAMESPACES_LIST, SVNXMLUtil.PREFIX_MAP, xmlBuffer);
+        SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "revision", String.valueOf(revision), xmlBuffer);
+        SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "inherit", inherit.toString(), xmlBuffer);
         if (paths != null) {
             for (int i = 0; i < paths.length; i++) {
-                String path = paths[i];
-                buffer.append("<S:path>");
-                buffer.append(path);
-                buffer.append("</S:path>");
+                SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "path", paths[i], xmlBuffer);
             }
         }
-        buffer.append("</S:mergeinfo-report>");
-        return buffer;
+        SVNXMLUtil.addXMLFooter(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "mergeinfo-report", xmlBuffer);
+        return xmlBuffer;
     }
 
-    private String myPath; 
+    private String myPath;
     private StringBuffer myCurrentInfo;
     private Map myPathsToMergeInfos;
-    
+
     public DAVMergeInfoHandler() {
         init();
         myPathsToMergeInfos = new TreeMap();
     }
-    
+
     public Map getMergeInfo() {
         return myPathsToMergeInfos;
     }
-    
+
     protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
         if (element == DAVElement.MERGE_INFO_ITEM) {
             myPath = null;

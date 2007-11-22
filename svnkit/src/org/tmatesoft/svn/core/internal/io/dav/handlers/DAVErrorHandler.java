@@ -21,29 +21,29 @@ import org.xml.sax.Attributes;
 
 
 /**
+ * @author TMate Software Ltd.
  * @version 1.1.1
- * @author  TMate Software Ltd.
  */
 public class DAVErrorHandler extends BasicDAVHandler {
-	
+
     private static final DAVElement SVN_ERROR = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "error");
     private static final DAVElement ERROR_DATA = DAVElement.getElement(DAVElement.SVN_APACHE_PROPERTY_NAMESPACE, "human-readable");
-	
-	private SVNErrorMessage myError;
+
+    private SVNErrorMessage myError;
     private SVNErrorCode myErrorCode;
     private String myErrorMessage;
 
-	public DAVErrorHandler() {
-		init();
+    public DAVErrorHandler() {
+        init();
         myErrorCode = SVNErrorCode.RA_DAV_REQUEST_FAILED;
         myErrorMessage = "General svn error from server";
-	}
-    
+    }
+
     public SVNErrorMessage getErrorMessage() {
         return myError;
     }
-	
-	protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
+
+    protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
         if (element == SVN_ERROR) {
             myErrorMessage = "General svn error from server";
             myError = SVNErrorMessage.create(myErrorCode, myErrorMessage);
@@ -57,8 +57,8 @@ public class DAVErrorHandler extends BasicDAVHandler {
                 }
             }
         }
-	}
-    
+    }
+
     protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
         if (element == ERROR_DATA && cdata != null) {
             String errorMessage = cdata.toString();

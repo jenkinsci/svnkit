@@ -12,31 +12,35 @@
 package org.tmatesoft.svn.core.internal.io.dav.handlers;
 
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 
 import org.xml.sax.Attributes;
 
 
 /**
+ * @author TMate Software Ltd.
  * @version 1.1.1
- * @author  TMate Software Ltd.
  */
 public class DAVGetLockHandler extends BasicDAVHandler {
 
     public static StringBuffer generateGetLockRequest(StringBuffer body) {
-        return DAVPropertiesHandler.generatePropertiesRequest(body, new DAVElement[] {DAVElement.LOCK_DISCOVERY});
+        return DAVPropertiesHandler.generatePropertiesRequest(body, new DAVElement[]{DAVElement.LOCK_DISCOVERY});
     }
 
-    public static StringBuffer generateSetLockRequest(StringBuffer body, String comment) {
-        body = body == null ? new StringBuffer() : body;
-        body.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
-        body.append("<lockinfo xmlns=\"DAV:\" >");
-        body.append("<lockscope><exclusive/></lockscope>");
-        body.append("<locktype><write/></locktype><owner>");
-        comment = comment == null ? "" : SVNEncodingUtil.xmlEncodeAttr(comment);
-        body.append(comment);
-        body.append("</owner></lockinfo>");
-        return body;
+    public static StringBuffer generateSetLockRequest(StringBuffer xmlBuffer, String comment) {
+        xmlBuffer = xmlBuffer == null ? new StringBuffer() : xmlBuffer;
+        SVNXMLUtil.addXMLHeader(xmlBuffer);
+        SVNXMLUtil.openNamespaceDeclarationTag(null, "lockinfo", DAV_NAMESPACES_LIST, SVNXMLUtil.PREFIX_MAP, xmlBuffer);
+        SVNXMLUtil.openXMLTag(null, "lockscope", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
+        SVNXMLUtil.openXMLTag(null, "exclusive", SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
+        SVNXMLUtil.closeXMLTag(null, "lockscope", xmlBuffer);
+        SVNXMLUtil.openXMLTag(null, "locktype", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
+        SVNXMLUtil.openXMLTag(null, "write", SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
+        SVNXMLUtil.closeXMLTag(null, "locktype", xmlBuffer);
+        comment = comment == null ? "" : comment;
+        SVNXMLUtil.openCDataTag(null, "owner", comment, xmlBuffer);
+        SVNXMLUtil.addXMLFooter(null, "lockinfo", xmlBuffer);
+        return xmlBuffer;
     }
 
     private boolean myIsHandlingToken;
@@ -45,14 +49,17 @@ public class DAVGetLockHandler extends BasicDAVHandler {
     private String myExpiration;
 
     public DAVGetLockHandler() {
-        init();        
-    }    
+        init();
+    }
+
     public String getComment() {
         return myComment;
     }
+
     public String getExpiration() {
         return myExpiration;
     }
+
     public String getID() {
         return myID;
     }
@@ -62,7 +69,7 @@ public class DAVGetLockHandler extends BasicDAVHandler {
             myIsHandlingToken = true;
         }
     }
-    
+
     protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) {
         if (element == DAVElement.HREF && myIsHandlingToken && cdata != null) {
             myID = cdata.toString();
@@ -72,5 +79,6 @@ public class DAVGetLockHandler extends BasicDAVHandler {
             myComment = cdata.toString();
         } else if (element == DAVElement.LOCK_TIMEOUT && cdata != null) {
             myExpiration = cdata.toString();
-        } 
-    }}
+        }
+    }
+}

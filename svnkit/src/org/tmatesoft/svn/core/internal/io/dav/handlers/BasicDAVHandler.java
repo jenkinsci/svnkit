@@ -12,7 +12,9 @@
 
 package org.tmatesoft.svn.core.internal.io.dav.handlers;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Stack;
 
@@ -29,30 +31,41 @@ import org.xml.sax.helpers.DefaultHandler;
 
 
 /**
+ * @author TMate Software Ltd.
  * @version 1.1.1
- * @author  TMate Software Ltd.
  */
 public abstract class BasicDAVHandler extends DefaultHandler {
-	
-	private static final Object ROOT = new Object();
-    
+
+    protected static final Collection SVN_DAV_NAMESPACES_LIST = new LinkedList();
+    protected static final Collection SVN_NAMESPACES_LIST = new LinkedList();
+    protected static final Collection DAV_NAMESPACES_LIST = new LinkedList();
+
+    static {
+        SVN_DAV_NAMESPACES_LIST.add(DAVElement.SVN_NAMESPACE);
+        SVN_DAV_NAMESPACES_LIST.add(DAVElement.DAV_NAMESPACE);
+        SVN_NAMESPACES_LIST.add(DAVElement.SVN_NAMESPACE);
+        DAV_NAMESPACES_LIST.add(DAVElement.DAV_NAMESPACE);
+    }
+
+    private static final Object ROOT = new Object();
+
     private Map myPrefixesMap;
     private String myNamespace;
     private StringBuffer myCDATA;
     private Stack myParent;
     private byte[] myDeltaBuffer;
-    
+
     protected BasicDAVHandler() {
-        myPrefixesMap = new HashMap();        
+        myPrefixesMap = new HashMap();
         myParent = new Stack();
     }
 
-    private void setNamespace(String uri){
-        if ("".equals(uri)){
-            myNamespace = null;            
+    private void setNamespace(String uri) {
+        if ("".equals(uri)) {
+            myNamespace = null;
         } else {
             myNamespace = uri;
-        }                             
+        }
     }
 
     protected void init() {
@@ -60,28 +73,28 @@ public abstract class BasicDAVHandler extends DefaultHandler {
         myParent.clear();
         myParent.push(ROOT);
     }
-    
+
     public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
         setNamespace(uri);
         DAVElement element = getDAVElement(qName);
         try {
             startElement(getParent(), element, attributes);
-        } catch(SVNException e) {
+        } catch (SVNException e) {
             SVNDebugLog.getDefaultLog().info(e);
             throw new SAXException(e);
         }
         myParent.push(element);
         myCDATA = new StringBuffer();
     }
-    
+
     public void endElement(String uri, String localName, String qName) throws SAXException {
         myParent.pop();
         DAVElement element = getDAVElement(qName);
         try {
             endElement(getParent(), element, myCDATA);
-        } catch(SVNException e) {            
+        } catch (SVNException e) {
             SVNDebugLog.getDefaultLog().info(e);
-            throw new SAXException(e); 
+            throw new SAXException(e);
         }
         myCDATA = null;
     }
@@ -91,40 +104,40 @@ public abstract class BasicDAVHandler extends DefaultHandler {
             myCDATA.append(ch, start, length);
         }
     }
-    
+
     public void startPrefixMapping(String prefix, String uri) throws SAXException {
         Stack mappings = (Stack) myPrefixesMap.get(prefix);
         if (mappings == null) {
             mappings = new Stack();
             myPrefixesMap.put(prefix, mappings);
         }
-        mappings.push(uri); 
+        mappings.push(uri);
     }
-    
+
     public void endPrefixMapping(String prefix) throws SAXException {
         Stack mappings = (Stack) myPrefixesMap.get(prefix);
         if (mappings != null) {
             mappings.pop();
         }
     }
-    
-    protected abstract void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException; 
+
+    protected abstract void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException;
 
     protected abstract void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException;
-    
+
     protected void invalidXML() throws SVNException {
         SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.XML_MALFORMED, "Malformed XML"));
-        
+
     }
-    
+
     private DAVElement getParent() {
         Object parent = myParent.peek();
         if (parent == ROOT) {
             return null;
         }
-        return (DAVElement) parent; 
+        return (DAVElement) parent;
     }
-    
+
     private DAVElement getDAVElement(String qName) {
         String prefix = myNamespace;
         int index = qName.indexOf(':');
@@ -136,13 +149,13 @@ public abstract class BasicDAVHandler extends DefaultHandler {
             }
             qName = qName.substring(index + 1);
         }
-        return DAVElement.getElement(prefix, qName);        
+        return DAVElement.getElement(prefix, qName);
     }
-    
+
     protected byte[] allocateBuffer(int length) {
         if (myDeltaBuffer == null || myDeltaBuffer.length < length) {
-            myDeltaBuffer = new byte[length*3/2];
-        }   
+            myDeltaBuffer = new byte[length * 3 / 2];
+        }
         return myDeltaBuffer;
     }
 

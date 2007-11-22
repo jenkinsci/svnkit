@@ -13,37 +13,19 @@ package org.tmatesoft.svn.core.internal.server.dav;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 
 
 /**
  * @author TMate Software Ltd.
  * @version 1.1.2
  */
-public class DAVXMLUtil extends XMLUtil {
-
-    public static final Map PREFIX_MAP = new HashMap();
-
-    public static final String DAV_NAMESPACE_PREFIX = "D";
-    public static final String SVN_NAMESPACE_PREFIX = "S";
-    public static final String SVN_DAV_PROPERTY_PREFIX = "SD";
-    public static final String SVN_CUSTOM_PROPERTY_PREFIX = "SC";
-    public static final String SVN_SVN_PROPERTY_PREFIX = "SS";
-    public static final String SVN_APACHE_PROPERTY_PREFIX = "SA";
-
-    static {
-        PREFIX_MAP.put(DAVElement.DAV_NAMESPACE, DAV_NAMESPACE_PREFIX);
-        PREFIX_MAP.put(DAVElement.SVN_NAMESPACE, SVN_NAMESPACE_PREFIX);
-        PREFIX_MAP.put(DAVElement.SVN_DAV_PROPERTY_NAMESPACE, SVN_DAV_PROPERTY_PREFIX);
-        PREFIX_MAP.put(DAVElement.SVN_SVN_PROPERTY_NAMESPACE, SVN_SVN_PROPERTY_PREFIX);
-        PREFIX_MAP.put(DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE, SVN_CUSTOM_PROPERTY_PREFIX);
-        PREFIX_MAP.put(DAVElement.SVN_APACHE_PROPERTY_NAMESPACE, SVN_APACHE_PROPERTY_PREFIX);
-    }
+public class DAVXMLUtil extends SVNXMLUtil {
 
     public static StringBuffer openNamespaceDeclarationTag(String prefix, String header, Collection namespaces, StringBuffer target) {
         return openNamespaceDeclarationTag(prefix, header, namespaces, null, target);

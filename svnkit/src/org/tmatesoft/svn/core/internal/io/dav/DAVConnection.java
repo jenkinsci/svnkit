@@ -17,6 +17,8 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.util.Date;
 import java.util.Map;
+import java.util.Collection;
+import java.util.LinkedList;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -34,6 +36,7 @@ import org.tmatesoft.svn.core.internal.io.dav.http.IHTTPConnectionFactory;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
@@ -280,7 +283,7 @@ public class DAVConnection {
                 header.setHeaderValue(HTTPHeader.SVN_OPTIONS_HEADER, "keep-locks");
             }
             request = new StringBuffer();
-            request.append("<?xml version=\"1.0\" encoding=\"utf-8\"?> ");
+            SVNXMLUtil.addXMLHeader(request);
             String locationPath = getLocation().getPath();
             locationPath = SVNEncodingUtil.uriEncode(locationPath);
             request = DAVMergeHandler.generateLockDataRequest(request, locationPath, repositoryPath, myLocks);
@@ -328,13 +331,14 @@ public class DAVConnection {
     
     public HTTPStatus doCheckout(String activityPath, String repositoryPath, String path, boolean allow404) throws SVNException {
         StringBuffer request = new StringBuffer();
-        request.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
-        request.append("<D:checkout xmlns:D=\"DAV:\">");
-        request.append("<D:activity-set>");
-        request.append("<D:href>");
-        request.append(activityPath);
-        request.append("</D:href>");
-        request.append("</D:activity-set></D:checkout>");
+        Collection namespaces = new LinkedList();
+        namespaces.add(DAVElement.DAV_NAMESPACE);
+        SVNXMLUtil.addXMLHeader(request);
+        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "checkout", namespaces, null, request);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "activity-set", SVNXMLUtil.XML_STYLE_NORMAL, null, request);
+        SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "href", activityPath, request);
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "activity-set", request);
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "checkout", request);
         HTTPHeader header = null;
         if (myLocks != null && repositoryPath != null && myLocks.containsKey(repositoryPath)) {
             header = new HTTPHeader();

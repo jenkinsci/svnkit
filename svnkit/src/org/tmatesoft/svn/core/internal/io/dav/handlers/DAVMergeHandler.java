@@ -21,59 +21,63 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 
 import org.xml.sax.Attributes;
 
 
 /**
+ * @author TMate Software Ltd.
  * @version 1.1.1
- * @author  TMate Software Ltd.
  */
 public class DAVMergeHandler extends BasicDAVHandler {
-    
-    public static StringBuffer generateMergeRequest(StringBuffer request, String path, String activityURL, Map locks) {
-        request = request == null ? new StringBuffer() : request;
-        request.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
-        request.append("<D:merge xmlns:D=\"DAV:\">");
-        request.append("<D:source><D:href>");
-        request.append(activityURL);
-        request.append("</D:href></D:source>");
-        request.append("<D:no-auto-merge/><D:no-checkout/>");
-        request.append("<D:prop>");
-        request.append("<D:checked-in/><D:version-name/><D:resourcetype/>");
-        request.append("<D:creationdate/><D:creator-displayname/>");
-        request.append("</D:prop>");
+
+    public static StringBuffer generateMergeRequest(StringBuffer xmlBuffer, String path, String activityURL, Map locks) {
+        xmlBuffer = xmlBuffer == null ? new StringBuffer() : xmlBuffer;
+        SVNXMLUtil.addXMLHeader(xmlBuffer);
+        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "merge", DAV_NAMESPACES_LIST, SVNXMLUtil.PREFIX_MAP, xmlBuffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "source", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
+        SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "href", activityURL, xmlBuffer);
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "source", xmlBuffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "no-auto-merge", SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "no-checkout", SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "prop", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "checked-in", SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "version-name", SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "resourcetype", SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "creationdate", SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "creator-displayname", SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "prop", xmlBuffer);
         if (locks != null) {
-            request = generateLockDataRequest(request, path, null, locks);
+            xmlBuffer = generateLockDataRequest(xmlBuffer, path, null, locks);
         }
-        request.append("</D:merge>");
-        return request;
+        SVNXMLUtil.addXMLFooter(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "merge", xmlBuffer);
+        return xmlBuffer;
 
     }
 
     public static StringBuffer generateLockDataRequest(StringBuffer target, String root, String path, Map locks) {
         target = target == null ? new StringBuffer() : target;
-        target.append("<S:lock-token-list xmlns:S=\"svn:\">");
+        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "lock-token-list", SVN_NAMESPACES_LIST, SVNXMLUtil.PREFIX_MAP, target);
         for (Iterator paths = locks.keySet().iterator(); paths.hasNext();) {
             String lockPath = (String) paths.next();
             if (path == null || SVNPathUtil.getPathAsChild(path, lockPath) != null) {
                 String relativePath = SVNPathUtil.getRelativePath(root, lockPath);
                 String token = (String) locks.get(lockPath);
-                target.append("<S:lock><S:lock-path>");
-                target.append(SVNEncodingUtil.xmlEncodeCDATA(SVNEncodingUtil.uriDecode(relativePath)));
-                target.append("</S:lock-path><S:lock-token>");
-                target.append(token);
-                target.append("</S:lock-token></S:lock>");
+                SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "lock", SVNXMLUtil.XML_STYLE_NORMAL, null, target);
+                SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "lock-path", SVNEncodingUtil.uriDecode(relativePath), target);
+                SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "lock-token", token, target);
+                SVNXMLUtil.closeXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "lock", target);
             }
         }
-        target.append("</S:lock-token-list>");
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "lock", target);
         return target;
     }
-    
+
     public static boolean hasChildPaths(String path, Map locks) {
         for (Iterator paths = locks.keySet().iterator(); paths.hasNext();) {
             String lockPath = (String) paths.next();
@@ -83,7 +87,7 @@ public class DAVMergeHandler extends BasicDAVHandler {
         }
         return false;
     }
-    
+
     private ISVNWorkspaceMediator myMediator;
     private Map myPathsMap;
 
@@ -93,21 +97,21 @@ public class DAVMergeHandler extends BasicDAVHandler {
     private String myAuthor;
     private Date myCommitDate;
     private long myRevision;
-    
+
     private String myRepositoryPath;
     private String myVersionPath;
-    
+
     private DAVElement myResourceType;
     private SVNCommitInfo myCommitInfo;
-    private SVNErrorMessage myPostCommitError;    
-    
+    private SVNErrorMessage myPostCommitError;
+
     public DAVMergeHandler(ISVNWorkspaceMediator mediator, Map pathsMap) {
         myMediator = mediator;
         myPathsMap = pathsMap;
-        
+
         init();
     }
-    
+
     public SVNCommitInfo getCommitInfo() {
         return myCommitInfo;
     }
@@ -124,7 +128,7 @@ public class DAVMergeHandler extends BasicDAVHandler {
         }
     }
 
-    protected void endElement(DAVElement parent, DAVElement element,  StringBuffer cdata) throws SVNException {
+    protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
         if (element == POST_COMMIT_ERROR) {
             myPostCommitError = SVNErrorMessage.create(SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED, cdata.toString(), SVNErrorMessage.TYPE_WARNING);
         } else if (element == DAVElement.HREF) {
@@ -133,7 +137,7 @@ public class DAVMergeHandler extends BasicDAVHandler {
                 myRepositoryPath = SVNEncodingUtil.uriDecode(myRepositoryPath);
             } else if (parent == DAVElement.CHECKED_IN) {
                 myVersionPath = cdata.toString();
-            } 
+            }
         } else if (parent == DAVElement.RESOURCE_TYPE && element == DAVElement.BASELINE) {
             myResourceType = element;
         } else if (parent == DAVElement.RESOURCE_TYPE && element == DAVElement.COLLECTION) {
@@ -147,7 +151,7 @@ public class DAVMergeHandler extends BasicDAVHandler {
                 String path = (String) myPathsMap.get(reposPath);
                 if (path != null && myMediator != null) {
                     myMediator.setWorkspaceProperty(SVNEncodingUtil.uriDecode(path), "svn:wc:ra_dav:version-url", myVersionPath);
-                } 
+                }
             }
         } else if (element == DAVElement.CREATION_DATE) {
             myCommitDate = SVNDate.parseDate(cdata.toString());

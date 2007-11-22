@@ -16,46 +16,44 @@ import java.util.Date;
 
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 
 import org.xml.sax.Attributes;
 
 
 /**
+ * @author TMate Software Ltd.
  * @version 1.1.1
- * @author  TMate Software Ltd.
  */
 public class DAVDateRevisionHandler extends BasicDAVHandler {
-	
-	public static StringBuffer generateDateRevisionRequest(StringBuffer body, Date date) {
-        body = body == null ? new StringBuffer() : body;
-        body.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
-        body.append("<S:dated-rev-report xmlns:S=\"svn:\" ");
-        body.append("xmlns:D=\"DAV:\">");
-        body.append("<D:creationdate>");
-        body.append(SVNDate.formatDate(date));
-        body.append("</D:creationdate>");
-        body.append("</S:dated-rev-report>");
-        return body;
-	}
-	
-	private long myRevisionNumber;
 
-	public DAVDateRevisionHandler() {
-		init();
-		myRevisionNumber = -1;
-	}
-	
-	public long getRevisionNumber() {
-		return myRevisionNumber;
-	}
+    public static StringBuffer generateDateRevisionRequest(StringBuffer xmlBuffer, Date date) {
+        xmlBuffer = xmlBuffer == null ? new StringBuffer() : xmlBuffer;
+        SVNXMLUtil.addXMLHeader(xmlBuffer);
+        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "dated-rev-report", SVN_DAV_NAMESPACES_LIST, SVNXMLUtil.PREFIX_MAP, xmlBuffer);
+        SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "creationdate", SVNDate.formatDate(date), xmlBuffer);
+        SVNXMLUtil.addXMLFooter(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "dated-rev-report", xmlBuffer);
+        return xmlBuffer;
+    }
 
-	protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) {
-		if (element == DAVElement.VERSION_NAME && cdata != null) {
-			myRevisionNumber = Long.parseLong(cdata.toString());
-		}
-	}
+    private long myRevisionNumber;
 
-	protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) {
-	}
+    public DAVDateRevisionHandler() {
+        init();
+        myRevisionNumber = -1;
+    }
+
+    public long getRevisionNumber() {
+        return myRevisionNumber;
+    }
+
+    protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) {
+        if (element == DAVElement.VERSION_NAME && cdata != null) {
+            myRevisionNumber = Long.parseLong(cdata.toString());
+        }
+    }
+
+    protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) {
+    }
 
 }

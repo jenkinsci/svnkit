@@ -29,7 +29,7 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
-import org.tmatesoft.svn.core.internal.server.dav.XMLUtil;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -191,12 +191,12 @@ public class DAVReportHandler extends ServletDAVHandler {
     }
 
     protected void addXMLHeader(StringBuffer xmlBuffer) {
-        XMLUtil.addXMLHeader(xmlBuffer);
+        SVNXMLUtil.addXMLHeader(xmlBuffer);
         DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, getDAVRequest().getRootElement().getName(), REPORT_NAMESPACES, xmlBuffer);
     }
 
     protected void addXMLFooter(StringBuffer xmlBuffer) {
-        XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, getDAVRequest().getRootElement().getName(), xmlBuffer);
+        SVNXMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, getDAVRequest().getRootElement().getName(), xmlBuffer);
     }
 
     private OutputStream myDiffWindowWriter;
@@ -228,7 +228,7 @@ public class DAVReportHandler extends ServletDAVHandler {
     protected void writePropertyTag(String tagName, String propertyName, String propertyValue) throws SVNException {
         StringBuffer xmlBuffer;
         if (SVNEncodingUtil.isXMLSafe(propertyValue)) {
-            xmlBuffer = XMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, propertyValue, NAME_ATTR, propertyName, null);
+            xmlBuffer = SVNXMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, propertyValue, NAME_ATTR, propertyName, null);
             write(xmlBuffer);
         } else {
             Map attrs = new HashMap();
@@ -239,10 +239,10 @@ public class DAVReportHandler extends ServletDAVHandler {
             } catch (UnsupportedEncodingException e) {
                 propertyValue = SVNBase64.byteArrayToBase64(propertyValue.getBytes());
             }
-            xmlBuffer = XMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, XMLUtil.XML_STYLE_PROTECT_PCDATA, attrs, null);
+            xmlBuffer = SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, SVNXMLUtil.XML_STYLE_PROTECT_PCDATA, attrs, null);
             write(xmlBuffer);
             write(propertyValue);
-            xmlBuffer = XMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, null);
+            xmlBuffer = SVNXMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, null);
             write(xmlBuffer);
         }
     }
