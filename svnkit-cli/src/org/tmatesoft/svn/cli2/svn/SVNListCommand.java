@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
@@ -88,7 +89,7 @@ public class SVNListCommand extends SVNXMLCommand implements ISVNDirEntryHandler
             String targetName = (String) targets.get(i);
             SVNPath target = new SVNPath(targetName, true);
             if (getSVNEnvironment().isXML()) {
-                StringBuffer buffer = openXMLTag("list", XML_STYLE_NORMAL, "path", 
+                StringBuffer buffer = openXMLTag("list", SVNXMLUtil.XML_STYLE_NORMAL, "path",
                         "".equals(target.getTarget()) ? "." : target.getTarget(), new StringBuffer());
                 getSVNEnvironment().getOut().print(buffer.toString());
             }
@@ -170,12 +171,12 @@ public class SVNListCommand extends SVNXMLCommand implements ISVNDirEntryHandler
             }
         }
         StringBuffer buffer = new StringBuffer();
-        buffer = openXMLTag("entry", XML_STYLE_NORMAL, "kind", dirEntry.getKind().toString(), buffer);
+        buffer = openXMLTag("entry", SVNXMLUtil.XML_STYLE_NORMAL, "kind", dirEntry.getKind().toString(), buffer);
         buffer = openCDataTag("name", path, buffer);
         if (dirEntry.getKind() == SVNNodeKind.FILE) {
             buffer = openCDataTag("size", Long.toString(dirEntry.getSize()), buffer);
         }
-        buffer = openXMLTag("commit", XML_STYLE_NORMAL, "revision", Long.toString(dirEntry.getRevision()), buffer);
+        buffer = openXMLTag("commit", SVNXMLUtil.XML_STYLE_NORMAL, "revision", Long.toString(dirEntry.getRevision()), buffer);
         buffer = openCDataTag("author", dirEntry.getAuthor(), buffer);
         if (dirEntry.getDate() != null) {
             buffer = openCDataTag("date", ((SVNDate) dirEntry.getDate()).format(), buffer);
@@ -184,7 +185,7 @@ public class SVNListCommand extends SVNXMLCommand implements ISVNDirEntryHandler
         
         SVNLock lock = dirEntry.getLock();
         if (lock != null) {
-            buffer = openXMLTag("lock", XML_STYLE_NORMAL, null, buffer);
+            buffer = openXMLTag("lock", SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
             buffer = openCDataTag("token", lock.getID(), buffer);
             buffer = openCDataTag("owner", lock.getOwner(), buffer);
             buffer = openCDataTag("comment", lock.getComment(), buffer);

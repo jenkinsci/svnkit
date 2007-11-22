@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
@@ -99,7 +100,7 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
             SVNPath commandTarget = new SVNPath(target);
 
             if (getSVNEnvironment().isXML()) {
-                StringBuffer xmlBuffer = openXMLTag("target", XML_STYLE_NORMAL, "path", SVNCommandUtil.getLocalPath(target), null);
+                StringBuffer xmlBuffer = openXMLTag("target", SVNXMLUtil.XML_STYLE_NORMAL, "path", SVNCommandUtil.getLocalPath(target), null);
                 getSVNEnvironment().getOut().print(xmlBuffer);
             }
             
@@ -112,7 +113,7 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
                 if (getSVNEnvironment().isXML()) {
                     StringBuffer xmlBuffer = new StringBuffer();
                     if (rev >= 0) {
-                        xmlBuffer = openXMLTag("against", XML_STYLE_SELF_CLOSING, "revision", Long.toString(rev), xmlBuffer);
+                        xmlBuffer = openXMLTag("against", SVNXMLUtil.XML_STYLE_SELF_CLOSING, "revision", Long.toString(rev), xmlBuffer);
                     }
                     xmlBuffer = closeXMLTag("target", xmlBuffer);
                     getSVNEnvironment().getOut().print(xmlBuffer);
@@ -168,7 +169,7 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
     }
 
     protected StringBuffer printXMLStatus(SVNStatus status, String path) {
-        StringBuffer xmlBuffer = openXMLTag("entry", XML_STYLE_NORMAL, "path", path, null);
+        StringBuffer xmlBuffer = openXMLTag("entry", SVNXMLUtil.XML_STYLE_NORMAL, "path", path, null);
         Map xmlMap = new LinkedHashMap();
         xmlMap.put("props", status.getPropertiesStatus().toString());
         xmlMap.put("item", status.getContentsStatus().toString());
@@ -184,9 +185,9 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
         if (status.getEntry() != null && !status.isCopied()) {
             xmlMap.put("revision", status.getRevision().toString());
         }
-        xmlBuffer = openXMLTag("wc-status", XML_STYLE_NORMAL, xmlMap, xmlBuffer);
+        xmlBuffer = openXMLTag("wc-status", SVNXMLUtil.XML_STYLE_NORMAL, xmlMap, xmlBuffer);
         if (status.getEntry() != null && status.getCommittedRevision().isValid()) {
-            xmlBuffer = openXMLTag("commit", XML_STYLE_NORMAL, "revision", status.getCommittedRevision().toString(), xmlBuffer);
+            xmlBuffer = openXMLTag("commit", SVNXMLUtil.XML_STYLE_NORMAL, "revision", status.getCommittedRevision().toString(), xmlBuffer);
             xmlBuffer = openCDataTag("author", status.getAuthor(), xmlBuffer);
             if (status.getCommittedDate() != null) {
                 xmlBuffer = openCDataTag("date", ((SVNDate) status.getCommittedDate()).format(), xmlBuffer);
@@ -194,7 +195,7 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
             xmlBuffer = closeXMLTag("commit", xmlBuffer);
         }
         if (status.getEntry() != null && status.getLocalLock() != null) {
-            xmlBuffer = openXMLTag("lock", XML_STYLE_NORMAL, null, xmlBuffer);
+            xmlBuffer = openXMLTag("lock", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
             xmlBuffer = openCDataTag("token", status.getLocalLock().getID(), xmlBuffer);
             xmlBuffer = openCDataTag("owner", status.getLocalLock().getOwner(), xmlBuffer);
             xmlBuffer = openCDataTag("comment", status.getLocalLock().getComment(), xmlBuffer);
@@ -206,9 +207,9 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
                 status.getRemoteLock() != null) {
             xmlMap.put("props", status.getRemotePropertiesStatus().toString());
             xmlMap.put("item", status.getRemoteContentsStatus().toString());
-            xmlBuffer = openXMLTag("repos-status", XML_STYLE_NORMAL, xmlMap, xmlBuffer);
+            xmlBuffer = openXMLTag("repos-status", SVNXMLUtil.XML_STYLE_NORMAL, xmlMap, xmlBuffer);
             if (status.getRemoteLock() != null) {
-                xmlBuffer = openXMLTag("lock", XML_STYLE_NORMAL, null, xmlBuffer);
+                xmlBuffer = openXMLTag("lock", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
                 xmlBuffer = openCDataTag("token", status.getRemoteLock().getID(), xmlBuffer);
                 xmlBuffer = openCDataTag("owner", status.getRemoteLock().getOwner(), xmlBuffer);
                 xmlBuffer = openCDataTag("comment", status.getRemoteLock().getComment(), xmlBuffer);

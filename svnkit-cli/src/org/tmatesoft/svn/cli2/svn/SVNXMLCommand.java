@@ -11,87 +11,53 @@
  */
 package org.tmatesoft.svn.cli2.svn;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 
 /**
+ * @author TMate Software Ltd.
  * @version 1.1.2
- * @author  TMate Software Ltd.
  */
 public abstract class SVNXMLCommand extends SVNCommand {
-    
-    protected static final int XML_STYLE_NORMAL = 1;
-    protected static final int XML_STYLE_PROTECT_PCDATA = 2;
-    protected static final int XML_STYLE_SELF_CLOSING = 4;
 
     protected SVNXMLCommand(String name, String[] aliases) {
         super(name, aliases);
     }
-    
+
     protected void printXMLHeader(String header) {
-        getSVNEnvironment().getOut().print("<?xml version=\"1.0\"?>\n");
-        getSVNEnvironment().getOut().print("<" + header + ">\n");
+        StringBuffer xmlBuffer = new StringBuffer();
+        SVNXMLUtil.addXMLHeader(xmlBuffer);
+        SVNXMLUtil.openXMLTag(null, header, SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
+        getSVNEnvironment().getOut().print(xmlBuffer.toString());
     }
 
     protected void printXMLFooter(String header) {
-        getSVNEnvironment().getOut().print("</" + header + ">\n");
+        StringBuffer xmlBuffer = new StringBuffer();
+        SVNXMLUtil.closeXMLTag(null, header, xmlBuffer);
+        getSVNEnvironment().getOut().print(xmlBuffer.toString());
     }
-    
+
 
     protected StringBuffer openCDataTag(String tagName, String cdata, StringBuffer target) {
-        if (cdata == null) {
-            return target;
-        }
-        target = openXMLTag(tagName, XML_STYLE_PROTECT_PCDATA, null, target);
-        target.append(SVNEncodingUtil.xmlEncodeCDATA(cdata));
-        target = closeXMLTag(tagName, target);
-        return target;
+        return SVNXMLUtil.openCDataTag(null, tagName, cdata, target);
     }
 
 
     protected StringBuffer openXMLTag(String tagName, int style, String attr, String value, StringBuffer target) {
-        Map attrs = new HashMap();
-        attrs.put(attr, value);
-        return openXMLTag(tagName, style, attrs, target);
+        return SVNXMLUtil.openXMLTag(null, tagName, style, attr, value, target);
     }
 
     protected StringBuffer openXMLTag(String tagName, int style, Map attributes, StringBuffer target) {
-        target = target == null ? new StringBuffer() : target;
-        target.append("<");
-        target.append(tagName);
-        if (attributes != null) {
-            for (Iterator names = attributes.keySet().iterator(); names.hasNext();) {
-                String name = (String) names.next();
-                String value = (String) attributes.get(name);
-                target.append("\n   ");
-                target.append(name);
-                target.append("=\"");
-                target.append(SVNEncodingUtil.xmlEncodeAttr(value));
-                target.append("\"");
-            }
-            attributes.clear();
-        }
-        if (style == XML_STYLE_SELF_CLOSING) {
-            target.append("/");
-        }
-        target.append(">");
-        if (style != XML_STYLE_PROTECT_PCDATA) {
-            target.append("\n");
-        }
-        return target;
+        return SVNXMLUtil.openXMLTag(null, tagName, style, attributes, target);
     }
 
     protected StringBuffer closeXMLTag(String tagName, StringBuffer target) {
-        target = target == null ? new StringBuffer() : target;
-        target.append("</");
-        target.append(tagName);
-        target.append(">\n");
-        return target;
+        return SVNXMLUtil.closeXMLTag(null, tagName, target);
     }
-    
+
     protected StringBuffer printXMLPropHash(StringBuffer buffer, Map propHash, boolean namesOnly) {
         if (propHash != null && !propHash.isEmpty()) {
             buffer = buffer == null ? new StringBuffer() : buffer;
@@ -99,9 +65,9 @@ public abstract class SVNXMLCommand extends SVNCommand {
                 String propName = (String) propNames.next();
                 String propVal = (String) propHash.get(propName);
                 if (namesOnly) {
-                    buffer = openXMLTag("property", XML_STYLE_SELF_CLOSING, "name", propName, buffer);
+                    buffer = openXMLTag("property", SVNXMLUtil.XML_STYLE_SELF_CLOSING, "name", propName, buffer);
                 } else {
-                    buffer = openXMLTag("property", XML_STYLE_PROTECT_PCDATA, "name", propName, buffer);
+                    buffer = openXMLTag("property", SVNXMLUtil.XML_STYLE_PROTECT_PCDATA, "name", propName, buffer);
                     buffer.append(SVNEncodingUtil.xmlEncodeCDATA(propVal));
                     buffer = closeXMLTag("property", buffer);
                 }

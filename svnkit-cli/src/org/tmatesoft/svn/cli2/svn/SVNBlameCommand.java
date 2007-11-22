@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
@@ -105,7 +106,7 @@ public class SVNBlameCommand extends SVNXMLCommand implements ISVNAnnotateHandle
                 }
             }
             if (getSVNEnvironment().isXML()) {
-                myBuffer = openXMLTag("target", XML_STYLE_NORMAL, "path", SVNCommandUtil.getLocalPath(target.getTarget()), myBuffer);
+                myBuffer = openXMLTag("target", SVNXMLUtil.XML_STYLE_NORMAL, "path", SVNCommandUtil.getLocalPath(target.getTarget()), myBuffer);
             }
             try {
                 if (target.isFile()) {
@@ -148,10 +149,10 @@ public class SVNBlameCommand extends SVNXMLCommand implements ISVNAnnotateHandle
                            Date mergedDate, long mergedRevision, String mergedAuthor, 
                            String mergedPath, int lineNumber) throws SVNException {
         if (getSVNEnvironment().isXML()) {
-            myBuffer = openXMLTag("entry", XML_STYLE_NORMAL, "line-number", 
+            myBuffer = openXMLTag("entry", SVNXMLUtil.XML_STYLE_NORMAL, "line-number",
                                   Long.toString(lineNumber + 1), myBuffer);
             if (SVNRevision.isValidRevisionNumber(revision)) {
-                myBuffer = openXMLTag("commit", XML_STYLE_NORMAL, "revision", Long.toString(revision), myBuffer);
+                myBuffer = openXMLTag("commit", SVNXMLUtil.XML_STYLE_NORMAL, "revision", Long.toString(revision), myBuffer);
                 myBuffer = openCDataTag("author", author, myBuffer);
                 myBuffer = openCDataTag("date", ((SVNDate) date).format(), myBuffer);
                 myBuffer = closeXMLTag("commit", myBuffer);
@@ -159,9 +160,9 @@ public class SVNBlameCommand extends SVNXMLCommand implements ISVNAnnotateHandle
             
             if (getSVNEnvironment().isUseMergeHistory() && 
                 SVNRevision.isValidRevisionNumber(mergedRevision)) {
-                myBuffer = openXMLTag("merged", XML_STYLE_NORMAL, "path", 
+                myBuffer = openXMLTag("merged", SVNXMLUtil.XML_STYLE_NORMAL, "path",
                                       mergedPath, myBuffer);
-                myBuffer = openXMLTag("commit", XML_STYLE_NORMAL, "revision", 
+                myBuffer = openXMLTag("commit", SVNXMLUtil.XML_STYLE_NORMAL, "revision", 
                                       Long.toString(mergedRevision), myBuffer);
                 myBuffer = openCDataTag("author", mergedAuthor, myBuffer);
                 myBuffer = openCDataTag("date", ((SVNDate) mergedDate).format(), myBuffer);

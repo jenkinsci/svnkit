@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
@@ -252,7 +253,7 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
         attrs.put("kind", info.getKind().toString());
         attrs.put("path", path);
         attrs.put("revision", info.getRevision().toString());
-        buffer = openXMLTag("entry", XML_STYLE_NORMAL, attrs, buffer);
+        buffer = openXMLTag("entry", SVNXMLUtil.XML_STYLE_NORMAL, attrs, buffer);
         
         String url = info.getURL() != null ? info.getURL().toString() : null;
         buffer = openCDataTag("url", url, buffer);
@@ -260,13 +261,13 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
         String rootURL = info.getRepositoryRootURL() != null ? info.getRepositoryUUID().toString() : null;
         String uuid = info.getRepositoryUUID();
         if (rootURL != null || uuid != null) {
-            buffer = openXMLTag("repository", XML_STYLE_NORMAL, null, buffer);
+            buffer = openXMLTag("repository", SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
             buffer = openCDataTag("root", rootURL, buffer);
             buffer = openCDataTag("uuid", uuid, buffer);
             buffer = closeXMLTag("repository", buffer);
         }   
         if (info.getFile() != null) {
-            buffer = openXMLTag("wc-info", XML_STYLE_NORMAL, null, buffer);
+            buffer = openXMLTag("wc-info", SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
             String schedule = info.getSchedule();
             if (schedule == null || "".equals(schedule)) {
                 schedule = "normal";
@@ -293,7 +294,7 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
         }
         if (info.getAuthor() != null || info.getCommittedRevision().isValid() ||
                 info.getCommittedDate() != null) {
-            openXMLTag("commit", XML_STYLE_NORMAL, "revision", info.getCommittedRevision().toString(), buffer);
+            openXMLTag("commit", SVNXMLUtil.XML_STYLE_NORMAL, "revision", info.getCommittedRevision().toString(), buffer);
             buffer = openCDataTag("author", info.getAuthor(), buffer);
             if (info.getCommittedDate() != null) {
                 buffer = openCDataTag("date", ((SVNDate) info.getCommittedDate()).format(), buffer);
@@ -303,7 +304,7 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
         
         if (info.getConflictNewFile() != null || info.getConflictOldFile() != null || info.getConflictWrkFile() != null ||
                 info.getPropConflictFile() != null) {
-            buffer = openXMLTag("conflict", XML_STYLE_NORMAL, null, buffer);
+            buffer = openXMLTag("conflict", SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
             if (info.getConflictOldFile() != null) {
                 buffer = openCDataTag("prev-base-file", info.getConflictOldFile().getName(), buffer);
             }
@@ -321,7 +322,7 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
         
         if (info.getLock() != null) {
             SVNLock lock = info.getLock();
-            buffer = openXMLTag("lock", XML_STYLE_NORMAL, null, buffer);
+            buffer = openXMLTag("lock", SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
             buffer = openCDataTag("token", lock.getID(), buffer);
             buffer = openCDataTag("owner", lock.getOwner(), buffer);
             buffer = openCDataTag("comment", lock.getComment(), buffer);

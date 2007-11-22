@@ -32,6 +32,7 @@ import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNChangelistClient;
@@ -336,14 +337,14 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
             return;
         }
         
-        buffer = openXMLTag("logentry", XML_STYLE_NORMAL, "revision", Long.toString(logEntry.getRevision()), buffer);
+        buffer = openXMLTag("logentry", SVNXMLUtil.XML_STYLE_NORMAL, "revision", Long.toString(logEntry.getRevision()), buffer);
         buffer = openCDataTag("author", author, buffer);
         if (dateObject != null && dateObject.getTime() != 0) {
             String dateString = SVNEncodingUtil.fuzzyEscape(((SVNDate) dateObject).format());
             buffer = openCDataTag("date", dateString, buffer);
         }
         if (logEntry.getChangedPaths() != null && !logEntry.getChangedPaths().isEmpty()) {
-            buffer = openXMLTag("paths", XML_STYLE_NORMAL, null, buffer);
+            buffer = openXMLTag("paths", SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
             for (Iterator paths = logEntry.getChangedPaths().keySet().iterator(); paths.hasNext();) {
                 String key = (String) paths.next();
                 SVNLogEntryPath path = (SVNLogEntryPath) logEntry.getChangedPaths().get(key);
@@ -353,7 +354,7 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
                     attrs.put("copyfrom-path", path.getCopyPath());
                     attrs.put("copyfrom-rev", Long.toString(path.getCopyRevision()));
                 }
-                buffer = openXMLTag("path", XML_STYLE_PROTECT_PCDATA, attrs, buffer);
+                buffer = openXMLTag("path", SVNXMLUtil.XML_STYLE_PROTECT_PCDATA, attrs, buffer);
                 buffer.append(SVNEncodingUtil.xmlEncodeCDATA(path.getPath()));
                 buffer = closeXMLTag("path", buffer);
             }
@@ -370,7 +371,7 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
             revProps.remove(SVNRevisionProperty.LOG);
         }
         if (revProps != null && !revProps.isEmpty()) {
-            buffer = openXMLTag("revprops", XML_STYLE_NORMAL, null, buffer);
+            buffer = openXMLTag("revprops", SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
             buffer = printXMLPropHash(buffer, revProps, false);
             buffer = closeXMLTag("revprops", buffer);
         }

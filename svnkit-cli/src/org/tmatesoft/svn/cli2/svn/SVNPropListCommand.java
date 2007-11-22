@@ -26,6 +26,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNChangelistClient;
@@ -87,10 +88,10 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
             }
             if (getSVNEnvironment().isXML()) {
                 printXMLHeader("properties");
-                StringBuffer buffer = openXMLTag("revprops", XML_STYLE_NORMAL, "rev", Long.toString(rev), null);
+                StringBuffer buffer = openXMLTag("revprops", SVNXMLUtil.XML_STYLE_NORMAL, "rev", Long.toString(rev), null);
                 for (Iterator props = revisionProperties.iterator(); props.hasNext();) {
                     SVNPropertyData property = (SVNPropertyData) props.next();
-                    buffer = openXMLTag("property", XML_STYLE_PROTECT_PCDATA, "name", SVNEncodingUtil.xmlEncodeAttr(property.getName()), buffer);
+                    buffer = openXMLTag("property", SVNXMLUtil.XML_STYLE_PROTECT_PCDATA, "name", SVNEncodingUtil.xmlEncodeAttr(property.getName()), buffer);
                     buffer.append(SVNEncodingUtil.xmlEncodeCDATA(property.getValue()));
                     buffer = closeXMLTag("property", buffer);
                 }
@@ -184,10 +185,10 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
             if (!isURL) {
                 target = SVNCommandUtil.getLocalPath(getSVNEnvironment().getRelativePath((File) key));
             } 
-            StringBuffer buffer = openXMLTag("target", XML_STYLE_NORMAL, "path", target, null);
+            StringBuffer buffer = openXMLTag("target", SVNXMLUtil.XML_STYLE_NORMAL, "path", target, null);
             for (Iterator plist = props.iterator(); plist.hasNext();) {
                 SVNPropertyData property = (SVNPropertyData) plist.next();
-                buffer = openXMLTag("property", XML_STYLE_PROTECT_PCDATA, "name", property.getName(), buffer);
+                buffer = openXMLTag("property", SVNXMLUtil.XML_STYLE_PROTECT_PCDATA, "name", property.getName(), buffer);
                 buffer.append(SVNEncodingUtil.xmlEncodeCDATA(property.getValue()));
                 buffer = closeXMLTag("property", buffer);
             }
