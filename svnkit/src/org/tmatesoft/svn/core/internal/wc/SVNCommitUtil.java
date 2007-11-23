@@ -123,7 +123,7 @@ public class SVNCommitUtil {
         for (int i = 0; i < paths.length; i++) {
             statusClient.checkCancelled();
             File file = paths[i];
-            validatedPaths[i] = file.getAbsolutePath();
+            validatedPaths[i] = file.getAbsolutePath().replace(File.separatorChar, '/');
         }
         String rootPath = SVNPathUtil.condencePaths(validatedPaths, relativePaths, depth == SVNDepth.INFINITY);
         
