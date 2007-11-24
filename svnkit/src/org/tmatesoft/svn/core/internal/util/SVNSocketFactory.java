@@ -15,6 +15,7 @@ package org.tmatesoft.svn.core.internal.util;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
@@ -49,9 +50,26 @@ import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
  */
 public class SVNSocketFactory {
     
+    private static final int ourConnectTimeout;
+    
+    static {
+        String timeoutStr = System.getProperty("svnkit.tcp.connectTimeout", "0");
+        int timeout = 0;
+        try {
+            timeout = Integer.parseInt(timeoutStr);
+            if (timeout < 0) {
+                timeout = 0;
+            }
+        } catch (NumberFormatException nfe) {
+            timeout = 0;
+        }
+        ourConnectTimeout = timeout;
+    }
+    
     public static Socket createPlainSocket(String host, int port) throws IOException {
         InetAddress address = createAddres(host);
-        Socket socket = new Socket(address, port);
+        Socket socket = new Socket() ;
+        socket.connect(new InetSocketAddress(address, port), ourConnectTimeout);
         socket.setReuseAddress(true);
         socket.setTcpNoDelay(true);
         socket.setKeepAlive(true);
@@ -60,8 +78,11 @@ public class SVNSocketFactory {
     }
 
     public static Socket createSSLSocket(ISVNSSLManager manager, String host, int port) throws IOException, SVNException {
+        InetSocketAddress address = new InetSocketAddress(createAddres(host), port); 
+
         manager = manager == null ? DEFAULT_SSL_MANAGER : manager;
-        Socket sslSocket = manager.getSSLContext().getSocketFactory().createSocket(createAddres(host), port);
+        Socket sslSocket = manager.getSSLContext().getSocketFactory().createSocket();
+        sslSocket.connect(address, ourConnectTimeout);
         sslSocket.setReuseAddress(true);
         sslSocket.setTcpNoDelay(true);
         sslSocket.setKeepAlive(true);

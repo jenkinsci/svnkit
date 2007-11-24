@@ -401,7 +401,7 @@ public class PythonTests {
         
         String svnserve = props.getProperty("svnserve.path");
         String[] command = {svnserve, "-d", "--foreground", "--listen-port", portNumber + "", "-r", path};
-        ourSVNServer = execCommand(command, false);
+        ourSVNServer = execCommand(command, false, false);
         return portNumber;
     }
     
@@ -428,7 +428,7 @@ public class PythonTests {
 
         String apache = props.getProperty("apache.path");
         command = new String[] {apache, "-f", path, "-k", (start ? "start" : "stop")};
-        execCommand(command, start);
+        execCommand(command, start, false);
         return port;
     }
     
@@ -493,12 +493,14 @@ public class PythonTests {
         return path;
     }
     
-    private static Process execCommand(String[] command, boolean wait) throws IOException {
+    private static Process execCommand(String[] command, boolean wait, boolean readOutput) throws IOException {
         Process process = Runtime.getRuntime().exec(command);
         if (process != null) {
             try {
-                new ReaderThread(process.getInputStream(), null).start();
-                new ReaderThread(process.getErrorStream(), null).start();
+                if (readOutput || wait) {
+                    new ReaderThread(process.getInputStream(), null).start();
+                    new ReaderThread(process.getErrorStream(), null).start();
+                }
                 if (wait) {
                     int code = process.waitFor();
                     if (code != 0) {
