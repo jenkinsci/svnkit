@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
+import org.tmatesoft.svn.core.wc.SVNCopySource;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
@@ -1078,16 +1079,14 @@ public class WorkingCopy {
      * commitMessage - a commit log message since URL->URL copying is immediately 
      * committed to a repository.
      */
-    private static SVNCommitInfo copy(SVNURL srcURL, SVNURL dstURL,
-            boolean isMove, String commitMessage) throws SVNException {
+    private static SVNCommitInfo copy(SVNURL srcURL, SVNURL dstURL, boolean isMove, String commitMessage) throws SVNException {
         /*
          * SVNRevision.HEAD means the latest revision.
          * Returns SVNCommitInfo containing information on the new revision committed 
          * (revision number, etc.) 
-         */
-        
-        return ourClientManager.getCopyClient().doCopy(srcURL,  SVNRevision.HEAD,
-                dstURL, isMove, commitMessage);
+         */        
+        return ourClientManager.getCopyClient().doCopy(new SVNCopySource[] {new SVNCopySource(SVNRevision.HEAD, SVNRevision.HEAD, srcURL)},
+                dstURL, isMove, true, false, commitMessage, null);
     }
     
     /*

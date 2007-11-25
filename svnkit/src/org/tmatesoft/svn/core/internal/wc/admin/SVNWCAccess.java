@@ -569,78 +569,7 @@ public class SVNWCAccess implements ISVNEventHandler {
         }
         return adminArea;
     }
-/*
-    public static SVNExternalInfo[] parseExternals(String rootPath, String externals) throws SVNException {
-        Collection result = new ArrayList();
-        if (externals == null) {
-            return (SVNExternalInfo[]) result.toArray(new SVNExternalInfo[result.size()]);
-        }
 
-        for (StringTokenizer lines = new StringTokenizer(externals, "\n\r"); lines.hasMoreTokens();) {
-            String line = lines.nextToken().trim();
-            if (line.length() == 0 || line.startsWith("#")) {
-                continue;
-            }
-            String url = null;
-            String path;
-            long rev = -1;
-            List parts = new ArrayList(4);
-            for (StringTokenizer tokens = new StringTokenizer(line, " \t"); tokens.hasMoreTokens();) {
-                String token = tokens.nextToken().trim();
-                parts.add(token);
-            }
-            if (parts.size() < 2) {
-                continue;
-            }
-            path = SVNPathUtil.append(rootPath, (String) parts.get(0));
-            if (path.endsWith("/")) {
-                path = path.substring(0, path.length() - 1);
-            }
-            if (parts.size() == 2) {
-                url = (String) parts.get(1);
-            } else if (parts.size() == 3 && parts.get(1).toString().startsWith("-r")) {
-                String revStr = parts.get(1).toString();
-                revStr = revStr.substring("-r".length());
-                if (!"HEAD".equals(revStr)) {
-                    try {
-                        rev = Long.parseLong(revStr);
-                    } catch (NumberFormatException nfe) {
-                        continue;
-                    }
-                }
-                url = (String) parts.get(2);
-            } else if (parts.size() == 4 && "-r".equals(parts.get(1))) {
-                String revStr = parts.get(2).toString();
-                if (!"HEAD".equals(revStr)) {
-                    try {
-                        rev = Long.parseLong(revStr);
-                    } catch (NumberFormatException nfe) {
-                        continue;
-                    }
-                }
-                url = (String) parts.get(3);
-            }
-            if (path != null && url != null) {
-                if ("".equals(rootPath) && ((String) parts.get(0)).startsWith("/")) {
-                    path = "/" + path;
-                }
-                SVNExternalInfo.checkPath(path);
-                try {
-                    url = SVNURL.parseURIEncoded(url).toString();
-                } catch (SVNException e) {
-                    continue;
-                }
-                
-                try {
-                    SVNExternalInfo info = new SVNExternalInfo("", null, path, SVNURL.parseURIEncoded(url), rev);
-                    result.add(info);
-                } catch (SVNException e) {
-                }
-            }
-        }
-        return (SVNExternalInfo[]) result.toArray(new SVNExternalInfo[result.size()]);
-    }
-*/
     //analogous to retrieve_internal
     public SVNAdminArea getAdminArea(File path) {
         //internal retrieve

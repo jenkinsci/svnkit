@@ -711,28 +711,5 @@ public class SVNWCManager {
         log.logChangedEntryProperties(fileName, entryProps);
         log.logChangedWCProperties(fileName, wcProps);
     }
-    
-/*    private static String scheduleForAddedEntry(SVNAdminArea adminArea, String dstPathName, 
-                                                String copyFromURL, long copyFromRevision) throws SVNException {
-
-        if (copyFromURL == null) {
-            return SVNProperty.SCHEDULE_ADD;
-        }
-
-        String urlBaseName = SVNPathUtil.tail(copyFromURL);
-        if (!dstPathName.equals(urlBaseName)) {
-            return SVNProperty.SCHEDULE_ADD;
-        }
-
-        String urlDirName = SVNPathUtil.removeTail(copyFromURL);
-        SVNEntry parentEntry = adminArea.getVersionedEntry(adminArea.getThisDirName(), false);
-        if (parentEntry.isCopied() && parentEntry.getCopyFromRevision() == copyFromRevision && 
-            urlDirName.equals(parentEntry.getCopyFromURL())) {
-            return null;
-        }
-
-        return SVNProperty.SCHEDULE_ADD;
-    }
-*/
 
 }

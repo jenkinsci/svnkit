@@ -48,7 +48,6 @@ public class SVNCopyCommand extends SVNCommand {
         options = SVNOption.addLogMessageOptions(options);
         options = SVNOption.addAuthOptions(options);
         options.add(SVNOption.CONFIG_DIR);
-        options.add(SVNOption.USE_MERGE_HISTORY);
         return options;
     }
 
@@ -95,15 +94,15 @@ public class SVNCopyCommand extends SVNCommand {
         client.setCommitHandler(getSVNEnvironment());
         SVNCopySource[] copySources = (SVNCopySource[]) sources.toArray(new SVNCopySource[sources.size()]);
         if (dst.isURL()) {
-            SVNCommitInfo info = client.doCopy(copySources, dst.getURL(), false, false, 
-                    getSVNEnvironment().isParents(), getSVNEnvironment().getMessage(), 
+            SVNCommitInfo info = client.doCopy(copySources, dst.getURL(), false, getSVNEnvironment().isParents(), false,
+                    getSVNEnvironment().getMessage(), 
                     getSVNEnvironment().getRevisionProperties());
+                    
             if (!getSVNEnvironment().isQuiet()) {
                 getSVNEnvironment().printCommitInfo(info);
             }
         } else {
-            client.doCopy(copySources, dst.getFile(), false, getSVNEnvironment().isParents(), false, 
-                    getSVNEnvironment().isUseMergeHistory());
+            client.doCopy(copySources, dst.getFile(), false, getSVNEnvironment().isParents(), false);
         }
     }
 

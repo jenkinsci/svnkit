@@ -124,4 +124,10 @@ public class SVNPath {
         }
         return;
     }
+
+    public SVNPath append(String tail) throws SVNException {
+        SVNPath path = new SVNPath(SVNPathUtil.append(myTarget, tail), false);
+        path.myPegRevision = myPegRevision;
+        return path;
+    }
 }

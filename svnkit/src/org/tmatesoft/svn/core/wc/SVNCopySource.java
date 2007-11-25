@@ -13,7 +13,6 @@ package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
 
-import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
@@ -23,17 +22,19 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
  * @author  TMate Software Ltd.
  */
 public class SVNCopySource {
+    
     private SVNRevision myPegRevision;
     private SVNRevision myRevision;
     private SVNURL myURL;
     private File myPath;
-    private SVNURL myDstURL;
-    private File myDstFile;
-    private boolean isRessurection;
-    private long mySrcRevisionNumber;
-    private SVNNodeKind mySrcKind;
-    private String mySrcPath;
-    private String myDstPath;    
+    
+//    private SVNURL myDstURL;
+//    private File myDstFile;
+//    private boolean isRessurection;
+//    private long mySrcRevisionNumber;
+//    private SVNNodeKind mySrcKind;
+//    private String mySrcPath;
+//    private String myDstPath;    
     
     public SVNCopySource(SVNRevision pegRevision, SVNRevision revision, File path) {
         myPegRevision = pegRevision;
@@ -74,6 +75,7 @@ public class SVNCopySource {
         return myPath.getName();
     }
     
+    /*
     void setDestinationURL(SVNURL dst) {
         myDstURL = dst;
     }
@@ -81,7 +83,6 @@ public class SVNCopySource {
     void setDestinationPath(File dst) {
         myDstFile = dst;
     }
-    
     File getDstFile() {
         return myDstFile;
     }
@@ -144,6 +145,6 @@ public class SVNCopySource {
 
     void setDstPath(String dstPath) {
         myDstPath = dstPath;
-    }
+    }*/
 
 }

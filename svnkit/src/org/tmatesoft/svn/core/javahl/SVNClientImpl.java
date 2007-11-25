@@ -716,10 +716,9 @@ public class SVNClientImpl implements SVNClientInterface {
         SVNCopyClient client = getSVNCopyClient();
         try {
             if (isURL(destPath)) {
-                client.doCopy(sources, SVNURL.parseURIEncoded(destPath), isMove, !copyAsChild, makeParents,
-                        message, null);
+                client.doCopy(sources, SVNURL.parseURIEncoded(destPath), isMove, !copyAsChild, makeParents, message, null);
             } else {
-                client.doCopy(sources, new File(destPath).getAbsoluteFile(), isMove, makeParents, !copyAsChild, true);
+                client.doCopy(sources, new File(destPath).getAbsoluteFile(), isMove, makeParents, !copyAsChild);
             }
         } catch (SVNException e) {
             throwException(e);

@@ -51,7 +51,6 @@ public class SVNMoveCommand extends SVNCommand {
         options = SVNOption.addLogMessageOptions(options);
         options = SVNOption.addAuthOptions(options);
         options.add(SVNOption.CONFIG_DIR);
-        options.add(SVNOption.USE_MERGE_HISTORY);
         return options;
     }
 
@@ -97,8 +96,7 @@ public class SVNMoveCommand extends SVNCommand {
                     getSVNEnvironment().printCommitInfo(info);
                 }
             } else {
-                client.doCopy(copySources, dst.getFile(), true, getSVNEnvironment().isParents(), false,
-                        getSVNEnvironment().isUseMergeHistory());
+                client.doCopy(copySources, dst.getFile(), true, getSVNEnvironment().isParents(), false);
             }
         } catch (SVNException e) {
             SVNErrorMessage err = e.getErrorMessage();
