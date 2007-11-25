@@ -25,7 +25,6 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNMergeRange;
-import org.tmatesoft.svn.core.SVNMergeRangeInheritance;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
@@ -208,10 +207,9 @@ public class FSFileRevisionsFinder {
 
         Map deleted = new TreeMap();
         Map changed = new TreeMap();
-        SVNMergeInfoManager.diffMergeInfo(deleted, changed, previousMergeInfo, currentMergeInfo, 
-                                          SVNMergeRangeInheritance.IGNORE_INHERITANCE);
+        SVNMergeInfoManager.diffMergeInfo(deleted, changed, previousMergeInfo, currentMergeInfo, false);
 
-        changed = SVNMergeInfoManager.mergeMergeInfos(changed, deleted, SVNMergeRangeInheritance.EQUAL_INHERITANCE);
+        changed = SVNMergeInfoManager.mergeMergeInfos(changed, deleted);
         if (changed.isEmpty()) {
             return;
         }

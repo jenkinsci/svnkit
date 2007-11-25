@@ -28,7 +28,6 @@ import java.util.TreeMap;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNMergeRangeInheritance;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -137,7 +136,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         return myDiffOptions;
     }
 
-    protected String getDisplayPath(String path) {
+    protected String getDisplayPath(String path) throws SVNException {
         if (myBasePath == null) {
             return path;
         }
@@ -157,6 +156,8 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             if (path.startsWith("./")) {
                 path = path.substring("./".length());
             }
+        } else if (path.startsWith("/")) {
+            createBadRelativePathError(path);
         }
         return path;
     }
@@ -196,7 +197,17 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                 String name = (String) changedPropNames.next();
                 String originalValue = baseProps != null ? (String) baseProps.get(name) : null;
                 String newValue = (String) diff.get(name);
-                bos.write(("Name: " + name).getBytes(getEncoding()));
+                String headerFormat = null;
+                
+                if (originalValue == null) {
+                    headerFormat = "Added: ";
+                } else if (newValue == null) {
+                    headerFormat = "Deleted: ";
+                } else {
+                    headerFormat = "Modified: ";
+                }
+                
+                bos.write((headerFormat + name).getBytes(getEncoding()));
                 bos.write(EOL);
                 if (SVNProperty.MERGE_INFO.equals(name)) {
                     displayMergeInfoDiff(bos, originalValue, newValue);
@@ -517,8 +528,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         
         Map deleted = new TreeMap();
         Map added = new TreeMap();
-        SVNMergeInfoManager.diffMergeInfo(deleted, added, oldMergeInfo, newMergeInfo, 
-                                          SVNMergeRangeInheritance.EQUAL_INHERITANCE);
+        SVNMergeInfoManager.diffMergeInfo(deleted, added, oldMergeInfo, newMergeInfo, true);
 
         for (Iterator paths = deleted.keySet().iterator(); paths.hasNext();) {
             String path = (String) paths.next();
@@ -535,5 +545,12 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             baos.write(rangeList.toString().getBytes(getEncoding()));
             baos.write(EOL);
         }
+    }
+    
+    private void createBadRelativePathError(String path) throws SVNException {
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_RELATIVE_PATH, 
+                "Path ''{0}'' must be an immediate child of the directory ''{1}''", 
+                new Object[] { path, myBasePath });
+        SVNErrorManager.error(err);
     }
 }

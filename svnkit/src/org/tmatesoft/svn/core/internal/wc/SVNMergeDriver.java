@@ -29,7 +29,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNMergeInfo;
 import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
 import org.tmatesoft.svn.core.SVNMergeRange;
-import org.tmatesoft.svn.core.SVNMergeRangeInheritance;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -859,10 +858,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                                                                          reposPath, 
                                                                          range.getStartRevision(), 
                                                                          range.getEndRevision());
-                if (!SVNMergeInfoManager.mergeInfoEquals(merges, targetMergeInfo, 
-                                                         SVNMergeRangeInheritance.IGNORE_INHERITANCE)) {
-                    merges = SVNMergeInfoManager.mergeMergeInfos(merges, inheritableMerges, 
-                                                                 SVNMergeRangeInheritance.EQUAL_INHERITANCE);
+                if (!SVNMergeInfoManager.mergeInfoEquals(merges, targetMergeInfo, false)) {
+                    merges = SVNMergeInfoManager.mergeMergeInfos(merges, inheritableMerges);
                 
                     SVNPropertiesManager.recordWCMergeInfo(target, merges, myWCAccess);
                 }
@@ -1364,9 +1361,9 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             if (isRollBack) {
                 ranges = ranges.dup();
                 ranges = ranges.reverse();
-                rangeList = rangeList.diff(ranges, SVNMergeRangeInheritance.IGNORE_INHERITANCE);
+                rangeList = rangeList.diff(ranges, false);
             } else {
-                rangeList = rangeList.merge(ranges, SVNMergeRangeInheritance.EQUAL_INHERITANCE);
+                rangeList = rangeList.merge(ranges);
             }
             
             mergeInfo.put(reposPath, rangeList);
@@ -1432,7 +1429,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                                           endMergeInfo != null ?
                                           endMergeInfo.getMergeSourcesToMergeLists() :
                                           null, 
-                                          SVNMergeRangeInheritance.EQUAL_INHERITANCE);
+                                          false);
 
         SVNMergeRangeList srcRangeListForTgt = null;
         if (!added.isEmpty()) {
@@ -1445,8 +1442,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         
         SVNMergeRangeList requestedRangeList = new SVNMergeRangeList(new SVNMergeRange[] {unrefinedRange});
         if (srcRangeListForTgt != null) {
-            requestedRangeList = requestedRangeList.diff(srcRangeListForTgt, 
-                                                         SVNMergeRangeInheritance.EQUAL_INHERITANCE);
+            requestedRangeList = requestedRangeList.diff(srcRangeListForTgt, false);
         }
         return requestedRangeList;
     }
@@ -1471,8 +1467,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 remainingRangeList = requestedRangeList.intersect(targetRangeList);
                 remainingRangeList = remainingRangeList.reverse();
             } else {
-                remainingRangeList = requestedRangeList.diff(targetRangeList, 
-                                                             SVNMergeRangeInheritance.IGNORE_INHERITANCE);
+                remainingRangeList = requestedRangeList.diff(targetRangeList, false);
                 
             }
         }

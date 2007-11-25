@@ -27,7 +27,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNMergeInfo;
 import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
 import org.tmatesoft.svn.core.SVNMergeRange;
-import org.tmatesoft.svn.core.SVNMergeRangeInheritance;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
@@ -227,8 +226,7 @@ public class SVNMergeInfoManager {
         return new SVNMergeInfoManager(dbProcessor);
     }
     
-    public static Map mergeMergeInfos(Map originalSrcsToRangeLists, Map changedSrcsToRangeLists, 
-                                      SVNMergeRangeInheritance considerInheritance) {
+    public static Map mergeMergeInfos(Map originalSrcsToRangeLists, Map changedSrcsToRangeLists) {
         originalSrcsToRangeLists = originalSrcsToRangeLists == null ? new TreeMap() : originalSrcsToRangeLists;
         changedSrcsToRangeLists = changedSrcsToRangeLists == null ? Collections.EMPTY_MAP : changedSrcsToRangeLists;
         String[] paths1 = (String[]) originalSrcsToRangeLists.keySet().toArray(new String[originalSrcsToRangeLists.size()]);
@@ -242,7 +240,7 @@ public class SVNMergeInfoManager {
             if (res == 0) {
                 SVNMergeRangeList rangeList1 = (SVNMergeRangeList) originalSrcsToRangeLists.get(path1);
                 SVNMergeRangeList rangeList2 = (SVNMergeRangeList) changedSrcsToRangeLists.get(path2);
-                rangeList1 = rangeList1.merge(rangeList2, considerInheritance);
+                rangeList1 = rangeList1.merge(rangeList2);
                 originalSrcsToRangeLists.put(path1, rangeList1);
                 i++;
                 j++;
@@ -264,12 +262,12 @@ public class SVNMergeInfoManager {
     public static String combineMergeInfoProperties(String propValue1, String propValue2) throws SVNException {
         Map srcsToRanges1 = parseMergeInfo(new StringBuffer(propValue1), null);
         Map srcsToRanges2 = parseMergeInfo(new StringBuffer(propValue2), null);
-        srcsToRanges1 = mergeMergeInfos(srcsToRanges1, srcsToRanges2, 
-                                        SVNMergeRangeInheritance.EQUAL_INHERITANCE);
+        srcsToRanges1 = mergeMergeInfos(srcsToRanges1, srcsToRanges2);
         return formatMergeInfoToString(srcsToRanges1);
     }
     
-    public static String combineForkedMergeInfoProperties(String fromPropValue, String workingPropValue, String toPropValue) throws SVNException {
+    public static String combineForkedMergeInfoProperties(String fromPropValue, String workingPropValue, 
+            String toPropValue) throws SVNException {
         Map leftDeleted = new TreeMap();
         Map leftAdded = new TreeMap();
         Map fromMergeInfo = parseMergeInfo(new StringBuffer(fromPropValue), null);
@@ -278,19 +276,16 @@ public class SVNMergeInfoManager {
         Map rightDeleted = new TreeMap();
         Map rightAdded = new TreeMap();
         diffMergeInfoProperties(rightDeleted, rightAdded, fromPropValue, null, toPropValue, null);
-        leftDeleted = mergeMergeInfos(leftDeleted, rightDeleted, 
-                                      SVNMergeRangeInheritance.EQUAL_INHERITANCE);
-        leftAdded = mergeMergeInfos(leftAdded, rightAdded,
-                                    SVNMergeRangeInheritance.EQUAL_INHERITANCE);
-        fromMergeInfo = mergeMergeInfos(fromMergeInfo, leftAdded,
-                                        SVNMergeRangeInheritance.EQUAL_INHERITANCE);
+        leftDeleted = mergeMergeInfos(leftDeleted, rightDeleted);
+        leftAdded = mergeMergeInfos(leftAdded, rightAdded);
+        fromMergeInfo = mergeMergeInfos(fromMergeInfo, leftAdded);
         Map result = new TreeMap();
-        walkMergeInfoHashForDiff(result, null, fromMergeInfo, leftDeleted, 
-                                 SVNMergeRangeInheritance.EQUAL_INHERITANCE);
+        walkMergeInfoHashForDiff(result, null, fromMergeInfo, leftDeleted, false);
         return formatMergeInfoToString(result);
     }
     
-    public static void diffMergeInfoProperties(Map deleted, Map added, String fromPropValue, Map fromMergeInfo, String toPropValue, Map toMergeInfo) throws SVNException {
+    public static void diffMergeInfoProperties(Map deleted, Map added, String fromPropValue, Map fromMergeInfo, 
+            String toPropValue, Map toMergeInfo) throws SVNException {
         if (fromPropValue.equals(toPropValue)) {
             return;
         } 
@@ -298,12 +293,11 @@ public class SVNMergeInfoManager {
                                               : fromMergeInfo;
         toMergeInfo = toMergeInfo == null ? parseMergeInfo(new StringBuffer(toPropValue), null) 
                                           : toMergeInfo;
-        diffMergeInfo(deleted, added, fromMergeInfo, toMergeInfo, 
-                      SVNMergeRangeInheritance.IGNORE_INHERITANCE);
+        diffMergeInfo(deleted, added, fromMergeInfo, toMergeInfo, false);
     }
     
     public static void diffMergeInfo(Map deleted, Map added, Map from, Map to, 
-                                     SVNMergeRangeInheritance considerInheritance) {
+            boolean considerInheritance) {
         from = from == null ? Collections.EMPTY_MAP : from;
         to = to == null ? Collections.EMPTY_MAP : to;
         if (!from.isEmpty() && to.isEmpty()) {
@@ -337,12 +331,13 @@ public class SVNMergeInfoManager {
         while (mergeInfo.length() > 0) {
             int ind = mergeInfo.indexOf(":");
             if (ind == -1) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, "Pathname not terminated by ':'");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, 
+                        "Pathname not terminated by ':'");
                 SVNErrorManager.error(err);
             }
             String path = mergeInfo.substring(0, ind);
             mergeInfo = mergeInfo.delete(0, ind + 1);
-            SVNMergeRange[] ranges = parseRanges(mergeInfo);
+            SVNMergeRange[] ranges = parseRevisionList(mergeInfo);
             if (mergeInfo.length() != 0 && mergeInfo.charAt(0) != '\n') {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, "Could not find end of line in range list line in ''{0}''", mergeInfo);
                 SVNErrorManager.error(err);
@@ -424,16 +419,14 @@ public class SVNMergeInfoManager {
             Map parentNonEmptyMergeInfo = new TreeMap();
             getEmptyRangeListsUniqueToChild(null, parentNonEmptyMergeInfo, 
                     mergeInfo, childMergeInfo);
-            if (mergeInfoEquals(parentNonEmptyMergeInfo, childMergeInfo, 
-                SVNMergeRangeInheritance.ONLY_INHERITABLE)) {
+            if (mergeInfoEquals(parentNonEmptyMergeInfo, childMergeInfo, true)) {
                 noElide = false;
                 elideFull = true;
             }
         }
         
         if (!elideFull && mergeInfo != null) {
-            if (mergeInfoEquals(childNonEmptyMergeInfo, mergeInfo, 
-                SVNMergeRangeInheritance.ONLY_INHERITABLE)) {
+            if (mergeInfoEquals(childNonEmptyMergeInfo, mergeInfo, true)) {
                 elideFull = true;
                 noElide = elidePartially = false;
             }
@@ -447,7 +440,7 @@ public class SVNMergeInfoManager {
     }
     
     public static boolean mergeInfoEquals(Map mergeInfo1, Map mergeInfo2, 
-                                          SVNMergeRangeInheritance considerInheritance) {
+            boolean considerInheritance) {
         mergeInfo1 = mergeInfo1 == null ? Collections.EMPTY_MAP : mergeInfo1;
         mergeInfo2 = mergeInfo2 == null ? Collections.EMPTY_MAP : mergeInfo2;
         
@@ -509,7 +502,7 @@ public class SVNMergeInfoManager {
         }
     }
     
-    private static SVNMergeRange[] parseRanges(StringBuffer mergeInfo) throws SVNException {
+    private static SVNMergeRange[] parseRevisionList(StringBuffer mergeInfo) throws SVNException {
         Collection ranges = new LinkedList();
         while (mergeInfo.length() > 0 && mergeInfo.charAt(0) != '\n' && 
                 Character.isWhitespace(mergeInfo.charAt(0))) {
@@ -526,8 +519,8 @@ public class SVNMergeInfoManager {
                 mergeInfo.charAt(0) != '-' && mergeInfo.charAt(0) != ',' && 
                 mergeInfo.charAt(0) != '*') {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, 
-                                                             "Invalid character ''{0}'' found in revision list", 
-                                                             new Character(mergeInfo.charAt(0)));
+                        "Invalid character ''{0}'' found in revision list", 
+                        new Character(mergeInfo.charAt(0)));
                 SVNErrorManager.error(err);
             }
             
@@ -535,42 +528,31 @@ public class SVNMergeInfoManager {
             if (mergeInfo.length() > 0 && mergeInfo.charAt(0) == '-') {
                 mergeInfo = mergeInfo.deleteCharAt(0);
                 long endRev = parseRevision(mergeInfo);
+                if (startRev > endRev) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, 
+                            "Unable to parse reversed revision range ''{0,number,integer}-{1,number,integer}''",
+                            new Object[] { new Long(startRev), new Long(endRev) });
+                    SVNErrorManager.error(err);
+                } else if (startRev == endRev) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, 
+                            "Unable to parse revision range ''{0,number,integer}-{1,number,integer}'' with same start and end revisions",
+                            new Object[] { new Long(startRev), new Long(endRev) });
+                }
                 range.setEndRevision(endRev);
             }
+            
             if (mergeInfo.length() == 0 || mergeInfo.charAt(0) == '\n') {
-                SVNMergeRange combinedRange = lastRange == null ? range 
-                                                                : lastRange.combine(range, 
-                                                                                    false,
-                                                                                    SVNMergeRangeInheritance.EQUAL_INHERITANCE);
-                if (lastRange != combinedRange) {
-                    lastRange = combinedRange;
-                    ranges.add(lastRange);
-                }
+                lastRange = combineWithAdjacentLastRange(ranges, lastRange, range, false);
                 return (SVNMergeRange[]) ranges.toArray(new SVNMergeRange[ranges.size()]);
             } else if (mergeInfo.length() > 0 && mergeInfo.charAt(0) == ',') {
-                SVNMergeRange combinedRange = lastRange == null ? range 
-                                                                : lastRange.combine(range, 
-                                                                                    false,
-                                                                                    SVNMergeRangeInheritance.EQUAL_INHERITANCE);
-                if (lastRange != combinedRange) {
-                    lastRange = combinedRange;
-                    ranges.add(lastRange);
-                }
+                lastRange = combineWithAdjacentLastRange(ranges, lastRange, range, false);
                 mergeInfo = mergeInfo.deleteCharAt(0);
             } else if (mergeInfo.length() > 0 && mergeInfo.charAt(0) == '*') {
                 range.setInheritable(false);
                 mergeInfo = mergeInfo.deleteCharAt(0);
                 if (mergeInfo.length() == 0 || mergeInfo.charAt(0) == ',' || 
-                    mergeInfo.charAt(0) == '\n') {
-                    SVNMergeRange combinedRange = lastRange == null ? range 
-                                                                    : lastRange.combine(range, 
-                                                                                        false,
-                                                                                        SVNMergeRangeInheritance.EQUAL_INHERITANCE);
-                    if (lastRange != combinedRange) {
-                        lastRange = combinedRange;
-                        ranges.add(lastRange);
-                    }
-                    
+                        mergeInfo.charAt(0) == '\n') {
+                    lastRange = combineWithAdjacentLastRange(ranges, lastRange, range, false);
                     if (mergeInfo.length() > 0 && mergeInfo.charAt(0) == ',') {
                         mergeInfo = mergeInfo.deleteCharAt(0);
                     } else {
@@ -634,7 +616,7 @@ public class SVNMergeInfoManager {
     }
     
     private static void walkMergeInfoHashForDiff(Map deleted, Map added, Map from, Map to, 
-                                                 SVNMergeRangeInheritance considerInheritance) {
+            boolean considerInheritance) {
         for (Iterator paths = from.keySet().iterator(); paths.hasNext();) {
             String path = (String) paths.next();
             SVNMergeRangeList fromRangeList = (SVNMergeRangeList) from.get(path);
@@ -668,4 +650,35 @@ public class SVNMergeInfoManager {
         }        
     }
     
+    private static SVNMergeRange combineWithAdjacentLastRange(Collection result, SVNMergeRange lastRange, 
+            SVNMergeRange mRange, boolean dupMRange) throws SVNException {
+        SVNMergeRange pushedMRange = mRange;
+        if (lastRange != null) {
+            if (lastRange.getStartRevision() <= mRange.getEndRevision() && 
+                    mRange.getStartRevision() <= lastRange.getEndRevision()) {
+                
+                if (mRange.getStartRevision() < lastRange.getEndRevision()) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, 
+                            "Parsing of overlapping revision ranges ''{0}'' and ''{1}'' is not supported",
+                            new Object[] { lastRange.toString(), mRange.toString() });
+                    SVNErrorManager.error(err);
+                } else if (lastRange.isInheritable() == mRange.isInheritable()) {
+                    lastRange.setEndRevision(mRange.getEndRevision());
+                    return lastRange;
+                }
+            } else if (lastRange.getStartRevision() > mRange.getStartRevision()) {
+                  SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, 
+                          "Unable to parse unordered revision ranges ''{0}'' and ''{1}''", 
+                          new Object[] { lastRange.toString(), mRange.toString() });
+                  SVNErrorManager.error(err);
+            }
+        }
+        
+        if (dupMRange) {
+            pushedMRange = mRange.dup();
+        }
+        result.add(pushedMRange);
+        lastRange = pushedMRange;
+        return lastRange;
+    }
 }

@@ -179,6 +179,10 @@ public class SVNErrorCode implements Serializable {
     public static final SVNErrorCode BAD_MIME_TYPE = new SVNErrorCode(BAD_CATEGORY, 4, "Bogus mime-type");
     public static final SVNErrorCode BAD_PROPERTY_VALUE = new SVNErrorCode(BAD_CATEGORY, 5, "Wrong or unexpected property value");
     public static final SVNErrorCode BAD_VERSION_FILE_FORMAT = new SVNErrorCode(BAD_CATEGORY, 6, "Version file format not correct");
+    /**
+     * @since SVN 1.5
+     */
+    public static final SVNErrorCode BAD_RELATIVE_PATH = new SVNErrorCode(BAD_CATEGORY, 7, "Path is not an immediate child of the specified directory");
     
     public static final SVNErrorCode XML_ATTRIB_NOT_FOUND = new SVNErrorCode(XML_CATEGORY, 0, "No such XML tag attribute");
     public static final SVNErrorCode XML_MISSING_ANCESTRY = new SVNErrorCode(XML_CATEGORY, 1, "<delta-pkg> is missing ancestry");

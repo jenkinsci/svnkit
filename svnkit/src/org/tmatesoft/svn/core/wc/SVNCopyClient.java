@@ -27,7 +27,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNMergeInfo;
 import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
 import org.tmatesoft.svn.core.SVNMergeRange;
-import org.tmatesoft.svn.core.SVNMergeRangeInheritance;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -1227,8 +1226,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 
                 Map wcMergeInfo = SVNPropertiesManager.parseMergeInfo(source.getPath(), entry, false);
                 if (wcMergeInfo != null) {
-                    mergeInfo = SVNMergeInfoManager.mergeMergeInfos(mergeInfo, wcMergeInfo,
-                                                                    SVNMergeRangeInheritance.EQUAL_INHERITANCE);
+                    mergeInfo = SVNMergeInfoManager.mergeMergeInfos(mergeInfo, wcMergeInfo);
                 }
                 
                 String mergeInfoString = SVNMergeInfoManager.formatMergeInfoToString(mergeInfo); 
@@ -2138,8 +2136,7 @@ public class SVNCopyClient extends SVNBasicClient {
 
         Map wcMergeInfo = SVNPropertiesManager.parseMergeInfo(path, entry, false);
         if (wcMergeInfo != null) {
-            wcMergeInfo = SVNMergeInfoManager.mergeMergeInfos(wcMergeInfo, mergeInfo, 
-                                                              SVNMergeRangeInheritance.EQUAL_INHERITANCE);
+            wcMergeInfo = SVNMergeInfoManager.mergeMergeInfos(wcMergeInfo, mergeInfo);
         } else {
             wcMergeInfo = mergeInfo;
         }
@@ -2184,8 +2181,7 @@ public class SVNCopyClient extends SVNBasicClient {
             SVNMergeInfo srcInfo = (SVNMergeInfo) srcMergeInfo.get(srcAbsPath);
             if (srcInfo != null) {
                 srcMergeInfo = srcInfo.getMergeSourcesToMergeLists();
-                targetMergeInfo = SVNMergeInfoManager.mergeMergeInfos(targetMergeInfo, srcMergeInfo, 
-                           SVNMergeRangeInheritance.EQUAL_INHERITANCE);
+                targetMergeInfo = SVNMergeInfoManager.mergeMergeInfos(targetMergeInfo, srcMergeInfo);
             }
         } else {
             targetMergeInfo = new TreeMap();

@@ -25,7 +25,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNMergeInfo;
 import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
 import org.tmatesoft.svn.core.SVNMergeRange;
-import org.tmatesoft.svn.core.SVNMergeRangeInheritance;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
@@ -202,7 +201,7 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doDiff(SVNURL url, SVNRevision pegRevision, SVNRevision rN, SVNRevision rM, boolean recursive, boolean useAncestry,
             OutputStream result) throws SVNException {
-        doDiff(url, pegRevision, rN, rM, SVNDepth.fromRecurse(recursive), useAncestry, result);
+        doDiff(url, pegRevision, rN, rM, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, result);
     }
      
     public void doDiff(SVNURL url, SVNRevision pegRevision, SVNRevision rN, SVNRevision rM, SVNDepth depth, boolean useAncestry,
@@ -260,7 +259,7 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doDiff(File path, SVNRevision pegRevision, SVNRevision rN, SVNRevision rM, boolean recursive, boolean useAncestry,
             OutputStream result) throws SVNException {
-        doDiff(path, pegRevision, rN, rM, SVNDepth.fromRecurse(recursive), useAncestry, result);
+        doDiff(path, pegRevision, rN, rM, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, result);
     }
     
     public void doDiff(File[] paths, SVNRevision rN, SVNRevision rM, SVNRevision pegRevision, SVNDepth depth, 
@@ -337,7 +336,7 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doDiff(SVNURL url1, SVNRevision rN, SVNURL url2, SVNRevision rM, boolean recursive, boolean useAncestry,
             OutputStream result) throws SVNException {
-        doDiff(url1, rN, url2, rM, SVNDepth.fromRecurse(recursive), useAncestry, result);
+        doDiff(url1, rN, url2, rM, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, result);
     }
     
     public void doDiff(SVNURL url1, SVNRevision rN, SVNURL url2, SVNRevision rM, SVNDepth depth, boolean useAncestry,
@@ -390,7 +389,7 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doDiff(File path1, SVNRevision rN, SVNURL url2, SVNRevision rM, boolean recursive, boolean useAncestry,
             OutputStream result) throws SVNException {
-        doDiff(path1, rN, url2, rM, SVNDepth.fromRecurse(recursive), useAncestry, result);
+        doDiff(path1, rN, url2, rM, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, result);
     }
     
     public void doDiff(File path1, SVNRevision rN, SVNURL url2, SVNRevision rM, SVNDepth depth, boolean useAncestry,
@@ -446,7 +445,7 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doDiff(SVNURL url1, SVNRevision rN, File path2, SVNRevision rM, boolean recursive, boolean useAncestry,
             OutputStream result) throws SVNException {
-        doDiff(url1, rN, path2, rM, SVNDepth.fromRecurse(recursive), useAncestry, result);
+        doDiff(url1, rN, path2, rM, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, result);
     }
 
     public void doDiff(SVNURL url1, SVNRevision rN, File path2, SVNRevision rM, SVNDepth depth, boolean useAncestry,
@@ -520,7 +519,7 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doDiff(File path1, SVNRevision rN, File path2, SVNRevision rM, boolean recursive, boolean useAncestry,
             OutputStream result) throws SVNException {
-        doDiff(path1, rN, path2, rM, SVNDepth.fromRecurse(recursive), useAncestry, result);
+        doDiff(path1, rN, path2, rM, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, result);
     }
     
     public void doDiff(File path1, SVNRevision rN, File path2, SVNRevision rM, SVNDepth depth, boolean useAncestry,
@@ -562,7 +561,7 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doDiffStatus(File path1, SVNRevision rN, File path2, SVNRevision rM, boolean recursive, boolean useAncestry,
             ISVNDiffStatusHandler handler) throws SVNException {
-        doDiffStatus(path1, rN, path2, rM, SVNDepth.fromRecurse(recursive), useAncestry, handler);
+        doDiffStatus(path1, rN, path2, rM, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, handler);
     }
     
     public void doDiffStatus(File path, SVNRevision rN, SVNRevision rM, SVNRevision pegRevision, SVNDepth depth, boolean useAncestry,
@@ -626,7 +625,7 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doDiffStatus(File path1, SVNRevision rN, SVNURL url2, SVNRevision rM, boolean recursive, boolean useAncestry,
             ISVNDiffStatusHandler handler) throws SVNException {
-        doDiffStatus(path1, rN, url2, rM, SVNDepth.fromRecurse(recursive), useAncestry, handler);
+        doDiffStatus(path1, rN, url2, rM, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, handler);
     }
     
     public void doDiffStatus(File path1, SVNRevision rN, SVNURL url2, SVNRevision rM, SVNDepth depth, boolean useAncestry,
@@ -664,7 +663,7 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doDiffStatus(SVNURL url1, SVNRevision rN, File path2, SVNRevision rM, boolean recursive, boolean useAncestry,
             ISVNDiffStatusHandler handler) throws SVNException {
-        doDiffStatus(url1, rN, path2, rM, SVNDepth.fromRecurse(recursive), useAncestry, handler);
+        doDiffStatus(url1, rN, path2, rM, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, handler);
     }
     
     public void doDiffStatus(SVNURL url1, SVNRevision rN, File path2, SVNRevision rM, SVNDepth depth, boolean useAncestry,
@@ -702,7 +701,7 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doDiffStatus(SVNURL url1, SVNRevision rN, SVNURL url2, SVNRevision rM, boolean recursive, boolean useAncestry,
             ISVNDiffStatusHandler handler) throws SVNException {
-        doDiffStatus(url1, rN, url2, rM, SVNDepth.fromRecurse(recursive), useAncestry, handler);
+        doDiffStatus(url1, rN, url2, rM, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, handler);
     }
     
     public void doDiffStatus(SVNURL url, SVNRevision rN, SVNRevision rM, SVNRevision pegRevision, SVNDepth depth, boolean useAncestry,
@@ -1061,7 +1060,7 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doMerge(File path1, SVNRevision revision1, File path2, SVNRevision revision2, File dstPath, boolean recursive, boolean useAncestry, 
             boolean force, boolean dryRun) throws SVNException {
-        doMerge(path1, revision1, path2, revision2, dstPath, SVNDepth.fromRecurse(recursive), 
+        doMerge(path1, revision1, path2, revision2, dstPath, SVNDepth.getInfinityOrFilesDepth(recursive), 
                 useAncestry, force, dryRun, false);
     }
     
@@ -1133,7 +1132,7 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doMerge(File path1, SVNRevision revision1, SVNURL url2, SVNRevision revision2, File dstPath, boolean recursive, boolean useAncestry, 
             boolean force, boolean dryRun) throws SVNException {
-        doMerge(path1, revision1, url2, revision2, dstPath, SVNDepth.fromRecurse(recursive), 
+        doMerge(path1, revision1, url2, revision2, dstPath, SVNDepth.getInfinityOrFilesDepth(recursive), 
                 useAncestry, force, dryRun, false);
     }
     
@@ -1193,7 +1192,7 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doMerge(SVNURL url1, SVNRevision revision1, File path2, SVNRevision revision2, File dstPath, boolean recursive, boolean useAncestry, 
             boolean force, boolean dryRun) throws SVNException {
-        doMerge(url1, revision1, path2, revision2, dstPath, SVNDepth.fromRecurse(recursive), 
+        doMerge(url1, revision1, path2, revision2, dstPath, SVNDepth.getInfinityOrFilesDepth(recursive), 
                 useAncestry, force, dryRun, false);
     }
     
@@ -1256,7 +1255,7 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doMerge(SVNURL url1, SVNRevision revision1, SVNURL url2, SVNRevision revision2, File dstPath, boolean recursive, boolean useAncestry, 
             boolean force, boolean dryRun) throws SVNException {
-        doMerge(url1, revision1, url2, revision2, dstPath, SVNDepth.fromRecurse(recursive), 
+        doMerge(url1, revision1, url2, revision2, dstPath, SVNDepth.getInfinityOrFilesDepth(recursive), 
                 useAncestry, force, dryRun, false);
     }
     
@@ -1313,7 +1312,7 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doMerge(SVNURL url1, SVNRevision pegRevision, SVNRevision revision1, SVNRevision revision2, File dstPath, boolean recursive, boolean useAncestry, 
             boolean force, boolean dryRun) throws SVNException {
-        doMerge(url1, pegRevision, revision1, revision2, dstPath, SVNDepth.fromRecurse(recursive), 
+        doMerge(url1, pegRevision, revision1, revision2, dstPath, SVNDepth.getInfinityOrFilesDepth(recursive), 
                 useAncestry, force, dryRun, false);
     }
     
@@ -1375,7 +1374,7 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doMerge(File path1, SVNRevision pegRevision, SVNRevision revision1, SVNRevision revision2, File dstPath, boolean recursive, boolean useAncestry, 
             boolean force, boolean dryRun) throws SVNException {
-        doMerge(path1, pegRevision, revision1, revision2, dstPath, SVNDepth.fromRecurse(recursive), 
+        doMerge(path1, pegRevision, revision1, revision2, dstPath, SVNDepth.getInfinityOrFilesDepth(recursive), 
                 useAncestry, force, dryRun, false);
     }
     
@@ -1469,7 +1468,7 @@ public class SVNDiffClient extends SVNMergeDriver {
         if (alreadyMergedRanges != null) {
             rangeList = fullRangeList;
         } else {
-            rangeList = fullRangeList.diff(alreadyMergedRanges, SVNMergeRangeInheritance.EQUAL_INHERITANCE);
+            rangeList = fullRangeList.diff(alreadyMergedRanges, false);
         }
         return rangeList;
     }
@@ -1489,7 +1488,7 @@ public class SVNDiffClient extends SVNMergeDriver {
         if (alreadyMergedRanges != null) {
             rangeList = fullRangeList;
         } else {
-            rangeList = fullRangeList.diff(alreadyMergedRanges, SVNMergeRangeInheritance.EQUAL_INHERITANCE);
+            rangeList = fullRangeList.diff(alreadyMergedRanges, false);
         }
         return rangeList;
     }

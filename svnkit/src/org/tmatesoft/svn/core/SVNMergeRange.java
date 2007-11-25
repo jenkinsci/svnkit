@@ -66,43 +66,36 @@ public class SVNMergeRange implements Comparable {
     }
     
     public SVNMergeRange combine(SVNMergeRange range, boolean dup, 
-                                 SVNMergeRangeInheritance considerInheritance) {
+                                 boolean considerInheritance) {
         if (canCombine(range, considerInheritance)) {
             myStartRevision = Math.min(myStartRevision, range.getStartRevision());
             myEndRevision = Math.max(myEndRevision, range.getEndRevision());
-            myIsInheritable = myIsInheritable && range.isInheritable();
+            myIsInheritable = myIsInheritable || range.myIsInheritable;
             return this; 
         }
-        return dup ? new SVNMergeRange(range.getStartRevision(), 
-                                       range.getEndRevision(), 
-                                       range.isInheritable()) 
-                   : range;
+        return dup ? dup() : range;
     }
     
-    public boolean canCombine(SVNMergeRange range, SVNMergeRangeInheritance considerInheritance) {
+    public boolean canCombine(SVNMergeRange range, boolean considerInheritance) {
         if (range != null && myStartRevision <= range.getEndRevision() &&
             range.getStartRevision() <= myEndRevision) {
-            if (considerInheritance == SVNMergeRangeInheritance.IGNORE_INHERITANCE ||
-                (considerInheritance == SVNMergeRangeInheritance.EQUAL_INHERITANCE &&
-                 myIsInheritable == range.isInheritable()) || 
-                (considerInheritance == SVNMergeRangeInheritance.ONLY_INHERITABLE && 
-                 myIsInheritable && range.isInheritable())) {
+            if (!considerInheritance || (considerInheritance && myIsInheritable == range.myIsInheritable)) {
                 return true;
             }
         }
         return false;
     }
     
-    public boolean contains(SVNMergeRange range, SVNMergeRangeInheritance considerInheritance) {
+    public boolean contains(SVNMergeRange range, boolean considerInheritance) {
         return range != null && myStartRevision <= range.myStartRevision && 
-               range.myEndRevision <= myEndRevision && 
-               inheritanceEqual(range, considerInheritance);
+        range.myEndRevision <= myEndRevision && 
+        (!considerInheritance || (!myIsInheritable == !range.myIsInheritable));
     }
     
-    public boolean intersects(SVNMergeRange range, SVNMergeRangeInheritance considerInheritance) {
+    public boolean intersects(SVNMergeRange range, boolean considerInheritance) {
         return range != null && myStartRevision + 1 <= range.myEndRevision && 
-               range.myStartRevision + 1 <= myEndRevision && 
-               inheritanceEqual(range, considerInheritance);
+        range.myStartRevision + 1 <= myEndRevision && 
+        (!considerInheritance || (!myIsInheritable == !range.myIsInheritable));
     }
     
     public SVNMergeRange swapEndPoints() {
@@ -116,18 +109,25 @@ public class SVNMergeRange implements Comparable {
         return myIsInheritable;
     }
     
-    private boolean inheritanceEqual(SVNMergeRange range, SVNMergeRangeInheritance considerInheritance) {
-        if (considerInheritance == SVNMergeRangeInheritance.IGNORE_INHERITANCE) {
-            return true;
-        } else if (considerInheritance == SVNMergeRangeInheritance.ONLY_INHERITABLE) {
-            return myIsInheritable && range.isInheritable();
-        }
-        
-        return myIsInheritable == range.isInheritable();
-    }
-
     public void setInheritable(boolean isInheritable) {
         myIsInheritable = isInheritable;
+    }
+
+    public SVNMergeRange dup() {
+        return new SVNMergeRange(myStartRevision, myEndRevision, myIsInheritable);
+    }
+
+    public String toString() {
+        String output = "";
+        if (myStartRevision == myEndRevision - 1) {
+            output += String.valueOf(myEndRevision);
+        } else {
+            output += String.valueOf(myStartRevision + 1) + "-" + String.valueOf(myEndRevision);
+        }
+        if (!isInheritable()) {
+            output += SVNMergeRangeList.MERGE_INFO_NONINHERITABLE_STRING;
+        }
+        return output;
     }
 
 }

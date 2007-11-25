@@ -25,7 +25,6 @@ import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNMergeInfo;
 import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
 import org.tmatesoft.svn.core.SVNMergeRange;
-import org.tmatesoft.svn.core.SVNMergeRangeInheritance;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
@@ -170,8 +169,7 @@ public class FSLog {
             for (Iterator pathsIter = mergeInfo.keySet().iterator(); pathsIter.hasNext();) {
                 String path = (String) pathsIter.next();
                 SVNMergeRangeList rangeList = (SVNMergeRangeList) mergeInfo.get(path);
-                combinedRangeList = combinedRangeList.merge(rangeList, 
-                                                            SVNMergeRangeInheritance.EQUAL_INHERITANCE);
+                combinedRangeList = combinedRangeList.merge(rangeList);
             }
             if (combinedRangeList.countRevisions() != 0) {
                 logEntry.setHasChildren(true);
@@ -312,10 +310,8 @@ public class FSLog {
         Map previousMergeInfo = getCombinedMergeInfo(paths, revision - 1, revision);
         Map deleted = new TreeMap();
         Map changed = new TreeMap();
-        SVNMergeInfoManager.diffMergeInfo(deleted, changed, previousMergeInfo, currentMergeInfo,
-                                          SVNMergeRangeInheritance.IGNORE_INHERITANCE);
-        changed = SVNMergeInfoManager.mergeMergeInfos(changed, deleted, 
-                                                      SVNMergeRangeInheritance.EQUAL_INHERITANCE);
+        SVNMergeInfoManager.diffMergeInfo(deleted, changed, previousMergeInfo, currentMergeInfo, false);
+        changed = SVNMergeInfoManager.mergeMergeInfos(changed, deleted);
         return changed;
     }
     
@@ -331,9 +327,7 @@ public class FSLog {
         for (Iterator pathsIter = treeMergeInfo.keySet().iterator(); pathsIter.hasNext();) {
             String path = (String) pathsIter.next();
             SVNMergeInfo info = (SVNMergeInfo) treeMergeInfo.get(path);
-            mergeInfo = SVNMergeInfoManager.mergeMergeInfos(mergeInfo, 
-                                                            info.getMergeSourcesToMergeLists(),
-                                                            SVNMergeRangeInheritance.EQUAL_INHERITANCE);
+            mergeInfo = SVNMergeInfoManager.mergeMergeInfos(mergeInfo, info.getMergeSourcesToMergeLists());
         }
         return mergeInfo;
     }
@@ -384,8 +378,7 @@ public class FSLog {
 
         Map added = new HashMap();
         Map deleted = new HashMap();
-        SVNMergeInfoManager.diffMergeInfo(deleted, added, impliedMergeInfo, mergeInfo,
-                                          SVNMergeRangeInheritance.IGNORE_INHERITANCE);
+        SVNMergeInfoManager.diffMergeInfo(deleted, added, impliedMergeInfo, mergeInfo, false);
         if (deleted.isEmpty() && added.isEmpty()) {
             return false;
         }

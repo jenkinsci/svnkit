@@ -28,7 +28,6 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNMergeRange;
-import org.tmatesoft.svn.core.SVNMergeRangeInheritance;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -182,9 +181,7 @@ public class SVNSQLiteDBProcessor implements ISVNDBProcessor {
                     boolean omitMergeInfo = filter != null && filter.omitMergeInfo(path, 
                                                                                    srcsToRangeLists); 
                     if (!omitMergeInfo) {
-                        parentMergeInfo = SVNMergeInfoManager.mergeMergeInfos(parentMergeInfo, 
-                                                                              srcsToRangeLists,
-                                                                              SVNMergeRangeInheritance.EQUAL_INHERITANCE);
+                        parentMergeInfo = SVNMergeInfoManager.mergeMergeInfos(parentMergeInfo, srcsToRangeLists);
                     }
                 }
             }

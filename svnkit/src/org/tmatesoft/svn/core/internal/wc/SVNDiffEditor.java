@@ -445,7 +445,7 @@ public class SVNDiffEditor implements ISVNEditor {
             }
         }
         
-        if (info.myDepth == SVNDepth.EMPTY) {
+        if (info.myDepth == SVNDepth.EMPTY && !anchor) {
             return;
         }
         
