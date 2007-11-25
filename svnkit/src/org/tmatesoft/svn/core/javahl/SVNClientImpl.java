@@ -646,25 +646,25 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public void copy(String srcPath, String destPath, String message, Revision revision) throws ClientException {
-        copy(new CopySource[]{new CopySource(srcPath, revision, Revision.HEAD)}, destPath, message, true, false, false);
+        copy(new CopySource[]{new CopySource(srcPath, revision, Revision.HEAD)}, destPath, message, true, false);
     }
 
-    public void copy(CopySource[] sources, String destPath, String message, boolean copyAsChild, boolean makeParents, boolean includeMergeHistory) throws ClientException {
+    public void copy(CopySource[] sources, String destPath, String message, boolean copyAsChild, boolean makeParents) throws ClientException {
         SVNCopySource[] copySources = getCopySources(sources, copyAsChild);
-        copyOrMove(copySources, destPath, false, message, copyAsChild, makeParents, includeMergeHistory);
+        copyOrMove(copySources, destPath, false, message, copyAsChild, makeParents);
     }
 
     public void move(String srcPath, String destPath, String message, boolean force) throws ClientException {
-        move(new String[]{srcPath}, destPath, message, force, true, false, false);
+        move(new String[]{srcPath}, destPath, message, force, true, false);
     }
 
     public void move(String srcPath, String destPath, String message, Revision revision, boolean force) throws ClientException {
-        move(new String[]{srcPath}, destPath, message, force, true, false, false);
+        move(new String[]{srcPath}, destPath, message, force, true, false);
     }
 
-    public void move(String[] srcPaths, String destPath, String message, boolean force, boolean moveAsChild, boolean makeParents, boolean includeMergeHistory) throws ClientException {
+    public void move(String[] srcPaths, String destPath, String message, boolean force, boolean moveAsChild, boolean makeParents) throws ClientException {
         SVNCopySource[] copySources = getCopySources(srcPaths, moveAsChild);
-        copyOrMove(copySources, destPath, true, message, moveAsChild, makeParents, includeMergeHistory);
+        copyOrMove(copySources, destPath, true, message, moveAsChild, makeParents);
     }
 
     private SVNCopySource[] getCopySources(CopySource[] srcs, boolean copyAsChild) throws ClientException {
@@ -712,15 +712,14 @@ public class SVNClientImpl implements SVNClientInterface {
         return sources;
     }
 
-    private void copyOrMove(SVNCopySource[] sources, String destPath, boolean isMove, String message, boolean copyAsChild, boolean makeParents, boolean includeMergeHistory) throws ClientException {
+    private void copyOrMove(SVNCopySource[] sources, String destPath, boolean isMove, String message, boolean copyAsChild, boolean makeParents) throws ClientException {
         SVNCopyClient client = getSVNCopyClient();
         try {
             if (isURL(destPath)) {
                 client.doCopy(sources, SVNURL.parseURIEncoded(destPath), isMove, !copyAsChild, makeParents,
                         message, null);
             } else {
-                client.doCopy(sources, new File(destPath).getAbsoluteFile(), isMove, makeParents, !copyAsChild,
-                        includeMergeHistory);
+                client.doCopy(sources, new File(destPath).getAbsoluteFile(), isMove, makeParents, !copyAsChild, true);
             }
         } catch (SVNException e) {
             throwException(e);

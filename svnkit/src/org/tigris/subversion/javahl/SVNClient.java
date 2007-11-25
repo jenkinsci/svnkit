@@ -486,12 +486,12 @@ public class SVNClient implements SVNClientInterface {
         return myDelegate.suggestMergeSources(path, pegRevision);
     }
 
-    public void copy(CopySource[] sources, String destPath, String message, boolean copyAsChild, boolean makeParents, boolean withMergeHistory) throws ClientException {
-        myDelegate.copy(sources, destPath, message, copyAsChild, makeParents, withMergeHistory);
+    public void copy(CopySource[] sources, String destPath, String message, boolean copyAsChild, boolean makeParents) throws ClientException {
+        myDelegate.copy(sources, destPath, message, copyAsChild, makeParents);
     }
 
-    public void move(String[] srcPaths, String destPath, String message, boolean force, boolean moveAsChild, boolean makeParents, boolean withMergeHistory) throws ClientException {
-        myDelegate.move(srcPaths, destPath, message, force, moveAsChild, makeParents, withMergeHistory);
+    public void move(String[] srcPaths, String destPath, String message, boolean force, boolean moveAsChild, boolean makeParents) throws ClientException {
+        myDelegate.move(srcPaths, destPath, message, force, moveAsChild, makeParents);
     }
 
     public void add(String path, int depth, boolean force, boolean noIgnores, boolean addParents) throws ClientException {
