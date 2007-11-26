@@ -379,6 +379,10 @@ public class SVNBasicClient implements ISVNEventHandler {
     }
     
     protected long getRevisionNumber(SVNRevision revision, SVNRepository repository, File path) throws SVNException {
+        return getRevisionNumber(revision, null, repository, path);
+    }
+
+    protected long getRevisionNumber(SVNRevision revision, long[] latestRevisionNumber, SVNRepository repository, File path) throws SVNException {
         if (repository == null && (revision == SVNRevision.HEAD || revision.getDate() != null)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_RA_ACCESS_REQUIRED);
             SVNErrorManager.error(err);
@@ -388,7 +392,14 @@ public class SVNBasicClient implements ISVNEventHandler {
         } else if (revision.getDate() != null) {
             return repository.getDatedRevision(revision.getDate());
         } else if (revision == SVNRevision.HEAD) {
-            return repository.getLatestRevision();
+            if (latestRevisionNumber != null && latestRevisionNumber.length > 0 && SVNRevision.isValidRevisionNumber(latestRevisionNumber[0])) {
+                return latestRevisionNumber[0]; 
+            }
+            long latestRevision = repository.getLatestRevision(); 
+            if (latestRevisionNumber != null && latestRevisionNumber.length > 0) {
+                latestRevisionNumber[0] = latestRevision;
+            }
+            return latestRevision;
         } else if (!revision.isValid()) {
             return -1;
         } else if (revision == SVNRevision.COMMITTED || revision == SVNRevision.WORKING || 
