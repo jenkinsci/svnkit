@@ -38,7 +38,8 @@ public class DAVGetLocksHandler extends BasicDAVHandler {
     public static StringBuffer generateGetLocksRequest(StringBuffer xmlBuffer) {
         xmlBuffer = xmlBuffer == null ? new StringBuffer() : xmlBuffer;
         SVNXMLUtil.addXMLHeader(xmlBuffer);
-        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "get-locks-report", SVN_DAV_NAMESPACES_LIST, SVNXMLUtil.PREFIX_MAP, xmlBuffer);
+        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "get-locks-report", 
+                SVN_DAV_NAMESPACES_LIST, SVNXMLUtil.PREFIX_MAP, xmlBuffer);
         SVNXMLUtil.addXMLFooter(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "get-locks-report", xmlBuffer);
         return xmlBuffer;
     }

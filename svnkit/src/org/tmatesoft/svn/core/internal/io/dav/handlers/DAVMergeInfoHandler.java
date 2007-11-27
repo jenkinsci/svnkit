@@ -30,13 +30,12 @@ import org.xml.sax.Attributes;
  */
 public class DAVMergeInfoHandler extends BasicDAVHandler {
 
-    public static StringBuffer generateMergeInfoRequest(StringBuffer xmlBuffer,
-                                                        long revision,
-                                                        String[] paths,
-                                                        SVNMergeInfoInheritance inherit) {
+    public static StringBuffer generateMergeInfoRequest(StringBuffer xmlBuffer, long revision, 
+            String[] paths, SVNMergeInfoInheritance inherit) {
         xmlBuffer = xmlBuffer == null ? new StringBuffer() : xmlBuffer;
         SVNXMLUtil.addXMLHeader(xmlBuffer);
-        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "mergeinfo-report", SVN_NAMESPACES_LIST, SVNXMLUtil.PREFIX_MAP, xmlBuffer);
+        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "mergeinfo-report", 
+                SVN_NAMESPACES_LIST, SVNXMLUtil.PREFIX_MAP, xmlBuffer);
         SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "revision", String.valueOf(revision), xmlBuffer);
         SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "inherit", inherit.toString(), xmlBuffer);
         if (paths != null) {

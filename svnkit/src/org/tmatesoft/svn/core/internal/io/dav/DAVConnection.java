@@ -334,8 +334,10 @@ public class DAVConnection {
         Collection namespaces = new LinkedList();
         namespaces.add(DAVElement.DAV_NAMESPACE);
         SVNXMLUtil.addXMLHeader(request);
-        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "checkout", namespaces, null, request);
-        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "activity-set", SVNXMLUtil.XML_STYLE_NORMAL, null, request);
+        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "checkout", namespaces, 
+                SVNXMLUtil.PREFIX_MAP, request);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "activity-set", SVNXMLUtil.XML_STYLE_NORMAL, 
+                null, request);
         SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "href", activityPath, request);
         SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "activity-set", request);
         SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "checkout", request);
@@ -344,7 +346,11 @@ public class DAVConnection {
             header = new HTTPHeader();
             header.setHeaderValue(HTTPHeader.IF_HEADER, "(<" + myLocks.get(repositoryPath) + ">)");
         }
-        HTTPStatus status = myHttpConnection.request("CHECKOUT", path, header, request, 201, allow404 ? 404 : 0, null, null);
+        HTTPStatus status = myHttpConnection.request("CHECKOUT", path, header, request, 201, allow404 ? 404 : 0, 
+                null, null);
+        if (allow404 && status.getCode() == 404 && status.getError() != null) {
+            status.setError(null);
+        }
         // update location to be a path!
         if (status.getHeader().hasHeader(HTTPHeader.LOCATION_HEADER)) {
             SVNURL location = SVNURL.parseURIEncoded(status.getHeader().getFirstHeaderValue(HTTPHeader.LOCATION_HEADER));

@@ -30,8 +30,10 @@ public class DAVOptionsHandler extends BasicDAVHandler {
 
     static {
         SVNXMLUtil.addXMLHeader(OPTIONS_REQUEST);
-        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "options", DAV_NAMESPACES_LIST, SVNXMLUtil.PREFIX_MAP, OPTIONS_REQUEST);
-        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "activity-collection-set", SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, OPTIONS_REQUEST);
+        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "options", 
+                DAV_NAMESPACES_LIST, SVNXMLUtil.PREFIX_MAP, OPTIONS_REQUEST);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "activity-collection-set", 
+                SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, OPTIONS_REQUEST);
         SVNXMLUtil.addXMLFooter(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "options", OPTIONS_REQUEST);
     }
 

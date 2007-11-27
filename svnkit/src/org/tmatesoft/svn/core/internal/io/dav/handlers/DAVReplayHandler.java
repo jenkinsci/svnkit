@@ -35,10 +35,14 @@ public class DAVReplayHandler extends DAVEditorHandler {
     public static StringBuffer generateReplayRequest(long highRevision, long lowRevision, boolean sendDeltas) {
         StringBuffer xmlBuffer = new StringBuffer();
         SVNXMLUtil.addXMLHeader(xmlBuffer);
-        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "replay-report", SVN_NAMESPACES_LIST, SVNXMLUtil.PREFIX_MAP, xmlBuffer);
-        SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "revision", String.valueOf(highRevision), xmlBuffer);
-        SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "low-water-mark", String.valueOf(lowRevision), xmlBuffer);
-        SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "send-deltas", sendDeltas ? "1" : "0", xmlBuffer);
+        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "replay-report", 
+                SVN_NAMESPACES_LIST, SVNXMLUtil.PREFIX_MAP, xmlBuffer);
+        SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "revision", String.valueOf(highRevision), 
+                xmlBuffer);
+        SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "low-water-mark", String.valueOf(lowRevision), 
+                xmlBuffer);
+        SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "send-deltas", sendDeltas ? "1" : "0", 
+                xmlBuffer);
         SVNXMLUtil.addXMLFooter(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "replay-report", xmlBuffer);
         return xmlBuffer;
     }

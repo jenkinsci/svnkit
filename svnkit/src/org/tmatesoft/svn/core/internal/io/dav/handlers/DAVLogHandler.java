@@ -42,24 +42,30 @@ public class DAVLogHandler extends BasicDAVHandler {
                                                   String[] revPropNames, long limit, String[] paths) {
         xmlBuffer = xmlBuffer == null ? new StringBuffer() : xmlBuffer;
         SVNXMLUtil.addXMLHeader(xmlBuffer);
-        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "log-report", SVN_NAMESPACES_LIST, SVNXMLUtil.PREFIX_MAP, xmlBuffer);
+        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "log-report", 
+                SVN_NAMESPACES_LIST, SVNXMLUtil.PREFIX_MAP, xmlBuffer);
         if (startRevision >= 0) {
-            SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "start-revision", String.valueOf(startRevision), xmlBuffer);
+            SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "start-revision", 
+                    String.valueOf(startRevision), xmlBuffer);
         }
         if (endRevision >= 0) {
-            SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "end-revision", String.valueOf(endRevision), xmlBuffer);
+            SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "end-revision", 
+                    String.valueOf(endRevision), xmlBuffer);
         }
         if (limit > 0) {
             SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "limit", String.valueOf(limit), xmlBuffer);
         }
         if (includeChangedPaths) {
-            SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "discover-changed-paths", SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "discover-changed-paths", 
+                    SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
         }
         if (strictNodes) {
-            SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "strict-node-history", SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "strict-node-history", 
+                    SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
         }
         if (includeMergedRevisions) {
-            SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "include-merged-revisions", SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "include-merged-revisions", 
+                    SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
         }
         if (revPropNames != null && revPropNames.length > 0) {
             for (int i = 0; i < revPropNames.length; i++) {
@@ -67,7 +73,8 @@ public class DAVLogHandler extends BasicDAVHandler {
                 SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "revprop", revPropName, xmlBuffer);
             }
         } else {
-            SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "all-revprops", SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "all-revprops", 
+                    SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
         }
 
         for (int i = 0; i < paths.length; i++) {
@@ -77,14 +84,22 @@ public class DAVLogHandler extends BasicDAVHandler {
         return xmlBuffer;
     }
 
-    private static final DAVElement LOG_ITEM = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "log-item");
-    private static final DAVElement ADDED_PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "added-path");
-    private static final DAVElement DELETED_PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "deleted-path");
-    private static final DAVElement MODIFIED_PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "modified-path");
-    private static final DAVElement REPLACED_PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "replaced-path");
-    private static final DAVElement HAS_CHILDREN = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "has-children");
-    private static final DAVElement NO_CUSTOM_REVPROPS = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "no-custom-revprops");
-    private static final DAVElement REVPROP = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "revprop");
+    private static final DAVElement LOG_ITEM = DAVElement.getElement(DAVElement.SVN_NAMESPACE, 
+            "log-item");
+    private static final DAVElement ADDED_PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, 
+            "added-path");
+    private static final DAVElement DELETED_PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, 
+            "deleted-path");
+    private static final DAVElement MODIFIED_PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, 
+            "modified-path");
+    private static final DAVElement REPLACED_PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, 
+            "replaced-path");
+    private static final DAVElement HAS_CHILDREN = DAVElement.getElement(DAVElement.SVN_NAMESPACE, 
+            "has-children");
+    private static final DAVElement NO_CUSTOM_REVPROPS = DAVElement.getElement(DAVElement.SVN_NAMESPACE, 
+            "no-custom-revprops");
+    private static final DAVElement REVPROP = DAVElement.getElement(DAVElement.SVN_NAMESPACE, 
+            "revprop");
 
     private ISVNLogEntryHandler myLogEntryHandler;
     private long myRevision;

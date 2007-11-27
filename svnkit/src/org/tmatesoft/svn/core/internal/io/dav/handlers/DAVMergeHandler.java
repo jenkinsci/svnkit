@@ -36,23 +36,34 @@ import org.xml.sax.Attributes;
  */
 public class DAVMergeHandler extends BasicDAVHandler {
 
-    public static StringBuffer generateMergeRequest(StringBuffer xmlBuffer, String path, String activityURL, Map locks) {
+    public static StringBuffer generateMergeRequest(StringBuffer xmlBuffer, String path, String activityURL, 
+            Map locks) {
         xmlBuffer = xmlBuffer == null ? new StringBuffer() : xmlBuffer;
         SVNXMLUtil.addXMLHeader(xmlBuffer);
-        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "merge", DAV_NAMESPACES_LIST, SVNXMLUtil.PREFIX_MAP, xmlBuffer);
-        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "source", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
+        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "merge", DAV_NAMESPACES_LIST, 
+                SVNXMLUtil.PREFIX_MAP, xmlBuffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "source", SVNXMLUtil.XML_STYLE_NORMAL, null, 
+                xmlBuffer);
         SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "href", activityURL, xmlBuffer);
         SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "source", xmlBuffer);
-        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "no-auto-merge", SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
-        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "no-checkout", SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
-        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "prop", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
-        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "checked-in", SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
-        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "version-name", SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
-        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "resourcetype", SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
-        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "creationdate", SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
-        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "creator-displayname", SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "no-auto-merge", 
+                SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "no-checkout", 
+                SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "prop", SVNXMLUtil.XML_STYLE_NORMAL, null, 
+                xmlBuffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "checked-in", 
+                SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "version-name", 
+                SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "resourcetype", 
+                SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "creationdate", 
+                SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "creator-displayname", 
+                SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
         SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "prop", xmlBuffer);
-        if (locks != null) {
+        if (locks != null && !locks.isEmpty()) {
             xmlBuffer = generateLockDataRequest(xmlBuffer, path, null, locks);
         }
         SVNXMLUtil.addXMLFooter(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "merge", xmlBuffer);
@@ -62,19 +73,22 @@ public class DAVMergeHandler extends BasicDAVHandler {
 
     public static StringBuffer generateLockDataRequest(StringBuffer target, String root, String path, Map locks) {
         target = target == null ? new StringBuffer() : target;
-        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "lock-token-list", SVN_NAMESPACES_LIST, SVNXMLUtil.PREFIX_MAP, target);
+        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "lock-token-list", 
+                SVN_NAMESPACES_LIST, SVNXMLUtil.PREFIX_MAP, target);
         for (Iterator paths = locks.keySet().iterator(); paths.hasNext();) {
             String lockPath = (String) paths.next();
             if (path == null || SVNPathUtil.getPathAsChild(path, lockPath) != null) {
                 String relativePath = SVNPathUtil.getRelativePath(root, lockPath);
                 String token = (String) locks.get(lockPath);
-                SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "lock", SVNXMLUtil.XML_STYLE_NORMAL, null, target);
-                SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "lock-path", SVNEncodingUtil.uriDecode(relativePath), target);
+                SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "lock", SVNXMLUtil.XML_STYLE_NORMAL, 
+                        null, target);
+                SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "lock-path", 
+                        SVNEncodingUtil.uriDecode(relativePath), target);
                 SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "lock-token", token, target);
                 SVNXMLUtil.closeXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "lock", target);
             }
         }
-        SVNXMLUtil.closeXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "lock", target);
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "lock-token-list", target);
         return target;
     }
 

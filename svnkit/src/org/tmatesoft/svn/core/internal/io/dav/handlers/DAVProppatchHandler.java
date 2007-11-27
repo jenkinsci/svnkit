@@ -52,12 +52,15 @@ public class DAVProppatchHandler extends BasicDAVHandler {
     public static StringBuffer generatePropertyRequest(StringBuffer xmlBuffer, Map properties) {
         xmlBuffer = xmlBuffer == null ? new StringBuffer() : xmlBuffer;
         SVNXMLUtil.addXMLHeader(xmlBuffer);
-        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "propertyupdate", NAMESPACES, SVNXMLUtil.PREFIX_MAP, xmlBuffer);
+        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "propertyupdate", NAMESPACES, 
+                SVNXMLUtil.PREFIX_MAP, xmlBuffer);
 
         // if there are non-null values
         if (hasNotNullValues(properties)) {
-            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "set", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
-            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "prop", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "set", SVNXMLUtil.XML_STYLE_NORMAL, null, 
+                    xmlBuffer);
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "prop", SVNXMLUtil.XML_STYLE_NORMAL, null, 
+                    xmlBuffer);
             for (Iterator names = properties.keySet().iterator(); names.hasNext();) {
                 String name = (String) names.next();
                 String value = (String) properties.get(name);
@@ -71,8 +74,10 @@ public class DAVProppatchHandler extends BasicDAVHandler {
 
         // if there are null values
         if (hasNullValues(properties)) {
-            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "remove", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
-            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "prop", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "remove", SVNXMLUtil.XML_STYLE_NORMAL, null, 
+                    xmlBuffer);
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "prop", SVNXMLUtil.XML_STYLE_NORMAL, null, 
+                    xmlBuffer);
             for (Iterator names = properties.keySet().iterator(); names.hasNext();) {
                 String name = (String) names.next();
                 String value = (String) properties.get(name);
