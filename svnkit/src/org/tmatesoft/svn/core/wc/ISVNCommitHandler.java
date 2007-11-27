@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.wc;
 
+import java.util.Map;
+
 import org.tmatesoft.svn.core.SVNException;
 
 /**
@@ -36,9 +38,10 @@ public interface ISVNCommitHandler {
      *  
      * @param  message			an initial log message
      * @param  commitables		an array of items to be committed
-     * @return					a new log message string
+     * @return					a new log message string or NULL to cancel commit operation.
      * @throws SVNException
      */
-    public String getCommitMessage(String message, SVNCommitItem[] commitables)
-            throws SVNException;
+    public String getCommitMessage(String message, SVNCommitItem[] commitables) throws SVNException;
+    
+    public Map getRevisionProperties(String message, SVNCommitItem[] commitables, Map revisionProperties) throws SVNException;
 }

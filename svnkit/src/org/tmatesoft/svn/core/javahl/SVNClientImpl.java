@@ -597,6 +597,11 @@ public class SVNClientImpl implements SVNClientInterface {
                         CommitItem[] items = JavaHLObjectFactory.getCommitItems(commitables);
                         return myMessageHandler.getLogMessage(items);
                     }
+
+                    public Map getRevisionProperties(String message, SVNCommitItem[] commitables, Map revisionProperties) throws SVNException {
+                        return revisionProperties == null ? new HashMap() : revisionProperties;
+                    }
+                    
                 });
             }
             SVNDepth svnDepth = SVNDepth.fromID(depth);
@@ -626,6 +631,11 @@ public class SVNClientImpl implements SVNClientInterface {
                         CommitItem[] items = JavaHLObjectFactory.getCommitItems(commitables);
                         return myMessageHandler.getLogMessage(items);
                     }
+
+                    public Map getRevisionProperties(String message, SVNCommitItem[] commitables, Map revisionProperties) throws SVNException {
+                        return revisionProperties == null ? new HashMap() : revisionProperties;
+                    }
+                    
                 });
             }
             packets = client.doCollectCommitItems(files, noUnlock, !recurse, recurse, atomicCommit);

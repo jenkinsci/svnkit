@@ -28,14 +28,6 @@ public class SVNCopySource {
     private SVNURL myURL;
     private File myPath;
     
-//    private SVNURL myDstURL;
-//    private File myDstFile;
-//    private boolean isRessurection;
-//    private long mySrcRevisionNumber;
-//    private SVNNodeKind mySrcKind;
-//    private String mySrcPath;
-//    private String myDstPath;    
-    
     public SVNCopySource(SVNRevision pegRevision, SVNRevision revision, File path) {
         myPegRevision = pegRevision;
         myRevision = revision;
@@ -48,7 +40,7 @@ public class SVNCopySource {
         myURL = url;
     }
 
-    public File getPath() {
+    public File getFile() {
         return myPath;
     }
     
@@ -74,77 +66,4 @@ public class SVNCopySource {
         } 
         return myPath.getName();
     }
-    
-    /*
-    void setDestinationURL(SVNURL dst) {
-        myDstURL = dst;
-    }
-    
-    void setDestinationPath(File dst) {
-        myDstFile = dst;
-    }
-    File getDstFile() {
-        return myDstFile;
-    }
-    
-    SVNURL getDstURL() {
-        return myDstURL;
-    }
-    
-    void setPegRevision(SVNRevision pegRevision) {
-        myPegRevision = pegRevision;
-    }
-
-    void setRevision(SVNRevision revision) {
-        myRevision = revision;
-    }
-    
-    void setPath(File path) {
-        myPath = path;
-    }
-    
-    void setURL(SVNURL url) {
-        myURL = url;
-    }
-
-    boolean isRessurection() {
-        return isRessurection;
-    }
-
-    void setRessurection(boolean isRessurection) {
-        this.isRessurection = isRessurection;
-    }
-
-    long getSrcRevisionNumber() {
-        return mySrcRevisionNumber;
-    }
-
-    void setSrcRevisionNumber(long srcRevisionNumber) {
-        mySrcRevisionNumber = srcRevisionNumber;
-    }
-
-    SVNNodeKind getSrcKind() {
-        return mySrcKind;
-    }
-    
-    void setSrcKind(SVNNodeKind srcKind) {
-        mySrcKind = srcKind;
-    }
-
-    String getSrcPath() {
-        return mySrcPath;
-    }
-
-    void setSrcPath(String srcPath) {
-        mySrcPath = srcPath;
-    }
-
-    String getDstPath() {
-        return myDstPath;
-    }
-
-    void setDstPath(String dstPath) {
-        myDstPath = dstPath;
-    }*/
-
 }

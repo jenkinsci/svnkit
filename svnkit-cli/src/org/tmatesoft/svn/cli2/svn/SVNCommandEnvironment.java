@@ -19,6 +19,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -626,6 +627,10 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         return new SVNDiffOptions(ignoreAllWS, ignoreAmountOfWS, ignoreEOLStyle);
     }
 
+
+    public Map getRevisionProperties(String message, SVNCommitItem[] commitables, Map revisionProperties) throws SVNException {
+        return revisionProperties == null ? new HashMap() : revisionProperties;
+    }
 
     public String getCommitMessage(String message, SVNCommitItem[] commitables) throws SVNException {
         if (getFileData() != null) {
