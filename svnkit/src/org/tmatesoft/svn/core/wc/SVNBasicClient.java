@@ -492,16 +492,16 @@ public class SVNBasicClient implements ISVNEventHandler {
         }
     }
     
-    protected void elideMergeInfo(SVNWCAccess access, 
-                                  File path, 
-                                  boolean hidden,
-                                  File wcElisionLimitPath) throws SVNException {
+    /**
+     * @deprecated
+     */
+    protected void elideMergeInfo(SVNWCAccess access, File path, boolean hidden,
+            File wcElisionLimitPath) throws SVNException {
         if (wcElisionLimitPath == null || !wcElisionLimitPath.equals(path)) {
             Map mergeInfo = null;
             Map targetMergeInfo = null;
             SVNEntry entry = access.getVersionedEntry(path, hidden);
-            SVNAdminArea adminArea = entry.getAdminArea();
-            if (!adminArea.isEntrySwitched(entry)) {
+            if (!access.isEntrySwitched(path, entry)) {
                 boolean[] inherited = new boolean[1];
                 
                 targetMergeInfo = getWCMergeInfo(path, entry, wcElisionLimitPath, 
@@ -529,7 +529,41 @@ public class SVNBasicClient implements ISVNEventHandler {
             }
         }
     }
-    
+
+    protected void elideMergeInfo2(SVNWCAccess access, File path, SVNEntry entry,
+            File wcElisionLimitPath) throws SVNException {
+        if (wcElisionLimitPath == null || !wcElisionLimitPath.equals(path)) {
+            Map mergeInfo = null;
+            Map targetMergeInfo = null;
+            if (!access.isEntrySwitched(path, entry)) {
+                boolean[] inherited = new boolean[1];
+                
+                targetMergeInfo = getWCMergeInfo(path, entry, wcElisionLimitPath, 
+                        SVNMergeInfoInheritance.INHERITED, false, inherited);
+                
+                if (inherited[0] || targetMergeInfo == null) {
+                    return;
+                }
+                
+                mergeInfo = getWCMergeInfo(path, entry, wcElisionLimitPath, 
+                                           SVNMergeInfoInheritance.NEAREST_ANCESTOR, 
+                                           false, inherited);
+                
+                if (mergeInfo == null && wcElisionLimitPath == null) {
+                    mergeInfo = getWCOrRepositoryMergeInfo(access, path, entry, 
+                            SVNMergeInfoInheritance.NEAREST_ANCESTOR, inherited, true, null);
+                }
+                
+                if (mergeInfo == null && wcElisionLimitPath != null) {
+                    return;
+                }
+                
+                SVNMergeInfoManager.elideMergeInfo(mergeInfo, 
+                        targetMergeInfo, path, null, access);
+            }
+        }
+    }
+
     protected Map getWCOrRepositoryMergeInfo(SVNWCAccess access, File path, SVNEntry entry, 
             SVNMergeInfoInheritance inherit, boolean[] indirect, boolean reposOnly, 
             SVNRepository repository) throws SVNException {

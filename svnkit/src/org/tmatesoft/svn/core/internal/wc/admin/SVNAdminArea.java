@@ -1524,7 +1524,10 @@ public abstract class SVNAdminArea {
             }
         }
     }
-
+    
+    /**
+     * @deprecated
+     */
     public boolean isEntrySwitched(SVNEntry entry) throws SVNException {
         File entryPath = getFile(entry.getName()); 
         File parent = entryPath.getParentFile();
