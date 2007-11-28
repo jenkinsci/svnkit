@@ -236,6 +236,7 @@ public class SVNCommitItem {
      * 
      * @return the item's relevant path
      */
+    // TODO get rid of this. always use getURL or getFile instead.
     public String getPath() {
         return myPath;
     }

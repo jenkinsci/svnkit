@@ -77,19 +77,26 @@ public class SVNCommitter implements ISVNCommitPathHandler {
         SVNEvent event = null;
         boolean closeDir = false;
 
+        File file = null;
+        if (item.getFile() != null) {
+            file = item.getFile();
+        } else if (item.getPath() != null) {
+            file = new File(wcAccess.getAnchor(), item.getPath());
+        }
+
         if (item.isAdded() && item.isDeleted()) {
-            event = SVNEventFactory.createSVNEvent(new File(wcAccess.getAnchor(), item.getPath()), item.getKind(), null, SVNRepository.INVALID_REVISION, SVNEventAction.COMMIT_REPLACED, null, null, null);
+            event = SVNEventFactory.createSVNEvent(file, item.getKind(), null, SVNRepository.INVALID_REVISION, SVNEventAction.COMMIT_REPLACED, null, null, null);
         } else if (item.isAdded()) {
             String mimeType = null;
-            if (item.getKind() == SVNNodeKind.FILE) {
-                SVNAdminArea dir = item.getWCAccess().retrieve(item.getFile().getParentFile());
-                mimeType = dir.getProperties(item.getFile().getName()).getPropertyValue(SVNProperty.MIME_TYPE);
+            if (item.getKind() == SVNNodeKind.FILE && file != null) {
+                SVNAdminArea dir = item.getWCAccess().retrieve(file.getParentFile());
+                mimeType = dir.getProperties(file.getName()).getPropertyValue(SVNProperty.MIME_TYPE);
             }
-            event = SVNEventFactory.createSVNEvent(new File(wcAccess.getAnchor(), item.getPath()), item.getKind(), mimeType, SVNRepository.INVALID_REVISION, SVNEventAction.COMMIT_ADDED, null, null, null);
+            event = SVNEventFactory.createSVNEvent(file, item.getKind(), mimeType, SVNRepository.INVALID_REVISION, SVNEventAction.COMMIT_ADDED, null, null, null);
         } else if (item.isDeleted()) {
-            event = SVNEventFactory.createSVNEvent(new File(wcAccess.getAnchor(), item.getPath()), item.getKind(), null, SVNRepository.INVALID_REVISION, SVNEventAction.COMMIT_DELETED, null, null, null);
+            event = SVNEventFactory.createSVNEvent(file, item.getKind(), null, SVNRepository.INVALID_REVISION, SVNEventAction.COMMIT_DELETED, null, null, null);
         } else if (item.isContentsModified() || item.isPropertiesModified()) {
-            event = SVNEventFactory.createSVNEvent(new File(wcAccess.getAnchor(), item.getPath()), item.getKind(), null, SVNRepository.INVALID_REVISION, SVNEventAction.COMMIT_MODIFIED, null, null, null);
+            event = SVNEventFactory.createSVNEvent(file, item.getKind(), null, SVNRepository.INVALID_REVISION, SVNEventAction.COMMIT_MODIFIED, null, null, null);
         }
         if (event != null) {
             wcAccess.handleEvent(event, ISVNEventHandler.UNKNOWN);
