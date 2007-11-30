@@ -186,7 +186,8 @@ public class SVNLogRunner {
                 setEntriesChanged(true);
             } catch (SVNException svne) {
                 SVNErrorCode code = count <= 1 ? SVNErrorCode.WC_BAD_ADM_LOG_START : SVNErrorCode.WC_BAD_ADM_LOG;
-                SVNErrorMessage err = SVNErrorMessage.create(code, "Error removing lock from entry for ''{0}''", fileName);
+                SVNErrorMessage err = SVNErrorMessage.create(code, 
+                        "Error removing changelist from entry ''{0}''", fileName);
                 error = new SVNException(err, svne);
             }
         } else if (SVNLog.DELETE.equals(name)) {

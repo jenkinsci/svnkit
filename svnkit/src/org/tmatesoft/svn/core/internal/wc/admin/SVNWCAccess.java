@@ -428,45 +428,62 @@ public class SVNWCAccess implements ISVNEventHandler {
         } else if (SVNFileType.getType(lockFile) == SVNFileType.NONE) {
             return false;
         }
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "Lock file ''{0}'' is not a regular file", lockFile);
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, 
+                "Lock file ''{0}'' is not a regular file", lockFile);
         SVNErrorManager.error(err);
         return false;
     }
     
     public boolean isWCRoot(File path) throws SVNException {
         SVNEntry entry = getEntry(path, false);
-        if (path.getParentFile() == null && entry != null) {
+        File parent = path.getParentFile(); 
+        if (parent == null && entry != null) {
             return true;
         }
-        SVNAdminArea parentArea = getAdminArea(path.getParentFile());
-        if (parentArea == null) {
-            try {
-                parentArea = probeOpen(path.getParentFile(), false, 0);
-            } catch (SVNException svne) {
+        SVNAdminArea parentArea = getAdminArea(parent);
+        SVNWCAccess tmpAccess = null;
+        SVNWCAccess access = this;
+        try {
+            if (parentArea == null) {
+                tmpAccess = new SVNWCAccess(null);
+                try {
+                    parentArea = tmpAccess.probeOpen(parent, false, 0);
+                } catch (SVNException svne) {
+                    return true;
+                }
+                access = tmpAccess;
+            }
+            
+            SVNEntry parentEntry = access.getEntry(parent, false);
+            if (parentEntry == null) {
                 return true;
             }
-        }
-        
-        SVNEntry parentEntry = getEntry(path.getParentFile(), false);
-        if (parentEntry == null) {
-            return true;
-        }
-        
-        if (parentEntry.getURL() == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no ancestry information", path.getParentFile());
-            SVNErrorManager.error(err);
-        }
-        
-        // what about switched paths?
-        /*
-        if (entry != null && entry.getURL() != null) {
-            if (!entry.getURL().equals(SVNPathUtil.append(parentEntry.getURL(), SVNEncodingUtil.uriEncode(path.getName())))) {
+            
+            if (parentEntry.getURL() == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, 
+                        "''{0}'' has no ancestry information", parent);
+                SVNErrorManager.error(err);
+            }
+            
+            // what about switched paths?
+            /*
+            if (entry != null && entry.getURL() != null) {
+                if (!entry.getURL().equals(SVNPathUtil.append(parentEntry.getURL(), SVNEncodingUtil.uriEncode(path.getName())))) {
+                    return true;
+                }
+            }*/
+            entry = parentArea.getEntry(path.getName(), false);
+            if (entry == null) {
                 return true;
             }
-        }*/
-        entry = parentArea.getEntry(path.getName(), false);
-        if (entry == null) {
-            return true;
+        } finally {
+            if (tmpAccess != null) {
+                try {
+                    tmpAccess.close();
+                } catch (SVNException svne) {
+                    //
+                }
+            }
         }
         return false;
     }
