@@ -1060,20 +1060,17 @@ public class DAVRepository extends SVNRepository {
 
     public Map getMergeInfo(String[] paths, long revision, SVNMergeInfoInheritance inherit) throws SVNException {
         try {
-            openConnection();
             String path = getFullPath("");
-            path = SVNEncodingUtil.uriEncode(path);
-            
+            path = SVNEncodingUtil.uriEncode(path);            
             if (paths == null || paths.length == 0) {
                 paths = new String[]{""};
             }
-
-            String[] fullPaths = new String[paths.length];
-            
+            String[] fullPaths = new String[paths.length];            
             for (int i = 0; i < paths.length; i++) {
                 fullPaths[i] = getFullPath(paths[i]);
             }
-            
+
+            openConnection();
             StringBuffer request = DAVMergeInfoHandler.generateMergeInfoRequest(null, revision, fullPaths, inherit);
             DAVMergeInfoHandler handler = new DAVMergeInfoHandler();
             HTTPStatus status = myConnection.doReport(path, request, handler);
