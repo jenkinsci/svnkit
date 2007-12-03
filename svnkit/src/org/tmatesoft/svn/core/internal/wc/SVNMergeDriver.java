@@ -53,6 +53,7 @@ import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 
 
@@ -171,14 +172,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             if (targetEntry.getRepositoryRoot() != null) {
                 wcReposRoot = targetEntry.getRepositoryRootURL();
             } else {
-                SVNRepository repos = createRepository(null, dstPath, 
-                                                       SVNRevision.WORKING, 
-                                                       SVNRevision.WORKING);
-                try {
-                    wcReposRoot = repos.getRepositoryRoot(true);
-                } finally {
-                    repos.closeSession();
-                }
+                SVNRepository repos = createRepository(null, dstPath, SVNRevision.WORKING, SVNRevision.WORKING);
+                wcReposRoot = repos.getRepositoryRoot(true);
             }
             
             SVNURL url = srcURL == null ? getURL(srcPath) : srcURL;
@@ -284,14 +279,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             if (targetEntry.getRepositoryRoot() != null) {
                 wcReposRoot = targetEntry.getRepositoryRootURL();
             } else {
-                SVNRepository repos = createRepository(null, dstPath, 
-                                                       SVNRevision.WORKING, 
-                                                       SVNRevision.WORKING);
-                try {
-                    wcReposRoot = repos.getRepositoryRoot(true);
-                } finally {
-                    repos.closeSession();
-                }
+                SVNRepository repos = createRepository(null, dstPath, SVNRevision.WORKING, SVNRevision.WORKING);
+                wcReposRoot = repos.getRepositoryRoot(true);
             }
             
             if (depth == null || depth == SVNDepth.UNKNOWN) {
@@ -395,15 +384,18 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 depth = targetEntry.getDepth();
             }
             
-            SVNRepository repository1 = createRepository(url1, false);
-            SVNRepository repository2 = createRepository(url2, false);
-            SVNURL sourceReposRoot = repository1.getRepositoryRoot(true); 
                 
             MergeSource mergeSrc = new MergeSource();
             mergeSrc.myURL1 = url1;
             mergeSrc.myURL2 = url2;
-            long[] latestRev = new long[1]; 
+            long[] latestRev = new long[1];
+            latestRev[0] = SVNRepository.INVALID_REVISION;
+
+            SVNRepository repository1 = createRepository(url1, true);
+            SVNURL sourceReposRoot = repository1.getRepositoryRoot(true); 
             mergeSrc.myRevision1 = getRevisionNumber(revision1, latestRev, repository1, null); 
+
+            SVNRepository repository2 = createRepository(url2, true);//TODO: not sure...
             mergeSrc.myRevision2 = getRevisionNumber(revision2, latestRev, repository2, null); 
             
             Collection mergeSources = new LinkedList();
@@ -521,7 +513,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 if (myIsSameRepository && recordOnly) {
                     SVNURL mergeSourceURL = revision1 < revision2 ? url2 : url1;
                     SVNMergeRange range = new SVNMergeRange(revision1, revision2, true);
-                    recordMergeInfoForRecordOnlyMerge2(url1, range, targetEntry);
+                    recordMergeInfoForRecordOnlyMerge2(mergeSourceURL, range, targetEntry);
                     continue;
                 }
                 
@@ -1152,7 +1144,31 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         updateWCMergeInfo(myTarget, reposPath, entry, merges, isRollBack);
     }
 
-    private Map getFullMergeInfo() throws SVNException {
+    private Map[] getFullMergeInfo(SVNEntry entry, boolean[] indirect, SVNMergeInfoInheritance inherit,
+            SVNRepository repos, File target, long start, long end) throws SVNException {
+        Map[] result = new Map[2];
+        SVNDebugLog.assertCondition(SVNRevision.isValidRevisionNumber(start) && 
+                SVNRevision.isValidRevisionNumber(end) && start > end, 
+                "ASSERTION FAILED in SVNMergeDriver.getFullMergeInfo()");
+        
+        Map recordedMergeInfo = getWCOrRepositoryMergeInfo(myWCAccess, target, entry, inherit, indirect, false, repos);
+        long[] targetRev = new long[1];
+        targetRev[0] = SVNRepository.INVALID_REVISION;
+        SVNURL url = deriveLocation(target, null, targetRev, SVNRevision.WORKING, repos, myWCAccess);
+        if (targetRev[0] <= end) {
+            result[0] = recordedMergeInfo;
+            result[1] = new TreeMap();
+            return result;
+        }
+        
+        if (repos != null) {
+            SVNURL sessionURL = repos.getLocation();
+            if (!sessionURL.equals(url)) {
+                repos.setLocation(url, true);
+            }
+        } else {
+            repos = createRepository(url, false);
+        }
         
         return null;
     }
@@ -1719,12 +1735,13 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     private void updateWCMergeInfo(File targetPath, String parentReposPath, 
                                    SVNEntry entry, Map merges, boolean isRollBack) throws SVNException {
         
-        for (Iterator paths = merges.keySet().iterator(); paths.hasNext();) {
-            File path = (File) paths.next();
-            SVNMergeRangeList ranges = (SVNMergeRangeList) merges.get(path);
+        for (Iterator mergesEntries = merges.entrySet().iterator(); mergesEntries.hasNext();) {
+            Map.Entry pathToRangeList = (Map.Entry) mergesEntries.next();
+            File path = (File) pathToRangeList.getKey();
+            SVNMergeRangeList ranges = (SVNMergeRangeList) pathToRangeList.getValue();
             
             Map mergeInfo = SVNPropertiesManager.parseMergeInfo(path, entry, false);
-            if (mergeInfo == null && ranges.getSize() == 0) {
+            if (mergeInfo == null && ranges.isEmpty()) {
                 mergeInfo = getWCMergeInfo(path, entry, null, 
                         SVNMergeInfoInheritance.NEAREST_ANCESTOR, true, new boolean[1]);
             }

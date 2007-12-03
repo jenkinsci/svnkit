@@ -382,7 +382,8 @@ public class SVNBasicClient implements ISVNEventHandler {
         return getRevisionNumber(revision, null, repository, path);
     }
 
-    protected long getRevisionNumber(SVNRevision revision, long[] latestRevisionNumber, SVNRepository repository, File path) throws SVNException {
+    protected long getRevisionNumber(SVNRevision revision, long[] latestRevisionNumber, SVNRepository repository, 
+            File path) throws SVNException {
         if (repository == null && (revision == SVNRevision.HEAD || revision.getDate() != null)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_RA_ACCESS_REQUIRED);
             SVNErrorManager.error(err);
@@ -589,11 +590,14 @@ public class SVNBasicClient implements ISVNEventHandler {
                         SVNProperty.MERGE_INFO, SVNDepth.EMPTY, true);
                 String mergeInfoProp = (String) fileToProp.get(path);
                 if (mergeInfoProp == null) {
-                    boolean closeRepository = repository == null;
+                    boolean closeRepository = false;
                     Map pathToMergeInfo = null;
                     String repositoryPath = entry.getURL().substring(entry.getRepositoryRoot().length());
                     try {
-                        repository = repository == null ? createRepository(url, false) : repository;
+                        if (repository == null) {
+                            repository = createRepository(url, false);
+                            closeRepository = true;
+                        }
                         pathToMergeInfo = repository.getMergeInfo(new String[] { repositoryPath }, revision, inherit);
                     } finally {
                         if (closeRepository) {
@@ -947,7 +951,63 @@ public class SVNBasicClient implements ISVNEventHandler {
         }
     }
     
-
+    protected SVNURL deriveLocation(File path, SVNURL url, long[] pegRevisionNumber, SVNRevision pegRevision, 
+            SVNRepository repos, SVNWCAccess access) throws SVNException {
+        if (path != null) {
+            SVNEntry entry = null;
+            if (access != null) {
+                entry = access.getVersionedEntry(path, false);
+            } else {
+                SVNWCAccess wcAccess = createWCAccess();
+                try {
+                    wcAccess.probeOpen(path, false, 0);
+                    entry = wcAccess.getVersionedEntry(path, false);
+                } finally {
+                    wcAccess.close();
+                }
+            }
+            url = getEntryLocation(path, entry, pegRevisionNumber, pegRevision);
+        }
+        
+        if (pegRevisionNumber != null && pegRevisionNumber.length > 0 && 
+                !SVNRevision.isValidRevisionNumber(pegRevisionNumber[0])) {
+            boolean closeRepository = false;
+            try {
+                if (repos == null) {
+                    repos = createRepository(url, false);
+                    closeRepository = true;
+                }
+                pegRevisionNumber[0] = getRevisionNumber(pegRevision, null, repos, path);
+            } finally {
+                if (closeRepository) {
+                    repos.closeSession();
+                }
+            }
+        }
+        
+        return null;
+    }
+    
+    protected SVNURL getEntryLocation(File path, SVNEntry entry, long[] revNum, SVNRevision pegRevision) throws SVNException {
+        SVNURL url = null;
+        if (entry.getCopyFromURL() == null && pegRevision == SVNRevision.WORKING) {
+            url = entry.getCopyFromSVNURL();
+            if (revNum != null && revNum.length > 0) {
+                revNum[0] = entry.getCopyFromRevision();
+            } 
+        } else if (entry.getURL() != null) {
+            url = entry.getSVNURL();
+            if (revNum != null && revNum.length > 0) {
+                revNum[0] = entry.getRevision();
+            } 
+        } else {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, 
+                    "Entry for ''{0}'' has no URL", path);
+            SVNErrorManager.error(err);
+        }
+        return url;
+    }
+    
     private static final class LocationsLogEntryHandler implements ISVNLogEntryHandler {
 
         
