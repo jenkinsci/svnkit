@@ -802,43 +802,53 @@ public class SVNBasicClient implements ISVNEventHandler {
             }
         }
         String repoPath = "";
-        if (repository == null) {
-            repository = createRepository(url, true);
-        } else {
-            // path relative to repository location.
-            repoPath = SVNPathUtil.getPathAsChild(repository.getLocation().toString(), url.toString());
-        }
-        if (pegRevisionNumber < 0) {
-            pegRevisionNumber = getRevisionNumber(revision, repository, path);
-        }
-        if (revision == start && revision == SVNRevision.HEAD) {
-            startRevisionNumber = pegRevisionNumber;
-        } else {
-            startRevisionNumber = getRevisionNumber(start, repository, path);
-        }
-        if (!end.isValid()) {
-            endRevisionNumber = startRevisionNumber;
-        } else {
-            endRevisionNumber = getRevisionNumber(end, repository, path);
-        }
-        if (endRevisionNumber == pegRevisionNumber && startRevisionNumber == pegRevisionNumber) {
-            SVNRepositoryLocation[] result = new SVNRepositoryLocation[2];
-            result[0] = new SVNRepositoryLocation(url, startRevisionNumber);
-            result[1] = new SVNRepositoryLocation(url, endRevisionNumber);
-            return result;
-        }
-        SVNURL rootURL = repository.getRepositoryRoot(true);
-        long[] revisionsRange = startRevisionNumber == endRevisionNumber ? 
-                new long[] {startRevisionNumber} : new long[] {startRevisionNumber, endRevisionNumber};
-                        
+        
+        boolean closeSession = false;
         Map locations = null;
+        SVNURL rootURL = null;
         try {
-            locations = repository.getLocations(repoPath, (Map) null, pegRevisionNumber, revisionsRange);
-        } catch (SVNException e) {
-            if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_IMPLEMENTED) {
-                locations = getLocations10(repository, pegRevisionNumber, startRevisionNumber, endRevisionNumber);
+            if (repository == null) {
+                repository = createRepository(url, false);
+                closeSession = true;
             } else {
-                throw e;
+                // path relative to repository location.
+                repoPath = SVNPathUtil.getPathAsChild(repository.getLocation().toString(), url.toString());
+            }
+            if (pegRevisionNumber < 0) {
+                pegRevisionNumber = getRevisionNumber(revision, repository, path);
+            }
+            if (revision == start && revision == SVNRevision.HEAD) {
+                startRevisionNumber = pegRevisionNumber;
+            } else {
+                startRevisionNumber = getRevisionNumber(start, repository, path);
+            }
+            if (!end.isValid()) {
+                endRevisionNumber = startRevisionNumber;
+            } else {
+                endRevisionNumber = getRevisionNumber(end, repository, path);
+            }
+            if (endRevisionNumber == pegRevisionNumber && startRevisionNumber == pegRevisionNumber) {
+                SVNRepositoryLocation[] result = new SVNRepositoryLocation[2];
+                result[0] = new SVNRepositoryLocation(url, startRevisionNumber);
+                result[1] = new SVNRepositoryLocation(url, endRevisionNumber);
+                return result;
+            }
+            rootURL = repository.getRepositoryRoot(true);
+            long[] revisionsRange = startRevisionNumber == endRevisionNumber ? 
+                    new long[] {startRevisionNumber} : new long[] {startRevisionNumber, endRevisionNumber};
+                            
+            try {
+                locations = repository.getLocations(repoPath, (Map) null, pegRevisionNumber, revisionsRange);
+            } catch (SVNException e) {
+                if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_IMPLEMENTED) {
+                    locations = getLocations10(repository, pegRevisionNumber, startRevisionNumber, endRevisionNumber);
+                } else {
+                    throw e;
+                }
+            }
+        } finally {
+            if (closeSession) {
+                repository.closeSession();
             }
         }
         // try to get locations with 'log' method.
