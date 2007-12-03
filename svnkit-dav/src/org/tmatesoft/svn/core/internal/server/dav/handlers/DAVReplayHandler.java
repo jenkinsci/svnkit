@@ -148,7 +148,7 @@ public class DAVReplayHandler extends DAVReportHandler implements ISVNEditor {
         if (baseChecksum != null) {
             attrs.put(CHECKSUM_ATTR, baseChecksum);
         }
-        StringBuffer xmlBuffer = SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "apply-textdelta", SVNXMLUtil.XML_STYLE_PROTECT_PCDATA, attrs, null);
+        StringBuffer xmlBuffer = SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "apply-textdelta", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, attrs, null);
         write(xmlBuffer);
     }
 
@@ -191,7 +191,7 @@ public class DAVReplayHandler extends DAVReportHandler implements ISVNEditor {
         if (propertyValue != null) {
             try {
                 propertyValue = SVNBase64.byteArrayToBase64(propertyValue.getBytes(UTF8_ENCODING));
-                SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, SVNXMLUtil.XML_STYLE_PROTECT_PCDATA, NAME_ATTR, propertyName, xmlBuffer);
+                SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, SVNXMLUtil.XML_STYLE_PROTECT_CDATA, NAME_ATTR, propertyName, xmlBuffer);
                 xmlBuffer.append(propertyValue);
                 SVNXMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, xmlBuffer);
             } catch (UnsupportedEncodingException e) {

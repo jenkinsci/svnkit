@@ -354,7 +354,7 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
                     attrs.put("copyfrom-path", path.getCopyPath());
                     attrs.put("copyfrom-rev", Long.toString(path.getCopyRevision()));
                 }
-                buffer = openXMLTag("path", SVNXMLUtil.XML_STYLE_PROTECT_PCDATA, attrs, buffer);
+                buffer = openXMLTag("path", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, attrs, buffer);
                 buffer.append(SVNEncodingUtil.xmlEncodeCDATA(path.getPath()));
                 buffer = closeXMLTag("path", buffer);
             }

@@ -29,7 +29,7 @@ public abstract class SVNXMLCommand extends SVNCommand {
 
     protected void printXMLHeader(String header) {
         StringBuffer xmlBuffer = new StringBuffer();
-        SVNXMLUtil.addXMLHeader(xmlBuffer);
+        SVNXMLUtil.addXMLHeader(xmlBuffer, false);
         SVNXMLUtil.openXMLTag(null, header, SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
         getSVNEnvironment().getOut().print(xmlBuffer.toString());
     }
@@ -47,11 +47,11 @@ public abstract class SVNXMLCommand extends SVNCommand {
 
 
     protected StringBuffer openXMLTag(String tagName, int style, String attr, String value, StringBuffer target) {
-        return SVNXMLUtil.openXMLTag(null, tagName, style, attr, value, target);
+        return SVNXMLUtil.openXMLTag(null, tagName, style | SVNXMLUtil.XML_STYLE_ATTRIBUTE_BREAKS_LINE, attr, value, target);
     }
 
     protected StringBuffer openXMLTag(String tagName, int style, Map attributes, StringBuffer target) {
-        return SVNXMLUtil.openXMLTag(null, tagName, style, attributes, target);
+        return SVNXMLUtil.openXMLTag(null, tagName, style | SVNXMLUtil.XML_STYLE_ATTRIBUTE_BREAKS_LINE, attributes, target);
     }
 
     protected StringBuffer closeXMLTag(String tagName, StringBuffer target) {
@@ -67,7 +67,7 @@ public abstract class SVNXMLCommand extends SVNCommand {
                 if (namesOnly) {
                     buffer = openXMLTag("property", SVNXMLUtil.XML_STYLE_SELF_CLOSING, "name", propName, buffer);
                 } else {
-                    buffer = openXMLTag("property", SVNXMLUtil.XML_STYLE_PROTECT_PCDATA, "name", propName, buffer);
+                    buffer = openXMLTag("property", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, "name", propName, buffer);
                     buffer.append(SVNEncodingUtil.xmlEncodeCDATA(propVal));
                     buffer = closeXMLTag("property", buffer);
                 }

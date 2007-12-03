@@ -43,17 +43,22 @@ public class SVNXMLUtil {
         PREFIX_MAP.put(DAVElement.SVN_APACHE_PROPERTY_NAMESPACE, SVN_APACHE_PROPERTY_PREFIX);
     }
 
-    private static final String XML_HEADER = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
+    private static final String FULL_XML_HEADER = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+    public static final String DEFAULT_XML_HEADER = "<?xml version=\"1.0\"?>\n";
 
     public static final int XML_STYLE_NORMAL = 1;
-    public static final int XML_STYLE_PROTECT_PCDATA = 2;
+    public static final int XML_STYLE_PROTECT_CDATA = 2;
     public static final int XML_STYLE_SELF_CLOSING = 4;
+    public static final int XML_STYLE_ATTRIBUTE_BREAKS_LINE = 8;
 
+    public static StringBuffer addXMLHeader(StringBuffer target, boolean addUTFAttribute) {
+        target = target == null ? new StringBuffer() : target;
+        target.append(addUTFAttribute ? FULL_XML_HEADER : DEFAULT_XML_HEADER);
+        return target;
+    }
 
     public static StringBuffer addXMLHeader(StringBuffer target) {
-        target = target == null ? new StringBuffer() : target;
-        target.append(XML_HEADER);
-        return target;
+        return addXMLHeader(target, true);
     }
 
     public static StringBuffer openNamespaceDeclarationTag(String prefix, String header, Collection namespaces, Map prefixMap, Map attrs, StringBuffer target) {
@@ -125,7 +130,7 @@ public class SVNXMLUtil {
         if (cdata == null) {
             return target;
         }
-        target = openXMLTag(prefix, tagName, XML_STYLE_PROTECT_PCDATA, null, target);
+        target = openXMLTag(prefix, tagName, XML_STYLE_PROTECT_CDATA, null, target);
         target.append(SVNEncodingUtil.xmlEncodeCDATA(cdata));
         target = closeXMLTag(prefix, tagName, target);
         return target;
@@ -139,7 +144,7 @@ public class SVNXMLUtil {
         if (cdata == null) {
             return target;
         }
-        target = openXMLTag(prefix, tagName, XML_STYLE_PROTECT_PCDATA, attributes, target);
+        target = openXMLTag(prefix, tagName, XML_STYLE_PROTECT_CDATA, attributes, target);
         target.append(SVNEncodingUtil.xmlEncodeCDATA(cdata));
         target = closeXMLTag(prefix, tagName, target);
         return target;
@@ -165,11 +170,14 @@ public class SVNXMLUtil {
             target.append(":");
         }
         target.append(tagName);
-        if (attributes != null) {
+        if (attributes != null && !attributes.isEmpty()) {
             for (Iterator iterator = attributes.entrySet().iterator(); iterator.hasNext();) {
                 Map.Entry entry = (Map.Entry) iterator.next();
                 String name = (String) entry.getKey();
                 String value = (String) entry.getValue();
+                if ((style & XML_STYLE_ATTRIBUTE_BREAKS_LINE) != 0){
+                    target.append("\n  ");
+                }
                 target.append(" ");
                 target.append(name);
                 target.append("=\"");
@@ -178,11 +186,11 @@ public class SVNXMLUtil {
             }
             attributes.clear();
         }
-        if (style == XML_STYLE_SELF_CLOSING) {
+        if ((style & XML_STYLE_SELF_CLOSING) != 0) {
             target.append("/");
         }
         target.append(">");
-        if (style != XML_STYLE_PROTECT_PCDATA) {
+        if ((style & XML_STYLE_PROTECT_CDATA) == 0) {
             target.append("\n");
         }
         return target;

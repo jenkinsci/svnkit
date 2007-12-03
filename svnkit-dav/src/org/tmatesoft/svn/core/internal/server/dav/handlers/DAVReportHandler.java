@@ -239,7 +239,7 @@ public class DAVReportHandler extends ServletDAVHandler {
             } catch (UnsupportedEncodingException e) {
                 propertyValue = SVNBase64.byteArrayToBase64(propertyValue.getBytes());
             }
-            xmlBuffer = SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, SVNXMLUtil.XML_STYLE_PROTECT_PCDATA, attrs, null);
+            xmlBuffer = SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, SVNXMLUtil.XML_STYLE_PROTECT_CDATA, attrs, null);
             write(xmlBuffer);
             write(propertyValue);
             xmlBuffer = SVNXMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, null);

@@ -95,7 +95,7 @@ public class DAVGetLocksHandler extends DAVReportHandler {
                 } catch (UnsupportedEncodingException e) {
                     ownerEncoded = SVNBase64.byteArrayToBase64(lock.getOwner().getBytes());
                 }
-                SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "owner", SVNXMLUtil.XML_STYLE_PROTECT_PCDATA, ENCODING_ATTR, BASE64_ENCODING, xmlBuffer);
+                SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "owner", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, ENCODING_ATTR, BASE64_ENCODING, xmlBuffer);
                 xmlBuffer.append(ownerEncoded);
                 SVNXMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "owner", xmlBuffer);
             }
@@ -110,7 +110,7 @@ public class DAVGetLocksHandler extends DAVReportHandler {
                 } catch (UnsupportedEncodingException e) {
                     commentEncoded = SVNBase64.byteArrayToBase64(lock.getComment().getBytes());
                 }
-                SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "comment", SVNXMLUtil.XML_STYLE_PROTECT_PCDATA, ENCODING_ATTR, BASE64_ENCODING, xmlBuffer);
+                SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "comment", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, ENCODING_ATTR, BASE64_ENCODING, xmlBuffer);
                 xmlBuffer.append(commentEncoded);
                 SVNXMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "comment", xmlBuffer);
             }

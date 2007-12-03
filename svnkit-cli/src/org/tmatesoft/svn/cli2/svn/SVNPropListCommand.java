@@ -91,7 +91,7 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
                 StringBuffer buffer = openXMLTag("revprops", SVNXMLUtil.XML_STYLE_NORMAL, "rev", Long.toString(rev), null);
                 for (Iterator props = revisionProperties.iterator(); props.hasNext();) {
                     SVNPropertyData property = (SVNPropertyData) props.next();
-                    buffer = openXMLTag("property", SVNXMLUtil.XML_STYLE_PROTECT_PCDATA, "name", SVNEncodingUtil.xmlEncodeAttr(property.getName()), buffer);
+                    buffer = openXMLTag("property", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, "name", SVNEncodingUtil.xmlEncodeAttr(property.getName()), buffer);
                     buffer.append(SVNEncodingUtil.xmlEncodeCDATA(property.getValue()));
                     buffer = closeXMLTag("property", buffer);
                 }
@@ -188,7 +188,7 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
             StringBuffer buffer = openXMLTag("target", SVNXMLUtil.XML_STYLE_NORMAL, "path", target, null);
             for (Iterator plist = props.iterator(); plist.hasNext();) {
                 SVNPropertyData property = (SVNPropertyData) plist.next();
-                buffer = openXMLTag("property", SVNXMLUtil.XML_STYLE_PROTECT_PCDATA, "name", property.getName(), buffer);
+                buffer = openXMLTag("property", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, "name", property.getName(), buffer);
                 buffer.append(SVNEncodingUtil.xmlEncodeCDATA(property.getValue()));
                 buffer = closeXMLTag("property", buffer);
             }
