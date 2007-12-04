@@ -580,11 +580,6 @@ class DAVRepository extends SVNRepository {
             DAVReplayHandler handler = new DAVReplayHandler(editor, true);
 
             String bcPath = SVNEncodingUtil.uriEncode(getLocation().getPath());
-            try {
-                bcPath = DAVUtil.getVCCPath(myConnection, this, bcPath);
-            } catch (SVNException e) {
-                throw e;
-            }
             HTTPStatus status = myConnection.doReport(bcPath, request, handler);
             if (status.getCode() == 501) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "'replay' REPORT not implemented");
