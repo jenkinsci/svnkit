@@ -1555,7 +1555,7 @@ public abstract class SVNRepository {
      * version.
      * 
      * <p>
-     * If <code>sendDeltas</code> is <span class="javakeyword">null</span>, the actual text 
+     * If <code>sendDeltas</code> is <span class="javakeyword">true</span>, the actual text 
      * and property changes in the revision will be sent, otherwise no text deltas and 
      * <span class="javakeyword">null</span> property changes will be sent instead.
      * 

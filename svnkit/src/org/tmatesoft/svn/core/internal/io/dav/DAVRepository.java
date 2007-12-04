@@ -684,14 +684,10 @@ public class DAVRepository extends SVNRepository {
             DAVReplayHandler handler = new DAVReplayHandler(editor, true);
 
             String bcPath = SVNEncodingUtil.uriEncode(getLocation().getPath());
-            try {
-                bcPath = DAVUtil.getVCCPath(myConnection, this, bcPath);
-            } catch (SVNException e) {
-                throw e;
-            }
             HTTPStatus status = myConnection.doReport(bcPath, request, handler);
             if (status.getCode() == 501) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "'replay' REPORT not implemented");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, 
+                        "'replay' REPORT not implemented");
                 SVNErrorManager.error(err, status.getError());
             } else if (status.getError() != null) {
                 SVNErrorManager.error(status.getError());
@@ -699,7 +695,6 @@ public class DAVRepository extends SVNRepository {
         } finally {
             closeConnection();
         }
-
     }
 
     public void setRevisionPropertyValue(long revision, String propertyName, String propertyValue) throws SVNException {
