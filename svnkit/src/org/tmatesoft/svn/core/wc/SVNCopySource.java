@@ -27,6 +27,7 @@ public class SVNCopySource {
     private SVNRevision myRevision;
     private SVNURL myURL;
     private File myPath;
+    private boolean myIsCopyContents;
     
     public SVNCopySource(SVNRevision pegRevision, SVNRevision revision, File path) {
         myPegRevision = pegRevision;
@@ -65,5 +66,13 @@ public class SVNCopySource {
             return SVNPathUtil.tail(myURL.getPath());
         } 
         return myPath.getName();
+    }
+    
+    public void setCopyContents(boolean copyContents) {
+        myIsCopyContents = copyContents;
+    }
+    
+    public boolean isCopyContents() {
+        return myIsCopyContents;
     }
 }
