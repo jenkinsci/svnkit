@@ -845,7 +845,13 @@ public abstract class SVNRepository {
      * @since               SVN 1.1
      */
     public abstract int getLocations(String path, long pegRevision, long[] revisions, ISVNLocationEntryHandler handler) throws SVNException;
-    
+
+    /**
+     * @since 1.2, SVN 1.5
+     */
+    public abstract int getLocationSegments(String path, long pegRevision, long startRevision, long endRevision, 
+            ISVNLocationSegmentHandler handler) throws SVNException;
+
     /**
      * Retrieves and returns interesting file revisions for the specified file. 
      * 
@@ -1966,7 +1972,8 @@ public abstract class SVNRepository {
     
     protected static void assertValidRevision(long revision) throws SVNException {
         if (!isValidRevision(revision)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Invalid revision number ''{0}''", new Long(revision));
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, 
+                    "Invalid revision number ''{0}''", new Long(revision));
             SVNErrorManager.error(err);
         }
     }

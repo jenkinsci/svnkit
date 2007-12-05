@@ -52,6 +52,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNMergeInfoManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
+import org.tmatesoft.svn.core.io.ISVNLocationSegmentHandler;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
@@ -68,6 +69,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
 
     private File myReposRootDir;
     private FSUpdateContext myReporterContext;
+    private FSLocationsFinder myLocationsFinder;
     private FSFS myFSFS;
 
     protected FSRepository(SVNURL location, ISVNSession options) {
@@ -380,86 +382,15 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         try {
             openRepository();
             path = getRepositoryPath(path);
-            ArrayList locationEntries = new ArrayList(0);
-            long[] locationRevs = new long[revisions.length];
-            long revision;
-            Arrays.sort(revisions);
-
-            for (int i = 0; i < revisions.length; ++i) {
-                locationRevs[i] = revisions[revisions.length - (i + 1)];
-            }
-
-            int count = 0;
-            boolean isAncestor = false;
-            
-            for (count = 0; count < locationRevs.length && locationRevs[count] > pegRevision; ++count) {
-                isAncestor = FSNodeHistory.checkAncestryOfPegPath(path, pegRevision, locationRevs[count], myFSFS);
-                if (isAncestor) {
-                    break;
-                }
-            }
-            
-            if (count >= locationRevs.length) {
-                return 0;
-            }
-            revision = isAncestor ? locationRevs[count] : pegRevision;
-
-            FSRevisionRoot root = null;
-            while (count < revisions.length) {
-                root = myFSFS.createRevisionRoot(revision);
-                FSClosestCopy tempClCopy = root.getClosestCopy(path);
-                if (tempClCopy == null) {
-                    break;
-                }
-                FSRevisionRoot croot = tempClCopy.getRevisionRoot();
-                if (croot == null) {
-                    break;
-                }
-                String cpath = tempClCopy.getPath();
-
-                long crev = croot.getRevision();
-                while ((count < revisions.length) && (locationRevs[count] >= crev)) {
-                    locationEntries.add(new SVNLocationEntry(locationRevs[count], path));
-                    ++count;
-                }
-
-                FSRevisionNode copyfromNode = croot.getRevisionNode(cpath);
-                String copyfromPath = copyfromNode.getCopyFromPath();
-                long copyfromRevision = copyfromNode.getCopyFromRevision();
-                while ((count < revisions.length) && locationRevs[count] > copyfromRevision) {
-                    ++count;
-                }
-                
-                String remainder = path.equals(cpath) ? "" : SVNPathUtil.getPathAsChild(cpath, path);
-                path = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(copyfromPath, remainder));
-                revision = copyfromRevision;
-            }
-            
-            root = myFSFS.createRevisionRoot(revision);
-            FSRevisionNode curNode = root.getRevisionNode(path);
-
-            while (count < revisions.length) {
-                root = myFSFS.createRevisionRoot(locationRevs[count]);
-                if (root.checkNodeKind(path) == SVNNodeKind.NONE) {
-                    break;
-                }
-                FSRevisionNode currentNode = root.getRevisionNode(path);
-                if (!curNode.getId().isRelated(currentNode.getId())) {
-                    break;
-                }
-                locationEntries.add(new SVNLocationEntry(locationRevs[count], path));
-                ++count;
-            }
-            
-            for (count = 0; count < locationEntries.size(); count++) {
-                if (handler != null) {
-                    handler.handleLocationEntry((SVNLocationEntry) locationEntries.get(count));
-                }
-            }
-            return count;
+            FSLocationsFinder locationsFinder = getLocationsFinder();
+            return locationsFinder.traceNodeLocations(path, pegRevision, revisions, handler);
         } finally {
             closeRepository();
         }
+    }
+
+    public int getLocationSegments(String path, long pegRevision, long startRevision, long endRevision, ISVNLocationSegmentHandler handler) throws SVNException {
+        return 0;
     }
 
     public void replay(long lowRevision, long highRevision, boolean sendDeltas, ISVNEditor editor) throws SVNException {
@@ -948,5 +879,15 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             }
         }
         return System.getProperty("user.name");
+    }
+
+    private FSLocationsFinder getLocationsFinder() {
+        if (myLocationsFinder == null) {
+            myLocationsFinder = new FSLocationsFinder(getFSFS());
+        } else {
+            myLocationsFinder.reset(getFSFS());
+        }
+
+        return myLocationsFinder;
     }
 }

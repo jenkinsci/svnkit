@@ -1161,15 +1161,28 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             return result;
         }
         
-        if (repos != null) {
-            SVNURL sessionURL = repos.getLocation();
-            if (!sessionURL.equals(url)) {
-                repos.setLocation(url, true);
+        boolean closeSession = false;
+        try {
+            if (repos != null) {
+                SVNURL sessionURL = repos.getLocation();
+                if (!sessionURL.equals(url)) {
+                    repos.setLocation(url, true);
+                }
+            } else {
+                repos = createRepository(url, false);
+                closeSession = true;
             }
-        } else {
-            repos = createRepository(url, false);
+            
+            if (targetRev[0] < start) {
+                SVNRepositoryLocation[] locations = getLocations(url, null, repos, 
+                        SVNRevision.create(targetRev[0]), SVNRevision.create(start), SVNRevision.UNDEFINED);
+                targetRev[0] = locations[0].getRevisionNumber();
+            }
+        } finally {
+            if (closeSession) {
+                repos.closeSession();
+            }
         }
-        
         return null;
     }
     

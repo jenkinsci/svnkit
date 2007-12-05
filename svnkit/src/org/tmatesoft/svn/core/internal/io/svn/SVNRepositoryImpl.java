@@ -55,6 +55,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNMergeInfoManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
+import org.tmatesoft.svn.core.io.ISVNLocationSegmentHandler;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
@@ -1486,5 +1487,10 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             return SVNDepthFilterEditor.getDepthFilterEditor(depth, editor, hasTarget);
         }
         return editor;
+    }
+
+    //TODO: implement
+    public int getLocationSegments(String path, long pegRevision, long startRevision, long endRevision, ISVNLocationSegmentHandler handler) throws SVNException {
+        return 0;
     }
 }
