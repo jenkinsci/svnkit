@@ -530,4 +530,15 @@ public class SVNClient implements SVNClientInterface {
             String[] revProps, long limit, LogMessageCallback callback) throws ClientException {
         myDelegate.logMessages(path, pegRevision, revisionStart, revisionEnd, stopOnCopy, discoverPath, includeMergedRevisions, revProps, limit, callback);
     }
+
+    public void merge(String path1, Revision revision1, String path2, Revision revision2, String localPath, 
+            boolean force, int depth, boolean ignoreAncestry, boolean dryRun, boolean recordOnly) throws ClientException {
+        myDelegate.merge(path1, revision1, path2, revision2, localPath, force, depth, ignoreAncestry, 
+                dryRun, recordOnly);
+    }
+
+    public void merge(String path, Revision pegRevision, RevisionRange[] revisions, String localPath, 
+            boolean force, int depth, boolean ignoreAncestry, boolean dryRun, boolean recordOnly) throws ClientException {
+        myDelegate.merge(path, pegRevision, revisions, localPath, force, depth, ignoreAncestry, dryRun, recordOnly);
+    }
 }
