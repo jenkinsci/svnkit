@@ -410,7 +410,10 @@ public class SVNFileUtil {
         if (executable) {
             setExecutable(dst, true);
         }
-        dst.setLastModified(src.lastModified());
+        long tstamp = src.lastModified();
+        if (tstamp >= 0) {
+            dst.setLastModified(tstamp);
+        }
     }
 
     public static boolean createSymlink(File link, File linkName) throws SVNException {
