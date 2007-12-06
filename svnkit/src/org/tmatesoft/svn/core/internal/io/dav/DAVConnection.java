@@ -25,7 +25,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVGetLockHandler;
+import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVLockHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVGetLocksHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVMergeHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVOptionsHandler;
@@ -112,8 +112,8 @@ public class DAVConnection {
     
     public SVNLock doGetLock(String path, DAVRepository repos) throws SVNException {
         DAVBaselineInfo info = DAVUtil.getBaselineInfo(this, repos, path, -1, false, true, null);
-        StringBuffer body = DAVGetLockHandler.generateGetLockRequest(null);
-        DAVGetLockHandler handler = new DAVGetLockHandler();
+        StringBuffer body = DAVLockHandler.generateGetLockRequest(null);
+        DAVLockHandler handler = new DAVLockHandler();
         SVNErrorMessage context = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Failed to fetch lock information");
         HTTPStatus rc = myHttpConnection.request("PROPFIND", path, null, body, 200, 207, null, handler, context);
         
@@ -164,19 +164,19 @@ public class DAVConnection {
     public SVNLock doLock(String path, DAVRepository repos, String comment, boolean force, long revision) throws SVNException {
         DAVBaselineInfo info = DAVUtil.getBaselineInfo(this, repos, path, -1, false, true, null);
 
-        StringBuffer body = DAVGetLockHandler.generateSetLockRequest(null, comment);
-        HTTPHeader header = null;
+        StringBuffer body = DAVLockHandler.generateSetLockRequest(null, comment);
+        HTTPHeader header = new HTTPHeader();
+        header.setHeaderValue(HTTPHeader.DEPTH_HEADER, "0");
+        header.setHeaderValue(HTTPHeader.TIMEOUT_HEADER, "Infinite");
+        header.setHeaderValue(HTTPHeader.CONTENT_TYPE_HEADER, "text/xml; charset=\"utf-8\"");
+
         if (revision >= 0) {
-            header = new HTTPHeader();
             header.setHeaderValue(HTTPHeader.SVN_VERSION_NAME_HEADER, Long.toString(revision));
         }
         if (force) {
-            if (header == null) {
-                header = new HTTPHeader();
-            }
             header.setHeaderValue(HTTPHeader.SVN_OPTIONS_HEADER, "lock-steal");
         }
-        DAVGetLockHandler handler = new DAVGetLockHandler();
+        DAVLockHandler handler = new DAVLockHandler();
         SVNErrorMessage context = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Lock request failed");
         HTTPStatus status = myHttpConnection.request("LOCK", path, header, body, -1, 0, null, handler, context);
         if (status.getError() != null) {

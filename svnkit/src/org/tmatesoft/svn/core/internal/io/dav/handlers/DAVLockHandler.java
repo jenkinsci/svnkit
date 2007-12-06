@@ -21,7 +21,7 @@ import org.xml.sax.Attributes;
  * @author TMate Software Ltd.
  * @version 1.1.1
  */
-public class DAVGetLockHandler extends BasicDAVHandler {
+public class DAVLockHandler extends BasicDAVHandler {
 
     public static StringBuffer generateGetLockRequest(StringBuffer body) {
         return DAVPropertiesHandler.generatePropertiesRequest(body, new DAVElement[]{DAVElement.LOCK_DISCOVERY});
@@ -30,16 +30,21 @@ public class DAVGetLockHandler extends BasicDAVHandler {
     public static StringBuffer generateSetLockRequest(StringBuffer xmlBuffer, String comment) {
         xmlBuffer = xmlBuffer == null ? new StringBuffer() : xmlBuffer;
         SVNXMLUtil.addXMLHeader(xmlBuffer);
-        SVNXMLUtil.openNamespaceDeclarationTag(null, "lockinfo", DAV_NAMESPACES_LIST, SVNXMLUtil.PREFIX_MAP, xmlBuffer);
-        SVNXMLUtil.openXMLTag(null, "lockscope", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
-        SVNXMLUtil.openXMLTag(null, "exclusive", SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
-        SVNXMLUtil.closeXMLTag(null, "lockscope", xmlBuffer);
-        SVNXMLUtil.openXMLTag(null, "locktype", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
-        SVNXMLUtil.openXMLTag(null, "write", SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
-        SVNXMLUtil.closeXMLTag(null, "locktype", xmlBuffer);
+        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "lockinfo", DAV_NAMESPACES_LIST, 
+                SVNXMLUtil.PREFIX_MAP, xmlBuffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "lockscope", SVNXMLUtil.XML_STYLE_NORMAL, null, 
+                xmlBuffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "exclusive", SVNXMLUtil.XML_STYLE_SELF_CLOSING, 
+                null, xmlBuffer);
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "lockscope", xmlBuffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "locktype", SVNXMLUtil.XML_STYLE_NORMAL, null, 
+                xmlBuffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "write", SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, 
+                xmlBuffer);
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "locktype", xmlBuffer);
         comment = comment == null ? "" : comment;
-        SVNXMLUtil.openCDataTag(null, "owner", comment, xmlBuffer);
-        SVNXMLUtil.addXMLFooter(null, "lockinfo", xmlBuffer);
+        SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "owner", comment, xmlBuffer);
+        SVNXMLUtil.addXMLFooter(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "lockinfo", xmlBuffer);
         return xmlBuffer;
     }
 
@@ -48,7 +53,7 @@ public class DAVGetLockHandler extends BasicDAVHandler {
     private String myComment;
     private String myExpiration;
 
-    public DAVGetLockHandler() {
+    public DAVLockHandler() {
         init();
     }
 
