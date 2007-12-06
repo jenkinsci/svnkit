@@ -66,33 +66,27 @@ public class FSLocationsFinder {
 
         FSRevisionRoot root = null;
         while (count < revisions.length) {
-            root = myFSFS.createRevisionRoot(revision);
-            FSClosestCopy tempClCopy = root.getClosestCopy(path);
-            if (tempClCopy == null) {
+            long[] appearedRevision = new long[1];
+            SVNLocationEntry previousLocation = getPreviousLocation(path, revision, appearedRevision);
+            if (previousLocation == null) {
                 break;
             }
-            FSRevisionRoot croot = tempClCopy.getRevisionRoot();
-            if (croot == null) {
+            String previousPath = previousLocation.getPath();
+            if (previousPath == null) {
                 break;
             }
-            String cpath = tempClCopy.getPath();
-
-            long crev = croot.getRevision();
-            while ((count < revisions.length) && (locationRevs[count] >= crev)) {
+            long previousRevision = previousLocation.getRevision();
+            while ((count < revisions.length) && (locationRevs[count] >= appearedRevision[0])) {
                 locationEntries.add(new SVNLocationEntry(locationRevs[count], path));
                 ++count;
             }
 
-            FSRevisionNode copyfromNode = croot.getRevisionNode(cpath);
-            String copyfromPath = copyfromNode.getCopyFromPath();
-            long copyfromRevision = copyfromNode.getCopyFromRevision();
-            while ((count < revisions.length) && locationRevs[count] > copyfromRevision) {
+            while ((count < revisions.length) && locationRevs[count] > previousRevision) {
                 ++count;
             }
             
-            String remainder = path.equals(cpath) ? "" : SVNPathUtil.getPathAsChild(cpath, path);
-            path = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(copyfromPath, remainder));
-            revision = copyfromRevision;
+            path = previousPath;
+            revision = previousRevision;
         }
         
         root = myFSFS.createRevisionRoot(revision);
@@ -158,6 +152,7 @@ public class FSLocationsFinder {
         
         long currentRevision = pegRevision;
         while (currentRevision >= endRevision) {
+            long[] appearedRevision = new long[1];
             
         }
     }
@@ -166,7 +161,31 @@ public class FSLocationsFinder {
         myFSFS = fsfs;
     }
 
-    private void getPreviousLocation() {
+    private SVNLocationEntry getPreviousLocation(String path, long revision, long[] appearedRevision) throws SVNException {
+        appearedRevision[0] = SVNRepository.INVALID_REVISION;
+        FSRevisionRoot root = myFSFS.createRevisionRoot(revision);
+        FSClosestCopy closestCopy = root.getClosestCopy(path);
+        if (closestCopy == null) {
+            return null;
+        }
         
+        FSRevisionRoot copyTargetRoot = closestCopy.getRevisionRoot();
+        if (copyTargetRoot == null) {
+            return null;
+        }
+        String copyTargetPath = closestCopy.getPath();
+        FSRevisionNode copyFromNode = copyTargetRoot.getRevisionNode(copyTargetPath);
+        String copyFromPath = copyFromNode.getCopyFromPath();
+        long copyFromRevision = copyFromNode.getCopyFromRevision();
+        String remainder = "";
+        if (!path.equals(copyTargetPath)) {
+            remainder = path.substring(copyTargetPath.length());
+            if (remainder.startsWith("/")) {
+                remainder = remainder.substring(1);
+            }
+        }
+        String previousPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(copyFromPath, remainder));
+        appearedRevision[0] = copyTargetRoot.getRevision();
+        return new SVNLocationEntry(copyFromRevision, previousPath);
     }
 }
