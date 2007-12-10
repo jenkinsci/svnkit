@@ -20,6 +20,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.TreeMap;
@@ -29,6 +30,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
+import org.tmatesoft.svn.core.internal.io.fs.FSID;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 
@@ -63,7 +65,9 @@ public class SVNSQLiteDBProcessor implements ISVNDBProcessor {
         "CREATE UNIQUE INDEX mi_c_revpath_idx ON mergeinfo_changed (revision, path);",
         "CREATE INDEX mi_c_path_idx ON mergeinfo_changed (path);",
         "CREATE INDEX mi_c_revision_idx ON mergeinfo_changed (revision);", 
-        "PRAGMA user_version = " + MERGE_INFO_INDEX_SCHEMA_FORMAT + ";"
+        "CREATE TABLE node_origins (node_id TEXT NOT NULL, node_rev_id TEXT NOT NULL);",
+        "CREATE UNIQUE INDEX no_ni_idx ON node_origins (node_id);",
+        "PRAGMA user_version = " + MERGE_INFO_INDEX_SCHEMA_FORMAT + ";"//TODO: correct and remove
     };
     
     private File myDBDirectory;
@@ -73,8 +77,10 @@ public class SVNSQLiteDBProcessor implements ISVNDBProcessor {
     private PreparedStatement mySinglePathSelectFromMergeInfoChangedStatement;
     private PreparedStatement mySelectMergeInfoStatement;
     private PreparedStatement myPathLikeSelectFromMergeInfoChangedStatement;
-    private PreparedStatement myInsertToMergeInfoTableStatement;
-    private PreparedStatement myInsertToMergeInfoChangedTableStatement;
+    private PreparedStatement myInsertIntoMergeInfoTableStatement;
+    private PreparedStatement myInsertIntoMergeInfoChangedTableStatement;
+    private PreparedStatement mySelectNodeRevIDStatement;
+    private PreparedStatement myInsertIntoNodeOriginsTableStatement;
     
     public void openDB(File dbDir) throws SVNException {
         if (myDBDirectory == null || !myDBDirectory.equals(dbDir)) {
@@ -232,7 +238,7 @@ public class SVNSQLiteDBProcessor implements ISVNDBProcessor {
 
     public void insertMergeInfo(long revision, String mergedFrom, String mergedTo, 
                                 SVNMergeRange[] ranges) throws SVNException {
-        PreparedStatement insertIntoMergeInfoTableStmt = createInsertToMergeInfoTableStatement();
+        PreparedStatement insertIntoMergeInfoTableStmt = createInsertIntoMergeInfoTableStatement();
         try {
             insertIntoMergeInfoTableStmt.setLong(1, revision);
             insertIntoMergeInfoTableStmt.setString(2, mergedFrom);
@@ -253,7 +259,7 @@ public class SVNSQLiteDBProcessor implements ISVNDBProcessor {
 
     public void updateMergeInfoChanges(long newRevision, String path) throws SVNException {
         PreparedStatement insertIntoMergeInfoChangedTableStmt = 
-                                                     createInsertToMergeInfoChangedTableStatement(); 
+            createInsertIntoMergeInfoChangedTableStatement(); 
         try {
             insertIntoMergeInfoChangedTableStmt.setLong(1, newRevision);
             insertIntoMergeInfoChangedTableStmt.setString(2, path);
@@ -261,6 +267,58 @@ public class SVNSQLiteDBProcessor implements ISVNDBProcessor {
         } catch (SQLException sqle) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_SQLITE_ERROR, 
                                                          sqle.getLocalizedMessage());
+            SVNErrorManager.error(err, sqle);
+        }
+    }
+
+    public String getNodeOrigin(String nodeID) throws SVNException {
+        String nodeRevID = null;
+        PreparedStatement selectNodeRevIDStmt = createSelectNodeRevIDStatement();
+        try {
+            selectNodeRevIDStmt.setString(1, nodeID);
+            ResultSet result = selectNodeRevIDStmt.executeQuery();
+            if (result.next()) {
+                nodeRevID = result.getString(1);
+            }
+        } catch (SQLException sqle) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_SQLITE_ERROR, 
+                    sqle.getLocalizedMessage());
+            SVNErrorManager.error(err, sqle);
+        }
+        return nodeRevID;
+    }
+    
+    public void setNodeOrigins(Map nodeOrigins) throws SVNException {
+        beginTransaction();
+        for (Iterator nodeOriginEntries = nodeOrigins.entrySet().iterator(); nodeOriginEntries.hasNext();) {
+            Map.Entry nodeOriginEntry = (Map.Entry) nodeOriginEntries.next();
+            String nodeID = (String) nodeOriginEntry.getKey();
+            FSID nodeRevisionID = (FSID) nodeOriginEntry.getValue();
+            setNodeOrigin(nodeID, nodeRevisionID.toString());
+        }
+        commitTransaction();
+    }
+
+    private void setNodeOrigin(String nodeID, String nodeRevID) throws SVNException {
+        String oldNodeRevID = getNodeOrigin(nodeID);
+        if (oldNodeRevID != null) {
+            if (oldNodeRevID.equals(nodeRevID)) {
+                return;
+            } 
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
+                    "Node origin for ''{0}'' exists with a different value ({1}) than what we were about to store ({2})", 
+                    new Object[] { nodeID, oldNodeRevID, nodeRevID });
+            SVNErrorManager.error(err);
+        }
+        
+        PreparedStatement stmt = createInsertIntoNodeOriginsTableStatement();
+        try {
+            stmt.setString(1, nodeID);
+            stmt.setString(2, nodeRevID);
+            stmt.execute();
+        } catch (SQLException sqle) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_SQLITE_ERROR, 
+                    sqle.getLocalizedMessage());
             SVNErrorManager.error(err, sqle);
         }
     }
@@ -279,9 +337,17 @@ public class SVNSQLiteDBProcessor implements ISVNDBProcessor {
                 mySelectMergeInfoStatement.close();
                 mySelectMergeInfoStatement = null;
             }
-            if (myInsertToMergeInfoTableStatement != null) {
-                myInsertToMergeInfoTableStatement.close();
-                myInsertToMergeInfoTableStatement = null;
+            if (myInsertIntoMergeInfoTableStatement != null) {
+                myInsertIntoMergeInfoTableStatement.close();
+                myInsertIntoMergeInfoTableStatement = null;
+            }
+            if (mySelectNodeRevIDStatement != null) {
+                mySelectNodeRevIDStatement.close();
+                mySelectNodeRevIDStatement = null;
+            }
+            if (myInsertIntoNodeOriginsTableStatement != null) {
+                myInsertIntoNodeOriginsTableStatement.close();
+                myInsertIntoNodeOriginsTableStatement = null;
             }
         } catch (SQLException sqle) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_SQLITE_ERROR, sqle.getLocalizedMessage());
@@ -345,30 +411,30 @@ public class SVNSQLiteDBProcessor implements ISVNDBProcessor {
         }
     }
     
-    private PreparedStatement createInsertToMergeInfoTableStatement() throws SVNException {
-        if (myInsertToMergeInfoTableStatement == null) {
+    private PreparedStatement createInsertIntoMergeInfoTableStatement() throws SVNException {
+        if (myInsertIntoMergeInfoTableStatement == null) {
             Connection connection = getConnection();
             try {
-                myInsertToMergeInfoTableStatement = connection.prepareStatement("INSERT INTO mergeinfo (revision, mergedfrom, mergedto, mergedrevstart, mergedrevend, inheritable) VALUES (?, ?, ?, ?, ?, ?);");
+                myInsertIntoMergeInfoTableStatement = connection.prepareStatement("INSERT INTO mergeinfo (revision, mergedfrom, mergedto, mergedrevstart, mergedrevend, inheritable) VALUES (?, ?, ?, ?, ?, ?);");
             } catch (SQLException sqle) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_SQLITE_ERROR, sqle.getLocalizedMessage());
                 SVNErrorManager.error(err, sqle);
             }
         }
-        return myInsertToMergeInfoTableStatement;
+        return myInsertIntoMergeInfoTableStatement;
     }
 
-    private PreparedStatement createInsertToMergeInfoChangedTableStatement() throws SVNException {
-        if (myInsertToMergeInfoChangedTableStatement == null) {
+    private PreparedStatement createInsertIntoMergeInfoChangedTableStatement() throws SVNException {
+        if (myInsertIntoMergeInfoChangedTableStatement == null) {
             Connection connection = getConnection();
             try {
-                myInsertToMergeInfoChangedTableStatement = connection.prepareStatement("INSERT INTO mergeinfo_changed (revision, path) VALUES (?, ?);");
+                myInsertIntoMergeInfoChangedTableStatement = connection.prepareStatement("INSERT INTO mergeinfo_changed (revision, path) VALUES (?, ?);");
             } catch (SQLException sqle) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_SQLITE_ERROR, sqle.getLocalizedMessage());
                 SVNErrorManager.error(err, sqle);
             }
         }
-        return myInsertToMergeInfoChangedTableStatement;
+        return myInsertIntoMergeInfoChangedTableStatement;
     }
 
     private PreparedStatement createPathLikeSelectFromMergeInfoChangedStatement() throws SVNException {
@@ -410,6 +476,34 @@ public class SVNSQLiteDBProcessor implements ISVNDBProcessor {
         return mySelectMergeInfoStatement;
     }
 
+    private PreparedStatement createSelectNodeRevIDStatement() throws SVNException {
+        if (mySelectNodeRevIDStatement == null) {
+            Connection connection = getConnection();
+            try {
+                mySelectNodeRevIDStatement = connection.prepareStatement("SELECT node_rev_id FROM node_origins WHERE node_id = ?;");
+            } catch (SQLException sqle) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_SQLITE_ERROR, 
+                        sqle.getLocalizedMessage());
+                SVNErrorManager.error(err, sqle);
+            }
+        }
+        return mySelectNodeRevIDStatement;
+    }
+
+    private PreparedStatement createInsertIntoNodeOriginsTableStatement() throws SVNException {
+        if (myInsertIntoNodeOriginsTableStatement == null) {
+            Connection connection = getConnection();
+            try {
+                myInsertIntoNodeOriginsTableStatement = connection.prepareStatement("INSERT INTO node_origins (node_id, node_rev_id) VALUES (?, ?);");
+            } catch (SQLException sqle) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_SQLITE_ERROR, 
+                        sqle.getLocalizedMessage());
+                SVNErrorManager.error(err, sqle);
+            }
+        }
+        return myInsertIntoNodeOriginsTableStatement;
+    }
+    
     private Connection getConnection() throws SVNException {
         if (!OUR_HAS_DRIVER) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_SQLITE_ERROR, "No sqlite driver found");

@@ -36,12 +36,15 @@ import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.wc.ISVNDBProcessor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
+import org.tmatesoft.svn.core.internal.wc.SVNSQLiteDBProcessor;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
+import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
@@ -100,6 +103,7 @@ public class FSFS {
     private File myCurrentFile;
     private File myTransactionCurrentFile;
     private long myMaxFilesPerDirectory;
+    private ISVNDBProcessor myDBProcessor;
 
     public FSFS(File repositoryRoot) {
         myRepositoryRoot = repositoryRoot;
@@ -1105,6 +1109,62 @@ public class FSFS {
             }
         }
     }
+
+    public SVNLocationEntry getPreviousLocation(String path, long revision, long[] appearedRevision) throws SVNException {
+        if (appearedRevision != null && appearedRevision.length > 0) {
+            appearedRevision[0] = SVNRepository.INVALID_REVISION;
+        }
+        FSRevisionRoot root = createRevisionRoot(revision);
+        FSClosestCopy closestCopy = root.getClosestCopy(path);
+        if (closestCopy == null) {
+            return null;
+        }
+        
+        FSRevisionRoot copyTargetRoot = closestCopy.getRevisionRoot();
+        if (copyTargetRoot == null) {
+            return null;
+        }
+        String copyTargetPath = closestCopy.getPath();
+        FSRevisionNode copyFromNode = copyTargetRoot.getRevisionNode(copyTargetPath);
+        String copyFromPath = copyFromNode.getCopyFromPath();
+        long copyFromRevision = copyFromNode.getCopyFromRevision();
+        String remainder = "";
+        if (!path.equals(copyTargetPath)) {
+            remainder = path.substring(copyTargetPath.length());
+            if (remainder.startsWith("/")) {
+                remainder = remainder.substring(1);
+            }
+        }
+        String previousPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(copyFromPath, remainder));
+        if (appearedRevision != null && appearedRevision.length > 0) {
+            appearedRevision[0] = copyTargetRoot.getRevision();
+        }
+        return new SVNLocationEntry(copyFromRevision, previousPath);
+    }
+
+    public String getNodeOrigin(String nodeID) throws SVNException {
+        String originID = null;
+        ISVNDBProcessor dbProcessor = getDBProcessor();
+        try {
+            dbProcessor.openDB(myDBRoot);
+            originID = dbProcessor.getNodeOrigin(nodeID);
+        } finally {
+            dbProcessor.closeDB();
+        }
+        return originID;
+    }
+    
+    public void setNodeOrigin(String nodeID, FSID nodeRevisionID) throws SVNException {
+        ISVNDBProcessor dbProcessor = getDBProcessor();
+        try {
+            Map origins = new HashMap();
+            origins.put(nodeID, nodeRevisionID);
+            dbProcessor.openDB(myDBRoot);
+            dbProcessor.setNodeOrigins(origins);
+        } finally {
+            dbProcessor.closeDB();
+        }
+    }
     
     public static File findRepositoryRoot(File path) {
         if (path == null) {
@@ -1462,6 +1522,13 @@ public class FSFS {
         return SVNDate.parseDateString(timeString);
     }
 
+    private ISVNDBProcessor getDBProcessor() {
+        if (myDBProcessor == null) {
+            myDBProcessor = new SVNSQLiteDBProcessor();
+        }
+        return myDBProcessor;
+    }
+    
     private static boolean isRepositoryRoot(File candidatePath) {
         File formatFile = new File(candidatePath, "format");
         SVNFileType fileType = SVNFileType.getType(formatFile);

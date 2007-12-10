@@ -1083,7 +1083,14 @@ public class DAVRepository extends SVNRepository {
     }
 
     //TODO: implement
-    public int getLocationSegments(String path, long pegRevision, long startRevision, long endRevision, ISVNLocationSegmentHandler handler) throws SVNException {
+    public long getLocationSegments(String path, long pegRevision, long startRevision, long endRevision, ISVNLocationSegmentHandler handler) throws SVNException {
+        try {
+            openConnection();
+            
+        } finally {
+            closeConnection();
+        }
+        
         return 0;
     }
 

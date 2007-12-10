@@ -1490,7 +1490,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     }
 
     //TODO: implement
-    public int getLocationSegments(String path, long pegRevision, long startRevision, long endRevision, ISVNLocationSegmentHandler handler) throws SVNException {
+    public long getLocationSegments(String path, long pegRevision, long startRevision, long endRevision, ISVNLocationSegmentHandler handler) throws SVNException {
         return 0;
     }
 }

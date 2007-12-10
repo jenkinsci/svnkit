@@ -16,6 +16,7 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNMergeRange;
+import org.tmatesoft.svn.core.internal.io.fs.FSID;
 
 
 /**
@@ -43,5 +44,9 @@ public interface ISVNDBProcessor {
     public void insertMergeInfo(long revision, String mergedFrom, String mergedTo, SVNMergeRange[] ranges) throws SVNException;
     
     public void updateMergeInfoChanges(long newRevision, String path) throws SVNException;
-    
+
+    public String getNodeOrigin(String nodeID) throws SVNException;
+
+    public void setNodeOrigins(Map nodeOrigins) throws SVNException;
+
 }

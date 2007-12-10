@@ -18,11 +18,11 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
 import org.tmatesoft.svn.core.io.ISVNLocationSegmentHandler;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
+import org.tmatesoft.svn.core.io.SVNLocationSegment;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 
@@ -67,14 +67,12 @@ public class FSLocationsFinder {
         FSRevisionRoot root = null;
         while (count < revisions.length) {
             long[] appearedRevision = new long[1];
-            SVNLocationEntry previousLocation = getPreviousLocation(path, revision, appearedRevision);
+            root = myFSFS.createRevisionRoot(revision);
+            SVNLocationEntry previousLocation = root.getPreviousLocation(path, appearedRevision);
             if (previousLocation == null) {
                 break;
             }
             String previousPath = previousLocation.getPath();
-            if (previousPath == null) {
-                break;
-            }
             long previousRevision = previousLocation.getRevision();
             while ((count < revisions.length) && (locationRevs[count] >= appearedRevision[0])) {
                 locationEntries.add(new SVNLocationEntry(locationRevs[count], path));
@@ -89,7 +87,9 @@ public class FSLocationsFinder {
             revision = previousRevision;
         }
         
-        root = myFSFS.createRevisionRoot(revision);
+        if (root != null && revision != root.getRevision()) {
+            root = myFSFS.createRevisionRoot(revision);
+        }
         FSRevisionNode curNode = root.getRevisionNode(path);
 
         while (count < revisions.length) {
@@ -113,7 +113,7 @@ public class FSLocationsFinder {
         return count;
     }
     
-    public void getNodeLocationSegments(String path, long pegRevision, long startRevision, 
+    public long getNodeLocationSegments(String path, long pegRevision, long startRevision, 
             long endRevision, ISVNLocationSegmentHandler handler) throws SVNException {
         long youngestRevision = SVNRepository.INVALID_REVISION; 
         if (FSRepository.isInvalidRevision(pegRevision)) {
@@ -150,42 +150,62 @@ public class FSLocationsFinder {
             path = "/" + path;
         }
         
+        long count = 0;
         long currentRevision = pegRevision;
+        String currentPath = path;
         while (currentRevision >= endRevision) {
             long[] appearedRevision = new long[1];
+            long segmentStartRevision = endRevision;
+            long segmentEndRevision = currentRevision;
+            String segmentPath = currentPath;
+            FSRevisionRoot root = myFSFS.createRevisionRoot(currentRevision);
+            SVNLocationEntry previousLocation = root.getPreviousLocation(currentPath, appearedRevision);
+            if (previousLocation == null) {
+                segmentStartRevision = root.getNodeOriginRevision(path);
+                if (segmentStartRevision < endRevision) {
+                    segmentStartRevision = endRevision;
+                }
+                currentRevision = SVNRepository.INVALID_REVISION;
+            } else {
+                segmentStartRevision = appearedRevision[0];
+                currentPath = previousLocation.getPath();
+                currentRevision = previousLocation.getRevision();
+            }
             
+            count += maybeCropAndSendSegment(segmentStartRevision, segmentEndRevision, startRevision, endRevision, 
+                    segmentPath, handler);
+         
+            if (FSRepository.isInvalidRevision(currentRevision)) {
+                break;
+            }
+            
+            if (segmentStartRevision - currentRevision > 1) {
+                count += maybeCropAndSendSegment(currentRevision + 1, segmentStartRevision - 1, startRevision, 
+                        endRevision, null, handler);
+            }
         }
+        return count;
     }
 
     protected void reset(FSFS fsfs) {
         myFSFS = fsfs;
     }
 
-    private SVNLocationEntry getPreviousLocation(String path, long revision, long[] appearedRevision) throws SVNException {
-        appearedRevision[0] = SVNRepository.INVALID_REVISION;
-        FSRevisionRoot root = myFSFS.createRevisionRoot(revision);
-        FSClosestCopy closestCopy = root.getClosestCopy(path);
-        if (closestCopy == null) {
-            return null;
-        }
-        
-        FSRevisionRoot copyTargetRoot = closestCopy.getRevisionRoot();
-        if (copyTargetRoot == null) {
-            return null;
-        }
-        String copyTargetPath = closestCopy.getPath();
-        FSRevisionNode copyFromNode = copyTargetRoot.getRevisionNode(copyTargetPath);
-        String copyFromPath = copyFromNode.getCopyFromPath();
-        long copyFromRevision = copyFromNode.getCopyFromRevision();
-        String remainder = "";
-        if (!path.equals(copyTargetPath)) {
-            remainder = path.substring(copyTargetPath.length());
-            if (remainder.startsWith("/")) {
-                remainder = remainder.substring(1);
+    private long maybeCropAndSendSegment(long segmentStartRevision, long segmentEndRevision, long startRevision, 
+            long endRevision, String segmentPath, ISVNLocationSegmentHandler handler) throws SVNException {
+        if (!(segmentStartRevision > startRevision || segmentEndRevision < endRevision)) {
+            if (segmentStartRevision < endRevision) {
+                segmentStartRevision = endRevision;
             }
+            if (segmentEndRevision > startRevision) {
+                segmentEndRevision = startRevision;
+            }
+            if (handler != null) {
+                handler.handleLocationSegment(new SVNLocationSegment(segmentStartRevision, segmentEndRevision, 
+                        segmentPath));
+            }
+            return segmentEndRevision - segmentStartRevision + 1;
         }
-        String previousPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(copyFromPath, remainder));
-        appearedRevision[0] = copyTargetRoot.getRevision();
-        return new SVNLocationEntry(copyFromRevision, previousPath);
+        return 0;
     }
 }

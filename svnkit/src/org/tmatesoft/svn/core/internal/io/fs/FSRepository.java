@@ -389,8 +389,15 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
     }
 
-    public int getLocationSegments(String path, long pegRevision, long startRevision, long endRevision, ISVNLocationSegmentHandler handler) throws SVNException {
-        return 0;
+    public long getLocationSegments(String path, long pegRevision, long startRevision, long endRevision, ISVNLocationSegmentHandler handler) throws SVNException {
+        try {
+            openRepository();
+            path = getRepositoryPath(path);
+            FSLocationsFinder locationsFinder = getLocationsFinder();
+            return locationsFinder.getNodeLocationSegments(path, pegRevision, startRevision, endRevision, handler);
+        } finally {
+            closeRepository();
+        }
     }
 
     public void replay(long lowRevision, long highRevision, boolean sendDeltas, ISVNEditor editor) throws SVNException {
@@ -693,6 +700,9 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
 
     private void openRepositoryRoot() throws SVNException {
         lock();
+        if (myFSFS != null && myRepositoryRoot != null && myRepositoryUUID != null) {
+            return;
+        }
         
         String hostName = getLocation().getHost(); 
         boolean hasCustomHostName = !"".equals(hostName) && 

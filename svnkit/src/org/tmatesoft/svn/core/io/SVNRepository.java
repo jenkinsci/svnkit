@@ -849,7 +849,7 @@ public abstract class SVNRepository {
     /**
      * @since 1.2, SVN 1.5
      */
-    public abstract int getLocationSegments(String path, long pegRevision, long startRevision, long endRevision, 
+    public abstract long getLocationSegments(String path, long pegRevision, long startRevision, long endRevision, 
             ISVNLocationSegmentHandler handler) throws SVNException;
 
     /**

@@ -21,6 +21,6 @@ import org.tmatesoft.svn.core.SVNException;
  */
 public interface ISVNLocationSegmentHandler {
 
-    public void handleLocationEntry(SVNLocationSegment locationSegment) throws SVNException;
+    public void handleLocationSegment(SVNLocationSegment locationSegment) throws SVNException;
 
 }

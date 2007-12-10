@@ -151,6 +151,7 @@ svnkit/src/org/tmatesoft/svn/core/SVNMergeRange.java -text
 svnkit/src/org/tmatesoft/svn/core/SVNMergeRangeList.java -text
 svnkit/src/org/tmatesoft/svn/core/SVNURL.java -text
 svnkit/src/org/tmatesoft/svn/core/auth/package.html -text
+svnkit/src/org/tmatesoft/svn/core/internal/io/dav/handlers/DAVLocationSegmentsHandler.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/dav/handlers/DAVMergeInfoHandler.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/HTTPBodyInputStream.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/FSClosestCopy.java -text
