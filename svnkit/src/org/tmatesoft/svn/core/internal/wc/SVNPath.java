@@ -13,7 +13,6 @@ package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
 
-import org.tmatesoft.svn.cli2.SVNCommandUtil;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -53,7 +52,7 @@ public class SVNPath {
     }
 
     public boolean isURL() {
-        return SVNCommandUtil.isURL(myTarget);
+        return SVNPathUtil.isURL(myTarget);
     }
     
     public boolean isFile() { 
