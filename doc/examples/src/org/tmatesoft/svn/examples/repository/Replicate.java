@@ -14,13 +14,13 @@ package org.tmatesoft.svn.examples.repository;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.util.Iterator;
-import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
@@ -286,10 +286,10 @@ public class Replicate {
      * But it's suitable enough for our example.
      */
     private static void copyRevisionProperties(SVNRepository fromRepository, SVNRepository toRepository, long revision) throws SVNException {
-        Map revProps = fromRepository.getRevisionProperties(revision, null);
-        for (Iterator propNames = revProps.keySet().iterator(); propNames.hasNext();) {
+        SVNProperties revProps = fromRepository.getRevisionProperties(revision, null);
+        for (Iterator propNames = revProps.nameSet().iterator(); propNames.hasNext();) {
             String propName = (String) propNames.next();
-            String propValue = (String) revProps.get(propName);
+            String propValue = revProps.getUTFEncodedValue(propName);
             toRepository.setRevisionPropertyValue(revision, propName, propValue);
         }
     }

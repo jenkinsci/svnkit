@@ -13,12 +13,11 @@ package org.tmatesoft.svn.examples.repository;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
@@ -141,7 +140,7 @@ public class DisplayFile {
          * property name and the value associated with the key is the property
          * value.
          */
-        Map fileProperties = new HashMap();
+        SVNProperties fileProperties = new SVNProperties();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         try {
@@ -177,7 +176,7 @@ public class DisplayFile {
          * svn:mime-type property (if any). SVNProperty is used to facilitate
          * the work with versioned properties.
          */
-        String mimeType = (String) fileProperties.get(SVNProperty.MIME_TYPE);
+        String mimeType = fileProperties.getUTFEncodedValue(SVNProperty.MIME_TYPE);
 
         /*
          * SVNProperty.isTextMimeType(..) method checks up the value of the mime-type
@@ -185,13 +184,13 @@ public class DisplayFile {
          */
         boolean isTextType = SVNProperty.isTextMimeType(mimeType);
 
-        Iterator iterator = fileProperties.keySet().iterator();
+        Iterator iterator = fileProperties.nameSet().iterator();
         /*
          * Displays file properties.
          */
         while (iterator.hasNext()) {
             String propertyName = (String) iterator.next();
-            String propertyValue = (String) fileProperties.get(propertyName);
+            String propertyValue = fileProperties.getUTFEncodedValue(propertyName);
             System.out.println("File property: " + propertyName + "="
                     + propertyValue);
         }

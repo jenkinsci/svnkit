@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
@@ -303,6 +304,9 @@ public class Export {
         public void changeDirProperty(String name, String value) throws SVNException {
         }
 
+        public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
+        }
+
         /*
          * Called when a new file has to be created.
          * 
@@ -344,7 +348,10 @@ public class Export {
          * transfor file contents propertly after receiving.
          */
         public void changeFileProperty(String path, String name, String value) throws SVNException {
-        }        
+        }
+
+        public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
+        }
 
         /*
          * Called before sending 'delta' for a file. Delta may include instructions
