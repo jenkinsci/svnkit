@@ -289,7 +289,7 @@ public class Replicate {
         SVNProperties revProps = fromRepository.getRevisionProperties(revision, null);
         for (Iterator propNames = revProps.nameSet().iterator(); propNames.hasNext();) {
             String propName = (String) propNames.next();
-            String propValue = revProps.getUTFEncodedValue(propName);
+            String propValue = revProps.getStringValue(propName);
             toRepository.setRevisionPropertyValue(revision, propName, propValue);
         }
     }

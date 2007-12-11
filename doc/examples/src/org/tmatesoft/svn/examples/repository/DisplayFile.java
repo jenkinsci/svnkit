@@ -176,7 +176,7 @@ public class DisplayFile {
          * svn:mime-type property (if any). SVNProperty is used to facilitate
          * the work with versioned properties.
          */
-        String mimeType = fileProperties.getUTFEncodedValue(SVNProperty.MIME_TYPE);
+        String mimeType = fileProperties.getStringValue(SVNProperty.MIME_TYPE);
 
         /*
          * SVNProperty.isTextMimeType(..) method checks up the value of the mime-type
@@ -190,7 +190,7 @@ public class DisplayFile {
          */
         while (iterator.hasNext()) {
             String propertyName = (String) iterator.next();
-            String propertyValue = fileProperties.getUTFEncodedValue(propertyName);
+            String propertyValue = fileProperties.getStringValue(propertyName);
             System.out.println("File property: " + propertyName + "="
                     + propertyValue);
         }
