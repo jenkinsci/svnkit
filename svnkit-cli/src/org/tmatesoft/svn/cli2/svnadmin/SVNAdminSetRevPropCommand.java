@@ -12,7 +12,6 @@
 package org.tmatesoft.svn.cli2.svnadmin;
 
 import java.io.File;
-import java.io.UnsupportedEncodingException;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -20,10 +19,11 @@ import java.util.List;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
-import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -69,19 +69,12 @@ public class SVNAdminSetRevPropCommand extends SVNAdminCommand {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                 "Exactly one property name and one file argument required"));
         }
-        byte[] value = getEnvironment().readFromFile(target.getFile());
-        String strValue = null;
-        try {
-            strValue = new String(value, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                    e.getMessage()));
-        }
+        SVNPropertyValue propertyValue = new SVNPropertyValue(getEnvironment().readFromFile(target.getFile()));        
         SVNURL url = SVNURL.fromFile(repos);
         FSRepository repository = (FSRepository) SVNRepositoryFactory.create(url);
         long rev = getRevisionNumber(getSVNAdminEnvironment().getStartRevision(), repository.getLatestRevision(), repository);
 
-        repository.setRevisionPropertyValue(rev, propertyName, strValue, 
+        repository.setRevisionPropertyValue(rev, propertyName, propertyValue,
                 !getSVNAdminEnvironment().isUsePreRevPropChangeHook(), 
                 !getSVNAdminEnvironment().isUsePostRevPropChangeHook());
     }

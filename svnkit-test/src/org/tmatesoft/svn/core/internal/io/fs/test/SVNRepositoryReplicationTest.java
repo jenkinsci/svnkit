@@ -25,6 +25,8 @@ import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
@@ -240,7 +242,7 @@ public class SVNRepositoryReplicationTest {
         return true;
     }
 
-    private static boolean checkItemProps(Map props1, Map props2) {
+    private static boolean checkItemProps(SVNProperties props1, SVNProperties props2) {
         if (props1 == null && props2 == null) {
             return true;
         }
@@ -249,16 +251,16 @@ public class SVNRepositoryReplicationTest {
             return false;
         }
 
-        for (Iterator propsIter = props1.keySet().iterator(); propsIter.hasNext();) {
+        for (Iterator propsIter = props1.nameSet().iterator(); propsIter.hasNext();) {
             String propName = (String) propsIter.next();
-            if (props2.get(propName) == null) {
+            if (props2.getSVNPropertyValue(propName) == null) {
                 return false;
             }
             if (propName.equals(SVNProperty.UUID)) {
                 continue;
             }
-            String propVal1 = (String) props1.get(propName);
-            String propVal2 = (String) props2.get(propName);
+            SVNPropertyValue propVal1 = props1.getSVNPropertyValue(propName);
+            SVNPropertyValue propVal2 = props2.getSVNPropertyValue(propName);
             if (!propVal1.equals(propVal2)) {
                 return false;
             }
@@ -350,24 +352,21 @@ public class SVNRepositoryReplicationTest {
     private static boolean compareRevisionProps(SVNURL srcURL, SVNURL dstURL, long revision) throws SVNException {
         SVNRepository srcRep = SVNRepositoryFactory.create(srcURL);
         SVNRepository dstRep = SVNRepositoryFactory.create(dstURL);
-        Map srcRevProps = new HashMap();
-        Map dstRevProps = new HashMap();
+        SVNProperties srcRevProps = new SVNProperties();
+        SVNProperties dstRevProps = new SVNProperties();
         srcRep.getRevisionProperties(revision, srcRevProps);
         dstRep.getRevisionProperties(revision, dstRevProps);
-        if (!compareProps(srcRevProps, dstRevProps)) {
-            return false;
-        }
-        return true;
+        return compareProps(srcRevProps, dstRevProps);
     }
 
-    private static boolean compareProps(Map props1, Map props2) {
+    private static boolean compareProps(SVNProperties props1, SVNProperties props2) {
         if (props1.size() != props2.size()) {
             return false;
         }
-        for (Iterator names = props1.keySet().iterator(); names.hasNext();) {
+        for (Iterator names = props1.nameSet().iterator(); names.hasNext();) {
             String propName = (String) names.next();
-            String propValue = (String) props1.get(propName);
-            String propValue2 = (String) props2.get(propName);
+            String propValue = props1.getStringValue(propName);
+            String propValue2 = props2.getStringValue(propName);
             if (propValue2 == null || !propValue2.equals(propValue)) {
                 return false;
             }
@@ -390,16 +389,13 @@ public class SVNRepositoryReplicationTest {
         if (!isRoot && !dir1.getName().equals(dir2.getName())) {
             return false;
         }
-        Map props1 = new HashMap();
-        Map props2 = new HashMap();
+        SVNProperties props1 = new SVNProperties();
+        SVNProperties props2 = new SVNProperties();
         ISVNPropertyHandler handler1 = new PropertyHandler(props1);
         ISVNPropertyHandler handler2 = new PropertyHandler(props2);
         wcClient.doGetProperty(dir1, null, SVNRevision.HEAD, SVNRevision.WORKING, false, handler1);
         wcClient.doGetProperty(dir2, null, SVNRevision.HEAD, SVNRevision.WORKING, false, handler2);
-        if (!compareProps(props1, props2)) {
-            return false;
-        }
-        return true;
+        return compareProps(props1, props2);
     }
 
     private static boolean compareFiles(File file1, File file2) throws SVNException {
@@ -416,8 +412,8 @@ public class SVNRepositoryReplicationTest {
         if (!file1.getName().equals(file2.getName())) {
             return false;
         }
-        Map props1 = new HashMap();
-        Map props2 = new HashMap();
+        SVNProperties props1 = new SVNProperties();
+        SVNProperties props2 = new SVNProperties();
         ISVNPropertyHandler handler1 = new PropertyHandler(props1);
         ISVNPropertyHandler handler2 = new PropertyHandler(props2);
         wcClient.doGetProperty(file1, null, SVNRevision.HEAD, SVNRevision.WORKING, false, handler1);
@@ -427,10 +423,7 @@ public class SVNRepositoryReplicationTest {
         }
         String checksum1 = file1Info.getChecksum();// SVNFileUtil.computeChecksum(file1);
         String checksum2 = file2Info.getChecksum();// SVNFileUtil.computeChecksum(file2);
-        if (!checksum1.equals(checksum2)) {
-            return false;
-        }
-        return true;
+        return checksum1.equals(checksum2);
     }
 
     public static boolean compareHistory(SVNRepository src, SVNRepository dst) throws SVNException {

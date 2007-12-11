@@ -39,6 +39,8 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -448,7 +450,7 @@ public abstract class SVNRepository {
      *                      </ul>
      * @see                 org.tmatesoft.svn.core.SVNRevisionProperty
      */
-    public abstract Map getRevisionProperties(long revision, Map properties) throws SVNException;
+    public abstract SVNProperties getRevisionProperties(long revision, SVNProperties properties) throws SVNException;
     
     /**
      * Sets a revision property with the specified name to a new value. 
@@ -474,8 +476,11 @@ public abstract class SVNRepository {
      *                          </ul>
      * @see                     org.tmatesoft.svn.core.SVNRevisionProperty
      */
-    public abstract void setRevisionPropertyValue(long revision, String propertyName, String propertyValue) throws SVNException;
-    
+    public void setRevisionPropertyValue(long revision, String propertyName, String propertyValue) throws SVNException{
+        setRevisionPropertyValue(revision, propertyName, new SVNPropertyValue(propertyValue));
+    }
+
+    public abstract void setRevisionPropertyValue(long revision, String propertyName, SVNPropertyValue propertyValue) throws SVNException;
     /**
      * Gets the value of an unversioned property. 
      * 
@@ -493,7 +498,13 @@ public abstract class SVNRepository {
      *                          (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
      *                          </ul>
      */
-    public abstract String getRevisionPropertyValue(long revision, String propertyName) throws SVNException;
+
+    public String getRevisionStringPropertyValue(long revision, String propertyName) throws SVNException {
+        SVNPropertyValue value = getRevisionPropertyValue(revision, propertyName);
+        return value != null ? value.getString() : null;
+    }
+
+    public abstract SVNPropertyValue getRevisionPropertyValue(long revision, String propertyName) throws SVNException;
     
     /**
 	 * Returns the kind of an item located at the specified path in
@@ -550,7 +561,7 @@ public abstract class SVNRepository {
      *                          (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
      *                          </ul>
      */
-    public abstract long getFile(String path, long revision, Map properties, OutputStream contents) throws SVNException; 
+    public abstract long getFile(String path, long revision, SVNProperties properties, OutputStream contents) throws SVNException; 
 
     /**
      * Fetches the contents and/or properties of a directory located at the specified path
@@ -595,9 +606,9 @@ public abstract class SVNRepository {
      * @see                 #getDir(String, long, boolean, Collection)
      * @see                 org.tmatesoft.svn.core.SVNDirEntry
      */
-    public abstract long getDir(String path, long revision, Map properties, ISVNDirEntryHandler handler) throws SVNException; 
+    public abstract long getDir(String path, long revision, SVNProperties properties, ISVNDirEntryHandler handler) throws SVNException;
 
-    public abstract long getDir(String path, long revision, Map properties, int entryFields, ISVNDirEntryHandler handler) throws SVNException; 
+    public abstract long getDir(String path, long revision, SVNProperties properties, int entryFields, ISVNDirEntryHandler handler) throws SVNException; 
 
     /**
      * Retrieves interesting file revisions for the specified file. 
@@ -931,11 +942,11 @@ public abstract class SVNRepository {
      * @see                 #getDir(String, long, boolean, Collection)
      * @see                 org.tmatesoft.svn.core.SVNDirEntry
      */
-    public Collection getDir(String path, long revision, Map properties, Collection dirEntries) throws SVNException {
+    public Collection getDir(String path, long revision, SVNProperties properties, Collection dirEntries) throws SVNException {
         return getDir(path, revision, properties, SVNDirEntry.DIRENT_ALL, dirEntries);
     }
 
-    public Collection getDir(String path, long revision, Map properties, int entryFields, Collection dirEntries) throws SVNException {
+    public Collection getDir(String path, long revision, SVNProperties properties, int entryFields, Collection dirEntries) throws SVNException {
         final Collection result = dirEntries != null ? dirEntries : new LinkedList();
         ISVNDirEntryHandler handler;
         handler = new ISVNDirEntryHandler() {
@@ -1701,19 +1712,19 @@ public abstract class SVNRepository {
      */    
     public abstract ISVNEditor getCommitEditor(String logMessage, Map locks, boolean keepLocks, final ISVNWorkspaceMediator mediator) throws SVNException;
     
-    public ISVNEditor getCommitEditor(String logMessage, Map locks, boolean keepLocks, Map revProps, final ISVNWorkspaceMediator mediator) throws SVNException {
+    public ISVNEditor getCommitEditor(String logMessage, Map locks, boolean keepLocks, SVNProperties revProps, final ISVNWorkspaceMediator mediator) throws SVNException {
         if (hasSVNProperties(revProps)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, "Standard properties can't be set explicitly as revision properties");
             SVNErrorManager.error(err);
         }
-        revProps = revProps == null ? new HashMap() : revProps;
+        revProps = revProps == null ? new SVNProperties() : revProps;
         if (logMessage != null) {
             revProps.put(SVNRevisionProperty.LOG, logMessage);
         }
         return getCommitEditorInternal(locks, keepLocks, revProps, mediator);
     }
     
-    protected abstract ISVNEditor getCommitEditorInternal(Map locks, boolean keepLocks, Map revProps, final ISVNWorkspaceMediator mediator) throws SVNException;
+    protected abstract ISVNEditor getCommitEditorInternal(Map locks, boolean keepLocks, SVNProperties revProps, final ISVNWorkspaceMediator mediator) throws SVNException;
     
     /**
      * Gets the lock for the file located at the specified path.
@@ -1978,11 +1989,11 @@ public abstract class SVNRepository {
         }
     }
     
-    protected static boolean hasSVNProperties(Map props) {
+    protected static boolean hasSVNProperties(SVNProperties props) {
         if (props == null) {
             return false;
         }
-        for (Iterator names = props.keySet().iterator(); names.hasNext();) {
+        for (Iterator names = props.nameSet().iterator(); names.hasNext();) {
             String propName = (String) names.next();
             if (SVNProperty.isSVNProperty(propName)) {
                 return true;

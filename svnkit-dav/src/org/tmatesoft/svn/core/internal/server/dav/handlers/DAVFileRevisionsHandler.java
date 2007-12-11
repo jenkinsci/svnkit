@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
@@ -74,16 +75,13 @@ public class DAVFileRevisionsHandler extends DAVReportHandler implements ISVNFil
         attrs.put(REVISION_ATTR, String.valueOf(fileRevision.getRevision()));
         StringBuffer xmlBuffer = SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, FILE_REVISION_ATTR, SVNXMLUtil.XML_STYLE_NORMAL, attrs, null);
         write(xmlBuffer);
-        for (Iterator iterator = fileRevision.getRevisionProperties().entrySet().iterator(); iterator.hasNext();) {
-            Map.Entry entry = (Map.Entry) iterator.next();
-            String propertyName = (String) entry.getKey();
-            String propertyValue = (String) entry.getValue();
-            writePropertyTag(REVISION_PROPERTY_ATTR, propertyName, propertyValue);
+        for (Iterator iterator = fileRevision.getRevisionProperties().nameSet().iterator(); iterator.hasNext();) {
+            String propertyName = (String) iterator.next();
+            writePropertyTag(REVISION_PROPERTY_ATTR, propertyName, fileRevision.getRevisionProperties().getSVNPropertyValue(propertyName));
         }
-        for (Iterator iterator = fileRevision.getPropertiesDelta().entrySet().iterator(); iterator.hasNext();) {
-            Map.Entry entry = (Map.Entry) iterator.next();
-            String propertyName = (String) entry.getKey();
-            String propertyValue = (String) entry.getValue();
+        for (Iterator iterator = fileRevision.getPropertiesDelta().nameSet().iterator(); iterator.hasNext();) {
+            String propertyName = (String) iterator.next();
+            SVNPropertyValue propertyValue = fileRevision.getPropertiesDelta().getSVNPropertyValue(propertyName);
             if (propertyValue != null) {
                 writePropertyTag(SET_PROPERTY_ATTR, propertyName, propertyValue);
             } else {

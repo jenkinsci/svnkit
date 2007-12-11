@@ -14,11 +14,11 @@ package org.tmatesoft.svn.core.internal.wc;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
@@ -26,7 +26,6 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionRoot;
 import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.admin.ISVNGNUDiffGenerator;
-
 
 
 /**
@@ -146,7 +145,7 @@ public class DefaultSVNGNUDiffGenerator extends DefaultSVNDiffGenerator implemen
         long rev = 0;
         if (root != null) {
             FSFS fsfs = root.getOwner();
-            Map props = null;
+            SVNProperties props = null;
             if (root instanceof FSRevisionRoot) {
                 FSRevisionRoot revisionRoot = (FSRevisionRoot) root;
                 rev = revisionRoot.getRevision();
@@ -156,7 +155,7 @@ public class DefaultSVNGNUDiffGenerator extends DefaultSVNDiffGenerator implemen
                 txnName = txnRoot.getTxnID();
                 props = fsfs.getTransactionProperties(txnName);
             }
-            date = (String) props.get(SVNRevisionProperty.DATE);
+            date = props.getStringValue(SVNRevisionProperty.DATE);
         } 
         
         String dateString = null;

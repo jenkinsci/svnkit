@@ -14,15 +14,14 @@ package org.tmatesoft.svn.core.internal.wc;
 import java.io.File;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-
 
 
 /**
@@ -47,16 +46,16 @@ public abstract class AbstractDiffCallback {
     
     public abstract File createTempDirectory() throws SVNException;
 
-    public abstract SVNStatusType propertiesChanged(String path, Map originalProperties, Map diff) throws SVNException;
+    public abstract SVNStatusType propertiesChanged(String path, SVNProperties originalProperties, SVNProperties diff) throws SVNException;
 
     public abstract SVNStatusType[] fileChanged(String path, File file1, File file2, long revision1, long revision2, String mimeType1, String mimeType2, 
-            Map originalProperties, Map diff) throws SVNException;
+            SVNProperties originalProperties, SVNProperties diff) throws SVNException;
     
     public abstract SVNStatusType[] fileAdded(String path, File file1, File file2, long revision1, long revision2, String mimeType1, String mimeType2, 
-            Map originalProperties, Map diff) throws SVNException;
+            SVNProperties originalProperties, SVNProperties diff) throws SVNException;
     
     public abstract SVNStatusType fileDeleted(String path, File file1, File file2, String mimeType1, String mimeType2, 
-            Map originalProperties) throws SVNException;
+            SVNProperties originalProperties) throws SVNException;
     
     public abstract SVNStatusType directoryAdded(String path, long revision) throws SVNException;
 
@@ -72,18 +71,18 @@ public abstract class AbstractDiffCallback {
         return myAdminArea.getFile(path).getAbsolutePath().replace(File.separatorChar, '/');
     }
     
-    protected void categorizeProperties(Map original, Map regular, Map entry, Map wc) {
+    protected void categorizeProperties(SVNProperties original, SVNProperties regular, SVNProperties entry, SVNProperties wc) {
         if (original == null) {
             return;
         }
-        for(Iterator propNames = original.keySet().iterator(); propNames.hasNext();) {
+        for(Iterator propNames = original.nameSet().iterator(); propNames.hasNext();) {
             String name = (String) propNames.next();
             if (SVNProperty.isRegularProperty(name) && regular != null) {
-                regular.put(name, original.get(name));
+                regular.put(name, original.getStringValue(name));
             } else if (SVNProperty.isEntryProperty(name) && entry != null) {
-                entry.put(name, original.get(name));
+                entry.put(name, original.getStringValue(name));
             } else if (SVNProperty.isWorkingCopyProperty(name) && wc != null) {
-                wc.put(name, original.get(name));
+                wc.put(name, original.getStringValue(name));
             }
         }
     }

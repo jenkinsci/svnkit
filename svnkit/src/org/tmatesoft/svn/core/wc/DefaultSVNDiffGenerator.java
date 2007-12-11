@@ -17,9 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
 import java.io.Writer;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -29,6 +27,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -170,13 +169,13 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         return myIsForcedBinaryDiff;
     }
 
-    public void displayPropDiff(String path, Map baseProps, Map diff, OutputStream result) throws SVNException {
-        baseProps = baseProps != null ? baseProps : Collections.EMPTY_MAP;
-        diff = diff != null ? diff : Collections.EMPTY_MAP;
-        for (Iterator changedPropNames = diff.keySet().iterator(); changedPropNames.hasNext();) {
+    public void displayPropDiff(String path, SVNProperties baseProps, SVNProperties diff, OutputStream result) throws SVNException {
+        baseProps = baseProps != null ? baseProps : SVNProperties.EMPTY_PROPERTIES;
+        diff = diff != null ? diff : SVNProperties.EMPTY_PROPERTIES;
+        for (Iterator changedPropNames = diff.nameSet().iterator(); changedPropNames.hasNext();) {
             String name = (String) changedPropNames.next();
-            String originalValue = (String) baseProps.get(name);
-            String newValue = (String) diff.get(name);
+            String originalValue = baseProps.getStringValue(name);
+            String newValue = diff.getStringValue(name);
             if ((originalValue != null && originalValue.equals(newValue)) || originalValue == newValue) {
                 changedPropNames.remove();
             }
@@ -186,17 +185,17 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         }
         path = getDisplayPath(path);
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        diff = new TreeMap(diff);
+        diff = new SVNProperties(diff);
         try {
             bos.write(EOL);
             bos.write(("Property changes on: " + (useLocalFileSeparatorChar() ? path.replace('/', File.separatorChar) : path)).getBytes(getEncoding()));
             bos.write(EOL);
             bos.write(PROPERTIES_SEPARATOR);
             bos.write(EOL);
-            for (Iterator changedPropNames = diff.keySet().iterator(); changedPropNames.hasNext();) {
+            for (Iterator changedPropNames = diff.nameSet().iterator(); changedPropNames.hasNext();) {
                 String name = (String) changedPropNames.next();
-                String originalValue = baseProps != null ? (String) baseProps.get(name) : null;
-                String newValue = (String) diff.get(name);
+                String originalValue = baseProps != null ? baseProps.getStringValue(name) : null;
+                String newValue = diff.getStringValue(name);
                 String headerFormat = null;
                 
                 if (originalValue == null) {
@@ -514,7 +513,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         return true;
     }
     
-    private void displayMergeInfoDiff(ByteArrayOutputStream baos, String oldValue, String newValue) throws SVNException, UnsupportedEncodingException, IOException {
+    private void displayMergeInfoDiff(ByteArrayOutputStream baos, String oldValue, String newValue) throws SVNException, IOException {
         Map oldMergeInfo = null;
         Map newMergeInfo = null;
         if (oldValue != null) {

@@ -15,6 +15,7 @@ import java.io.InputStream;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.wc.admin.SVNUUIDAction;
 
 
@@ -45,9 +46,7 @@ public interface ISVNLoadHandler {
     
     public void removeNodeProperties() throws SVNException;
 
-    public void setNodeProperty(String propertyName, String propertyValue) throws SVNException;
-
-    public void setRevisionProperty(String propertyName, String propertyValue) throws SVNException;
+    public void setRevisionProperty(String propertyName, SVNPropertyValue propertyValue) throws SVNException;
 
     public void applyTextDelta() throws SVNException;
 

@@ -45,6 +45,8 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaReader;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -190,10 +192,10 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         return SVNReader.getLong(values, 0);
     }
 
-    public Map getRevisionProperties(long revision, Map properties) throws SVNException {
+    public SVNProperties getRevisionProperties(long revision, SVNProperties properties) throws SVNException {
         assertValidRevision(revision);
         if (properties == null) {
-            properties = new HashMap();
+            properties = new SVNProperties();
         }
         Object[] buffer = new Object[]{"rev-proplist", getRevisionObject(revision)};
         try {
@@ -211,7 +213,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         return properties;
     }
 
-    public String getRevisionPropertyValue(long revision, String propertyName) throws SVNException {
+    public SVNPropertyValue getRevisionPropertyValue(long revision, String propertyName) throws SVNException {
         assertValidRevision(revision);
         Object[] buffer = new Object[]{"rev-prop", getRevisionObject(revision), propertyName};
         List values = null;
@@ -219,14 +221,15 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             openConnection();
             write("(w(ns))", buffer);
             authenticate();
-            values = read("(?s)", null, true);
+            values = read("(?b)", null, true);
         } catch (SVNException e) {
             closeSession();
             throw e;
         } finally {
             closeConnection();
         }
-        return SVNReader.getString(values, 0);
+        byte[] bytes = SVNReader.getBytes(values, 0);
+        return bytes == null ? null : new SVNPropertyValue(bytes);
     }
 
     public SVNNodeKind checkPath(String path, long revision) throws SVNException {
@@ -290,7 +293,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         return count;
     }
 
-    public long getFile(String path, long revision, Map properties, OutputStream contents) throws SVNException {
+    public long getFile(String path, long revision, SVNProperties properties, OutputStream contents) throws SVNException {
         Long rev = revision > 0 ? new Long(revision) : null;
         try {
             openConnection();
@@ -353,11 +356,11 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         }
     }
 
-    public long getDir(String path, long revision, Map properties, final ISVNDirEntryHandler handler) throws SVNException {
+    public long getDir(String path, long revision, SVNProperties properties, final ISVNDirEntryHandler handler) throws SVNException {
         return getDir(path, revision, properties, SVNDirEntry.DIRENT_ALL, handler);
     }
 
-    public long getDir(String path, long revision, Map properties, int entryFields, final ISVNDirEntryHandler handler) throws SVNException {
+    public long getDir(String path, long revision, SVNProperties properties, int entryFields, final ISVNDirEntryHandler handler) throws SVNException {
         Long rev = getRevisionObject(revision);
         try {
             openConnection();
@@ -547,8 +550,8 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 if (handler != null) {
                     name = SVNReader.getString(items, 0);
                     long revision = SVNReader.getLong(items, 1);
-                    Map properties = SVNReader.getProperties(items, 2, null);
-                    Map propertiesDelta = SVNReader.getPropertyDiffs(items, 3, null);
+                    SVNProperties properties = SVNReader.getProperties(items, 2, null);
+                    SVNProperties propertiesDelta = SVNReader.getPropertyDiffs(items, 3, null);
                     boolean isMergedRevision = SVNReader.getBoolean(items, 4);
 
                     if (name != null) {
@@ -699,7 +702,8 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 }
                 count++;
                 long revision = 0;
-                Map revisionProperties = null;
+                SVNProperties revisionProperties = null;
+                SVNProperties logEntryProperties = new SVNProperties();
                 boolean hasChildren = false;
                 if (handler != null && (limit <= 0 || count <= limit)) {
                     revision = SVNReader.getLong(items, 1);
@@ -720,37 +724,41 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                         SVNErrorManager.error(err);
                     }
 
-                    if (revisionProperties == null || revisionProperties.isEmpty()) {
-                        revisionProperties = new HashMap();
+                    if (revisionProperties != null) {
+                        for (Iterator iterator = revisionProperties.nameSet().iterator(); iterator.hasNext();) {
+                            String name = (String) iterator.next();
+                            String value = revisionProperties.getStringValue(name);
+                            logEntryProperties.put(name, value);
+                        }
                     }
 
                     if (revisionPropertyNames == null || revisionPropertyNames.length == 0) {
                         if (author != null) {
-                            revisionProperties.put(SVNRevisionProperty.AUTHOR, author);
+                            logEntryProperties.put(SVNRevisionProperty.AUTHOR, author);
                         }
                         if (date != null) {
-                            revisionProperties.put(SVNRevisionProperty.DATE, date);
+                            logEntryProperties.put(SVNRevisionProperty.DATE, SVNDate.formatDate(date));
                         }
                         if (message != null) {
-                            revisionProperties.put(SVNRevisionProperty.LOG, message);
+                            logEntryProperties.put(SVNRevisionProperty.LOG, message);
                         }
                     } else {
                         for (int i = 0; i < revisionPropertyNames.length; i++) {
                             String revPropName = revisionPropertyNames[i];
                             if (author != null && SVNRevisionProperty.AUTHOR.equals(revPropName)) {
-                                revisionProperties.put(SVNRevisionProperty.AUTHOR, author);
+                                logEntryProperties.put(SVNRevisionProperty.AUTHOR, author);
                             }
                             if (date != null && SVNRevisionProperty.DATE.equals(revPropName)) {
-                                revisionProperties.put(SVNRevisionProperty.DATE, date);
+                                logEntryProperties.put(SVNRevisionProperty.DATE, SVNDate.formatDate(date));
                             }
                             if (message != null && SVNRevisionProperty.LOG.equals(revPropName)) {
-                                revisionProperties.put(SVNRevisionProperty.LOG, message);
+                                logEntryProperties.put(SVNRevisionProperty.LOG, message);
                             }
                         }
                     }
                 }
                 if (handler != null && (limit <= 0 || count <= limit)) {
-                    SVNLogEntry logEntry = new SVNLogEntry(changedPathsMap, revision, revisionProperties, hasChildren);
+                    SVNLogEntry logEntry = new SVNLogEntry(changedPathsMap, revision, logEntryProperties, hasChildren);
                     handler.handleLogEntry(logEntry);
                 }
             }
@@ -782,13 +790,13 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     }
 
     public void setRevisionPropertyValue(long revision, String propertyName,
-                                         String propertyValue) throws SVNException {
+                                         SVNPropertyValue propertyValue) throws SVNException {
         assertValidRevision(revision);
         Object[] buffer = new Object[]{"change-rev-prop",
-                getRevisionObject(revision), propertyName, propertyValue};
+                getRevisionObject(revision), propertyName, propertyValue.getBytes()};
         try {
             openConnection();
-            write("(w(nss))", buffer);
+            write("(w(nsb))", buffer);
             authenticate();
             read("", null, true);
         } catch (SVNException e) {
@@ -1448,10 +1456,10 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         }
     }
 
-    protected ISVNEditor getCommitEditorInternal(Map locks, boolean keepLocks, Map revProps, ISVNWorkspaceMediator mediator) throws SVNException {
+    protected ISVNEditor getCommitEditorInternal(Map locks, boolean keepLocks, SVNProperties revProps, ISVNWorkspaceMediator mediator) throws SVNException {
         try {
             openConnection();
-            String logMessage = (String) revProps.get(SVNRevisionProperty.LOG);
+            String logMessage = revProps.getStringValue(SVNRevisionProperty.LOG);
             if (revProps.size() > 1 && !myConnection.isCommitRevprops()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "Server doesn't support setting arbitrary revision properties during commit");
                 SVNErrorManager.error(err);

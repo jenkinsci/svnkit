@@ -16,6 +16,7 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
+import org.tmatesoft.svn.core.SVNProperties;
 
 /**
  * @author TMate Software Ltd.
@@ -58,12 +59,12 @@ public abstract class SVNXMLCommand extends SVNCommand {
         return SVNXMLUtil.closeXMLTag(null, tagName, target);
     }
 
-    protected StringBuffer printXMLPropHash(StringBuffer buffer, Map propHash, boolean namesOnly) {
+    protected StringBuffer printXMLPropHash(StringBuffer buffer, SVNProperties propHash, boolean namesOnly) {
         if (propHash != null && !propHash.isEmpty()) {
             buffer = buffer == null ? new StringBuffer() : buffer;
-            for (Iterator propNames = propHash.keySet().iterator(); propNames.hasNext();) {
+            for (Iterator propNames = propHash.nameSet().iterator(); propNames.hasNext();) {
                 String propName = (String) propNames.next();
-                String propVal = (String) propHash.get(propName);
+                String propVal = propHash.getStringValue(propName);
                 if (namesOnly) {
                     buffer = openXMLTag("property", SVNXMLUtil.XML_STYLE_SELF_CLOSING, "name", propName, buffer);
                 } else {

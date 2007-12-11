@@ -106,7 +106,7 @@ public class DAVLogHandler extends DAVReportHandler implements ISVNLogEntryHandl
         SVNXMLUtil.openCDataTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.VERSION_NAME.getName(), String.valueOf(logEntry.getRevision()), xmlBuffer);
 
         boolean noCustomProperties = getLogRequest().isCustomPropertyRequested();
-        for (Iterator iterator = logEntry.getRevisionProperties().entrySet().iterator(); iterator.hasNext();) {
+        for (Iterator iterator = logEntry.getRevisionProperties().nameSet().iterator(); iterator.hasNext();) {
             Map.Entry entry = (Map.Entry) iterator.next();
             String property = (String) entry.getKey();
             Object value = entry.getValue();

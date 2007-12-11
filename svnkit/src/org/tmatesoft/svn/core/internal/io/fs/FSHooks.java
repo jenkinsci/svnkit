@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.io.fs;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -91,18 +92,24 @@ public class FSHooks {
     private static void runLockHook(File reposRootDir, String hookName, String path, String username, String paths) throws SVNException {
         username = username == null ? "" : username;
         path = path == null ? "" : path;
-        runHook(reposRootDir, hookName, new String[] {path, username}, paths);
+        byte[] bytes = null;
+        try {
+            bytes = paths == null ? null : paths.getBytes("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            bytes = paths.getBytes();
+        }
+        runHook(reposRootDir, hookName, new String[] {path, username}, bytes);
     }
 
-    public static void runPreRevPropChangeHook(File reposRootDir, String propName, String propNewValue, String author, long revision, String action) throws SVNException {
+    public static void runPreRevPropChangeHook(File reposRootDir, String propName, byte[] propNewValue, String author, long revision, String action) throws SVNException {
         runChangeRevPropHook(reposRootDir, SVN_REPOS_HOOK_PRE_REVPROP_CHANGE, propName, propNewValue, author, revision, action, true);
     }
 
-    public static void runPostRevPropChangeHook(File reposRootDir, String propName, String propOldValue, String author, long revision, String action) throws SVNException {
+    public static void runPostRevPropChangeHook(File reposRootDir, String propName, byte[] propOldValue, String author, long revision, String action) throws SVNException {
         runChangeRevPropHook(reposRootDir, SVN_REPOS_HOOK_POST_REVPROP_CHANGE, propName, propOldValue, author, revision, action, false);
     }
     
-    private static void runChangeRevPropHook(File reposRootDir, String hookName, String propName, String propValue, String author, long revision, String action, boolean isPre) throws SVNException {
+    private static void runChangeRevPropHook(File reposRootDir, String hookName, String propName, byte[] propValue, String author, long revision, String action, boolean isPre) throws SVNException {
         File hookFile = getHookFile(reposRootDir, hookName);
         if (hookFile == null) {
             if (isPre) {
@@ -129,7 +136,7 @@ public class FSHooks {
         runHook(reposRootDir, SVN_REPOS_HOOK_POST_COMMIT, new String[] {String.valueOf(committedRevision)}, null);
     }
 
-    private static void runHook(File reposRootDir, String hookName, String[] args, String input) throws SVNException {
+    private static void runHook(File reposRootDir, String hookName, String[] args, byte[] input) throws SVNException {
         File hookFile = getHookFile(reposRootDir, hookName);
         if (hookFile == null) {
             return;
@@ -167,7 +174,7 @@ public class FSHooks {
     }
 
 
-    private static void feedHook(File hook, String hookName, Process hookProcess, String stdInValue) throws SVNException {
+    private static void feedHook(File hook, String hookName, Process hookProcess, byte[] stdInValue) throws SVNException {
         if (hookProcess == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "Failed to start ''{0}'' hook", hook);
             SVNErrorManager.error(err);
@@ -181,9 +188,8 @@ public class FSHooks {
         if (stdInValue != null) {
             OutputStream osToStdIn = hookProcess.getOutputStream();
             try {
-                byte[] bytes = stdInValue.getBytes("UTF-8");
-                for (int i = 0; i < bytes.length; i += 1024) {
-                    osToStdIn.write(bytes, i, Math.min(1024, bytes.length - i));
+                for (int i = 0; i < stdInValue.length; i += 1024) {
+                    osToStdIn.write(stdInValue, i, Math.min(1024, stdInValue.length - i));
                     osToStdIn.flush();
                 }
             } catch (IOException ioe) {

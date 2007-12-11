@@ -15,6 +15,7 @@ import java.io.OutputStream;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
@@ -52,7 +53,13 @@ class SVNFileCheckoutEditor implements ISVNEditor {
     public void changeDirProperty(String name, String value) throws SVNException {
     }
 
+    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
+    }
+
     public void changeFileProperty(String path, String name, String value) throws SVNException {
+    }
+
+    public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
     }
 
     public void closeDir() throws SVNException {

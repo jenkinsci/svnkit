@@ -19,13 +19,12 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -55,13 +54,13 @@ public class SVNLogImpl extends SVNLog {
         try {
             os = new OutputStreamWriter(SVNFileUtil.openFileForWriting(myTmpFile), "UTF-8");
             for (Iterator commands = myCache.iterator(); commands.hasNext();) {
-                Map command = (Map) commands.next();
+                SVNProperties command = (SVNProperties) commands.next();
                 String name = (String) command.remove("");
                 os.write("<");
                 os.write(name);
-                for (Iterator attrs = command.keySet().iterator(); attrs.hasNext();) {
+                for (Iterator attrs = command.nameSet().iterator(); attrs.hasNext();) {
                     String attr = (String) attrs.next();
-                    String value = (String) command.get(attr);
+                    String value = command.getStringValue(attr);
                     if (value == null) {
                         value = "";
                     }
@@ -94,7 +93,7 @@ public class SVNLogImpl extends SVNLog {
         try {
             reader = new BufferedReader(new InputStreamReader(SVNFileUtil.openFileForReading(myFile), "UTF-8"));
             String line;
-            Map attrs = new HashMap();
+            SVNProperties attrs = new SVNProperties();
             String name = null;
             while ((line = reader.readLine()) != null) {
                 line = line.trim();
@@ -125,7 +124,7 @@ public class SVNLogImpl extends SVNLog {
                     // run command
                     attrs.put("", name);
                     commands.add(attrs);
-                    attrs = new HashMap();
+                    attrs = new SVNProperties();
                     name = null;
                 }
             }

@@ -12,12 +12,12 @@
 package org.tmatesoft.svn.core.internal.wc.admin;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.TreeSet;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 
 
 /**
@@ -25,17 +25,22 @@ import org.tmatesoft.svn.core.SVNException;
  * @author  TMate Software Ltd.
  */
 public abstract class SVNVersionedProperties {
-    private Map myProperties;
+    private SVNProperties myProperties;
     private boolean myIsModified;
     
-    protected SVNVersionedProperties(Map props) {
+    protected SVNVersionedProperties(SVNProperties props) {
         myProperties = props;
         myIsModified = false;
     }
     
     public abstract boolean containsProperty(String name) throws SVNException;
     
-    public abstract String getPropertyValue(String name) throws SVNException;
+    public abstract SVNPropertyValue getPropertyValue(String name) throws SVNException;
+
+    public String getStringPropertyValue(String name) throws SVNException {
+        SVNPropertyValue value = getPropertyValue(name);
+        return value == null ? null : value.getString();
+    }
 
     public boolean isModified() {
         return myIsModified;
@@ -46,25 +51,25 @@ public abstract class SVNVersionedProperties {
     }
     
     public boolean isEmpty() throws SVNException {
-        Map props = loadProperties();
+        SVNProperties props = loadProperties();
         return props == null || props.isEmpty();
     }
     
     public Collection getPropertyNames(Collection target) throws SVNException {
-        Map props = loadProperties();
+        SVNProperties props = loadProperties();
 
         target = target == null ? new TreeSet() : target;
         if (isEmpty()) {
             return target;
         }
-        for (Iterator names = props.keySet().iterator(); names.hasNext();) {
+        for (Iterator names = props.nameSet().iterator(); names.hasNext();) {
             target.add(names.next());
         }
         return target;
     }
 
-    public void setPropertyValue(String name, String value) throws SVNException {
-        Map props = loadProperties();
+    public void setPropertyValue(String name, SVNPropertyValue value) throws SVNException {
+        SVNProperties props = loadProperties();
         if (value != null) {
             props.put(name, value);
         } else {
@@ -74,7 +79,7 @@ public abstract class SVNVersionedProperties {
     }
 
     public SVNVersionedProperties compareTo(SVNVersionedProperties properties) throws SVNException {
-        Map result = new HashMap();
+        SVNProperties result = new SVNProperties();
         if (isEmpty()) {
             result.putAll(properties.asMap());
             return wrap(result);
@@ -88,7 +93,7 @@ public abstract class SVNVersionedProperties {
         tmp.removeAll(props2);
         for (Iterator props = tmp.iterator(); props.hasNext();) {
             String missing = (String) props.next();
-            result.put(missing, null);
+            result.put(missing, (byte[]) null);
         }
 
         // added in props2.
@@ -104,8 +109,8 @@ public abstract class SVNVersionedProperties {
         props2.retainAll(props1);
         for (Iterator props = props2.iterator(); props.hasNext();) {
             String changed = (String) props.next();
-            String value1 = getPropertyValue(changed);
-            String value2 = properties.getPropertyValue(changed);
+            SVNPropertyValue value1 = getPropertyValue(changed);
+            SVNPropertyValue value2 = properties.getPropertyValue(changed);
             if (!value1.equals(value2)) {
                 result.put(changed, value2);
             }
@@ -114,7 +119,7 @@ public abstract class SVNVersionedProperties {
     }
     
     public void copyTo(SVNVersionedProperties destination) throws SVNException {
-        Map props = loadProperties();
+        SVNProperties props = loadProperties();
         if (isEmpty()) {
             destination.removeAll();
         } else {
@@ -123,7 +128,7 @@ public abstract class SVNVersionedProperties {
     }
     
     public void removeAll() throws SVNException {
-        Map props = loadProperties();
+        SVNProperties props = loadProperties();
         if (!isEmpty()) {
             props.clear();
             myIsModified = true;
@@ -134,28 +139,27 @@ public abstract class SVNVersionedProperties {
         return compareTo(props).isEmpty();
     }
     
-    public Map asMap() throws SVNException {
-        Map props = loadProperties() != null ? new HashMap(loadProperties()) : new HashMap();
-        return props;
+    public SVNProperties asMap() throws SVNException {
+        return loadProperties() != null ? new SVNProperties(loadProperties()) : new SVNProperties();
     }
     
-    protected void put(Map props) throws SVNException {
-        Map thisProps = loadProperties(); 
+    protected void put(SVNProperties props) throws SVNException {
+        SVNProperties thisProps = loadProperties(); 
         thisProps.clear();
         thisProps.putAll(props);
         myIsModified = true;
     }
 
-    protected Map getPropertiesMap() {
+    protected SVNProperties getProperties() {
         return myProperties;
     }
     
-    protected void setPropertiesMap(Map props) {
+    protected void setPropertiesMap(SVNProperties props) {
         myProperties = props;
     }
     
-    protected abstract SVNVersionedProperties wrap(Map properties);
+    protected abstract SVNVersionedProperties wrap(SVNProperties properties);
 
-    protected abstract Map loadProperties() throws SVNException;
+    protected abstract SVNProperties loadProperties() throws SVNException;
 
 }

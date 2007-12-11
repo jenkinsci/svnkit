@@ -15,7 +15,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
@@ -24,6 +23,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.io.fs.FSEntry;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
@@ -34,7 +34,6 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-
 
 
 /**
@@ -69,9 +68,9 @@ public class SVNAdminHelper {
         return revNumber;
     }
     
-    public static void writeProperties(Map props, Map oldProps, OutputStream dumpStream) throws SVNException {
+    public static void writeProperties(SVNProperties props, SVNProperties oldProps, OutputStream dumpStream) throws SVNException {
         LinkedList propNames = new LinkedList();
-        for(Iterator names = props.keySet().iterator(); names.hasNext();) {
+        for(Iterator names = props.nameSet().iterator(); names.hasNext();) {
             String propName = (String) names.next();
             if (SVNRevisionProperty.LOG.equals(propName)) {
                   propNames.addFirst(propName);
@@ -89,25 +88,24 @@ public class SVNAdminHelper {
         
         for(Iterator names = propNames.iterator(); names.hasNext();) {
             String propName = (String) names.next();
-            String propValue = (String) props.get(propName); 
+            String propValue = props.getStringValue(propName); 
             if (oldProps != null) {
-                String oldValue = (String) oldProps.get(propName);
+                String oldValue = oldProps.getStringValue(propName);
                 if (oldValue != null && oldValue.equals(propValue)) {
                     continue;
                 }
             }
             
-            SVNProperties.appendProperty(propName, propValue, dumpStream);
+            SVNWCProperties.appendProperty(propName, propValue, dumpStream);
         }
         
         if (oldProps != null) {
-            for(Iterator names = oldProps.keySet().iterator(); names.hasNext();) {
+            for(Iterator names = oldProps.nameSet().iterator(); names.hasNext();) {
                 String propName = (String) names.next();
-                if (props.containsKey(propName)) {
+                if (props.containsName(propName)) {
                     continue;
                 }
-                SVNProperties.appendPropertyDeleted(propName, dumpStream);
-                
+                SVNWCProperties.appendPropertyDeleted(propName, dumpStream);
             }            
         }
         
@@ -316,7 +314,7 @@ public class SVNAdminHelper {
     private static void deltifyProperties(FSFS fsfs, ISVNEditor editor, FSRevisionRoot srcRoot, FSRevisionRoot tgtRoot, String srcPath, String tgtPath, String editPath, boolean isDir) throws SVNException {
         FSRevisionNode targetNode = tgtRoot.getRevisionNode(tgtPath);
 
-        Map sourceProps = null;
+        SVNProperties sourceProps = null;
         if (srcPath != null) {
             FSRevisionNode sourceNode = srcRoot.getRevisionNode(srcPath);
             boolean propsChanged = !FSRepositoryUtil.arePropertiesEqual(sourceNode, targetNode);
@@ -325,15 +323,15 @@ public class SVNAdminHelper {
             }
             sourceProps = sourceNode.getProperties(fsfs);
         } else {
-            sourceProps = new HashMap();
+            sourceProps = new SVNProperties();
         }
 
-        Map targetProps = targetNode.getProperties(fsfs);
-        Map propsDiffs = FSRepositoryUtil.getPropsDiffs(sourceProps, targetProps);
-        Object[] names = propsDiffs.keySet().toArray();
+        SVNProperties targetProps = targetNode.getProperties(fsfs);
+        SVNProperties propsDiffs = FSRepositoryUtil.getPropsDiffs(sourceProps, targetProps);
+        Object[] names = propsDiffs.nameSet().toArray();
         for (int i = 0; i < names.length; i++) {
             String propName = (String) names[i];
-            String propValue = (String) propsDiffs.get(propName);
+            String propValue = propsDiffs.getStringValue(propName);
             if (isDir) {
                 editor.changeDirProperty(propName, propValue);
             } else {

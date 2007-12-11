@@ -35,6 +35,7 @@ import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepository;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
@@ -815,11 +816,11 @@ public class SVNLogClient extends SVNBasicClient {
                         entry.setRelativePath(kind == SVNNodeKind.FILE ? name : "");
                     }
                 } else {
-                    Map props = new HashMap();
+                    SVNProperties props = new SVNProperties();
                     repos.getDir("", rev, props, entryFields, (Collection) null);
-                    Map revProps = repos.getRevisionProperties(rev, null);
-                    String author = (String) revProps.get(SVNRevisionProperty.AUTHOR);
-                    String dateStr = (String) revProps.get(SVNRevisionProperty.DATE);
+                    SVNProperties revProps = repos.getRevisionProperties(rev, null);
+                    String author = revProps.getStringValue(SVNRevisionProperty.AUTHOR);
+                    String dateStr = revProps.getStringValue(SVNRevisionProperty.DATE);
                     Date datestamp = null;
                     if (dateStr != null) {
                         datestamp = SVNDate.parseDateString(dateStr);

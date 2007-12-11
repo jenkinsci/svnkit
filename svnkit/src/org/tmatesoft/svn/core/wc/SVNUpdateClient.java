@@ -31,6 +31,8 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -221,7 +223,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             
             final SVNRepository repos2 = createRepository(reposRoot, false);
             ISVNFileFetcher fileFetcher = new ISVNFileFetcher() {
-                public long fetchFile(String path, long revision, OutputStream os, Map properties) throws SVNException {
+                public long fetchFile(String path, long revision, OutputStream os, SVNProperties properties) throws SVNException {
                     return repos2.getFile(path, revision, properties, os);
                 }
             };
@@ -637,7 +639,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             }
             if (!isIgnoreExternals() && depth == SVNDepth.INFINITY && entry.getDepth() == SVNDepth.INFINITY) {
                 SVNVersionedProperties properties = adminArea.getProperties(adminArea.getThisDirName());
-                String externalsValue = properties.getPropertyValue(SVNProperty.EXTERNALS);
+                String externalsValue = properties.getStringPropertyValue(SVNProperty.EXTERNALS);
                 if (externalsValue != null) {
                     SVNExternal[] externals = SVNExternal.parseExternals(adminArea.getRoot().getAbsolutePath(), externalsValue);
                     for (int i = 0; i < externals.length; i++) {
@@ -679,10 +681,10 @@ public class SVNUpdateClient extends SVNBasicClient {
         }
         boolean special = props.getPropertyValue(SVNProperty.SPECIAL) != null;
         boolean executable = props.getPropertyValue(SVNProperty.EXECUTABLE) != null;
-        String keywords = props.getPropertyValue(SVNProperty.KEYWORDS);
+        String keywords = props.getStringPropertyValue(SVNProperty.KEYWORDS);
         byte[] eols = eol != null ? SVNTranslator.getEOL(eol) : null;
         if (eols == null) {
-            eol = props.getPropertyValue(SVNProperty.EOL_STYLE);
+            eol = props.getStringPropertyValue(SVNProperty.EOL_STYLE);
             eols = SVNTranslator.getWorkingEOL(eol);
         }
         if (modified && !special) {
@@ -757,7 +759,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             } else {
                 dstPath.getParentFile().mkdirs();
             }
-            Map properties = new HashMap();
+            SVNProperties properties = new SVNProperties();
             OutputStream os = null;
             File tmpFile = SVNFileUtil.createUniqueFile(dstPath.getParentFile(), ".export", ".tmp");
             try {
@@ -770,26 +772,26 @@ public class SVNUpdateClient extends SVNBasicClient {
                 if (force && dstPath.exists()) {
                     SVNFileUtil.deleteAll(dstPath, this);
                 }
-                boolean binary = SVNProperty.isBinaryMimeType((String) properties.get(SVNProperty.MIME_TYPE));
-                Map keywords = SVNTranslator.computeKeywords((String) properties.get(SVNProperty.KEYWORDS), url,
-                                (String) properties.get(SVNProperty.LAST_AUTHOR),
-                                (String) properties.get(SVNProperty.COMMITTED_DATE),
-                                (String) properties.get(SVNProperty.COMMITTED_REVISION), getOptions());
+                boolean binary = SVNProperty.isBinaryMimeType(properties.getStringValue(SVNProperty.MIME_TYPE));
+                Map keywords = SVNTranslator.computeKeywords(properties.getStringValue(SVNProperty.KEYWORDS), url,
+                        properties.getStringValue(SVNProperty.LAST_AUTHOR),
+                        properties.getStringValue(SVNProperty.COMMITTED_DATE),
+                        properties.getStringValue(SVNProperty.COMMITTED_REVISION), getOptions());
                 byte[] eols = null;
-                if (SVNProperty.EOL_STYLE_NATIVE.equals(properties.get(SVNProperty.EOL_STYLE))) {
-                    eols = SVNTranslator.getWorkingEOL(eolStyle != null ? eolStyle : (String) properties.get(SVNProperty.EOL_STYLE));
-                } else if (properties.containsKey(SVNProperty.EOL_STYLE)) {
-                    eols = SVNTranslator.getWorkingEOL((String) properties.get(SVNProperty.EOL_STYLE));
+                if (SVNProperty.EOL_STYLE_NATIVE.equals(properties.getStringValue(SVNProperty.EOL_STYLE))) {
+                    eols = SVNTranslator.getWorkingEOL(eolStyle != null ? eolStyle : properties.getStringValue(SVNProperty.EOL_STYLE));
+                } else if (properties.containsName(SVNProperty.EOL_STYLE)) {
+                    eols = SVNTranslator.getWorkingEOL(properties.getStringValue(SVNProperty.EOL_STYLE));
                 }
                 if (binary) {
                     eols = null;
                     keywords = null;
                 }
-                SVNTranslator.translate(tmpFile, dstPath, eols, keywords, properties.get(SVNProperty.SPECIAL) != null, true);
+                SVNTranslator.translate(tmpFile, dstPath, eols, keywords, properties.getStringValue(SVNProperty.SPECIAL) != null, true);
             } finally {
                 SVNFileUtil.deleteFile(tmpFile);
             }
-            if (properties.get(SVNProperty.EXECUTABLE) != null) {
+            if (properties.getStringValue(SVNProperty.EXECUTABLE) != null) {
                 SVNFileUtil.setExecutable(dstPath, true);
             }
             dispatchEvent(SVNEventFactory.createSVNEvent(dstPath, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_ADD, null, null, null));
@@ -897,11 +899,12 @@ public class SVNUpdateClient extends SVNBasicClient {
             return;
         }
         if (!isIgnoreExternals()) {
-            String externalsValue = adminArea.getProperties(adminArea.getThisDirName()).getPropertyValue(SVNProperty.EXTERNALS);
+            SVNPropertyValue externalsValue = adminArea.getProperties(adminArea.getThisDirName()).getPropertyValue(SVNProperty.EXTERNALS);
             String ownerPath = adminArea.getRelativePath(adminAreaInfo.getAnchor());
-            adminAreaInfo.addExternal(ownerPath, externalsValue, externalsValue);
+            String externals = externalsValue == null ? null : externalsValue.getString();
+            adminAreaInfo.addExternal(ownerPath, externals, externals);
             if (externalsValue != null) {
-                externalsValue = canonicalizeExtenrals(externalsValue, omitDefaultPort);
+                externalsValue = new SVNPropertyValue(canonicalizeExtenrals(externals, omitDefaultPort));
                 adminArea.getProperties(adminArea.getThisDirName()).setPropertyValue(SVNProperty.EXTERNALS, externalsValue);
             }
         }

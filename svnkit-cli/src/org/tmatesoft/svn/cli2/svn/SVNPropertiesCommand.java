@@ -17,13 +17,18 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.util.SVNBase64;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -121,16 +126,32 @@ public abstract class SVNPropertiesCommand extends SVNXMLCommand implements ISVN
         return myRevisionProperties;
     }
 
-    protected void checkBooleanProperty(String name, String value) throws SVNException {
+    protected void checkBooleanProperty(String name, SVNPropertyValue value) throws SVNException {
         if (!SVNProperty.isBooleanProperty(name)) {
             return;
         }
-        value = value.trim();
-        if ("".equals(value) || "off".equalsIgnoreCase(value) || "no".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value)) {
+        String stringValue = value.getString().trim();
+        if ("".equals(value) || "off".equalsIgnoreCase(stringValue) || "no".equalsIgnoreCase(stringValue) || "false".equalsIgnoreCase(stringValue)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_PROPERTY_VALUE, "To turn off the {0} property, use ''svn propdel'';\n" +
             		"setting the property to ''{1}'' will not turn it off.", new Object[] {name, value});
             getSVNEnvironment().handleWarning(err, new SVNErrorCode[] {SVNErrorCode.BAD_PROPERTY_VALUE},
                     getSVNEnvironment().isQuiet());
         }
+    }
+
+    protected StringBuffer addXMLProp(SVNPropertyData property, StringBuffer xmlBuffer) {
+        String xmlSafe = null;
+        Map attrs = new TreeMap();
+        attrs.put("name", property.getName());
+        if (!property.getValue().isXMLSafe("UTF-8")) {
+            attrs.put("encoding", "base64");
+            xmlSafe = SVNBase64.byteArrayToBase64(property.getValue().getBytes());
+        } else {
+            xmlSafe = SVNEncodingUtil.xmlEncodeCDATA(property.getValue().getString());
+        }
+        xmlBuffer = openXMLTag("property", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, attrs, xmlBuffer);
+        xmlBuffer.append(xmlSafe);
+        xmlBuffer = closeXMLTag("property", xmlBuffer);
+        return xmlBuffer;
     }
 }

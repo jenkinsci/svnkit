@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.io.dav.DAVBaselineInfo;
 import org.tmatesoft.svn.core.internal.io.dav.DAVConnection;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
@@ -253,9 +254,9 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
         } else if (element == REMOVE_PROP) {
             String name = attrs.getValue(NAME_ATTR);
             if (myIsDirectory) {
-                myEditor.changeDirProperty(name, null);
+                myEditor.changeDirProperty(name, (SVNPropertyValue) null);
             } else {
-                myEditor.changeFileProperty(myPath, name, null);
+                myEditor.changeFileProperty(myPath, name, (SVNPropertyValue) null);
             }
         } else if (element == RESOURCE || element == FETCH_FILE || element == FETCH_PROPS) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "'update' response format used by the server is not supported; element ''{0}'' was not expected", element.toString());

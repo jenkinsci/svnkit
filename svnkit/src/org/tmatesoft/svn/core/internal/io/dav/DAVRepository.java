@@ -37,6 +37,8 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVDateRevisionHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVEditorHandler;
@@ -217,8 +219,8 @@ public class DAVRepository extends SVNRepository {
         return kind;
     }
     
-    public Map getRevisionProperties(long revision, Map properties) throws SVNException {
-        properties = properties == null ? new HashMap() : properties;
+    public SVNProperties getRevisionProperties(long revision, SVNProperties properties) throws SVNException {
+        properties = properties == null ? new SVNProperties() : properties;
         try {
             openConnection();
             String path = getLocation().getPath();
@@ -226,7 +228,7 @@ public class DAVRepository extends SVNRepository {
             DAVProperties source = DAVUtil.getBaselineProperties(myConnection, this, path, revision, null);
             properties = DAVUtil.filterProperties(source, properties);
             if (revision >= 0) {
-                String commitMessage = (String) properties.get(SVNRevisionProperty.LOG);
+                String commitMessage = properties.getStringValue(SVNRevisionProperty.LOG);
                 getOptions().saveCommitMessage(DAVRepository.this, revision, commitMessage);
             }
         } finally {
@@ -235,12 +237,12 @@ public class DAVRepository extends SVNRepository {
         return properties;
     }
     
-    public String getRevisionPropertyValue(long revision, String propertyName) throws SVNException {
-        Map properties = getRevisionProperties(revision, null);
-        return (String) properties.get(propertyName);
+    public SVNPropertyValue getRevisionPropertyValue(long revision, String propertyName) throws SVNException {
+        SVNProperties properties = getRevisionProperties(revision, null);
+        return properties.getSVNPropertyValue(propertyName);
     }
 
-    public long getFile(String path, long revision, final Map properties, OutputStream contents) throws SVNException {
+    public long getFile(String path, long revision, final SVNProperties properties, OutputStream contents) throws SVNException {
         long fileRevision = revision;
         try {
             openConnection();
@@ -279,11 +281,11 @@ public class DAVRepository extends SVNRepository {
         return fileRevision;
     }
 
-    public long getDir(String path, long revision, final Map properties, final ISVNDirEntryHandler handler) throws SVNException {
+    public long getDir(String path, long revision, final SVNProperties properties, final ISVNDirEntryHandler handler) throws SVNException {
         return getDir(path, revision, properties, SVNDirEntry.DIRENT_ALL, handler);
     }
 
-    public long getDir(String path, long revision, Map properties, int entryFields, ISVNDirEntryHandler handler) throws SVNException {
+    public long getDir(String path, long revision, SVNProperties properties, int entryFields, ISVNDirEntryHandler handler) throws SVNException {
         long dirRevision = revision;
         try {
             openConnection();
@@ -698,7 +700,7 @@ public class DAVRepository extends SVNRepository {
         }
     }
 
-    public void setRevisionPropertyValue(long revision, String propertyName, String propertyValue) throws SVNException {
+    public void setRevisionPropertyValue(long revision, String propertyName, SVNPropertyValue propertyValue) throws SVNException {
         assertValidRevision(revision);
 
         StringBuffer request = DAVProppatchHandler.generatePropertyRequest(null, propertyName, propertyValue);
@@ -720,11 +722,33 @@ public class DAVRepository extends SVNRepository {
         }
     }
 
+    public void setRevisionPropertyValue(long revision, String propertyName, byte[] propertyValue) throws SVNException {
+        assertValidRevision(revision);
+
+        StringBuffer request = DAVProppatchHandler.generatePropertyRequest(null, propertyName, propertyValue);
+        try {
+            openConnection();
+            // get baseline url and proppatch.
+            DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, this, SVNEncodingUtil.uriEncode(getLocation().getPath()), revision, false, false, null);
+            String path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
+            path = info.baseline;
+            try {
+                myConnection.doProppatch(null, path, request, null, null);
+            } catch (SVNException e) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "DAV request failed; it's possible that the repository's " +
+                        "pre-rev-propchange hook either failed or is non-existent");
+                SVNErrorManager.error(err, e.getErrorMessage());
+            }
+        } finally {
+            closeConnection();
+        }
+    }
+
     public ISVNEditor getCommitEditor(String logMessage, Map locks, boolean keepLocks, ISVNWorkspaceMediator mediator) throws SVNException {
         return getCommitEditor(logMessage, locks, keepLocks, null, mediator);
     }
 
-    protected ISVNEditor getCommitEditorInternal(Map locks, boolean keepLocks, Map revProps, ISVNWorkspaceMediator mediator) throws SVNException {
+    protected ISVNEditor getCommitEditorInternal(Map locks, boolean keepLocks, SVNProperties revProps, ISVNWorkspaceMediator mediator) throws SVNException {
         try {
             openConnection();
             Map translatedLocks = null;

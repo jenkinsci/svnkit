@@ -19,6 +19,7 @@ import java.util.Stack;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -97,6 +98,18 @@ public class SVNTestUpdateEditor implements ISVNEditor {
         myNumberOfChanges++;
     }
 
+    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
+        SVNItem curDir = (SVNItem) myDirsStack.peek();
+        String absPath = curDir.getRepositoryPath();
+        curDir.changeProperty(name, value);
+
+        if (myItems.get(absPath) == null) {
+            myItems.put(absPath, curDir);
+        }
+
+        myNumberOfChanges++;
+    }
+
     public void closeDir() throws SVNException {
         myDirsStack.pop();
     }
@@ -115,6 +128,13 @@ public class SVNTestUpdateEditor implements ISVNEditor {
     }
 
     public void changeFileProperty(String path, String name, String value) throws SVNException {
+        String absPath = myRepository.getRepositoryPath(path);
+        SVNItem fileItem = (SVNItem) myItems.get(absPath);
+        fileItem.changeProperty(name, value);
+        myNumberOfChanges++;
+    }
+
+    public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
         String absPath = myRepository.getRepositoryPath(path);
         SVNItem fileItem = (SVNItem) myItems.get(absPath);
         fileItem.changeProperty(name, value);

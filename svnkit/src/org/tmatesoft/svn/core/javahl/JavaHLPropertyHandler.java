@@ -39,17 +39,17 @@ class JavaHLPropertyHandler implements ISVNPropertyHandler{
     }
 
     public void handleProperty(File path, SVNPropertyData property) throws SVNException {
-        myData = JavaHLObjectFactory.createPropertyData(myOwner, path.getAbsolutePath(), property.getName(), property.getValue(), property.getValue().getBytes());
+        myData = JavaHLObjectFactory.createPropertyData(myOwner, path.getAbsolutePath(), property.getName(), property.getValue().getString(), property.getValue().getBytes());
         myAllData.add(myData);
     }
 
     public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
-        myData = JavaHLObjectFactory.createPropertyData(myOwner, url.toString(), property.getName(), property.getValue(), property.getValue().getBytes());
+        myData = JavaHLObjectFactory.createPropertyData(myOwner, url.toString(), property.getName(), property.getValue().getString(), property.getValue().getBytes());
         myAllData.add(myData);
     }
 
     public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
-        myData = JavaHLObjectFactory.createPropertyData(myOwner, null, property.getName(), property.getValue(), property.getValue().getBytes());
+        myData = JavaHLObjectFactory.createPropertyData(myOwner, null, property.getName(), property.getValue().getString(), property.getValue().getBytes());
         myAllData.add(myData);
     }
     

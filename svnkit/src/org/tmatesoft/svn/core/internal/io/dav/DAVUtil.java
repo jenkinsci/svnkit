@@ -19,6 +19,7 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVPropertiesHandler;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPHeader;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPStatus;
@@ -213,9 +214,9 @@ public class DAVUtil {
         return properties;
     }
 
-    public static Map filterProperties(DAVProperties source, Map target) {
-        target = target == null ? new HashMap() : target;
-        for(Iterator props = source.getProperties().keySet().iterator(); props.hasNext();) {
+    public static SVNProperties filterProperties(DAVProperties source, SVNProperties target) {
+        target = target == null ? new SVNProperties() : target;
+        for (Iterator props = source.getProperties().keySet().iterator(); props.hasNext();) {
             DAVElement property = (DAVElement) props.next();
             String namespace = property.getNamespace();
             if (namespace.equals(DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE)) {

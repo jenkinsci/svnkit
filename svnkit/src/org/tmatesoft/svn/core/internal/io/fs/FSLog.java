@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.ISVNMergeInfoFilter;
 import org.tmatesoft.svn.core.internal.wc.SVNMergeInfoManager;
@@ -201,7 +202,7 @@ public class FSLog {
     
     private SVNLogEntry fillLogEntry(long revision) throws SVNException {
         Map changedPaths = null;
-        Map entryRevProps = null;
+        SVNProperties entryRevProps = null;
         boolean getRevProps = true;
         boolean censorRevProps = false;
         if (revision > 0 && myIsDiscoverChangedPaths) {
@@ -211,41 +212,41 @@ public class FSLog {
 
         //TODO: add autz check code later
         if (getRevProps) {
-            Map revisionProps = myFSFS.getRevisionProperties(revision);
+            SVNProperties revisionProps = myFSFS.getRevisionProperties(revision);
 
             if (revisionProps != null) {
-                String author = (String) revisionProps.get(SVNRevisionProperty.AUTHOR);
-                String datestamp = (String) revisionProps.get(SVNRevisionProperty.DATE);
+                String author = revisionProps.getStringValue(SVNRevisionProperty.AUTHOR);
+                String datestamp = revisionProps.getStringValue(SVNRevisionProperty.DATE);
                 Date date = datestamp != null ? SVNDate.parseDateString(datestamp) : null;
 
                 if (myRevPropNames == null || myRevPropNames.length == 0) {
                     if (censorRevProps) {
-                        entryRevProps = new HashMap();
+                        entryRevProps = new SVNProperties();
                         if (author != null) {
                             entryRevProps.put(SVNRevisionProperty.AUTHOR, author);
                         }
                         if (date != null) {
-                            entryRevProps.put(SVNRevisionProperty.DATE, date);
+                            entryRevProps.put(SVNRevisionProperty.DATE, SVNDate.formatDate(date));
                         }
                     } else {
                         entryRevProps = revisionProps;
                         if (date != null) {
-                            entryRevProps.put(SVNRevisionProperty.DATE, date);
+                            entryRevProps.put(SVNRevisionProperty.DATE, SVNDate.formatDate(date));
                         }
                     }
                 } else {
                     for (int i = 0; i < myRevPropNames.length; i++) {
                         String propName = myRevPropNames[i];
-                        String propVal = (String) revisionProps.get(propName);
+                        String propVal = revisionProps.getStringValue(propName);
                         if (censorRevProps && !SVNRevisionProperty.AUTHOR.equals(propName) && 
                                 !SVNRevisionProperty.DATE.equals(propName)) {
                             continue;
                         }
                         if (entryRevProps == null) {
-                            entryRevProps = new HashMap();
+                            entryRevProps = new SVNProperties();
                         }
                         if (SVNRevisionProperty.DATE.equals(propName) && date != null) {
-                            entryRevProps.put(propName, date);
+                            entryRevProps.put(propName, SVNDate.formatDate(date));
                         } else if (propVal != null) {
                             entryRevProps.put(propName, propVal);
                         }
@@ -258,7 +259,7 @@ public class FSLog {
             changedPaths = new HashMap();
         }
         if (entryRevProps == null) {
-            entryRevProps = new HashMap();
+            entryRevProps = new SVNProperties();
         }
         SVNLogEntry entry = new SVNLogEntry(changedPaths, revision, entryRevProps, false);
         return entry;

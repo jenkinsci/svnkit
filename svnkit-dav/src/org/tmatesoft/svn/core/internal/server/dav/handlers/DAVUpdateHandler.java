@@ -32,6 +32,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
@@ -491,6 +492,10 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
     }
 
     public void changeDirProperty(String name, String value) throws SVNException {
+        changeDirProperty(name, value == null ? null : new SVNPropertyValue(value));
+    }
+
+    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
         if (!isResourceWalk()) {
             EditorEntry entry = (EditorEntry) getEditorEntries().peek();
             changeProperties(entry, name, value);
@@ -513,6 +518,10 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
     }
 
     public void changeFileProperty(String path, String name, String value) throws SVNException {
+        changeFileProperty(path, name, value == null ? null : new SVNPropertyValue(value));
+    }
+
+    public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
         if (!isResourceWalk()) {
             changeProperties(getFileEditorEntry(), name, value);
         }
@@ -615,7 +624,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
         write(xmlBuffer);
     }
 
-    private void changeProperties(EditorEntry entry, String name, String value) throws SVNException {
+    private void changeProperties(EditorEntry entry, String name, SVNPropertyValue value) throws SVNException {
         if (getUpdateRequest().isSendAll()) {
             if (value != null) {
                 writePropertyTag("set-prop", name, value);
@@ -623,12 +632,13 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
                 writeEntryTag("remove-prop", name);
             }
         } else {
+            String stringValue = value == null ? null : value.getString();
             if (SVNProperty.COMMITTED_REVISION.equals(name)) {
-                entry.setCommitedRevision(value);
-            } else if (SVNProperty.COMMITTED_DATE.equals(value)) {
-                entry.setCommitedDate(value);
+                entry.setCommitedRevision(stringValue);
+            } else if (SVNProperty.COMMITTED_DATE.equals(name)) {
+                entry.setCommitedDate(stringValue);
             } else if (SVNProperty.LAST_AUTHOR.equals(name)) {
-                entry.setLastAuthor(value);
+                entry.setLastAuthor(stringValue);
             } else {
                 if (value == null) {
                     entry.addRemovedProperty(name);

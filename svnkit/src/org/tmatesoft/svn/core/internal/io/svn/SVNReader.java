@@ -17,17 +17,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
@@ -107,7 +106,7 @@ public class SVNReader {
         return Collections.EMPTY_LIST;
     }
 
-    public static Map getProperties(List items, int index, Map properties) throws SVNException {
+    public static SVNProperties getProperties(List items, int index, SVNProperties properties) throws SVNException {
         if (items == null || index >= items.size()) {
             return properties;
         }
@@ -115,7 +114,7 @@ public class SVNReader {
             return properties;
         }
 
-        properties = properties == null ? new HashMap() : properties;
+        properties = properties == null ? new SVNProperties() : properties;
         List props = getItemList(items, index);
         for (Iterator prop = props.iterator(); prop.hasNext();) {
             SVNItem item = (SVNItem) prop.next();
@@ -123,20 +122,20 @@ public class SVNReader {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Proplist element not a list");
                 SVNErrorManager.error(err);
             }
-            List propItems = parseTuple("ss", item.getItems(), null);
-            properties.put(getString(propItems, 0), getString(propItems, 1));
+            List propItems = parseTuple("sc", item.getItems(), null);
+            properties.put(getString(propItems, 0), getBytes(propItems, 1));
         }
         return properties;
     }
 
-    public static Map getPropertyDiffs(List items, int index, Map diffs) throws SVNException {
+    public static SVNProperties getPropertyDiffs(List items, int index, SVNProperties diffs) throws SVNException {
         if (items == null || index >= items.size()) {
             return diffs;
         }
         if (!(items.get(index) instanceof List)) {
             return diffs;
         }
-        diffs = diffs == null ? new HashMap() : diffs;
+        diffs = diffs == null ? new SVNProperties() : diffs;
         items = getList(items, index);
         for (Iterator iterator = items.iterator(); iterator.hasNext();) {
             SVNItem item = (SVNItem) iterator.next();
@@ -144,8 +143,8 @@ public class SVNReader {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Prop diffs element not a list");
                 SVNErrorManager.error(err);
             }
-            List values = parseTuple("s(?s)", item.getItems(), null);
-            diffs.put(getString(values, 0), getString(values, 1));
+            List values = parseTuple("s(?b)", item.getItems(), null);
+            diffs.put(getString(values, 0), getBytes(values, 1));
         }
         return diffs;
     }

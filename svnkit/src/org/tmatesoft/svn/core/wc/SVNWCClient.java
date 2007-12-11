@@ -36,6 +36,8 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -298,16 +300,16 @@ public class SVNWCClient extends SVNBasicClient {
             if (!expandKeywords) {
                 repos.getFile("", revNumber, null, new SVNCancellableOutputStream(dst, this));
             } else {
-                Map properties = new HashMap();
+                SVNProperties properties = new SVNProperties();
                 repos.getFile("", revNumber, properties, null);
                 checkCancelled();
 
-                String keywords = (String) properties.get(SVNProperty.KEYWORDS);
-                String eol = (String) properties.get(SVNProperty.EOL_STYLE);
+                String keywords = properties.getStringValue(SVNProperty.KEYWORDS);
+                String eol = properties.getStringValue(SVNProperty.EOL_STYLE);
                 if (keywords != null || eol != null) {
-                    String cmtRev = (String) properties.get(SVNProperty.COMMITTED_REVISION);
-                    String cmtDate = (String) properties.get(SVNProperty.COMMITTED_DATE);
-                    String author = (String) properties.get(SVNProperty.LAST_AUTHOR);
+                    String cmtRev = properties.getStringValue(SVNProperty.COMMITTED_REVISION);
+                    String cmtDate = properties.getStringValue(SVNProperty.COMMITTED_DATE);
+                    String author = properties.getStringValue(SVNProperty.LAST_AUTHOR);
                     Map keywordsMap = SVNTranslator.computeKeywords(keywords, expandKeywords ? repos.getLocation().toString() : null, author, cmtDate, cmtRev, getOptions());
                     OutputStream translatingStream = new SVNTranslatorOutputStream(dst, SVNTranslator.getEOL(eol), false, keywordsMap, expandKeywords); 
                     repos.getFile("", revNumber, null, new SVNCancellableOutputStream(translatingStream, getEventDispatcher()));
@@ -367,16 +369,16 @@ public class SVNWCClient extends SVNBasicClient {
         if (!expandKeywords) {
             repos.getFile("", revNumber, null, new SVNCancellableOutputStream(dst, this));
         } else {
-            Map properties = new HashMap();
+            SVNProperties properties = new SVNProperties();
             repos.getFile("", revNumber, properties, null);
             checkCancelled();
 
-            String keywords = (String) properties.get(SVNProperty.KEYWORDS);
-            String eol = (String) properties.get(SVNProperty.EOL_STYLE);
+            String keywords = properties.getStringValue(SVNProperty.KEYWORDS);
+            String eol = properties.getStringValue(SVNProperty.EOL_STYLE);
             if (keywords != null || eol != null) {
-                String cmtRev = (String) properties.get(SVNProperty.COMMITTED_REVISION);
-                String cmtDate = (String) properties.get(SVNProperty.COMMITTED_DATE);
-                String author = (String) properties.get(SVNProperty.LAST_AUTHOR);
+                String cmtRev = properties.getStringValue(SVNProperty.COMMITTED_REVISION);
+                String cmtDate = properties.getStringValue(SVNProperty.COMMITTED_DATE);
+                String author = properties.getStringValue(SVNProperty.LAST_AUTHOR);
                 Map keywordsMap = SVNTranslator.computeKeywords(keywords, expandKeywords ? repos.getLocation().toString() : null, author, cmtDate, cmtRev, getOptions());
                 OutputStream translatingStream = new SVNTranslatorOutputStream(dst, SVNTranslator.getEOL(eol), false, keywordsMap, expandKeywords); 
                 repos.getFile("", revNumber, null, new SVNCancellableOutputStream(translatingStream, getEventDispatcher()));
@@ -478,12 +480,12 @@ public class SVNWCClient extends SVNBasicClient {
      * @see                     #doGetProperty(File, String, SVNRevision, SVNRevision, boolean)
      * @see                     #doGetRevisionProperty(File, String, SVNRevision, ISVNPropertyHandler)
      */
-    public void doSetProperty(File path, String propName, String propValue, boolean force, boolean recursive, 
+    public void doSetProperty(File path, String propName, SVNPropertyValue propValue, boolean force, boolean recursive, 
             ISVNPropertyHandler handler) throws SVNException {
         doSetProperty(path, propName, propValue, force, SVNDepth.getInfinityOrEmptyDepth(recursive), handler);
     }
 
-    public void doSetProperty(File path, String propName, String propValue, boolean force, SVNDepth depth, 
+    public void doSetProperty(File path, String propName, SVNPropertyValue propValue, boolean force, SVNDepth depth, 
             ISVNPropertyHandler handler) throws SVNException {
         depth = depth == null ? SVNDepth.UNKNOWN : depth;
         int admLockLevel = SVNWCAccess.INFINITE_DEPTH;
@@ -529,8 +531,8 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
 
-    public SVNCommitInfo doSetProperty(SVNURL url, String propName, String propValue, 
-            SVNRevision baseRevision, String commitMessage, Map revisionProperties, 
+    public SVNCommitInfo doSetProperty(SVNURL url, String propName, SVNPropertyValue propValue, 
+            SVNRevision baseRevision, String commitMessage, SVNProperties revisionProperties, 
             boolean force, SVNDepth depth, ISVNPropertyHandler handler) throws SVNException {
         depth = depth == null ? SVNDepth.UNKNOWN : depth;
         if (propValue != null && !SVNPropertiesManager.isValidPropertyName(propName)) {
@@ -642,7 +644,7 @@ public class SVNWCClient extends SVNBasicClient {
      * @see                    #doGetProperty(File, String, SVNRevision, SVNRevision, boolean)
      * @see                    #doGetRevisionProperty(File, String, SVNRevision, ISVNPropertyHandler)                         
      */
-    public void doSetRevisionProperty(File path, SVNRevision revision, String propName, String propValue, boolean force, ISVNPropertyHandler handler) throws SVNException {
+    public void doSetRevisionProperty(File path, SVNRevision revision, String propName, SVNPropertyValue propValue, boolean force, ISVNPropertyHandler handler) throws SVNException {
         if (propValue != null && !SVNPropertiesManager.isValidPropertyName(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, 
                     "Bad property name ''{0}''", propName);
@@ -685,14 +687,14 @@ public class SVNWCClient extends SVNBasicClient {
      * @see                    #doGetProperty(File, String, SVNRevision, SVNRevision, boolean)
      * @see                    #doGetRevisionProperty(File, String, SVNRevision, ISVNPropertyHandler)                         
      */
-    public void doSetRevisionProperty(SVNURL url, SVNRevision revision, String propName, String propValue, boolean force, ISVNPropertyHandler handler) throws SVNException {
+    public void doSetRevisionProperty(SVNURL url, SVNRevision revision, String propName, SVNPropertyValue propValue, boolean force, ISVNPropertyHandler handler) throws SVNException {
         if (propValue != null && !SVNPropertiesManager.isValidPropertyName(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, 
                     "Bad property name ''{0}''", propName);
             SVNErrorManager.error(err);
         }
         propValue = validatePropertyValue(url.toString(), propName, propValue, force);
-        if (!force && SVNRevisionProperty.AUTHOR.equals(propName) && propValue != null && propValue.indexOf('\n') >= 0) {
+        if (!force && SVNRevisionProperty.AUTHOR.equals(propName) && propValue != null && propValue.getString().indexOf('\n') >= 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_REVISION_AUTHOR_CONTAINS_NEWLINE, "Value will not be set unless forced");
             SVNErrorManager.error(err);
         }
@@ -876,15 +878,15 @@ public class SVNWCClient extends SVNBasicClient {
                     // area could only be path itself or child file in it.
                     SVNVersionedProperties properties = base ? area.getBaseProperties(entry.getName()) : area.getProperties(entry.getName());
                     if (propName != null) {
-                        String propValue = properties.getPropertyValue(propName);
+                        SVNPropertyValue propValue = properties.getPropertyValue(propName);
                         if (propValue != null) {
                             handler.handleProperty(path, new SVNPropertyData(propName, propValue));
                         }
                     } else {
-                        Map allProps = properties.asMap();
-                        for(Iterator names = allProps.keySet().iterator(); names.hasNext();) {
+                        SVNProperties allProps = properties.asMap();
+                        for(Iterator names = allProps.nameSet().iterator(); names.hasNext();) {
                             String name = (String) names.next();
-                            String val = (String) allProps.get(name);
+                            SVNPropertyValue val = allProps.getSVNPropertyValue(name);
                             handler.handleProperty(area.getFile(entry.getName()), new SVNPropertyData(name, val));
                         }
                     }
@@ -913,15 +915,15 @@ public class SVNWCClient extends SVNBasicClient {
                                 childProps = base ? area.getBaseProperties(childEntry.getName()) : area.getProperties(childEntry.getName());
                             }
                             if (propName != null) {
-                                String propValue = childProps.getPropertyValue(propName);
+                                SVNPropertyValue propValue = childProps.getPropertyValue(propName);
                                 if (propValue != null) {
                                     handler.handleProperty(area.getFile(childEntry.getName()), new SVNPropertyData(propName, propValue));
                                 }
                             } else {
-                                Map allProps = childProps.asMap();
-                                for(Iterator names = allProps.keySet().iterator(); names.hasNext();) {
+                                SVNProperties allProps = childProps.asMap();
+                                for(Iterator names = allProps.nameSet().iterator(); names.hasNext();) {
                                     String name = (String) names.next();
-                                    String val = (String) allProps.get(name);
+                                    SVNPropertyValue val = allProps.getSVNPropertyValue(name);
                                     handler.handleProperty(area.getFile(childEntry.getName()), new SVNPropertyData(name, val));
                                 }
                             }
@@ -1050,16 +1052,16 @@ public class SVNWCClient extends SVNBasicClient {
 
     private void doGetRevisionProperty(SVNRepository repos, String propName, long revNumber, ISVNPropertyHandler handler) throws SVNException {
         if (propName != null) {
-            String value = repos.getRevisionPropertyValue(revNumber, propName);
+            SVNPropertyValue value = repos.getRevisionPropertyValue(revNumber, propName);
             if (value != null) {
                 handler.handleProperty(revNumber, new SVNPropertyData(propName, value));
             }
         } else {
-            Map props = new HashMap();
+            SVNProperties props = new SVNProperties();
             repos.getRevisionProperties(revNumber, props);
-            for (Iterator names = props.keySet().iterator(); names.hasNext();) {
+            for (Iterator names = props.nameSet().iterator(); names.hasNext();) {
                 String name = (String) names.next();
-                String value = (String) props.get(name);
+                SVNPropertyValue value = props.getSVNPropertyValue(name);
                 handler.handleProperty(revNumber, new SVNPropertyData(name, value));
             }
         }
@@ -1355,9 +1357,9 @@ public class SVNWCClient extends SVNBasicClient {
                         if (action == ISVNAddParameters.REPORT_ERROR) {
                             throw e;
                         } else if (action == ISVNAddParameters.ADD_AS_IS) {
-                            SVNPropertiesManager.setProperty(dir.getWCAccess(), path, propName, null, false);
+                            SVNPropertiesManager.setProperty(dir.getWCAccess(), path, propName, (SVNPropertyValue) null, false);
                         } else if (action == ISVNAddParameters.ADD_AS_BINARY) {
-                            SVNPropertiesManager.setProperty(dir.getWCAccess(), path, propName, null, false);
+                            SVNPropertiesManager.setProperty(dir.getWCAccess(), path, propName, (SVNPropertyValue) null, false);
                             mimeType = SVNFileUtil.BINARY_MIME_TYPE;
                         }
                     } else {
@@ -1561,7 +1563,7 @@ public class SVNWCClient extends SVNBasicClient {
         SVNLog log = dir.getLog();
         boolean reverted = false;
         SVNVersionedProperties baseProperties = null;
-        Map command = new HashMap();
+        SVNProperties command = new SVNProperties();
         boolean revertBase = false;
         
         if (entry.isScheduledForReplacement()) {
@@ -1590,24 +1592,24 @@ public class SVNWCClient extends SVNBasicClient {
         }
         if (baseProperties != null) {
             // save base props both to base and working. 
-            Map newProperties = baseProperties.asMap();
+            SVNProperties newProperties = baseProperties.asMap();
             SVNVersionedProperties originalBaseProperties = dir.getBaseProperties(name);
             SVNVersionedProperties workProperties = dir.getProperties(name);
             if (entry.isScheduledForReplacement()) {
                 originalBaseProperties.removeAll();
             }
             workProperties.removeAll();
-            for(Iterator names = newProperties.keySet().iterator(); names.hasNext();) {
+            for(Iterator names = newProperties.nameSet().iterator(); names.hasNext();) {
                 String propName = (String) names.next();
                 if (entry.isScheduledForReplacement()) {
-                    originalBaseProperties.setPropertyValue(propName, (String) newProperties.get(propName));
+                    originalBaseProperties.setPropertyValue(propName, newProperties.getSVNPropertyValue(propName));
                 }
-                workProperties.setPropertyValue(propName, (String) newProperties.get(propName));
+                workProperties.setPropertyValue(propName, newProperties.getSVNPropertyValue(propName));
             }
             dir.saveVersionedProperties(log, false);
             reverted = true;
         } 
-        Map newEntryProperties = new HashMap();
+        SVNProperties newEntryProperties = new SVNProperties();
         if (entry.getKind() == SVNNodeKind.FILE) {
             if (!reinstallWorkingFile) {
                 SVNFileType fileType = SVNFileType.getType(dir.getFile(name));
@@ -1662,7 +1664,7 @@ public class SVNWCClient extends SVNBasicClient {
             command.put(SVNLog.NAME_ATTR, entry.getConflictNew());
             log.addCommand(SVNLog.DELETE, command, false);
             command.clear();
-            newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_NEW), null);
+            newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_NEW), (String) null);
             if (!reverted) {
                 reverted |= dir.getFile(entry.getConflictNew()).exists();
             }
@@ -1671,7 +1673,7 @@ public class SVNWCClient extends SVNBasicClient {
             command.put(SVNLog.NAME_ATTR, entry.getConflictOld());
             log.addCommand(SVNLog.DELETE, command, false);
             command.clear();
-            newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_OLD), null);
+            newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_OLD), (String) null);
             if (!reverted) {
                 reverted |= dir.getFile(entry.getConflictOld()).exists();
             }
@@ -1680,7 +1682,7 @@ public class SVNWCClient extends SVNBasicClient {
             command.put(SVNLog.NAME_ATTR, entry.getConflictWorking());
             log.addCommand(SVNLog.DELETE, command, false);
             command.clear();
-            newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_WRK), null);
+            newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_WRK), (String) null);
             if (!reverted) {
                 reverted |= dir.getFile(entry.getConflictWorking()).exists();
             }
@@ -1689,14 +1691,14 @@ public class SVNWCClient extends SVNBasicClient {
             command.put(SVNLog.NAME_ATTR, entry.getPropRejectFile());
             log.addCommand(SVNLog.DELETE, command, false);
             command.clear();
-            newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.PROP_REJECT_FILE), null);
+            newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.PROP_REJECT_FILE), (String) null);
             if (!reverted) {
                 reverted |= dir.getFile(entry.getPropRejectFile()).exists();
             }
         }
         if (entry.isScheduledForReplacement()) {
             newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.COPIED), SVNProperty.toString(false));
-            newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.COPYFROM_URL), null);
+            newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.COPYFROM_URL), (String) null);
             newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.COPYFROM_REVISION), 
                     SVNProperty.toString(SVNRepository.INVALID_REVISION));
             if (entry.isFile() && entry.getCopyFromURL() != null) {
@@ -1708,7 +1710,7 @@ public class SVNWCClient extends SVNBasicClient {
         }
         
         if (entry.getSchedule() != null) {
-            newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE), null);
+            newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE), (String) null);
             reverted = true;
         }
         if (!newEntryProperties.isEmpty()) {
@@ -2243,7 +2245,7 @@ public class SVNWCClient extends SVNBasicClient {
             pegRevision = revision;
         }
 
-        SVNRepository repos = createRepository(url, null, pegRevision, revision);;
+        SVNRepository repos = createRepository(url, null, pegRevision, revision);
         url = repos.getLocation();
         long revNum = getRevisionNumber(revision, repos, null);
         SVNDirEntry rootEntry = null;
@@ -2537,23 +2539,23 @@ public class SVNWCClient extends SVNBasicClient {
         checkCancelled();
         long revNumber = getRevisionNumber(rev, repos, null);
         SVNNodeKind kind = repos.checkPath(path, revNumber);
-        Map props = new HashMap();
+        SVNProperties props = new SVNProperties();
         if (kind == SVNNodeKind.DIR) {
             Collection children = repos.getDir(path, revNumber, props, SVNDirEntry.DIRENT_KIND, 
                     SVNDepth.FILES.compareTo(depth) <= 0 ? new ArrayList() : null);
             if (propName != null) {
-                String value = (String) props.get(propName);
+                SVNPropertyValue value = props.getSVNPropertyValue(propName);
                 if (value != null) {
                     handler.handleProperty(url, new SVNPropertyData(propName, value));
                 }
             } else {
-                for (Iterator names = props.keySet().iterator(); names.hasNext();) {
+                for (Iterator names = props.nameSet().iterator(); names.hasNext();) {
                     String name = (String) names.next();
                     if (name.startsWith(SVNProperty.SVN_ENTRY_PREFIX)
                             || name.startsWith(SVNProperty.SVN_WC_PREFIX)) {
                         continue;
                     }
-                    String value = (String) props.get(name);
+                    SVNPropertyValue value = props.getSVNPropertyValue(name);
                     handler.handleProperty(url, new SVNPropertyData(name, value));
                 }
             }
@@ -2576,19 +2578,19 @@ public class SVNWCClient extends SVNBasicClient {
         } else if (kind == SVNNodeKind.FILE) {
             repos.getFile(path, revNumber, props, null);
             if (propName != null) {
-                String value = (String) props.get(propName);
+                SVNPropertyValue value = props.getSVNPropertyValue(propName);
                 if (value != null) {
                     handler.handleProperty(url, new SVNPropertyData(propName, value));
                 }
             } else {
-                for (Iterator names = props.keySet().iterator(); names
+                for (Iterator names = props.nameSet().iterator(); names
                         .hasNext();) {
                     String name = (String) names.next();
                     if (name.startsWith(SVNProperty.SVN_ENTRY_PREFIX)
                             || name.startsWith(SVNProperty.SVN_WC_PREFIX)) {
                         continue;
                     }
-                    String value = (String) props.get(name);
+                    SVNPropertyValue value = props.getSVNPropertyValue(name);
                     handler.handleProperty(url, new SVNPropertyData(name, value));
                 }
             }
@@ -2607,15 +2609,15 @@ public class SVNWCClient extends SVNBasicClient {
             }
             SVNVersionedProperties properties = base ? area.getBaseProperties(entry.getName()) : area.getProperties(entry.getName());
             if (propName != null) {
-                String propVal = properties.getPropertyValue(propName);
+                SVNPropertyValue propVal = properties.getPropertyValue(propName);
                 if (propVal != null) {
                     handler.handleProperty(area.getFile(entry.getName()), new SVNPropertyData(propName, propVal));
                 }
             } else {
-                Map allProps = properties.asMap();
-                for(Iterator names = allProps.keySet().iterator(); names.hasNext();) {
+                SVNProperties allProps = properties.asMap();
+                for(Iterator names = allProps.nameSet().iterator(); names.hasNext();) {
                     String name = (String) names.next();
-                    String val = (String) allProps.get(name);
+                    SVNPropertyValue val = allProps.getSVNPropertyValue(name);
                     handler.handleProperty(area.getFile(entry.getName()), new SVNPropertyData(name, val));
                 }
             }
@@ -2640,7 +2642,7 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
 
-    private static String validatePropertyValue(String owner, String name, String value, boolean force) throws SVNException {
+    private static SVNPropertyValue validatePropertyValue(String owner, String name, SVNPropertyValue value, boolean force) throws SVNException {
         if (value == null) {
             return value;
         }
@@ -2651,18 +2653,18 @@ public class SVNWCClient extends SVNBasicClient {
         if (!force && SVNProperty.EOL_STYLE.equals(name)) {
             value = value.trim();
         } else if (!force && SVNProperty.MIME_TYPE.equals(name)) {
-            value = value.trim();
+            value.trim();
         } else if (SVNProperty.IGNORE.equals(name) || SVNProperty.EXTERNALS.equals(name)) {
             if (!value.endsWith("\n")) {
-                value += "\n";
+                value = value.append("\n");
             }
             if (SVNProperty.EXTERNALS.equals(name)) {
-                SVNExternal.parseExternals(owner, value);
+                SVNExternal.parseExternals(owner, value.getString());
             }
         } else if (SVNProperty.KEYWORDS.equals(name)) {
-            value = value.trim();
+            value.trim();
         } else if (SVNProperty.EXECUTABLE.equals(name) || SVNProperty.SPECIAL.equals(name) || SVNProperty.NEEDS_LOCK.equals(name)) {
-            value = "*";
+            value = new SVNPropertyValue("*");
         }
         return value;
     }
@@ -2706,15 +2708,15 @@ public class SVNWCClient extends SVNBasicClient {
                 hasMods = area.hasPropModifications(name) || area.hasTextModifications(name, true);
                 properties = area.getProperties(name);
             }
-            String eolStyle = properties.getPropertyValue(SVNProperty.EOL_STYLE);
-            String keywords = properties.getPropertyValue(SVNProperty.KEYWORDS);
+            SVNPropertyValue eolStyle = properties.getPropertyValue(SVNProperty.EOL_STYLE);
+            SVNPropertyValue keywords = properties.getPropertyValue(SVNProperty.KEYWORDS);
             boolean special = properties.getPropertyValue(SVNProperty.SPECIAL) != null;
             byte[] eols = null;
             Map keywordsMap = null;
             String time = null;
 
             if (eolStyle != null) {
-                eols = SVNTranslator.getEOL(eolStyle);
+                eols = SVNTranslator.getEOL(eolStyle.getString());
             }
             if (hasMods && !special) {
                 time = SVNDate.formatDate(new Date(path.lastModified()));
@@ -2725,7 +2727,7 @@ public class SVNWCClient extends SVNBasicClient {
                 String url = entry.getURL();
                 String author = hasMods ? "(local)" : entry.getAuthor();
                 String rev = hasMods ? entry.getCommittedRevision() + "M" : entry.getCommittedRevision() + ""; 
-                keywordsMap = SVNTranslator.computeKeywords(keywords, expandKeywords ? url : null, author, time, rev, getOptions());
+                keywordsMap = SVNTranslator.computeKeywords(keywords.getString(), expandKeywords ? url : null, author, time, rev, getOptions());
             }
             OutputStream translatingStream = eols != null || keywordsMap != null ? new SVNTranslatorOutputStream(dst, eols, false, keywordsMap, expandKeywords) : dst;
             try {
@@ -2768,10 +2770,10 @@ public class SVNWCClient extends SVNBasicClient {
     private static class PropSetHandler implements ISVNEntryHandler {
         private boolean myIsForce;
         private String myPropName;
-        private String myPropValue;
+        private SVNPropertyValue myPropValue;
         private ISVNPropertyHandler myPropHandler;
         
-        public PropSetHandler(boolean isForce, String propName, String propValue, ISVNPropertyHandler handler) {
+        public PropSetHandler(boolean isForce, String propName, SVNPropertyValue propValue, ISVNPropertyHandler handler) {
             myIsForce = isForce;
             myPropName = propName;
             myPropValue = propValue;

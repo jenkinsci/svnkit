@@ -37,6 +37,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.io.fs.FSFile;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
@@ -46,7 +47,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNProperties;
+import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 
@@ -116,9 +117,9 @@ public class SVNAdminArea14 extends SVNAdminArea {
                 target = SVNFileUtil.openFileForWriting(tmpFile);
                 SVNVersionedProperties props = (SVNVersionedProperties)wcPropsCache.get(getThisDirName());
                 if (props != null && !props.isEmpty()) {
-                    SVNProperties.setProperties(props.asMap(), target, SVNProperties.SVN_HASH_TERMINATOR);
+                    SVNWCProperties.setProperties(props.asMap(), target, SVNWCProperties.SVN_HASH_TERMINATOR);
                 } else {
-                    SVNProperties.setProperties(Collections.EMPTY_MAP, target, SVNProperties.SVN_HASH_TERMINATOR);
+                    SVNWCProperties.setProperties(SVNProperties.EMPTY_PROPERTIES, target, SVNWCProperties.SVN_HASH_TERMINATOR);
                 }
     
                 for(Iterator entries = wcPropsCache.keySet().iterator(); entries.hasNext();) {
@@ -130,7 +131,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
                     if (!props.isEmpty()) {
                         target.write(name.getBytes("UTF-8"));
                         target.write('\n');
-                        SVNProperties.setProperties(props.asMap(), target, SVNProperties.SVN_HASH_TERMINATOR);
+                        SVNWCProperties.setProperties(props.asMap(), target, SVNWCProperties.SVN_HASH_TERMINATOR);
                     }
                 }
             } catch (IOException ioe) {
@@ -156,7 +157,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
             return props;
         }
         
-        Map baseProps = null;
+        SVNProperties baseProps = null;
         try {
             baseProps = readBaseProperties(name);
         } catch (SVNException svne) {
@@ -176,7 +177,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
             return props;
         }
         
-        Map revertProps = null;
+        SVNProperties revertProps = null;
         try {
             revertProps = readRevertProperties(name);
         } catch (SVNException svne) {
@@ -199,8 +200,8 @@ public class SVNAdminArea14 extends SVNAdminArea {
         final String entryName = name;
         props =  new SVNProperties14(null, this, name){
 
-            protected Map loadProperties() throws SVNException {
-                Map props = getPropertiesMap();
+            protected SVNProperties loadProperties() throws SVNException {
+                SVNProperties props = getProperties();
                 if (props == null) {
                     try {
                         props = readProperties(entryName);
@@ -208,7 +209,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
                         SVNErrorMessage err = svne.getErrorMessage().wrap("Failed to load properties from disk");
                         SVNErrorManager.error(err);
                     }
-                    props = props != null ? props : new HashMap();
+                    props = props != null ? props : new SVNProperties();
                     setPropertiesMap(props);
                 }
                 return props;
@@ -237,7 +238,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
 
         props = (SVNVersionedProperties)wcPropsCache.get(entryName); 
         if (props == null) {
-            props = new SVNProperties13(new HashMap());
+            props = new SVNProperties13(new SVNProperties());
             wcPropsCache.put(entryName, props);
         }
         return props;
@@ -254,7 +255,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         FSFile wcpropsFile = null;
         try {
             wcpropsFile = new FSFile(propertiesFile);
-            Map wcProps = wcpropsFile.readProperties(false);
+            SVNProperties wcProps = wcpropsFile.readProperties(false);
             SVNVersionedProperties entryWCProps = new SVNProperties13(wcProps); 
             wcPropsCache.put(getThisDirName(), entryWCProps);
             
@@ -284,22 +285,22 @@ public class SVNAdminArea14 extends SVNAdminArea {
         return wcPropsCache;
     }
     
-    private Map readBaseProperties(String name) throws SVNException {
+    private SVNProperties readBaseProperties(String name) throws SVNException {
         File propertiesFile = getBasePropertiesFile(name, false);
-        SVNProperties props = new SVNProperties(propertiesFile, null);
+        SVNWCProperties props = new SVNWCProperties(propertiesFile, null);
         return props.asMap();
     }
 
-    private Map readRevertProperties(String name) throws SVNException {
+    private SVNProperties readRevertProperties(String name) throws SVNException {
         File propertiesFile = getRevertPropertiesFile(name, false);
-        SVNProperties props = new SVNProperties(propertiesFile, null);
+        SVNWCProperties props = new SVNWCProperties(propertiesFile, null);
         return props.asMap();
     }
     
-    private Map readProperties(String name) throws SVNException {
+    private SVNProperties readProperties(String name) throws SVNException {
         if (hasPropModifications(name)) {
             File propertiesFile = getPropertiesFile(name, false);
-            SVNProperties props = new SVNProperties(propertiesFile, null);
+            SVNWCProperties props = new SVNWCProperties(propertiesFile, null);
             return props.asMap();
         } 
             
@@ -313,11 +314,11 @@ public class SVNAdminArea14 extends SVNAdminArea {
         if (hasProperties(name)) {
             return readBaseProperties(name);
         }        
-        return new HashMap();
+        return new SVNProperties();
     }
 
     public void saveVersionedProperties(SVNLog log, boolean close) throws SVNException {
-        Map command = new HashMap();
+        SVNProperties command = new SVNProperties();
         Set processedEntries = new HashSet();
         
         Map propsCache = getPropertiesStorage(false);
@@ -330,10 +331,10 @@ public class SVNAdminArea14 extends SVNAdminArea {
                     SVNVersionedProperties propsDiff = baseProps.compareTo(props);
                     String[] cachableProps = SVNAdminArea14.getCachableProperties();
                     command.put(SVNProperty.shortPropertyName(SVNProperty.CACHABLE_PROPS), asString(cachableProps, " "));
-                    Map propsMap = props.loadProperties();
+                    SVNProperties propsMap = props.loadProperties();
                     LinkedList presentProps = new LinkedList();
                     for (int i = 0; i < cachableProps.length; i++) {
-                        if (propsMap.containsKey(cachableProps[i])) {
+                        if (propsMap.containsName(cachableProps[i])) {
                             presentProps.addLast(cachableProps[i]);
                         }
                     }
@@ -362,7 +363,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
                         tmpPath += getThisDirName().equals(name) ? "dir-props" : "props/" + name + ".svn-work";
                         File tmpFile = getAdminFile(tmpPath);
                         String srcPath = getAdminDirectory().getName() + "/" + tmpPath;
-                        SVNProperties tmpProps = new SVNProperties(tmpFile, srcPath);
+                        SVNWCProperties tmpProps = new SVNWCProperties(tmpFile, srcPath);
                         if (!props.isEmpty()) {
                             tmpProps.setProperties(props.asMap());
                         } else {
@@ -399,10 +400,10 @@ public class SVNAdminArea14 extends SVNAdminArea {
                         String[] cachableProps = SVNAdminArea14.getCachableProperties();
                         command.put(SVNProperty.shortPropertyName(SVNProperty.CACHABLE_PROPS), asString(cachableProps, " "));
                         
-                        Map propsMap = props.loadProperties();
+                        SVNProperties propsMap = props.loadProperties();
                         LinkedList presentProps = new LinkedList();
                         for (int i = 0; i < cachableProps.length; i++) {
-                            if (propsMap.containsKey(cachableProps[i])) {
+                            if (propsMap.containsName(cachableProps[i])) {
                                 presentProps.addLast(cachableProps[i]);
                             }
                         }
@@ -439,7 +440,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
                         tmpPath += getThisDirName().equals(name) ? "dir-prop-base" : "prop-base/" + name + ".svn-base";
                         File tmpFile = getAdminFile(tmpPath);
                         String srcPath = getAdminDirectory().getName() + "/" + tmpPath;
-                        SVNProperties tmpProps = new SVNProperties(tmpFile, srcPath);
+                        SVNWCProperties tmpProps = new SVNWCProperties(tmpFile, srcPath);
                         tmpProps.setProperties(baseProps.asMap());
 
                         command.put(SVNLog.NAME_ATTR, srcPath);
@@ -1533,7 +1534,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         }
 
         SVNLog log = getLog();
-        Map command = new HashMap();
+        SVNProperties command = new SVNProperties();
         command.put(SVNLog.FORMAT_ATTR, String.valueOf(getFormatVersion()));
         log.addCommand(SVNLog.UPGRADE_FORMAT, command, false);
         command.clear();
@@ -1554,7 +1555,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
             }
 
             SVNVersionedProperties srcBaseProps = adminArea.getBaseProperties(entry.getName());
-            Map basePropsHolder = srcBaseProps.asMap();
+            SVNProperties basePropsHolder = srcBaseProps.asMap();
             SVNVersionedProperties dstBaseProps = new SVNProperties13(basePropsHolder);
             basePropsCache.put(entry.getName(), dstBaseProps);
             dstBaseProps.setModified(true);
@@ -1562,8 +1563,8 @@ public class SVNAdminArea14 extends SVNAdminArea {
             SVNVersionedProperties srcProps = adminArea.getProperties(entry.getName());
             SVNVersionedProperties dstProps = new SVNProperties14(srcProps.asMap(), this, entry.getName()){
 
-                protected Map loadProperties() throws SVNException {
-                    return getPropertiesMap();
+                protected SVNProperties loadProperties() throws SVNException {
+                    return getProperties();
                 }
             };
             propsCache.put(entry.getName(), dstProps);

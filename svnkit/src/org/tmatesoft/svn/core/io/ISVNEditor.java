@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.io;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 
 /**
  * The <b>ISVNEditor</b> interface is used by <b>SVNRepository</b> to 
@@ -151,6 +152,8 @@ public interface ISVNEditor extends ISVNDeltaConsumer {
      */
     public void changeDirProperty(String name, String value) throws SVNException;
 
+    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException;
+
     /**
      * Closes the currently opened directory fixing all changes of its 
      * properties and/or entries. Closing a directory picks up an editor
@@ -203,7 +206,9 @@ public interface ISVNEditor extends ISVNDeltaConsumer {
      * @throws SVNException
      */
     public void changeFileProperty(String path, String name, String value) throws SVNException;
-    
+
+    public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException;
+
     /**
      * Closes the opened file fixing all properties and/or contents changes. 
      * 

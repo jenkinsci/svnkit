@@ -22,7 +22,9 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaReader;
 import org.tmatesoft.svn.core.internal.io.fs.FSCommitter;
 import org.tmatesoft.svn.core.internal.io.fs.FSDeltaConsumer;
@@ -41,7 +43,6 @@ import org.tmatesoft.svn.core.wc.admin.SVNAdminEvent;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEventAction;
 import org.tmatesoft.svn.core.wc.admin.SVNUUIDAction;
 import org.tmatesoft.svn.util.SVNDebugLog;
-
 
 
 /**
@@ -340,7 +341,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
     
                         buff = new byte[len];
                         actualLength += SVNAdminHelper.readKeyOrValue(dumpStream, buff, len);
-                        String propValue = new String(buff, "UTF-8");
+                        SVNPropertyValue propValue = new SVNPropertyValue(buff);
                         if (isNode) {
                             setNodeProperty(propName, propValue);
                         } else {
@@ -382,19 +383,19 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
     public void removeNodeProperties() throws SVNException {
         FSTransactionRoot txnRoot = myCurrentRevisionBaton.myTxnRoot;
         FSRevisionNode node = txnRoot.getRevisionNode(myCurrentNodeBaton.myPath);
-        Map props = node.getProperties(myFSFS);
+        SVNProperties props = node.getProperties(myFSFS);
         
-        for (Iterator propNames = props.keySet().iterator(); propNames.hasNext();) {
+        for (Iterator propNames = props.nameSet().iterator(); propNames.hasNext();) {
             String propName = (String) propNames.next();
             myCurrentRevisionBaton.getCommitter().changeNodeProperty(myCurrentNodeBaton.myPath, propName, null);
         }
     }
 
-    public void setNodeProperty(String propertyName, String propertyValue) throws SVNException {
+    public void setNodeProperty(String propertyName, SVNPropertyValue propertyValue) throws SVNException {
         myCurrentRevisionBaton.getCommitter().changeNodeProperty(myCurrentNodeBaton.myPath, propertyName, propertyValue);
     }
 
-    public void setRevisionProperty(String propertyName, String propertyValue) throws SVNException {
+    public void setRevisionProperty(String propertyName, SVNPropertyValue propertyValue) throws SVNException {
         if (myCurrentRevisionBaton.myRevision > 0) {
             myFSFS.setTransactionProperty(myCurrentRevisionBaton.myTxn.getTxnId(), propertyName, propertyValue);
             if (SVNRevisionProperty.DATE.equals(propertyName)) {
@@ -526,7 +527,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
         FSTransactionRoot myTxnRoot;
         long myRevision;
         long myRevisionOffset;
-        String myDatestamp;
+        SVNPropertyValue myDatestamp;
         
         private FSCommitter myCommitter;
         private FSDeltaConsumer myDeltaConsumer;

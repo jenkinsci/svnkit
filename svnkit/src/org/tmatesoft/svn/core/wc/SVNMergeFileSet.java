@@ -14,11 +14,10 @@ package org.tmatesoft.svn.core.wc;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -181,7 +180,7 @@ public class SVNMergeFileSet {
     
     public void dispose() throws SVNException {
         // add deletion commands to the log file.
-        Map command = new HashMap();
+        SVNProperties command = new SVNProperties();
         for (Iterator paths = myTmpPaths.iterator(); paths.hasNext();) {
             String path = (String) paths.next();
             command.put(SVNLog.NAME_ATTR, path);

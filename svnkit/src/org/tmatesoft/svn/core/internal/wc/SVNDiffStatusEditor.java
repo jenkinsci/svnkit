@@ -19,6 +19,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
@@ -79,6 +80,12 @@ public class SVNDiffStatusEditor implements ISVNEditor {
         }
     }
 
+    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
+        if (SVNProperty.isRegularProperty(name)) {
+            myCurrentDirSummarize.myPropChanged = true;
+        }
+    }
+
     public void closeDir() throws SVNException {
         myHandler.handleDiffStatus(myCurrentDirSummarize.toStatus());
         myCurrentDirSummarize = myCurrentDirSummarize.myParent;
@@ -94,6 +101,12 @@ public class SVNDiffStatusEditor implements ISVNEditor {
     }
 
     public void changeFileProperty(String path, String name, String value) throws SVNException {
+        if (SVNProperty.isRegularProperty(name)) {
+            myCurrentFileSummarize.myPropChanged = true;
+        }
+    }
+
+    public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
         if (SVNProperty.isRegularProperty(name)) {
             myCurrentFileSummarize.myPropChanged = true;
         }

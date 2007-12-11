@@ -63,7 +63,7 @@ public class SVNReporter implements ISVNReporterBaton {
                 if (myDepth == SVNDepth.UNKNOWN) {
                     myDepth = SVNDepth.INFINITY;
                 }
-                reporter.setPath("", null, revision, myDepth, targetEntry != null ? targetEntry.isIncomplete() : true);
+                reporter.setPath("", null, revision, myDepth, targetEntry == null || targetEntry.isIncomplete());
                 reporter.deletePath("");
                 reporter.finishReport();
                 return;
@@ -124,7 +124,7 @@ public class SVNReporter implements ISVNReporterBaton {
 
     private void reportEntries(ISVNReporter reporter, SVNAdminArea adminArea, String dirPath, long dirRevision, boolean reportAll, SVNDepth depth) throws SVNException {
         SVNWCAccess wcAccess = myInfo.getWCAccess();
-        String externalsProperty = adminArea.getProperties(adminArea.getThisDirName()).getPropertyValue(SVNProperty.EXTERNALS);
+        String externalsProperty = adminArea.getProperties(adminArea.getThisDirName()).getStringPropertyValue(SVNProperty.EXTERNALS);
         SVNEntry thisEntry = adminArea.getEntry(adminArea.getThisDirName(), true);
         if (externalsProperty != null) {
             // use owners path as a key.

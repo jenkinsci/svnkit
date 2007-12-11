@@ -15,10 +15,8 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.Map;
 
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.SVNDirEntry;
@@ -27,10 +25,12 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
@@ -60,7 +60,7 @@ public class DAVResource {
     private String myBaseChecksum;
     private String myResultChecksum;
 
-    private Map mySVNProperties;
+    private SVNProperties mySVNProperties;
     private Collection myDeadProperties;
     private Collection myEntries;
 
@@ -187,9 +187,9 @@ public class DAVResource {
         return myResultChecksum;
     }
 
-    private Map getSVNProperties() throws SVNException {
+    private SVNProperties getSVNProperties() throws SVNException {
         if (mySVNProperties == null) {
-            mySVNProperties = new HashMap();
+            mySVNProperties = new SVNProperties();
             if (getResourceURI().getType() == DAVResourceType.REGULAR) {
                 if (isCollection()) {
                     getRepository().getDir(getResourceURI().getPath(), getRevision(), mySVNProperties, (ISVNDirEntryHandler) null);
@@ -366,7 +366,7 @@ public class DAVResource {
     public Collection getDeadProperties() throws SVNException {
         if (myDeadProperties == null) {
             myDeadProperties = new ArrayList();
-            for (Iterator iterator = getSVNProperties().keySet().iterator(); iterator.hasNext();) {
+            for (Iterator iterator = getSVNProperties().nameSet().iterator(); iterator.hasNext();) {
                 String propertyName = (String) iterator.next();
                 if (SVNProperty.isRegularProperty(propertyName)) {
                     myDeadProperties.add(propertyName);
@@ -381,11 +381,12 @@ public class DAVResource {
     }
 
     public String getProperty(String propertyName) throws SVNException {
-        return (String) getSVNProperties().get(propertyName);
+        return getSVNProperties().getStringValue(propertyName);
     }
 
     public String getRevisionProperty(long revision, String propertyName) throws SVNException {
-        return getRepository().getRevisionPropertyValue(revision, propertyName);
+        SVNPropertyValue value = getRepository().getRevisionPropertyValue(revision, propertyName);
+        return value == null ? null : value.getString();
     }
 
     public void writeTo(OutputStream out) throws SVNException {

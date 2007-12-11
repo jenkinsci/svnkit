@@ -16,6 +16,7 @@ import java.io.OutputStream;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
 
 /**
  * The <b>ISVNDiffGenerator</b> should be implemented by drivers generating
@@ -218,7 +219,7 @@ public interface ISVNDiffGenerator {
      *                        the differences will be written to
      * @throws SVNException   if can not save diff data
      */
-    public void displayPropDiff(String path, Map baseProps, Map diff, OutputStream result) throws SVNException;
+    public void displayPropDiff(String path, SVNProperties baseProps, SVNProperties diff, OutputStream result) throws SVNException;
     
     /**
      * Generates and writes differences between two files to the specified 

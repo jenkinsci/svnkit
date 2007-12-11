@@ -11,10 +11,9 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs.test;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 
 /**
  * @version 1.1.1
@@ -24,7 +23,7 @@ public class SVNItem {
 
     private String myRepositoryPath;
     private SVNNodeKind myKind;
-    private Map myProperties;
+    private SVNProperties myProperties;
     private String myChecksum;
     private int myNumberOfDeltaChunks;
 
@@ -50,16 +49,26 @@ public class SVNItem {
         myKind = kind;
     }
 
-    public Map getProperties() {
+    public SVNProperties getProperties() {
         return myProperties;
     }
 
-    public void changeProperty(String propName, String propVal) {
+    public void changeProperty(String propName, SVNPropertyValue propVal) {
         if (propVal == null) {
             return;
         }
         if (myProperties == null) {
-            myProperties = new HashMap();
+            myProperties = new SVNProperties();
+        }
+        myProperties.put(propName, propVal);
+    }
+
+     public void changeProperty(String propName, String propVal) {
+        if (propVal == null) {
+            return;
+        }
+        if (myProperties == null) {
+            myProperties = new SVNProperties();
         }
         myProperties.put(propName, propVal);
     }

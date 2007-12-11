@@ -126,7 +126,7 @@ public class SVNStatusEditor {
         Map childrenFiles = getChildrenFiles(dir.getRoot());
         SVNEntry dirEntry = myWCAccess.getEntry(dir.getRoot(), false);
 
-        String externals = dir.getProperties(dir.getThisDirName()).getPropertyValue(SVNProperty.EXTERNALS);
+        String externals = dir.getProperties(dir.getThisDirName()).getStringPropertyValue(SVNProperty.EXTERNALS);
         if (externals != null) {
             String path = dir.getRelativePath(myAdminInfo.getAnchor());
             myAdminInfo.addExternal(path, externals, externals);
@@ -472,7 +472,7 @@ public class SVNStatusEditor {
     }
     
     public static Collection getIgnorePatterns(SVNAdminArea dir, Collection globalIgnores) throws SVNException {
-        String localIgnores = dir.getProperties("").getPropertyValue(SVNProperty.IGNORE);
+        String localIgnores = dir.getProperties("").getStringPropertyValue(SVNProperty.IGNORE);
         if (localIgnores != null) {
             Collection patterns = new HashSet();
             patterns.addAll(globalIgnores);

@@ -16,6 +16,7 @@ import java.io.UnsupportedEncodingException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
@@ -177,9 +178,9 @@ public class DAVReplayHandler extends DAVEditorHandler {
             } else {
                 if (attrs.getValue(DEL_ATTR) != null) {
                     if (element == CHANGE_FILE_PROPERTY) {
-                        myEditor.changeFileProperty(myPath, myPropertyName, null);
+                        myEditor.changeFileProperty(myPath, myPropertyName, (SVNPropertyValue) null);
                     } else {
-                        myEditor.changeDirProperty(myPropertyName, null);
+                        myEditor.changeDirProperty(myPropertyName, (SVNPropertyValue) null);
                     }
                     myPropertyName = null;
                 } else {

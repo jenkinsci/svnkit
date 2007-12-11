@@ -24,8 +24,8 @@ import java.util.Iterator;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.Version;
@@ -114,13 +114,13 @@ public class SVNCommandUtil {
         }
     }
     
-    public static byte[] runEditor(AbstractSVNCommandEnvironment env, String editorCommand, String existingValue, String prefix) throws SVNException {
+    public static byte[] runEditor(AbstractSVNCommandEnvironment env, String editorCommand, byte[] existingValue, String prefix) throws SVNException {
         File tmpDir = new File(System.getProperty("java.io.tmpdir"));
         File tmpFile = SVNFileUtil.createUniqueFile(tmpDir, prefix, ".tmp");
         OutputStream os = null;
         try {
             os = SVNFileUtil.openFileForWriting(tmpFile);
-            os.write(existingValue.getBytes("UTF-8"));
+            os.write(existingValue);
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
             SVNErrorManager.error(err);

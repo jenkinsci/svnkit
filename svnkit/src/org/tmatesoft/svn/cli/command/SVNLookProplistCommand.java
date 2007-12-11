@@ -15,11 +15,11 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.Iterator;
-import java.util.Map;
 
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
@@ -46,7 +46,7 @@ public class SVNLookProplistCommand extends SVNCommand {
         
         if (getCommandLine().hasArgument(SVNArgument.TRANSACTION)) {
             String transactionName = (String) getCommandLine().getArgumentValue(SVNArgument.TRANSACTION);
-            Map props = null;
+            SVNProperties props = null;
             if (isRevProp) {
                 props = lookClient.doGetRevisionProperties(reposRoot, transactionName);
             } else {
@@ -60,7 +60,7 @@ public class SVNLookProplistCommand extends SVNCommand {
             revision = SVNRevision.parse((String) getCommandLine().getArgumentValue(SVNArgument.REVISION));
         } 
 
-        Map props = null;
+        SVNProperties props = null;
         if (isRevProp) {
             props = lookClient.doGetRevisionProperties(reposRoot, revision);
         } else {
@@ -75,12 +75,12 @@ public class SVNLookProplistCommand extends SVNCommand {
         run(out, err);
     }
     
-    public void printProps(PrintStream out, Map props, boolean isVerbose) {
+    public void printProps(PrintStream out, SVNProperties props, boolean isVerbose) {
         if (props != null) {
-            for (Iterator propNames = props.keySet().iterator(); propNames.hasNext(); ) {
+            for (Iterator propNames = props.nameSet().iterator(); propNames.hasNext(); ) {
                 String propName = (String) propNames.next();
                 if (isVerbose) {
-                    String propVal = (String) props.get(propName);
+                    String propVal = props.getStringValue(propName);
                     SVNCommand.println(out, "  " + propName + " : " + propVal);    
                 } else {
                     SVNCommand.println(out, "  " + propName);    

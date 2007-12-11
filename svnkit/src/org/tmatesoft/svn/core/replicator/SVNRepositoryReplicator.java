@@ -13,7 +13,6 @@ package org.tmatesoft.svn.core.replicator;
 
 import java.util.Date;
 import java.util.Iterator;
-import java.util.Map;
 
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNCancelException;
@@ -22,7 +21,9 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -178,13 +179,13 @@ public class SVNRepositoryReplicator implements ISVNEventHandler {
         
         long count = toRevision - fromRevision + 1;
         if (dstLatestRevision == 0) { 
-            Map zeroRevisionProperties = src.getRevisionProperties(0, null);
+            SVNProperties zeroRevisionProperties = src.getRevisionProperties(0, null);
             updateRevisionProperties(dst, 0, zeroRevisionProperties);
         }
         
         for(long i = fromRevision; i <= toRevision; i++) {
-            Map revisionProps = src.getRevisionProperties(i, null);
-            String commitMessage = (String) revisionProps.get(SVNRevisionProperty.LOG);
+            SVNProperties revisionProps = src.getRevisionProperties(i, null);
+            String commitMessage = revisionProps.getStringValue(SVNRevisionProperty.LOG);
             
             currentRevision[0] = null;
             
@@ -238,8 +239,8 @@ public class SVNRepositoryReplicator implements ISVNEventHandler {
             SVNCommitInfo commitInfo = bridgeEditor.getCommitInfo();
             try {
                 updateRevisionProperties(dst, i, revisionProps);
-                String author = (String) revisionProps.get(SVNRevisionProperty.AUTHOR);
-                Date date = SVNDate.parseDate((String) revisionProps.get(SVNRevisionProperty.DATE));
+                String author = revisionProps.getStringValue(SVNRevisionProperty.AUTHOR);
+                Date date = SVNDate.parseDate(revisionProps.getStringValue(SVNRevisionProperty.DATE));
                 commitInfo = new SVNCommitInfo(i, author, date); 
             } catch (SVNException e) {
                 // skip revprop set failures.
@@ -249,20 +250,20 @@ public class SVNRepositoryReplicator implements ISVNEventHandler {
         return count;
     }
 
-    private void updateRevisionProperties(SVNRepository repository, long revision, Map properties) throws SVNCancelException, SVNException {
-        if (!properties.containsKey(SVNRevisionProperty.AUTHOR)) {
-            properties.put(SVNRevisionProperty.AUTHOR, null);
+    private void updateRevisionProperties(SVNRepository repository, long revision, SVNProperties properties) throws SVNException {
+        if (!properties.containsName(SVNRevisionProperty.AUTHOR)) {
+            properties.put(SVNRevisionProperty.AUTHOR, (byte[]) null);
         }
-        if (!properties.containsKey(SVNRevisionProperty.DATE)) {
-            properties.put(SVNRevisionProperty.DATE, null);
+        if (!properties.containsName(SVNRevisionProperty.DATE)) {
+            properties.put(SVNRevisionProperty.DATE, (byte[]) null);
         }
-        if (!properties.containsKey(SVNRevisionProperty.LOG)) {
-            properties.put(SVNRevisionProperty.LOG, null);
+        if (!properties.containsName(SVNRevisionProperty.LOG)) {
+            properties.put(SVNRevisionProperty.LOG, (byte[]) null);
         }
-        for (Iterator names = properties.keySet().iterator(); names.hasNext();) {
+        for (Iterator names = properties.nameSet().iterator(); names.hasNext();) {
             checkCancelled();
             String name = (String) names.next();
-            String value = (String) properties.get(name);
+            SVNPropertyValue value = properties.getSVNPropertyValue(name);
             if (name != null) {
                 repository.setRevisionPropertyValue(revision, name, value);
             }

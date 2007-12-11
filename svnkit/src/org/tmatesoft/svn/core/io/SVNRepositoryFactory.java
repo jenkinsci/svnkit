@@ -39,7 +39,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNMergeInfoManager;
-import org.tmatesoft.svn.core.internal.wc.SVNProperties;
+import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 
 /**
@@ -466,7 +466,7 @@ public abstract class SVNRepositoryFactory {
 
             // set creation date.
             File rev0File = new File(path, maxFilesPerDir > 0 ? "db/revprops/0/0" : "db/revprops/0");
-            SVNProperties props = new SVNProperties(rev0File, null);
+            SVNWCProperties props = new SVNWCProperties(rev0File, null);
             String date = SVNDate.formatDate(new Date(System.currentTimeMillis()), true);
             props.setPropertyValue(SVNRevisionProperty.DATE, date);
             

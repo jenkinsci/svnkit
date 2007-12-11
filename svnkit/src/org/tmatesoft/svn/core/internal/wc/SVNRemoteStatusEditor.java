@@ -26,6 +26,7 @@ import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
@@ -127,6 +128,25 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
         }
     }
 
+    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
+        if (name != null && !name.startsWith(SVNProperty.SVN_ENTRY_PREFIX)
+                && !name.startsWith(SVNProperty.SVN_WC_PREFIX)) {
+            myDirectoryInfo.myIsPropertiesChanged = true;
+        }
+        if (SVNProperty.COMMITTED_REVISION.equals(name) && value != null) {
+            try {
+                long number = Long.parseLong(value.getString());
+                myDirectoryInfo.myRemoteRevision = SVNRevision.create(number);
+            } catch (NumberFormatException nfe) {
+                myDirectoryInfo.myRemoteRevision = SVNRevision.UNDEFINED;
+            }
+        } else if (SVNProperty.COMMITTED_DATE.equals(name) && value != null) {
+            myDirectoryInfo.myRemoteDate = SVNDate.parseDate(value.getString());
+        } else if (SVNProperty.LAST_AUTHOR.equals(name)) {
+            myDirectoryInfo.myRemoteAuthor = value.getString();
+        }
+    }
+
     public void closeDir() throws SVNException {
         DirectoryInfo parent = myDirectoryInfo.myParent;
         if (myDirectoryInfo.myIsAdded || myDirectoryInfo.myIsPropertiesChanged || myDirectoryInfo.myIsContentsChanged) {
@@ -207,6 +227,25 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
             myFileInfo.myRemoteDate = SVNDate.parseDate(value);
         } else if (SVNProperty.LAST_AUTHOR.equals(name)) {
             myFileInfo.myRemoteAuthor = value;
+        }
+    }
+
+    public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
+        if (name != null && !name.startsWith(SVNProperty.SVN_ENTRY_PREFIX)
+                && !name.startsWith(SVNProperty.SVN_WC_PREFIX)) {
+            myFileInfo.myIsPropertiesChanged = true;
+        }
+        if (SVNProperty.COMMITTED_REVISION.equals(name) && value != null) {
+            try {
+                long number = Long.parseLong(value.getString());
+                myFileInfo.myRemoteRevision = SVNRevision.create(number);
+            } catch (NumberFormatException nfe) {
+                myFileInfo.myRemoteRevision = SVNRevision.UNDEFINED;
+            }
+        } else if (SVNProperty.COMMITTED_DATE.equals(name) && value != null) {
+            myFileInfo.myRemoteDate = SVNDate.parseDate(value.getString());
+        } else if (SVNProperty.LAST_AUTHOR.equals(name)) {
+            myFileInfo.myRemoteAuthor = value.getString();
         }
     }
 

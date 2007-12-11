@@ -22,6 +22,8 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
@@ -49,7 +51,7 @@ public class SVNExportEditor implements ISVNEditor {
     private File myCurrentTmpFile;
     private String myCurrentPath;
     private Map myExternals;
-    private Map myFileProperties;
+    private SVNProperties myFileProperties;
     private ISVNEventHandler myEventDispatcher;
     private String myURL;
     private ISVNOptions myOptions;
@@ -109,6 +111,13 @@ public class SVNExportEditor implements ISVNEditor {
         }
     }
 
+    public void changeDirProperty(String name, SVNPropertyValue value)
+            throws SVNException {
+        if (SVNProperty.EXTERNALS.equals(name) && value != null) {
+            myExternals.put(myCurrentPath, value.getString());
+        }
+    }
+
     public void closeDir() throws SVNException {
         myCurrentDirectory = myCurrentDirectory.getParentFile();
         myCurrentPath = SVNPathUtil.tail(myCurrentPath);
@@ -123,11 +132,16 @@ public class SVNExportEditor implements ISVNEditor {
             SVNErrorManager.error(err);
         }
         myCurrentFile = file;
-        myFileProperties = new HashMap();
+        myFileProperties = new SVNProperties();
         myChecksum = null;
     }
 
     public void changeFileProperty(String commitPath, String name, String value)
+            throws SVNException {
+        myFileProperties.put(name, value);
+    }
+
+    public void changeFileProperty(String commitPath, String name, SVNPropertyValue value)
             throws SVNException {
         myFileProperties.put(name, value);
     }
@@ -150,7 +164,7 @@ public class SVNExportEditor implements ISVNEditor {
 
     public void closeFile(String commitPath, String textChecksum) throws SVNException {
         if (textChecksum == null) {
-            textChecksum = (String) myFileProperties.get(SVNProperty.CHECKSUM);
+            textChecksum = myFileProperties.getStringValue(SVNProperty.CHECKSUM);
         }
         if (myIsForce) {
             myCurrentFile.delete();
@@ -164,23 +178,23 @@ public class SVNExportEditor implements ISVNEditor {
         }
         // retranslate.
         try {
-            String date = (String) myFileProperties.get(SVNProperty.COMMITTED_DATE);
-            boolean special = myFileProperties.get(SVNProperty.SPECIAL) != null;
-            boolean binary = SVNProperty.isBinaryMimeType((String) myFileProperties.get(SVNProperty.MIME_TYPE));
-            String keywords = (String) myFileProperties.get(SVNProperty.KEYWORDS);
+            String date = myFileProperties.getStringValue(SVNProperty.COMMITTED_DATE);
+            boolean special = myFileProperties.getStringValue(SVNProperty.SPECIAL) != null;
+            boolean binary = SVNProperty.isBinaryMimeType(myFileProperties.getStringValue(SVNProperty.MIME_TYPE));
+            String keywords = myFileProperties.getStringValue(SVNProperty.KEYWORDS);
             Map keywordsMap = null;
             if (keywords != null) {
                 String url = SVNPathUtil.append(myURL, SVNEncodingUtil.uriEncode(myCurrentPath));
                 url = SVNPathUtil.append(url, SVNEncodingUtil.uriEncode(myCurrentFile.getName()));
-                String author = (String) myFileProperties.get(SVNProperty.LAST_AUTHOR);
-                String revStr = (String) myFileProperties.get(SVNProperty.COMMITTED_REVISION);
+                String author = myFileProperties.getStringValue(SVNProperty.LAST_AUTHOR);
+                String revStr = myFileProperties.getStringValue(SVNProperty.COMMITTED_REVISION);
                 keywordsMap = SVNTranslator.computeKeywords(keywords, url, author, date, revStr, myOptions);
             }
             byte[] eolBytes = null;
-            if (SVNProperty.EOL_STYLE_NATIVE.equals(myFileProperties.get(SVNProperty.EOL_STYLE))) {
-                eolBytes = SVNTranslator.getWorkingEOL(myEOLStyle != null ? myEOLStyle : (String) myFileProperties.get(SVNProperty.EOL_STYLE));
-            } else if (myFileProperties.containsKey(SVNProperty.EOL_STYLE)) {
-                eolBytes = SVNTranslator.getWorkingEOL((String) myFileProperties.get(SVNProperty.EOL_STYLE));
+            if (SVNProperty.EOL_STYLE_NATIVE.equals(myFileProperties.getStringValue(SVNProperty.EOL_STYLE))) {
+                eolBytes = SVNTranslator.getWorkingEOL(myEOLStyle != null ? myEOLStyle : myFileProperties.getStringValue(SVNProperty.EOL_STYLE));
+            } else if (myFileProperties.containsName(SVNProperty.EOL_STYLE)) {
+                eolBytes = SVNTranslator.getWorkingEOL(myFileProperties.getStringValue(SVNProperty.EOL_STYLE));
             }
             if (binary) {
                 // no translation unless 'special'.
@@ -192,7 +206,7 @@ public class SVNExportEditor implements ISVNEditor {
             } else {
                 SVNFileUtil.rename(myCurrentTmpFile, myCurrentFile);
             }
-            boolean executable = myFileProperties.get(SVNProperty.EXECUTABLE) != null;
+            boolean executable = myFileProperties.getStringValue(SVNProperty.EXECUTABLE) != null;
             if (executable) {
                 SVNFileUtil.setExecutable(myCurrentFile, true);
             }

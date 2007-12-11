@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.internal.io.fs;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.ListIterator;
@@ -27,6 +26,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -63,17 +63,17 @@ public class FSFileRevisionsFinder {
 
         FSRoot lastRoot = null;
         String lastPath = null;
-        Map lastProps = new HashMap();
+        SVNProperties lastProps = new SVNProperties();
         for (ListIterator locations = pathRevisions.listIterator(); locations.hasNext();) {
             SVNLocationEntry pathRevision = (SVNLocationEntry) locations.next();
             long rev = pathRevision.getRevision();
             String revPath = pathRevision.getPath();
             
-            Map revProps = myFSFS.getRevisionProperties(rev);
+            SVNProperties revProps = myFSFS.getRevisionProperties(rev);
             FSRevisionRoot root = myFSFS.createRevisionRoot(rev);
             FSRevisionNode fileNode = root.getRevisionNode(revPath);
-            Map props = fileNode.getProperties(myFSFS);
-            Map propDiffs = FSRepositoryUtil.getPropsDiffs(lastProps, props);
+            SVNProperties props = fileNode.getProperties(myFSFS);
+            SVNProperties propDiffs = FSRepositoryUtil.getPropsDiffs(lastProps, props);
             boolean contentsChanged = false;
             if (lastRoot != null) {
                 contentsChanged = FSRepositoryUtil.areFileContentsChanged(lastRoot, lastPath, root, revPath);

@@ -16,7 +16,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -26,8 +25,10 @@ import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVMergeHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVProppatchHandler;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPBodyInputStream;
@@ -59,17 +60,17 @@ class DAVCommitEditor implements ISVNEditor {
     private Map myPathsMap;
     private Map myFilesMap;
     private String myBaseChecksum;
-    private Map myRevProps;
+    private SVNProperties myRevProps;
     
     public DAVCommitEditor(DAVRepository repository, DAVConnection connection, String message, ISVNWorkspaceMediator mediator, Runnable closeCallback) {
-        this(repository, connection, (Map)null, mediator, closeCallback);
-        myRevProps = new HashMap(); 
+        this(repository, connection, (SVNProperties) null, mediator, closeCallback);
+        myRevProps = new SVNProperties();
         if (message != null) {
             myRevProps.put(SVNRevisionProperty.LOG, message);
         }
     }
 
-    public DAVCommitEditor(DAVRepository repository, DAVConnection connection, Map revProps, ISVNWorkspaceMediator mediator, Runnable closeCallback) {
+    public DAVCommitEditor(DAVRepository repository, DAVConnection connection, SVNProperties revProps, ISVNWorkspaceMediator mediator, Runnable closeCallback) {
         myConnection = connection;
         myLocation = repository.getLocation();
         myRepository = repository;
@@ -78,7 +79,7 @@ class DAVCommitEditor implements ISVNEditor {
         myDirsStack = new Stack();
         myPathsMap = new HashMap();
         myFilesMap = new HashMap();
-        myRevProps = revProps != null ? revProps : Collections.EMPTY_MAP;
+        myRevProps = revProps != null ? revProps : SVNProperties.EMPTY_PROPERTIES;
     }
 
     /* do nothing */
@@ -178,7 +179,7 @@ class DAVCommitEditor implements ISVNEditor {
         path = SVNEncodingUtil.uriEncode(path);
         // do nothing,
         DAVResource parent = myDirsStack.peek() != null ? (DAVResource) myDirsStack.peek() : null;
-        DAVResource directory = new DAVResource(myCommitMediator, myConnection, path, revision, parent == null ? false : parent.isCopy());
+        DAVResource directory = new DAVResource(myCommitMediator, myConnection, path, revision, parent != null && parent.isCopy());
         if (parent != null && parent.getVersionURL() == null) {
             // part of copied structure -> derive wurl
             directory.setWorkingURL(SVNPathUtil.append(parent.getWorkingURL(), SVNPathUtil.tail(path)));
@@ -190,6 +191,13 @@ class DAVCommitEditor implements ISVNEditor {
     }
 
     public void changeDirProperty(String name, String value) throws SVNException {
+        DAVResource directory = (DAVResource) myDirsStack.peek();
+        checkoutResource(directory, true);
+        directory.putProperty(name, value);
+        myPathsMap.put(directory.getURL(), directory.getPath());
+    }
+
+    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
         DAVResource directory = (DAVResource) myDirsStack.peek();
         checkoutResource(directory, true);
         directory.putProperty(name, value);
@@ -305,6 +313,11 @@ class DAVCommitEditor implements ISVNEditor {
     }
 
     public void changeFileProperty(String path, String name, String value)  throws SVNException {
+        DAVResource currentFile = (DAVResource) myFilesMap.get(path);
+        currentFile.putProperty(name, value);
+    }
+
+    public void changeFileProperty(String path, String name, SVNPropertyValue value)  throws SVNException {
         DAVResource currentFile = (DAVResource) myFilesMap.get(path);
         currentFile.putProperty(name, value);
     }

@@ -32,6 +32,7 @@ import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
 import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
@@ -54,7 +55,6 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.util.SVNDebugLog;
-
 
 
 /**
@@ -604,8 +604,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             SVNMergeRange nextRange = remainingRanges[i];
             this.handleEvent(SVNEventFactory.createSVNEvent(dstPath, SVNNodeKind.NONE, null, SVNRepository.INVALID_REVISION, SVNEventAction.MERGE_BEGIN, null, null, myIsSameURLs ? nextRange : null), ISVNEventHandler.UNKNOWN);
 
-            Map props1 = new HashMap();
-            Map props2 = new HashMap();
+            SVNProperties props1 = new SVNProperties();
+            SVNProperties props2 = new SVNProperties();
             File f1 = null;
             File f2 = null;
 
@@ -618,12 +618,12 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 f1 = loadFile(myRepository1, nextRange.getStartRevision(), props1, adminArea);
                 f2 = loadFile(myRepository2, nextRange.getEndRevision(), props2, adminArea);
 
-                mimeType1 = (String) props1.get(SVNProperty.MIME_TYPE);
-                mimeType2 = (String) props2.get(SVNProperty.MIME_TYPE);
+                mimeType1 = props1.getStringValue(SVNProperty.MIME_TYPE);
+                mimeType2 = props2.getStringValue(SVNProperty.MIME_TYPE);
                 props1 = filterProperties(props1, true, false, false);
                 props2 = filterProperties(props2, true, false, false);
 
-                Map propsDiff = computePropsDiff(props1, props2);
+                SVNProperties propsDiff = computePropsDiff(props1, props2);
                 
                 if (isReplace) {
                     SVNStatusType cstatus = callback.fileDeleted(name, f1, f2, mimeType1, 
@@ -753,8 +753,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             SVNMergeRange nextRange = remainingRanges[i];
             this.handleEvent(SVNEventFactory.createSVNEvent(dstPath, SVNNodeKind.NONE, null, SVNRepository.INVALID_REVISION, SVNEventAction.MERGE_BEGIN, null, null, myIsSameURLs ? nextRange : null), ISVNEventHandler.UNKNOWN);
 
-            Map props1 = new HashMap();
-            Map props2 = new HashMap();
+            SVNProperties props1 = new SVNProperties();
+            SVNProperties props2 = new SVNProperties();
             File f1 = null;
             File f2 = null;
 
@@ -767,12 +767,12 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 f1 = loadFile(myRepository1, nextRange.getStartRevision(), props1, adminArea);
                 f2 = loadFile(myRepository2, nextRange.getEndRevision(), props2, adminArea);
 
-                mimeType1 = (String) props1.get(SVNProperty.MIME_TYPE);
-                mimeType2 = (String) props2.get(SVNProperty.MIME_TYPE);
+                mimeType1 = props1.getStringValue(SVNProperty.MIME_TYPE);
+                mimeType2 = props2.getStringValue(SVNProperty.MIME_TYPE);
                 props1 = filterProperties(props1, true, false, false);
                 props2 = filterProperties(props2, true, false, false);
 
-                Map propsDiff = computePropsDiff(props1, props2);
+                SVNProperties propsDiff = computePropsDiff(props1, props2);
                 
                 if (isReplace) {
                     SVNStatusType cstatus = callback.fileDeleted(name, f1, f2, mimeType1, 
@@ -1218,35 +1218,35 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         return revs;
     }
 
-    private static Map computePropsDiff(Map props1, Map props2) {
-        Map propsDiff = new HashMap();
-        for (Iterator names = props2.keySet().iterator(); names.hasNext();) {
+    private static SVNProperties computePropsDiff(SVNProperties props1, SVNProperties props2) {
+        SVNProperties propsDiff = new SVNProperties();
+        for (Iterator names = props2.nameSet().iterator(); names.hasNext();) {
             String newPropName = (String) names.next();
-            if (props1.containsKey(newPropName)) {
+            if (props1.containsName(newPropName)) {
                 // changed.
-                Object oldValue = props2.get(newPropName);
-                if (!oldValue.equals(props1.get(newPropName))) {
-                    propsDiff.put(newPropName, props2.get(newPropName));
+                Object oldValue = props2.getStringValue(newPropName);
+                if (!oldValue.equals(props1.getStringValue(newPropName))) {
+                    propsDiff.put(newPropName, props2.getStringValue(newPropName));
                 }
             } else {
                 // added.
-                propsDiff.put(newPropName, props2.get(newPropName));
+                propsDiff.put(newPropName, props2.getStringValue(newPropName));
             }
         }
-        for (Iterator names = props1.keySet().iterator(); names.hasNext();) {
+        for (Iterator names = props1.nameSet().iterator(); names.hasNext();) {
             String oldPropName = (String) names.next();
-            if (!props2.containsKey(oldPropName)) {
+            if (!props2.containsName(oldPropName)) {
                 // deleted
-                propsDiff.put(oldPropName, null);
+                propsDiff.put(oldPropName, (String) null);
             }
         }
         return propsDiff;
     }
 
-    private static Map filterProperties(Map props1, boolean leftRegular,
+    private static SVNProperties filterProperties(SVNProperties props1, boolean leftRegular,
             boolean leftEntry, boolean leftWC) {
-        Map result = new HashMap();
-        for (Iterator names = props1.keySet().iterator(); names.hasNext();) {
+        SVNProperties result = new SVNProperties();
+        for (Iterator names = props1.nameSet().iterator(); names.hasNext();) {
             String propName = (String) names.next();
             if (!leftEntry && propName.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) {
                 continue;
@@ -1259,7 +1259,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                             .startsWith(SVNProperty.SVN_WC_PREFIX))) {
                 continue;
             }
-            result.put(propName, props1.get(propName));
+            result.copyValue(props1, propName);
         }
         return result;
     }
@@ -1546,7 +1546,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 String mergeInfoProp = null;
                 if (!entry.isAbsent()) {
                     SVNVersionedProperties props = adminArea.getProperties(entry.getName());
-                    mergeInfoProp = props.getPropertyValue(SVNProperty.MERGE_INFO);
+                    mergeInfoProp = props.getStringPropertyValue(SVNProperty.MERGE_INFO);
                     if (mergeInfoProp != null) {
                         String relToTargetPath = SVNPathUtil.getRelativePath(target.getAbsolutePath(), path.getAbsolutePath());
                         String mergeSrcChildPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(mergeSrcPath,
@@ -1900,7 +1900,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     }
     
     private File loadFile(SVNRepository repository, long revision, 
-                          Map properties, SVNAdminArea adminArea) throws SVNException {
+                          SVNProperties properties, SVNAdminArea adminArea) throws SVNException {
         File tmpDir = adminArea.getAdminTempDirectory();
         File result = SVNFileUtil.createUniqueFile(tmpDir, ".merge", ".tmp");
         SVNFileUtil.createEmptyFile(result);

@@ -11,7 +11,6 @@
  */
 package org.tmatesoft.svn.cli2.svn;
 
-import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,9 +23,10 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -80,14 +80,9 @@ public class SVNPropEditCommand extends SVNPropertiesCommand {
             SVNWCClient client = getSVNEnvironment().getClientManager().getWCClient();
             long rev = client.doGetRevisionProperty(revPropURL, propertyName, getSVNEnvironment().getStartRevision(), this);
             SVNPropertyData property = getRevisionProperty(rev);
-            String propertyValue = property != null ? property.getValue() : "";
-            byte[] newValue = SVNCommandUtil.runEditor(getSVNEnvironment(), getSVNEnvironment().getEditorCommand(), propertyValue, "svn-prop");
-            String newPropertyValue = null;
-            try {
-                newPropertyValue = newValue == null ? null : new String(newValue, "UTF-8");
-            } catch (IOException e) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()));
-            }
+            SVNPropertyValue propertyValue = property != null ? property.getValue() : new SVNPropertyValue("");
+            byte[] bytes = SVNCommandUtil.runEditor(getSVNEnvironment(), getSVNEnvironment().getEditorCommand(), propertyValue.getBytes(), "svn-prop");            
+            SVNPropertyValue newPropertyValue = bytes == null ? null : new SVNPropertyValue(bytes);
             if (newPropertyValue != null && !newPropertyValue.equals(propertyValue)) {
                 clearCollectedProperties();
                 client.doSetRevisionProperty(revPropURL, SVNRevision.create(rev), propertyName, newPropertyValue, getSVNEnvironment().isForce(), this);
@@ -120,16 +115,11 @@ public class SVNPropEditCommand extends SVNPropertiesCommand {
                         SVNErrorManager.error(err);
                     }
                     SVNPropertyData property = client.doGetProperty(target.getFile(), propertyName, SVNRevision.UNDEFINED, SVNRevision.WORKING, false);
-                    String propertyValue = property != null ? property.getValue() : "";
-                    byte[] newValue = SVNCommandUtil.runEditor(getSVNEnvironment(), getSVNEnvironment().getEditorCommand(), propertyValue, "svn-prop");
-                    String newPropertyValue = null;
-                    try {
-                        newPropertyValue = newValue == null ? null : new String(newValue, "UTF-8");
-                    } catch (IOException e) {
-                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()));
-                    }
+                    SVNPropertyValue propertyValue = property != null ? property.getValue() : new SVNPropertyValue("");
+                    byte[] bytes = SVNCommandUtil.runEditor(getSVNEnvironment(), getSVNEnvironment().getEditorCommand(), propertyValue.getBytes(), "svn-prop");
+                    SVNPropertyValue newPropertyValue = bytes == null ? null : new SVNPropertyValue(bytes);
                     if (newPropertyValue != null && !newPropertyValue.equals(propertyValue)) {
-                        checkBooleanProperty(propertyValue, newPropertyValue);
+                        checkBooleanProperty(propertyName, newPropertyValue);
                         client.doSetProperty(target.getFile(), propertyName, newPropertyValue, getSVNEnvironment().isForce(), false, this);
                         String message = "Set new value for property ''{0}'' on ''{1}''";
                         String path = SVNCommandUtil.getLocalPath(targetName);
@@ -143,16 +133,11 @@ public class SVNPropEditCommand extends SVNPropertiesCommand {
                     }
                 } else {
                     SVNPropertyData property = client.doGetProperty(target.getURL(), propertyName, SVNRevision.UNDEFINED, SVNRevision.HEAD, false);
-                    String propertyValue = property != null ? property.getValue() : "";
-                    byte[] newValue = SVNCommandUtil.runEditor(getSVNEnvironment(), getSVNEnvironment().getEditorCommand(), propertyValue, "svn-prop");
-                    String newPropertyValue = null;
-                    try {
-                        newPropertyValue = newValue == null ? null : new String(newValue, "UTF-8");
-                    } catch (IOException e) {
-                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()));
-                    }
+                    SVNPropertyValue propertyValue = property != null ? property.getValue() : new SVNPropertyValue("");
+                    byte[] bytes = SVNCommandUtil.runEditor(getSVNEnvironment(), getSVNEnvironment().getEditorCommand(), propertyValue.getBytes(), "svn-prop");
+                    SVNPropertyValue newPropertyValue = bytes == null ? null : new SVNPropertyValue(bytes);                    
                     if (newPropertyValue != null && !newPropertyValue.equals(propertyValue)) {
-                        checkBooleanProperty(propertyValue, newPropertyValue);
+                        checkBooleanProperty(propertyName, newPropertyValue);
                         client.setCommitHandler(getSVNEnvironment());
                         SVNCommitInfo info = client.doSetProperty(target.getURL(), propertyName, 
                                 newPropertyValue, SVNRevision.HEAD, getSVNEnvironment().getMessage(), 

@@ -487,9 +487,9 @@ public class SVNProperty {
      * @see             #isBooleanProperty(String)
      * @since           1.1
      */
-    public static String getValueOfBooleanProperty(String propName) {
+    public static SVNPropertyValue getValueOfBooleanProperty(String propName) {
         if (SVNProperty.EXECUTABLE.equals(propName) || SVNProperty.NEEDS_LOCK.equals(propName) || SVNProperty.SPECIAL.equals(propName)) {
-            return "*";
+            return new SVNPropertyValue("*");
         }
         return null;
     }

@@ -20,6 +20,8 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.ISVNCommitPathHandler;
@@ -172,18 +174,18 @@ public class FSReplayPathHandler implements ISVNCommitPathHandler {
         if (!isDelete || isAdd) {
             if (change.arePropertiesModified()) {
                 if (myCompareRoot != null) {
-                    Map oldProps = null;
+                    SVNProperties oldProps = null;
                     if (srcRoot != null) {
                         FSRevisionNode srcNode = srcRoot.getRevisionNode(srcPath);
                         oldProps = srcNode.getProperties(myOwner);
                     }
                     
                     FSRevisionNode node = myRoot.getRevisionNode(absPath);
-                    Map newProps = node.getProperties(myOwner);
-                    Map propDiff = FSRepositoryUtil.getPropsDiffs(oldProps, newProps);
-                    for (Iterator propNames = propDiff.keySet().iterator(); propNames.hasNext();) {
+                    SVNProperties newProps = node.getProperties(myOwner);
+                    SVNProperties propDiff = FSRepositoryUtil.getPropsDiffs(oldProps, newProps);
+                    for (Iterator propNames = propDiff.nameSet().iterator(); propNames.hasNext();) {
                         String propName = (String) propNames.next();
-                        String propValue = (String) propDiff.get(propName);
+                        String propValue = propDiff.getStringValue(propName);
                         if (kind == SVNNodeKind.DIR) {
                             editor.changeDirProperty(propName, propValue);
                         } else if (kind == SVNNodeKind.FILE) {
@@ -192,9 +194,9 @@ public class FSReplayPathHandler implements ISVNCommitPathHandler {
                     }
                 } else {
                     if (kind == SVNNodeKind.DIR) {
-                        editor.changeDirProperty("", null);
+                        editor.changeDirProperty("", (SVNPropertyValue) null);
                     } else if (kind == SVNNodeKind.FILE) {
-                        editor.changeFileProperty(path, "", null);
+                        editor.changeFileProperty(path, "", (String) null);
                     }
                 }
             }
@@ -238,10 +240,10 @@ public class FSReplayPathHandler implements ISVNCommitPathHandler {
         editor.addDir(path, null, -1);
         FSRevisionNode node = srcRoot.getRevisionNode(srcPath);
         
-        Map props = node.getProperties(myOwner);
-        for (Iterator propNames = props.keySet().iterator(); propNames.hasNext();) {
+        SVNProperties props = node.getProperties(myOwner);
+        for (Iterator propNames = props.nameSet().iterator(); propNames.hasNext();) {
             String propName = (String) propNames.next();
-            String propValue = (String) props.get(propName);
+            String propValue = props.getStringValue(propName);
             editor.changeDirProperty(propName, propValue);
         }
         
@@ -260,9 +262,9 @@ public class FSReplayPathHandler implements ISVNCommitPathHandler {
                 FSRevisionNode srcNode = srcRoot.getRevisionNode(newSrcPath);
                 
                 props = srcNode.getProperties(myOwner);
-                for (Iterator propNames = props.keySet().iterator(); propNames.hasNext();) {
+                for (Iterator propNames = props.nameSet().iterator(); propNames.hasNext();) {
                     String propName = (String) propNames.next();
-                    String propValue = (String) props.get(propName);
+                    String propValue = props.getStringValue(propName);
                     editor.changeFileProperty(newPath, propName, propValue);
                 }                
                 

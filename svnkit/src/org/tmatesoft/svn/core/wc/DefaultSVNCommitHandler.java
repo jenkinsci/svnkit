@@ -11,10 +11,8 @@
  */
 package org.tmatesoft.svn.core.wc;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
 
 /**
  * This is a default implementation for <b>ISVNCommitHandler</b>.
@@ -52,8 +50,8 @@ public class DefaultSVNCommitHandler implements ISVNCommitHandler {
         return message == null ? "" : message;
     }
 
-    public Map getRevisionProperties(String message, SVNCommitItem[] commitables, Map revisionProperties) throws SVNException {
-        return revisionProperties == null ? new HashMap() : revisionProperties;
+    public SVNProperties getRevisionProperties(String message, SVNCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {
+        return revisionProperties == null ? new SVNProperties() : revisionProperties;
     }
 
 }

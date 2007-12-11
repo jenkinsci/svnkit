@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
@@ -72,8 +73,8 @@ public class SVNMergeCallback extends AbstractDiffCallback {
         return myConflictedPaths;
     }
     
-    public SVNStatusType propertiesChanged(String path, Map originalProperties, Map diff) throws SVNException {
-        Map regularProps = new HashMap();
+    public SVNStatusType propertiesChanged(String path, SVNProperties originalProperties, SVNProperties diff) throws SVNException {
+        SVNProperties regularProps = new SVNProperties();
         categorizeProperties(diff, regularProps, null, null);
         if (regularProps.isEmpty()) {
             return SVNStatusType.UNKNOWN;
@@ -84,11 +85,10 @@ public class SVNMergeCallback extends AbstractDiffCallback {
             if (wcAccess.getAdminArea(file) == null) {
                 wcAccess.probeTry(file, true, SVNWCAccess.INFINITE_DEPTH);
             }
-            SVNStatusType result = SVNPropertiesManager.mergeProperties(getWCAccess(), file, 
+            return SVNPropertiesManager.mergeProperties(getWCAccess(), file,
                                                                         originalProperties, 
                                                                         regularProps, false, 
                                                                         myIsDryRun);
-            return result;
         } catch (SVNException e) {
             if (e.getErrorMessage().getErrorCode() == SVNErrorCode.UNVERSIONED_RESOURCE || 
                     e.getErrorMessage().getErrorCode() == SVNErrorCode.ENTRY_NOT_FOUND) {
@@ -209,7 +209,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
 
     public SVNStatusType[] fileChanged(String path, File file1, File file2, long revision1, 
                                        long revision2, String mimeType1, String mimeType2, 
-                                       Map originalProperties, Map diff) throws SVNException {
+                                       SVNProperties originalProperties, SVNProperties diff) throws SVNException {
         boolean needsMerge = true;
         File mergedFile = getFile(path);
         SVNAdminArea dir = retrieve(mergedFile.getParentFile(), myIsDryRun);
@@ -278,7 +278,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
         return result;
     }
     
-    public SVNStatusType[] fileAdded(String path, File file1, File file2, long revision1, long revision2, String mimeType1, String mimeType2, Map originalProperties, Map diff) throws SVNException {
+    public SVNStatusType[] fileAdded(String path, File file1, File file2, long revision1, long revision2, String mimeType1, String mimeType2, SVNProperties originalProperties, SVNProperties diff) throws SVNException {
         SVNStatusType[] result = new SVNStatusType[] {null, SVNStatusType.UNKNOWN};
         
         File mergedFile = getFile(path);
@@ -330,7 +330,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
         return result;
     }
 
-    public SVNStatusType fileDeleted(String path, File file1, File file2, String mimeType1, String mimeType2, Map originalProperties) throws SVNException {
+    public SVNStatusType fileDeleted(String path, File file1, File file2, String mimeType1, String mimeType2, SVNProperties originalProperties) throws SVNException {
         File mergedFile = getFile(path);
         SVNAdminArea dir = retrieve(mergedFile.getParentFile(), true);
         if (dir == null) {

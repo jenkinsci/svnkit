@@ -29,6 +29,8 @@ import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
 import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
@@ -54,7 +56,7 @@ public class SVNMergeInfoManager {
         }
     }
     
-    public void updateIndex(File dbDirectory, long newRevision, Map mergeInfo) throws SVNException {
+    public void updateIndex(File dbDirectory, long newRevision, SVNProperties mergeInfo) throws SVNException {
         try {
             myDBProcessor.openDB(dbDirectory);
             myDBProcessor.beginTransaction();
@@ -114,10 +116,10 @@ public class SVNMergeInfoManager {
         return pathsToMergeInfos == null ? new TreeMap() : pathsToMergeInfos;
     }
     
-    private void indexTxnMergeInfo(long revision, Map pathsToMergeInfos) throws SVNException {
-        for (Iterator paths = pathsToMergeInfos.keySet().iterator(); paths.hasNext();) {
+    private void indexTxnMergeInfo(long revision, SVNProperties pathsToMergeInfos) throws SVNException {
+        for (Iterator paths = pathsToMergeInfos.nameSet().iterator(); paths.hasNext();) {
             String path = (String) paths.next();
-            String mergeInfoToParse = (String) pathsToMergeInfos.get(path);
+            String mergeInfoToParse = pathsToMergeInfos.getStringValue(path);
             indexPathMergeInfo(revision, path, mergeInfoToParse);
         }
     }
@@ -433,7 +435,7 @@ public class SVNMergeInfoManager {
         }
         
         if (elideFull) {
-            SVNPropertiesManager.setProperty(access, path, SVNProperty.MERGE_INFO, null, true);
+            SVNPropertiesManager.setProperty(access, path, SVNProperty.MERGE_INFO, (SVNPropertyValue) null, true);
         } else if (elidePartially) {
             SVNPropertiesManager.recordWCMergeInfo(path, childNonEmptyMergeInfo, access);
         }

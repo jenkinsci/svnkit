@@ -17,6 +17,7 @@ import java.io.UnsupportedEncodingException;
 import java.io.InputStream;
 
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 
 
 /**
@@ -49,7 +50,7 @@ public class SVNPropertyValue {
         if (myIsBinary == null) {
             if (myValue != null) {
                 myIsBinary = Boolean.FALSE;
-            } else if (myData != null){
+            } else if (myData != null) {
                 try {
                     InputStream is = new ByteArrayInputStream(myData);
                     myIsBinary = Boolean.valueOf(SVNProperty.isBinaryMimeType(SVNFileUtil.detectMimeType(is)));
@@ -63,24 +64,42 @@ public class SVNPropertyValue {
         return myIsBinary.booleanValue();
     }
 
-    public byte[] getBytes() {
+    public boolean isXMLSafe(String encoding) {
+        if (isBinary()) {
+            return false;
+        }
+        if (encoding != null) {
+            return SVNEncodingUtil.isXMLSafe(getString(encoding));
+        }
+        return SVNEncodingUtil.isXMLSafe(getString(encoding));
+    }
+
+    public byte[] getBytes(String encoding) {
         if (myData == null) {
             if (myValue != null) {
-                try {
-                    myData = myValue.getBytes("UTF-8");
-                } catch (UnsupportedEncodingException e) {
+                if (encoding == null) {
                     myData = myValue.getBytes();
+                } else {
+                    try {
+                        myData = myValue.getBytes(encoding);
+                    } catch (UnsupportedEncodingException e) {
+                        myData = myValue.getBytes();
+                    }
                 }
             }
         }
         return myData;
     }
 
-    public String getString() {
+    public byte[] getBytes() {
+        return getBytes("UTF-8");
+    }
+
+    public String getString(String encoding) {
         if (myValue == null) {
             if (!isBinary() && myData != null) {
                 try {
-                    myValue = new String(myData, "UTF-8");
+                    myValue = new String(myData, encoding);
                 } catch (UnsupportedEncodingException e) {
                     myValue = new String(myData);
                 }
@@ -89,11 +108,60 @@ public class SVNPropertyValue {
         return myValue;
     }
 
+    public String getString() {
+        return getString("UTF-8");
+    }
+
     public String toString() {
         if (isBinary()) {
             return "property is binary";
         }
         return getString();
+    }
+
+    public SVNPropertyValue trim() {
+        if (!isBinary()) {
+            if (myValue != null) {
+                return new SVNPropertyValue(myValue.trim());
+            }
+        }
+        return this;
+    }
+
+    public SVNPropertyValue replace(char oldChar, char newChar) {
+        if (!isBinary()) {
+            if (getString() != null) {
+                return new SVNPropertyValue(getString().replace(oldChar, newChar));
+            }
+        }
+        return this;
+    }
+
+    public SVNPropertyValue replaceAll(String regex, String replacement) {
+        if (!isBinary()) {
+            if (getString() != null) {
+                return new SVNPropertyValue(getString().replaceAll(regex, replacement));
+            }
+        }
+        return this;
+    }
+
+    public boolean endsWith(String suffix) {
+        if (!isBinary()) {
+            if (getString() != null) {
+                return getString().endsWith(suffix);
+            }
+        }
+        return false;
+    }
+
+    public SVNPropertyValue append(String str) {
+        if (!isBinary()) {
+            if (getString() != null) {
+                return new SVNPropertyValue(getString().concat(str));
+            }
+        }
+        return this;
     }
 
     public boolean equals(Object obj) {
@@ -116,11 +184,11 @@ public class SVNPropertyValue {
     }
 
     public int hashCode() {
-        if (myValue != null){
+        if (myValue != null) {
             return myValue.hashCode();
         }
-        if (myData != null){
-            return myData.hashCode();            
+        if (myData != null) {
+            return myData.hashCode();
         }
         return super.hashCode();
     }

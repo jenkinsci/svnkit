@@ -12,7 +12,7 @@
 
 package org.tmatesoft.svn.core.io;
 
-import java.util.Map;
+import org.tmatesoft.svn.core.SVNProperties;
 
 
 /**
@@ -36,8 +36,8 @@ public class SVNFileRevision implements Comparable {
     
     private String myPath;
     private long myRevision;
-    private Map myProperties;
-    private Map myPropertiesDelta;
+    private SVNProperties myProperties;
+    private SVNProperties myPropertiesDelta;
     private boolean myIsResultOfMerge;
     
     /**
@@ -50,11 +50,11 @@ public class SVNFileRevision implements Comparable {
      * @param properties		revision properties
      * @param propertiesDelta	file properties for the <code>revision</code>
      */
-    public SVNFileRevision(String path, long revision, Map properties, Map propertiesDelta) {
+    public SVNFileRevision(String path, long revision, SVNProperties properties, SVNProperties propertiesDelta) {
         this(path, revision, properties, propertiesDelta, false);
     }
     
-    public SVNFileRevision(String path, long revision, Map properties, Map propertiesDelta, boolean isResultOfMerge) {
+    public SVNFileRevision(String path, long revision, SVNProperties properties, SVNProperties propertiesDelta, boolean isResultOfMerge) {
         myPath = path;
         myRevision = revision;
         myProperties = properties;
@@ -81,7 +81,7 @@ public class SVNFileRevision implements Comparable {
      * @return	a map which keys are revision property names and values
      * 			are their values (both are strings)
      */
-    public Map getProperties() {
+    public SVNProperties getProperties() {
         return myProperties;
     }
     
@@ -93,7 +93,7 @@ public class SVNFileRevision implements Comparable {
      * @return  a map which keys are revision property names and values
      *          are their values (both are strings)
      */
-    public Map getRevisionProperties() {
+    public SVNProperties getRevisionProperties() {
         return myProperties;
     }
     
@@ -105,7 +105,7 @@ public class SVNFileRevision implements Comparable {
      * @return a map where keys are file property names and values are the
      *         property values 
      */
-    public Map getPropertiesDelta() {
+    public SVNProperties getPropertiesDelta() {
         return myPropertiesDelta;
     }
     

@@ -22,7 +22,6 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -198,8 +197,8 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
      */
     public void openRevision(SVNFileRevision fileRevision) throws SVNException {
         myIsLastRevisionReported = false;
-        Map propDiff = fileRevision.getPropertiesDelta();
-        String newMimeType = (String) (propDiff != null ? propDiff.get(SVNProperty.MIME_TYPE) : null);
+        SVNProperties propDiff = fileRevision.getPropertiesDelta();
+        String newMimeType = propDiff != null ? propDiff.getStringValue(SVNProperty.MIME_TYPE) : null;
         if (!myIsForce && SVNProperty.isBinaryMimeType(newMimeType)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_IS_BINARY_FILE, "Cannot calculate blame information for binary file ''{0}''", myPath);
             SVNErrorManager.error(err);
@@ -211,14 +210,14 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             myCancelBaton.handleEvent(event, ISVNEventHandler.UNKNOWN);
             myCancelBaton.checkCancelled();
         }
-        Map props = fileRevision.getRevisionProperties();
-        if (known && props != null && props.get(SVNRevisionProperty.AUTHOR) != null) {
-            myCurrentAuthor = props.get(SVNRevisionProperty.AUTHOR).toString();
+        SVNProperties props = fileRevision.getRevisionProperties();
+        if (known && props != null && props.getStringValue(SVNRevisionProperty.AUTHOR) != null) {
+            myCurrentAuthor = props.getStringValue(SVNRevisionProperty.AUTHOR);
         } else {
             myCurrentAuthor = null;
         }
-        if (known && props != null && props.get(SVNRevisionProperty.DATE) != null) {
-            myCurrentDate = SVNDate.parseDate(fileRevision.getRevisionProperties().get(SVNRevisionProperty.DATE).toString());
+        if (known && props != null && props.getStringValue(SVNRevisionProperty.DATE) != null) {
+            myCurrentDate = SVNDate.parseDate(fileRevision.getRevisionProperties().getStringValue(SVNRevisionProperty.DATE));
         } else {
             myCurrentDate = null;
         }
@@ -242,7 +241,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         if (myCurrentFile != null) {
             myCurrentFile.delete();
         } else {
-            myCurrentFile = SVNFileUtil.createUniqueFile(myTmpDirectory, "annotate", ".tmp");;
+            myCurrentFile = SVNFileUtil.createUniqueFile(myTmpDirectory, "annotate", ".tmp");
         }
         myDeltaProcessor.applyTextDelta(myPreviousFile, myCurrentFile, false);
     }

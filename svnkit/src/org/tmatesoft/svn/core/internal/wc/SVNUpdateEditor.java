@@ -26,6 +26,8 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNCleanupHandler;
@@ -160,7 +162,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         }
 
         SVNLog log = myCurrentDirectory.getLog();
-        Map attributes = new HashMap();
+        SVNProperties attributes = new SVNProperties();
 
         attributes.put(SVNLog.NAME_ATTR, name);
         log.addCommand(SVNLog.DELETE_ENTRY, attributes, false);
@@ -378,13 +380,19 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         attributes.put(SVNProperty.DELETED, null);
         attributes.put(SVNProperty.ABSENT, Boolean.TRUE.toString());
         entry = adminArea.modifyEntry(name, attributes, true, false);
-        }
+    }
 
     public void changeDirProperty(String name, String value) throws SVNException {
         if (!myCurrentDirectory.isSkipped) {
             myCurrentDirectory.propertyChanged(name, value);
         }
     }
+
+    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
+        if (!myCurrentDirectory.isSkipped) {
+            myCurrentDirectory.propertyChanged(name, value);
+        }
+    }    
 
     private void clearWCProperty(SVNAdminArea adminArea, String target) throws SVNException {
         if (adminArea == null) {
@@ -412,18 +420,18 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
     }
 
     public void closeDir() throws SVNException {
-        Map modifiedWCProps = myCurrentDirectory.getChangedWCProperties();
-        Map modifiedEntryProps = myCurrentDirectory.getChangedEntryProperties();
-        Map modifiedProps = myCurrentDirectory.getChangedProperties();
+        SVNProperties modifiedWCProps = myCurrentDirectory.getChangedWCProperties();
+        SVNProperties modifiedEntryProps = myCurrentDirectory.getChangedEntryProperties();
+        SVNProperties modifiedProps = myCurrentDirectory.getChangedProperties();
 
         SVNStatusType propStatus = SVNStatusType.UNKNOWN;
         SVNAdminArea adminArea = myCurrentDirectory.getAdminArea();
         if (modifiedWCProps != null || modifiedEntryProps != null || modifiedProps != null) {
             SVNLog log = myCurrentDirectory.getLog();
             if (modifiedProps != null && !modifiedProps.isEmpty()) {
-                if (modifiedProps.containsKey(SVNProperty.EXTERNALS)) {
-                    String oldExternal = adminArea.getProperties(adminArea.getThisDirName()).getPropertyValue(SVNProperty.EXTERNALS);
-                    String newExternal = (String) modifiedProps.get(SVNProperty.EXTERNALS);
+                if (modifiedProps.containsName(SVNProperty.EXTERNALS)) {
+                    String oldExternal = adminArea.getProperties(adminArea.getThisDirName()).getStringPropertyValue(SVNProperty.EXTERNALS);
+                    String newExternal = modifiedProps.getStringValue(SVNProperty.EXTERNALS);
                     String path = myCurrentDirectory.getPath();
                     if (oldExternal == null && newExternal != null) {
                         myAdminInfo.addExternal(path, oldExternal, newExternal);
@@ -490,6 +498,10 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
     }
 
     public void changeFileProperty(String commitPath, String name, String value) throws SVNException {
+        changeFileProperty(name, value, myCurrentFile);
+    }
+
+    public void changeFileProperty(String commitPath, String name, SVNPropertyValue value) throws SVNException {
         changeFileProperty(name, value, myCurrentFile);
     }
 
@@ -711,7 +723,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         SVNAdminArea adminArea = parent.getAdminArea();
         info.baseFile = adminArea.getBaseFile(info.Name, false);
         info.newBaseFile = adminArea.getBaseFile(info.Name, true);
-        Map fileProps = new HashMap();
+        SVNProperties fileProps = new SVNProperties();
         OutputStream baseTextOS = null;
         try {
             baseTextOS = SVNFileUtil.openFileForWriting(info.newBaseFile);
@@ -721,9 +733,9 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             SVNFileUtil.closeFile(baseTextOS);
         }
         
-        for (Iterator propNames = fileProps.keySet().iterator(); propNames.hasNext();) {
+        for (Iterator propNames = fileProps.nameSet().iterator(); propNames.hasNext();) {
             String propName = (String) propNames.next();
-            String propVal = (String) fileProps.get(propName);
+            String propVal = fileProps.getStringValue(propName);
             changeFileProperty(propName, propVal, info);
         }
         
@@ -740,6 +752,15 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             fileInfo.propertyChanged(name, value);
             if (myWCAccess.getOptions().isUseCommitTimes() && SVNProperty.COMMITTED_DATE.equals(name)) {
                 fileInfo.CommitTime = value;
+            }
+        }
+    }
+
+    private void changeFileProperty(String name, SVNPropertyValue value, SVNFileInfo fileInfo) {
+        if (!fileInfo.isSkipped) {
+            fileInfo.propertyChanged(name, value);
+            if (myWCAccess.getOptions().isUseCommitTimes() && SVNProperty.COMMITTED_DATE.equals(name)) {
+                fileInfo.CommitTime = value != null && value.getString() != null ? value.getString() : null;
             }
         }
     }
@@ -802,27 +823,27 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         }
 
         // merge props.
-        Map modifiedWCProps = fileInfo.getChangedWCProperties();
-        Map modifiedEntryProps = fileInfo.getChangedEntryProperties();
-        Map modifiedProps = fileInfo.getChangedProperties();
+        SVNProperties modifiedWCProps = fileInfo.getChangedWCProperties();
+        SVNProperties modifiedEntryProps = fileInfo.getChangedEntryProperties();
+        SVNProperties modifiedProps = fileInfo.getChangedProperties();
         String commitTime = fileInfo.CommitTime;
 
-        Map command = new HashMap();
+        SVNProperties command = new SVNProperties();
 
         SVNStatusType textStatus = SVNStatusType.UNCHANGED;
         SVNStatusType lockStatus = SVNStatusType.LOCK_UNCHANGED;
 
         boolean magicPropsChanged = false;
         if (modifiedProps != null && !modifiedProps.isEmpty()) {
-            magicPropsChanged = modifiedProps.containsKey(SVNProperty.EXECUTABLE) || 
-            modifiedProps.containsKey(SVNProperty.NEEDS_LOCK) || 
-            modifiedProps.containsKey(SVNProperty.KEYWORDS) || 
-            modifiedProps.containsKey(SVNProperty.EOL_STYLE) || 
-            modifiedProps.containsKey(SVNProperty.SPECIAL);
+            magicPropsChanged = modifiedProps.containsName(SVNProperty.EXECUTABLE) ||
+            modifiedProps.containsName(SVNProperty.NEEDS_LOCK) ||
+            modifiedProps.containsName(SVNProperty.KEYWORDS) ||
+            modifiedProps.containsName(SVNProperty.EOL_STYLE) ||
+            modifiedProps.containsName(SVNProperty.SPECIAL);
         }
         
         SVNVersionedProperties baseProps = adminArea.getBaseProperties(name);
-        Map oldBaseProps = baseProps != null ? baseProps.asMap() : null;
+        SVNProperties oldBaseProps = baseProps != null ? baseProps.asMap() : null;
         SVNStatusType propStatus = SVNStatusType.UNCHANGED;
         if (modifiedProps != null) {
             propStatus = adminArea.mergeProperties(name, oldBaseProps, modifiedProps, true, false, log);
@@ -844,7 +865,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         
         boolean isReplaced = fileEntry != null && fileEntry.isScheduledForReplacement();
         
-        Map logAttributes = new HashMap();
+        SVNProperties logAttributes = new SVNProperties();
         if (fileInfo.isAddExisted) {
             logAttributes.put(SVNLog.FORCE_ATTR, "true");
             logAttributes.put(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE), "");
@@ -1130,9 +1151,9 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         public boolean isSkipped;
 
         private String myPath;
-        private Map myChangedProperties;
-        private Map myChangedEntryProperties;
-        private Map myChangedWCProperties;
+        private SVNProperties myChangedProperties;
+        private SVNProperties myChangedEntryProperties;
+        private SVNProperties myChangedWCProperties;
 
         protected SVNEntryInfo(String path) {
             myPath = path;
@@ -1144,26 +1165,39 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
 
         public void propertyChanged(String name, String value) {
             if (name.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) {
-                myChangedEntryProperties = myChangedEntryProperties == null ? new HashMap() : myChangedEntryProperties;
+                myChangedEntryProperties = myChangedEntryProperties == null ? new SVNProperties() : myChangedEntryProperties;
                 myChangedEntryProperties.put(name.substring(SVNProperty.SVN_ENTRY_PREFIX.length()), value);
             } else if (name.startsWith(SVNProperty.SVN_WC_PREFIX)) {
-                myChangedWCProperties = myChangedWCProperties == null ? new HashMap() : myChangedWCProperties;
+                myChangedWCProperties = myChangedWCProperties == null ? new SVNProperties() : myChangedWCProperties;
                 myChangedWCProperties.put(name, value);
             } else {
-                myChangedProperties = myChangedProperties == null ? new HashMap() : myChangedProperties;
+                myChangedProperties = myChangedProperties == null ? new SVNProperties() : myChangedProperties;
                 myChangedProperties.put(name, value);
             }
         }
 
-        public Map getChangedWCProperties() {
+        public void propertyChanged(String name, SVNPropertyValue value) {
+            if (name.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) {
+                myChangedEntryProperties = myChangedEntryProperties == null ? new SVNProperties() : myChangedEntryProperties;
+                myChangedEntryProperties.put(name.substring(SVNProperty.SVN_ENTRY_PREFIX.length()), value);
+            } else if (name.startsWith(SVNProperty.SVN_WC_PREFIX)) {
+                myChangedWCProperties = myChangedWCProperties == null ? new SVNProperties() : myChangedWCProperties;
+                myChangedWCProperties.put(name, value);
+            } else {
+                myChangedProperties = myChangedProperties == null ? new SVNProperties() : myChangedProperties;
+                myChangedProperties.put(name, value);
+            }
+        }
+
+        public SVNProperties getChangedWCProperties() {
             return myChangedWCProperties;
         }
 
-        public Map getChangedEntryProperties() {
+        public SVNProperties getChangedEntryProperties() {
             return myChangedEntryProperties;
         }
 
-        public Map getChangedProperties() {
+        public SVNProperties getChangedProperties() {
             return myChangedProperties;
         }
     }

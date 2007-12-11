@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.wc;
 
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 
 /**
  * <b>SVNPropertyData</b> is a wrapper for both versioned and unversioned
@@ -28,7 +29,7 @@ import org.tmatesoft.svn.core.SVNProperty;
  */
 public class SVNPropertyData {
 
-    private String myValue;
+    private SVNPropertyValue myValue;
 
     private String myName;
     
@@ -39,7 +40,7 @@ public class SVNPropertyData {
      * @param name  a property name
      * @param data  a property value
      */
-    public SVNPropertyData(String name, String data) {
+    public SVNPropertyData(String name, SVNPropertyValue data) {
         myName = name;
         myValue = data;
         if (myValue != null && SVNProperty.isSVNProperty(myName)) {
@@ -63,7 +64,7 @@ public class SVNPropertyData {
      *  
      * @return  a property value
      */
-    public String getValue() {
+    public SVNPropertyValue getValue() {
         return myValue;
     }
 

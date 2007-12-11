@@ -11,9 +11,8 @@
  */
 package org.tmatesoft.svn.core.wc;
 
-import java.util.Map;
-
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
 
 /**
  * The <b>ISVNCommitHandler</b> should be implemented to 
@@ -43,5 +42,5 @@ public interface ISVNCommitHandler {
      */
     public String getCommitMessage(String message, SVNCommitItem[] commitables) throws SVNException;
     
-    public Map getRevisionProperties(String message, SVNCommitItem[] commitables, Map revisionProperties) throws SVNException;
+    public SVNProperties getRevisionProperties(String message, SVNCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException;
 }

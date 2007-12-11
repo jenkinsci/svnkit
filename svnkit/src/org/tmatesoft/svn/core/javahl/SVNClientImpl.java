@@ -35,6 +35,8 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
@@ -598,8 +600,8 @@ public class SVNClientImpl implements SVNClientInterface {
                         return myMessageHandler.getLogMessage(items);
                     }
 
-                    public Map getRevisionProperties(String message, SVNCommitItem[] commitables, Map revisionProperties) throws SVNException {
-                        return revisionProperties == null ? new HashMap() : revisionProperties;
+                    public SVNProperties getRevisionProperties(String message, SVNCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {
+                        return revisionProperties == null ? new SVNProperties() : revisionProperties;
                     }
                     
                 });
@@ -632,8 +634,8 @@ public class SVNClientImpl implements SVNClientInterface {
                         return myMessageHandler.getLogMessage(items);
                     }
 
-                    public Map getRevisionProperties(String message, SVNCommitItem[] commitables, Map revisionProperties) throws SVNException {
-                        return revisionProperties == null ? new HashMap() : revisionProperties;
+                    public SVNProperties getRevisionProperties(String message, SVNCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {
+                        return revisionProperties == null ? new SVNProperties() : revisionProperties;
                     }
                     
                 });
@@ -981,7 +983,7 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public void propertySet(String path, String name, byte[] value, boolean recurse, boolean force) throws ClientException {
-        propertySet(path, name, new String(value), recurse, force);
+        propertySet(path, name, value == null ? null : new SVNPropertyValue(value), JavaHLObjectFactory.infinityOrEmpty(recurse), force);
     }
 
     public void propertySet(String path, String name, String value, boolean recurse) throws ClientException {
@@ -993,7 +995,11 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public void propertySet(String path, String name, String value, int depth, boolean force) throws ClientException {
-        SVNWCClient client = getSVNWCClient();
+        propertySet(path, name, value == null ? null : new SVNPropertyValue(value), depth, force);        
+    }
+
+    private void propertySet(String path, String name, SVNPropertyValue value, int depth, boolean force) throws ClientException {
+       SVNWCClient client = getSVNWCClient();
         try {
             client.doSetProperty(new File(path).getAbsoluteFile(), name, value, force, JavaHLObjectFactory.getSVNDepth(depth), ISVNPropertyHandler.NULL);
         } catch (SVNException e) {
@@ -1047,11 +1053,11 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public void propertyCreate(String path, String name, byte[] value, boolean recurse) throws ClientException {
-        propertyCreate(path, name, value == null ? null : new String(value), recurse);
+        propertyCreate(path, name, value, recurse, false);
     }
 
     public void propertyCreate(String path, String name, byte[] value, boolean recurse, boolean force) throws ClientException {
-        propertyCreate(path, name, value == null ? null : new String(value), recurse, force);
+        propertyCreate(path, name, value == null ? null : new SVNPropertyValue(value), recurse, force);
     }
 
     public void propertyCreate(String path, String name, String value, int depth, boolean force) throws ClientException {
@@ -1062,6 +1068,10 @@ public class SVNClientImpl implements SVNClientInterface {
         if (value == null) {
             value = "";
         }
+        propertyCreate(path, name, new SVNPropertyValue(value), recurse, force);        
+    }
+
+    public void propertyCreate(String path, String name, SVNPropertyValue value, boolean recurse, boolean force) throws ClientException {
         SVNWCClient client = getSVNWCClient();
         try {
             client.doSetProperty(new File(path).getAbsoluteFile(), name, value, force, recurse, ISVNPropertyHandler.NULL);
@@ -1115,13 +1125,14 @@ public class SVNClientImpl implements SVNClientInterface {
         }
         SVNWCClient client = getSVNWCClient();
         SVNRevision svnRevision = JavaHLObjectFactory.getSVNRevision(rev);
+        SVNPropertyValue propertyValue = value == null ? null : new SVNPropertyValue(value);
         try {
             if (isURL(path)) {
                 client.doSetRevisionProperty(SVNURL.parseURIEncoded(path),
-                        svnRevision, name, value, force, ISVNPropertyHandler.NULL);
+                        svnRevision, name, propertyValue, force, ISVNPropertyHandler.NULL);
             } else {
                 client.doSetRevisionProperty(new File(path).getAbsoluteFile(),
-                        svnRevision, name, value, force, ISVNPropertyHandler.NULL);
+                        svnRevision, name, propertyValue, force, ISVNPropertyHandler.NULL);
             }
         } catch (SVNException e) {
             throwException(e);

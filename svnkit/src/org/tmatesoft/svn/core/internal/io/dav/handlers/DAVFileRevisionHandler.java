@@ -13,13 +13,11 @@
 package org.tmatesoft.svn.core.internal.io.dav.handlers;
 
 import java.io.UnsupportedEncodingException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
@@ -69,8 +67,8 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
     private ISVNFileRevisionHandler myFileRevisionsHandler;
     private String myPath;
     private long myRevision;
-    private Map myProperties;
-    private Map myPropertiesDelta;
+    private SVNProperties myProperties;
+    private SVNProperties myPropertiesDelta;
     private String myPropertyName;
     private String myPropertyEncoding;
     private boolean myIsMergedRevision;
@@ -103,10 +101,10 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
             // handle file revision with props.
             if (myPath != null && myFileRevisionsHandler != null) {
                 if (myProperties == null) {
-                    myProperties = Collections.EMPTY_MAP;
+                    myProperties = SVNProperties.EMPTY_PROPERTIES;
                 }
                 if (myPropertiesDelta == null) {
-                    myPropertiesDelta = Collections.EMPTY_MAP;
+                    myPropertiesDelta = SVNProperties.EMPTY_PROPERTIES;
                 }
                 SVNFileRevision revision = new SVNFileRevision(myPath,
                         myRevision,
@@ -130,10 +128,10 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
             if (myPath != null && myFileRevisionsHandler != null) {
                 // handle file revision if was not handled yet (no tx delta).
                 if (myProperties == null) {
-                    myProperties = Collections.EMPTY_MAP;
+                    myProperties = SVNProperties.EMPTY_PROPERTIES;
                 }
                 if (myPropertiesDelta == null) {
-                    myPropertiesDelta = Collections.EMPTY_MAP;
+                    myPropertiesDelta = SVNProperties.EMPTY_PROPERTIES;
                 }
                 SVNFileRevision revision = new SVNFileRevision(myPath,
                         myRevision,
@@ -155,13 +153,13 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
             myCount++;
         } else if (element == REVISION_PROPERTY) {
             if (myProperties == null) {
-                myProperties = new HashMap();
+                myProperties = new SVNProperties();
             }
             myProperties.put(myPropertyName, cdata != null ? cdata.toString() : "");
             myPropertyName = null;
         } else if (element == SET_PROPERTY) {
             if (myPropertiesDelta == null) {
-                myPropertiesDelta = new HashMap();
+                myPropertiesDelta = new SVNProperties();
             }
             if (myPropertyName != null) {
                 String value;
@@ -174,18 +172,17 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
                         value = new String(bytes, 0, length);
                     }
                 } else {
-                    value = cdata.toString();
+                    myPropertiesDelta.put(myPropertyName, cdata.toString());
                 }
-                myPropertiesDelta.put(myPropertyName, value);
             }
             myPropertyName = null;
             myPropertyEncoding = null;
         } else if (element == DELETE_PROPERTY) {
             if (myPropertiesDelta == null) {
-                myPropertiesDelta = new HashMap();
+                myPropertiesDelta = new SVNProperties();
             }
             if (myPropertyName != null) {
-                myPropertiesDelta.put(myPropertyName, null);
+                myPropertiesDelta.put(myPropertyName, (byte[]) null);
             }
             myPropertyEncoding = null;
             myPropertyName = null;

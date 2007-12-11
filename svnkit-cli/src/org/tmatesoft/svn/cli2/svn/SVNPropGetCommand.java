@@ -24,10 +24,9 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.wc.SVNChangelistClient;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
@@ -96,9 +95,7 @@ public class SVNPropGetCommand extends SVNPropertiesCommand {
                 if (getSVNEnvironment().isXML()) {
                     printXMLHeader("properties");
                     StringBuffer buffer = openXMLTag("revprops", SVNXMLUtil.XML_STYLE_NORMAL, "rev", Long.toString(rev), null);
-                    buffer = openXMLTag("property", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, "name", SVNEncodingUtil.xmlEncodeAttr(propertyName), buffer);
-                    buffer.append(SVNEncodingUtil.xmlEncodeCDATA(propertyValue.getValue()));
-                    buffer = closeXMLTag("property", buffer);
+                    buffer = addXMLProp(propertyValue, buffer);
                     buffer = closeXMLTag("revprops", buffer);
                     getSVNEnvironment().getOut().print(buffer);
                     printXMLFooter("properties");
@@ -159,7 +156,7 @@ public class SVNPropGetCommand extends SVNPropertiesCommand {
                 getSVNEnvironment().getOut().print(" - ");
             }
             SVNPropertyData property = (SVNPropertyData) props.get(0);
-            getSVNEnvironment().getOut().print(property.getValue());
+            getSVNEnvironment().getOut().print(property.getValue().getBytes(null));
             if (!getSVNEnvironment().isStrict()) {
                 getSVNEnvironment().getOut().println();
             }
@@ -178,9 +175,7 @@ public class SVNPropGetCommand extends SVNPropertiesCommand {
             } 
             SVNPropertyData property = (SVNPropertyData) props.get(0);
             StringBuffer buffer = openXMLTag("target", SVNXMLUtil.XML_STYLE_NORMAL, "path", target, null);
-            buffer = openXMLTag("property", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, "name", property.getName(), buffer);
-            buffer.append(SVNEncodingUtil.xmlEncodeCDATA(property.getValue()));
-            buffer = closeXMLTag("property", buffer);
+            buffer = addXMLProp(property, buffer);
             buffer = closeXMLTag("target", buffer);
             getSVNEnvironment().getOut().print(buffer);
         }

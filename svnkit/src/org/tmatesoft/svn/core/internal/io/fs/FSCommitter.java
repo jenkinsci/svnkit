@@ -30,6 +30,8 @@ import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -77,7 +79,7 @@ public class FSCommitter {
         addChange(path, parentPath.getRevNode().getId(), FSPathChangeKind.FS_PATH_CHANGE_DELETE, false, false, SVNRepository.INVALID_REVISION, null);
     }
 
-    public void changeNodeProperty(String path, String propName, String propValue) throws SVNException {
+    public void changeNodeProperty(String path, String propName, SVNPropertyValue propValue) throws SVNException {
         if (!SVNProperty.isRegularProperty(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS,
                     "Storage of non-regular property ''{0}'' is disallowed through the repository interface, and could indicate a bug in your client", propName);
@@ -91,7 +93,7 @@ public class FSCommitter {
         }
 
         makePathMutable(parentPath, path);
-        Map properties = parentPath.getRevNode().getProperties(myFSFS);
+        SVNProperties properties = parentPath.getRevNode().getProperties(myFSFS);
 
         if (properties.isEmpty() && propValue == null) {
             return;
@@ -101,8 +103,8 @@ public class FSCommitter {
             String canonicalPath = SVNPathUtil.canonicalizePath(path);
             canonicalPath = SVNPathUtil.getAbsolutePath(canonicalPath);
             myTxnRoot.setTxnMergeInfo(canonicalPath, propValue);
-            myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNProperty.TXN_CONTAINS_MERGEINFO, 
-                                          SVNProperty.toString(true));
+            myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNProperty.TXN_CONTAINS_MERGEINFO,
+                    SVNPropertyValue.TRUE);
         }
         
         if (propValue == null) {
@@ -416,16 +418,16 @@ public class FSCommitter {
             SVNFileUtil.closeFile(protoFileOS);
         }
 
-        Map txnProps = myFSFS.getTransactionProperties(myTxn.getTxnId());
-        Map txnMergeInfo = null;
+        SVNProperties txnProps = myFSFS.getTransactionProperties(myTxn.getTxnId());
+        SVNProperties txnMergeInfo = null;
         if (txnProps != null && !txnProps.isEmpty()) {
-            if (txnProps.get(SVNProperty.TXN_CHECK_OUT_OF_DATENESS) != null) {
+            if (txnProps.getStringValue(SVNProperty.TXN_CHECK_OUT_OF_DATENESS) != null) {
                 myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNProperty.TXN_CHECK_OUT_OF_DATENESS, null);
             }
-            if (txnProps.get(SVNProperty.TXN_CHECK_LOCKS) != null) {
+            if (txnProps.getStringValue(SVNProperty.TXN_CHECK_LOCKS) != null) {
                 myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNProperty.TXN_CHECK_LOCKS, null);
             }
-            if (txnProps.get(SVNProperty.TXN_CONTAINS_MERGEINFO) != null) {
+            if (txnProps.getStringValue(SVNProperty.TXN_CONTAINS_MERGEINFO) != null) {
                 txnMergeInfo = myFSFS.getTransactionMergeInfo(myTxn.getTxnId());
                 myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNProperty.TXN_CONTAINS_MERGEINFO, null);
             }
@@ -435,7 +437,7 @@ public class FSCommitter {
         SVNFileUtil.rename(revisionPrototypeFile, dstRevFile);
 
         String commitTime = SVNDate.formatDate(new Date(System.currentTimeMillis()));
-        myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNRevisionProperty.DATE, commitTime);
+        myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNRevisionProperty.DATE, commitTime == null ? null : new SVNPropertyValue(commitTime));
         
         File txnPropsFile = myFSFS.getTransactionPropertiesFile(myTxn.getTxnId());
         File dstRevPropsFile = myFSFS.getNewRevisionPropertiesFile(newRevision);

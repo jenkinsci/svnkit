@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -149,8 +150,8 @@ public class FSFile {
         return buffer.toString();
     }
 
-    public Map readProperties(boolean allowEOF) throws SVNException {
-        Map map = new HashMap();
+    public SVNProperties readProperties(boolean allowEOF) throws SVNException {
+        SVNProperties properties = new SVNProperties();
         String line = null;
         try {
             while(true) {
@@ -197,7 +198,7 @@ public class FSFile {
                     key = new String(myReadLineBuffer.array(), myReadLineBuffer.arrayOffset() + pos, limit - pos);
                 }
                 if (kind == 'D') {
-                    map.put(key, null);
+                    properties.put(key, (byte[]) null);
                     continue;
                 }
                 line = readLine(160);
@@ -219,21 +220,19 @@ public class FSFile {
                 read(myReadLineBuffer);
                 myReadLineBuffer.flip();
                 myReadLineBuffer.limit(myReadLineBuffer.limit() - 1);
-                String value = null;
                 pos = myReadLineBuffer.position();
                 limit = myReadLineBuffer.limit();
                 try {
-                    value = myDecoder.decode(myReadLineBuffer).toString();
+                    properties.put(key, myDecoder.decode(myReadLineBuffer).toString());
                 } catch (MalformedInputException mfi) {
-                    value = new String(myReadLineBuffer.array(), myReadLineBuffer.arrayOffset() + pos, limit - pos);
+                    properties.put(key, myReadLineBuffer.array());
                 }
-                map.put(key, value);
             }
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MALFORMED_FILE);
             SVNErrorManager.error(err, e);
         }
-        return map;
+        return properties;
     }
     
     public Map readHeader() throws SVNException {
@@ -392,7 +391,7 @@ public class FSFile {
                 }
             }
         }
-        boolean startEmpty = read() == '+' ? true : false;
+        boolean startEmpty = read() == '+';
         String lockToken = read() == '+' ? readStringFromReportFile() : null;
         return new PathInfo(path, linkPath, lockToken, revision, depth, startEmpty);
     }

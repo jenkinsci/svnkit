@@ -12,10 +12,9 @@
 
 package org.tmatesoft.svn.core.internal.io.dav;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
@@ -35,7 +34,7 @@ class DAVResource {
     private boolean myIsCopy;
     
     private DAVConnection myConnection;
-    private Map myProperties;
+    private SVNProperties myProperties;
     private boolean myIsAdded;
 
     public DAVResource(ISVNWorkspaceMediator mediator, DAVConnection connection, String path, long revision) {
@@ -81,7 +80,8 @@ class DAVResource {
             return;
         }
         if (!force && myMediator != null) {
-            myVURL = myMediator.getWorkspaceProperty(SVNEncodingUtil.uriDecode(myPath), "svn:wc:ra_dav:version-url");
+            SVNPropertyValue value = myMediator.getWorkspaceProperty(SVNEncodingUtil.uriDecode(myPath), "svn:wc:ra_dav:version-url");
+            myVURL = value == null ? null : value.getString();
             if (myVURL != null) {
                 return;
             }
@@ -113,12 +113,19 @@ class DAVResource {
     
     public void putProperty(String name, String value) {
         if (myProperties == null) {
-            myProperties = new HashMap();
+            myProperties = new SVNProperties();
         }
         myProperties.put(name, value);       
     }
+
+    public void putProperty(String name, SVNPropertyValue value) {
+        if (myProperties == null) {
+            myProperties = new SVNProperties();
+        }
+        myProperties.put(name, value);
+    }
     
-    public Map getProperties() {
+    public SVNProperties getProperties() {
         return myProperties;
     }
     

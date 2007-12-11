@@ -19,7 +19,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -31,17 +30,19 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
-import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.ISVNDBProcessor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNProperties;
+import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNSQLiteDBProcessor;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
@@ -280,7 +281,7 @@ public class FSFS {
         return myDBRoot;
     }
     
-    public Map getRevisionProperties(long revision) throws SVNException {
+    public SVNProperties getRevisionProperties(long revision) throws SVNException {
         FSFile file = new FSFile(getRevisionPropertiesFile(revision));
         try {
             return file.readProperties(false);
@@ -294,12 +295,12 @@ public class FSFS {
     }
     
     public FSTransactionRoot createTransactionRoot(FSTransactionInfo txn) throws SVNException {
-        Map txnProps = getTransactionProperties(txn.getTxnId());
+        SVNProperties txnProps = getTransactionProperties(txn.getTxnId());
         int flags = 0;
-        if (txnProps.get(SVNProperty.TXN_CHECK_OUT_OF_DATENESS) != null) {
+        if (txnProps.getStringValue(SVNProperty.TXN_CHECK_OUT_OF_DATENESS) != null) {
             flags |= FSTransactionRoot.SVN_FS_TXN_CHECK_OUT_OF_DATENESS;
         }
-        if (txnProps.get(SVNProperty.TXN_CHECK_LOCKS) != null) {
+        if (txnProps.getStringValue(SVNProperty.TXN_CHECK_LOCKS) != null) {
             flags |= FSTransactionRoot.SVN_FS_TXN_CHECK_LOCKS;
         }
 
@@ -348,15 +349,10 @@ public class FSFS {
             FSFile childrenFile = getTransactionRevisionNodeChildrenFile(revNode.getId());
             Map entries = null;
             try {
-                Map rawEntries = childrenFile.readProperties(false);
+                SVNProperties rawEntries = childrenFile.readProperties(false);
                 rawEntries.putAll(childrenFile.readProperties(true));
-                
-                Object[] keys = rawEntries.keySet().toArray();
-                for(int i = 0; i < keys.length; i++){
-                    if(rawEntries.get(keys[i]) == null){
-                        rawEntries.remove(keys[i]);
-                    }
-                }
+
+                rawEntries.removeNullValues();
             
                 entries = parsePlainRepresentation(rawEntries, true);
             } finally {
@@ -377,7 +373,7 @@ public class FSFS {
                 }
                 
                 revisionFile.resetDigest();
-                Map rawEntries = revisionFile.readProperties(false);
+                SVNProperties rawEntries = revisionFile.readProperties(false);
                 String checksum = revisionFile.digest();
                
                 if (!checksum.equals(textRep.getHexDigest())) {
@@ -397,7 +393,7 @@ public class FSFS {
         return new HashMap();// returns an empty map, must not be null!!
     }
 
-    public Map getProperties(FSRevisionNode revNode) throws SVNException {
+    public SVNProperties getProperties(FSRevisionNode revNode) throws SVNException {
         if (revNode.getPropsRepresentation() != null && revNode.getPropsRepresentation().isTxn()) {
             FSFile propsFile = null;
             try {
@@ -422,7 +418,7 @@ public class FSFS {
                 }
 
                 revisionFile.resetDigest();
-                Map props = revisionFile.readProperties(false);
+                SVNProperties props = revisionFile.readProperties(false);
                 String checksum = revisionFile.digest();
 
                 if (!checksum.equals(propsRep.getHexDigest())) {
@@ -438,7 +434,7 @@ public class FSFS {
                 }
             }
         }
-        return new HashMap();// no properties? return an empty map
+        return new SVNProperties();// no properties? return an empty SVNProperties
     }
 
     public String[] getNextRevisionIDs() throws SVNException {
@@ -636,22 +632,22 @@ public class FSFS {
         }
     }
 
-    public void setTransactionProperty(String txnID, String propertyName, String propertyValue) throws SVNException {
+    public void setTransactionProperty(String txnID, String propertyName, SVNPropertyValue propertyValue) throws SVNException {
         if (!SVNProperty.isRegularProperty(propertyName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS,
                     "Storage of non-regular property ''{0}'' is disallowed through the repository interface, and could indicate a bug in your client", propertyName);
             SVNErrorManager.error(err);
         }
-        SVNProperties revProps = new SVNProperties(getTransactionPropertiesFile(txnID), null);
+        SVNWCProperties revProps = new SVNWCProperties(getTransactionPropertiesFile(txnID), null);
         revProps.setPropertyValue(propertyName, propertyValue);
     }
 
-    public void setRevisionProperty(long revision, String propertyName, String propertyValue) throws SVNException {
+    public void setRevisionProperty(long revision, String propertyName, SVNPropertyValue propertyValue) throws SVNException {
         FSWriteLock writeLock = FSWriteLock.getWriteLock(this);
         synchronized (writeLock) {
             try {
                 writeLock.lock();
-                SVNProperties revProps = new SVNProperties(getRevisionPropertiesFile(revision), null);
+                SVNWCProperties revProps = new SVNWCProperties(getRevisionPropertiesFile(revision), null);
                 revProps.setPropertyValue(propertyName, propertyValue);
             } finally {
                 writeLock.unlock();
@@ -660,7 +656,7 @@ public class FSFS {
         }
     }
 
-    public Map getTransactionProperties(String txnID) throws SVNException {
+    public SVNProperties getTransactionProperties(String txnID) throws SVNException {
         FSFile txnPropsFile = new FSFile(getTransactionPropertiesFile(txnID));
         try {
             return txnPropsFile.readProperties(false);
@@ -673,7 +669,7 @@ public class FSFS {
         return new File(getTransactionDir(txnID), "props");
     }
 
-    public Map getTransactionMergeInfo(String txnID) throws SVNException {
+    public SVNProperties getTransactionMergeInfo(String txnID) throws SVNException {
         File mergeInfoFile = getTransactionMergeInfoFile(txnID);
         if (!mergeInfoFile.exists()) {
             try {
@@ -682,7 +678,7 @@ public class FSFS {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
                 SVNErrorManager.error(err);
             }
-            return new HashMap();
+            return new SVNProperties();
         }
         FSFile txnMergeInfoFile = new FSFile(mergeInfoFile);
         try {
@@ -870,52 +866,52 @@ public class FSFS {
 
     public SVNLock fetchLockFromDigestFile(File digestFile, String repositoryPath, Collection children) throws SVNException {
         File digestLockFile = digestFile == null ? getDigestFileFromRepositoryPath(repositoryPath) : digestFile;
-        Map lockProps = null;
+        SVNProperties lockProps = null;
 
-        if(digestLockFile.exists()){
+        if (digestLockFile.exists()) {
             FSFile reader = new FSFile(digestLockFile);
             try {
                 lockProps = reader.readProperties(false);
             } catch (SVNException svne) {
                 SVNErrorMessage err = svne.getErrorMessage().wrap("Can't parse lock/entries hashfile ''{0}''", digestLockFile);
                 SVNErrorManager.error(err);
-            }finally{
+            } finally {
                 reader.close();
             }
-        }else{
-            lockProps = Collections.EMPTY_MAP;
+        } else {
+            lockProps = SVNProperties.EMPTY_PROPERTIES;
         }
-        
+
         SVNLock lock = null;
-        String lockPath = (String) lockProps.get(FSFS.PATH_LOCK_KEY);
+        String lockPath = lockProps.getStringValue(FSFS.PATH_LOCK_KEY);
         if (lockPath != null) {
-            String lockToken = (String) lockProps.get(FSFS.TOKEN_LOCK_KEY);
+            String lockToken = lockProps.getStringValue(FSFS.TOKEN_LOCK_KEY);
             if (lockToken == null) {
                 SVNErrorManager.error(FSErrors.errorCorruptLockFile(lockPath, this));
             }
-            String lockOwner = (String) lockProps.get(FSFS.OWNER_LOCK_KEY);
+            String lockOwner = lockProps.getStringValue(FSFS.OWNER_LOCK_KEY);
             if (lockOwner == null) {
                 SVNErrorManager.error(FSErrors.errorCorruptLockFile(lockPath, this));
             }
-            String davComment = (String) lockProps.get(FSFS.IS_DAV_COMMENT_LOCK_KEY);
+            String davComment = lockProps.getStringValue(FSFS.IS_DAV_COMMENT_LOCK_KEY);
             if (davComment == null) {
                 SVNErrorManager.error(FSErrors.errorCorruptLockFile(lockPath, this));
             }
-            String creationTime = (String) lockProps.get(FSFS.CREATION_DATE_LOCK_KEY);
+            String creationTime = lockProps.getStringValue(FSFS.CREATION_DATE_LOCK_KEY);
             if (creationTime == null) {
                 SVNErrorManager.error(FSErrors.errorCorruptLockFile(lockPath, this));
             }
             Date creationDate = SVNDate.parseDateString(creationTime);
-            String expirationTime = (String) lockProps.get(FSFS.EXPIRATION_DATE_LOCK_KEY);
+            String expirationTime = lockProps.getStringValue(FSFS.EXPIRATION_DATE_LOCK_KEY);
             Date expirationDate = null;
             if (expirationTime != null) {
                 expirationDate = SVNDate.parseDateString(expirationTime);
             }
-            String comment = (String) lockProps.get(FSFS.COMMENT_LOCK_KEY);
+            String comment = lockProps.getStringValue(FSFS.COMMENT_LOCK_KEY);
             lock = new SVNLock(lockPath, lockToken, lockOwner, comment, creationDate, expirationDate);
         }
         
-        String childEntries = (String) lockProps.get(FSFS.CHILDREN_LOCK_KEY);
+        String childEntries = lockProps.getStringValue(FSFS.CHILDREN_LOCK_KEY);
         if (children != null && childEntries != null) {
             String[] digests = childEntries.split("\n");
             for (int i = 0; i < digests.length; i++) {
@@ -1013,19 +1009,19 @@ public class FSFS {
         return lock;
     }
     
-    public Map compoundMetaProperties(long revision) throws SVNException {
-        Map metaProps = new HashMap();
-        Map revProps = getRevisionProperties(revision);
-        String author = (String) revProps.get(SVNRevisionProperty.AUTHOR);
-        String date = (String) revProps.get(SVNRevisionProperty.DATE);
+    public SVNProperties compoundMetaProperties(long revision) throws SVNException {
+        SVNProperties metaProperties = new SVNProperties();
+        SVNProperties revProps = getRevisionProperties(revision);
         String uuid = getUUID();
         String rev = String.valueOf(revision);
+        
+        metaProperties.copyValue(revProps, SVNRevisionProperty.AUTHOR);
+        metaProperties.copyValue(revProps, SVNRevisionProperty.DATE);
 
-        metaProps.put(SVNProperty.LAST_AUTHOR, author);
-        metaProps.put(SVNProperty.COMMITTED_DATE, date);
-        metaProps.put(SVNProperty.COMMITTED_REVISION, rev);
-        metaProps.put(SVNProperty.UUID, uuid);
-        return metaProps;
+        metaProperties.put(SVNProperty.COMMITTED_REVISION, rev);
+        metaProperties.put(SVNProperty.UUID, uuid);
+
+        return metaProperties;
     }
 
     public long getDeletedRevision(String path, long startRev, long endRev) throws SVNException {
@@ -1403,7 +1399,7 @@ public class FSFS {
     }
 
     private boolean ensureDirExists(File dir, boolean create) {
-        if (!dir.exists() && create == true) {
+        if (!dir.exists() && create) {
             return dir.mkdirs();
         } else if (!dir.exists()) {
             return false;
@@ -1426,7 +1422,7 @@ public class FSFS {
             SVNErrorManager.error(err);
         }
         
-        Map props = new HashMap();
+        SVNProperties props = new SVNProperties();
         
         if (lock != null) {
             props.put(FSFS.PATH_LOCK_KEY, lock.getPath());
@@ -1453,7 +1449,7 @@ public class FSFS {
             props.put(FSFS.CHILDREN_LOCK_KEY, value.toString());
         }
         try {
-            SVNProperties.setProperties(props, digestLockFile, SVNFileUtil.createUniqueFile(digestLockFile.getParentFile(), digestLockFile.getName(), ".tmp"), SVNProperties.SVN_HASH_TERMINATOR);
+            SVNWCProperties.setProperties(props, digestLockFile, SVNFileUtil.createUniqueFile(digestLockFile.getParentFile(), digestLockFile.getName(), ".tmp"), SVNWCProperties.SVN_HASH_TERMINATOR);
         } catch (SVNException svne) {
             SVNErrorMessage err = svne.getErrorMessage().wrap("Cannot write lock/entries hashfile ''{0}''", digestLockFile);
             SVNErrorManager.error(err, svne);
@@ -1472,17 +1468,17 @@ public class FSFS {
         return file;
     }
 
-    private Map parsePlainRepresentation(Map entries, boolean mayContainNulls) throws SVNException {
+    private Map parsePlainRepresentation(SVNProperties entries, boolean mayContainNulls) throws SVNException {
         Map representationMap = new HashMap();
-        Object[] names = entries.keySet().toArray();
-        for (int i = 0; i < names.length; i++) {
-            String name = (String) names[i];
-            String unparsedEntry = (String) entries.get(names[i]);
-            
+
+        for (Iterator iterator = entries.nameSet().iterator(); iterator.hasNext();) {
+            String name = (String) iterator.next();
+            String unparsedEntry = entries.getStringValue(name);
+
             if(unparsedEntry == null && mayContainNulls){
                 continue;
             }
-            
+
             FSEntry nextRepEntry = parseRepEntryValue(name, unparsedEntry);
             if (nextRepEntry == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Directory entry corrupt");
@@ -1513,8 +1509,8 @@ public class FSFS {
     }
     
     private Date getRevisionTime(long revision) throws SVNException {
-        Map revisionProperties = getRevisionProperties(revision);
-        String timeString = (String) revisionProperties.get(SVNRevisionProperty.DATE);
+        SVNProperties revisionProperties = getRevisionProperties(revision);
+        String timeString = revisionProperties.getStringValue(SVNRevisionProperty.DATE);
         if (timeString == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_GENERAL, "Failed to find time on revision {0,number,integer}", new Long(revision));
             SVNErrorManager.error(err);

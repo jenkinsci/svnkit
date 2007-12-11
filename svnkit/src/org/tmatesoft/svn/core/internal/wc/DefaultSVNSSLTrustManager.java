@@ -184,7 +184,7 @@ public class DefaultSVNSSLTrustManager implements X509TrustManager {
 		if (!file.isFile()) {
 			return null;
 		}
-		SVNProperties props = new SVNProperties(file, "");
+		SVNWCProperties props = new SVNWCProperties(file, "");
 		try {
 			String storedRealm = props.getPropertyValue("svn:realmstring");
 			if (!realm.equals(storedRealm)) {
@@ -201,7 +201,7 @@ public class DefaultSVNSSLTrustManager implements X509TrustManager {
 		myAuthDirectory.mkdirs();
 
 		File file = new File(myAuthDirectory, SVNFileUtil.computeChecksum(realm));
-		SVNProperties props = new SVNProperties(file, "");
+		SVNWCProperties props = new SVNWCProperties(file, "");
 		props.delete();
 		try {
 			props.setPropertyValue("ascii_cert", data);

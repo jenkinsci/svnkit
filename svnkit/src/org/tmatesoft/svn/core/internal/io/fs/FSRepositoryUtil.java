@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -25,6 +24,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
 import org.tmatesoft.svn.core.internal.wc.ISVNCommitPathHandler;
@@ -128,33 +128,33 @@ public class FSRepositoryUtil {
         return !areRepresentationsEqual(revNode1, revNode2, false);
     }
 
-    public static Map getPropsDiffs(Map sourceProps, Map targetProps){
-        Map result = new HashMap();
+    public static SVNProperties getPropsDiffs(SVNProperties sourceProps, SVNProperties targetProps){
+        SVNProperties result = new SVNProperties();
         
         if(sourceProps == null){
-            sourceProps = Collections.EMPTY_MAP;
+            sourceProps = SVNProperties.EMPTY_PROPERTIES;
         }
         
         if(targetProps == null){
-            targetProps = Collections.EMPTY_MAP;
+            targetProps = SVNProperties.EMPTY_PROPERTIES;
         }
     
-        for(Iterator names = sourceProps.keySet().iterator(); names.hasNext();){
+        for(Iterator names = sourceProps.nameSet().iterator(); names.hasNext();){
             String propName = (String)names.next();
-            String srcPropVal = (String)sourceProps.get(propName);
-            String targetPropVal = (String)targetProps.get(propName);
+            String srcPropVal = sourceProps.getStringValue(propName);
+            String targetPropVal = targetProps.getStringValue(propName);
     
             if(targetPropVal == null){
-                result.put(propName, null);
+                result.put(propName, targetPropVal);
             }else if(!targetPropVal.equals(srcPropVal)){
                 result.put(propName, targetPropVal);
             }
         }
     
-        for(Iterator names = targetProps.keySet().iterator(); names.hasNext();){
+        for(Iterator names = targetProps.nameSet().iterator(); names.hasNext();){
             String propName = (String)names.next();
-            String targetPropVal = (String)targetProps.get(propName);
-            if(sourceProps.get(propName) == null){
+            String targetPropVal = targetProps.getStringValue(propName);
+            if(sourceProps.getStringValue(propName) == null){
                 result.put(propName, targetPropVal);
             }
         }        

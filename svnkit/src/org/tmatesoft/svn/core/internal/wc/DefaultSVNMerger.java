@@ -15,13 +15,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
@@ -142,7 +141,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
     }
     
     protected SVNMergeResult handleChooseBase(SVNMergeFileSet files) throws SVNException {
-        Map command = new HashMap();
+        SVNProperties command = new SVNProperties();
         SVNLog log = files.getLog();
 
         command.put(SVNLog.NAME_ATTR, files.getBasePath());
@@ -153,7 +152,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
     }
     
     protected SVNMergeResult handleChooseRepository(SVNMergeFileSet files) throws SVNException {
-        Map command = new HashMap();
+        SVNProperties command = new SVNProperties();
         SVNLog log = files.getLog();
         
         command.put(SVNLog.NAME_ATTR, files.getRepositoryPath());
@@ -180,7 +179,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
     }
 
     protected SVNMergeResult handleMarkBinaryConflicted(SVNMergeFileSet files) throws SVNException {
-        Map command = new HashMap();
+        SVNProperties command = new SVNProperties();
         File root = files.getAdminArea().getRoot();
         SVNLog log = files.getLog();
 
@@ -211,7 +210,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
     }
     
     protected void makeBinaryConflictEntry(SVNMergeFileSet files, String newFilePath, String oldFilePath) throws SVNException {
-        Map command = new HashMap();
+        SVNProperties command = new SVNProperties();
         SVNLog log = files.getLog();
 
         command.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_NEW), newFilePath);
@@ -222,7 +221,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
     }
 
     protected SVNMergeResult handleMarkTextConflicted(SVNMergeFileSet files) throws SVNException {
-        Map command = new HashMap();
+        SVNProperties command = new SVNProperties();
         File root = files.getAdminArea().getRoot();
         SVNLog log = files.getLog();
 
@@ -275,7 +274,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
     }
 
     protected void makeTextConflictEntry(SVNMergeFileSet files, String mineFilePath, String newFilePath, String oldFilePath) throws SVNException {
-        Map command = new HashMap();
+        SVNProperties command = new SVNProperties();
         SVNLog log = files.getLog();
         
         command.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_WRK), mineFilePath);
@@ -286,7 +285,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
     }
     
     protected SVNMergeResult handleChooseMerged(SVNMergeFileSet files, SVNMergeResult mergeResult) throws SVNException {
-        Map command = new HashMap();
+        SVNProperties command = new SVNProperties();
         SVNLog log = files.getLog();
         if (mergeResult.getMergeStatus() != SVNStatusType.CONFLICTED) {
             // do normal merge.
@@ -321,7 +320,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
     }
 
     protected void postMergeCleanup(SVNMergeFileSet files) throws SVNException {
-        Map command = new HashMap();
+        SVNProperties command = new SVNProperties();
         SVNLog log = files.getLog();
 
         if (!files.getLocalPath().equals(files.getWCPath())) {

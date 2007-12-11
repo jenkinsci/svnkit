@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
@@ -164,7 +165,7 @@ public class DAVMergeHandler extends BasicDAVHandler {
                 String reposPath = SVNEncodingUtil.uriEncode(myRepositoryPath);
                 String path = (String) myPathsMap.get(reposPath);
                 if (path != null && myMediator != null) {
-                    myMediator.setWorkspaceProperty(SVNEncodingUtil.uriDecode(path), "svn:wc:ra_dav:version-url", myVersionPath);
+                    myMediator.setWorkspaceProperty(SVNEncodingUtil.uriDecode(path), "svn:wc:ra_dav:version-url", new SVNPropertyValue(myVersionPath));
                 }
             }
         } else if (element == DAVElement.CREATION_DATE) {

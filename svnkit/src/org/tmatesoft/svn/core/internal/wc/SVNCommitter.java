@@ -27,6 +27,8 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
@@ -90,7 +92,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
             String mimeType = null;
             if (item.getKind() == SVNNodeKind.FILE && file != null) {
                 SVNAdminArea dir = item.getWCAccess().retrieve(file.getParentFile());
-                mimeType = dir.getProperties(file.getName()).getPropertyValue(SVNProperty.MIME_TYPE);
+                mimeType = dir.getProperties(file.getName()).getStringPropertyValue(SVNProperty.MIME_TYPE);
             }
             event = SVNEventFactory.createSVNEvent(file, item.getKind(), mimeType, SVNRepository.INVALID_REVISION, SVNEventAction.COMMIT_ADDED, null, null, null);
         } else if (item.isDeleted()) {
@@ -229,13 +231,13 @@ public class SVNCommitter implements ISVNCommitPathHandler {
         }
         SVNVersionedProperties props = dir.getProperties(name);
         SVNVersionedProperties baseProps = replaced ? null : dir.getBaseProperties(name);
-        Map diff = replaced ? props.asMap() : baseProps.compareTo(props).asMap();
+        SVNProperties diff = replaced ? props.asMap() : baseProps.compareTo(props).asMap();
         if (diff != null && !diff.isEmpty()) {
             File tmpPropsFile = dir.getPropertiesFile(name, true);
-            SVNProperties tmpProps = new SVNProperties(tmpPropsFile, null);
+            SVNWCProperties tmpProps = new SVNWCProperties(tmpPropsFile, null);
             for(Iterator propNames = props.getPropertyNames(null).iterator(); propNames.hasNext();) {
                 String propName = (String) propNames.next();
-                String propValue = props.getPropertyValue(propName);
+                SVNPropertyValue propValue = props.getPropertyValue(propName);
                 tmpProps.setPropertyValue(propName, propValue);
             }
             if (!tmpPropsFile.exists()) {
@@ -244,9 +246,9 @@ public class SVNCommitter implements ISVNCommitPathHandler {
             }
             myTmpFiles.add(tmpPropsFile);
 
-            for (Iterator names = diff.keySet().iterator(); names.hasNext();) {
+            for (Iterator names = diff.nameSet().iterator(); names.hasNext();) {
                 String propName = (String) names.next();
-                String value = (String) diff.get(propName);
+                String value = diff.getStringValue(propName);
                 if (item.getKind() == SVNNodeKind.FILE) {
                     editor.changeFileProperty(commitPath, propName, value);
                 } else {

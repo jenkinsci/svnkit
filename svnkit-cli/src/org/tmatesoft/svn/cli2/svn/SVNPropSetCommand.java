@@ -11,7 +11,6 @@
  */
 package org.tmatesoft.svn.cli2.svn;
 
-import java.io.UnsupportedEncodingException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,9 +22,10 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.wc.SVNChangelistClient;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
@@ -34,13 +34,13 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 
 /**
+ * @author TMate Software Ltd.
  * @version 1.1.2
- * @author  TMate Software Ltd.
  */
 public class SVNPropSetCommand extends SVNPropertiesCommand {
 
     public SVNPropSetCommand() {
-        super("propset", new String[] {"pset", "ps"});
+        super("propset", new String[]{"pset", "ps"});
     }
 
     protected Collection createSupportedOptions() {
@@ -58,7 +58,7 @@ public class SVNPropSetCommand extends SVNPropertiesCommand {
         options.add(SVNOption.FORCE);
         options.add(SVNOption.CONFIG_DIR);
         options.add(SVNOption.CHANGELIST);
-        
+
         return options;
     }
 
@@ -69,32 +69,33 @@ public class SVNPropSetCommand extends SVNPropertiesCommand {
             SVNErrorManager.error(err);
         }
         if (!SVNPropertiesManager.isValidPropertyName(propertyName)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, 
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
                     "''{0}'' is not a valid Subversion property name", propertyName);
             SVNErrorManager.error(err);
         }
 
-        String propertyValue = null;
+        SVNPropertyValue propertyValue = null;        
         if (getSVNEnvironment().getFileData() != null) {
+            propertyValue = new SVNPropertyValue(getSVNEnvironment().getFileData());            
+        } else {
+            propertyValue = new SVNPropertyValue(getSVNEnvironment().popArgument());
+        }
+        
+        if (SVNPropertiesManager.propNeedsTranslation(propertyName)) {
             String encoding = getSVNEnvironment().getEncoding();
             if (encoding == null) {
                 encoding = "UTF-8";
             }
-            try {
-                propertyValue = new String(getSVNEnvironment().getFileData(), encoding);
-            } catch (UnsupportedEncodingException e) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
-                SVNErrorManager.error(err);
-            }
+            propertyValue = new SVNPropertyValue(propertyValue.getString(encoding));
         } else {
-            propertyValue = getSVNEnvironment().popArgument();
-        }
-        if (propertyValue == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS);
-            SVNErrorManager.error(err);
+            if (getSVNEnvironment().getEncoding() != null){
+                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
+                        "''{}'' is not a valid Subversion property name", new Object[]{propertyName});
+                SVNErrorManager.error(errorMessage);                
+            }
         }
 
-        Collection targets = new ArrayList(); 
+        Collection targets = new ArrayList();
         if (getSVNEnvironment().getChangelist() != null) {
             SVNPath target = new SVNPath("");
             SVNChangelistClient changelistClient = getSVNEnvironment().getClientManager().getChangelistClient();
@@ -108,7 +109,7 @@ public class SVNPropSetCommand extends SVNPropertiesCommand {
             targets.addAll(getSVNEnvironment().getTargets());
         }
         targets = getSVNEnvironment().combineTargets(targets);
-        
+
         if (getSVNEnvironment().isRevprop()) {
             if (targets.isEmpty()) {
                 targets.add("");
@@ -116,7 +117,7 @@ public class SVNPropSetCommand extends SVNPropertiesCommand {
             SVNURL revPropURL = getRevpropURL(getSVNEnvironment().getStartRevision(), targets);
             getSVNEnvironment().getClientManager().getWCClient().doSetRevisionProperty(revPropURL, getSVNEnvironment().getStartRevision(), propertyName, propertyValue, getSVNEnvironment().isForce(), this);
         } else if (getSVNEnvironment().getStartRevision() != SVNRevision.UNDEFINED) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR,
                     "Cannot specify revision for setting versioned property ''{0}''", propertyName);
             SVNErrorManager.error(err);
         } else {
@@ -126,7 +127,7 @@ public class SVNPropSetCommand extends SVNPropertiesCommand {
             }
             if (targets.isEmpty()) {
                 if (getSVNEnvironment().getFileData() == null) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, 
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS,
                             "Explicit target required (''{0}'' interpreted as prop value)", propertyValue);
                     SVNErrorManager.error(err);
                 } else {
@@ -141,11 +142,11 @@ public class SVNPropSetCommand extends SVNPropertiesCommand {
                 if (target.isFile()) {
                     boolean success = true;
                     try {
-                        client.doSetProperty(target.getFile(), propertyName, propertyValue, 
+                        client.doSetProperty(target.getFile(), propertyName, propertyValue,
                                 getSVNEnvironment().isForce(), depth, this);
                     } catch (SVNException e) {
-                        success = getSVNEnvironment().handleWarning(e.getErrorMessage(), 
-                                new SVNErrorCode[] {SVNErrorCode.UNVERSIONED_RESOURCE, SVNErrorCode.ENTRY_NOT_FOUND},
+                        success = getSVNEnvironment().handleWarning(e.getErrorMessage(),
+                                new SVNErrorCode[]{SVNErrorCode.UNVERSIONED_RESOURCE, SVNErrorCode.ENTRY_NOT_FOUND},
                                 getSVNEnvironment().isQuiet());
                     }
                     clearCollectedProperties();
@@ -153,27 +154,26 @@ public class SVNPropSetCommand extends SVNPropertiesCommand {
                         checkBooleanProperty(propertyName, propertyValue);
                         if (success) {
                             String path = SVNCommandUtil.getLocalPath(targetName);
-                            String message = depth.isRecursive() ? 
+                            String message = depth.isRecursive() ?
                                     "property ''{0}'' set (recursively) on ''{1}''" :
-                                        "property ''{0}'' set on ''{1}''";
-                            message = MessageFormat.format(message, new Object[] {propertyName, path});
+                                    "property ''{0}'' set on ''{1}''";
+                            message = MessageFormat.format(message, new Object[]{propertyName, path});
                             getSVNEnvironment().getOut().println(message);
                         }
                     }
-                } 
+                }
             }
         }
     }
-    
+
     public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
         super.handleProperty(revision, property);
         if (!getSVNEnvironment().isQuiet()) {
             String message = "property ''{0}'' set on repository revision {1}";
-            message = MessageFormat.format(message, new Object[] {property.getName(), new Long(revision)});
+            message = MessageFormat.format(message, new Object[]{property.getName(), new Long(revision)});
             getSVNEnvironment().getOut().println(message);
         }
     }
-    
-    
+
 
 }

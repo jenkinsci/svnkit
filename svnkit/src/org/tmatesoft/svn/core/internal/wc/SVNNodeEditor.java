@@ -26,6 +26,8 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryUtil;
@@ -91,7 +93,16 @@ public class SVNNodeEditor implements ISVNEditor {
         myCurrentNode.myHasPropModifications = true;
     }
 
+    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
+        myCurrentNode.myHasPropModifications = true;
+    }
+
     public void changeFileProperty(String path, String name, String value) throws SVNException {
+        Node fileNode = (Node) myFiles.get(path);
+        fileNode.myHasPropModifications = true;
+    }
+
+    public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
         Node fileNode = (Node) myFiles.get(path);
         fileNode.myHasPropModifications = true;
     }
@@ -287,13 +298,13 @@ public class SVNNodeEditor implements ISVNEditor {
         
         if (node.myHasPropModifications && node.myAction != SVNChangeEntry.TYPE_DELETED) {
             FSRevisionNode localNode = root.getRevisionNode(path);
-            Map props = localNode.getProperties(root.getOwner());
-            Map baseProps = null;
+            SVNProperties props = localNode.getProperties(root.getOwner());
+            SVNProperties baseProps = null;
             if (node.myAction != SVNChangeEntry.TYPE_ADDED) {
                 FSRevisionNode baseNode = baseRoot.getRevisionNode(basePath);
                 baseProps = baseNode.getProperties(baseRoot.getOwner());
             }
-            Map propsDiff = FSRepositoryUtil.getPropsDiffs(baseProps, props);
+            SVNProperties propsDiff = FSRepositoryUtil.getPropsDiffs(baseProps, props);
             if (propsDiff.size() > 0) {
                 String displayPath = path.startsWith("/") ? path.substring(1) : path;
                 generator.displayPropDiff(displayPath, baseProps, propsDiff, os);
@@ -316,8 +327,8 @@ public class SVNNodeEditor implements ISVNEditor {
         String mimeType = null; 
         if (root != null) {
             FSRevisionNode node = root.getRevisionNode(path);
-            Map nodeProps = node.getProperties(root.getOwner());
-            mimeType = (String) nodeProps.get(SVNProperty.MIME_TYPE);
+            SVNProperties nodeProps = node.getProperties(root.getOwner());
+            mimeType = nodeProps.getStringValue(SVNProperty.MIME_TYPE);
             if (SVNProperty.isBinaryMimeType(mimeType) && !generator.isForcedBinaryDiff()) {
                 return new DiffItem(mimeType, null);
             }

@@ -13,6 +13,7 @@
 package org.tmatesoft.svn.core.io;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 
 /**
  * The <b>ISVNWorkspaceMediator</b> interface is used for temporary 
@@ -37,7 +38,7 @@ public interface ISVNWorkspaceMediator {
      * @throws SVNException
      * @see					#setWorkspaceProperty(String, String, String)
      */
-    public String getWorkspaceProperty(String path, String name) throws SVNException;
+    public SVNPropertyValue getWorkspaceProperty(String path, String name) throws SVNException;
     
     /**
      * Sets a new value for an item's WC property in a <code>".svn/wcprops"</code> 
@@ -49,5 +50,5 @@ public interface ISVNWorkspaceMediator {
      * @throws SVNException
      * @see						#getWorkspaceProperty(String, String)
      */
-    public void setWorkspaceProperty(String path, String name, String value) throws SVNException ;
+    public void setWorkspaceProperty(String path, String name, SVNPropertyValue value) throws SVNException ;
 }

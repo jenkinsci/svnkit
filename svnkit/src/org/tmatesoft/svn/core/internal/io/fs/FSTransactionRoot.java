@@ -17,7 +17,6 @@ import java.io.OutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -25,13 +24,15 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNProperties;
+import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
@@ -148,8 +149,8 @@ public class FSTransactionRoot extends FSRoot {
         return myTxnID;
     }
 
-    public Map unparseDirEntries(Map entries) {
-        Map unparsedEntries = new HashMap();
+    public SVNProperties unparseDirEntries(Map entries) {
+        SVNProperties unparsedEntries = new SVNProperties();
         for (Iterator names = entries.keySet().iterator(); names.hasNext();) {
             String name = (String) names.next();
             FSEntry dirEntry = (FSEntry) entries.get(name);
@@ -162,14 +163,14 @@ public class FSTransactionRoot extends FSRoot {
     public static FSTransactionInfo beginTransaction(long baseRevision, int flags, FSFS owner) throws SVNException {
         FSTransactionInfo txn = createTxn(baseRevision, owner);
         String commitTime = SVNDate.formatDate(new Date(System.currentTimeMillis()));
-        owner.setTransactionProperty(txn.getTxnId(), SVNRevisionProperty.DATE, commitTime);
+        owner.setTransactionProperty(txn.getTxnId(), SVNRevisionProperty.DATE, new SVNPropertyValue(commitTime));
 
         if ((flags & SVN_FS_TXN_CHECK_OUT_OF_DATENESS) != 0) {
-            owner.setTransactionProperty(txn.getTxnId(), SVNProperty.TXN_CHECK_OUT_OF_DATENESS, SVNProperty.toString(true));
+            owner.setTransactionProperty(txn.getTxnId(), SVNProperty.TXN_CHECK_OUT_OF_DATENESS, SVNPropertyValue.TRUE);
         }
 
         if ((flags & FSTransactionRoot.SVN_FS_TXN_CHECK_LOCKS) != 0) {
-            owner.setTransactionProperty(txn.getTxnId(), SVNProperty.TXN_CHECK_LOCKS, SVNProperty.toString(true));
+            owner.setTransactionProperty(txn.getTxnId(), SVNProperty.TXN_CHECK_LOCKS, SVNPropertyValue.TRUE);
         }
 
         return txn;
@@ -286,17 +287,17 @@ public class FSTransactionRoot extends FSRoot {
         SVNFileUtil.deleteFile(getOwner().getTransactionRevNodeFile(id));
     }
 
-    public void setProplist(FSRevisionNode node, Map properties) throws SVNException {
+    public void setProplist(FSRevisionNode node, SVNProperties properties) throws SVNException {
         if (!node.getId().isTxn()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_MUTABLE, "Can't set proplist on *immutable* node-revision {0}", node.getId());
             SVNErrorManager.error(err);
         }
 
         File propsFile = getTransactionRevNodePropsFile(node.getId());
-        SVNProperties.setProperties(properties, propsFile, 
+        SVNWCProperties.setProperties(properties, propsFile,
                                     SVNFileUtil.createUniqueFile(propsFile.getParentFile(), 
                                                                  ".props", ".tmp"), 
-                                    SVNProperties.SVN_HASH_TERMINATOR);
+                                    SVNWCProperties.SVN_HASH_TERMINATOR);
 
         if (node.getPropsRepresentation() == null || !node.getPropsRepresentation().isTxn()) {
             FSRepresentation mutableRep = new FSRepresentation();
@@ -307,19 +308,19 @@ public class FSTransactionRoot extends FSRoot {
         }
     }
 
-    public void setTxnMergeInfo(String name, String value) throws SVNException {
+    public void setTxnMergeInfo(String name, SVNPropertyValue value) throws SVNException {
         FSFS fs = getOwner(); 
-        Map txnMergeInfo = fs.getTransactionMergeInfo(myTxnID);
+        SVNProperties txnMergeInfo = fs.getTransactionMergeInfo(myTxnID);
         if (value != null) {
             txnMergeInfo.put(name, value);
         } else {
             txnMergeInfo.remove(name);
         }
         File txnMergeInfoFile = fs.getTransactionMergeInfoFile(myTxnID);
-        SVNProperties.setProperties(txnMergeInfo, txnMergeInfoFile, 
+        SVNWCProperties.setProperties(txnMergeInfo, txnMergeInfoFile,
                                     SVNFileUtil.createUniqueFile(txnMergeInfoFile.getParentFile(), 
                                                                  "mergeinfo", ".tmp"), 
-                                    SVNProperties.SVN_HASH_TERMINATOR);
+                                    SVNWCProperties.SVN_HASH_TERMINATOR);
     }
     
     public FSID createSuccessor(FSID oldId, FSRevisionNode newRevNode, String copyId) throws SVNException {
@@ -355,9 +356,9 @@ public class FSTransactionRoot extends FSRoot {
         try {
             if (textRep == null || !textRep.isTxn()) {
                 Map entries = parentRevNode.getDirEntries(getOwner());
-                Map unparsedEntries = unparseDirEntries(entries);
+                SVNProperties unparsedEntries = unparseDirEntries(entries);
                 dst = SVNFileUtil.openFileForWriting(childrenFile);
-                SVNProperties.setProperties(unparsedEntries, dst, SVNProperties.SVN_HASH_TERMINATOR);
+                SVNWCProperties.setProperties(unparsedEntries, dst, SVNWCProperties.SVN_HASH_TERMINATOR);
                 textRep = new FSRepresentation();
                 textRep.setRevision(SVNRepository.INVALID_REVISION);
                 textRep.setTxnId(myTxnID);
@@ -369,12 +370,12 @@ public class FSTransactionRoot extends FSRoot {
             }
             Map dirContents = parentRevNode.getDirContents();
             if (entryId != null) {
-                SVNProperties.appendProperty(entryName, kind + " " + entryId.toString(), dst);
+                SVNWCProperties.appendProperty(entryName, kind + " " + entryId.toString(), dst);
                 if (dirContents != null) {
                     dirContents.put(entryName, new FSEntry(entryId, kind, entryName));
                 }
             } else {
-                SVNProperties.appendPropertyDeleted(entryName, dst);
+                SVNWCProperties.appendPropertyDeleted(entryName, dst);
                 if (dirContents != null) {
                     dirContents.remove(entryName);
                 }
@@ -493,7 +494,7 @@ public class FSTransactionRoot extends FSRoot {
                 }
             }
             if (revNode.getTextRepresentation() != null && revNode.getTextRepresentation().isTxn()) {
-                Map unparsedEntries = unparseDirEntries(namesToEntries);
+                SVNProperties unparsedEntries = unparseDirEntries(namesToEntries);
                 FSRepresentation textRep = revNode.getTextRepresentation();
                 textRep.setTxnId(null);
                 textRep.setRevision(revision);
@@ -519,7 +520,7 @@ public class FSTransactionRoot extends FSRoot {
         }
 
         if (revNode.getPropsRepresentation() != null && revNode.getPropsRepresentation().isTxn()) {
-            Map props = revNode.getProperties(owner);
+            SVNProperties props = revNode.getProperties(owner);
             FSRepresentation propsRep = revNode.getPropsRepresentation();
             try {
                 propsRep.setOffset(protoFile.getPosition());
@@ -603,11 +604,11 @@ public class FSTransactionRoot extends FSRoot {
         return getOwner().getRevisionNode(newNodeId);
     }
 
-    private long writeHashRepresentation(Map hashContents, OutputStream protoFile, MessageDigest digest) throws IOException, SVNException {
+    private long writeHashRepresentation(SVNProperties hashContents, OutputStream protoFile, MessageDigest digest) throws IOException, SVNException {
         HashRepresentationStream targetFile = new HashRepresentationStream(protoFile, digest);
         String header = FSRepresentation.REP_PLAIN + "\n";
         protoFile.write(header.getBytes("UTF-8"));
-        SVNProperties.setProperties(hashContents, targetFile, SVNProperties.SVN_HASH_TERMINATOR);
+        SVNWCProperties.setProperties(hashContents, targetFile, SVNWCProperties.SVN_HASH_TERMINATOR);
         String trailer = FSRepresentation.REP_TRAILER + "\n";
         protoFile.write(trailer.getBytes("UTF-8"));
         return targetFile.mySize;

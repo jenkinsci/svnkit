@@ -24,6 +24,8 @@ import javax.net.ssl.TrustManager;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationStorage;
@@ -470,11 +472,11 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             String fileName = SVNFileUtil.computeChecksum(realm);
             File authFile = new File(dir, fileName);
             if (authFile.exists()) {
-                SVNProperties props = new SVNProperties(authFile, "");
+                SVNWCProperties props = new SVNWCProperties(authFile, "");
                 try {
-                    Map values = props.asMap();
-                    String storedRealm = (String) values.get("svn:realmstring");
-                    String cipherType = (String) values.get("passtype");
+                    SVNProperties values = props.asMap();
+                    String storedRealm = values.getStringValue("svn:realmstring");
+                    String cipherType = values.getStringValue("passtype");
                     if (cipherType != null && !SVNPasswordCipher.hasCipher(cipherType)) {
                         return null;
                     }
@@ -482,17 +484,17 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                     if (storedRealm == null || !storedRealm.equals(realm)) {
                         return null;
                     }
-                    String userName = (String) values.get("username");
+                    String userName = values.getStringValue("username");
                     if (userName == null || "".equals(userName.trim())) {
                         return null;
                     }
-                    String password = (String) values.get("password");
+                    String password = values.getStringValue("password");
                     password = cipher.decrypt(password);
 
-                    String path = (String) values.get("key");
-                    String passphrase = (String) values.get("passphrase");
+                    String path = values.getStringValue("key");
+                    String passphrase = values.getStringValue("passphrase");
                     passphrase = cipher.decrypt(passphrase);
-                    String port = (String) values.get("port");
+                    String port = values.getStringValue("port");
                     port = port == null ? ("" + getDefaultSSHPortNumber()) : port;
                     if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
                         return new SVNPasswordAuthentication(userName, password, authMayBeStored);
@@ -560,7 +562,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             String fileName = SVNFileUtil.computeChecksum(realm);
             File authFile = new File(dir, fileName);
             
-            SVNProperties props = new SVNProperties(authFile, "");
+            SVNWCProperties props = new SVNWCProperties(authFile, "");
             try {
                 if (values.equals(props.asMap())) {
                     return;
@@ -572,7 +574,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             try {
                 for (Iterator names = values.keySet().iterator(); names.hasNext();) {
                     String name = (String) names.next();
-                    props.setPropertyValue(name, (String) values.get(name));
+                    props.setPropertyValue(name, new SVNPropertyValue((String) values.get(name)));
                 } 
                 SVNFileUtil.setReadonly(props.getFile(), false);
             } catch (SVNException e) {

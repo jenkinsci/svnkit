@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
@@ -76,12 +77,12 @@ public class SVNTranslator {
         File dst2 = dst;
         
         SVNVersionedProperties props = adminArea.getProperties(name);
-        String keywords = props.getPropertyValue(SVNProperty.KEYWORDS);
+        String keywords = props.getStringPropertyValue(SVNProperty.KEYWORDS);
         String eolStyle = null;
         if (customEOLStyle != null) {
             eolStyle = customEOLStyle;
         } else {
-            eolStyle = props.getPropertyValue(SVNProperty.EOL_STYLE);
+            eolStyle = props.getStringPropertyValue(SVNProperty.EOL_STYLE);
         }
         boolean special = props.getPropertyValue(SVNProperty.SPECIAL) != null;
         Map keywordsMap = null;
@@ -151,8 +152,8 @@ public class SVNTranslator {
     }
 
     public static InputStream getTranslatedStream(SVNAdminArea adminArea, String name, boolean translateToNormalForm, boolean repairEOL) throws SVNException {
-        String eolStyle = adminArea.getProperties(name).getPropertyValue(SVNProperty.EOL_STYLE);
-        String keywords = adminArea.getProperties(name).getPropertyValue(SVNProperty.KEYWORDS);
+        String eolStyle = adminArea.getProperties(name).getStringPropertyValue(SVNProperty.EOL_STYLE);
+        String keywords = adminArea.getProperties(name).getStringPropertyValue(SVNProperty.KEYWORDS);
         boolean special = adminArea.getProperties(name).getPropertyValue(SVNProperty.SPECIAL) != null;
         File src = adminArea.getFile(name);
         if (special) {
@@ -202,8 +203,8 @@ public class SVNTranslator {
     }
     
     public static File getTranslatedFile(SVNAdminArea dir, String name, File src, boolean forceEOLRepair, boolean useGlobalTmp, boolean forceCopy, boolean toNormalFormat) throws SVNException {
-        String eolStyle = dir.getProperties(name).getPropertyValue(SVNProperty.EOL_STYLE);
-        String keywords = dir.getProperties(name).getPropertyValue(SVNProperty.KEYWORDS);
+        String eolStyle = dir.getProperties(name).getStringPropertyValue(SVNProperty.EOL_STYLE);
+        String keywords = dir.getProperties(name).getStringPropertyValue(SVNProperty.KEYWORDS);
         boolean special = dir.getProperties(name).getPropertyValue(SVNProperty.SPECIAL) != null;
         boolean needsTranslation = eolStyle != null || keywords != null || special;
         File result = null;
@@ -231,10 +232,10 @@ public class SVNTranslator {
         return result;
     }
     
-    public static File maybeUpdateTargetEOLs(SVNAdminArea dir, File target, Map propDiff) throws SVNException {
+    public static File maybeUpdateTargetEOLs(SVNAdminArea dir, File target, SVNProperties propDiff) throws SVNException {
         String eolStyle = null;
-        if (propDiff != null && propDiff.containsKey(SVNProperty.EOL_STYLE) && propDiff.get(SVNProperty.EOL_STYLE) != null) {
-            eolStyle = (String) propDiff.get(SVNProperty.EOL_STYLE);
+        if (propDiff != null && propDiff.containsName(SVNProperty.EOL_STYLE) && propDiff.getStringValue(SVNProperty.EOL_STYLE) != null) {
+            eolStyle = propDiff.getStringValue(SVNProperty.EOL_STYLE);
             byte[] eol = getEOL(eolStyle);
             File tmpFile = SVNAdminUtil.createTmpFile(dir);
             copyAndTranslate(target, tmpFile, eol, null, false, false, eol == null);
@@ -243,31 +244,31 @@ public class SVNTranslator {
         return target;
     }
     
-    public static File detranslateWorkingCopy(SVNAdminArea dir, String name, Map propDiff, boolean force) throws SVNException {
+    public static File detranslateWorkingCopy(SVNAdminArea dir, String name, SVNProperties propDiff, boolean force) throws SVNException {
         SVNVersionedProperties props = dir.getProperties(name);
-        boolean isLocalBinary = SVNProperty.isBinaryMimeType(props.getPropertyValue(SVNProperty.MIME_TYPE));
+        boolean isLocalBinary = SVNProperty.isBinaryMimeType(props.getStringPropertyValue(SVNProperty.MIME_TYPE));
         
         String eolStyle = null;
         String keywords = null;
         boolean isSpecial = false;
-        boolean isRemoteHasBinary = propDiff != null && propDiff.containsKey(SVNProperty.MIME_TYPE); 
-        boolean isRemoteBinaryRemoved = isRemoteHasBinary && !SVNProperty.isBinaryMimeType((String) propDiff.get(SVNProperty.MIME_TYPE)); 
-        boolean isRemoteBinary = isRemoteHasBinary && SVNProperty.isBinaryMimeType((String) propDiff.get(SVNProperty.MIME_TYPE)); 
+        boolean isRemoteHasBinary = propDiff != null && propDiff.containsName(SVNProperty.MIME_TYPE); 
+        boolean isRemoteBinaryRemoved = isRemoteHasBinary && !SVNProperty.isBinaryMimeType(propDiff.getStringValue(SVNProperty.MIME_TYPE));
+        boolean isRemoteBinary = isRemoteHasBinary && SVNProperty.isBinaryMimeType(propDiff.getStringValue(SVNProperty.MIME_TYPE));
         
         if (!isLocalBinary && isRemoteBinary) {
             isSpecial = props.getPropertyValue(SVNProperty.SPECIAL) != null;
-            keywords = props.getPropertyValue(SVNProperty.KEYWORDS);
+            keywords = props.getStringPropertyValue(SVNProperty.KEYWORDS);
         } else if (!isLocalBinary || isRemoteBinaryRemoved) {
             isSpecial = props.getPropertyValue(SVNProperty.SPECIAL) != null;
             if (!isSpecial) {
-                if (propDiff != null && propDiff.containsKey(SVNProperty.EOL_STYLE) && propDiff.get(SVNProperty.EOL_STYLE) != null) {
-                    eolStyle = (String) propDiff.get(SVNProperty.EOL_STYLE);
+                if (propDiff != null && propDiff.containsName(SVNProperty.EOL_STYLE) && propDiff.getStringValue(SVNProperty.EOL_STYLE) != null) {
+                    eolStyle = propDiff.getStringValue(SVNProperty.EOL_STYLE);
                 } else if (!isLocalBinary) {
-                    eolStyle = props.getPropertyValue(SVNProperty.EOL_STYLE);
+                    eolStyle = props.getStringPropertyValue(SVNProperty.EOL_STYLE);
                 }
                 
                 if (!isLocalBinary) {
-                    keywords = props.getPropertyValue(SVNProperty.KEYWORDS);
+                    keywords = props.getStringPropertyValue(SVNProperty.KEYWORDS);
                 }
             }
         }

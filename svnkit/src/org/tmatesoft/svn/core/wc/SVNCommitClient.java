@@ -32,6 +32,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -224,7 +225,7 @@ public class SVNCommitClient extends SVNBasicClient {
         return doDelete(urls, commitMessage, null);
     }
     
-    public SVNCommitInfo doDelete(SVNURL[] urls, String commitMessage, Map revisionProperties)
+    public SVNCommitInfo doDelete(SVNURL[] urls, String commitMessage, SVNProperties revisionProperties)
             throws SVNException {
         if (urls == null || urls.length == 0) {
             return SVNCommitInfo.NULL;
@@ -309,7 +310,7 @@ public class SVNCommitClient extends SVNBasicClient {
         return doMkDir(urls, commitMessage, null, false);
     }
     
-    public SVNCommitInfo doMkDir(SVNURL[] urls, String commitMessage, Map revisionProperties, boolean makeParents) throws SVNException {
+    public SVNCommitInfo doMkDir(SVNURL[] urls, String commitMessage, SVNProperties revisionProperties, boolean makeParents) throws SVNException {
         if (makeParents) {
             List allURLs = new LinkedList();
             for (int i = 0; i < urls.length; i++) {
@@ -461,7 +462,7 @@ public class SVNCommitClient extends SVNBasicClient {
     }
     
     public SVNCommitInfo doImport(File path, SVNURL dstURL, String commitMessage, 
-            Map revisionProperties, boolean useGlobalIgnores, boolean ignoreUnknownNodeTypes, 
+            SVNProperties revisionProperties, boolean useGlobalIgnores, boolean ignoreUnknownNodeTypes,
             SVNDepth depth) throws SVNException {
         // first find dstURL root.
         SVNRepository repos = null;
@@ -587,7 +588,7 @@ public class SVNCommitClient extends SVNBasicClient {
     }
     
     public SVNCommitInfo doCommit(File[] paths, boolean keepLocks, 
-                                  String commitMessage, Map revisionProperties, 
+                                  String commitMessage, SVNProperties revisionProperties, 
                                   String changelistName, boolean keepChangelist, boolean force, 
                                   SVNDepth depth) throws SVNException {
         SVNCommitPacket packet = doCollectCommitItems(paths, keepLocks, force, 
@@ -627,7 +628,7 @@ public class SVNCommitClient extends SVNBasicClient {
         return doCommit(commitPacket, keepLocks, false, commitMessage, null);
     }
     
-    public SVNCommitInfo doCommit(SVNCommitPacket commitPacket, boolean keepLocks, boolean keepChangelist, String commitMessage, Map revisionProperties) throws SVNException {
+    public SVNCommitInfo doCommit(SVNCommitPacket commitPacket, boolean keepLocks, boolean keepChangelist, String commitMessage, SVNProperties revisionProperties) throws SVNException {
         SVNCommitInfo[] info = doCommit(new SVNCommitPacket[] {commitPacket}, keepLocks, keepChangelist, commitMessage, revisionProperties);
         if (info != null && info.length > 0) {
             if (info[0].getErrorMessage() != null && info[0].getErrorMessage().getErrorCode() != SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED) {
@@ -667,7 +668,7 @@ public class SVNCommitClient extends SVNBasicClient {
     }
     
     public SVNCommitInfo[] doCommit(SVNCommitPacket[] commitPackets, boolean keepLocks, boolean keepChangelist, 
-                                    String commitMessage, Map revisionProperties) throws SVNException {
+                                    String commitMessage, SVNProperties revisionProperties) throws SVNException {
         if (commitPackets == null || commitPackets.length == 0) {
             return new SVNCommitInfo[0];
         }
@@ -770,7 +771,7 @@ public class SVNCommitClient extends SVNBasicClient {
                     }
                     boolean removeLock = !keepLocks && item.isLocked();
                     // update entry in dir.
-                    Map wcPropChanges = mediator.getWCProperties(item);
+                    SVNProperties wcPropChanges = mediator.getWCProperties(item);
                     dir.commit(target, info, wcPropChanges, removeLock, recurse, !keepChangelist, explicitCommitPaths, getCommitParameters());
                     processedItems.add(path);
                 } 

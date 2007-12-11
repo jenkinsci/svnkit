@@ -35,6 +35,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
@@ -43,7 +44,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNProperties;
+import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 
@@ -77,7 +78,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             return;
         }
 
-        Map command = new HashMap();
+        SVNProperties command = new SVNProperties();
         for(Iterator entries = propsCache.keySet().iterator(); entries.hasNext();) {
             String name = (String)entries.next();
             SVNVersionedProperties props = (SVNVersionedProperties)propsCache.get(name);
@@ -93,7 +94,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                     tmpPath += getThisDirName().equals(name) ? "dir-props" : "props/" + name + ".svn-work";
                     File tmpFile = getAdminFile(tmpPath);
                     String srcPath = getAdminDirectory().getName() + "/" + tmpPath;
-                    SVNProperties tmpProps = new SVNProperties(tmpFile, srcPath);
+                    SVNWCProperties tmpProps = new SVNWCProperties(tmpFile, srcPath);
                     tmpProps.setProperties(props.asMap());
                     command.put(SVNLog.NAME_ATTR, srcPath);
                     command.put(SVNLog.DEST_ATTR, dstPath);
@@ -114,7 +115,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             return;
         }
 
-        Map command = new HashMap();
+        SVNProperties command = new SVNProperties();
         for(Iterator entries = basePropsCache.keySet().iterator(); entries.hasNext();) {
             String name = (String)entries.next();
             SVNVersionedProperties props = (SVNVersionedProperties)basePropsCache.get(name);
@@ -130,7 +131,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                     tmpPath += getThisDirName().equals(name) ? "dir-prop-base" : "prop-base/" + name + ".svn-base";
                     File tmpFile = getAdminFile(tmpPath);
                     String srcPath = getAdminDirectory().getName() + "/" + tmpPath;
-                    SVNProperties tmpProps = new SVNProperties(tmpFile, srcPath);
+                    SVNWCProperties tmpProps = new SVNWCProperties(tmpFile, srcPath);
                     tmpProps.setProperties(props.asMap());
                     command.put(SVNLog.NAME_ATTR, srcPath);
                     command.put(SVNLog.DEST_ATTR, dstPath);
@@ -163,7 +164,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                     String tmpPath = "tmp/";
                     tmpPath += getThisDirName().equals(name) ? "dir-wcprops" : "wcprops/" + name + ".svn-work";
                     File tmpFile = getAdminFile(tmpPath);
-                    SVNProperties.setProperties(props.asMap(), dstFile, tmpFile, SVNProperties.SVN_HASH_TERMINATOR);
+                    SVNWCProperties.setProperties(props.asMap(), dstFile, tmpFile, SVNWCProperties.SVN_HASH_TERMINATOR);
                 }
                 props.setModified(false);
             }
@@ -180,7 +181,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             return props;
         }
         
-        Map baseProps = null;
+        SVNProperties baseProps = null;
         try {
             baseProps = readBaseProperties(name);
         } catch (SVNException svne) {
@@ -200,7 +201,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             return props;
         }
         
-        Map revertProps = null;
+        SVNProperties revertProps = null;
         try {
             revertProps = readRevertProperties(name);
         } catch (SVNException svne) {
@@ -220,7 +221,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             return props;
         }
         
-        Map properties = null;
+        SVNProperties properties = null;
         try {
             properties = readProperties(name);
         } catch (SVNException svne) {
@@ -240,7 +241,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             return props;
         }
         
-        Map properties = null;
+        SVNProperties properties = null;
         try {
             properties = readWCProperties(name);
         } catch (SVNException svne) {
@@ -253,28 +254,28 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         return props;
     }
     
-    private Map readProperties(String name) throws SVNException {
+    private SVNProperties readProperties(String name) throws SVNException {
         File propertiesFile = getPropertiesFile(name, false);
-        SVNProperties props = new SVNProperties(propertiesFile, null);
+        SVNWCProperties props = new SVNWCProperties(propertiesFile, null);
         return props.asMap();
     }
 
-    private Map readBaseProperties(String name) throws SVNException {
+    private SVNProperties readBaseProperties(String name) throws SVNException {
         File propertiesFile = getBasePropertiesFile(name, false);
-        SVNProperties props = new SVNProperties(propertiesFile, null);
+        SVNWCProperties props = new SVNWCProperties(propertiesFile, null);
         return props.asMap();
     }
 
-    private Map readRevertProperties(String name) throws SVNException {
+    private SVNProperties readRevertProperties(String name) throws SVNException {
         File propertiesFile = getRevertPropertiesFile(name, false);
-        SVNProperties props = new SVNProperties(propertiesFile, null);
+        SVNWCProperties props = new SVNWCProperties(propertiesFile, null);
         return props.asMap();
     }
 
-    private Map readWCProperties(String name) throws SVNException {
+    private SVNProperties readWCProperties(String name) throws SVNException {
         String path = getThisDirName().equals(name) ? "dir-wcprops" : "wcprops/" + name + ".svn-work";
         File propertiesFile = getAdminFile(path);
-        SVNProperties props = new SVNProperties(propertiesFile, getAdminDirectory().getName() + "/" + path);
+        SVNWCProperties props = new SVNWCProperties(propertiesFile, getAdminDirectory().getName() + "/" + path);
         return props.asMap();
     }
 
@@ -584,9 +585,9 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             propFile = getAdminFile("props/" + entryName + ".svn-work");
             baseFile = getAdminFile("prop-base/" + entryName + ".svn-base");
         }
-        SVNProperties baseProps = new SVNProperties(baseFile, null);
+        SVNWCProperties baseProps = new SVNWCProperties(baseFile, null);
         if (baseProps.isEmpty()) {
-            SVNProperties props = new SVNProperties(propFile, null);
+            SVNWCProperties props = new SVNWCProperties(propFile, null);
             return !props.isEmpty();
         }
         return true;
@@ -875,8 +876,8 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         SVNFileType tmpPropsType = SVNFileType.getType(tmpPropsFile);
         // tmp may be missing when there were no prop change at all!
         if (tmpPropsType == SVNFileType.FILE) {
-            SVNProperties working = new SVNProperties(wcPropsFile, null);
-            SVNProperties workingTmp = new SVNProperties(tmpPropsFile, null);
+            SVNWCProperties working = new SVNWCProperties(wcPropsFile, null);
+            SVNWCProperties workingTmp = new SVNWCProperties(tmpPropsFile, null);
             Map pDiff = working.compareTo(workingTmp);
             boolean equals = pDiff == null || pDiff.isEmpty();
             propTime = equals ? wcPropsFile.lastModified() : tmpPropsFile.lastModified();

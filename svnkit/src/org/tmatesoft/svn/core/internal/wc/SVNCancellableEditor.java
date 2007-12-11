@@ -15,6 +15,7 @@ import java.io.OutputStream;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
@@ -93,6 +94,12 @@ public class SVNCancellableEditor implements ISVNEditor {
         myDelegate.changeDirProperty(name, value);
     }
 
+    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
+        myCancel.checkCancelled();
+        myLog.info("change dir prop " + name + " = " + value);
+        myDelegate.changeDirProperty(name, value);
+    }
+
     public void closeDir() throws SVNException {
         myCancel.checkCancelled();
         myLog.info("close dir");
@@ -128,6 +135,12 @@ public class SVNCancellableEditor implements ISVNEditor {
     }
 
     public void changeFileProperty(String path, String name, String value) throws SVNException {
+        myCancel.checkCancelled();
+        myLog.info("change file prop " + name + " = " + value);
+        myDelegate.changeFileProperty(path, name, value);
+    }
+
+    public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
         myCancel.checkCancelled();
         myLog.info("change file prop " + name + " = " + value);
         myDelegate.changeFileProperty(path, name, value);

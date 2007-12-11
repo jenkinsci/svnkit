@@ -19,6 +19,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 
@@ -83,7 +84,19 @@ public class SVNDepthFilterEditor implements ISVNEditor {
         }
     }
 
+    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
+        if (!myCurrentNodeBaton.myIsFiltered) {
+            myDelegate.changeDirProperty(name, value);
+        }
+    }
+
     public void changeFileProperty(String path, String name, String value) throws SVNException {
+        if (!myCurrentNodeBaton.myIsFiltered) {
+            myDelegate.changeFileProperty(path, name, value);
+        }
+    }
+
+    public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
         if (!myCurrentNodeBaton.myIsFiltered) {
             myDelegate.changeFileProperty(path, name, value);
         }

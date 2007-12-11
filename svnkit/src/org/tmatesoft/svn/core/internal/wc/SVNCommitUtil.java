@@ -32,6 +32,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
@@ -576,7 +577,7 @@ public class SVNCommitUtil {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "Unknown entry kind for ''{0}''", path);                    
             SVNErrorManager.error(err);
         }
-        String specialPropertyValue = dir.getProperties(entry.getName()).getPropertyValue(SVNProperty.SPECIAL);
+        String specialPropertyValue = dir.getProperties(entry.getName()).getStringPropertyValue(SVNProperty.SPECIAL);
         boolean specialFile = fileType == SVNFileType.SYMLINK;
         if (SVNFileType.isSymlinkSupportEnabled()) {
             if (((specialPropertyValue == null && specialFile) || (!SVNFileUtil.isWindows && specialPropertyValue != null && !specialFile)) 
@@ -681,16 +682,16 @@ public class SVNCommitUtil {
         if (commitAddition) {
             SVNVersionedProperties props = dir.getProperties(entry.getName());
             SVNVersionedProperties baseProps = dir.getBaseProperties(entry.getName());            
-            Map propDiff = null;
+            SVNProperties propDiff = null;
             if (entry.isScheduledForReplacement()) {
                 propDiff = props.asMap();
             } else {
                 propDiff = baseProps.compareTo(props).asMap();
             }
-            boolean eolChanged = textModified = propDiff != null && propDiff.containsKey(SVNProperty.EOL_STYLE);
+            boolean eolChanged = textModified = propDiff != null && propDiff.containsName(SVNProperty.EOL_STYLE);
             if (entry.getKind() == SVNNodeKind.FILE) {
                 if (commitCopy) {
-                    textModified = propDiff != null && propDiff.containsKey(SVNProperty.EOL_STYLE);
+                    textModified = propDiff != null && propDiff.containsName(SVNProperty.EOL_STYLE);
                     if (!textModified) {
                         textModified = dir.hasTextModifications(entry.getName(), eolChanged);
                     }
@@ -702,8 +703,8 @@ public class SVNCommitUtil {
         } else if (!commitDeletion) {
             SVNVersionedProperties props = dir.getProperties(entry.getName());
             SVNVersionedProperties baseProps = dir.getBaseProperties(entry.getName());
-            Map propDiff = baseProps.compareTo(props).asMap();
-            boolean eolChanged = textModified = propDiff != null && propDiff.containsKey(SVNProperty.EOL_STYLE);
+            SVNProperties propDiff = baseProps.compareTo(props).asMap();
+            boolean eolChanged = textModified = propDiff != null && propDiff.containsName(SVNProperty.EOL_STYLE);
             propsModified = propDiff != null && !propDiff.isEmpty();
             if (entry.getKind() == SVNNodeKind.FILE) {
                 textModified = dir.hasTextModifications(entry.getName(),  eolChanged);

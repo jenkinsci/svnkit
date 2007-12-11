@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -114,6 +115,13 @@ class SVNCommitEditor implements ISVNEditor {
                 dirBaton.getToken(), name, value });
     }
 
+    public void changeDirProperty(String name, SVNPropertyValue value)
+            throws SVNException {
+        DirBaton dirBaton = (DirBaton)myDirsStack.peek();
+        myConnection.write("(w(ss(b)))", new Object[] { "change-dir-prop",
+                dirBaton.getToken(), name, value.getBytes()});
+    }
+
     public void closeDir() throws SVNException {
         DirBaton dirBaton = (DirBaton)myDirsStack.pop();
 
@@ -184,6 +192,11 @@ class SVNCommitEditor implements ISVNEditor {
     public void changeFileProperty(String path, String name, String value) throws SVNException {
         String fileToken = (String)myFilesToTokens.get(path);
         myConnection.write("(w(ss(s)))", new Object[] { "change-file-prop", fileToken, name, value });
+    }
+
+    public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
+        String fileToken = (String)myFilesToTokens.get(path);
+        myConnection.write("(w(ss(s)))", new Object[] { "change-file-prop", fileToken, name, value.getBytes()});
     }
 
     public void closeFile(String path, String textChecksum) throws SVNException {

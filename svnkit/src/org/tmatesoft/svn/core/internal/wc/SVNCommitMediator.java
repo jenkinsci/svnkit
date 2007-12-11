@@ -18,6 +18,8 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
@@ -42,15 +44,15 @@ public class SVNCommitMediator implements ISVNWorkspaceMediator {
         myCommitItems = commitItems;
     }
 
-    public Map getWCProperties(SVNCommitItem item) {
-        return (Map) myWCPropsMap.get(item);
+    public SVNProperties getWCProperties(SVNCommitItem item) {
+        return (SVNProperties) myWCPropsMap.get(item);
     }
 
     public Collection getTmpFiles() {
         return myTmpFiles;
     }
 
-    public String getWorkspaceProperty(String path, String name) throws SVNException {
+    public SVNPropertyValue getWorkspaceProperty(String path, String name) throws SVNException {
         SVNCommitItem item = (SVNCommitItem) myCommitItems.get(path);
         if (item == null) {
             return null;
@@ -69,16 +71,16 @@ public class SVNCommitMediator implements ISVNWorkspaceMediator {
         return wcProps.getPropertyValue(name);
     }
 
-    public void setWorkspaceProperty(String path, String name, String value)
+    public void setWorkspaceProperty(String path, String name, SVNPropertyValue value)
             throws SVNException {
         if (name == null) {
             return;
         }
         SVNCommitItem item = (SVNCommitItem) myCommitItems.get(path);
         if (!myWCPropsMap.containsKey(item)) {
-            myWCPropsMap.put(item, new HashMap());
+            myWCPropsMap.put(item, new SVNProperties());
         }
 
-        ((Map) myWCPropsMap.get(item)).put(name, value);
+        ((SVNProperties) myWCPropsMap.get(item)).put(name, value);
     }
 }

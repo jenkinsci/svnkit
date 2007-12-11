@@ -19,6 +19,7 @@ import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -131,6 +132,12 @@ public class SVNConcurrentCommitTest {
         }
 
         public void changeFileProperty(String path, String name, String value) throws SVNException {
+        }
+
+        public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
+        }
+
+        public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
         }
 
         public void closeDir() throws SVNException {

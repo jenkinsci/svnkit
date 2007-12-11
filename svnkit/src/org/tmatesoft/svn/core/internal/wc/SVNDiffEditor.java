@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -27,7 +26,9 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
@@ -96,7 +97,7 @@ public class SVNDiffEditor implements ISVNEditor {
         if (entry.isFile()) {
             if (myIsReverseDiff) {
                 File baseFile = dir.getBaseFile(name, false);
-                Map baseProps = dir.getBaseProperties(name).asMap();
+                SVNProperties baseProps = dir.getBaseProperties(name).asMap();
                 getDiffCallback().fileDeleted(path, baseFile, null, null, null, baseProps);
             } else {
                 reportAddedFile(myCurrentDirectory, path, entry);
@@ -109,13 +110,13 @@ public class SVNDiffEditor implements ISVNEditor {
     
     private void reportAddedDir(SVNDirectoryInfo info) throws SVNException {
         SVNAdminArea dir = retrieve(info.myPath);
-        Map wcProps;
+        SVNProperties wcProps;
         if (myIsCompareToBase) {
             wcProps = dir.getBaseProperties(dir.getThisDirName()).asMap();
         } else {
             wcProps = dir.getProperties(dir.getThisDirName()).asMap();
         }
-        Map propDiff = computePropsDiff(new HashMap(), wcProps);
+        SVNProperties propDiff = computePropsDiff(new SVNProperties(), wcProps);
         if (!propDiff.isEmpty()) {
             getDiffCallback().propertiesChanged(info.myPath, null, propDiff);
         }
@@ -156,14 +157,14 @@ public class SVNDiffEditor implements ISVNEditor {
         }
         SVNAdminArea dir = retrieve(info.myPath);
         String name = SVNPathUtil.tail(path);
-        Map wcProps = null;
+        SVNProperties wcProps = null;
         if (myIsCompareToBase) {
             wcProps = dir.getBaseProperties(name).asMap();
         } else {
             wcProps = dir.getProperties(name).asMap();
         }
-        String mimeType = (String) wcProps.get(SVNProperty.MIME_TYPE);
-        Map propDiff = computePropsDiff(new HashMap(), wcProps);
+        String mimeType = wcProps.getStringValue(SVNProperty.MIME_TYPE);
+        SVNProperties propDiff = computePropsDiff(new SVNProperties(), wcProps);
         
         File sourceFile;
         if (myIsCompareToBase) {
@@ -184,8 +185,8 @@ public class SVNDiffEditor implements ISVNEditor {
         if (!myUseAncestry && entry.isScheduledForReplacement()) {
             schedule = null;
         }
-        Map propDiff = null;
-        Map baseProps = null;
+        SVNProperties propDiff = null;
+        SVNProperties baseProps = null;
         File baseFile = dir.getBaseFile(fileName, false);
         if (!entry.isScheduledForDeletion()) {
             boolean modified = dir.hasPropModifications(fileName);
@@ -193,7 +194,7 @@ public class SVNDiffEditor implements ISVNEditor {
                 baseProps = dir.getBaseProperties(fileName).asMap();
                 propDiff = computePropsDiff(baseProps, dir.getProperties(fileName).asMap());
             } else {
-                propDiff = new HashMap();
+                propDiff = new SVNProperties();
             }
         } else {
             baseProps = dir.getBaseProperties(fileName).asMap();
@@ -201,12 +202,12 @@ public class SVNDiffEditor implements ISVNEditor {
         boolean isAdded = schedule != null && entry.isScheduledForAddition();
         String filePath = SVNPathUtil.append(dirInfo.myPath, fileName);
         if (schedule != null && (entry.isScheduledForDeletion() || entry.isScheduledForReplacement())) {
-            String mimeType = dir.getBaseProperties(fileName).getPropertyValue(SVNProperty.MIME_TYPE);
+            String mimeType = dir.getBaseProperties(fileName).getStringPropertyValue(SVNProperty.MIME_TYPE);
             getDiffCallback().fileDeleted(filePath, baseFile, null, mimeType, null, dir.getBaseProperties(fileName).asMap());
             isAdded = entry.isScheduledForReplacement();
         }
         if (isAdded) {
-            String mimeType = dir.getProperties(fileName).getPropertyValue(SVNProperty.MIME_TYPE);
+            String mimeType = dir.getProperties(fileName).getStringPropertyValue(SVNProperty.MIME_TYPE);
             
             File tmpFile = detranslateFile(dir, fileName);
 //            SVNDebugLog.getDefaultLog().info("added");
@@ -219,8 +220,8 @@ public class SVNDiffEditor implements ISVNEditor {
             }
 //            SVNDebugLog.getDefaultLog().info("modified: " + modified);
             if (modified || (propDiff != null && !propDiff.isEmpty())) {
-                String baseMimeType = dir.getBaseProperties(fileName).getPropertyValue(SVNProperty.MIME_TYPE); 
-                String mimeType = dir.getProperties(fileName).getPropertyValue(SVNProperty.MIME_TYPE);
+                String baseMimeType = dir.getBaseProperties(fileName).getStringPropertyValue(SVNProperty.MIME_TYPE);
+                String mimeType = dir.getProperties(fileName).getStringPropertyValue(SVNProperty.MIME_TYPE);
 
                 getDiffCallback().fileChanged(filePath, modified ? baseFile : null, tmpFile, entry.getRevision(), -1, 
                         baseMimeType, mimeType, baseProps, propDiff);
@@ -247,30 +248,37 @@ public class SVNDiffEditor implements ISVNEditor {
 
     public void changeDirProperty(String name, String value) throws SVNException {
         if (myCurrentDirectory.myPropertyDiff == null) {
-            myCurrentDirectory.myPropertyDiff = new HashMap();
+            myCurrentDirectory.myPropertyDiff = new SVNProperties();
+        }
+        myCurrentDirectory.myPropertyDiff.put(name, value);
+    }
+
+    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
+        if (myCurrentDirectory.myPropertyDiff == null) {
+            myCurrentDirectory.myPropertyDiff = new SVNProperties();
         }
         myCurrentDirectory.myPropertyDiff.put(name, value);
     }
 
     public void closeDir() throws SVNException {
         // display dir prop changes.
-        Map diff = myCurrentDirectory.myPropertyDiff;
+        SVNProperties diff = myCurrentDirectory.myPropertyDiff;
         if (diff != null && !diff.isEmpty()) {
             // reverse changes
-            Map originalProps = null;
+            SVNProperties originalProps = null;
             if (myCurrentDirectory.myIsAdded) {
-                originalProps = new HashMap();
+                originalProps = new SVNProperties();
             } else {
                 SVNAdminArea dir = retrieve(myCurrentDirectory.myPath);
                 if (dir != null && myIsCompareToBase) {
                     originalProps = dir.getBaseProperties(dir.getThisDirName()).asMap();
                 } else {
                     originalProps = dir.getProperties(dir.getThisDirName()).asMap();
-                    Map baseProps = dir.getBaseProperties(dir.getThisDirName()).asMap();
-                    Map reposProps = new HashMap(baseProps);
-                    for(Iterator diffNames = diff.keySet().iterator(); diffNames.hasNext();) {
+                    SVNProperties baseProps = dir.getBaseProperties(dir.getThisDirName()).asMap();
+                    SVNProperties reposProps = new SVNProperties(baseProps);
+                    for(Iterator diffNames = diff.nameSet().iterator(); diffNames.hasNext();) {
                         String diffName = (String) diffNames.next();
-                        reposProps.put(diffName, diff.get(diffName));
+                        reposProps.copyValue(diff, diffName);
                     }
                     diff = computePropsDiff(originalProps, reposProps);
                     
@@ -306,7 +314,14 @@ public class SVNDiffEditor implements ISVNEditor {
 
     public void changeFileProperty(String path, String name, String value) throws SVNException {
         if (myCurrentFile.myPropertyDiff == null) {
-            myCurrentFile.myPropertyDiff = new HashMap();
+            myCurrentFile.myPropertyDiff = new SVNProperties();
+        }
+        myCurrentFile.myPropertyDiff.put(name, value);
+    }
+
+    public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
+        if (myCurrentFile.myPropertyDiff == null) {
+            myCurrentFile.myPropertyDiff = new SVNProperties();
         }
         myCurrentFile.myPropertyDiff.put(name, value);
     }
@@ -339,20 +354,21 @@ public class SVNDiffEditor implements ISVNEditor {
         File filePath = myAdminInfo.getAnchor().getFile(myCurrentFile.myPath);
         SVNAdminArea dir = myWCAccess.probeRetrieve(filePath);
         SVNEntry entry = myWCAccess.getEntry(filePath, false);
-        Map baseProperties = null;
+        SVNProperties baseProperties = null;
         if (myCurrentFile.myIsAdded) {
-            baseProperties = new HashMap();
+            baseProperties = new SVNProperties();
         } else {
-            baseProperties = dir != null ? dir.getBaseProperties(fileName).asMap() : new HashMap();
+            baseProperties = dir != null ? dir.getBaseProperties(fileName).asMap() : new SVNProperties();
         }
-        Map reposProperties = new HashMap(baseProperties);
+        SVNProperties reposProperties = new SVNProperties();
         if (myCurrentFile.myPropertyDiff != null) {
-            for(Iterator propNames = myCurrentFile.myPropertyDiff.keySet().iterator(); propNames.hasNext();) {
+            for(Iterator propNames = myCurrentFile.myPropertyDiff.nameSet().iterator(); propNames.hasNext();) {
                 String propName = (String) propNames.next();
-                reposProperties.put(propName, myCurrentFile.myPropertyDiff.get(propName));
+                reposProperties.put(propName, myCurrentFile.myPropertyDiff.getStringValue(propName));
+                reposProperties.copyValue(myCurrentFile.myPropertyDiff, propName);
             }
         }
-        String reposMimeType = (String) reposProperties.get(SVNProperty.MIME_TYPE);
+        String reposMimeType = reposProperties.getStringValue(SVNProperty.MIME_TYPE);
         File reposFile = myCurrentFile.myFile;
         File localFile = null;
         if (reposFile == null) {
@@ -381,7 +397,7 @@ public class SVNDiffEditor implements ISVNEditor {
             reposFile = null;
         }
         
-        Map originalProps = null;
+        SVNProperties originalProps = null;
         if (myIsCompareToBase) {
             originalProps = baseProperties;
         } else {
@@ -390,7 +406,7 @@ public class SVNDiffEditor implements ISVNEditor {
         }
         
         if (localFile != null || (myCurrentFile.myPropertyDiff != null && !myCurrentFile.myPropertyDiff.isEmpty())) {
-            String originalMimeType = (String) originalProps.get(SVNProperty.MIME_TYPE);
+            String originalMimeType = originalProps.getStringValue(SVNProperty.MIME_TYPE);
             if (myCurrentFile.myPropertyDiff != null && !myCurrentFile.myPropertyDiff.isEmpty() && !myIsReverseDiff) {
                 reversePropChanges(originalProps, myCurrentFile.myPropertyDiff);
             }
@@ -440,7 +456,7 @@ public class SVNDiffEditor implements ISVNEditor {
             // generate prop diff for dir.
             if (dir.hasPropModifications(dir.getThisDirName())) {
                 SVNVersionedProperties baseProps = dir.getBaseProperties(dir.getThisDirName());
-                Map propDiff = baseProps.compareTo(dir.getProperties(dir.getThisDirName())).asMap();
+                SVNProperties propDiff = baseProps.compareTo(dir.getProperties(dir.getThisDirName())).asMap();
                 getDiffCallback().propertiesChanged(info.myPath, baseProps.asMap(), propDiff);
             }
         }
@@ -549,8 +565,8 @@ public class SVNDiffEditor implements ISVNEditor {
     
     private File detranslateFile(SVNAdminArea dir, String name) throws SVNException {
         SVNVersionedProperties properties = dir.getProperties(name);
-        String keywords = properties.getPropertyValue(SVNProperty.KEYWORDS);
-        String eolStyle = properties.getPropertyValue(SVNProperty.EOL_STYLE);
+        String keywords = properties.getStringPropertyValue(SVNProperty.KEYWORDS);
+        String eolStyle = properties.getStringPropertyValue(SVNProperty.EOL_STYLE);
         boolean special = properties.getPropertyValue(SVNProperty.SPECIAL) != null;
         if (keywords == null && eolStyle == null && (!special || SVNFileUtil.isWindows)) {
             return dir.getFile(name);
@@ -594,7 +610,7 @@ public class SVNDiffEditor implements ISVNEditor {
 
         private boolean myIsAdded;
         private String myPath;
-        private Map myPropertyDiff;
+        private SVNProperties myPropertyDiff;
         private SVNDirectoryInfo myParent;
         private Set myComparedEntries = new HashSet();
         private SVNDepth myDepth;
@@ -606,20 +622,20 @@ public class SVNDiffEditor implements ISVNEditor {
         private String myPath;
         private File myFile;
         private File myBaseFile;
-        private Map myPropertyDiff;
+        private SVNProperties myPropertyDiff;
     }
 
-    private static void reversePropChanges(Map base, Map diff) {
-        Collection namesList = new ArrayList(diff.keySet());
+    private static void reversePropChanges(SVNProperties base, SVNProperties diff) {
+        Collection namesList = new ArrayList(diff.nameSet());
         for (Iterator names = namesList.iterator(); names.hasNext();) {
             String name = (String) names.next();
-            String newValue = (String) diff.get(name);
-            String oldValue = (String) base.get(name);
+            String newValue = diff.getStringValue(name);
+            String oldValue = base.getStringValue(name);
             if (oldValue == null && newValue != null) {
                 base.put(name, newValue);
-                diff.put(name, null);
+                diff.put(name, (byte[]) null);
             } else if (oldValue != null && newValue == null) {
-                base.put(name, null);
+                base.put(name, (byte[]) null);
                 diff.put(name, oldValue);
             } else if (oldValue != null && newValue != null) {
                 base.put(name, newValue);
@@ -628,28 +644,29 @@ public class SVNDiffEditor implements ISVNEditor {
         }
     }
 
-    private static Map computePropsDiff(Map props1, Map props2) {
-        Map propsDiff = new HashMap();
-        for (Iterator names = props2.keySet().iterator(); names.hasNext();) {
+    private static SVNProperties computePropsDiff(SVNProperties props1, SVNProperties props2) {
+        SVNProperties propsDiff = new SVNProperties();
+        for (Iterator names = props2.nameSet().iterator(); names.hasNext();) {
             String newPropName = (String) names.next();
-            if (props1.containsKey(newPropName)) {
+            if (props1.containsName(newPropName)) {
                 // changed.
-                Object oldValue = props2.get(newPropName);
-                if (oldValue != null && !oldValue.equals(props1.get(newPropName))) {
-                    propsDiff.put(newPropName, props2.get(newPropName));
-                } else if (oldValue == null && props1.get(newPropName) != null) {
-                    propsDiff.put(newPropName, props2.get(newPropName));
+                byte[] oldValue = props2.getBinaryValue(newPropName);
+                byte[] value = props1.getBinaryValue(newPropName);
+                if (oldValue != null && !oldValue.equals(value)) {
+                    propsDiff.put(newPropName, oldValue);
+                } else if (oldValue == null && value != null) {
+                    propsDiff.put(newPropName, oldValue);
                 }
             } else {
                 // added.
-                propsDiff.put(newPropName, props2.get(newPropName));
+                propsDiff.put(newPropName, props2.getBinaryValue(newPropName));
             }
         }
-        for (Iterator names = props1.keySet().iterator(); names.hasNext();) {
+        for (Iterator names = props1.nameSet().iterator(); names.hasNext();) {
             String oldPropName = (String) names.next();
-            if (!props2.containsKey(oldPropName)) {
+            if (!props2.containsName(oldPropName)) {
                 // deleted
-                propsDiff.put(oldPropName, null);
+                propsDiff.put(oldPropName, (byte[]) null);
             }
         }
         return propsDiff;

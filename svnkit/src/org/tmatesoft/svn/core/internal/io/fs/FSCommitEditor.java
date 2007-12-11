@@ -13,9 +13,7 @@ package org.tmatesoft.svn.core.internal.io.fs;
 
 import java.io.OutputStream;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
@@ -26,16 +24,18 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
- 
+
 /**
  * @version 1.1.1
  * @author  TMate Software Ltd.
@@ -52,15 +52,15 @@ public class FSCommitEditor implements ISVNEditor {
     private FSRepository myRepository;
     private Stack myDirsStack;
     private FSDeltaConsumer myDeltaConsumer;
-    private Map myCurrentFileProps;
+    private SVNProperties myCurrentFileProps;
     private String myCurrentFilePath;
     private FSCommitter myCommitter;
-    private Map myRevProps;
+    private SVNProperties myRevProps;
     private String myAuthor;
     
     public FSCommitEditor(String path, String logMessage, String userName, Map lockTokens, boolean keepLocks, FSTransactionInfo txn, FSFS owner, FSRepository repository) {
         this(path, lockTokens, keepLocks, txn, owner, repository, null);
-        myRevProps = new HashMap();
+        myRevProps = new SVNProperties();
         if (userName != null) {
             myAuthor = userName;
             myRevProps.put(SVNRevisionProperty.AUTHOR, userName);
@@ -70,7 +70,7 @@ public class FSCommitEditor implements ISVNEditor {
         }
     }
 
-    public FSCommitEditor(String path, Map lockTokens, boolean keepLocks, FSTransactionInfo txn, FSFS owner, FSRepository repository, Map revProps) {
+    public FSCommitEditor(String path, Map lockTokens, boolean keepLocks, FSTransactionInfo txn, FSFS owner, FSRepository repository, SVNProperties revProps) {
         myPathsToLockTokens = !keepLocks ? lockTokens : null;
         myLockTokens = lockTokens != null ? lockTokens.values() : new LinkedList();
         myBasePath = path;
@@ -79,7 +79,7 @@ public class FSCommitEditor implements ISVNEditor {
         myRepository = repository;
         myFSFS = owner;
         myDirsStack = new Stack();
-        myRevProps = revProps != null ? revProps : Collections.EMPTY_MAP;
+        myRevProps = revProps != null ? revProps : SVNProperties.EMPTY_PROPERTIES;
     }
 
     public void targetRevision(long revision) throws SVNException {
@@ -108,16 +108,16 @@ public class FSCommitEditor implements ISVNEditor {
     }
 
     private void changeTransactionProperties(String txnId) throws SVNException {
-        for (Iterator iter = myRevProps.keySet().iterator(); iter.hasNext();) {
+        for (Iterator iter = myRevProps.nameSet().iterator(); iter.hasNext();) {
             String propName = (String) iter.next();
-            String propValue = (String) myRevProps.get(propName);
+            SVNPropertyValue propValue = myRevProps.getSVNPropertyValue(propName);
             myFSFS.setTransactionProperty(txnId, propName, propValue);
         }
         }
 
     private String getAuthor() {
         if (myAuthor == null) {
-            myAuthor = (String) myRevProps.get(SVNRevisionProperty.AUTHOR);
+            myAuthor = myRevProps.getStringValue(SVNRevisionProperty.AUTHOR);
         }
         return myAuthor;
     }
@@ -185,6 +185,10 @@ public class FSCommitEditor implements ISVNEditor {
     }
 
     public void changeDirProperty(String name, String value) throws SVNException {
+        changeDirProperty(name, value == null ? null : new SVNPropertyValue(value));
+    }
+
+    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
         DirBaton dirBaton = (DirBaton) myDirsStack.peek();
         if (FSRepository.isValidRevision(dirBaton.getBaseRevision())) {
             FSRevisionNode existingNode = myTxnRoot.getRevisionNode(dirBaton.getPath());
@@ -196,12 +200,12 @@ public class FSCommitEditor implements ISVNEditor {
         myCommitter.changeNodeProperty(dirBaton.getPath(), name, value);
     }
 
-    private void changeNodeProperties(String path, Map propNamesToValues) throws SVNException {
+    private void changeNodeProperties(String path, SVNProperties propNamesToValues) throws SVNException {
         FSParentPath parentPath = null;
-        Map properties = null;
+        SVNProperties properties = null;
         boolean done = false;
         boolean haveRealChanges = false;
-        for (Iterator propNames = propNamesToValues.keySet().iterator(); propNames.hasNext();) {
+        for (Iterator propNames = propNamesToValues.nameSet().iterator(); propNames.hasNext();) {
             String propName = (String)propNames.next();
             if (!SVNProperty.isRegularProperty(propName)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS,
@@ -222,7 +226,7 @@ public class FSCommitEditor implements ISVNEditor {
                 done = true;
             }
 
-            String propValue = (String)propNamesToValues.get(propName);
+            SVNPropertyValue propValue = propNamesToValues.getSVNPropertyValue(propName);
             if (properties.isEmpty() && propValue == null) {
                 continue;
             }
@@ -307,7 +311,7 @@ public class FSCommitEditor implements ISVNEditor {
     
     public void changeFileProperty(String path, String name, String value) throws SVNException {
         String fullPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(myBasePath, path));
-        Map props = getFilePropertiesStorage();
+        SVNProperties props = getFilePropertiesStorage();
         if (!fullPath.equals(myCurrentFilePath)) {
             if (myCurrentFilePath != null) {
                 changeNodeProperties(myCurrentFilePath, props);
@@ -318,16 +322,29 @@ public class FSCommitEditor implements ISVNEditor {
         props.put(name, value);
     }
 
-    private Map getFilePropertiesStorage() {
+    public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
+        String fullPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(myBasePath, path));
+        SVNProperties props = getFilePropertiesStorage();
+        if (!fullPath.equals(myCurrentFilePath)) {
+            if (myCurrentFilePath != null) {
+                changeNodeProperties(myCurrentFilePath, props);
+                props.clear();
+            }
+            myCurrentFilePath = fullPath;
+        }
+        props.put(name, value);
+    }
+
+    private SVNProperties getFilePropertiesStorage() {
         if (myCurrentFileProps == null) {
-            myCurrentFileProps = new HashMap();
+            myCurrentFileProps = new SVNProperties();
         }
         return myCurrentFileProps;
     }
     
     private void flushPendingProperties() throws SVNException {
         if (myCurrentFilePath != null) {
-            Map props = getFilePropertiesStorage();
+            SVNProperties props = getFilePropertiesStorage();
             changeNodeProperties(myCurrentFilePath, props);
             props.clear();
             myCurrentFilePath = null;
@@ -365,8 +382,8 @@ public class FSCommitEditor implements ISVNEditor {
             errorMessage = SVNErrorMessage.create(SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED, svne.getErrorMessage().getFullMessage(), SVNErrorMessage.TYPE_WARNING);
         }
 
-        Map revProps = myFSFS.getRevisionProperties(committedRev);
-        String dateProp = (String) revProps.get(SVNRevisionProperty.DATE);
+        SVNProperties revProps = myFSFS.getRevisionProperties(committedRev);
+        String dateProp = revProps.getStringValue(SVNRevisionProperty.DATE);
         Date datestamp = dateProp != null ? SVNDate.parseDateString(dateProp) : null;
         
         SVNCommitInfo info = new SVNCommitInfo(committedRev, getAuthor(), datestamp, errorMessage);

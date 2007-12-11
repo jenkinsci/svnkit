@@ -25,6 +25,8 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -39,9 +41,9 @@ public class SVNLogRunner {
     private boolean myIsEntriesChanged;
     private boolean myIsWCPropertiesChanged;
 
-    public void runCommand(SVNAdminArea adminArea, String name, Map attributes, int count) throws SVNException {
+    public void runCommand(SVNAdminArea adminArea, String name, SVNProperties attributes, int count) throws SVNException {
         SVNException error = null;
-        String fileName = (String) attributes.get(SVNLog.NAME_ATTR);
+        String fileName = attributes.getStringValue(SVNLog.NAME_ATTR);
         if (SVNLog.DELETE_ENTRY.equals(name)) {
             File path = adminArea.getFile(fileName);
             SVNAdminArea dir = adminArea.getWCAccess().probeRetrieve(path);
@@ -80,13 +82,13 @@ public class SVNLogRunner {
         } else if (SVNLog.MODIFY_ENTRY.equals(name)) {
             try {
                 Map entryAttrs = new HashMap();
-                for (Iterator attrtibutesIter = attributes.keySet().iterator(); attrtibutesIter.hasNext();) {
+                for (Iterator attrtibutesIter = attributes.nameSet().iterator(); attrtibutesIter.hasNext();) {
                     String attrName = (String) attrtibutesIter.next();
                     if ("".equals(attrName) || SVNLog.NAME_ATTR.equals(attrName) || SVNLog.FORCE_ATTR.equals(attrName)) {
                         continue;
                     }
                     
-                    Object value = attributes.get(attrName); 
+                    Object value = attributes.getStringValue(attrName); 
                     attrName = SVNProperty.SVN_ENTRY_PREFIX + attrName;
                     entryAttrs.put(attrName, value);
                 }
@@ -135,8 +137,8 @@ public class SVNLogRunner {
                 }
                 
                 boolean force = false;
-                if (attributes.containsKey(SVNLog.FORCE_ATTR)) {
-                    String forceAttr = (String) attributes.get(SVNLog.FORCE_ATTR);
+                if (attributes.containsName(SVNLog.FORCE_ATTR)) {
+                    String forceAttr = attributes.getStringValue(SVNLog.FORCE_ATTR);
                     force = SVNProperty.booleanValue(forceAttr);
                 }
                 
@@ -155,8 +157,8 @@ public class SVNLogRunner {
             try {
                 SVNVersionedProperties wcprops = adminArea.getWCProperties(fileName);
                 if (wcprops != null) {
-                    String propName = (String) attributes .get(SVNLog.PROPERTY_NAME_ATTR);
-                    String propValue = (String) attributes.get(SVNLog.PROPERTY_VALUE_ATTR);
+                    String propName = attributes.getStringValue(SVNLog.PROPERTY_NAME_ATTR);
+                    SVNPropertyValue propValue = attributes.getSVNPropertyValue(SVNLog.PROPERTY_VALUE_ATTR);
                     wcprops.setPropertyValue(propName, propValue);
                     setWCPropertiesChanged(true);
                 }
@@ -198,7 +200,7 @@ public class SVNLogRunner {
             SVNFileUtil.setReadonly(file, true);
         } else if (SVNLog.MOVE.equals(name)) {
             File src = adminArea.getFile(fileName);
-            File dst = adminArea.getFile((String) attributes.get(SVNLog.DEST_ATTR));
+            File dst = adminArea.getFile(attributes.getStringValue(SVNLog.DEST_ATTR));
             try {
                 SVNFileUtil.rename(src, dst);
             } catch (SVNException svne) {
@@ -206,7 +208,7 @@ public class SVNLogRunner {
             }
         } else if (SVNLog.APPEND.equals(name)) {
             File src = adminArea.getFile(fileName);
-            File dst = adminArea.getFile((String) attributes.get(SVNLog.DEST_ATTR));
+            File dst = adminArea.getFile(attributes.getStringValue(SVNLog.DEST_ATTR));
             OutputStream os = null;
             InputStream is = null;
             try {
@@ -234,7 +236,7 @@ public class SVNLogRunner {
             }
         } else if (SVNLog.SET_TIMESTAMP.equals(name)) {
             File file = adminArea.getFile(fileName);
-            String timestamp = (String) attributes.get(SVNLog.TIMESTAMP_ATTR);
+            String timestamp = attributes.getStringValue(SVNLog.TIMESTAMP_ATTR);
             try {
                 if (timestamp == null) {
                     SVNErrorCode code = count <= 1 ? SVNErrorCode.WC_BAD_ADM_LOG_START : SVNErrorCode.WC_BAD_ADM_LOG;
@@ -254,7 +256,7 @@ public class SVNLogRunner {
                 error = svne;
             }
         } else if (SVNLog.UPGRADE_FORMAT.equals(name)) {
-            String format = (String) attributes.get(SVNLog.FORMAT_ATTR);
+            String format = attributes.getStringValue(SVNLog.FORMAT_ATTR);
             SVNErrorCode code = count <= 1 ? SVNErrorCode.WC_BAD_ADM_LOG_START : SVNErrorCode.WC_BAD_ADM_LOG;
             try {
                 if (format == null) {
@@ -280,7 +282,7 @@ public class SVNLogRunner {
                 if (entry != null) {
                     adminArea.closeVersionedProperties();
                     SVNVersionedProperties props = adminArea.getProperties(fileName);
-                    String needsLock = props.getPropertyValue(SVNProperty.NEEDS_LOCK);
+                    String needsLock = props.getStringPropertyValue(SVNProperty.NEEDS_LOCK);
                     if (entry.getLockToken() == null && needsLock != null) {
                         SVNFileUtil.setReadonly(file, true);
                     }
@@ -296,8 +298,8 @@ public class SVNLogRunner {
                 SVNFileUtil.setExecutable(adminArea.getFile(fileName), true);
             }
         } else if (SVNLog.COPY_AND_TRANSLATE.equals(name)) {
-            String dstName = (String) attributes.get(SVNLog.DEST_ATTR);
-            String versionedName = (String) attributes.get(SVNLog.ATTR2);
+            String dstName = attributes.getStringValue(SVNLog.DEST_ATTR);
+            String versionedName = attributes.getStringValue(SVNLog.ATTR2);
             if (versionedName == null) {
                 versionedName = dstName;
             }
@@ -334,8 +336,8 @@ public class SVNLogRunner {
                 error = svne;
             }
         } else if (SVNLog.COPY_AND_DETRANSLATE.equals(name)) {
-            String dstName = (String) attributes.get(SVNLog.DEST_ATTR);
-            String versionedName = (String) attributes.get(SVNLog.ATTR2);
+            String dstName = attributes.getStringValue(SVNLog.DEST_ATTR);
+            String versionedName = attributes.getStringValue(SVNLog.ATTR2);
             adminArea.closeVersionedProperties();
             try {
                 SVNTranslator.translate(adminArea, versionedName != null ? versionedName : fileName, fileName, dstName, false);
@@ -344,7 +346,7 @@ public class SVNLogRunner {
             }
         } else if (SVNLog.COPY.equals(name)) {
             File src = adminArea.getFile(fileName);
-            File dst = adminArea.getFile((String) attributes.get(SVNLog.DEST_ATTR));
+            File dst = adminArea.getFile(attributes.getStringValue(SVNLog.DEST_ATTR));
             try {
                 SVNFileUtil.copy(src, dst, true, false);
             } catch (SVNException svne) {
@@ -354,21 +356,21 @@ public class SVNLogRunner {
             File target = adminArea.getFile(fileName);
             try {
                 SVNErrorCode code = count <= 1 ? SVNErrorCode.WC_BAD_ADM_LOG_START : SVNErrorCode.WC_BAD_ADM_LOG;
-                String leftPath = (String) attributes.get(SVNLog.ATTR1);
+                String leftPath = attributes.getStringValue(SVNLog.ATTR1);
                 if (leftPath == null) {
                     SVNErrorMessage err = SVNErrorMessage.create(code, "Missing 'left' attribute in ''{0}''", adminArea.getRoot());
                     SVNErrorManager.error(err);
                 }
-                String rightPath = (String) attributes.get(SVNLog.ATTR2);
+                String rightPath = attributes.getStringValue(SVNLog.ATTR2);
                 if (rightPath == null) {
                     SVNErrorMessage err = SVNErrorMessage.create(code, "Missing 'right' attribute in ''{0}''", adminArea.getRoot());
                     SVNErrorManager.error(err);
                 }
-                String leftLabel = (String) attributes.get(SVNLog.ATTR3);
+                String leftLabel = attributes.getStringValue(SVNLog.ATTR3);
                 leftLabel = leftLabel == null ? ".old" : leftLabel;
-                String rightLabel = (String) attributes.get(SVNLog.ATTR4);
+                String rightLabel = attributes.getStringValue(SVNLog.ATTR4);
                 rightLabel = rightLabel == null ? ".new" : rightLabel;
-                String targetLabel = (String) attributes.get(SVNLog.ATTR5);
+                String targetLabel = attributes.getStringValue(SVNLog.ATTR5);
                 targetLabel = targetLabel == null ? ".working" : targetLabel;
     
                 //when performing a merge from a log runner we may have just set 
@@ -399,7 +401,7 @@ public class SVNLogRunner {
         } else if (SVNLog.COMMIT.equals(name)) {
             try {
                 SVNErrorCode code = count <= 1 ? SVNErrorCode.WC_BAD_ADM_LOG_START : SVNErrorCode.WC_BAD_ADM_LOG;
-                if (attributes.get(SVNLog.REVISION_ATTR) == null) {
+                if (attributes.getStringValue(SVNLog.REVISION_ATTR) == null) {
                     SVNErrorMessage err = SVNErrorMessage.create(code, "Missing revision attribute for ''{0}''", fileName);
                     SVNErrorManager.error(err);
                 }
@@ -409,9 +411,9 @@ public class SVNLogRunner {
                     SVNErrorMessage err = SVNErrorMessage.create(code, "Log command for directory ''{0}'' is mislocated", adminArea.getRoot()); 
                     SVNErrorManager.error(err);
                 }
-                boolean implicit = attributes.get("implicit") != null && entry.isCopied();
+                boolean implicit = attributes.getStringValue("implicit") != null && entry.isCopied();
                 setEntriesChanged(true);
-                long revisionNumber = Long.parseLong((String) attributes.get(SVNLog.REVISION_ATTR));
+                long revisionNumber = Long.parseLong(attributes.getStringValue(SVNLog.REVISION_ATTR));
                 adminArea.postCommit(fileName, revisionNumber, implicit, code);
             } catch (SVNException svne) {
                 error = svne;

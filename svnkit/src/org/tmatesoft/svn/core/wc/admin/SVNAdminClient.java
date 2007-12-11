@@ -34,6 +34,8 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.fs.FSCommitter;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
@@ -303,7 +305,7 @@ public class SVNAdminClient extends SVNBasicClient {
                 SVNErrorManager.error(err);
             }
 
-            String fromURLProp = toRepos.getRevisionPropertyValue(0, SVNRevisionProperty.FROM_URL);
+            String fromURLProp = toRepos.getRevisionStringPropertyValue(0, SVNRevisionProperty.FROM_URL);
             if (fromURLProp != null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Destination repository is already synchronizing from ''{0}''", fromURLProp);
                 SVNErrorManager.error(err);
@@ -396,7 +398,7 @@ public class SVNAdminClient extends SVNBasicClient {
             SessionInfo info = openSourceRepository(toRepos);
             SVNRepository fromRepos = info.myRepository;
             long lastMergedRevision = info.myLastMergedRevision;
-            String currentlyCopying = toRepos.getRevisionPropertyValue(0, SVNRevisionProperty.CURRENTLY_COPYING);
+            String currentlyCopying = toRepos.getRevisionStringPropertyValue(0, SVNRevisionProperty.CURRENTLY_COPYING);
             long toLatestRevision = toRepos.getLatestRevision();
 
             if (currentlyCopying != null) {
@@ -416,7 +418,7 @@ public class SVNAdminClient extends SVNBasicClient {
                         lastMergedRevision = copyingRev;
                     }
                     toRepos.setRevisionPropertyValue(0, SVNRevisionProperty.LAST_MERGED_REVISION, SVNProperty.toString(lastMergedRevision));
-                    toRepos.setRevisionPropertyValue(0, SVNRevisionProperty.CURRENTLY_COPYING, null);
+                    toRepos.setRevisionPropertyValue(0, SVNRevisionProperty.CURRENTLY_COPYING, (String) null);
                 } 
             } else {
                 if (toLatestRevision != lastMergedRevision) {
@@ -451,7 +453,7 @@ public class SVNAdminClient extends SVNBasicClient {
                 }
                 copyRevisionProperties(fromRepos, toRepos, currentRev, true);
                 toRepos.setRevisionPropertyValue(0, SVNRevisionProperty.LAST_MERGED_REVISION, SVNProperty.toString(currentRev));
-                toRepos.setRevisionPropertyValue(0, SVNRevisionProperty.CURRENTLY_COPYING, null);
+                toRepos.setRevisionPropertyValue(0, SVNRevisionProperty.CURRENTLY_COPYING, (String) null);
             }
         } catch (SVNException svne) {
             error = svne;
@@ -1008,9 +1010,9 @@ public class SVNAdminClient extends SVNBasicClient {
     }
     
     private void writeRevisionRecord(OutputStream dumpStream, FSFS fsfs, long revision) throws SVNException, IOException {
-        Map revProps = fsfs.getRevisionProperties(revision);
+        SVNProperties revProps = fsfs.getRevisionProperties(revision);
         
-        String revisionDate = (String) revProps.get(SVNRevisionProperty.DATE);
+        String revisionDate = revProps.getStringValue(SVNRevisionProperty.DATE);
         if (revisionDate != null) {
             SVNDate date = SVNDate.parseDate(revisionDate);
             revProps.put(SVNRevisionProperty.DATE, date.format());
@@ -1086,16 +1088,16 @@ public class SVNAdminClient extends SVNBasicClient {
     }
 
     private void copyRevisionProperties(SVNRepository fromRepository, SVNRepository toRepository, long revision, boolean sync) throws SVNException {
-        Map existingRevProps = null;
+        SVNProperties existingRevProps = null;
         if (sync) {
             existingRevProps = toRepository.getRevisionProperties(revision, null);
         }
         
         boolean sawSyncProperties = false;
-        Map revProps = fromRepository.getRevisionProperties(revision, null);
-        for (Iterator propNames = revProps.keySet().iterator(); propNames.hasNext();) {
+        SVNProperties revProps = fromRepository.getRevisionProperties(revision, null);
+        for (Iterator propNames = revProps.nameSet().iterator(); propNames.hasNext();) {
             String propName = (String) propNames.next();
-            String propValue = (String) revProps.get(propName);
+            SVNPropertyValue propValue = revProps.getSVNPropertyValue(propName);
             if (propName.startsWith("sync-")) {
                 sawSyncProperties = true;
             } else {
@@ -1108,9 +1110,9 @@ public class SVNAdminClient extends SVNBasicClient {
         }
         
         if (sync) {
-            for (Iterator propNames = existingRevProps.keySet().iterator(); propNames.hasNext();) {
+            for (Iterator propNames = existingRevProps.nameSet().iterator(); propNames.hasNext();) {
                 String propName = (String) propNames.next();
-                toRepository.setRevisionPropertyValue(revision, propName, null);
+                toRepository.setRevisionPropertyValue(revision, propName, (String) null);
             }            
         }
         
@@ -1122,9 +1124,9 @@ public class SVNAdminClient extends SVNBasicClient {
     }
 
     private SessionInfo openSourceRepository(SVNRepository targetRepos) throws SVNException {
-        String fromURL = targetRepos.getRevisionPropertyValue(0, SVNRevisionProperty.FROM_URL);
-        String fromUUID = targetRepos.getRevisionPropertyValue(0, SVNRevisionProperty.FROM_UUID);
-        String lastMergedRev = targetRepos.getRevisionPropertyValue(0, SVNRevisionProperty.LAST_MERGED_REVISION);
+        String fromURL = targetRepos.getRevisionStringPropertyValue(0, SVNRevisionProperty.FROM_URL);
+        String fromUUID = targetRepos.getRevisionStringPropertyValue(0, SVNRevisionProperty.FROM_UUID);
+        String lastMergedRev = targetRepos.getRevisionStringPropertyValue(0, SVNRevisionProperty.LAST_MERGED_REVISION);
 
         if (fromURL == null || fromUUID == null || lastMergedRev == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Destination repository has not been initialized");
@@ -1174,7 +1176,7 @@ public class SVNAdminClient extends SVNBasicClient {
         String lockToken = hostName + ":" + SVNUUIDGenerator.formatUUID(SVNUUIDGenerator.generateUUID());
         int i = 0;
         for (i = 0; i < 10; i++) {
-            String reposLockToken = repos.getRevisionPropertyValue(0, SVNRevisionProperty.LOCK);
+            String reposLockToken = repos.getRevisionStringPropertyValue(0, SVNRevisionProperty.LOCK);
             if (reposLockToken != null) {
                 if (reposLockToken.equals(lockToken)) {
                     return;
@@ -1194,7 +1196,7 @@ public class SVNAdminClient extends SVNBasicClient {
     }
 
     private void unlock(SVNRepository repos) throws SVNException {
-        repos.setRevisionPropertyValue(0, SVNRevisionProperty.LOCK, null);
+        repos.setRevisionPropertyValue(0, SVNRevisionProperty.LOCK, (String) null);
     }
 
     private class SessionInfo {

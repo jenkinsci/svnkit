@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -567,21 +568,21 @@ public class FSUpdateContext {
         long createdRevision = targetNode.getCreatedRevision();
 
         if (FSRepository.isValidRevision(createdRevision)) {
-            Map entryProps = myFSFS.compoundMetaProperties(createdRevision);
-            changeProperty(editPath, SVNProperty.COMMITTED_REVISION, (String) entryProps.get(SVNProperty.COMMITTED_REVISION), isDir);
-            String committedDate = (String) entryProps.get(SVNProperty.COMMITTED_DATE);
+            SVNProperties entryProps = myFSFS.compoundMetaProperties(createdRevision);
+            changeProperty(editPath, SVNProperty.COMMITTED_REVISION, entryProps.getStringValue(SVNProperty.COMMITTED_REVISION), isDir);
+            String committedDate = entryProps.getStringValue(SVNProperty.COMMITTED_DATE);
 
             if (committedDate != null || sourcePath != null) {
                 changeProperty(editPath, SVNProperty.COMMITTED_DATE, committedDate, isDir);
             }
 
-            String lastAuthor = (String) entryProps.get(SVNProperty.LAST_AUTHOR);
+            String lastAuthor = entryProps.getStringValue(SVNProperty.LAST_AUTHOR);
 
             if (lastAuthor != null || sourcePath != null) {
                 changeProperty(editPath, SVNProperty.LAST_AUTHOR, lastAuthor, isDir);
             }
 
-            String uuid = (String) entryProps.get(SVNProperty.UUID);
+            String uuid = entryProps.getStringValue(SVNProperty.UUID);
 
             if (uuid != null || sourcePath != null) {
                 changeProperty(editPath, SVNProperty.UUID, uuid, isDir);
@@ -595,7 +596,7 @@ public class FSUpdateContext {
             }
         }
 
-        Map sourceProps = null;
+        SVNProperties sourceProps = null;
         if (sourcePath != null) {
             FSRevisionRoot sourceRoot = getSourceRoot(sourceRevision);
             FSRevisionNode sourceNode = sourceRoot.getRevisionNode(sourcePath);
@@ -605,15 +606,15 @@ public class FSUpdateContext {
             }
             sourceProps = sourceNode.getProperties(myFSFS);
         } else {
-            sourceProps = new HashMap();
+            sourceProps = new SVNProperties();
         }
 
-        Map targetProps = targetNode.getProperties(myFSFS);
-        Map propsDiffs = FSRepositoryUtil.getPropsDiffs(sourceProps, targetProps);
-        Object[] names = propsDiffs.keySet().toArray();
+        SVNProperties targetProps = targetNode.getProperties(myFSFS);
+        SVNProperties propsDiffs = FSRepositoryUtil.getPropsDiffs(sourceProps, targetProps);
+        Object[] names = propsDiffs.nameSet().toArray();
         for (int i = 0; i < names.length; i++) {
             String propName = (String) names[i];
-            changeProperty(editPath, propName, (String) propsDiffs.get(propName), isDir);
+            changeProperty(editPath, propName, propsDiffs.getStringValue(propName), isDir);
         }
     }
 

@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
@@ -118,7 +119,7 @@ public class DAVLogHandler extends BasicDAVHandler {
     private boolean myIsWantComment;
     private boolean myIsWantCustomRevProps;
     private String myRevPropName;
-    private Map myRevProps;
+    private SVNProperties myRevProps;
 
     public DAVLogHandler(ISVNLogEntryHandler handler, long limit, String[] revPropNames) {
         myLogEntryHandler = handler;
@@ -204,7 +205,7 @@ public class DAVLogHandler extends BasicDAVHandler {
                         myPaths = new HashMap();
                     }
                     if (myRevProps == null) {
-                        myRevProps = new HashMap();
+                        myRevProps = new SVNProperties();
                     }
                     if (myAuthor != null) {
                         myRevProps.put(SVNRevisionProperty.AUTHOR, myAuthor);
@@ -213,7 +214,7 @@ public class DAVLogHandler extends BasicDAVHandler {
                         myRevProps.put(SVNRevisionProperty.LOG, myComment);
                     }
                     if (myDate != null) {
-                        myRevProps.put(SVNRevisionProperty.DATE, myDate);
+                        myRevProps.put(SVNRevisionProperty.DATE, SVNDate.formatDate(myDate));
                     }
                     SVNLogEntry logEntry = new SVNLogEntry(myPaths, myRevision, myRevProps, myHasChildren);
                     myLogEntryHandler.handleLogEntry(logEntry);
@@ -233,7 +234,7 @@ public class DAVLogHandler extends BasicDAVHandler {
             myRevision = Long.parseLong(cdata.toString());
         } else if (element == REVPROP) {
             if (myRevProps == null) {
-                myRevProps = new HashMap();
+                myRevProps = new SVNProperties();
             }
             if (myRevPropName != null && cdata != null) {
                 myRevProps.put(myRevPropName, cdata.toString());

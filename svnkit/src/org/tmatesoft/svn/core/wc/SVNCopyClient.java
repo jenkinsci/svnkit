@@ -32,6 +32,7 @@ import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -241,7 +242,7 @@ public class SVNCopyClient extends SVNBasicClient {
     }
 
     public SVNCommitInfo doCopy(SVNCopySource[] sources, SVNURL dst, boolean isMove, boolean makeParents, boolean failWhenDstExists,
-            String commitMessage, Map revisionProperties) throws SVNException {
+            String commitMessage, SVNProperties revisionProperties) throws SVNException {
         if (sources.length > 1 && failWhenDstExists) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_MULTIPLE_SOURCES_DISALLOWED);
             SVNErrorManager.error(err);
@@ -366,7 +367,7 @@ public class SVNCopyClient extends SVNBasicClient {
         }
     }
 
-    private SVNCommitInfo setupCopy(SVNCopySource[] sources, SVNPath dst, boolean isMove, boolean makeParents, String message, Map revprops) throws SVNException {
+    private SVNCommitInfo setupCopy(SVNCopySource[] sources, SVNPath dst, boolean isMove, boolean makeParents, String message, SVNProperties revprops) throws SVNException {
         List pairs = new ArrayList(sources.length);
         for (int i = 0; i < sources.length; i++) {
             SVNCopySource source = sources[i];
@@ -495,7 +496,7 @@ public class SVNCopyClient extends SVNBasicClient {
         }
     }
     
-    private SVNCommitInfo copyWCToRepos(List copyPairs, boolean makeParents, String message, Map revprops) throws SVNException {
+    private SVNCommitInfo copyWCToRepos(List copyPairs, boolean makeParents, String message, SVNProperties revprops) throws SVNException {
         String topSrc = ((CopyPair) copyPairs.get(0)).mySource;
         for (int i = 1; i < copyPairs.size(); i++) {
             CopyPair pair = (CopyPair) copyPairs.get(i);
@@ -564,7 +565,7 @@ public class SVNCopyClient extends SVNBasicClient {
             if (message == null) {
                 return SVNCommitInfo.NULL;
             }
-            revprops = getCommitHandler().getRevisionProperties(message, commitables, revprops == null ? new HashMap() : revprops);
+            revprops = getCommitHandler().getRevisionProperties(message, commitables, revprops == null ? new SVNProperties() : revprops);
             if (revprops == null) {
                 return SVNCommitInfo.NULL;
             }
@@ -659,7 +660,7 @@ public class SVNCopyClient extends SVNBasicClient {
         return info != null ? info : SVNCommitInfo.NULL;
     }
     
-    private SVNCommitInfo copyReposToRepos(List copyPairs, boolean makeParents, boolean isMove, String message, Map revprops) throws SVNException {
+    private SVNCommitInfo copyReposToRepos(List copyPairs, boolean makeParents, boolean isMove, String message, SVNProperties revprops) throws SVNException {
         List pathInfos = new ArrayList();
         Map pathsMap = new HashMap();
         for (int i = 0; i < copyPairs.size(); i++) {
@@ -808,7 +809,7 @@ public class SVNCopyClient extends SVNBasicClient {
         }
         message = SVNCommitClient.validateCommitMessage(message);
 
-        revprops = getCommitHandler().getRevisionProperties(message, commitables, revprops == null ? new HashMap() : revprops);
+        revprops = getCommitHandler().getRevisionProperties(message, commitables, revprops == null ? new SVNProperties() : revprops);
         if (revprops == null) {
             return SVNCommitInfo.NULL;
         }
@@ -992,7 +993,7 @@ public class SVNCopyClient extends SVNBasicClient {
             SVNAdminArea dir = dstAccess.getAdminArea(dst.getParentFile());
             File tmpFile = SVNAdminUtil.createTmpFile(dir);
             String path = getPathRelativeToRoot(null, url, null, null, topSrcRepos);
-            Map props = new HashMap();
+            SVNProperties props = new SVNProperties();
             OutputStream os = null;
             long revision = -1;
             try {

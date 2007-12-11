@@ -11,10 +11,11 @@
  */
 package org.tmatesoft.svn.core;
 
-import java.io.UnsupportedEncodingException;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -23,10 +24,20 @@ import java.util.Iterator;
  */
 public class SVNProperties {
 
+    public static final SVNProperties EMPTY_PROPERTIES = new SVNProperties(Collections.EMPTY_MAP);
+
     private Map myProperties;
 
     public SVNProperties() {
         myProperties = new HashMap();
+    }
+
+    public SVNProperties(SVNProperties properties){
+        myProperties = new HashMap(properties.myProperties);
+    }
+
+    private SVNProperties(Map properties){
+        myProperties = properties;
     }
 
     public void put(String propertyName, String propertyValue) {
@@ -37,18 +48,8 @@ public class SVNProperties {
         myProperties.put(propertyName, propertyValue);
     }
 
-    public void put(String propertyName, byte[] propertyValue, String encoding) {
-        if (encoding == null) {
-            myProperties.put(propertyName, propertyValue);
-        } else {
-            String stringValue;
-            try {
-                stringValue = new String(propertyValue, encoding);
-            } catch (UnsupportedEncodingException e) {
-                stringValue = new String(propertyValue);
-            }
-            myProperties.put(propertyName, stringValue);
-        }
+    public void put(String propertyName, SVNPropertyValue propertyValue) {
+        myProperties.put(propertyName, propertyValue);
     }
 
     public String getStringValue(String propertyName, String encoding) {
@@ -60,14 +61,13 @@ public class SVNProperties {
             return (String) value;
         }
         if (value instanceof byte[]) {
-            byte[] bytes = (byte[]) value;
-            String stringValue = null;
-            try {
-                stringValue = new String(bytes, encoding);
-            } catch (UnsupportedEncodingException e) {
-                stringValue = new String(bytes);
-            }
-            return stringValue;
+            SVNPropertyValue propertyValue = new SVNPropertyValue((byte[]) value);
+            myProperties.put(propertyName, propertyValue);
+            return propertyValue.getString(encoding);
+        }
+        if (value instanceof SVNPropertyValue){
+            SVNPropertyValue propertyValue = (SVNPropertyValue) value;
+            return propertyValue.getString();
         }
         return null;
     }
@@ -85,47 +85,103 @@ public class SVNProperties {
             return (byte[]) value;            
         }
         if (value instanceof String){
-            String stringValue = (String) value;
-            byte[] bytes = null;
-            try {
-                bytes = stringValue.getBytes(encoding);
-            } catch (UnsupportedEncodingException e) {
-                bytes = stringValue.getBytes();
-            }
-            return bytes;
+            SVNPropertyValue propertyValue = new SVNPropertyValue((String) value);
+            myProperties.put(propertyName, propertyValue);
+            return propertyValue.getBytes(encoding);
+        }
+        if (value instanceof SVNPropertyValue){
+            SVNPropertyValue propertyValue = (SVNPropertyValue) value;
+            return propertyValue.getBytes(encoding);
         }
         return null;
-    }
-
-    public void putAllValues(SVNProperties properties){
-        myProperties.putAll(properties.myProperties);        
-    }
-
-    public void putValue(SVNProperties properties, String propertyName){
-        myProperties.put(propertyName, properties.myProperties.get(propertyName));
     }
 
     public byte[] getBinaryValue(String propertyName){
         return getBinaryValue(propertyName, "UTF-8");
     }
 
-    public Iterator nameIterator() {
-        return new Iterator() {
-
-            Iterator keyIterator = myProperties.keySet().iterator();
-
-            public void remove() {
-                keyIterator.remove();
-            }
-
-            public boolean hasNext() {
-                return keyIterator.hasNext();
-            }
-
-            public Object next() {
-                return keyIterator.next();
-            }
-        };
+    public SVNPropertyValue getSVNPropertyValue(String propertyName){
+        Object value = myProperties.get(propertyName);
+        if (value == null){
+            return null;
+        }
+        if (value instanceof SVNPropertyValue){
+            return (SVNPropertyValue) value;            
+        }
+        if (value instanceof String){
+            SVNPropertyValue propertyValue = new SVNPropertyValue((String) value);
+            myProperties.put(propertyName, propertyValue);
+            return propertyValue;
+        }
+        if (value instanceof byte[]){
+            SVNPropertyValue propertyValue = new SVNPropertyValue((byte[]) value);
+            myProperties.put(propertyName, propertyValue);
+            return propertyValue;
+        }
+        return null;
     }
 
+    public Object remove(String propertyName){
+        return myProperties.remove(propertyName);                
+    }
+
+    public void putAll(SVNProperties properties){
+        myProperties.putAll(properties.myProperties);        
+    }
+
+    public void copyValue(SVNProperties properties, String propertyName){
+        myProperties.put(propertyName, properties.myProperties.get(propertyName));
+    }
+
+    public boolean isEmpty(){
+        return myProperties.isEmpty();
+    }
+
+    public void clear(){
+        myProperties.clear();
+    }
+
+    public boolean hasNullValues(){
+        if (myProperties.isEmpty()) {
+            return false;
+        }
+        return myProperties.containsValue(null);
+    }
+
+    public boolean hasNotNullValues(){
+        if (isEmpty()) {
+            return false;
+        }
+        if (!hasNullValues()) {
+            return true;
+        }
+        for (Iterator entries = myProperties.entrySet().iterator(); entries.hasNext();) {
+            Map.Entry entry = (Map.Entry) entries.next();
+            if (entry.getValue() != null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void removeNullValues(){
+        for (Iterator iterator = myProperties.keySet().iterator(); iterator.hasNext();) {
+            String name = (String) iterator.next();
+            if (myProperties.get(name) == null){
+                iterator.remove();
+            }
+        }
+    }
+
+    public int size(){
+        return myProperties.size();
+    }
+
+    public boolean containsName(String propertyName){
+        return myProperties.containsKey(propertyName);        
+    }
+
+    public Set nameSet(){
+        return myProperties.keySet();
+    }
 }

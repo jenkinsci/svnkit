@@ -30,6 +30,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
@@ -163,12 +164,12 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
             if (!getSVNEnvironment().isAllRevisionProperties() && 
                     getSVNEnvironment().getRevisionProperties() != null && 
                     !getSVNEnvironment().getRevisionProperties().isEmpty()) {
-                Map revPropNames = getSVNEnvironment().getRevisionProperties();
+                SVNProperties revPropNames = getSVNEnvironment().getRevisionProperties();
                 revProps = new String[revPropNames.size()];
                 int i = 0;
-                for (Iterator propNames = revPropNames.keySet().iterator(); propNames.hasNext();) {
+                for (Iterator propNames = revPropNames.nameSet().iterator(); propNames.hasNext();) {
                     String propName = (String) propNames.next();
-                    String propVal = (String) revPropNames.get(propName);
+                    String propVal = revPropNames.getStringValue(propName);
                     if (propVal.length() > 0) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                                 "cannot assign with 'with-revprop' option (drop the '=')");
@@ -236,10 +237,11 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
             return;
         }
 
-        Map revisionProperties = logEntry.getRevisionProperties();
-        String author = (String) revisionProperties.get(SVNRevisionProperty.AUTHOR);
-        String message = (String) revisionProperties.get(SVNRevisionProperty.LOG);
-        Date dateObject = (Date) revisionProperties.get(SVNRevisionProperty.DATE); 
+        SVNProperties revisionProperties = logEntry.getRevisionProperties();
+        String author = revisionProperties.getStringValue(SVNRevisionProperty.AUTHOR);
+        String message = revisionProperties.getStringValue(SVNRevisionProperty.LOG);
+        String dateValue = revisionProperties.getStringValue(SVNRevisionProperty.DATE);
+        Date dateObject = dateValue == null ? null : SVNDate.parseDate(dateValue); 
 
         if (message == null && logEntry.getRevision() == 0) {
             return;
@@ -313,10 +315,11 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
             return;
         }
         
-        Map revProps = logEntry.getRevisionProperties();
-        String author = (String) revProps.get(SVNRevisionProperty.AUTHOR);
-        String message = (String) revProps.get(SVNRevisionProperty.LOG);
-        Date dateObject = (Date) revProps.get(SVNRevisionProperty.DATE);
+        SVNProperties revProps = logEntry.getRevisionProperties();
+        String author = revProps.getStringValue(SVNRevisionProperty.AUTHOR);
+        String message = revProps.getStringValue(SVNRevisionProperty.LOG);
+        String dateValue = revProps.getStringValue(SVNRevisionProperty.DATE);
+        Date dateObject = dateValue == null ? null : SVNDate.parseDate(dateValue);
         
         if (logEntry.getRevision() == 0 && message == null) {
             return;

@@ -14,18 +14,17 @@ package org.tmatesoft.svn.core.internal.wc;
 import java.io.File;
 import java.io.OutputStream;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
 
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -102,7 +101,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             if (nodeKind == SVNNodeKind.FILE) {
                 SVNFileInfo file = new SVNFileInfo(path, false);
                 file.loadFromRepository(myRevision1);
-                String baseType = (String) file.myBaseProperties.get(SVNProperty.MIME_TYPE);
+                String baseType = file.myBaseProperties.getStringValue(SVNProperty.MIME_TYPE);
                 type = getDiffCallback().fileDeleted(path, file.myBaseFile, null, baseType, null, file.myBaseProperties);
             } else if (nodeKind == SVNNodeKind.DIR) {
                 type = getDiffCallback().directoryDeleted(path);
@@ -122,7 +121,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
 
     public void addDir(String path, String copyFromPath, long copyFromRevision)  throws SVNException {
         myCurrentDirectory = new SVNDirectoryInfo(myCurrentDirectory, path, true);
-        myCurrentDirectory.myBaseProperties = Collections.EMPTY_MAP;
+        myCurrentDirectory.myBaseProperties = SVNProperties.EMPTY_PROPERTIES;
         
         SVNEventAction expectedAction = SVNEventAction.UPDATE_ADD;
         SVNEventAction action = expectedAction;
@@ -143,6 +142,10 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     }
 
     public void changeDirProperty(String name, String value) throws SVNException {
+        myCurrentDirectory.myPropertyDiff.put(name, value);
+    }
+
+    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
         myCurrentDirectory.myPropertyDiff.put(name, value);
     }
 
@@ -187,7 +190,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
 
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         myCurrentFile = new SVNFileInfo(path, true);
-        myCurrentFile.myBaseProperties = Collections.EMPTY_MAP;
+        myCurrentFile.myBaseProperties = SVNProperties.EMPTY_PROPERTIES;
         myCurrentFile.myBaseFile = SVNFileUtil.createUniqueFile(getTempDirectory(), ".diff", ".tmp");
         SVNFileUtil.createEmptyFile(myCurrentFile.myBaseFile);
     }
@@ -198,6 +201,10 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     }
 
     public void changeFileProperty(String commitPath, String name, String value) throws SVNException {
+        myCurrentFile.myPropertyDiff.put(name, value);
+    }
+
+    public void changeFileProperty(String commitPath, String name, SVNPropertyValue value) throws SVNException {
         myCurrentFile.myPropertyDiff.put(name, value);
     }
 
@@ -239,8 +246,8 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             throw e;
         }
         if (myCurrentFile.myFile != null || !myCurrentFile.myPropertyDiff.isEmpty()) {
-            String baseMimeType = (String) myCurrentFile.myBaseProperties.get(SVNProperty.MIME_TYPE);
-            String mimeType = (String) myCurrentFile.myPropertyDiff.get(SVNProperty.MIME_TYPE);
+            String baseMimeType = myCurrentFile.myBaseProperties.getStringValue(SVNProperty.MIME_TYPE);
+            String mimeType = myCurrentFile.myPropertyDiff.getStringValue(SVNProperty.MIME_TYPE);
             if (myCurrentFile.myIsAdded) {
                 type = getDiffCallback().fileAdded(commitPath, 
                         myCurrentFile.myFile != null ? myCurrentFile.myBaseFile : null, myCurrentFile.myFile, 
@@ -343,11 +350,11 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             myRepositoryPath = path;
             myWCFile = myTarget != null ? new File(myTarget, path) : null;
             myIsAdded = added;
-            myPropertyDiff = new HashMap();
+            myPropertyDiff = new SVNProperties();
         }
 
         public void loadFromRepository() throws SVNException {
-            myBaseProperties = new HashMap();
+            myBaseProperties = new SVNProperties();
             myRepos.getDir(myRepositoryPath, myRevision1, myBaseProperties, (ISVNDirEntryHandler) null);
         }
 
@@ -355,8 +362,8 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
         private String myRepositoryPath;
         private File myWCFile;
         
-        private Map myBaseProperties;
-        private Map myPropertyDiff;
+        private SVNProperties myBaseProperties;
+        private SVNProperties myPropertyDiff;
         
         private SVNDirectoryInfo myParent;
     }
@@ -367,13 +374,13 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             myRepositoryPath = path;
             myIsAdded = added;
             myWCFile = myTarget != null ? new File(myTarget, path) : null;
-            myPropertyDiff = new HashMap();
+            myPropertyDiff = new SVNProperties();
         }
 
         public void loadFromRepository(long revision) throws SVNException {
             myBaseFile = SVNFileUtil.createUniqueFile(getTempDirectory(), ".diff", ".tmp");
             OutputStream os = null;
-            myBaseProperties = new HashMap();
+            myBaseProperties = new SVNProperties();
             try {
                 os = SVNFileUtil.openFileForWriting(myBaseFile);
                 myRepos.getFile(myRepositoryPath, revision, myBaseProperties, new SVNCancellableOutputStream(os, myCancelHandler));
@@ -388,7 +395,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
         
         private File myFile;
         private File myBaseFile;
-        private Map myBaseProperties;
-        private Map myPropertyDiff;
+        private SVNProperties myBaseProperties;
+        private SVNProperties myPropertyDiff;
     }
 }

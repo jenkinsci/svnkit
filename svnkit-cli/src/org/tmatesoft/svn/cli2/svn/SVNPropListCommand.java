@@ -25,10 +25,9 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.SVNChangelistClient;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -91,9 +90,7 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
                 StringBuffer buffer = openXMLTag("revprops", SVNXMLUtil.XML_STYLE_NORMAL, "rev", Long.toString(rev), null);
                 for (Iterator props = revisionProperties.iterator(); props.hasNext();) {
                     SVNPropertyData property = (SVNPropertyData) props.next();
-                    buffer = openXMLTag("property", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, "name", SVNEncodingUtil.xmlEncodeAttr(property.getName()), buffer);
-                    buffer.append(SVNEncodingUtil.xmlEncodeCDATA(property.getValue()));
-                    buffer = closeXMLTag("property", buffer);
+                    buffer = addXMLProp(property, buffer);
                 }
                 buffer = closeXMLTag("revprops", buffer);
                 getSVNEnvironment().getOut().print(buffer);
@@ -104,7 +101,7 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
                     SVNPropertyData property = (SVNPropertyData) props.next();
                     getSVNEnvironment().getOut().print("  " + property.getName());
                     if (getSVNEnvironment().isVerbose()) {
-                        getSVNEnvironment().getOut().print(" : " + property.getValue());
+                        getSVNEnvironment().getOut().print(" : " + property.getValue().getBytes(null));
                     }
                     getSVNEnvironment().getOut().println();
                 }
@@ -188,9 +185,7 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
             StringBuffer buffer = openXMLTag("target", SVNXMLUtil.XML_STYLE_NORMAL, "path", target, null);
             for (Iterator plist = props.iterator(); plist.hasNext();) {
                 SVNPropertyData property = (SVNPropertyData) plist.next();
-                buffer = openXMLTag("property", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, "name", property.getName(), buffer);
-                buffer.append(SVNEncodingUtil.xmlEncodeCDATA(property.getValue()));
-                buffer = closeXMLTag("property", buffer);
+                buffer = addXMLProp(property, buffer);
             }
             buffer = closeXMLTag("target", buffer);
             getSVNEnvironment().getOut().print(buffer);

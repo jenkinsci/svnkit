@@ -19,24 +19,22 @@ import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
-import org.tmatesoft.svn.cli2.SVNConsoleAuthenticationProvider;
 import org.tmatesoft.svn.cli2.AbstractSVNCommand;
 import org.tmatesoft.svn.cli2.AbstractSVNCommandEnvironment;
 import org.tmatesoft.svn.cli2.AbstractSVNOption;
 import org.tmatesoft.svn.cli2.SVNCommandLine;
 import org.tmatesoft.svn.cli2.SVNCommandUtil;
+import org.tmatesoft.svn.cli2.SVNConsoleAuthenticationProvider;
 import org.tmatesoft.svn.cli2.SVNOptionValue;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
@@ -89,7 +87,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private String myMessage;
     private boolean myIsForceLog;
     private String myEditorCommand;
-    private Map myRevisionProperties;
+    private SVNProperties myRevisionProperties;
     private boolean myIsNoUnlock;
     private boolean myIsDryRun;
     private boolean myIsRecordOnly;
@@ -532,7 +530,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         return myMessage;
     }
     
-    public Map getRevisionProperties() {
+    public SVNProperties getRevisionProperties() {
         return myRevisionProperties;
     }
     
@@ -628,8 +626,8 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     }
 
 
-    public Map getRevisionProperties(String message, SVNCommitItem[] commitables, Map revisionProperties) throws SVNException {
-        return revisionProperties == null ? new HashMap() : revisionProperties;
+    public SVNProperties getRevisionProperties(String message, SVNCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {
+        return revisionProperties == null ? new SVNProperties() : revisionProperties;
     }
 
     public String getCommitMessage(String message, SVNCommitItem[] commitables) throws SVNException {
@@ -662,7 +660,12 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             message = createCommitMessageTemplate(commitables);
             byte[] messageData = null;
             try {
-                messageData = SVNCommandUtil.runEditor(this, getEditorCommand(), message, "svn-commit");
+                try {
+                    messageData = message.getBytes("UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    messageData = message.getBytes();
+                }
+                messageData = SVNCommandUtil.runEditor(this, getEditorCommand(), messageData, "svn-commit");
             } catch (SVNException e) {
                 if (e.getErrorMessage().getErrorCode() == SVNErrorCode.CL_NO_EXTERNAL_EDITOR) {
                     SVNErrorMessage err = e.getErrorMessage().wrap(
@@ -709,7 +712,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     
     private void parseRevisionProperty(SVNOptionValue optionValue) throws SVNException {
         if (myRevisionProperties == null) {
-            myRevisionProperties = new LinkedHashMap();
+            myRevisionProperties = new SVNProperties();
         }
         String revProp = optionValue.getValue();
         if (revProp == null || "".equals(revProp)) {

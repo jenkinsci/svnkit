@@ -12,9 +12,9 @@
 package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.OutputStream;
-import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
 
 
 /**
@@ -23,5 +23,5 @@ import org.tmatesoft.svn.core.SVNException;
  */
 public interface ISVNFileFetcher {
 
-    public long fetchFile(String path, long revision, OutputStream os, Map properties) throws SVNException;
+    public long fetchFile(String path, long revision, OutputStream os, SVNProperties properties) throws SVNException;
 }

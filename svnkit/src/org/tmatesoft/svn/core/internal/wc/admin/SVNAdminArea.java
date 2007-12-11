@@ -38,6 +38,8 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
@@ -213,9 +215,9 @@ public abstract class SVNAdminArea {
     }
     
     private boolean compareAndVerify(File text, File baseFile, boolean compareTextBase, boolean checksum) throws SVNException {
-        String eolStyle = getProperties(text.getName()).getPropertyValue(SVNProperty.EOL_STYLE);
-        String keywords = getProperties(text.getName()).getPropertyValue(SVNProperty.KEYWORDS);
-        boolean special = getProperties(text.getName()).getPropertyValue(SVNProperty.SPECIAL) != null;
+        String eolStyle = getProperties(text.getName()).getStringPropertyValue(SVNProperty.EOL_STYLE);
+        String keywords = getProperties(text.getName()).getStringPropertyValue(SVNProperty.KEYWORDS);
+        boolean special = getProperties(text.getName()).getStringPropertyValue(SVNProperty.SPECIAL) != null;
         
         if (special) {
             compareTextBase = true;
@@ -465,12 +467,12 @@ public abstract class SVNAdminArea {
         saveEntries(false);
     }
 
-    public SVNStatusType mergeProperties(String name, Map serverBaseProps, Map propDiff, boolean baseMerge, boolean dryRun, SVNLog log) throws SVNException {
+    public SVNStatusType mergeProperties(String name, SVNProperties serverBaseProps, SVNProperties propDiff, boolean baseMerge, boolean dryRun, SVNLog log) throws SVNException {
         //serverBaseProps = serverBaseProps == null ? Collections.EMPTY_MAP : serverBaseProps;
-        propDiff = propDiff == null ? Collections.EMPTY_MAP : propDiff;
+        propDiff = propDiff == null ? SVNProperties.EMPTY_PROPERTIES : propDiff;
         
         SVNVersionedProperties working = getProperties(name);
-        Map workingProps = working.asMap();
+        SVNProperties workingProps = working.asMap();
         SVNVersionedProperties base = getBaseProperties(name);
         if (serverBaseProps == null) {
             serverBaseProps = base.asMap();
@@ -479,13 +481,12 @@ public abstract class SVNAdminArea {
         Collection conflicts = new ArrayList();
         SVNStatusType result = propDiff.isEmpty() ? SVNStatusType.UNCHANGED : SVNStatusType.CHANGED;
         
-        for (Iterator propEntries = propDiff.entrySet().iterator(); propEntries.hasNext();) {
-            Map.Entry incomingEntry = (Map.Entry) propEntries.next();
-            String propName = (String) incomingEntry.getKey();
-            String toValue = (String) incomingEntry.getValue();
-            String fromValue = (String) serverBaseProps.get(propName);
-            String workingValue = (String) workingProps.get(propName);
-            String baseValue = base.getPropertyValue(propName);
+        for (Iterator propEntries = propDiff.nameSet().iterator(); propEntries.hasNext();) {
+            String propName = (String) propEntries.next();
+            SVNPropertyValue toValue = propDiff.getSVNPropertyValue(propName);
+            SVNPropertyValue fromValue = serverBaseProps.getSVNPropertyValue(propName);
+            SVNPropertyValue workingValue = workingProps.getSVNPropertyValue(propName);
+            SVNPropertyValue baseValue = base.getPropertyValue(propName);
             boolean isNormal = SVNProperty.isRegularProperty(propName); 
             if (baseMerge) {
                 base.setPropertyValue(propName, toValue);
@@ -514,7 +515,7 @@ public abstract class SVNAdminArea {
                         result = result != SVNStatusType.CONFLICTED && isNormal ? SVNStatusType.MERGED : result;
                     } else {
                         if (SVNProperty.MERGE_INFO.equals(propName)) {
-                            toValue = SVNMergeInfoManager.combineMergeInfoProperties(workingValue, toValue);
+                            toValue = new SVNPropertyValue(SVNMergeInfoManager.combineMergeInfoProperties(workingValue.getString(), toValue.getString()));
                             working.setPropertyValue(propName, toValue);
                             result = result != SVNStatusType.CONFLICTED && isNormal ? SVNStatusType.MERGED : result;
                         } else {
@@ -561,9 +562,9 @@ public abstract class SVNAdminArea {
                             result = result != SVNStatusType.CONFLICTED && isNormal ? SVNStatusType.MERGED : result;
                         } else {
                             if (SVNProperty.MERGE_INFO.equals(propName)) {
-                                toValue = SVNMergeInfoManager.combineForkedMergeInfoProperties(fromValue, 
-                                                                                               workingValue, 
-                                                                                               toValue);
+                                toValue = new SVNPropertyValue(SVNMergeInfoManager.combineForkedMergeInfoProperties(fromValue.getString(),
+                                                                                               workingValue.getString(),
+                                                                                               toValue.getString()));
                                 working.setPropertyValue(propName, toValue);
                                 result = result != SVNStatusType.CONFLICTED && isNormal ? SVNStatusType.MERGED : result;
                             } else {
@@ -597,8 +598,8 @@ public abstract class SVNAdminArea {
                 } else if (workingValue == null) {
                     if (SVNProperty.MERGE_INFO.equals(propName)) {
                         Map addedMergeInfo = new TreeMap();
-                        SVNMergeInfoManager.diffMergeInfoProperties(null, addedMergeInfo, fromValue, null, toValue, null);
-                        toValue = SVNMergeInfoManager.formatMergeInfoToString(addedMergeInfo);
+                        SVNMergeInfoManager.diffMergeInfoProperties(null, addedMergeInfo, fromValue.getString(), null, toValue.getString(), null);
+                        toValue = new SVNPropertyValue(SVNMergeInfoManager.formatMergeInfoToString(addedMergeInfo));
                         working.setPropertyValue(propName, toValue);
                     } else {
                         result = isNormal ? SVNStatusType.CONFLICTED : result;                            
@@ -614,9 +615,9 @@ public abstract class SVNAdminArea {
                         working.setPropertyValue(propName, toValue);
                     } else {
                         if (SVNProperty.MERGE_INFO.equals(propName)) {
-                            toValue = SVNMergeInfoManager.combineForkedMergeInfoProperties(fromValue, 
-                                                                                           workingValue, 
-                                                                                           toValue);
+                            toValue = new SVNPropertyValue(SVNMergeInfoManager.combineForkedMergeInfoProperties(fromValue.getString(),
+                                                                                           workingValue.getString(),
+                                                                                           toValue.getString()));
                             working.setPropertyValue(propName, toValue);
                             result = result != SVNStatusType.CONFLICTED && isNormal ? SVNStatusType.MERGED : result;
                         } else {
@@ -675,7 +676,7 @@ public abstract class SVNAdminArea {
                 SVNFileUtil.closeFile(os);
             }
 
-            Map command = new HashMap();
+            SVNProperties command = new SVNProperties();
             command.put(SVNLog.NAME_ATTR, prejTmpPath);
             command.put(SVNLog.DEST_ATTR, prejPath);
             log.addCommand(SVNLog.APPEND, command, false);
@@ -694,7 +695,7 @@ public abstract class SVNAdminArea {
     }
 
     public SVNStatusType mergeText(String localPath, File base, File latest, String localLabel, 
-                                   String baseLabel, String latestLabel, Map propChanges, 
+                                   String baseLabel, String latestLabel, SVNProperties propChanges,
                                    boolean dryRun, SVNDiffOptions options, SVNLog log) throws SVNException {
         SVNEntry entry = getEntry(localPath, false);
         if (entry == null) {
@@ -706,10 +707,10 @@ public abstract class SVNAdminArea {
         
         SVNVersionedProperties props = getProperties(localPath);
         String mimeType = null;
-        if (propChanges != null && propChanges.containsKey(SVNProperty.MIME_TYPE)) {
-            mimeType = (String) propChanges.get(SVNProperty.MIME_TYPE);
+        if (propChanges != null && propChanges.containsName(SVNProperty.MIME_TYPE)) {
+            mimeType = propChanges.getStringValue(SVNProperty.MIME_TYPE);
         } else {
-            mimeType = props.getPropertyValue(SVNProperty.MIME_TYPE);
+            mimeType = props.getStringPropertyValue(SVNProperty.MIME_TYPE);
         }
         boolean isBinary = SVNProperty.isBinaryMimeType(mimeType); 
 
@@ -1422,7 +1423,7 @@ public abstract class SVNAdminArea {
         getWCAccess().closeAdminArea(getRoot());
     }
     
-    public void commit(String target, SVNCommitInfo info, Map wcPropChanges,
+    public void commit(String target, SVNCommitInfo info, SVNProperties wcPropChanges,
             boolean removeLock, boolean recursive, boolean removeChangelist, 
             Collection explicitCommitPaths, ISVNCommitParameters params) throws SVNException {
         SVNAdminArea anchor = getWCAccess().retrieve(getWCAccess().getAnchor());
@@ -1454,7 +1455,7 @@ public abstract class SVNAdminArea {
             recursive = false;
         } 
         
-        Map command = new HashMap();
+        SVNProperties command = new SVNProperties();
         if (info != null) {
             command.put(SVNLog.NAME_ATTR, target);
             command.put(SVNProperty.shortPropertyName(SVNProperty.COMMITTED_REVISION), Long.toString(info.getNewRevision()));
@@ -1487,9 +1488,9 @@ public abstract class SVNAdminArea {
         log.addCommand(SVNLog.COMMIT, command, false);
         command.clear();
         if (wcPropChanges != null && !wcPropChanges.isEmpty()) {
-            for (Iterator propNames = wcPropChanges.keySet().iterator(); propNames.hasNext();) {
+            for (Iterator propNames = wcPropChanges.nameSet().iterator(); propNames.hasNext();) {
                 String propName = (String) propNames.next();
-                String propValue = (String) wcPropChanges.get(propName);
+                SVNPropertyValue propValue = wcPropChanges.getSVNPropertyValue(propName);
                 command.put(SVNLog.NAME_ATTR, target);
                 command.put(SVNLog.PROPERTY_NAME_ATTR, propName);
                 command.put(SVNLog.PROPERTY_VALUE_ATTR, propValue);

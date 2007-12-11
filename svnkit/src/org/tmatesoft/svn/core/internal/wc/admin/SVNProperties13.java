@@ -11,10 +11,9 @@
  */
 package org.tmatesoft.svn.core.internal.wc.admin;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 
 
 /**
@@ -23,39 +22,39 @@ import org.tmatesoft.svn.core.SVNException;
  */
 public class SVNProperties13 extends SVNVersionedProperties {
 
-    public SVNProperties13(Map properties) {
+    public SVNProperties13(SVNProperties properties) {
         super(properties);
     }
 
     public boolean containsProperty(String name) throws SVNException {
         if (!isEmpty()) {
-            Map props = loadProperties();
-            return props.containsKey(name);
+            SVNProperties props = loadProperties();
+            return props.containsName(name);
         }
         return false;
     }
 
-    public String getPropertyValue(String name) throws SVNException {
-        if (getPropertiesMap() != null && getPropertiesMap().containsKey(name)) {
-            return (String) getPropertiesMap().get(name);
+    public SVNPropertyValue getPropertyValue(String name) throws SVNException {
+        if (getProperties() != null && getProperties().containsName(name)) {
+            return getProperties().getSVNPropertyValue(name);
         }
         if (!isEmpty()) {
-            Map props = loadProperties();
-            return (String)props.get(name); 
+            SVNProperties props = loadProperties();
+            return props.getSVNPropertyValue(name); 
         }
         return null;
     }
 
-    protected Map loadProperties() throws SVNException {
-        Map props = getPropertiesMap();
+    protected SVNProperties loadProperties() throws SVNException {
+        SVNProperties props = getProperties();
         if (props == null) {
-            props = new HashMap();
+            props = new SVNProperties();
             setPropertiesMap(props);
         }
         return props;
     }
 
-    protected SVNVersionedProperties wrap(Map properties) {
+    protected SVNVersionedProperties wrap(SVNProperties properties) {
         return new SVNProperties13(properties);
     }
 }

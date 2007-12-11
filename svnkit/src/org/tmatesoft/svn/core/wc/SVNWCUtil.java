@@ -375,7 +375,7 @@ public class SVNWCUtil {
                 try {
                     SVNAdminArea dir = parentAccess.open(parent, false, 0);
                     SVNVersionedProperties props = dir.getProperties(dir.getThisDirName());
-                    SVNExternal[] externals = SVNExternal.parseExternals(dir.getRoot().getAbsolutePath(), props.getPropertyValue(SVNProperty.EXTERNALS));
+                    SVNExternal[] externals = SVNExternal.parseExternals(dir.getRoot().getAbsolutePath(), props.getStringPropertyValue(SVNProperty.EXTERNALS));
                     // now externals could point to our dir.
                     for (int i = 0; i < externals.length; i++) {
                         SVNExternal external = externals[i];

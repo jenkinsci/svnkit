@@ -19,13 +19,14 @@ import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.io.fs.CountingStream;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
@@ -40,7 +41,6 @@ import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNDebugLog;
-
 
 
 /**
@@ -107,7 +107,18 @@ public class SVNDumpEditor implements ISVNEditor {
         }
     }
 
+
+    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
+        if (!myCurrentDirInfo.myIsWrittenOut) {
+            dumpNode(myCurrentDirInfo.myFullPath, SVNNodeKind.DIR, SVNAdminHelper.NODE_ACTION_CHANGE, false, myCurrentDirInfo.myComparePath, myCurrentDirInfo.myCompareRevision);
+            myCurrentDirInfo.myIsWrittenOut = true;
+        }        
+    }
+
     public void changeFileProperty(String path, String name, String value) throws SVNException {
+    }
+
+    public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
     }
 
     public void closeDir() throws SVNException {
@@ -255,8 +266,8 @@ public class SVNDumpEditor implements ISVNEditor {
             String propContents = null;
             if (mustDumpProps) {
                 FSRevisionNode node = myRoot.getRevisionNode(canonicalPath);
-                Map props = node.getProperties(myFSFS);
-                Map oldProps = null;
+                SVNProperties props = node.getProperties(myFSFS);
+                SVNProperties oldProps = null;
                 if (myUseDeltas && compareRoot != null) {
                     FSRevisionNode cmpNode = myRoot.getRevisionNode(comparePath);
                     oldProps = cmpNode.getProperties(myFSFS);

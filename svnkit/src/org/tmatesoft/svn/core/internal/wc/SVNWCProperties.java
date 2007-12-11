@@ -29,20 +29,22 @@ import java.util.TreeSet;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 
 
 /**
  * @version 1.1.1
  * @author  TMate Software Ltd.
  */
-public class SVNProperties {
+public class SVNWCProperties {
     public static final String SVN_HASH_TERMINATOR = "END";
     
     private File myFile;
 
     private String myPath;
 
-    public SVNProperties(File properitesFile, String path) {
+    public SVNWCProperties(File properitesFile, String path) {
         myFile = properitesFile;
         myPath = path;
     }
@@ -77,8 +79,8 @@ public class SVNProperties {
         return target;
     }
 
-    public Map asMap() throws SVNException {
-        Map result = new HashMap();
+    public SVNProperties asMap() throws SVNException {
+        SVNProperties result = new SVNProperties();
         if (isEmpty()) {
             return result;
         }
@@ -102,7 +104,7 @@ public class SVNProperties {
         return result;
     }
 
-    public boolean compareTo(SVNProperties properties,
+    public boolean compareTo(SVNWCProperties properties,
             ISVNPropertyComparator comparator) throws SVNException {
         boolean equals = true;
         Collection props1 = properties(null);
@@ -261,13 +263,17 @@ public class SVNProperties {
 
     public void setPropertyValue(String name, String value) throws SVNException {
         byte[] bytes = null;
-        if (value != null) {
-            try {
-                bytes = value.getBytes("UTF-8");
-            } catch (IOException e) {
-                bytes = value.getBytes();
-            }
+        try {
+            bytes = value == null ? null : value.getBytes("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            bytes = value.getBytes();
         }
+        int length = bytes != null && bytes.length >= 0 ? bytes.length : -1;
+        setPropertyValue(name, bytes != null ? new ByteArrayInputStream(bytes) : null, length);
+    }
+
+    public void setPropertyValue(String name, SVNPropertyValue value) throws SVNException {
+        byte[] bytes = value == null ? null : value.getBytes();
         int length = bytes != null && bytes.length >= 0 ? bytes.length : -1;
         setPropertyValue(name, bytes != null ? new ByteArrayInputStream(bytes) : null, length);
     }
@@ -300,17 +306,17 @@ public class SVNProperties {
         }
     }
 
-    public void setProperties(Map properties) throws SVNException {
+    public void setProperties(SVNProperties properties) throws SVNException {
         if (properties != null) {
-            for (Iterator names = properties.keySet().iterator(); names.hasNext();) {
+            for (Iterator names = properties.nameSet().iterator(); names.hasNext();) {
                 String name = (String) names.next();
-                String value = (String) properties.get(name);
+                SVNPropertyValue value = properties.getSVNPropertyValue(name);
                 setPropertyValue(name, value);
             }
         }
     }
     
-    public Map compareTo(SVNProperties properties) throws SVNException {
+    public Map compareTo(SVNWCProperties properties) throws SVNException {
         final Map locallyChangedProperties = new HashMap();
         compareTo(properties, new ISVNPropertyComparator() {
             public void propertyAdded(String name, InputStream value, int length) {
@@ -341,7 +347,7 @@ public class SVNProperties {
         return locallyChangedProperties;
     }
 
-    public void copyTo(SVNProperties destination) throws SVNException {
+    public void copyTo(SVNWCProperties destination) throws SVNException {
         if (isEmpty()) {
             SVNFileUtil.deleteFile(destination.getFile());
         } else {
@@ -353,7 +359,7 @@ public class SVNProperties {
         SVNFileUtil.deleteFile(getFile());
     }
 
-    public static void setProperties(Map namesToValues, File target, File tmpFile, String terminator) throws SVNException {
+    public static void setProperties(SVNProperties namesToValues, File target, File tmpFile, String terminator) throws SVNException {
         OutputStream dst = null;
         try {
             dst = SVNFileUtil.openFileForWriting(tmpFile);
@@ -367,21 +373,20 @@ public class SVNProperties {
         }
     }
 
-    public static void setProperties(Map namesToValues, OutputStream target, String terminator) throws SVNException {
+    public static void setProperties(SVNProperties namesToValues, OutputStream target, String terminator) throws SVNException {
         try {
-            Object[] keys = namesToValues.keySet().toArray();
+            Object[] keys = namesToValues.nameSet().toArray();
             Arrays.sort(keys);
-            for(int i = 0; i < keys.length; i++){
-                String propertyName = (String)keys[i];
+            for (int i = 0; i < keys.length; i++) {
+                String propertyName = (String) keys[i];
                 writeProperty(target, 'K', propertyName.getBytes("UTF-8"));
-                String propertyValue = (String)namesToValues.get(propertyName);
-                writeProperty(target, 'V', propertyValue.getBytes("UTF-8"));
+                writeProperty(target, 'V', namesToValues.getBinaryValue(propertyName));
             }
-            if(terminator != null){
+            if (terminator != null) {
                 target.write(terminator.getBytes("UTF-8"));
                 target.write('\n');
             }
-        }catch(IOException ioe){    
+        } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
             SVNErrorManager.error(err, ioe);
         }

@@ -11,7 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -20,6 +19,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
@@ -266,8 +266,8 @@ public class SVNAdminDeltifier {
                             String.valueOf(committedRevision));
                 }
                 
-                Map revisionProps = myFSFS.getRevisionProperties(committedRevision);
-                String committedDateStr = (String) revisionProps.get(SVNRevisionProperty.DATE);
+                SVNProperties revisionProps = myFSFS.getRevisionProperties(committedRevision);
+                String committedDateStr = revisionProps.getStringValue(SVNRevisionProperty.DATE);
                 if (committedDateStr != null || srcPath != null) {
                     if (isDir) {
                         myEditor.changeDirProperty(SVNProperty.COMMITTED_DATE, committedDateStr);
@@ -276,7 +276,7 @@ public class SVNAdminDeltifier {
                                 committedDateStr);
                     }
                 }
-                String lastAuthor = (String) revisionProps.get(SVNRevisionProperty.AUTHOR);
+                String lastAuthor = revisionProps.getStringValue(SVNRevisionProperty.AUTHOR);
                 if (lastAuthor != null || srcPath != null) {
                     if (isDir) {
                         myEditor.changeDirProperty(SVNProperty.LAST_AUTHOR, lastAuthor);
@@ -296,7 +296,7 @@ public class SVNAdminDeltifier {
         
         FSRevisionNode targetNode = tgtRoot.getRevisionNode(tgtPath);
 
-        Map sourceProps = null;
+        SVNProperties sourceProps = null;
         if (srcPath != null) {
             FSRevisionNode sourceNode = srcRoot.getRevisionNode(srcPath);
             boolean propsChanged = !FSRepositoryUtil.arePropertiesEqual(sourceNode, targetNode);
@@ -305,15 +305,15 @@ public class SVNAdminDeltifier {
             }
             sourceProps = sourceNode.getProperties(myFSFS);
         } else {
-            sourceProps = new HashMap();
+            sourceProps = new SVNProperties();
         }
 
-        Map targetProps = targetNode.getProperties(myFSFS);
-        Map propsDiffs = FSRepositoryUtil.getPropsDiffs(sourceProps, targetProps);
-        Object[] names = propsDiffs.keySet().toArray();
+        SVNProperties targetProps = targetNode.getProperties(myFSFS);
+        SVNProperties propsDiffs = FSRepositoryUtil.getPropsDiffs(sourceProps, targetProps);
+        Object[] names = propsDiffs.nameSet().toArray();
         for (int i = 0; i < names.length; i++) {
             String propName = (String) names[i];
-            String propValue = (String) propsDiffs.get(propName);
+            String propValue = propsDiffs.getStringValue(propName);
             if (isDir) {
                 myEditor.changeDirProperty(propName, propValue);
             } else {

@@ -20,6 +20,7 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaReader;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -39,14 +40,14 @@ public class SVNEditModeReader {
         COMMANDS_MAP.put("delete-entry", "s(?r)s");
         COMMANDS_MAP.put("add-dir", "sss(?sr)");
         COMMANDS_MAP.put("open-dir", "sss(?r)");
-        COMMANDS_MAP.put("change-dir-prop", "ss(?s)");
+        COMMANDS_MAP.put("change-dir-prop", "ss(?с)");
         COMMANDS_MAP.put("close-dir", "s");
         COMMANDS_MAP.put("add-file", "sss(?sr)");
         COMMANDS_MAP.put("open-file", "sss(?r)");
         COMMANDS_MAP.put("apply-textdelta", "s(?c)");
         COMMANDS_MAP.put("textdelta-chunk", "sc");
         COMMANDS_MAP.put("textdelta-end", "s");
-        COMMANDS_MAP.put("change-file-prop", "ss(?s)");
+        COMMANDS_MAP.put("change-file-prop", "ss(?с)");
         COMMANDS_MAP.put("close-file", "s(?c)");
         COMMANDS_MAP.put("close-edit", "()");
         COMMANDS_MAP.put("abort-edit", "()");
@@ -116,7 +117,8 @@ public class SVNEditModeReader {
             storeToken(SVNReader.getString(params, 2), false);
         } else if ("change-dir-prop".equals(commandName)) {
             lookupToken(SVNReader.getString(params, 0), false);
-            myEditor.changeDirProperty(SVNReader.getString(params, 1), SVNReader.getString(params, 2));
+            byte[] bytes = SVNReader.getBytes(params, 2);
+            myEditor.changeDirProperty(SVNReader.getString(params, 1), bytes == null ? null : new SVNPropertyValue(bytes));
         } else if ("close-dir".equals(commandName)) {
             String token = SVNReader.getString(params, 0);
             lookupToken(token, false);
@@ -140,7 +142,8 @@ public class SVNEditModeReader {
             myFilePath = path;
         } else if ("change-file-prop".equals(commandName)) {
             lookupToken(SVNReader.getString(params, 0), true);
-            myEditor.changeFileProperty(myFilePath, SVNReader.getString(params, 1), SVNReader.getString(params, 2));
+            byte[] bytes = SVNReader.getBytes(params, 2);
+            myEditor.changeFileProperty(myFilePath, SVNReader.getString(params, 1), bytes == null ? null : new SVNPropertyValue(bytes));
         } else if ("close-file".equals(commandName)) {
             String token = SVNReader.getString(params, 0);
             lookupToken(token, true);
