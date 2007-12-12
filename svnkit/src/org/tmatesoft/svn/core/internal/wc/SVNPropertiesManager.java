@@ -184,7 +184,7 @@ public class SVNPropertiesManager {
         SVNVersionedProperties properties = dir.getProperties(entry.getName());
         SVNPropertyValue oldValue = properties.getPropertyValue(propName);
         if (!updateTimeStamp && (entry.getKind() == SVNNodeKind.FILE && SVNProperty.KEYWORDS.equals(propName))) {
-            Collection oldKeywords = getKeywords(oldValue.getString());
+            Collection oldKeywords = getKeywords(oldValue == null ? null : oldValue.getString());
             Collection newKeywords = getKeywords(propValue == null ? null : propValue.getString());
             updateTimeStamp = !oldKeywords.equals(newKeywords); 
         }
@@ -315,9 +315,9 @@ public class SVNPropertiesManager {
                 SVNDepth.EMPTY, base); 
 
         Map result = null;
-        String propValue = (String) fileToProp.get(path);
-        if (propValue != null) {
-            result = SVNMergeInfoManager.parseMergeInfo(new StringBuffer(propValue), result);
+        SVNPropertyValue propValue = (SVNPropertyValue) fileToProp.get(path);
+        if (propValue != null && propValue.getString() != null) {
+            result = SVNMergeInfoManager.parseMergeInfo(new StringBuffer(propValue.getString()), result);
         }
         return result;
     }

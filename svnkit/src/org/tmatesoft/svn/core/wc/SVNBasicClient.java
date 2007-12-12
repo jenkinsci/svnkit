@@ -36,6 +36,7 @@ import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -588,7 +589,7 @@ public class SVNBasicClient implements ISVNEventHandler {
             if (!entry.isScheduledForAddition()) {
                 Map fileToProp = SVNPropertiesManager.getWorkingCopyPropertyValues(path, entry, 
                         SVNProperty.MERGE_INFO, SVNDepth.EMPTY, true);
-                String mergeInfoProp = (String) fileToProp.get(path);
+                SVNPropertyValue mergeInfoProp = (SVNPropertyValue) fileToProp.get(path);
                 if (mergeInfoProp == null) {
                     boolean closeRepository = false;
                     Map pathToMergeInfo = null;
