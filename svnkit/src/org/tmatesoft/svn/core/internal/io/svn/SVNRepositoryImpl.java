@@ -293,6 +293,21 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         return count;
     }
 
+    //TODO: implement
+    public long getLocationSegments(String path, long pegRevision, long startRevision, long endRevision, ISVNLocationSegmentHandler handler) throws SVNException {
+        try {
+            openConnection();
+            
+        } catch (SVNException e) {
+            closeSession();
+            handleUnsupportedCommand(e, "'get-location-segments' not implemented");
+        } finally {
+            closeConnection();
+        }
+        return 0;
+        //        return count;
+    }
+
     public long getFile(String path, long revision, SVNProperties properties, OutputStream contents) throws SVNException {
         Long rev = revision > 0 ? new Long(revision) : null;
         try {
@@ -1497,8 +1512,4 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         return editor;
     }
 
-    //TODO: implement
-    public long getLocationSegments(String path, long pegRevision, long startRevision, long endRevision, ISVNLocationSegmentHandler handler) throws SVNException {
-        return 0;
-    }
 }

@@ -43,6 +43,7 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVDateRevisionHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVEditorHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVFileRevisionHandler;
+import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVLocationSegmentsHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVLocationsHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVLogHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVMergeInfoHandler;
@@ -680,6 +681,42 @@ public class DAVRepository extends SVNRepository {
         }
     }
 
+    public long getLocationSegments(String path, long pegRevision, long startRevision, long endRevision, ISVNLocationSegmentHandler handler) throws SVNException {
+        try {
+            openConnection();
+            if (path.startsWith("/")) {
+                // (root + path), relative to location
+                myConnection.fetchRepositoryRoot(this);
+                path = SVNPathUtil.append(myRepositoryRoot.getPath(), path);
+                if (path.equals(getLocation().getPath())) {
+                    path = "";
+                } else {
+                    path = path.substring(getLocation().getPath().length() + 1);
+                }
+            }
+
+            StringBuffer request = DAVLocationSegmentsHandler.generateGetLocationSegmentsRequest(null, path, 
+                    pegRevision, startRevision, endRevision); 
+            DAVLocationSegmentsHandler davHandler = new DAVLocationSegmentsHandler(handler);
+            String root = getLocation().getPath();
+            root = SVNEncodingUtil.uriEncode(root);
+            DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, this, root, pegRevision, false, 
+                    false, null);            
+            path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
+            HTTPStatus status = myConnection.doReport(path, request, davHandler);
+            if (status.getCode() == 501) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, 
+                        "'get-location-segments' REPORT not implemented");
+                SVNErrorManager.error(err, status.getError());
+            } else if (status.getError() != null) {
+                SVNErrorManager.error(status.getError());
+            }
+            return davHandler.getTotalRevisions();
+        } finally {
+            closeConnection();
+        }
+    }
+
     public void replay(long lowRevision, long highRevision, boolean sendDeltas, ISVNEditor editor) throws SVNException {
         try {
             openConnection();
@@ -1104,18 +1141,6 @@ public class DAVRepository extends SVNRepository {
         } finally {
             closeConnection();
         }
-    }
-
-    //TODO: implement
-    public long getLocationSegments(String path, long pegRevision, long startRevision, long endRevision, ISVNLocationSegmentHandler handler) throws SVNException {
-        try {
-            openConnection();
-            
-        } finally {
-            closeConnection();
-        }
-        
-        return 0;
     }
 
 }

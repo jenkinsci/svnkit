@@ -11,11 +11,16 @@
  */
 package org.tmatesoft.svn.core.internal.io.dav.handlers;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
 import org.tmatesoft.svn.core.io.ISVNLocationSegmentHandler;
+import org.tmatesoft.svn.core.io.SVNLocationSegment;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.xml.sax.Attributes;
 
@@ -27,9 +32,9 @@ import org.xml.sax.Attributes;
 public class DAVLocationSegmentsHandler extends BasicDAVHandler {
     private static final DAVElement LOCATION_SEGMENTS_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, 
             "get-location-segments-report");
+    private static final DAVElement LOCATION_SEGMENT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, 
+            "location-segment");
 
-    private ISVNLocationSegmentHandler myLocationSegmentHandler;
-    private int myCount;
 
     public static StringBuffer generateGetLocationSegmentsRequest(StringBuffer xmlBuffer, String path, 
             long pegRevision, long startRevision, long endRevision) {
@@ -54,10 +59,47 @@ public class DAVLocationSegmentsHandler extends BasicDAVHandler {
         return xmlBuffer;
     }
     
-    protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
+    private ISVNLocationSegmentHandler myLocationSegmentHandler;
+    private long myCount;
+
+    public DAVLocationSegmentsHandler(ISVNLocationSegmentHandler handler) {
+        myLocationSegmentHandler = handler;
+        init();
     }
 
+    public long getTotalRevisions() {
+        return myCount;
+    }
+    
     protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
+        if (parent == LOCATION_SEGMENTS_REPORT && element == LOCATION_SEGMENT) {
+            long rangeStart = SVNRepository.INVALID_REVISION;
+            long rangeEnd = SVNRepository.INVALID_REVISION;
+            String path = attrs.getValue("path");
+            String revStr = attrs.getValue("range-start");
+            if (revStr != null) {
+                rangeStart = Long.parseLong(revStr);
+            }
+            revStr = attrs.getValue("range-end");
+            if (revStr != null) {
+                rangeEnd = Long.parseLong(revStr);
+            }
+            
+            if (SVNRevision.isValidRevisionNumber(rangeStart) && SVNRevision.isValidRevisionNumber(rangeEnd)) {
+                if (myLocationSegmentHandler != null) {
+                    myLocationSegmentHandler.handleLocationSegment(new SVNLocationSegment(rangeStart, rangeEnd, 
+                            path));
+                    myCount = rangeEnd - rangeStart + 1;
+                }
+            } else {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
+                        "Expected valid revision range");
+                SVNErrorManager.error(err);
+            }
+        }
+    }
+
+    protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
     }
 
 }
