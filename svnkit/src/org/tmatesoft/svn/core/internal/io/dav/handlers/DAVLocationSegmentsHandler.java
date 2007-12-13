@@ -17,7 +17,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
 import org.tmatesoft.svn.core.io.ISVNLocationSegmentHandler;
 import org.tmatesoft.svn.core.io.SVNLocationSegment;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -89,7 +88,7 @@ public class DAVLocationSegmentsHandler extends BasicDAVHandler {
                 if (myLocationSegmentHandler != null) {
                     myLocationSegmentHandler.handleLocationSegment(new SVNLocationSegment(rangeStart, rangeEnd, 
                             path));
-                    myCount = rangeEnd - rangeStart + 1;
+                    myCount += rangeEnd - rangeStart + 1;
                 }
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 

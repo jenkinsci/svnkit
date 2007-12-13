@@ -65,6 +65,7 @@ import org.tmatesoft.svn.core.io.ISVNSession;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
+import org.tmatesoft.svn.core.io.SVNLocationSegment;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
@@ -293,19 +294,52 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         return count;
     }
 
-    //TODO: implement
     public long getLocationSegments(String path, long pegRevision, long startRevision, long endRevision, ISVNLocationSegmentHandler handler) throws SVNException {
+        long count = 0;
         try {
             openConnection();
-            
+            path = getRepositoryPath(path);
+            Object[] buffer = new Object[] { "get-location-segments", path, getRevisionObject(pegRevision), 
+                    getRevisionObject(startRevision), getRevisionObject(endRevision) };
+            write("(w(s(n)(n)(n)))", buffer);
+            authenticate();
+            boolean isDone = false;
+            while (!isDone) {
+                SVNItem item = readItem(true);
+                if (item.getKind() == SVNItem.WORD && "done".equals(item.getWord())) {
+                    isDone = true;
+                } else if (item.getKind() != SVNItem.LIST) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, 
+                            "Location segment entry not a list");
+                    SVNErrorManager.error(err);
+                } else {
+                    List segmentAttrs = SVNReader.parseTuple("rr(?c)", item.getItems(), null);
+                    long rangeStartRevision = SVNReader.getLong(segmentAttrs, 0);
+                    long rangeEndRevision = SVNReader.getLong(segmentAttrs, 1);
+                    String rangePath = SVNReader.getString(segmentAttrs, 2);
+                    if (SVNRepository.isInvalidRevision(rangeStartRevision) || 
+                            SVNRepository.isInvalidRevision(endRevision)) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, 
+                                "Expected valid revision range");
+                        SVNErrorManager.error(err);
+                    }
+                    if (rangePath != null) {
+                        rangePath = SVNPathUtil.canonicalizePath(path);    
+                    }
+                    if (handler != null) {
+                        handler.handleLocationSegment(new SVNLocationSegment(rangeStartRevision, rangeEndRevision,
+                                rangePath));
+                    }
+                    count += rangeEndRevision - rangeStartRevision + 1;
+                }
+            }
         } catch (SVNException e) {
             closeSession();
             handleUnsupportedCommand(e, "'get-location-segments' not implemented");
         } finally {
             closeConnection();
         }
-        return 0;
-        //        return count;
+        return count;
     }
 
     public long getFile(String path, long revision, SVNProperties properties, OutputStream contents) throws SVNException {
