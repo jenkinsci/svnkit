@@ -40,14 +40,14 @@ public class SVNEditModeReader {
         COMMANDS_MAP.put("delete-entry", "s(?r)s");
         COMMANDS_MAP.put("add-dir", "sss(?sr)");
         COMMANDS_MAP.put("open-dir", "sss(?r)");
-        COMMANDS_MAP.put("change-dir-prop", "ss(?с)");
+        COMMANDS_MAP.put("change-dir-prop", "ss(?c)");
         COMMANDS_MAP.put("close-dir", "s");
         COMMANDS_MAP.put("add-file", "sss(?sr)");
         COMMANDS_MAP.put("open-file", "sss(?r)");
         COMMANDS_MAP.put("apply-textdelta", "s(?c)");
         COMMANDS_MAP.put("textdelta-chunk", "sc");
         COMMANDS_MAP.put("textdelta-end", "s");
-        COMMANDS_MAP.put("change-file-prop", "ss(?с)");
+        COMMANDS_MAP.put("change-file-prop", "ss(?c)");
         COMMANDS_MAP.put("close-file", "s(?c)");
         COMMANDS_MAP.put("close-edit", "()");
         COMMANDS_MAP.put("abort-edit", "()");
