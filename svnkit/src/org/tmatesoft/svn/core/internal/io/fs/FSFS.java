@@ -1014,9 +1014,9 @@ public class FSFS {
         SVNProperties revProps = getRevisionProperties(revision);
         String uuid = getUUID();
         String rev = String.valueOf(revision);
-        
-        metaProperties.copyValue(revProps, SVNRevisionProperty.AUTHOR);
-        metaProperties.copyValue(revProps, SVNRevisionProperty.DATE);
+
+        metaProperties.put(SVNProperty.LAST_AUTHOR, revProps.getStringValue(SVNRevisionProperty.AUTHOR));
+        metaProperties.put(SVNProperty.COMMITTED_DATE, revProps.getStringValue(SVNRevisionProperty.DATE));        
 
         metaProperties.put(SVNProperty.COMMITTED_REVISION, rev);
         metaProperties.put(SVNProperty.UUID, uuid);
