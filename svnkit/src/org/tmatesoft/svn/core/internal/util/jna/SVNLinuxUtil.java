@@ -62,7 +62,7 @@ class SVNLinuxUtil {
                     return SVNFileType.NONE;
                 }
                 int mode = SVNFileUtil.isOSX || SVNFileUtil.isBSD ?
-                        ourSharedMemory.getInt(8) : ourSharedMemory.getInt(16);
+                        ourSharedMemory.getShort(8) : ourSharedMemory.getInt(16);
                 int type = mode & 0170000;
                 if (type == 0120000) {
                     return SVNFileType.SYMLINK;
