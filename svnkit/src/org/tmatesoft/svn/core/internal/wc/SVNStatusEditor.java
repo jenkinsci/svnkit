@@ -344,10 +344,10 @@ public class SVNStatusEditor {
                 repositoryLock = getLock(url);
             }
         }
+        SVNFileType fileType = SVNFileType.getType(file);
+        special = SVNFileUtil.isWindows ? false : fileType == SVNFileType.SYMLINK;
         if (fileKind == SVNNodeKind.UNKNOWN || fileKind == null) {
-            SVNFileType fileType = SVNFileType.getType(file);
             fileKind = SVNFileType.getNodeKind(fileType);
-            special = SVNFileUtil.isWindows ? false : fileType == SVNFileType.SYMLINK;
         }
         if (entry == null) {
             SVNStatus status = new SVNStatus(null, file, SVNNodeKind.NONE,
@@ -359,7 +359,6 @@ public class SVNStatusEditor {
                     repositoryLock, null, null);
             status.setRemoteStatus(SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, repositoryLock, SVNNodeKind.NONE);
             SVNStatusType text = SVNStatusType.STATUS_NONE;
-            SVNFileType fileType = SVNFileType.getType(file);
             if (fileType != SVNFileType.NONE) {
                 text = isIgnored ? SVNStatusType.STATUS_IGNORED : SVNStatusType.STATUS_UNVERSIONED;
             }

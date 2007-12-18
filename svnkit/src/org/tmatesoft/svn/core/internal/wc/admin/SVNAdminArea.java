@@ -142,7 +142,8 @@ public abstract class SVNAdminArea {
 
     public boolean hasTextModifications(String name, boolean forceComparison, boolean compareTextBase, boolean compareChecksum) throws SVNException {
         SVNEntry entry = getEntry(name, false);
-        if (!forceComparison) {
+        SVNFileType fType = SVNFileType.getType(getFile(name));
+        if (!forceComparison && fType != SVNFileType.SYMLINK) {
             if (entry == null || entry.isDirectory()) {
                 return false;
             }
@@ -156,7 +157,6 @@ public abstract class SVNAdminArea {
                 }
             }
         }
-        SVNFileType fType = SVNFileType.getType(getFile(name));
         if (fType != SVNFileType.FILE && fType != SVNFileType.SYMLINK) {
             return false;
         }
@@ -210,8 +210,8 @@ public abstract class SVNAdminArea {
                         byte[] eols = SVNTranslator.getBaseEOL(eolStyle);
                         textStream = new SVNTranslatorInputStream(textStream, eols, false, keywordsMap, false);
                     } else {
-                        String tmpPath = SVNAdminUtil.getTextBasePath(text.getName(), true);
-                        tmpFile = getFile(tmpPath);
+                        tmpFile = SVNFileUtil.createUniqueFile(getAdminFile("tmp/text-base"), text.getName(), ".tmp");
+                        String tmpPath = SVNFileUtil.getBasePath(tmpFile);
                         SVNTranslator.translate(this, text.getName(), text.getName(), tmpPath, false);
                         textStream = SVNFileUtil.openFileForReading(getFile(tmpPath));
                     }

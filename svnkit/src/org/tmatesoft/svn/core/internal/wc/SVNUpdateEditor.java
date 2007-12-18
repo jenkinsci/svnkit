@@ -444,6 +444,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         Map modifiedProps = myCurrentFile.getChangedProperties();
         String name = myCurrentFile.Name;
         String commitTime = myCurrentFile.CommitTime;
+        boolean isLocallyModified = !myCurrentFile.IsAdded && adminArea.hasTextModifications(name, false);
 
         Map command = new HashMap();
 
@@ -477,7 +478,6 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             log.logChangedWCProperties(name, modifiedWCProps);
         }
 
-        boolean isLocallyModified = !myCurrentFile.IsAdded && adminArea.hasTextModifications(name, false);
         boolean isReplaced = false;
         boolean useRevertBase = false;
         if (!isLocallyModified) {
@@ -496,7 +496,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         if (useRevertBase) {
             textTmpBase = adminArea.getFile(SVNAdminUtil.getTextRevertPath(name, true));
         } else {
-            textTmpBase = adminArea.getBaseFile(name, true);;
+            textTmpBase = adminArea.getBaseFile(name, true);
         }
         File workingFile = adminArea.getFile(name);
         String tmpPath = null;
