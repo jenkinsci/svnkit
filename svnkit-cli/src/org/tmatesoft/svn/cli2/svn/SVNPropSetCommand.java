@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.io.UnsupportedEncodingException;
 
 import org.tmatesoft.svn.cli2.SVNCommandUtil;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -74,24 +75,38 @@ public class SVNPropSetCommand extends SVNPropertiesCommand {
             SVNErrorManager.error(err);
         }
 
-        SVNPropertyValue propertyValue = null;        
-        if (getSVNEnvironment().getFileData() != null) {
-            propertyValue = new SVNPropertyValue(getSVNEnvironment().getFileData());            
-        } else {
-            propertyValue = new SVNPropertyValue(getSVNEnvironment().popArgument());
-        }
-        
+        String encoding = null;
         if (SVNPropertiesManager.propNeedsTranslation(propertyName)) {
-            String encoding = getSVNEnvironment().getEncoding();
+            encoding = getSVNEnvironment().getEncoding();
             if (encoding == null) {
                 encoding = "UTF-8";
             }
-            propertyValue = new SVNPropertyValue(propertyValue.getString(encoding));
         } else {
-            if (getSVNEnvironment().getEncoding() != null){
+            if (getSVNEnvironment().getEncoding() != null) {
                 SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
-                        "''{}'' is not a valid Subversion property name", new Object[]{propertyName});
-                SVNErrorManager.error(errorMessage);                
+                        "Bad encoding option: prop value not stored as UTF8");
+                SVNErrorManager.error(errorMessage);
+            }
+        }
+
+        SVNPropertyValue propertyValue = null;
+        if (encoding != null) {
+            if (getSVNEnvironment().getFileData() != null) {
+                String stringValue = null;
+                try {
+                    stringValue = new String(getSVNEnvironment().getFileData(), encoding);
+                } catch (UnsupportedEncodingException e) {
+                    stringValue = new String(getSVNEnvironment().getFileData());
+                }
+                propertyValue = new SVNPropertyValue(stringValue);                
+            } else {
+                propertyValue = new SVNPropertyValue(getSVNEnvironment().popArgument());
+            }
+        } else {
+            if (getSVNEnvironment().getFileData() != null) {
+                propertyValue = new SVNPropertyValue(getSVNEnvironment().getFileData());
+            } else {
+                propertyValue = new SVNPropertyValue(getSVNEnvironment().popArgument().getBytes());
             }
         }
 
