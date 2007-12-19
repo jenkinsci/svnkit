@@ -13,11 +13,12 @@ package org.tmatesoft.svn.core;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
 
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 
 /**
@@ -44,6 +45,7 @@ public class SVNPropertyValue {
 
     public SVNPropertyValue(String value) {
         myValue = value;
+        myIsBinary = Boolean.FALSE;
     }
 
     public boolean isBinary() {
@@ -175,9 +177,9 @@ public class SVNPropertyValue {
         if (obj instanceof SVNPropertyValue) {
             SVNPropertyValue value = (SVNPropertyValue) obj;
             if (myValue != null) {
-                return myValue.equals(value.myValue);
+                return myValue.equals(value.getString());
             } else if (myData != null) {
-                return myData.equals(value.myData);
+                return Arrays.equals(myData, value.getBytes());
             }
         }
         return false;
