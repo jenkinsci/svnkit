@@ -21,9 +21,7 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.TreeSet;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -91,7 +89,7 @@ public class SVNWCProperties {
                 String name = new String(nameOS.toByteArray(), "UTF-8");
                 nameOS.reset();
                 readProperty('V', is, nameOS);
-                String value = new String(nameOS.toByteArray(), "UTF-8");
+                byte[] value = nameOS.toByteArray();
                 result.put(name, value);
                 nameOS.reset();
             }
@@ -316,8 +314,8 @@ public class SVNWCProperties {
         }
     }
     
-    public Map compareTo(SVNWCProperties properties) throws SVNException {
-        final Map locallyChangedProperties = new HashMap();
+    public SVNProperties compareTo(SVNWCProperties properties) throws SVNException {
+        final SVNProperties locallyChangedProperties = new SVNProperties();
         compareTo(properties, new ISVNPropertyComparator() {
             public void propertyAdded(String name, InputStream value, int length) {
                 propertyChanged(name, value, length);
@@ -341,7 +339,7 @@ public class SVNWCProperties {
             }
 
             public void propertyDeleted(String name) {
-                locallyChangedProperties.put(name, null);
+                locallyChangedProperties.put(name, (SVNPropertyValue) null);
             }
         });
         return locallyChangedProperties;

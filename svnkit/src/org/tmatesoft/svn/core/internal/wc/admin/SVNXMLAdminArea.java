@@ -878,7 +878,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         if (tmpPropsType == SVNFileType.FILE) {
             SVNWCProperties working = new SVNWCProperties(wcPropsFile, null);
             SVNWCProperties workingTmp = new SVNWCProperties(tmpPropsFile, null);
-            Map pDiff = working.compareTo(workingTmp);
+            SVNProperties pDiff = working.compareTo(workingTmp);
             boolean equals = pDiff == null || pDiff.isEmpty();
             propTime = equals ? wcPropsFile.lastModified() : tmpPropsFile.lastModified();
 
