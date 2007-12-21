@@ -836,6 +836,13 @@ public abstract class SVNAdminArea {
             }
             
         }
+        // remove cached props from this
+        if (myBaseProperties != null) {
+            myBaseProperties.remove(name);
+        }
+        if (myProperties != null) {
+            myProperties.remove(name);
+        }
         if (leftSomething && myCommitParameters == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LEFT_LOCAL_MOD);
             SVNErrorManager.error(err);
