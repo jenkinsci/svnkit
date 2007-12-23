@@ -87,6 +87,7 @@ import org.tmatesoft.svn.util.Version;
 
 import org.tigris.subversion.javahl.BlameCallback;
 import org.tigris.subversion.javahl.BlameCallback2;
+import org.tigris.subversion.javahl.ChangelistCallback;
 import org.tigris.subversion.javahl.ClientException;
 import org.tigris.subversion.javahl.CommitItem;
 import org.tigris.subversion.javahl.CommitMessage;
@@ -1612,6 +1613,11 @@ public class SVNClientImpl implements SVNClientInterface {
             return paths;
         }
         return new String[]{};
+    }
+
+    public void getChangelists(String rootPath, String[] changelists, int depth, ChangelistCallback callback) throws ClientException {
+        //TODO: fixme
+        notImplementedYet(null);
     }
 
     public void removeFromChangelist(String[] paths, String changelist) throws ClientException {

@@ -402,6 +402,10 @@ public class SVNClient implements SVNClientInterface {
         return myDelegate.getChangelist(changelist, rootPath);
     }
 
+    public void getChangelists(String rootPath, String[] changelists, int depth, ChangelistCallback callback) throws ClientException {
+        myDelegate.getChangelists(rootPath, changelists, depth, callback);
+    }
+
     public void removeFromChangelist(String[] paths, String changelist) throws ClientException {
         myDelegate.removeFromChangelist(paths, changelist);
     }
@@ -541,4 +545,5 @@ public class SVNClient implements SVNClientInterface {
             boolean force, int depth, boolean ignoreAncestry, boolean dryRun, boolean recordOnly) throws ClientException {
         myDelegate.merge(path, pegRevision, revisions, localPath, force, depth, ignoreAncestry, dryRun, recordOnly);
     }
+
 }

@@ -112,7 +112,9 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
             
             boolean performedEdit = false;
             boolean diffAllowed = false;
-            File path = files.getTargetFile();
+            String path = mySVNEnvironment.getRelativePath(files.getTargetFile());
+            path = SVNCommandUtil.getLocalPath(path);
+
             if (conflictDescription.isPropertyConflict()) {
                 String message = "Property conflict for ''{0}'' discovered on ''{1}''.";
                 message = MessageFormat.format(message, new Object[] { conflictDescription.getPropertyName(), 
@@ -155,8 +157,18 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                     message += ", (r)esolved";
                 }
                 message += ", (h)elp for more options : ";
-                String answer = SVNCommandUtil.prompt(message);
-                if ("h".equalsIgnoreCase(answer) || "?".equals(answer)) {
+                String answer = SVNCommandUtil.prompt(message, mySVNEnvironment, false);
+                char answerChar = '\0';
+                if (answer != null) {
+                    if (answer.length() == 1) {
+                        answer = answer.toLowerCase();
+                        answerChar = answer.charAt(0);
+                    } else {
+                        continue;
+                    }
+                    
+                }
+                if (answerChar == 'h' || answerChar == '?') {
                     mySVNEnvironment.getErr().println("  (p)ostpone - mark the conflict to be resolved later");
                     mySVNEnvironment.getErr().println("  (d)iff     - show all changes made to merged file");
                     mySVNEnvironment.getErr().println("  (e)dit     - change merged file in an editor");
@@ -166,19 +178,19 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                     mySVNEnvironment.getErr().println("  (h)elp     - show this list");
                     mySVNEnvironment.getErr().println();
                 }
-                if ("p".equalsIgnoreCase(answer)) {
+                if (answerChar == 'p') {
                     choice = SVNConflictChoice.POSTPONE;
                     break;
                 }
-                if ("m".equalsIgnoreCase(answer)) {
+                if (answerChar == 'm') {
                     choice = SVNConflictChoice.MINE;
                     break;
                 }
-                if ("t".equalsIgnoreCase(answer)) {
+                if (answerChar == 't') {
                     choice = SVNConflictChoice.THEIRS;
                     break;
                 }
-                if ("d".equalsIgnoreCase(answer)) {
+                if (answerChar == 'd') {
                     if (!diffAllowed) {
                         mySVNEnvironment.getErr().println("Invalid option; there's no merged version to diff.");
                         mySVNEnvironment.getErr().println();
@@ -200,7 +212,7 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                     diffGenerator.displayFileDiff("", path1, path2, null, null, null, null, System.out);
                     performedEdit = true;
                 }
-                if ("e".equalsIgnoreCase(answer)) {
+                if (answerChar == 'e') {
                     if (files.getResultFile() != null) {
                         try {
                             SVNCommandUtil.editFileExternally(mySVNEnvironment, mySVNEnvironment.getEditorCommand(), 
@@ -222,7 +234,7 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                         mySVNEnvironment.getErr().println();
                     }
                 }
-                if ("l".equalsIgnoreCase(answer)) {
+                if (answerChar == 'l') {
                     if (files.getBaseFile() != null && files.getLocalFile() != null && 
                             files.getRepositoryFile() != null && files.getResultFile() != null) {
                         try {
@@ -247,7 +259,7 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                         mySVNEnvironment.getErr().println();
                     }
                 }
-                if ("r".equalsIgnoreCase(answer)) {
+                if (answerChar == 'r') {
                     if (performedEdit) {
                         choice = SVNConflictChoice.MERGED;
                         break;
@@ -265,23 +277,33 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
             
             String prompt = "Select: (p)ostpone, (m)ine, (t)heirs, (h)elp :";
             while (true) {
-                String answer = SVNCommandUtil.prompt(prompt);
-                if ("h".equalsIgnoreCase(answer) || "?".equals(answer)) {
+                String answer = SVNCommandUtil.prompt(prompt, mySVNEnvironment, false);
+                char answerChar = '\0';
+                if (answer != null) {
+                    if (answer.length() == 1) {
+                        answer = answer.toLowerCase();
+                        answerChar = answer.charAt(0);
+                    } else {
+                        continue;
+                    }
+                }
+                 
+                if (answerChar == 'h' || answerChar == '?') {
                     mySVNEnvironment.getErr().println("  (p)ostpone - resolve the conflict later");
                     mySVNEnvironment.getErr().println("  (m)ine     - accept pre-existing item");
                     mySVNEnvironment.getErr().println("  (t)heirs   - accept incoming item");
                     mySVNEnvironment.getErr().println("  (h)elp     - show this list");
                     mySVNEnvironment.getErr().println();
                 }
-                if ("p".equalsIgnoreCase(answer)) {
+                if (answerChar == 'p') {
                     choice = SVNConflictChoice.POSTPONE;
                     break;
                 }
-                if ("m".equalsIgnoreCase(answer)) {
+                if (answerChar == 'm') {
                     choice = SVNConflictChoice.MINE;
                     break;
                 }
-                if ("t".equalsIgnoreCase(answer)) {
+                if (answerChar == 't') {
                     choice = SVNConflictChoice.THEIRS;
                     break;
                 }

@@ -21,6 +21,8 @@ import java.io.OutputStream;
 import java.text.MessageFormat;
 import java.util.Iterator;
 
+import org.tmatesoft.svn.cli2.svn.SVNCommandEnvironment;
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -28,6 +30,7 @@ import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.Version;
 
 
@@ -174,17 +177,25 @@ public class SVNCommandUtil {
         }
     }
     
-    public static String prompt(String promptMessage) {
+    public static String prompt(String promptMessage, SVNCommandEnvironment env, boolean hide) throws SVNException {
         System.out.print(promptMessage);
         System.out.flush();
+        String input = null;
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         try {
-            return reader.readLine();
+            input = reader.readLine();
+            if (input == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can't read stdin: End of file found");
+                SVNErrorManager.error(err);
+            }
         } catch (IOException e) {
-            return null;
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can't read stdin: {0}", 
+                    e.getLocalizedMessage());
+            SVNErrorManager.error(err);
         }
+        return input;
     }
-    
+
     private static String getEditorCommand(AbstractSVNCommandEnvironment env, String editorCommand) throws SVNException {
         if (editorCommand != null) {
             return editorCommand;
