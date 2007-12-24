@@ -108,6 +108,8 @@ public class SVNWCManager {
         }
         if (replace) {
             command.put(SVNProperty.shortPropertyName(SVNProperty.CHECKSUM), null);
+            command.put(SVNProperty.shortPropertyName(SVNProperty.HAS_PROP_MODS), null);
+            command.put(SVNProperty.shortPropertyName(SVNProperty.HAS_PROPS), null);
         }
         command.put(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE), SVNProperty.SCHEDULE_ADD);
         command.put(SVNProperty.shortPropertyName(SVNProperty.KIND), SVNFileType.getNodeKind(fileType).toString());

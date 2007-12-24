@@ -1286,12 +1286,16 @@ public class SVNWCClient extends SVNBasicClient {
                     recursive = true;
                 }
                 // check parent entry for schedule.
-                if (parent != dir) {
+                if (reverted && parent != dir) {
                     SVNEntry entryInParent = parent.getEntry(path.getName(), false);
-                    if (entryInParent.getSchedule() != null && notScheduled) {
+                    revert(parent, path.getName(), entryInParent, useCommitTimes);
+                    parent.saveEntries(false);
+                } else if (notScheduled && parent != dir) {
+                    SVNEntry entryInParent = parent.getEntry(path.getName(), false);
+                    if (entryInParent.getSchedule() != null) {
                         entryInParent.setSchedule(null);
                         parent.saveEntries(false);
-                    }
+                    }                    
                 }
             }
         }
@@ -2490,6 +2494,10 @@ public class SVNWCClient extends SVNBasicClient {
         }
         if (!force && SVNProperty.EOL_STYLE.equals(name)) {
             value = value.trim();
+            if (SVNTranslator.getEOL(value) == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_UNKNOWN_EOL, "Unrecognized line ending style ''{0}''", value);
+                SVNErrorManager.error(err);
+            }
         } else if (!force && SVNProperty.MIME_TYPE.equals(name)) {
             value = value.trim();
         } else if (SVNProperty.IGNORE.equals(name) || SVNProperty.EXTERNALS.equals(name)) {

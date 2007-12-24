@@ -758,11 +758,17 @@ public abstract class SVNAdminArea {
         if (isFile) {
             File path = getFile(name);
             boolean textModified = false;
+            boolean wasSpecial = false;
+            boolean isSpecial = false;
             if (deleteWorkingFiles) {
-                textModified = hasTextModifications(name, false);
-                if (reportInstantError && textModified) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LEFT_LOCAL_MOD, "File ''{0}'' has local modifications", path);
-                    SVNErrorManager.error(err);
+                wasSpecial = getProperties(name).containsProperty(SVNProperty.SPECIAL);
+                isSpecial = SVNFileType.getType(path) == SVNFileType.SYMLINK;
+                if (!(!wasSpecial && isSpecial)) {
+                    textModified = hasTextModifications(name, false);
+                    if (reportInstantError && textModified) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LEFT_LOCAL_MOD, "File ''{0}'' has local modifications", path);
+                        SVNErrorManager.error(err);
+                    }
                 }
             }
             SVNPropertiesManager.deleteWCProperties(this, name, false);
@@ -773,7 +779,7 @@ public abstract class SVNAdminArea {
             SVNFileUtil.deleteFile(getFile(SVNAdminUtil.getPropPath(name, isFile ? SVNNodeKind.FILE : SVNNodeKind.DIR, false)));
             SVNFileUtil.deleteFile(getFile(SVNAdminUtil.getPropBasePath(name, isFile ? SVNNodeKind.FILE : SVNNodeKind.DIR, false)));
             if (deleteWorkingFiles) {
-                if (textModified) {
+                if (textModified || (!wasSpecial && isSpecial)) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LEFT_LOCAL_MOD);
                     SVNErrorManager.error(err);
                 } else if (myCommitParameters == null || myCommitParameters.onFileDeletion(path)) {
@@ -1279,6 +1285,7 @@ public abstract class SVNAdminArea {
         SVNLog log = getLog();
         //
         String checksum = null;
+        Map command = new HashMap();
         if (!"".equals(target)) {
             File baseFile = getBaseFile(target, true);
             SVNFileType baseType = SVNFileType.getType(baseFile);
@@ -1289,11 +1296,23 @@ public abstract class SVNAdminArea {
             if (baseType == SVNFileType.FILE) {
                 checksum = SVNFileUtil.computeChecksum(baseFile);
             }
+            File textRevertFile = getFile(SVNAdminUtil.getTextRevertPath(target, false));
+            File propRevertFile = getFile(SVNAdminUtil.getPropRevertPath(target, SVNNodeKind.FILE, false));
+            if (textRevertFile.isFile()) {
+                command.put(SVNLog.NAME_ATTR, SVNAdminUtil.getTextRevertPath(target, false));
+                log.addCommand(SVNLog.DELETE, command, false);
+                command.clear();
+            }
+            if (propRevertFile.isFile()) {
+                command.put(SVNLog.NAME_ATTR, SVNAdminUtil.getPropRevertPath(target, SVNNodeKind.FILE, false));
+                log.addCommand(SVNLog.DELETE, command, false);
+                command.clear();
+            }
+            command.clear();
             recursive = false;
         } else {
 
         }
-        Map command = new HashMap();
         if (info != null) {
             command.put(SVNLog.NAME_ATTR, target);
             command.put(SVNProperty.shortPropertyName(SVNProperty.COMMITTED_REVISION), Long.toString(info.getNewRevision()));
