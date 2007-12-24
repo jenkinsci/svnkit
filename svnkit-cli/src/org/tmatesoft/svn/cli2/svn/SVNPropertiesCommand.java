@@ -131,7 +131,7 @@ public abstract class SVNPropertiesCommand extends SVNXMLCommand implements ISVN
             return;
         }
         String stringValue = value.getString().trim();
-        if ("".equals(value) || "off".equalsIgnoreCase(stringValue) || "no".equalsIgnoreCase(stringValue) || "false".equalsIgnoreCase(stringValue)) {
+        if ("".equals(stringValue) || "off".equalsIgnoreCase(stringValue) || "no".equalsIgnoreCase(stringValue) || "false".equalsIgnoreCase(stringValue)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_PROPERTY_VALUE, "To turn off the {0} property, use ''svn propdel'';\n" +
             		"setting the property to ''{1}'' will not turn it off.", new Object[] {name, value});
             getSVNEnvironment().handleWarning(err, new SVNErrorCode[] {SVNErrorCode.BAD_PROPERTY_VALUE},
