@@ -592,14 +592,18 @@ public class SVNCopyClient extends SVNBasicClient {
                 SVNURL srcURL = entry.getSVNURL();
 
                 Map mergeInfo = calculateTargetMergeInfo(new File(source.mySource), wcAccess, srcURL,  
-                        source.mySourceRevisionNumber, repos);
+                        source.mySourceRevisionNumber, repos, false);
                 
                 Map wcMergeInfo = SVNPropertiesManager.parseMergeInfo(new File(source.mySource), entry, false);
-                if (wcMergeInfo != null) {
+                if (wcMergeInfo != null && mergeInfo != null) {
                     mergeInfo = SVNMergeInfoManager.mergeMergeInfos(mergeInfo, wcMergeInfo);
+                } else if (mergeInfo == null) {
+                    mergeInfo = wcMergeInfo;
                 }
-                String mergeInfoString = SVNMergeInfoManager.formatMergeInfoToString(mergeInfo); 
-                item.setMergeInfoProp(mergeInfoString);
+                if (mergeInfo != null) {
+                    String mergeInfoString = SVNMergeInfoManager.formatMergeInfoToString(mergeInfo); 
+                    item.setMergeInfoProp(mergeInfoString);
+                }
             }
             commitItems = new ArrayList(allCommitables.values());
             // add parents to commits hash?
@@ -796,8 +800,11 @@ public class SVNCopyClient extends SVNBasicClient {
         
         for (Iterator infos = pathInfos.iterator(); infos.hasNext();) {
             CopyPathInfo info = (CopyPathInfo) infos.next();
-            Map mergeInfo = calculateTargetMergeInfo(null, null, SVNURL.parseURIEncoded(info.mySource), info.mySourceRevisionNumber, topRepos);
-            info.myMergeInfoProp = SVNMergeInfoManager.formatMergeInfoToString(mergeInfo);
+            Map mergeInfo = calculateTargetMergeInfo(null, null, SVNURL.parseURIEncoded(info.mySource), 
+                    info.mySourceRevisionNumber, topRepos, false);
+            if (mergeInfo != null) {
+                info.myMergeInfoProp = SVNMergeInfoManager.formatMergeInfoToString(mergeInfo);
+            }
             paths.add(info.myDstPath);
             if (isMove && !info.isResurrection) {
                 paths.add(info.mySourcePath);
@@ -980,7 +987,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 }
                 SVNAdminArea dir = dstAccess.getAdminArea(dstFile.getParentFile());
                 SVNWCManager.add(dstFile, dir, url, srcRevNum);
-                Map srcMergeInfo = calculateTargetMergeInfo(null, null, url, srcRevNum, topSrcRepos);
+                Map srcMergeInfo = calculateTargetMergeInfo(null, null, url, srcRevNum, topSrcRepos, false);
                 extendWCMergeInfo(dstFile, dstRootEntry, srcMergeInfo, dstAccess);
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Source URL ''{0}'' is from foreign repository; leaving it as a disjoint WC", url);
@@ -1011,7 +1018,7 @@ public class SVNCopyClient extends SVNBasicClient {
                     sameRepositories ? srcRevNum : -1);
 
             SVNEntry entry = dstAccess.getEntry(dst, false);
-            Map mergeInfo = calculateTargetMergeInfo(null, null, url, srcRevNum, topSrcRepos);
+            Map mergeInfo = calculateTargetMergeInfo(null, null, url, srcRevNum, topSrcRepos, false);
             extendWCMergeInfo(dst, entry, mergeInfo, dstAccess);
 
             SVNEvent event = SVNEventFactory.createSVNEvent(dst, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, SVNEventAction.ADD, null, null, null);
@@ -1141,7 +1148,11 @@ public class SVNCopyClient extends SVNBasicClient {
         SVNEntry entry = srcAccess.getVersionedEntry(new File(pair.mySource), false);
         if (entry.getSchedule() == null || (entry.isScheduledForAddition() && entry.isCopied())) {
             SVNRepository repos = createRepository(entry.getSVNURL(), true);
-            Map mergeInfo = calculateTargetMergeInfo(new File(pair.mySource), srcAccess, entry.getSVNURL(), entry.getRevision(), repos);
+            Map mergeInfo = calculateTargetMergeInfo(new File(pair.mySource), srcAccess, entry.getSVNURL(), 
+                    entry.getRevision(), repos, true);
+            if (mergeInfo == null) {
+                mergeInfo = new TreeMap();
+            }
             SVNEntry dstEntry = dstAccess.getEntry(new File(pair.myDst), false);
             extendWCMergeInfo(new File(pair.myDst), dstEntry, mergeInfo, dstAccess);
             return;
@@ -1389,18 +1400,17 @@ public class SVNCopyClient extends SVNBasicClient {
     }
 
     private void extendWCMergeInfo(File path, SVNEntry entry, Map mergeInfo, SVNWCAccess access) throws SVNException {
-
         Map wcMergeInfo = SVNPropertiesManager.parseMergeInfo(path, entry, false);
-        if (wcMergeInfo != null) {
+        if (wcMergeInfo != null && mergeInfo != null) {
             wcMergeInfo = SVNMergeInfoManager.mergeMergeInfos(wcMergeInfo, mergeInfo);
-        } else {
+        } else if (wcMergeInfo == null) {
             wcMergeInfo = mergeInfo;
         }
-        
         SVNPropertiesManager.recordWCMergeInfo(path, wcMergeInfo, access);
     }
     
-    private Map calculateTargetMergeInfo(File srcFile, SVNWCAccess access, SVNURL srcURL, long srcRevision, SVNRepository repository) throws SVNException {
+    private Map calculateTargetMergeInfo(File srcFile, SVNWCAccess access, SVNURL srcURL, long srcRevision, 
+            SVNRepository repository, boolean noReposAccess) throws SVNException {
         boolean isLocallyAdded = false;
         SVNEntry entry = null;
         SVNURL url = null;        
@@ -1424,21 +1434,28 @@ public class SVNCopyClient extends SVNBasicClient {
             url = srcURL;
         }
 
-        Map srcMergeInfo = null;
+        Map targetMergeInfo = null;
         if (!isLocallyAdded) {
-            // TODO reparent repository if needed and then ensure that repository has the same location as before that call.
-            String srcAbsPath = getPathRelativeToRoot(srcFile, url, entry != null ? entry.getRepositoryRootURL() : null, access, repository);
-            srcMergeInfo = repository.getMergeInfo(new String[] { srcAbsPath }, srcRevision, SVNMergeInfoInheritance.INHERITED);
-            if (srcMergeInfo != null) {
-                SVNMergeInfo mergeInfo = (SVNMergeInfo) srcMergeInfo.get(srcAbsPath);
-                if (mergeInfo != null) {
-                    srcMergeInfo = mergeInfo.getMergeSourcesToMergeLists();
-                } else {
-                    srcMergeInfo = null;
+            String mergeInfoPath = null;
+            if (!noReposAccess) {
+                // TODO reparent repository if needed and then ensure that repository has the same location as before that call.
+                mergeInfoPath = getPathRelativeToRoot(null, url, 
+                        entry != null ? entry.getRepositoryRootURL() : null, access, repository);
+                targetMergeInfo = repository.getMergeInfo(new String[] { mergeInfoPath }, srcRevision, 
+                        SVNMergeInfoInheritance.INHERITED);
+                if (targetMergeInfo != null) {
+                    SVNMergeInfo mergeInfo = (SVNMergeInfo) targetMergeInfo.get(mergeInfoPath);
+                    if (mergeInfo != null) {
+                        targetMergeInfo = mergeInfo.getMergeSourcesToMergeLists();
+                    } else {
+                        targetMergeInfo = null;
+                    }
                 }
+            } else {
+                targetMergeInfo = getWCMergeInfo(srcFile, entry, null, SVNMergeInfoInheritance.INHERITED, false, 
+                        new boolean[1]);
             }
         } 
-        Map targetMergeInfo = srcMergeInfo != null ? srcMergeInfo : new TreeMap();
         return targetMergeInfo;
     }
     
