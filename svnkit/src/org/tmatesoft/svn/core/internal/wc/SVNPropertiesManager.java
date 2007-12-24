@@ -133,7 +133,7 @@ public class SVNPropertiesManager {
 
     public static boolean setProperty(SVNWCAccess access, File path, String propName, String propValue,
                                       boolean skipChecks) throws SVNException {
-        return setProperty(access, path, propName, new SVNPropertyValue(propValue), skipChecks);
+        return setProperty(access, path, propName, propValue == null ? null : new SVNPropertyValue(propValue), skipChecks);
 
     }
     public static boolean setProperty(SVNWCAccess access, File path, String propName, SVNPropertyValue propValue,

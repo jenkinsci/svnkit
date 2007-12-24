@@ -92,7 +92,7 @@ public class SVNEntry implements Comparable {
     }
 
     public long getRevision() {
-        String revStr = (String)myAttributes.get(SVNProperty.REVISION);
+        String revStr = (String) myAttributes.get(SVNProperty.REVISION);
         return revStr != null ? Long.parseLong(revStr) : SVNRepository.INVALID_REVISION;
     }
 
@@ -117,7 +117,7 @@ public class SVNEntry implements Comparable {
     }
 
     public String getLockToken() {
-        return (String)myAttributes.get(SVNProperty.LOCK_TOKEN);
+        return (String) myAttributes.get(SVNProperty.LOCK_TOKEN);
     }
 
     public boolean isDeleted() {
@@ -149,7 +149,7 @@ public class SVNEntry implements Comparable {
     }
     
     public String getChangelistName() {
-        return (String)myAttributes.get(SVNProperty.CHANGELIST);
+        return (String) myAttributes.get(SVNProperty.CHANGELIST);
     }
     
     public boolean setWorkingSize(long size) {
@@ -160,7 +160,7 @@ public class SVNEntry implements Comparable {
     }
 
     public long getWorkingSize() {
-        String workingSize = (String)myAttributes.get(SVNProperty.WORKING_SIZE);
+        String workingSize = (String) myAttributes.get(SVNProperty.WORKING_SIZE);
         if (workingSize == null) {
             return SVNProperty.WORKING_SIZE_UNKNOWN;
         }
@@ -189,7 +189,7 @@ public class SVNEntry implements Comparable {
     }
 
     public String getConflictOld() {
-        return (String)myAttributes.get(SVNProperty.CONFLICT_OLD);
+        return (String) myAttributes.get(SVNProperty.CONFLICT_OLD);
     }
 
     public void setConflictOld(String name) {
@@ -197,7 +197,7 @@ public class SVNEntry implements Comparable {
     }
 
     public String getConflictNew() {
-        return (String)myAttributes.get(SVNProperty.CONFLICT_NEW);
+        return (String) myAttributes.get(SVNProperty.CONFLICT_NEW);
     }
 
     public void setConflictNew(String name) {
@@ -205,7 +205,7 @@ public class SVNEntry implements Comparable {
     }
 
     public String getConflictWorking() {
-        return (String)myAttributes.get(SVNProperty.CONFLICT_WRK);
+        return (String) myAttributes.get(SVNProperty.CONFLICT_WRK);
     }
 
     public void setConflictWorking(String name) {
@@ -213,7 +213,7 @@ public class SVNEntry implements Comparable {
     }
 
     public String getPropRejectFile() {
-        return (String)myAttributes.get(SVNProperty.PROP_REJECT_FILE);
+        return (String) myAttributes.get(SVNProperty.PROP_REJECT_FILE);
     }
 
     public void setPropRejectFile(String name) {
@@ -221,11 +221,11 @@ public class SVNEntry implements Comparable {
     }
 
     public String getAuthor() {
-        return (String)myAttributes.get(SVNProperty.LAST_AUTHOR);
+        return (String) myAttributes.get(SVNProperty.LAST_AUTHOR);
     }
 
     public String getCommittedDate() {
-        return (String)myAttributes.get(SVNProperty.COMMITTED_DATE);
+        return (String) myAttributes.get(SVNProperty.COMMITTED_DATE);
     }
 
     public long getCommittedRevision() {
@@ -262,13 +262,13 @@ public class SVNEntry implements Comparable {
         }
         return SVNNodeKind.UNKNOWN;
     }
-    
+
     public String getTextTime() {
-        return (String)myAttributes.get(SVNProperty.TEXT_TIME);
+        return (String) myAttributes.get(SVNProperty.TEXT_TIME);
     }
 
     public String getChecksum() {
-        return (String)myAttributes.get(SVNProperty.CHECKSUM);
+        return (String) myAttributes.get(SVNProperty.CHECKSUM);
     }
 
     public void setLockComment(String comment) {
@@ -390,19 +390,19 @@ public class SVNEntry implements Comparable {
     }
 
     public String getLockOwner() {
-        return (String)myAttributes.get(SVNProperty.LOCK_OWNER);
+        return (String) myAttributes.get(SVNProperty.LOCK_OWNER);
     }
 
     public String getLockComment() {
-        return (String)myAttributes.get(SVNProperty.LOCK_COMMENT);
+        return (String) myAttributes.get(SVNProperty.LOCK_COMMENT);
     }
 
     public String getLockCreationDate() {
-        return (String)myAttributes.get(SVNProperty.LOCK_CREATION_DATE);
+        return (String) myAttributes.get(SVNProperty.LOCK_CREATION_DATE);
     }
 
     public String getSchedule() {
-        return (String)myAttributes.get(SVNProperty.SCHEDULE);
+        return (String) myAttributes.get(SVNProperty.SCHEDULE);
     }
 
     public void setCachableProperties(String[] cachableProps) {
@@ -432,7 +432,7 @@ public class SVNEntry implements Comparable {
     public Map asMap() {
         return myAttributes;
     }
-    
+
     public SVNAdminArea getAdminArea() {
         return myAdminArea;
     }
