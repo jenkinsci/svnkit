@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNMergeInfo;
 import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -1400,7 +1401,6 @@ public class SVNCopyClient extends SVNBasicClient {
     }
     
     private Map calculateTargetMergeInfo(File srcFile, SVNWCAccess access, SVNURL srcURL, long srcRevision, SVNRepository repository) throws SVNException {
-        Map targetMergeInfo = null;
         boolean isLocallyAdded = false;
         SVNEntry entry = null;
         SVNURL url = null;        
@@ -1424,13 +1424,21 @@ public class SVNCopyClient extends SVNBasicClient {
             url = srcURL;
         }
 
+        Map srcMergeInfo = null;
         if (!isLocallyAdded) {
             // TODO reparent repository if needed and then ensure that repository has the same location as before that call.
             String srcAbsPath = getPathRelativeToRoot(srcFile, url, entry != null ? entry.getRepositoryRootURL() : null, access, repository);
-            targetMergeInfo = repository.getMergeInfo(new String[] { srcAbsPath }, srcRevision, SVNMergeInfoInheritance.INHERITED);
-        } else {
-            targetMergeInfo = new TreeMap();
-        }
+            srcMergeInfo = repository.getMergeInfo(new String[] { srcAbsPath }, srcRevision, SVNMergeInfoInheritance.INHERITED);
+            if (srcMergeInfo != null) {
+                SVNMergeInfo mergeInfo = (SVNMergeInfo) srcMergeInfo.get(srcAbsPath);
+                if (mergeInfo != null) {
+                    srcMergeInfo = mergeInfo.getMergeSourcesToMergeLists();
+                } else {
+                    srcMergeInfo = null;
+                }
+            }
+        } 
+        Map targetMergeInfo = srcMergeInfo != null ? srcMergeInfo : new TreeMap();
         return targetMergeInfo;
     }
     
