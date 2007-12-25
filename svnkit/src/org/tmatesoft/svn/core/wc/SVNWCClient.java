@@ -1319,18 +1319,27 @@ public class SVNWCClient extends SVNBasicClient {
     private boolean revert(SVNAdminArea dir, String name, SVNEntry entry, boolean useCommitTime) throws SVNException {
         SVNLog log = dir.getLog();
         boolean reverted = false;
+        boolean revertBase = false;
         SVNVersionedProperties baseProperties = null;
         Map command = new HashMap();
         
         if (entry.isScheduledForReplacement()) {
             String propRevertPath = SVNAdminUtil.getPropRevertPath(name, entry.getKind(), false);
-            if (dir.getFile(propRevertPath).isFile()) {
-                baseProperties = dir.getRevertProperties(name);
-                command.put(SVNLog.NAME_ATTR, propRevertPath);
-                log.addCommand(SVNLog.DELETE, command, false);
-                command.clear();
-                reverted = true;
+            File propRevertFile = dir.getFile(propRevertPath);
+            revertBase = true;
+            if (!propRevertFile.isFile()) {
+                propRevertPath = SVNAdminUtil.getPropBasePath(name, entry.getKind(), false);
+                revertBase = false;
             }
+            if (dir.getFile(propRevertPath).isFile()) {
+                baseProperties = revertBase ? dir.getRevertProperties(name) : dir.getBaseProperties(name);
+                if (revertBase) {
+                    command.put(SVNLog.NAME_ATTR, propRevertPath);
+                    log.addCommand(SVNLog.DELETE, command, false);
+                    command.clear();
+                }
+                reverted = true;
+            } 
         }
         boolean reinstallWorkingFile = false;
         if (baseProperties == null) {
@@ -1350,13 +1359,13 @@ public class SVNWCClient extends SVNBasicClient {
             Map newProperties = baseProperties.asMap();
             SVNVersionedProperties originalBaseProperties = dir.getBaseProperties(name);
             SVNVersionedProperties workProperties = dir.getProperties(name);
-            if (entry.isScheduledForReplacement()) {
+            if (revertBase) {
                 originalBaseProperties.removeAll();
             }
             workProperties.removeAll();
             for(Iterator names = newProperties.keySet().iterator(); names.hasNext();) {
                 String propName = (String) names.next();
-                if (entry.isScheduledForReplacement()) {
+                if (revertBase) {
                     originalBaseProperties.setPropertyValue(propName, (String) newProperties.get(propName));
                 }
                 workProperties.setPropertyValue(propName, (String) newProperties.get(propName));
