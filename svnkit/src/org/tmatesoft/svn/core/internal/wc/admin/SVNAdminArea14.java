@@ -293,8 +293,9 @@ public class SVNAdminArea14 extends SVNAdminArea {
     }
     
     private Map readProperties(String name) throws SVNException {
-        SVNEntry entry = getEntry(name, false);        
-        if (hasPropModifications(name) || (entry != null && entry.isScheduledForReplacement())) {
+//        SVNEntry entry = getEntry(name, false);        
+        if (hasPropModifications(name) 
+                /*|| (entry != null && entry.isScheduledForReplacement())*/) {
             // ignore base props when entry is schedule for replacement.
             File propertiesFile = getPropertiesFile(name, false);
             SVNProperties props = new SVNProperties(propertiesFile, null);
