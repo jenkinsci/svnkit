@@ -22,7 +22,6 @@ import java.text.MessageFormat;
 import java.util.Iterator;
 
 import org.tmatesoft.svn.cli2.svn.SVNCommandEnvironment;
-import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -30,7 +29,6 @@ import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.Version;
 
 
@@ -177,22 +175,34 @@ public class SVNCommandUtil {
         }
     }
     
-    public static String prompt(String promptMessage, SVNCommandEnvironment env, boolean hide) throws SVNException {
+    //TODO: password masking
+    public static String prompt(String promptMessage, SVNCommandEnvironment env) throws SVNException {
         System.out.print(promptMessage);
         System.out.flush();
         String input = null;
-        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-        try {
-            input = reader.readLine();
-            if (input == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can't read stdin: End of file found");
-                SVNErrorManager.error(err);
+        InputReader reader = new InputReader(System.in);
+        Thread readerThread = new Thread(reader);
+        readerThread.setDaemon(true);
+        readerThread.start();
+        while (true) {
+            env.checkCancelled();
+            if (reader.myIsFinished) {
+                input = reader.getReadInput();
+                break;
             }
-        } catch (IOException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can't read stdin: {0}", 
-                    e.getLocalizedMessage());
-            SVNErrorManager.error(err);
+            try {
+                Thread.sleep(1);
+            } catch (InterruptedException e) {
+            }
         }
+        if (reader.getError() != null) {
+            SVNErrorManager.error(reader.getError());
+        }
+        if (input == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
+                        "Can't read stdin: End of file found");
+                SVNErrorManager.error(err);
+        } 
         return input;
     }
 
@@ -336,4 +346,35 @@ public class SVNCommandUtil {
         }
         return help.toString();
     }
+ 
+    private static class InputReader implements Runnable {
+        private BufferedReader myReader;
+        private String myReadInput;
+        private SVNErrorMessage myError;
+        volatile boolean myIsFinished;
+        
+        public InputReader(InputStream is) {
+            myReader = new BufferedReader(new InputStreamReader(is));
+        }
+        
+        public void run() {
+            myIsFinished = false;
+            try {
+                myReadInput = myReader.readLine();
+            } catch (IOException e) {
+                myError = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can't read stdin: {0}", 
+                        e.getLocalizedMessage());
+            }
+            myIsFinished = true;
+        }
+        
+        public String getReadInput() {
+            return myReadInput;
+        }
+        
+        public SVNErrorMessage getError() {
+            return myError;
+        }
+    }
+
 }

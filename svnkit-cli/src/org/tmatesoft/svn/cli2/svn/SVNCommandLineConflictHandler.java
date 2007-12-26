@@ -157,7 +157,7 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                     message += ", (r)esolved";
                 }
                 message += ", (h)elp for more options : ";
-                String answer = SVNCommandUtil.prompt(message, mySVNEnvironment, false);
+                String answer = SVNCommandUtil.prompt(message, mySVNEnvironment);
                 char answerChar = '\0';
                 if (answer != null) {
                     if (answer.length() == 1) {
@@ -166,7 +166,6 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                     } else {
                         continue;
                     }
-                    
                 }
                 if (answerChar == 'h' || answerChar == '?') {
                     mySVNEnvironment.getErr().println("  (p)ostpone - mark the conflict to be resolved later");
@@ -277,7 +276,7 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
             
             String prompt = "Select: (p)ostpone, (m)ine, (t)heirs, (h)elp :";
             while (true) {
-                String answer = SVNCommandUtil.prompt(prompt, mySVNEnvironment, false);
+                String answer = SVNCommandUtil.prompt(prompt, mySVNEnvironment);
                 char answerChar = '\0';
                 if (answer != null) {
                     if (answer.length() == 1) {
