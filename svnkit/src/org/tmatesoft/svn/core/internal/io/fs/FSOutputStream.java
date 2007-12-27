@@ -205,7 +205,7 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
 
             myTargetFile.write("ENDREP\n".getBytes("UTF-8"));
             myRevNode.setTextRepresentation(rep);
-
+            myRevNode.setIsFreshTxnRoot(false);
             myTxnRoot.getOwner().putTxnRevisionNode(myRevNode.getId(), myRevNode);
         } catch (SVNException svne) {
             throw new IOException(svne.getMessage());

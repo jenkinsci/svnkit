@@ -142,7 +142,8 @@ public class FSNodeHistory {
         FSRevisionRoot root = owner.createRevisionRoot(revision);
         FSParentPath parentPath = root.openPath(path, true, true);
         FSRevisionNode revNode = parentPath.getRevNode();
-        SVNLocationEntry commitEntry = new SVNLocationEntry(revNode.getId().getRevision(), revNode.getCreatedPath());
+        SVNLocationEntry commitEntry = new SVNLocationEntry(revNode.getCreatedRevision(), 
+                revNode.getCreatedPath());
 
         FSNodeHistory prevHist = null;
         if (revision == commitEntry.getRevision()) {
@@ -155,7 +156,7 @@ public class FSNodeHistory {
                 return prevHist;
             }
             revNode = owner.getRevisionNode(predId);
-            commitEntry = new SVNLocationEntry(revNode.getId().getRevision(), revNode.getCreatedPath());
+            commitEntry = new SVNLocationEntry(revNode.getCreatedRevision(), revNode.getCreatedPath());
         }
         SVNLocationEntry copyrootEntry = findYoungestCopyroot(owner.getRepositoryRoot(), parentPath);
         SVNLocationEntry srcEntry = new SVNLocationEntry(FSRepository.SVN_INVALID_REVNUM, null);

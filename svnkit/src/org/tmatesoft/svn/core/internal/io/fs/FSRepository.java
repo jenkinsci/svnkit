@@ -288,7 +288,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
         Map metaprops = null;
         try {
-            metaprops = myFSFS.compoundMetaProperties(revNode.getId().getRevision());
+            metaprops = myFSFS.compoundMetaProperties(revNode.getCreatedRevision());
         } catch (SVNException svne) {
             //
         }
@@ -1063,7 +1063,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             return null;
         }
 
-        long createdRev = copyDstNode.getId().getRevision();
+        long createdRev = copyDstNode.getCreatedRevision();
         if (createdRev == copyDstEntry.getRevision()) {
             if (copyDstNode.getPredecessorId() == null) {
                 return null;

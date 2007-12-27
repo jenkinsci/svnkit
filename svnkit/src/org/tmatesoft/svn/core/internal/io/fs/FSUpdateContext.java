@@ -536,7 +536,7 @@ public class FSUpdateContext {
 
     private void diffProplists(long sourceRevision, String sourcePath, String editPath, String targetPath, String lockToken, boolean isDir) throws SVNException {
         FSRevisionNode targetNode = getTargetRoot().getRevisionNode(targetPath);
-        long createdRevision = targetNode.getId().getRevision();
+        long createdRevision = targetNode.getCreatedRevision();
 
         if (FSRepository.isValidRevision(createdRevision)) {
             Map entryProps = myFSFS.compoundMetaProperties(createdRevision);

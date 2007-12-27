@@ -354,6 +354,7 @@ public class FSCommitter {
         String nodeId = getNewTxnNodeId();
         FSID id = FSID.createTxnId(nodeId, copyId, txnId);
         revNode.setId(id);
+        revNode.setIsFreshTxnRoot(false);
         myFSFS.putTxnRevisionNode(id, revNode);
         return id;
     }
@@ -539,6 +540,7 @@ public class FSCommitter {
         FSRevisionNode revNode = myFSFS.getRevisionNode(targetId);
         revNode.setPredecessorId(sourceId);
         revNode.setCount(sourcePredecessorCount != -1 ? sourcePredecessorCount + 1 : sourcePredecessorCount);
+        revNode.setIsFreshTxnRoot(false);
         myFSFS.putTxnRevisionNode(targetId, revNode);
     }
 
