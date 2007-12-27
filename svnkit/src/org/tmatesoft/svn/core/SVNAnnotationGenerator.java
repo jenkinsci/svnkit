@@ -39,7 +39,6 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 import de.regnis.q.sequence.QSequenceDifferenceBlock;
 import de.regnis.q.sequence.line.QSequenceLineMedia;
@@ -450,16 +449,17 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         return prevChunk;
     }
     
-    private void normalizeBlames(LinkedList chain, LinkedList mergedChain) {
+    private void normalizeBlames(LinkedList chain, LinkedList mergedChain) throws SVNException {
         int i = 0, k = 0;
         for (; i < chain.size() - 1 && k < mergedChain.size() - 1; i++, k++) {
             BlameChunk chunk = (BlameChunk) chain.get(i);
             BlameChunk mergedChunk = (BlameChunk) mergedChain.get(k);
-            SVNDebugLog.assertCondition(chunk.blockStart == mergedChunk.blockStart, 
-                                        "ASSERTION FAILURE in " + 
-                                        "SVNAnnotationGenerator.normalizeBlames():" +
-                                        "current chunks should always be starting " + 
-                                        "at the same offset");
+            if (chunk.blockStart != mergedChunk.blockStart) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN,                               
+                        "ASSERTION FAILURE in SVNAnnotationGenerator.normalizeBlames():" +
+                        "current chunks should always start at the same offset");
+                SVNErrorManager.error(err);
+            }
 
             BlameChunk nextChunk = (BlameChunk) chain.get(i + 1);
             BlameChunk nextMergedChunk = (BlameChunk) mergedChain.get(k + 1);
@@ -520,10 +520,12 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             return;
         }
 
-        SVNDebugLog.assertCondition(myPreviousFile != null, 
-                                    "ASSERTION FAILURE in " + 
-                                    "SVNAnnotationGenerator.reportAnnotations():" +
-                                    "generator has to have been called at least once");
+        if (myPreviousFile == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
+                    "ASSERTION FAILURE in SVNAnnotationGenerator.reportAnnotations(): myPreviousFile is null, " +
+                    "generator has to have been called at least once");
+            SVNErrorManager.error(err);
+        }
         int mergedCount = -1;
         if (myIncludeMergedRevisions) {
             if (myBlameChunks.isEmpty()) {

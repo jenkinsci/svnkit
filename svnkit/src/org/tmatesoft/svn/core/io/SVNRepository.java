@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -862,6 +863,41 @@ public abstract class SVNRepository {
      */
     public abstract long getLocationSegments(String path, long pegRevision, long startRevision, long endRevision, 
             ISVNLocationSegmentHandler handler) throws SVNException;
+
+    public Collection getLocationSegments(String path, long pegRevision, long startRevision, 
+            long endRevision) throws SVNException {
+        
+        final List result = new LinkedList();
+        getLocationSegments(path, pegRevision, startRevision, endRevision, new ISVNLocationSegmentHandler() {
+            public void handleLocationSegment(SVNLocationSegment locationSegment) throws SVNException {
+                result.add(locationSegment);
+                getCanceller().checkCancelled();
+            }
+        });
+        
+        Collections.sort(result, new Comparator() {
+            public int compare(Object o1, Object o2) {
+                if (o1 == o2) {
+                    return 0;
+                } else if (o1 == null) {
+                    return -1;
+                } else if (o2 == null) {
+                    return 1;
+                } else if (o1.getClass() != SVNLocationSegment.class || 
+                        o2.getClass() != SVNLocationSegment.class) {
+                    return o1.getClass() == o2.getClass() ? 0 : o1.getClass() == SVNLocationSegment.class ? 1 : -1;
+                }
+                SVNLocationSegment segment1 = (SVNLocationSegment) o1;
+                SVNLocationSegment segment2 = (SVNLocationSegment) o2;
+                if (segment1.getStartRevision() == segment2.getStartRevision()) {
+                    return 0;
+                }
+                return segment1.getStartRevision() < segment2.getStartRevision() ? 1 : -1;
+            }
+        });
+        
+        return result; 
+    }
 
     /**
      * Retrieves and returns interesting file revisions for the specified file. 

@@ -498,4 +498,8 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
         }
         return (String[]) tokensList.toArray(new String[tokensList.size()]);
     }
+
+    public boolean isAllowAllForwardMergesFromSelf() {
+        return false;
+    }
 }

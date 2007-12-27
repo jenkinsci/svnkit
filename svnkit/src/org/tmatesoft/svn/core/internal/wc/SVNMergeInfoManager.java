@@ -138,8 +138,8 @@ public class SVNMergeInfoManager {
         }
         for (Iterator paths = mergeInfo.keySet().iterator(); paths.hasNext();) {
             String srcMergePath = (String) paths.next();
-            SVNMergeRangeList rangeList = removeMergeInfo ? SVNMergeRangeList.EMPTY_RANGE_LIST
-                                                          : (SVNMergeRangeList) mergeInfo.get(srcMergePath);
+            SVNMergeRangeList rangeList = removeMergeInfo ? 
+            		SVNMergeRangeList.NO_MERGE_INFO_LIST : (SVNMergeRangeList) mergeInfo.get(srcMergePath);
             myDBProcessor.insertMergeInfo(revision, srcMergePath, path, rangeList.getRanges());
         }
         myDBProcessor.updateMergeInfoChanges(revision, path);
@@ -228,7 +228,7 @@ public class SVNMergeInfoManager {
         return new SVNMergeInfoManager(dbProcessor);
     }
     
-    public static Map mergeMergeInfos(Map originalSrcsToRangeLists, Map changedSrcsToRangeLists) {
+    public static Map mergeMergeInfos(Map originalSrcsToRangeLists, Map changedSrcsToRangeLists) throws SVNException {
         originalSrcsToRangeLists = originalSrcsToRangeLists == null ? new TreeMap() : originalSrcsToRangeLists;
         changedSrcsToRangeLists = changedSrcsToRangeLists == null ? Collections.EMPTY_MAP : changedSrcsToRangeLists;
         String[] paths1 = (String[]) originalSrcsToRangeLists.keySet().toArray(new String[originalSrcsToRangeLists.size()]);
@@ -539,6 +539,7 @@ public class SVNMergeInfoManager {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, 
                             "Unable to parse revision range ''{0,number,integer}-{1,number,integer}'' with same start and end revisions",
                             new Object[] { new Long(startRev), new Long(endRev) });
+                    SVNErrorManager.error(err);
                 }
                 range.setEndRevision(endRev);
             }

@@ -76,6 +76,8 @@ public class FSRevisionNode {
     // for only node-revs representing dirs
     private Map myDirContents;
 
+    //in case of txn root: whether it wasn't 
+    //changed yet (fresh) or was
     private boolean myIsFreshTxnRoot;
     private FSID myFreshRootPredecessorId;
     
@@ -533,10 +535,6 @@ public class FSRevisionNode {
 
     public boolean isFreshTxnRoot() {
         return myIsFreshTxnRoot;
-    }
-
-    public FSID getFreshRootPredecessorId() {
-        return myFreshRootPredecessorId;
     }
 
     public void setFreshRootPredecessorId(FSID freshRootPredecessorId) {

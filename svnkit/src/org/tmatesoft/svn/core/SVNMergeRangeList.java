@@ -18,9 +18,9 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 
 /**
@@ -30,11 +30,8 @@ import org.tmatesoft.svn.util.SVNDebugLog;
 public class SVNMergeRangeList {
     public static String MERGE_INFO_NONINHERITABLE_STRING = "*";
     
-    public static SVNMergeRangeList EMPTY_RANGE_LIST = new SVNMergeRangeList(new SVNMergeRange[] {
-                                                       new SVNMergeRange(SVNRepository.INVALID_REVISION, 
-                                                                         SVNRepository.INVALID_REVISION,
-                                                                         false)
-                                                       });
+    public static SVNMergeRangeList NO_MERGE_INFO_LIST = new SVNMergeRangeList(new SVNMergeRange[] {
+            new SVNMergeRange(SVNRepository.INVALID_REVISION, SVNRepository.INVALID_REVISION, false) });
     
     private SVNMergeRange[] myRanges;
     
@@ -63,7 +60,7 @@ public class SVNMergeRangeList {
         return new SVNMergeRangeList(ranges);
     }
     
-    public SVNMergeRangeList merge(SVNMergeRangeList rangeList) {
+    public SVNMergeRangeList merge(SVNMergeRangeList rangeList) throws SVNException {
         int i = 0;
         int j = 0;
         SVNMergeRange lastRange = null;
@@ -89,8 +86,12 @@ public class SVNMergeRangeList {
             }
         }
         
-        SVNDebugLog.assertCondition(i >= myRanges.length || j >= rangeList.myRanges.length, 
-                "assertion failure in SVNMergeRangeList.merge()");
+        if (i < myRanges.length && j < rangeList.myRanges.length) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
+                    "ASSERTION FAILURE in SVNMergeRangeList.merge(): expected to reach the end of at least " +
+                    "one range list");
+            SVNErrorManager.error(err);
+        }
         
         for (; i < myRanges.length; i++) {
             SVNMergeRange range = myRanges[i];
@@ -236,6 +237,37 @@ public class SVNMergeRangeList {
         }
         SVNMergeRange[] ranges = (SVNMergeRange[]) inheritableRanges.toArray(new SVNMergeRange[inheritableRanges.size()]);
         return new SVNMergeRangeList(ranges);
+    }
+    
+    public SVNMergeRangeList compactMergeRanges() {
+    	List additiveSources = new LinkedList();
+    	List subtractiveSources = new LinkedList();
+    	for (int i = 0; i < myRanges.length; i++) {
+    		SVNMergeRange range = myRanges[i].dup();
+    		if (range.getStartRevision() > range.getEndRevision()) {
+    			subtractiveSources.add(range);
+    		} else {
+    			additiveSources.add(range);
+    		}
+    	}
+    	
+    	Collections.sort(additiveSources, new RangeComparator());
+    	
+    	return null;
+    }
+    
+    private void removeRedundantRanges(List ranges) {
+    	SVNMergeRange range1 = null;
+    	SVNMergeRange range2;
+    	for (int i = 0; i < ranges.size(); i++) {
+			if (range1 == null) {
+				range1 = (SVNMergeRange) ranges.get(i);
+				continue;
+			} else {
+				range2 = (SVNMergeRange) ranges.get(i);
+			}
+			
+		}
     }
     
     private SVNMergeRangeList removeOrIntersect(SVNMergeRangeList rangeList, boolean remove, 
@@ -475,4 +507,15 @@ public class SVNMergeRangeList {
         return lastRange;
     }
     
+    private static class RangeComparator implements Comparator {
+		public int compare(Object o1, Object o2) {
+			SVNMergeRange r1 = (SVNMergeRange) o1;
+			SVNMergeRange r2 = (SVNMergeRange) o2;
+			SVNMergeRange range1 = new SVNMergeRange(Math.min(r1.getStartRevision(), 
+					r1.getEndRevision()), Math.max(r1.getStartRevision(), r1.getEndRevision()), true);
+			SVNMergeRange range2 = new SVNMergeRange(Math.min(r2.getStartRevision(), 
+					r2.getEndRevision()), Math.max(r2.getStartRevision(), r2.getEndRevision()), true);
+			return range1.compareTo(range2);
+		}
+    }
 }

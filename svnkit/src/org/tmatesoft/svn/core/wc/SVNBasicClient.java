@@ -44,6 +44,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNMergeInfoManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
+import org.tmatesoft.svn.core.internal.wc.SVNWCManager;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
@@ -237,7 +238,7 @@ public class SVNBasicClient implements ISVNEventHandler {
     public SVNURL getReposRoot(File path, SVNURL url, SVNRevision pegRevision, SVNAdminArea adminArea, 
             SVNWCAccess access) throws SVNException {
         SVNURL reposRoot = null;
-        if (path != null && (pegRevision == SVNRevision.WORKING ||pegRevision == SVNRevision.BASE )) {
+        if (path != null && (pegRevision == SVNRevision.WORKING || pegRevision == SVNRevision.BASE)) {
             if (access == null) {
                 access = createWCAccess();
             } 
@@ -249,7 +250,7 @@ public class SVNBasicClient implements ISVNEventHandler {
                     needCleanUp = true;
                 }
                 SVNEntry entry = access.getVersionedEntry(path, false);
-                url = entry.getSVNURL();
+                url = getEntryLocation(path, entry, null, SVNRevision.UNDEFINED);
                 reposRoot = entry.getRepositoryRootURL();
             } finally {
                 if (needCleanUp) {
@@ -503,7 +504,7 @@ public class SVNBasicClient implements ISVNEventHandler {
             Map mergeInfo = null;
             Map targetMergeInfo = null;
             SVNEntry entry = access.getVersionedEntry(path, hidden);
-            if (!access.isEntrySwitched(path, entry)) {
+            if (!SVNWCManager.isEntrySwitched(path, entry)) {
                 boolean[] inherited = new boolean[1];
                 
                 targetMergeInfo = getWCMergeInfo(path, entry, wcElisionLimitPath, 
@@ -537,7 +538,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         if (wcElisionLimitPath == null || !wcElisionLimitPath.equals(path)) {
             Map mergeInfo = null;
             Map targetMergeInfo = null;
-            if (!access.isEntrySwitched(path, entry)) {
+            if (!SVNWCManager.isEntrySwitched(path, entry)) {
                 boolean[] inherited = new boolean[1];
                 
                 targetMergeInfo = getWCMergeInfo(path, entry, wcElisionLimitPath, 
@@ -651,9 +652,8 @@ public class SVNBasicClient implements ISVNEventHandler {
                     wcMergeInfo = null;
                     inherit = SVNMergeInfoInheritance.INHERITED;
                 } else {
-                    SVNAdminArea adminArea = entry.getAdminArea();
                     wcMergeInfo = SVNPropertiesManager.parseMergeInfo(path, entry, base);
-                    if (adminArea.isEntrySwitched(entry)) {
+                    if (SVNWCManager.isEntrySwitched(path, entry)) {
                         break;
                     }
                 }
@@ -995,8 +995,7 @@ public class SVNBasicClient implements ISVNEventHandler {
                 }
             }
         }
-        
-        return null;
+        return url;
     }
     
     protected SVNURL getEntryLocation(File path, SVNEntry entry, long[] revNum, SVNRevision pegRevision) throws SVNException {

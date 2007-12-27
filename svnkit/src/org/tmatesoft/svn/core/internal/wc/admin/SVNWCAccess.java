@@ -626,39 +626,6 @@ public class SVNWCAccess implements ISVNEventHandler {
         }
     }
 
-    public boolean isEntrySwitched(File path, SVNEntry entry) throws SVNException {
-        File parent = path.getParentFile();
-        if (parent == null) {
-            return false;
-        }
-        
-        SVNWCAccess access = SVNWCAccess.newInstance(getEventHandler());
-        SVNAdminArea parentAdminArea = null;
-        SVNEntry parentEntry = null;
-        try {
-            parentAdminArea = access.open(parent, false, 0);
-            parentEntry = parentAdminArea.getVersionedEntry(parentAdminArea.getThisDirName(), false);
-        } catch (SVNException svne) {
-            if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
-                return false;
-            } 
-            throw svne;
-        } finally {
-            access.close();
-        }
-        
-        SVNURL parentSVNURL = parentEntry.getSVNURL();
-        SVNURL entrySVNURL = entry.getSVNURL(); 
-        if (parentSVNURL == null || entrySVNURL == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, 
-                    "Cannot find a URL for ''{0}''", parentSVNURL == null ? parent : path);
-            SVNErrorManager.error(err);
-        }
-        
-        SVNURL expectedSVNURL = parentSVNURL.appendPath(path.getName(), false);
-        return !entrySVNURL.equals(expectedSVNURL);
-    }
-
     private File probe(File path) throws SVNException {
         int wcFormat = -1;
         SVNFileType type = SVNFileType.getType(path);

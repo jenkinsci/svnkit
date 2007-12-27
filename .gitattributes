@@ -228,6 +228,7 @@ svnkit/src/org/tmatesoft/svn/core/wc/SVNConflictDescription.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/SVNConflictReason.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/SVNConflictResult.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/SVNCopySource.java -text
+svnkit/src/org/tmatesoft/svn/core/wc/SVNRevisionRange.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/package.html -text
 svnkit/src/org/tmatesoft/svn/core/wc/xml/SVNXMLInfoHandler.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/xml/package.html -text

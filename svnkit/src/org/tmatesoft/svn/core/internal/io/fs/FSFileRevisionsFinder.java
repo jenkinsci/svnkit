@@ -35,7 +35,6 @@ import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 
 /**
@@ -59,7 +58,11 @@ public class FSFileRevisionsFinder {
             pathRevisions = sortAndScrubRevisions(pathRevisions);
         }
        
-        SVNDebugLog.assertCondition(!pathRevisions.isEmpty(), "ASSERTION FAILURE in FSFileRevisionsFinder: pathRevisions is empty");
+        if (pathRevisions.isEmpty()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
+                    "ASSERTION FAILURE in FSFileRevisionsFinder: pathRevisions is empty");
+            SVNErrorManager.error(err);
+        }
 
         FSRoot lastRoot = null;
         String lastPath = null;

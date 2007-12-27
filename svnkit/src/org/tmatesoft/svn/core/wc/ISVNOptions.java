@@ -409,5 +409,7 @@ public interface ISVNOptions extends ISVNTunnelProvider {
     public boolean isInteractiveConflictResolution();
     
     public void setConflictHandler(ISVNConflictHandler resolver);
+    
+    public boolean isAllowAllForwardMergesFromSelf();
 
 }
