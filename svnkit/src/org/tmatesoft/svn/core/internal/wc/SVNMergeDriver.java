@@ -1339,7 +1339,10 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
 			}
     	}
     	
-    	
+    	SVNMergeRangeList mergeRangesList = SVNMergeRangeList.fromCollection(mergeRanges);
+    	mergeRangesList = mergeRangesList.compactMergeRanges();
+//    	Collections.
+//    	mergeRanges = new ArrayList(mergeRangesList.getRanges());
     	return null;
     }
     
