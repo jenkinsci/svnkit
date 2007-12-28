@@ -250,9 +250,17 @@ public class SVNMergeRangeList {
     			additiveSources.add(range);
     		}
     	}
-    	
-    	Collections.sort(additiveSources, new RangeComparator());
-    	
+    	RangeComparator comparator = new RangeComparator(); 
+    	Collections.sort(additiveSources, comparator);
+    	removeRedundantRanges(additiveSources);
+        Collections.sort(subtractiveSources, comparator);
+        removeRedundantRanges(subtractiveSources);
+        for (Iterator subtractiveSrcsIter = subtractiveSources.iterator(); subtractiveSrcsIter.hasNext();) {
+            SVNMergeRange range = (SVNMergeRange) subtractiveSrcsIter.next();
+            additiveSources.add(range);
+        }
+        Collections.sort(additiveSources, comparator);
+        
     	return null;
     }
     
@@ -263,11 +271,98 @@ public class SVNMergeRangeList {
 			if (range1 == null) {
 				range1 = (SVNMergeRange) ranges.get(i);
 				continue;
-			} else {
-				range2 = (SVNMergeRange) ranges.get(i);
-			}
-			
+			} 
+            range2 = (SVNMergeRange) ranges.get(i);
+			SVNMergeRange twoRanges[] = { range1, range2 };
+			boolean isCompacted = compactRange(twoRanges); 
+            range1 = twoRanges[0];
+            range2 = twoRanges[1];
+            if (isCompacted) {
+                if (range2 == null) {
+                    ranges.remove(i);
+                    i--;
+                }
+            }
 		}
+    }
+    
+    private List compactAddSubRanges(List sources) {
+        return null;
+    }
+    
+    private boolean compactRange(SVNMergeRange ranges[]) {
+        SVNMergeRange range1 = ranges[0];
+        SVNMergeRange range2 = ranges[1];
+        if (range1 == null || range2 == null || 
+                !SVNRevision.isValidRevisionNumber(range1.getStartRevision()) ||
+                !SVNRevision.isValidRevisionNumber(range2.getStartRevision())) {
+            return false;
+        }
+        boolean range1IsReversed = range1.getStartRevision() > range1.getEndRevision();
+        boolean range2IsReversed = range2.getStartRevision() > range2.getEndRevision();
+        if (range1IsReversed) {
+            range1 = range1.swapEndPoints();
+        }
+        if (range2IsReversed) {
+            range2 = range2.swapEndPoints();
+        }
+        
+        boolean isCompacted = false;
+        if (range1.getStartRevision() <= range2.getEndRevision() && 
+                range2.getStartRevision() <= range1.getEndRevision()) {
+            if (range1IsReversed == range2IsReversed) {
+                range1.setStartRevision(Math.min(range1.getStartRevision(), range2.getStartRevision()));
+                range1.setEndRevision(Math.min(range1.getEndRevision(), range2.getEndRevision()));
+                range2 = null;
+                ranges[1] = null;
+            } else {
+                if (range1.getStartRevision() == range2.getStartRevision()) {
+                    if (range1.getEndRevision() == range2.getEndRevision()) {
+                        range1 = null;
+                        range2 = null;
+                        ranges[0] = null;
+                        ranges[1] = null;
+                    } else {
+                        range1.setStartRevision(range1.getEndRevision());
+                        range1.setEndRevision(range2.getEndRevision());
+                        range2 = null;
+                        ranges[1] = null;
+                        range1IsReversed = range2IsReversed;
+                    }
+                } else {
+                    if (range1.getEndRevision() > range2.getEndRevision()) {
+                        if (range1.getStartRevision() < range2.getStartRevision()) {
+                            long tmpRev = range1.getEndRevision();
+                            range1.setEndRevision(range2.getStartRevision());
+                            range2.setStartRevision(range2.getEndRevision());
+                            range2.setEndRevision(tmpRev);
+                            range2IsReversed = range1IsReversed;
+                        } else {
+                            long tmpRev = range1.getStartRevision();
+                            range1.setStartRevision(range2.getEndRevision());
+                            range2.setEndRevision(tmpRev);
+                        }
+                    } else if (range1.getEndRevision() > range2.getEndRevision()) {
+                        long tmpRev = range1.getEndRevision();
+                        range1.setEndRevision(range2.getStartRevision());
+                        range2.setStartRevision(tmpRev);
+                    } else {
+                        range1.setEndRevision(range2.getStartRevision());
+                        range2 = null;
+                        ranges[1] = null;
+                    }
+                }
+            }
+            isCompacted = true;
+        }
+        
+        if (range1 != null && range1IsReversed) {
+            range1 = range1.swapEndPoints();
+        }
+        if (range2 != null && range2IsReversed) {
+            range2 = range2.swapEndPoints();
+        }
+        return isCompacted;
     }
     
     private SVNMergeRangeList removeOrIntersect(SVNMergeRangeList rangeList, boolean remove, 
