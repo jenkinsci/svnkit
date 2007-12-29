@@ -248,7 +248,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
 
             for (Iterator names = diff.nameSet().iterator(); names.hasNext();) {
                 String propName = (String) names.next();
-                String value = diff.getStringValue(propName);
+                SVNPropertyValue value = diff.getSVNPropertyValue(propName);
                 if (item.getKind() == SVNNodeKind.FILE) {
                     editor.changeFileProperty(commitPath, propName, value);
                 } else {

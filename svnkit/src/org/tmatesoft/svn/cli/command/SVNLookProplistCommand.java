@@ -20,6 +20,7 @@ import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
@@ -80,7 +81,7 @@ public class SVNLookProplistCommand extends SVNCommand {
             for (Iterator propNames = props.nameSet().iterator(); propNames.hasNext(); ) {
                 String propName = (String) propNames.next();
                 if (isVerbose) {
-                    String propVal = props.getStringValue(propName);
+                    SVNPropertyValue propVal = props.getSVNPropertyValue(propName);
                     SVNCommand.println(out, "  " + propName + " : " + propVal);    
                 } else {
                     SVNCommand.println(out, "  " + propName);    

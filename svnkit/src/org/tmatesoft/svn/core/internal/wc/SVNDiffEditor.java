@@ -364,7 +364,6 @@ public class SVNDiffEditor implements ISVNEditor {
         if (myCurrentFile.myPropertyDiff != null) {
             for(Iterator propNames = myCurrentFile.myPropertyDiff.nameSet().iterator(); propNames.hasNext();) {
                 String propName = (String) propNames.next();
-                reposProperties.put(propName, myCurrentFile.myPropertyDiff.getStringValue(propName));
                 reposProperties.copyValue(myCurrentFile.myPropertyDiff, propName);
             }
         }
@@ -629,13 +628,13 @@ public class SVNDiffEditor implements ISVNEditor {
         Collection namesList = new ArrayList(diff.nameSet());
         for (Iterator names = namesList.iterator(); names.hasNext();) {
             String name = (String) names.next();
-            String newValue = diff.getStringValue(name);
-            String oldValue = base.getStringValue(name);
-            if (oldValue == null && newValue != null) {
+            SVNPropertyValue newValue = diff.getSVNPropertyValue(name);
+            SVNPropertyValue oldValue = base.getSVNPropertyValue(name);
+            if ((oldValue == null || oldValue.hasNullValue()) && (newValue != null && !newValue.hasNullValue())) {
                 base.put(name, newValue);
-                diff.put(name, (byte[]) null);
+                diff.put(name, (SVNPropertyValue) null);
             } else if (oldValue != null && newValue == null) {
-                base.put(name, (byte[]) null);
+                base.put(name, (SVNPropertyValue) null);
                 diff.put(name, oldValue);
             } else if (oldValue != null && newValue != null) {
                 base.put(name, newValue);
@@ -650,8 +649,8 @@ public class SVNDiffEditor implements ISVNEditor {
             String newPropName = (String) names.next();
             if (props1.containsName(newPropName)) {
                 // changed.
-                byte[] oldValue = props2.getBinaryValue(newPropName);
-                byte[] value = props1.getBinaryValue(newPropName);
+                SVNPropertyValue oldValue = props2.getSVNPropertyValue(newPropName);
+                SVNPropertyValue value = props1.getSVNPropertyValue(newPropName);
                 if (oldValue != null && !oldValue.equals(value)) {
                     propsDiff.put(newPropName, oldValue);
                 } else if (oldValue == null && value != null) {
@@ -659,7 +658,7 @@ public class SVNDiffEditor implements ISVNEditor {
                 }
             } else {
                 // added.
-                propsDiff.put(newPropName, props2.getBinaryValue(newPropName));
+                propsDiff.copyValue(props2, newPropName);
             }
         }
         for (Iterator names = props1.nameSet().iterator(); names.hasNext();) {

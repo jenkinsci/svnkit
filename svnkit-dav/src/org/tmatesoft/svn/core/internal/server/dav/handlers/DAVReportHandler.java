@@ -13,6 +13,7 @@ package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -227,14 +228,14 @@ public class DAVReportHandler extends ServletDAVHandler {
 
     protected void writePropertyTag(String tagName, String propertyName, SVNPropertyValue propertyValue) throws SVNException {
         StringBuffer xmlBuffer;
-        if (propertyValue.isXMLSafe("UTF-8")) {
+        if (propertyValue.isXMLSafe()) {
             xmlBuffer = SVNXMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, propertyValue.getString(), NAME_ATTR, propertyName, null);
             write(xmlBuffer);
         } else {
             Map attrs = new HashMap();
             attrs.put(NAME_ATTR, propertyName);
-            attrs.put(ENCODING_ATTR, BASE64_ENCODING);
-            String value = SVNBase64.byteArrayToBase64(propertyValue.getBytes(UTF8_ENCODING));
+            attrs.put(ENCODING_ATTR, BASE64_ENCODING);            
+            String value = SVNBase64.byteArrayToBase64(SVNPropertyValue.getPropertyAsBytes(propertyValue));
 
             xmlBuffer = SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, SVNXMLUtil.XML_STYLE_PROTECT_CDATA, attrs, null);
             write(xmlBuffer);

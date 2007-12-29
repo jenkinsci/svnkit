@@ -88,7 +88,7 @@ public class SVNLogRunner {
                         continue;
                     }
                     
-                    Object value = attributes.getStringValue(attrName); 
+                    String value = attributes.getStringValue(attrName); 
                     attrName = SVNProperty.SVN_ENTRY_PREFIX + attrName;
                     entryAttrs.put(attrName, value);
                 }

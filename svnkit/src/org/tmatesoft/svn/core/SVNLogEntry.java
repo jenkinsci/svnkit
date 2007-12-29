@@ -181,7 +181,7 @@ public class SVNLogEntry implements Serializable {
         result.append(myRevision);
         for (Iterator propNames = myRevisionProperties.nameSet().iterator(); propNames.hasNext();) {
             String propName = (String) propNames.next();
-            Object propVal = myRevisionProperties.getStringValue(propName);
+            Object propVal = myRevisionProperties.getSVNPropertyValue(propName);
             result.append('\n');
             result.append(propName);
             result.append('=');

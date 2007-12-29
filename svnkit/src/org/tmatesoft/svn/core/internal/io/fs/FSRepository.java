@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.io.fs;
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -149,21 +150,23 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             }
             String userName = getUserName();
             SVNProperties revProps = myFSFS.getRevisionProperties(revision);
-            byte[] oldValue = revProps.getBinaryValue(propertyName);
+            SVNPropertyValue oldValue = revProps.getSVNPropertyValue(propertyName);
             String action = null;
-            if (propertyValue == null) {
+            if (propertyValue == null || propertyValue.hasNullValue()) {
                 action = FSHooks.REVPROP_DELETE;
             } else if (oldValue == null) {
                 action = FSHooks.REVPROP_ADD;
             } else {
                 action = FSHooks.REVPROP_MODIFY;
             }
+
+            byte[] bytes = SVNPropertyValue.getPropertyAsBytes(propertyValue);
             if (FSHooks.isHooksEnabled() && !bypassPreRevpropHook) {
-                FSHooks.runPreRevPropChangeHook(myReposRootDir, propertyName, propertyValue == null ? null : propertyValue.getBytes(), userName, revision, action);
+                FSHooks.runPreRevPropChangeHook(myReposRootDir, propertyName, bytes, userName, revision, action);
             }
             myFSFS.setRevisionProperty(revision, propertyName, propertyValue);
             if (FSHooks.isHooksEnabled() && !bypassPostRevpropHook) {
-                FSHooks.runPostRevPropChangeHook(myReposRootDir, propertyName, propertyValue == null ? null : propertyValue.getBytes(), userName, revision, action);
+                FSHooks.runPostRevPropChangeHook(myReposRootDir, propertyName, bytes, userName, revision, action);
             }
         } finally {
             closeRepository();

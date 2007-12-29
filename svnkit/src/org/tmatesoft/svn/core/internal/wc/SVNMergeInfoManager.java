@@ -119,7 +119,7 @@ public class SVNMergeInfoManager {
     private void indexTxnMergeInfo(long revision, SVNProperties pathsToMergeInfos) throws SVNException {
         for (Iterator paths = pathsToMergeInfos.nameSet().iterator(); paths.hasNext();) {
             String path = (String) paths.next();
-            String mergeInfoToParse = pathsToMergeInfos.getStringValue(path);
+            String mergeInfoToParse = SVNPropertyValue.getPropertyAsString(pathsToMergeInfos.getSVNPropertyValue(path));
             indexPathMergeInfo(revision, path, mergeInfoToParse);
         }
     }

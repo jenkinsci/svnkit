@@ -37,6 +37,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNEntryHandler;
@@ -1534,20 +1535,20 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             String newPropName = (String) names.next();
             if (props1.containsName(newPropName)) {
                 // changed.
-                Object oldValue = props2.getStringValue(newPropName);
-                if (!oldValue.equals(props1.getStringValue(newPropName))) {
-                    propsDiff.put(newPropName, props2.getStringValue(newPropName));
+                SVNPropertyValue oldValue = props2.getSVNPropertyValue(newPropName);
+                if (!oldValue.equals(props1.getSVNPropertyValue(newPropName))) {
+                    propsDiff.put(newPropName, props2.getSVNPropertyValue(newPropName));
                 }
             } else {
                 // added.
-                propsDiff.put(newPropName, props2.getStringValue(newPropName));
+                propsDiff.put(newPropName, props2.getSVNPropertyValue(newPropName));
             }
         }
         for (Iterator names = props1.nameSet().iterator(); names.hasNext();) {
             String oldPropName = (String) names.next();
             if (!props2.containsName(oldPropName)) {
                 // deleted
-                propsDiff.put(oldPropName, (String) null);
+                propsDiff.put(oldPropName, (SVNPropertyValue) null);
             }
         }
         return propsDiff;

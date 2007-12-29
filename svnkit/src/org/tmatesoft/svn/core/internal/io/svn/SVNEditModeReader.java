@@ -118,7 +118,8 @@ public class SVNEditModeReader {
         } else if ("change-dir-prop".equals(commandName)) {
             lookupToken(SVNReader.getString(params, 0), false);
             byte[] bytes = SVNReader.getBytes(params, 2);
-            myEditor.changeDirProperty(SVNReader.getString(params, 1), bytes == null ? null : new SVNPropertyValue(bytes));
+            String propertyName = SVNReader.getString(params, 1);
+            myEditor.changeDirProperty(propertyName, bytes == null ? null : new SVNPropertyValue(propertyName, bytes));
         } else if ("close-dir".equals(commandName)) {
             String token = SVNReader.getString(params, 0);
             lookupToken(token, false);
@@ -143,7 +144,8 @@ public class SVNEditModeReader {
         } else if ("change-file-prop".equals(commandName)) {
             lookupToken(SVNReader.getString(params, 0), true);
             byte[] bytes = SVNReader.getBytes(params, 2);
-            myEditor.changeFileProperty(myFilePath, SVNReader.getString(params, 1), bytes == null ? null : new SVNPropertyValue(bytes));
+            String propertyName = SVNReader.getString(params, 1);
+            myEditor.changeFileProperty(myFilePath, propertyName, bytes == null ? null : new SVNPropertyValue(propertyName, bytes));
         } else if ("close-file".equals(commandName)) {
             String token = SVNReader.getString(params, 0);
             lookupToken(token, true);

@@ -175,7 +175,7 @@ public class SVNReplicationEditor implements ISVNEditor {
     }
 
     public void changeDirProperty(String name, String value) throws SVNException {
-        changeDirProperty(name, value == null ? null : new SVNPropertyValue(value));
+        changeDirProperty(name, value == null ? null : new SVNPropertyValue(name, value));
     }
 
     public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
@@ -334,7 +334,7 @@ public class SVNReplicationEditor implements ISVNEditor {
     }
 
     public void changeFileProperty(String path, String name, String value) throws SVNException {
-        changeFileProperty(path, name, value == null ? null : new SVNPropertyValue(value));
+        changeFileProperty(path, name, value == null ? null : new SVNPropertyValue(name, value));
     }
 
 

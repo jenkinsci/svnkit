@@ -478,7 +478,7 @@ public abstract class SVNRepository {
      * @see                     org.tmatesoft.svn.core.SVNRevisionProperty
      */
     public void setRevisionPropertyValue(long revision, String propertyName, String propertyValue) throws SVNException{
-        setRevisionPropertyValue(revision, propertyName, new SVNPropertyValue(propertyValue));
+        setRevisionPropertyValue(revision, propertyName, new SVNPropertyValue(propertyName, propertyValue));
     }
 
     public abstract void setRevisionPropertyValue(long revision, String propertyName, SVNPropertyValue propertyValue) throws SVNException;

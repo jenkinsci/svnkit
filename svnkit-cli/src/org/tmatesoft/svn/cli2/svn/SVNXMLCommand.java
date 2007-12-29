@@ -13,10 +13,15 @@ package org.tmatesoft.svn.cli2.svn;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.TreeMap;
+import java.io.UnsupportedEncodingException;
 
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
+import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.wc.SVNPropertyData;
 
 /**
  * @author TMate Software Ltd.
@@ -64,16 +69,30 @@ public abstract class SVNXMLCommand extends SVNCommand {
             buffer = buffer == null ? new StringBuffer() : buffer;
             for (Iterator propNames = propHash.nameSet().iterator(); propNames.hasNext();) {
                 String propName = (String) propNames.next();
-                String propVal = propHash.getStringValue(propName);
+                SVNPropertyValue propVal = propHash.getSVNPropertyValue(propName);
                 if (namesOnly) {
                     buffer = openXMLTag("property", SVNXMLUtil.XML_STYLE_SELF_CLOSING, "name", propName, buffer);
                 } else {
-                    buffer = openXMLTag("property", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, "name", propName, buffer);
-                    buffer.append(SVNEncodingUtil.xmlEncodeCDATA(propVal));
-                    buffer = closeXMLTag("property", buffer);
+                    buffer = addXMLProp(new SVNPropertyData(propName, propVal), buffer);                    
                 }
             }
         }
         return buffer;
+    }
+
+    protected StringBuffer addXMLProp(SVNPropertyData property, StringBuffer xmlBuffer) {
+        String xmlSafe = null;
+        Map attrs = new TreeMap();
+        attrs.put("name", property.getName());
+        if (!property.getValue().isXMLSafe()) {
+            attrs.put("encoding", "base64");            
+            xmlSafe = SVNBase64.byteArrayToBase64(SVNPropertyValue.getPropertyAsBytes(property.getValue()));
+        } else {
+            xmlSafe = SVNEncodingUtil.xmlEncodeCDATA(property.getValue().getString());
+        }
+        xmlBuffer = openXMLTag("property", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, attrs, xmlBuffer);
+        xmlBuffer.append(xmlSafe);
+        xmlBuffer = closeXMLTag("property", xmlBuffer);
+        return xmlBuffer;
     }
 }

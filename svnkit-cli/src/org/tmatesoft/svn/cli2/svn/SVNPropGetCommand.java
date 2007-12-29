@@ -156,7 +156,7 @@ public class SVNPropGetCommand extends SVNPropertiesCommand {
                 getSVNEnvironment().getOut().print(" - ");
             }
             SVNPropertyData property = (SVNPropertyData) props.get(0);
-            getSVNEnvironment().getOut().print(property.getValue());
+            printProperty(property.getValue());
             if (!getSVNEnvironment().isStrict()) {
                 getSVNEnvironment().getOut().println();
             }

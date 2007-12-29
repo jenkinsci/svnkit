@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.io.fs.FSEntry;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryUtil;
@@ -88,9 +89,9 @@ public class SVNAdminHelper {
         
         for(Iterator names = propNames.iterator(); names.hasNext();) {
             String propName = (String) names.next();
-            String propValue = props.getStringValue(propName); 
+            SVNPropertyValue propValue = props.getSVNPropertyValue(propName);
             if (oldProps != null) {
-                String oldValue = oldProps.getStringValue(propName);
+                SVNPropertyValue oldValue = oldProps.getSVNPropertyValue(propName);
                 if (oldValue != null && oldValue.equals(propValue)) {
                     continue;
                 }
@@ -331,7 +332,7 @@ public class SVNAdminHelper {
         Object[] names = propsDiffs.nameSet().toArray();
         for (int i = 0; i < names.length; i++) {
             String propName = (String) names[i];
-            String propValue = propsDiffs.getStringValue(propName);
+            SVNPropertyValue propValue = propsDiffs.getSVNPropertyValue(propName);
             if (isDir) {
                 editor.changeDirProperty(propName, propValue);
             } else {

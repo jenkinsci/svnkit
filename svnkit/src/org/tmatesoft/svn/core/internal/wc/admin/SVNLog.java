@@ -14,16 +14,15 @@ package org.tmatesoft.svn.core.internal.wc.admin;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -131,7 +130,7 @@ public abstract class SVNLog {
             command.put(SVNLog.NAME_ATTR, name);
             for (Iterator names = modifiedEntryProps.nameSet().iterator(); names.hasNext();) {
                 String propName = (String) names.next();
-                String propValue = modifiedEntryProps.getStringValue(propName);
+                SVNPropertyValue propValue = modifiedEntryProps.getSVNPropertyValue(propName);
                 String longPropName = !propName.startsWith(SVNProperty.SVN_ENTRY_PREFIX) ? SVNProperty.SVN_ENTRY_PREFIX + propName : propName;
 
                 if (SVNProperty.LOCK_TOKEN.equals(longPropName)) {
@@ -155,7 +154,7 @@ public abstract class SVNLog {
             command.put(SVNLog.NAME_ATTR, name);
             for (Iterator names = modifiedWCProps.nameSet().iterator(); names.hasNext();) {
                 String propName = (String) names.next();
-                String propValue = modifiedWCProps.getStringValue(propName);
+                SVNPropertyValue propValue = modifiedWCProps.getSVNPropertyValue(propName);
                 command.put(SVNLog.PROPERTY_NAME_ATTR, propName);
                 if (propValue != null) {
                     command.put(SVNLog.PROPERTY_VALUE_ATTR, propValue);

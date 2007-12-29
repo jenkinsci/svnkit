@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -883,35 +884,35 @@ public class FSFS {
         }
 
         SVNLock lock = null;
-        String lockPath = lockProps.getStringValue(FSFS.PATH_LOCK_KEY);
+        String lockPath = SVNPropertyValue.getPropertyAsString(lockProps.getSVNPropertyValue(FSFS.PATH_LOCK_KEY));
         if (lockPath != null) {
-            String lockToken = lockProps.getStringValue(FSFS.TOKEN_LOCK_KEY);
+            String lockToken = SVNPropertyValue.getPropertyAsString(lockProps.getSVNPropertyValue(FSFS.TOKEN_LOCK_KEY));
             if (lockToken == null) {
                 SVNErrorManager.error(FSErrors.errorCorruptLockFile(lockPath, this));
             }
-            String lockOwner = lockProps.getStringValue(FSFS.OWNER_LOCK_KEY);
+            String lockOwner = SVNPropertyValue.getPropertyAsString(lockProps.getSVNPropertyValue(FSFS.OWNER_LOCK_KEY));
             if (lockOwner == null) {
                 SVNErrorManager.error(FSErrors.errorCorruptLockFile(lockPath, this));
             }
-            String davComment = lockProps.getStringValue(FSFS.IS_DAV_COMMENT_LOCK_KEY);
+            String davComment = SVNPropertyValue.getPropertyAsString(lockProps.getSVNPropertyValue(FSFS.IS_DAV_COMMENT_LOCK_KEY));
             if (davComment == null) {
                 SVNErrorManager.error(FSErrors.errorCorruptLockFile(lockPath, this));
             }
-            String creationTime = lockProps.getStringValue(FSFS.CREATION_DATE_LOCK_KEY);
+            String creationTime = SVNPropertyValue.getPropertyAsString(lockProps.getSVNPropertyValue(FSFS.CREATION_DATE_LOCK_KEY));
             if (creationTime == null) {
                 SVNErrorManager.error(FSErrors.errorCorruptLockFile(lockPath, this));
             }
             Date creationDate = SVNDate.parseDateString(creationTime);
-            String expirationTime = lockProps.getStringValue(FSFS.EXPIRATION_DATE_LOCK_KEY);
+            String expirationTime = SVNPropertyValue.getPropertyAsString(lockProps.getSVNPropertyValue(FSFS.EXPIRATION_DATE_LOCK_KEY));
             Date expirationDate = null;
             if (expirationTime != null) {
                 expirationDate = SVNDate.parseDateString(expirationTime);
             }
-            String comment = lockProps.getStringValue(FSFS.COMMENT_LOCK_KEY);
+            String comment = SVNPropertyValue.getPropertyAsString(lockProps.getSVNPropertyValue(FSFS.COMMENT_LOCK_KEY));
             lock = new SVNLock(lockPath, lockToken, lockOwner, comment, creationDate, expirationDate);
         }
         
-        String childEntries = lockProps.getStringValue(FSFS.CHILDREN_LOCK_KEY);
+        String childEntries = SVNPropertyValue.getPropertyAsString(lockProps.getSVNPropertyValue(FSFS.CHILDREN_LOCK_KEY));
         if (children != null && childEntries != null) {
             String[] digests = childEntries.split("\n");
             for (int i = 0; i < digests.length; i++) {
@@ -1015,8 +1016,8 @@ public class FSFS {
         String uuid = getUUID();
         String rev = String.valueOf(revision);
 
-        metaProperties.put(SVNProperty.LAST_AUTHOR, revProps.getStringValue(SVNRevisionProperty.AUTHOR));
-        metaProperties.put(SVNProperty.COMMITTED_DATE, revProps.getStringValue(SVNRevisionProperty.DATE));        
+        metaProperties.put(SVNProperty.LAST_AUTHOR, new SVNPropertyValue(SVNProperty.LAST_AUTHOR, revProps.getStringValue(SVNRevisionProperty.AUTHOR)));
+        metaProperties.put(SVNProperty.COMMITTED_DATE, new SVNPropertyValue(SVNProperty.COMMITTED_DATE, revProps.getStringValue(SVNRevisionProperty.DATE)));        
 
         metaProperties.put(SVNProperty.COMMITTED_REVISION, rev);
         metaProperties.put(SVNProperty.UUID, uuid);
@@ -1473,9 +1474,9 @@ public class FSFS {
 
         for (Iterator iterator = entries.nameSet().iterator(); iterator.hasNext();) {
             String name = (String) iterator.next();
-            String unparsedEntry = entries.getStringValue(name);
+            String unparsedEntry = SVNPropertyValue.getPropertyAsString(entries.getSVNPropertyValue(name));
 
-            if(unparsedEntry == null && mayContainNulls){
+            if (unparsedEntry == null && mayContainNulls) {
                 continue;
             }
 

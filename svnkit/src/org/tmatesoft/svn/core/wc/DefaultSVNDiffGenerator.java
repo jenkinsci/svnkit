@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -29,6 +30,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNMergeInfoManager;
@@ -174,8 +176,8 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         diff = diff != null ? diff : SVNProperties.EMPTY_PROPERTIES;
         for (Iterator changedPropNames = diff.nameSet().iterator(); changedPropNames.hasNext();) {
             String name = (String) changedPropNames.next();
-            String originalValue = baseProps.getStringValue(name);
-            String newValue = diff.getStringValue(name);
+            SVNPropertyValue originalValue = baseProps.getSVNPropertyValue(name);
+            SVNPropertyValue newValue = diff.getSVNPropertyValue(name);
             if ((originalValue != null && originalValue.equals(newValue)) || originalValue == newValue) {
                 changedPropNames.remove();
             }
@@ -194,8 +196,8 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             bos.write(EOL);
             for (Iterator changedPropNames = diff.nameSet().iterator(); changedPropNames.hasNext();) {
                 String name = (String) changedPropNames.next();
-                String originalValue = baseProps != null ? baseProps.getStringValue(name) : null;
-                String newValue = diff.getStringValue(name);
+                SVNPropertyValue originalValue = baseProps != null ? baseProps.getSVNPropertyValue(name) : null;
+                SVNPropertyValue newValue = diff.getSVNPropertyValue(name);
                 String headerFormat = null;
                 
                 if (originalValue == null) {
@@ -209,17 +211,17 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                 bos.write((headerFormat + name).getBytes(getEncoding()));
                 bos.write(EOL);
                 if (SVNProperty.MERGE_INFO.equals(name)) {
-                    displayMergeInfoDiff(bos, originalValue, newValue);
+                    displayMergeInfoDiff(bos, originalValue.getString(), newValue.getString());
                     continue;
                 }
                 if (originalValue != null) {
                     bos.write("   - ".getBytes(getEncoding()));
-                    bos.write(originalValue.getBytes(getEncoding()));
+                    bos.write(getPropertyAsBytes(originalValue, getEncoding()));
                     bos.write(EOL);
                 }
                 if (newValue != null) {
                     bos.write("   + ".getBytes(getEncoding()));
-                    bos.write(newValue.getBytes(getEncoding()));
+                    bos.write(getPropertyAsBytes(newValue, getEncoding()));
                     bos.write(EOL);
                 } 
             }
@@ -233,6 +235,21 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                 bos.writeTo(result);
             } catch (IOException e) {
             }
+        }
+    }
+
+    private byte[] getPropertyAsBytes(SVNPropertyValue value, String encoding){
+        if (value == null || value.hasNullValue()){
+            return null;            
+        }
+        if (value.isString()){
+            try {
+                return value.getString().getBytes(encoding);
+            } catch (UnsupportedEncodingException e) {
+                return value.getString().getBytes();
+            }
+        } else {
+            return value.getBytes();
         }
     }
 

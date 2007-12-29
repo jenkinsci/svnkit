@@ -163,7 +163,7 @@ public class FSTransactionRoot extends FSRoot {
     public static FSTransactionInfo beginTransaction(long baseRevision, int flags, FSFS owner) throws SVNException {
         FSTransactionInfo txn = createTxn(baseRevision, owner);
         String commitTime = SVNDate.formatDate(new Date(System.currentTimeMillis()));
-        owner.setTransactionProperty(txn.getTxnId(), SVNRevisionProperty.DATE, new SVNPropertyValue(commitTime));
+        owner.setTransactionProperty(txn.getTxnId(), SVNRevisionProperty.DATE, new SVNPropertyValue(SVNRevisionProperty.DATE, commitTime));
 
         if ((flags & SVN_FS_TXN_CHECK_OUT_OF_DATENESS) != 0) {
             owner.setTransactionProperty(txn.getTxnId(), SVNProperty.TXN_CHECK_OUT_OF_DATENESS, SVNPropertyValue.TRUE);
@@ -370,7 +370,7 @@ public class FSTransactionRoot extends FSRoot {
             }
             Map dirContents = parentRevNode.getDirContents();
             if (entryId != null) {
-                SVNWCProperties.appendProperty(entryName, kind + " " + entryId.toString(), dst);
+                SVNWCProperties.appendProperty(entryName, new SVNPropertyValue(entryName, kind + " " + entryId.toString()), dst);
                 if (dirContents != null) {
                     dirContents.put(entryName, new FSEntry(entryId, kind, entryName));
                 }

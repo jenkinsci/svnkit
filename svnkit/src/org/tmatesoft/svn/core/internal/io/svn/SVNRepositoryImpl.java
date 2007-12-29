@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.io.svn;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -230,7 +231,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             closeConnection();
         }
         byte[] bytes = SVNReader.getBytes(values, 0);
-        return bytes == null ? null : new SVNPropertyValue(bytes);
+        return bytes == null ? null : new SVNPropertyValue(propertyName, bytes);
     }
 
     public SVNNodeKind checkPath(String path, long revision) throws SVNException {
@@ -776,8 +777,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     if (revisionProperties != null) {
                         for (Iterator iterator = revisionProperties.nameSet().iterator(); iterator.hasNext();) {
                             String name = (String) iterator.next();
-                            String value = revisionProperties.getStringValue(name);
-                            logEntryProperties.put(name, value);
+                            logEntryProperties.copyValue(revisionProperties, name);
                         }
                     }
 
@@ -841,8 +841,10 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     public void setRevisionPropertyValue(long revision, String propertyName,
                                          SVNPropertyValue propertyValue) throws SVNException {
         assertValidRevision(revision);
+
+        byte[] bytes = SVNPropertyValue.getPropertyAsBytes(propertyValue);        
         Object[] buffer = new Object[]{"change-rev-prop",
-                getRevisionObject(revision), propertyName, propertyValue.getBytes()};
+                getRevisionObject(revision), propertyName, bytes};
         try {
             openConnection();
             write("(w(nsb))", buffer);

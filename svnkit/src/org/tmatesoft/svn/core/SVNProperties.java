@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.io.UnsupportedEncodingException;
 
 
 /**
@@ -39,6 +40,14 @@ public class SVNProperties {
     private SVNProperties(Map properties){
         myProperties = properties;
     }
+    
+    public void put(SVNPropertyValue value){
+        myProperties.put(value.getName(), value);        
+    }
+
+    public void put(String propertyName, SVNPropertyValue propertyValue) {
+        myProperties.put(propertyName, propertyValue);
+    }
 
     public void put(String propertyName, String propertyValue) {
         myProperties.put(propertyName, propertyValue);
@@ -48,11 +57,7 @@ public class SVNProperties {
         myProperties.put(propertyName, propertyValue);
     }
 
-    public void put(String propertyName, SVNPropertyValue propertyValue) {
-        myProperties.put(propertyName, propertyValue);
-    }
-
-    public String getStringValue(String propertyName, String encoding) {
+    public String getStringValue(String propertyName) {
         Object value = myProperties.get(propertyName);
         if (value == null) {
             return null;
@@ -61,9 +66,9 @@ public class SVNProperties {
             return (String) value;
         }
         if (value instanceof byte[]) {
-            SVNPropertyValue propertyValue = new SVNPropertyValue((byte[]) value);
+            SVNPropertyValue propertyValue = new SVNPropertyValue(propertyName, (byte[]) value);
             myProperties.put(propertyName, propertyValue);
-            return propertyValue.getString(encoding);
+            return propertyValue.getString();
         }
         if (value instanceof SVNPropertyValue){
             SVNPropertyValue propertyValue = (SVNPropertyValue) value;
@@ -72,32 +77,19 @@ public class SVNProperties {
         return null;
     }
 
-    public String getStringValue(String propertyName) {
-        return getStringValue(propertyName, "UTF-8");
-    }
-
-    public byte[] getBinaryValue(String propertyName, String encoding){
+    public byte[] getBinaryValue(String propertyName){
         Object value = myProperties.get(propertyName);
-        if (value == null) {
+        if (value == null || value instanceof String) {
             return null;
         }
         if (value instanceof byte[]){
-            return (byte[]) value;            
-        }
-        if (value instanceof String){
-            SVNPropertyValue propertyValue = new SVNPropertyValue((String) value);
-            myProperties.put(propertyName, propertyValue);
-            return propertyValue.getBytes(encoding);
+            return (byte[]) value;
         }
         if (value instanceof SVNPropertyValue){
             SVNPropertyValue propertyValue = (SVNPropertyValue) value;
-            return propertyValue.getBytes(encoding);
+            return propertyValue.getBytes();
         }
         return null;
-    }
-
-    public byte[] getBinaryValue(String propertyName){
-        return getBinaryValue(propertyName, "UTF-8");
     }
 
     public SVNPropertyValue getSVNPropertyValue(String propertyName){
@@ -109,12 +101,12 @@ public class SVNProperties {
             return (SVNPropertyValue) value;            
         }
         if (value instanceof String){
-            SVNPropertyValue propertyValue = new SVNPropertyValue((String) value);
+            SVNPropertyValue propertyValue = new SVNPropertyValue(propertyName, (String) value);
             myProperties.put(propertyName, propertyValue);
             return propertyValue;
         }
         if (value instanceof byte[]){
-            SVNPropertyValue propertyValue = new SVNPropertyValue((byte[]) value);
+            SVNPropertyValue propertyValue = new SVNPropertyValue(propertyName, (byte[]) value);
             myProperties.put(propertyName, propertyValue);
             return propertyValue;
         }

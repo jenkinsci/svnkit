@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.cli2.svn;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -101,7 +102,16 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
                     SVNPropertyData property = (SVNPropertyData) props.next();
                     getSVNEnvironment().getOut().print("  " + property.getName());
                     if (getSVNEnvironment().isVerbose()) {
-                        getSVNEnvironment().getOut().print(" : " + property.getValue().getBytes(null));
+                        getSVNEnvironment().getOut().print(" : ");
+                        if (property.getValue().isString()){
+                            getSVNEnvironment().getOut().print(property.getValue().getString());
+                        } else {
+                            try {
+                                getSVNEnvironment().getOut().write(property.getValue().getBytes());
+                            } catch (IOException e) {
+
+                            }
+                        }
                     }
                     getSVNEnvironment().getOut().println();
                 }
@@ -163,7 +173,8 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
                 SVNPropertyData property = (SVNPropertyData) plist.next();
                 getSVNEnvironment().getOut().print("  " + property.getName());
                 if (getSVNEnvironment().isVerbose()) {
-                    getSVNEnvironment().getOut().print(" : " + property.getValue());
+                    getSVNEnvironment().getOut().print(" : ");
+                    printProperty(property.getValue());
                 }
                 getSVNEnvironment().getOut().println();
             }

@@ -904,7 +904,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             String externals = externalsValue == null ? null : externalsValue.getString();
             adminAreaInfo.addExternal(ownerPath, externals, externals);
             if (externalsValue != null) {
-                externalsValue = new SVNPropertyValue(canonicalizeExtenrals(externals, omitDefaultPort));
+                externalsValue = new SVNPropertyValue(SVNProperty.EXTERNALS, canonicalizeExtenrals(externals, omitDefaultPort));
                 adminArea.getProperties(adminArea.getThisDirName()).setPropertyValue(SVNProperty.EXTERNALS, externalsValue);
             }
         }

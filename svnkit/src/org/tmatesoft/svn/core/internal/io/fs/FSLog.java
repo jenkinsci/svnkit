@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.ISVNMergeInfoFilter;
 import org.tmatesoft.svn.core.internal.wc.SVNMergeInfoManager;
@@ -237,8 +238,8 @@ public class FSLog {
                 } else {
                     for (int i = 0; i < myRevPropNames.length; i++) {
                         String propName = myRevPropNames[i];
-                        String propVal = revisionProps.getStringValue(propName);
-                        if (censorRevProps && !SVNRevisionProperty.AUTHOR.equals(propName) && 
+                        SVNPropertyValue propVal = revisionProps.getSVNPropertyValue(propName);
+                        if (censorRevProps && !SVNRevisionProperty.AUTHOR.equals(propName) &&
                                 !SVNRevisionProperty.DATE.equals(propName)) {
                             continue;
                         }
@@ -247,7 +248,7 @@ public class FSLog {
                         }
                         if (SVNRevisionProperty.DATE.equals(propName) && date != null) {
                             entryRevProps.put(propName, SVNDate.formatDate(date));
-                        } else if (propVal != null) {
+                        } else if (propVal != null && !propVal.hasNullValue()) {
                             entryRevProps.put(propName, propVal);
                         }
                     }

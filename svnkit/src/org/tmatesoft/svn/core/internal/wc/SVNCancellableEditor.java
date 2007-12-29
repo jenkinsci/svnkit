@@ -96,7 +96,7 @@ public class SVNCancellableEditor implements ISVNEditor {
 
     public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
         myCancel.checkCancelled();
-        myLog.info("change dir prop " + name + " = " + value);
+        myLog.info("change dir prop " + name + " = " + SVNPropertyValue.getPropertyAsString(value));
         myDelegate.changeDirProperty(name, value);
     }
 
@@ -142,7 +142,7 @@ public class SVNCancellableEditor implements ISVNEditor {
 
     public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
         myCancel.checkCancelled();
-        myLog.info("change file prop " + name + " = " + value);
+        myLog.info("change file prop " + name + " = " + SVNPropertyValue.getPropertyAsString(value));
         myDelegate.changeFileProperty(path, name, value);
     }
 

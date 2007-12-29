@@ -476,7 +476,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                 try {
                     SVNProperties values = props.asMap();
                     String storedRealm = values.getStringValue("svn:realmstring");
-                    String cipherType = values.getStringValue("passtype");
+                    String cipherType = SVNPropertyValue.getPropertyAsString(values.getSVNPropertyValue("passtype"));
                     if (cipherType != null && !SVNPasswordCipher.hasCipher(cipherType)) {
                         return null;
                     }
@@ -484,17 +484,17 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                     if (storedRealm == null || !storedRealm.equals(realm)) {
                         return null;
                     }
-                    String userName = values.getStringValue("username");
+                    String userName = SVNPropertyValue.getPropertyAsString(values.getSVNPropertyValue("username"));
                     if (userName == null || "".equals(userName.trim())) {
                         return null;
                     }
-                    String password = values.getStringValue("password");
+                    String password = SVNPropertyValue.getPropertyAsString(values.getSVNPropertyValue("password"));
                     password = cipher.decrypt(password);
 
-                    String path = values.getStringValue("key");
-                    String passphrase = values.getStringValue("passphrase");
+                    String path = SVNPropertyValue.getPropertyAsString(values.getSVNPropertyValue("key"));
+                    String passphrase = SVNPropertyValue.getPropertyAsString(values.getSVNPropertyValue("passphrase"));
                     passphrase = cipher.decrypt(passphrase);
-                    String port = values.getStringValue("port");
+                    String port = SVNPropertyValue.getPropertyAsString(values.getSVNPropertyValue("port"));
                     port = port == null ? ("" + getDefaultSSHPortNumber()) : port;
                     if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
                         return new SVNPasswordAuthentication(userName, password, authMayBeStored);
@@ -574,7 +574,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             try {
                 for (Iterator names = values.keySet().iterator(); names.hasNext();) {
                     String name = (String) names.next();
-                    props.setPropertyValue(name, new SVNPropertyValue((String) values.get(name)));
+                    props.setPropertyValue(name, new SVNPropertyValue(name, (String) values.get(name)));
                 } 
                 SVNFileUtil.setReadonly(props.getFile(), false);
             } catch (SVNException e) {

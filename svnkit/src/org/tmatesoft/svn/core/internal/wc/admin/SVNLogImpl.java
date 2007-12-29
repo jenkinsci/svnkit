@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -60,15 +61,18 @@ public class SVNLogImpl extends SVNLog {
                 os.write(name);
                 for (Iterator attrs = command.nameSet().iterator(); attrs.hasNext();) {
                     String attr = (String) attrs.next();
-                    String value = command.getStringValue(attr);
-                    if (value == null) {
-                        value = "";
+                    SVNPropertyValue value = command.getSVNPropertyValue(attr);
+                    String str = null;
+                    if (value == null || value.hasNullValue()) {
+                        str = "";
+                    } else {
+                        str = SVNPropertyValue.getPropertyAsString(value);
                     }
-                    value = SVNEncodingUtil.xmlEncodeAttr(value);
+                    str = SVNEncodingUtil.xmlEncodeAttr(str);
                     os.write("\n   ");
                     os.write(attr);
                     os.write("=\"");
-                    os.write(value);
+                    os.write(str);
                     os.write("\"");
                 }
                 os.write("/>\n");

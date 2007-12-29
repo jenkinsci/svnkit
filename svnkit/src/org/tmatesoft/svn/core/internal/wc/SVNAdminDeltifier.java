@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.io.fs.FSEntry;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
@@ -313,7 +314,7 @@ public class SVNAdminDeltifier {
         Object[] names = propsDiffs.nameSet().toArray();
         for (int i = 0; i < names.length; i++) {
             String propName = (String) names[i];
-            String propValue = propsDiffs.getStringValue(propName);
+            SVNPropertyValue propValue = propsDiffs.getSVNPropertyValue(propName);
             if (isDir) {
                 myEditor.changeDirProperty(propName, propValue);
             } else {

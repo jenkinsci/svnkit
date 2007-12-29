@@ -271,7 +271,7 @@ public class SVNWCProperties {
     }
 
     public void setPropertyValue(String name, SVNPropertyValue value) throws SVNException {
-        byte[] bytes = value == null ? null : value.getBytes();
+        byte[] bytes = SVNPropertyValue.getPropertyAsBytes(value);
         int length = bytes != null && bytes.length >= 0 ? bytes.length : -1;
         setPropertyValue(name, bytes != null ? new ByteArrayInputStream(bytes) : null, length);
     }
@@ -378,7 +378,7 @@ public class SVNWCProperties {
             for (int i = 0; i < keys.length; i++) {
                 String propertyName = (String) keys[i];
                 writeProperty(target, 'K', propertyName.getBytes("UTF-8"));
-                writeProperty(target, 'V', namesToValues.getBinaryValue(propertyName));
+                writeProperty(target, 'V', SVNPropertyValue.getPropertyAsBytes(namesToValues.getSVNPropertyValue(propertyName)));
             }
             if (terminator != null) {
                 target.write(terminator.getBytes("UTF-8"));
@@ -390,13 +390,16 @@ public class SVNWCProperties {
         }
     }
     
-    public static void appendProperty(String name, String value, OutputStream target) throws SVNException {
-        if(name == null || value == null){
+    public static void appendProperty(String name, SVNPropertyValue value, OutputStream target) throws SVNException {
+        if(name == null || value == null || value.hasNullValue()){
             return;
         }
+
+        byte[] bytes = SVNPropertyValue.getPropertyAsBytes(value);        
+
         try {
             writeProperty(target, 'K', name.getBytes("UTF-8"));
-            writeProperty(target, 'V', value.getBytes("UTF-8"));
+            writeProperty(target, 'V', bytes);
         }catch(IOException ioe){    
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
             SVNErrorManager.error(err, ioe);

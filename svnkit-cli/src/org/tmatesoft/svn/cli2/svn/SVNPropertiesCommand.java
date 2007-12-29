@@ -12,31 +12,28 @@
 package org.tmatesoft.svn.cli2.svn;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.util.SVNBase64;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 
 /**
+ * @author TMate Software Ltd.
  * @version 1.1.2
- * @author  TMate Software Ltd.
  */
 public abstract class SVNPropertiesCommand extends SVNXMLCommand implements ISVNPropertyHandler {
 
@@ -48,22 +45,22 @@ public abstract class SVNPropertiesCommand extends SVNXMLCommand implements ISVN
         super(name, aliases);
         clearCollectedProperties();
     }
-    
+
     protected void clearCollectedProperties() {
         myRevisionProperties = new LinkedHashMap();
         myURLProperties = new LinkedHashMap();
         myPathProperties = new LinkedHashMap();
     }
-    
+
     protected SVNURL getRevpropURL(SVNRevision revision, Collection targets) throws SVNException {
         if (revision != SVNRevision.HEAD && revision.getDate() == null && revision.getNumber() < 0) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR,
                     "Must specify revision as a number, a date or 'HEAD' when operating on revision property");
             SVNErrorManager.error(err);
         }
         if (targets.size() != 1) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                "Wrong number of targets specified");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR,
+                    "Wrong number of targets specified");
             SVNErrorManager.error(err);
         }
         String target = (String) targets.iterator().next();
@@ -91,7 +88,7 @@ public abstract class SVNPropertiesCommand extends SVNXMLCommand implements ISVN
         }
         ((Collection) myRevisionProperties.get(new Long(revision))).add(property);
     }
-    
+
     protected SVNPropertyData getRevisionProperty(long revision) {
         Object key = new Long(revision);
         if (myRevisionProperties.containsKey(key)) {
@@ -126,6 +123,18 @@ public abstract class SVNPropertiesCommand extends SVNXMLCommand implements ISVN
         return myRevisionProperties;
     }
 
+    protected void printProperty(SVNPropertyValue value) {
+        if (value.isString()) {
+            getSVNEnvironment().getOut().print(value.getString());
+        } else {
+            try {
+                getSVNEnvironment().getOut().write(value.getBytes());
+            } catch (IOException e) {
+
+            }
+        }
+    }
+
     protected void checkBooleanProperty(String name, SVNPropertyValue value) throws SVNException {
         if (!SVNProperty.isBooleanProperty(name)) {
             return;
@@ -133,25 +142,9 @@ public abstract class SVNPropertiesCommand extends SVNXMLCommand implements ISVN
         String stringValue = value.getString().trim();
         if ("".equals(stringValue) || "off".equalsIgnoreCase(stringValue) || "no".equalsIgnoreCase(stringValue) || "false".equalsIgnoreCase(stringValue)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_PROPERTY_VALUE, "To turn off the {0} property, use ''svn propdel'';\n" +
-            		"setting the property to ''{1}'' will not turn it off.", new Object[] {name, value});
-            getSVNEnvironment().handleWarning(err, new SVNErrorCode[] {SVNErrorCode.BAD_PROPERTY_VALUE},
+                    "setting the property to ''{1}'' will not turn it off.", new Object[]{name, value});
+            getSVNEnvironment().handleWarning(err, new SVNErrorCode[]{SVNErrorCode.BAD_PROPERTY_VALUE},
                     getSVNEnvironment().isQuiet());
         }
-    }
-
-    protected StringBuffer addXMLProp(SVNPropertyData property, StringBuffer xmlBuffer) {
-        String xmlSafe = null;
-        Map attrs = new TreeMap();
-        attrs.put("name", property.getName());
-        if (!property.getValue().isXMLSafe("UTF-8")) {
-            attrs.put("encoding", "base64");
-            xmlSafe = SVNBase64.byteArrayToBase64(property.getValue().getBytes());
-        } else {
-            xmlSafe = SVNEncodingUtil.xmlEncodeCDATA(property.getValue().getString());
-        }
-        xmlBuffer = openXMLTag("property", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, attrs, xmlBuffer);
-        xmlBuffer.append(xmlSafe);
-        xmlBuffer = closeXMLTag("property", xmlBuffer);
-        return xmlBuffer;
     }
 }

@@ -735,7 +735,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         
         for (Iterator propNames = fileProps.nameSet().iterator(); propNames.hasNext();) {
             String propName = (String) propNames.next();
-            String propVal = fileProps.getStringValue(propName);
+            SVNPropertyValue propVal = fileProps.getSVNPropertyValue(propName);
             changeFileProperty(propName, propVal, info);
         }
         

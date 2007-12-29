@@ -30,6 +30,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -198,7 +199,7 @@ public class FSFile {
                     key = new String(myReadLineBuffer.array(), myReadLineBuffer.arrayOffset() + pos, limit - pos);
                 }
                 if (kind == 'D') {
-                    properties.put(key, (byte[]) null);
+                    properties.put(key, (SVNPropertyValue) null);
                     continue;
                 }
                 line = readLine(160);

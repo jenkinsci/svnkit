@@ -17,6 +17,7 @@ import java.util.Collection;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 
@@ -39,17 +40,17 @@ class JavaHLPropertyHandler implements ISVNPropertyHandler{
     }
 
     public void handleProperty(File path, SVNPropertyData property) throws SVNException {
-        myData = JavaHLObjectFactory.createPropertyData(myOwner, path.getAbsolutePath(), property.getName(), property.getValue().getString(), property.getValue().getBytes());
+        myData = JavaHLObjectFactory.createPropertyData(myOwner, path.getAbsolutePath(), property.getName(), property.getValue().getString(), SVNPropertyValue.getPropertyAsBytes(property.getValue()));
         myAllData.add(myData);
     }
 
     public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
-        myData = JavaHLObjectFactory.createPropertyData(myOwner, url.toString(), property.getName(), property.getValue().getString(), property.getValue().getBytes());
+        myData = JavaHLObjectFactory.createPropertyData(myOwner, url.toString(), property.getName(), property.getValue().getString(), SVNPropertyValue.getPropertyAsBytes(property.getValue()));
         myAllData.add(myData);
     }
 
     public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
-        myData = JavaHLObjectFactory.createPropertyData(myOwner, null, property.getName(), property.getValue().getString(), property.getValue().getBytes());
+        myData = JavaHLObjectFactory.createPropertyData(myOwner, null, property.getName(), property.getValue().getString(), SVNPropertyValue.getPropertyAsBytes(property.getValue()));
         myAllData.add(myData);
     }
     

@@ -69,7 +69,7 @@ public class SVNAdminSetRevPropCommand extends SVNAdminCommand {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                 "Exactly one property name and one file argument required"));
         }
-        SVNPropertyValue propertyValue = new SVNPropertyValue(getEnvironment().readFromFile(target.getFile()));        
+        SVNPropertyValue propertyValue = new SVNPropertyValue(propertyName, getEnvironment().readFromFile(target.getFile()));        
         SVNURL url = SVNURL.fromFile(repos);
         FSRepository repository = (FSRepository) SVNRepositoryFactory.create(url);
         long rev = getRevisionNumber(getSVNAdminEnvironment().getStartRevision(), repository.getLatestRevision(), repository);

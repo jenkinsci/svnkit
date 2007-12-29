@@ -185,7 +185,7 @@ public class FSReplayPathHandler implements ISVNCommitPathHandler {
                     SVNProperties propDiff = FSRepositoryUtil.getPropsDiffs(oldProps, newProps);
                     for (Iterator propNames = propDiff.nameSet().iterator(); propNames.hasNext();) {
                         String propName = (String) propNames.next();
-                        String propValue = propDiff.getStringValue(propName);
+                        SVNPropertyValue propValue = propDiff.getSVNPropertyValue(propName);
                         if (kind == SVNNodeKind.DIR) {
                             editor.changeDirProperty(propName, propValue);
                         } else if (kind == SVNNodeKind.FILE) {
@@ -243,7 +243,7 @@ public class FSReplayPathHandler implements ISVNCommitPathHandler {
         SVNProperties props = node.getProperties(myOwner);
         for (Iterator propNames = props.nameSet().iterator(); propNames.hasNext();) {
             String propName = (String) propNames.next();
-            String propValue = props.getStringValue(propName);
+            SVNPropertyValue propValue = props.getSVNPropertyValue(propName);
             editor.changeDirProperty(propName, propValue);
         }
         
@@ -264,7 +264,7 @@ public class FSReplayPathHandler implements ISVNCommitPathHandler {
                 props = srcNode.getProperties(myOwner);
                 for (Iterator propNames = props.nameSet().iterator(); propNames.hasNext();) {
                     String propName = (String) propNames.next();
-                    String propValue = props.getStringValue(propName);
+                    SVNPropertyValue propValue = props.getSVNPropertyValue(propName);
                     editor.changeFileProperty(newPath, propName, propValue);
                 }                
                 

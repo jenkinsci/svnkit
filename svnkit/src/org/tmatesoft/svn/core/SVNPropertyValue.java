@@ -11,14 +11,10 @@
  */
 package org.tmatesoft.svn.core;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 
 /**
@@ -27,91 +23,93 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
  */
 public class SVNPropertyValue {
 
-    public static final SVNPropertyValue TRUE = new SVNPropertyValue(Boolean.TRUE.toString());
-    public static final SVNPropertyValue FALSE = new SVNPropertyValue(Boolean.FALSE.toString());
+    public static final SVNPropertyValue TRUE = new SVNPropertyValue("svn:*", Boolean.TRUE.toString());
+    public static final SVNPropertyValue FALSE = new SVNPropertyValue("svn:*", Boolean.FALSE.toString());
 
+    private String myName;
     private String myValue;
     private byte[] myData;
-    private Boolean myIsBinary;
 
-    public SVNPropertyValue(byte[] data, int offset, int length) {
-        myData = new byte[length];
-        System.arraycopy(data, offset, myData, 0, length);
+    public SVNPropertyValue(String propertyName, byte[] data, int offset, int length) {
+        myName = propertyName;
+        if (SVNProperty.isSVNProperty(myName)) {
+            try {
+                myValue = new String(data, offset, length, "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                myValue = new String(data, offset, length);
+            }
+        } else {
+            myData = new byte[length];
+            System.arraycopy(data, offset, myData, 0, length);
+        }
     }
 
-    public SVNPropertyValue(byte[] data) {
-        this(data, 0, data.length);
+    public SVNPropertyValue(String propertyName, byte[] data) {
+        this(propertyName, data, 0, data.length);
     }
 
-    public SVNPropertyValue(String value) {
-        myValue = value;
-        myIsBinary = Boolean.FALSE;
+    public SVNPropertyValue(String propertyName, String propertyValue) {
+        myName = propertyName;
+        myValue = propertyValue;
     }
 
-    public boolean isBinary() {
-        if (myIsBinary == null) {
-            if (myValue != null) {
-                myIsBinary = Boolean.FALSE;
-            } else if (myData != null) {
-                try {
-                    InputStream is = new ByteArrayInputStream(myData);
-                    myIsBinary = Boolean.valueOf(SVNProperty.isBinaryMimeType(SVNFileUtil.detectMimeType(is)));
-                } catch (IOException e) {
-                    myIsBinary = Boolean.TRUE;
-                }
-            } else {
-                myIsBinary = Boolean.FALSE;
+    public static byte[] getPropertyAsBytes(SVNPropertyValue value){
+        if (value == null || value.hasNullValue()){
+            return null;
+        }
+        if (value.isString()){
+            try {
+                return value.getString().getBytes("UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                return value.getString().getBytes();
             }
         }
-        return myIsBinary.booleanValue();
+        return value.getBytes();
     }
-
-    public boolean isXMLSafe(String encoding) {
-        if (isBinary()) {
-            return false;
+    
+    public static String getPropertyAsString(SVNPropertyValue value){
+        if (value == null || value.hasNullValue()){
+            return null;           
         }
-        if (encoding != null) {
-            return SVNEncodingUtil.isXMLSafe(getString(encoding));
-        }
-        return SVNEncodingUtil.isXMLSafe(getString(encoding));
-    }
-
-    public byte[] getBytes(String encoding) {
-        if (myData == null) {
-            if (myValue != null) {
-                if (encoding == null) {
-                    myData = myValue.getBytes();
-                } else {
-                    try {
-                        myData = myValue.getBytes(encoding);
-                    } catch (UnsupportedEncodingException e) {
-                        myData = myValue.getBytes();
-                    }
-                }
+        if (value.isBinary()){
+            try {
+                return new String(value.getBytes(), "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                return new String(value.getBytes());
             }
         }
-        return myData;
+        return value.getString();
+    }
+
+    public String getName(){
+        return myName;
     }
 
     public byte[] getBytes() {
-        return getBytes("UTF-8");
-    }
-
-    public String getString(String encoding) {
-        if (myValue == null) {
-            if (!isBinary() && myData != null) {
-                try {
-                    myValue = new String(myData, encoding);
-                } catch (UnsupportedEncodingException e) {
-                    myValue = new String(myData);
-                }
-            }
-        }
-        return myValue;
+        return myData;
     }
 
     public String getString() {
-        return getString("UTF-8");
+        return myValue;
+    }
+
+    public boolean isBinary() {
+        return myData != null;
+    }
+
+    public boolean isString() {
+        return myValue != null;
+    }
+
+    public boolean hasNullValue(){
+        return !isBinary() && !isString();
+    }
+
+    public boolean isXMLSafe() {
+        if (isBinary()) {
+            return false;
+        }
+        return SVNEncodingUtil.isXMLSafe(getString());
     }
 
     public String toString() {
@@ -121,51 +119,7 @@ public class SVNPropertyValue {
         return getString();
     }
 
-    public SVNPropertyValue trim() {
-        if (!isBinary()) {
-            if (myValue != null) {
-                return new SVNPropertyValue(myValue.trim());
-            }
-        }
-        return this;
-    }
-
-    public SVNPropertyValue replace(char oldChar, char newChar) {
-        if (!isBinary()) {
-            if (getString() != null) {
-                return new SVNPropertyValue(getString().replace(oldChar, newChar));
-            }
-        }
-        return this;
-    }
-
-    public SVNPropertyValue replaceAll(String regex, String replacement) {
-        if (!isBinary()) {
-            if (getString() != null) {
-                return new SVNPropertyValue(getString().replaceAll(regex, replacement));
-            }
-        }
-        return this;
-    }
-
-    public boolean endsWith(String suffix) {
-        if (!isBinary()) {
-            if (getString() != null) {
-                return getString().endsWith(suffix);
-            }
-        }
-        return false;
-    }
-
-    public SVNPropertyValue append(String str) {
-        if (!isBinary()) {
-            if (getString() != null) {
-                return new SVNPropertyValue(getString().concat(str));
-            }
-        }
-        return this;
-    }
-
+    //TODO: compare properties names
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;
@@ -176,10 +130,10 @@ public class SVNPropertyValue {
 
         if (obj instanceof SVNPropertyValue) {
             SVNPropertyValue value = (SVNPropertyValue) obj;
-            if (myValue != null) {
+            if (isString()) {
                 return myValue.equals(value.getString());
-            } else if (myData != null) {
-                return Arrays.equals(myData, value.getBytes());
+            } else if (isBinary()) {
+                return Arrays.equals(myData, getPropertyAsBytes(value));
             }
         }
         return false;

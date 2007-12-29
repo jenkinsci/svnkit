@@ -30,6 +30,7 @@ import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -569,20 +570,20 @@ public class FSUpdateContext {
 
         if (FSRepository.isValidRevision(createdRevision)) {
             SVNProperties entryProps = myFSFS.compoundMetaProperties(createdRevision);
-            changeProperty(editPath, SVNProperty.COMMITTED_REVISION, entryProps.getStringValue(SVNProperty.COMMITTED_REVISION), isDir);
-            String committedDate = entryProps.getStringValue(SVNProperty.COMMITTED_DATE);
+            changeProperty(editPath, SVNProperty.COMMITTED_REVISION, entryProps.getSVNPropertyValue(SVNProperty.COMMITTED_REVISION), isDir);
+            SVNPropertyValue committedDate = entryProps.getSVNPropertyValue(SVNProperty.COMMITTED_DATE);
 
             if (committedDate != null || sourcePath != null) {
                 changeProperty(editPath, SVNProperty.COMMITTED_DATE, committedDate, isDir);
             }
 
-            String lastAuthor = entryProps.getStringValue(SVNProperty.LAST_AUTHOR);
+            SVNPropertyValue lastAuthor = entryProps.getSVNPropertyValue(SVNProperty.LAST_AUTHOR);
 
             if (lastAuthor != null || sourcePath != null) {
                 changeProperty(editPath, SVNProperty.LAST_AUTHOR, lastAuthor, isDir);
             }
 
-            String uuid = entryProps.getStringValue(SVNProperty.UUID);
+            SVNPropertyValue uuid = entryProps.getSVNPropertyValue(SVNProperty.UUID);
 
             if (uuid != null || sourcePath != null) {
                 changeProperty(editPath, SVNProperty.UUID, uuid, isDir);
@@ -614,7 +615,7 @@ public class FSUpdateContext {
         Object[] names = propsDiffs.nameSet().toArray();
         for (int i = 0; i < names.length; i++) {
             String propName = (String) names[i];
-            changeProperty(editPath, propName, propsDiffs.getStringValue(propName), isDir);
+            changeProperty(editPath, propName, propsDiffs.getSVNPropertyValue(propName), isDir);
         }
     }
 
@@ -647,7 +648,7 @@ public class FSUpdateContext {
         return result;
     }
 
-    private void changeProperty(String path, String name, String value, boolean isDir) throws SVNException {
+    private void changeProperty(String path, String name, SVNPropertyValue value, boolean isDir) throws SVNException {
         if (isDir) {
             getEditor().changeDirProperty(name, value);
         } else {

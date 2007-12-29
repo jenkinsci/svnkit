@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
 import org.tmatesoft.svn.core.internal.wc.ISVNCommitPathHandler;
@@ -140,9 +141,9 @@ public class FSRepositoryUtil {
         }
     
         for(Iterator names = sourceProps.nameSet().iterator(); names.hasNext();){
-            String propName = (String)names.next();
-            String srcPropVal = sourceProps.getStringValue(propName);
-            String targetPropVal = targetProps.getStringValue(propName);
+            String propName = (String) names.next();
+            SVNPropertyValue srcPropVal = sourceProps.getSVNPropertyValue(propName);
+            SVNPropertyValue targetPropVal = targetProps.getSVNPropertyValue(propName);
     
             if(targetPropVal == null){
                 result.put(propName, targetPropVal);
@@ -153,8 +154,9 @@ public class FSRepositoryUtil {
     
         for(Iterator names = targetProps.nameSet().iterator(); names.hasNext();){
             String propName = (String)names.next();
-            String targetPropVal = targetProps.getStringValue(propName);
-            if(sourceProps.getStringValue(propName) == null){
+            SVNPropertyValue targetPropVal = targetProps.getSVNPropertyValue(propName);
+            SVNPropertyValue sourceValue = sourceProps.getSVNPropertyValue(propName);
+            if(sourceValue == null || sourceValue.hasNullValue()){
                 result.put(propName, targetPropVal);
             }
         }        
