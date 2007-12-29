@@ -211,7 +211,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                 bos.write((headerFormat + name).getBytes(getEncoding()));
                 bos.write(EOL);
                 if (SVNProperty.MERGE_INFO.equals(name)) {
-                    displayMergeInfoDiff(bos, originalValue.getString(), newValue.getString());
+                    displayMergeInfoDiff(bos, originalValue == null ? null : originalValue.getString(), newValue == null ? null : newValue.getString());
                     continue;
                 }
                 if (originalValue != null) {
