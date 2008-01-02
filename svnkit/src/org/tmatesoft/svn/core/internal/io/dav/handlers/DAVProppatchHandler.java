@@ -12,7 +12,6 @@
 
 package org.tmatesoft.svn.core.internal.io.dav.handlers;
 
-import java.io.UnsupportedEncodingException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -26,7 +25,6 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
-
 import org.xml.sax.Attributes;
 
 
@@ -111,6 +109,8 @@ public class DAVProppatchHandler extends BasicDAVHandler {
             String attrPrefix = (String) SVNXMLUtil.PREFIX_MAP.get(DAVElement.SVN_DAV_PROPERTY_NAMESPACE);
             attrs.put(attrPrefix + ":encoding", "base64");            
             str = SVNBase64.byteArrayToBase64(SVNPropertyValue.getPropertyAsBytes(value));
+        } else {
+            str = value.toString();
         }
         return SVNXMLUtil.openCDataTag(prefix, tagName, str, attrs, xmlBuffer);
     }
