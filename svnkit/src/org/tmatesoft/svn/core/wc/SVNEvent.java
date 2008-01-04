@@ -104,7 +104,10 @@ public class SVNEvent {
     private File myFile;
     private SVNNodeKind myNodeKind;
     private String myMimeType;
+    
     private long myRevision;
+    private long myOldRevision;
+    
     private SVNStatusType myContentsStatus;
     private SVNStatusType myPropertiesStatus;
     private SVNStatusType myLockStatus;
@@ -165,6 +168,7 @@ public class SVNEvent {
         myErrorMessage = error;
         myRange = range;
         myChangelistName = changelistName;
+        myOldRevision = -1;
     }
 
     public File getFile() {
@@ -300,6 +304,10 @@ public class SVNEvent {
     public long getRevision() {
         return myRevision;
     }
+
+    public long getOldRevision() {
+        return myOldRevision;
+    }
     
     /**
      * Sets the item's path relative to the Working Copy root.
@@ -314,4 +322,8 @@ public class SVNEvent {
     public SVNMergeRange getMergeRange() {
         return myRange;
     }    
+    
+    public void setOldRevision(long oldRevision) {
+        myOldRevision = oldRevision;
+    }
 }

@@ -130,6 +130,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             SVNEntry entry = adminArea.getEntry(adminArea.getThisDirName(), false);
             if (entry != null) {
                 myCurrentDirectory.myDepth = entry.getDepth();
+                myCurrentDirectory.myPreviousRevision = entry.getRevision();
             }
             Map attributes = new HashMap();
             attributes.put(SVNProperty.REVISION, Long.toString(myTargetRevision));
@@ -225,6 +226,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         SVNAdminArea parentArea = myCurrentDirectory.getAdminArea();
         SVNDirectoryInfo parentDirectory = myCurrentDirectory;
         myCurrentDirectory = createDirectoryInfo(myCurrentDirectory, path, true);
+        myCurrentDirectory.myPreviousRevision = -1;
         parentDirectory.flushLog();
         checkIfPathIsUnderRoot(path);
         String name = SVNPathUtil.tail(path);
@@ -309,8 +311,9 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         SVNAdminArea childArea = myWCAccess.open(childDir, true, 0);
         myWCAccess.registerCleanupHandler(childArea, myCurrentDirectory);
         if (!myCurrentDirectory.isAddExisted) {
-            SVNEvent event = SVNEventFactory.createSVNEvent(parentArea.getFile(entry.getName()), SVNNodeKind.DIR, null, entry.getRevision(),
+            SVNEvent event = SVNEventFactory.createSVNEvent(parentArea.getFile(entry.getName()), SVNNodeKind.DIR, null, myTargetRevision,
                     myCurrentDirectory.isExisted ? SVNEventAction.UPDATE_EXISTS : SVNEventAction.UPDATE_ADD, null, null, null);
+            event.setOldRevision(myCurrentDirectory.myPreviousRevision);
             myWCAccess.handleEvent(event);
         }
     }
@@ -321,18 +324,22 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         myCurrentDirectory = createDirectoryInfo(myCurrentDirectory, path, false);
         SVNAdminArea adminArea = myCurrentDirectory.getAdminArea(); 
         myWCAccess.registerCleanupHandler(adminArea, myCurrentDirectory);
-        SVNEntry entry = adminArea.getEntry(adminArea.getThisDirName(), true);
+        SVNEntry entry = adminArea.getEntry(adminArea.getThisDirName(), true);        
         if (entry != null) {
+            myCurrentDirectory.myPreviousRevision = entry.getRevision();
             myCurrentDirectory.myDepth = entry.getDepth();
             boolean hasPropConflicts = adminArea.hasPropConflict(adminArea.getThisDirName());
             if (hasPropConflicts) {
                 myCurrentDirectory.isSkipped = true;
                 Collection skippedPaths = getSkippedPaths();
                 skippedPaths.add(adminArea.getRoot());
-                SVNEvent event = SVNEventFactory.createSVNEvent(adminArea.getRoot(), SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNStatusType.INAPPLICABLE, SVNStatusType.CONFLICTED, SVNStatusType.LOCK_INAPPLICABLE, SVNEventAction.SKIP, SVNEventAction.UPDATE_UPDATE, null, null);
+                SVNEvent event = SVNEventFactory.createSVNEvent(adminArea.getRoot(), SVNNodeKind.DIR, null, myTargetRevision, SVNStatusType.INAPPLICABLE, SVNStatusType.CONFLICTED, SVNStatusType.LOCK_INAPPLICABLE, SVNEventAction.SKIP, SVNEventAction.UPDATE_UPDATE, null, null);
+                event.setOldRevision(entry.getRevision());
                 myWCAccess.handleEvent(event);
                 return;
             }
+        } else {
+            myCurrentDirectory.myPreviousRevision = -1;
         }
         
         Map attributes = new HashMap();
@@ -426,6 +433,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
 
         SVNStatusType propStatus = SVNStatusType.UNKNOWN;
         SVNAdminArea adminArea = myCurrentDirectory.getAdminArea();
+        
         if (modifiedWCProps != null || modifiedEntryProps != null || modifiedProps != null) {
             SVNLog log = myCurrentDirectory.getLog();
             if (modifiedProps != null && !modifiedProps.isEmpty()) {
@@ -466,7 +474,9 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 if (propStatus == SVNStatusType.UNKNOWN && action != SVNEventAction.UPDATE_EXISTS) {
                     action = SVNEventAction.UPDATE_NONE;
                 }
-                myWCAccess.handleEvent(SVNEventFactory.createSVNEvent(adminArea.getRoot(), SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNStatusType.UNKNOWN, propStatus, null, action, null, null, null));
+                SVNEvent event = SVNEventFactory.createSVNEvent(adminArea.getRoot(), SVNNodeKind.DIR, null, myTargetRevision, SVNStatusType.UNKNOWN, propStatus, null, action, null, null, null);
+                event.setOldRevision(myCurrentDirectory.myPreviousRevision);
+                myWCAccess.handleEvent(event);
             }
         }
         myCurrentDirectory = myCurrentDirectory.Parent;
@@ -682,8 +692,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         SVNEntry entry = adminArea.getEntry(info.Name, true);
         
         if (kind != SVNFileType.NONE) {
-            if (myIsUnversionedObstructionsAllowed || (entry != null && 
-                    entry.isScheduledForAddition())) {
+            if (myIsUnversionedObstructionsAllowed || (entry != null && entry.isScheduledForAddition())) {
                 if (entry != null && entry.isCopied()) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, 
                             "Failed to add file ''{0}'': a file of the same name is already scheduled for addition with history", 
@@ -785,11 +794,12 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             Collection skippedPaths = getSkippedPaths();
             File file = new File(myAdminInfo.getAnchor().getRoot(), path);
             skippedPaths.add(file);
-            SVNEvent event = SVNEventFactory.createSVNEvent(adminArea.getFile(info.Name), SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION,
+            SVNEvent event = SVNEventFactory.createSVNEvent(adminArea.getFile(info.Name), SVNNodeKind.FILE, null, myTargetRevision,
                     hasTextConflicts ? SVNStatusType.CONFLICTED : SVNStatusType.UNKNOWN,
                     hasPropConflicts ? SVNStatusType.CONFLICTED : SVNStatusType.UNKNOWN,
                     SVNStatusType.LOCK_INAPPLICABLE,
                     SVNEventAction.SKIP, SVNEventAction.UPDATE_UPDATE, null, null);
+            event.setOldRevision(entry.getRevision());
             myWCAccess.handleEvent(event);
         }
         return info;
@@ -821,6 +831,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                     "''{0}'' is not under version control", fileInfo.getPath());
             SVNErrorManager.error(err);
         }
+        long previousRevision = fileEntry != null ? fileEntry.getRevision() : -1;
 
         // merge props.
         SVNProperties modifiedWCProps = fileInfo.getChangedWCProperties();
@@ -1051,7 +1062,9 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             } else if (fileInfo.IsAdded) {
                 action = SVNEventAction.UPDATE_ADD;
             }
-            myWCAccess.handleEvent(SVNEventFactory.createSVNEvent(adminArea.getFile(fileInfo.Name), SVNNodeKind.FILE,  null, SVNRepository.INVALID_REVISION, textStatus, propStatus, lockStatus, action, null, null, null));
+            SVNEvent event = SVNEventFactory.createSVNEvent(adminArea.getFile(fileInfo.Name), SVNNodeKind.FILE,  null, myTargetRevision, textStatus, propStatus, lockStatus, action, null, null, null);
+            event.setOldRevision(previousRevision);
+            myWCAccess.handleEvent(event);
         }
     }
 
@@ -1149,6 +1162,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         public boolean isAddExisted;
         public SVNDirectoryInfo Parent;
         public boolean isSkipped;
+        public long myPreviousRevision;
 
         private String myPath;
         private SVNProperties myChangedProperties;
