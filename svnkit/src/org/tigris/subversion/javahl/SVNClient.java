@@ -410,8 +410,8 @@ public class SVNClient implements SVNClientInterface {
         myDelegate.removeFromChangelist(paths, changelist);
     }
 
-    public long commit(String[] path, String message, int depth, boolean noUnlock, boolean keepChangelist, String changelistName) throws ClientException {
-        return myDelegate.commit(path, message, depth, noUnlock, keepChangelist, changelistName);
+    public long commit(String[] path, String message, int depth, boolean noUnlock, boolean keepChangelist, String[] changelists) throws ClientException {
+        return myDelegate.commit(path, message, depth, noUnlock, keepChangelist, changelists);
     }
 
     public void remove(String[] path, String message, boolean force, boolean keepLocal) throws ClientException {

@@ -584,7 +584,7 @@ public class SVNClientImpl implements SVNClientInterface {
         return commit(path, message, JavaHLObjectFactory.infinityOrEmpty(recurse), noUnlock, false, null);
     }
 
-    public long commit(String[] path, String message, int depth, boolean noUnlock, boolean keepChangelist, String changelistName) throws ClientException {
+    public long commit(String[] path, String message, int depth, boolean noUnlock, boolean keepChangelist, String[] changelists) throws ClientException {
         if (path == null || path.length == 0) {
             return 0;
         }
@@ -609,7 +609,8 @@ public class SVNClientImpl implements SVNClientInterface {
             }
             SVNDepth svnDepth = SVNDepth.fromID(depth);
             boolean recurse = SVNDepth.recurseFromDepth(svnDepth);
-            return client.doCommit(files, noUnlock, message, null, changelistName, keepChangelist, !recurse, svnDepth).getNewRevision();
+            String changelist = changelists != null && changelists.length > 0 ? changelists[0] : null;
+            return client.doCommit(files, noUnlock, message, null, changelist, keepChangelist, !recurse, svnDepth).getNewRevision();
         } catch (SVNException e) {
             throwException(e);
         }
