@@ -12,7 +12,6 @@
 package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -717,12 +716,7 @@ public class SVNWCManager {
     }
 
     public static boolean isEntrySwitched(File path, SVNEntry entry) throws SVNException {
-        try {
-            //TODO: FIXME
-        	path = path.getCanonicalFile();
-        } catch (IOException ioe) {
-            //
-        }
+        path = new File(SVNPathUtil.validateFilePath(path.getAbsolutePath())).getAbsoluteFile();
         File parent = path.getParentFile();
         if (parent == null) {
             return false;
