@@ -16,6 +16,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -38,6 +40,7 @@ import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 import org.xml.sax.helpers.DefaultHandler;
@@ -56,6 +59,7 @@ public class DAVConnection {
     private IHTTPConnectionFactory myConnectionFactory;
     private SVNRepository myRepository;
     private boolean myIsSpoolReport;
+    private Map myCapabilities;
     
     public DAVConnection(IHTTPConnectionFactory connectionFactory, SVNRepository repository) {
         myRepository = repository;
@@ -380,6 +384,71 @@ public class DAVConnection {
         }
     }
     
+    public void setLocks(Map locks, boolean keepLocks) {
+        myLocks = locks;
+        myKeepLocks = keepLocks;
+    }
+
+    public void clearAuthenticationCache() {
+        if (myHttpConnection != null) {
+            myHttpConnection.clearAuthenticationCache();
+        }
+    }
+
+    public boolean hasCapability(SVNCapability capability) throws SVNException {
+    	if (myCapabilities == null) {
+    		exchangeCapabilities();
+    	}
+    	return myCapabilities.get(capability) != null;
+    }
+    
+    private void exchangeCapabilities() throws SVNException {
+        HTTPHeader header = new HTTPHeader();
+        header.addHeaderValue(HTTPHeader.DAV_HEADER, DAVElement.DEPTH_OPTION);
+        header.addHeaderValue(HTTPHeader.DAV_HEADER, DAVElement.LOG_REVPROPS_OPTION);
+        header.addHeaderValue(HTTPHeader.DAV_HEADER, DAVElement.MERGE_INFO_OPTION);
+
+        HTTPStatus status = myHttpConnection.request("OPTIONS", getLocation().toString(), header, 
+        		(StringBuffer) null, 200, 0, null, null);
+        if (status.getCode() == 200) {
+        	parseCapabilities(status);
+        } else {
+        	SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_OPTIONS_REQ_FAILED, 
+        			"OPTIONS request (for capabilities) got HTTP response code {0,number,integer}", 
+        			new Integer(status.getCode()));
+        	SVNErrorManager.error(err);
+        }
+    }
+    
+    private void parseCapabilities(HTTPStatus status) {
+    	if (myCapabilities == null) {
+    		myCapabilities = new HashMap();
+    	}
+
+    	if (!myCapabilities.isEmpty()) {
+        	myCapabilities.remove(SVNCapability.DEPTH);
+        	myCapabilities.remove(SVNCapability.MERGE_INFO);
+        	myCapabilities.remove(SVNCapability.LOG_REVPROPS);
+        	myCapabilities.remove(SVNCapability.PARTIAL_REPLAY);
+    	}
+    	
+    	Collection capValues = status.getHeader().getHeaderValues(HTTPHeader.DAV_HEADER);
+    	if (capValues != null) {
+    		for (Iterator valuesIter = capValues.iterator(); valuesIter.hasNext();) {
+    			String value = (String) valuesIter.next();
+    			if (DAVElement.DEPTH_OPTION.equalsIgnoreCase(value)) {
+    				myCapabilities.put(SVNCapability.DEPTH, SVNCapability.DEPTH);
+    			} else if (DAVElement.MERGE_INFO_OPTION.equalsIgnoreCase(value)) {
+    				myCapabilities.put(SVNCapability.MERGE_INFO, SVNCapability.MERGE_INFO);
+    			} else if (DAVElement.LOG_REVPROPS_OPTION.equalsIgnoreCase(value)) {
+    				myCapabilities.put(SVNCapability.LOG_REVPROPS, SVNCapability.LOG_REVPROPS);
+    			} else if (DAVElement.PARTIAL_REPLAY_OPTION.equalsIgnoreCase(value)) {
+    				myCapabilities.put(SVNCapability.PARTIAL_REPLAY, SVNCapability.PARTIAL_REPLAY);
+    			}
+			}
+    	}
+    }
+    
     private String getActivityCollectionURL(String path, boolean force) throws SVNException {
         if (!force && myActivityCollectionURL != null) {
             return myActivityCollectionURL;
@@ -409,14 +478,4 @@ public class DAVConnection {
         }
     }
 
-    public void setLocks(Map locks, boolean keepLocks) {
-        myLocks = locks;
-        myKeepLocks = keepLocks;
-    }
-
-    public void clearAuthenticationCache() {
-        if (myHttpConnection != null) {
-            myHttpConnection.clearAuthenticationCache();
-        }
-    }
 }

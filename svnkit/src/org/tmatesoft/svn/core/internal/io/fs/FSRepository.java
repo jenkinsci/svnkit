@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.internal.io.fs;
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -59,6 +58,7 @@ import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.ISVNSession;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
+import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
@@ -669,6 +669,17 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
     }
 
+	public boolean hasCapability(SVNCapability capability) throws SVNException {
+		if (capability == SVNCapability.DEPTH || capability == SVNCapability.LOG_REVPROPS ||
+				capability == SVNCapability.MERGE_INFO || capability == SVNCapability.PARTIAL_REPLAY) {
+			return true;
+		}
+		SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_UNKNOWN_CAPABILITY, 
+				"Don''t know anything about capability ''{0}''", capability);
+		SVNErrorManager.error(err);
+		return false;
+	}
+
     void closeRepository() {
         unlock();
     }
@@ -898,4 +909,5 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
 
         return myLocationsFinder;
     }
+
 }

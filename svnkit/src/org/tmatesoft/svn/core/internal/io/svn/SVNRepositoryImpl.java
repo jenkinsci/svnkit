@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.internal.io.svn;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -64,6 +63,7 @@ import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.ISVNSession;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
+import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNLocationSegment;
@@ -1506,6 +1506,20 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             closeConnection();
         }
     }
+
+	public boolean hasCapability(SVNCapability capability) throws SVNException {
+		try {
+        	openConnection();
+        	if (capability != null) {
+            	return myConnection.hasCapability(capability.toString());
+        	}
+        	return false;
+        } catch (SVNException e) {
+            closeConnection();
+            closeSession();
+            throw e;
+        }
+	}
 
     protected ISVNEditor getCommitEditorInternal(Map locks, boolean keepLocks, SVNProperties revProps, ISVNWorkspaceMediator mediator) throws SVNException {
         try {

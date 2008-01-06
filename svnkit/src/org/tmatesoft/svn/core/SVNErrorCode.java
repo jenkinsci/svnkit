@@ -320,6 +320,14 @@ public class SVNErrorCode implements Serializable {
     public static final SVNErrorCode RA_NO_REPOS_UUID = new SVNErrorCode(RA_CATEGORY, 5, "Repository has no UUID");
     public static final SVNErrorCode RA_UNSUPPORTED_ABI_VERSION = new SVNErrorCode(RA_CATEGORY, 6, "Unsupported RA plugin ABI version");
     public static final SVNErrorCode RA_NOT_LOCKED = new SVNErrorCode(RA_CATEGORY, 7, "Path is not locked");
+    /**
+     * @since SVN 1.5
+     */
+    public static final SVNErrorCode RA_UNKNOWN_CAPABILITY = new SVNErrorCode(RA_CATEGORY, 8, "Inquiry about unknown capability");
+    /**
+     * @since SVN 1.5
+     */
+    public static final SVNErrorCode RA_PARTIAL_REPLAY_NOT_SUPPORTED = new SVNErrorCode(RA_CATEGORY, 9, "Server can only replay from the root of a repository");
     
     public static final SVNErrorCode RA_DAV_SOCK_INIT = new SVNErrorCode(RA_DAV_CATEGORY, 0, "RA layer failed to init socket layer");
     public static final SVNErrorCode RA_DAV_CREATING_REQUEST = new SVNErrorCode(RA_DAV_CATEGORY, 1, "RA layer failed to create HTTP request");

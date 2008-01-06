@@ -18,7 +18,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -46,7 +49,8 @@ class SVNConnection {
     private boolean myIsReopening = false;
     private boolean myIsCredentialsReceived = false;
     private InputStream myLoggingInputStream;
-
+    private Map myCapabilities;
+    
     private static final String SUCCESS = "success";
     private static final String FAILURE = "failure";
     private static final String STEP = "step";
@@ -129,20 +133,36 @@ class SVNConnection {
         Long minVer = (Long) items.get(0);
         Long maxVer = (Long) items.get(1);
         if (minVer.longValue() > 2) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_BAD_VERSION, "Server requires minimum version {0,number,integer}", minVer));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_BAD_VERSION, 
+            		"Server requires minimum version {0,number,integer}", minVer));
         } else if (maxVer.longValue() < 2) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_BAD_VERSION, "Server requires maximum version {0,number,integer}", maxVer));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_BAD_VERSION, 
+            		"Server requires maximum version {0,number,integer}", maxVer));
         }
-        if (!SVNReader.hasValue(items, 3, EDIT_PIPELINE)) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_BAD_VERSION, "Only servers with 'edit-pipeline' capability is supported"));
+
+        List capabilities = (List) items.get(3);
+        setCapabilities(capabilities);
+        if (!hasCapability(EDIT_PIPELINE)) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_BAD_VERSION, 
+            		"Server does not support edit pipelining"));
         }
+        
+        
         myIsSVNDiff1 = SVNReader.hasValue(items, 3, SVNDIFF1);
         myIsCommitRevprops = SVNReader.hasValue(items, 3, COMMIT_REVPROPS);
         myIsMergeInfo = SVNReader.hasValue(items, 3, MERGE_INFO);
+
         write("(n(wwwwww)s)", new Object[]{"2", EDIT_PIPELINE, SVNDIFF1, ABSENT_ENTRIES, DEPTH, MERGE_INFO, LOG_REVPROPS,
                 repository.getLocation().toString()});
     }
 
+    protected boolean hasCapability(String capability) {
+    	if (myCapabilities != null) {
+    		return myCapabilities.get(capability) != null;
+    	}
+    	return false;
+    }
+    
     public void authenticate(SVNRepositoryImpl repository) throws SVNException {
         SVNErrorMessage failureReason = null;
         List items = read("lc", null, true);
@@ -216,6 +236,26 @@ class SVNConnection {
         SVNErrorManager.error(failureReason);
     }
 
+    private void setCapabilities(List capabilities) throws SVNException {
+    	if (capabilities != null && !capabilities.isEmpty()) {
+    		if (myCapabilities == null) {
+    			myCapabilities = new HashMap();
+    		} else {
+    			myCapabilities.clear();
+    		}
+    		
+    		for (Iterator capsIter = capabilities.iterator(); capsIter.hasNext();) {
+				SVNItem item = (SVNItem) capsIter.next();
+				if (item.getKind() != SVNItem.WORD) {
+					SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, 
+							"Capability entry is not a word"); 
+					SVNErrorManager.error(err);
+				}
+				myCapabilities.put(item.getWord(), item.getWord());
+			}
+    	}
+    }
+    
     private void receiveRepositoryCredentials(SVNRepositoryImpl repository) throws SVNException {
         if (myIsCredentialsReceived) {
             return;

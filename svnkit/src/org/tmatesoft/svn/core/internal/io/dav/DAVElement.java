@@ -53,7 +53,11 @@ public class DAVElement {
     public static final String DAV_NAMESPACE = "DAV:";
     public static final String SVN_NAMESPACE = "svn:";
     
-    
+    public static final String DEPTH_OPTION = SVN_DAV_PROPERTY_NAMESPACE + "svn/depth";
+    public static final String MERGE_INFO_OPTION = SVN_DAV_PROPERTY_NAMESPACE + "svn/mergeinfo";
+    public static final String LOG_REVPROPS_OPTION = SVN_DAV_PROPERTY_NAMESPACE + "svn/log-revprops";
+    public static final String PARTIAL_REPLAY_OPTION = SVN_DAV_PROPERTY_NAMESPACE + "svn/partial-replay";
+
     public static final DAVElement MULTISTATUS = getElement(DAV_NAMESPACE, "multistatus");
     public static final DAVElement RESPONSE = getElement(DAV_NAMESPACE, "response");
     public static final DAVElement HREF = getElement(DAV_NAMESPACE, "href");

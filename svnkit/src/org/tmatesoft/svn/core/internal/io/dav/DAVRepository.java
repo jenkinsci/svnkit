@@ -63,6 +63,7 @@ import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.ISVNSession;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
+import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
@@ -1142,6 +1143,15 @@ public class DAVRepository extends SVNRepository {
             closeConnection();
         }
     }
+
+	public boolean hasCapability(SVNCapability capability) throws SVNException {
+        try {
+            openConnection();
+            return myConnection.hasCapability(capability);
+        } finally {
+            closeConnection();
+        }
+	}
 
 }
 

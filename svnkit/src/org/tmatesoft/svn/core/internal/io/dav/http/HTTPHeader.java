@@ -47,6 +47,7 @@ public class HTTPHeader {
     public static final String LABEL_HEADER = "Label";
     public static final String DESTINATION_HEADER = "Destination";
     public static final String TIMEOUT_HEADER = "Timeout";
+    public static final String DAV_HEADER = "DAV";
 
     private Map myHeaders;
 

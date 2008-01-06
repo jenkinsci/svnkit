@@ -1933,6 +1933,8 @@ public abstract class SVNRepository {
      */
     public abstract void closeSession();
     
+    public abstract boolean hasCapability(SVNCapability capability) throws SVNException;
+
     /**
      * Returns the session options object this driver is using.
      * If no options object was provided to create this driver then 
@@ -2119,4 +2121,5 @@ public abstract class SVNRepository {
         }
         return myDebugLog;
     }
+    
 }

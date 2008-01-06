@@ -208,6 +208,7 @@ svnkit/src/org/tmatesoft/svn/core/internal/wc/config/config eol=lf
 svnkit/src/org/tmatesoft/svn/core/internal/wc/config/servers eol=lf
 svnkit/src/org/tmatesoft/svn/core/io/ISVNLocationSegmentHandler.java -text
 svnkit/src/org/tmatesoft/svn/core/io/ISVNSession.java -text
+svnkit/src/org/tmatesoft/svn/core/io/SVNCapability.java -text
 svnkit/src/org/tmatesoft/svn/core/io/SVNLocationSegment.java -text
 svnkit/src/org/tmatesoft/svn/core/io/diff/package.html -text
 svnkit/src/org/tmatesoft/svn/core/io/package.html -text
