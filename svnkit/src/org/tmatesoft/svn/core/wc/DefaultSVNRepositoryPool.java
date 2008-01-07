@@ -91,6 +91,7 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
     
     private ISVNAuthenticationManager myAuthManager;
     private ISVNTunnelProvider myTunnelProvider;
+    private ISVNDebugLog myDebugLog;
     private Map myPool;
     private long myTimeout;
     private Map myInactiveRepositories = new HashMap();
@@ -125,6 +126,7 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
     public DefaultSVNRepositoryPool(ISVNAuthenticationManager authManager, ISVNTunnelProvider tunnelProvider, long timeout, boolean keepConnection) {
         myAuthManager = authManager;
         myTunnelProvider = tunnelProvider;
+        myDebugLog = SVNDebugLog.getDefaultLog();
         myTimeout = timeout > 0 ? timeout : DEFAULT_IDLE_TIMEOUT;
         myIsKeepConnection = keepConnection;
         myTimeout = timeout;
@@ -189,6 +191,7 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
             repos = SVNRepositoryFactory.create(url, this);
             repos.setAuthenticationManager(myAuthManager);
             repos.setTunnelProvider(myTunnelProvider);
+            repos.setDebugLog(myDebugLog);
             return repos;
         }
         
@@ -205,6 +208,7 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
         }         
         repos.setAuthenticationManager(myAuthManager);
         repos.setTunnelProvider(myTunnelProvider);
+        repos.setDebugLog(myDebugLog);
         return repos;
     }
     
@@ -336,11 +340,12 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
     }
 
     public void setDebugLog(ISVNDebugLog log) {
+        myDebugLog = log == null ? SVNDebugLog.getDefaultLog() : log;
         Map pool = getPool();
         for (Iterator protocols = pool.keySet().iterator(); protocols.hasNext();) {
             String key = (String) protocols.next();
             SVNRepository repository = (SVNRepository) pool.get(key);
-            repository.setDebugLog(log);
+            repository.setDebugLog(myDebugLog);
         }
     }
     
