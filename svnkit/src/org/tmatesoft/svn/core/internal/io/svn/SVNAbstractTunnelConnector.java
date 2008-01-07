@@ -10,7 +10,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
-import ch.ethz.ssh2.StreamGobbler;
+import com.trilead.ssh2.StreamGobbler;
 
 /**
  * @version 1.1.1

@@ -11,7 +11,7 @@
       <library name="svnkit.jar">
          <export name="*"/>
       </library>
-      <library name="contrib/ganymed/ganymed.jar"/>
+      <library name="contrib/trilead/trilead.jar"/>
       <library name="contrib/junit/junit.jar"/>
       <library name="contrib/jna/jna.jar">
          <export

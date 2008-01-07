@@ -24,9 +24,9 @@
  </distributionManagement>
  <dependencies>
    <dependency>
-     <groupId>ch.ethz.ganymed</groupId>
-     <artifactId>ganymed-ssh2</artifactId>
-     <version>build210</version>
+     <groupId>com.trilead.ssh</groupId>
+     <artifactId>trilead-ssh2</artifactId>
+     <version>build211</version>
    </dependency>
  </dependencies>
 </project> 

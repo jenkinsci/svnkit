@@ -15,7 +15,7 @@
          <export name="*"/>
       </library>
       <library name="svnkitplugin.jar"/>
-      <library name="ganymed.jar"/>
+      <library name="trilead.jar"/>
       <library name="jna.jar"/>
    </runtime>
    

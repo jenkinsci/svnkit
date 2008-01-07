@@ -15,7 +15,7 @@ import org.eclipse.core.runtime.Plugin;
 import org.osgi.framework.BundleContext;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
-import org.tmatesoft.svn.core.internal.io.svn.SVNGanymedSession;
+import org.tmatesoft.svn.core.internal.io.svn.SVNSSHSession;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
@@ -41,7 +41,7 @@ public class SVNKitPlugin extends Plugin {
     
     
 	public void stop(BundleContext context) throws Exception {
-		SVNGanymedSession.shutdown();
+		SVNSSHSession.shutdown();
 		super.stop(context);
 	}
 }

@@ -56,15 +56,10 @@ class SVNConnection {
     }
 
     public void open(SVNRepositoryImpl repository) throws SVNException {
-        myIsReopening = true;
-        try {
-            myIsCredentialsReceived = false;
-            myConnector.open(repository);
-            myRepository = repository;
-            handshake(repository);
-        } finally {
-            myIsReopening = false;
-        }
+        myIsCredentialsReceived = false;
+        myConnector.open(repository);
+        myRepository = repository;
+        handshake(repository);
     }
 
     public String getRealm() {
@@ -105,7 +100,6 @@ class SVNConnection {
         InputStream is = skipLeadingGrabage();
         Object[] items = null;
         try {
-            checkConnection();
             items = SVNReader.parse(is, "[(*N(*W)(*W))]", null);
         } finally {
             myRepository.getDebugLog().flushStream(myLoggingInputStream);
@@ -241,7 +235,6 @@ class SVNConnection {
 
     public Object[] read(String template, Object[] items, boolean readMalformedData) throws SVNException {
         try {
-            checkConnection();
             return SVNReader.parse(getInputStream(), template, items);
         } catch (SVNException e) {
             if (readMalformedData && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_SVN_MALFORMED_DATA) {
@@ -260,8 +253,6 @@ class SVNConnection {
         }
     }
     
-    private boolean myIsReopening = false;
-    
     public void write(String template, Object[] items) throws SVNException {
         try {
             SVNWriter.write(getOutputStream(), template, items);
@@ -279,18 +270,6 @@ class SVNConnection {
     
     public boolean isConnectionStale() {
         return myConnector.isStale();
-    }
-
-    private void checkConnection() throws SVNException {
-        if (!myIsReopening && !myConnector.isConnected(myRepository)) {
-            myIsReopening = true;
-            try {
-                close();
-                open(myRepository);
-            } finally {
-                myIsReopening = false;
-            }
-        }
     }
 
     public OutputStream getOutputStream() throws SVNException {

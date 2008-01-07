@@ -103,14 +103,14 @@ anonymous checkouts from your repository.</p>
       &lt;arg value=<span class="javaCommentSingle">"admin"</span>/&gt;
       &lt;arg value=<span class="javaCommentSingle">"${repository.URL}/TESTING"</span>/&gt;
       &lt;classpath&gt;
-        &lt;pathelement location=<span class="javaCommentSingle">"${antroot}/LIB/ganymed.jar"</span> /&gt;
+        &lt;pathelement location=<span class="javaCommentSingle">"${antroot}/LIB/trilead.jar"</span> /&gt;
         &lt;pathelement location=<span class="javaCommentSingle">"${antroot}/LIB/svnkit.jar"</span> /&gt;
         &lt;pathelement location=<span class="javaCommentSingle">"${antroot}/LIB/svnkit-cli.jar"</span> /&gt;
       &lt;/classpath&gt;
     &lt;/java&gt;
   &lt;/target&gt;
 </pre>
-Don't forget to put a <code>ganymed.jar</code> onto the classpath (if using an SSH tunnel).
+Don't forget to put a <code>trilead.jar</code> onto the classpath (if using an SSH tunnel).
 
 <p>
 <b>Checking out files from a repository via the svn+ssh:// protocol</b>
@@ -134,7 +134,7 @@ an svn+ssh:// protocol.</p>
       &lt;arg value=<span class="javaCommentSingle">"co"</span> /&gt;
       &lt;arg value=<span class="javaCommentSingle">"${repository.URL}"</span> /&gt;
         &lt;classpath&gt;
-          &lt;pathelement location=<span class="javaCommentSingle">"${! antroot}/ganymed.jar"</span> /&gt;
+          &lt;pathelement location=<span class="javaCommentSingle">"${! antroot}/trilead.jar"</span> /&gt;
           &lt;pathelement location=<span class="javaCommentSingle">"${antroot}/svnkit.jar"</span> /&gt;
           &lt;pathelement location=<span class="javaCommentSingle">"${antroot}/svnkit-cli.jar"</span> /&gt;
         &lt;/classpath&gt;
@@ -172,7 +172,7 @@ version would.</p>
       &lt;arg value=<span class="javaCommentSingle">'"Testing"'</span>/&gt;
       &lt;arg value=<span class="javaCommentSingle">"${repository.URL}/TESTING"</span>/&gt;
       &lt;classpath&gt;
-        &lt;pathelement location=<span class="javaCommentSingle">"${antroot}/LIB/ganymed.jar"</span> /&gt;
+        &lt;pathelement location=<span class="javaCommentSingle">"${antroot}/LIB/trilead.jar"</span> /&gt;
         &lt;pathelement location=<span class="javaCommentSingle">"${antroot}/LIB/svnkit.jar"</span> /&gt;
         &lt;pathelement location=<span class="javaCommentSingle">"${antroot}/LIB/svnkit-cli.jar"</span> /&gt;
       &lt;/classpath&gt;

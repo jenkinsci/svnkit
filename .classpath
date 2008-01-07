@@ -10,7 +10,7 @@
 	<classpathentry kind="src" output="contrib/sequence/bin" path="contrib/sequence/src-test"/>
 	<classpathentry exported="true" kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.4"/>
-	<classpathentry kind="lib" path="contrib/ganymed/ganymed.jar" sourcepath="contrib/ganymed/ganymedsrc.zip"/>
 	<classpathentry exported="true" kind="lib" path="contrib/jna/jna.jar" sourcepath="contrib/jna/jna-src.zip"/>
+	<classpathentry kind="lib" path="contrib/trilead/trilead.jar" sourcepath="contrib/trilead/trileadsrc.zip"/>
 	<classpathentry kind="output" path="svnkit/bin"/>
 </classpath>

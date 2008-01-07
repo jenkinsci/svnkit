@@ -2,9 +2,6 @@
 /.options eol=lf
 /COPYING eol=lf
 /changelog.txt eol=lf
-contrib/ganymed/GANYMED-LICENSE -text
-contrib/ganymed/ganymed.jar -text
-contrib/ganymed/ganymedsrc.zip -text
 contrib/javahl/JAVAHL-LICENSE eol=lf
 contrib/jna/JNA-LICENSE eol=lf
 contrib/jna/jna-src.zip -text
@@ -25,6 +22,9 @@ contrib/sequence/src/de/regnis/q/sequence/line/QSequenceLineRAFileData.java -tex
 contrib/sequence/src/de/regnis/q/sequence/line/QSequenceLineRAFileDataStream.java -text
 contrib/sequence/src/de/regnis/q/sequence/line/QSequenceLineResult.java -text
 contrib/sequence/src/de/regnis/q/sequence/media/QSequenceIntMedia.java -text
+contrib/trilead/TRILEAD-LICENSE -text
+contrib/trilead/trilead.jar -text
+contrib/trilead/trileadsrc.zip -text
 doc/JSPWikiDocs/Authentication/AuthManager_Architecture.png -text
 doc/JSPWikiDocs/Authentication/AuthProvider_In_Work.png -text
 doc/JSPWikiDocs/Authentication/AuthProvider_In_Work_1.png -text

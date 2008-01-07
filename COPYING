@@ -1,7 +1,7 @@
 The TMate License
 
 This license applies to all portions of TMate SVNKit library, which 
-are not externally-maintained libraries (e.g. Ganymed SSH library).
+are not externally-maintained libraries (e.g. Trilead SSH library).
 
 All the source code and compiled classes in package org.tigris.subversion.javahl
 except SvnClient class are covered by the license in JAVAHL-LICENSE file
