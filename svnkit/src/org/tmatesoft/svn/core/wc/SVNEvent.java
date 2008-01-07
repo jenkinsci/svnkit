@@ -106,7 +106,7 @@ public class SVNEvent {
     private String myMimeType;
     
     private long myRevision;
-    private long myOldRevision;
+    private long myPreviousRevision;
     
     private SVNStatusType myContentsStatus;
     private SVNStatusType myPropertiesStatus;
@@ -168,7 +168,7 @@ public class SVNEvent {
         myErrorMessage = error;
         myRange = range;
         myChangelistName = changelistName;
-        myOldRevision = -1;
+        myPreviousRevision = -1;
     }
 
     public File getFile() {
@@ -305,8 +305,8 @@ public class SVNEvent {
         return myRevision;
     }
 
-    public long getOldRevision() {
-        return myOldRevision;
+    public long getPreviousRevision() {
+        return myPreviousRevision;
     }
     
     /**
@@ -323,7 +323,7 @@ public class SVNEvent {
         return myRange;
     }    
     
-    public void setOldRevision(long oldRevision) {
-        myOldRevision = oldRevision;
+    public void setPreviousRevision(long previousRevision) {
+        myPreviousRevision = previousRevision;
     }
 }
