@@ -345,7 +345,7 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
         for (Iterator protocols = pool.keySet().iterator(); protocols.hasNext();) {
             String key = (String) protocols.next();
             SVNRepository repository = (SVNRepository) pool.get(key);
-            repository.setDebugLog(log);
+            repository.setDebugLog(myDebugLog);
         }
     }
     
