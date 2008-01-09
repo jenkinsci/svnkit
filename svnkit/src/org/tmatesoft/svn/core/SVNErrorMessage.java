@@ -141,7 +141,7 @@ public class SVNErrorMessage implements Serializable {
      * @return            a new error message
      */
     public static SVNErrorMessage create(SVNErrorCode code, String message, int type) {
-        return new SVNErrorMessage(code, message, EMPTY_ARRAY, null, type);
+        return create(code, message, null, type, null);
     }
     
     /**
@@ -176,10 +176,29 @@ public class SVNErrorMessage implements Serializable {
      * @return            a new error message
      */
     public static SVNErrorMessage create(SVNErrorCode code, String message, Object[] objects, int type) {
-        return new SVNErrorMessage(code == null ? SVNErrorCode.BASE : code, message == null ? "" : message, 
-                objects == null ? EMPTY_ARRAY : objects, null, type);
+        return create(code, message, objects, type, null);
     }
-    
+
+	/**
+	 * Creates an error message given an error code, description, an error type
+	 * (whether it's a warning or an error) and may be related objects to be
+	 * formatted with the error description and an optional cause.
+	 * To format the provided <code>objects</code> 
+	 * with the <code>message</code>, you should use valid format patterns parsable for
+	 * {@link MessageFormat}.
+	 *
+	 * @param  code       an error code
+	 * @param  message    an error description
+	 * @param  objects    an array of objects related to the error <code>message</code>
+	 * @param  type       an error type
+	 * @param  cause     cause of the error
+	 * @return            a new error message
+	 */
+	public static SVNErrorMessage create(SVNErrorCode code, String message, Object[] objects, int type, Throwable cause) {
+	    return new SVNErrorMessage(code == null ? SVNErrorCode.BASE : code, message == null ? "" : message,
+	            objects == null ? EMPTY_ARRAY : objects, cause, type);
+	}
+
     protected SVNErrorMessage(SVNErrorCode code, String message, Object[] relatedObjects, Throwable th, int type) {
         myErrorCode = code;
         if (message != null && message.startsWith("svn: ")) {

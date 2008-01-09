@@ -297,7 +297,7 @@ class HTTPConnection implements IHTTPConnection {
 	            if (ssl.getCause() instanceof SVNSSLUtil.CertificateNotTrustedException) {
 		            SVNErrorManager.cancel(ssl.getCause().getMessage());
 	            }
-                SVNErrorMessage sslErr = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "SSL handshake failed: ''{0}''", ssl.getMessage());
+                SVNErrorMessage sslErr = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "SSL handshake failed: ''{0}''", new Object[] { ssl.getMessage() }, SVNErrorMessage.TYPE_ERROR, ssl);
 		            if (keyManager != null) {
 			            keyManager.acknowledgeAndClearAuthentication(sslErr);
 		            }

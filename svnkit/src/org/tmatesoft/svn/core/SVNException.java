@@ -32,7 +32,7 @@ public class SVNException extends Exception {
      * @param errorMessage an error message
      */
     public SVNException(SVNErrorMessage errorMessage) {
-        this(errorMessage, null);
+        this(errorMessage, errorMessage.getCause());
     }
     
     /**
