@@ -63,14 +63,6 @@ public class DAVReplayHandler extends DAVEditorHandler {
         super(editor, fetchContent);
     }
 
-    protected String getCurrentPath() {
-        return null;
-    }
-
-    protected ISVNDeltaConsumer getDeltaConsumer() {
-        return myEditor;
-    }
-
     protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
         if (element == TARGET_REVISION) {
             String rev = attrs.getValue(REVISION_ATTR);
