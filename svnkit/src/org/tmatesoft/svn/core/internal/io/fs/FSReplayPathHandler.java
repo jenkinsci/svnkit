@@ -82,14 +82,14 @@ public class FSReplayPathHandler implements ISVNCommitPathHandler {
         
         if (isDelete) {
             editor.deleteEntry(path, -1);
-            return false;
         }
         
         SVNNodeKind kind = null;
         if (!isDelete || isAdd) {
             kind = myRoot.checkNodeKind(absPath);
             if (kind != SVNNodeKind.DIR && kind != SVNNodeKind.FILE) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "Filesystem path ''{0}'' is neither a file nor a directory", path);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, 
+                        "Filesystem path ''{0}'' is neither a file nor a directory", path);
                 SVNErrorManager.error(err);
             }
         }
