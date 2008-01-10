@@ -130,6 +130,9 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
         myTimeout = timeout > 0 ? timeout : DEFAULT_IDLE_TIMEOUT;
         myIsKeepConnection = keepConnection;
         myTimeout = timeout;
+        if (ourTimer == null) {
+            ourTimer = new Timer(true);
+        }
         if (myIsKeepConnection) {
             myTimer = ourTimer;
             ourTimer.schedule(new TimeoutTask(), 10000);
@@ -265,6 +268,13 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
             repository.closeSession();
         }
         myPool = null;
+    }
+    
+    public static void shutdownTimer() {
+        if (ourTimer != null) {
+            ourTimer.cancel();
+            ourTimer = null;
+        }
     }
     
     private Map getPool() {
