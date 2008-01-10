@@ -17,9 +17,9 @@ package org.tmatesoft.svn.core;
  * @author  TMate Software Ltd.
  */
 public class SVNMergeInfoInheritance {
-    public static SVNMergeInfoInheritance EXPLICIT = new SVNMergeInfoInheritance("explicit");
-    public static SVNMergeInfoInheritance INHERITED = new SVNMergeInfoInheritance("inherited");
-    public static SVNMergeInfoInheritance NEAREST_ANCESTOR = new SVNMergeInfoInheritance("nearest-ancestor");
+    public static final SVNMergeInfoInheritance EXPLICIT = new SVNMergeInfoInheritance("explicit");
+    public static final SVNMergeInfoInheritance INHERITED = new SVNMergeInfoInheritance("inherited");
+    public static final SVNMergeInfoInheritance NEAREST_ANCESTOR = new SVNMergeInfoInheritance("nearest-ancestor");
     
     private String myName;
     

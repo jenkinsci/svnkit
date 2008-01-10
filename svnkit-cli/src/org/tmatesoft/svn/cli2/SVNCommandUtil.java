@@ -362,7 +362,7 @@ public class SVNCommandUtil {
             try {
                 myReadInput = myReader.readLine();
             } catch (IOException e) {
-                myError = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can't read stdin: {0}", 
+                myError = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can''t read stdin: {0}", 
                         e.getLocalizedMessage());
             }
             myIsFinished = true;
@@ -377,4 +377,17 @@ public class SVNCommandUtil {
         }
     }
 
+    private static class PromptEraserThread implements Runnable {
+    	volatile boolean myIsErase;
+    	
+    	public PromptEraserThread() {
+    		myIsErase = true;
+    	}
+
+		public void run() {
+			while (myIsErase) {
+				System.out.print('\b');
+			}
+		}
+    }
 }

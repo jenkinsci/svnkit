@@ -82,6 +82,7 @@ public class FSReplayPathHandler implements ISVNCommitPathHandler {
             isDelete = true;
         }
         
+        boolean closeDir = false;
         if (isDelete) {
             editor.deleteEntry(path, -1);
         }
@@ -90,7 +91,8 @@ public class FSReplayPathHandler implements ISVNCommitPathHandler {
         if (!isDelete || isAdd) {
             kind = myRoot.checkNodeKind(absPath);
             if (kind != SVNNodeKind.DIR && kind != SVNNodeKind.FILE) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "Filesystem path ''{0}'' is neither a file nor a directory", path);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, 
+                		"Filesystem path ''{0}'' is neither a file nor a directory", path);
                 SVNErrorManager.error(err);
             }
         }
@@ -126,6 +128,7 @@ public class FSReplayPathHandler implements ISVNCommitPathHandler {
                 } else {
                     editor.addDir(path, copyFromPath, copyFromRevision);
                 }
+                closeDir = true;
             } else {
                 editor.addFile(path, copyFromPath, copyFromRevision);
                 closeFile = true;
@@ -153,6 +156,7 @@ public class FSReplayPathHandler implements ISVNCommitPathHandler {
                 } else {
                     editor.openDir(path, -1);
                 }
+                closeDir = true;
             } else {
                 editor.openFile(path, -1);
                 closeFile = true;
@@ -230,9 +234,8 @@ public class FSReplayPathHandler implements ISVNCommitPathHandler {
         if (closeFile) {
             FSRevisionNode node = myRoot.getRevisionNode(absPath);
             editor.closeFile(path, node.getFileChecksum());
-            return false;
         }
-        return true;
+        return closeDir;
     }
 
     private void addSubdirectory(FSRoot srcRoot, FSRoot tgtRoot, ISVNEditor editor, String srcPath, String path) throws SVNException {

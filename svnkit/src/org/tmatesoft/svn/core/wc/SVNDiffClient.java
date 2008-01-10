@@ -1463,7 +1463,7 @@ public class SVNDiffClient extends SVNMergeDriver {
         long endRev = getRevisionNumber(SVNRevision.HEAD, repos, null);
         long startRev = getPathLastChangeRevision("", endRev, repos);
         SVNMergeRange fullRange = new SVNMergeRange(startRev, endRev, true);
-        SVNMergeRangeList fullRangeList = new SVNMergeRangeList(new SVNMergeRange[] { fullRange });
+        SVNMergeRangeList fullRangeList = new SVNMergeRangeList(fullRange);
         SVNMergeRangeList rangeList = null;
         if (alreadyMergedRanges != null) {
             rangeList = fullRangeList;
@@ -1483,7 +1483,7 @@ public class SVNDiffClient extends SVNMergeDriver {
         long endRev = getRevisionNumber(SVNRevision.HEAD, repos, null);
         long startRev = getPathLastChangeRevision("", endRev, repos);
         SVNMergeRange fullRange = new SVNMergeRange(startRev, endRev, true);
-        SVNMergeRangeList fullRangeList = new SVNMergeRangeList(new SVNMergeRange[] { fullRange });
+        SVNMergeRangeList fullRangeList = new SVNMergeRangeList(fullRange);
         SVNMergeRangeList rangeList = null;
         if (alreadyMergedRanges != null) {
             rangeList = fullRangeList;

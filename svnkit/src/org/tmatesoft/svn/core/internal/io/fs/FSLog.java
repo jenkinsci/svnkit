@@ -400,11 +400,8 @@ public class FSLog {
         }
         
         long oldestRevision = copyRoot.getRevision();
-        SVNMergeRangeList rangeList = new SVNMergeRangeList(new SVNMergeRange[] {
-                                                            new SVNMergeRange(oldestRevision, 
-                                                                              revision - 1, 
-                                                                              true)
-                                                            });
+        SVNMergeRangeList rangeList = new SVNMergeRangeList(new SVNMergeRange(oldestRevision, 
+        		revision - 1, true));
         impliedMergeInfo.put(dstPath, rangeList);    
         return impliedMergeInfo;
     }

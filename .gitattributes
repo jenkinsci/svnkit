@@ -183,6 +183,7 @@ svnkit/src/org/tmatesoft/svn/core/internal/util/SVNEncodingUtil.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/util/SVNFormatUtil.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/util/SVNLogInputStream.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/util/SVNLogOutputStream.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/util/SVNMergeInfoUtil.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/util/SVNPathUtil.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/util/SVNStreamGobbler.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/util/SVNUUIDGenerator.java -text

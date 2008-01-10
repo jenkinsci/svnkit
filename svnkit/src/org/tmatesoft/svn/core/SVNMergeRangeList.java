@@ -30,17 +30,30 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 public class SVNMergeRangeList {
     public static String MERGE_INFO_NONINHERITABLE_STRING = "*";
     
-    public static SVNMergeRangeList NO_MERGE_INFO_LIST = new SVNMergeRangeList(new SVNMergeRange[] {
-            new SVNMergeRange(SVNRepository.INVALID_REVISION, SVNRepository.INVALID_REVISION, false) });
-    
+    public static SVNMergeRangeList NO_MERGE_INFO_LIST = new SVNMergeRangeList(new SVNMergeRange(SVNRepository.INVALID_REVISION, 
+    		SVNRepository.INVALID_REVISION, false));
+
     private SVNMergeRange[] myRanges;
     
+    public SVNMergeRangeList(SVNMergeRange range) {
+    	this(new SVNMergeRange[] { range });
+    }
+
     public SVNMergeRangeList(SVNMergeRange[] ranges) {
         myRanges = ranges == null ? new SVNMergeRange[0] : ranges;
     }
     
     public SVNMergeRange[] getRanges() {
         return myRanges;
+    }
+    
+    public List getRangesAsList() {
+    	LinkedList list = new LinkedList();
+    	for (int i = 0; i < myRanges.length; i++) {
+			SVNMergeRange range = myRanges[i];
+			list.add(range);
+		}
+    	return list;
     }
     
     public int getSize() {
@@ -102,7 +115,7 @@ public class SVNMergeRangeList {
             SVNMergeRange range = rangeList.myRanges[j];
             lastRange = combineWithLastRange(resultRanges, lastRange, range, true, false);
         }
-        return new SVNMergeRangeList((SVNMergeRange[]) resultRanges.toArray(new SVNMergeRange[resultRanges.size()]));
+        return SVNMergeRangeList.fromCollection(resultRanges);
     }
     
 /*    public SVNMergeRangeList combineRanges() {
@@ -231,7 +244,7 @@ public class SVNMergeRangeList {
                 }
             } else {
                 SVNMergeRange range = new SVNMergeRange(startRev, endRev, false);
-                SVNMergeRangeList boundRangeList = new SVNMergeRangeList(new SVNMergeRange[] { range });
+                SVNMergeRangeList boundRangeList = new SVNMergeRangeList(range);
                 return diff(boundRangeList, true);
             }
         }
@@ -262,8 +275,7 @@ public class SVNMergeRangeList {
         Collections.sort(additiveSources, comparator);
         List compactedSources = compactAddSubRanges(additiveSources);
     	Collections.sort(compactedSources, new RangeComparator2());
-        return new SVNMergeRangeList((SVNMergeRange[]) 
-        		compactedSources.toArray(new SVNMergeRange[compactedSources.size()]));
+        return SVNMergeRangeList.fromCollection(compactedSources);
     }
     
     private void removeRedundantRanges(List ranges) {
@@ -479,7 +491,7 @@ public class SVNMergeRangeList {
                 lastRange = combineWithLastRange(ranges, lastRange, range, true, considerInheritance);
             }
         }
-        return new SVNMergeRangeList((SVNMergeRange[]) ranges.toArray(new SVNMergeRange[ranges.size()]));
+        return SVNMergeRangeList.fromCollection(ranges);
     }
     
     private SVNMergeRange combineWithLastRange(Collection rangeList, SVNMergeRange lastRange, SVNMergeRange mRange, boolean dupMRange, boolean considerInheritance) {
@@ -660,7 +672,7 @@ public class SVNMergeRangeList {
 			boolean r1IsReversed = r1.getStartRevision() > r1.getEndRevision(); 
 			boolean r2IsReversed = r2.getStartRevision() > r2.getEndRevision();
 			if (r1IsReversed && r2IsReversed) {
-				return - compareMergeRanges(o1, o2);
+				return -1 * compareMergeRanges(o1, o2);
 			} else if (r1IsReversed) {
 				return 1;
 			} else if (r2IsReversed) {
