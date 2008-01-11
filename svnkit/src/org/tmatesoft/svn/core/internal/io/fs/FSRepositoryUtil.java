@@ -144,14 +144,14 @@ public class FSRepositoryUtil {
             String propName = (String) names.next();
             SVNPropertyValue srcPropVal = sourceProps.getSVNPropertyValue(propName);
             SVNPropertyValue targetPropVal = targetProps.getSVNPropertyValue(propName);
-    
-            if(targetPropVal == null){
+
+            if (targetPropVal == null || targetPropVal.hasNullValue()) {
                 result.put(propName, targetPropVal);
-            }else if(!targetPropVal.equals(srcPropVal)){
+            } else if (!targetPropVal.equals(srcPropVal)) {
                 result.put(propName, targetPropVal);
             }
         }
-    
+
         for(Iterator names = targetProps.nameSet().iterator(); names.hasNext();){
             String propName = (String)names.next();
             SVNPropertyValue targetPropVal = targetProps.getSVNPropertyValue(propName);

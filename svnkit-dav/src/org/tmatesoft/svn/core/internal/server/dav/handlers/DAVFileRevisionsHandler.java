@@ -82,7 +82,7 @@ public class DAVFileRevisionsHandler extends DAVReportHandler implements ISVNFil
         for (Iterator iterator = fileRevision.getPropertiesDelta().nameSet().iterator(); iterator.hasNext();) {
             String propertyName = (String) iterator.next();
             SVNPropertyValue propertyValue = fileRevision.getPropertiesDelta().getSVNPropertyValue(propertyName);
-            if (propertyValue != null) {
+            if (propertyValue != null && !propertyValue.hasNullValue()) {
                 writePropertyTag(SET_PROPERTY_ATTR, propertyName, propertyValue);
             } else {
                 xmlBuffer = SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, REMOVE_PROPERTY_ATTR, SVNXMLUtil.XML_STYLE_SELF_CLOSING, "name", propertyName, null);

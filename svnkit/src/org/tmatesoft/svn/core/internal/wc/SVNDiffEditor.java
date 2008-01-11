@@ -619,10 +619,10 @@ public class SVNDiffEditor implements ISVNEditor {
             if ((oldValue == null || oldValue.hasNullValue()) && (newValue != null && !newValue.hasNullValue())) {
                 base.put(name, newValue);
                 diff.put(name, (SVNPropertyValue) null);
-            } else if (oldValue != null && newValue == null) {
+            } else if ((oldValue != null && !oldValue.hasNullValue()) && (newValue == null || newValue.hasNullValue()) ) {
                 base.put(name, (SVNPropertyValue) null);
                 diff.put(name, oldValue);
-            } else if (oldValue != null && newValue != null) {
+            } else if ((oldValue != null && !oldValue.hasNullValue()) && (newValue != null && !newValue.hasNullValue())) {
                 base.put(name, newValue);
                 diff.put(name, oldValue);
             }
@@ -637,9 +637,9 @@ public class SVNDiffEditor implements ISVNEditor {
                 // changed.
                 SVNPropertyValue oldValue = props2.getSVNPropertyValue(newPropName);
                 SVNPropertyValue value = props1.getSVNPropertyValue(newPropName);
-                if (oldValue != null && !oldValue.equals(value)) {
+                if (!oldValue.hasNullValue() && !oldValue.equals(value)) {
                     propsDiff.put(newPropName, oldValue);
-                } else if (oldValue == null && value != null) {
+                } else if (oldValue.hasNullValue() && (value != null && !value.hasNullValue())) {
                     propsDiff.put(newPropName, oldValue);
                 }
             } else {
@@ -651,7 +651,7 @@ public class SVNDiffEditor implements ISVNEditor {
             String oldPropName = (String) names.next();
             if (!props2.containsName(oldPropName)) {
                 // deleted
-                propsDiff.put(oldPropName, (byte[]) null);
+                propsDiff.put(oldPropName, (String) null);
             }
         }
         return propsDiff;

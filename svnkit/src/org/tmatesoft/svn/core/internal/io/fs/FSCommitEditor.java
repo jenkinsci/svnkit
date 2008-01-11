@@ -223,7 +223,7 @@ public class FSCommitEditor implements ISVNEditor {
             }
 
             SVNPropertyValue propValue = propNamesToValues.getSVNPropertyValue(propName);
-            if (properties.isEmpty() && propValue == null) {
+            if (properties.isEmpty() && propValue.hasNullValue()) {
                 continue;
             }
 
@@ -231,7 +231,7 @@ public class FSCommitEditor implements ISVNEditor {
                 //TODO: FIXME
             }
 
-            if (propValue == null) {
+            if (propValue.hasNullValue()) {
                 properties.remove(propName);
             } else {
                 properties.put(propName, propValue);

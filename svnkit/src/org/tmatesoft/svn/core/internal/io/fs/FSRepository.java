@@ -154,7 +154,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             String action = null;
             if (propertyValue.hasNullValue()) {
                 action = FSHooks.REVPROP_DELETE;
-            } else if (oldValue.hasNullValue()) {
+            } else if (oldValue == null || oldValue.hasNullValue()) {
                 action = FSHooks.REVPROP_ADD;
             } else {
                 action = FSHooks.REVPROP_MODIFY;

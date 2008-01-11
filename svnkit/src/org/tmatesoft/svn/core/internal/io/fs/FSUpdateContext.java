@@ -570,22 +570,24 @@ public class FSUpdateContext {
 
         if (FSRepository.isValidRevision(createdRevision)) {
             SVNProperties entryProps = myFSFS.compoundMetaProperties(createdRevision);
-            changeProperty(editPath, entryProps.getSVNPropertyValue(SVNProperty.COMMITTED_REVISION), isDir);
+            SVNPropertyValue committedRevision = entryProps.getSVNPropertyValue(SVNProperty.COMMITTED_REVISION);
+            committedRevision = committedRevision == null ? new SVNPropertyValue(SVNProperty.COMMITTED_REVISION, (String) null) : committedRevision;
+            changeProperty(editPath, committedRevision, isDir);
             SVNPropertyValue committedDate = entryProps.getSVNPropertyValue(SVNProperty.COMMITTED_DATE);
 
-            if ((!committedDate.hasNullValue()) || sourcePath != null) {
+            if ((committedDate != null && !committedDate.hasNullValue()) || sourcePath != null) {
                 changeProperty(editPath, committedDate, isDir);
             }
 
             SVNPropertyValue lastAuthor = entryProps.getSVNPropertyValue(SVNProperty.LAST_AUTHOR);
 
-            if ((!lastAuthor.hasNullValue()) || sourcePath != null) {
+            if ((lastAuthor != null && !lastAuthor.hasNullValue()) || sourcePath != null) {
                 changeProperty(editPath, lastAuthor, isDir);
             }
 
             SVNPropertyValue uuid = entryProps.getSVNPropertyValue(SVNProperty.UUID);
 
-            if ((!uuid.hasNullValue()) || sourcePath != null) {
+            if ((uuid != null && !uuid.hasNullValue()) || sourcePath != null) {
                 changeProperty(editPath, uuid, isDir);
             }
         }

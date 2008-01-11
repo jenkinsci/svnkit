@@ -200,9 +200,9 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                 SVNPropertyValue newValue = diff.getSVNPropertyValue(name);
                 String headerFormat = null;
                 
-                if (originalValue == null) {
+                if (originalValue == null || originalValue.hasNullValue()) {
                     headerFormat = "Added: ";
-                } else if (newValue == null) {
+                } else if (newValue == null || newValue.hasNullValue()) {
                     headerFormat = "Deleted: ";
                 } else {
                     headerFormat = "Modified: ";
