@@ -28,7 +28,6 @@ import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNMergeInfo;
 import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -1441,16 +1440,8 @@ public class SVNCopyClient extends SVNBasicClient {
                 // TODO reparent repository if needed and then ensure that repository has the same location as before that call.
                 mergeInfoPath = getPathRelativeToRoot(null, url, 
                         entry != null ? entry.getRepositoryRootURL() : null, access, repository);
-                targetMergeInfo = repository.getMergeInfo(new String[] { mergeInfoPath }, srcRevision, 
-                        SVNMergeInfoInheritance.INHERITED);
-                if (targetMergeInfo != null) {
-                    SVNMergeInfo mergeInfo = (SVNMergeInfo) targetMergeInfo.get(mergeInfoPath);
-                    if (mergeInfo != null) {
-                        targetMergeInfo = mergeInfo.getMergeSourcesToMergeLists();
-                    } else {
-                        targetMergeInfo = null;
-                    }
-                }
+                targetMergeInfo = getReposMergeInfo(repository, mergeInfoPath, srcRevision, 
+                		SVNMergeInfoInheritance.INHERITED, true);
             } else {
                 targetMergeInfo = getWCMergeInfo(srcFile, entry, null, SVNMergeInfoInheritance.INHERITED, false, 
                         new boolean[1]);

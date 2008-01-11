@@ -566,6 +566,32 @@ public class SVNBasicClient implements ISVNEventHandler {
         }
     }
 
+    protected Map getReposMergeInfo(SVNRepository repository, String path, long revision, 
+    		SVNMergeInfoInheritance inheritance, boolean squelchIncapable) throws SVNException {
+    	SVNURL oldURL = ensureSessionURL(repository, null);
+    	Map reposMergeInfo = null;
+    	try {
+    		reposMergeInfo = repository.getMergeInfo(new String[] { path }, revision, inheritance);
+    	} catch (SVNException svne) {
+    		if (!squelchIncapable || svne.getErrorMessage().getErrorCode() != SVNErrorCode.UNSUPPORTED_FEATURE) {
+    			throw svne;
+    		}
+    	} finally {
+        	if (oldURL != null) {
+        		repository.setLocation(oldURL, false);
+        	}
+    	}
+    	
+    	Map targetMergeInfo = null;
+    	if (reposMergeInfo != null) {
+    		SVNMergeInfo mergeInfo = (SVNMergeInfo) reposMergeInfo.get(path);
+    		if (mergeInfo != null) {
+    			targetMergeInfo = mergeInfo.getMergeSourcesToMergeLists();
+    		}
+    	}
+    	return targetMergeInfo;
+    }
+    
     protected Map getWCOrRepositoryMergeInfo(SVNWCAccess access, File path, SVNEntry entry, 
             SVNMergeInfoInheritance inherit, boolean[] indirect, boolean reposOnly, 
             SVNRepository repository) throws SVNException {
@@ -585,7 +611,7 @@ public class SVNBasicClient implements ISVNEventHandler {
                 SVNPropertyValue mergeInfoProp = (SVNPropertyValue) fileToProp.get(path);
                 if (mergeInfoProp == null) {
                     boolean closeRepository = false;
-                    Map pathToMergeInfo = null;
+                    Map reposMergeInfo = null;
                     String repositoryPath = null;
                     try {
                         if (repository == null) {
@@ -594,17 +620,16 @@ public class SVNBasicClient implements ISVNEventHandler {
                         }
                         repositoryPath = getPathRelativeToRoot(null, url, entry.getRepositoryRootURL(), 
                         		null, repository);
-                        pathToMergeInfo = repository.getMergeInfo(new String[] { repositoryPath }, revision, inherit);
+                        reposMergeInfo = getReposMergeInfo(repository, repositoryPath, revision, inherit, true);
                     } finally {
                         if (closeRepository) {
                             repository.closeSession();
                         }
                     }
                     
-                    SVNMergeInfo reposMergeInfo = (SVNMergeInfo) pathToMergeInfo.get(repositoryPath); 
                     if (reposMergeInfo != null) {
                         indirect[0] = true;
-                        mergeInfo = reposMergeInfo.getMergeSourcesToMergeLists();
+                        mergeInfo = reposMergeInfo;
                     } 
                 }
             }
@@ -972,7 +997,7 @@ public class SVNBasicClient implements ISVNEventHandler {
     
     protected SVNURL getEntryLocation(File path, SVNEntry entry, long[] revNum, SVNRevision pegRevision) throws SVNException {
         SVNURL url = null;
-        if (entry.getCopyFromURL() == null && pegRevision == SVNRevision.WORKING) {
+        if (entry.getCopyFromURL() != null && pegRevision == SVNRevision.WORKING) {
             url = entry.getCopyFromSVNURL();
             if (revNum != null && revNum.length > 0) {
                 revNum[0] = entry.getCopyFromRevision();
@@ -988,6 +1013,18 @@ public class SVNBasicClient implements ISVNEventHandler {
             SVNErrorManager.error(err);
         }
         return url;
+    }
+    
+    protected SVNURL ensureSessionURL(SVNRepository repository, SVNURL url) throws SVNException {
+    	SVNURL oldURL = repository.getLocation();
+    	if (url == null) {
+    		url = repository.getRepositoryRoot(true);
+    	}
+    	if (!url.equals(oldURL)) {
+    		repository.setLocation(url, false);
+        	return oldURL;
+    	}
+    	return null;
     }
     
     private static final class LocationsLogEntryHandler implements ISVNLogEntryHandler {

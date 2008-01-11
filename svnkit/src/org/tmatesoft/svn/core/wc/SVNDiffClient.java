@@ -22,7 +22,6 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNMergeInfo;
 import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
 import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
@@ -1429,13 +1428,8 @@ public class SVNDiffClient extends SVNMergeDriver {
         SVNURL reposRoot = repository.getRepositoryRoot(true);
         String relPath = getPathRelativeToRoot(null, url, reposRoot, null, null);
 
-        Map mergeInfos = repository.getMergeInfo(new String[] {relPath}, revisionNum, 
-                                                 SVNMergeInfoInheritance.INHERITED);
-        Map mergeInfo = null;
-        if (mergeInfos != null) {
-            SVNMergeInfo info = (SVNMergeInfo) mergeInfos.get(relPath);
-            mergeInfo = info.getMergeSourcesToMergeLists();
-        }
+        Map mergeInfo = getReposMergeInfo(repository, relPath, revisionNum, 
+        		SVNMergeInfoInheritance.INHERITED, false);
         Map fullPathMergeInfo = null;
         if (mergeInfo != null) {
             fullPathMergeInfo = new TreeMap();
