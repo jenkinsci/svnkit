@@ -128,16 +128,10 @@ public class SVNConcurrentCommitTest {
         public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         }
 
-        public void changeDirProperty(String name, String value) throws SVNException {
+        public void changeDirProperty(SVNPropertyValue value) throws SVNException {
         }
 
-        public void changeFileProperty(String path, String name, String value) throws SVNException {
-        }
-
-        public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
-        }
-
-        public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
+        public void changeFileProperty(String path, SVNPropertyValue value) throws SVNException {
         }
 
         public void closeDir() throws SVNException {

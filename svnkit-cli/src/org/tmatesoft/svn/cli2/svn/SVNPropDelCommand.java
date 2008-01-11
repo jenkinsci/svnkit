@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNChangelistClient;
@@ -84,7 +85,7 @@ public class SVNPropDelCommand extends SVNPropertiesCommand {
         
         if (getSVNEnvironment().isRevprop()) {
             SVNURL revPropURL = getRevpropURL(getSVNEnvironment().getStartRevision(), targets);
-            getSVNEnvironment().getClientManager().getWCClient().doSetRevisionProperty(revPropURL, getSVNEnvironment().getStartRevision(), propertyName, null, getSVNEnvironment().isForce(), this);
+            getSVNEnvironment().getClientManager().getWCClient().doSetRevisionProperty(revPropURL, getSVNEnvironment().getStartRevision(), new SVNPropertyValue(propertyName, (String) null), getSVNEnvironment().isForce(), this);
         } else if (getSVNEnvironment().getStartRevision() != SVNRevision.UNDEFINED) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                     "Cannot specify revision for deleting versioned property ''{0}''", propertyName);

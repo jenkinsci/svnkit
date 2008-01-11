@@ -100,25 +100,14 @@ public class SVNDumpEditor implements ISVNEditor {
         }
     }
 
-    public void changeDirProperty(String name, String value) throws SVNException {
+    public void changeDirProperty(SVNPropertyValue value) throws SVNException {
         if (!myCurrentDirInfo.myIsWrittenOut) {
             dumpNode(myCurrentDirInfo.myFullPath, SVNNodeKind.DIR, SVNAdminHelper.NODE_ACTION_CHANGE, false, myCurrentDirInfo.myComparePath, myCurrentDirInfo.myCompareRevision);
             myCurrentDirInfo.myIsWrittenOut = true;
         }
     }
 
-
-    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
-        if (!myCurrentDirInfo.myIsWrittenOut) {
-            dumpNode(myCurrentDirInfo.myFullPath, SVNNodeKind.DIR, SVNAdminHelper.NODE_ACTION_CHANGE, false, myCurrentDirInfo.myComparePath, myCurrentDirInfo.myCompareRevision);
-            myCurrentDirInfo.myIsWrittenOut = true;
-        }        
-    }
-
-    public void changeFileProperty(String path, String name, String value) throws SVNException {
-    }
-
-    public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
+    public void changeFileProperty(String path, SVNPropertyValue value) throws SVNException {
     }
 
     public void closeDir() throws SVNException {

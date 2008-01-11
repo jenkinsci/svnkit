@@ -12,7 +12,6 @@
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -110,12 +109,8 @@ public class DAVReplayHandler extends DAVReportHandler implements ISVNEditor {
         openEntry("open-directory", path, revision);
     }
 
-    public void changeDirProperty(String name, String value) throws SVNException {
-        changeEntryProperty("change-directory-prop", name, value == null ? null : new SVNPropertyValue(name, value));
-    }
-
-    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
-        changeEntryProperty("change-directory-prop", name, value);
+    public void changeDirProperty(SVNPropertyValue value) throws SVNException {
+        changeEntryProperty("change-directory-prop", value);
     }
 
     public void closeDir() throws SVNException {
@@ -131,12 +126,8 @@ public class DAVReplayHandler extends DAVReportHandler implements ISVNEditor {
         openEntry("open-file", path, revision);
     }
 
-    public void changeFileProperty(String path, String name, String value) throws SVNException {
-        changeEntryProperty("change-file-prop", name, value == null ? null : new SVNPropertyValue(name, value));
-    }
-
-    public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
-        changeEntryProperty("change-file-prop", name, value);
+    public void changeFileProperty(String path, SVNPropertyValue value) throws SVNException {
+        changeEntryProperty("change-file-prop", value);
     }
 
     public void closeFile(String path, String textChecksum) throws SVNException {
@@ -195,9 +186,10 @@ public class DAVReplayHandler extends DAVReportHandler implements ISVNEditor {
         write(xmlBuffer);
     }
 
-    private void changeEntryProperty(String tagName, String propertyName, SVNPropertyValue propertyValue) throws SVNException {
+    private void changeEntryProperty(String tagName, SVNPropertyValue propertyValue) throws SVNException {
         StringBuffer xmlBuffer = new StringBuffer();
-        if (propertyValue != null && !propertyValue.hasNullValue()) {            
+        String propertyName = propertyValue.getName();
+        if (!propertyValue.hasNullValue()) {
             String value = SVNBase64.byteArrayToBase64(SVNPropertyValue.getPropertyAsBytes(propertyValue));
             SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, SVNXMLUtil.XML_STYLE_PROTECT_CDATA, NAME_ATTR, propertyName, xmlBuffer);
             xmlBuffer.append(value);

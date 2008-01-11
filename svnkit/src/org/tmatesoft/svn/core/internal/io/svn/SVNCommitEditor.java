@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.internal.io.svn;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -109,17 +108,10 @@ class SVNCommitEditor implements ISVNEditor {
         myDirsStack.push(dirBaton);
     }
 
-    public void changeDirProperty(String name, String value)
+    public void changeDirProperty(SVNPropertyValue value)
             throws SVNException {
         DirBaton dirBaton = (DirBaton) myDirsStack.peek();
-        myConnection.write("(w(ss(s)))", new Object[]{"change-dir-prop",
-                dirBaton.getToken(), name, value});
-    }
-
-    public void changeDirProperty(String name, SVNPropertyValue value)
-            throws SVNException {
-        DirBaton dirBaton = (DirBaton) myDirsStack.peek();
-
+        String name = value.getName();
         byte[] bytes = SVNPropertyValue.getPropertyAsBytes(value);
         myConnection.write("(w(ss(b)))", new Object[]{"change-dir-prop",
                 dirBaton.getToken(), name, bytes});
@@ -192,14 +184,9 @@ class SVNCommitEditor implements ISVNEditor {
         myConnection.write("(w(s))", new Object[]{"textdelta-end", fileToken});
     }
 
-    public void changeFileProperty(String path, String name, String value) throws SVNException {
+    public void changeFileProperty(String path, SVNPropertyValue value) throws SVNException {
         String fileToken = (String) myFilesToTokens.get(path);
-        myConnection.write("(w(ss(s)))", new Object[]{"change-file-prop", fileToken, name, value});
-    }
-
-    public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
-        String fileToken = (String) myFilesToTokens.get(path);
-
+        String name = value.getName();
         byte[] bytes = SVNPropertyValue.getPropertyAsBytes(value);       
         myConnection.write("(w(ss(s)))", new Object[]{"change-file-prop", fileToken, name, bytes});
     }
@@ -214,7 +201,7 @@ class SVNCommitEditor implements ISVNEditor {
         SVNException e = null;
         try {
             myConnection.write("(w())", new Object[]{"close-edit"});
-            myConnection.read("", (List) null, true);
+            myConnection.read("", null, true);
 
             myRepository.authenticate();
 
@@ -246,7 +233,7 @@ class SVNCommitEditor implements ISVNEditor {
         SVNException error = null;
         try {
             myConnection.write("(w())", new Object[]{"abort-edit"});
-            myConnection.read("", (List) null, true);
+            myConnection.read("", null, true);
         } catch (SVNException e) {
             error = e;
             throw e;

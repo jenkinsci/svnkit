@@ -33,6 +33,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -1159,15 +1160,15 @@ public class SVNCommitClient extends SVNBasicClient {
         }
         for (Iterator names = autoProperties.keySet().iterator(); names.hasNext();) {
             String name = (String) names.next();
-            String value = (String) autoProperties.get(name);
-            if (SVNProperty.EOL_STYLE.equals(name) && value != null) {
+            SVNPropertyValue value = new SVNPropertyValue(name, (String) autoProperties.get(name));
+            if (SVNProperty.EOL_STYLE.equals(name) && !value.hasNullValue()) {
                 if (SVNProperty.isBinaryMimeType((String) autoProperties.get(SVNProperty.MIME_TYPE))) {
                     continue;
-                }else if (!SVNTranslator.checkNewLines(file)) {
+                } else if (!SVNTranslator.checkNewLines(file)) {
                     continue;
                 } 
             }
-            editor.changeFileProperty(filePath, name, value);
+            editor.changeFileProperty(filePath, value);
         }
         // send "adding"
         SVNEvent addedEvent = SVNEventFactory.createSVNEvent(file, SVNNodeKind.FILE, mimeType, SVNRepository.INVALID_REVISION, SVNEventAction.COMMIT_ADDED, null, null, null);

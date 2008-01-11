@@ -215,9 +215,9 @@ public class SVNCommitter implements ISVNCommitPathHandler {
         
         if (item.getMergeInfo() != null) {
             if (item.getKind() == SVNNodeKind.FILE) {
-                editor.changeFileProperty(commitPath, SVNProperty.MERGE_INFO, item.getMergeInfo());
+                editor.changeFileProperty(commitPath, new SVNPropertyValue(SVNProperty.MERGE_INFO, item.getMergeInfo()));
             } else {
-                editor.changeDirProperty(SVNProperty.MERGE_INFO, item.getMergeInfo());
+                editor.changeDirProperty(new SVNPropertyValue(SVNProperty.MERGE_INFO, item.getMergeInfo()));
             }
         }
 
@@ -238,7 +238,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
             for(Iterator propNames = props.getPropertyNames(null).iterator(); propNames.hasNext();) {
                 String propName = (String) propNames.next();
                 SVNPropertyValue propValue = props.getPropertyValue(propName);
-                tmpProps.setPropertyValue(propName, propValue);
+                tmpProps.setPropertyValue(propValue);
             }
             if (!tmpPropsFile.exists()) {
                 // create empty tmp (!) file just to make sure it will be used on post-commit.
@@ -250,9 +250,9 @@ public class SVNCommitter implements ISVNCommitPathHandler {
                 String propName = (String) names.next();
                 SVNPropertyValue value = diff.getSVNPropertyValue(propName);
                 if (item.getKind() == SVNNodeKind.FILE) {
-                    editor.changeFileProperty(commitPath, propName, value);
+                    editor.changeFileProperty(commitPath, value);
                 } else {
-                    editor.changeDirProperty(propName, value);
+                    editor.changeDirProperty(value);
                 }
             }
         }

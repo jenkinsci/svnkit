@@ -23,9 +23,6 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
  */
 public class SVNPropertyValue {
 
-    public static final SVNPropertyValue TRUE = new SVNPropertyValue("svn:*", Boolean.TRUE.toString());
-    public static final SVNPropertyValue FALSE = new SVNPropertyValue("svn:*", Boolean.FALSE.toString());
-
     private String myName;
     private String myValue;
     private byte[] myData;
@@ -55,7 +52,7 @@ public class SVNPropertyValue {
 
     public static byte[] getPropertyAsBytes(SVNPropertyValue value){
         if (value == null || value.hasNullValue()){
-            return null;
+            return new byte[0];
         }
         if (value.isString()){
             try {

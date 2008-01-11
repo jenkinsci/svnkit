@@ -130,7 +130,7 @@ public class SVNPropSetCommand extends SVNPropertiesCommand {
                 targets.add("");
             }
             SVNURL revPropURL = getRevpropURL(getSVNEnvironment().getStartRevision(), targets);
-            getSVNEnvironment().getClientManager().getWCClient().doSetRevisionProperty(revPropURL, getSVNEnvironment().getStartRevision(), propertyName, propertyValue, getSVNEnvironment().isForce(), this);
+            getSVNEnvironment().getClientManager().getWCClient().doSetRevisionProperty(revPropURL, getSVNEnvironment().getStartRevision(), propertyValue, getSVNEnvironment().isForce(), this);
         } else if (getSVNEnvironment().getStartRevision() != SVNRevision.UNDEFINED) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR,
                     "Cannot specify revision for setting versioned property ''{0}''", propertyName);

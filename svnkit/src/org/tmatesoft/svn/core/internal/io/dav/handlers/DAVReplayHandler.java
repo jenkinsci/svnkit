@@ -11,8 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.io.dav.handlers;
 
-import java.io.UnsupportedEncodingException;
-
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -170,9 +168,9 @@ public class DAVReplayHandler extends DAVEditorHandler {
             } else {
                 if (attrs.getValue(DEL_ATTR) != null) {
                     if (element == CHANGE_FILE_PROPERTY) {
-                        myEditor.changeFileProperty(myPath, myPropertyName, (SVNPropertyValue) null);
+                        myEditor.changeFileProperty(myPath, new SVNPropertyValue(myPropertyName, (String) null));
                     } else {
-                        myEditor.changeDirProperty(myPropertyName, (SVNPropertyValue) null);
+                        myEditor.changeDirProperty(new SVNPropertyValue(myPropertyName, (String) null));
                     }
                     myPropertyName = null;
                 } else {
@@ -191,18 +189,14 @@ public class DAVReplayHandler extends DAVEditorHandler {
                 SVNErrorManager.error(err);
             }
             if (myPropertyName != null) {
-                String value = cdata.toString();
+                SVNPropertyValue property = null;
                 byte[] buffer = allocateBuffer(cdata.length());
                 int length = SVNBase64.base64ToByteArray(new StringBuffer(cdata.toString().trim()), buffer);
-                try {
-                    value = new String(buffer, 0, length, "UTF-8");
-                } catch (UnsupportedEncodingException e) {
-                    value = new String(buffer, 0, length);
-                }
+                property = new SVNPropertyValue(myPropertyName, buffer, 0, length);
                 if (element == CHANGE_FILE_PROPERTY) {
-                    myEditor.changeFileProperty(myPath, myPropertyName, value);
+                    myEditor.changeFileProperty(myPath, property);
                 } else {
-                    myEditor.changeDirProperty(myPropertyName, value);
+                    myEditor.changeDirProperty(property);
                 }
             }
         }

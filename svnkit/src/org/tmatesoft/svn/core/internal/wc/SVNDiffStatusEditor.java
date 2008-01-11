@@ -74,14 +74,8 @@ public class SVNDiffStatusEditor implements ISVNEditor {
         myCurrentDirSummarize.myType = SVNStatusType.STATUS_ADDED;
     }
 
-    public void changeDirProperty(String name, String value) throws SVNException {
-        if (SVNProperty.isRegularProperty(name)) {
-            myCurrentDirSummarize.myPropChanged = true;
-        }
-    }
-
-    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
-        if (SVNProperty.isRegularProperty(name)) {
+    public void changeDirProperty(SVNPropertyValue value) throws SVNException {
+        if (SVNProperty.isRegularProperty(value.getName())) {
             myCurrentDirSummarize.myPropChanged = true;
         }
     }
@@ -100,14 +94,8 @@ public class SVNDiffStatusEditor implements ISVNEditor {
         myCurrentFileSummarize.myType = SVNStatusType.STATUS_ADDED;
     }
 
-    public void changeFileProperty(String path, String name, String value) throws SVNException {
-        if (SVNProperty.isRegularProperty(name)) {
-            myCurrentFileSummarize.myPropChanged = true;
-        }
-    }
-
-    public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
-        if (SVNProperty.isRegularProperty(name)) {
+    public void changeFileProperty(String path, SVNPropertyValue value) throws SVNException {
+        if (SVNProperty.isRegularProperty(value.getName())) {
             myCurrentFileSummarize.myPropChanged = true;
         }
     }

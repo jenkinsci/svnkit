@@ -163,14 +163,14 @@ public class FSTransactionRoot extends FSRoot {
     public static FSTransactionInfo beginTransaction(long baseRevision, int flags, FSFS owner) throws SVNException {
         FSTransactionInfo txn = createTxn(baseRevision, owner);
         String commitTime = SVNDate.formatDate(new Date(System.currentTimeMillis()));
-        owner.setTransactionProperty(txn.getTxnId(), SVNRevisionProperty.DATE, new SVNPropertyValue(SVNRevisionProperty.DATE, commitTime));
+        owner.setTransactionProperty(txn.getTxnId(), new SVNPropertyValue(SVNRevisionProperty.DATE, commitTime));
 
         if ((flags & SVN_FS_TXN_CHECK_OUT_OF_DATENESS) != 0) {
-            owner.setTransactionProperty(txn.getTxnId(), SVNProperty.TXN_CHECK_OUT_OF_DATENESS, SVNPropertyValue.TRUE);
+            owner.setTransactionProperty(txn.getTxnId(), new SVNPropertyValue(SVNProperty.TXN_CHECK_OUT_OF_DATENESS, Boolean.TRUE.toString()));
         }
 
         if ((flags & FSTransactionRoot.SVN_FS_TXN_CHECK_LOCKS) != 0) {
-            owner.setTransactionProperty(txn.getTxnId(), SVNProperty.TXN_CHECK_LOCKS, SVNPropertyValue.TRUE);
+            owner.setTransactionProperty(txn.getTxnId(), new SVNPropertyValue(SVNProperty.TXN_CHECK_LOCKS, Boolean.TRUE.toString()));
         }
 
         return txn;

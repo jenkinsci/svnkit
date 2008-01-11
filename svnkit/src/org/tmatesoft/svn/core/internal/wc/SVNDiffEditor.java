@@ -246,18 +246,11 @@ public class SVNDiffEditor implements ISVNEditor {
         myCurrentDirectory = createDirInfo(myCurrentDirectory, path, false, subDirDepth);
     }
 
-    public void changeDirProperty(String name, String value) throws SVNException {
+    public void changeDirProperty(SVNPropertyValue value) throws SVNException {
         if (myCurrentDirectory.myPropertyDiff == null) {
             myCurrentDirectory.myPropertyDiff = new SVNProperties();
         }
-        myCurrentDirectory.myPropertyDiff.put(name, value);
-    }
-
-    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
-        if (myCurrentDirectory.myPropertyDiff == null) {
-            myCurrentDirectory.myPropertyDiff = new SVNProperties();
-        }
-        myCurrentDirectory.myPropertyDiff.put(name, value);
+        myCurrentDirectory.myPropertyDiff.put(value);
     }
 
     public void closeDir() throws SVNException {
@@ -312,18 +305,11 @@ public class SVNDiffEditor implements ISVNEditor {
         myCurrentDirectory.myComparedEntries.add(name);
     }
 
-    public void changeFileProperty(String path, String name, String value) throws SVNException {
+    public void changeFileProperty(String path, SVNPropertyValue value) throws SVNException {
         if (myCurrentFile.myPropertyDiff == null) {
             myCurrentFile.myPropertyDiff = new SVNProperties();
         }
-        myCurrentFile.myPropertyDiff.put(name, value);
-    }
-
-    public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
-        if (myCurrentFile.myPropertyDiff == null) {
-            myCurrentFile.myPropertyDiff = new SVNProperties();
-        }
-        myCurrentFile.myPropertyDiff.put(name, value);
+        myCurrentFile.myPropertyDiff.put(value);
     }
 
     public void applyTextDelta(String path, String baseChecksum) throws SVNException {

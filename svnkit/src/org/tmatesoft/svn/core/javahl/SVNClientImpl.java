@@ -1131,10 +1131,10 @@ public class SVNClientImpl implements SVNClientInterface {
         try {
             if (isURL(path)) {
                 client.doSetRevisionProperty(SVNURL.parseURIEncoded(path),
-                        svnRevision, name, propertyValue, force, ISVNPropertyHandler.NULL);
+                        svnRevision, propertyValue, force, ISVNPropertyHandler.NULL);
             } else {
                 client.doSetRevisionProperty(new File(path).getAbsoluteFile(),
-                        svnRevision, name, propertyValue, force, ISVNPropertyHandler.NULL);
+                        svnRevision, propertyValue, force, ISVNPropertyHandler.NULL);
             }
         } catch (SVNException e) {
             throwException(e);

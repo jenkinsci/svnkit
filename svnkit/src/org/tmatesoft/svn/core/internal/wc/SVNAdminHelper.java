@@ -334,9 +334,9 @@ public class SVNAdminHelper {
             String propName = (String) names[i];
             SVNPropertyValue propValue = propsDiffs.getSVNPropertyValue(propName);
             if (isDir) {
-                editor.changeDirProperty(propName, propValue);
+                editor.changeDirProperty(propValue);
             } else {
-                editor.changeFileProperty(editPath, propName, propValue);
+                editor.changeFileProperty(editPath, propValue);
             }
         }
     }

@@ -74,6 +74,6 @@ public class SVNAdminSetLogCommand extends SVNAdminCommand {
         FSRepository repository = (FSRepository) SVNRepositoryFactory.create(url);
         long rev = getRevisionNumber(getSVNAdminEnvironment().getStartRevision(), repository.getLatestRevision(), repository);
 
-        repository.setRevisionPropertyValue(rev, SVNRevisionProperty.LOG, propertyValue, getSVNAdminEnvironment().isBypassHooks());
+        repository.setRevisionPropertyValue(rev, propertyValue, getSVNAdminEnvironment().isBypassHooks());
     }
 }

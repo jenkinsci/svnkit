@@ -79,10 +79,10 @@ public class FSCommitter {
         addChange(path, parentPath.getRevNode().getId(), FSPathChangeKind.FS_PATH_CHANGE_DELETE, false, false, SVNRepository.INVALID_REVISION, null);
     }
 
-    public void changeNodeProperty(String path, String propName, SVNPropertyValue propValue) throws SVNException {
-        if (!SVNProperty.isRegularProperty(propName)) {
+    public void changeNodeProperty(String path, SVNPropertyValue propValue) throws SVNException {
+        if (!SVNProperty.isRegularProperty(propValue.getName())) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS,
-                    "Storage of non-regular property ''{0}'' is disallowed through the repository interface, and could indicate a bug in your client", propName);
+                    "Storage of non-regular property ''{0}'' is disallowed through the repository interface, and could indicate a bug in your client", propValue.getName());
             SVNErrorManager.error(err);
         }
 
@@ -95,22 +95,21 @@ public class FSCommitter {
         makePathMutable(parentPath, path);
         SVNProperties properties = parentPath.getRevNode().getProperties(myFSFS);
 
-        if (properties.isEmpty() && propValue == null) {
+        if (properties.isEmpty() && propValue.hasNullValue()) {
             return;
         }
 
-        if (propName.equals(SVNProperty.MERGE_INFO)) {
+        if (propValue.getName().equals(SVNProperty.MERGE_INFO)) {
             String canonicalPath = SVNPathUtil.canonicalizePath(path);
             canonicalPath = SVNPathUtil.getAbsolutePath(canonicalPath);
             myTxnRoot.setTxnMergeInfo(canonicalPath, propValue);
-            myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNProperty.TXN_CONTAINS_MERGEINFO,
-                    SVNPropertyValue.TRUE);
+            myFSFS.setTransactionProperty(myTxn.getTxnId(), new SVNPropertyValue(SVNProperty.TXN_CONTAINS_MERGEINFO, Boolean.TRUE.toString()));
         }
         
-        if (propValue == null) {
-            properties.remove(propName);
+        if (propValue.hasNullValue()) {
+            properties.remove(propValue.getName());
         } else {
-            properties.put(propName, propValue);
+            properties.put(propValue);
         }
 
         myTxnRoot.setProplist(parentPath.getRevNode(), properties);
@@ -422,14 +421,14 @@ public class FSCommitter {
         SVNProperties txnMergeInfo = null;
         if (txnProps != null && !txnProps.isEmpty()) {
             if (txnProps.getStringValue(SVNProperty.TXN_CHECK_OUT_OF_DATENESS) != null) {
-                myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNProperty.TXN_CHECK_OUT_OF_DATENESS, null);
+                myFSFS.setTransactionProperty(myTxn.getTxnId(), new SVNPropertyValue(SVNProperty.TXN_CHECK_OUT_OF_DATENESS, (String) null));
             }
             if (txnProps.getStringValue(SVNProperty.TXN_CHECK_LOCKS) != null) {
-                myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNProperty.TXN_CHECK_LOCKS, null);
+                myFSFS.setTransactionProperty(myTxn.getTxnId(), new SVNPropertyValue(SVNProperty.TXN_CHECK_LOCKS, (String) null));
             }
             if (txnProps.getStringValue(SVNProperty.TXN_CONTAINS_MERGEINFO) != null) {
                 txnMergeInfo = myFSFS.getTransactionMergeInfo(myTxn.getTxnId());
-                myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNProperty.TXN_CONTAINS_MERGEINFO, null);
+                myFSFS.setTransactionProperty(myTxn.getTxnId(), new SVNPropertyValue(SVNProperty.TXN_CONTAINS_MERGEINFO, (String) null));
             }
         }
         
@@ -437,7 +436,7 @@ public class FSCommitter {
         SVNFileUtil.rename(revisionPrototypeFile, dstRevFile);
 
         String commitTime = SVNDate.formatDate(new Date(System.currentTimeMillis()));
-        myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNRevisionProperty.DATE, commitTime == null ? null : new SVNPropertyValue(SVNRevisionProperty.DATE, commitTime));
+        myFSFS.setTransactionProperty(myTxn.getTxnId(), new SVNPropertyValue(SVNRevisionProperty.DATE, commitTime));
         
         File txnPropsFile = myFSFS.getTransactionPropertiesFile(myTxn.getTxnId());
         File dstRevPropsFile = myFSFS.getNewRevisionPropertiesFile(newRevision);

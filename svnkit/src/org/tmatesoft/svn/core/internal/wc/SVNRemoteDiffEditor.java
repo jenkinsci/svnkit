@@ -141,12 +141,8 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
         myCurrentDirectory.loadFromRepository();
     }
 
-    public void changeDirProperty(String name, String value) throws SVNException {
-        myCurrentDirectory.myPropertyDiff.put(name, value);
-    }
-
-    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
-        myCurrentDirectory.myPropertyDiff.put(name, value);
+    public void changeDirProperty(SVNPropertyValue value) throws SVNException {
+        myCurrentDirectory.myPropertyDiff.put(value);
     }
 
     public void closeDir() throws SVNException {
@@ -204,8 +200,8 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
         myCurrentFile.myPropertyDiff.put(name, value);
     }
 
-    public void changeFileProperty(String commitPath, String name, SVNPropertyValue value) throws SVNException {
-        myCurrentFile.myPropertyDiff.put(name, value);
+    public void changeFileProperty(String commitPath, SVNPropertyValue value) throws SVNException {
+        myCurrentFile.myPropertyDiff.put(value);
     }
 
     public void applyTextDelta(String commitPath, String baseChecksum) throws SVNException {

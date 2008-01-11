@@ -13,7 +13,6 @@
 package org.tmatesoft.svn.core.internal.io.dav.handlers;
 
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,8 +21,8 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.dav.DAVBaselineInfo;
 import org.tmatesoft.svn.core.internal.io.dav.DAVConnection;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
@@ -254,9 +253,9 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
         } else if (element == REMOVE_PROP) {
             String name = attrs.getValue(NAME_ATTR);
             if (myIsDirectory) {
-                myEditor.changeDirProperty(name, (SVNPropertyValue) null);
+                myEditor.changeDirProperty(new SVNPropertyValue(name, (String) null));
             } else {
-                myEditor.changeFileProperty(myPath, name, (SVNPropertyValue) null);
+                myEditor.changeFileProperty(myPath, new SVNPropertyValue(name, (String) null));
             }
         } else if (element == RESOURCE || element == FETCH_FILE || element == FETCH_PROPS) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "'update' response format used by the server is not supported; element ''{0}'' was not expected", element.toString());
@@ -290,20 +289,18 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             if (myPropertyName == null) {
                 myPropertyName = computeWCPropertyName(element);
             }
-            String value = cdata.toString();
+            SVNPropertyValue value = null;
             if ("base64".equals(myEncoding)) {
                 byte[] buffer = allocateBuffer(cdata.length());
                 int length = SVNBase64.base64ToByteArray(new StringBuffer(cdata.toString().trim()), buffer);
-                try {
-                    value = new String(buffer, 0, length, "UTF-8");
-                } catch (UnsupportedEncodingException e) {
-                    value = new String(buffer, 0, length);
-                }
+                value = new SVNPropertyValue(myPropertyName, buffer, 0, length);                
+            } else {
+                value = new SVNPropertyValue(myPropertyName, cdata.toString());
             }
             if (myIsDirectory) {
-                myEditor.changeDirProperty(myPropertyName, value);
+                myEditor.changeDirProperty(value);
             } else {
-                myEditor.changeFileProperty(myPath, myPropertyName, value);
+                myEditor.changeFileProperty(myPath, value);
             }
             myPropertyName = null;
             myEncoding = null;

@@ -738,10 +738,10 @@ public class DAVRepository extends SVNRepository {
         }
     }
 
-    public void setRevisionPropertyValue(long revision, String propertyName, SVNPropertyValue propertyValue) throws SVNException {
+    public void setRevisionPropertyValue(long revision, SVNPropertyValue propertyValue) throws SVNException {
         assertValidRevision(revision);
 
-        StringBuffer request = DAVProppatchHandler.generatePropertyRequest(null, propertyName, propertyValue);
+        StringBuffer request = DAVProppatchHandler.generatePropertyRequest(null, propertyValue);
         try {
             openConnection();
             // get baseline url and proppatch.

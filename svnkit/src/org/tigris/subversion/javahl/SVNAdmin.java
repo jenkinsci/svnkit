@@ -325,7 +325,7 @@ public class SVNAdmin {
     public void setLog(String path, Revision rev, String message, boolean bypassHooks) throws ClientException {
         try {
             SVNRepository repository = SVNRepositoryFactory.create(SVNURL.fromFile(new File(path).getAbsoluteFile()));
-            ((FSRepository) repository).setRevisionPropertyValue(JavaHLObjectFactory.getSVNRevision(rev).getNumber(), SVNRevisionProperty.LOG, new SVNPropertyValue(SVNRevisionProperty.LOG, message), bypassHooks);
+            ((FSRepository) repository).setRevisionPropertyValue(JavaHLObjectFactory.getSVNRevision(rev).getNumber(), new SVNPropertyValue(SVNRevisionProperty.LOG, message), bypassHooks);
         } catch (SVNException e) {
             JavaHLObjectFactory.throwException(e, myDelegate);
         } 

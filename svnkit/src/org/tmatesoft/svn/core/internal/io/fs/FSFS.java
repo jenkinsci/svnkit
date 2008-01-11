@@ -15,7 +15,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -43,8 +42,8 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNSQLiteDBProcessor;
+import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -633,23 +632,23 @@ public class FSFS {
         }
     }
 
-    public void setTransactionProperty(String txnID, String propertyName, SVNPropertyValue propertyValue) throws SVNException {
-        if (!SVNProperty.isRegularProperty(propertyName)) {
+    public void setTransactionProperty(String txnID, SVNPropertyValue propertyValue) throws SVNException {
+        if (!SVNProperty.isRegularProperty(propertyValue.getName())) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS,
-                    "Storage of non-regular property ''{0}'' is disallowed through the repository interface, and could indicate a bug in your client", propertyName);
+                    "Storage of non-regular property ''{0}'' is disallowed through the repository interface, and could indicate a bug in your client", propertyValue.getName());
             SVNErrorManager.error(err);
         }
         SVNWCProperties revProps = new SVNWCProperties(getTransactionPropertiesFile(txnID), null);
-        revProps.setPropertyValue(propertyName, propertyValue);
+        revProps.setPropertyValue(propertyValue);
     }
 
-    public void setRevisionProperty(long revision, String propertyName, SVNPropertyValue propertyValue) throws SVNException {
+    public void setRevisionProperty(long revision, SVNPropertyValue propertyValue) throws SVNException {
         FSWriteLock writeLock = FSWriteLock.getWriteLock(this);
         synchronized (writeLock) {
             try {
                 writeLock.lock();
                 SVNWCProperties revProps = new SVNWCProperties(getRevisionPropertiesFile(revision), null);
-                revProps.setPropertyValue(propertyName, propertyValue);
+                revProps.setPropertyValue(propertyValue);
             } finally {
                 writeLock.unlock();
                 FSWriteLock.realease(writeLock);
@@ -1016,8 +1015,8 @@ public class FSFS {
         String uuid = getUUID();
         String rev = String.valueOf(revision);
 
-        metaProperties.put(SVNProperty.LAST_AUTHOR, new SVNPropertyValue(SVNProperty.LAST_AUTHOR, revProps.getStringValue(SVNRevisionProperty.AUTHOR)));
-        metaProperties.put(SVNProperty.COMMITTED_DATE, new SVNPropertyValue(SVNProperty.COMMITTED_DATE, revProps.getStringValue(SVNRevisionProperty.DATE)));        
+        metaProperties.put(SVNProperty.LAST_AUTHOR, revProps.getStringValue(SVNRevisionProperty.AUTHOR));
+        metaProperties.put(SVNProperty.COMMITTED_DATE, revProps.getStringValue(SVNRevisionProperty.DATE));        
 
         metaProperties.put(SVNProperty.COMMITTED_REVISION, rev);
         metaProperties.put(SVNProperty.UUID, uuid);

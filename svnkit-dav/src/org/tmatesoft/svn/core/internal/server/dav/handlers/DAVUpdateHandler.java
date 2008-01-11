@@ -491,14 +491,10 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
         writeEntryTag("open-directory", path, revision);
     }
 
-    public void changeDirProperty(String name, String value) throws SVNException {
-        changeDirProperty(name, value == null ? null : new SVNPropertyValue(name, value));
-    }
-
-    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
+    public void changeDirProperty(SVNPropertyValue value) throws SVNException {
         if (!isResourceWalk()) {
             EditorEntry entry = (EditorEntry) getEditorEntries().peek();
-            changeProperties(entry, name, value);
+            changeProperties(entry, value);
         }
     }
 
@@ -517,13 +513,9 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
         writeEntryTag("open-file", path, revision);
     }
 
-    public void changeFileProperty(String path, String name, String value) throws SVNException {
-        changeFileProperty(path, name, value == null ? null : new SVNPropertyValue(name, value));
-    }
-
-    public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
+    public void changeFileProperty(String path, SVNPropertyValue value) throws SVNException {
         if (!isResourceWalk()) {
-            changeProperties(getFileEditorEntry(), name, value);
+            changeProperties(getFileEditorEntry(), value);
         }
     }
 
@@ -624,23 +616,23 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
         write(xmlBuffer);
     }
 
-    private void changeProperties(EditorEntry entry, String name, SVNPropertyValue value) throws SVNException {
+    private void changeProperties(EditorEntry entry, SVNPropertyValue value) throws SVNException {
+        String name = value.getName();
         if (getUpdateRequest().isSendAll()) {
-            if (value != null) {
+            if (!value.hasNullValue()) {
                 writePropertyTag("set-prop", name, value);
             } else {
                 writeEntryTag("remove-prop", name);
             }
         } else {
-            String stringValue = value == null ? null : value.getString();
             if (SVNProperty.COMMITTED_REVISION.equals(name)) {
-                entry.setCommitedRevision(stringValue);
+                entry.setCommitedRevision(value.getString());
             } else if (SVNProperty.COMMITTED_DATE.equals(name)) {
-                entry.setCommitedDate(stringValue);
+                entry.setCommitedDate(value.getString());
             } else if (SVNProperty.LAST_AUTHOR.equals(name)) {
-                entry.setLastAuthor(stringValue);
+                entry.setLastAuthor(value.getString());
             } else {
-                if (value == null) {
+                if (value.hasNullValue()) {
                     entry.addRemovedProperty(name);
                 } else {
                     entry.setHasChangedProperty(true);

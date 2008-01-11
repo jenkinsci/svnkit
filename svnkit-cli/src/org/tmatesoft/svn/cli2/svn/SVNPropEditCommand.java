@@ -84,10 +84,10 @@ public class SVNPropEditCommand extends SVNPropertiesCommand {
             SVNPropertyValue propertyValue = property != null ? property.getValue() : new SVNPropertyValue(propertyName, "");
             byte[] propBytes = SVNPropertyValue.getPropertyAsBytes(propertyValue);            
             byte[] bytes = SVNCommandUtil.runEditor(getSVNEnvironment(), getSVNEnvironment().getEditorCommand(), propBytes, "svn-prop");
-            SVNPropertyValue newPropertyValue = bytes == null ? null : new SVNPropertyValue(propertyName, bytes);
-            if (newPropertyValue != null && !newPropertyValue.equals(propertyValue)) {
+            SVNPropertyValue newPropertyValue = new SVNPropertyValue(propertyName, bytes);
+            if (!newPropertyValue.hasNullValue() && !newPropertyValue.equals(propertyValue)) {
                 clearCollectedProperties();
-                client.doSetRevisionProperty(revPropURL, SVNRevision.create(rev), propertyName, newPropertyValue, getSVNEnvironment().isForce(), this);
+                client.doSetRevisionProperty(revPropURL, SVNRevision.create(rev), newPropertyValue, getSVNEnvironment().isForce(), this);
                 String message = "Set new value for property ''{0}'' on revision {1}";
                 message = MessageFormat.format(message, new Object[]{propertyName, new Long(rev)});
                 getSVNEnvironment().getOut().println(message);

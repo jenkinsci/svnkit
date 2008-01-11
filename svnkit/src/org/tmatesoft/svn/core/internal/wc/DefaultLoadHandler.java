@@ -113,7 +113,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                 throw svne;
             }
             if (baton.myDatestamp == null) {
-                myFSFS.setRevisionProperty(baton.myRevision, SVNRevisionProperty.DATE, null);
+                myFSFS.setRevisionProperty(baton.myRevision, new SVNPropertyValue(SVNRevisionProperty.DATE, (String) null));
             }
             
             if (myIsUsePostCommitHook) {
@@ -127,7 +127,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
             
             myRevisionsMap.put(new Long(oldRevision), new Long(newRevision));
             if (baton.myDatestamp != null) {
-                myFSFS.setRevisionProperty(newRevision, SVNRevisionProperty.DATE, baton.myDatestamp);
+                myFSFS.setRevisionProperty(newRevision, new SVNPropertyValue(SVNRevisionProperty.DATE, baton.myDatestamp.getString()));
             }
             
             String message;
@@ -343,7 +343,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                         actualLength += SVNAdminHelper.readKeyOrValue(dumpStream, buff, len);
                         SVNPropertyValue propValue = new SVNPropertyValue(propName, buff);
                         if (isNode) {
-                            setNodeProperty(propName, propValue);
+                            setNodeProperty(propValue);
                         } else {
                             setRevisionProperty(propName, propValue);
                         }
@@ -367,7 +367,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                     }
                     
                     String propName = new String(buff, "UTF-8");
-                    setNodeProperty(propName, null);
+                    setNodeProperty(new SVNPropertyValue(propName, (String) null));
                 } else {
                     SVNAdminHelper.generateStreamMalformedError();
                 }
@@ -387,24 +387,24 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
         
         for (Iterator propNames = props.nameSet().iterator(); propNames.hasNext();) {
             String propName = (String) propNames.next();
-            myCurrentRevisionBaton.getCommitter().changeNodeProperty(myCurrentNodeBaton.myPath, propName, null);
+            myCurrentRevisionBaton.getCommitter().changeNodeProperty(myCurrentNodeBaton.myPath, new SVNPropertyValue(propName, (String) null));
         }
     }
 
-    public void setNodeProperty(String propertyName, SVNPropertyValue propertyValue) throws SVNException {
-        myCurrentRevisionBaton.getCommitter().changeNodeProperty(myCurrentNodeBaton.myPath, propertyName, propertyValue);
+    public void setNodeProperty(SVNPropertyValue propertyValue) throws SVNException {
+        myCurrentRevisionBaton.getCommitter().changeNodeProperty(myCurrentNodeBaton.myPath, propertyValue);
     }
 
     public void setRevisionProperty(String propertyName, SVNPropertyValue propertyValue) throws SVNException {
         if (myCurrentRevisionBaton.myRevision > 0) {
-            myFSFS.setTransactionProperty(myCurrentRevisionBaton.myTxn.getTxnId(), propertyName, propertyValue);
+            myFSFS.setTransactionProperty(myCurrentRevisionBaton.myTxn.getTxnId(), propertyValue);
             if (SVNRevisionProperty.DATE.equals(propertyName)) {
                 myCurrentRevisionBaton.myDatestamp = propertyValue;
             }
         } else if (myCurrentRevisionBaton.myRevision == 0) {
             long youngestRevision = myFSFS.getYoungestRevision();
             if (youngestRevision == 0) {
-                myFSFS.setRevisionProperty(0, propertyName, propertyValue);
+                myFSFS.setRevisionProperty(0, propertyValue);
             }
         }
     }

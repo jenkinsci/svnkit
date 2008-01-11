@@ -89,20 +89,11 @@ public class SVNNodeEditor implements ISVNEditor {
         myFiles.put(path, node);
     }
 
-    public void changeDirProperty(String name, String value) throws SVNException {
+    public void changeDirProperty(SVNPropertyValue value) throws SVNException {
         myCurrentNode.myHasPropModifications = true;
     }
 
-    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
-        myCurrentNode.myHasPropModifications = true;
-    }
-
-    public void changeFileProperty(String path, String name, String value) throws SVNException {
-        Node fileNode = (Node) myFiles.get(path);
-        fileNode.myHasPropModifications = true;
-    }
-
-    public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
+    public void changeFileProperty(String path, SVNPropertyValue value) throws SVNException {
         Node fileNode = (Node) myFiles.get(path);
         fileNode.myHasPropModifications = true;
     }

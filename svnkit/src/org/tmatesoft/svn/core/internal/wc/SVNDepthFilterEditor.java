@@ -78,27 +78,15 @@ public class SVNDepthFilterEditor implements ISVNEditor {
         myCurrentNodeBaton = childNodeBaton;
     }
 
-    public void changeDirProperty(String name, String value) throws SVNException {
+    public void changeDirProperty(SVNPropertyValue value) throws SVNException {
         if (!myCurrentNodeBaton.myIsFiltered) {
-            myDelegate.changeDirProperty(name, value);
+            myDelegate.changeDirProperty(value);
         }
     }
 
-    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
+    public void changeFileProperty(String path, SVNPropertyValue value) throws SVNException {
         if (!myCurrentNodeBaton.myIsFiltered) {
-            myDelegate.changeDirProperty(name, value);
-        }
-    }
-
-    public void changeFileProperty(String path, String name, String value) throws SVNException {
-        if (!myCurrentNodeBaton.myIsFiltered) {
-            myDelegate.changeFileProperty(path, name, value);
-        }
-    }
-
-    public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
-        if (!myCurrentNodeBaton.myIsFiltered) {
-            myDelegate.changeFileProperty(path, name, value);
+            myDelegate.changeFileProperty(path, value);
         }
     }
 

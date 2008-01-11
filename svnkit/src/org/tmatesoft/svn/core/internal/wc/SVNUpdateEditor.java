@@ -392,15 +392,9 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         entry = adminArea.modifyEntry(name, attributes, true, false);
     }
 
-    public void changeDirProperty(String name, String value) throws SVNException {
+    public void changeDirProperty(SVNPropertyValue value) throws SVNException {
         if (!myCurrentDirectory.isSkipped) {
-            myCurrentDirectory.propertyChanged(name, value);
-        }
-    }
-
-    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
-        if (!myCurrentDirectory.isSkipped) {
-            myCurrentDirectory.propertyChanged(name, value);
+            myCurrentDirectory.propertyChanged(value);
         }
     }    
 
@@ -510,12 +504,8 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         myCurrentFile = openFile(path, myCurrentDirectory);
     }
 
-    public void changeFileProperty(String commitPath, String name, String value) throws SVNException {
-        changeFileProperty(name, value, myCurrentFile);
-    }
-
-    public void changeFileProperty(String commitPath, String name, SVNPropertyValue value) throws SVNException {
-        changeFileProperty(name, value, myCurrentFile);
+    public void changeFileProperty(String commitPath, SVNPropertyValue value) throws SVNException {
+        changeFileProperty(value, myCurrentFile);
     }
 
     public void applyTextDelta(String commitPath, String baseChecksum) throws SVNException {
@@ -748,7 +738,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         for (Iterator propNames = fileProps.nameSet().iterator(); propNames.hasNext();) {
             String propName = (String) propNames.next();
             SVNPropertyValue propVal = fileProps.getSVNPropertyValue(propName);
-            changeFileProperty(propName, propVal, info);
+            changeFileProperty(propVal, info);
         }
         
         closeFile(null, info, myCurrentDirectory);
@@ -758,21 +748,12 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         info.sendNotification = false;
         return info;
     }
-    
-    private void changeFileProperty(String name, String value, SVNFileInfo fileInfo) {
-        if (!fileInfo.isSkipped) {
-            fileInfo.propertyChanged(name, value);
-            if (myWCAccess.getOptions().isUseCommitTimes() && SVNProperty.COMMITTED_DATE.equals(name)) {
-                fileInfo.CommitTime = value;
-            }
-        }
-    }
 
-    private void changeFileProperty(String name, SVNPropertyValue value, SVNFileInfo fileInfo) {
+    private void changeFileProperty(SVNPropertyValue value, SVNFileInfo fileInfo) {
         if (!fileInfo.isSkipped) {
-            fileInfo.propertyChanged(name, value);
-            if (myWCAccess.getOptions().isUseCommitTimes() && SVNProperty.COMMITTED_DATE.equals(name)) {
-                fileInfo.CommitTime = value != null && value.getString() != null ? value.getString() : null;
+            fileInfo.propertyChanged(value);
+            if (myWCAccess.getOptions().isUseCommitTimes() && SVNProperty.COMMITTED_DATE.equals(value.getName())) {
+                fileInfo.CommitTime = value.getString();
             }
         }
     }
@@ -1180,20 +1161,8 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             return myPath;
         }
 
-        public void propertyChanged(String name, String value) {
-            if (name.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) {
-                myChangedEntryProperties = myChangedEntryProperties == null ? new SVNProperties() : myChangedEntryProperties;
-                myChangedEntryProperties.put(name.substring(SVNProperty.SVN_ENTRY_PREFIX.length()), value);
-            } else if (name.startsWith(SVNProperty.SVN_WC_PREFIX)) {
-                myChangedWCProperties = myChangedWCProperties == null ? new SVNProperties() : myChangedWCProperties;
-                myChangedWCProperties.put(name, value);
-            } else {
-                myChangedProperties = myChangedProperties == null ? new SVNProperties() : myChangedProperties;
-                myChangedProperties.put(name, value);
-            }
-        }
-
-        public void propertyChanged(String name, SVNPropertyValue value) {
+        public void propertyChanged(SVNPropertyValue value) {
+            String name = value.getName();
             if (name.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) {
                 myChangedEntryProperties = myChangedEntryProperties == null ? new SVNProperties() : myChangedEntryProperties;
                 myChangedEntryProperties.put(name.substring(SVNProperty.SVN_ENTRY_PREFIX.length()), value);

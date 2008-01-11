@@ -260,37 +260,37 @@ public class SVNAdminDeltifier {
             long committedRevision = node.getCreatedRevision();
             if (SVNRevision.isValidRevisionNumber(committedRevision)) {
                 if (isDir) {
-                    myEditor.changeDirProperty(SVNProperty.COMMITTED_REVISION, 
-                            String.valueOf(committedRevision));
+                    myEditor.changeDirProperty(new SVNPropertyValue(SVNProperty.COMMITTED_REVISION,
+                            String.valueOf(committedRevision)));
                 } else {
-                    myEditor.changeFileProperty(editPath, SVNProperty.COMMITTED_REVISION, 
-                            String.valueOf(committedRevision));
+                    myEditor.changeFileProperty(editPath, new SVNPropertyValue(SVNProperty.COMMITTED_REVISION,
+                            String.valueOf(committedRevision)));
                 }
                 
                 SVNProperties revisionProps = myFSFS.getRevisionProperties(committedRevision);
                 String committedDateStr = revisionProps.getStringValue(SVNRevisionProperty.DATE);
                 if (committedDateStr != null || srcPath != null) {
                     if (isDir) {
-                        myEditor.changeDirProperty(SVNProperty.COMMITTED_DATE, committedDateStr);
+                        myEditor.changeDirProperty(new SVNPropertyValue(SVNProperty.COMMITTED_DATE, committedDateStr));
                     } else {
-                        myEditor.changeFileProperty(editPath, SVNProperty.COMMITTED_DATE, 
-                                committedDateStr);
+                        myEditor.changeFileProperty(editPath, new SVNPropertyValue(SVNProperty.COMMITTED_DATE, 
+                                committedDateStr));
                     }
                 }
                 String lastAuthor = revisionProps.getStringValue(SVNRevisionProperty.AUTHOR);
                 if (lastAuthor != null || srcPath != null) {
                     if (isDir) {
-                        myEditor.changeDirProperty(SVNProperty.LAST_AUTHOR, lastAuthor);
+                        myEditor.changeDirProperty(new SVNPropertyValue(SVNProperty.LAST_AUTHOR, lastAuthor));
                     } else {
-                        myEditor.changeFileProperty(editPath, SVNProperty.LAST_AUTHOR, lastAuthor);
+                        myEditor.changeFileProperty(editPath, new SVNPropertyValue(SVNProperty.LAST_AUTHOR, lastAuthor));
                     }
                 }
 
                 String uuid = myFSFS.getUUID();
                 if (isDir) {
-                    myEditor.changeDirProperty(SVNProperty.UUID, uuid);
+                    myEditor.changeDirProperty(new SVNPropertyValue(SVNProperty.UUID, uuid));
                 } else {
-                    myEditor.changeFileProperty(editPath, SVNProperty.UUID, uuid);
+                    myEditor.changeFileProperty(editPath, new SVNPropertyValue(SVNProperty.UUID, uuid));
                 }
             }
         }
@@ -316,9 +316,9 @@ public class SVNAdminDeltifier {
             String propName = (String) names[i];
             SVNPropertyValue propValue = propsDiffs.getSVNPropertyValue(propName);
             if (isDir) {
-                myEditor.changeDirProperty(propName, propValue);
+                myEditor.changeDirProperty(propValue);
             } else {
-                myEditor.changeFileProperty(editPath, propName, propValue);
+                myEditor.changeFileProperty(editPath, propValue);
             }
         }
     }

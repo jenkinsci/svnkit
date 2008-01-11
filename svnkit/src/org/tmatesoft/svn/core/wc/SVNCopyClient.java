@@ -33,6 +33,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -1493,14 +1494,14 @@ public class SVNCopyClient extends SVNBasicClient {
                 if (pathInfo.mySourceKind == SVNNodeKind.DIR) {
                     commitEditor.addDir(commitPath, pathInfo.mySourcePath, pathInfo.mySourceRevisionNumber);
                     if (pathInfo.myMergeInfoProp != null) {
-                        commitEditor.changeDirProperty(SVNProperty.MERGE_INFO, 
-                                                       pathInfo.myMergeInfoProp);
+                        commitEditor.changeDirProperty(new SVNPropertyValue(SVNProperty.MERGE_INFO,
+                                                       pathInfo.myMergeInfoProp));
                     }
                     closeDir = true;
                 } else {
                     commitEditor.addFile(commitPath, pathInfo.mySourcePath, pathInfo.mySourceRevisionNumber);
                     if (pathInfo.myMergeInfoProp != null) {
-                        commitEditor.changeFileProperty(commitPath, SVNProperty.MERGE_INFO, pathInfo.myMergeInfoProp);
+                        commitEditor.changeFileProperty(commitPath, new SVNPropertyValue(SVNProperty.MERGE_INFO, pathInfo.myMergeInfoProp));
                     }
                     commitEditor.closeFile(commitPath, null);
                 }

@@ -270,10 +270,10 @@ public class SVNWCProperties {
         setPropertyValue(name, bytes != null ? new ByteArrayInputStream(bytes) : null, length);
     }
 
-    public void setPropertyValue(String name, SVNPropertyValue value) throws SVNException {
+    public void setPropertyValue(SVNPropertyValue value) throws SVNException {
         byte[] bytes = SVNPropertyValue.getPropertyAsBytes(value);
         int length = bytes != null && bytes.length >= 0 ? bytes.length : -1;
-        setPropertyValue(name, bytes != null ? new ByteArrayInputStream(bytes) : null, length);
+        setPropertyValue(value.getName(), bytes != null ? new ByteArrayInputStream(bytes) : null, length);
     }
 
     public void setPropertyValue(String name, InputStream is, int length)
@@ -309,7 +309,7 @@ public class SVNWCProperties {
             for (Iterator names = properties.nameSet().iterator(); names.hasNext();) {
                 String name = (String) names.next();
                 SVNPropertyValue value = properties.getSVNPropertyValue(name);
-                setPropertyValue(name, value);
+                setPropertyValue(value);
             }
         }
     }
