@@ -214,12 +214,12 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                     displayMergeInfoDiff(bos, originalValue == null ? null : originalValue.getString(), newValue == null ? null : newValue.getString());
                     continue;
                 }
-                if (originalValue != null) {
+                if (originalValue != null && !originalValue.hasNullValue()) {
                     bos.write("   - ".getBytes(getEncoding()));
                     bos.write(getPropertyAsBytes(originalValue, getEncoding()));
                     bos.write(EOL);
                 }
-                if (newValue != null) {
+                if (!newValue.hasNullValue()) {
                     bos.write("   + ".getBytes(getEncoding()));
                     bos.write(getPropertyAsBytes(newValue, getEncoding()));
                     bos.write(EOL);
