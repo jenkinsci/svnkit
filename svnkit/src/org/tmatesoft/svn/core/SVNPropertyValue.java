@@ -52,7 +52,7 @@ public class SVNPropertyValue {
 
     public static byte[] getPropertyAsBytes(SVNPropertyValue value){
         if (value == null || value.hasNullValue()){
-            return new byte[0];
+            return null;
         }
         if (value.isString()){
             try {
