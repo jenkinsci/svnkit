@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
@@ -290,7 +291,8 @@ public class Replicate {
         for (Iterator propNames = revProps.nameSet().iterator(); propNames.hasNext();) {
             String propName = (String) propNames.next();
             String propValue = revProps.getStringValue(propName);
-            toRepository.setRevisionPropertyValue(revision, propName, propValue);
+            SVNPropertyValue propVal = new SVNPropertyValue(propName, propValue);
+            toRepository.setRevisionPropertyValue(revision, propVal);
         }
     }
 
