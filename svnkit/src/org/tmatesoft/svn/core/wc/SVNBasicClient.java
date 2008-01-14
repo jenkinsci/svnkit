@@ -259,8 +259,13 @@ public class SVNBasicClient implements ISVNEventHandler {
         }
        
         if (reposRoot == null) {
-            SVNRepository repos = createRepository(url, path, pegRevision, pegRevision);
-            reposRoot = repos.getRepositoryRoot(true);
+        	SVNRepository repos = null;
+        	try {
+            	repos = createRepository(url, path, pegRevision, pegRevision);
+            	reposRoot = repos.getRepositoryRoot(true); 
+            } finally {
+            	repos.closeSession();
+            }
         }
         
         return reposRoot;
@@ -946,17 +951,7 @@ public class SVNBasicClient implements ISVNEventHandler {
     }
     
     protected SVNURL getURL(File path) throws SVNException {
-        if (path == null) {
-            return null;
-        }
-        SVNWCAccess wcAccess = createWCAccess();
-        try {
-            wcAccess.probeOpen(path, false, 0);
-            SVNEntry entry = wcAccess.getEntry(path, false);
-            return entry != null ? entry.getSVNURL() : null;
-        } finally {
-            wcAccess.close();
-        }
+        return deriveLocation(path, null, null, SVNRevision.UNDEFINED, null, null);
     }
     
     protected SVNURL deriveLocation(File path, SVNURL url, long[] pegRevisionNumber, SVNRevision pegRevision, 

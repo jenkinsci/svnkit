@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -1321,7 +1322,10 @@ public class SVNDiffClient extends SVNMergeDriver {
         if (pegRevision == null || !pegRevision.isValid()) {
             pegRevision = SVNRevision.HEAD;
         }
-        runPeggedMerge(url1, null, pegRevision, revision1, revision2, dstPath, depth, dryRun, 
+        SVNRevisionRange range = new SVNRevisionRange(revision1, revision2);
+        List rangesToMerge = new LinkedList();
+        rangesToMerge.add(range);
+        runPeggedMerge(url1, null, rangesToMerge, pegRevision, dstPath, depth, dryRun, 
                        force, !useAncestry, recordOnly);
     }
     
@@ -1387,7 +1391,10 @@ public class SVNDiffClient extends SVNMergeDriver {
         if (pegRevision == null || !pegRevision.isValid()) {
             pegRevision = SVNRevision.WORKING;
         }
-        runPeggedMerge(null, path1, pegRevision, revision1, revision2, dstPath, depth, dryRun, 
+        SVNRevisionRange range = new SVNRevisionRange(revision1, revision2);
+        List rangesToMerge = new LinkedList();
+        rangesToMerge.add(range);
+        runPeggedMerge(null, path1, rangesToMerge, pegRevision, dstPath, depth, dryRun, 
                        force, !useAncestry, recordOnly);
     }
     
