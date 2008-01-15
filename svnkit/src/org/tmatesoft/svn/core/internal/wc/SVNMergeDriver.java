@@ -62,6 +62,7 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 
 /**
@@ -116,11 +117,11 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         	return;
         }
         
-    	SVNWCAccess wcAccess = createWCAccess();
+    	myWCAccess = createWCAccess();
         targetWCPath = targetWCPath.getAbsoluteFile();
         try {
-            SVNAdminArea adminArea = wcAccess.probeOpen(targetWCPath, !dryRun, SVNWCAccess.INFINITE_DEPTH);
-            SVNEntry targetEntry = wcAccess.getVersionedEntry(targetWCPath, false);
+            SVNAdminArea adminArea = myWCAccess.probeOpen(targetWCPath, !dryRun, SVNWCAccess.INFINITE_DEPTH);
+            SVNEntry targetEntry = myWCAccess.getVersionedEntry(targetWCPath, false);
             SVNURL url = srcURL == null ? getURL(srcPath) : srcURL;
             if (url == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, 
@@ -128,14 +129,14 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 SVNErrorManager.error(err);
             }
         
-            SVNURL wcReposRoot = getReposRoot(targetWCPath, null, SVNRevision.WORKING, adminArea, wcAccess);
+            SVNURL wcReposRoot = getReposRoot(targetWCPath, null, SVNRevision.WORKING, adminArea, myWCAccess);
             List mergeSources = null;
             SVNRepository repository = null;
             SVNURL sourceReposRoot = null;
             try {
             	repository = createRepository(url, true);
-            	sourceReposRoot = repository.getRepositoryRoot(false);
-            	mergeSources = normalizeMergeSources(url, url, sourceReposRoot, pegRevision, rangesToMerge, 
+            	sourceReposRoot = repository.getRepositoryRoot(true);
+            	mergeSources = normalizeMergeSources(srcPath, url, sourceReposRoot, pegRevision, rangesToMerge, 
             			repository);
             } finally {
             	repository.closeSession();
@@ -146,7 +147,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             
         } finally {
             try {
-                wcAccess.close();
+                myWCAccess.close();
             } catch (SVNException svne) {
                 //
             }
@@ -208,7 +209,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             		SVNRevision eRev = SVNRevision.create(youngestCommonRevision);
             		range = new SVNRevisionRange(sRev, eRev);
             		ranges.add(range);
-            		mergeSources = normalizeMergeSources(url1, url1, sourceReposRoot, sRev, 
+            		mergeSources = normalizeMergeSources(null, url1, sourceReposRoot, sRev, 
             				ranges, repository1);
             	} else if (youngestCommonURL.equals(url1) && youngestCommonRevision == rev1) {
             		ancestral = true;
@@ -216,21 +217,21 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             		SVNRevision eRev = SVNRevision.create(rev2);
             		range = new SVNRevisionRange(sRev, eRev);
             		ranges.add(range);
-            		mergeSources = normalizeMergeSources(url2, url2, sourceReposRoot, eRev, 
+            		mergeSources = normalizeMergeSources(null, url2, sourceReposRoot, eRev, 
             				ranges, repository2);
             	} else {
             		SVNRevision sRev = SVNRevision.create(rev1);
             		SVNRevision eRev = SVNRevision.create(youngestCommonRevision);
             		range = new SVNRevisionRange(sRev, eRev);
             		ranges.add(range);
-            		List removeSources = normalizeMergeSources(url1, url1, sourceReposRoot, sRev, 
+            		List removeSources = normalizeMergeSources(null, url1, sourceReposRoot, sRev, 
             				ranges, repository1);
             		sRev = eRev;
             		eRev = SVNRevision.create(rev2);
             		range = new SVNRevisionRange(sRev, eRev);
             		ranges.clear();
             		ranges.add(range);
-            		List addSources = normalizeMergeSources(url2, url2, sourceReposRoot, eRev, 
+            		List addSources = normalizeMergeSources(null, url2, sourceReposRoot, eRev, 
             				ranges, repository2);
             		
             		repository1.closeSession();
@@ -297,8 +298,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         }
         
         if (depth == SVNDepth.UNKNOWN) {
+            depth = targetEntry.getDepth();
         }
-        depth = targetEntry.getDepth();
         
         myIsForce = force;
         myIsDryRun = dryRun;
@@ -740,10 +741,10 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     	return myIsMergeInfoCapable && myAreSourcesAncestral && myIsSameRepository && !myIsDryRun;
     }
     
-    private List normalizeMergeSources(SVNURL url, SVNURL sourceURL, SVNURL sourceRootURL, 
+    private List normalizeMergeSources(File source, SVNURL sourceURL, SVNURL sourceRootURL, 
     		SVNRevision pegRevision, List rangesToMerge, SVNRepository repository) throws SVNException {
     	long youngestRevision[] = { SVNRepository.INVALID_REVISION };
-    	long pegRevNum = getRevisionNumber(pegRevision, youngestRevision, repository, null);
+    	long pegRevNum = getRevisionNumber(pegRevision, youngestRevision, repository, source);
     	if (!SVNRevision.isValidRevisionNumber(pegRevNum)) {
     		SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION);
     		SVNErrorManager.error(err);
@@ -1307,8 +1308,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                             reporter.setPath("", null, reportStart, reportDepth, false);
 
                             if (honorMergeInfo && childrenWithMergeInfo != null) {
-                                for (Iterator paths = childrenWithMergeInfo.iterator(); paths.hasNext();) {
-                                   MergePath childMergePath = (MergePath) paths.next();
+                            	for (int i = 1; i < childrenWithMergeInfo.size(); i++) {
+                                   MergePath childMergePath = (MergePath) childrenWithMergeInfo.get(i);
                                    if (childMergePath == null || childMergePath.myIsAbsent || 
                                            childMergePath.myRemainingRanges == null || 
                                            childMergePath.myRemainingRanges.isEmpty()) {

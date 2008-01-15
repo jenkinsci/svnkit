@@ -180,13 +180,6 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                     oldEventHandler.checkCancelled();
                 }
                 public void handleEvent(SVNEvent event, double progress) throws SVNException {
-                    if (event.getFile().equals(mergedFile)) {
-                        return;
-                    }
-                    if (event.getAction() == SVNEventAction.DELETE) {
-                        event = SVNEventFactory.createSVNEvent(event.getFile(), event.getNodeKind(), null, SVNRepository.INVALID_REVISION, SVNStatusType.UNKNOWN, SVNStatusType.UNKNOWN, null, SVNEventAction.UPDATE_DELETE, SVNEventAction.UPDATE_DELETE, null, null);
-                    }
-                    oldEventHandler.handleEvent(event, progress);
                 }
             };
             getWCAccess().setEventHandler(handler);
