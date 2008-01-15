@@ -454,12 +454,12 @@ public class SVNClient implements SVNClientInterface {
         myDelegate.merge(path, pegRevision, revisions, localPath, force, depth, ignoreAncestry, dryRun);
     }
 
-    public long update(String path, Revision revision, int depth, boolean ignoreExternals, boolean allowUnverObstructions) throws ClientException {
-        return myDelegate.update(path, revision, depth, ignoreExternals, allowUnverObstructions);
+    public long update(String path, Revision revision, int depth, boolean depthIsSticky, boolean ignoreExternals, boolean allowUnverObstructions) throws ClientException {
+        return myDelegate.update(path, revision, depth, depthIsSticky, ignoreExternals, allowUnverObstructions);
     }
 
-    public long[] update(String[] path, Revision revision, int depth, boolean ignoreExternals, boolean allowUnverObstructions) throws ClientException {
-        return myDelegate.update(path, revision, depth, ignoreExternals, allowUnverObstructions);
+    public long[] update(String[] path, Revision revision, int depth, boolean depthIsSticky, boolean ignoreExternals, boolean allowUnverObstructions) throws ClientException {
+        return myDelegate.update(path, revision, depth, depthIsSticky, ignoreExternals, allowUnverObstructions);
     }
 
     public void status(String path, int depth, boolean onServer, boolean getAll, boolean noIgnore, boolean ignoreExternals, StatusCallback callback) throws ClientException {
@@ -526,8 +526,8 @@ public class SVNClient implements SVNClientInterface {
         myDelegate.resolved(path, depth, conflictResult);
     }
 
-    public long doSwitch(String path, String url, Revision revision, Revision pegRevision, int depth, boolean ignoreExternals, boolean allowUnverObstructions) throws ClientException {
-        return myDelegate.doSwitch(path, url, revision, pegRevision, depth, ignoreExternals, allowUnverObstructions);
+    public long doSwitch(String path, String url, Revision revision, Revision pegRevision, int depth, boolean depthIsSticky, boolean ignoreExternals, boolean allowUnverObstructions) throws ClientException {
+        return myDelegate.doSwitch(path, url, revision, pegRevision, depth, depthIsSticky, ignoreExternals, allowUnverObstructions);
     }
 
     public void logMessages(String path, Revision pegRevision, Revision revisionStart, Revision revisionEnd, boolean stopOnCopy, boolean discoverPath, boolean includeMergedRevisions,
