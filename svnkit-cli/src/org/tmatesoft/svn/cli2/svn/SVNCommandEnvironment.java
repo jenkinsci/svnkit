@@ -203,6 +203,27 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         return authManager;
     }
 
+    protected void initOptions(SVNCommandLine commandLine) throws SVNException {
+    	super.initOptions(commandLine);
+    	if (getCommand().getClass() != SVNMergeCommand.class) {
+        	if (myRevisionRanges.size() > 1) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+                		"Multiple revision argument encountered; " +
+                        "can't specify -c twice, or both -c and -r");
+                SVNErrorManager.error(err);
+        	}
+        }
+        
+        if (myRevisionRanges.isEmpty()) {
+        	SVNRevisionRange range = new SVNRevisionRange(SVNRevision.UNDEFINED, SVNRevision.UNDEFINED);
+        	myRevisionRanges.add(range);
+        }
+        
+        SVNRevisionRange range = (SVNRevisionRange) myRevisionRanges.get(0);
+        myStartRevision = range.getStartRevision();
+        myEndRevision = range.getEndRevision();
+    }
+    
     protected void initOption(SVNOptionValue optionValue) throws SVNException {
         AbstractSVNOption option = optionValue.getOption();
         if (option == SVNOption.LIMIT) {
@@ -412,24 +433,6 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             }
             myResolveAccept = accept;
         }
-        
-        if (getCommand().getClass() != SVNMergeCommand.class) {
-        	if (myRevisionRanges.size() > 1) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                		"Multiple revision argument encountered; " +
-                        "can't specify -c twice, or both -c and -r");
-                SVNErrorManager.error(err);
-        	}
-        }
-        
-        if (myRevisionRanges.isEmpty()) {
-        	SVNRevisionRange range = new SVNRevisionRange(SVNRevision.UNDEFINED, SVNRevision.UNDEFINED);
-        	myRevisionRanges.add(range);
-        }
-        
-        SVNRevisionRange range = (SVNRevisionRange) myRevisionRanges.get(0);
-        myStartRevision = range.getStartRevision();
-        myEndRevision = range.getEndRevision();
     }
     
     protected SVNCommand getSVNCommand() {
