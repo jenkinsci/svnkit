@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -112,6 +113,7 @@ import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusClient;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -864,21 +866,22 @@ public class SVNClientImpl implements SVNClientInterface {
 
     private void merge(String path, Revision pegRevision, Revision revision1, Revision revision2, String localPath, boolean force, int depth, boolean ignoreAncestry, boolean dryRun) throws ClientException {
         SVNDiffClient differ = getSVNDiffClient();
+        List rangesToMerge = new LinkedList();
+        rangesToMerge.add(new SVNRevisionRange(JavaHLObjectFactory.getSVNRevision(revision1), 
+        		JavaHLObjectFactory.getSVNRevision(revision2)));
         try {
             if (isURL(path)) {
                 SVNURL url = SVNURL.parseURIEncoded(path);
                 differ.doMerge(url,
                         JavaHLObjectFactory.getSVNRevision(pegRevision),
-                        JavaHLObjectFactory.getSVNRevision(revision1),
-                        JavaHLObjectFactory.getSVNRevision(revision2),
+                        rangesToMerge,
                         new File(localPath).getAbsoluteFile(),
                         JavaHLObjectFactory.getSVNDepth(depth),
                         !ignoreAncestry, force, dryRun, false);
             } else {
                 differ.doMerge(new File(path).getAbsoluteFile(),
                         JavaHLObjectFactory.getSVNRevision(pegRevision),
-                        JavaHLObjectFactory.getSVNRevision(revision1),
-                        JavaHLObjectFactory.getSVNRevision(revision2),
+                        rangesToMerge,
                         new File(localPath).getAbsoluteFile(),
                         JavaHLObjectFactory.getSVNDepth(depth),
                         !ignoreAncestry, force, dryRun, false);
@@ -1838,6 +1841,13 @@ public class SVNClientImpl implements SVNClientInterface {
             }
         }
     }
+
+	public void info2(String pathOrUrl, Revision revision,
+			Revision pegRevision, int depth, String[] changelists,
+			InfoCallback callback) throws ClientException {
+        notImplementedYet();
+        //TODO: Implement
+	}
 
     private void info2(String pathOrUrl, Revision revision, Revision pegRevision, boolean recurse, ISVNInfoHandler handler) throws SVNException {
         SVNWCClient client = getSVNWCClient();

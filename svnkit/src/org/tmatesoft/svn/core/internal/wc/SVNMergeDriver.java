@@ -110,7 +110,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     
     public abstract SVNDiffOptions getMergeOptions();
 
-    protected void runPeggedMerge(SVNURL srcURL, File srcPath, List rangesToMerge, 
+    protected void runPeggedMerge(SVNURL srcURL, File srcPath, Collection rangesToMerge, 
     		SVNRevision pegRevision, File targetWCPath, SVNDepth depth, boolean dryRun, 
             boolean force, boolean ignoreAncestry, boolean recordOnly) throws SVNException {
         if (rangesToMerge == null || rangesToMerge.isEmpty()) {
@@ -261,6 +261,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 mergeSrc.myURL2 = url2;
                 mergeSrc.myRevision1 = rev1;
                 mergeSrc.myRevision2 = rev2;
+                mergeSources = new LinkedList();
                 mergeSources.add(mergeSrc);
             }
 
@@ -742,7 +743,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     }
     
     private List normalizeMergeSources(File source, SVNURL sourceURL, SVNURL sourceRootURL, 
-    		SVNRevision pegRevision, List rangesToMerge, SVNRepository repository) throws SVNException {
+    		SVNRevision pegRevision, Collection rangesToMerge, SVNRepository repository) throws SVNException {
     	long youngestRevision[] = { SVNRepository.INVALID_REVISION };
     	long pegRevNum = getRevisionNumber(pegRevision, youngestRevision, repository, source);
     	if (!SVNRevision.isValidRevisionNumber(pegRevNum)) {
@@ -1563,8 +1564,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                     }
                     
                     File siblingPath = parentArea.getFile(siblingEntry.getName());
-                    if (!childrenWithMergeInfo.contains(new MergePath(siblingPath))) {
-                        MergePath siblingOfMissing = new MergePath(siblingPath);
+                    MergePath siblingOfMissing = new MergePath(siblingPath);
+                    if (!childrenWithMergeInfo.contains(siblingOfMissing)) {
                         childrenWithMergeInfo.add(siblingOfMissing);
                         //TODO: optimize these repeating sorts
                         Collections.sort(childrenWithMergeInfo);

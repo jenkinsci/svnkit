@@ -114,8 +114,8 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
 
 
     public void init(SVNCommandLine commandLine) throws SVNException {
-        initOptions(commandLine);
         initCommand(commandLine);
+    	initOptions(commandLine);
         validateOptions(commandLine);
     }
     

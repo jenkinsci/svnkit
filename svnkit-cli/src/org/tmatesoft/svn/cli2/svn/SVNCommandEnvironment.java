@@ -44,6 +44,7 @@ import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 
@@ -112,6 +113,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private boolean myIsStopOnCopy;
     private boolean myIsChangeOptionUsed;
     private boolean myIsWithAllRevprops;
+    private List myRevisionRanges;
     
     public SVNCommandEnvironment(String programName, PrintStream out, PrintStream err, InputStream in) {
         super(programName, out, err, in);
@@ -122,6 +124,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         myDepth = SVNDepth.UNKNOWN;
         myStartRevision = SVNRevision.UNDEFINED;
         myEndRevision = SVNRevision.UNDEFINED;
+        myRevisionRanges = new LinkedList();
     }
     
     public void initClientManager() throws SVNException {
@@ -218,45 +221,45 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         } else if (option == SVNOption.MESSAGE) {
             myMessage = optionValue.getValue();
         } else if (option == SVNOption.CHANGE) {
-            if (myStartRevision != SVNRevision.UNDEFINED) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Multiple revision argument encountered; " +
-                        "can't specify -c twice, or both -c and -r");
-                SVNErrorManager.error(err);
+            if (myOldTarget != null) {
+            	SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+            			"Can't specify -c with --old");
+            	SVNErrorManager.error(err);
             }
+            
             String chValue = optionValue.getValue();
             long change = 0;
             try {
                 change = Long.parseLong(chValue);
             } catch (NumberFormatException nfe) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Non-numeric change argument given to -c");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+                		"Non-numeric change argument given to -c");
                 SVNErrorManager.error(err);
             }
+            
+            SVNRevisionRange range = null;
             if (change == 0) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "There is no change 0");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+                		"There is no change 0");
                 SVNErrorManager.error(err);
             } else if (change > 0) {
-                myStartRevision = SVNRevision.create(change - 1);
-                myEndRevision = SVNRevision.create(change);
+                range = new SVNRevisionRange(SVNRevision.create(change - 1), SVNRevision.create(change));
             } else {
                 change = -change;
-                myStartRevision = SVNRevision.create(change);
-                myEndRevision = SVNRevision.create(change - 1);
+                range = new SVNRevisionRange(SVNRevision.create(change), SVNRevision.create(change - 1));
             }
+            myRevisionRanges.add(range);
             myIsChangeOptionUsed = true;
         } else if (option == SVNOption.REVISION) {
-            if (myStartRevision != SVNRevision.UNDEFINED) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Multiple revision argument encountered; " +
-                        "can't specify -r and c, or try '-r N:M' instead of '-r N -r M'");
-                SVNErrorManager.error(err);
-            }
             String revStr = optionValue.getValue();
             SVNRevision[] revisions = parseRevision(revStr);
             if (revisions == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Syntax error in revision argument ''{0}''", revStr);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+                		"Syntax error in revision argument ''{0}''", revStr);
                 SVNErrorManager.error(err);
             }
-            myStartRevision = revisions[0];
-            myEndRevision = revisions[1];
+            SVNRevisionRange range = new SVNRevisionRange(revisions[0], revisions[1]);
+            myRevisionRanges.add(range);
         } else if (option == SVNOption.VERBOSE) {
             myIsVerbose = true;
         } else if (option == SVNOption.UPDATE) {
@@ -409,6 +412,24 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             }
             myResolveAccept = accept;
         }
+        
+        if (getCommand().getClass() != SVNMergeCommand.class) {
+        	if (myRevisionRanges.size() > 1) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+                		"Multiple revision argument encountered; " +
+                        "can't specify -c twice, or both -c and -r");
+                SVNErrorManager.error(err);
+        	}
+        }
+        
+        if (myRevisionRanges.isEmpty()) {
+        	SVNRevisionRange range = new SVNRevisionRange(SVNRevision.UNDEFINED, SVNRevision.UNDEFINED);
+        	myRevisionRanges.add(range);
+        }
+        
+        SVNRevisionRange range = (SVNRevisionRange) myRevisionRanges.get(0);
+        myStartRevision = range.getStartRevision();
+        myEndRevision = range.getEndRevision();
     }
     
     protected SVNCommand getSVNCommand() {
@@ -484,6 +505,10 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     
     public boolean isStrict() {
         return myIsStrict;
+    }
+    
+    public List getRevisionRanges() {
+    	return myRevisionRanges;
     }
     
     public SVNRevision getStartRevision() {

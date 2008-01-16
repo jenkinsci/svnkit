@@ -13,6 +13,7 @@ package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
 import java.io.OutputStream;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -1312,19 +1313,18 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doMerge(SVNURL url1, SVNRevision pegRevision, SVNRevision revision1, SVNRevision revision2, File dstPath, boolean recursive, boolean useAncestry, 
             boolean force, boolean dryRun) throws SVNException {
-        doMerge(url1, pegRevision, revision1, revision2, dstPath, SVNDepth.getInfinityOrFilesDepth(recursive), 
-                useAncestry, force, dryRun, false);
-    }
-    
-    public void doMerge(SVNURL url1, SVNRevision pegRevision, SVNRevision revision1, 
-                        SVNRevision revision2, File dstPath, SVNDepth depth, boolean useAncestry, 
-                        boolean force, boolean dryRun, boolean recordOnly) throws SVNException {
-        if (pegRevision == null || !pegRevision.isValid()) {
-            pegRevision = SVNRevision.HEAD;
-        }
         SVNRevisionRange range = new SVNRevisionRange(revision1, revision2);
         List rangesToMerge = new LinkedList();
         rangesToMerge.add(range);
+    	doMerge(url1, pegRevision, rangesToMerge, dstPath, SVNDepth.getInfinityOrFilesDepth(recursive), 
+                useAncestry, force, dryRun, false);
+    }
+    
+    public void doMerge(SVNURL url1, SVNRevision pegRevision, Collection rangesToMerge, File dstPath, 
+    		SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly) throws SVNException {
+        if (pegRevision == null || !pegRevision.isValid()) {
+            pegRevision = SVNRevision.HEAD;
+        }
         runPeggedMerge(url1, null, rangesToMerge, pegRevision, dstPath, depth, dryRun, 
                        force, !useAncestry, recordOnly);
     }
@@ -1377,13 +1377,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doMerge(File path1, SVNRevision pegRevision, SVNRevision revision1, SVNRevision revision2, File dstPath, boolean recursive, boolean useAncestry, 
             boolean force, boolean dryRun) throws SVNException {
-        doMerge(path1, pegRevision, revision1, revision2, dstPath, SVNDepth.getInfinityOrFilesDepth(recursive), 
+        SVNRevisionRange range = new SVNRevisionRange(revision1, revision2);
+        List rangesToMerge = new LinkedList();
+        rangesToMerge.add(range);
+    	doMerge(path1, pegRevision, rangesToMerge, dstPath, SVNDepth.getInfinityOrFilesDepth(recursive), 
                 useAncestry, force, dryRun, false);
     }
     
-    public void doMerge(File path1, SVNRevision pegRevision, SVNRevision revision1, 
-                        SVNRevision revision2, File dstPath, SVNDepth depth, boolean useAncestry, 
-                        boolean force, boolean dryRun, boolean recordOnly) throws SVNException {
+    public void doMerge(File path1, SVNRevision pegRevision, List rangesToMerge, File dstPath, SVNDepth depth, 
+    		boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly) throws SVNException {
         /*
          * Equivalent of 3. merge -r N:M SOURCE[@REV] [WCPATH]
          * where SOURCE is a wc path.
@@ -1391,9 +1393,6 @@ public class SVNDiffClient extends SVNMergeDriver {
         if (pegRevision == null || !pegRevision.isValid()) {
             pegRevision = SVNRevision.WORKING;
         }
-        SVNRevisionRange range = new SVNRevisionRange(revision1, revision2);
-        List rangesToMerge = new LinkedList();
-        rangesToMerge.add(range);
         runPeggedMerge(null, path1, rangesToMerge, pegRevision, dstPath, depth, dryRun, 
                        force, !useAncestry, recordOnly);
     }
