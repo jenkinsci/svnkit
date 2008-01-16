@@ -546,4 +546,10 @@ public class SVNClient implements SVNClientInterface {
         myDelegate.merge(path, pegRevision, revisions, localPath, force, depth, ignoreAncestry, dryRun, recordOnly);
     }
 
+	public void info2(String pathOrUrl, Revision revision,
+			Revision pegRevision, int depth, String[] changelists,
+			InfoCallback callback) throws ClientException {
+		myDelegate.info2(pathOrUrl, revision, pegRevision, depth, changelists, callback);
+	}
+
 }
