@@ -362,7 +362,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 }
                 
                 if (!dryRun && myIsOperativeMerge) {
-                    elideMergeInfo2(myWCAccess, target, targetEntry, null);
+                    elideMergeInfo(myWCAccess, target, targetEntry, null);
                 }
             } finally {
                 if (myRepository1 != null) {
@@ -636,7 +636,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
 				markMergeInfoAsInheritableForARange(child.myPath, childMergeSourcePath, 
 						child.myPreMergeMergeInfo, range, myChildrenWithMergeInfo, true, i);
                 if (i > 0) {
-                    elideMergeInfo2(myWCAccess, child.myPath, childEntry, myTarget);
+                    elideMergeInfo(myWCAccess, child.myPath, childEntry, myTarget);
                 }
         	}
         }
@@ -763,8 +763,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
 				SVNErrorManager.error(err);
 			}
 			
-			long rangeStartRev = getRevisionNumber(rangeStart, youngestRevision, repository, null); 
-			long rangeEndRev = getRevisionNumber(rangeEnd, youngestRevision, repository, null);
+			long rangeStartRev = getRevisionNumber(rangeStart, youngestRevision, repository, source); 
+			long rangeEndRev = getRevisionNumber(rangeEnd, youngestRevision, repository, source);
 			if (rangeStartRev != rangeEndRev) {
 				SVNMergeRange range = new SVNMergeRange(rangeStartRev, rangeEndRev, true);
 				mergeRanges.add(range);

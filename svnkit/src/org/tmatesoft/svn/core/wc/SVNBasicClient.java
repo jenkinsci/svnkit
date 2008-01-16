@@ -13,7 +13,6 @@ package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -489,55 +488,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         return repository;
     }
     
-    protected void elideMergeInfoForTree(SVNWCAccess access, 
-                                        Map childrenMergeInfo) throws SVNException {
-        File[] paths = (File[]) childrenMergeInfo.keySet().toArray(new File[childrenMergeInfo.keySet().size()]);
-        Arrays.sort(paths);
-        for (int i = 0; i < paths.length; i++) {
-            File path = paths[i];
-            elideMergeInfo(access, path, false, null);
-        }
-    }
-    
-    /**
-     * @deprecated
-     */
-    protected void elideMergeInfo(SVNWCAccess access, File path, boolean hidden,
-            File wcElisionLimitPath) throws SVNException {
-        if (wcElisionLimitPath == null || !wcElisionLimitPath.equals(path)) {
-            Map mergeInfo = null;
-            Map targetMergeInfo = null;
-            SVNEntry entry = access.getVersionedEntry(path, hidden);
-            if (!SVNWCManager.isEntrySwitched(path, entry)) {
-                boolean[] inherited = new boolean[1];
-                
-                targetMergeInfo = getWCMergeInfo(path, entry, wcElisionLimitPath, 
-                        SVNMergeInfoInheritance.INHERITED, false, inherited);
-                
-                if (inherited[0] || targetMergeInfo == null) {
-                    return;
-                }
-                
-                mergeInfo = getWCMergeInfo(path, entry, wcElisionLimitPath, 
-                                           SVNMergeInfoInheritance.NEAREST_ANCESTOR, 
-                                           false, inherited);
-                
-                if (mergeInfo == null && wcElisionLimitPath == null) {
-                    mergeInfo = getWCOrRepositoryMergeInfo(access, path, entry, 
-                            SVNMergeInfoInheritance.NEAREST_ANCESTOR, inherited, true, null);
-                }
-                
-                if (mergeInfo == null && wcElisionLimitPath != null) {
-                    return;
-                }
-                
-                SVNMergeInfoManager.elideMergeInfo(mergeInfo, 
-                        targetMergeInfo, path, null, access);
-            }
-        }
-    }
-
-    protected void elideMergeInfo2(SVNWCAccess access, File path, SVNEntry entry,
+    protected void elideMergeInfo(SVNWCAccess access, File path, SVNEntry entry,
             File wcElisionLimitPath) throws SVNException {
         if (wcElisionLimitPath == null || !wcElisionLimitPath.equals(path)) {
             Map mergeInfo = null;
