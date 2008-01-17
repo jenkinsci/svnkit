@@ -552,4 +552,37 @@ public class SVNClient implements SVNClientInterface {
 		myDelegate.info2(pathOrUrl, revision, pegRevision, depth, changelists, callback);
 	}
 
+	public void diff(String target1, Revision revision1, String target2,
+			Revision revision2, String relativeToDir, String outFileName,
+			int depth, String[] changelists, boolean ignoreAncestry,
+			boolean noDiffDeleted, boolean force) throws ClientException {
+		myDelegate.diff(target1, revision1, target2, revision2, relativeToDir, outFileName, depth, 
+				changelists, ignoreAncestry, noDiffDeleted, force);
+	}
+
+	public void diff(String target, Revision pegRevision,
+			Revision startRevision, Revision endRevision, String relativeToDir,
+			String outFileName, int depth, String[] changelists,
+			boolean ignoreAncestry, boolean noDiffDeleted, boolean force)
+			throws ClientException {
+		myDelegate.diff(target, pegRevision, startRevision, endRevision, relativeToDir, outFileName, 
+				depth, changelists, ignoreAncestry, noDiffDeleted, force);
+	}
+
+	public void diffSummarize(String target1, Revision revision1,
+			String target2, Revision revision2, int depth,
+			String[] changelists, boolean ignoreAncestry,
+			DiffSummaryReceiver receiver) throws ClientException {
+		myDelegate.diffSummarize(target1, revision1, target2, revision2, depth, changelists, 
+				ignoreAncestry,	receiver);
+	}
+
+	public void diffSummarize(String target, Revision pegRevision,
+			Revision startRevision, Revision endRevision, int depth,
+			String[] changelists, boolean ignoreAncestry,
+			DiffSummaryReceiver receiver) throws ClientException {
+		myDelegate.diffSummarize(target, pegRevision, startRevision, endRevision, depth, changelists, 
+				ignoreAncestry, receiver);
+	}
+
 }

@@ -1807,6 +1807,39 @@ public class SVNClientImpl implements SVNClientInterface {
         }
     }
 
+	public void diff(String target1, Revision revision1, String target2,
+			Revision revision2, String relativeToDir, String outFileName,
+			int depth, String[] changelists, boolean ignoreAncestry,
+			boolean noDiffDeleted, boolean force) throws ClientException {
+        //TODO: Implement
+		notImplementedYet();
+	}
+
+	public void diff(String target, Revision pegRevision,
+			Revision startRevision, Revision endRevision, String relativeToDir,
+			String outFileName, int depth, String[] changelists,
+			boolean ignoreAncestry, boolean noDiffDeleted, boolean force)
+			throws ClientException {
+        //TODO: Implement
+		notImplementedYet();
+	}
+
+	public void diffSummarize(String target1, Revision revision1,
+			String target2, Revision revision2, int depth,
+			String[] changelists, boolean ignoreAncestry,
+			DiffSummaryReceiver receiver) throws ClientException {
+        //TODO: Implement
+		notImplementedYet();
+	}
+
+	public void diffSummarize(String target, Revision pegRevision,
+			Revision startRevision, Revision endRevision, int depth,
+			String[] changelists, boolean ignoreAncestry,
+			DiffSummaryReceiver receiver) throws ClientException {
+        //TODO: Implement
+		notImplementedYet();
+	}
+
     public Info2[] info2(String pathOrUrl, Revision revision, Revision pegRevision, boolean recurse) throws ClientException {
         final Collection infos = new ArrayList();
         try {
