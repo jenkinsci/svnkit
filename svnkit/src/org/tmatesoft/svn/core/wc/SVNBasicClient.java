@@ -46,6 +46,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNWCManager;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
+import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
@@ -670,6 +671,19 @@ public class SVNBasicClient implements ISVNEventHandler {
         return mergeInfo;
     }
 
+    protected void assertServerIsMergeInfoCapable(SVNRepository repository, String pathOrURL) throws SVNException {
+    	boolean isMergeInfoCapable = repository.hasCapability(SVNCapability.MERGE_INFO);
+    	if (!isMergeInfoCapable) {
+    		if (pathOrURL == null) {
+    			SVNURL sessionURL = repository.getLocation();
+    			pathOrURL = sessionURL.toString();
+    		}
+    		SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+    				"Retrieval of mergeinfo unsupported by ''{0}''", pathOrURL);
+    		SVNErrorManager.error(err);
+    	}
+    }
+    
     protected long getPathLastChangeRevision(String relPath, long revision, SVNRepository repository) throws SVNException {
         final long[] rev = new long[1];
         rev[0] = SVNRepository.INVALID_REVISION;

@@ -13,11 +13,13 @@ package org.tmatesoft.svn.cli2.svn;
 
 import java.text.MessageFormat;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.tmatesoft.svn.cli2.SVNCommandUtil;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNMergeRange;
@@ -44,6 +46,7 @@ public class SVNMergeInfoCommand extends SVNCommand {
         options.add(SVNOption.REVISION);
         options = SVNOption.addAuthOptions(options);
         options.add(SVNOption.CONFIG_DIR);
+        options.add(SVNOption.FROM_SOURCE);
         return options;
     }
 
@@ -66,19 +69,20 @@ public class SVNMergeInfoCommand extends SVNCommand {
             }
             
             String message = "Path: {0}";
-            Map urlsToRangeLists = null;
+            Map mergeInfo = null;
             if (target.isFile()) {
-                urlsToRangeLists = client.getMergeInfo(target.getFile(), pegRevision);
-                message = MessageFormat.format(message, new Object[] { target.getFile() });
+                mergeInfo = client.getMergedMergeInfo(target.getFile(), pegRevision);
+                String path = getSVNEnvironment().getRelativePath(target.getFile());
+                path = SVNCommandUtil.getLocalPath(path);
+                message = MessageFormat.format(message, new Object[] { path });
             } else {
-                urlsToRangeLists = client.getMergeInfo(target.getURL(), pegRevision);
+                mergeInfo = client.getMergedMergeInfo(target.getURL(), pegRevision);
                 message = MessageFormat.format(message, new Object[] { target.getURL() });
             }
             
             getSVNEnvironment().getOut().println(message);
-            if (urlsToRangeLists == null) {
-                getSVNEnvironment().getOut().println();
-                continue;
+            if (mergeInfo == null) {
+                mergeInfo = new HashMap();
             }
             
             SVNURL rootURL = null;
@@ -88,40 +92,22 @@ public class SVNMergeInfoCommand extends SVNCommand {
                 rootURL = client.getReposRoot(null, target.getURL(), SVNRevision.HEAD, null, null);
             }
             
-            String rootPath = rootURL.getPath();
-            for (Iterator entries = urlsToRangeLists.entrySet().iterator(); entries.hasNext();) {
-                Map.Entry urlToRangeList = (Map.Entry) entries.next();
-                SVNURL mergeSrcURL = (SVNURL) urlToRangeList.getKey();
-                SVNMergeRangeList rangeList = (SVNMergeRangeList) urlToRangeList.getValue();
-                String fullPath = mergeSrcURL.getPath();
-                String path = SVNPathUtil.getPathAsChild(rootPath, fullPath);
-                if (path != null) {
-                    path = "/" + path;
-                } else {
-                    path = "/";
-                }
-                message = MessageFormat.format("  Source path: {0}", new Object[] { path });
-                getSVNEnvironment().getOut().println(message);
-                getSVNEnvironment().getOut().print("    Merged ranges: ");
-                printMergeRanges(rangeList);
-                getSVNEnvironment().getOut().print("    Eligible ranges: ");
-                try {
-                    if (target.isURL()) {
-                        rangeList = client.getAvailableMergeInfo(target.getURL(), pegRevision, mergeSrcURL); 
-                    } else {
-                        rangeList = client.getAvailableMergeInfo(target.getFile(), pegRevision, mergeSrcURL);
-                    }
-                    printMergeRanges(rangeList);
-                } catch (SVNException svne) {
-                    SVNErrorCode errCode = svne.getErrorMessage().getErrorCode();
-                    if (errCode == SVNErrorCode.FS_NOT_FOUND || errCode == SVNErrorCode.RA_DAV_PATH_NOT_FOUND) {
-                        getSVNEnvironment().getOut().println("(source no longer available in HEAD)");
-                    } else {
-                        throw svne;
-                    }
+            String fromSource = getSVNEnvironment().getFromSource();
+            if (fromSource != null) {
+                SVNURL mergeSourceURL = SVNURL.parseURIEncoded(fromSource);
+            	SVNMergeRangeList mergedRanges = (SVNMergeRangeList) mergeInfo.get(mergeSourceURL);
+            	if (mergedRanges == null) {
+            		mergedRanges = new SVNMergeRangeList(new SVNMergeRange[0]);
+            	}
+            	showMergeInfoForSource(mergeSourceURL, mergedRanges, target, pegRevision, rootURL, client);
+            } else if (!mergeInfo.isEmpty()) {
+                for (Iterator entries = mergeInfo.entrySet().iterator(); entries.hasNext();) {
+                    Map.Entry urlToRangeList = (Map.Entry) entries.next();
+                    SVNURL mergeSrcURL = (SVNURL) urlToRangeList.getKey();
+                    SVNMergeRangeList rangeList = (SVNMergeRangeList) urlToRangeList.getValue();
+                    showMergeInfoForSource(mergeSrcURL, rangeList, target, pegRevision, rootURL, client);
                 }
             }
-            getSVNEnvironment().getOut().println();
         }
     }
     
@@ -137,4 +123,39 @@ public class SVNMergeInfoCommand extends SVNCommand {
         getSVNEnvironment().getOut().println();
     }
 
+    private void showMergeInfoForSource(SVNURL mergeSourceURL, SVNMergeRangeList mergeRanges, SVNPath path, 
+    		SVNRevision pegRevision, SVNURL rootURL, SVNDiffClient client) throws SVNException {
+    	String mergeSourceString = mergeSourceURL.toDecodedString();
+    	String rootURLString = rootURL.toDecodedString();
+        String relPath = SVNPathUtil.getPathAsChild(rootURLString, mergeSourceString);
+        if (relPath != null) {
+            relPath = "/" + relPath;
+        } else {
+            relPath = "/";
+        }
+
+    	String message = MessageFormat.format("  Source path: {0}", new Object[] { relPath });
+        getSVNEnvironment().getOut().println(message);
+        getSVNEnvironment().getOut().print("    Merged ranges: ");
+        printMergeRanges(mergeRanges);
+        getSVNEnvironment().getOut().print("    Eligible ranges: ");
+        SVNMergeRangeList availableRanges = null;
+        try {
+            if (path.isURL()) {
+                availableRanges = client.getAvailableMergeInfo(path.getURL(), pegRevision, mergeSourceURL); 
+            } else {
+                availableRanges = client.getAvailableMergeInfo(path.getFile(), pegRevision, mergeSourceURL);
+            }
+            printMergeRanges(availableRanges);
+        } catch (SVNException svne) {
+            SVNErrorCode errCode = svne.getErrorMessage().getErrorCode();
+            if (errCode == SVNErrorCode.FS_NOT_FOUND || errCode == SVNErrorCode.RA_DAV_PATH_NOT_FOUND) {
+                getSVNEnvironment().getOut().println("(source no longer available in HEAD)");
+            } else {
+            	getSVNEnvironment().getOut().println();
+            	throw svne;
+            }
+        }
+
+    }
 }

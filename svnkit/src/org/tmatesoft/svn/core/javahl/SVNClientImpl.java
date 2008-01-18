@@ -1594,6 +1594,18 @@ public class SVNClientImpl implements SVNClientInterface {
         }
     }
 
+    public void addToChangelist(String[] paths, String changelist, int depth,
+			String[] changelists) throws ClientException {
+    	//TODO: Implement
+    	notImplementedYet();
+    }
+
+	public void removeFromChangelists(String[] paths, int depth,
+			String[] changelist) throws ClientException {
+    	//TODO: Implement
+    	notImplementedYet();
+	}
+
     public String[] getChangelist(String changelist, String rootPath) throws ClientException {
         if (changelist == null || "".equals(changelist)) {
             return new String[]{};
@@ -1902,10 +1914,10 @@ public class SVNClientImpl implements SVNClientInterface {
         try {
             if (isURL(path)) {
                 mergeInfo = client.getMergeInfo(SVNURL.parseURIEncoded(path),
-                        JavaHLObjectFactory.getSVNRevision(revision));
+                        JavaHLObjectFactory.getSVNRevision(revision), null);
             } else {
                 mergeInfo = client.getMergeInfo(new File(path).getAbsoluteFile(), 
-                        JavaHLObjectFactory.getSVNRevision(revision));
+                        JavaHLObjectFactory.getSVNRevision(revision), null);
             }
             return JavaHLObjectFactory.createMergeInfo(mergeInfo);
         } catch (SVNException e) {
@@ -1916,7 +1928,7 @@ public class SVNClientImpl implements SVNClientInterface {
 
     public String[] suggestMergeSources(String path, Revision pegRevision) throws SubversionException {
         SVNDiffClient client = getSVNDiffClient();
-        List mergeSrcURLs = null;
+        Collection mergeSrcURLs = null;
         try {
             mergeSrcURLs = client.suggestMergeSources(new File(path).getAbsoluteFile(), 
                     JavaHLObjectFactory.getSVNRevision(pegRevision));

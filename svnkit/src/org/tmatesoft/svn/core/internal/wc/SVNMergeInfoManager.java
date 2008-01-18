@@ -281,8 +281,7 @@ public class SVNMergeInfoManager {
         leftDeleted = mergeMergeInfos(leftDeleted, rightDeleted);
         leftAdded = mergeMergeInfos(leftAdded, rightAdded);
         fromMergeInfo = mergeMergeInfos(fromMergeInfo, leftAdded);
-        Map result = new TreeMap();
-        walkMergeInfoHashForDiff(result, null, fromMergeInfo, leftDeleted, false);
+        Map result = removeMergeInfo(leftDeleted, fromMergeInfo);
         return formatMergeInfoToString(result);
     }
     
@@ -452,6 +451,12 @@ public class SVNMergeInfoManager {
             }
         }
         return inheritableMergeInfo;
+    }
+    
+    public static Map removeMergeInfo(Map eraser, Map whiteBoard) {
+    	Map mergeInfo = new TreeMap();
+    	walkMergeInfoHashForDiff(mergeInfo, null, whiteBoard, eraser, true);
+    	return mergeInfo;
     }
     
     private static SVNMergeRange[] parseRevisionList(StringBuffer mergeInfo) throws SVNException {

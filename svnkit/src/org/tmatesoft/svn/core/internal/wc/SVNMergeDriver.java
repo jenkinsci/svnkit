@@ -977,7 +977,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         return ancestorIndex;
     }
     
-    private Map getHistoryAsMergeInfo(SVNURL url, File path, SVNRevision pegRevision, long rangeYoungest, 
+    protected Map getHistoryAsMergeInfo(SVNURL url, File path, SVNRevision pegRevision, long rangeYoungest, 
             long rangeOldest, SVNRepository repos, SVNWCAccess access) throws SVNException {
         Map mergeInfo = new TreeMap();
         long[] pegRevNum = new long[1];

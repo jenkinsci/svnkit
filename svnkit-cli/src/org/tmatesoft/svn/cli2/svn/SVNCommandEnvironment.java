@@ -114,6 +114,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private boolean myIsChangeOptionUsed;
     private boolean myIsWithAllRevprops;
     private List myRevisionRanges;
+    private String myFromSource;
     
     public SVNCommandEnvironment(String programName, PrintStream out, PrintStream err, InputStream in) {
         super(programName, out, err, in);
@@ -432,6 +433,8 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                 SVNErrorManager.error(err);
             }
             myResolveAccept = accept;
+        } else if (option == SVNOption.FROM_SOURCE) {
+        	myFromSource = optionValue.getValue();
         }
     }
     
@@ -468,6 +471,10 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                 myDepth = SVNDepth.fromRecurse(myIsDescend);
             }
         }
+    }
+    
+    public String getFromSource() {
+    	return myFromSource;
     }
     
     public boolean isChangeOptionUsed() {

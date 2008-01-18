@@ -153,15 +153,15 @@ public class FSLocationsFinder {
         long count = 0;
         long currentRevision = pegRevision;
         String currentPath = path;
+        long[] appearedRevision = new long[1];
         while (currentRevision >= endRevision) {
-            long[] appearedRevision = new long[1];
             long segmentStartRevision = endRevision;
             long segmentEndRevision = currentRevision;
             String segmentPath = currentPath;
             FSRevisionRoot root = myFSFS.createRevisionRoot(currentRevision);
             SVNLocationEntry previousLocation = root.getPreviousLocation(currentPath, appearedRevision);
             if (previousLocation == null) {
-                segmentStartRevision = root.getNodeOriginRevision(path);
+                segmentStartRevision = root.getNodeOriginRevision(currentPath);
                 if (segmentStartRevision < endRevision) {
                     segmentStartRevision = endRevision;
                 }

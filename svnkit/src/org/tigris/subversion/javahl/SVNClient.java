@@ -585,4 +585,14 @@ public class SVNClient implements SVNClientInterface {
 				ignoreAncestry, receiver);
 	}
 
+	public void addToChangelist(String[] paths, String changelist, int depth,
+			String[] changelists) throws ClientException {
+		myDelegate.addToChangelist(paths, changelist, depth, changelists);
+	}
+
+	public void removeFromChangelists(String[] paths, int depth,
+			String[] changelist) throws ClientException {
+		myDelegate.removeFromChangelists(paths, depth, changelist);
+	}
+
 }
