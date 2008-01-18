@@ -366,6 +366,25 @@
         	<zipfileset file="build/lib/jsvnlook" filemode="555" prefix="svnkit-${build.number}" />
         	<zipfileset dir="build/doc" prefix="svnkit-${build.number}/doc" />
         </zip>
+    	
+        <zip destfile="build/deploy/org.tmatesoft.svn_${build.number}.standalone.nojna.zip">
+            <zipfileset dir="build/lib" prefix="svnkit-${build.number}">
+                <exclude name="jsvn" />
+                <exclude name="jsvnadmin" />
+                <exclude name="jsvnversion" />
+                <exclude name="jsvnsync" />
+            	<exclude name="jsvnlook" />
+            	
+                <exclude name="jna.jar" />
+                <exclude name="JNA-LICENSE" />
+            </zipfileset>
+            <zipfileset file="build/lib/jsvn" filemode="555" prefix="svnkit-${build.number}" />
+            <zipfileset file="build/lib/jsvnadmin" filemode="555" prefix="svnkit-${build.number}" />
+            <zipfileset file="build/lib/jsvnversion" filemode="555" prefix="svnkit-${build.number}" />
+            <zipfileset file="build/lib/jsvnsync" filemode="555" prefix="svnkit-${build.number}" />
+        	<zipfileset file="build/lib/jsvnlook" filemode="555" prefix="svnkit-${build.number}" />
+        	<zipfileset dir="build/doc" prefix="svnkit-${build.number}/doc" />
+        </zip>
     </target>
 
 	<target name="deploy-bundle" depends="init-environment,build-library">
