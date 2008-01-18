@@ -501,8 +501,7 @@ public class SVNCommitUtil {
         return (SVNCommitItem[]) commitables.values().toArray(new SVNCommitItem[commitables.values().size()]);
     }
 
-    public static SVNURL translateCommitables(SVNCommitItem[] items,
-            Map decodedPaths) throws SVNException {
+    public static SVNURL translateCommitables(SVNCommitItem[] items, Map decodedPaths) throws SVNException {
         Map itemsMap = new HashMap();
         for (int i = 0; i < items.length; i++) {
             SVNCommitItem item = items[i];
@@ -527,15 +526,13 @@ public class SVNCommitUtil {
             if (root.getKind() != SVNNodeKind.DIR) {
                 baseURL = baseURL.removePathTail();
             } else if (root.getKind() == SVNNodeKind.DIR
-                    && (root.isAdded() || root.isDeleted() || root.isCopied() || root
-                            .isLocked())) {
+                    && (root.isAdded() || root.isDeleted() || root.isCopied() || root.isLocked())) {
                 baseURL = baseURL.removePathTail();
             }
         }
-        for (Iterator iterator = itemsMap.entrySet().iterator(); iterator.hasNext();) {
-            Map.Entry entry  = (Map.Entry) iterator.next();
-            SVNURL url = (SVNURL) entry.getKey();
-            SVNCommitItem item = (SVNCommitItem) entry.getValue();
+        for (Iterator iterator = itemsMap.keySet().iterator(); iterator.hasNext();) {
+            SVNURL url = (SVNURL) iterator.next();
+            SVNCommitItem item = (SVNCommitItem) itemsMap.get(url);
             String realPath = url.equals(baseURL) ? "" : SVNPathUtil.getRelativePath(baseURL.getPath(), url.getPath());
             decodedPaths.put(realPath, item);
         }
