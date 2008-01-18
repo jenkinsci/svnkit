@@ -537,7 +537,7 @@ public class SVNCommitUtil {
             SVNURL url = (SVNURL) entry.getKey();
             SVNCommitItem item = (SVNCommitItem) entry.getValue();
             String realPath = url.equals(baseURL) ? "" : SVNPathUtil.getRelativePath(baseURL.getPath(), url.getPath());
-            decodedPaths.put(SVNEncodingUtil.uriDecode(realPath), item);
+            decodedPaths.put(realPath, item);
         }
         return baseURL;
     }
