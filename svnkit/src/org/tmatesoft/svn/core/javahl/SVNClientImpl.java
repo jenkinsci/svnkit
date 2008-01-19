@@ -1969,6 +1969,39 @@ public class SVNClientImpl implements SVNClientInterface {
         return null;
     }
 
+	public void properties(String path, Revision revision,
+			Revision pegRevision, int depth, String[] changelists,
+			ProplistCallback callback) throws ClientException {
+		//TODO: Implement
+		notImplementedYet();
+	}
+
+	public void propertyCreate(String path, String name, String value,
+			int depth, String[] changelists, boolean force)
+			throws ClientException {
+		//TODO: Implement
+		notImplementedYet();
+	}
+
+	public void propertyRemove(String path, String name, int depth,
+			String[] changelists) throws ClientException {
+		//TODO: Implement
+		notImplementedYet();
+	}
+
+	public void propertySet(String path, String name, String value, int depth,
+			String[] changelists, boolean force) throws ClientException {
+		//TODO: Implement
+		notImplementedYet();
+	}
+
+	public void revert(String path, int depth, String[] changelists)
+			throws ClientException {
+		//TODO: Implement
+		notImplementedYet();
+	}
+
+
     private void notImplementedYet() throws ClientException {
         notImplementedYet(null);
     }

@@ -595,4 +595,31 @@ public class SVNClient implements SVNClientInterface {
 		myDelegate.removeFromChangelists(paths, depth, changelist);
 	}
 
+	public void properties(String path, Revision revision,
+			Revision pegRevision, int depth, String[] changelists,
+			ProplistCallback callback) throws ClientException {
+		myDelegate.properties(path, revision, pegRevision, depth, changelists, callback);
+	}
+
+	public void propertyCreate(String path, String name, String value,
+			int depth, String[] changelists, boolean force)
+			throws ClientException {
+		myDelegate.propertyCreate(path, name, value, depth, changelists, force);
+	}
+
+	public void propertyRemove(String path, String name, int depth,
+			String[] changelists) throws ClientException {
+		myDelegate.propertyRemove(path, name, depth, changelists);
+	}
+
+	public void propertySet(String path, String name, String value, int depth,
+			String[] changelists, boolean force) throws ClientException {
+		myDelegate.propertySet(path, name, value, depth, changelists, force);
+	}
+
+	public void revert(String path, int depth, String[] changelists)
+			throws ClientException {
+		myDelegate.revert(path, depth, changelists);
+	}
+
 }
