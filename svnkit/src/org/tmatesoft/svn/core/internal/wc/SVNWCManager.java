@@ -696,7 +696,8 @@ public class SVNWCManager {
             String propName = (String) names.next();
             SVNPropertyValue propValue = properties.getSVNPropertyValue(propName);
             if (SVNProperty.isEntryProperty(propName)) {
-                entryProps.put(SVNProperty.shortPropertyName(propName), propValue);
+                SVNPropertyValue newValue = propValue.changePropertyName(SVNProperty.shortPropertyName(propName));                
+                entryProps.put(newValue);
             } else if (SVNProperty.isWorkingCopyProperty(propName)) {
                 wcProps.put(propName, propValue);
             } else {

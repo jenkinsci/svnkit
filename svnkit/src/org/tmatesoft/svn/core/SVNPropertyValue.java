@@ -82,6 +82,16 @@ public class SVNPropertyValue {
         return myName;
     }
 
+    public SVNPropertyValue changePropertyName(String newName) {
+        if (myName.equals(newName)) {
+            return this;
+        }
+        if (isBinary()) {
+            return new SVNPropertyValue(newName, getBytes());
+        }
+        return new SVNPropertyValue(newName, getString());
+    }
+
     public byte[] getBytes() {
         return myData;
     }

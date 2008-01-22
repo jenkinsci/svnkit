@@ -178,7 +178,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             String name = (String) changedPropNames.next();
             SVNPropertyValue originalValue = baseProps.getSVNPropertyValue(name);
             SVNPropertyValue newValue = diff.getSVNPropertyValue(name);
-            if ((originalValue != null && originalValue.equals(newValue)) || originalValue == newValue) {
+            if ((originalValue != null && originalValue.equals(newValue)) || ((originalValue == null || originalValue.hasNullValue()) && newValue.hasNullValue())) {
                 changedPropNames.remove();
             }
         }
