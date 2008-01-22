@@ -49,7 +49,7 @@ public abstract class AbstractSVNMerger implements ISVNMerger {
         return myEnd;
     }
 
-    public SVNMergeResult merge(SVNMergeFileSet files, boolean dryRun, SVNDiffOptions options) throws SVNException {
+    public SVNMergeResult mergeText(SVNMergeFileSet files, boolean dryRun, SVNDiffOptions options) throws SVNException {
         SVNStatusType status;
         if (files.isBinary()) {
             status = mergeBinary(files.getBaseFile(), files.getLocalFile(), files.getRepositoryFile(), options, files.getResultFile());
