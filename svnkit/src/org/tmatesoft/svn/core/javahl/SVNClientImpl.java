@@ -280,6 +280,12 @@ public class SVNClientImpl implements SVNClientInterface {
         }
     }
 
+
+    public void status(String path, int depth, boolean onServer, boolean getAll, boolean noIgnore, boolean ignoreExternals, String[] changelists, StatusCallback callback) throws ClientException {
+        notImplementedYet();
+        //TODO: Implement
+    }
+
     public Status singleStatus(final String path, boolean onServer) throws ClientException {
         if (path == null) {
             return null;

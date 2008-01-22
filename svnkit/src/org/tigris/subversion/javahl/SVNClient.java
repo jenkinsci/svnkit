@@ -466,6 +466,10 @@ public class SVNClient implements SVNClientInterface {
         myDelegate.status(path, depth, onServer, getAll, noIgnore, ignoreExternals, callback);
     }
 
+    public void status(String path, int depth, boolean onServer, boolean getAll, boolean noIgnore, boolean ignoreExternals, String[] changelists, StatusCallback callback) throws ClientException {
+        myDelegate.status(path, depth, onServer, getAll, noIgnore, ignoreExternals, changelists, callback);
+    }
+
     public void list(String url, Revision revision, Revision pegRevision, int depth, int direntFields, boolean fetchLocks, ListCallback callback) throws ClientException {
         myDelegate.list(url, revision, pegRevision, depth, direntFields, fetchLocks, callback);
     }
