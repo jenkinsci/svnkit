@@ -944,6 +944,11 @@ public class SVNClientImpl implements SVNClientInterface {
         notImplementedYet();
     }
 
+   //TODO: fixme
+    public void mergeReintegrate(String path, Revision pegRevision, String localPath, boolean force, boolean dryRun) throws ClientException {
+        notImplementedYet();
+    }
+
     public PropertyData[] properties(String path) throws ClientException {
         return properties(path, null);
     }
