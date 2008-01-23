@@ -64,8 +64,8 @@
     </containerElement>
     <containerElement type="library" level="module">
       <attribute name="method" value="1" />
-      <attribute name="URI" value="/WEB-INF/lib/ganymed.jar" />
-      <url>jar://$MODULE_DIR$/../contrib/ganymed/ganymed.jar!/</url>
+      <attribute name="URI" value="/WEB-INF/lib/trilead.jar" />
+      <url>jar://$MODULE_DIR$/../contrib/trilead/trilead.jar!/</url>
     </containerElement>
     <containerElement type="library" level="module">
       <attribute name="method" value="0" />

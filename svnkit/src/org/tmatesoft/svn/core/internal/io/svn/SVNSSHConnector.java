@@ -24,19 +24,19 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
-import org.tmatesoft.svn.core.internal.io.svn.SVNGanymedSession.SSHConnectionInfo;
+import org.tmatesoft.svn.core.internal.io.svn.SVNSSHSession.SSHConnectionInfo;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
-import ch.ethz.ssh2.Session;
-import ch.ethz.ssh2.StreamGobbler;
+import com.trilead.ssh2.Session;
+import com.trilead.ssh2.StreamGobbler;
 
 /**
  * @version 1.1.1
  * @author  TMate Software Ltd.
  */
-public class SVNGanymedConnector implements ISVNConnector {
+public class SVNSSHConnector implements ISVNConnector {
 
     private static final String SVNSERVE_COMMAND = "svnserve -t";
     private static final String SVNSERVE_COMMAND_WITH_USER_NAME = "svnserve -t --tunnel-user ";
@@ -48,6 +48,10 @@ public class SVNGanymedConnector implements ISVNConnector {
 
     public void open(SVNRepositoryImpl repository) throws SVNException {
         ISVNAuthenticationManager authManager = repository.getAuthenticationManager();
+        if (authManager == null) {
+            SVNErrorManager.authenticationFailed("Authentication required for ''{0}''", repository.getLocation());
+            return;
+        }
 
         String realm = repository.getLocation().getProtocol() + "://" + repository.getLocation().getHost();
         if (repository.getLocation().hasPort()) {
@@ -62,12 +66,12 @@ public class SVNGanymedConnector implements ISVNConnector {
             SVNSSHAuthentication authentication = (SVNSSHAuthentication) authManager.getFirstAuthentication(ISVNAuthenticationManager.SSH, realm, repository.getLocation());
             SSHConnectionInfo connection = null;
             
-            // lock SVNGanymedSession to make sure connection opening and session creation is atomic.
-            SVNGanymedSession.lock(Thread.currentThread());
+            // lock SVNSSHSession to make sure connection opening and session creation is atomic.
+            SVNSSHSession.lock(Thread.currentThread());
             try {
                 while (authentication != null) {
                     try {
-                        connection = SVNGanymedSession.getConnection(repository.getLocation(), authentication);
+                        connection = SVNSSHSession.getConnection(repository.getLocation(), authentication);
                         if (connection == null) {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Cannot connect to ''{0}''", repository.getLocation().setPath("", false));
                             SVNErrorManager.error(err);
@@ -130,7 +134,7 @@ public class SVNGanymedConnector implements ISVNConnector {
                     SVNErrorManager.error(err, e);
                 }
             } finally {
-                SVNGanymedSession.unlock();
+                SVNSSHSession.unlock();
             }
         }
     }
@@ -141,18 +145,18 @@ public class SVNGanymedConnector implements ISVNConnector {
         if (mySession != null) {
             // close session and close owning connection if necessary.
             // close session and connection in atomic way.
-            SVNGanymedSession.lock(Thread.currentThread());
+            SVNSSHSession.lock(Thread.currentThread());
             SVNDebugLog.getDefaultLog().info(Thread.currentThread() + ": ABOUT TO CLOSE SESSION IN : " + myConnection);
             try {
                 if (myConnection.closeSession(mySession)) {
                     // no sessions left in connection, close it.
-                    // SVNGanymedSession will make sure that connection is disposed if necessary.
+                    // SVNSSHSession will make sure that connection is disposed if necessary.
                     SVNDebugLog.getDefaultLog().info(Thread.currentThread() + ": ABOUT TO CLOSE CONNECTION: " + myConnection);
-                    SVNGanymedSession.closeConnection(myConnection);
+                    SVNSSHSession.closeConnection(myConnection);
                     myConnection = null;
                 }
             } finally {
-                SVNGanymedSession.unlock();
+                SVNSSHSession.unlock();
             }
             
         }
@@ -170,10 +174,21 @@ public class SVNGanymedConnector implements ISVNConnector {
     }
 
     public boolean isConnected(SVNRepositoryImpl repos) throws SVNException {
-        return true;
+        return mySession != null && !isStale();
     }
     
     public boolean isStale() {
+        if (mySession == null) {
+            return true;
+        }
+        try {
+            mySession.ping();
+        } catch (IOException e) {
+            // any failure here means that channel is stale.
+            // session will be closed then.
+            SVNDebugLog.getDefaultLog().info(Thread.currentThread() + ": DETECTED STALE SESSION : " + myConnection);
+            return true;
+        }
         return false;
     }
 }

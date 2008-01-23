@@ -3,9 +3,6 @@
 /COPYING eol=lf
 /REMARKS.txt -text
 /changelog.txt eol=lf
-contrib/ganymed/GANYMED-LICENSE -text
-contrib/ganymed/ganymed.jar -text
-contrib/ganymed/ganymedsrc.zip -text
 contrib/javahl/JAVAHL-LICENSE eol=lf
 contrib/jna/JNA-LICENSE eol=lf
 contrib/jna/jna-src.zip -text
@@ -31,6 +28,9 @@ contrib/servlet-api/servlet-api.jar -text
 contrib/sqlite/SQLITEJDBC-LICENSE -text
 contrib/sqlite/sqlitejdbc.jar -text
 contrib/sqlite/src/org/sqlite/NestedDB.java -text
+contrib/trilead/TRILEAD-LICENSE -text
+contrib/trilead/trilead.jar -text
+contrib/trilead/trileadsrc.zip -text
 doc/JSPWikiDocs/Authentication/AuthManager_Architecture.png -text
 doc/JSPWikiDocs/Authentication/AuthProvider_In_Work.png -text
 doc/JSPWikiDocs/Authentication/AuthProvider_In_Work_1.png -text

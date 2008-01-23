@@ -16,11 +16,11 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../contrib/ganymed/ganymed.jar!/" />
+          <root url="jar://$MODULE_DIR$/../contrib/trilead/trilead.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/../contrib/ganymed/ganymedsrc.zip!/" />
+          <root url="jar://$MODULE_DIR$/../contrib/trilead/trileadsrc.zip!/" />
         </SOURCES>
       </library>
     </orderEntry>

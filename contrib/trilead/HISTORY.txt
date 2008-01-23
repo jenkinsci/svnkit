@@ -2,6 +2,38 @@
 Release Notes:
 ==============
 
+build211, 2007-10-28:
+
+- The library is now called "Trilead SSH-2 for Java".
+  It is still maintained by Christian Plattner (co-founder of Trilead).
+
+- The package has been moved to "com.trilead.ssh2". Therefore, please make sure
+  that you use "import com.trilead.ssh2.*" in your Java source files.
+  Otherwise, the library is completely backwards compatible.
+  
+- If you have questions, then please consult our new forum at http://www.trilead.com/support.
+
+- Added Connection.sendIgnorePacket(...) methods which allow to send SSH_MSG_IGNORE packets.
+  Thanks to Andrei Tchijov.
+
+- Added support for the "none" authentication method.
+
+- Revised the SHA-1 code. Highly optimized. Speed should be more than doubled.
+
+- Changed references to the correct RFCs (instead of the drafts) in the javadocs (where possible).
+
+- Fixed the write() method in the SFTP code. Unsatisfiable preconditions stopped the method
+  from writing any bytes. As stated in the documentation, the SFTP code is still experimental.
+  Thanks to Andreas Pueschel.
+
+- The "softwareversion" token for the SSH protocol version exchange has been changed
+  to "TrileadSSH2Java_XXX", where XXX is the build number.
+
+- Added a new createLocalPortForwarder(InetSocketAddress addr, ...) method which allows to
+  specify the local address and port to bind to. Thanks to Andrei Tchijov.
+
+- Slightly updated the FAQ.
+
 build210, 2006-10-06:
 
 - Added HTTP proxy support. See Connection.setProxyData() and the HTTPProxyData class.

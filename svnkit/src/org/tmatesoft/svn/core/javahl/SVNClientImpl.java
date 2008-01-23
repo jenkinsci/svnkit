@@ -81,7 +81,7 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.dav.http.IHTTPConnectionFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.ISVNConnectorFactory;
-import org.tmatesoft.svn.core.internal.io.svn.SVNGanymedSession;
+import org.tmatesoft.svn.core.internal.io.svn.SVNSSHSession;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -1329,7 +1329,7 @@ public class SVNClientImpl implements SVNClientInterface {
             ourInstanceCount--;
             if (ourInstanceCount <= 0) {
                 ourInstanceCount = 0;
-                SVNGanymedSession.shutdown();
+                SVNSSHSession.shutdown();
             }
         }
     }

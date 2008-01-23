@@ -34,7 +34,7 @@
         <mkdir dir="contrib/sqlite/bin" />
 
         <path id="library.classpath">
-            <pathelement location="contrib/ganymed/ganymed.jar" />
+            <pathelement location="contrib/trilead/trilead.jar" />
             <pathelement location="contrib/sqlite/sqlitejdbc.jar" />
             <pathelement location="contrib/jna/jna.jar" />            
             <pathelement path="contrib/javahl/bin" />
@@ -74,7 +74,7 @@
 
 	<target name="compile-library-eclipse" depends="init-environment" if="eclipse.present"> 
         <path id="library-eclipse.classpath">
-            <pathelement location="contrib/ganymed/ganymed.jar" />
+            <pathelement location="contrib/trilead/trilead.jar" />
             <pathelement location="contrib/sqlite/sqlitejdbc.jar" />
             <pathelement location="contrib/jna/jna.jar" />
             <pathelement path="contrib/javahl/bin" />
@@ -109,7 +109,7 @@
 		
         <path id="eclipse.classpath">
             <pathelement path="build/lib/svnkit.jar" />
-            <pathelement path="build/lib/ganymed.jar" />
+            <pathelement path="build/lib/trilead.jar" />
             <pathelement path="build/lib/sqlitejdbc.jar" />
             <pathelement path="build/lib/jna.jar" />
         	<fileset dir="${eclipse.home}/plugins">
@@ -130,7 +130,7 @@
         <mkdir dir="contrib/sequence/bin-test" />
         <mkdir dir="svnkit-test/bin" />
         <path id="tests.classpath">
-            <pathelement location="contrib/ganymed/ganymed.jar" />
+            <pathelement location="contrib/trilead/trilead.jar" />
             <pathelement location="contrib/sqlite/sqlitejdbc.jar" />
             <pathelement location="contrib/jna/jna.jar" />
             <pathelement location="contrib/junit/junit.jar" />
@@ -207,7 +207,7 @@
                 <include name="JAVAHL-LICENSE" />
             </fileset>
         </jar>
-        <copy file="contrib/ganymed/ganymed.jar" todir="build/lib" />
+        <copy file="contrib/trilead/trilead.jar" todir="build/lib" />
         <copy file="contrib/sqlite/sqlitejdbc.jar" todir="build/lib" />
         <copy file="contrib/jna/jna.jar" todir="build/lib" />
     	<!-- copy licences and changelog -->
@@ -219,7 +219,7 @@
                 <include name="contrib/jna/JNA-LICENSE" />
                 <include name="contrib/javahl/JAVAHL-LICENSE" />
                 <include name="contrib/sequence/SEQUENCE-LICENSE" />
-                <include name="contrib/ganymed/GANYMED-LICENSE" />
+                <include name="contrib/trilead/TRILEAD-LICENSE" />
                 <include name="contrib/sqlite/SQLITEJDBC-LICENSE" />
             </fileset>
         </copy>
@@ -317,7 +317,7 @@
                 <include name="changelog.txt" />
                 <include name="README.txt" />
                 <include name="COPYING" />
-                <include name="GANYMED-LICENSE" />
+                <include name="TRILEAD-LICENSE" />
                 <include name="SEQUENCE-LICENSE" />
                 <include name="JAVAHL-LICENSE" />
                 <include name="SQLITEJDBC-LICENSE" />
