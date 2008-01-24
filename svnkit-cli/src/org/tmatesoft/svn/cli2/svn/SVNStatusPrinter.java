@@ -11,10 +11,9 @@
  */
 package org.tmatesoft.svn.cli2.svn;
 
-import org.tmatesoft.svn.cli.SVNCommand;
+import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 
 /**
  * @version 1.1.2

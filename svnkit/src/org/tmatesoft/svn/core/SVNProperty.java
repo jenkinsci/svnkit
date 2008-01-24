@@ -340,11 +340,11 @@ public class SVNProperty {
      *              <span class="javakeyword">false</span>
      */
     public static boolean isRegularProperty(String name){
-        if(name == null){
+        if (name == null){
             return false;
-        }else if(name.startsWith(SVN_WC_PREFIX) || name.startsWith(SVN_ENTRY_PREFIX)){
+        } else if (name.startsWith(SVN_WC_PREFIX) || name.startsWith(SVN_ENTRY_PREFIX)) {
             return false;
-        }else{
+        } else {
             return true;
         }
     }
