@@ -273,8 +273,10 @@ public class SVNEventAction {
 
     public static final SVNEventAction CHANGELIST_FAILED = new SVNEventAction(28, "changelist_failed");
 
-    public static final SVNEventAction CHANGELIST_MOVED = new SVNEventAction(30, "changelist_moved");
+    public static final SVNEventAction CHANGELIST_MOVED = new SVNEventAction(29, "changelist_moved");
+
+    public static final SVNEventAction MERGE_BEGIN = new SVNEventAction(30, "merge_begin");
     
-    public static final SVNEventAction MERGE_BEGIN = new SVNEventAction(29, "merge_begin");
+    public static final SVNEventAction UPDATE_REPLACE = new SVNEventAction(31, "update_replace");
     
 }
