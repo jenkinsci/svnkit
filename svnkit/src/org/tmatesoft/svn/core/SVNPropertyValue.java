@@ -29,20 +29,22 @@ public class SVNPropertyValue {
 
     public SVNPropertyValue(String propertyName, byte[] data, int offset, int length) {
         myName = propertyName;
-        if (SVNProperty.isSVNProperty(myName)) {
-            try {
-                myValue = new String(data, offset, length, "UTF-8");
-            } catch (UnsupportedEncodingException e) {
-                myValue = new String(data, offset, length);
+        if (data != null) {
+            if (SVNProperty.isSVNProperty(myName)) {
+                try {
+                    myValue = new String(data, offset, length, "UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    myValue = new String(data, offset, length);
+                }
+            } else {
+                myData = new byte[length];
+                System.arraycopy(data, offset, myData, 0, length);
             }
-        } else {
-            myData = new byte[length];
-            System.arraycopy(data, offset, myData, 0, length);
         }
     }
 
     public SVNPropertyValue(String propertyName, byte[] data) {
-        this(propertyName, data, 0, data.length);
+        this(propertyName, data, 0, data == null ? -1 : data.length);
     }
 
     public SVNPropertyValue(String propertyName, String propertyValue) {
@@ -50,11 +52,11 @@ public class SVNPropertyValue {
         myValue = propertyValue;
     }
 
-    public static byte[] getPropertyAsBytes(SVNPropertyValue value){
-        if (value == null || value.hasNullValue()){
+    public static byte[] getPropertyAsBytes(SVNPropertyValue value) {
+        if (value == null || value.hasNullValue()) {
             return null;
         }
-        if (value.isString()){
+        if (value.isString()) {
             try {
                 return value.getString().getBytes("UTF-8");
             } catch (UnsupportedEncodingException e) {
@@ -63,12 +65,12 @@ public class SVNPropertyValue {
         }
         return value.getBytes();
     }
-    
-    public static String getPropertyAsString(SVNPropertyValue value){
-        if (value == null || value.hasNullValue()){
-            return null;           
+
+    public static String getPropertyAsString(SVNPropertyValue value) {
+        if (value == null || value.hasNullValue()) {
+            return null;
         }
-        if (value.isBinary()){
+        if (value.isBinary()) {
             try {
                 return new String(value.getBytes(), "UTF-8");
             } catch (UnsupportedEncodingException e) {
@@ -78,7 +80,7 @@ public class SVNPropertyValue {
         return value.getString();
     }
 
-    public String getName(){
+    public String getName() {
         return myName;
     }
 
@@ -108,7 +110,7 @@ public class SVNPropertyValue {
         return myValue != null;
     }
 
-    public boolean hasNullValue(){
+    public boolean hasNullValue() {
         return !isBinary() && !isString();
     }
 
