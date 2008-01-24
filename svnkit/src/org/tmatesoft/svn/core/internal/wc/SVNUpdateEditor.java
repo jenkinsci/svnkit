@@ -451,7 +451,8 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 }
                 SVNVersionedProperties oldBaseProps = adminArea.getBaseProperties(adminArea.getThisDirName());
                 try {
-                    propStatus = adminArea.mergeProperties(adminArea.getThisDirName(), oldBaseProps.asMap(), modifiedProps, true, false, log);
+                    propStatus = adminArea.mergeProperties(adminArea.getThisDirName(), oldBaseProps.asMap(), 
+                    		modifiedProps, null, null, true, false, log);
                 } catch (SVNException svne) {
                     SVNErrorMessage err = svne.getErrorMessage().wrap("Couldn't do property merge");
                     SVNErrorManager.error(err, svne);
@@ -841,7 +842,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         SVNProperties oldBaseProps = baseProps != null ? baseProps.asMap() : null;
         SVNStatusType propStatus = SVNStatusType.UNCHANGED;
         if (modifiedProps != null) {
-            propStatus = adminArea.mergeProperties(name, oldBaseProps, modifiedProps, true, false, log);
+            propStatus = adminArea.mergeProperties(name, oldBaseProps, modifiedProps, null, null, true, false, log);
         }
         if (modifiedEntryProps != null) {
             lockStatus = log.logChangedEntryProperties(name, modifiedEntryProps);

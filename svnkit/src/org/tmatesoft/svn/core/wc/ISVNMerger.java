@@ -13,6 +13,7 @@ package org.tmatesoft.svn.core.wc;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 
@@ -33,8 +34,8 @@ public interface ISVNMerger {
     
     public SVNMergeResult mergeText(SVNMergeFileSet files, boolean dryRun, SVNDiffOptions options) throws SVNException;
    
-	public SVNMergeResult mergeProperties(SVNVersionedProperties workingProperties, 
-			SVNVersionedProperties baseProperties, SVNProperties serverBaseProps, 
-			SVNProperties propDiff,	boolean baseMerge, boolean dryRun, boolean isDir) throws SVNException;
+	public SVNMergeResult mergeProperties(String localPath, SVNVersionedProperties workingProperties, 
+			SVNVersionedProperties baseProperties, SVNProperties serverBaseProps, SVNProperties propDiff,
+			SVNAdminArea adminArea, SVNLog log, boolean baseMerge, boolean dryRun) throws SVNException;
 
 }

@@ -51,7 +51,6 @@ public class SVNMergeFileSet {
     private File myBaseFile;
     private File myRepositoryFile;
     private File myMergeResultFile;
-    
     private Collection myTmpPaths = new ArrayList();
 
     public SVNMergeFileSet(SVNAdminArea adminArea, SVNLog log,
@@ -105,7 +104,7 @@ public class SVNMergeFileSet {
     public String getLocalLabel() {
         return myLocalLabel;
     }
-    
+
     public String getRepositoryLabel() {
         return myRepositoryLabel;
     }

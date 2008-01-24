@@ -226,7 +226,7 @@ public class SVNPropertiesManager {
         if (!dryRun) {
             log = dir.getLog();
         }
-        SVNStatusType result = dir.mergeProperties(name, baseProperties, diff, baseMerge, dryRun, log);
+        SVNStatusType result = dir.mergeProperties(name, baseProperties, diff, null, null, baseMerge, dryRun, log);
         if (!dryRun) {
             log.save();
             dir.runLogs();
