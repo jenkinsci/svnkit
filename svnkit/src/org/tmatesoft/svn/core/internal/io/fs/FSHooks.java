@@ -219,12 +219,23 @@ public class FSHooks {
                 SVNErrorManager.error(err, errorGobbler.getError());
             }
         } else {
+            String actionName = null;
+            if (SVN_REPOS_HOOK_START_COMMIT.equals(hookName) || SVN_REPOS_HOOK_PRE_COMMIT.equals(hookName)) {
+                actionName = "Commit";
+            } else if (SVN_REPOS_HOOK_PRE_REVPROP_CHANGE.equals(hookName)) {
+                actionName = "Revprop change";
+            } else if (SVN_REPOS_HOOK_PRE_LOCK.equals(hookName)) {
+                actionName = "Lock";
+            } else if (SVN_REPOS_HOOK_PRE_UNLOCK.equals(hookName)) {
+                actionName = "Unlock";
+            }
             String stdErrMessage = errorGobbler.getError() != null ? "[Error output could not be read.]" : errorGobbler.getResult();
-            String errorMessage = "''{0}'' hook failed (exited with a non-zero exitcode of {1,number,integer}).  ";
+            String errorMessage = actionName != null ? 
+                    actionName + " blocked by {0} hook (exit code {1,number,integer})" : "{0} hook failed (exit code {1,number,integer})";
             if (stdErrMessage != null && stdErrMessage.length() > 0) {
-                errorMessage += "The following error output was produced by the hook:\n" + stdErrMessage;
+                errorMessage += " with output:\n" + stdErrMessage;
             } else {
-                errorMessage += "No error output was produced by the hook.";
+                errorMessage += " with no output.";
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, errorMessage, new Object[] {hookName, new Integer(rc)});
             SVNErrorManager.error(err);
