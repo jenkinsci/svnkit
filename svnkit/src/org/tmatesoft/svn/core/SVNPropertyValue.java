@@ -27,7 +27,19 @@ public class SVNPropertyValue {
     private String myValue;
     private byte[] myData;
 
-    public SVNPropertyValue(String propertyName, byte[] data, int offset, int length) {
+    public static SVNPropertyValue create(String propertyName, byte[] data, int offset, int length) {
+        return new SVNPropertyValue(propertyName, data, offset, length);
+    }
+
+    public static SVNPropertyValue createSVNPropertyValue(String propertyName, byte[] data) {
+        return new SVNPropertyValue(propertyName, data);
+    }
+
+    public static SVNPropertyValue create(String propertyName, String propertyValue) {
+        return new SVNPropertyValue(propertyName, propertyValue);
+    }
+
+    private SVNPropertyValue(String propertyName, byte[] data, int offset, int length) {
         myName = propertyName;
         if (data != null) {
             if (SVNProperty.isSVNProperty(myName)) {
@@ -43,11 +55,11 @@ public class SVNPropertyValue {
         }
     }
 
-    public SVNPropertyValue(String propertyName, byte[] data) {
+    private SVNPropertyValue(String propertyName, byte[] data) {
         this(propertyName, data, 0, data == null ? -1 : data.length);
     }
 
-    public SVNPropertyValue(String propertyName, String propertyValue) {
+    private SVNPropertyValue(String propertyName, String propertyValue) {
         myName = propertyName;
         myValue = propertyValue;
     }
@@ -89,9 +101,9 @@ public class SVNPropertyValue {
             return this;
         }
         if (isBinary()) {
-            return new SVNPropertyValue(newName, getBytes());
+            return createSVNPropertyValue(newName, getBytes());
         }
-        return new SVNPropertyValue(newName, getString());
+        return create(newName, getString());
     }
 
     public byte[] getBytes() {

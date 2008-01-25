@@ -2655,30 +2655,30 @@ public class SVNWCClient extends SVNBasicClient {
             String str = value.getString();
             str = str.replaceAll("\r\n", "\n");
             str.replace('\r', '\n');
-            value = new SVNPropertyValue(value.getName(), str);
+            value = SVNPropertyValue.create(value.getName(), str);
         }
         if (!force && SVNProperty.EOL_STYLE.equals(name)) {
             if (value.isString()) {
-                value = new SVNPropertyValue(value.getName(), value.getString().trim());
+                value = SVNPropertyValue.create(value.getName(), value.getString().trim());
             }
         } else if (!force && SVNProperty.MIME_TYPE.equals(name)) {
             if (value.isString()) {
-                value = new SVNPropertyValue(value.getName(), value.getString().trim());
+                value = SVNPropertyValue.create(value.getName(), value.getString().trim());
             }
         } else if (SVNProperty.IGNORE.equals(name) || SVNProperty.EXTERNALS.equals(name)) {
             if (value.isString() && !value.getString().endsWith("\n")) {
-                value = new SVNPropertyValue(value.getName(), value.getString().concat("\n"));
+                value = SVNPropertyValue.create(value.getName(), value.getString().concat("\n"));
             }
             if (SVNProperty.EXTERNALS.equals(name)) {
                 SVNExternal.parseExternals(owner, value.getString());
             }
         } else if (SVNProperty.KEYWORDS.equals(name)) {
             if (value.isString()) {
-                value = new SVNPropertyValue(value.getName(), value.getString().trim());
+                value = SVNPropertyValue.create(value.getName(), value.getString().trim());
             }
         } else
         if (SVNProperty.EXECUTABLE.equals(name) || SVNProperty.SPECIAL.equals(name) || SVNProperty.NEEDS_LOCK.equals(name)) {
-            value = new SVNPropertyValue(name, "*");
+            value = SVNPropertyValue.create(name, "*");
         }
         return value;
     }

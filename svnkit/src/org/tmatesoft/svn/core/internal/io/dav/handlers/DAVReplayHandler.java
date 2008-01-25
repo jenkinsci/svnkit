@@ -19,7 +19,6 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 
 import org.xml.sax.Attributes;
@@ -168,9 +167,9 @@ public class DAVReplayHandler extends DAVEditorHandler {
             } else {
                 if (attrs.getValue(DEL_ATTR) != null) {
                     if (element == CHANGE_FILE_PROPERTY) {
-                        myEditor.changeFileProperty(myPath, new SVNPropertyValue(myPropertyName, (String) null));
+                        myEditor.changeFileProperty(myPath, SVNPropertyValue.create(myPropertyName, (String) null));
                     } else {
-                        myEditor.changeDirProperty(new SVNPropertyValue(myPropertyName, (String) null));
+                        myEditor.changeDirProperty(SVNPropertyValue.create(myPropertyName, (String) null));
                     }
                     myPropertyName = null;
                 } else {
@@ -192,7 +191,7 @@ public class DAVReplayHandler extends DAVEditorHandler {
                 SVNPropertyValue property = null;
                 byte[] buffer = allocateBuffer(cdata.length());
                 int length = SVNBase64.base64ToByteArray(new StringBuffer(cdata.toString().trim()), buffer);
-                property = new SVNPropertyValue(myPropertyName, buffer, 0, length);
+                property = SVNPropertyValue.create(myPropertyName, buffer, 0, length);
                 if (element == CHANGE_FILE_PROPERTY) {
                     myEditor.changeFileProperty(myPath, property);
                 } else {

@@ -489,7 +489,7 @@ public class SVNProperty {
      */
     public static SVNPropertyValue getValueOfBooleanProperty(String propName) {
         if (SVNProperty.EXECUTABLE.equals(propName) || SVNProperty.NEEDS_LOCK.equals(propName) || SVNProperty.SPECIAL.equals(propName)) {
-            return new SVNPropertyValue(propName, "*");
+            return SVNPropertyValue.create(propName, "*");
         }
         return null;
     }

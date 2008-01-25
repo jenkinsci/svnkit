@@ -291,7 +291,7 @@ public class Replicate {
         for (Iterator propNames = revProps.nameSet().iterator(); propNames.hasNext();) {
             String propName = (String) propNames.next();
             String propValue = revProps.getStringValue(propName);
-            SVNPropertyValue propVal = new SVNPropertyValue(propName, propValue);
+            SVNPropertyValue propVal = SVNPropertyValue.create(propName, propValue);
             toRepository.setRevisionPropertyValue(revision, propVal);
         }
     }

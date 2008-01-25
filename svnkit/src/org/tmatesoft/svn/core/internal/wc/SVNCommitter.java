@@ -215,9 +215,9 @@ public class SVNCommitter implements ISVNCommitPathHandler {
         
         if (item.getMergeInfo() != null) {
             if (item.getKind() == SVNNodeKind.FILE) {
-                editor.changeFileProperty(commitPath, new SVNPropertyValue(SVNProperty.MERGE_INFO, item.getMergeInfo()));
+                editor.changeFileProperty(commitPath, SVNPropertyValue.create(SVNProperty.MERGE_INFO, item.getMergeInfo()));
             } else {
-                editor.changeDirProperty(new SVNPropertyValue(SVNProperty.MERGE_INFO, item.getMergeInfo()));
+                editor.changeDirProperty(SVNPropertyValue.create(SVNProperty.MERGE_INFO, item.getMergeInfo()));
             }
         }
 

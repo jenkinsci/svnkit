@@ -98,15 +98,15 @@ public class SVNPropSetCommand extends SVNPropertiesCommand {
                 } catch (UnsupportedEncodingException e) {
                     stringValue = new String(getSVNEnvironment().getFileData());
                 }
-                propertyValue = new SVNPropertyValue(propertyName, stringValue);                
+                propertyValue = SVNPropertyValue.create(propertyName, stringValue);
             } else {
-                propertyValue = new SVNPropertyValue(propertyName, getSVNEnvironment().popArgument());
+                propertyValue = SVNPropertyValue.create(propertyName, getSVNEnvironment().popArgument());
             }
         } else {
             if (getSVNEnvironment().getFileData() != null) {
-                propertyValue = new SVNPropertyValue(propertyName, getSVNEnvironment().getFileData());
+                propertyValue = SVNPropertyValue.createSVNPropertyValue(propertyName, getSVNEnvironment().getFileData());
             } else {
-                propertyValue = new SVNPropertyValue(propertyName, getSVNEnvironment().popArgument().getBytes());
+                propertyValue = SVNPropertyValue.createSVNPropertyValue(propertyName, getSVNEnvironment().popArgument().getBytes());
             }
         }
 

@@ -315,10 +315,10 @@ public class SVNAdminClient extends SVNBasicClient {
             SVNRepository fromRepos = createRepository(fromURL, false);
             checkIfRepositoryIsAtRoot(fromRepos, fromURL);
 
-            toRepos.setRevisionPropertyValue(0, new SVNPropertyValue(SVNRevisionProperty.FROM_URL, fromURL.toDecodedString()));
+            toRepos.setRevisionPropertyValue(0, SVNPropertyValue.create(SVNRevisionProperty.FROM_URL, fromURL.toDecodedString()));
             String uuid = fromRepos.getRepositoryUUID(true);
-            toRepos.setRevisionPropertyValue(0, new SVNPropertyValue(SVNRevisionProperty.FROM_UUID, uuid));
-            toRepos.setRevisionPropertyValue(0, new SVNPropertyValue(SVNRevisionProperty.LAST_MERGED_REVISION, "0"));
+            toRepos.setRevisionPropertyValue(0, SVNPropertyValue.create(SVNRevisionProperty.FROM_UUID, uuid));
+            toRepos.setRevisionPropertyValue(0, SVNPropertyValue.create(SVNRevisionProperty.LAST_MERGED_REVISION, "0"));
 
             copyRevisionProperties(fromRepos, toRepos, 0, false);
         } catch (SVNException svne) {
@@ -417,8 +417,8 @@ public class SVNAdminClient extends SVNBasicClient {
                         copyRevisionProperties(fromRepos, toRepos, toLatestRevision, true);
                         lastMergedRevision = copyingRev;
                     }
-                    toRepos.setRevisionPropertyValue(0, new SVNPropertyValue(SVNRevisionProperty.LAST_MERGED_REVISION, SVNProperty.toString(lastMergedRevision)));
-                    toRepos.setRevisionPropertyValue(0, new SVNPropertyValue(SVNRevisionProperty.CURRENTLY_COPYING, (String) null));
+                    toRepos.setRevisionPropertyValue(0, SVNPropertyValue.create(SVNRevisionProperty.LAST_MERGED_REVISION, SVNProperty.toString(lastMergedRevision)));
+                    toRepos.setRevisionPropertyValue(0, SVNPropertyValue.create(SVNRevisionProperty.CURRENTLY_COPYING, (String) null));
                 } 
             } else {
                 if (toLatestRevision != lastMergedRevision) {
@@ -433,7 +433,7 @@ public class SVNAdminClient extends SVNBasicClient {
             }
 
             for (long currentRev = lastMergedRevision + 1; currentRev <= fromLatestRevision; currentRev++) {
-                toRepos.setRevisionPropertyValue(0, new SVNPropertyValue(SVNRevisionProperty.CURRENTLY_COPYING, SVNProperty.toString(currentRev)));
+                toRepos.setRevisionPropertyValue(0, SVNPropertyValue.create(SVNRevisionProperty.CURRENTLY_COPYING, SVNProperty.toString(currentRev)));
                 SVNSynchronizeEditor syncEditor = new SVNSynchronizeEditor(toRepos, mySyncHandler, currentRev - 1);
                 ISVNEditor cancellableEditor = SVNCancellableEditor.newInstance(syncEditor, this, getDebugLog());
                 try {
@@ -452,8 +452,8 @@ public class SVNAdminClient extends SVNBasicClient {
                     SVNErrorManager.error(err);
                 }
                 copyRevisionProperties(fromRepos, toRepos, currentRev, true);
-                toRepos.setRevisionPropertyValue(0, new SVNPropertyValue(SVNRevisionProperty.LAST_MERGED_REVISION, SVNProperty.toString(currentRev)));
-                toRepos.setRevisionPropertyValue(0, new SVNPropertyValue(SVNRevisionProperty.CURRENTLY_COPYING, (String) null));
+                toRepos.setRevisionPropertyValue(0, SVNPropertyValue.create(SVNRevisionProperty.LAST_MERGED_REVISION, SVNProperty.toString(currentRev)));
+                toRepos.setRevisionPropertyValue(0, SVNPropertyValue.create(SVNRevisionProperty.CURRENTLY_COPYING, (String) null));
             }
         } catch (SVNException svne) {
             error = svne;
@@ -1112,7 +1112,7 @@ public class SVNAdminClient extends SVNBasicClient {
         if (sync) {
             for (Iterator propNames = existingRevProps.nameSet().iterator(); propNames.hasNext();) {
                 String propName = (String) propNames.next();
-                toRepository.setRevisionPropertyValue(revision, new SVNPropertyValue(propName, (String) null));
+                toRepository.setRevisionPropertyValue(revision, SVNPropertyValue.create(propName, (String) null));
             }            
         }
         
@@ -1187,7 +1187,7 @@ public class SVNAdminClient extends SVNBasicClient {
                     //
                 }
             } else {
-                repos.setRevisionPropertyValue(0, new SVNPropertyValue(SVNRevisionProperty.LOCK, lockToken));
+                repos.setRevisionPropertyValue(0, SVNPropertyValue.create(SVNRevisionProperty.LOCK, lockToken));
             }
         }
 
@@ -1196,7 +1196,7 @@ public class SVNAdminClient extends SVNBasicClient {
     }
 
     private void unlock(SVNRepository repos) throws SVNException {
-        repos.setRevisionPropertyValue(0, new SVNPropertyValue(SVNRevisionProperty.LOCK, (String) null));
+        repos.setRevisionPropertyValue(0, SVNPropertyValue.create(SVNRevisionProperty.LOCK, (String) null));
     }
 
     private class SessionInfo {

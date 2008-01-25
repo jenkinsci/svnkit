@@ -1160,7 +1160,7 @@ public class SVNCommitClient extends SVNBasicClient {
         }
         for (Iterator names = autoProperties.keySet().iterator(); names.hasNext();) {
             String name = (String) names.next();
-            SVNPropertyValue value = new SVNPropertyValue(name, (String) autoProperties.get(name));
+            SVNPropertyValue value = SVNPropertyValue.create(name, (String) autoProperties.get(name));
             if (SVNProperty.EOL_STYLE.equals(name) && !value.hasNullValue()) {
                 if (SVNProperty.isBinaryMimeType((String) autoProperties.get(SVNProperty.MIME_TYPE))) {
                     continue;

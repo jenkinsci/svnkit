@@ -65,7 +65,7 @@ public class SVNProperties {
             return (String) value;
         }
         if (value instanceof byte[]) {
-            SVNPropertyValue propertyValue = new SVNPropertyValue(propertyName, (byte[]) value);
+            SVNPropertyValue propertyValue = SVNPropertyValue.createSVNPropertyValue(propertyName, (byte[]) value);
             myProperties.put(propertyName, propertyValue);
             return propertyValue.getString();
         }
@@ -95,7 +95,7 @@ public class SVNProperties {
         Object value = myProperties.get(propertyName);
         if (value == null) {
             if (myProperties.containsKey(propertyName)) {
-                SVNPropertyValue propertyValue = new SVNPropertyValue(propertyName, (String) null);
+                SVNPropertyValue propertyValue = SVNPropertyValue.create(propertyName, (String) null);
                 myProperties.put(propertyName, propertyValue);
                 return propertyValue;
             } else {
@@ -106,16 +106,16 @@ public class SVNProperties {
             return (SVNPropertyValue) value;
         }
         if (value instanceof String) {
-            SVNPropertyValue propertyValue = new SVNPropertyValue(propertyName, (String) value);
+            SVNPropertyValue propertyValue = SVNPropertyValue.create(propertyName, (String) value);
             myProperties.put(propertyName, propertyValue);
             return propertyValue;
         }
         if (value instanceof byte[]) {
-            SVNPropertyValue propertyValue = new SVNPropertyValue(propertyName, (byte[]) value);
+            SVNPropertyValue propertyValue = SVNPropertyValue.createSVNPropertyValue(propertyName, (byte[]) value);
             myProperties.put(propertyName, propertyValue);
             return propertyValue;
         }
-        return new SVNPropertyValue(propertyName, (String) null);
+        return SVNPropertyValue.create(propertyName, (String) null);
     }
 
     public Object remove(String propertyName) {

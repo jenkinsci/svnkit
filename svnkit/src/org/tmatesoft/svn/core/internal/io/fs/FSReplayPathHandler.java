@@ -198,9 +198,9 @@ public class FSReplayPathHandler implements ISVNCommitPathHandler {
                     }
                 } else {
                     if (kind == SVNNodeKind.DIR) {
-                        editor.changeDirProperty(new SVNPropertyValue("", (String) null));
+                        editor.changeDirProperty(SVNPropertyValue.create("", (String) null));
                     } else if (kind == SVNNodeKind.FILE) {
-                        editor.changeFileProperty(path, new SVNPropertyValue("", (String) null));
+                        editor.changeFileProperty(path, SVNPropertyValue.create("", (String) null));
                     }
                 }
             }

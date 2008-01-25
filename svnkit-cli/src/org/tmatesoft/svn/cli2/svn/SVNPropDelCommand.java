@@ -85,7 +85,7 @@ public class SVNPropDelCommand extends SVNPropertiesCommand {
         
         if (getSVNEnvironment().isRevprop()) {
             SVNURL revPropURL = getRevpropURL(getSVNEnvironment().getStartRevision(), targets);
-            getSVNEnvironment().getClientManager().getWCClient().doSetRevisionProperty(revPropURL, getSVNEnvironment().getStartRevision(), new SVNPropertyValue(propertyName, (String) null), getSVNEnvironment().isForce(), this);
+            getSVNEnvironment().getClientManager().getWCClient().doSetRevisionProperty(revPropURL, getSVNEnvironment().getStartRevision(), SVNPropertyValue.create(propertyName, (String) null), getSVNEnvironment().isForce(), this);
         } else if (getSVNEnvironment().getStartRevision() != SVNRevision.UNDEFINED) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                     "Cannot specify revision for deleting versioned property ''{0}''", propertyName);

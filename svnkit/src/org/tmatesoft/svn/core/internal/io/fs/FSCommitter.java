@@ -103,7 +103,7 @@ public class FSCommitter {
             String canonicalPath = SVNPathUtil.canonicalizePath(path);
             canonicalPath = SVNPathUtil.getAbsolutePath(canonicalPath);
             myTxnRoot.setTxnMergeInfo(canonicalPath, propValue);
-            myFSFS.setTransactionProperty(myTxn.getTxnId(), new SVNPropertyValue(SVNProperty.TXN_CONTAINS_MERGEINFO, Boolean.TRUE.toString()));
+            myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNPropertyValue.create(SVNProperty.TXN_CONTAINS_MERGEINFO, Boolean.TRUE.toString()));
         }
         
         if (propValue.hasNullValue()) {
@@ -421,14 +421,14 @@ public class FSCommitter {
         SVNProperties txnMergeInfo = null;
         if (txnProps != null && !txnProps.isEmpty()) {
             if (txnProps.getStringValue(SVNProperty.TXN_CHECK_OUT_OF_DATENESS) != null) {
-                myFSFS.setTransactionProperty(myTxn.getTxnId(), new SVNPropertyValue(SVNProperty.TXN_CHECK_OUT_OF_DATENESS, (String) null));
+                myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNPropertyValue.create(SVNProperty.TXN_CHECK_OUT_OF_DATENESS, (String) null));
             }
             if (txnProps.getStringValue(SVNProperty.TXN_CHECK_LOCKS) != null) {
-                myFSFS.setTransactionProperty(myTxn.getTxnId(), new SVNPropertyValue(SVNProperty.TXN_CHECK_LOCKS, (String) null));
+                myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNPropertyValue.create(SVNProperty.TXN_CHECK_LOCKS, (String) null));
             }
             if (txnProps.getStringValue(SVNProperty.TXN_CONTAINS_MERGEINFO) != null) {
                 txnMergeInfo = myFSFS.getTransactionMergeInfo(myTxn.getTxnId());
-                myFSFS.setTransactionProperty(myTxn.getTxnId(), new SVNPropertyValue(SVNProperty.TXN_CONTAINS_MERGEINFO, (String) null));
+                myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNPropertyValue.create(SVNProperty.TXN_CONTAINS_MERGEINFO, (String) null));
             }
         }
         
@@ -436,7 +436,7 @@ public class FSCommitter {
         SVNFileUtil.rename(revisionPrototypeFile, dstRevFile);
 
         String commitTime = SVNDate.formatDate(new Date(System.currentTimeMillis()));
-        myFSFS.setTransactionProperty(myTxn.getTxnId(), new SVNPropertyValue(SVNRevisionProperty.DATE, commitTime));
+        myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNPropertyValue.create(SVNRevisionProperty.DATE, commitTime));
         
         File txnPropsFile = myFSFS.getTransactionPropertiesFile(myTxn.getTxnId());
         File dstRevPropsFile = myFSFS.getNewRevisionPropertiesFile(newRevision);

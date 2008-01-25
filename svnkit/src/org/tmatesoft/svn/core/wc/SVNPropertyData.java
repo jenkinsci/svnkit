@@ -44,7 +44,7 @@ public class SVNPropertyData {
         myName = name;
         myValue = data;
         if (myValue != null && SVNProperty.isSVNProperty(myName) && myValue.isString()) {
-            myValue = new SVNPropertyValue(myValue.getName(), myValue.getString().replaceAll("\n", System.getProperty("line.separator")));
+            myValue = SVNPropertyValue.create(myValue.getName(), myValue.getString().replaceAll("\n", System.getProperty("line.separator")));
         }
     }
     

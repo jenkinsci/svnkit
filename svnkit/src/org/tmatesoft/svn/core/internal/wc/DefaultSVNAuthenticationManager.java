@@ -574,7 +574,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             try {
                 for (Iterator names = values.keySet().iterator(); names.hasNext();) {
                     String name = (String) names.next();
-                    props.setPropertyValue(new SVNPropertyValue(name, (String) values.get(name)));
+                    props.setPropertyValue(SVNPropertyValue.create(name, (String) values.get(name)));
                 } 
                 SVNFileUtil.setReadonly(props.getFile(), false);
             } catch (SVNException e) {

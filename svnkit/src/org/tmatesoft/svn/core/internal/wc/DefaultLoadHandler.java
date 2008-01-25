@@ -113,7 +113,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                 throw svne;
             }
             if (baton.myDatestamp == null) {
-                myFSFS.setRevisionProperty(baton.myRevision, new SVNPropertyValue(SVNRevisionProperty.DATE, (String) null));
+                myFSFS.setRevisionProperty(baton.myRevision, SVNPropertyValue.create(SVNRevisionProperty.DATE, (String) null));
             }
             
             if (myIsUsePostCommitHook) {
@@ -127,7 +127,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
             
             myRevisionsMap.put(new Long(oldRevision), new Long(newRevision));
             if (baton.myDatestamp != null) {
-                myFSFS.setRevisionProperty(newRevision, new SVNPropertyValue(SVNRevisionProperty.DATE, baton.myDatestamp.getString()));
+                myFSFS.setRevisionProperty(newRevision, SVNPropertyValue.create(SVNRevisionProperty.DATE, baton.myDatestamp.getString()));
             }
             
             String message;
@@ -341,7 +341,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
     
                         buff = new byte[len];
                         actualLength += SVNAdminHelper.readKeyOrValue(dumpStream, buff, len);
-                        SVNPropertyValue propValue = new SVNPropertyValue(propName, buff);
+                        SVNPropertyValue propValue = SVNPropertyValue.createSVNPropertyValue(propName, buff);
                         if (isNode) {
                             setNodeProperty(propValue);
                         } else {
@@ -367,7 +367,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                     }
                     
                     String propName = new String(buff, "UTF-8");
-                    setNodeProperty(new SVNPropertyValue(propName, (String) null));
+                    setNodeProperty(SVNPropertyValue.create(propName, (String) null));
                 } else {
                     SVNAdminHelper.generateStreamMalformedError();
                 }
@@ -387,7 +387,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
         
         for (Iterator propNames = props.nameSet().iterator(); propNames.hasNext();) {
             String propName = (String) propNames.next();
-            myCurrentRevisionBaton.getCommitter().changeNodeProperty(myCurrentNodeBaton.myPath, new SVNPropertyValue(propName, (String) null));
+            myCurrentRevisionBaton.getCommitter().changeNodeProperty(myCurrentNodeBaton.myPath, SVNPropertyValue.create(propName, (String) null));
         }
     }
 

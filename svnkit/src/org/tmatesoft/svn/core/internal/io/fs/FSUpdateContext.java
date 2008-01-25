@@ -571,7 +571,7 @@ public class FSUpdateContext {
         if (FSRepository.isValidRevision(createdRevision)) {
             SVNProperties entryProps = myFSFS.compoundMetaProperties(createdRevision);
             SVNPropertyValue committedRevision = entryProps.getSVNPropertyValue(SVNProperty.COMMITTED_REVISION);
-            committedRevision = committedRevision == null ? new SVNPropertyValue(SVNProperty.COMMITTED_REVISION, (String) null) : committedRevision;
+            committedRevision = committedRevision == null ? SVNPropertyValue.create(SVNProperty.COMMITTED_REVISION, (String) null) : committedRevision;
             changeProperty(editPath, committedRevision, isDir);
             SVNPropertyValue committedDate = entryProps.getSVNPropertyValue(SVNProperty.COMMITTED_DATE);
 
@@ -595,7 +595,7 @@ public class FSUpdateContext {
         if (lockToken != null) {
             SVNLock lock = myFSFS.getLockHelper(targetPath, false);
             if (lock == null || !lockToken.equals(lock.getID())) {
-                changeProperty(editPath, new SVNPropertyValue(SVNProperty.LOCK_TOKEN, (String) null), isDir);
+                changeProperty(editPath, SVNPropertyValue.create(SVNProperty.LOCK_TOKEN, (String) null), isDir);
             }
         }
 

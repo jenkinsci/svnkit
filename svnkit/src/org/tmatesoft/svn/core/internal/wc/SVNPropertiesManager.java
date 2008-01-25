@@ -133,7 +133,7 @@ public class SVNPropertiesManager {
 
     public static boolean setProperty(SVNWCAccess access, File path, String propName, String propValue,
                                       boolean skipChecks) throws SVNException {
-        return setProperty(access, path, propName, propValue == null ? null : new SVNPropertyValue(propName, propValue), skipChecks);
+        return setProperty(access, path, propName, propValue == null ? null : SVNPropertyValue.create(propName, propValue), skipChecks);
 
     }
 
@@ -152,24 +152,24 @@ public class SVNPropertiesManager {
             validatePropertyName(path, propName, entry.getKind());
             if (!skipChecks && SVNProperty.EOL_STYLE.equals(propName)) {
                 if (propValue.isString()) {
-                    propValue = new SVNPropertyValue(propValue.getName(), propValue.getString().trim());
+                    propValue = SVNPropertyValue.create(propValue.getName(), propValue.getString().trim());
                 }
                 validateEOLProperty(path, access);
             } else if (!skipChecks && SVNProperty.MIME_TYPE.equals(propName)) {
                 if (propValue.isString()) {
-                    propValue = new SVNPropertyValue(propValue.getName(), propValue.getString().trim());
+                    propValue = SVNPropertyValue.create(propValue.getName(), propValue.getString().trim());
                 }
                 validateMimeType(propValue.getString());
             } else if (SVNProperty.EXTERNALS.equals(propName) || SVNProperty.IGNORE.equals(propName)) {
                 if (propValue.isString() && !propValue.getString().endsWith("\n")) {
-                    propValue = new SVNPropertyValue(propValue.getName(), propValue.getString().concat("\n"));
+                    propValue = SVNPropertyValue.create(propValue.getName(), propValue.getString().concat("\n"));
                 }
                 if (SVNProperty.EXTERNALS.equals(propName)) {
                     SVNExternal.parseExternals(path.getAbsolutePath(), propValue.getString());
                 }
             } else if (SVNProperty.KEYWORDS.equals(propName)) {
                 if (propValue.isString()) {
-                    propValue = new SVNPropertyValue(propValue.getName(), propValue.getString().trim());
+                    propValue = SVNPropertyValue.create(propValue.getName(), propValue.getString().trim());
                 }
             }
         }

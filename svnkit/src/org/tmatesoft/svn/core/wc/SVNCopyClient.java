@@ -1494,14 +1494,14 @@ public class SVNCopyClient extends SVNBasicClient {
                 if (pathInfo.mySourceKind == SVNNodeKind.DIR) {
                     commitEditor.addDir(commitPath, pathInfo.mySourcePath, pathInfo.mySourceRevisionNumber);
                     if (pathInfo.myMergeInfoProp != null) {
-                        commitEditor.changeDirProperty(new SVNPropertyValue(SVNProperty.MERGE_INFO,
+                        commitEditor.changeDirProperty(SVNPropertyValue.create(SVNProperty.MERGE_INFO,
                                                        pathInfo.myMergeInfoProp));
                     }
                     closeDir = true;
                 } else {
                     commitEditor.addFile(commitPath, pathInfo.mySourcePath, pathInfo.mySourceRevisionNumber);
                     if (pathInfo.myMergeInfoProp != null) {
-                        commitEditor.changeFileProperty(commitPath, new SVNPropertyValue(SVNProperty.MERGE_INFO, pathInfo.myMergeInfoProp));
+                        commitEditor.changeFileProperty(commitPath, SVNPropertyValue.create(SVNProperty.MERGE_INFO, pathInfo.myMergeInfoProp));
                     }
                     commitEditor.closeFile(commitPath, null);
                 }

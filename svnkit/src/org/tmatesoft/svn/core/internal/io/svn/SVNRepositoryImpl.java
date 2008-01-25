@@ -231,7 +231,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             closeConnection();
         }
         byte[] bytes = SVNReader.getBytes(values, 0);
-        return bytes == null ? null : new SVNPropertyValue(propertyName, bytes);
+        return bytes == null ? null : SVNPropertyValue.createSVNPropertyValue(propertyName, bytes);
     }
 
     public SVNNodeKind checkPath(String path, long revision) throws SVNException {

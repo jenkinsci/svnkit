@@ -166,7 +166,7 @@ public class DAVMergeHandler extends BasicDAVHandler {
                 String path = (String) myPathsMap.get(reposPath);
                 if (path != null && myMediator != null) {
                     String versionURLPropName = "svn:wc:ra_dav:version-url";
-                    myMediator.setWorkspaceProperty(SVNEncodingUtil.uriDecode(path), versionURLPropName, new SVNPropertyValue(versionURLPropName, myVersionPath));
+                    myMediator.setWorkspaceProperty(SVNEncodingUtil.uriDecode(path), versionURLPropName, SVNPropertyValue.create(versionURLPropName, myVersionPath));
                 }
             }
         } else if (element == DAVElement.CREATION_DATE) {
