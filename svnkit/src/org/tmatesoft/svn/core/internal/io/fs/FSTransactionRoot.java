@@ -311,7 +311,7 @@ public class FSTransactionRoot extends FSRoot {
     public void setTxnMergeInfo(String name, SVNPropertyValue value) throws SVNException {
         FSFS fs = getOwner(); 
         SVNProperties txnMergeInfo = fs.getTransactionMergeInfo(myTxnID);
-        if (value != null) {
+        if (value != null && !value.hasNullValue()) {
             txnMergeInfo.put(name, value);
         } else {
             txnMergeInfo.remove(name);
