@@ -495,6 +495,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
         if (!workingValue.hasNullValue()) {
             if (workingValue.equals(newValue)) {
                 status = getPropMergeStatus(status, SVNStatusType.MERGED);
+                workingProps.setPropertyValue(propName, newValue);
             } else {
                 if (SVNProperty.MERGE_INFO.equals(propName)) {
                     newValue = SVNPropertyValue.create(SVNProperty.MERGE_INFO,
