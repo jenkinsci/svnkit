@@ -65,7 +65,7 @@ public class SVNProperties {
             return (String) value;
         }
         if (value instanceof byte[]) {
-            SVNPropertyValue propertyValue = SVNPropertyValue.createSVNPropertyValue(propertyName, (byte[]) value);
+            SVNPropertyValue propertyValue = SVNPropertyValue.create(propertyName, (byte[]) value);
             myProperties.put(propertyName, propertyValue);
             return propertyValue.getString();
         }
@@ -111,7 +111,7 @@ public class SVNProperties {
             return propertyValue;
         }
         if (value instanceof byte[]) {
-            SVNPropertyValue propertyValue = SVNPropertyValue.createSVNPropertyValue(propertyName, (byte[]) value);
+            SVNPropertyValue propertyValue = SVNPropertyValue.create(propertyName, (byte[]) value);
             myProperties.put(propertyName, propertyValue);
             return propertyValue;
         }

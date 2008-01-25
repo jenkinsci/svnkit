@@ -31,7 +31,7 @@ public class SVNPropertyValue {
         return new SVNPropertyValue(propertyName, data, offset, length);
     }
 
-    public static SVNPropertyValue createSVNPropertyValue(String propertyName, byte[] data) {
+    public static SVNPropertyValue create(String propertyName, byte[] data) {
         return new SVNPropertyValue(propertyName, data);
     }
 
@@ -101,7 +101,7 @@ public class SVNPropertyValue {
             return this;
         }
         if (isBinary()) {
-            return createSVNPropertyValue(newName, getBytes());
+            return create(newName, getBytes());
         }
         return create(newName, getString());
     }

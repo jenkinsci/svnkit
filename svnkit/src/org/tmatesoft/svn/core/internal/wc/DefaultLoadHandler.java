@@ -341,7 +341,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
     
                         buff = new byte[len];
                         actualLength += SVNAdminHelper.readKeyOrValue(dumpStream, buff, len);
-                        SVNPropertyValue propValue = SVNPropertyValue.createSVNPropertyValue(propName, buff);
+                        SVNPropertyValue propValue = SVNPropertyValue.create(propName, buff);
                         if (isNode) {
                             setNodeProperty(propValue);
                         } else {
