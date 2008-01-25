@@ -1088,12 +1088,22 @@ public class SVNCopyClient extends SVNBasicClient {
                             srcAccess = dstAccess;
                         }
                     } else {
-                        srcAccess = createWCAccess();
-                        srcAccess.open(new File(srcParent), false, srcType == SVNFileType.DIRECTORY ? -1 : 0);
+                        try {
+                            srcAccess = createWCAccess();
+                            srcAccess.open(new File(srcParent), false, srcType == SVNFileType.DIRECTORY ? -1 : 0);
+                        } catch (SVNException e) {
+                            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
+                                srcAccess = null;
+                            } else {
+                                throw e;
+                            }
+                        }
                     }
                     // do real copy.
                     copyFiles(new File(pair.mySource), new File(dstParentPath), dstAccess, pair.myBaseName);
-                    propagateMegeInfo(pair, srcAccess, dstAccess);
+                    if (srcAccess != null) {
+                        propagateMegeInfo(pair, srcAccess, dstAccess);
+                    }
                 } finally {
                     if (srcAccess != null && srcAccess != dstAccess) {
                         srcAccess.close();
