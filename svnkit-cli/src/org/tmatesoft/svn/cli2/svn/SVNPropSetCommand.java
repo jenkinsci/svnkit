@@ -104,9 +104,9 @@ public class SVNPropSetCommand extends SVNPropertiesCommand {
             }
         } else {
             if (getSVNEnvironment().getFileData() != null) {
-                propertyValue = SVNPropertyValue.createSVNPropertyValue(propertyName, getSVNEnvironment().getFileData());
+                propertyValue = SVNPropertyValue.create(propertyName, getSVNEnvironment().getFileData());
             } else {
-                propertyValue = SVNPropertyValue.createSVNPropertyValue(propertyName, getSVNEnvironment().popArgument().getBytes());
+                propertyValue = SVNPropertyValue.create(propertyName, getSVNEnvironment().popArgument().getBytes());
             }
         }
 

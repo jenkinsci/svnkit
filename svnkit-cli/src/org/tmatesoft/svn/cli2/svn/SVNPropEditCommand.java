@@ -83,7 +83,7 @@ public class SVNPropEditCommand extends SVNPropertiesCommand {
             SVNPropertyValue propertyValue = property != null ? property.getValue() : SVNPropertyValue.create(propertyName, "");
             byte[] propBytes = SVNPropertyValue.getPropertyAsBytes(propertyValue);            
             byte[] bytes = SVNCommandUtil.runEditor(getSVNEnvironment(), getSVNEnvironment().getEditorCommand(), propBytes, "svn-prop");
-            SVNPropertyValue newPropertyValue = SVNPropertyValue.createSVNPropertyValue(propertyName, bytes);
+            SVNPropertyValue newPropertyValue = SVNPropertyValue.create(propertyName, bytes);
             if (!newPropertyValue.hasNullValue() && !newPropertyValue.equals(propertyValue)) {
                 clearCollectedProperties();
                 client.doSetRevisionProperty(revPropURL, SVNRevision.create(rev), newPropertyValue, getSVNEnvironment().isForce(), this);
@@ -119,7 +119,7 @@ public class SVNPropEditCommand extends SVNPropertiesCommand {
                     SVNPropertyValue propertyValue = property != null ? property.getValue() : SVNPropertyValue.create(propertyName, "");
                     byte[] propBytes = SVNPropertyValue.getPropertyAsBytes(propertyValue);                   
                     byte[] bytes = SVNCommandUtil.runEditor(getSVNEnvironment(), getSVNEnvironment().getEditorCommand(), propBytes, "svn-prop");
-                    SVNPropertyValue newPropertyValue = bytes == null ? null : SVNPropertyValue.createSVNPropertyValue(propertyName, bytes);
+                    SVNPropertyValue newPropertyValue = bytes == null ? null : SVNPropertyValue.create(propertyName, bytes);
                     if (newPropertyValue != null && !newPropertyValue.equals(propertyValue)) {
                         checkBooleanProperty(propertyName, newPropertyValue);
                         client.doSetProperty(target.getFile(), propertyName, newPropertyValue, getSVNEnvironment().isForce(), false, this);
@@ -138,7 +138,7 @@ public class SVNPropEditCommand extends SVNPropertiesCommand {
                     SVNPropertyValue propertyValue = property != null ? property.getValue() : SVNPropertyValue.create(propertyName, "");
                     byte[] propBytes = SVNPropertyValue.getPropertyAsBytes(propertyValue);                                       
                     byte[] bytes = SVNCommandUtil.runEditor(getSVNEnvironment(), getSVNEnvironment().getEditorCommand(), propBytes, "svn-prop");
-                    SVNPropertyValue newPropertyValue = bytes == null ? null : SVNPropertyValue.createSVNPropertyValue(propertyName, bytes);
+                    SVNPropertyValue newPropertyValue = bytes == null ? null : SVNPropertyValue.create(propertyName, bytes);
                     if (newPropertyValue != null && !newPropertyValue.equals(propertyValue)) {
                         checkBooleanProperty(propertyName, newPropertyValue);
                         client.setCommitHandler(getSVNEnvironment());
