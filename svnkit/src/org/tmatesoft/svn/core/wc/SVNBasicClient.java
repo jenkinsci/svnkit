@@ -743,14 +743,16 @@ public class SVNBasicClient implements ISVNEventHandler {
         return absPath;
     }
     
-    protected SVNRepositoryLocation[] getLocations(SVNURL url, File path, SVNRepository repository, SVNRevision revision, SVNRevision start, SVNRevision end) throws SVNException {
+    protected SVNRepositoryLocation[] getLocations(SVNURL url, File path, SVNRepository repository, 
+    		SVNRevision revision, SVNRevision start, SVNRevision end) throws SVNException {
         if (!revision.isValid() || !start.isValid()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION));
         }
         long pegRevisionNumber = -1;
         long startRevisionNumber;
         long endRevisionNumber;
-
+        long youngestRevNumber[] = { SVNRepository.INVALID_REVISION };
+        
         if (path != null) {
             SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
             try {
@@ -759,17 +761,20 @@ public class SVNBasicClient implements ISVNEventHandler {
                 if (entry.getCopyFromURL() != null && revision == SVNRevision.WORKING) {
                     url = entry.getCopyFromSVNURL();
                     pegRevisionNumber = entry.getCopyFromRevision();
+                    if (entry.getURL() == null || !entry.getURL().equals(entry.getCopyFromURL())) {
+                    	repository = null;
+                    }
                 } else if (entry.getURL() != null){
                     url = entry.getSVNURL();
                 } else {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path);
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, 
+                    		"''{0}'' has no URL", path);
                     SVNErrorManager.error(err);
                 }
             } finally {
                 wcAccess.close();
             }
         }
-        String repoPath = "";
         
         boolean closeSession = false;
         Map locations = null;
@@ -778,23 +783,21 @@ public class SVNBasicClient implements ISVNEventHandler {
             if (repository == null) {
                 repository = createRepository(url, false);
                 closeSession = true;
-            } else {
-                // path relative to repository location.
-                repoPath = SVNPathUtil.getPathAsChild(repository.getLocation().toString(), url.toString());
-            }
+            } 
             if (pegRevisionNumber < 0) {
-                pegRevisionNumber = getRevisionNumber(revision, repository, path);
+                pegRevisionNumber = getRevisionNumber(revision, youngestRevNumber, repository, path);
             }
             if (revision == start && revision == SVNRevision.HEAD) {
                 startRevisionNumber = pegRevisionNumber;
             } else {
-                startRevisionNumber = getRevisionNumber(start, repository, path);
+                startRevisionNumber = getRevisionNumber(start, youngestRevNumber, repository, path);
             }
             if (!end.isValid()) {
                 endRevisionNumber = startRevisionNumber;
             } else {
-                endRevisionNumber = getRevisionNumber(end, repository, path);
+                endRevisionNumber = getRevisionNumber(end, youngestRevNumber, repository, path);
             }
+
             if (endRevisionNumber == pegRevisionNumber && startRevisionNumber == pegRevisionNumber) {
                 SVNRepositoryLocation[] result = new SVNRepositoryLocation[2];
                 result[0] = new SVNRepositoryLocation(url, startRevisionNumber);
@@ -806,7 +809,7 @@ public class SVNBasicClient implements ISVNEventHandler {
                     new long[] {startRevisionNumber} : new long[] {startRevisionNumber, endRevisionNumber};
                             
             try {
-                locations = repository.getLocations(repoPath, (Map) null, pegRevisionNumber, revisionsRange);
+                locations = repository.getLocations("", (Map) null, pegRevisionNumber, revisionsRange);
             } catch (SVNException e) {
                 if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_IMPLEMENTED) {
                     locations = getLocations10(repository, pegRevisionNumber, startRevisionNumber, endRevisionNumber);
