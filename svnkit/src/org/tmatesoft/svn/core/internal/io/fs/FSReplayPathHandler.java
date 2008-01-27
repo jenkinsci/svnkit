@@ -191,16 +191,16 @@ public class FSReplayPathHandler implements ISVNCommitPathHandler {
                         String propName = (String) propNames.next();
                         SVNPropertyValue propValue = propDiff.getSVNPropertyValue(propName);
                         if (kind == SVNNodeKind.DIR) {
-                            editor.changeDirProperty(propValue);
+                            editor.changeDirProperty(propName, propValue);
                         } else if (kind == SVNNodeKind.FILE) {
-                            editor.changeFileProperty(path, propValue);
+                            editor.changeFileProperty(path, propName, propValue);
                         }
                     }
                 } else {
                     if (kind == SVNNodeKind.DIR) {
-                        editor.changeDirProperty(SVNPropertyValue.create("", (String) null));
+                        editor.changeDirProperty("", null);
                     } else if (kind == SVNNodeKind.FILE) {
-                        editor.changeFileProperty(path, SVNPropertyValue.create("", (String) null));
+                        editor.changeFileProperty(path, "", null);
                     }
                 }
             }
@@ -247,7 +247,7 @@ public class FSReplayPathHandler implements ISVNCommitPathHandler {
         for (Iterator names = props.nameSet().iterator(); names.hasNext();) {
             String propName = (String) names.next();
             SVNPropertyValue propValue = props.getSVNPropertyValue(propName);
-            editor.changeDirProperty(propValue);
+            editor.changeDirProperty(propName, propValue);
         }
 
         Map entries = node.getDirEntries(myOwner);
@@ -268,7 +268,7 @@ public class FSReplayPathHandler implements ISVNCommitPathHandler {
                 for (Iterator names = props.nameSet().iterator(); names.hasNext();) {
                     String propName = (String) names.next();
                     SVNPropertyValue propValue = props.getSVNPropertyValue(propName);
-                    editor.changeFileProperty(newPath, propValue);
+                    editor.changeFileProperty(newPath, propName, propValue);
                 }
 
                 editor.applyTextDelta(newPath, null);

@@ -571,31 +571,30 @@ public class FSUpdateContext {
         if (FSRepository.isValidRevision(createdRevision)) {
             SVNProperties entryProps = myFSFS.compoundMetaProperties(createdRevision);
             SVNPropertyValue committedRevision = entryProps.getSVNPropertyValue(SVNProperty.COMMITTED_REVISION);
-            committedRevision = committedRevision == null ? SVNPropertyValue.create(SVNProperty.COMMITTED_REVISION, (String) null) : committedRevision;
-            changeProperty(editPath, committedRevision, isDir);
+            changeProperty(editPath, SVNProperty.COMMITTED_REVISION, committedRevision, isDir);
             SVNPropertyValue committedDate = entryProps.getSVNPropertyValue(SVNProperty.COMMITTED_DATE);
 
-            if ((committedDate != null && !committedDate.hasNullValue()) || sourcePath != null) {
-                changeProperty(editPath, committedDate, isDir);
+            if (committedDate != null || sourcePath != null) {
+                changeProperty(editPath, SVNProperty.COMMITTED_DATE, committedDate, isDir);
             }
 
             SVNPropertyValue lastAuthor = entryProps.getSVNPropertyValue(SVNProperty.LAST_AUTHOR);
 
-            if ((lastAuthor != null && !lastAuthor.hasNullValue()) || sourcePath != null) {
-                changeProperty(editPath, lastAuthor, isDir);
+            if (lastAuthor != null || sourcePath != null) {
+                changeProperty(editPath, SVNProperty.LAST_AUTHOR, lastAuthor, isDir);
             }
 
             SVNPropertyValue uuid = entryProps.getSVNPropertyValue(SVNProperty.UUID);
 
-            if ((uuid != null && !uuid.hasNullValue()) || sourcePath != null) {
-                changeProperty(editPath, uuid, isDir);
+            if (uuid != null || sourcePath != null) {
+                changeProperty(editPath, SVNProperty.UUID, uuid, isDir);
             }
         }
 
         if (lockToken != null) {
             SVNLock lock = myFSFS.getLockHelper(targetPath, false);
             if (lock == null || !lockToken.equals(lock.getID())) {
-                changeProperty(editPath, SVNPropertyValue.create(SVNProperty.LOCK_TOKEN, (String) null), isDir);
+                changeProperty(editPath, SVNProperty.LOCK_TOKEN,  null, isDir);
             }
         }
 
@@ -617,7 +616,7 @@ public class FSUpdateContext {
         Object[] names = propsDiffs.nameSet().toArray();
         for (int i = 0; i < names.length; i++) {
             String propName = (String) names[i];
-            changeProperty(editPath, propsDiffs.getSVNPropertyValue(propName), isDir);
+            changeProperty(editPath, propName, propsDiffs.getSVNPropertyValue(propName), isDir);
         }
     }
 
@@ -650,11 +649,11 @@ public class FSUpdateContext {
         return result;
     }
 
-    private void changeProperty(String path, SVNPropertyValue value, boolean isDir) throws SVNException {
+    private void changeProperty(String path, String name, SVNPropertyValue value, boolean isDir) throws SVNException {
         if (isDir) {
-            getEditor().changeDirProperty(value);
+            getEditor().changeDirProperty(name, value);
         } else {
-            getEditor().changeFileProperty(path, value);
+            getEditor().changeFileProperty(path, name, value);
         }
     }
 

@@ -131,30 +131,30 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         return properties;
     }
 
-    public void setRevisionPropertyValue(long revision, SVNPropertyValue propertyValue) throws SVNException {
-        setRevisionPropertyValue(revision, propertyValue, false);
+    public void setRevisionPropertyValue(long revision, String propertyName, SVNPropertyValue propertyValue) throws SVNException {
+        setRevisionPropertyValue(revision, propertyName, propertyValue, false);
     }
 
-    public void setRevisionPropertyValue(long revision, SVNPropertyValue propertyValue, boolean bypassHooks) throws SVNException {
-        setRevisionPropertyValue(revision, propertyValue, bypassHooks, bypassHooks);
+    public void setRevisionPropertyValue(long revision, String propertyName, SVNPropertyValue propertyValue, boolean bypassHooks) throws SVNException {
+        setRevisionPropertyValue(revision, propertyName, propertyValue, bypassHooks, bypassHooks);
     }
 
-    public void setRevisionPropertyValue(long revision, SVNPropertyValue propertyValue, boolean bypassPreRevpropHook, boolean bypassPostRevpropHook) throws SVNException {
+    public void setRevisionPropertyValue(long revision, String propertyName, SVNPropertyValue propertyValue, boolean bypassPreRevpropHook, boolean bypassPostRevpropHook) throws SVNException {
          assertValidRevision(revision);
         try {
             openRepository();
-            if (!SVNProperty.isRegularProperty(propertyValue.getName())) {
+            if (!SVNProperty.isRegularProperty(propertyName)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS,
-                        "Storage of non-regular property ''{0}'' is disallowed through the repository interface, and could indicate a bug in your client", propertyValue.getName());
+                        "Storage of non-regular property ''{0}'' is disallowed through the repository interface, and could indicate a bug in your client", propertyName);
                 SVNErrorManager.error(err);
             }
             String userName = getUserName();
             SVNProperties revProps = myFSFS.getRevisionProperties(revision);
-            SVNPropertyValue oldValue = revProps.getSVNPropertyValue(propertyValue.getName());
+            SVNPropertyValue oldValue = revProps.getSVNPropertyValue(propertyName);
             String action = null;
-            if (propertyValue.hasNullValue()) {
+            if (propertyValue == null) {
                 action = FSHooks.REVPROP_DELETE;
-            } else if (oldValue == null || oldValue.hasNullValue()) {
+            } else if (oldValue == null) {
                 action = FSHooks.REVPROP_ADD;
             } else {
                 action = FSHooks.REVPROP_MODIFY;
@@ -162,11 +162,11 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
 
             byte[] bytes = SVNPropertyValue.getPropertyAsBytes(propertyValue);
             if (FSHooks.isHooksEnabled() && !bypassPreRevpropHook) {
-                FSHooks.runPreRevPropChangeHook(myReposRootDir, propertyValue.getName(), bytes, userName, revision, action);
+                FSHooks.runPreRevPropChangeHook(myReposRootDir, propertyName, bytes, userName, revision, action);
             }
-            myFSFS.setRevisionProperty(revision, propertyValue);
+            myFSFS.setRevisionProperty(revision, propertyName, propertyValue);
             if (FSHooks.isHooksEnabled() && !bypassPostRevpropHook) {
-                FSHooks.runPostRevPropChangeHook(myReposRootDir, propertyValue.getName(), bytes, userName, revision, action);
+                FSHooks.runPostRevPropChangeHook(myReposRootDir, propertyName, bytes, userName, revision, action);
             }
         } finally {
             closeRepository();

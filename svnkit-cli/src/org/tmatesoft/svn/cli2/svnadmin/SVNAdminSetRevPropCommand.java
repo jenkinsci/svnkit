@@ -74,7 +74,7 @@ public class SVNAdminSetRevPropCommand extends SVNAdminCommand {
         FSRepository repository = (FSRepository) SVNRepositoryFactory.create(url);
         long rev = getRevisionNumber(getSVNAdminEnvironment().getStartRevision(), repository.getLatestRevision(), repository);
 
-        repository.setRevisionPropertyValue(rev, propertyValue,
+        repository.setRevisionPropertyValue(rev, propertyName, propertyValue,
                 !getSVNAdminEnvironment().isUsePreRevPropChangeHook(), 
                 !getSVNAdminEnvironment().isUsePostRevPropChangeHook());
     }

@@ -104,9 +104,9 @@ public class SVNExportEditor implements ISVNEditor {
         myEventDispatcher.handleEvent(SVNEventFactory.createSVNEvent(myCurrentDirectory, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_ADD, null, null, null), ISVNEventHandler.UNKNOWN);
     }
 
-    public void changeDirProperty(SVNPropertyValue value)
+    public void changeDirProperty(String name, SVNPropertyValue value)
             throws SVNException {
-        if (SVNProperty.EXTERNALS.equals(value.getName()) && !value.hasNullValue()) {
+        if (SVNProperty.EXTERNALS.equals(name) && value != null) {
             myExternals.put(myCurrentPath, value.getString());
         }
     }
@@ -129,9 +129,9 @@ public class SVNExportEditor implements ISVNEditor {
         myChecksum = null;
     }
 
-    public void changeFileProperty(String commitPath, SVNPropertyValue value)
+    public void changeFileProperty(String commitPath, String name, SVNPropertyValue value)
             throws SVNException {
-        myFileProperties.put(value);
+        myFileProperties.put(name, value);
     }
 
     public void applyTextDelta(String commitPath, String baseChecksum) throws SVNException {

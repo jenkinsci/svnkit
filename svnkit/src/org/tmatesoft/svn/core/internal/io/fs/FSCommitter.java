@@ -29,9 +29,9 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -79,10 +79,10 @@ public class FSCommitter {
         addChange(path, parentPath.getRevNode().getId(), FSPathChangeKind.FS_PATH_CHANGE_DELETE, false, false, SVNRepository.INVALID_REVISION, null);
     }
 
-    public void changeNodeProperty(String path, SVNPropertyValue propValue) throws SVNException {
-        if (!SVNProperty.isRegularProperty(propValue.getName())) {
+    public void changeNodeProperty(String path, String name, SVNPropertyValue propValue) throws SVNException {
+        if (!SVNProperty.isRegularProperty(name)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS,
-                    "Storage of non-regular property ''{0}'' is disallowed through the repository interface, and could indicate a bug in your client", propValue.getName());
+                    "Storage of non-regular property ''{0}'' is disallowed through the repository interface, and could indicate a bug in your client", name);
             SVNErrorManager.error(err);
         }
 
@@ -95,21 +95,21 @@ public class FSCommitter {
         makePathMutable(parentPath, path);
         SVNProperties properties = parentPath.getRevNode().getProperties(myFSFS);
 
-        if (properties.isEmpty() && propValue.hasNullValue()) {
+        if (properties.isEmpty() && propValue == null) {
             return;
         }
 
-        if (propValue.getName().equals(SVNProperty.MERGE_INFO)) {
+        if (name.equals(SVNProperty.MERGE_INFO)) {
             String canonicalPath = SVNPathUtil.canonicalizePath(path);
             canonicalPath = SVNPathUtil.getAbsolutePath(canonicalPath);
             myTxnRoot.setTxnMergeInfo(canonicalPath, propValue);
-            myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNPropertyValue.create(SVNProperty.TXN_CONTAINS_MERGEINFO, Boolean.TRUE.toString()));
+            myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNProperty.TXN_CONTAINS_MERGEINFO, SVNPropertyValue.create(Boolean.TRUE.toString()));
         }
         
-        if (propValue.hasNullValue()) {
-            properties.remove(propValue.getName());
+        if (propValue == null) {
+            properties.remove(name);
         } else {
-            properties.put(propValue);
+            properties.put(name, propValue);
         }
 
         myTxnRoot.setProplist(parentPath.getRevNode(), properties);
@@ -421,14 +421,14 @@ public class FSCommitter {
         SVNProperties txnMergeInfo = null;
         if (txnProps != null && !txnProps.isEmpty()) {
             if (txnProps.getStringValue(SVNProperty.TXN_CHECK_OUT_OF_DATENESS) != null) {
-                myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNPropertyValue.create(SVNProperty.TXN_CHECK_OUT_OF_DATENESS, (String) null));
+                myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNProperty.TXN_CHECK_OUT_OF_DATENESS, null);
             }
             if (txnProps.getStringValue(SVNProperty.TXN_CHECK_LOCKS) != null) {
-                myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNPropertyValue.create(SVNProperty.TXN_CHECK_LOCKS, (String) null));
+                myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNProperty.TXN_CHECK_LOCKS, null);
             }
             if (txnProps.getStringValue(SVNProperty.TXN_CONTAINS_MERGEINFO) != null) {
                 txnMergeInfo = myFSFS.getTransactionMergeInfo(myTxn.getTxnId());
-                myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNPropertyValue.create(SVNProperty.TXN_CONTAINS_MERGEINFO, (String) null));
+                myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNProperty.TXN_CONTAINS_MERGEINFO, null);
             }
         }
         
@@ -436,7 +436,7 @@ public class FSCommitter {
         SVNFileUtil.rename(revisionPrototypeFile, dstRevFile);
 
         String commitTime = SVNDate.formatDate(new Date(System.currentTimeMillis()));
-        myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNPropertyValue.create(SVNRevisionProperty.DATE, commitTime));
+        myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNRevisionProperty.DATE, SVNPropertyValue.create(commitTime));
         
         File txnPropsFile = myFSFS.getTransactionPropertiesFile(myTxn.getTxnId());
         File dstRevPropsFile = myFSFS.getNewRevisionPropertiesFile(newRevision);

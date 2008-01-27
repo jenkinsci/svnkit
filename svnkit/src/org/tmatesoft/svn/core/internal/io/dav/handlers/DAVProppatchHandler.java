@@ -43,9 +43,9 @@ public class DAVProppatchHandler extends BasicDAVHandler {
         NAMESPACES.add(DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE);
     }
 
-    public static StringBuffer generatePropertyRequest(StringBuffer buffer, SVNPropertyValue value) {
+    public static StringBuffer generatePropertyRequest(StringBuffer buffer, String name, SVNPropertyValue value) {
         SVNProperties props = new SVNProperties();
-        props.put(value);
+        props.put(name, value);
         return generatePropertyRequest(buffer, props);
     }
 
@@ -70,8 +70,8 @@ public class DAVProppatchHandler extends BasicDAVHandler {
             for (Iterator names = properties.nameSet().iterator(); names.hasNext();) {
                 String name = (String) names.next();
                 SVNPropertyValue value = properties.getSVNPropertyValue(name);
-                if (!value.hasNullValue()) {
-                    xmlBuffer = appendProperty(xmlBuffer, value);
+                if (value != null) {
+                    xmlBuffer = appendProperty(xmlBuffer, name, value);
                 }
             }
             SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "prop", xmlBuffer);
@@ -87,8 +87,8 @@ public class DAVProppatchHandler extends BasicDAVHandler {
             for (Iterator names = properties.nameSet().iterator(); names.hasNext();) {
                 String name = (String) names.next();
                 SVNPropertyValue value = properties.getSVNPropertyValue(name);
-                if (value.hasNullValue()) {
-                    xmlBuffer = appendProperty(xmlBuffer, value);
+                if (value == null) {
+                    xmlBuffer = appendProperty(xmlBuffer, name, value);
                 }
             }
             SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "prop", xmlBuffer);
@@ -99,9 +99,9 @@ public class DAVProppatchHandler extends BasicDAVHandler {
         return xmlBuffer;
     }
 
-    private static StringBuffer appendProperty(StringBuffer xmlBuffer, SVNPropertyValue value) {
-        String prefix = SVNProperty.isSVNProperty(value.getName()) ? SVNXMLUtil.SVN_SVN_PROPERTY_PREFIX : SVNXMLUtil.SVN_CUSTOM_PROPERTY_PREFIX;
-        String tagName = SVNProperty.shortPropertyName(value.getName());
+    private static StringBuffer appendProperty(StringBuffer xmlBuffer, String name, SVNPropertyValue value) {
+        String prefix = SVNProperty.isSVNProperty(name) ? SVNXMLUtil.SVN_SVN_PROPERTY_PREFIX : SVNXMLUtil.SVN_CUSTOM_PROPERTY_PREFIX;
+        String tagName = SVNProperty.shortPropertyName(name);
         Map attrs = null;
         String str = null;
         if (!value.isXMLSafe()) {
@@ -110,7 +110,7 @@ public class DAVProppatchHandler extends BasicDAVHandler {
             attrs.put(attrPrefix + ":encoding", "base64");            
             str = SVNBase64.byteArrayToBase64(SVNPropertyValue.getPropertyAsBytes(value));
         } else {
-            str = value.toString();
+            str = value.getString();
         }
         return SVNXMLUtil.openCDataTag(prefix, tagName, str, attrs, xmlBuffer);
     }

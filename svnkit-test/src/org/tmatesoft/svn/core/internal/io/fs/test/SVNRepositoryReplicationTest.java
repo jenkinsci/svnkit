@@ -253,7 +253,7 @@ public class SVNRepositoryReplicationTest {
 
         for (Iterator propsIter = props1.nameSet().iterator(); propsIter.hasNext();) {
             String propName = (String) propsIter.next();
-            if (props2.getSVNPropertyValue(propName) == null || props2.getSVNPropertyValue(propName).hasNullValue()) {
+            if (props2.getSVNPropertyValue(propName) == null) {
                 return false;
             }
             if (propName.equals(SVNProperty.UUID)) {

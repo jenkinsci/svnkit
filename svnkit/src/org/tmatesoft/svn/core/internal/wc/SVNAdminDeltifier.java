@@ -20,9 +20,9 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.io.fs.FSEntry;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
@@ -119,7 +119,6 @@ public class SVNAdminDeltifier {
 
         if (distance == 0) {
             myEditor.closeEdit();
-            return;
         } else if (srcEntry != null) {
             if (srcKind != tgtKind || distance == -1) {
                 myEditor.openRoot(rootRevision);
@@ -260,37 +259,34 @@ public class SVNAdminDeltifier {
             long committedRevision = node.getCreatedRevision();
             if (SVNRevision.isValidRevisionNumber(committedRevision)) {
                 if (isDir) {
-                    myEditor.changeDirProperty(SVNPropertyValue.create(SVNProperty.COMMITTED_REVISION,
-                            String.valueOf(committedRevision)));
+                    myEditor.changeDirProperty(SVNProperty.COMMITTED_REVISION, SVNPropertyValue.create(String.valueOf(committedRevision)));
                 } else {
-                    myEditor.changeFileProperty(editPath, SVNPropertyValue.create(SVNProperty.COMMITTED_REVISION,
-                            String.valueOf(committedRevision)));
+                    myEditor.changeFileProperty(editPath, SVNProperty.COMMITTED_REVISION, SVNPropertyValue.create(String.valueOf(committedRevision)));
                 }
                 
                 SVNProperties revisionProps = myFSFS.getRevisionProperties(committedRevision);
                 String committedDateStr = revisionProps.getStringValue(SVNRevisionProperty.DATE);
                 if (committedDateStr != null || srcPath != null) {
                     if (isDir) {
-                        myEditor.changeDirProperty(SVNPropertyValue.create(SVNProperty.COMMITTED_DATE, committedDateStr));
+                        myEditor.changeDirProperty(SVNProperty.COMMITTED_DATE, SVNPropertyValue.create(committedDateStr));
                     } else {
-                        myEditor.changeFileProperty(editPath, SVNPropertyValue.create(SVNProperty.COMMITTED_DATE,
-                                committedDateStr));
+                        myEditor.changeFileProperty(editPath,SVNProperty.COMMITTED_DATE, SVNPropertyValue.create(committedDateStr));
                     }
                 }
                 String lastAuthor = revisionProps.getStringValue(SVNRevisionProperty.AUTHOR);
                 if (lastAuthor != null || srcPath != null) {
                     if (isDir) {
-                        myEditor.changeDirProperty(SVNPropertyValue.create(SVNProperty.LAST_AUTHOR, lastAuthor));
+                        myEditor.changeDirProperty(SVNProperty.LAST_AUTHOR, SVNPropertyValue.create(lastAuthor));
                     } else {
-                        myEditor.changeFileProperty(editPath, SVNPropertyValue.create(SVNProperty.LAST_AUTHOR, lastAuthor));
+                        myEditor.changeFileProperty(editPath,SVNProperty.LAST_AUTHOR, SVNPropertyValue.create(lastAuthor));
                     }
                 }
 
                 String uuid = myFSFS.getUUID();
                 if (isDir) {
-                    myEditor.changeDirProperty(SVNPropertyValue.create(SVNProperty.UUID, uuid));
+                    myEditor.changeDirProperty(SVNProperty.UUID, SVNPropertyValue.create(uuid));
                 } else {
-                    myEditor.changeFileProperty(editPath, SVNPropertyValue.create(SVNProperty.UUID, uuid));
+                    myEditor.changeFileProperty(editPath, SVNProperty.UUID, SVNPropertyValue.create(uuid));
                 }
             }
         }
@@ -316,9 +312,9 @@ public class SVNAdminDeltifier {
             String propName = (String) names[i];
             SVNPropertyValue propValue = propsDiffs.getSVNPropertyValue(propName);
             if (isDir) {
-                myEditor.changeDirProperty(propValue);
+                myEditor.changeDirProperty(propName, propValue);
             } else {
-                myEditor.changeFileProperty(editPath, propValue);
+                myEditor.changeFileProperty(editPath, propName, propValue);
             }
         }
     }

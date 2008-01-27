@@ -67,7 +67,7 @@ class SVNCheckoutRoot extends SVNMeasurable implements Runnable, ISVNEditor, ISV
     public void openDir(String path, long revision) throws SVNException {
     }
 
-    public void changeDirProperty(SVNPropertyValue value) throws SVNException {
+    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
     }
 
     public void closeDir() throws SVNException {
@@ -79,7 +79,7 @@ class SVNCheckoutRoot extends SVNMeasurable implements Runnable, ISVNEditor, ISV
     public void openFile(String path, long revision) throws SVNException {
     }
 
-    public void changeFileProperty(String path, SVNPropertyValue value) throws SVNException {
+    public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
     }
 
     public void closeFile(String path, String textChecksum) throws SVNException {

@@ -111,7 +111,7 @@ public class FSCommitEditor implements ISVNEditor {
         for (Iterator iter = myRevProps.nameSet().iterator(); iter.hasNext();) {
             String propName = (String) iter.next();
             SVNPropertyValue propValue = myRevProps.getSVNPropertyValue(propName);
-            myFSFS.setTransactionProperty(txnId, propValue);
+            myFSFS.setTransactionProperty(txnId, propName, propValue);
         }
     }
 
@@ -184,7 +184,7 @@ public class FSCommitEditor implements ISVNEditor {
         myDirsStack.push(dirBaton);
     }
 
-    public void changeDirProperty(SVNPropertyValue value) throws SVNException {
+    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
         DirBaton dirBaton = (DirBaton) myDirsStack.peek();
         if (FSRepository.isValidRevision(dirBaton.getBaseRevision())) {
             FSRevisionNode existingNode = myTxnRoot.getRevisionNode(dirBaton.getPath());
@@ -193,7 +193,7 @@ public class FSCommitEditor implements ISVNEditor {
                 SVNErrorManager.error(FSErrors.errorOutOfDate(dirBaton.getPath(), SVNNodeKind.DIR));
             }
         }
-        myCommitter.changeNodeProperty(dirBaton.getPath(), value);
+        myCommitter.changeNodeProperty(dirBaton.getPath(), name, value);
     }
 
     private void changeNodeProperties(String path, SVNProperties propNamesToValues) throws SVNException {
@@ -223,7 +223,7 @@ public class FSCommitEditor implements ISVNEditor {
             }
 
             SVNPropertyValue propValue = propNamesToValues.getSVNPropertyValue(propName);
-            if (properties.isEmpty() && propValue.hasNullValue()) {
+            if (properties.isEmpty() && propValue == null) {
                 continue;
             }
 
@@ -231,7 +231,7 @@ public class FSCommitEditor implements ISVNEditor {
                 //TODO: FIXME
             }
 
-            if (propValue.hasNullValue()) {
+            if (propValue == null) {
                 properties.remove(propName);
             } else {
                 properties.put(propName, propValue);
@@ -305,7 +305,7 @@ public class FSCommitEditor implements ISVNEditor {
         return myDeltaConsumer;
     }
 
-    public void changeFileProperty(String path, SVNPropertyValue value) throws SVNException {
+    public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
         String fullPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(myBasePath, path));
         SVNProperties props = getFilePropertiesStorage();
         if (!fullPath.equals(myCurrentFilePath)) {
@@ -315,7 +315,7 @@ public class FSCommitEditor implements ISVNEditor {
             }
             myCurrentFilePath = fullPath;
         }
-        props.put(value);
+        props.put(name, value);
     }
 
     private SVNProperties getFilePropertiesStorage() {

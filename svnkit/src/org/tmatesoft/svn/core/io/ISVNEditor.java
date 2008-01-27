@@ -151,7 +151,7 @@ public interface ISVNEditor extends ISVNDeltaConsumer {
      * @see 					#openDir(String, long)
      */
 
-    public void changeDirProperty(SVNPropertyValue property) throws SVNException;
+    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException;
 
     /**
      * Closes the currently opened directory fixing all changes of its 
@@ -194,18 +194,8 @@ public interface ISVNEditor extends ISVNDeltaConsumer {
      * @throws SVNException
      */
     public void openFile(String path, long revision) throws SVNException;
-    
-    /**
-     * Changes the value of a property of an opened file.
-     * 
-     * @param  path			  a file path relative to the root       
-     *                        directory opened by {@link #openRoot(long) openRoot()}
-     * @param  name			  a file property name
-     * @param  value		  a new value for the property
-     * @throws SVNException
-     */
 
-    public void changeFileProperty(String path, SVNPropertyValue property) throws SVNException;
+    public void changeFileProperty(String path, String propertyName, SVNPropertyValue propertyValue) throws SVNException;
 
     /**
      * Closes the opened file fixing all properties and/or contents changes. 

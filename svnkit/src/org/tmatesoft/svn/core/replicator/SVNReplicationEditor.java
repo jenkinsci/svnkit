@@ -174,15 +174,15 @@ public class SVNReplicationEditor implements ISVNEditor {
         myCommitEditor.openDir(path, myPreviousRevision);
     }
 
-    public void changeDirProperty(SVNPropertyValue value) throws SVNException {
-        if (!SVNProperty.isRegularProperty(value.getName())) {
+    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
+        if (!SVNProperty.isRegularProperty(name)) {
             return;
         }
         EntryBaton baton = (EntryBaton) myDirsStack.peek();
         if (baton.myPropsAct == ACCEPT) {
-            myCommitEditor.changeDirProperty(value);
+            myCommitEditor.changeDirProperty(name, value);
         } else if (baton.myPropsAct == DECIDE) {
-            SVNPropertyValue propVal = baton.myProps.getSVNPropertyValue(value.getName());
+            SVNPropertyValue propVal = baton.myProps.getSVNPropertyValue(name);
             if (propVal != null && propVal.equals(value)) {
                 /*
                  * The properties seem to be the same as of the copy origin,
@@ -195,7 +195,7 @@ public class SVNReplicationEditor implements ISVNEditor {
              * Properties do differ, accept them.
              */
             baton.myPropsAct = ACCEPT;
-            myCommitEditor.changeDirProperty(value);
+            myCommitEditor.changeDirProperty(name, value);
         }
     }
 
@@ -329,15 +329,15 @@ public class SVNReplicationEditor implements ISVNEditor {
         }
     }
 
-    public void changeFileProperty(String path, SVNPropertyValue value) throws SVNException {
-        if (!SVNProperty.isRegularProperty(value.getName())) {
+    public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
+        if (!SVNProperty.isRegularProperty(name)) {
             return;
         }
         EntryBaton baton = (EntryBaton) myPathsToFileBatons.get(path);
         if (baton.myPropsAct == ACCEPT) {
-            myCommitEditor.changeFileProperty(path, value);
+            myCommitEditor.changeFileProperty(path, name, value);
         } else if (baton.myPropsAct == DECIDE) {
-            SVNPropertyValue propVal = baton.myProps.getSVNPropertyValue(value.getName());
+            SVNPropertyValue propVal = baton.myProps.getSVNPropertyValue(name);
             if (propVal != null && propVal.equals(value)) {
                 /*
                  * The properties seem to be the same as of the copy origin,
@@ -350,7 +350,7 @@ public class SVNReplicationEditor implements ISVNEditor {
              * Properties do differ, accept them.
              */
             baton.myPropsAct = ACCEPT;
-            myCommitEditor.changeFileProperty(path, value);
+            myCommitEditor.changeFileProperty(path, name, value);
         }
     }
 

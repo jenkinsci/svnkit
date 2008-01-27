@@ -632,23 +632,23 @@ public class FSFS {
         }
     }
 
-    public void setTransactionProperty(String txnID, SVNPropertyValue propertyValue) throws SVNException {
-        if (!SVNProperty.isRegularProperty(propertyValue.getName())) {
+    public void setTransactionProperty(String txnID, String name, SVNPropertyValue propertyValue) throws SVNException {
+        if (!SVNProperty.isRegularProperty(name)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS,
-                    "Storage of non-regular property ''{0}'' is disallowed through the repository interface, and could indicate a bug in your client", propertyValue.getName());
+                    "Storage of non-regular property ''{0}'' is disallowed through the repository interface, and could indicate a bug in your client", name);
             SVNErrorManager.error(err);
         }
         SVNWCProperties revProps = new SVNWCProperties(getTransactionPropertiesFile(txnID), null);
-        revProps.setPropertyValue(propertyValue);
+        revProps.setPropertyValue(name, propertyValue);
     }
 
-    public void setRevisionProperty(long revision, SVNPropertyValue propertyValue) throws SVNException {
+    public void setRevisionProperty(long revision, String propertyName, SVNPropertyValue propertyValue) throws SVNException {
         FSWriteLock writeLock = FSWriteLock.getWriteLock(this);
         synchronized (writeLock) {
             try {
                 writeLock.lock();
                 SVNWCProperties revProps = new SVNWCProperties(getRevisionPropertiesFile(revision), null);
-                revProps.setPropertyValue(propertyValue);
+                revProps.setPropertyValue(propertyName, propertyValue);
             } finally {
                 writeLock.unlock();
                 FSWriteLock.realease(writeLock);

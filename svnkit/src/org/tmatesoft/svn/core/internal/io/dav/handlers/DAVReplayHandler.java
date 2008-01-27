@@ -167,9 +167,9 @@ public class DAVReplayHandler extends DAVEditorHandler {
             } else {
                 if (attrs.getValue(DEL_ATTR) != null) {
                     if (element == CHANGE_FILE_PROPERTY) {
-                        myEditor.changeFileProperty(myPath, SVNPropertyValue.create(myPropertyName, (String) null));
+                        myEditor.changeFileProperty(myPath, name, null);
                     } else {
-                        myEditor.changeDirProperty(SVNPropertyValue.create(myPropertyName, (String) null));
+                        myEditor.changeDirProperty(name, null);
                     }
                     myPropertyName = null;
                 } else {
@@ -193,9 +193,9 @@ public class DAVReplayHandler extends DAVEditorHandler {
                 int length = SVNBase64.base64ToByteArray(new StringBuffer(cdata.toString().trim()), buffer);
                 property = SVNPropertyValue.create(myPropertyName, buffer, 0, length);
                 if (element == CHANGE_FILE_PROPERTY) {
-                    myEditor.changeFileProperty(myPath, property);
+                    myEditor.changeFileProperty(myPath, myPropertyName, property);
                 } else {
-                    myEditor.changeDirProperty(property);
+                    myEditor.changeDirProperty(myPropertyName, property);
                 }
             }
         }

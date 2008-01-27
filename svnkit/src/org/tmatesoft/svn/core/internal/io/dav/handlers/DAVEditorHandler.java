@@ -253,9 +253,9 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
         } else if (element == REMOVE_PROP) {
             String name = attrs.getValue(NAME_ATTR);
             if (myIsDirectory) {
-                myEditor.changeDirProperty(SVNPropertyValue.create(name, (String) null));
+                myEditor.changeDirProperty(name, null);
             } else {
-                myEditor.changeFileProperty(myPath, SVNPropertyValue.create(name, (String) null));
+                myEditor.changeFileProperty(myPath, name, null);
             }
         } else if (element == RESOURCE || element == FETCH_FILE || element == FETCH_PROPS) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "'update' response format used by the server is not supported; element ''{0}'' was not expected", element.toString());
@@ -295,12 +295,12 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                 int length = SVNBase64.base64ToByteArray(new StringBuffer(cdata.toString().trim()), buffer);
                 value = SVNPropertyValue.create(myPropertyName, buffer, 0, length);                
             } else {
-                value = SVNPropertyValue.create(myPropertyName, cdata.toString());
+                value = SVNPropertyValue.create(cdata.toString());
             }
             if (myIsDirectory) {
-                myEditor.changeDirProperty(value);
+                myEditor.changeDirProperty(myPropertyName, value);
             } else {
-                myEditor.changeFileProperty(myPath, value);
+                myEditor.changeFileProperty(myPath, myPropertyName, value);
             }
             myPropertyName = null;
             myEncoding = null;

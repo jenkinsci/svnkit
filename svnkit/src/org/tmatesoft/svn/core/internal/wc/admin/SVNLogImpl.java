@@ -63,7 +63,7 @@ public class SVNLogImpl extends SVNLog {
                     String attr = (String) attrs.next();
                     SVNPropertyValue value = command.getSVNPropertyValue(attr);
                     String str = null;
-                    if (value == null || value.hasNullValue()) {
+                    if (value == null) {
                         str = "";
                     } else {
                         str = SVNPropertyValue.getPropertyAsString(value);

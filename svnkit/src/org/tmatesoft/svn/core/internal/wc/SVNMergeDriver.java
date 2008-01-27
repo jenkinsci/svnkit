@@ -591,7 +591,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         			for (Iterator childrenIter = myChildrenWithMergeInfo.iterator(); childrenIter.hasNext();) {
 						MergePath child = (MergePath) childrenIter.next();
 						SVNPropertiesManager.setProperty(myWCAccess, child.myPath, SVNProperty.MERGE_INFO, 
-								child.myMergeInfoPropValue, true);
+								SVNPropertyValue.create(child.myMergeInfoPropValue), true);
 					}
         		}
         		if (err != null) {

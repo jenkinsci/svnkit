@@ -286,6 +286,8 @@ public class SVNProperty {
     public static final String SCHEDULE_REPLACE = "replace";
 
     public static final long WORKING_SIZE_UNKNOWN = -1;
+
+    public static final SVNPropertyValue BOOLEAN_PROPERTY_VALUE = SVNPropertyValue.create("*");    
     
     private static final byte[] EOL_LF_BYTES = { '\n' };
     private static final byte[] EOL_CRLF_BYTES = { '\r', '\n' };
@@ -489,7 +491,7 @@ public class SVNProperty {
      */
     public static SVNPropertyValue getValueOfBooleanProperty(String propName) {
         if (SVNProperty.EXECUTABLE.equals(propName) || SVNProperty.NEEDS_LOCK.equals(propName) || SVNProperty.SPECIAL.equals(propName)) {
-            return SVNPropertyValue.create(propName, "*");
+            return BOOLEAN_PROPERTY_VALUE;
         }
         return null;
     }

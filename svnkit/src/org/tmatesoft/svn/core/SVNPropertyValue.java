@@ -23,49 +23,41 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
  */
 public class SVNPropertyValue {
 
-    private String myName;
     private String myValue;
     private byte[] myData;
 
     public static SVNPropertyValue create(String propertyName, byte[] data, int offset, int length) {
-        return new SVNPropertyValue(propertyName, data, offset, length);
+        if (data == null) {
+            return null;
+        }
+        if (SVNProperty.isSVNProperty(propertyName)) {
+            String value = null;
+            try {
+                value = new String(data, offset, length, "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                value = new String(data, offset, length);
+            }
+            return new SVNPropertyValue(value);
+        }
+        return new SVNPropertyValue(data, offset, length);
     }
 
     public static SVNPropertyValue create(String propertyName, byte[] data) {
-        return new SVNPropertyValue(propertyName, data);
-    }
-
-    public static SVNPropertyValue create(String propertyName, String propertyValue) {
-        return new SVNPropertyValue(propertyName, propertyValue);
-    }
-
-    private SVNPropertyValue(String propertyName, byte[] data, int offset, int length) {
-        myName = propertyName;
-        if (data != null) {
-            if (SVNProperty.isSVNProperty(myName)) {
-                try {
-                    myValue = new String(data, offset, length, "UTF-8");
-                } catch (UnsupportedEncodingException e) {
-                    myValue = new String(data, offset, length);
-                }
-            } else {
-                myData = new byte[length];
-                System.arraycopy(data, offset, myData, 0, length);
-            }
+        if (data == null) {
+            return null;
         }
+        return create(propertyName, data, 0, data.length);
     }
 
-    private SVNPropertyValue(String propertyName, byte[] data) {
-        this(propertyName, data, 0, data == null ? -1 : data.length);
-    }
-
-    private SVNPropertyValue(String propertyName, String propertyValue) {
-        myName = propertyName;
-        myValue = propertyValue;
+    public static SVNPropertyValue create(String propertyValue) {
+        if (propertyValue == null){
+            return null;            
+        }
+        return new SVNPropertyValue(propertyValue);
     }
 
     public static byte[] getPropertyAsBytes(SVNPropertyValue value) {
-        if (value == null || value.hasNullValue()) {
+        if (value == null) {
             return null;
         }
         if (value.isString()) {
@@ -79,7 +71,7 @@ public class SVNPropertyValue {
     }
 
     public static String getPropertyAsString(SVNPropertyValue value) {
-        if (value == null || value.hasNullValue()) {
+        if (value == null) {
             return null;
         }
         if (value.isBinary()) {
@@ -92,38 +84,29 @@ public class SVNPropertyValue {
         return value.getString();
     }
 
-    public String getName() {
-        return myName;
+    private SVNPropertyValue(byte[] data, int offset, int length) {
+        myData = new byte[length];
+        System.arraycopy(data, offset, myData, 0, length);
     }
 
-    public SVNPropertyValue changePropertyName(String newName) {
-        if (myName.equals(newName)) {
-            return this;
-        }
-        if (isBinary()) {
-            return create(newName, getBytes());
-        }
-        return create(newName, getString());
-    }
-
-    public byte[] getBytes() {
-        return myData;
-    }
-
-    public String getString() {
-        return myValue;
+    private SVNPropertyValue(String propertyValue) {
+        myValue = propertyValue;
     }
 
     public boolean isBinary() {
         return myData != null;
     }
 
+    public byte[] getBytes() {
+        return myData;
+    }
+
     public boolean isString() {
         return myValue != null;
     }
 
-    public boolean hasNullValue() {
-        return !isBinary() && !isString();
+    public String getString() {
+        return myValue;
     }
 
     public boolean isXMLSafe() {
@@ -140,7 +123,6 @@ public class SVNPropertyValue {
         return getString();
     }
 
-    //TODO: compare properties names
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;

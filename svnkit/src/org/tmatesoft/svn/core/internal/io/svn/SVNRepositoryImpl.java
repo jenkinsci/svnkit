@@ -838,9 +838,8 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         }
     }
 
-    public void setRevisionPropertyValue(long revision, SVNPropertyValue propertyValue) throws SVNException {
+    public void setRevisionPropertyValue(long revision, String propertyName, SVNPropertyValue propertyValue) throws SVNException {
         assertValidRevision(revision);
-        String propertyName = propertyValue.getName();
         byte[] bytes = SVNPropertyValue.getPropertyAsBytes(propertyValue);        
         Object[] buffer = new Object[]{"change-rev-prop",
                 getRevisionObject(revision), propertyName, bytes};

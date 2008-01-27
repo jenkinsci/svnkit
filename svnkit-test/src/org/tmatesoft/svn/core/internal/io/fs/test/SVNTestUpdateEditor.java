@@ -86,10 +86,10 @@ public class SVNTestUpdateEditor implements ISVNEditor {
         myDirsStack.push(item);
     }
 
-    public void changeDirProperty(SVNPropertyValue value) throws SVNException {
+    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
         SVNItem curDir = (SVNItem) myDirsStack.peek();
         String absPath = curDir.getRepositoryPath();
-        curDir.changeProperty(value.getName(), value);
+        curDir.changeProperty(name, value);
 
         if (myItems.get(absPath) == null) {
             myItems.put(absPath, curDir);
@@ -115,10 +115,10 @@ public class SVNTestUpdateEditor implements ISVNEditor {
         myItems.put(absPath, item);
     }
 
-    public void changeFileProperty(String path, SVNPropertyValue value) throws SVNException {
+    public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
         String absPath = myRepository.getRepositoryPath(path);
         SVNItem fileItem = (SVNItem) myItems.get(absPath);
-        fileItem.changeProperty(value.getName(), value);
+        fileItem.changeProperty(name, value);
         myNumberOfChanges++;
     }
 

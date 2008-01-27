@@ -248,7 +248,7 @@ public class FSLog {
                         }
                         if (SVNRevisionProperty.DATE.equals(propName) && date != null) {
                             entryRevProps.put(propName, SVNDate.formatDate(date));
-                        } else if (propVal != null && !propVal.hasNullValue()) {
+                        } else if (propVal != null) {
                             entryRevProps.put(propName, propVal);
                         }
                     }

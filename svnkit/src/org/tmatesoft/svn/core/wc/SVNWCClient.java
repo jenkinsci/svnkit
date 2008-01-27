@@ -512,7 +512,7 @@ public class SVNWCClient extends SVNBasicClient {
                     "''{0}'' is an entry property, thus not accessible to clients", propName);
             SVNErrorManager.error(err);
         }
-        propValue = validatePropertyValue(path.getAbsolutePath(), propValue, force);
+        propValue = validatePropertyValue(path.getAbsolutePath(), propName, propValue, force);
         SVNWCAccess wcAccess = createWCAccess();
         try {
             wcAccess.probeOpen(path, true, admLockLevel);
@@ -553,7 +553,7 @@ public class SVNWCClient extends SVNBasicClient {
                     "''{0}'' is an entry property, thus not accessible to clients", propName);
             SVNErrorManager.error(err);
         }
-        propValue = validatePropertyValue(url.toString(), propValue, force);
+        propValue = validatePropertyValue(url.toString(), propName, propValue, force);
         SVNRepository repos = createRepository(url, true);
         long revNumber = SVNRepository.INVALID_REVISION;
         try {
@@ -597,10 +597,10 @@ public class SVNWCClient extends SVNBasicClient {
             commitEditor.openRoot(revNumber);
             if (kind == SVNNodeKind.FILE) {
                 commitEditor.openFile("", revNumber);
-                commitEditor.changeFileProperty("", propValue);
+                commitEditor.changeFileProperty("", propName, propValue);
                 commitEditor.closeFile("", null);
             } else {
-                commitEditor.changeDirProperty(propValue);
+                commitEditor.changeDirProperty(propName, propValue);
             }
             commitEditor.closeDir();
         } catch (SVNException svne) {
@@ -644,15 +644,15 @@ public class SVNWCClient extends SVNBasicClient {
      * @see #doGetProperty(File,String,SVNRevision,SVNRevision,boolean)
      * @see #doGetRevisionProperty(File,String,SVNRevision,ISVNPropertyHandler)
      */
-    public void doSetRevisionProperty(File path, SVNRevision revision, SVNPropertyValue propValue, boolean force, ISVNPropertyHandler handler) throws SVNException {
-        if (propValue != null && !SVNPropertiesManager.isValidPropertyName(propValue.getName())) {
+    public void doSetRevisionProperty(File path, SVNRevision revision, String propName, SVNPropertyValue propValue, boolean force, ISVNPropertyHandler handler) throws SVNException {
+        if (propValue != null && !SVNPropertiesManager.isValidPropertyName(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
-                    "Bad property name ''{0}''", propValue.getName());
+                    "Bad property name ''{0}''", propName);
             SVNErrorManager.error(err);
         }
-        propValue = validatePropertyValue(path.getAbsolutePath(), propValue, force);
+        propValue = validatePropertyValue(path.getAbsolutePath(), propName, propValue, force);
         SVNURL url = getURL(path);
-        doSetRevisionProperty(url, revision, propValue, force, handler);
+        doSetRevisionProperty(url, revision, propName, propValue, force, handler);
     }
 
     /**
@@ -687,15 +687,14 @@ public class SVNWCClient extends SVNBasicClient {
      * @see #doGetProperty(File,String,SVNRevision,SVNRevision,boolean)
      * @see #doGetRevisionProperty(File,String,SVNRevision,ISVNPropertyHandler)
      */
-    public void doSetRevisionProperty(SVNURL url, SVNRevision revision, SVNPropertyValue propValue, boolean force, ISVNPropertyHandler handler) throws SVNException {
-        String propName = propValue.getName();
+    public void doSetRevisionProperty(SVNURL url, SVNRevision revision, String propName, SVNPropertyValue propValue, boolean force, ISVNPropertyHandler handler) throws SVNException {
         if (propValue != null && !SVNPropertiesManager.isValidPropertyName(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
                     "Bad property name ''{0}''", propName);
             SVNErrorManager.error(err);
         }
-        propValue = validatePropertyValue(url.toString(), propValue, force);
-        if (!force && SVNRevisionProperty.AUTHOR.equals(propName) && propValue != null && propValue.getString().indexOf('\n') >= 0) {
+        propValue = validatePropertyValue(url.toString(), propName, propValue, force);
+        if (!force && SVNRevisionProperty.AUTHOR.equals(propName) && propValue != null && propValue.isString() &&  propValue.getString().indexOf('\n') >= 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_REVISION_AUTHOR_CONTAINS_NEWLINE, "Value will not be set unless forced");
             SVNErrorManager.error(err);
         }
@@ -705,7 +704,7 @@ public class SVNWCClient extends SVNBasicClient {
         }
         SVNRepository repos = createRepository(url, null, SVNRevision.UNDEFINED, revision);
         long revNumber = getRevisionNumber(revision, repos, null);
-        repos.setRevisionPropertyValue(revNumber, propValue);
+        repos.setRevisionPropertyValue(revNumber, propName, propValue);
         if (handler != null) {
             handler.handleProperty(revNumber, new SVNPropertyData(propName, propValue));
         }
@@ -1349,7 +1348,7 @@ public class SVNWCClient extends SVNBasicClient {
                 String propName = (String) names.next();
                 String propValue = (String) props.get(propName);
                 try {
-                    SVNPropertiesManager.setProperty(dir.getWCAccess(), path, propName, propValue, false);
+                    SVNPropertiesManager.setProperty(dir.getWCAccess(), path, propName, SVNPropertyValue.create(propValue), false);
                 } catch (SVNException e) {
                     if (SVNProperty.EOL_STYLE.equals(propName) &&
                             e.getErrorMessage().getErrorCode() == SVNErrorCode.ILLEGAL_TARGET &&
@@ -1369,7 +1368,7 @@ public class SVNWCClient extends SVNBasicClient {
                 }
             }
             if (mimeType != null) {
-                SVNPropertiesManager.setProperty(dir.getWCAccess(), path, SVNProperty.MIME_TYPE, mimeType, false);
+                SVNPropertiesManager.setProperty(dir.getWCAccess(), path, SVNProperty.MIME_TYPE, SVNPropertyValue.create(mimeType), false);
             } else {
                 mimeType = (String) props.get(SVNProperty.MIME_TYPE);
             }
@@ -2646,39 +2645,38 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
 
-    private static SVNPropertyValue validatePropertyValue(String owner, SVNPropertyValue value, boolean force) throws SVNException {
+    private static SVNPropertyValue validatePropertyValue(String owner, String name, SVNPropertyValue value, boolean force) throws SVNException {
         if (value == null) {
             return value;
         }
-        String name = value.getName();
         if (SVNProperty.isSVNProperty(name) && value.isString()) {
             String str = value.getString();
             str = str.replaceAll("\r\n", "\n");
             str.replace('\r', '\n');
-            value = SVNPropertyValue.create(value.getName(), str);
+            value = SVNPropertyValue.create(str);
         }
         if (!force && SVNProperty.EOL_STYLE.equals(name)) {
             if (value.isString()) {
-                value = SVNPropertyValue.create(value.getName(), value.getString().trim());
+                value = SVNPropertyValue.create(value.getString().trim());
             }
         } else if (!force && SVNProperty.MIME_TYPE.equals(name)) {
             if (value.isString()) {
-                value = SVNPropertyValue.create(value.getName(), value.getString().trim());
+                value = SVNPropertyValue.create(value.getString().trim());
             }
         } else if (SVNProperty.IGNORE.equals(name) || SVNProperty.EXTERNALS.equals(name)) {
             if (value.isString() && !value.getString().endsWith("\n")) {
-                value = SVNPropertyValue.create(value.getName(), value.getString().concat("\n"));
+                value = SVNPropertyValue.create(value.getString().concat("\n"));
             }
             if (SVNProperty.EXTERNALS.equals(name)) {
                 SVNExternal.parseExternals(owner, value.getString());
             }
         } else if (SVNProperty.KEYWORDS.equals(name)) {
             if (value.isString()) {
-                value = SVNPropertyValue.create(value.getName(), value.getString().trim());
+                value = SVNPropertyValue.create(value.getString().trim());
             }
         } else
         if (SVNProperty.EXECUTABLE.equals(name) || SVNProperty.SPECIAL.equals(name) || SVNProperty.NEEDS_LOCK.equals(name)) {
-            value = SVNPropertyValue.create(name, "*");
+            value = SVNPropertyValue.create("*");
         }
         return value;
     }

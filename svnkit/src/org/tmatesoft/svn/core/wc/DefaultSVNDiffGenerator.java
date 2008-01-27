@@ -178,7 +178,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             String name = (String) changedPropNames.next();
             SVNPropertyValue originalValue = baseProps.getSVNPropertyValue(name);
             SVNPropertyValue newValue = diff.getSVNPropertyValue(name);
-            if ((originalValue != null && originalValue.equals(newValue)) || ((originalValue == null || originalValue.hasNullValue()) && newValue.hasNullValue())) {
+            if ((originalValue != null && originalValue.equals(newValue)) || (originalValue == null && newValue == null)) {
                 changedPropNames.remove();
             }
         }
@@ -200,9 +200,9 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                 SVNPropertyValue newValue = diff.getSVNPropertyValue(name);
                 String headerFormat = null;
                 
-                if (originalValue == null || originalValue.hasNullValue()) {
+                if (originalValue == null) {
                     headerFormat = "Added: ";
-                } else if (newValue == null || newValue.hasNullValue()) {
+                } else if (newValue == null) {
                     headerFormat = "Deleted: ";
                 } else {
                     headerFormat = "Modified: ";
@@ -214,12 +214,12 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                     displayMergeInfoDiff(bos, originalValue == null ? null : originalValue.getString(), newValue == null ? null : newValue.getString());
                     continue;
                 }
-                if (originalValue != null && !originalValue.hasNullValue()) {
+                if (originalValue != null) {
                     bos.write("   - ".getBytes(getEncoding()));
                     bos.write(getPropertyAsBytes(originalValue, getEncoding()));
                     bos.write(EOL);
                 }
-                if (!newValue.hasNullValue()) {
+                if (newValue != null) {
                     bos.write("   + ".getBytes(getEncoding()));
                     bos.write(getPropertyAsBytes(newValue, getEncoding()));
                     bos.write(EOL);
@@ -239,7 +239,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     }
 
     private byte[] getPropertyAsBytes(SVNPropertyValue value, String encoding){
-        if (value == null || value.hasNullValue()){
+        if (value == null){
             return null;            
         }
         if (value.isString()){

@@ -71,15 +71,15 @@ public class SVNSynchronizeEditor implements ISVNEditor {
         getWrappedEditor().addFile(path, copyFromPath, copyFromRevision);
     }
 
-    public void changeDirProperty(SVNPropertyValue value) throws SVNException {
-        if (SVNProperty.isRegularProperty(value.getName())) {
-            getWrappedEditor().changeDirProperty(value);
+    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
+        if (SVNProperty.isRegularProperty(name)) {
+            getWrappedEditor().changeDirProperty(name, value);
         }
     }
 
-    public void changeFileProperty(String path, SVNPropertyValue value) throws SVNException {
-        if (SVNProperty.isRegularProperty(value.getName())) {
-            getWrappedEditor().changeFileProperty(path, value);
+    public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
+        if (SVNProperty.isRegularProperty(name)) {
+            getWrappedEditor().changeFileProperty(path, name, value);
         }
     }
 

@@ -108,10 +108,9 @@ class SVNCommitEditor implements ISVNEditor {
         myDirsStack.push(dirBaton);
     }
 
-    public void changeDirProperty(SVNPropertyValue value)
+    public void changeDirProperty(String name, SVNPropertyValue value)
             throws SVNException {
         DirBaton dirBaton = (DirBaton) myDirsStack.peek();
-        String name = value.getName();
         byte[] bytes = SVNPropertyValue.getPropertyAsBytes(value);
         myConnection.write("(w(ss(b)))", new Object[]{"change-dir-prop",
                 dirBaton.getToken(), name, bytes});
@@ -184,10 +183,9 @@ class SVNCommitEditor implements ISVNEditor {
         myConnection.write("(w(s))", new Object[]{"textdelta-end", fileToken});
     }
 
-    public void changeFileProperty(String path, SVNPropertyValue value) throws SVNException {
+    public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
         String fileToken = (String) myFilesToTokens.get(path);
-        String name = value.getName();
-        byte[] bytes = SVNPropertyValue.getPropertyAsBytes(value);       
+        byte[] bytes = SVNPropertyValue.getPropertyAsBytes(value);
         myConnection.write("(w(ss(s)))", new Object[]{"change-file-prop", fileToken, name, bytes});
     }
 

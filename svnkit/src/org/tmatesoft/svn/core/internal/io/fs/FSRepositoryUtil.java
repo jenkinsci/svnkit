@@ -145,7 +145,7 @@ public class FSRepositoryUtil {
             SVNPropertyValue srcPropVal = sourceProps.getSVNPropertyValue(propName);
             SVNPropertyValue targetPropVal = targetProps.getSVNPropertyValue(propName);
 
-            if (targetPropVal == null || targetPropVal.hasNullValue()) {
+            if (targetPropVal == null) {
                 result.put(propName, targetPropVal);
             } else if (!targetPropVal.equals(srcPropVal)) {
                 result.put(propName, targetPropVal);
@@ -156,7 +156,7 @@ public class FSRepositoryUtil {
             String propName = (String)names.next();
             SVNPropertyValue targetPropVal = targetProps.getSVNPropertyValue(propName);
             SVNPropertyValue sourceValue = sourceProps.getSVNPropertyValue(propName);
-            if(sourceValue == null || sourceValue.hasNullValue()){
+            if (sourceValue == null){
                 result.put(propName, targetPropVal);
             }
         }        

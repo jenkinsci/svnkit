@@ -491,10 +491,10 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
         writeEntryTag("open-directory", path, revision);
     }
 
-    public void changeDirProperty(SVNPropertyValue value) throws SVNException {
+    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
         if (!isResourceWalk()) {
             EditorEntry entry = (EditorEntry) getEditorEntries().peek();
-            changeProperties(entry, value);
+            changeProperties(entry, name, value);
         }
     }
 
@@ -513,9 +513,9 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
         writeEntryTag("open-file", path, revision);
     }
 
-    public void changeFileProperty(String path, SVNPropertyValue value) throws SVNException {
+    public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
         if (!isResourceWalk()) {
-            changeProperties(getFileEditorEntry(), value);
+            changeProperties(getFileEditorEntry(), name, value);
         }
     }
 
@@ -616,10 +616,9 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
         write(xmlBuffer);
     }
 
-    private void changeProperties(EditorEntry entry, SVNPropertyValue value) throws SVNException {
-        String name = value.getName();
+    private void changeProperties(EditorEntry entry, String name, SVNPropertyValue value) throws SVNException {
         if (getUpdateRequest().isSendAll()) {
-            if (!value.hasNullValue()) {
+            if (value != null) {
                 writePropertyTag("set-prop", name, value);
             } else {
                 writeEntryTag("remove-prop", name);
@@ -632,7 +631,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
             } else if (SVNProperty.LAST_AUTHOR.equals(name)) {
                 entry.setLastAuthor(value.getString());
             } else {
-                if (value.hasNullValue()) {
+                if (value == null) {
                     entry.addRemovedProperty(name);
                 } else {
                     entry.setHasChangedProperty(true);

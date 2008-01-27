@@ -190,10 +190,10 @@ class DAVCommitEditor implements ISVNEditor {
         myPathsMap.put(directory.getURL(), directory.getPath());
     }
 
-    public void changeDirProperty(SVNPropertyValue value) throws SVNException {
+    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
         DAVResource directory = (DAVResource) myDirsStack.peek();
         checkoutResource(directory, true);
-        directory.putProperty(value.getName(), value);
+        directory.putProperty(name, value);
         myPathsMap.put(directory.getURL(), directory.getPath());
     }
 
@@ -305,9 +305,9 @@ class DAVCommitEditor implements ISVNEditor {
         SVNFileUtil.closeFile(myCurrentDelta);
     }
 
-    public void changeFileProperty(String path, SVNPropertyValue value)  throws SVNException {
+    public void changeFileProperty(String path, String name, SVNPropertyValue value)  throws SVNException {
         DAVResource currentFile = (DAVResource) myFilesMap.get(path);
-        currentFile.putProperty(value.getName(), value);
+        currentFile.putProperty(name, value);
     }
 
     public void closeFile(String path, String textChecksum) throws SVNException {

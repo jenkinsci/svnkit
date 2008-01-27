@@ -301,7 +301,8 @@ public class Export {
          * 
          * When property has to be deleted value will be 'null'. 
          */
-		public void changeDirProperty(SVNPropertyValue property) throws SVNException {
+
+        public void changeDirProperty(String name, SVNPropertyValue property) throws SVNException {
 		}
 
         /*
@@ -345,7 +346,7 @@ public class Export {
          * transfor file contents propertly after receiving.
          */
 
-		public void changeFileProperty(String path, SVNPropertyValue property) throws SVNException {
+        public void changeFileProperty(String path, String name, SVNPropertyValue property) throws SVNException {
 		}
 
         /*

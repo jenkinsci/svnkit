@@ -265,7 +265,7 @@ public class SVNRepositoryReplicator implements ISVNEventHandler {
             checkCancelled();
             String name = (String) names.next();
             SVNPropertyValue value = properties.getSVNPropertyValue(name);
-            repository.setRevisionPropertyValue(revision, value);
+            repository.setRevisionPropertyValue(revision, name, value);
         }
     }
 

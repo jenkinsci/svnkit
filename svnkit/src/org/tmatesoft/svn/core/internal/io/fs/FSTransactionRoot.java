@@ -26,8 +26,8 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -163,14 +163,14 @@ public class FSTransactionRoot extends FSRoot {
     public static FSTransactionInfo beginTransaction(long baseRevision, int flags, FSFS owner) throws SVNException {
         FSTransactionInfo txn = createTxn(baseRevision, owner);
         String commitTime = SVNDate.formatDate(new Date(System.currentTimeMillis()));
-        owner.setTransactionProperty(txn.getTxnId(), SVNPropertyValue.create(SVNRevisionProperty.DATE, commitTime));
+        owner.setTransactionProperty(txn.getTxnId(), SVNRevisionProperty.DATE, SVNPropertyValue.create(commitTime));
 
         if ((flags & SVN_FS_TXN_CHECK_OUT_OF_DATENESS) != 0) {
-            owner.setTransactionProperty(txn.getTxnId(), SVNPropertyValue.create(SVNProperty.TXN_CHECK_OUT_OF_DATENESS, Boolean.TRUE.toString()));
+            owner.setTransactionProperty(txn.getTxnId(), SVNProperty.TXN_CHECK_OUT_OF_DATENESS, SVNPropertyValue.create(Boolean.TRUE.toString()));
         }
 
         if ((flags & FSTransactionRoot.SVN_FS_TXN_CHECK_LOCKS) != 0) {
-            owner.setTransactionProperty(txn.getTxnId(), SVNPropertyValue.create(SVNProperty.TXN_CHECK_LOCKS, Boolean.TRUE.toString()));
+            owner.setTransactionProperty(txn.getTxnId(), SVNProperty.TXN_CHECK_LOCKS, SVNPropertyValue.create(Boolean.TRUE.toString()));
         }
 
         return txn;
@@ -311,7 +311,7 @@ public class FSTransactionRoot extends FSRoot {
     public void setTxnMergeInfo(String name, SVNPropertyValue value) throws SVNException {
         FSFS fs = getOwner(); 
         SVNProperties txnMergeInfo = fs.getTransactionMergeInfo(myTxnID);
-        if (value != null && !value.hasNullValue()) {
+        if (value != null) {
             txnMergeInfo.put(name, value);
         } else {
             txnMergeInfo.remove(name);
@@ -370,7 +370,7 @@ public class FSTransactionRoot extends FSRoot {
             }
             Map dirContents = parentRevNode.getDirContents();
             if (entryId != null) {
-                SVNWCProperties.appendProperty(entryName, SVNPropertyValue.create(entryName, kind + " " + entryId.toString()), dst);
+                SVNWCProperties.appendProperty(entryName, SVNPropertyValue.create(kind + " " + entryId.toString()), dst);
                 if (dirContents != null) {
                     dirContents.put(entryName, new FSEntry(entryId, kind, entryName));
                 }

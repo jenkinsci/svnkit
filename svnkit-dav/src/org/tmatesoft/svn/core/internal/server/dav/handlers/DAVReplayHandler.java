@@ -109,8 +109,8 @@ public class DAVReplayHandler extends DAVReportHandler implements ISVNEditor {
         openEntry("open-directory", path, revision);
     }
 
-    public void changeDirProperty(SVNPropertyValue value) throws SVNException {
-        changeEntryProperty("change-directory-prop", value);
+    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
+        changeEntryProperty("change-directory-prop", name, value);
     }
 
     public void closeDir() throws SVNException {
@@ -126,8 +126,8 @@ public class DAVReplayHandler extends DAVReportHandler implements ISVNEditor {
         openEntry("open-file", path, revision);
     }
 
-    public void changeFileProperty(String path, SVNPropertyValue value) throws SVNException {
-        changeEntryProperty("change-file-prop", value);
+    public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
+        changeEntryProperty("change-file-prop", name, value);
     }
 
     public void closeFile(String path, String textChecksum) throws SVNException {
@@ -186,17 +186,16 @@ public class DAVReplayHandler extends DAVReportHandler implements ISVNEditor {
         write(xmlBuffer);
     }
 
-    private void changeEntryProperty(String tagName, SVNPropertyValue propertyValue) throws SVNException {
+    private void changeEntryProperty(String tagName, String name, SVNPropertyValue propertyValue) throws SVNException {
         StringBuffer xmlBuffer = new StringBuffer();
-        String propertyName = propertyValue.getName();
-        if (!propertyValue.hasNullValue()) {
+        if (propertyValue != null) {
             String value = SVNBase64.byteArrayToBase64(SVNPropertyValue.getPropertyAsBytes(propertyValue));
-            SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, SVNXMLUtil.XML_STYLE_PROTECT_CDATA, NAME_ATTR, propertyName, xmlBuffer);
+            SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, SVNXMLUtil.XML_STYLE_PROTECT_CDATA, NAME_ATTR, name, xmlBuffer);
             xmlBuffer.append(value);
             SVNXMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, xmlBuffer);
         } else {
             Map attrs = new HashMap();
-            attrs.put(NAME_ATTR, propertyName);
+            attrs.put(NAME_ATTR, name);
             attrs.put(DELETE_ATTR, Boolean.TRUE.toString());
             SVNXMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, "", attrs, xmlBuffer);
         }

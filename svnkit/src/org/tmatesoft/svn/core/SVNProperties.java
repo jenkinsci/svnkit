@@ -40,10 +40,6 @@ public class SVNProperties {
         myProperties = properties;
     }
 
-    public void put(SVNPropertyValue value) {
-        myProperties.put(value.getName(), value);
-    }
-
     public void put(String propertyName, SVNPropertyValue propertyValue) {
         myProperties.put(propertyName, propertyValue);
     }
@@ -94,19 +90,13 @@ public class SVNProperties {
     public SVNPropertyValue getSVNPropertyValue(String propertyName) {
         Object value = myProperties.get(propertyName);
         if (value == null) {
-            if (myProperties.containsKey(propertyName)) {
-                SVNPropertyValue propertyValue = SVNPropertyValue.create(propertyName, (String) null);
-                myProperties.put(propertyName, propertyValue);
-                return propertyValue;
-            } else {
-                return null;
-            }
+            return null;
         }
         if (value instanceof SVNPropertyValue) {
             return (SVNPropertyValue) value;
         }
         if (value instanceof String) {
-            SVNPropertyValue propertyValue = SVNPropertyValue.create(propertyName, (String) value);
+            SVNPropertyValue propertyValue = SVNPropertyValue.create((String) value);
             myProperties.put(propertyName, propertyValue);
             return propertyValue;
         }
@@ -115,7 +105,7 @@ public class SVNProperties {
             myProperties.put(propertyName, propertyValue);
             return propertyValue;
         }
-        return SVNPropertyValue.create(propertyName, (String) null);
+        return null;
     }
 
     public Object remove(String propertyName) {
