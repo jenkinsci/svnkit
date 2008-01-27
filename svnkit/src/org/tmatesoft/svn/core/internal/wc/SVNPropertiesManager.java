@@ -258,28 +258,37 @@ public class SVNPropertiesManager {
         final Map pathsToPropValues = new HashMap();
 
         ISVNEntryHandler handler = new ISVNEntryHandler() {
-            public void handleEntry(File path, SVNEntry entry) throws SVNException {
-                SVNAdminArea adminArea = entry.getAdminArea();
-                if (entry.isDirectory() && !entry.getName().equals(adminArea.getThisDirName())) {
+            public void handleEntry(File itemPath, SVNEntry itemEntry) throws SVNException {
+                SVNAdminArea adminArea = itemEntry.getAdminArea();
+                if (itemEntry.isDirectory() && !itemEntry.getName().equals(adminArea.getThisDirName())) {
                     return;
                 }
 
-                if ((entry.isScheduledForAddition() && base) ||
-                        (entry.isScheduledForDeletion() && !base)) {
+                if ((itemEntry.isScheduledForAddition() && base) ||
+                        (itemEntry.isScheduledForDeletion() && !base)) {
                     return;
                 }
 
                 SVNPropertyValue propValue = null;
+                SVNWCAccess access = adminArea.getWCAccess();
                 if (base) {
-                    SVNVersionedProperties baseProps = adminArea.getBaseProperties(entry.getName());
-                    propValue = baseProps.getPropertyValue(propName);
+                    SVNEntry pathEntry = access.getEntry(itemPath, false);
+                    if (pathEntry != null) {
+                        SVNAdminArea pathArea = pathEntry.getAdminArea();
+                    	SVNVersionedProperties baseProps = pathArea.getBaseProperties(pathEntry.getName());
+                        propValue = baseProps.getPropertyValue(propName);
+                    }
                 } else {
-                    SVNVersionedProperties workingProps = adminArea.getProperties(entry.getName());
-                    propValue = workingProps.getPropertyValue(propName);
+                    SVNEntry pathEntry = access.getEntry(itemPath, true);
+                    if (pathEntry != null) {
+                        SVNAdminArea pathArea = pathEntry.getAdminArea();
+                        SVNVersionedProperties workingProps = pathArea.getProperties(pathEntry.getName());
+                        propValue = workingProps.getPropertyValue(propName);
+                    }
                 }
 
                 if (propValue != null) {
-                    pathsToPropValues.put(path, propValue);
+                    pathsToPropValues.put(itemPath, propValue);
                 }
             }
 

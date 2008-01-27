@@ -775,7 +775,7 @@ public class SVNBasicClient implements ISVNEventHandler {
                 wcAccess.close();
             }
         }
-        
+        String repoPath = "";
         boolean closeSession = false;
         Map locations = null;
         SVNURL rootURL = null;
@@ -783,7 +783,14 @@ public class SVNBasicClient implements ISVNEventHandler {
             if (repository == null) {
                 repository = createRepository(url, false);
                 closeSession = true;
-            } 
+            } else {
+            	// path relative to repository location.
+            	repoPath = SVNPathUtil.getPathAsChild(repository.getLocation().toString(), url.toString());
+            	if (repoPath == null) {
+            		repoPath = "";
+            	}
+            }
+
             if (pegRevisionNumber < 0) {
                 pegRevisionNumber = getRevisionNumber(revision, youngestRevNumber, repository, path);
             }
@@ -809,7 +816,7 @@ public class SVNBasicClient implements ISVNEventHandler {
                     new long[] {startRevisionNumber} : new long[] {startRevisionNumber, endRevisionNumber};
                             
             try {
-                locations = repository.getLocations("", (Map) null, pegRevisionNumber, revisionsRange);
+                locations = repository.getLocations(repoPath, (Map) null, pegRevisionNumber, revisionsRange);
             } catch (SVNException e) {
                 if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_IMPLEMENTED) {
                     locations = getLocations10(repository, pegRevisionNumber, startRevisionNumber, endRevisionNumber);
