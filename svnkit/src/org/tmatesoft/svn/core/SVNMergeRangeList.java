@@ -270,6 +270,7 @@ public class SVNMergeRangeList {
         removeRedundantRanges(subtractiveSources);
         for (Iterator subtractiveSrcsIter = subtractiveSources.iterator(); subtractiveSrcsIter.hasNext();) {
             SVNMergeRange range = (SVNMergeRange) subtractiveSrcsIter.next();
+            range = range.dup();
             additiveSources.add(range);
         }
         Collections.sort(additiveSources, comparator);
@@ -384,7 +385,7 @@ public class SVNMergeRangeList {
                             range1.setStartRevision(range2.getEndRevision());
                             range2.setEndRevision(tmpRev);
                         }
-                    } else if (range1.getEndRevision() > range2.getEndRevision()) {
+                    } else if (range1.getEndRevision() < range2.getEndRevision()) {
                         long tmpRev = range1.getEndRevision();
                         range1.setEndRevision(range2.getStartRevision());
                         range2.setStartRevision(tmpRev);
