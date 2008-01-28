@@ -784,10 +784,10 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
 			long minRev = Math.min(range.getStartRevision(), range.getEndRevision());
 			long maxRev = Math.max(range.getStartRevision(), range.getEndRevision());
 			
-			if (!SVNRevision.isValidRevisionNumber(oldestRequestedRev) || oldestRequestedRev < minRev) {
+			if (!SVNRevision.isValidRevisionNumber(oldestRequestedRev) || minRev < oldestRequestedRev) {
 				oldestRequestedRev = minRev;
 			}
-			if (!SVNRevision.isValidRevisionNumber(youngestRequestedRev) || youngestRequestedRev < maxRev) {
+			if (!SVNRevision.isValidRevisionNumber(youngestRequestedRev) || maxRev > youngestRequestedRev) {
 				youngestRequestedRev = maxRev;
 			}
 		}
@@ -800,11 +800,11 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
 
     	Collection segments = repository.getLocationSegments("", pegRevNum, youngestRequestedRev, 
     			oldestRequestedRev);
+		SVNLocationSegment[] segmentsArray = (SVNLocationSegment[]) segments.toArray(new SVNLocationSegment[segments.size()]);
     	
-    	List resultMergeSources = new LinkedList();
+		List resultMergeSources = new LinkedList();
     	for (Iterator rangesIter = mergeRanges.iterator(); rangesIter.hasNext();) {
 			SVNMergeRange range = (SVNMergeRange) rangesIter.next();
-			SVNLocationSegment[] segmentsArray = (SVNLocationSegment[]) segments.toArray(new SVNLocationSegment[segments.size()]);
 			List mergeSources = combineRangeWithSegments(range, segmentsArray, sourceRootURL);
 			resultMergeSources.addAll(mergeSources);
     	}
@@ -971,7 +971,6 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             if (SVNPathUtil.isAncestor(childPath, pathStr)) {
                 ancestorIndex = i;
             }
-            i++;
         }
         return ancestorIndex;
     }

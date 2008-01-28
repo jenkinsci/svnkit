@@ -889,7 +889,7 @@ public abstract class SVNRepository {
                 if (segment1.getStartRevision() == segment2.getStartRevision()) {
                     return 0;
                 }
-                return segment1.getStartRevision() < segment2.getStartRevision() ? 1 : -1;
+                return segment1.getStartRevision() < segment2.getStartRevision() ? -1 : 1;
             }
         });
         
