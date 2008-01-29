@@ -375,31 +375,6 @@ public class SVNProperty {
     public static boolean isBinaryMimeType(String mimeType) {
         return !isTextMimeType(mimeType);
     }
-    
-    /**
-     * Returns eol-marker bytes according to the given eol type.
-     * 
-     * @param   eolType  a requested eol-marker type (platform specific)
-     * @return  <span class="javakeyword">null</span> if <code>eolType</code> is
-     *          <span class="javakeyword">null</span>, or an array of bytes 
-     *          for one of the four possible eol types
-     * @see     #EOL_STYLE_CR
-     * @see     #EOL_STYLE_CRLF
-     * @see     #EOL_STYLE_LF
-     * @see     #EOL_STYLE_NATIVE
-     */
-    public static byte[] getEOLBytes(String eolType) {
-        if (eolType == null) {
-            return null;
-        } else if (SVNProperty.EOL_STYLE_NATIVE.equals(eolType)) {
-            return EOL_NATIVE_BYTES;
-        } else if (SVNProperty.EOL_STYLE_CR.equals(eolType)) {
-            return EOL_CR_BYTES;
-        } else if (SVNProperty.EOL_STYLE_CRLF.equals(eolType)) {
-            return EOL_CRLF_BYTES;
-        }
-        return EOL_LF_BYTES;
-    }
 
     /**
      * Converts a string representation of a boolean value to boolean.

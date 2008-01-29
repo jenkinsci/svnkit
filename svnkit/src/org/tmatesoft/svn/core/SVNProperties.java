@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.Collection;
 
 
 /**
@@ -45,71 +46,29 @@ public class SVNProperties {
     }
 
     public void put(String propertyName, String propertyValue) {
-        myProperties.put(propertyName, propertyValue);
+        myProperties.put(propertyName, SVNPropertyValue.create(propertyValue));
     }
 
     public void put(String propertyName, byte[] propertyValue) {
-        myProperties.put(propertyName, propertyValue);
+        myProperties.put(propertyName, SVNPropertyValue.create(propertyName, propertyValue));
     }
 
     public String getStringValue(String propertyName) {
-        Object value = myProperties.get(propertyName);
-        if (value == null) {
-            return null;
-        }
-        if (value instanceof String) {
-            return (String) value;
-        }
-        if (value instanceof byte[]) {
-            SVNPropertyValue propertyValue = SVNPropertyValue.create(propertyName, (byte[]) value);
-            myProperties.put(propertyName, propertyValue);
-            return propertyValue.getString();
-        }
-        if (value instanceof SVNPropertyValue) {
-            SVNPropertyValue propertyValue = (SVNPropertyValue) value;
-            return propertyValue.getString();
-        }
-        return null;
+        SVNPropertyValue value = (SVNPropertyValue) myProperties.get(propertyName);
+        return value == null ? null : value.getString();
     }
 
     public byte[] getBinaryValue(String propertyName) {
-        Object value = myProperties.get(propertyName);
-        if (value == null || value instanceof String) {
-            return null;
-        }
-        if (value instanceof byte[]) {
-            return (byte[]) value;
-        }
-        if (value instanceof SVNPropertyValue) {
-            SVNPropertyValue propertyValue = (SVNPropertyValue) value;
-            return propertyValue.getBytes();
-        }
-        return null;
+        SVNPropertyValue value = (SVNPropertyValue) myProperties.get(propertyName);
+        return value == null ? null : value.getBytes();
     }
 
     public SVNPropertyValue getSVNPropertyValue(String propertyName) {
-        Object value = myProperties.get(propertyName);
-        if (value == null) {
-            return null;
-        }
-        if (value instanceof SVNPropertyValue) {
-            return (SVNPropertyValue) value;
-        }
-        if (value instanceof String) {
-            SVNPropertyValue propertyValue = SVNPropertyValue.create((String) value);
-            myProperties.put(propertyName, propertyValue);
-            return propertyValue;
-        }
-        if (value instanceof byte[]) {
-            SVNPropertyValue propertyValue = SVNPropertyValue.create(propertyName, (byte[]) value);
-            myProperties.put(propertyName, propertyValue);
-            return propertyValue;
-        }
-        return null;
+        return (SVNPropertyValue) myProperties.get(propertyName);        
     }
 
-    public Object remove(String propertyName) {
-        return myProperties.remove(propertyName);
+    public SVNPropertyValue remove(String propertyName) {
+        return (SVNPropertyValue) myProperties.remove(propertyName);
     }
 
     public void putAll(SVNProperties properties) {
@@ -126,29 +85,6 @@ public class SVNProperties {
 
     public void clear() {
         myProperties.clear();
-    }
-
-    public boolean hasNullValues() {
-        if (myProperties.isEmpty()) {
-            return false;
-        }
-        return myProperties.containsValue(null);
-    }
-
-    public boolean hasNotNullValues() {
-        if (isEmpty()) {
-            return false;
-        }
-        if (!hasNullValues()) {
-            return true;
-        }
-        for (Iterator entries = myProperties.entrySet().iterator(); entries.hasNext();) {
-            Map.Entry entry = (Map.Entry) entries.next();
-            if (entry.getValue() != null) {
-                return true;
-            }
-        }
-        return false;
     }
 
     public void removeNullValues() {
@@ -170,5 +106,13 @@ public class SVNProperties {
 
     public Set nameSet() {
         return myProperties.keySet();
+    }
+
+    public boolean containsValue(SVNPropertyValue value){
+        return myProperties.containsValue(value);        
+    }
+
+    public Collection values(){
+        return myProperties.values();
     }
 }

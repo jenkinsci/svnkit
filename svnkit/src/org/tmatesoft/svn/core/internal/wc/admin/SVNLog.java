@@ -234,8 +234,8 @@ public abstract class SVNLog {
             myCache = null;
             for (Iterator cmds = commands.iterator(); cmds.hasNext();) {
                 SVNProperties command = (SVNProperties) cmds.next();
-                String name = (String) command.remove("");
-                addCommand(name, command, false);
+                SVNPropertyValue name = command.remove("");
+                addCommand(name.getString(), command, false);
             }
             save();
             throw e;

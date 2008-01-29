@@ -56,9 +56,9 @@ public class SVNLogImpl extends SVNLog {
             os = new OutputStreamWriter(SVNFileUtil.openFileForWriting(myTmpFile), "UTF-8");
             for (Iterator commands = myCache.iterator(); commands.hasNext();) {
                 SVNProperties command = (SVNProperties) commands.next();
-                String name = (String) command.remove("");
+                SVNPropertyValue name = command.remove("");
                 os.write("<");
-                os.write(name);
+                os.write(name.getString());
                 for (Iterator attrs = command.nameSet().iterator(); attrs.hasNext();) {
                     String attr = (String) attrs.next();
                     SVNPropertyValue value = command.getSVNPropertyValue(attr);

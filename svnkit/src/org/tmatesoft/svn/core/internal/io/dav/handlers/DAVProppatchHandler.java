@@ -62,7 +62,7 @@ public class DAVProppatchHandler extends BasicDAVHandler {
                 SVNXMLUtil.PREFIX_MAP, xmlBuffer);
 
         // if there are non-null values
-        if (properties.hasNotNullValues()) {
+        if (hasNotNullValues(properties)) {
             SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "set", SVNXMLUtil.XML_STYLE_NORMAL, null,
                     xmlBuffer);
             SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "prop", SVNXMLUtil.XML_STYLE_NORMAL, null,
@@ -79,7 +79,7 @@ public class DAVProppatchHandler extends BasicDAVHandler {
         }
 
         // if there are null values
-        if (properties.hasNullValues()) {
+        if (hasNullValues(properties)) {
             SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "remove", SVNXMLUtil.XML_STYLE_NORMAL, null,
                     xmlBuffer);
             SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "prop", SVNXMLUtil.XML_STYLE_NORMAL, null,
@@ -113,6 +113,31 @@ public class DAVProppatchHandler extends BasicDAVHandler {
             str = value.getString();
         }
         return SVNXMLUtil.openCDataTag(prefix, tagName, str, attrs, xmlBuffer);
+    }
+
+
+
+    private static boolean hasNullValues(SVNProperties props) {
+        if (props.isEmpty()) {
+            return false;
+        }
+        return props.containsValue(null);
+    }
+
+    private static boolean hasNotNullValues(SVNProperties props) {
+        if (props.isEmpty()) {
+            return false;
+        }
+        if (!hasNullValues(props)) {
+            return true;
+        }
+        for (Iterator entries = props.nameSet().iterator(); entries.hasNext();) {
+            String propName = (String) entries.next();
+            if (props.getSVNPropertyValue(propName) != null) {
+                return true;
+            }
+        }
+        return false;
     }
 
     protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
