@@ -158,8 +158,14 @@ public class SVNPropSetCommand extends SVNPropertiesCommand {
                 if (target.isFile()) {
                     boolean success = true;
                     try {
-                        client.doSetProperty(target.getFile(), propertyName, propertyValue,
-                                getSVNEnvironment().isForce(), depth, this);
+                        if (target.isFile()) {
+                            client.doSetProperty(target.getFile(), propertyName, propertyValue,
+                                    getSVNEnvironment().isForce(), depth, this);
+                        } else {
+                            client.setCommitHandler(getSVNEnvironment());
+                            client.doSetProperty(target.getURL(), propertyName, propertyValue, SVNRevision.HEAD, getSVNEnvironment().getMessage(),
+                                    getSVNEnvironment().getRevisionProperties(), getSVNEnvironment().isForce(), depth, this);
+                        }
                     } catch (SVNException e) {
                         success = getSVNEnvironment().handleWarning(e.getErrorMessage(),
                                 new SVNErrorCode[]{SVNErrorCode.UNVERSIONED_RESOURCE, SVNErrorCode.ENTRY_NOT_FOUND},

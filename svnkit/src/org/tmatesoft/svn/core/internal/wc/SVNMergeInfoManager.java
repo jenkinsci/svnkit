@@ -405,8 +405,7 @@ public class SVNMergeInfoManager {
     	}
         
         if (elides) {
-            SVNPropertiesManager.setProperty(access, path, SVNProperty.MERGE_INFO, 
-            		(SVNPropertyValue) null, true);
+            SVNPropertiesManager.setProperty(access, path, SVNProperty.MERGE_INFO, null, true);
         }
     }
     
