@@ -338,7 +338,7 @@ public class SVNMergeInfoManager {
             }
             String path = mergeInfo.substring(0, ind);
             mergeInfo = mergeInfo.delete(0, ind + 1);
-            SVNMergeRange[] ranges = parseRevisionList(mergeInfo);
+            SVNMergeRange[] ranges = parseRevisionList(mergeInfo, path);
             if (mergeInfo.length() != 0 && mergeInfo.charAt(0) != '\n') {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, "Could not find end of line in range list line in ''{0}''", mergeInfo);
                 SVNErrorManager.error(err);
@@ -458,14 +458,16 @@ public class SVNMergeInfoManager {
     	return mergeInfo;
     }
     
-    private static SVNMergeRange[] parseRevisionList(StringBuffer mergeInfo) throws SVNException {
+    private static SVNMergeRange[] parseRevisionList(StringBuffer mergeInfo, String path) throws SVNException {
         Collection ranges = new LinkedList();
         while (mergeInfo.length() > 0 && mergeInfo.charAt(0) != '\n' && 
                 Character.isWhitespace(mergeInfo.charAt(0))) {
             mergeInfo = mergeInfo.deleteCharAt(0);
         }
         if (mergeInfo.length() == 0 || mergeInfo.charAt(0) == '\n') {
-            return new SVNMergeRange[0];
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, 
+            		"Mergeinfo for ''{0}'' maps to an empty revision range", path);
+            SVNErrorManager.error(err);
         }
         
         SVNMergeRange lastRange = null;

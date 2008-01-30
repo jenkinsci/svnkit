@@ -28,16 +28,13 @@ import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
@@ -241,19 +238,7 @@ public class SVNStatusEditor {
     }
     
     protected SVNLock getLock(SVNURL url) {
-        // get decoded path
-        if (myRepositoryRoot == null || myRepositoryLocks == null || myRepositoryLocks.isEmpty() || url == null) {
-            return null;
-        }
-        String urlString = url.getPath();
-        String root = myRepositoryRoot.getPath();
-        String path;
-        if (urlString.equals(root)) {
-            path = "/";
-        } else {
-            path = urlString.substring(root.length());
-        }
-        return (SVNLock) myRepositoryLocks.get(path);
+    	return SVNStatusUtil.getLock(myRepositoryLocks, url, myRepositoryRoot);
     }
 
     private void handleDirEntry(SVNAdminArea dir, String entryName, SVNEntry dirEntry, SVNEntry entry, SVNNodeKind fileKind, boolean special, 
@@ -272,18 +257,21 @@ public class SVNStatusEditor {
             } else if (fullEntry != entry) {
                 // get correct dir.
                 SVNAdminArea childDir = myWCAccess.retrieve(path);
-                SVNStatus status = assembleStatus(path, childDir, fullEntry, dirEntry, fileKind, special, getAll, false);
+                SVNStatus status = assembleStatus(path, childDir, fullEntry, dirEntry, fileKind, 
+                		special, getAll, false);
                 if (status != null && handler != null) {
                     handler.handleStatus(status);
                 }
             } else {
-                SVNStatus status = assembleStatus(path, dir, fullEntry, dirEntry, fileKind, special, getAll, false);
+                SVNStatus status = assembleStatus(path, dir, fullEntry, dirEntry, fileKind, 
+                		special, getAll, false);
                 if (status != null && handler != null) {
                     handler.handleStatus(status);
                 }
             }
         } else {
-            SVNStatus status = assembleStatus(path, dir, entry, dirEntry, fileKind, special, getAll, false);
+            SVNStatus status = assembleStatus(path, dir, entry, dirEntry, fileKind, special, 
+            		getAll, false);
             if (status != null && handler != null) {
                 handler.handleStatus(status);
             }
@@ -296,7 +284,8 @@ public class SVNStatusEditor {
         String path = dir.getRelativePath(myAdminInfo.getAnchor());
         path = SVNPathUtil.append(path, name);  
         boolean isExternal = isExternal(path);
-        SVNStatus status = assembleStatus(file, dir, null, null, fileType, special, true, isIgnored);
+        SVNStatus status = assembleStatus(file, dir, null, null, fileType, special, true, 
+        		isIgnored);
         if (status != null) {
             if (isExternal) {
                 status.setContentsStatus(SVNStatusType.STATUS_EXTERNAL);
@@ -310,151 +299,9 @@ public class SVNStatusEditor {
     protected SVNStatus assembleStatus(File file, SVNAdminArea dir, 
             SVNEntry entry, SVNEntry parentEntry, SVNNodeKind fileKind, boolean special, 
             boolean reportAll, boolean isIgnored) throws SVNException {
-        
-        boolean hasProps = false;
-        boolean isTextModified = false;
-        boolean isPropsModified = false;
-        boolean isLocked = false;
-        boolean isSwitched = false;
-        boolean isSpecial = false;
-        
-        SVNStatusType textStatus = SVNStatusType.STATUS_NORMAL;
-        SVNStatusType propStatus = SVNStatusType.STATUS_NONE;
-        
-        SVNLock repositoryLock = null;
-        
-        if (myRepositoryLocks != null) {
-            SVNURL url = null;
-            if (entry != null && entry.getSVNURL() != null) {
-                url = entry.getSVNURL();
-            } else if (parentEntry != null && parentEntry.getSVNURL() != null) {
-                url = parentEntry.getSVNURL().appendPath(file.getName(), false);
-            }
-            if (url != null) {
-                repositoryLock = getLock(url);
-            }
-        }
-        if (fileKind == SVNNodeKind.UNKNOWN || fileKind == null) {
-            SVNFileType fileType = SVNFileType.getType(file);
-            fileKind = SVNFileType.getNodeKind(fileType);
-            special = SVNFileUtil.isWindows ? false : fileType == SVNFileType.SYMLINK;
-        }
-        if (entry == null) {
-            SVNStatus status = new SVNStatus(null, file, SVNNodeKind.NONE,
-                    SVNRevision.UNDEFINED, SVNRevision.UNDEFINED,
-                    null, null, SVNStatusType.STATUS_NONE,  SVNStatusType.STATUS_NONE, 
-                    SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, false,
-                    false, false, null, null, null, null,
-                    null, SVNRevision.UNDEFINED,
-                    repositoryLock, null, null, null);
-            status.setRemoteStatus(SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, repositoryLock, SVNNodeKind.NONE);
-            SVNStatusType text = SVNStatusType.STATUS_NONE;
-            SVNFileType fileType = SVNFileType.getType(file);
-            if (fileType != SVNFileType.NONE) {
-                text = isIgnored ? SVNStatusType.STATUS_IGNORED : SVNStatusType.STATUS_UNVERSIONED;
-            }
-            status.setContentsStatus(text);
-            return status;
-        }
-        if (entry.getKind() == SVNNodeKind.DIR) {
-            if (fileKind == SVNNodeKind.DIR) {
-                if (myWCAccess.isMissing(file)) {
-                    textStatus = SVNStatusType.STATUS_OBSTRUCTED;
-                }
-            } else if (fileKind != SVNNodeKind.NONE) {
-                textStatus = SVNStatusType.STATUS_OBSTRUCTED;
-            }
-        }
-        if (entry.getSVNURL() != null && parentEntry != null && parentEntry.getSVNURL() != null) {
-            String urlName = SVNPathUtil.tail(entry.getSVNURL().getURIEncodedPath());
-            if (!SVNEncodingUtil.uriEncode(file.getName()).equals(urlName)) {
-                isSwitched = true;
-            }
-            if (!isSwitched && !entry.getSVNURL().removePathTail().equals(parentEntry.getSVNURL())) {
-                isSwitched = true;
-            }
-        }
-        if (textStatus != SVNStatusType.STATUS_OBSTRUCTED) {
-            String name = entry.getName();
-            if (dir != null && dir.hasProperties(name)) {
-                propStatus = SVNStatusType.STATUS_NORMAL;
-                hasProps = true;
-            }
-            isPropsModified = dir != null && dir.hasPropModifications(name);
-            if (hasProps) {
-                isSpecial = !SVNFileUtil.isWindows && dir != null && dir.getProperties(name).getPropertyValue(SVNProperty.SPECIAL) != null;
-            }
-            if (entry.getKind() == SVNNodeKind.FILE && special == isSpecial) {
-                isTextModified = dir != null && dir.hasTextModifications(name, false);
-            }
-            if (isTextModified) {
-                textStatus = SVNStatusType.STATUS_MODIFIED;
-            }
-            if (isPropsModified) {
-                propStatus = SVNStatusType.STATUS_MODIFIED;
-            }
-            if (entry.getPropRejectFile() != null || 
-                    entry.getConflictOld() != null || entry.getConflictNew() != null || entry.getConflictWorking() != null) {
-                if (dir != null && dir.hasTextConflict(name)) {
-                    textStatus = SVNStatusType.STATUS_CONFLICTED;
-                }
-                if (dir != null && dir.hasPropConflict(name)) {
-                    propStatus = SVNStatusType.STATUS_CONFLICTED;
-                }
-            }
-            if (entry.isScheduledForAddition() && textStatus != SVNStatusType.STATUS_CONFLICTED) {
-                textStatus = SVNStatusType.STATUS_ADDED;
-                propStatus = SVNStatusType.STATUS_NONE;
-            } else if (entry.isScheduledForReplacement() && textStatus != SVNStatusType.STATUS_CONFLICTED) {
-                textStatus = SVNStatusType.STATUS_REPLACED;
-                propStatus = SVNStatusType.STATUS_NONE;
-            } else if (entry.isScheduledForDeletion() && textStatus != SVNStatusType.STATUS_CONFLICTED) {
-                textStatus = SVNStatusType.STATUS_DELETED;
-                propStatus = SVNStatusType.STATUS_NONE;
-            }
-            if (entry.isIncomplete() && textStatus != SVNStatusType.STATUS_DELETED && textStatus != SVNStatusType.STATUS_ADDED) { 
-                textStatus = SVNStatusType.STATUS_INCOMPLETE;
-            } else if (fileKind == SVNNodeKind.NONE) {
-                if (textStatus != SVNStatusType.STATUS_DELETED) {
-                    textStatus = SVNStatusType.STATUS_MISSING;
-                }
-            } else if (fileKind != entry.getKind()) {
-                textStatus = SVNStatusType.STATUS_OBSTRUCTED;
-            } else if ((!isSpecial && special) || (isSpecial && !special)) {
-                textStatus = SVNStatusType.STATUS_OBSTRUCTED;
-            }
-            if (fileKind == SVNNodeKind.DIR && entry.getKind() == SVNNodeKind.DIR) {
-                isLocked = myWCAccess.isLocked(file);
-            }
-        }
-        if (!reportAll) {
-            if ((textStatus == SVNStatusType.STATUS_NONE || textStatus == SVNStatusType.STATUS_NORMAL) &&
-                (propStatus == SVNStatusType.STATUS_NONE || propStatus == SVNStatusType.STATUS_NORMAL) &&
-                !isLocked && !isSwitched && entry.getLockToken() == null && repositoryLock == null && 
-                entry.getChangelistName() == null) {
-                return null;
-            }
-        }
-        SVNLock localLock = null;
-        if (entry.getLockToken() != null) {
-            localLock = new SVNLock(null, entry.getLockToken(), entry.getLockOwner(), entry.getLockComment(),
-                    SVNDate.parseDate(entry.getLockCreationDate()), null);
-        }
-        File conflictNew = dir != null ? dir.getFile(entry.getConflictNew()) : null;
-        File conflictOld = dir != null ? dir.getFile(entry.getConflictOld()) : null;
-        File conflictWrk = dir != null ? dir.getFile(entry.getConflictWorking()) : null;
-        File conflictProp = dir != null ? dir.getFile(entry.getPropRejectFile()) : null;
-        SVNStatus status = new SVNStatus(entry.getSVNURL(), file, entry.getKind(),
-                SVNRevision.create(entry.getRevision()), SVNRevision.create(entry.getCommittedRevision()),
-                SVNDate.parseDate(entry.getCommittedDate()), entry.getAuthor(),
-                textStatus,  propStatus, 
-                SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, 
-                isLocked, entry.isCopied(), isSwitched, 
-                conflictNew, conflictOld, conflictWrk, conflictProp, 
-                entry.getCopyFromURL(), SVNRevision.create(entry.getCopyFromRevision()),
-                repositoryLock, localLock, entry.asMap(), entry.getChangelistName());
-        status.setEntry(entry);
-        return status;
+
+    	return SVNStatusUtil.assembleStatus(file, dir, entry, parentEntry, fileKind, special, reportAll, 
+    			isIgnored, myRepositoryLocks, myRepositoryRoot, myWCAccess);
     }
     
     private boolean isExternal(String path) {
