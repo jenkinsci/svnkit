@@ -23,9 +23,8 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.SVNChangelistClient;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -102,7 +101,13 @@ public class SVNPropDelCommand extends SVNPropertiesCommand {
                 if (target.isFile()) {
                     boolean success = true;
                     try {
-                        client.doSetProperty(target.getFile(), propertyName, null, getSVNEnvironment().isForce(), depth.isRecursive(), this);
+                        if (target.isFile()){
+                            client.doSetProperty(target.getFile(), propertyName, null, getSVNEnvironment().isForce(), depth, this);                                
+                        } else {
+                            client.setCommitHandler(getSVNEnvironment());
+                            client.doSetProperty(target.getURL(), propertyName, null, SVNRevision.HEAD, getSVNEnvironment().getMessage(),
+                                    getSVNEnvironment().getRevisionProperties(), getSVNEnvironment().isForce(), depth, this);
+                        }
                     } catch (SVNException e) {
                         success = getSVNEnvironment().handleWarning(e.getErrorMessage(), 
                                 new SVNErrorCode[] {SVNErrorCode.UNVERSIONED_RESOURCE, SVNErrorCode.ENTRY_NOT_FOUND},
