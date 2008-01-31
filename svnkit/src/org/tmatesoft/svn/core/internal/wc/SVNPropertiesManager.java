@@ -164,7 +164,7 @@ public class SVNPropertiesManager {
 
                 public boolean fileIsBinary() throws SVNException {
                     SVNPropertyValue mimeType = getProperty(access, path, SVNProperty.MIME_TYPE);
-                    return SVNProperty.isBinaryMimeType(mimeType.getString());
+                    return mimeType != null && SVNProperty.isBinaryMimeType(mimeType.getString());
                 }
             });
         }
