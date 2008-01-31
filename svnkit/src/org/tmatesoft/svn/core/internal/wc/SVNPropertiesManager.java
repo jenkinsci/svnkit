@@ -465,11 +465,10 @@ public class SVNPropertiesManager {
         } finally {
             try {
                 out.close();
+            } catch (IOExceptionWrapper wrapper) {
+                handleInconsistentEOL(wrapper.getOriginalException(), path);
             } catch (IOException e) {
-                if (e instanceof IOExceptionWrapper) {
-                    IOExceptionWrapper wrapper = (IOExceptionWrapper) e;
-                    handleInconsistentEOL(wrapper.getOriginalException(), path);
-                }
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e));
             }
         }
 
