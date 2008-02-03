@@ -180,9 +180,9 @@ public class SVNExportEditor implements ISVNEditor {
             }
             byte[] eolBytes = null;
             if (SVNProperty.EOL_STYLE_NATIVE.equals(myFileProperties.getStringValue(SVNProperty.EOL_STYLE))) {
-                eolBytes = SVNTranslator.getWorkingEOL(myEOLStyle != null ? myEOLStyle : myFileProperties.getStringValue(SVNProperty.EOL_STYLE));
+                eolBytes = SVNTranslator.getWorkingEOL(myEOLStyle != null ? myEOLStyle : myFileProperties.getStringValue(SVNProperty.EOL_STYLE), myOptions);
             } else if (myFileProperties.containsName(SVNProperty.EOL_STYLE)) {
-                eolBytes = SVNTranslator.getWorkingEOL(myFileProperties.getStringValue(SVNProperty.EOL_STYLE));
+                eolBytes = SVNTranslator.getWorkingEOL(myFileProperties.getStringValue(SVNProperty.EOL_STYLE), myOptions);
             }
             if (binary) {
                 // no translation unless 'special'.

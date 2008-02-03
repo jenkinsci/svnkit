@@ -74,7 +74,7 @@ public class DefaultSVNGNUDiffGenerator extends DefaultSVNDiffGenerator implemen
                 break;
             case NO_DIFF:
                 try {
-                    result.write(EOL);
+                    result.write(getEOL());
                 } catch (IOException e) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
                     SVNErrorManager.error(err, e);
@@ -87,7 +87,7 @@ public class DefaultSVNGNUDiffGenerator extends DefaultSVNDiffGenerator implemen
             String rev1, String rev2, String mimeType1, String mimeType2, OutputStream result) throws SVNException {
         super.displayFileDiff(path, file1, file2, rev1, rev2, mimeType1, mimeType2, result);
         try {
-            result.write(EOL);
+            result.write(getEOL());
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
             SVNErrorManager.error(err, e);
@@ -99,17 +99,17 @@ public class DefaultSVNGNUDiffGenerator extends DefaultSVNDiffGenerator implemen
             path = path.startsWith("/") ? path.substring(1) : path;
             myHeader = "Index: " + path;
             os.write(myHeader.getBytes(getEncoding())); 
-            os.write(EOL);
+            os.write(getEOL());
             myIsHeaderWritten = true;
         }
         os.write(HEADER_SEPARATOR);
-        os.write(EOL);
+        os.write(getEOL());
         return false;
     }
     
     protected void displayBinary(OutputStream os, String mimeType1, String mimeType2) throws IOException {
         os.write("(Binary files differ)".getBytes(getEncoding()));
-        os.write(EOL);
+        os.write(getEOL());
     }
 
     protected void displayHeaderFields(OutputStream os, String path1, String rev1, String path2, String rev2) throws IOException {
@@ -123,10 +123,10 @@ public class DefaultSVNGNUDiffGenerator extends DefaultSVNDiffGenerator implemen
             throw new IOException(svne.getLocalizedMessage());
         }
         os.write(originalLabel.getBytes(getEncoding()));
-        os.write(EOL);
+        os.write(getEOL());
         os.write("+++ ".getBytes(getEncoding()));
         os.write(newLabel.getBytes(getEncoding()));
-        os.write(EOL);
+        os.write(getEOL());
     }
 
     protected void setOriginalFile(FSRoot originalRoot, String originalPath) {
@@ -176,7 +176,7 @@ public class DefaultSVNGNUDiffGenerator extends DefaultSVNDiffGenerator implemen
     private void writeHeader(OutputStream result) throws SVNException {
         try {
             result.write(myHeader.getBytes(getEncoding())); 
-            result.write(EOL);
+            result.write(getEOL());
             myIsHeaderWritten = true;
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());

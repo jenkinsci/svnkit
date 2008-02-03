@@ -46,12 +46,12 @@ public class DefaultSVNCommandLineDiffGenerator extends DefaultSVNDiffGenerator 
         os.write(file1.getBytes(getEncoding()));
         os.write("\t".getBytes(getEncoding()));
         os.write(timestamp1.getBytes(getEncoding()));
-        os.write(EOL);
+        os.write(getEOL());
         os.write("+++ ".getBytes(getEncoding()));
         os.write(file2.getBytes(getEncoding()));
         os.write("\t".getBytes(getEncoding()));
         os.write(timestamp2.getBytes(getEncoding()));
-        os.write(EOL);
+        os.write(getEOL());
     }
     
     protected boolean displayHeader(OutputStream os, String path, boolean deleted) throws IOException {

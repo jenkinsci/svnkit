@@ -1302,7 +1302,7 @@ public abstract class SVNAdminArea {
                     }
                 } else if (needsTranslation) {
                     Map keywordsMap = SVNTranslator.computeKeywords(keywords, entry.getURL(), entry.getAuthor(), entry.getCommittedDate(), entry.getRevision() + "", getWCAccess().getOptions());
-                    byte[] eols = SVNTranslator.getWorkingEOL(eolStyle);
+                    byte[] eols = SVNTranslator.getWorkingEOL(eolStyle, getWCAccess().getOptions());
                     baseStream = new SVNTranslatorInputStream(baseStream, eols, false, keywordsMap, true);
                 }
                 byte[] buffer1 = new byte[8192];

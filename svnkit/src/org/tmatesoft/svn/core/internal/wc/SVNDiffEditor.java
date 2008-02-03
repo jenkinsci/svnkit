@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
@@ -552,11 +553,12 @@ public class SVNDiffEditor implements ISVNEditor {
         SVNVersionedProperties properties = dir.getProperties(name);
         String keywords = properties.getStringPropertyValue(SVNProperty.KEYWORDS);
         String eolStyle = properties.getStringPropertyValue(SVNProperty.EOL_STYLE);
+        ISVNOptions options = dir.getWCAccess().getOptions();
         boolean special = properties.getPropertyValue(SVNProperty.SPECIAL) != null;
         if (keywords == null && eolStyle == null && (!special || SVNFileUtil.isWindows)) {
             return dir.getFile(name);
         }
-        byte[] eol = SVNTranslator.getEOL(eolStyle);
+        byte[] eol = SVNTranslator.getEOL(eolStyle, options);
         File tmpFile = createTempFile();
         Map keywordsMap = SVNTranslator.computeKeywords(keywords, null, null, null, null, null);
         SVNTranslator.translate(dir.getFile(name), tmpFile, eol, keywordsMap, special, false);

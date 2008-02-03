@@ -670,10 +670,10 @@ public class SVNUpdateClient extends SVNBasicClient {
         boolean special = props.getPropertyValue(SVNProperty.SPECIAL) != null;
         boolean executable = props.getPropertyValue(SVNProperty.EXECUTABLE) != null;
         String keywords = props.getStringPropertyValue(SVNProperty.KEYWORDS);
-        byte[] eols = eol != null ? SVNTranslator.getEOL(eol) : null;
+        byte[] eols = eol != null ? SVNTranslator.getEOL(eol, getOptions()) : null;
         if (eols == null) {
             eol = props.getStringPropertyValue(SVNProperty.EOL_STYLE);
-            eols = SVNTranslator.getWorkingEOL(eol);
+            eols = SVNTranslator.getWorkingEOL(eol, getOptions());
         }
         if (modified && !special) {
             timestamp = adminArea.getFile(fileName).lastModified();
@@ -767,9 +767,9 @@ public class SVNUpdateClient extends SVNBasicClient {
                         properties.getStringValue(SVNProperty.COMMITTED_REVISION), getOptions());
                 byte[] eols = null;
                 if (SVNProperty.EOL_STYLE_NATIVE.equals(properties.getStringValue(SVNProperty.EOL_STYLE))) {
-                    eols = SVNTranslator.getWorkingEOL(eolStyle != null ? eolStyle : properties.getStringValue(SVNProperty.EOL_STYLE));
+                    eols = SVNTranslator.getWorkingEOL(eolStyle != null ? eolStyle : properties.getStringValue(SVNProperty.EOL_STYLE), getOptions());
                 } else if (properties.containsName(SVNProperty.EOL_STYLE)) {
-                    eols = SVNTranslator.getWorkingEOL(properties.getStringValue(SVNProperty.EOL_STYLE));
+                    eols = SVNTranslator.getWorkingEOL(properties.getStringValue(SVNProperty.EOL_STYLE), getOptions());
                 }
                 if (binary) {
                     eols = null;

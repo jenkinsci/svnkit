@@ -311,7 +311,7 @@ public class SVNWCClient extends SVNBasicClient {
                     String cmtDate = properties.getStringValue(SVNProperty.COMMITTED_DATE);
                     String author = properties.getStringValue(SVNProperty.LAST_AUTHOR);
                     Map keywordsMap = SVNTranslator.computeKeywords(keywords, expandKeywords ? repos.getLocation().toString() : null, author, cmtDate, cmtRev, getOptions());
-                    OutputStream translatingStream = new SVNTranslatorOutputStream(dst, SVNTranslator.getEOL(eol), false, keywordsMap, expandKeywords);
+                    OutputStream translatingStream = new SVNTranslatorOutputStream(dst, SVNTranslator.getEOL(eol, getOptions()), false, keywordsMap, expandKeywords);
                     repos.getFile("", revNumber, null, new SVNCancellableOutputStream(translatingStream, getEventDispatcher()));
                     try {
                         translatingStream.close();
@@ -380,7 +380,7 @@ public class SVNWCClient extends SVNBasicClient {
                 String cmtDate = properties.getStringValue(SVNProperty.COMMITTED_DATE);
                 String author = properties.getStringValue(SVNProperty.LAST_AUTHOR);
                 Map keywordsMap = SVNTranslator.computeKeywords(keywords, expandKeywords ? repos.getLocation().toString() : null, author, cmtDate, cmtRev, getOptions());
-                OutputStream translatingStream = new SVNTranslatorOutputStream(dst, SVNTranslator.getEOL(eol), false, keywordsMap, expandKeywords);
+                OutputStream translatingStream = new SVNTranslatorOutputStream(dst, SVNTranslator.getEOL(eol, getOptions()), false, keywordsMap, expandKeywords);
                 repos.getFile("", revNumber, null, new SVNCancellableOutputStream(translatingStream, getEventDispatcher()));
                 try {
                     translatingStream.close();
@@ -584,7 +584,7 @@ public class SVNWCClient extends SVNBasicClient {
 
         if (propValue != null && SVNProperty.isSVNProperty(propName)) {
             final long baseRev = revNumber;
-            propValue = SVNPropertiesManager.validatePropertyValue(url.toString(), kind, propName, propValue, force, new ISVNFileContentFetcher() {
+            propValue = SVNPropertiesManager.validatePropertyValue(url.toString(), kind, propName, propValue, force, getOptions(), new ISVNFileContentFetcher() {
 
                 Boolean isBinary = null;
 
@@ -2718,7 +2718,7 @@ public class SVNWCClient extends SVNBasicClient {
             String time = null;
 
             if (eolStyle != null) {
-                eols = SVNTranslator.getEOL(eolStyle.getString());
+                eols = SVNTranslator.getEOL(eolStyle.getString(), getOptions());
             }
             if (hasMods && !special) {
                 time = SVNDate.formatDate(new Date(path.lastModified()));

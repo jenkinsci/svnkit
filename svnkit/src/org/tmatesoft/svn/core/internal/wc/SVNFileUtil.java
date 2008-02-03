@@ -45,6 +45,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.jna.SVNJNAUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
@@ -805,9 +806,9 @@ public class SVNFileUtil {
         return Character.isDigit(ch) || (Character.toUpperCase(ch) >= 'A' && Character.toUpperCase(ch) <= 'F');
     }
 
-    public static String getNativeEOLMarker() {
+    public static String getNativeEOLMarker(ISVNOptions options) {
         if (nativeEOLMarker == null) {
-            nativeEOLMarker = new String(SVNTranslator.getEOL(SVNProperty.EOL_STYLE_NATIVE));
+            nativeEOLMarker = new String(options.getNativeEOL());
         }
         return nativeEOLMarker;
     }

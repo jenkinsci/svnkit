@@ -27,7 +27,6 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslatorInputStream;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
@@ -547,7 +546,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         InputStream stream = null;
         try {
             stream = new SVNTranslatorInputStream(SVNFileUtil.openFileForReading(myPreviousFile), 
-                                                  SVNTranslator.LF, true, null, false);
+                                                  SVNProperty.EOL_LF_BYTES, true, null, false);
             
             StringBuffer buffer = new StringBuffer();
             for (int i = 0; i < myBlameChunks.size(); i++) {

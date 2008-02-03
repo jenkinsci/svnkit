@@ -149,7 +149,7 @@ public class SVNPropertiesManager {
 
 
         if (propValue != null && SVNProperty.isSVNProperty(propName)) {
-            propValue = SVNPropertiesManager.validatePropertyValue(path.getAbsolutePath(), entry.getKind(), propName, propValue, skipChecks, new ISVNFileContentFetcher() {
+            propValue = SVNPropertiesManager.validatePropertyValue(path.getAbsolutePath(), entry.getKind(), propName, propValue, skipChecks, access.getOptions(), new ISVNFileContentFetcher() {
 
                 public void fetchFileContent(OutputStream os) throws SVNException {
                     InputStream is = SVNFileUtil.openFileForReading(path);
@@ -378,7 +378,7 @@ public class SVNPropertiesManager {
         return false;
     }
 
-    public static SVNPropertyValue validatePropertyValue(String path, SVNNodeKind kind, String name, SVNPropertyValue value, boolean force, ISVNFileContentFetcher fileContentFetcher) throws SVNException {
+    public static SVNPropertyValue validatePropertyValue(String path, SVNNodeKind kind, String name, SVNPropertyValue value, boolean force, ISVNOptions options, ISVNFileContentFetcher fileContentFetcher) throws SVNException {
         if (value == null) {
             return value;
         }
@@ -394,7 +394,7 @@ public class SVNPropertiesManager {
 
         if (!force && SVNProperty.EOL_STYLE.equals(name)) {
             value = SVNPropertyValue.create(value.getString().trim());
-            if (SVNTranslator.getEOL(value.getString()) == null) {
+            if (SVNTranslator.getEOL(value.getString(), options) == null) {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.IO_UNKNOWN_EOL, "Unrecognized line ending style for ''{0}''", path);
                 SVNErrorManager.error(error);
             }

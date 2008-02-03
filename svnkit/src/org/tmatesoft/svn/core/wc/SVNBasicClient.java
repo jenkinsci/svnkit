@@ -330,7 +330,7 @@ public class SVNBasicClient implements ISVNEventHandler {
     }
 
     protected SVNWCAccess createWCAccess() {
-        return createWCAccess((String) null);
+        return createWCAccess(null);
     }
 
     protected SVNWCAccess createWCAccess(final String pathPrefix) {

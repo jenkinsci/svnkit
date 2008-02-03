@@ -30,6 +30,7 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.io.svn.ISVNConnector;
 import org.tmatesoft.svn.core.internal.io.svn.SVNTunnelConnector;
 import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
@@ -62,8 +63,10 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
     private static final String NO_UNLOCK = "no-unlock";
     private static final String PRESERVED_CONFLICT_FILE_EXTENSIONS = "preserved-conflict-file-exts";
     private static final String INTERACTIVE_COFLICTS = "interactive-conflicts";
-    
-    private static final String DEFAULT_IGNORES = "*.o *.lo *.la #*# .*.rej *.rej .*~ *~ .#* .DS_Store";    
+    private static final String NATIVE_CHARSET = "native-charset";
+    private static final String NATIVE_EOL = "native-style";
+
+    private static final String DEFAULT_IGNORES = "*.o *.lo *.la #*# .*.rej *.rej .*~ *~ .#* .DS_Store";
     private static final String YES = "yes";
     private static final String NO = "no";
     
@@ -501,5 +504,32 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
 
     public boolean isAllowAllForwardMergesFromSelf() {
         return false;
+    }
+
+    public void setNativeCharset(String charset){
+        getConfigFile().setPropertyValue(MISCELLANY_GROUP, NATIVE_CHARSET, charset, !myIsReadonly);
+    }
+
+    public String getNativeCharset() {
+        String charset = getConfigFile().getPropertyValue(MISCELLANY_GROUP, NATIVE_CHARSET);
+        return charset == null ? "UTF-8" : charset;
+    }
+
+    public void setNativeEOLStyle(String eolStyle){
+        getConfigFile().setPropertyValue(MISCELLANY_GROUP, NATIVE_EOL, eolStyle, !myIsReadonly);
+    }
+
+    public byte[] getNativeEOL() {
+        String eolStyle = getConfigFile().getPropertyValue(MISCELLANY_GROUP, NATIVE_EOL);
+        if (SVNProperty.EOL_STYLE_LF.equals(eolStyle)){
+            return SVNProperty.EOL_LF_BYTES;
+        }
+        if (SVNProperty.EOL_STYLE_CRLF.equals(eolStyle)) {
+            return SVNProperty.EOL_CRLF_BYTES;                        
+        }
+        if (SVNProperty.EOL_STYLE_CR.equals(eolStyle)) {
+            return SVNProperty.EOL_CR_BYTES;                        
+        }
+        return System.getProperty("line.separator").getBytes();
     }
 }

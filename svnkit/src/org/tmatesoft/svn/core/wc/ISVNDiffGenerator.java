@@ -83,6 +83,10 @@ public interface ISVNDiffGenerator {
      * @return the name of the charset being in use
      */
     public String getEncoding();
+
+    public void setEOL(byte[] eol);
+
+    public byte[] getEOL();
     
     /**
      * Enables or disables generating differences for deleted

@@ -52,17 +52,11 @@ public class SVNTranslator {
 
     public static final byte[] NATIVE = System.getProperty("line.separator").getBytes();
 
-    private static final String NATIVE_STYLE = "native";
-    private static final String CRLF_STYLE = "CRLF";
-    private static final String CR_STYLE = "CR";
-    private static final String LF_STYLE = "LF";
-    
     public static void translate(SVNAdminArea adminArea, String name, String srcPath,
             String dstPath, boolean expand) throws SVNException {
         translate(adminArea, name, srcPath, dstPath, null, expand);
     }
-
-    public static void translate(SVNAdminArea adminArea, String name, String srcPath,
+  public static void translate(SVNAdminArea adminArea, String name, String srcPath,
             String dstPath, String customEOLStyle, boolean expand) throws SVNException {
         translate(adminArea, name, adminArea.getFile(srcPath), adminArea.getFile(dstPath), customEOLStyle, expand);
     }
@@ -87,10 +81,11 @@ public class SVNTranslator {
         boolean special = props.getPropertyValue(SVNProperty.SPECIAL) != null;
         Map keywordsMap = null;
         byte[] eols;
-        if (keywords != null) {            
+        ISVNOptions options = null;
+        if (keywords != null) {
             if (expand) {
                 SVNEntry entry = adminArea.getVersionedEntry(name, true);
-                ISVNOptions options = adminArea.getWCAccess().getOptions();
+                options = adminArea.getWCAccess().getOptions();
                 String url = entry.getURL();
                 String author = entry.getAuthor();
                 String date = entry.getCommittedDate();
@@ -103,7 +98,8 @@ public class SVNTranslator {
         if (!expand) {
             eols = getBaseEOL(eolStyle);
         } else {
-            eols = getWorkingEOL(eolStyle);
+            options = adminArea.getWCAccess().getOptions();
+            eols = getWorkingEOL(eolStyle, options);
         }
         
         translate(src, dst2, eols, keywordsMap, special, expand);
@@ -186,7 +182,7 @@ public class SVNTranslator {
                     SVNErrorManager.error(err);
                 }
                 Map keywordsMap = computeKeywords(keywords, null, null, null, null, null);
-                boolean repair = (eolStyle != null && eol != null && !NATIVE_STYLE.equals(eolStyle)) || repairEOL; 
+                boolean repair = (eolStyle != null && eol != null && !SVNProperty.EOL_STYLE_NATIVE.equals(eolStyle)) || repairEOL;
                 return new SVNTranslatorInputStream(SVNFileUtil.openFileForReading(src), eol, repair, keywordsMap, false);
             }
 
@@ -226,7 +222,7 @@ public class SVNTranslator {
                 String date = entry.getCommittedDate();
                 String rev = Long.toString(entry.getCommittedRevision());
                 Map keywordsMap = computeKeywords(keywords, url, author, date, rev, options);
-                copyAndTranslate(src, result, getEOL(eolStyle), keywordsMap, special, true, true);
+                copyAndTranslate(src, result, getEOL(eolStyle, options), keywordsMap, special, true, true);
             }
         }
         return result;
@@ -236,7 +232,8 @@ public class SVNTranslator {
         String eolStyle = null;
         if (propDiff != null && propDiff.containsName(SVNProperty.EOL_STYLE) && propDiff.getStringValue(SVNProperty.EOL_STYLE) != null) {
             eolStyle = propDiff.getStringValue(SVNProperty.EOL_STYLE);
-            byte[] eol = getEOL(eolStyle);
+            ISVNOptions options = dir.getWCAccess().getOptions();
+            byte[] eol = getEOL(eolStyle, options);
             File tmpFile = SVNAdminUtil.createTmpFile(dir);
             copyAndTranslate(target, tmpFile, eol, null, false, false, eol == null);
             return tmpFile;
@@ -276,7 +273,8 @@ public class SVNTranslator {
         File detranslatedFile = null;
         if (force || keywords != null || eolStyle != null || isSpecial) {
             File tmpFile = SVNAdminUtil.createTmpFile(dir);
-            translateToNormalForm(dir.getFile(name), tmpFile, eolStyle, getEOL(eolStyle) == null, keywords, isSpecial);
+            ISVNOptions options = dir.getWCAccess().getOptions();
+            translateToNormalForm(dir.getFile(name), tmpFile, eolStyle, getEOL(eolStyle, options) == null, keywords, isSpecial);
             detranslatedFile = tmpFile;
         } else {
             detranslatedFile = dir.getFile(name);
@@ -293,7 +291,7 @@ public class SVNTranslator {
         }
         
         Map keywordsMap = computeKeywords(keywords, null, null, null, null, null);
-        boolean repair = (eolStyle != null && eol != null && !NATIVE_STYLE.equals(eolStyle)) || alwaysRepairEOLs; 
+        boolean repair = (eolStyle != null && eol != null && !SVNProperty.EOL_STYLE_NATIVE.equals(eolStyle)) || alwaysRepairEOLs;
         copyAndTranslate(source, destination, eol, keywordsMap, isSpecial, false, repair);
     }
 
@@ -368,12 +366,12 @@ public class SVNTranslator {
             byte[] currentEOL = null;
             while ((r = is.read()) >= 0) {
                 if (r == '\n') {
-                    currentEOL = LF;
+                    currentEOL = SVNProperty.EOL_LF_BYTES;
                 } else if (r == '\r') {
-                    currentEOL = CR;
+                    currentEOL = SVNProperty.EOL_CR_BYTES;
                     r = is.read();
                     if (r == '\n') {
-                        currentEOL = CRLF;
+                        currentEOL = SVNProperty.EOL_CRLF_BYTES;
                     }
                 }
                 if (lastFoundEOL == null) {
@@ -465,41 +463,41 @@ public class SVNTranslator {
         return map;
     }
 
-    public static byte[] getEOL(String propertyValue) {
-        if (NATIVE_STYLE.equals(propertyValue)) {
-            return NATIVE;
-        } else if (LF_STYLE.equals(propertyValue)) {
-            return LF;
-        } else if (CR_STYLE.equals(propertyValue)) {
-            return CR;
-        } else if (CRLF_STYLE.equals(propertyValue)) {
-            return CRLF;
+    public static byte[] getEOL(String eolStyle, ISVNOptions options) {
+        if (SVNProperty.EOL_STYLE_NATIVE.equals(eolStyle)) {
+            return options.getNativeEOL();
+        } else if (SVNProperty.EOL_STYLE_LF.equals(eolStyle)) {
+            return SVNProperty.EOL_LF_BYTES;
+        } else if (SVNProperty.EOL_STYLE_CR.equals(eolStyle)) {
+            return SVNProperty.EOL_CR_BYTES;
+        } else if (SVNProperty.EOL_STYLE_CRLF.equals(eolStyle)) {
+            return SVNProperty.EOL_CRLF_BYTES;
         }
         return null;
     }
 
     public static byte[] getBaseEOL(String eolStyle) {
-        if (NATIVE_STYLE.equals(eolStyle)) {
-            return LF;
-        } else if (CR_STYLE.equals(eolStyle)) {
-            return CR;
-        } else if (LF_STYLE.equals(eolStyle)) {
-            return LF;
-        } else if (CRLF_STYLE.equals(eolStyle)) {
-            return CRLF;
+        if (SVNProperty.EOL_STYLE_NATIVE.equals(eolStyle)) {
+            return SVNProperty.EOL_LF_BYTES;
+        } else if (SVNProperty.EOL_STYLE_CR.equals(eolStyle)) {
+            return SVNProperty.EOL_CR_BYTES;
+        } else if (SVNProperty.EOL_STYLE_LF.equals(eolStyle)) {
+            return SVNProperty.EOL_LF_BYTES;
+        } else if (SVNProperty.EOL_STYLE_CRLF.equals(eolStyle)) {
+            return SVNProperty.EOL_CRLF_BYTES;
         }
         return null;
     }
 
-    public static byte[] getWorkingEOL(String eolStyle) {
-        if (NATIVE_STYLE.equals(eolStyle)) {
-            return NATIVE;
-        } else if (CR_STYLE.equals(eolStyle)) {
-            return CR;
-        } else if (LF_STYLE.equals(eolStyle)) {
-            return LF;
-        } else if (CRLF_STYLE.equals(eolStyle)) {
-            return CRLF;
+    public static byte[] getWorkingEOL(String eolStyle, ISVNOptions options) {
+        if (SVNProperty.EOL_STYLE_NATIVE.equals(eolStyle)) {
+            return options.getNativeEOL();
+        } else if (SVNProperty.EOL_STYLE_CR.equals(eolStyle)) {
+            return SVNProperty.EOL_CR_BYTES;
+        } else if (SVNProperty.EOL_STYLE_LF.equals(eolStyle)) {
+            return SVNProperty.EOL_LF_BYTES;
+        } else if (SVNProperty.EOL_STYLE_CRLF.equals(eolStyle)) {
+            return SVNProperty.EOL_CRLF_BYTES;
         }
         return null;
     }

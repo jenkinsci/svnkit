@@ -13,13 +13,13 @@
 package org.tmatesoft.svn.core;
 
 /**
- * The <b>SVNProperty</b> class is a representation class for both versioned 
- * properties (user-managed svn specials) and for metaproperties (untweakable) 
- * supported by Subversion. This class holds string constants that are property 
+ * The <b>SVNProperty</b> class is a representation class for both versioned
+ * properties (user-managed svn specials) and for metaproperties (untweakable)
+ * supported by Subversion. This class holds string constants that are property
  * names, and gives some useful methods to operate with properties (in particular).
- * 
+ *
+ * @author TMate Software Ltd.
  * @version 1.1.1
- * @author  TMate Software Ltd.
  */
 public class SVNProperty {
     /**
@@ -32,12 +32,12 @@ public class SVNProperty {
     public static final String SVN_WC_PREFIX = "svn:wc:";
 
     /**
-     * A special property used in a commit transaction. 
+     * A special property used in a commit transaction.
      */
     public static final String TXN_CHECK_LOCKS = SVN_PREFIX + "check-locks";
 
     /**
-     * A special property used in a commit transaction. 
+     * A special property used in a commit transaction.
      */
     public static final String TXN_CHECK_OUT_OF_DATENESS = SVN_PREFIX + "check-ood";
 
@@ -75,7 +75,7 @@ public class SVNProperty {
      * An <span class="javastring">"svn:special"</span> SVN special property.
      */
     public static final String SPECIAL = SVN_PREFIX + "special";
-    
+
     /**
      * @since SVN 1.5
      */
@@ -95,31 +95,35 @@ public class SVNProperty {
      */
     public static final String COMMITTED_DATE = SVN_ENTRY_PREFIX
             + "committed-date";
-    
+
     /**
      * <span class="javastring">"has-props"</span> SVN untweakable metaproperty.
+     *
      * @since 1.1, new in Subversion 1.4
      */
     public static final String HAS_PROPS = SVN_ENTRY_PREFIX + "has-props";
 
     /**
      * <span class="javastring">"has-prop-mods"</span> SVN untweakable metaproperty.
+     *
      * @since 1.1, new in Subversion 1.4
      */
     public static final String HAS_PROP_MODS = SVN_ENTRY_PREFIX + "has-prop-mods";
 
     /**
      * <span class="javastring">"cachable-props"</span> SVN untweakable metaproperty.
+     *
      * @since 1.1, new in Subversion 1.4
      */
     public static final String CACHABLE_PROPS = SVN_ENTRY_PREFIX + "cachable-props";
 
     /**
      * <span class="javastring">"present-props"</span> SVN untweakable metaproperty.
+     *
      * @since 1.1, new in Subversion 1.4
      */
     public static final String PRESENT_PROPS = SVN_ENTRY_PREFIX + "present-props";
-    
+
     public static final String KEEP_LOCAL = SVN_ENTRY_PREFIX + "keep-local";
 
     public static final String CHANGELIST = SVN_ENTRY_PREFIX + "changelist";
@@ -127,7 +131,7 @@ public class SVNProperty {
     public static final String WORKING_SIZE = SVN_ENTRY_PREFIX + "working-size";
 
     public static final String DEPTH = SVN_ENTRY_PREFIX + "depth";
-    
+
     /**
      * An <span class="javastring">"svn:entry:checksum"</span> SVN untweakable metaproperty.
      */
@@ -240,68 +244,72 @@ public class SVNProperty {
      */
     public static final String NEEDS_LOCK = SVN_PREFIX + "needs-lock";
     /**
-     * One of the two possible values of the {@link #KIND} property - 
-     * <span class="javastring">"dir"</span> 
+     * One of the two possible values of the {@link #KIND} property -
+     * <span class="javastring">"dir"</span>
      */
     public static final String KIND_DIR = "dir";
     /**
-     * One of the two possible values of the {@link #KIND} property - 
-     * <span class="javastring">"file"</span> 
+     * One of the two possible values of the {@link #KIND} property -
+     * <span class="javastring">"file"</span>
      */
     public static final String KIND_FILE = "file";
     /**
-     * One of the four possible values of the {@link #EOL_STYLE} property - 
-     * <span class="javastring">"LF"</span> (line feed) 
+     * One of the four possible values of the {@link #EOL_STYLE} property -
+     * <span class="javastring">"LF"</span> (line feed)
      */
     public static final String EOL_STYLE_LF = "LF";
     /**
-     * One of the four possible values of the {@link #EOL_STYLE} property - 
-     * <span class="javastring">"CR"</span> (linefeed) 
+     * One of the four possible values of the {@link #EOL_STYLE} property -
+     * <span class="javastring">"CR"</span> (linefeed)
      */
     public static final String EOL_STYLE_CR = "CR";
     /**
-     * One of the four possible values of the {@link #EOL_STYLE} property - 
-     * <span class="javastring">"CRLF"</span> 
+     * One of the four possible values of the {@link #EOL_STYLE} property -
+     * <span class="javastring">"CRLF"</span>
      */
     public static final String EOL_STYLE_CRLF = "CRLF";
     /**
-     * One of the four possible values of the {@link #EOL_STYLE} property - 
-     * <span class="javastring">"native"</span> 
+     * One of the four possible values of the {@link #EOL_STYLE} property -
+     * <span class="javastring">"native"</span>
      */
     public static final String EOL_STYLE_NATIVE = "native";
+
+    public static final byte[] EOL_LF_BYTES = {'\n'};
+
+    public static final byte[] EOL_CRLF_BYTES = {'\r', '\n'};
+
+    public static final byte[] EOL_CR_BYTES = {'\r'};
+    
+    public static final byte[] EOL_NATIVE_BYTES = System.getProperty("line.separator").getBytes();
     /**
-     * One of the three possible values of the {@link #SCHEDULE} property - 
-     * <span class="javastring">"add"</span> 
+     * One of the three possible values of the {@link #SCHEDULE} property -
+     * <span class="javastring">"add"</span>
      */
     public static final String SCHEDULE_ADD = "add";
     /**
-     * One of the three possible values of the {@link #SCHEDULE} property - 
-     * <span class="javastring">"delete"</span> 
+     * One of the three possible values of the {@link #SCHEDULE} property -
+     * <span class="javastring">"delete"</span>
      */
     public static final String SCHEDULE_DELETE = "delete";
     /**
-     * One of the three possible values of the {@link #SCHEDULE} property - 
-     * <span class="javastring">"replace"</span> 
+     * One of the three possible values of the {@link #SCHEDULE} property -
+     * <span class="javastring">"replace"</span>
      */
     public static final String SCHEDULE_REPLACE = "replace";
 
     public static final long WORKING_SIZE_UNKNOWN = -1;
 
-    public static final SVNPropertyValue BOOLEAN_PROPERTY_VALUE = SVNPropertyValue.create("*");    
-    
-    private static final byte[] EOL_LF_BYTES = { '\n' };
-    private static final byte[] EOL_CRLF_BYTES = { '\r', '\n' };
-    private static final byte[] EOL_CR_BYTES = { '\r' };
-    private static final byte[] EOL_NATIVE_BYTES = System.getProperty("line.separator").getBytes();
+    public static final SVNPropertyValue BOOLEAN_PROPERTY_VALUE = SVNPropertyValue.create("*");
+
 
     /**
      * Says if the given property name starts with the {@link #SVN_WC_PREFIX}
      * prefix.
-     * 
-     * @param  name a property name to check
-     * @return      <span class="javakeyword">true</span> if <code>name</code> is
-     *              not <span class="javakeyword">null</span> and starts with
-     *              the {@link #SVN_WC_PREFIX} prefix, otherwise <span class="javakeyword">false</span>
+     *
+     * @param name a property name to check
+     * @return <span class="javakeyword">true</span> if <code>name</code> is
+     *         not <span class="javakeyword">null</span> and starts with
+     *         the {@link #SVN_WC_PREFIX} prefix, otherwise <span class="javakeyword">false</span>
      */
     public static boolean isWorkingCopyProperty(String name) {
         return name != null && name.startsWith(SVN_WC_PREFIX);
@@ -310,39 +318,39 @@ public class SVNProperty {
     /**
      * Says if the given property name starts with the {@link #SVN_ENTRY_PREFIX}
      * prefix.
-     * 
-     * @param  name  a property name to check
-     * @return       <span class="javakeyword">true</span> if <code>name</code> is
-     *               not <span class="javakeyword">null</span> and starts with
-     *               the {@link #SVN_ENTRY_PREFIX} prefix, otherwise <span class="javakeyword">false</span>
+     *
+     * @param name a property name to check
+     * @return <span class="javakeyword">true</span> if <code>name</code> is
+     *         not <span class="javakeyword">null</span> and starts with
+     *         the {@link #SVN_ENTRY_PREFIX} prefix, otherwise <span class="javakeyword">false</span>
      */
     public static boolean isEntryProperty(String name) {
         return name != null && name.startsWith(SVN_ENTRY_PREFIX);
     }
-    
+
     /**
      * Says if the given property name starts with the {@link #SVN_PREFIX}
      * prefix.
-     * 
-     * @param  name  a property name to check
-     * @return       <span class="javakeyword">true</span> if <code>name</code> is
-     *               not <span class="javakeyword">null</span> and starts with
-     *               the {@link #SVN_PREFIX} prefix, otherwise <span class="javakeyword">false</span>
+     *
+     * @param name a property name to check
+     * @return <span class="javakeyword">true</span> if <code>name</code> is
+     *         not <span class="javakeyword">null</span> and starts with
+     *         the {@link #SVN_PREFIX} prefix, otherwise <span class="javakeyword">false</span>
      */
     public static boolean isSVNProperty(String name) {
         return name != null && name.startsWith(SVN_PREFIX);
     }
 
     /**
-     * Checks if a property is regular. Regular are some <span class="javastring">"svn:"</span> 
+     * Checks if a property is regular. Regular are some <span class="javastring">"svn:"</span>
      * properties and all user props, i.e. ones stored in the repository filesystem.
      *
-     * @param  name a property name
-     * @return      <span class="javakeyword">true</span> if regular, otherwise 
-     *              <span class="javakeyword">false</span>
+     * @param name a property name
+     * @return <span class="javakeyword">true</span> if regular, otherwise
+     *         <span class="javakeyword">false</span>
      */
-    public static boolean isRegularProperty(String name){
-        if (name == null){
+    public static boolean isRegularProperty(String name) {
+        if (name == null) {
             return false;
         } else if (name.startsWith(SVN_WC_PREFIX) || name.startsWith(SVN_ENTRY_PREFIX)) {
             return false;
@@ -350,27 +358,27 @@ public class SVNProperty {
             return true;
         }
     }
-    
+
     /**
      * Says if the given MIME-type corresponds to a text type.
-     * 
-     * @param   mimeType  a value of a file {@link #MIME_TYPE} property
-     * @return            <span class="javakeyword">true</span> if <code>mimeType</code>
-     *                    is either <span class="javakeyword">null</span> or is a text
-     *                    type (starts with <span class="javastring">"text/"</span>)
-     * @see               #isBinaryMimeType(String)                   
+     *
+     * @param mimeType a value of a file {@link #MIME_TYPE} property
+     * @return <span class="javakeyword">true</span> if <code>mimeType</code>
+     *         is either <span class="javakeyword">null</span> or is a text
+     *         type (starts with <span class="javastring">"text/"</span>)
+     * @see #isBinaryMimeType(String)
      */
     public static boolean isTextMimeType(String mimeType) {
         return mimeType == null || mimeType.startsWith("text/");
     }
-    
+
     /**
      * Says if the given MIME-type corresponds to a binary (non-textual) type.
-     * 
-     * @param   mimeType  a value of a file {@link #MIME_TYPE} property
-     * @return            <span class="javakeyword">true</span> if <code>mimeType</code>
-     *                    is not a text type
-     * @see               #isTextMimeType(String)                    
+     *
+     * @param mimeType a value of a file {@link #MIME_TYPE} property
+     * @return <span class="javakeyword">true</span> if <code>mimeType</code>
+     *         is not a text type
+     * @see #isTextMimeType(String)
      */
     public static boolean isBinaryMimeType(String mimeType) {
         return !isTextMimeType(mimeType);
@@ -379,25 +387,25 @@ public class SVNProperty {
     /**
      * Converts a string representation of a boolean value to boolean.
      * Useful to convert values of the {@link #COPIED} property.
-     *  
-     * @param  text  a string to convert to a boolean value
-     * @return       <span class="javakeyword">true</span> if and only if
-     *               <code>text</code> is not <span class="javakeyword">null</span>
-     *               and is equal, ignoring case, to the string 
-     *               <span class="javastring">"true"</span> 
+     *
+     * @param text a string to convert to a boolean value
+     * @return <span class="javakeyword">true</span> if and only if
+     *         <code>text</code> is not <span class="javakeyword">null</span>
+     *         and is equal, ignoring case, to the string
+     *         <span class="javastring">"true"</span>
      */
     public static boolean booleanValue(String text) {
         return text == null ? false : Boolean.valueOf(text.trim())
                 .booleanValue();
     }
-    
+
     /**
      * Converts a string representation of a numeric value to a long value.
      * Useful to convert revision numbers.
-     *   
-     * @param   text  a string to convert to a long value  
-     * @return        a long representation of the given string; 
-     *                -1 is returned if the string can not be parsed  
+     *
+     * @param text a string to convert to a long value
+     * @return a long representation of the given string;
+     *         -1 is returned if the string can not be parsed
      */
     public static long longValue(String text) {
         if (text != null) {
@@ -408,35 +416,35 @@ public class SVNProperty {
         }
         return -1;
     }
-    
+
     /**
      * Converts a boolean value to a string representation.
      * Useful to convert values of the {@link #COPIED} property.
-     * 
-     * @param   b  a boolean value
-     * @return     a string representation of <code>b</code>
+     *
+     * @param b a boolean value
+     * @return a string representation of <code>b</code>
      */
     public static String toString(boolean b) {
         return Boolean.toString(b);
     }
-    
+
     /**
      * Converts a long value to a string representation.
      * Useful to convert revision numbers.
-     *  
-     * @param  i  a long value
-     * @return    a string representation of <code>i</code>
+     *
+     * @param i a long value
+     * @return a string representation of <code>i</code>
      */
     public static String toString(long i) {
         return Long.toString(i);
     }
-    
+
     /**
      * Returns a short name for the given property name - that is
      * a name without any prefixes.
-     *  
-     * @param   longName  a property name
-     * @return            a property short name
+     *
+     * @param longName a property name
+     * @return a property short name
      */
     public static String shortPropertyName(String longName) {
         if (longName == null) {
@@ -453,16 +461,16 @@ public class SVNProperty {
     }
 
     /**
-     * Returns the value for such boolean properties as 
-     * <span class="javastring">"svn:executable"</span>, <span class="javastring">"svn:needs-lock"</span> 
+     * Returns the value for such boolean properties as
+     * <span class="javastring">"svn:executable"</span>, <span class="javastring">"svn:needs-lock"</span>
      * and <span class="javastring">"svn:special"</span>.
      * Used by internals.
-     * 
-     * @param  propName a property name
-     * @return          the property value <span class="javastring">"*"</span>, or 
-     *                  <span class="javakeyword">null</span> if the property is not boolean
-     * @see             #isBooleanProperty(String)
-     * @since           1.1
+     *
+     * @param propName a property name
+     * @return the property value <span class="javastring">"*"</span>, or
+     *         <span class="javakeyword">null</span> if the property is not boolean
+     * @see #isBooleanProperty(String)
+     * @since 1.1
      */
     public static SVNPropertyValue getValueOfBooleanProperty(String propName) {
         if (SVNProperty.EXECUTABLE.equals(propName) || SVNProperty.NEEDS_LOCK.equals(propName) || SVNProperty.SPECIAL.equals(propName)) {
@@ -473,11 +481,11 @@ public class SVNProperty {
 
     /**
      * Checks whether the property is boolean.
-     * 
-     * @param  propName  a property name
-     * @return           <span class="javakeyword">true</span> if boolean, 
-     *                   otherwise <span class="javakeyword">false</span>
-     * @since            1.1
+     *
+     * @param propName a property name
+     * @return <span class="javakeyword">true</span> if boolean,
+     *         otherwise <span class="javakeyword">false</span>
+     * @since 1.1
      */
     public static boolean isBooleanProperty(String propName) {
         return SVNProperty.EXECUTABLE.equals(propName) || SVNProperty.SPECIAL.equals(propName) || SVNProperty.NEEDS_LOCK.equals(propName);
