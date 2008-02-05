@@ -335,13 +335,15 @@ public class SVNStatusEditor {
     }
     
     public static Collection getGlobalIgnores(ISVNOptions options) {
-        String[] ignores = options.getIgnorePatterns();
-        if (ignores != null) {
-            Collection patterns = new HashSet();
-            for (int i = 0; i < ignores.length; i++) {
-                patterns.add(ignores[i]);
+        if (options != null) {
+            String[] ignores = options.getIgnorePatterns();
+            if (ignores != null) {
+                Collection patterns = new HashSet();
+                for (int i = 0; i < ignores.length; i++) {
+                    patterns.add(ignores[i]);
+                }
+                return patterns;
             }
-            return patterns;
         }
         return Collections.EMPTY_SET;
     }

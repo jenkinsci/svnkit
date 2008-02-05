@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.wc;
 import java.io.File;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -23,8 +24,12 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
+import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -35,6 +40,70 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
  */
 public class SVNStatusUtil {
 
+	public static SVNRevisionStatus getRevisionStatus(final File wcPath, String trailURL, 
+	        final boolean committed, ISVNEventHandler eventHandler) throws SVNException {
+		
+	    SVNWCAccess wcAccess = null; 
+	        
+	    try {    
+    	    wcAccess = SVNWCAccess.newInstance(eventHandler);
+    		SVNAdminAreaInfo anchor = wcAccess.openAnchor(wcPath, false, SVNWCAccess.INFINITE_DEPTH);
+    		
+    		final long[] minRev = { SVNRepository.INVALID_REVISION };
+            final long[] maxRev = { SVNRepository.INVALID_REVISION };
+    		
+    		final boolean[] isSwitched = { false, false, false }; 
+    		final boolean[] isModified = { false };
+    		final boolean[] isSparseCheckOut = { false };
+    		final SVNURL[] wcURL = { null };
+    		
+    		SVNStatusEditor editor = new SVNStatusEditor(null, wcAccess, anchor, false, true, 
+                    SVNDepth.INFINITY, new ISVNStatusHandler() {
+                public void handleStatus(SVNStatus status) throws SVNException {
+                    SVNEntry entry = status.getEntry();
+                    if (entry == null) {
+                        return;
+                    }
+                    
+                    if (status.getContentsStatus() != SVNStatusType.STATUS_ADDED) {
+                        long itemRev = committed ? entry.getCommittedRevision() : entry.getRevision();
+                        if (!SVNRevision.isValidRevisionNumber(minRev[0]) || itemRev < minRev[0]) {
+                            minRev[0] = itemRev;
+                        }
+                        if (!SVNRevision.isValidRevisionNumber(maxRev[0]) || itemRev > maxRev[0]) {
+                            maxRev[0] = itemRev;
+                        }
+                    }
+                    
+                    isSwitched[0] |= status.isSwitched();
+                    isModified[0] |= status.getContentsStatus() != SVNStatusType.STATUS_NORMAL; 
+                    isModified[0] |= status.getPropertiesStatus() != SVNStatusType.STATUS_NORMAL &&
+                    status.getPropertiesStatus() != SVNStatusType.STATUS_NONE;                           
+                    isSparseCheckOut[0] |= entry.getDepth() != SVNDepth.INFINITY;
+                    
+                    if (wcPath != null && wcURL[0] == null && wcPath.equals(status.getFile())) {
+                        wcURL[0] = entry.getSVNURL();
+                    }
+                }
+            });
+    
+    		editor.closeEdit();
+    		if (!isSwitched[0] && trailURL != null) {
+    		    if (wcURL[0] == null) {
+    		        isSwitched[0] = true;
+    		    } else {
+    		        String wcURLStr = wcURL[0].toDecodedString();
+    		        if (trailURL.length() > wcURLStr.length() || !wcURLStr.endsWith(trailURL)) {
+    		            isSwitched[0] = true;
+    		        }
+    		    }
+    		}
+            return new SVNRevisionStatus(minRev[0], maxRev[0], isSwitched[0], isModified[0], isSparseCheckOut[0]);
+	    } finally {
+	        wcAccess.close();
+	    }
+	}
+	
 	public static SVNStatus getStatus(File path, SVNWCAccess wcAccess) throws SVNException {
 		SVNEntry entry = null;
 		SVNEntry parentEntry = null;

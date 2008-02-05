@@ -209,18 +209,6 @@ public class SVNMergeInfoManager {
         return result;
     }
     
-/*    private Map combineRanges(Map srcPathsToRangeLists) {
-        String[] paths = (String[]) srcPathsToRangeLists.keySet().toArray(new String[srcPathsToRangeLists.keySet().size()]);
-        for (int i = 0; i < paths.length; i++) {
-            String path = paths[i];
-            SVNMergeRangeList rangeList = (SVNMergeRangeList) srcPathsToRangeLists.get(path);
-            rangeList = rangeList.combineRanges();
-            srcPathsToRangeLists.put(path, rangeList);
-        }
-        return srcPathsToRangeLists;
-    }
-*/
-    
     public static SVNMergeInfoManager createMergeInfoManager(ISVNDBProcessor dbProcessor) {
         if (dbProcessor == null) {
             dbProcessor =  new SVNSQLiteDBProcessor();
@@ -383,27 +371,32 @@ public class SVNMergeInfoManager {
         return result;
     }
 
+    public static boolean shouldElideMergeInfo(Map parentMergeInfo, Map childMergeInfo, String pathSuffix) {
+        boolean elides = false;
+        if (childMergeInfo != null) {
+            if (childMergeInfo.isEmpty()) {
+                if (parentMergeInfo == null || parentMergeInfo.isEmpty()) {
+                    elides = true;
+                }
+            } else if (!(parentMergeInfo == null || parentMergeInfo.isEmpty())) {
+                Map pathTweakedMergeInfo = parentMergeInfo;
+                if (pathSuffix != null) {
+                    pathTweakedMergeInfo = new TreeMap();
+                    for (Iterator paths = parentMergeInfo.keySet().iterator(); paths.hasNext();) {
+                        String mergeSrcPath = (String) paths.next();
+                        pathTweakedMergeInfo.put(SVNPathUtil.getAbsolutePath(SVNPathUtil.append(mergeSrcPath, 
+                                pathSuffix)), parentMergeInfo.get(mergeSrcPath));
+                    }
+                } 
+                elides = mergeInfoEquals(pathTweakedMergeInfo, childMergeInfo, true);
+            }
+        }
+        return elides;
+    }
+    
     public static void elideMergeInfo(Map parentMergeInfo, Map childMergeInfo, File path, 
     		String pathSuffix, SVNWCAccess access) throws SVNException {
-        childMergeInfo = childMergeInfo == null ? Collections.EMPTY_MAP : childMergeInfo;
-    	boolean elides = false;
-    	if (childMergeInfo.isEmpty()) {
-    		if (parentMergeInfo == null || parentMergeInfo.isEmpty()) {
-    			elides = true;
-    		}
-    	} else if (!(parentMergeInfo == null || parentMergeInfo.isEmpty())) {
-    		Map pathTweakedMergeInfo = parentMergeInfo;
-            if (pathSuffix != null) {
-                pathTweakedMergeInfo = new TreeMap();
-                for (Iterator paths = parentMergeInfo.keySet().iterator(); paths.hasNext();) {
-                    String mergeSrcPath = (String) paths.next();
-                    pathTweakedMergeInfo.put(SVNPathUtil.getAbsolutePath(SVNPathUtil.append(mergeSrcPath, 
-                    		pathSuffix)), parentMergeInfo.get(mergeSrcPath));
-                }
-            } 
-            elides = mergeInfoEquals(pathTweakedMergeInfo, childMergeInfo, true);
-    	}
-        
+        boolean elides = shouldElideMergeInfo(parentMergeInfo, childMergeInfo, pathSuffix);
         if (elides) {
             SVNPropertiesManager.setProperty(access, path, SVNProperty.MERGE_INFO, null, true);
         }
@@ -456,6 +449,22 @@ public class SVNMergeInfoManager {
     	Map mergeInfo = new TreeMap();
     	walkMergeInfoHashForDiff(mergeInfo, null, whiteBoard, eraser, true);
     	return mergeInfo;
+    }
+    
+    public static Map intersectMergeInfo(Map mergeInfo1, Map mergeInfo2) {
+        Map mergeInfo = new TreeMap();
+        for (Iterator pathsIter = mergeInfo1.keySet().iterator(); pathsIter.hasNext();) {
+            String path = (String) pathsIter.next();
+            SVNMergeRangeList rangeList1 = (SVNMergeRangeList) mergeInfo1.get(path);
+            SVNMergeRangeList rangeList2 = (SVNMergeRangeList) mergeInfo2.get(path);
+            if (rangeList2 != null) {
+                rangeList2 = rangeList2.intersect(rangeList1);
+                if (!rangeList2.isEmpty()) {
+                    mergeInfo.put(path, rangeList2);
+                }
+            }
+        }
+        return mergeInfo;
     }
     
     private static SVNMergeRange[] parseRevisionList(StringBuffer mergeInfo, String path) throws SVNException {
