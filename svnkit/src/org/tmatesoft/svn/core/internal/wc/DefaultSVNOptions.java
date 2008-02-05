@@ -506,30 +506,11 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
         return false;
     }
 
-    public void setNativeCharset(String charset){
-        getConfigFile().setPropertyValue(MISCELLANY_GROUP, NATIVE_CHARSET, charset, !myIsReadonly);
-    }
-
     public String getNativeCharset() {
-        String charset = getConfigFile().getPropertyValue(MISCELLANY_GROUP, NATIVE_CHARSET);
-        return charset == null ? "UTF-8" : charset;
+        return System.getProperty("file.encoding");
     }
 
-    public void setNativeEOLStyle(String eolStyle){
-        getConfigFile().setPropertyValue(MISCELLANY_GROUP, NATIVE_EOL, eolStyle, !myIsReadonly);
-    }
-
-    public byte[] getNativeEOL() {
-        String eolStyle = getConfigFile().getPropertyValue(MISCELLANY_GROUP, NATIVE_EOL);
-        if (SVNProperty.EOL_STYLE_LF.equals(eolStyle)){
-            return SVNProperty.EOL_LF_BYTES;
-        }
-        if (SVNProperty.EOL_STYLE_CRLF.equals(eolStyle)) {
-            return SVNProperty.EOL_CRLF_BYTES;                        
-        }
-        if (SVNProperty.EOL_STYLE_CR.equals(eolStyle)) {
-            return SVNProperty.EOL_CR_BYTES;                        
-        }
+    public byte[] getNativeEOL() {        
         return System.getProperty("line.separator").getBytes();
     }
 }

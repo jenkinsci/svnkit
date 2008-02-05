@@ -80,7 +80,7 @@ public class SVNProperty {
      * @since SVN 1.5
      */
     public static final String MERGE_INFO = SVN_PREFIX + "mergeinfo";
-
+    
     /**
      * An <span class="javastring">"svn:entry:revision"</span> SVN untweakable metaproperty.
      */
@@ -279,8 +279,11 @@ public class SVNProperty {
     public static final byte[] EOL_CRLF_BYTES = {'\r', '\n'};
 
     public static final byte[] EOL_CR_BYTES = {'\r'};
+
+    public static final String CHARSET = SVN_PREFIX + "charset";
+
+    public static final String NATIVE = "native";
     
-    public static final byte[] EOL_NATIVE_BYTES = System.getProperty("line.separator").getBytes();
     /**
      * One of the three possible values of the {@link #SCHEDULE} property -
      * <span class="javastring">"add"</span>

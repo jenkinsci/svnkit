@@ -21,12 +21,11 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.javahl.SVNClientImpl;
@@ -47,6 +46,8 @@ public class SVNAdmin {
     protected long cppAddr;
     private SVNClientImpl myDelegate;
     private SVNAdminClient mySVNAdminClient;
+
+    private static final byte[] NATIVE_EOL = System.getProperty("line.separator").getBytes();
 
     /**
      * Filesystem in a Berkeley DB
@@ -131,7 +132,7 @@ public class SVNAdmin {
                     if (errorOut != null && event.getAction() == SVNAdminEventAction.REVISION_DUMPED) {
                         try {
                             errorOut.write(event.getMessage().getBytes());
-                            errorOut.write(SVNTranslator.NATIVE);
+                            errorOut.write(NATIVE_EOL);
                         } catch (IOException e) {
                         }
                     }
@@ -142,7 +143,7 @@ public class SVNAdmin {
             try {
                 if (errorOut != null) {
                     errorOut.write(e.getErrorMessage().getFullMessage().getBytes("UTF-8"));
-                    errorOut.write(SVNTranslator.NATIVE);
+                    errorOut.write(NATIVE_EOL);
                 }
             } catch (IOException e1) {
                 //
@@ -235,16 +236,16 @@ public class SVNAdmin {
                     StringBuffer message = new StringBuffer();
                     if (event.getAction() != SVNAdminEventAction.REVISION_LOAD && myIsNodeOpened) {
                         message.append(" done.");
-                        message.append(SVNTranslator.NATIVE);
+                        message.append(NATIVE_EOL);
                         myIsNodeOpened = false;
                     }
                     if (event.getAction() == SVNAdminEventAction.REVISION_LOADED) {
-                        message.append(SVNTranslator.NATIVE);
+                        message.append(NATIVE_EOL);
                     }
                     message.append(event.getMessage());
-                    message.append(SVNTranslator.NATIVE);
+                    message.append(NATIVE_EOL);
                     if (event.getAction() == SVNAdminEventAction.REVISION_LOADED) {
-                        message.append(SVNTranslator.NATIVE);
+                        message.append(NATIVE_EOL);
                     }
                     myIsNodeOpened = event.getAction() != SVNAdminEventAction.REVISION_LOAD;
                     return message.toString();
@@ -255,7 +256,7 @@ public class SVNAdmin {
             if (messageOutput != null) {
                 try {
                     messageOutput.write(e.getErrorMessage().getFullMessage().getBytes("UTF-8"));
-                    messageOutput.write(SVNTranslator.NATIVE);
+                    messageOutput.write(NATIVE_EOL);
                 } catch (IOException e1) {
                 }
             }
@@ -346,7 +347,7 @@ public class SVNAdmin {
                     if (messageOut != null && event.getAction() == SVNAdminEventAction.REVISION_DUMPED) {
                         try {
                             messageOut.write(event.getMessage().getBytes());
-                            messageOut.write(SVNTranslator.NATIVE);
+                            messageOut.write(NATIVE_EOL);
                         } catch (IOException e) {
                         }
                     }
@@ -357,7 +358,7 @@ public class SVNAdmin {
             try {
                 if (messageOut != null) {
                     messageOut.write(e.getErrorMessage().getFullMessage().getBytes("UTF-8"));
-                    messageOut.write(SVNTranslator.NATIVE);
+                    messageOut.write(NATIVE_EOL);
                 }
             } catch (IOException e1) {
                 //

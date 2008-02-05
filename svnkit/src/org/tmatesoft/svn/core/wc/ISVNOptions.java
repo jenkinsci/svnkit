@@ -412,11 +412,7 @@ public interface ISVNOptions extends ISVNTunnelProvider {
     
     public boolean isAllowAllForwardMergesFromSelf();
 
-    public void setNativeEOLStyle(String eolStyle);
-
     public byte[] getNativeEOL();
-
-    public void setNativeCharset(String charset);
 
     public String getNativeCharset();
 
