@@ -113,6 +113,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private boolean myIsStopOnCopy;
     private boolean myIsChangeOptionUsed;
     private boolean myIsWithAllRevprops;
+    private boolean myIsReIntegrate;
     private List myRevisionRanges;
     private String myFromSource;
     
@@ -223,6 +224,24 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         SVNRevisionRange range = (SVNRevisionRange) myRevisionRanges.get(0);
         myStartRevision = range.getStartRevision();
         myEndRevision = range.getEndRevision();
+        
+        if (myIsReIntegrate) {
+            if (myIsIgnoreAncestry) {
+                if (myIsRecordOnly) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_MUTUALLY_EXCLUSIVE_ARGS, 
+                            "--reintegrate cannot be used with --ignore-ancestry or --record-only");
+                    SVNErrorManager.error(err);
+                } else {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_MUTUALLY_EXCLUSIVE_ARGS, 
+                            "--reintegrate cannot be used with --ignore-ancestry");
+                    SVNErrorManager.error(err);
+                }
+            } else if (myIsRecordOnly) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_MUTUALLY_EXCLUSIVE_ARGS, 
+                        "--reintegrate cannot be used with --record-only");
+                SVNErrorManager.error(err);
+            }
+        }
     }
     
     protected void initOption(SVNOptionValue optionValue) throws SVNException {
@@ -435,6 +454,8 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             myResolveAccept = accept;
         } else if (option == SVNOption.FROM_SOURCE) {
         	myFromSource = optionValue.getValue();
+        } else if (option == SVNOption.REINTEGRATE) {
+            myIsReIntegrate = true;
         }
     }
     
@@ -471,6 +492,10 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                 myDepth = SVNDepth.fromRecurse(myIsDescend);
             }
         }
+    }
+    
+    public boolean isReIntegrate() {
+        return myIsReIntegrate;
     }
     
     public String getFromSource() {

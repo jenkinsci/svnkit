@@ -19,7 +19,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -1398,7 +1397,23 @@ public class SVNDiffClient extends SVNMergeDriver {
         runPeggedMerge(null, path1, rangesToMerge, pegRevision, dstPath, depth, dryRun, 
                        force, !useAncestry, recordOnly);
     }
+
+    public void doMergeReIntegrate(File srcPath, SVNRevision pegRevision, File dstPath, 
+            boolean force, boolean dryRun) throws SVNException {
+        if (pegRevision == null || !pegRevision.isValid()) {
+            pegRevision = SVNRevision.WORKING;
+        }
+        runMergeReintegrate(null, srcPath, pegRevision, dstPath, force, dryRun);
+    }
     
+    public void doMergeReIntegrate(SVNURL srcURL, SVNRevision pegRevision, File dstPath, 
+            boolean force, boolean dryRun) throws SVNException {
+        if (pegRevision == null || !pegRevision.isValid()) {
+            pegRevision = SVNRevision.WORKING;
+        }
+        runMergeReintegrate(srcURL, null, pegRevision, dstPath, force, dryRun);
+    }
+
     public Map getMergeInfo(File path, SVNRevision pegRevision, SVNURL repositoryRoot[]) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess();
         try {

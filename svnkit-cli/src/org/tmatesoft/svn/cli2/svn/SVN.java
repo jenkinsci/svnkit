@@ -130,6 +130,7 @@ public class SVN extends AbstractSVNLauncher {
         SVNCommandLine.registerOption(SVNOption.NON_INTERACTIVE);
         SVNCommandLine.registerOption(SVNOption.WITH_ALL_REVPROPS);
         SVNCommandLine.registerOption(SVNOption.FROM_SOURCE);
+        SVNCommandLine.registerOption(SVNOption.REINTEGRATE);
     }
 
     protected boolean needArgs() {
