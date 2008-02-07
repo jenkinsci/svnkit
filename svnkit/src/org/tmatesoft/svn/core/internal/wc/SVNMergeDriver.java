@@ -1904,7 +1904,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         if (myOperativeNotificationsNumber > 0) {
             myIsOperativeMerge = true;
         } else {
-        	if (!myWorkingMergeInfo.containsKey(targetPath)) {
+        	if (myWorkingMergeInfo.get(targetPath) == null) {
         		myWorkingMergeInfo.put(targetPath, null);
         	}
         }
@@ -1921,8 +1921,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 	continue;
                 }
                 merges.put(skippedPath, new SVNMergeRangeList(new SVNMergeRange[0]));
-                if (!myWorkingMergeInfo.containsKey(skippedPath)) {
-            		myWorkingMergeInfo.put(targetPath, null);
+                if (myWorkingMergeInfo.get(skippedPath) == null) {
+            		myWorkingMergeInfo.put(skippedPath, null);
                 }
                 //TODO: numberOfSkippedPaths < myOperativeNotificationsNumber
             }

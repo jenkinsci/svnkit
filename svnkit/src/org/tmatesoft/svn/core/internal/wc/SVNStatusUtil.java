@@ -110,7 +110,7 @@ public class SVNStatusUtil {
 		SVNAdminArea adminArea = null;
 		if (wcAccess != null) {
 			entry = wcAccess.getEntry(path, false);
-			adminArea = entry.getAdminArea();
+			adminArea = entry != null ? entry.getAdminArea() : null; 
 		}
 		
 		File parentPath = path.getParentFile();
