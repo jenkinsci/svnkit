@@ -112,11 +112,12 @@ public class SVNEventFactory {
                 null, null, null, null, null, null);
     }
 
-    public static SVNEvent createUpdateExternalEvent(SVNAdminAreaInfo info, String path) {
+    public static SVNEvent createUpdateExternalEvent(SVNAdminAreaInfo info, SVNExternalInfo extInfo, String path) {
         SVNEvent event = new SVNEvent(info, null, null,
                 SVNEventAction.UPDATE_EXTERNAL, SVNNodeKind.DIR, -1, null,
                 null, null, null, null, null);
         event.setPath(path);
+        event.setExternalInfo(extInfo);
         return event;
     }
 

@@ -18,6 +18,7 @@ import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
+import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
 
 /**
  * The <b>SVNEvent</b> class is used to provide detailed information on 
@@ -117,7 +118,8 @@ public class SVNEvent {
     private File myRoot;
     private File myRootFile;
     private SVNEventAction myExpectedAction;
-    
+    private SVNExternalInfo myExternalInfo;
+
     /**
      * Constructs an <b>SVNEvent</b> object given
      * an error message for a filed operation. 
@@ -454,4 +456,13 @@ public class SVNEvent {
     public void setPath(String path) {
         myPath = path;
     }
+
+    public SVNExternalInfo getExternalInfo() {
+        return myExternalInfo;
+    }
+
+    public void setExternalInfo(SVNExternalInfo myExternalInfo) {
+        this.myExternalInfo = myExternalInfo;
+    }
+
 }

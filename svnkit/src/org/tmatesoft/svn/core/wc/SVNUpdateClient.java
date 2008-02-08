@@ -613,7 +613,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                         SVNRevision srcRevision = externalRevNumber >=0 ? SVNRevision.create(externalRevNumber) : SVNRevision.HEAD;
                         String relativePath =  targetDir.equals(dstPath) ? "" : targetDir.getAbsolutePath().substring(dstPath.getAbsolutePath().length() + 1);
                         relativePath = relativePath.replace(File.separatorChar, '/');
-                        dispatchEvent(SVNEventFactory.createUpdateExternalEvent((SVNAdminAreaInfo)null, relativePath));
+                        dispatchEvent(SVNEventFactory.createUpdateExternalEvent((SVNAdminAreaInfo)null, infos[i], relativePath));
                         try {
                             setEventPathPrefix(relativePath);
                             doExport(srcURL, targetDir, srcRevision, srcRevision, eolStyle, force, recursive);
@@ -895,7 +895,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             try {
                 if (external.getOldURL() == null) {
                     external.getFile().mkdirs();
-                    dispatchEvent(SVNEventFactory.createUpdateExternalEvent(info, ""));
+                    dispatchEvent(SVNEventFactory.createUpdateExternalEvent(info,external,""));
                     doCheckout(external.getNewURL(), external.getFile(), revision, revision, true);
                 } else if (external.getNewURL() == null) {
                     SVNWCAccess wcAccess = createWCAccess();
@@ -919,7 +919,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                         throw error;
                     }
                 } else {
-                    dispatchEvent(SVNEventFactory.createUpdateExternalEvent(info, ""));
+                    dispatchEvent(SVNEventFactory.createUpdateExternalEvent(info,external,""));
                     if (!external.getFile().isDirectory()) {
                         boolean created = external.getFile().mkdirs();
                         try {
