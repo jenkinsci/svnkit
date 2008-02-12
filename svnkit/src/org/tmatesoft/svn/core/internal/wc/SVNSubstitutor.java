@@ -48,7 +48,7 @@ public class SVNSubstitutor {
     private int myEOLBufferLength;
     private int myNextSignOff;
 
-    public SVNSubstitutor(byte[] eol, boolean repair, Map keywords, boolean expand) {
+    public SVNSubstitutor(String charset, byte[] eol, boolean repair, Map keywords, boolean expand) {
         myEOL = eol;
         myKeywords = keywords;
         myIsExpand = expand;

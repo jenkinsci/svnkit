@@ -456,7 +456,7 @@ public class SVNPropertiesManager {
     }
 
     public static void validateEOLProperty(String path, ISVNFileContentFetcher fetcher) throws SVNException {
-        SVNTranslatorOutputStream out = new SVNTranslatorOutputStream(SVNFileUtil.DUMMY_OUT, new byte[0], false, null, false);
+        SVNTranslatorOutputStream out = new SVNTranslatorOutputStream(SVNFileUtil.DUMMY_OUT, null, new byte[0], false, null, false);
 
         try {
             fetcher.fetchFileContent(out);

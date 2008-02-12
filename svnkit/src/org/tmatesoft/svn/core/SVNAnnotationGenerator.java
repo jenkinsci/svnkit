@@ -545,7 +545,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
 
         InputStream stream = null;
         try {
-            stream = new SVNTranslatorInputStream(SVNFileUtil.openFileForReading(myPreviousFile), 
+            stream = new SVNTranslatorInputStream(SVNFileUtil.openFileForReading(myPreviousFile), null, 
                                                   SVNProperty.EOL_LF_BYTES, true, null, false);
             
             StringBuffer buffer = new StringBuffer();

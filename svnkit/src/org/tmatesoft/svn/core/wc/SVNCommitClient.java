@@ -1174,15 +1174,16 @@ public class SVNCommitClient extends SVNBasicClient {
         SVNEvent addedEvent = SVNEventFactory.createSVNEvent(file, SVNNodeKind.FILE, mimeType, SVNRepository.INVALID_REVISION, SVNEventAction.COMMIT_ADDED, null, null, null);
         handleEvent(addedEvent, ISVNEventHandler.UNKNOWN);
         // translate and send file.
+        String charset = SVNTranslator.getCharset((String) autoProperties.get(SVNProperty.CHARSET), getOptions());
         String eolStyle = (String) autoProperties.get(SVNProperty.EOL_STYLE);
         String keywords = (String) autoProperties.get(SVNProperty.KEYWORDS);
         boolean special = autoProperties.get(SVNProperty.SPECIAL) != null;
         File tmpFile = null;
-        if (eolStyle != null || keywords != null || special) {
+        if (charset != null || eolStyle != null || keywords != null || special) {
             byte[] eolBytes = SVNTranslator.getBaseEOL(eolStyle);
             Map keywordsMap = keywords != null ? SVNTranslator.computeKeywords(keywords, null, null, null, null, getOptions()) : null;
             tmpFile = SVNFileUtil.createTempFile("import", ".tmp");
-            SVNTranslator.translate(file, tmpFile, eolBytes, keywordsMap, special, false);
+            SVNTranslator.translate(file, tmpFile, charset, eolBytes, keywordsMap, special, false);
         }
         File importedFile = tmpFile != null ? tmpFile : file;
         InputStream is = null;

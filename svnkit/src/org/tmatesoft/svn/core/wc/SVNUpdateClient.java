@@ -670,10 +670,12 @@ public class SVNUpdateClient extends SVNBasicClient {
         boolean special = props.getPropertyValue(SVNProperty.SPECIAL) != null;
         boolean executable = props.getPropertyValue(SVNProperty.EXECUTABLE) != null;
         String keywords = props.getStringPropertyValue(SVNProperty.KEYWORDS);
+        String charsetProp = props.getStringPropertyValue(SVNProperty.CHARSET);
+        String charset = SVNTranslator.getCharset(charsetProp, getOptions());
         byte[] eols = eol != null ? SVNTranslator.getEOL(eol, getOptions()) : null;
         if (eols == null) {
             eol = props.getStringPropertyValue(SVNProperty.EOL_STYLE);
-            eols = SVNTranslator.getWorkingEOL(eol, getOptions());
+            eols = SVNTranslator.getEOL(eol, getOptions());
         }
         if (modified && !special) {
             timestamp = adminArea.getFile(fileName).lastModified();
@@ -698,13 +700,13 @@ public class SVNUpdateClient extends SVNBasicClient {
             // base will be translated OK, but working not.
             File tmpBaseFile = adminArea.getBaseFile(fileName, true);
             try {
-                SVNTranslator.translate(srcFile, tmpBaseFile, eols, keywordsMap, special, false);
-                SVNTranslator.translate(tmpBaseFile, dstPath, eols, keywordsMap, special, true);
+                SVNTranslator.translate(srcFile, tmpBaseFile, charset, eols, keywordsMap, special, false);
+                SVNTranslator.translate(tmpBaseFile, dstPath, charset, eols, keywordsMap, special, true);
             } finally {
                 tmpBaseFile.delete();
             }
         } else {
-            SVNTranslator.translate(srcFile, dstPath, eols, keywordsMap, special, true);
+            SVNTranslator.translate(srcFile, dstPath, charset, eols, keywordsMap, special, true);
         }
         if (executable) {
             SVNFileUtil.setExecutable(dstPath, true);
@@ -761,21 +763,23 @@ public class SVNUpdateClient extends SVNBasicClient {
                     SVNFileUtil.deleteAll(dstPath, this);
                 }
                 boolean binary = SVNProperty.isBinaryMimeType(properties.getStringValue(SVNProperty.MIME_TYPE));
+                String charset = SVNTranslator.getCharset(properties.getStringValue(SVNProperty.CHARSET), getOptions());
                 Map keywords = SVNTranslator.computeKeywords(properties.getStringValue(SVNProperty.KEYWORDS), url,
                         properties.getStringValue(SVNProperty.LAST_AUTHOR),
                         properties.getStringValue(SVNProperty.COMMITTED_DATE),
                         properties.getStringValue(SVNProperty.COMMITTED_REVISION), getOptions());
                 byte[] eols = null;
                 if (SVNProperty.EOL_STYLE_NATIVE.equals(properties.getStringValue(SVNProperty.EOL_STYLE))) {
-                    eols = SVNTranslator.getWorkingEOL(eolStyle != null ? eolStyle : properties.getStringValue(SVNProperty.EOL_STYLE), getOptions());
+                    eols = SVNTranslator.getEOL(eolStyle != null ? eolStyle : properties.getStringValue(SVNProperty.EOL_STYLE), getOptions());
                 } else if (properties.containsName(SVNProperty.EOL_STYLE)) {
-                    eols = SVNTranslator.getWorkingEOL(properties.getStringValue(SVNProperty.EOL_STYLE), getOptions());
+                    eols = SVNTranslator.getEOL(properties.getStringValue(SVNProperty.EOL_STYLE), getOptions());
                 }
                 if (binary) {
+                    charset = null;
                     eols = null;
                     keywords = null;
                 }
-                SVNTranslator.translate(tmpFile, dstPath, eols, keywords, properties.getStringValue(SVNProperty.SPECIAL) != null, true);
+                SVNTranslator.translate(tmpFile, dstPath, charset, eols, keywords, properties.getStringValue(SVNProperty.SPECIAL) != null, true);
             } finally {
                 SVNFileUtil.deleteFile(tmpFile);
             }

@@ -1263,6 +1263,8 @@ public abstract class SVNAdminArea {
     }
 
     private boolean compareAndVerify(File text, File baseFile, boolean compareTextBase, boolean checksum) throws SVNException {
+        String charsetProp = getProperties(text.getName()).getStringPropertyValue(SVNProperty.CHARSET);
+        String charset = SVNTranslator.getCharset(charsetProp, getWCAccess().getOptions());
         String eolStyle = getProperties(text.getName()).getStringPropertyValue(SVNProperty.EOL_STYLE);
         String keywords = getProperties(text.getName()).getStringPropertyValue(SVNProperty.KEYWORDS);
         boolean special = getProperties(text.getName()).getStringPropertyValue(SVNProperty.SPECIAL) != null;
@@ -1271,7 +1273,7 @@ public abstract class SVNAdminArea {
             compareTextBase = true;
         }
 
-        boolean needsTranslation = eolStyle != null || keywords != null || special;
+        boolean needsTranslation = charset == null || eolStyle != null || keywords != null || special;
         SVNChecksumInputStream checksumStream = null;
         SVNEntry entry = null;
 
@@ -1293,7 +1295,7 @@ public abstract class SVNAdminArea {
                     if (!special) {
                         Map keywordsMap = SVNTranslator.computeKeywords(keywords, null, entry.getAuthor(), entry.getCommittedDate(), entry.getRevision() + "", getWCAccess().getOptions());
                         byte[] eols = SVNTranslator.getBaseEOL(eolStyle);
-                        textStream = new SVNTranslatorInputStream(textStream, eols, true, keywordsMap, false);
+                        textStream = new SVNTranslatorInputStream(textStream, charset, eols, true, keywordsMap, false);
                     } else {
                         String tmpPath = SVNAdminUtil.getTextBasePath(text.getName(), true);
                         tmpFile = getFile(tmpPath);
@@ -1302,8 +1304,8 @@ public abstract class SVNAdminArea {
                     }
                 } else if (needsTranslation) {
                     Map keywordsMap = SVNTranslator.computeKeywords(keywords, entry.getURL(), entry.getAuthor(), entry.getCommittedDate(), entry.getRevision() + "", getWCAccess().getOptions());
-                    byte[] eols = SVNTranslator.getWorkingEOL(eolStyle, getWCAccess().getOptions());
-                    baseStream = new SVNTranslatorInputStream(baseStream, eols, false, keywordsMap, true);
+                    byte[] eols = SVNTranslator.getEOL(eolStyle, getWCAccess().getOptions());
+                    baseStream = new SVNTranslatorInputStream(baseStream, charset, eols, false, keywordsMap, true);
                 }
                 byte[] buffer1 = new byte[8192];
                 byte[] buffer2 = new byte[8192];

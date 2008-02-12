@@ -178,19 +178,21 @@ public class SVNExportEditor implements ISVNEditor {
                 String revStr = myFileProperties.getStringValue(SVNProperty.COMMITTED_REVISION);
                 keywordsMap = SVNTranslator.computeKeywords(keywords, url, author, date, revStr, myOptions);
             }
+            String charset = SVNTranslator.getCharset(myFileProperties.getStringValue(SVNProperty.CHARSET), myOptions);
             byte[] eolBytes = null;
             if (SVNProperty.EOL_STYLE_NATIVE.equals(myFileProperties.getStringValue(SVNProperty.EOL_STYLE))) {
-                eolBytes = SVNTranslator.getWorkingEOL(myEOLStyle != null ? myEOLStyle : myFileProperties.getStringValue(SVNProperty.EOL_STYLE), myOptions);
+                eolBytes = SVNTranslator.getEOL(myEOLStyle != null ? myEOLStyle : myFileProperties.getStringValue(SVNProperty.EOL_STYLE), myOptions);
             } else if (myFileProperties.containsName(SVNProperty.EOL_STYLE)) {
-                eolBytes = SVNTranslator.getWorkingEOL(myFileProperties.getStringValue(SVNProperty.EOL_STYLE), myOptions);
+                eolBytes = SVNTranslator.getEOL(myFileProperties.getStringValue(SVNProperty.EOL_STYLE), myOptions);
             }
             if (binary) {
                 // no translation unless 'special'.
+                charset = null;
                 eolBytes = null;
                 keywordsMap = null;
             }
             if (eolBytes != null || (keywordsMap != null && !keywordsMap.isEmpty()) || special) {
-                SVNTranslator.translate(myCurrentTmpFile, myCurrentFile, eolBytes, keywordsMap, special, true);
+                SVNTranslator.translate(myCurrentTmpFile, myCurrentFile, charset, eolBytes, keywordsMap, special, true);
             } else {
                 SVNFileUtil.rename(myCurrentTmpFile, myCurrentFile);
             }

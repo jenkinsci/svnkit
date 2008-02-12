@@ -553,15 +553,17 @@ public class SVNDiffEditor implements ISVNEditor {
         SVNVersionedProperties properties = dir.getProperties(name);
         String keywords = properties.getStringPropertyValue(SVNProperty.KEYWORDS);
         String eolStyle = properties.getStringPropertyValue(SVNProperty.EOL_STYLE);
+        String charsetProp = properties.getStringPropertyValue(SVNProperty.CHARSET);
         ISVNOptions options = dir.getWCAccess().getOptions();
+        String charset = SVNTranslator.getCharset(charsetProp, options);
         boolean special = properties.getPropertyValue(SVNProperty.SPECIAL) != null;
-        if (keywords == null && eolStyle == null && (!special || SVNFileUtil.isWindows)) {
+        if (charset == null && keywords == null && eolStyle == null && (!special || SVNFileUtil.isWindows)) {
             return dir.getFile(name);
         }
         byte[] eol = SVNTranslator.getEOL(eolStyle, options);
         File tmpFile = createTempFile();
         Map keywordsMap = SVNTranslator.computeKeywords(keywords, null, null, null, null, null);
-        SVNTranslator.translate(dir.getFile(name), tmpFile, eol, keywordsMap, special, false);
+        SVNTranslator.translate(dir.getFile(name), tmpFile, charset, eol, keywordsMap, special, false);
         return tmpFile;
     }
     
