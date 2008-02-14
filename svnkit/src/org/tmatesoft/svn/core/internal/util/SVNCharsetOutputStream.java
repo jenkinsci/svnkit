@@ -15,8 +15,7 @@ import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CharsetEncoder;
+import java.nio.charset.Charset;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
@@ -34,9 +33,9 @@ public class SVNCharsetOutputStream extends FilterOutputStream {
     private int myLength;
     private ByteBuffer myOutputBuffer;
 
-    public SVNCharsetOutputStream(OutputStream out, CharsetDecoder decoder, CharsetEncoder encoder) {
+    public SVNCharsetOutputStream(OutputStream out, Charset inputCharset, Charset outputCharset) {
         super(out);
-        myCharsetConvertor = new SVNCharsetConvertor(decoder, encoder);
+        myCharsetConvertor = new SVNCharsetConvertor(inputCharset.newDecoder(), outputCharset.newEncoder());
     }
 
     public void write(int b) throws IOException {
@@ -52,7 +51,7 @@ public class SVNCharsetOutputStream extends FilterOutputStream {
             try {
                 myOutputBuffer = myCharsetConvertor.convertChunk(myBuffer, myOffset, myLength, myOutputBuffer, false);
                 myOutputBuffer.flip();
-                super.write(myOutputBuffer.array(), myOutputBuffer.arrayOffset(), myOutputBuffer.limit());
+                out.write(myOutputBuffer.array(), myOutputBuffer.arrayOffset(), myOutputBuffer.limit());
             } catch (SVNException e) {
                 throw new IOExceptionWrapper(e);
             }
@@ -67,7 +66,7 @@ public class SVNCharsetOutputStream extends FilterOutputStream {
             try {
                 myOutputBuffer = myCharsetConvertor.convertChunk(myBuffer, myOffset, myLength, myOutputBuffer, true);
                 myOutputBuffer.flip();
-                super.write(myOutputBuffer.array(), myOutputBuffer.arrayOffset(), myOutputBuffer.limit());
+                out.write(myOutputBuffer.array(), myOutputBuffer.arrayOffset(), myOutputBuffer.limit());
             } catch (SVNException e) {
                 throw new IOExceptionWrapper(e);
             } finally {
@@ -78,7 +77,7 @@ public class SVNCharsetOutputStream extends FilterOutputStream {
         try {
             myOutputBuffer = myCharsetConvertor.flush(myOutputBuffer);
             myOutputBuffer.flip();
-            super.write(myOutputBuffer.array(), myOutputBuffer.arrayOffset(), myOutputBuffer.limit());
+            out.write(myOutputBuffer.array(), myOutputBuffer.arrayOffset(), myOutputBuffer.limit());
         } catch (SVNException e) {
             throw new IOExceptionWrapper(e);
         }

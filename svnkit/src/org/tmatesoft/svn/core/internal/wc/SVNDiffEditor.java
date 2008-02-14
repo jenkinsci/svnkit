@@ -555,7 +555,7 @@ public class SVNDiffEditor implements ISVNEditor {
         String eolStyle = properties.getStringPropertyValue(SVNProperty.EOL_STYLE);
         String charsetProp = properties.getStringPropertyValue(SVNProperty.CHARSET);
         ISVNOptions options = dir.getWCAccess().getOptions();
-        String charset = SVNTranslator.getCharset(charsetProp, options);
+        String charset = SVNTranslator.getCharset(charsetProp, dir.getFile(name).getPath(), options);
         boolean special = properties.getPropertyValue(SVNProperty.SPECIAL) != null;
         if (charset == null && keywords == null && eolStyle == null && (!special || SVNFileUtil.isWindows)) {
             return dir.getFile(name);

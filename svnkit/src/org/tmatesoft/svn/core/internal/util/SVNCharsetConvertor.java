@@ -37,12 +37,16 @@ public class SVNCharsetConvertor {
     private CharBuffer myCharBuffer;
     private ByteBuffer myInputByteBuffer;
 
+    private boolean myComplete;
+
     public SVNCharsetConvertor(CharsetDecoder decoder, CharsetEncoder encoder) {
         myDecoder = decoder;
         myEncoder = encoder;
+        reset();
     }
 
     public SVNCharsetConvertor reset() {
+        myComplete = false;
         myEncoder = myEncoder.reset();
         myDecoder = myDecoder.reset();
         myCharBuffer = null;
@@ -81,25 +85,38 @@ public class SVNCharsetConvertor {
     }
 
     public ByteBuffer flush(ByteBuffer dst) throws SVNException {
-        CoderResult result = myDecoder.flush(myCharBuffer);
-        if (result.isError()) {
-            throwException(result);
-        }
-        myCharBuffer.flip();
+        if (!myComplete) {
+            CoderResult result;
+            while (true) {
+                result = myDecoder.flush(myCharBuffer);
+                if (result.isError()) {
+                    throwException(result);
+                }
+                if (result.isUnderflow()) {
+                    break;
+                }
+            }
+            myCharBuffer.flip();
 
-        if (myCharBuffer.hasRemaining()) {
-            dst = allocate(dst, (int) (myEncoder.maxBytesPerChar() * myCharBuffer.remaining()));
+            if (myCharBuffer.hasRemaining()) {
+                dst = allocate(dst, (int) (myEncoder.maxBytesPerChar() * myCharBuffer.remaining()));
 
-            result = myEncoder.encode(myCharBuffer, dst, true);
-            if (result.isError()) {
-                throwException(result);
+                result = myEncoder.encode(myCharBuffer, dst, true);
+                if (result.isError()) {
+                    throwException(result);
+                }
+            }
+            while (true) {
+                result = myEncoder.flush(dst);
+                if (result.isError()) {
+                    throwException(result);
+                }
+                if (result.isUnderflow()) {
+                    break;
+                }
             }
         }
-
-        result = myEncoder.flush(dst);
-        if (result.isError()) {
-            throwException(result);
-        }
+        myComplete = true;
         return dst;
     }
 

@@ -306,13 +306,13 @@ public class SVNWCClient extends SVNBasicClient {
 
                 String keywords = properties.getStringValue(SVNProperty.KEYWORDS);
                 String eol = properties.getStringValue(SVNProperty.EOL_STYLE);
-                String charset = SVNTranslator.getCharset(properties.getStringValue(SVNProperty.CHARSET), getOptions());
+                String charset = SVNTranslator.getCharset(properties.getStringValue(SVNProperty.CHARSET), path.getPath(), getOptions());
                 if (keywords != null || eol != null || charset != null) {
                     String cmtRev = properties.getStringValue(SVNProperty.COMMITTED_REVISION);
                     String cmtDate = properties.getStringValue(SVNProperty.COMMITTED_DATE);
                     String author = properties.getStringValue(SVNProperty.LAST_AUTHOR);
                     Map keywordsMap = SVNTranslator.computeKeywords(keywords, expandKeywords ? repos.getLocation().toString() : null, author, cmtDate, cmtRev, getOptions());
-                    OutputStream translatingStream = new SVNTranslatorOutputStream(dst, charset, SVNTranslator.getEOL(eol, getOptions()), false, keywordsMap, expandKeywords);
+                    OutputStream translatingStream = SVNTranslator.getTranslatingOutputStream(dst, charset, SVNTranslator.getEOL(eol, getOptions()), false, keywordsMap, expandKeywords);
                     repos.getFile("", revNumber, null, new SVNCancellableOutputStream(translatingStream, getEventDispatcher()));
                     try {
                         translatingStream.close();
@@ -373,16 +373,15 @@ public class SVNWCClient extends SVNBasicClient {
             SVNProperties properties = new SVNProperties();
             repos.getFile("", revNumber, properties, null);
             checkCancelled();
-
-            //TODO: maybe we should pass charset to parameters to translate file.
+            String charset = SVNTranslator.getCharset(properties.getStringValue(SVNProperty.CHARSET), repos.getLocation().toDecodedString(), getOptions());
             String keywords = properties.getStringValue(SVNProperty.KEYWORDS);
             String eol = properties.getStringValue(SVNProperty.EOL_STYLE);
-            if (keywords != null || eol != null) {
+            if (charset != null || keywords != null || eol != null) {
                 String cmtRev = properties.getStringValue(SVNProperty.COMMITTED_REVISION);
                 String cmtDate = properties.getStringValue(SVNProperty.COMMITTED_DATE);
                 String author = properties.getStringValue(SVNProperty.LAST_AUTHOR);
                 Map keywordsMap = SVNTranslator.computeKeywords(keywords, expandKeywords ? repos.getLocation().toString() : null, author, cmtDate, cmtRev, getOptions());
-                OutputStream translatingStream = new SVNTranslatorOutputStream(dst, null, SVNTranslator.getEOL(eol, getOptions()), false, keywordsMap, expandKeywords);
+                OutputStream translatingStream = SVNTranslator.getTranslatingOutputStream(dst, charset, SVNTranslator.getEOL(eol, getOptions()), false, keywordsMap, expandKeywords);
                 repos.getFile("", revNumber, null, new SVNCancellableOutputStream(translatingStream, getEventDispatcher()));
                 try {
                     translatingStream.close();
@@ -2719,7 +2718,7 @@ public class SVNWCClient extends SVNBasicClient {
             byte[] eols = null;
             Map keywordsMap = null;
             String time = null;
-            String charset = SVNTranslator.getCharset(charsetProp, getOptions());
+            String charset = SVNTranslator.getCharset(charsetProp, path.getPath(), getOptions());
             eols = SVNTranslator.getEOL(eolStyle, getOptions());
             if (hasMods && !special) {
                 time = SVNDate.formatDate(new Date(path.lastModified()));
@@ -2732,7 +2731,7 @@ public class SVNWCClient extends SVNBasicClient {
                 String rev = hasMods ? entry.getCommittedRevision() + "M" : entry.getCommittedRevision() + "";
                 keywordsMap = SVNTranslator.computeKeywords(keywords, expandKeywords ? url : null, author, time, rev, getOptions());
             }
-            OutputStream translatingStream = charset != null || eols != null || keywordsMap != null ? new SVNTranslatorOutputStream(dst, charset, eols, false, keywordsMap, expandKeywords) : dst;
+            OutputStream translatingStream = charset != null || eols != null || keywordsMap != null ? SVNTranslator.getTranslatingOutputStream(dst, charset, eols, false, keywordsMap, expandKeywords) : dst;
             try {
                 SVNTranslator.copy(input, new SVNCancellableOutputStream(translatingStream, getEventDispatcher()));
                 if (translatingStream != dst) {

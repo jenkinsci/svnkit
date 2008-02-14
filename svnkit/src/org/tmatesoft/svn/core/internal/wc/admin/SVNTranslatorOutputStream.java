@@ -32,8 +32,8 @@ public class SVNTranslatorOutputStream extends OutputStream {
     private ByteBuffer mySrcBuffer;
     private ByteBuffer myDstBuffer;
 
-    public SVNTranslatorOutputStream(OutputStream dst, String charset, byte[] eol, boolean repair, Map keywords, boolean expand) {
-        mySubstitutor = new SVNSubstitutor(charset, eol, repair, keywords, expand);
+    public SVNTranslatorOutputStream(OutputStream dst, byte[] eol, boolean repair, Map keywords, boolean expand) {
+        mySubstitutor = new SVNSubstitutor(eol, repair, keywords, expand);
         myDst = dst;
         mySrcBuffer = ByteBuffer.allocate(2048); 
         myDstBuffer = ByteBuffer.allocate(2048); 

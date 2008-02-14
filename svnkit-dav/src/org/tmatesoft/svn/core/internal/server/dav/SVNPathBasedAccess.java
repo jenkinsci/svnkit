@@ -64,7 +64,7 @@ public class SVNPathBasedAccess {
         InputStream stream = null;
 
         try {
-            stream = new SVNTranslatorInputStream(SVNFileUtil.openFileForReading(pathBasedAccessConfiguration), null, SVNProperty.EOL_LF_BYTES, true, null, false);
+            stream = new SVNTranslatorInputStream(SVNFileUtil.openFileForReading(pathBasedAccessConfiguration), SVNProperty.EOL_LF_BYTES, true, null, false);
         } catch (SVNException e) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "Failed to load the AuthzSVNAccessFile: ''{0}''", pathBasedAccessConfiguration.getAbsolutePath()));
         }

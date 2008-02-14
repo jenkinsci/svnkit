@@ -1149,6 +1149,7 @@ public class SVNCommitClient extends SVNBasicClient {
                     autoProperties.put(SVNProperty.MIME_TYPE, mimeType);
                     if (SVNProperty.isBinaryMimeType(mimeType)) {
                         autoProperties.remove(SVNProperty.EOL_STYLE);
+                        autoProperties.remove(SVNProperty.CHARSET);
                     }
                 }
             }
@@ -1174,7 +1175,7 @@ public class SVNCommitClient extends SVNBasicClient {
         SVNEvent addedEvent = SVNEventFactory.createSVNEvent(file, SVNNodeKind.FILE, mimeType, SVNRepository.INVALID_REVISION, SVNEventAction.COMMIT_ADDED, null, null, null);
         handleEvent(addedEvent, ISVNEventHandler.UNKNOWN);
         // translate and send file.
-        String charset = SVNTranslator.getCharset((String) autoProperties.get(SVNProperty.CHARSET), getOptions());
+        String charset = SVNTranslator.getCharset((String) autoProperties.get(SVNProperty.CHARSET), file.getPath(), getOptions());
         String eolStyle = (String) autoProperties.get(SVNProperty.EOL_STYLE);
         String keywords = (String) autoProperties.get(SVNProperty.KEYWORDS);
         boolean special = autoProperties.get(SVNProperty.SPECIAL) != null;

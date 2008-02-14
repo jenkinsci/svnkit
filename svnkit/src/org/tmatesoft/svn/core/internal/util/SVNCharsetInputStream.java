@@ -15,8 +15,7 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CharsetEncoder;
+import java.nio.charset.Charset;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
@@ -34,9 +33,9 @@ public class SVNCharsetInputStream extends FilterInputStream {
     private byte[] mySourceBuffer;
     private ByteBuffer myConvertedBuffer;
 
-    public SVNCharsetInputStream(InputStream in, CharsetDecoder decoder, CharsetEncoder encoder) {
+    public SVNCharsetInputStream(InputStream in, Charset inputCharset, Charset outputCharset) {
         super(in);
-        myCharsetConvertor = new SVNCharsetConvertor(decoder, encoder);
+        myCharsetConvertor = new SVNCharsetConvertor(inputCharset.newDecoder(), outputCharset.newEncoder());
         mySourceBuffer = new byte[DEFAULT_BUFFER_CAPACITY];
         myConvertedBuffer = ByteBuffer.allocate(DEFAULT_BUFFER_CAPACITY);
     }

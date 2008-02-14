@@ -671,7 +671,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         boolean executable = props.getPropertyValue(SVNProperty.EXECUTABLE) != null;
         String keywords = props.getStringPropertyValue(SVNProperty.KEYWORDS);
         String charsetProp = props.getStringPropertyValue(SVNProperty.CHARSET);
-        String charset = SVNTranslator.getCharset(charsetProp, getOptions());
+        String charset = SVNTranslator.getCharset(charsetProp, adminArea.getFile(fileName).getPath(), getOptions());
         byte[] eols = eol != null ? SVNTranslator.getEOL(eol, getOptions()) : null;
         if (eols == null) {
             eol = props.getStringPropertyValue(SVNProperty.EOL_STYLE);
@@ -763,7 +763,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                     SVNFileUtil.deleteAll(dstPath, this);
                 }
                 boolean binary = SVNProperty.isBinaryMimeType(properties.getStringValue(SVNProperty.MIME_TYPE));
-                String charset = SVNTranslator.getCharset(properties.getStringValue(SVNProperty.CHARSET), getOptions());
+                String charset = SVNTranslator.getCharset(properties.getStringValue(SVNProperty.CHARSET), url, getOptions());
                 Map keywords = SVNTranslator.computeKeywords(properties.getStringValue(SVNProperty.KEYWORDS), url,
                         properties.getStringValue(SVNProperty.LAST_AUTHOR),
                         properties.getStringValue(SVNProperty.COMMITTED_DATE),

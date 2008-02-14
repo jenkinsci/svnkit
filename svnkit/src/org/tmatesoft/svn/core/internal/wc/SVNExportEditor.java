@@ -178,7 +178,7 @@ public class SVNExportEditor implements ISVNEditor {
                 String revStr = myFileProperties.getStringValue(SVNProperty.COMMITTED_REVISION);
                 keywordsMap = SVNTranslator.computeKeywords(keywords, url, author, date, revStr, myOptions);
             }
-            String charset = SVNTranslator.getCharset(myFileProperties.getStringValue(SVNProperty.CHARSET), myOptions);
+            String charset = SVNTranslator.getCharset(myFileProperties.getStringValue(SVNProperty.CHARSET), myCurrentFile.getPath(), myOptions);
             byte[] eolBytes = null;
             if (SVNProperty.EOL_STYLE_NATIVE.equals(myFileProperties.getStringValue(SVNProperty.EOL_STYLE))) {
                 eolBytes = SVNTranslator.getEOL(myEOLStyle != null ? myEOLStyle : myFileProperties.getStringValue(SVNProperty.EOL_STYLE), myOptions);
@@ -191,7 +191,7 @@ public class SVNExportEditor implements ISVNEditor {
                 eolBytes = null;
                 keywordsMap = null;
             }
-            if (eolBytes != null || (keywordsMap != null && !keywordsMap.isEmpty()) || special) {
+            if (charset != null || eolBytes != null || (keywordsMap != null && !keywordsMap.isEmpty()) || special) {
                 SVNTranslator.translate(myCurrentTmpFile, myCurrentFile, charset, eolBytes, keywordsMap, special, true);
             } else {
                 SVNFileUtil.rename(myCurrentTmpFile, myCurrentFile);
