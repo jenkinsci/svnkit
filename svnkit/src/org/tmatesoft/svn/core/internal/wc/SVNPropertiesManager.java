@@ -12,9 +12,10 @@
 package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
-import java.io.OutputStream;
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -388,17 +389,29 @@ public class SVNPropertiesManager {
         if (SVNProperty.isSVNProperty(name) && value.isString()) {
             String str = value.getString();
             str = str.replaceAll("\r\n", "\n");
-            str.replace('\r', '\n');
+            str = str.replace('\r', '\n');
             value = SVNPropertyValue.create(str);
         }
 
         if (!force && SVNProperty.EOL_STYLE.equals(name)) {
-            value = SVNPropertyValue.create(value.getString().trim());
-            if (SVNTranslator.getEOL(value.getString(), options) == null) {
+            String eolStyle = value.getString().trim();
+            if (SVNTranslator.getEOL(eolStyle, options) == null) {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.IO_UNKNOWN_EOL, "Unrecognized line ending style for ''{0}''", path);
                 SVNErrorManager.error(error);
             }
             validateEOLProperty(path, fileContentFetcher);
+        } else if (!force && SVNProperty.CHARSET.equals(name)) {
+            String charsetProp = value.getString().trim();
+            try {
+                SVNTranslator.getCharset(charsetProp, path, options);
+            } catch (SVNException e) {
+                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Charset ''{0}'' is not supported on this computer", charsetProp);
+                SVNErrorManager.error(error, e);
+            }
+            if (fileContentFetcher.fileIsBinary()) {
+                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "File ''{0}'' has binary mime type property", path);
+                SVNErrorManager.error(error);
+            }
         } else if (!force && SVNProperty.MIME_TYPE.equals(name)) {
             value = SVNPropertyValue.create(value.getString().trim());
             validateMimeType(value.getString());
@@ -456,7 +469,7 @@ public class SVNPropertiesManager {
     }
 
     public static void validateEOLProperty(String path, ISVNFileContentFetcher fetcher) throws SVNException {
-        OutputStream out = new SVNTranslatorOutputStream(SVNFileUtil.DUMMY_OUT, new byte[0], false, null, false);
+        SVNTranslatorOutputStream out = new SVNTranslatorOutputStream(SVNFileUtil.DUMMY_OUT, new byte[0], false, null, false);
 
         try {
             fetcher.fetchFileContent(out);
