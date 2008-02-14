@@ -419,12 +419,12 @@ public class JavaHLObjectFactory {
         return new LogMessage(cp, logEntry.getRevision(), logEntry.getAuthor(), time, logEntry.getMessage());
     }
 
-    public static MergeInfo createMergeInfo(Map mergeInfo) {
+    public static Mergeinfo createMergeInfo(Map mergeInfo) {
         if (mergeInfo == null) {
             return null;
         }
         
-        MergeInfo result = new MergeInfo();
+        Mergeinfo result = new Mergeinfo();
         for (Iterator iterator = mergeInfo.entrySet().iterator(); iterator.hasNext();) {
             Map.Entry entry = (Map.Entry) iterator.next();
             SVNURL mergeSrcURL = (SVNURL) entry.getKey();

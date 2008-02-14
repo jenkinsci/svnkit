@@ -43,7 +43,7 @@ import org.tigris.subversion.javahl.JavaHLObjectFactory;
 import org.tigris.subversion.javahl.ListCallback;
 import org.tigris.subversion.javahl.LogMessage;
 import org.tigris.subversion.javahl.LogMessageCallback;
-import org.tigris.subversion.javahl.MergeInfo;
+import org.tigris.subversion.javahl.Mergeinfo;
 import org.tigris.subversion.javahl.Notify;
 import org.tigris.subversion.javahl.Notify2;
 import org.tigris.subversion.javahl.NotifyInformation;
@@ -1919,7 +1919,7 @@ public class SVNClientImpl implements SVNClientInterface {
         }
     }
 
-    public MergeInfo getMergeInfo(String path, Revision revision) throws SubversionException {
+    public Mergeinfo getMergeinfo(String path, Revision revision) throws SubversionException {
         SVNDiffClient client = getSVNDiffClient();
         Map mergeInfo = null;
         try {
