@@ -405,7 +405,7 @@ public class SVNTranslator {
     }
 
     public static OutputStream getTranslatingOutputStream(OutputStream out, String charset, byte[] eol, boolean repair, Map keywords, boolean expand) {
-        if (charset == null) {
+        if (charset == null || "UTF-8".equals(charset)) {
             return new SVNTranslatorOutputStream(out, eol, repair, keywords, expand);
         }
         if (expand) {
@@ -417,7 +417,7 @@ public class SVNTranslator {
     }
 
     public static InputStream getTranslatingInputStream(InputStream in, String charset, byte[] eol, boolean repair, Map keywords, boolean expand) {
-        if (charset == null) {
+        if (charset == null || "UTF-8".equals(charset)) {
             return new SVNTranslatorInputStream(in, eol, repair, keywords, expand);
         }
         if (expand) {
