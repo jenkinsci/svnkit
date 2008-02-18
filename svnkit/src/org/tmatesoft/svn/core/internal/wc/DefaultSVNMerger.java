@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
@@ -489,7 +490,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
             } else {
                 if (SVNProperty.MERGE_INFO.equals(propName)) {
                     newValue = SVNPropertyValue.create(
-                            SVNMergeInfoManager.combineMergeInfoProperties(workingValue.getString(),
+                            SVNMergeInfoUtil.combineMergeInfoProperties(workingValue.getString(),
                     				newValue.getString()));
                     
                     workingProps.setPropertyValue(propName, newValue);
@@ -535,7 +536,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
     			} else {
                     if (SVNProperty.MERGE_INFO.equals(propName)) {
                         newValue = SVNPropertyValue.create(
-                                SVNMergeInfoManager.combineForkedMergeInfoProperties(oldValue.getString(),
+                                SVNMergeInfoUtil.combineForkedMergeInfoProperties(oldValue.getString(),
                         				workingValue.getString(), newValue.getString()));
                         workingProps.setPropertyValue(propName, newValue);
                         status = getPropMergeStatus(status, SVNStatusType.MERGED);
@@ -573,10 +574,10 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
     	} else if (workingValue == null) {
             if (SVNProperty.MERGE_INFO.equals(propName)) {
                 Map addedMergeInfo = new TreeMap();
-                SVNMergeInfoManager.diffMergeInfoProperties(null, addedMergeInfo, oldValue.getString(), null, 
+                SVNMergeInfoUtil.diffMergeInfoProperties(null, addedMergeInfo, oldValue.getString(), null, 
                 		newValue.getString(), null);
                 newValue = SVNPropertyValue.create(
-                        SVNMergeInfoManager.formatMergeInfoToString(addedMergeInfo));
+                        SVNMergeInfoUtil.formatMergeInfoToString(addedMergeInfo));
                 workingProps.setPropertyValue(propName, newValue);
             } else {
                 gotConflict = maybeGeneratePropConflict(localPath, propName, workingProps, oldValue, newValue, 
@@ -594,7 +595,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
             } else {
                 if (SVNProperty.MERGE_INFO.equals(propName)) {
                     newValue = SVNPropertyValue.create(
-                            SVNMergeInfoManager.combineForkedMergeInfoProperties(oldValue.getString(),
+                            SVNMergeInfoUtil.combineForkedMergeInfoProperties(oldValue.getString(),
                     				workingValue.getString(), newValue.getString()));
                     workingProps.setPropertyValue(propName, newValue);
                     status = getPropMergeStatus(status, SVNStatusType.MERGED);

@@ -40,7 +40,6 @@ import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNMergeInfoManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.internal.wc.SVNWCManager;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
@@ -517,7 +516,7 @@ public class SVNBasicClient implements ISVNEventHandler {
                     return;
                 }
                 
-                SVNMergeInfoManager.elideMergeInfo(mergeInfo, 
+                SVNMergeInfoUtil.elideMergeInfo(mergeInfo, 
                         targetMergeInfo, path, null, access);
             }
         }
@@ -528,7 +527,7 @@ public class SVNBasicClient implements ISVNEventHandler {
     	SVNURL oldURL = ensureSessionURL(repository, null);
     	Map reposMergeInfo = null;
     	try {
-    		reposMergeInfo = repository.getMergeInfo(new String[] { path }, revision, inheritance);
+    		reposMergeInfo = repository.getMergeInfo(new String[] { path }, revision, inheritance, false);
     	} catch (SVNException svne) {
     		if (!squelchIncapable || svne.getErrorMessage().getErrorCode() != SVNErrorCode.UNSUPPORTED_FEATURE) {
     			throw svne;
@@ -664,14 +663,14 @@ public class SVNBasicClient implements ISVNEventHandler {
         }
         
         if (inherited[0]) {
-            mergeInfo = SVNMergeInfoManager.getInheritableMergeInfo(mergeInfo, null, 
+            mergeInfo = SVNMergeInfoUtil.getInheritableMergeInfo(mergeInfo, null, 
             		SVNRepository.INVALID_REVISION, SVNRepository.INVALID_REVISION);
             SVNMergeInfoUtil.removeEmptyRangeLists(mergeInfo);
         }
         return mergeInfo;
     }
 
-    protected void assertServerIsMergeInfoCapable(SVNRepository repository, String pathOrURL) throws SVNException {
+    public void assertServerIsMergeInfoCapable(SVNRepository repository, String pathOrURL) throws SVNException {
     	boolean isMergeInfoCapable = repository.hasCapability(SVNCapability.MERGE_INFO);
     	if (!isMergeInfoCapable) {
     		if (pathOrURL == null) {

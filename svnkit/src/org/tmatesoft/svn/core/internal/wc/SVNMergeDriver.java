@@ -311,7 +311,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                             SVNRevision.create(rev1[0]), rev1[0], youngestAncestorRevision + 1, null, myWCAccess);
                     Map deletedMergeInfo = new TreeMap();
                     Map addedMergeInfo = new TreeMap();
-                    SVNMergeInfoManager.diffMergeInfo(deletedMergeInfo, addedMergeInfo, targetMergeInfo, 
+                    SVNMergeInfoUtil.diffMergeInfo(deletedMergeInfo, addedMergeInfo, targetMergeInfo, 
                             sourceMergeInfo, false);
                     ensureAllMissingRangesArePhantoms(repository, deletedMergeInfo);
                 }
@@ -470,7 +470,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             if (myIsFirstRange) {
             	String workingMergeInfoPropValue = null;
             	if (!indirect[0] && targetMergeInfo != null) {
-            		workingMergeInfoPropValue = SVNMergeInfoManager.formatMergeInfoToString(targetMergeInfo);
+            		workingMergeInfoPropValue = SVNMergeInfoUtil.formatMergeInfoToString(targetMergeInfo);
             	}
             	myWorkingMergeInfo.put(targetWCPath, workingMergeInfoPropValue);
             }
@@ -732,7 +732,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
 					Map addedPathMergeInfo = getWCMergeInfo(addedPath, entry, null, 
 							SVNMergeInfoInheritance.EXPLICIT, false, inherited);
 					if (addedPathMergeInfo != null) {
-						mergeMergeInfo = SVNMergeInfoManager.mergeMergeInfos(mergeMergeInfo, addedPathMergeInfo);
+						mergeMergeInfo = SVNMergeInfoUtil.mergeMergeInfos(mergeMergeInfo, addedPathMergeInfo);
 					}
 					SVNPropertiesManager.recordWCMergeInfo(addedPath, mergeMergeInfo, myWCAccess);
 				}
@@ -913,7 +913,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         for (Iterator pathsIter = mergeInfoByPath.keySet().iterator(); pathsIter.hasNext();) {
             String path = (String) pathsIter.next();
             SVNMergeInfo mergeInfo = (SVNMergeInfo) mergeInfoByPath.get(path);  
-            Map filteredMergeInfo = SVNMergeInfoManager.intersectMergeInfo(mergeInfo.getMergeSourcesToMergeLists(), 
+            Map filteredMergeInfo = SVNMergeInfoUtil.intersectMergeInfo(mergeInfo.getMergeSourcesToMergeLists(), 
                     historyAsMergeInfo);
             if (filteredMergeInfo != null && !filteredMergeInfo.isEmpty()) {
                 newMergeInfoByPath.put(path, filteredMergeInfo);
@@ -930,7 +930,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         Collection segments = repository.getLocationSegments(targetReposRelPath, targetRev, targetRev, 
                 SVNRepository.INVALID_REVISION);
         Map mergeInfoCatalog = repository.getMergeInfo(new String[] { sourceReposRelPath }, sourceRev, 
-                SVNMergeInfoInheritance.INHERITED);
+                SVNMergeInfoInheritance.INHERITED, true);
         if (mergeInfoCatalog == null) {
             mergeInfoCatalog = Collections.EMPTY_MAP;
         }
@@ -978,7 +978,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                     leftRev[0] = lastRange.getEndRevision();
                     leftURL[0] = sourceReposRoot.appendPath(segment.getPath().startsWith("/") ? 
                             segment.getPath().substring(1) : segment.getPath(), false);
-                    return SVNMergeInfoManager.dupMergeInfo(sourceMergeInfo, null);
+                    return SVNMergeInfoUtil.dupMergeInfo(sourceMergeInfo, null);
                 }
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "merge aborted");
@@ -1367,12 +1367,12 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 SVNMergeRangeList inheritableRangeList = new SVNMergeRangeList(range);
                 Map inheritableMerges = new TreeMap();
                 inheritableMerges.put(reposPath, inheritableRangeList);
-                Map merges = SVNMergeInfoManager.getInheritableMergeInfo(targetMergeInfo, 
+                Map merges = SVNMergeInfoUtil.getInheritableMergeInfo(targetMergeInfo, 
                                                                          reposPath, 
                                                                          range.getStartRevision(), 
                                                                          range.getEndRevision());
-                if (!SVNMergeInfoManager.mergeInfoEquals(merges, targetMergeInfo, false)) {
-                    merges = SVNMergeInfoManager.mergeMergeInfos(merges, inheritableMerges);
+                if (!SVNMergeInfoUtil.mergeInfoEquals(merges, targetMergeInfo, false)) {
+                    merges = SVNMergeInfoUtil.mergeMergeInfos(merges, inheritableMerges);
                 
                     SVNPropertiesManager.recordWCMergeInfo(target, merges, myWCAccess);
                 }
@@ -1708,7 +1708,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                         		path.getAbsolutePath());
                         String mergeSrcChildPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(mergeSrcPath,
                         		relToTargetPath));
-                        Map mergeInfo = SVNMergeInfoManager.parseMergeInfo(new StringBuffer(mergeInfoProp), 
+                        Map mergeInfo = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(mergeInfoProp), 
                         		null);
                         if (mergeInfo.containsKey(mergeSrcChildPath)) {
                             hasMergeInfoFromMergeSrc = true;
@@ -1743,7 +1743,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                         					entry, SVNMergeInfoInheritance.NEAREST_ANCESTOR, indirect, false, 
                         					repository);
                         			if (indirect[0]) {
-                        				boolean equalMergeInfo = SVNMergeInfoManager.mergeInfoEquals(mergeInfo, 
+                        				boolean equalMergeInfo = SVNMergeInfoUtil.mergeInfoEquals(mergeInfo, 
                         						overridenMergeInfo, false);
                         				if (equalMergeInfo) {
                         					SVNPropertiesManager.recordWCMergeInfo(path, null, myWCAccess);
@@ -2043,9 +2043,9 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         SVNMergeRangeList remainingRanges = null;
         
         if (isRollBack) {
-            mergeInfo = SVNMergeInfoManager.dupMergeInfo(implicitMergeInfo, null);
+            mergeInfo = SVNMergeInfoUtil.dupMergeInfo(implicitMergeInfo, null);
             if (targetMergeInfo != null) {
-                mergeInfo = SVNMergeInfoManager.mergeMergeInfos(mergeInfo, targetMergeInfo);
+                mergeInfo = SVNMergeInfoUtil.mergeMergeInfos(mergeInfo, targetMergeInfo);
             }
             
             targetRangeList = (SVNMergeRangeList) mergeInfo.get(mergeInfoPath);
@@ -2064,9 +2064,9 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                     targetRangeList = (SVNMergeRangeList) targetMergeInfo.get(mergeInfoPath);
                 }
             } else {
-                mergeInfo = SVNMergeInfoManager.dupMergeInfo(implicitMergeInfo, null);
+                mergeInfo = SVNMergeInfoUtil.dupMergeInfo(implicitMergeInfo, null);
                 if (targetMergeInfo != null) {
-                    mergeInfo = SVNMergeInfoManager.mergeMergeInfos(mergeInfo, targetMergeInfo);
+                    mergeInfo = SVNMergeInfoUtil.mergeMergeInfos(mergeInfo, targetMergeInfo);
                 }
                 targetRangeList = (SVNMergeRangeList) mergeInfo.get(mergeInfoPath);
             }
@@ -2111,7 +2111,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         Map addedMergeInfo = null;
         if (startMergeInfo != null && endMergeInfo != null) {
             addedMergeInfo = new HashMap();
-            SVNMergeInfoManager.diffMergeInfo(null, addedMergeInfo, startMergeInfo, endMergeInfo, false);
+            SVNMergeInfoUtil.diffMergeInfo(null, addedMergeInfo, startMergeInfo, endMergeInfo, false);
         } else if (endMergeInfo != null) {
         	addedMergeInfo = endMergeInfo;
         }

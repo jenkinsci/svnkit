@@ -12,10 +12,12 @@
 package org.tmatesoft.svn.core.internal.io.fs;
 
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
@@ -101,8 +103,11 @@ public class FSCommitEditor implements ISVNEditor {
     }
 
     private FSTransactionInfo beginTransactionForCommit(long baseRevision) throws SVNException {
-        FSHooks.runStartCommitHook(myFSFS.getRepositoryRoot(), getAuthor());
-        FSTransactionInfo txn = FSTransactionRoot.beginTransaction(baseRevision, FSTransactionRoot.SVN_FS_TXN_CHECK_LOCKS, myFSFS);
+        List caps = new ArrayList();
+        caps.add("mergeinfo");
+        FSHooks.runStartCommitHook(myFSFS.getRepositoryRoot(), getAuthor(), caps);
+        FSTransactionInfo txn = FSTransactionRoot.beginTransaction(baseRevision, 
+                FSTransactionRoot.SVN_FS_TXN_CHECK_LOCKS, myFSFS);
         changeTransactionProperties(txn.getTxnId());
         return txn;
     }

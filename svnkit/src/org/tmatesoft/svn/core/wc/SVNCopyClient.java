@@ -36,6 +36,7 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.ISVNCommitPathHandler;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
@@ -48,7 +49,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNMergeInfoManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.internal.wc.SVNWCManager;
@@ -596,12 +596,12 @@ public class SVNCopyClient extends SVNBasicClient {
                 
                 Map wcMergeInfo = SVNPropertiesManager.parseMergeInfo(new File(source.mySource), entry, false);
                 if (wcMergeInfo != null && mergeInfo != null) {
-                    mergeInfo = SVNMergeInfoManager.mergeMergeInfos(mergeInfo, wcMergeInfo);
+                    mergeInfo = SVNMergeInfoUtil.mergeMergeInfos(mergeInfo, wcMergeInfo);
                 } else if (mergeInfo == null) {
                     mergeInfo = wcMergeInfo;
                 }
                 if (mergeInfo != null) {
-                    String mergeInfoString = SVNMergeInfoManager.formatMergeInfoToString(mergeInfo); 
+                    String mergeInfoString = SVNMergeInfoUtil.formatMergeInfoToString(mergeInfo); 
                     item.setMergeInfoProp(mergeInfoString);
                 }
             }
@@ -803,7 +803,7 @@ public class SVNCopyClient extends SVNBasicClient {
             Map mergeInfo = calculateTargetMergeInfo(null, null, SVNURL.parseURIEncoded(info.mySource), 
                     info.mySourceRevisionNumber, topRepos, false);
             if (mergeInfo != null) {
-                info.myMergeInfoProp = SVNMergeInfoManager.formatMergeInfoToString(mergeInfo);
+                info.myMergeInfoProp = SVNMergeInfoUtil.formatMergeInfoToString(mergeInfo);
             }
             paths.add(info.myDstPath);
             if (isMove && !info.isResurrection) {
@@ -1412,7 +1412,7 @@ public class SVNCopyClient extends SVNBasicClient {
     private void extendWCMergeInfo(File path, SVNEntry entry, Map mergeInfo, SVNWCAccess access) throws SVNException {
         Map wcMergeInfo = SVNPropertiesManager.parseMergeInfo(path, entry, false);
         if (wcMergeInfo != null && mergeInfo != null) {
-            wcMergeInfo = SVNMergeInfoManager.mergeMergeInfos(wcMergeInfo, mergeInfo);
+            wcMergeInfo = SVNMergeInfoUtil.mergeMergeInfos(wcMergeInfo, mergeInfo);
         } else if (wcMergeInfo == null) {
             wcMergeInfo = mergeInfo;
         }

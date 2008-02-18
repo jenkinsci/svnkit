@@ -41,8 +41,6 @@ public class SVNProperty {
      */
     public static final String TXN_CHECK_OUT_OF_DATENESS = SVN_PREFIX + "check-ood";
 
-    public static final String TXN_CONTAINS_MERGEINFO = SVN_PREFIX + "contains-mergeinfo";
-
     /**
      * An <span class="javastring">"svn:entry:"</span> prefix.
      */

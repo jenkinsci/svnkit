@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNEntryHandler;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
@@ -318,7 +319,7 @@ public class SVNPropertiesManager {
     public static void recordWCMergeInfo(File path, Map mergeInfo, SVNWCAccess wcAccess) throws SVNException {
         SVNPropertyValue value = null;
         if (mergeInfo != null) {
-            value = SVNPropertyValue.create(SVNMergeInfoManager.formatMergeInfoToString(mergeInfo));
+            value = SVNPropertyValue.create(SVNMergeInfoUtil.formatMergeInfoToString(mergeInfo));
         }
         setProperty(wcAccess, path, SVNProperty.MERGE_INFO, value, true);
     }
@@ -330,7 +331,7 @@ public class SVNPropertiesManager {
         Map result = null;
         SVNPropertyValue propValue = (SVNPropertyValue) fileToProp.get(path);
         if (propValue != null && propValue.getString() != null) {
-            result = SVNMergeInfoManager.parseMergeInfo(new StringBuffer(propValue.getString()), result);
+            result = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(propValue.getString()), result);
         }
         return result;
     }
@@ -430,7 +431,7 @@ public class SVNPropertiesManager {
         if (SVNProperty.EXECUTABLE.equals(name) || SVNProperty.SPECIAL.equals(name) || SVNProperty.NEEDS_LOCK.equals(name)) {
             value = SVNPropertyValue.create("*");
         } else if (SVNProperty.MERGE_INFO.equals(name)) {
-            SVNMergeInfoManager.parseMergeInfo(new StringBuffer(value.getString()), null);
+            SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(value.getString()), null);
         }
         return value;
     }

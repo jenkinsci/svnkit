@@ -188,7 +188,8 @@ public class FSTransactionRoot extends FSRoot {
         FSRevisionRoot root = owner.createRevisionRoot(baseRevision);
         FSRevisionNode rootNode = root.getRootRevisionNode();
         owner.createNewTxnNodeRevisionFromRevision(txnId, rootNode);
-        SVNFileUtil.createEmptyFile(new File(owner.getTransactionDir(txn.getTxnId()), FSFS.TXN_PATH_REV));
+        SVNFileUtil.createEmptyFile(owner.getTransactionProtoRevFile(txn.getTxnId()));
+        SVNFileUtil.createEmptyFile(owner.getTransactionProtoRevLockFile(txn.getTxnId()));
         SVNFileUtil.createEmptyFile(new File(owner.getTransactionDir(txn.getTxnId()), "changes"));
         owner.writeNextIDs(txnId, "0", "0");
         return txn;
@@ -216,8 +217,8 @@ public class FSTransactionRoot extends FSRoot {
         }
         
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_UNIQUE_NAMES_EXHAUSTED, 
-                                                     "Unable to create transaction directory in ''{0}'' for revision {1,number,integer}", 
-                                                     new Object[] { parent, new Long(revision) });
+                "Unable to create transaction directory in ''{0}'' for revision {1,number,integer}", 
+                new Object[] { parent, new Long(revision) });
         SVNErrorManager.error(err);
         return null;    
     }
@@ -250,6 +251,32 @@ public class FSTransactionRoot extends FSRoot {
         setEntry(parent, entryName, null, SVNNodeKind.UNKNOWN);
     }
 
+    public void incrementMergeInfoCount(FSRevisionNode node, long increment) throws SVNException {
+        if (!node.getId().isTxn()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_MUTABLE, 
+                    "Can''t increment mergeinfo count on *immutable* node-revision {0}", node.getId());
+            SVNErrorManager.error(err);
+        }
+        if (increment == 0) {
+            return;
+        }
+        
+        node.setMergeInfoCount(node.getMergeInfoCount() + increment);
+        if (node.getMergeInfoCount() < 0) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
+                    "Can''t increment mergeinfo count on node-revision {0} to negative value {1,number,integer}",
+                    new Object[] { node.getId(), new Long(node.getMergeInfoCount()) });
+            SVNErrorManager.error(err);
+        }
+        if (node.getMergeInfoCount() > 1 && node.getType() == SVNNodeKind.FILE) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
+                    "Can''t increment mergeinfo count on *file* node-revision {0} to {1,number,integer} (> 1)",
+                    new Object[] { node.getId(), new Long(node.getMergeInfoCount()) });
+            SVNErrorManager.error(err);
+        }
+        getOwner().putTxnRevisionNode(node.getId(), node);
+    }
+    
     private void deleteEntryIfMutable(FSID id) throws SVNException {
         FSRevisionNode node = getOwner().getRevisionNode(id);
         if (!node.getId().isTxn()) {
@@ -308,21 +335,6 @@ public class FSTransactionRoot extends FSRoot {
         }
     }
 
-    public void setTxnMergeInfo(String name, SVNPropertyValue value) throws SVNException {
-        FSFS fs = getOwner(); 
-        SVNProperties txnMergeInfo = fs.getTransactionMergeInfo(myTxnID);
-        if (value != null) {
-            txnMergeInfo.put(name, value);
-        } else {
-            txnMergeInfo.remove(name);
-        }
-        File txnMergeInfoFile = fs.getTransactionMergeInfoFile(myTxnID);
-        SVNWCProperties.setProperties(txnMergeInfo, txnMergeInfoFile,
-                                    SVNFileUtil.createUniqueFile(txnMergeInfoFile.getParentFile(), 
-                                                                 "mergeinfo", ".tmp"), 
-                                    SVNWCProperties.SVN_HASH_TERMINATOR);
-    }
-    
     public FSID createSuccessor(FSID oldId, FSRevisionNode newRevNode, String copyId) throws SVNException {
         if (copyId == null) {
             copyId = oldId.getCopyID();
@@ -476,9 +488,10 @@ public class FSTransactionRoot extends FSRoot {
         SVNFileUtil.rename(tmpCurrentFile, currentFile);
     }
 
-    public FSID writeFinalRevision(FSID newId, final CountingStream protoFile, long revision, FSID id, String startNodeId, String startCopyId) throws SVNException, IOException {
+    public FSID writeFinalRevision(FSID newId, final CountingStream protoFile, long revision, FSID id, 
+            String startNodeId, String startCopyId, Map nodeOrigins) throws SVNException, IOException {
         newId = null;
-
+        boolean isNewNodeID = false;
         if (!id.isTxn()) {
             return newId;
         }
@@ -488,7 +501,8 @@ public class FSTransactionRoot extends FSRoot {
             Map namesToEntries = revNode.getDirEntries(owner);
             for (Iterator entries = namesToEntries.values().iterator(); entries.hasNext();) {
                 FSEntry dirEntry = (FSEntry) entries.next();
-                newId = writeFinalRevision(newId, protoFile, revision, dirEntry.getId(), startNodeId, startCopyId);
+                newId = writeFinalRevision(newId, protoFile, revision, dirEntry.getId(), startNodeId, startCopyId, 
+                        nodeOrigins);
                 if (newId != null && newId.getRevision() == revision) {
                     dirEntry.setId(newId);
                 }
@@ -507,7 +521,8 @@ public class FSTransactionRoot extends FSRoot {
                     textRep.setHexDigest(hexDigest);
                     textRep.setExpandedSize(textRep.getSize());
                 } catch (NoSuchAlgorithmException nsae) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "MD5 implementation not found: {0}", nsae.getLocalizedMessage());
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
+                            "MD5 implementation not found: {0}", nsae.getLocalizedMessage());
                     SVNErrorManager.error(err, nsae);
                 }
             }
@@ -533,7 +548,8 @@ public class FSTransactionRoot extends FSRoot {
                 propsRep.setRevision(revision);
                 propsRep.setExpandedSize(size);
             } catch (NoSuchAlgorithmException nsae) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "MD5 implementation not found: {0}", nsae.getLocalizedMessage());
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
+                        "MD5 implementation not found: {0}", nsae.getLocalizedMessage());
                 SVNErrorManager.error(err, nsae);
             }
         }
@@ -544,6 +560,7 @@ public class FSTransactionRoot extends FSRoot {
 
         if (nodeId.startsWith("_")) {
             myNodeId = FSTransactionRoot.addKeys(startNodeId, nodeId.substring(1));
+            isNewNodeID = true;
         } else {
             myNodeId = nodeId;
         }
@@ -563,7 +580,9 @@ public class FSTransactionRoot extends FSRoot {
 
         newId = FSID.createRevId(myNodeId, myCopyId, revision, myOffset);
         revNode.setId(newId);
-
+        if (isNewNodeID) {
+            nodeOrigins.put(myNodeId, newId);
+        }
         getOwner().writeTxnNodeRevision(protoFile, revNode);
         revNode.setIsFreshTxnRoot(false);
         getOwner().putTxnRevisionNode(id, revNode);
@@ -622,9 +641,9 @@ public class FSTransactionRoot extends FSRoot {
         return new File(getOwner().getTransactionDir(id.getTxnID()), FSFS.PATH_PREFIX_NODE + id.getNodeID() + "." + id.getCopyID() + FSFS.TXN_PATH_EXT_CHILDREN);
     }
 
-    public File getTransactionRevFile() {
+    public File getTransactionProtoRevFile() {
         if (myTxnRevFile == null) {
-            myTxnRevFile = new File(getOwner().getTransactionDir(myTxnID), FSFS.TXN_PATH_REV);
+            myTxnRevFile = getOwner().getTransactionProtoRevFile(myTxnID);
         }
         return myTxnRevFile;
     }

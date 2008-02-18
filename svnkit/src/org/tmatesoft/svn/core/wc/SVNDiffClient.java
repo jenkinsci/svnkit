@@ -30,6 +30,7 @@ import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.AbstractDiffCallback;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
@@ -40,7 +41,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNMergeDriver;
-import org.tmatesoft.svn.core.internal.wc.SVNMergeInfoManager;
 import org.tmatesoft.svn.core.internal.wc.SVNRemoteDiffEditor;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
@@ -1469,12 +1469,12 @@ public class SVNDiffClient extends SVNMergeDriver {
             if (mergeInfo == null) {
             	mergeInfo = history;
             } else {
-            	mergeInfo = SVNMergeInfoManager.mergeMergeInfos(mergeInfo, history);
+            	mergeInfo = SVNMergeInfoUtil.mergeMergeInfos(mergeInfo, history);
             }
             
             Map sourceHistory = getHistoryAsMergeInfo(mergeSrcURL, null, SVNRevision.HEAD, 
             		SVNRepository.INVALID_REVISION, SVNRepository.INVALID_REVISION, repos, null);
-            Map availableMergeInfo = SVNMergeInfoManager.removeMergeInfo(mergeInfo, sourceHistory);
+            Map availableMergeInfo = SVNMergeInfoUtil.removeMergeInfo(mergeInfo, sourceHistory);
             SVNMergeRangeList rangeList = new SVNMergeRangeList(new SVNMergeRange[0]);
             for (Iterator availableIter = availableMergeInfo.values().iterator(); availableIter.hasNext();) {
             	SVNMergeRangeList availableRangeList = (SVNMergeRangeList) availableIter.next();
@@ -1496,12 +1496,12 @@ public class SVNDiffClient extends SVNMergeDriver {
             if (mergeInfo == null) {
             	mergeInfo = history;
             } else {
-            	mergeInfo = SVNMergeInfoManager.mergeMergeInfos(mergeInfo, history);
+            	mergeInfo = SVNMergeInfoUtil.mergeMergeInfos(mergeInfo, history);
             }
             
             Map sourceHistory = getHistoryAsMergeInfo(mergeSrcURL, null, SVNRevision.HEAD, 
             		SVNRepository.INVALID_REVISION, SVNRepository.INVALID_REVISION, repos, null);
-            Map availableMergeInfo = SVNMergeInfoManager.removeMergeInfo(mergeInfo, sourceHistory);
+            Map availableMergeInfo = SVNMergeInfoUtil.removeMergeInfo(mergeInfo, sourceHistory);
             SVNMergeRangeList rangeList = new SVNMergeRangeList(new SVNMergeRange[0]);
             for (Iterator availableIter = availableMergeInfo.values().iterator(); availableIter.hasNext();) {
             	SVNMergeRangeList availableRangeList = (SVNMergeRangeList) availableIter.next();

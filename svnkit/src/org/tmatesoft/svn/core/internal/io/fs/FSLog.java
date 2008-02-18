@@ -15,6 +15,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.TreeMap;
@@ -31,7 +32,7 @@ import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
-import org.tmatesoft.svn.core.internal.wc.ISVNMergeInfoFilter;
+import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNMergeInfoManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
@@ -97,8 +98,7 @@ public class FSLog {
     
     private long doLogs() throws SVNException {
         long sendCount = 0;
-        PathInfo[] histories = getPathHistories(myPaths, myStartRevision, 
-                                                myEndRevision, myIsStrictNode);
+        PathInfo[] histories = getPathHistories(myPaths, myStartRevision, myEndRevision, myIsStrictNode);
         
         LinkedList revisions = null;
         boolean anyHistoriesLeft = true;
@@ -187,7 +187,7 @@ public class FSLog {
             long[] revs = combinedRangeList.toRevisionsArray();
             for (int i = 0; i < revs.length; i++) {
                 long rev = revs[i];
-                String mergeSource = SVNMergeInfoManager.findMergeSource(rev, mergeInfo);
+                String mergeSource = SVNMergeInfoUtil.findMergeSource(rev, mergeInfo);
                 root = myFSFS.createRevisionRoot(rev);
                 if (root.checkNodeKind(mergeSource) == SVNNodeKind.NONE) {
                     continue;
@@ -312,100 +312,48 @@ public class FSLog {
         Map previousMergeInfo = getCombinedMergeInfo(paths, revision - 1, revision);
         Map deleted = new TreeMap();
         Map changed = new TreeMap();
-        SVNMergeInfoManager.diffMergeInfo(deleted, changed, previousMergeInfo, currentMergeInfo, false);
-        changed = SVNMergeInfoManager.mergeMergeInfos(changed, deleted);
+        SVNMergeInfoUtil.diffMergeInfo(deleted, changed, previousMergeInfo, currentMergeInfo, false);
+        changed = SVNMergeInfoUtil.mergeMergeInfos(changed, deleted);
         return changed;
     }
     
     private Map getCombinedMergeInfo(String[] paths, long revision, long currentRevision) throws SVNException {
-        Map mergeInfo = new TreeMap();
         if (revision == 0) {
-            return mergeInfo;
+            return new TreeMap();
         }
         FSRevisionRoot root = myFSFS.createRevisionRoot(revision);
-        SVNMergeInfoManager mergeInfoManager = getMergeInfoManager(); 
-        ISVNMergeInfoFilter filter = new BranchingCopyFilter(root, revision == currentRevision);
-        Map treeMergeInfo = mergeInfoManager.getMergeInfoForTree(paths, root, filter);
-        for (Iterator pathsIter = treeMergeInfo.keySet().iterator(); pathsIter.hasNext();) {
-            String path = (String) pathsIter.next();
-            SVNMergeInfo info = (SVNMergeInfo) treeMergeInfo.get(path);
-            mergeInfo = SVNMergeInfoManager.mergeMergeInfos(mergeInfo, info.getMergeSourcesToMergeLists());
+        String[] queryPaths = paths;
+        if (revision != currentRevision) {
+            List existingPaths = new LinkedList();
+            for (int i = 0; i < paths.length; i++) {
+                String path = paths[i];
+                SVNNodeKind kind = root.checkNodeKind(path);
+                if (kind != SVNNodeKind.NONE) {
+                    existingPaths.add(path);
+                }
+            }
+            queryPaths = (String[]) existingPaths.toArray(new String[existingPaths.size()]);
         }
-        return mergeInfo;
+        
+        SVNMergeInfoManager mergeInfoManager = getMergeInfoManager(); 
+        Map treeMergeInfo = mergeInfoManager.getMergeInfo(queryPaths, root, SVNMergeInfoInheritance.INHERITED, 
+                true);
+        Map mergeInfoCatalog = new TreeMap();
+        for (Iterator mergeInfoIter = treeMergeInfo.values().iterator(); mergeInfoIter.hasNext();) {
+            SVNMergeInfo mergeInfo = (SVNMergeInfo) mergeInfoIter.next();
+            mergeInfoCatalog = SVNMergeInfoUtil.mergeMergeInfos(mergeInfoCatalog, 
+                    mergeInfo.getMergeSourcesToMergeLists());
+        }
+        return mergeInfoCatalog;
     }
-    
+
     private SVNMergeInfoManager getMergeInfoManager() {
         if (myMergeInfoManager == null) {
-            myMergeInfoManager = SVNMergeInfoManager.createMergeInfoManager(null);
+            myMergeInfoManager = new SVNMergeInfoManager();
         }
         return myMergeInfoManager;
     }
     
-    public static Map getPathMergeInfo(String path, FSRevisionRoot root) throws SVNException {
-        SVNMergeInfoManager mergeInfoManager = SVNMergeInfoManager.createMergeInfoManager(null);
-        Map tmpMergeInfo = mergeInfoManager.getMergeInfo(new String[] {path}, 
-                                                         root, 
-                                                         SVNMergeInfoInheritance.INHERITED);
-        SVNMergeInfo mergeInfo = (SVNMergeInfo) tmpMergeInfo.get(path);
-        if (mergeInfo != null) {
-            return mergeInfo.getMergeSourcesToMergeLists();
-        }
-        return new TreeMap();
-    }
-
-    public static boolean isBranchingCopy(FSRevisionRoot root, Map pathMergeInfo, String path) throws SVNException {
-        Map mergeInfo = null;
-        if (pathMergeInfo != null) {
-            mergeInfo = pathMergeInfo;
-        } else {
-            mergeInfo = FSLog.getPathMergeInfo(path, root); 
-        }
-        
-        FSClosestCopy closestCopy = root.getClosestCopy(path);
-        FSRevisionRoot copyRoot = closestCopy != null ? closestCopy.getRevisionRoot()
-                                                      : null;
-        
-        if (copyRoot == null) {
-            return false;
-        }
-
-        if (copyRoot.getRevision() != root.getRevision()) {
-            return false;
-        }
-
-        Map impliedMergeInfo = calculateBranchingCopyMergeInfo(copyRoot, 
-                                                               closestCopy.getPath(), 
-                                                               path, 
-                                                               root.getRevision());           
-
-        Map added = new HashMap();
-        Map deleted = new HashMap();
-        SVNMergeInfoManager.diffMergeInfo(deleted, added, impliedMergeInfo, mergeInfo, false);
-        if (deleted.isEmpty() && added.isEmpty()) {
-            return false;
-        }
-        return true;
-    }
-    
-    private static Map calculateBranchingCopyMergeInfo(FSRevisionRoot srcRoot, 
-                                                       String srcPath,
-                                                       String dstPath, 
-                                                       long revision) throws SVNException {
-        
-        Map impliedMergeInfo = new TreeMap();
-        FSClosestCopy closestCopy = srcRoot.getClosestCopy(srcPath);
-        FSRevisionRoot copyRoot = closestCopy != null ? closestCopy.getRevisionRoot() : null;  
-        if (copyRoot == null) {
-            return impliedMergeInfo;
-        }
-        
-        long oldestRevision = copyRoot.getRevision();
-        SVNMergeRangeList rangeList = new SVNMergeRangeList(new SVNMergeRange(oldestRevision, 
-        		revision - 1, true));
-        impliedMergeInfo.put(dstPath, rangeList);    
-        return impliedMergeInfo;
-    }
-
     private class PathInfo {
         FSNodeHistory myHistory;
         boolean myIsDone;
@@ -459,27 +407,4 @@ public class FSLog {
         }
     }
     
-    private class BranchingCopyFilter implements ISVNMergeInfoFilter {
-        private FSRevisionRoot myRoot;
-        private boolean myIsFindingCurrentRevision;
-        
-        public BranchingCopyFilter(FSRevisionRoot root, boolean isFindingCurrentRevision) {
-            myRoot = root;
-            myIsFindingCurrentRevision = isFindingCurrentRevision;
-        }
-        
-        public boolean omitMergeInfo(String path, Map pathMergeInfo) throws SVNException {
-            if (!myIsFindingCurrentRevision) {
-                return false;
-            }
-            
-            SVNNodeKind kind = myRoot.checkNodeKind(path);
-            if (kind == SVNNodeKind.NONE) {
-                return false;
-            }
-            return isBranchingCopy(myRoot, pathMergeInfo, path);
-        }
-        
-    }
-
 }

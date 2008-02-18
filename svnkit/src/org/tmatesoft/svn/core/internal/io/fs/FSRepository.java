@@ -71,7 +71,8 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     private FSUpdateContext myReporterContext;
     private FSLocationsFinder myLocationsFinder;
     private FSFS myFSFS;
-
+    private SVNMergeInfoManager myMergeInfoManager;
+    
     protected FSRepository(SVNURL location, ISVNSession options) {
         super(location, options);
     }
@@ -651,24 +652,6 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
     }
 
-    public Map getMergeInfo(String[] paths, long revision, SVNMergeInfoInheritance inherit) throws SVNException {
-        try {
-            openRepository();
-            if (!isValidRevision(revision)) {
-                revision = myFSFS.getYoungestRevision();
-            }
-            FSRevisionRoot root = myFSFS.createRevisionRoot(revision);
-            String[] absPaths = new String[paths.length];
-            for (int i = 0; i < paths.length; i++) {
-                absPaths[i] = getRepositoryPath(paths[i]);
-            }
-            SVNMergeInfoManager mergeInfoManager = SVNMergeInfoManager.createMergeInfoManager(null);
-            return mergeInfoManager.getMergeInfo(absPaths, root, inherit);
-        } finally {
-            closeRepository();
-        }
-    }
-
 	public boolean hasCapability(SVNCapability capability) throws SVNException {
 		if (capability == SVNCapability.DEPTH || capability == SVNCapability.LOG_REVPROPS ||
 				capability == SVNCapability.MERGE_INFO || capability == SVNCapability.PARTIAL_REPLAY) {
@@ -682,6 +665,25 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
 
     void closeRepository() {
         unlock();
+    }
+
+    protected Map getMergeInfoImpl(String[] paths, long revision, SVNMergeInfoInheritance inherit, 
+            boolean includeDescendants) throws SVNException {
+        try {
+            openRepository();
+            if (!isValidRevision(revision)) {
+                revision = myFSFS.getYoungestRevision();
+            }
+            FSRevisionRoot root = myFSFS.createRevisionRoot(revision);
+            String[] absPaths = new String[paths.length];
+            for (int i = 0; i < paths.length; i++) {
+                absPaths[i] = getRepositoryPath(paths[i]);
+            }
+            SVNMergeInfoManager mergeInfoManager = getMergeInfoManager();
+            return mergeInfoManager.getMergeInfo(absPaths, root, inherit, includeDescendants);
+        } finally {
+            closeRepository();
+        }
     }
 
     protected ISVNEditor getCommitEditorInternal(Map locks, boolean keepLocks, SVNProperties revProps, ISVNWorkspaceMediator mediator) throws SVNException {
@@ -910,4 +912,10 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         return myLocationsFinder;
     }
 
+    private SVNMergeInfoManager getMergeInfoManager() {
+        if (myMergeInfoManager == null) {
+            myMergeInfoManager = new SVNMergeInfoManager();
+        }
+        return myMergeInfoManager;
+    }
 }

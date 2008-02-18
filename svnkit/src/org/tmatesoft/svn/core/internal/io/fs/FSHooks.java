@@ -15,6 +15,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -123,9 +126,11 @@ public class FSHooks {
         runHook(reposRootDir, hookName, new String[] {String.valueOf(revision), author, propName, action}, propValue);
     }
 
-    public static void runStartCommitHook(File reposRootDir, String author) throws SVNException {
+    public static void runStartCommitHook(File reposRootDir, String author, List capabilities) throws SVNException {
         author = author == null ? "" : author;
-        runHook(reposRootDir, SVN_REPOS_HOOK_START_COMMIT, new String[] {author, "mergeinfo"}, null);
+        String capsString = getCapabilitiesAsString(capabilities);
+        String[] args = capsString == null ? new String[] { author } : new String[] { author, capsString }; 
+        runHook(reposRootDir, SVN_REPOS_HOOK_START_COMMIT, args, null);
     }
 
     public static void runPreCommitHook(File reposRootDir, String txnName) throws SVNException {
@@ -277,5 +282,20 @@ public class FSHooks {
 
     private static File getHooksDir(File reposRootDir) {
         return new File(reposRootDir, SVN_REPOS_HOOKS_DIR);
+    }
+    
+    private static String getCapabilitiesAsString(List capabilities) {
+        if (capabilities == null || capabilities.isEmpty()) {
+            return null;
+        }
+        StringBuffer buffer = new StringBuffer();
+        for (int i = 0; i < capabilities.size(); i++) {
+            Object cap = capabilities.get(i); 
+            buffer.append(cap);
+            if (i < capabilities.size() - 1) {
+                buffer.append(":");
+            }
+        }
+        return buffer.toString();
     }
 }

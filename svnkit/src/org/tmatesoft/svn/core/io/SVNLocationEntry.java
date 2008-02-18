@@ -12,6 +12,9 @@
 
 package org.tmatesoft.svn.core.io;
 
+import java.util.Collections;
+import java.util.Map;
+
 /**
  * The <b>SVNLocationEntry</b> represents a mapping of a path to its 
  * revision. That is, the repository path of an item in a particular
@@ -26,7 +29,8 @@ public class SVNLocationEntry {
     private long myRevision;
     private String myPath;
     private boolean myIsResultOfMerge;
-
+    private Map myMergedMergeInfo;
+    
     /**
      * Constructs an <b>SVNLocationEntry</b> object.
      * 
@@ -35,13 +39,14 @@ public class SVNLocationEntry {
      *                  the <code>revision</code>
      */
     public SVNLocationEntry(long revision, String path) {
-        this(revision, path, false);
+        this(revision, path, false, null);
     }
 
-    public SVNLocationEntry(long revision, String path, boolean isResultOfMerge) {
+    public SVNLocationEntry(long revision, String path, boolean isResultOfMerge, Map mergedMergeInfo) {
         myRevision = revision;
         myPath = path;
         myIsResultOfMerge = isResultOfMerge;
+        myMergedMergeInfo = mergedMergeInfo != null ? Collections.unmodifiableMap(mergedMergeInfo) : null;
     }
 
     /**
@@ -64,5 +69,9 @@ public class SVNLocationEntry {
 
     public boolean isResultOfMerge() {
         return myIsResultOfMerge;
+    }
+    
+    public Map getMergedMergeInfo() {
+        return myMergedMergeInfo;
     }
 }

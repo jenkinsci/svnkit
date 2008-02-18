@@ -54,12 +54,8 @@ public class FSParentPath {
         myRevNode = newRevNode;
     }
 
-    public String getNameEntry() {
+    public String getEntryName() {
         return myEntryName;
-    }
-
-    public void setNameEntry(String newNameEntry) {
-        myEntryName = newNameEntry;
     }
 
     public FSParentPath getParent() {
@@ -94,7 +90,17 @@ public class FSParentPath {
         if (myParent != null) {
             pathSoFar = myParent.getAbsPath();
         }
-        return SVNPathUtil.getAbsolutePath(SVNPathUtil.append(pathSoFar, getNameEntry()));
+        return SVNPathUtil.getAbsolutePath(SVNPathUtil.append(pathSoFar, getEntryName()));
+    }
+    
+    public String getRelativePath(FSParentPath ancestor) {
+        String pathSoFar = "";
+        FSParentPath thisNode = this;
+        while (thisNode != ancestor) {
+            pathSoFar = SVNPathUtil.append(thisNode.getEntryName(), pathSoFar);
+            thisNode = thisNode.getParent();
+        }
+        return pathSoFar;
     }
 
 }

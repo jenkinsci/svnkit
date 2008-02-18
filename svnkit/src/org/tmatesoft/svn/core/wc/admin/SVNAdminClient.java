@@ -37,7 +37,6 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.internal.io.fs.FSCommitter;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryUtil;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
@@ -585,7 +584,7 @@ public class SVNAdminClient extends SVNBasicClient {
         for (int i = 0; i < transactions.length; i++) {
             String txnName = transactions[i];
             fsfs.openTxn(txnName);
-            FSCommitter.purgeTxn(fsfs, txnName);
+            fsfs.purgeTxn(txnName);
             SVNDebugLog.getDefaultLog().info("Transaction '" + txnName + "' removed.\n");
             if (myEventHandler != null) {
                 SVNAdminEvent event = new SVNAdminEvent(txnName, fsfs.getTransactionDir(txnName), SVNAdminEventAction.TRANSACTION_REMOVED);

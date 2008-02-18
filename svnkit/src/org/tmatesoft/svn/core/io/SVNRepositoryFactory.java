@@ -38,7 +38,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNMergeInfoManager;
 import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 
@@ -453,7 +452,7 @@ public abstract class SVNRepositoryFactory {
             }
             
             if (fsFormat >= FSFS.MIN_CURRENT_TXN_FORMAT) {
-                File txnCurrentFile = new File(path, "db/transaction-current");
+                File txnCurrentFile = new File(path, "db/" + FSFS.TXN_CURRENT_FILE);
                 SVNFileUtil.createEmptyFile(txnCurrentFile);
                 txnCurrentOS = SVNFileUtil.openFileForWriting(txnCurrentFile);
                 try {
@@ -469,9 +468,6 @@ public abstract class SVNRepositoryFactory {
             SVNWCProperties props = new SVNWCProperties(rev0File, null);
             String date = SVNDate.formatDate(new Date(System.currentTimeMillis()), true);
             props.setPropertyValue(SVNRevisionProperty.DATE, date);
-            
-            SVNMergeInfoManager mergeInfoManager = SVNMergeInfoManager.createMergeInfoManager(null);
-            mergeInfoManager.createIndex(new File(path, "db"));
         } finally {
             SVNFileUtil.closeFile(uuidOS);
             SVNFileUtil.closeFile(reposFormatOS);

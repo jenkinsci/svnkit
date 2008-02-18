@@ -49,11 +49,11 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaReader;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNDepthFilterEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNMergeInfoManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
@@ -1464,6 +1464,48 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         }
     }
 
+    protected Map getMergeInfoImpl(String[] paths, long revision, SVNMergeInfoInheritance inherit,
+            boolean includeDescendants) throws SVNException {
+        try {
+            openConnection();
+            if (!myConnection.isMergeInfo()) {
+                return new TreeMap();
+            }
+            String[] repositoryPaths = getRepositoryPaths(paths);
+            if (repositoryPaths == null || repositoryPaths.length == 0) {
+                repositoryPaths = new String[]{""};
+            }
+
+            Object[] buffer = new Object[]{"get-mergeinfo", repositoryPaths,
+                    getRevisionObject(revision), inherit.toString()};
+            write("(w((*s)(n)w))", buffer);
+            authenticate();
+
+            List items = read("(?l)", null, true);
+            items = (List) items.get(0);
+            Map pathsToMergeInfos = new HashMap();
+            for (Iterator iterator = items.iterator(); iterator.hasNext();) {
+                SVNItem item = (SVNItem) iterator.next();
+                if (item.getKind() != SVNItem.LIST) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Merge info element is not a list");
+                    SVNErrorManager.error(err);
+                }
+                List values = SVNReader.parseTuple("cc", item.getItems(), null);
+                String path = SVNReader.getString(values, 0);
+                String mergeInfoToParse = SVNReader.getString(values, 1);
+                Map srcsToRangeLists = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(mergeInfoToParse), null);
+                SVNMergeInfo mergeInfo = new SVNMergeInfo(path, srcsToRangeLists);
+                pathsToMergeInfos.put(path, mergeInfo);
+            }
+            return pathsToMergeInfos;
+        } catch (SVNException e) {
+            closeSession();
+            throw e;
+        } finally {
+            closeConnection();
+        }
+    }
+
     public Map getMergeInfo(String[] paths, long revision, SVNMergeInfoInheritance inherit) throws SVNException {
         try {
             openConnection();
@@ -1492,7 +1534,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 List values = SVNReader.parseTuple("cc", item.getItems(), null);
                 String path = SVNReader.getString(values, 0);
                 String mergeInfoToParse = SVNReader.getString(values, 1);
-                Map srcsToRangeLists = SVNMergeInfoManager.parseMergeInfo(new StringBuffer(mergeInfoToParse), null);
+                Map srcsToRangeLists = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(mergeInfoToParse), null);
                 SVNMergeInfo mergeInfo = new SVNMergeInfo(path, srcsToRangeLists);
                 pathsToMergeInfos.put(path, mergeInfo);
             }

@@ -1809,8 +1809,15 @@ public abstract class SVNRepository {
      */
     public abstract SVNLock[] getLocks(String path) throws SVNException;
     
-    public abstract Map getMergeInfo(String[] paths, long revision, SVNMergeInfoInheritance inherit) throws SVNException;
-    
+    public Map getMergeInfo(String[] paths, long revision, SVNMergeInfoInheritance inherit, 
+            boolean includeDescendants) throws SVNException {
+        boolean isMergeInfoCapable = hasCapability(SVNCapability.MERGE_INFO);
+        if (!isMergeInfoCapable) {
+            return null;
+        }
+        return getMergeInfoImpl(paths, revision, inherit, includeDescendants);
+    }
+
     /**
 	 * Locks path(s) at definite revision(s).
 	 * 
@@ -1954,6 +1961,9 @@ public abstract class SVNRepository {
         myConnectionListeners.remove(listener);
     }
     
+    protected abstract Map getMergeInfoImpl(String[] paths, long revision, SVNMergeInfoInheritance inherit, 
+            boolean includeDescendants) throws SVNException;
+
     protected void fireConnectionOpened() {
         for (Iterator listeners = myConnectionListeners.iterator(); listeners.hasNext();) {
             ISVNConnectionListener listener = (ISVNConnectionListener) listeners.next();

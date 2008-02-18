@@ -37,12 +37,10 @@ import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
-import org.tmatesoft.svn.core.internal.wc.ISVNDBProcessor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNSQLiteDBProcessor;
 import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
@@ -55,18 +53,20 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 public class FSFS {
     public static final String DB_DIR = "db";
     public static final String REVS_DIR = "revs";
-    public static final String TXN_CURRENT_FILE = "transaction-current";
+    public static final String TXN_CURRENT_FILE = "txn-current";
+    public static final String TXN_CURRENT_LOCK_FILE = "txn-current-lock";
     public static final String REVISION_PROPERTIES_DIR = "revprops";
     public static final String WRITE_LOCK_FILE = "write-lock";
     public static final String LOCKS_DIR = "locks";
     public static final String TRANSACTIONS_DIR = "transactions";
+    public static final String TRANSACTION_PROTOS_DIR = "txn-protorevs";
+    public static final String NODE_ORIGINS_DIR = "node-origins";
     
     public static final String TXN_PATH_EXT = ".txn";
     public static final String TXN_MERGEINFO_PATH = "mergeinfo";
     public static final String TXN_PATH_EXT_CHILDREN = ".children";
     public static final String PATH_PREFIX_NODE = "node.";
     public static final String TXN_PATH_EXT_PROPS = ".props";
-    public static final int    DIGEST_SUBDIR_LEN = 3;
     public static final String SVN_OPAQUE_LOCK_TOKEN = "opaquelocktoken:";
     public static final String TXN_PATH_REV = "rev";
     public static final String PATH_LOCK_KEY = "path";
@@ -78,12 +78,14 @@ public class FSFS {
     public static final String EXPIRATION_DATE_LOCK_KEY = "expiration_date";
     public static final String COMMENT_LOCK_KEY = "comment";
     
+    public static final int DIGEST_SUBDIR_LEN = 3;
     public static final int REPOSITORY_FORMAT = 5;
     public static final int REPOSITORY_FORMAT_LEGACY = 3;
     public static final int DB_FORMAT = 3;
     public static final int DB_FORMAT_LOW = 1;
     public static final int LAYOUT_FORMAT_OPTION_MINIMAL_FORMAT = 3;
     public static final int MIN_CURRENT_TXN_FORMAT = 3;
+    public static final int MIN_PROTOREVS_DIR_FORMAT = 3;
 
     //TODO: we should be able to change this via some option
     private static long DEFAULT_MAX_FILES_PER_DIRECTORY = 1000;
@@ -103,8 +105,10 @@ public class FSFS {
     private File myWriteLockFile;
     private File myCurrentFile;
     private File myTransactionCurrentFile;
+    private File myTransactionCurrentLockFile;
+    private File myTransactionProtoRevsRoot;
+    private File myNodeOriginsDir;
     private long myMaxFilesPerDirectory;
-    private ISVNDBProcessor myDBProcessor;
 
     public FSFS(File repositoryRoot) {
         myRepositoryRoot = repositoryRoot;
@@ -112,8 +116,10 @@ public class FSFS {
         myRevisionsRoot = new File(myDBRoot, REVS_DIR);
         myRevisionPropertiesRoot = new File(myDBRoot, REVISION_PROPERTIES_DIR);
         myTransactionsRoot = new File(myDBRoot, TRANSACTIONS_DIR);
+        myTransactionProtoRevsRoot = new File(myDBRoot, TRANSACTION_PROTOS_DIR);
         myWriteLockFile = new File(myDBRoot, WRITE_LOCK_FILE);
         myLocksRoot = new File(myDBRoot, LOCKS_DIR);
+        myNodeOriginsDir = new File(myDBRoot, NODE_ORIGINS_DIR);
         myMaxFilesPerDirectory = 0;
     }
     
@@ -474,7 +480,7 @@ public class FSFS {
     }
     
     public String getAndIncrementTxnKey() throws SVNException {
-        FSWriteLock writeLock = FSWriteLock.getWriteLock(this);
+        FSWriteLock writeLock = FSWriteLock.getWriteLockForCurrentTxn("_" + TXN_CURRENT_FILE, this);
         synchronized (writeLock) {
             try {
                 writeLock.lock();
@@ -607,6 +613,10 @@ public class FSFS {
         return myRepositoryRoot;
     }
     
+    public File getNodeOriginsDir() {
+        return myNodeOriginsDir;
+    }
+    
     public FSFile openAndSeekRepresentation(FSRepresentation rep) throws SVNException {
         if (!rep.isTxn()) {
             return openAndSeekRevision(rep.getRevision(), rep.getOffset());
@@ -643,7 +653,7 @@ public class FSFS {
     }
 
     public void setRevisionProperty(long revision, String propertyName, SVNPropertyValue propertyValue) throws SVNException {
-        FSWriteLock writeLock = FSWriteLock.getWriteLock(this);
+        FSWriteLock writeLock = FSWriteLock.getWriteLockForDB(this);
         synchronized (writeLock) {
             try {
                 writeLock.lock();
@@ -669,27 +679,30 @@ public class FSFS {
         return new File(getTransactionDir(txnID), "props");
     }
 
-    public SVNProperties getTransactionMergeInfo(String txnID) throws SVNException {
-        File mergeInfoFile = getTransactionMergeInfoFile(txnID);
-        if (!mergeInfoFile.exists()) {
-            try {
-                mergeInfoFile.createNewFile();
-            } catch (IOException e) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-                SVNErrorManager.error(err);
-            }
-            return new SVNProperties();
+    public File getTransactionProtoRevsDir() {
+        return myTransactionProtoRevsRoot;
+    }
+    
+    public File getTransactionProtoRevFile(String txnID) {
+        if (myDBFormat >= MIN_PROTOREVS_DIR_FORMAT) {
+            return new File(getTransactionProtoRevsDir(), txnID + ".rev");
         }
-        FSFile txnMergeInfoFile = new FSFile(mergeInfoFile);
-        try {
-            return txnMergeInfoFile.readProperties(false);
-        } finally {
-            txnMergeInfoFile.close();
+        return new File(getTransactionDir(txnID), "rev");
+    }
+    
+    public File getTransactionProtoRevLockFile(String txnID) {
+        if (myDBFormat >= MIN_PROTOREVS_DIR_FORMAT) {
+            return new File(getTransactionProtoRevsDir(), txnID + ".rev-lock");
         }
+        return new File(getTransactionDir(txnID), "rev-lock");
     }
 
-    public File getTransactionMergeInfoFile(String txnID) {
-        return new File(getTransactionDir(txnID), TXN_MERGEINFO_PATH);
+    public void purgeTxn(String txnID) throws SVNException {
+        SVNFileUtil.deleteAll(getTransactionDir(txnID), true);
+        if (getDBFormat() >= FSFS.MIN_PROTOREVS_DIR_FORMAT) {
+            SVNFileUtil.deleteFile(getTransactionProtoRevFile(txnID));
+            SVNFileUtil.deleteFile(getTransactionProtoRevLockFile(txnID));
+        }
     }
 
     public void createNewTxnNodeRevisionFromRevision(String txnID, FSRevisionNode sourceNode) throws SVNException {
@@ -749,7 +762,8 @@ public class FSFS {
         }
         
         if (revNode.getPropsRepresentation() != null) {
-            String propsRepresentation = FSRevisionNode.HEADER_PROPS + ": " + (revNode.getPropsRepresentation().getTxnId() != null ? "-1" : revNode.getPropsRepresentation().toString()) + "\n";
+            String propsRepresentation = FSRevisionNode.HEADER_PROPS + ": " + 
+            (revNode.getPropsRepresentation().getTxnId() != null ? "-1" : revNode.getPropsRepresentation().toString()) + "\n";
             revNodeFile.write(propsRepresentation.getBytes("UTF-8"));
         }
         
@@ -772,6 +786,15 @@ public class FSFS {
             revNodeFile.write(isFreshRootStr.getBytes("UTF-8"));
         }
         
+        if (revNode.getMergeInfoCount() > 0) {
+            String mergeInfoCntStr = FSRevisionNode.HEADER_MERGE_INFO_COUNT + ": " + revNode.getMergeInfoCount() + "\n";
+            revNodeFile.write(mergeInfoCntStr.getBytes("UTF-8"));
+        }
+        
+        if (revNode.hasMergeInfo()) {
+            String hasMergeInfoStr = FSRevisionNode.HEADER_MERGE_INFO_HERE + ": y\n";
+            revNodeFile.write(hasMergeInfoStr.getBytes("UTF-8"));
+        }
         revNodeFile.write("\n".getBytes("UTF-8"));
     }
     
@@ -954,7 +977,7 @@ public class FSFS {
             FSHooks.runPreUnlockHook(myRepositoryRoot, path, username);
         }
 
-        FSWriteLock writeLock = FSWriteLock.getWriteLock(this);
+        FSWriteLock writeLock = FSWriteLock.getWriteLockForDB(this);
         synchronized (writeLock) {
             try {
                 writeLock.lock();
@@ -987,7 +1010,7 @@ public class FSFS {
         FSHooks.runPreLockHook(myRepositoryRoot, path, username);
         SVNLock lock = null;
         
-        FSWriteLock writeLock = FSWriteLock.getWriteLock(this);
+        FSWriteLock writeLock = FSWriteLock.getWriteLockForDB(this);
 
         synchronized (writeLock) {
             try {
@@ -1139,29 +1162,31 @@ public class FSFS {
     }
 
     public String getNodeOrigin(String nodeID) throws SVNException {
-        String originID = null;
-        ISVNDBProcessor dbProcessor = getDBProcessor();
-        try {
-            dbProcessor.openDB(myDBRoot);
-            originID = dbProcessor.getNodeOrigin(nodeID);
-        } finally {
-            dbProcessor.closeDB();
+        File nodeOriginFile = new File(getNodeOriginsDir(), nodeID);
+        if (!nodeOriginFile.exists()) {
+            return null;
         }
-        return originID;
+        return SVNFileUtil.readFile(nodeOriginFile);
     }
-    
+
     public void setNodeOrigin(String nodeID, FSID nodeRevisionID) throws SVNException {
-        ISVNDBProcessor dbProcessor = getDBProcessor();
+        File nodeOriginsDir = getNodeOriginsDir();
+        if (!nodeOriginsDir.exists()) {
+            nodeOriginsDir.mkdirs();
+        }
+        File nodeOriginFile = new File(nodeOriginsDir, nodeID);
+        OutputStream os = SVNFileUtil.openFileForWriting(nodeOriginFile);
         try {
-            Map origins = new HashMap();
-            origins.put(nodeID, nodeRevisionID);
-            dbProcessor.openDB(myDBRoot);
-            dbProcessor.setNodeOrigins(origins);
+            os.write(nodeRevisionID.toString().getBytes("UTF-8"));
+        } catch (IOException ioe) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
+                    "Failed to write a node origin file: {0}", ioe.getLocalizedMessage());
+            SVNErrorManager.error(err, ioe);
         } finally {
-            dbProcessor.closeDB();
+            SVNFileUtil.closeFile(os);
         }
     }
-    
+
     public static File findRepositoryRoot(File path) {
         if (path == null) {
             path = new File("");
@@ -1207,7 +1232,7 @@ public class FSFS {
     }
 
     protected FSFile getTransactionRevisionPrototypeFile(String txnID) {
-        File revFile = new File(getTransactionDir(txnID), TXN_PATH_REV);
+        File revFile = getTransactionProtoRevFile(txnID);
         return new FSFile(revFile);
     }
 
@@ -1217,7 +1242,8 @@ public class FSFS {
     }
 
     protected FSFile getTransactionRevisionNodeChildrenFile(FSID txnID) {
-        File childrenFile = new File(getTransactionDir(txnID.getTxnID()), PATH_PREFIX_NODE + txnID.getNodeID() + "." + txnID.getCopyID() + TXN_PATH_EXT_CHILDREN);
+        File childrenFile = new File(getTransactionDir(txnID.getTxnID()), PATH_PREFIX_NODE + txnID.getNodeID() + 
+                "." + txnID.getCopyID() + TXN_PATH_EXT_CHILDREN);
         return new FSFile(childrenFile);
     }
     
@@ -1254,6 +1280,13 @@ public class FSFS {
             myTransactionCurrentFile = new File(myDBRoot, TXN_CURRENT_FILE); 
         }
         return myTransactionCurrentFile;
+    }
+
+    protected File getTransactionCurrentLockFile(){
+        if(myTransactionCurrentLockFile == null){
+            myTransactionCurrentLockFile = new File(myDBRoot, TXN_CURRENT_LOCK_FILE); 
+        }
+        return myTransactionCurrentLockFile;
     }
 
     public void readOptions(FSFile formatFile, int formatNumber) throws SVNException {
@@ -1518,13 +1551,6 @@ public class FSFS {
         return SVNDate.parseDateString(timeString);
     }
 
-    private ISVNDBProcessor getDBProcessor() {
-        if (myDBProcessor == null) {
-            myDBProcessor = new SVNSQLiteDBProcessor();
-        }
-        return myDBProcessor;
-    }
-    
     private static boolean isRepositoryRoot(File candidatePath) {
         File formatFile = new File(candidatePath, "format");
         SVNFileType fileType = SVNFileType.getType(formatFile);

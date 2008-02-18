@@ -73,7 +73,9 @@ public class DAVMergeInfoHandler extends DAVReportHandler {
             getMergeInfoRequest().getTargetPaths()[i] = SVNPathUtil.append(getDAVResource().getResourceURI().getPath(), currentPath);
         }
 
-        Map mergeInfoMap = getDAVResource().getRepository().getMergeInfo(getMergeInfoRequest().getTargetPaths(), getMergeInfoRequest().getRevision(), getMergeInfoRequest().getInherit());
+        //TODO: fixme - add includeDescendants parameter
+        Map mergeInfoMap = getDAVResource().getRepository().getMergeInfo(getMergeInfoRequest().getTargetPaths(), 
+                getMergeInfoRequest().getRevision(), getMergeInfoRequest().getInherit(), false);
         if (mergeInfoMap != null && !mergeInfoMap.isEmpty()) {
             for (Iterator iterator = mergeInfoMap.entrySet().iterator(); iterator.hasNext();) {
                 Map.Entry entry = (Map.Entry) iterator.next();

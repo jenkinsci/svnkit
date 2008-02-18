@@ -31,9 +31,9 @@ import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNMergeInfoManager;
 
 import de.regnis.q.sequence.line.diff.QDiffGenerator;
 import de.regnis.q.sequence.line.diff.QDiffGeneratorFactory;
@@ -247,9 +247,8 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             } catch (UnsupportedEncodingException e) {
                 return value.getString().getBytes();
             }
-        } else {
-            return value.getBytes();
-        }
+        } 
+        return value.getBytes();
     }
 
     protected File getBasePath() {
@@ -544,17 +543,15 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         Map oldMergeInfo = null;
         Map newMergeInfo = null;
         if (oldValue != null) {
-            oldMergeInfo = SVNMergeInfoManager.parseMergeInfo(new StringBuffer(oldValue), 
-                                                              null);
+            oldMergeInfo = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(oldValue), null);
         }
         if (newValue != null) {
-            newMergeInfo = SVNMergeInfoManager.parseMergeInfo(new StringBuffer(newValue), 
-                                                              null);
+            newMergeInfo = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(newValue), null);
         }
         
         Map deleted = new TreeMap();
         Map added = new TreeMap();
-        SVNMergeInfoManager.diffMergeInfo(deleted, added, oldMergeInfo, newMergeInfo, true);
+        SVNMergeInfoUtil.diffMergeInfo(deleted, added, oldMergeInfo, newMergeInfo, true);
 
         for (Iterator paths = deleted.keySet().iterator(); paths.hasNext();) {
             String path = (String) paths.next();

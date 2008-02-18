@@ -33,23 +33,44 @@ public class FSWriteLock {
 
     private static final Map ourThreadLocksCache = new HashMap();
 
-    private RandomAccessFile myLockFile;
+    private RandomAccessFile myLockRAFile;
     private FileLock myLock;
     private int myReferencesCount = 0;
-    private FSFS myFSFS;
-    private String myUUID;
+    private File myLockFile;
+    private String myToken;
 
-    private FSWriteLock(String uuid, FSFS owner) {
-        myUUID = uuid;
-        myFSFS = owner;
+    private FSWriteLock(String token, File lockFile) {
+        myToken = token;
+        myLockFile = lockFile;
     }
 
-    public static synchronized FSWriteLock getWriteLock(FSFS owner) throws SVNException {
+    public static synchronized FSWriteLock getWriteLockForDB(FSFS owner) throws SVNException {
         String uuid = owner.getUUID();
         FSWriteLock lock = (FSWriteLock) ourThreadLocksCache.get(uuid);
-
         if (lock == null) {
-            lock = new FSWriteLock(uuid, owner);
+            lock = new FSWriteLock(uuid, owner.getWriteLockFile());
+            ourThreadLocksCache.put(uuid, lock);
+        }
+        lock.myReferencesCount++;
+        return lock;
+    }
+
+    public static synchronized FSWriteLock getWriteLockForCurrentTxn(String token, FSFS owner) throws SVNException {
+        String uuid = owner.getUUID() + (token != null ? token : "");
+        FSWriteLock lock = (FSWriteLock) ourThreadLocksCache.get(uuid);
+        if (lock == null) {
+            lock = new FSWriteLock(uuid, owner.getTransactionCurrentLockFile());
+            ourThreadLocksCache.put(uuid, lock);
+        }
+        lock.myReferencesCount++;
+        return lock;
+    }
+
+    public static synchronized FSWriteLock getWriteLockForTxn(String txnID, FSFS owner) throws SVNException {
+        String uuid = owner.getUUID() + (txnID != null ? txnID : "");
+        FSWriteLock lock = (FSWriteLock) ourThreadLocksCache.get(uuid);
+        if (lock == null) {
+            lock = new FSWriteLock(uuid, owner.getTransactionProtoRevLockFile(txnID));
             ourThreadLocksCache.put(uuid, lock);
         }
         lock.myReferencesCount++;
@@ -57,21 +78,18 @@ public class FSWriteLock {
     }
 
     public synchronized void lock() throws SVNException {
-        File writeLockFile = myFSFS.getWriteLockFile();
-
         try {
-            SVNFileType type = SVNFileType.getType(writeLockFile);
+            SVNFileType type = SVNFileType.getType(myLockFile);
             if (type == SVNFileType.UNKNOWN || type == SVNFileType.NONE) {
-                SVNFileUtil.createEmptyFile(writeLockFile);
+                SVNFileUtil.createEmptyFile(myLockFile);
             }
-
-            myLockFile = new RandomAccessFile(writeLockFile, "rw");
-            myLock = myLockFile.getChannel().lock();
+            myLockRAFile = new RandomAccessFile(myLockFile, "rw");
+            myLock = myLockRAFile.getChannel().lock();
         } catch (IOException ioe) {
             unlock();
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can't get exclusive lock on file ''{0}'': {1}", new Object[] {
-                    writeLockFile, ioe.getLocalizedMessage()
-            });
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
+                    "Can''t get exclusive lock on file ''{0}'': {1}", new Object[] {
+                    myLockFile, ioe.getLocalizedMessage() });
             SVNErrorManager.error(err, ioe);
         }
     }
@@ -81,7 +99,7 @@ public class FSWriteLock {
             return;
         }
         if ((--lock.myReferencesCount) == 0) {
-            ourThreadLocksCache.remove(lock.myUUID);
+            ourThreadLocksCache.remove(lock.myToken);
         }
     }
 
@@ -94,7 +112,8 @@ public class FSWriteLock {
             }
             myLock = null;
         }
-        SVNFileUtil.closeFile(myLockFile);
+        SVNFileUtil.closeFile(myLockRAFile);
         myLockFile = null;
     }
+
 }
