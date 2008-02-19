@@ -529,7 +529,7 @@ public class SVNTranslator {
         }
         boolean isSupported = true;
         try {
-            isSupported = charset != null && Charset.isSupported(charset);
+            isSupported = charset == null || Charset.isSupported(charset);
         } catch (IllegalCharsetNameException e) {
             isSupported = false;
         }
