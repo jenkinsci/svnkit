@@ -54,7 +54,7 @@ public class FSFileRevisionsFinder {
     public int getFileRevisions(String path, long startRevision, long endRevision, 
             boolean includeMergedRevisions, ISVNFileRevisionHandler handler) throws SVNException {
         Map duplicatePathRevs = new HashMap();
-        LinkedList mainLinePathRevisions = findInterestingRevisions2(null, path, startRevision, endRevision, 
+        LinkedList mainLinePathRevisions = findInterestingRevisions(null, path, startRevision, endRevision, 
                 includeMergedRevisions, false, duplicatePathRevs);
         
         LinkedList mergedPathRevisions = null;
@@ -80,15 +80,15 @@ public class FSFileRevisionsFinder {
             SVNLocationEntry mergedPathRev = (SVNLocationEntry) mergedPathRevisions.get(mergedPos);
             if (mainPathRev.getRevision() <= mergedPathRev.getRevision()) {
                 sendPathRevision(mainPathRev, sb, handler);
-                mainLinePos = -1;
+                mainLinePos--;
             } else {
                 sendPathRevision(mergedPathRev, sb, handler);
-                mergedPos = -1;
+                mergedPos--;
             }
             i++;
         }
         
-        for (; mainLinePos >= 0; mainLinePos -= 1) {
+        for (; mainLinePos >= 0; mainLinePos--) {
             SVNLocationEntry mainPathRev = (SVNLocationEntry) mainLinePathRevisions.get(mainLinePos);
             sendPathRevision(mainPathRev, sb, handler);
             i++;
@@ -171,7 +171,7 @@ public class FSFileRevisionsFinder {
                             continue;
                         }
                         
-                        newPathRevisions = findInterestingRevisions2(newPathRevisions, path, 
+                        newPathRevisions = findInterestingRevisions(newPathRevisions, path, 
                                 range.getStartRevision(), range.getEndRevision(), true, true, duplicatePathRevs);
                     }
                 }
@@ -193,7 +193,7 @@ public class FSFileRevisionsFinder {
         return mergedPathRevisions;
     }
     
-    private LinkedList findInterestingRevisions2(LinkedList pathRevisions, String path, 
+    private LinkedList findInterestingRevisions(LinkedList pathRevisions, String path, 
             long startRevision, long endRevision, boolean includeMergedRevisions, 
             boolean markAsMerged, Map duplicatePathRevs) throws SVNException {
         FSRevisionRoot root = myFSFS.createRevisionRoot(endRevision);
@@ -229,7 +229,7 @@ public class FSFileRevisionsFinder {
                 pathRev = new SVNLocationEntry(histRev, histPath, markAsMerged, null);
             }
               
-            pathRevisions.addFirst(pathRev);
+            pathRevisions.addLast(pathRev);
 
             if (histRev <= startRevision) {
                 break;
