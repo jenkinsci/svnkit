@@ -88,15 +88,15 @@ public class SVNCharsetOutputStream extends FilterOutputStream {
 
     private static ByteBuffer copy(byte[] src, int offset, int length, ByteBuffer dst) {
         if (dst == null) {
-            length = Math.max(length * 3 / 2, DEFAULT_BUFFER_CAPACITY);
-            dst = ByteBuffer.allocate(length);
+            dst = ByteBuffer.allocate(Math.max(length * 3 / 2, DEFAULT_BUFFER_CAPACITY));
         } else if (dst.remaining() < length) {
             ByteBuffer expandedBuffer = ByteBuffer.allocate((dst.position() + length) * 3 / 2);
             dst.flip();
             expandedBuffer.put(dst);
             dst = expandedBuffer;
         }
-        dst.put(src, offset, length).flip();
+        dst.put(src, offset, length);
+        dst.flip();
         return dst;
     }
 }
