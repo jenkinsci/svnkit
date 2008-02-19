@@ -1161,7 +1161,7 @@ public class SVNCommitClient extends SVNBasicClient {
         }
         for (Iterator names = autoProperties.keySet().iterator(); names.hasNext();) {
             String name = (String) names.next();
-            SVNPropertyValue value = SVNPropertyValue.create((String) autoProperties.get(name));
+            String value = (String) autoProperties.get(name);
             if (SVNProperty.EOL_STYLE.equals(name) && value != null) {
                 if (SVNProperty.isBinaryMimeType((String) autoProperties.get(SVNProperty.MIME_TYPE))) {
                     continue;
@@ -1169,7 +1169,17 @@ public class SVNCommitClient extends SVNBasicClient {
                     continue;
                 } 
             }
-            editor.changeFileProperty(filePath, name, value);
+            if (SVNProperty.CHARSET.equals(name) && value != null) {
+                if (SVNProperty.isBinaryMimeType((String) autoProperties.get(SVNProperty.MIME_TYPE))) {
+                    continue;
+                }
+                try {
+                    SVNTranslator.getCharset(value, filePath, getOptions());
+                } catch (SVNException e) {
+                    continue;
+                }
+            }
+            editor.changeFileProperty(filePath, name, SVNPropertyValue.create(value));
         }
         // send "adding"
         SVNEvent addedEvent = SVNEventFactory.createSVNEvent(file, SVNNodeKind.FILE, mimeType, SVNRepository.INVALID_REVISION, SVNEventAction.COMMIT_ADDED, null, null, null);

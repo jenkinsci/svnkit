@@ -60,6 +60,7 @@ public class SVNPropertiesManager {
         NOT_ALLOWED_FOR_DIR.add(SVNProperty.EXECUTABLE);
         NOT_ALLOWED_FOR_DIR.add(SVNProperty.KEYWORDS);
         NOT_ALLOWED_FOR_DIR.add(SVNProperty.EOL_STYLE);
+        NOT_ALLOWED_FOR_DIR.add(SVNProperty.CHARSET);
         NOT_ALLOWED_FOR_DIR.add(SVNProperty.NEEDS_LOCK);
         NOT_ALLOWED_FOR_DIR.add(SVNProperty.MIME_TYPE);
     }
@@ -147,7 +148,7 @@ public class SVNPropertiesManager {
         }
         SVNEntry entry = access.getVersionedEntry(path, false);
         SVNAdminArea dir = entry.getAdminArea();
-        boolean updateTimeStamp = SVNProperty.EOL_STYLE.equals(propName);
+        boolean updateTimeStamp = SVNProperty.EOL_STYLE.equals(propName) || SVNProperty.CHARSET.equals(propName);
 
 
         if (propValue != null && SVNProperty.isSVNProperty(propName)) {
@@ -242,6 +243,7 @@ public class SVNPropertiesManager {
         }
         if (SVNProperty.isBinaryMimeType((String) properties.get(SVNProperty.MIME_TYPE))) {
             properties.remove(SVNProperty.EOL_STYLE);
+            properties.remove(SVNProperty.CHARSET);
         }
         if (!properties.containsKey(SVNProperty.EXECUTABLE)) {
             if (SVNFileUtil.isExecutable(file)) {

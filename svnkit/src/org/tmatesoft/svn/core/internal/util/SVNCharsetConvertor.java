@@ -37,8 +37,6 @@ public class SVNCharsetConvertor {
     private CharBuffer myCharBuffer;
     private ByteBuffer myInputByteBuffer;
 
-    private boolean myComplete;
-
     public SVNCharsetConvertor(CharsetDecoder decoder, CharsetEncoder encoder) {
         myDecoder = decoder;
         myEncoder = encoder;
@@ -46,7 +44,6 @@ public class SVNCharsetConvertor {
     }
 
     public SVNCharsetConvertor reset() {
-        myComplete = false;
         myEncoder = myEncoder.reset();
         myDecoder = myDecoder.reset();
         myCharBuffer = null;
@@ -55,6 +52,9 @@ public class SVNCharsetConvertor {
     }
 
     public ByteBuffer convertChunk(byte[] b, int offset, int length, ByteBuffer dst, boolean endOfInput) throws SVNException {
+        if (length == 0){
+            return dst;           
+        }
         myInputByteBuffer = allocate(myInputByteBuffer, length);
         myInputByteBuffer.put(b, offset, length);
         myInputByteBuffer.flip();
@@ -84,8 +84,37 @@ public class SVNCharsetConvertor {
         return dst;
     }
 
+
+
+    public ByteBuffer convertChunk(ByteBuffer src, ByteBuffer dst, boolean endOfInput) throws SVNException {
+        myCharBuffer = allocate(myCharBuffer, (int) (myDecoder.maxCharsPerByte() * src.remaining()));
+
+        CoderResult result = myDecoder.decode(myInputByteBuffer, myCharBuffer, endOfInput);
+        if (result.isError()) {
+            throwException(result);
+        } else if (result.isUnderflow()) {
+            myInputByteBuffer.compact();
+        } else {
+            myInputByteBuffer.clear();
+        }
+
+        myCharBuffer.flip();
+        dst = allocate(dst, (int) (myEncoder.maxBytesPerChar() * myCharBuffer.remaining()));
+
+        result = myEncoder.encode(myCharBuffer, dst, endOfInput);
+        if (result.isError()) {
+            throwException(result);
+        } else if (result.isUnderflow()) {
+            myCharBuffer.compact();
+        } else {
+            myCharBuffer.clear();
+        }
+
+        return dst;
+    }
+
     public ByteBuffer flush(ByteBuffer dst) throws SVNException {
-        if (!myComplete) {
+        if (myCharBuffer != null) {
             CoderResult result;
             while (true) {
                 result = myDecoder.flush(myCharBuffer);
@@ -116,7 +145,7 @@ public class SVNCharsetConvertor {
                 }
             }
         }
-        myComplete = true;
+        reset();
         return dst;
     }
 

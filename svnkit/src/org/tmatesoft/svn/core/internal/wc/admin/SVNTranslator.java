@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.IllegalCharsetNameException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -259,15 +260,20 @@ public class SVNTranslator {
         } else if (!isLocalBinary || isRemoteBinaryRemoved) {
             isSpecial = props.getPropertyValue(SVNProperty.SPECIAL) != null;
             if (!isSpecial) {
-                if (propDiff != null && propDiff.containsName(SVNProperty.EOL_STYLE) && propDiff.getStringValue(SVNProperty.EOL_STYLE) != null) {
+                if (propDiff != null && propDiff.getStringValue(SVNProperty.EOL_STYLE) != null) {
                     eolStyle = propDiff.getStringValue(SVNProperty.EOL_STYLE);
                 } else if (!isLocalBinary) {
                     eolStyle = props.getStringPropertyValue(SVNProperty.EOL_STYLE);
                 }
 
+                if (propDiff != null && propDiff.getStringValue(SVNProperty.CHARSET) != null) {
+                    charsetProp = propDiff.getStringValue(SVNProperty.CHARSET);
+                } else if (!isLocalBinary) {
+                    charsetProp = props.getStringPropertyValue(SVNProperty.CHARSET);
+                }
+
                 if (!isLocalBinary) {
                     keywords = props.getStringPropertyValue(SVNProperty.KEYWORDS);
-                    charsetProp = props.getStringPropertyValue(SVNProperty.CHARSET);
                 }
             }
         }
@@ -422,9 +428,9 @@ public class SVNTranslator {
         }
         if (expand) {
             in = new SVNTranslatorInputStream(in, eol, repair, keywords, expand);
-            return new SVNCharsetInputStream(in, Charset.forName(charset), UTF8_CHARSET);
+            return new SVNCharsetInputStream(in, UTF8_CHARSET, Charset.forName(charset));
         }
-        in = new SVNCharsetInputStream(in, UTF8_CHARSET, Charset.forName(charset));
+        in = new SVNCharsetInputStream(in, Charset.forName(charset), UTF8_CHARSET);
         return new SVNTranslatorInputStream(in, eol, repair, keywords, expand);
     }
 
@@ -521,7 +527,13 @@ public class SVNTranslator {
         if (SVNProperty.NATIVE.equals(charset)) {
             charset = options.getNativeCharset();
         }
-        if (charset != null && !Charset.isSupported(charset)) {
+        boolean isSupported = true;
+        try {
+            isSupported = charset != null && Charset.isSupported(charset);
+        } catch (IllegalCharsetNameException e) {
+            isSupported = false;
+        }
+        if (!isSupported) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR,
                     "Charset ''{0}'' is not supported on this computer; change svn:charset property value or remove that property for file ''{1}''",
                     new Object[]{charset, path}));

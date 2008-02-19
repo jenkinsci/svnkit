@@ -71,6 +71,7 @@ public class SVNTranslatorOutputStream extends OutputStream {
             myDst.write(myDstBuffer.array(), myDstBuffer.arrayOffset() + myDstBuffer.position(), myDstBuffer.remaining());
         }
         myDstBuffer.clear();
+        myDst.close();
     }
 
     public void write(byte[] b) throws IOException {

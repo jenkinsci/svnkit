@@ -59,18 +59,15 @@ public class SVNCharsetInputStream extends FilterInputStream {
         }
         int available = myConvertedBuffer.position();
         while (available < len) {
-            int read = super.read(mySourceBuffer, 0, mySourceBuffer.length);
-            if (read < 0) {
-                try {
-                    myConvertedBuffer = myCharsetConvertor.flush(myConvertedBuffer);
-                } catch (SVNException e) {
-                    throw new IOExceptionWrapper(e);
-                }
-                break;
-            }
+            int read = in.read(mySourceBuffer);
+            read = read < 0 ? 0 : read;
             boolean endOfInput = read < mySourceBuffer.length;
             try {
                 myConvertedBuffer = myCharsetConvertor.convertChunk(mySourceBuffer, 0, read, myConvertedBuffer, endOfInput);
+                if (endOfInput) {
+                    myConvertedBuffer = myCharsetConvertor.flush(myConvertedBuffer);
+                    break;
+                }
             } catch (SVNException e) {
                 throw new IOExceptionWrapper(e);
             }
@@ -80,6 +77,6 @@ public class SVNCharsetInputStream extends FilterInputStream {
         len = Math.min(myConvertedBuffer.remaining(), len);
         myConvertedBuffer.get(b, off, len);
         myConvertedBuffer.compact();
-        return len;
+        return len == 0 ? -1 : len;
     }
 }

@@ -686,9 +686,11 @@ public class SVNCommitUtil {
                 propDiff = baseProps.compareTo(props).asMap();
             }
             boolean eolChanged = textModified = propDiff != null && propDiff.containsName(SVNProperty.EOL_STYLE);
+            boolean charsetChanged = propDiff != null && propDiff.containsName(SVNProperty.CHARSET);
+            textModified = eolChanged || charsetChanged;
             if (entry.getKind() == SVNNodeKind.FILE) {
                 if (commitCopy) {
-                    textModified = propDiff != null && propDiff.containsName(SVNProperty.EOL_STYLE);
+                    textModified = propDiff != null && (propDiff.containsName(SVNProperty.EOL_STYLE) || propDiff.containsName(SVNProperty.CHARSET));
                     if (!textModified) {
                         textModified = dir.hasTextModifications(entry.getName(), eolChanged);
                     }
@@ -701,10 +703,10 @@ public class SVNCommitUtil {
             SVNVersionedProperties props = dir.getProperties(entry.getName());
             SVNVersionedProperties baseProps = dir.getBaseProperties(entry.getName());
             SVNProperties propDiff = baseProps.compareTo(props).asMap();
-            boolean eolChanged = textModified = propDiff != null && propDiff.containsName(SVNProperty.EOL_STYLE);
+            boolean forceComparison = textModified = propDiff != null && (propDiff.containsName(SVNProperty.EOL_STYLE) || propDiff.containsName(SVNProperty.CHARSET));
             propsModified = propDiff != null && !propDiff.isEmpty();
             if (entry.getKind() == SVNNodeKind.FILE) {
-                textModified = dir.hasTextModifications(entry.getName(),  eolChanged);
+                textModified = dir.hasTextModifications(entry.getName(),  forceComparison);
             }
         }
 

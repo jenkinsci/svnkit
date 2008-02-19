@@ -570,7 +570,7 @@ public class SVNWCClient extends SVNBasicClient {
             SVNErrorManager.error(err);
         }
 
-        if (SVNProperty.EOL_STYLE.equals(propName) || SVNProperty.KEYWORDS.equals(propName)) {
+        if (SVNProperty.EOL_STYLE.equals(propName) || SVNProperty.KEYWORDS.equals(propName) || SVNProperty.CHARSET.equals(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
                     "Setting property ''{0}'' on non-local target ''{1}'' is not supported",
                     new Object[]{propName, url});
@@ -1613,6 +1613,7 @@ public class SVNWCClient extends SVNBasicClient {
                 reinstallWorkingFile = propNames.contains(SVNProperty.EXECUTABLE) ||
                         propNames.contains(SVNProperty.KEYWORDS) ||
                         propNames.contains(SVNProperty.EOL_STYLE) ||
+                        propNames.contains(SVNProperty.CHARSET) ||
                         propNames.contains(SVNProperty.SPECIAL) ||
                         propNames.contains(SVNProperty.NEEDS_LOCK);
             }

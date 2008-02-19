@@ -835,6 +835,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             modifiedProps.containsName(SVNProperty.NEEDS_LOCK) ||
             modifiedProps.containsName(SVNProperty.KEYWORDS) ||
             modifiedProps.containsName(SVNProperty.EOL_STYLE) ||
+            modifiedProps.containsName(SVNProperty.CHARSET) ||
             modifiedProps.containsName(SVNProperty.SPECIAL);
         }
         
