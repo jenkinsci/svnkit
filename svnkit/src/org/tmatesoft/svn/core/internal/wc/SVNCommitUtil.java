@@ -612,7 +612,11 @@ public class SVNCommitUtil {
         }
         if ((entry.isCopied() || copyMode) && !entry.isDeleted() && entry.getSchedule() == null) {
             long parentRevision = entry.getRevision() - 1;
-            if (!dir.getWCAccess().isWCRoot(path)) {
+            boolean switched = false;
+            if (entry != null && parentEntry != null) {
+                switched = !entry.getURL().equals(SVNPathUtil.append(parentEntry.getURL(), SVNEncodingUtil.uriEncode(path.getName())));
+            }
+            if (!switched && !dir.getWCAccess().isWCRoot(path)) {
                 if (parentEntry != null) {
                     parentRevision = parentEntry.getRevision();
                 }
