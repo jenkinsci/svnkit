@@ -734,8 +734,10 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         if (mySwitchURL == null) {
             SVNAdminArea area = null;
             SVNEntry dirEntry = null;
+            
+            File areaPath = new File(myAdminInfo.getAnchor().getRoot(), info.getPath());            
             try {
-                area = info.getAdminArea();
+                area = myWCAccess.getAdminArea(areaPath);
                 if (area != null) {
                     // could be missing.
                     dirEntry = area.getEntry(area.getThisDirName(), false);
