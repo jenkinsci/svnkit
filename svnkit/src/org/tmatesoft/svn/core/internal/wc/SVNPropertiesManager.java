@@ -397,18 +397,18 @@ public class SVNPropertiesManager {
         }
 
         if (!force && SVNProperty.EOL_STYLE.equals(name)) {
-            String eolStyle = value.getString().trim();
-            if (SVNTranslator.getEOL(eolStyle, options) == null) {
+            value = SVNPropertyValue.create(value.getString().trim());
+            if (SVNTranslator.getEOL(value.getString(), options) == null) {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.IO_UNKNOWN_EOL, "Unrecognized line ending style for ''{0}''", path);
                 SVNErrorManager.error(error);
             }
             validateEOLProperty(path, fileContentFetcher);
         } else if (!force && SVNProperty.CHARSET.equals(name)) {
-            String charsetProp = value.getString().trim();
+            value = SVNPropertyValue.create(value.getString().trim());
             try {
-                SVNTranslator.getCharset(charsetProp, path, options);
+                SVNTranslator.getCharset(value.getString(), path, options);
             } catch (SVNException e) {
-                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Charset ''{0}'' is not supported on this computer", charsetProp);
+                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Charset ''{0}'' is not supported on this computer", value.getString());
                 SVNErrorManager.error(error, e);
             }
             if (fileContentFetcher.fileIsBinary()) {
@@ -419,16 +419,14 @@ public class SVNPropertiesManager {
             value = SVNPropertyValue.create(value.getString().trim());
             validateMimeType(value.getString());
         } else if (SVNProperty.IGNORE.equals(name) || SVNProperty.EXTERNALS.equals(name)) {
-            if (value.isString() && !value.getString().endsWith("\n")) {
+            if (!value.getString().endsWith("\n")) {
                 value = SVNPropertyValue.create(value.getString().concat("\n"));
             }
             if (SVNProperty.EXTERNALS.equals(name)) {
                 SVNExternal.parseExternals(path, value.getString());
             }
         } else if (SVNProperty.KEYWORDS.equals(name)) {
-            if (value.isString()) {
-                value = SVNPropertyValue.create(value.getString().trim());
-            }
+            value = SVNPropertyValue.create(value.getString().trim());
         } else
         if (SVNProperty.EXECUTABLE.equals(name) || SVNProperty.SPECIAL.equals(name) || SVNProperty.NEEDS_LOCK.equals(name)) {
             value = SVNPropertyValue.create("*");
