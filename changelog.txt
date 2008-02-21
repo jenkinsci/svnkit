@@ -1,3 +1,10 @@
+== version 1.1.6
+
++ Bugfixes:
++  Copy WC to URL sometimes didn't work properly with switched directories.
++  Several NPEs in HTTP connection code fixed.
++  Authentication cancellation didn't work with SSH connection in some cases.
+
 == version 1.1.5
 
 + Connections pool has been improved.
