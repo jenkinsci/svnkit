@@ -877,9 +877,6 @@ public class SVNWCClient extends SVNBasicClient {
             depth = SVNDepth.EMPTY;
         }
 
-        if (revision == null || !revision.isValid()) {
-            revision = SVNRevision.WORKING;
-        }
         SVNWCAccess wcAccess = createWCAccess();
 
         try {
@@ -891,7 +888,8 @@ public class SVNWCClient extends SVNBasicClient {
             }
             SVNAdminArea area = wcAccess.probeOpen(path, false, admDepth);
             SVNEntry entry = wcAccess.getVersionedEntry(path, false);
-            if (revision != SVNRevision.WORKING && revision != SVNRevision.BASE && revision != SVNRevision.COMMITTED) {
+            if ((revision != SVNRevision.WORKING && revision != SVNRevision.BASE && revision != SVNRevision.COMMITTED && revision != SVNRevision.UNDEFINED) ||
+                    (pegRevision != SVNRevision.WORKING && pegRevision != SVNRevision.BASE && pegRevision != SVNRevision.COMMITTED && pegRevision != SVNRevision.UNDEFINED)) {
                 SVNURL url = entry.getSVNURL();
                 SVNRepository repository = createRepository(null, path, pegRevision, revision);
                 long revisionNumber = getRevisionNumber(revision, repository, path);
@@ -995,10 +993,9 @@ public class SVNWCClient extends SVNBasicClient {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, "''{0}'' is a wcprop , thus not accessible to clients", propName);
             SVNErrorManager.error(err);
         }
-        if (revision == null || !revision.isValid()) {
-            revision = SVNRevision.HEAD;
-        }
-        SVNRepository repos = createRepository(url, null, pegRevision, revision);
+        long[] pegRev = new long[]{-1};
+        SVNRepository repos = createRepository(url, null, pegRevision, revision, pegRev);
+        revision = pegRev[0] < 0 ? revision : SVNRevision.create(pegRev[0]);
         doGetRemoteProperty(url, "", repos, propName, revision, depth, handler);
     }
 
