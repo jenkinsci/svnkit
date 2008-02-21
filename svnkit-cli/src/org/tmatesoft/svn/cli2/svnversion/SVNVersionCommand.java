@@ -49,7 +49,7 @@ public class SVNVersionCommand extends AbstractSVNCommand {
     }
 
     public void run() throws SVNException {
-        List targets = getEnvironment().combineTargets(null);
+        List targets = getEnvironment().combineTargets(null, false);
         if (targets.isEmpty()) {
             targets.add("");
         }

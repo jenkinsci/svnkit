@@ -43,7 +43,7 @@ public class SVNAdminRemoveTransactionsCommand extends SVNAdminCommand implement
     public void run() throws SVNException {
         SVNAdminClient client = getEnvironment().getClientManager().getAdminClient();
         
-        List targets = getEnvironment().combineTargets(null);
+        List targets = getEnvironment().combineTargets(null, false);
         if (!targets.isEmpty()) {
             targets.remove(0);
         }

@@ -42,7 +42,7 @@ public class SVNAdminRemoveLocksCommand extends SVNAdminCommand implements ISVNL
     }
 
     public void run() throws SVNException {
-        List targets = getEnvironment().combineTargets(null);
+        List targets = getEnvironment().combineTargets(null, false);
         if (!targets.isEmpty()) {
             targets.remove(0);
         }

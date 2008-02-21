@@ -55,7 +55,7 @@ public class SVNAdminSetRevPropCommand extends SVNAdminCommand {
                     "Only one revision allowed"));
         }
         File repos = getLocalRepository();
-        List targets = getEnvironment().combineTargets(null);
+        List targets = getEnvironment().combineTargets(null, false);
         if (!targets.isEmpty()) {
             targets.remove(0);
         }
