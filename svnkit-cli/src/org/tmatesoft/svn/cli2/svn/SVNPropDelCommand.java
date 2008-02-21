@@ -77,7 +77,7 @@ public class SVNPropDelCommand extends SVNPropertiesCommand {
         if (getSVNEnvironment().getTargets() != null) {
             targets.addAll(getSVNEnvironment().getTargets());
         }
-        targets = getSVNEnvironment().combineTargets(targets);
+        targets = getSVNEnvironment().combineTargets(targets, true);
         if (targets.isEmpty()) {
             targets.add("");
         }

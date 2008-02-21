@@ -53,7 +53,7 @@ public class SVNMkDirCommand extends SVNCommand {
     }
 
     public void run() throws SVNException {
-        List targets = getSVNEnvironment().combineTargets(getSVNEnvironment().getTargets());
+        List targets = getSVNEnvironment().combineTargets(getSVNEnvironment().getTargets(), true);
         if (targets.isEmpty()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS));
         }

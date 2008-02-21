@@ -70,7 +70,7 @@ public class SVNPropEditCommand extends SVNPropertiesCommand {
         }
 
         Collection targets = new ArrayList();
-        targets = getSVNEnvironment().combineTargets(targets);
+        targets = getSVNEnvironment().combineTargets(targets, true);
 
         if (getSVNEnvironment().isRevprop()) {
             if (targets.isEmpty()) {

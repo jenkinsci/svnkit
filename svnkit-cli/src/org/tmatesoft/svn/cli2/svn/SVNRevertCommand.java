@@ -53,7 +53,7 @@ public class SVNRevertCommand extends SVNCommand {
     }
 
     public void run() throws SVNException {
-        List targets = getSVNEnvironment().combineTargets(getSVNEnvironment().getTargets());
+        List targets = getSVNEnvironment().combineTargets(getSVNEnvironment().getTargets(), true);
         if (getSVNEnvironment().getChangelist() != null) {
             SVNPath target = new SVNPath("");
             SVNChangelistClient changelistClient = getSVNEnvironment().getClientManager().getChangelistClient();

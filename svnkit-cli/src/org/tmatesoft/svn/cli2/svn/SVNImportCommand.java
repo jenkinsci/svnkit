@@ -56,7 +56,7 @@ public class SVNImportCommand extends SVNCommand {
     }
 
     public void run() throws SVNException {
-        List targets = getSVNEnvironment().combineTargets(new ArrayList());
+        List targets = getSVNEnvironment().combineTargets(new ArrayList(), true);
         SVNPath url = null;
         SVNPath src = null;
         if (targets.isEmpty()) {

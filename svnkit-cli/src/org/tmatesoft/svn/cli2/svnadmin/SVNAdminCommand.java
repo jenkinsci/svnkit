@@ -40,7 +40,7 @@ public abstract class SVNAdminCommand extends AbstractSVNCommand {
     }
     
     protected File getLocalRepository() throws SVNException {
-        List targets = getEnvironment().combineTargets(null);
+        List targets = getEnvironment().combineTargets(null, false);
         if (targets.isEmpty()) {
             targets.add("");
         }

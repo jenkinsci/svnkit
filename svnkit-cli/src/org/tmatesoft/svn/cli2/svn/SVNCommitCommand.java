@@ -58,7 +58,7 @@ public class SVNCommitCommand extends SVNCommand {
     }
 
     public void run() throws SVNException {
-        List targets = getSVNEnvironment().combineTargets(getSVNEnvironment().getTargets());
+        List targets = getSVNEnvironment().combineTargets(getSVNEnvironment().getTargets(), true);
         if (targets.isEmpty()) {
             targets.add(".");
         }

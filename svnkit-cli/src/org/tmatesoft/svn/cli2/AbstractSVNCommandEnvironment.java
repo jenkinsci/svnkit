@@ -195,7 +195,7 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
         });
     }
     
-    public List combineTargets(Collection targets) throws SVNException {
+    public List combineTargets(Collection targets, boolean warnReserved) throws SVNException {
         List result = new LinkedList();
         result.addAll(getArguments());
         if (targets != null) {
@@ -221,7 +221,12 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
                 path = path.replace(File.separatorChar, '/');
                 path = SVNPathUtil.canonicalizePath(path);
                 String name = SVNPathUtil.tail(path);
-                if (SVNFileUtil.getAdminDirectoryName().equals(name)) {
+                if (SVNFileUtil.getAdminDirectoryName().equals(name) || ".svn".equals(name) || "_svn".equals(name)) {
+                    if (warnReserved) {
+                        SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.CL_ADM_DIR_RESERVED, "Skipping argument: ''{0}'' ends in a reserved name", path);
+                        error.setType(SVNErrorMessage.TYPE_WARNING);
+                        handleError(error);
+                    }
                     continue;
                 }
             }

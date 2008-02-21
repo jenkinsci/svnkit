@@ -50,7 +50,7 @@ public class SVNCheckoutCommand extends SVNCommand {
     }
 
     public void run() throws SVNException {
-        List targets = getSVNEnvironment().combineTargets(new ArrayList());
+        List targets = getSVNEnvironment().combineTargets(new ArrayList(), true);
         if (targets.isEmpty()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS));
         }

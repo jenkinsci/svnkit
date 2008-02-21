@@ -50,7 +50,7 @@ public class SVNSwitchCommand extends SVNCommand {
     }
 
     public void run() throws SVNException {
-        List targets = getSVNEnvironment().combineTargets(new ArrayList());
+        List targets = getSVNEnvironment().combineTargets(new ArrayList(), true);
         if (getSVNEnvironment().isRelocate()) {
             if (getSVNEnvironment().getDepth() != SVNDepth.UNKNOWN) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_MUTUALLY_EXCLUSIVE_ARGS, 

@@ -82,7 +82,7 @@ public class SVNDiffCommand extends SVNCommand implements ISVNDiffStatusHandler 
         if (getSVNEnvironment().getTargets() != null) {
             targets.addAll(getSVNEnvironment().getTargets());
         }
-        targets = getSVNEnvironment().combineTargets(targets);
+        targets = getSVNEnvironment().combineTargets(targets, true);
         
         SVNPath oldTarget = null;
         SVNPath newTarget = null;
@@ -129,7 +129,7 @@ public class SVNDiffCommand extends SVNCommand implements ISVNDiffStatusHandler 
             if (end == SVNRevision.UNDEFINED) {
                 end = newTarget.isURL() ? SVNRevision.HEAD : SVNRevision.WORKING;
             }
-            targets = getSVNEnvironment().combineTargets(null);
+            targets = getSVNEnvironment().combineTargets(null, true);
         } else if (getSVNEnvironment().getNewTarget() != null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                     "'--new' option only valid with '--old' option");

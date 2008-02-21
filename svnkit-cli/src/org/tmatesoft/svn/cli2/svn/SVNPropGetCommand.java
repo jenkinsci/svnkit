@@ -81,7 +81,7 @@ public class SVNPropGetCommand extends SVNPropertiesCommand {
                 SVNErrorManager.error(err);
             }
         }
-        targets = getSVNEnvironment().combineTargets(targets);
+        targets = getSVNEnvironment().combineTargets(targets, true);
         if (targets.isEmpty()) {
             targets.add("");
         }

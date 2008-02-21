@@ -62,7 +62,7 @@ public class SVNChangeListCommand extends SVNCommand {
         if (getSVNEnvironment().getTargets() != null) {
             targets.addAll(getSVNEnvironment().getTargets());
         }
-        targets = getSVNEnvironment().combineTargets(targets);
+        targets = getSVNEnvironment().combineTargets(targets, true);
         if (getSVNEnvironment().isRemove()) {
             if (targets.size() < 1) { 
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS));

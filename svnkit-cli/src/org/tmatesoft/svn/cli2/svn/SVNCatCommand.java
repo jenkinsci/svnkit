@@ -42,7 +42,7 @@ public class SVNCatCommand extends SVNCommand {
     }
 
     public void run() throws SVNException {
-        List targets = getSVNEnvironment().combineTargets(null);
+        List targets = getSVNEnvironment().combineTargets(null, true);
         if (targets.isEmpty()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS));
         }

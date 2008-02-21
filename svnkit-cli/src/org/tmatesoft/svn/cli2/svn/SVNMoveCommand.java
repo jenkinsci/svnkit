@@ -55,7 +55,7 @@ public class SVNMoveCommand extends SVNCommand {
     }
 
     public void run() throws SVNException {
-        List targets = getSVNEnvironment().combineTargets(null);
+        List targets = getSVNEnvironment().combineTargets(null, true);
         if (targets.size() < 2) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS));
         }

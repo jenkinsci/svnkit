@@ -51,7 +51,7 @@ public class SVNMergeInfoCommand extends SVNCommand {
     }
 
     public void run() throws SVNException {
-        List targets = getSVNEnvironment().combineTargets(null);
+        List targets = getSVNEnvironment().combineTargets(null, true);
         if (targets.isEmpty()) {
             targets.add("");
         }

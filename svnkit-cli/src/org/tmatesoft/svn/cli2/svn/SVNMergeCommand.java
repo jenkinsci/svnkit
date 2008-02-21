@@ -65,7 +65,7 @@ public class SVNMergeCommand extends SVNCommand {
     }
 
     public void run() throws SVNException {
-        List targets = getSVNEnvironment().combineTargets(new ArrayList());
+        List targets = getSVNEnvironment().combineTargets(new ArrayList(), true);
         SVNPath source1 = null;
         SVNPath source2 = null;
         SVNPath target = null;
