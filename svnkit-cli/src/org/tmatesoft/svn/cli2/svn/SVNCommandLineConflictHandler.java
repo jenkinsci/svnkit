@@ -53,6 +53,10 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
             return new SVNConflictResult(SVNConflictChoice.MINE, null);
         } else if (myAccept == SVNConflictAcceptPolicy.THEIRS) {
             return new SVNConflictResult(SVNConflictChoice.THEIRS, null);
+        } else if (myAccept == SVNConflictAcceptPolicy.MINE_FULL) {
+            return new SVNConflictResult(SVNConflictChoice.MINE_FULL, null);
+        } else if (myAccept == SVNConflictAcceptPolicy.THEIRS_FULL) {
+            return new SVNConflictResult(SVNConflictChoice.THEIRS_FULL, null);
         } else if (myAccept == SVNConflictAcceptPolicy.EDIT) {
             if (files.getResultFile() != null) {
                 if (myIsExternalFailed) {
@@ -149,47 +153,67 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
             while (true) {
                 String message = "Select: (p)ostpone";
                 if (diffAllowed) {
-                    message += ", (d)iff, (e)dit"; 
+                    message += ", (D)iff in full, (e)dit"; 
                 } else {
-                    message += ", (m)ine, (t)heirs";
+                    message += ", (M)ine in full, (T)heirs in full";
                 }
                 if (performedEdit) {
                     message += ", (r)esolved";
                 }
-                message += ", (h)elp for more options : ";
+                if (!diffAllowed && performedEdit) {
+                    message += ",\n        ";
+                } else {
+                    message += ", ";
+                }
+                message += "(h)elp for more options : ";
                 String answer = SVNCommandUtil.prompt(message, mySVNEnvironment);
                 char answerChar = '\0';
                 if (answer != null) {
                     if (answer.length() == 1) {
-                        answer = answer.toLowerCase();
                         answerChar = answer.charAt(0);
                     } else {
                         continue;
                     }
                 }
                 if (answerChar == 'h' || answerChar == '?') {
-                    mySVNEnvironment.getErr().println("  (p)ostpone - mark the conflict to be resolved later");
-                    mySVNEnvironment.getErr().println("  (d)iff     - show all changes made to merged file");
-                    mySVNEnvironment.getErr().println("  (e)dit     - change merged file in an editor");
-                    mySVNEnvironment.getErr().println("  (r)esolved - accept merged version of file");
-                    mySVNEnvironment.getErr().println("  (t)heirs   - accept their version of file");
-                    mySVNEnvironment.getErr().println("  (l)aunch   - use third-party tool to resolve conflict");
-                    mySVNEnvironment.getErr().println("  (h)elp     - show this list");
+                    mySVNEnvironment.getErr().println("  (p)ostpone    - mark the conflict to be resolved later");
+                    mySVNEnvironment.getErr().println("  (D)iff-full   - show all changes made to merged file");
+                    mySVNEnvironment.getErr().println("  (e)dit        - change merged file in an editor");
+                    mySVNEnvironment.getErr().println("  (r)esolved    - accept merged version of file");
+                    mySVNEnvironment.getErr().println("  (M)ine-full   - accept my version of entire file (ignore their changes)");
+                    mySVNEnvironment.getErr().println("  (T)heirs-full - accept their version of entire file (lose my changes)");
+                    mySVNEnvironment.getErr().println("  (l)aunch      - use third-party tool to resolve conflict");
+                    mySVNEnvironment.getErr().println("  (h)elp        - show this list");
                     mySVNEnvironment.getErr().println();
-                }
-                if (answerChar == 'p') {
+                } else  if (answerChar == 'p') {
                     choice = SVNConflictChoice.POSTPONE;
                     break;
-                }
-                if (answerChar == 'm') {
-                    choice = SVNConflictChoice.MINE;
+                } else if (answerChar == 'm') {
+                    //choice = SVNConflictChoice.MINE;
+                    //break;
+                    mySVNEnvironment.getErr().println("Sorry, '(m)ine' is not yet implemented; see");
+                    mySVNEnvironment.getErr().println("http://subversion.tigris.org/issues/show_bug.cgi?id=3049");
+                    mySVNEnvironment.getErr().println();
+                    continue;
+                } else if (answerChar == 't') {
+                    //choice = SVNConflictChoice.THEIRS;
+                    //break;
+                    mySVNEnvironment.getErr().println("Sorry, '(t)heirs' is not yet implemented; see");
+                    mySVNEnvironment.getErr().println("http://subversion.tigris.org/issues/show_bug.cgi?id=3049");
+                    mySVNEnvironment.getErr().println();
+                    continue;
+                } else if (answerChar == 'M') {
+                    choice = SVNConflictChoice.MINE_FULL;
                     break;
-                }
-                if (answerChar == 't') {
-                    choice = SVNConflictChoice.THEIRS;
+                } else if (answerChar == 'T') {
+                    choice = SVNConflictChoice.THEIRS_FULL;
                     break;
-                }
-                if (answerChar == 'd') {
+                } else if (answerChar == 'd') {
+                    mySVNEnvironment.getErr().println("Sorry, '(d)iff' is not yet implemented; see");
+                    mySVNEnvironment.getErr().println("http://subversion.tigris.org/issues/show_bug.cgi?id=3048");
+                    mySVNEnvironment.getErr().println();
+                    continue;
+                } else if (answerChar == 'D') {
                     if (!diffAllowed) {
                         mySVNEnvironment.getErr().println("Invalid option; there's no merged version to diff.");
                         mySVNEnvironment.getErr().println();
@@ -210,8 +234,7 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                     diffGenerator.setDiffOptions(new SVNDiffOptions(false, false, true));
                     diffGenerator.displayFileDiff("", path1, path2, null, null, null, null, System.out);
                     performedEdit = true;
-                }
-                if (answerChar == 'e') {
+                } else if (answerChar == 'e') {
                     if (files.getResultFile() != null) {
                         try {
                             SVNCommandUtil.editFileExternally(mySVNEnvironment, mySVNEnvironment.getEditorCommand(), 
@@ -232,8 +255,7 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                         mySVNEnvironment.getErr().println("Invalid option; there's no merged version to edit.");
                         mySVNEnvironment.getErr().println();
                     }
-                }
-                if (answerChar == 'l') {
+                } else if (answerChar == 'l') {
                     if (files.getBaseFile() != null && files.getLocalFile() != null && 
                             files.getRepositoryFile() != null && files.getResultFile() != null) {
                         try {
@@ -257,8 +279,7 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                         mySVNEnvironment.getErr().println("Invalid option.");
                         mySVNEnvironment.getErr().println();
                     }
-                }
-                if (answerChar == 'r') {
+                } else if (answerChar == 'r') {
                     if (performedEdit) {
                         choice = SVNConflictChoice.MERGED;
                         break;
@@ -274,7 +295,7 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
             mySVNEnvironment.getErr().println(message);
             mySVNEnvironment.getErr().println("An object of the same name already exists.");
             
-            String prompt = "Select: (p)ostpone, (m)ine, (t)heirs, (h)elp :";
+            String prompt = "Select: (p)ostpone, (M)ine-full, (T)heirs-full, (h)elp :";
             while (true) {
                 String answer = SVNCommandUtil.prompt(prompt, mySVNEnvironment);
                 char answerChar = '\0';
@@ -288,24 +309,37 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                 }
                  
                 if (answerChar == 'h' || answerChar == '?') {
-                    mySVNEnvironment.getErr().println("  (p)ostpone - resolve the conflict later");
-                    mySVNEnvironment.getErr().println("  (m)ine     - accept pre-existing item");
-                    mySVNEnvironment.getErr().println("  (t)heirs   - accept incoming item");
-                    mySVNEnvironment.getErr().println("  (h)elp     - show this list");
+                    mySVNEnvironment.getErr().println("  (p)ostpone    - resolve the conflict later");
+                    mySVNEnvironment.getErr().println("  (M)ine-full   - accept pre-existing item");
+                    mySVNEnvironment.getErr().println("  (T)heirs-full - accept incoming item");
+                    mySVNEnvironment.getErr().println("  (h)elp        - show this list");
                     mySVNEnvironment.getErr().println();
                 }
                 if (answerChar == 'p') {
                     choice = SVNConflictChoice.POSTPONE;
                     break;
                 }
-                if (answerChar == 'm') {
-                    choice = SVNConflictChoice.MINE;
+                if (answerChar == 'M') {
+                    choice = SVNConflictChoice.MINE_FULL;
                     break;
+                }
+                if (answerChar == 'T') {
+                    choice = SVNConflictChoice.THEIRS_FULL;
+                    break;
+                }
+                if (answerChar == 'm') {
+                    mySVNEnvironment.getErr().println("Sorry, '(m)ine' is not yet implemented; see");
+                    mySVNEnvironment.getErr().println("http://subversion.tigris.org/issues/show_bug.cgi?id=3049");
+                    mySVNEnvironment.getErr().println();
+                    continue;
                 }
                 if (answerChar == 't') {
-                    choice = SVNConflictChoice.THEIRS;
-                    break;
+                    mySVNEnvironment.getErr().println("Sorry, '(t)heirs' is not yet implemented; see");
+                    mySVNEnvironment.getErr().println("http://subversion.tigris.org/issues/show_bug.cgi?id=3049");
+                    mySVNEnvironment.getErr().println();
+                    continue;
                 }
+                
             }
         } else {
             choice = SVNConflictChoice.POSTPONE;

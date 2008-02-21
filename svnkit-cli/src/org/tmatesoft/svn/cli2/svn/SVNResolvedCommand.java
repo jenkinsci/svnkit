@@ -59,6 +59,10 @@ public class SVNResolvedCommand extends SVNCommand {
             choice = SVNConflictChoice.THEIRS;
         } else if (accept == SVNConflictAcceptPolicy.MINE) {
             choice = SVNConflictChoice.MINE;
+        } else if (accept == SVNConflictAcceptPolicy.MINE_FULL) {
+            choice = SVNConflictChoice.MINE_FULL;
+        } else if (accept == SVNConflictAcceptPolicy.THEIRS_FULL) {
+            choice = SVNConflictChoice.THEIRS_FULL;
         } else {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "invalid 'accept' ARG");
             SVNErrorManager.error(err);

@@ -286,9 +286,9 @@ public abstract class SVNAdminArea {
         String autoResolveSource = null;
         if (conflictChoice == SVNConflictChoice.BASE) {
             autoResolveSource = entry.getConflictOld();
-        } else if (conflictChoice == SVNConflictChoice.MINE) {
+        } else if (conflictChoice == SVNConflictChoice.MINE_FULL) {
             autoResolveSource = entry.getConflictWorking();
-        } else if (conflictChoice == SVNConflictChoice.THEIRS) {
+        } else if (conflictChoice == SVNConflictChoice.THEIRS_FULL) {
             autoResolveSource = entry.getConflictNew();
         } else if (conflictChoice != SVNConflictChoice.MERGED) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS,

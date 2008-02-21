@@ -19,9 +19,11 @@ package org.tmatesoft.svn.core.wc;
 public class SVNConflictChoice {
     public static SVNConflictChoice POSTPONE = new SVNConflictChoice(0);
     public static SVNConflictChoice BASE = new SVNConflictChoice(1);
-    public static SVNConflictChoice THEIRS = new SVNConflictChoice(2);
-    public static SVNConflictChoice MINE = new SVNConflictChoice(3);
-    public static SVNConflictChoice MERGED = new SVNConflictChoice(4);
+    public static SVNConflictChoice THEIRS_FULL = new SVNConflictChoice(2);
+    public static SVNConflictChoice MINE_FULL = new SVNConflictChoice(3);
+    public static SVNConflictChoice THEIRS = new SVNConflictChoice(4);
+    public static SVNConflictChoice MINE = new SVNConflictChoice(5);
+    public static SVNConflictChoice MERGED = new SVNConflictChoice(6);
 
     private int myID;
 

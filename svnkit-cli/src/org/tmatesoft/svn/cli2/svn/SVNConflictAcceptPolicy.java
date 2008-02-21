@@ -26,10 +26,15 @@ public class SVNConflictAcceptPolicy {
      * Resolve the conflict with the pre-conflict working copy file.
      */
     public static SVNConflictAcceptPolicy MINE = new SVNConflictAcceptPolicy("mine");
+
+    public static SVNConflictAcceptPolicy MINE_FULL = new SVNConflictAcceptPolicy("mine-full");
+
     /**
      * Resolve the conflict with the post-conflict base file.
      */
     public static SVNConflictAcceptPolicy THEIRS = new SVNConflictAcceptPolicy("theirs");
+
+    public static SVNConflictAcceptPolicy THEIRS_FULL = new SVNConflictAcceptPolicy("theirs-full");
 
     public static SVNConflictAcceptPolicy POSTPONE = new SVNConflictAcceptPolicy("postpone");
     
@@ -51,14 +56,20 @@ public class SVNConflictAcceptPolicy {
             return SVNConflictAcceptPolicy.POSTPONE;
         } else if (BASE.myName.equals(accept)) {
             return SVNConflictAcceptPolicy.BASE;
+        /* TODO: not implemented yet
         } else if (MINE.myName.equals(accept)) {
             return SVNConflictAcceptPolicy.MINE;
         } else if (THEIRS.myName.equals(accept)) {
             return SVNConflictAcceptPolicy.THEIRS;
+        */
         } else if (EDIT.myName.equals(accept)) {
             return SVNConflictAcceptPolicy.EDIT;
         } else if (LAUNCH.myName.equals(accept)) {
             return SVNConflictAcceptPolicy.LAUNCH;
+        } else if (MINE_FULL.myName.equals(accept)) {
+            return SVNConflictAcceptPolicy.MINE_FULL;
+        } else if (THEIRS_FULL.myName.equals(accept)) {
+            return SVNConflictAcceptPolicy.THEIRS_FULL;
         }
         return SVNConflictAcceptPolicy.INVALID;
     }

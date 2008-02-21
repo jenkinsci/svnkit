@@ -265,9 +265,9 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
                     return DefaultSVNMergerAction.CHOOSE_BASE;                        
                 } else if (choice == SVNConflictChoice.MERGED) {
                     return DefaultSVNMergerAction.CHOOSE_MERGED_FILE;                        
-                } else if (choice == SVNConflictChoice.MINE) {
+                } else if (choice == SVNConflictChoice.MINE_FULL) {
                     return DefaultSVNMergerAction.CHOOSE_WORKING;                        
-                } else if (choice == SVNConflictChoice.THEIRS) {
+                } else if (choice == SVNConflictChoice.THEIRS_FULL) {
                     return DefaultSVNMergerAction.CHOOSE_REPOSITORY;                        
                 }
 	        }
@@ -801,9 +801,9 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
     		SVNErrorManager.error(err);
     	}
     	SVNConflictChoice choice = result.getConflictChoice();
-    	if (choice == SVNConflictChoice.MINE) {
+    	if (choice == SVNConflictChoice.MINE_FULL) {
     		conflictRemains = false;
-    	} else if (choice == SVNConflictChoice.THEIRS) {
+    	} else if (choice == SVNConflictChoice.THEIRS_FULL) {
     		workingProps.setPropertyValue(propName, newValue);
     		conflictRemains = false;
     	} else if (choice == SVNConflictChoice.BASE) {

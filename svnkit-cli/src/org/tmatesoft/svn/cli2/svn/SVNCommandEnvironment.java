@@ -214,9 +214,13 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                         "can't specify -c twice, or both -c and -r");
                 SVNErrorManager.error(err);
         	}
+        } else if (!myRevisionRanges.isEmpty() && myIsReIntegrate) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+                    "-r and -c can't be used with --reintegrate");
+            SVNErrorManager.error(err);
         }
-        
-        if (myRevisionRanges.isEmpty()) {
+
+    	if (myRevisionRanges.isEmpty()) {
         	SVNRevisionRange range = new SVNRevisionRange(SVNRevision.UNDEFINED, SVNRevision.UNDEFINED);
         	myRevisionRanges.add(range);
         }
