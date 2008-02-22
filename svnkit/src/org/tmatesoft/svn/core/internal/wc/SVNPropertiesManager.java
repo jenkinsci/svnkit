@@ -15,7 +15,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -152,7 +151,7 @@ public class SVNPropertiesManager {
 
 
         if (propValue != null && SVNProperty.isSVNProperty(propName)) {
-            propValue = SVNPropertiesManager.validatePropertyValue(path.getAbsolutePath(), entry.getKind(), propName, propValue, skipChecks, access.getOptions(), new ISVNFileContentFetcher() {
+            propValue = validatePropertyValue(path.getAbsolutePath(), entry.getKind(), propName, propValue, skipChecks, access.getOptions(), new ISVNFileContentFetcher() {
 
                 public void fetchFileContent(OutputStream os) throws SVNException {
                     InputStream is = SVNFileUtil.openFileForReading(path);
@@ -409,7 +408,7 @@ public class SVNPropertiesManager {
                 SVNTranslator.getCharset(value.getString(), path, options);
             } catch (SVNException e) {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Charset ''{0}'' is not supported on this computer", value.getString());
-                SVNErrorManager.error(error, e);
+                SVNErrorManager.error(error);
             }
             if (fileContentFetcher.fileIsBinary()) {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "File ''{0}'' has binary mime type property", path);

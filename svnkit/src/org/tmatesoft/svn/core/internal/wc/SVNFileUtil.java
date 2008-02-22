@@ -341,7 +341,8 @@ public class SVNFileUtil {
     }
 
     public static void setExecutable(File file, boolean executable) {
-        if (isWindows || isOpenVMS || file == null || !file.exists()) {
+        if (isWindows || isOpenVMS ||
+                file == null || !file.exists() || SVNFileType.getType(file) == SVNFileType.SYMLINK) {
             return;
         }
         if (SVNJNAUtil.setExecutable(file, executable)) {
