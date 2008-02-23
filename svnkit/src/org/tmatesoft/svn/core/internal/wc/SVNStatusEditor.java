@@ -158,7 +158,7 @@ public class SVNStatusEditor {
 
         if (!skipThisDir) {
             SVNStatus status = assembleStatus(dir.getRoot(), dir, dirEntry, parentEntry, 
-                    SVNNodeKind.DIR, false, getAll, false);
+                    SVNNodeKind.DIR, false, isReportAll(), false);
             if (status != null && handler != null) {
                 handler.handleStatus(status);
             }

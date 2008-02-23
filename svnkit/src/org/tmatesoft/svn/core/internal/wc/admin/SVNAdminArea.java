@@ -149,7 +149,7 @@ public abstract class SVNAdminArea {
 
     public boolean hasTextModifications(String name, boolean forceComparison, boolean compareTextBase, boolean compareChecksum) throws SVNException {
         File textFile = getFile(name);
-        if (!textFile.isFile()) {
+        if (!(textFile.isFile() || SVNFileType.getType(textFile) == SVNFileType.SYMLINK)) {
             return false;
         }
 
