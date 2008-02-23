@@ -527,7 +527,7 @@ public class SVNCommitClient extends SVNBasicClient {
             if (srcKind == SVNFileType.DIRECTORY) {
                 changed |= importDir(deltaGenerator, path, newDirPath, useGlobalIgnores, 
                         ignoreUnknownNodeTypes, depth, commitEditor);
-            } else if (srcKind == SVNFileType.FILE) {
+            } else if (srcKind == SVNFileType.FILE || srcKind == SVNFileType.SYMLINK) {
                 if (!useGlobalIgnores || !getOptions().isIgnored(path)) {
                     changed |= importFile(deltaGenerator, path, srcKind, filePath, commitEditor);
                 }
