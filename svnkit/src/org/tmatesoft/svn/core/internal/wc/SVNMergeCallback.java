@@ -47,16 +47,17 @@ public class SVNMergeCallback extends AbstractDiffCallback {
     private boolean myIsForce;
     private SVNDiffOptions myDiffOptions;
     private Map myConflictedPaths;
-    
+    private SVNMergeDriver myMergeDriver;
     
     public SVNMergeCallback(SVNAdminArea adminArea, SVNURL url, boolean force, boolean dryRun, 
-                            SVNDiffOptions options, Map conflictedPathsGetter) {
+                            SVNDiffOptions options, Map conflictedPathsGetter, SVNMergeDriver mergeDriver) {
         super(adminArea);
         myURL = url;
         myIsDryRun = dryRun;
         myIsForce = force;
         myDiffOptions = options;
         myConflictedPaths = conflictedPathsGetter;
+        myMergeDriver = mergeDriver;
     }
 
     public File createTempDirectory() throws SVNException {
@@ -83,10 +84,12 @@ public class SVNMergeCallback extends AbstractDiffCallback {
             if (wcAccess.getAdminArea(file) == null) {
                 wcAccess.probeTry(file, true, SVNWCAccess.INFINITE_DEPTH);
             }
-            return SVNPropertiesManager.mergeProperties(getWCAccess(), file,
-                                                                        originalProperties, 
-                                                                        regularProps, false, 
-                                                                        myIsDryRun);
+            SVNProperties filteredProps = myMergeDriver.filterSelfReferentialMergeInfo(regularProps, file); 
+            if (filteredProps != null) {
+                regularProps = filteredProps; 
+            }
+            return SVNPropertiesManager.mergeProperties(getWCAccess(), file, originalProperties, regularProps, 
+                    false, myIsDryRun);
         } catch (SVNException e) {
             if (e.getErrorMessage().getErrorCode() == SVNErrorCode.UNVERSIONED_RESOURCE || 
                     e.getErrorMessage().getErrorCode() == SVNErrorCode.ENTRY_NOT_FOUND) {

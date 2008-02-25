@@ -45,4 +45,11 @@ public class SVNLocationSegment {
         return myEndRevision;
     }
 
+    public void setStartRevision(long startRevision) {
+        myStartRevision = startRevision;
+    }
+    
+    public void setEndRevision(long endRevision) {
+        myEndRevision = endRevision;
+    }
 }
