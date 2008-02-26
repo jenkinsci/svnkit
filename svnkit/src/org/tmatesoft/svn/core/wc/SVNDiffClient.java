@@ -1424,7 +1424,7 @@ public class SVNDiffClient extends SVNMergeDriver {
             SVNRepository repository = null;
             try {
             	repository = createRepository(url, false);
-            	assertServerIsMergeInfoCapable(repository, path.toString());
+            	repository.assertServerIsMergeInfoCapable(path.toString());
             } finally {
             	repository.closeSession();
             }

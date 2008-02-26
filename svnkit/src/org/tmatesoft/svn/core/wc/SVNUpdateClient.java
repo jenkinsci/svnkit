@@ -497,13 +497,11 @@ public class SVNUpdateClient extends SVNBasicClient {
     }
     
     public long doExport(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, String eolStyle, boolean force, SVNDepth depth) throws SVNException {
-        SVNRepository repository = createRepository(url, null, pegRevision, revision);
-        long revisionNumber = getRevisionNumber(revision, repository, null);
-        if (revisionNumber < 0) {
-            revisionNumber = repository.getLatestRevision();
-        }
-        long exportedRevision = doRemoteExport(repository, revisionNumber, dstPath, eolStyle, force, depth);
-        dispatchEvent(SVNEventFactory.createSVNEvent(null, SVNNodeKind.NONE, null, exportedRevision, SVNEventAction.UPDATE_COMPLETED, null, null, null));
+        long[] revNum = { SVNRepository.INVALID_REVISION }; 
+        SVNRepository repository = createRepository2(url, null, pegRevision, revision, revNum);
+        long exportedRevision = doRemoteExport(repository, revNum[0], dstPath, eolStyle, force, depth);
+        dispatchEvent(SVNEventFactory.createSVNEvent(null, SVNNodeKind.NONE, null, exportedRevision, 
+                SVNEventAction.UPDATE_COMPLETED, null, null, null));
         return exportedRevision;
     }
 

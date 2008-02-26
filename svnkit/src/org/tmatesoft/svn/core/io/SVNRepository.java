@@ -653,7 +653,28 @@ public abstract class SVNRepository {
     public abstract int getFileRevisions(String path, long startRevision, long endRevision, ISVNFileRevisionHandler handler) throws SVNException;
 
     public abstract int getFileRevisions(String path, long startRevision, long endRevision, 
-                                         boolean includeMergedRevisions, ISVNFileRevisionHandler handler) throws SVNException;
+            boolean includeMergedRevisions, ISVNFileRevisionHandler handler) throws SVNException;
+
+/*    public int getFileRevisions(String path, long startRevision, long endRevision, 
+            boolean includeMergedRevisions, ISVNFileRevisionHandler handler) throws SVNException {
+        
+    }
+*/
+    public void assertServerIsMergeInfoCapable(String pathOrURL) throws SVNException {
+        boolean isMergeInfoCapable = hasCapability(SVNCapability.MERGE_INFO);
+        if (!isMergeInfoCapable) {
+            if (pathOrURL == null) {
+                SVNURL sessionURL = getLocation();
+                pathOrURL = sessionURL.toString();
+            }
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                    "Retrieval of mergeinfo unsupported by ''{0}''", pathOrURL);
+            SVNErrorManager.error(err);
+        }
+    }
+
+//    protected abstract int getFileRevisionsImpl(String path, long startRevision, long endRevision, 
+//            boolean includeMergedRevisions, ISVNFileRevisionHandler handler) throws SVNException;
 
     /**
 	 * Traverses revisions history. In other words, collects per revision

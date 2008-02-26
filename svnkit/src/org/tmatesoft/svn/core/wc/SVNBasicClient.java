@@ -487,6 +487,57 @@ public class SVNBasicClient implements ISVNEventHandler {
         }
         return repository;
     }
+
+    /**
+     * TODO: replace createRepository calls with createRepository2
+     */
+    protected SVNRepository createRepository2(SVNURL url, File path, SVNRevision pegRevision, SVNRevision revision, long[] pegRev) throws SVNException {
+        if (url == null) {
+            SVNURL pathURL = getURL(path);
+            if (pathURL == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path);
+                SVNErrorManager.error(err);
+            }
+        }
+
+        SVNRevision startRevision = revision;
+        SVNRevision[] resolvedRevisions = resolveRevisions(pegRevision, startRevision, url != null, true);
+        pegRevision = resolvedRevisions[0];
+        startRevision = resolvedRevisions[1];
+        SVNRepositoryLocation[] locations = getLocations(url, path, null, pegRevision, startRevision, 
+                SVNRevision.UNDEFINED);
+        url = locations[0].getURL();
+        long actualRevision = locations[0].getRevisionNumber();
+        SVNRepository repository = createRepository(url, true);
+        actualRevision = getRevisionNumber(SVNRevision.create(actualRevision), repository, path);
+        if (actualRevision < 0) {
+            actualRevision = repository.getLatestRevision();
+        }
+        if (pegRev != null && pegRev.length > 0) {
+            pegRev[0] = actualRevision;
+        }
+        return repository;
+    }
+
+    protected SVNRevision[] resolveRevisions(SVNRevision pegRevision, SVNRevision revision, boolean isURL,
+            boolean noticeLocalModifications) {
+        if (!pegRevision.isValid()) {
+            if (isURL) {
+                pegRevision = SVNRevision.HEAD;
+            } else {
+                if (noticeLocalModifications) {
+                    pegRevision = SVNRevision.WORKING;
+                } else {
+                    pegRevision = SVNRevision.BASE;
+                }
+            }
+        }
+
+        if (!revision.isValid()) {
+            revision = pegRevision;
+        }
+        return new SVNRevision[] { pegRevision, revision };
+    }
     
     protected void elideMergeInfo(SVNWCAccess access, File path, SVNEntry entry,
             File wcElisionLimitPath) throws SVNException {
@@ -670,19 +721,6 @@ public class SVNBasicClient implements ISVNEventHandler {
         return mergeInfo;
     }
 
-    public void assertServerIsMergeInfoCapable(SVNRepository repository, String pathOrURL) throws SVNException {
-    	boolean isMergeInfoCapable = repository.hasCapability(SVNCapability.MERGE_INFO);
-    	if (!isMergeInfoCapable) {
-    		if (pathOrURL == null) {
-    			SVNURL sessionURL = repository.getLocation();
-    			pathOrURL = sessionURL.toString();
-    		}
-    		SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
-    				"Retrieval of mergeinfo unsupported by ''{0}''", pathOrURL);
-    		SVNErrorManager.error(err);
-    	}
-    }
-    
     protected long getPathLastChangeRevision(String relPath, long revision, SVNRepository repository) throws SVNException {
         final long[] rev = new long[1];
         rev[0] = SVNRepository.INVALID_REVISION;
