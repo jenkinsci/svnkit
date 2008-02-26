@@ -1881,6 +1881,7 @@ public class SVNWCClient extends SVNBasicClient {
      * @see                    #doInfo(File, SVNRevision, boolean, ISVNInfoHandler)
      */
     public void doInfo(File path, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNInfoHandler handler) throws SVNException {
+        path = path.getAbsoluteFile();
         if (handler == null) {
             return;
         }
