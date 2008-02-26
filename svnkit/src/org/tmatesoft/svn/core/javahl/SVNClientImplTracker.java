@@ -32,7 +32,9 @@ public class SVNClientImplTracker implements Runnable {
         synchronized (SVNClientImplTracker.class) {
             if (ourQueue == null) {
                 ourQueue = new ReferenceQueue();
-                new Thread(new SVNClientImplTracker()).start();
+                Thread th = new Thread(new SVNClientImplTracker());
+                th.setDaemon(true);
+                th.start();
             }
         }
         synchronized (ourReferences) {
