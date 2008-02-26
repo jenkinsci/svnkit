@@ -271,6 +271,11 @@ public class SVNWCAccess implements ISVNEventHandler {
     
     public SVNAdminArea probeOpen(File path, boolean writeLock, int depth) throws SVNException {
         File dir = probe(path);
+        if (dir == null) {
+            // we tried to open root which is not wc.
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
+            SVNErrorManager.error(err);
+        }
         if (!path.equals(dir)) {
             depth = 0;
         }
@@ -414,6 +419,11 @@ public class SVNWCAccess implements ISVNEventHandler {
 
     public SVNAdminArea probeRetrieve(File path) throws SVNException {
         File dir = probe(path);
+        if (dir == null) {
+            // we tried to open root which is not wc.
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
+            SVNErrorManager.error(err);
+        }
         return retrieve(dir);
     }
     
