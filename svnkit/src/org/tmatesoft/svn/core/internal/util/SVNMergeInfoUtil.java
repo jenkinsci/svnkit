@@ -47,6 +47,16 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 public class SVNMergeInfoUtil {
 
 	public static Map elideMergeInfoCatalog(Map mergeInfoCatalog) throws SVNException {
+	    Map adjustedMergeInfoCatalog = new TreeMap();
+	    for (Iterator pathsIter = mergeInfoCatalog.keySet().iterator(); pathsIter.hasNext();) {
+	        String path = (String) pathsIter.next();
+	        String adjustedPath = path;
+	        if (path.startsWith("/")) {
+	            adjustedPath = path.substring(1);
+	        }
+	        adjustedMergeInfoCatalog.put(adjustedPath, mergeInfoCatalog.get(path));
+	    }
+	    mergeInfoCatalog = adjustedMergeInfoCatalog;
 	    ElideMergeInfoCatalogHandler handler = new ElideMergeInfoCatalogHandler(mergeInfoCatalog);
 	    ElideMergeInfoEditor editor = new ElideMergeInfoEditor(mergeInfoCatalog);
 	    SVNCommitUtil.driveCommitEditor(handler, mergeInfoCatalog.keySet(), editor, -1);
@@ -55,7 +65,17 @@ public class SVNMergeInfoUtil {
             String elidablePath = (String) elidablePathsIter.next();
             mergeInfoCatalog.remove(elidablePath);
         }
-	    return mergeInfoCatalog;
+        
+	    adjustedMergeInfoCatalog = new TreeMap();
+        for (Iterator pathsIter = mergeInfoCatalog.keySet().iterator(); pathsIter.hasNext();) {
+            String path = (String) pathsIter.next();
+            String adjustedPath = path;
+            if (!path.startsWith("/")) {
+                adjustedPath = "/" + adjustedPath;
+            }
+            adjustedMergeInfoCatalog.put(adjustedPath, mergeInfoCatalog.get(path));
+        }
+	    return adjustedMergeInfoCatalog;
 	}
 	
     public static Map adjustMergeInfoSourcePaths(Map mergeInfo, String walkPath, Map wcMergeInfo) {
@@ -528,9 +548,6 @@ public class SVNMergeInfoUtil {
         }
         
         public boolean handleCommitPath(String path, ISVNEditor editor) throws SVNException {
-	        if (!path.startsWith("/")) {
-	            path = "/" + path;
-	        }
             ElideMergeInfoEditor elideEditor = (ElideMergeInfoEditor) editor;
 	        String inheritedMergeInfoPath = elideEditor.getInheritedMergeInfoPath();
 	        if (inheritedMergeInfoPath == null || "/".equals(path)) {
