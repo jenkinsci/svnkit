@@ -176,7 +176,7 @@ public class FSFileRevisionsFinder {
                     }
                 }
             }
-            mergedPathRevisions.addLast(newPathRevisions);
+            mergedPathRevisions.addAll(newPathRevisions);
             oldPathRevisions = newPathRevisions;
         } while (!newPathRevisions.isEmpty());
         
