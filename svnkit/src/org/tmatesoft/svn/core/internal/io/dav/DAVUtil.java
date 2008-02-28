@@ -109,6 +109,7 @@ public class DAVUtil {
         
         while(!"".equals(fullPath)) {
             SVNErrorMessage err = null;
+            SVNException nested=null;
             try {
                 props = getStartingProperties(connection, fullPath, null);
             } catch (SVNException e) {
@@ -116,19 +117,20 @@ public class DAVUtil {
                     throw e;
                 }
                 err = e.getErrorMessage();
+                nested = e;
             }            
             if (err == null) {
                 break;
             }
             if (err.getErrorCode() != SVNErrorCode.RA_DAV_PATH_NOT_FOUND) {
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err,nested);
             }
             loppedPath = SVNPathUtil.append(SVNPathUtil.tail(fullPath), loppedPath);
             int length = fullPath.length();
             fullPath = "/".equals(fullPath) ? "" : SVNPathUtil.removeTail(fullPath);
             if (length == fullPath.length()) {
                 SVNErrorMessage err2 = SVNErrorMessage.create(err.getErrorCode(), "The path was not part of repository");
-                SVNErrorManager.error(err2, err);
+                SVNErrorManager.error(err2, err, nested);
             }
         }        
         if ("".equals(fullPath)) {
