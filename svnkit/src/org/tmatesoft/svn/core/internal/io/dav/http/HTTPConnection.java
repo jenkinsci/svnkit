@@ -27,6 +27,9 @@ import java.net.UnknownHostException;
 import java.security.cert.CertificateException;
 import java.text.ParseException;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 import javax.net.ssl.SSLHandshakeException;
@@ -805,23 +808,39 @@ class HTTPConnection implements IHTTPConnection {
     private static synchronized SAXParserFactory getSAXParserFactory() throws FactoryConfigurationError {
         if (ourSAXParserFactory == null) {
             ourSAXParserFactory = SAXParserFactory.newInstance();
+            Map supportedFeatures = new HashMap();
             try {
                 ourSAXParserFactory.setFeature("http://xml.org/sax/features/namespaces", true);
+                supportedFeatures.put("http://xml.org/sax/features/namespaces", Boolean.TRUE);
             } catch (SAXNotRecognizedException e) {
             } catch (SAXNotSupportedException e) {
             } catch (ParserConfigurationException e) {
             }
             try {
                 ourSAXParserFactory.setFeature("http://xml.org/sax/features/validation", false);
+                supportedFeatures.put("http://xml.org/sax/features/validation", Boolean.FALSE);
             } catch (SAXNotRecognizedException e) {
             } catch (SAXNotSupportedException e) {
             } catch (ParserConfigurationException e) {
             }
             try {
                 ourSAXParserFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+                supportedFeatures.put("http://apache.org/xml/features/nonvalidating/load-external-dtd", Boolean.FALSE);
             } catch (SAXNotRecognizedException e) {
             } catch (SAXNotSupportedException e) {
             } catch (ParserConfigurationException e) {
+            }
+            if (supportedFeatures.size() < 3) {
+                ourSAXParserFactory = SAXParserFactory.newInstance();
+                for (Iterator names = supportedFeatures.keySet().iterator(); names.hasNext();) {
+                    String name = (String) names.next();
+                    try {
+                        ourSAXParserFactory.setFeature(name, supportedFeatures.get(name) == Boolean.TRUE);
+                    } catch (SAXNotRecognizedException e) {
+                    } catch (SAXNotSupportedException e) {
+                    } catch (ParserConfigurationException e) {
+                    }
+                }
             }
             ourSAXParserFactory.setNamespaceAware(true);
             ourSAXParserFactory.setValidating(false);
