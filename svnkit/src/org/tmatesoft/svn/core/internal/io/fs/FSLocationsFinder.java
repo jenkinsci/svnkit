@@ -191,8 +191,8 @@ public class FSLocationsFinder {
         myFSFS = fsfs;
     }
 
-    private long maybeCropAndSendSegment(long segmentStartRevision, long segmentEndRevision, long startRevision, 
-            long endRevision, String segmentPath, ISVNLocationSegmentHandler handler) throws SVNException {
+    private long maybeCropAndSendSegment(long segmentStartRevision, long segmentEndRevision, 
+            long startRevision, long endRevision, String segmentPath, ISVNLocationSegmentHandler handler) throws SVNException {
         if (!(segmentStartRevision > startRevision || segmentEndRevision < endRevision)) {
             if (segmentStartRevision < endRevision) {
                 segmentStartRevision = endRevision;

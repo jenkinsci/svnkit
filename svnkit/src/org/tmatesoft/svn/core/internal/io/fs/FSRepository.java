@@ -297,7 +297,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
     }
 
-    public int getFileRevisions(String path, long startRevision, long endRevision, boolean includeMergedRevisions, ISVNFileRevisionHandler handler) throws SVNException {
+    protected int getFileRevisionsImpl(String path, long startRevision, long endRevision, boolean includeMergedRevisions, ISVNFileRevisionHandler handler) throws SVNException {
         try {
             openRepository();
             path = getRepositoryPath(path);
@@ -323,11 +323,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
     }
 
-    public int getFileRevisions(String path, long startRevision, long endRevision, ISVNFileRevisionHandler handler) throws SVNException {
-        return getFileRevisions(path, startRevision, endRevision, false, handler);
-    }
-
-    public long log(String[] targetPaths, long startRevision, long endRevision, boolean
+    protected long logImpl(String[] targetPaths, long startRevision, long endRevision, boolean
                     discoverChangedPaths, boolean strictNode, long limit,
                     boolean includeMergedRevisions, String[] revPropNames,
                     ISVNLogEntryHandler handler) throws SVNException {
@@ -377,7 +373,8 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
     }
 
-    public int getLocations(String path, long pegRevision, long[] revisions, ISVNLocationEntryHandler handler) throws SVNException {
+    protected int getLocationsImpl(String path, long pegRevision, long[] revisions, 
+            ISVNLocationEntryHandler handler) throws SVNException {
         assertValidRevision(pegRevision);
         for (int i = 0; i < revisions.length; i++) {
             assertValidRevision(revisions[i]);
@@ -392,7 +389,8 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
     }
 
-    public long getLocationSegments(String path, long pegRevision, long startRevision, long endRevision, ISVNLocationSegmentHandler handler) throws SVNException {
+    protected long getLocationSegmentsImpl(String path, long pegRevision, long startRevision, long endRevision, 
+            ISVNLocationSegmentHandler handler) throws SVNException {
         try {
             openRepository();
             path = getRepositoryPath(path);

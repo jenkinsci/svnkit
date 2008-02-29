@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.io;
 
+import java.io.File;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,6 +37,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNLogEntry;
+import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -43,9 +46,11 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
@@ -650,16 +655,26 @@ public abstract class SVNRepository {
 	 * @see 					SVNFileRevision
 	 * @since					SVN 1.1
 	 */    
-    public abstract int getFileRevisions(String path, long startRevision, long endRevision, ISVNFileRevisionHandler handler) throws SVNException;
-
-    public abstract int getFileRevisions(String path, long startRevision, long endRevision, 
-            boolean includeMergedRevisions, ISVNFileRevisionHandler handler) throws SVNException;
-
-/*    public int getFileRevisions(String path, long startRevision, long endRevision, 
-            boolean includeMergedRevisions, ISVNFileRevisionHandler handler) throws SVNException {
-        
+    public int getFileRevisions(String path, long startRevision, long endRevision, ISVNFileRevisionHandler handler) throws SVNException {
+        return getFileRevisions(path, startRevision, endRevision, false, handler);
     }
-*/
+
+    public int getFileRevisions(String path, long startRevision, long endRevision, 
+            boolean includeMergedRevisions, ISVNFileRevisionHandler handler) throws SVNException {
+        if (includeMergedRevisions) {
+            assertServerIsMergeInfoCapable(null);
+        }
+        
+        try {
+            return getFileRevisionsImpl(path, startRevision, endRevision, includeMergedRevisions, handler);
+        } catch (SVNException svne) {
+            if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_IMPLEMENTED) {
+                return getFileRevisionsFromLog(path, startRevision, endRevision, handler); 
+            } 
+            throw svne;
+        }
+    }
+
     public void assertServerIsMergeInfoCapable(String pathOrURL) throws SVNException {
         boolean isMergeInfoCapable = hasCapability(SVNCapability.MERGE_INFO);
         if (!isMergeInfoCapable) {
@@ -672,9 +687,6 @@ public abstract class SVNRepository {
             SVNErrorManager.error(err);
         }
     }
-
-//    protected abstract int getFileRevisionsImpl(String path, long startRevision, long endRevision, 
-//            boolean includeMergedRevisions, ISVNFileRevisionHandler handler) throws SVNException;
 
     /**
 	 * Traverses revisions history. In other words, collects per revision
@@ -823,9 +835,15 @@ public abstract class SVNRepository {
         return log(targetPaths, startRevision, endRevision, changedPath, strictNode, limit, false, null, handler);
     }
     
-    public abstract long log(String[] targetPaths, long startRevision, long endRevision, 
+    public long log(String[] targetPaths, long startRevision, long endRevision, 
             boolean changedPath, boolean strictNode, long limit, boolean includeMergedRevisions, 
-            String[] revisionProperties, ISVNLogEntryHandler handler) throws SVNException;
+            String[] revisionProperties, ISVNLogEntryHandler handler) throws SVNException {
+        if (includeMergedRevisions) {
+            assertServerIsMergeInfoCapable(null);
+        }
+        return logImpl(targetPaths, startRevision, endRevision, changedPath, strictNode, limit, 
+                includeMergedRevisions, revisionProperties, handler);
+    }
 
     /**
 	 * Gets entry locations in time. The location of an entry in a repository
@@ -874,13 +892,31 @@ public abstract class SVNRepository {
      * @see 				SVNLocationEntry
      * @since               SVN 1.1
      */
-    public abstract int getLocations(String path, long pegRevision, long[] revisions, ISVNLocationEntryHandler handler) throws SVNException;
+    public int getLocations(String path, long pegRevision, long[] revisions, ISVNLocationEntryHandler handler) throws SVNException {
+        try {
+            return getLocationsImpl(path, pegRevision, revisions, handler);
+        } catch (SVNException svne) {
+            if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_IMPLEMENTED) {
+                return getLocationsFromLog(path, pegRevision, revisions, handler);
+            }
+            throw svne;
+        }
+    }
 
     /**
      * @since 1.2, SVN 1.5
      */
-    public abstract long getLocationSegments(String path, long pegRevision, long startRevision, long endRevision, 
-            ISVNLocationSegmentHandler handler) throws SVNException;
+    public long getLocationSegments(String path, long pegRevision, long startRevision, long endRevision, 
+            ISVNLocationSegmentHandler handler) throws SVNException {
+        try {
+            return getLocationSegmentsImpl(path, pegRevision, startRevision, endRevision, handler);
+        } catch (SVNException svne) {
+            if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_IMPLEMENTED) {
+                return getLocationSegmentsFromLog(path, pegRevision, startRevision, endRevision, handler);
+            }
+            throw svne;
+        }
+    }
 
     public Collection getLocationSegments(String path, long pegRevision, long startRevision, 
             long endRevision) throws SVNException {
@@ -1982,6 +2018,19 @@ public abstract class SVNRepository {
         myConnectionListeners.remove(listener);
     }
     
+    protected abstract long getLocationSegmentsImpl(String path, long pegRevision, long startRevision, long endRevision, 
+            ISVNLocationSegmentHandler handler) throws SVNException;
+    
+    protected abstract int getLocationsImpl(String path, long pegRevision, long[] revisions, 
+            ISVNLocationEntryHandler handler) throws SVNException;
+    
+    protected abstract long logImpl(String[] targetPaths, long startRevision, long endRevision, 
+            boolean changedPath, boolean strictNode, long limit, boolean includeMergedRevisions, 
+            String[] revisionProperties, ISVNLogEntryHandler handler) throws SVNException;
+
+    protected abstract int getFileRevisionsImpl(String path, long startRevision, long endRevision, 
+            boolean includeMergedRevisions, ISVNFileRevisionHandler handler) throws SVNException;
+
     protected abstract Map getMergeInfoImpl(String[] paths, long revision, SVNMergeInfoInheritance inherit, 
             boolean includeDescendants) throws SVNException;
 
@@ -2150,4 +2199,388 @@ public abstract class SVNRepository {
         return myDebugLog;
     }
     
+    private long getLocationSegmentsFromLog(String path, long pegRevision, long startRevision, long endRevision, 
+            ISVNLocationSegmentHandler handler) throws SVNException {
+        String reposAbsPath = getRepositoryPath(path);
+        long youngestRevision = INVALID_REVISION;
+        if (isInvalidRevision(pegRevision)) {
+            youngestRevision = getLatestRevision();
+            pegRevision = youngestRevision;
+        }
+        
+        if (isInvalidRevision(startRevision)) {
+            if (isValidRevision(youngestRevision)) {
+                startRevision = youngestRevision;
+            } else {
+                startRevision = getLatestRevision();
+            }
+        }
+        
+        if (isInvalidRevision(endRevision)) {
+            endRevision = 0;
+        }
+        
+        if (pegRevision < startRevision || startRevision < endRevision) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
+                    "assertion failure in getLocationSegmentsFromLog:\n" +
+                    "  pegRevision is {0,number,integer}\n" +
+                    "  startRevision is {1,number,integer}\n" +
+                    "  endRevision is {2,number,integer}", new Object[] { new Long(pegRevision), 
+                    new Long(startRevision), new Long(endRevision) });
+            SVNErrorManager.error(err);
+        }
+        
+        SVNNodeKind kind = checkPath(path, pegRevision);
+        if (kind == SVNNodeKind.NONE) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, 
+                    "Path ''{0}'' doesn''t exist in revision {1,number,integer}", 
+                    new Object[] { reposAbsPath, new Long(pegRevision) });
+            SVNErrorManager.error(err);
+        }
+
+        LocationSegmentsLogHandler locationSegmentsLogHandler = new LocationSegmentsLogHandler(kind, reposAbsPath, 
+                startRevision, handler);
+        log(new String[] { path }, pegRevision, endRevision, true, false, 0, false, null, 
+                locationSegmentsLogHandler);
+        if (!locationSegmentsLogHandler.myIsDone) {
+            locationSegmentsLogHandler.maybeCropAndSendSegment(locationSegmentsLogHandler.myLastPath, 
+                    startRevision, endRevision, locationSegmentsLogHandler.myRangeEnd, handler);
+        }
+        return locationSegmentsLogHandler.myCount;
+    }
+
+    private int getLocationsFromLog(String path, long pegRevision, long[] revisions, 
+            ISVNLocationEntryHandler handler) throws SVNException {
+        String reposAbsPath = getRepositoryPath(path);
+        SVNNodeKind kind = checkPath(path, pegRevision);
+        if (kind == SVNNodeKind.NONE) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, 
+                    "Path ''{0}'' doesn''t exist in revision {1,number,integer}", 
+                    new Object[] { reposAbsPath, new Long(pegRevision) });
+            SVNErrorManager.error(err);
+        }
+        if (revisions == null || revisions.length == 0) {
+            return 0;
+        }
+        
+        Arrays.sort(revisions);
+        long oldestRequestedRev = revisions[0];
+        long youngestRequestedRev = revisions[revisions.length - 1];
+        long youngest = pegRevision;
+        youngest = oldestRequestedRev > youngest ? oldestRequestedRev : youngest;
+        youngest = youngestRequestedRev > youngest ? youngestRequestedRev : youngest;
+        long oldest = pegRevision;
+        oldest = oldestRequestedRev < oldest ? oldestRequestedRev : oldest;
+        oldest = youngestRequestedRev < oldest ? youngestRequestedRev : oldest;
+        
+        LocationsLogHandler locationsLogHandler = new LocationsLogHandler(revisions, kind, reposAbsPath, 
+                pegRevision);
+        log(new String[] { path }, youngest, oldest, true, false, 0, false, null, locationsLogHandler);
+        if (locationsLogHandler.myPegPath == null) {
+            locationsLogHandler.myPegPath = locationsLogHandler.myLastPath;
+        }
+        if (locationsLogHandler.myLastPath != null) {
+            for (int i = 0; i < locationsLogHandler.myRevisionsCount; i++) {
+                long rev = revisions[i];
+                Long revObject = new Long(rev);
+                if (handler != null && !locationsLogHandler.myProcessedRevisions.contains(revObject)) {
+                    handler.handleLocationEntry(new SVNLocationEntry(rev, locationsLogHandler.myLastPath));
+                    locationsLogHandler.myProcessedRevisions.add(revObject);
+                }
+            }
+        }
+        
+        if (locationsLogHandler.myPegPath == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
+                    "Unable to find repository location for ''{0}'' in revision {1,number,integer}", 
+                    new Object[] { reposAbsPath, new Long(pegRevision) });
+            SVNErrorManager.error(err);
+        }
+        
+        if (!reposAbsPath.equals(locationsLogHandler.myPegPath)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_UNRELATED_RESOURCES, 
+                    "''{0}'' in revision {1,number,integer} is an unrelated object",
+                    new Object[] { reposAbsPath, new Long(youngest) });
+            SVNErrorManager.error(err);
+        }
+        return locationsLogHandler.myProcessedRevisions.size();
+    }
+    
+    private int getFileRevisionsFromLog(String path, long startRevision, long endRevision, 
+            ISVNFileRevisionHandler handler) throws SVNException {
+        SVNURL reposURL = getRepositoryRoot(true);
+        SVNURL sessionURL = getLocation();
+        String reposAbsPath = getRepositoryPath(path);
+        SVNNodeKind kind = checkPath("", endRevision);
+        if (kind == SVNNodeKind.DIR) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FILE, "''{0}'' is not a file", 
+                    reposAbsPath);
+            SVNErrorManager.error(err);
+        }
+        FileRevisionsLogHandler logHandler = new FileRevisionsLogHandler(reposAbsPath);
+        log(new String[] { "" }, endRevision, startRevision, true, false, 0, false, null, logHandler);
+        LinkedList revisions = logHandler.getRevisions();
+        setLocation(reposURL, false);
+        
+        File lastFile = null;
+        SVNProperties lastProps = null;
+        SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
+        int i = 0;
+        for (Iterator revsIter = revisions.iterator(); revsIter.hasNext();) {
+            Revision rev = (Revision) revsIter.next();
+            File tmpFile = SVNFileUtil.createTempFile("tmp", ".tmp");
+            SVNProperties props = new SVNProperties();
+            OutputStream os = null;
+            try {
+                os = SVNFileUtil.openFileForWriting(tmpFile);
+                getFile(rev.myPath, rev.myRevision, props, os);
+            } finally {
+                SVNFileUtil.closeFile(os);
+            }
+            
+            SVNProperties propDiff = FSRepositoryUtil.getPropsDiffs(lastProps, props);
+            SVNFileRevision fileRevision = new SVNFileRevision(rev.myPath, rev.myRevision, rev.myProperties, 
+                    propDiff, false);
+            handler.openRevision(fileRevision);
+            
+            InputStream srcStream = null;
+            InputStream tgtStream = null;
+            try {
+                srcStream = lastFile != null ? SVNFileUtil.openFileForReading(lastFile) : SVNFileUtil.DUMMY_IN;
+                tgtStream = SVNFileUtil.openFileForReading(tmpFile);
+                deltaGenerator.sendDelta(rev.myPath, srcStream, 0, tgtStream, handler, false);
+            } finally {
+                SVNFileUtil.closeFile(srcStream);
+                SVNFileUtil.closeFile(tgtStream);
+            }
+            
+            handler.closeRevision(rev.myPath);
+            if (lastFile != null) {
+                SVNFileUtil.deleteFile(lastFile);
+            }
+            lastFile = tmpFile;
+            lastProps = props;
+            i++;
+        }
+        
+        setLocation(sessionURL, false);
+        return i;
+    }
+
+    private static String getPreviousLogPath(char[] action, long[] copyFromRevision, Map changedPaths, 
+            String path, SVNNodeKind kind, long revision) throws SVNException {
+        if (action != null && action.length > 0) {
+            action[0] = SVNLogEntryPath.TYPE_MODIFIED;
+        }
+        if (copyFromRevision != null && copyFromRevision.length > 0) {
+            copyFromRevision[0] = INVALID_REVISION;
+        }
+        String previousPath = null;
+        if (changedPaths != null) {
+            SVNLogEntryPath change = (SVNLogEntryPath) changedPaths.get(path);
+            if (change != null) {
+                if (change.getType() != SVNLogEntryPath.TYPE_ADDED && 
+                        change.getType() != SVNLogEntryPath.TYPE_REPLACED) {
+                    previousPath = path;
+                } else {
+                    if (change.getCopyPath() != null) {
+                        previousPath = change.getCopyPath();
+                    } 
+                    if (action != null && action.length > 0) {
+                        action[0] = change.getType();
+                    }
+                    if (copyFromRevision != null && copyFromRevision.length > 0) {
+                        copyFromRevision[0] = change.getCopyRevision();
+                    }
+                    return previousPath;
+                }
+            }
+            
+            if (!changedPaths.isEmpty()) {
+                String[] sortedPaths = (String[]) changedPaths.keySet().toArray(new String[changedPaths.size()]);
+                Arrays.sort(sortedPaths, SVNPathUtil.PATH_COMPARATOR);
+                for (int i = sortedPaths.length; i > 0; i--) {
+                    String changedPath = sortedPaths[i - 1];
+                    if (!(path.startsWith(changedPath) && path.length() > changedPath.length() && 
+                            path.charAt(changedPath.length()) == '/')) {
+                        continue;
+                    }
+                    
+                    change = (SVNLogEntryPath) changedPaths.get(changedPath);
+                    if (change.getCopyPath() != null) {
+                        if (action != null && action.length > 0) {
+                            action[0] = change.getType();
+                        }
+                        if (copyFromRevision != null && copyFromRevision.length > 0) {
+                            copyFromRevision[0] = change.getCopyRevision();
+                        }
+                        previousPath = SVNPathUtil.append(change.getCopyPath(), 
+                                path.substring(changedPath.length() + 1));
+                        break;
+                    }
+                }
+            }
+        }
+        
+        if (previousPath == null) {
+            if (kind == SVNNodeKind.DIR) {
+                previousPath = path;
+            } else {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_UNRELATED_RESOURCES, 
+                        "Missing changed-path information for ''{0}'' in revision {1,number,integer}", 
+                        new Object[] { path, new Long(revision) });
+                SVNErrorManager.error(err);
+            }
+        }
+       
+        return previousPath;
+    }
+    
+    private static class FileRevisionsLogHandler implements ISVNLogEntryHandler {
+        private LinkedList myRevisions;
+        private String myPath;
+        
+        public FileRevisionsLogHandler(String path) {
+            myRevisions = new LinkedList();
+            myPath = path;
+        }
+        
+        public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
+            Revision rev = new Revision();
+            rev.myPath = myPath;
+            rev.myRevision = logEntry.getRevision();
+            rev.myProperties = logEntry.getRevisionProperties();
+            myRevisions.addFirst(rev);
+            
+            myPath = getPreviousLogPath(null, null, logEntry.getChangedPaths(), myPath, 
+                    SVNNodeKind.FILE, logEntry.getRevision());
+        }
+        
+        public LinkedList getRevisions() {
+            return myRevisions;
+        }
+    }
+    
+    private static class LocationSegmentsLogHandler implements ISVNLogEntryHandler {
+        boolean myIsDone;
+        String myLastPath;
+        SVNNodeKind myNodeKind;
+        long myCount;
+        long myStartRevision;
+        long myRangeEnd;
+        ISVNLocationSegmentHandler myHandler;
+        
+        public LocationSegmentsLogHandler(SVNNodeKind kind, String lastPath, long startRev, 
+                ISVNLocationSegmentHandler handler) {
+            myNodeKind = kind;
+            myLastPath = lastPath;
+            myStartRevision = startRev;
+            myRangeEnd = startRev;
+            myHandler = handler;
+            myCount = 0;
+        }
+        
+        public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
+            if (myIsDone) {
+                return;
+            }
+            
+            long[] copyFromRevision = { INVALID_REVISION };
+            String prevPath = getPreviousLogPath(null, copyFromRevision, logEntry.getChangedPaths(), myLastPath, 
+                    myNodeKind, logEntry.getRevision());
+            if (prevPath == null) {
+                myIsDone = true;
+                maybeCropAndSendSegment(myLastPath, myStartRevision, logEntry.getRevision(), myRangeEnd, myHandler); 
+                return;
+            }
+            
+            if (isValidRevision(copyFromRevision[0])) {
+                maybeCropAndSendSegment(myLastPath, myStartRevision, logEntry.getRevision(), myRangeEnd, myHandler);
+                myRangeEnd = logEntry.getRevision() - 1;
+                if (logEntry.getRevision() - copyFromRevision[0] > 1) {
+                    maybeCropAndSendSegment(null, myStartRevision, copyFromRevision[0] + 1, myRangeEnd, myHandler);
+                    myRangeEnd = copyFromRevision[0];
+                }
+                myLastPath = prevPath;
+            }
+        }    
+
+        public void maybeCropAndSendSegment(String path, long startRevision, long rangeStart, long rangeEnd, 
+                ISVNLocationSegmentHandler handler) throws SVNException {
+            long segmentRangeStart = rangeStart;
+            long segmentRangeEnd = rangeEnd;
+            if (segmentRangeStart <= startRevision) {
+                if (segmentRangeEnd > startRevision) {
+                    segmentRangeEnd = startRevision;
+                }
+                if (handler != null) {
+                    handler.handleLocationSegment(new SVNLocationSegment(segmentRangeStart, segmentRangeEnd, path));
+                    myCount += segmentRangeEnd - segmentRangeStart + 1;
+                }
+            }
+        }
+
+    }
+    
+    private static class LocationsLogHandler implements ISVNLogEntryHandler {
+        String myLastPath;
+        String myPegPath;
+        SVNNodeKind myNodeKind;
+        long myPegRevision;
+        long[] myRevisions;
+        int myRevisionsCount;
+        ISVNLocationEntryHandler myLocationsHandler;
+        LinkedList myProcessedRevisions;
+        
+        public LocationsLogHandler(long[] revisions, SVNNodeKind kind, String lastPath, long pegRevision) {
+            myRevisionsCount = revisions.length;
+            myRevisions = revisions;
+            myNodeKind = kind;
+            myLastPath = lastPath;
+            myPegRevision = pegRevision;
+            myProcessedRevisions = new LinkedList();
+        }
+        
+        public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
+            if (logEntry.getChangedPaths() == null) {
+                return;
+            }
+            
+            String currentPath = myLastPath;
+            if (currentPath == null) {
+                return;
+            }
+        
+            if (myPegPath == null && logEntry.getRevision() <= myPegRevision) {
+                myPegPath = currentPath;
+            }
+            
+            while (myRevisionsCount > 0) {
+                long nextRev = myRevisions[myRevisionsCount - 1];
+                if (logEntry.getRevision() <= nextRev) {
+                    if (myLocationsHandler != null) {
+                        myLocationsHandler.handleLocationEntry(new SVNLocationEntry(nextRev, currentPath));
+                        myProcessedRevisions.add(new Long(nextRev));
+                    }
+                    myRevisionsCount--;
+                } else {
+                    break;
+                }
+            }
+            
+            String prevPath = getPreviousLogPath(null, null, logEntry.getChangedPaths(), currentPath, 
+                    myNodeKind, logEntry.getRevision());
+            if (prevPath == null) {
+                myLastPath = null;
+            } else if (!prevPath.equals(currentPath)) {
+                myLastPath = prevPath;
+            }
+        }
+    }
+    
+    private static class Revision {
+        String myPath;
+        long myRevision;
+        SVNProperties myProperties;
+    }
 }

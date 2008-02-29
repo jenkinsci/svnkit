@@ -251,7 +251,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         }
     }
 
-    public int getLocations(String path, long pegRevision, long[] revisions, ISVNLocationEntryHandler handler) throws SVNException {
+    protected int getLocationsImpl(String path, long pegRevision, long[] revisions, ISVNLocationEntryHandler handler) throws SVNException {
         assertValidRevision(pegRevision);
         for (int i = 0; i < revisions.length; i++) {
             assertValidRevision(revisions[i]);
@@ -295,7 +295,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         return count;
     }
 
-    public long getLocationSegments(String path, long pegRevision, long startRevision, long endRevision, ISVNLocationSegmentHandler handler) throws SVNException {
+    protected long getLocationSegmentsImpl(String path, long pegRevision, long startRevision, long endRevision, ISVNLocationSegmentHandler handler) throws SVNException {
         long count = 0;
         try {
             openConnection();
@@ -570,7 +570,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         return parentEntry;
     }
 
-    public int getFileRevisions(String path, long startRevision, long endRevision, boolean includeMergedRevisions,
+    protected int getFileRevisionsImpl(String path, long startRevision, long endRevision, boolean includeMergedRevisions,
                                 ISVNFileRevisionHandler handler) throws SVNException {
         Long srev = getRevisionObject(startRevision);
         Long erev = getRevisionObject(endRevision);
@@ -665,11 +665,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         return -1;
     }
 
-    public int getFileRevisions(String path, long sRevision, long eRevision, ISVNFileRevisionHandler handler) throws SVNException {
-        return getFileRevisions(path, sRevision, eRevision, false, handler);
-    }
-
-    public long log(String[] targetPaths, long startRevision, long endRevision,
+    protected long logImpl(String[] targetPaths, long startRevision, long endRevision,
                     boolean changedPaths, boolean strictNode, long limit,
                     boolean includeMergedRevisions, String[] revisionPropertyNames,
                     ISVNLogEntryHandler handler) throws SVNException {

@@ -46,6 +46,7 @@ import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
  */
 public class FSFileRevisionsFinder {
     private FSFS myFSFS;
+    private SVNDeltaGenerator myDeltaGenerator;
     
     public FSFileRevisionsFinder(FSFS fsfs) {
         myFSFS = fsfs;
@@ -130,7 +131,7 @@ public class FSFileRevisionsFinder {
                                 myFSFS);
                     }
                     targetStream = root.getFileStreamForPath(targetCombiner, pathRevision.getPath());
-                    SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
+                    SVNDeltaGenerator deltaGenerator = getDeltaGenerator();
                     deltaGenerator.sendDelta(pathRevision.getPath(), sourceStream, 0, targetStream, handler, 
                             false);
                 } finally {
@@ -145,6 +146,13 @@ public class FSFileRevisionsFinder {
         sendBaton.myLastRoot = root;
         sendBaton.myLastPath = pathRevision.getPath();
         sendBaton.myLastProps = props;
+    }
+    
+    private SVNDeltaGenerator getDeltaGenerator() {
+        if (myDeltaGenerator == null) {
+            myDeltaGenerator = new SVNDeltaGenerator();
+        }
+        return myDeltaGenerator;
     }
     
     private LinkedList findMergedRevisions(LinkedList mainLinePathRevisions, Map duplicatePathRevs) throws SVNException {

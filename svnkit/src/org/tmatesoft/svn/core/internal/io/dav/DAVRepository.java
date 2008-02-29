@@ -525,19 +525,16 @@ public class DAVRepository extends SVNRepository {
         return parent[0];
     }
 
-    public int getFileRevisions(String path, long startRevision, long endRevision, 
-                                boolean includeMergedRevisions, ISVNFileRevisionHandler handler) throws SVNException {
+    protected int getFileRevisionsImpl(String path, long startRevision, long endRevision, 
+            boolean includeMergedRevisions, ISVNFileRevisionHandler handler) throws SVNException {
         String bcPath = getLocation().getPath();
         bcPath = SVNEncodingUtil.uriEncode(bcPath);
         try {
             openConnection();
             path = "".equals(path) ? "" : doGetRepositoryPath(path);
             DAVFileRevisionHandler davHandler = new DAVFileRevisionHandler(handler);
-            StringBuffer request = DAVFileRevisionHandler.generateFileRevisionsRequest(null, 
-                                                                                       startRevision, 
-                                                                                       endRevision, 
-                                                                                       path, 
-                                                                                       includeMergedRevisions);
+            StringBuffer request = DAVFileRevisionHandler.generateFileRevisionsRequest(null, startRevision, 
+                    endRevision, path, includeMergedRevisions);
             long revision = -1;
             if (isValidRevision(startRevision) && isValidRevision(endRevision)) {
                 revision = Math.max(startRevision, endRevision);                
@@ -561,12 +558,8 @@ public class DAVRepository extends SVNRepository {
         }
     }
     
-    public int getFileRevisions(String path, long startRevision, long endRevision, ISVNFileRevisionHandler handler) throws SVNException {
-        return getFileRevisions(path, startRevision, endRevision, false, handler);
-    }
-    
     //TODO: FIXME
-    public long log(String[] targetPaths, long startRevision, long endRevision, 
+    protected long logImpl(String[] targetPaths, long startRevision, long endRevision, 
                     boolean changedPath, boolean strictNode, long limit, 
                     boolean includeMergedRevisions, String[] revPropNames, 
                     final ISVNLogEntryHandler handler) throws SVNException {
@@ -649,7 +642,7 @@ public class DAVRepository extends SVNRepository {
         fireConnectionClosed();
     }
     
-    public int getLocations(String path, long pegRevision, long[] revisions, ISVNLocationEntryHandler handler) throws SVNException {
+    protected int getLocationsImpl(String path, long pegRevision, long[] revisions, ISVNLocationEntryHandler handler) throws SVNException {
         try {
             openConnection();
             if (path.startsWith("/")) {
@@ -682,7 +675,7 @@ public class DAVRepository extends SVNRepository {
         }
     }
 
-    public long getLocationSegments(String path, long pegRevision, long startRevision, long endRevision, ISVNLocationSegmentHandler handler) throws SVNException {
+    protected long getLocationSegmentsImpl(String path, long pegRevision, long startRevision, long endRevision, ISVNLocationSegmentHandler handler) throws SVNException {
         try {
             openConnection();
             if (path.startsWith("/")) {
