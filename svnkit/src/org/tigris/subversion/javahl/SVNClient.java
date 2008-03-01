@@ -478,8 +478,8 @@ public class SVNClient implements SVNClientInterface {
     }
 
 
-    public void mergeReintegrate(String path, Revision pegRevision, String localPath, boolean force, boolean dryRun) throws ClientException {
-        myDelegate.mergeReintegrate(path, pegRevision, localPath, force, dryRun);
+    public void mergeReintegrate(String path, Revision pegRevision, String localPath, boolean dryRun) throws ClientException {
+        myDelegate.mergeReintegrate(path, pegRevision, localPath, dryRun);
     }
 
     public void info2(String pathOrUrl, Revision revision,
