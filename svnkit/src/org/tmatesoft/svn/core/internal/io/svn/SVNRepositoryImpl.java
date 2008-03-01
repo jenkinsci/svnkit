@@ -1544,16 +1544,17 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     }
 
 	public boolean hasCapability(SVNCapability capability) throws SVNException {
+	    if (capability == null) {
+	        return false;
+	    }
 		try {
         	openConnection();
-        	if (capability != null) {
-            	return myConnection.hasCapability(capability.toString());
-        	}
-        	return false;
+        	return myConnection.hasCapability(capability.toString());
         } catch (SVNException e) {
-            closeConnection();
             closeSession();
             throw e;
+        } finally {
+            closeConnection();
         }
 	}
 
