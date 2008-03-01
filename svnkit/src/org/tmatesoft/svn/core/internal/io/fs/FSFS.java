@@ -273,12 +273,13 @@ public class FSFS {
             if (spaceIndex > 0) {
                 return Long.parseLong(line.substring(0, spaceIndex));
             }
+            return Long.parseLong(line);
         } catch (NumberFormatException nfe) {
             //
         } finally {
             file.close();
         }
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Can''t parse revision number in file ''{0}''", file); 
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Can''t parse revision number in file ''{0}''", getCurrentFile()); 
         SVNErrorManager.error(err);
         return - 1;
     }

@@ -674,7 +674,7 @@ public class SVNAdminClient extends SVNBasicClient {
         try {
             dump(fsfs, dumpStream, lowerR, upperR, isIncremental, useDeltas);
         } catch (IOException ioe) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getMessage());
             SVNErrorManager.error(err, ioe);
         }
     }
