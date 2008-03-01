@@ -303,13 +303,13 @@ public class SVNMergeCallback extends AbstractDiffCallback {
             if (diff != null && !diff.isEmpty()) {
                 result[1] = SVNStatusType.CHANGED;
             }
-        } else if (fileType == SVNFileType.DIRECTORY || fileType == SVNFileType.SYMLINK) {
+        } else if (fileType == SVNFileType.DIRECTORY) {
             if (myIsDryRun && isPathDeleted(path)){
                 result[0] = SVNStatusType.CHANGED;
             } else { 
                 result[0] = SVNStatusType.OBSTRUCTED;
             }
-        } else if (fileType == SVNFileType.FILE) {
+        } else if (fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) {
             SVNEntry entry = getWCAccess().getEntry(mergedFile, false);
             if (entry == null || entry.isScheduledForDeletion()) {
                 result[0] = SVNStatusType.OBSTRUCTED;

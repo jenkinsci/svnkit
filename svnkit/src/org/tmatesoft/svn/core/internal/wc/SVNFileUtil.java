@@ -404,7 +404,7 @@ public class SVNFileUtil {
             return;
         }
         File tmpDst = dst;
-        if (dst.exists()) {
+        if (SVNFileType.getType(dst) != SVNFileType.NONE) {
             if (safe) {
                 tmpDst = createUniqueFile(dst.getParentFile(), ".copy", ".tmp");
             } else {

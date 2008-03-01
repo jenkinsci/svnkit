@@ -517,7 +517,7 @@ public class SVNDiffEditor implements ISVNEditor {
             SVNFileType fileType = SVNFileType.getType(file);
             if (fileType == SVNFileType.DIRECTORY) {
                 diffUnversioned(file, null, SVNPathUtil.append(parentRelativePath, file.getName()), false, null);
-            } else if (fileType == SVNFileType.FILE) {
+            } else if (fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) {
                 String mimeType1 = null;
                 String mimeType2 = SVNFileUtil.detectMimeType(file);
                 String filePath = SVNPathUtil.append(parentRelativePath, file.getName());
