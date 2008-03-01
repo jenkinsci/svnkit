@@ -462,6 +462,10 @@ public abstract class SVNRepositoryFactory {
                     SVNErrorManager.error(err);
                 }
             }
+            if (fsFormat >= FSFS.MIN_PROTOREVS_DIR_FORMAT) {
+                File protoRevsDir = new File(path, "db/txn-protorevs");
+                protoRevsDir.mkdirs();
+            }
 
             // set creation date.
             File rev0File = new File(path, maxFilesPerDir > 0 ? "db/revprops/0/0" : "db/revprops/0");
