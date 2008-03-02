@@ -963,7 +963,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 }
             }
         } else {
-            if (magicPropsChanged && workingFile.exists()) {
+            if (magicPropsChanged && (workingFile.exists() || SVNFileType.getType(workingFile) == SVNFileType.SYMLINK)) {
                 // only props were changed, but we have to retranslate file.
                 // only if wc file exists (may be locally deleted), otherwise no
                 // need to retranslate...

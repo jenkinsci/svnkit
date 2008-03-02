@@ -112,7 +112,7 @@ public class SVNTranslator {
             return;
         }
         if (special) {
-            if (dst.exists()) {
+            if (SVNFileType.getType(dst) != SVNFileType.NONE) {
                 dst.delete();
             }
             if (SVNFileUtil.isWindows) {

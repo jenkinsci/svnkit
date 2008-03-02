@@ -489,17 +489,20 @@ public class SVNFileUtil {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create symbolic link ''{0}''; file already exists", link);
             SVNErrorManager.error(err);
         }
-        String linkTarget = "";
+        String fileContents = "";
         try {
-            linkTarget = readSingleLine(linkName);
+            fileContents = readSingleLine(linkName);
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
             SVNErrorManager.error(err, e);
         }
-        if (linkTarget.startsWith("link")) {
-            linkTarget = linkTarget.substring("link".length()).trim();
+        if (fileContents.startsWith("link ")) {
+            fileContents = fileContents.substring("link".length()).trim();
+            return createSymlink(link, fileContents);
         }
-        return createSymlink(link, linkTarget);
+        //create file using internal representation
+        createFile(link, fileContents);
+        return true;
     }
 
     public static boolean createSymlink(File link, String linkName) {
