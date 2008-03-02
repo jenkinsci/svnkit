@@ -376,18 +376,4 @@ public class SVNCommandUtil {
             return myError;
         }
     }
-
-    private static class PromptEraserThread implements Runnable {
-    	volatile boolean myIsErase;
-    	
-    	public PromptEraserThread() {
-    		myIsErase = true;
-    	}
-
-		public void run() {
-			while (myIsErase) {
-				System.out.print('\b');
-			}
-		}
-    }
 }

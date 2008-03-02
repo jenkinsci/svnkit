@@ -108,6 +108,7 @@ doc/wiki/main.vm -text
 doc/wiki/repository_tree.png -text
 doc/wiki/svnkit_architecture.png -text
 doc/wiki/svnrepository_connection.png -text
+svnkit-cli/src/org/tmatesoft/svn/cli2/SVNCommandDaemon.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svn/DefaultSVNCommandLineDiffGenerator.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svn/SVNCommandLineConflictHandler.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svn/SVNConflictAcceptPolicy.java -text
