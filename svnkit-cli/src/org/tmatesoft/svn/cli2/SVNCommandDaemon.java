@@ -15,8 +15,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.Permission;
 
 import org.tmatesoft.svn.cli2.svn.SVN;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
@@ -44,6 +47,15 @@ public class SVNCommandDaemon implements Runnable {
         if (port <= 0) {
             port = 1729;
         }
+        
+        System.setSecurityManager(new SecurityManager() {
+            public void checkExit(int status) { 
+                throw new ExitException(status);
+            }
+            
+            public void checkPermission(Permission perm, Object context) {}
+            public void checkPermission(Permission perm) {}
+        });
         
         SVNRepositoryFactoryImpl.setup();
         DAVRepositoryFactory.setup();
@@ -81,26 +93,47 @@ public class SVNCommandDaemon implements Runnable {
                 continue;
             }
             String commandLine = null;
+            OutputStream os = null;
             try {
                 InputStream is = socket.getInputStream();
+                os = socket.getOutputStream();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
                 commandLine = reader.readLine();
             } catch (IOException e) {
                 e.printStackTrace();
                 continue;
             }
+            System.err.println("running: " + commandLine);            
             String[] args = commandLine.split(" ");
             try {
+                System.setOut(new PrintStream(os));
                 SVN.main(args);
+            } catch (ExitException e) {
+                System.err.println("exit code: " + e.getCode());
             } catch (Throwable th) {
                 th.printStackTrace();
             } finally {
+                try {
+                    os.close();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
                 try {
                     socket.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
+        }
+    }
+    private static class ExitException extends RuntimeException {
+        private int myCode;
+
+        public ExitException(int code) {
+            myCode = code;
+        }
+        public int getCode() {
+            return myCode;
         }
     }
 }
