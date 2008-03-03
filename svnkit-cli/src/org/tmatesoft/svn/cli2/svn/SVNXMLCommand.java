@@ -14,13 +14,12 @@ package org.tmatesoft.svn.cli2.svn;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
-import java.io.UnsupportedEncodingException;
 
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
-import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.internal.util.SVNBase64;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 
 /**

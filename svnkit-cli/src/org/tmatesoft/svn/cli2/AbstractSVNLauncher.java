@@ -30,6 +30,8 @@ public abstract class AbstractSVNLauncher {
     private static volatile boolean ourIsCompleted;
 
     protected void run(String[] args) {
+        ourIsCompleted = false;
+        
         if (needArgs() && (args == null || args.length < 1)) {
             printBasicUsage();
             failure();
@@ -57,22 +59,29 @@ public abstract class AbstractSVNLauncher {
             } catch (SVNException e) {
                 handleError(e);
                 if (e instanceof SVNCancelException || e instanceof SVNAuthenticationException) {
+                    env.dispose();
                     failure();
                     return;
                 }
                 printBasicUsage();
+                env.dispose();
                 failure();
                 return;
             }
     
             env.initClientManager();
             if (!env.run()) {
+                env.dispose();
                 failure();
                 return;
             }
+            env.dispose();
             success();
         } catch (Throwable th) {
             th.printStackTrace();
+            if (env != null) {
+                env.dispose();
+            }
             failure();
         } finally {
             setCompleted();

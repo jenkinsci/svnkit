@@ -195,6 +195,13 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
         });
     }
     
+    public void dispose() {
+        if (myClientManager != null) {
+            myClientManager.dispose();
+            myClientManager = null;
+        }
+    }
+    
     public List combineTargets(Collection targets, boolean warnReserved) throws SVNException {
         List result = new LinkedList();
         result.addAll(getArguments());

@@ -41,6 +41,7 @@ import org.tmatesoft.svn.util.SVNDebugLog;
 public class SVNCommandDaemon implements Runnable {
 
     private int myPort;
+    private SecurityManager myDefaultSecurityManager;
 
     public static void main(String[] args) {
         int port = -1;
@@ -55,16 +56,6 @@ public class SVNCommandDaemon implements Runnable {
             port = 1729;
         }
         
-        System.setSecurityManager(new SecurityManager() {
-            public void checkExit(int status) {
-                super.checkExit(status);
-                throw new ExitException(status);
-            }
-            
-            public void checkPermission(Permission perm, Object context) {}
-            public void checkPermission(Permission perm) {}
-        });
-        
         SVNRepositoryFactoryImpl.setup();
         DAVRepositoryFactory.setup();
         FSRepositoryFactory.setup();
@@ -78,6 +69,21 @@ public class SVNCommandDaemon implements Runnable {
     
     private SVNCommandDaemon(int port) {
         myPort = port;
+        myDefaultSecurityManager = System.getSecurityManager();
+        System.setSecurityManager(new SecurityManager() {
+            public void checkExit(int status) {
+                super.checkExit(status);
+                throw new ExitException(status);
+            }
+            
+            public void checkPermission(Permission perm, Object context) {}
+            public void checkPermission(Permission perm) {}
+        });
+    }
+    
+    private void shutdown() {
+        System.setSecurityManager(myDefaultSecurityManager);
+        System.exit(0);
     }
 
     public void run() {
@@ -118,6 +124,9 @@ public class SVNCommandDaemon implements Runnable {
                     String line = reader.readLine();
                     if (line == null || "".equals(line.trim())) {
                         break;
+                    } else if ("SHUTDOWN".equals(line.trim()) && "".equals(input)) {
+                        shutdown();
+                        return;
                     }
                     if (!"".equals(input)) {
                         input += "\n";
