@@ -166,7 +166,7 @@ class SVNConnection {
     
     public void authenticate(SVNRepositoryImpl repository) throws SVNException {
         SVNErrorMessage failureReason = null;
-        List items = read("lc", null, true);
+        List items = read("ls", null, true);
         List mechs = SVNReader.getList(items, 0);
         myRealm = SVNReader.getString(items, 1);
         if (mechs == null || mechs.size() == 0) {
@@ -207,7 +207,7 @@ class SVNConnection {
                 write("(w())", new Object[]{"CRAM-MD5"});
                 while (true) {
                     authenticator.setUserCredentials(auth);
-                    items = readTuple("w(?c)", true);
+                    items = readTuple("w(?s)", true);
                     String status = SVNReader.getString(items, 0);
                     if (SUCCESS.equals(status)) {
                         authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.PASSWORD, realm, null, auth);
@@ -261,7 +261,7 @@ class SVNConnection {
         if (myIsCredentialsReceived) {
             return;
         }
-        List creds = read("c?c", null, true);
+        List creds = read("s?s", null, true);
         myIsCredentialsReceived = true;
         if (creds != null && creds.size() == 2 && creds.get(0) != null && creds.get(1) != null) {
             SVNURL rootURL = creds.get(1) != null ? SVNURL.parseURIEncoded(SVNReader.getString(creds, 1)) : null;
@@ -281,7 +281,7 @@ class SVNConnection {
     }
 
     private SVNErrorMessage readAuthResponse() throws SVNException {
-        List items = readTuple("w(?c)", true);
+        List items = readTuple("w(?s)", true);
         if (SUCCESS.equals(SVNReader.getString(items, 0))) {
             return null;
         } else if (FAILURE.equals(SVNReader.getString(items, 0))) {

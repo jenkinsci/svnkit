@@ -203,7 +203,7 @@ class SVNCommitEditor implements ISVNEditor {
 
             myRepository.authenticate();
 
-            List items = myConnection.readTuple("r(?c)(?c)?(?c)", true);
+            List items = myConnection.readTuple("r(?s)(?s)?(?s)", true);
             long revision = SVNReader.getLong(items, 0);
             Date date = SVNReader.getDate(items, 1);
             String author = SVNReader.getString(items, 2);

@@ -22,7 +22,7 @@ import java.util.Iterator;
  */
 public class SVNItem {
     public static final int WORD = 0;
-    public static final int STRING = 1;
+    public static final int BYTES = 1;
     public static final int LIST = 2;
     public static final int NUMBER = 3;
 
@@ -57,7 +57,7 @@ public class SVNItem {
         myWord = word;
     }
 
-    public byte[] getLine() {
+    public byte[] getBytes() {
         return myLine;
     }
 
@@ -77,7 +77,7 @@ public class SVNItem {
         StringBuffer result = new StringBuffer();
         if (myKind == WORD) {
             result.append("W").append(myWord);
-        } else if (myKind == STRING) {
+        } else if (myKind == BYTES) {
             result.append("S").append(myLine.length).append(":");
             try {
                 result.append(new String(myLine, "UTF-8"));
@@ -106,14 +106,14 @@ public class SVNItem {
         if (o instanceof String) {
             if (myKind == WORD) {
                 return myWord.equals(o);
-            } else if (myKind == STRING) {
+            } else if (myKind == BYTES) {
                 return myLine.equals(o);
             }
             return false;
         } else if (o instanceof byte[]) {
             if (myKind == WORD) {
                 return myWord.getBytes().equals(o);
-            } else if (myKind == STRING) {
+            } else if (myKind == BYTES) {
                 return myLine.equals(o);
             }
             return false;
