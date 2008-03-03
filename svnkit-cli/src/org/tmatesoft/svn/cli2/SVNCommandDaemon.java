@@ -56,6 +56,7 @@ public class SVNCommandDaemon implements Runnable {
         System.setSecurityManager(new SecurityManager() {
             public void checkExit(int status) {
                 super.checkExit(status);
+                System.out.println("exit status in checkExit is " + status);
                 throw new ExitException(status);
             }
             
@@ -151,7 +152,7 @@ public class SVNCommandDaemon implements Runnable {
             try {
                 System.setProperty("user.dir", userDir);
                 System.setOut(commandOut);
-                System.setOut(commandErr);
+                System.setErr(commandErr);
                 if ("svn".equals(commandName)) {
                     SVN.main(commandArgs);
                 } else if ("svnadmin".equals(commandName)) {
