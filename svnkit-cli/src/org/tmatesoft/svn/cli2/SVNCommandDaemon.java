@@ -22,8 +22,11 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.Permission;
 
+import org.tmatesoft.svn.cli.SVNSync;
 import org.tmatesoft.svn.cli2.svn.SVN;
 import org.tmatesoft.svn.cli2.svnadmin.SVNAdmin;
+import org.tmatesoft.svn.cli2.svnlook.SVNLook;
+import org.tmatesoft.svn.cli2.svnversion.SVNVersion;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
@@ -51,7 +54,8 @@ public class SVNCommandDaemon implements Runnable {
         }
         
         System.setSecurityManager(new SecurityManager() {
-            public void checkExit(int status) { 
+            public void checkExit(int status) {
+                super.checkExit(status);
                 throw new ExitException(status);
             }
             
@@ -112,12 +116,22 @@ public class SVNCommandDaemon implements Runnable {
                     input += line;
                 }
             } catch (IOException e) {
+                try {
+                    socket.close();
+                } catch (IOException inner) {
+                    e.printStackTrace();
+                }
                 continue;
             }
             System.err.println("running: " + input);            
             String[] args = input.split("\n");
             if (args.length < 2) {
                 System.err.println("insufficient number of arguments");
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 continue;
             }
             String userDir = args[0];
@@ -132,7 +146,7 @@ public class SVNCommandDaemon implements Runnable {
             ByteArrayOutputStream commandOutData = new ByteArrayOutputStream();
             ByteArrayOutputStream commandErrData = new ByteArrayOutputStream();
             PrintStream commandOut = new PrintStream(commandOutData);
-            PrintStream commandErr = new PrintStream(commandOutData);
+            PrintStream commandErr = new PrintStream(commandErrData);
             int rc = 0;
             try {
                 System.setProperty("user.dir", userDir);
@@ -142,34 +156,44 @@ public class SVNCommandDaemon implements Runnable {
                     SVN.main(commandArgs);
                 } else if ("svnadmin".equals(commandName)) {
                     SVNAdmin.main(commandArgs);
+                } else if ("svnlook".equals(commandName)) {
+                    SVNLook.main(commandArgs);
+                } else if ("svnversion".equals(commandName)) {
+                    SVNVersion.main(commandArgs);
+                } else if ("svnsync".equals(commandName)) {
+                    SVNSync.main(commandArgs);
                 }
             } catch (ExitException e) {
                 rc = e.getCode();
-                System.err.println("exit code: " + rc);
             } catch (Throwable th) {
-                th.printStackTrace();
-                rc = 1;
+//                th.printStackTrace();
+//                rc = 1;
             } finally {
                 System.setProperty("user.dir", oldUserDir);
                 System.setOut(oldOut);
                 System.setErr(oldErr);
 
                 // send output to the user!
+                System.err.println("exit code: " + rc);
                 try {
                     commandOut.flush();
                     commandOutData.flush();
                     commandErr.flush();
                     commandErrData.flush();
                     os.write(commandOutData.toByteArray());
-                    os.write(new byte[] {'$', '$', '$'});
+                    os.write(new byte[] {
+                            '$', '$', '$'
+                    });
                     os.write(commandErrData.toByteArray());
-                    os.write(new byte[] {'$', '$', '$'});
+                    os.write(new byte[] {
+                            '$', '$', '$'
+                    });
                     os.write(Integer.toString(rc).getBytes());
                     os.flush();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                
+
                 try {
                     os.close();
                 } catch (IOException e1) {
@@ -184,7 +208,7 @@ public class SVNCommandDaemon implements Runnable {
         }
     }
     
-    private static class ExitException extends RuntimeException {
+    private static class ExitException extends SecurityException {
         private int myCode;
 
         public ExitException(int code) {
