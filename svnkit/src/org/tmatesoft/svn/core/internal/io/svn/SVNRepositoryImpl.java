@@ -223,7 +223,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             openConnection();
             write("(w(ns))", buffer);
             authenticate();
-            values = read("(?b)", null, true);
+            values = read("(?b)", null, false);
         } catch (SVNException e) {
             closeSession();
             throw e;
