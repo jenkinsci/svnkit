@@ -30,6 +30,8 @@ import org.tmatesoft.svn.cli2.svnversion.SVNVersion;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
+import org.tmatesoft.svn.util.ISVNDebugLog;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 
 /**
@@ -56,7 +58,6 @@ public class SVNCommandDaemon implements Runnable {
         System.setSecurityManager(new SecurityManager() {
             public void checkExit(int status) {
                 super.checkExit(status);
-                System.out.println("exit status in checkExit is " + status);
                 throw new ExitException(status);
             }
             
@@ -80,13 +81,17 @@ public class SVNCommandDaemon implements Runnable {
     }
 
     public void run() {
+        ISVNDebugLog log = SVNDebugLog.getDefaultLog();
         ServerSocket serverSocket = null;
         try {
             serverSocket = new ServerSocket(myPort);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("cannot create server socket at port " + myPort);
+            log.error(e);
+            return;
         }
         if (serverSocket == null) {
+            log.error("cannot create server socket at port " + myPort);
             return;
         }
         while(true) {
@@ -94,9 +99,12 @@ public class SVNCommandDaemon implements Runnable {
             try {
                 socket = serverSocket.accept();
             } catch (IOException e) {
-                e.printStackTrace();
+                log.error("cannot accept connection");
+                log.error(e);
+                continue;
             }
             if (socket == null) {
+                log.error("cannot accept connection");
                 continue;
             }
             OutputStream os = null;
@@ -117,21 +125,25 @@ public class SVNCommandDaemon implements Runnable {
                     input += line;
                 }
             } catch (IOException e) {
+                log.error("error reading input");
+                log.error(e);
                 try {
                     socket.close();
                 } catch (IOException inner) {
-                    e.printStackTrace();
+                    log.error("error closing client socket");
+                    log.error(inner);
                 }
                 continue;
             }
-            System.err.println("running: " + input);            
+            log.info("running: " + input);
             String[] args = input.split("\n");
             if (args.length < 2) {
-                System.err.println("insufficient number of arguments");
+                log.error("Insufficient number of arguments read, at least two needed");
                 try {
                     socket.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    log.error("error closing client socket");
+                    log.error(e);
                 }
                 continue;
             }
@@ -166,16 +178,18 @@ public class SVNCommandDaemon implements Runnable {
                 }
             } catch (ExitException e) {
                 rc = e.getCode();
+                log.error("command exit code: " + rc);
             } catch (Throwable th) {
-//                th.printStackTrace();
-//                rc = 1;
+                log.error("error running command");
+                log.error(th);
+                rc = 1;
             } finally {
                 System.setProperty("user.dir", oldUserDir);
                 System.setOut(oldOut);
                 System.setErr(oldErr);
 
                 // send output to the user!
-                System.err.println("exit code: " + rc);
+                log.error("command exit code: " + rc);
                 try {
                     commandOut.flush();
                     commandOutData.flush();
@@ -192,18 +206,21 @@ public class SVNCommandDaemon implements Runnable {
                     os.write(Integer.toString(rc).getBytes());
                     os.flush();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    log.error("error sending execution results");
+                    log.error(e);
                 }
 
                 try {
                     os.close();
-                } catch (IOException e1) {
-                    e1.printStackTrace();
+                } catch (IOException e) {
+                    log.error("error closing client stream");
+                    log.error(e);
                 }
                 try {
                     socket.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    log.error("error closing client socket");
+                    log.error(e);
                 }
             }
         }
