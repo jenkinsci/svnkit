@@ -11,12 +11,12 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -87,12 +87,15 @@ public class FSLog {
                 if (myIsDescending) {
                     rev = myEndRevision - i;
                 }
-                sendLogs(myPaths, rev, myIsIncludeMergedRevisions);
+                sendLog(rev, false);
             }
             
             return count;
         }
 
+        if (myIsIncludeMergedRevisions) {
+            return doMergedLogs(myPaths, myStartRevision, myEndRevision, myLimit, null, myIsDescending);
+        } 
         return doLogs();
     }
     
@@ -120,24 +123,26 @@ public class FSLog {
 
             if (changed) {
                 if (myIsDescending) {
-                    sendLogs(myPaths, currentRev, myIsIncludeMergedRevisions);
-                    if (myLimit > 0 && ++sendCount >= myLimit) {
+                    sendLog(currentRev, false);
+                    sendCount++;
+                    if (myLimit > 0 && sendCount >= myLimit) {
                         break;
                     }
                 } else {
                     if (revisions == null) {
                         revisions = new LinkedList();
                     }
-                    revisions.addFirst(new Long(currentRev));
+                    revisions.addLast(new Long(currentRev));
                 }
             }
         }
 
         if (revisions != null) {
-            for (ListIterator revs = revisions.listIterator(); revs.hasNext();) {
-                long nextRev = ((Long) revs.next()).longValue(); 
-                sendLogs(myPaths, nextRev, myIsIncludeMergedRevisions);
-                if (myLimit > 0 && ++sendCount >= myLimit) {
+            for (int i = 0; i < revisions.size(); i++) {
+                long rev = ((Long) revisions.get(revisions.size() - i - 1)).longValue();
+                sendLog(rev, false);
+                sendCount++;
+                if (myLimit > 0 && sendCount >= myLimit) {
                     break;
                 }
             }
@@ -159,48 +164,14 @@ public class FSLog {
         return nextRevision;
     }
 
-    private void sendLogs(String[] paths, long revision, boolean includeMergedRevisions) throws SVNException {
-
+    private void sendLog(long revision, boolean hasChildren) throws SVNException {
         SVNLogEntry logEntry = fillLogEntry(revision);
-
-        Map mergeInfo = null;
-        SVNMergeRangeList combinedRangeList = null;
-        if (includeMergedRevisions) {
-            mergeInfo = getMergedRevisionMergeInfo(paths, revision);
-            combinedRangeList = new SVNMergeRangeList(new SVNMergeRange[0]);
-            for (Iterator pathsIter = mergeInfo.keySet().iterator(); pathsIter.hasNext();) {
-                String path = (String) pathsIter.next();
-                SVNMergeRangeList rangeList = (SVNMergeRangeList) mergeInfo.get(path);
-                combinedRangeList = combinedRangeList.merge(rangeList);
-            }
-            if (combinedRangeList.countRevisions() != 0) {
-                logEntry.setHasChildren(true);
-            }
-        }
-
+        logEntry.setHasChildren(hasChildren);
         if (myHandler != null) {
             myHandler.handleLogEntry(logEntry);
         }
-        
-        if (logEntry.hasChildren()) {
-            FSRevisionRoot root = null;
-            long[] revs = combinedRangeList.toRevisionsArray();
-            for (int i = 0; i < revs.length; i++) {
-                long rev = revs[i];
-                String mergeSource = SVNMergeInfoUtil.findMergeSource(rev, mergeInfo);
-                root = myFSFS.createRevisionRoot(rev);
-                if (root.checkNodeKind(mergeSource) == SVNNodeKind.NONE) {
-                    continue;
-                }
-                
-                doMergedLog(mergeSource, rev);
-            }
-            if (myHandler != null) {
-                myHandler.handleLogEntry(SVNLogEntry.EMPTY_ENTRY);
-            }
-        }
     }
-    
+
     private SVNLogEntry fillLogEntry(long revision) throws SVNException {
         Map changedPaths = null;
         SVNProperties entryRevProps = null;
@@ -266,21 +237,76 @@ public class FSLog {
         return entry;
     }
     
-    private void doMergedLog(String path, long revision) throws SVNException {
-        String[] paths = new String[] {path};
-        PathInfo[] histories = getPathHistories(paths, revision, revision, 
-                                                true);
-        boolean changed = false;
-        for (int i = 0; i < histories.length; i++) {
-            PathInfo info = histories[i];
-            changed = info.checkHistory(revision, true, revision, changed);
+    private long doMergedLogs(String[] paths, long histStart, long histEnd, long limit, Map foundRevisions, 
+            boolean isDescendingOrder) throws SVNException {
+        boolean anyHistoriesLeft = true;
+        boolean mainLineRun = false;
+        boolean useLimit = true;
+        long sendCount = 0;
+        LinkedList revs = new LinkedList();
+        
+        if (foundRevisions == null) {
+            mainLineRun = true;
+            foundRevisions = new HashMap();
         }
-
-        if (changed) {
-            sendLogs(paths, revision, true);
+        
+        if (limit == 0) {
+            useLimit = false;
         }
+        
+        PathInfo[] histories = getPathHistories(paths, 0, histEnd, myIsStrictNode);
+        for (long current = histEnd; anyHistoriesLeft; current = getNextHistoryRevision(histories)) {
+            boolean changed = false;
+            anyHistoriesLeft = false;
+            if (!mainLineRun && foundRevisions.get(new Long(current)) != null) {
+                break;
+            }
+            for (int i = 0; i < histories.length; i++) {
+                PathInfo info = histories[i];
+                changed = info.checkHistory(current, myIsStrictNode, 0, changed);
+                if (!info.myIsDone) {
+                    anyHistoriesLeft = true;
+                }
+            }
+            if (changed) {
+                String[] currentPaths = new String[histories.length];
+                for (int i = 0; i < histories.length; i++) {
+                    PathInfo info = histories[i];
+                    currentPaths[i] = info.myPath;
+                }                
+                revs.add(new Long(current));
+                Map mergeInfo = getMergedRevisionMergeInfo(currentPaths, current);
+                foundRevisions.put(new Long(current), mergeInfo);
+            }
+        }
+        
+        for (int i = 0; i < revs.size() && !(useLimit && limit == 0); i++) {
+            Long rev = (Long) revs.get(isDescendingOrder ? i : revs.size() - i - 1);
+            Map mergeInfo = (Map) foundRevisions.get(rev);
+            boolean hasChildren = mergeInfo != null && !mergeInfo.isEmpty();
+            if (rev.longValue() < histStart) {
+                break;
+            }
+            
+            sendLog(rev.longValue(), hasChildren);
+            sendCount++;
+            
+            if (hasChildren) {
+                LinkedList combinedList = combineMergeInfoPathLists(mergeInfo);
+                for (int j = combinedList.size() - 1; j >= 0; j--) {
+                    PathListRange pathListRange = (PathListRange) combinedList.get(j);
+                    sendCount += doMergedLogs(pathListRange.myPaths, pathListRange.myRange.getStartRevision(), 
+                            pathListRange.myRange.getEndRevision(), 0, foundRevisions, true);
+                }
+                if (myHandler != null) {
+                    myHandler.handleLogEntry(SVNLogEntry.EMPTY_ENTRY);
+                }
+            }
+            limit--;
+        }
+        return sendCount;
     }
-    
+
     private PathInfo[] getPathHistories(String[] paths, long start, 
                                         long end, boolean strictNodeHistory) throws SVNException {
         PathInfo[] histories = new PathInfo[paths.length];
@@ -308,8 +334,8 @@ public class FSLog {
             return new TreeMap();
         }
         
-        Map currentMergeInfo = getCombinedMergeInfo(paths, revision, revision);  
-        Map previousMergeInfo = getCombinedMergeInfo(paths, revision - 1, revision);
+        Map currentMergeInfo = getCombinedMergeInfo(paths, revision);  
+        Map previousMergeInfo = getCombinedMergeInfo(paths, revision - 1);
         Map deleted = new TreeMap();
         Map changed = new TreeMap();
         SVNMergeInfoUtil.diffMergeInfo(deleted, changed, previousMergeInfo, currentMergeInfo, false);
@@ -317,24 +343,29 @@ public class FSLog {
         return changed;
     }
     
-    private Map getCombinedMergeInfo(String[] paths, long revision, long currentRevision) throws SVNException {
+    private Map getCombinedMergeInfo(String[] paths, long revision) throws SVNException {
         if (revision == 0) {
             return new TreeMap();
         }
         FSRevisionRoot root = myFSFS.createRevisionRoot(revision);
-        String[] queryPaths = paths;
-        if (revision != currentRevision) {
-            List existingPaths = new LinkedList();
-            for (int i = 0; i < paths.length; i++) {
-                String path = paths[i];
-                SVNNodeKind kind = root.checkNodeKind(path);
-                if (kind != SVNNodeKind.NONE) {
-                    existingPaths.add(path);
+
+        List existingPaths = new LinkedList();
+        for (int i = 0; i < paths.length; i++) {
+            String path = paths[i];
+            SVNNodeKind kind = root.checkNodeKind(path);
+            if (kind == SVNNodeKind.NONE) {
+                FSRevisionRoot revRoot = myFSFS.createRevisionRoot(revision + 1);
+                FSRevisionNode revNode = revRoot.getRevisionNode(path);
+                String copyPath = revNode.getCopyFromPath();
+                if (copyPath != null) {
+                    existingPaths.add(copyPath);
                 }
+            } else {
+                existingPaths.add(path);
             }
-            queryPaths = (String[]) existingPaths.toArray(new String[existingPaths.size()]);
         }
         
+        String[] queryPaths = (String[]) existingPaths.toArray(new String[existingPaths.size()]);
         SVNMergeInfoManager mergeInfoManager = getMergeInfoManager(); 
         Map treeMergeInfo = mergeInfoManager.getMergeInfo(queryPaths, root, SVNMergeInfoInheritance.INHERITED, 
                 true);
@@ -347,11 +378,70 @@ public class FSLog {
         return mergeInfoCatalog;
     }
 
+    private LinkedList combineMergeInfoPathLists(Map mergeInfo) throws SVNException {
+        SVNMergeRangeList rangeList = new SVNMergeRangeList(new SVNMergeRange[0]);
+        for (Iterator pathsIter = mergeInfo.keySet().iterator(); pathsIter.hasNext();) {
+            String path = (String) pathsIter.next();
+            SVNMergeRangeList changes = (SVNMergeRangeList) mergeInfo.get(path);
+            rangeList = rangeList.merge(changes);
+        }
+        
+        long[] revs = rangeList.toRevisionsArray();
+        List pathLists = new ArrayList(revs.length);
+        for (int i = 0; i < revs.length; i++) {
+            long rev = revs[i];
+            String[] paths = SVNMergeInfoUtil.findMergeSources(rev, mergeInfo);
+            pathLists.add(paths);
+        }
+        
+        LinkedList combinedList = new LinkedList();
+        PathListRange pathListRange = new PathListRange();
+        pathListRange.myPaths = (String[]) pathLists.get(0);
+        long rangeStart = revs[0];
+        long rangeEnd = SVNRepository.INVALID_REVISION;
+        int i = 1;
+        for (; i < revs.length; i++) {
+            String[] curPathList = (String[]) pathLists.get(i);
+            String[] prevPathList = (String[]) pathLists.get(i - 1);
+            if (!arePathListsEqual(curPathList, prevPathList)) {
+                rangeEnd = revs[i - 1];
+                pathListRange.myRange = new SVNMergeRange(rangeStart, rangeEnd, false);
+                combinedList.add(pathListRange);
+                pathListRange = new PathListRange();
+                pathListRange.myPaths = curPathList;
+                rangeStart = revs[i];
+            }
+        }
+        rangeEnd = revs[i - 1]; 
+        pathListRange.myRange = new SVNMergeRange(rangeStart, rangeEnd, false);
+        combinedList.add(pathListRange);
+        return combinedList;
+    }
+    
+    private boolean arePathListsEqual(String[] pathList1, String[] pathList2) {
+        if (pathList1.length != pathList2.length) {
+            return false;
+        }
+        for (int i = 0; i < pathList1.length; i++) {
+            String path1 = pathList1[i];
+            String path2 = pathList2[i];
+            if (!path1.equals(path2)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
     private SVNMergeInfoManager getMergeInfoManager() {
         if (myMergeInfoManager == null) {
             myMergeInfoManager = new SVNMergeInfoManager();
         }
         return myMergeInfoManager;
+    }
+    
+    private class PathListRange {
+        String myPaths[];
+        SVNMergeRange myRange;
     }
     
     private class PathInfo {

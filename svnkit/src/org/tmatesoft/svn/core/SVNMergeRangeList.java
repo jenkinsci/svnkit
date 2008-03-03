@@ -177,21 +177,6 @@ public class SVNMergeRangeList {
             }
         }
 
-        Collections.sort(revs, new Comparator() {
-            public int compare(Object o1, Object o2) {
-                Long rO1 = (Long) o1;
-                Long rO2 = (Long) o2;
-                
-                long r1 = rO1.longValue();
-                long r2 = rO2.longValue();
-                
-                if (r1 == r2) {
-                    return 0;
-                }
-                return r1 < r2 ? 1 : -1;
-            }
-        });
-        
         long[] revisionsArray = new long[revs.size()];
         int i = 0;
         for (Iterator revsIter = revs.iterator(); revsIter.hasNext();) {

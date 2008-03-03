@@ -283,7 +283,7 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
         }
         
         if (myMergeStack != null && !myMergeStack.isEmpty()) {
-            buffer.append("Result of a merge from:");
+            buffer.append("Merged via:");
             for (Iterator revs = myMergeStack.iterator(); revs.hasNext();) {
                 long rev = ((Long) revs.next()).longValue();
                 buffer.append(" r");

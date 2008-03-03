@@ -13,8 +13,8 @@
 package org.tmatesoft.svn.core;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -35,7 +35,7 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
  */
 public class SVNLogEntry implements Serializable {
     
-    public static SVNLogEntry EMPTY_ENTRY = new SVNLogEntry(new HashMap(), SVNRepository.INVALID_REVISION, 
+    public static SVNLogEntry EMPTY_ENTRY = new SVNLogEntry(Collections.EMPTY_MAP, SVNRepository.INVALID_REVISION, 
             null, false);
 
     private long myRevision;

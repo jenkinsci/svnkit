@@ -304,15 +304,16 @@ public class SVNMergeInfoUtil {
         return false;
     }
     
-    public static String findMergeSource(long revision, Map mergeInfo) {
+    public static String[] findMergeSources(long revision, Map mergeInfo) {
+        LinkedList mergeSources = new LinkedList();
         for (Iterator paths = mergeInfo.keySet().iterator(); paths.hasNext();) {
             String path = (String) paths.next();
             SVNMergeRangeList rangeList = (SVNMergeRangeList) mergeInfo.get(path);
             if (rangeList.includes(revision)) {
-                return path;
+                mergeSources.add(path);
             }
         }
-        return null;
+        return (String[]) mergeSources.toArray(new String[mergeSources.size()]);
     }
     
     public static Map getInheritableMergeInfo(Map mergeInfo, String path, long startRev, long endRev) {
