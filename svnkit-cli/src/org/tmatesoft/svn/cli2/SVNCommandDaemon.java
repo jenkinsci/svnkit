@@ -125,6 +125,19 @@ public class SVNCommandDaemon implements Runnable {
                     if (line == null || "".equals(line.trim())) {
                         break;
                     } else if ("SHUTDOWN".equals(line.trim()) && "".equals(input)) {
+                        try {
+                            os.write(("svnkit daemon shutted down on port " + myPort).getBytes());
+                            os.flush();
+                        } catch (IOException inner) {
+                            log.error("error writing shutdown response");
+                            log.error(inner);
+                        }
+                        try {
+                            socket.close();
+                        } catch (IOException inner) {
+                            log.error("error closing client socket");
+                            log.error(inner);
+                        }
                         shutdown();
                         return;
                     }
