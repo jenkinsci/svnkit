@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# collect arguments,
+# prepend them with command name and current directory
+
+args=`pwd`
+args+='\n%name%'
+
+for arg in "$@"
+do 
+    args+='\n'
+    args+=$arg
+done
+# add empty line
+args+='\n\n'
+
+# now send all that to the server
+
+exec 3<>/dev/tcp/localhost/%port%
+echo -e -n "$args">&3
+data=$(cat <&3)
+
+# process data with simple regexps
+
+data1=${data%%\$\$\$*\$\$\$*}
+data2=${data:${#data1}}
+rc=${data2##\$\$\$*\$\$\$}
+data2=${data2%\$\$\$[[:digit:]]}
+data2=${data2:3}
+
+echo -n "$data1"
+echo -n "$data2">&2
+exit $rc
