@@ -33,6 +33,7 @@ public abstract class AbstractSVNLauncher {
         if (needArgs() && (args == null || args.length < 1)) {
             printBasicUsage();
             failure();
+            return;
         }
         initRA();
         registerOptions();
@@ -45,6 +46,7 @@ public abstract class AbstractSVNLauncher {
             handleError(e);
             printBasicUsage();
             failure();
+            return;
         }
         AbstractSVNCommandEnvironment env = createCommandEnvironment();
         Runtime.getRuntime().addShutdownHook(new Thread(new Cancellator(env)));
@@ -56,14 +58,17 @@ public abstract class AbstractSVNLauncher {
                 handleError(e);
                 if (e instanceof SVNCancelException || e instanceof SVNAuthenticationException) {
                     failure();
+                    return;
                 }
                 printBasicUsage();
                 failure();
+                return;
             }
     
             env.initClientManager();
             if (!env.run()) {
                 failure();
+                return;
             }
             success();
         } catch (Throwable th) {
@@ -102,12 +107,20 @@ public abstract class AbstractSVNLauncher {
 
     public void failure() {
         setCompleted();
-        System.exit(1);
+        try {
+            System.exit(1);
+        } catch (SecurityException se) {
+            
+        }
     }
 
     public void success() {
         setCompleted();
-        System.exit(0);
+        try {
+            System.exit(0);
+        } catch (SecurityException se) {
+            
+        }
     }
     
     private void setCompleted() {
