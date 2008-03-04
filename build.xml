@@ -640,6 +640,11 @@
     			<exclude name="svn-test-work/**"/>
     		</fileset>
         </copy>
+    	<copy todir="${python.test.home}/python/cmdline/svntest">
+    		<fileset dir="svnkit-test/patch">
+    			<include name="**/**"/>
+    		</fileset>
+        </copy>
     	<copy todir="${python.test.home}">
     		<fileset dir="svnkit-test">
     			<include name="test.properties"/>

@@ -139,6 +139,7 @@ svnkit-test/apache/users eol=lf
 svnkit-test/daemon/template eol=lf
 svnkit-test/logging.cli.properties -text
 svnkit-test/logging.properties -text
+svnkit-test/patch/main.py -text
 svnkit-test/src/org/tmatesoft/svn/core/internal/io/fs/test/PropertyHandler.java -text
 svnkit-test/src/org/tmatesoft/svn/core/internal/io/fs/test/SVNRepositoryReplicationTest.java -text
 svnkit-test/src/org/tmatesoft/svn/core/test/SpecialTest.java -text
