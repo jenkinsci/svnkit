@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.cli2.svn;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -100,7 +101,16 @@ public class SVNPropGetCommand extends SVNPropertiesCommand {
                     getSVNEnvironment().getOut().print(buffer);
                     printXMLFooter("properties");
                 } else {
-                    getSVNEnvironment().getOut().print(propertyValue.getValue());
+                    if (propertyValue.getValue().isString()){
+                        getSVNEnvironment().getOut().print(propertyValue.getValue());
+                    } else {
+                        try {
+                            getSVNEnvironment().getOut().write(propertyValue.getValue().getBytes());
+                        } catch (IOException e) {
+                            //
+                        }
+                    }
+
                     if (!getSVNEnvironment().isStrict()) {
                         getSVNEnvironment().getOut().println();
                     }
