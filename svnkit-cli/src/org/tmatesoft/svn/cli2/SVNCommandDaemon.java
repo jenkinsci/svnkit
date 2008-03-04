@@ -132,6 +132,7 @@ public class SVNCommandDaemon implements Runnable {
                     if (b == '\n' && lastChar == '\n') {
                         break;
                     }
+                    lastChar = b;
                     buffer.write(b);
                 }
                 buffer.close();
