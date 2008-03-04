@@ -304,7 +304,7 @@ public class SVNAdminClient extends SVNBasicClient {
                 SVNErrorManager.error(err);
             }
 
-            String fromURLProp = toRepos.getRevisionStringPropertyValue(0, SVNRevisionProperty.FROM_URL);
+            SVNPropertyValue fromURLProp = toRepos.getRevisionPropertyValue(0, SVNRevisionProperty.FROM_URL);
             if (fromURLProp != null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Destination repository is already synchronizing from ''{0}''", fromURLProp);
                 SVNErrorManager.error(err);
@@ -397,11 +397,11 @@ public class SVNAdminClient extends SVNBasicClient {
             SessionInfo info = openSourceRepository(toRepos);
             SVNRepository fromRepos = info.myRepository;
             long lastMergedRevision = info.myLastMergedRevision;
-            String currentlyCopying = toRepos.getRevisionStringPropertyValue(0, SVNRevisionProperty.CURRENTLY_COPYING);
+            SVNPropertyValue currentlyCopying = toRepos.getRevisionPropertyValue(0, SVNRevisionProperty.CURRENTLY_COPYING);
             long toLatestRevision = toRepos.getLatestRevision();
 
             if (currentlyCopying != null) {
-                long copyingRev = Long.parseLong(currentlyCopying);
+                long copyingRev = Long.parseLong(currentlyCopying.getString());
                 if (copyingRev < lastMergedRevision || copyingRev > lastMergedRevision + 1 || (toLatestRevision != lastMergedRevision && toLatestRevision != copyingRev)) {
                     SVNErrorMessage err = SVNErrorMessage
                             .create(
@@ -1123,16 +1123,16 @@ public class SVNAdminClient extends SVNBasicClient {
     }
 
     private SessionInfo openSourceRepository(SVNRepository targetRepos) throws SVNException {
-        String fromURL = targetRepos.getRevisionStringPropertyValue(0, SVNRevisionProperty.FROM_URL);
-        String fromUUID = targetRepos.getRevisionStringPropertyValue(0, SVNRevisionProperty.FROM_UUID);
-        String lastMergedRev = targetRepos.getRevisionStringPropertyValue(0, SVNRevisionProperty.LAST_MERGED_REVISION);
+        SVNPropertyValue fromURL = targetRepos.getRevisionPropertyValue(0, SVNRevisionProperty.FROM_URL);
+        SVNPropertyValue fromUUID = targetRepos.getRevisionPropertyValue(0, SVNRevisionProperty.FROM_UUID);
+        SVNPropertyValue lastMergedRev = targetRepos.getRevisionPropertyValue(0, SVNRevisionProperty.LAST_MERGED_REVISION);
 
         if (fromURL == null || fromUUID == null || lastMergedRev == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Destination repository has not been initialized");
             SVNErrorManager.error(err);
         }
 
-        SVNURL srcURL = SVNURL.parseURIDecoded(fromURL);
+        SVNURL srcURL = SVNURL.parseURIDecoded(fromURL.getString());
         // TOOD close session.
         SVNRepository srcRepos = createRepository(srcURL, false);
 
@@ -1141,12 +1141,11 @@ public class SVNAdminClient extends SVNBasicClient {
         String reposUUID = srcRepos.getRepositoryUUID(true);
         if (!fromUUID.equals(reposUUID)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "UUID of destination repository ({0}) does not match expected UUID ({1})", new String[] {
-                    reposUUID, fromUUID
-            });
+                    reposUUID, fromUUID.getString()});
             SVNErrorManager.error(err);
         }
 
-        return new SessionInfo(srcRepos, Long.parseLong(lastMergedRev));
+        return new SessionInfo(srcRepos, Long.parseLong(lastMergedRev.getString()));
     }
 
     private void checkIfRepositoryIsAtRoot(SVNRepository repos, SVNURL url) throws SVNException {
@@ -1175,7 +1174,7 @@ public class SVNAdminClient extends SVNBasicClient {
         String lockToken = hostName + ":" + SVNUUIDGenerator.formatUUID(SVNUUIDGenerator.generateUUID());
         int i = 0;
         for (i = 0; i < 10; i++) {
-            String reposLockToken = repos.getRevisionStringPropertyValue(0, SVNRevisionProperty.LOCK);
+            SVNPropertyValue reposLockToken = repos.getRevisionPropertyValue(0, SVNRevisionProperty.LOCK);
             if (reposLockToken != null) {
                 if (reposLockToken.equals(lockToken)) {
                     return;

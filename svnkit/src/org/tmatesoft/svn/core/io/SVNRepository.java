@@ -502,11 +502,6 @@ public abstract class SVNRepository {
      *                          </ul>
      */
 
-    public String getRevisionStringPropertyValue(long revision, String propertyName) throws SVNException {
-        SVNPropertyValue value = getRevisionPropertyValue(revision, propertyName);
-        return value != null ? value.getString() : null;
-    }
-
     public abstract SVNPropertyValue getRevisionPropertyValue(long revision, String propertyName) throws SVNException;
     
     /**
