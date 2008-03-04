@@ -118,6 +118,7 @@ public class SVNCommandDaemon implements Runnable {
             InputStream is = null;
             // read all from the input stream until empty line is met.
             String input = "";
+            byte[] body = null;
             try {
                 is = socket.getInputStream();
                 os = socket.getOutputStream();
@@ -136,7 +137,24 @@ public class SVNCommandDaemon implements Runnable {
                     buffer.write(b);
                 }
                 buffer.close();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(buffer.toByteArray()), "UTF-8"));
+                byte[] header = buffer.toByteArray();
+                buffer = new ByteArrayOutputStream();
+                while(true) {
+                    int b = is.read();
+                    if (b < 0) {
+                        break;
+                    }
+                    if (b == '\0') {
+                        break;
+                    }
+                    buffer.write(b);
+                }
+                buffer.close();
+                body = buffer.toByteArray();
+                //log.info("header: " + new String(header));
+                //log.info("body: " + new String(body));
+
+                BufferedReader reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(header), "UTF-8"));
                 while(true) {
                     String line = reader.readLine();
                     if (line == null || "".equals(line.trim())) {
@@ -174,7 +192,7 @@ public class SVNCommandDaemon implements Runnable {
                 }
                 continue;
             }
-            log.info("running: " + input);
+            //log.info("running: " + input);
             String[] args = input.split("\n");
             if (args.length < 2) {
                 log.error("Insufficient number of arguments read, at least two needed");
@@ -205,7 +223,7 @@ public class SVNCommandDaemon implements Runnable {
                 System.setProperty("user.dir", userDir);
                 System.setOut(commandOut);
                 System.setErr(commandErr);
-                System.setIn(is);
+                System.setIn(new ByteArrayInputStream(body));
                 if ("svn".equals(commandName)) {
                     SVN.main(commandArgs);
                 } else if ("svnadmin".equals(commandName)) {
