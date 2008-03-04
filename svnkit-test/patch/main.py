@@ -654,7 +654,6 @@ def copy_repos(src_path, dst_path, head_revision, ignore_uuid = 1):
 
   dump_lines = dump_err.readlines()
   load_lines = load_out.readlines()
-  dump_in.close()
   dump_out.close()
   dump_err.close()
   load_out.close()
