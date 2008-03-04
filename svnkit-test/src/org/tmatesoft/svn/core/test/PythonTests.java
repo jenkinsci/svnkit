@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
+import org.tmatesoft.svn.cli2.SVNCommandDaemon;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
@@ -42,7 +44,8 @@ public class PythonTests {
 	private static File ourPropertiesFile;
     private static Process ourSVNServer;
     
-    private static AbstractPythonTestLogger[] ourLoggers; 
+    private static AbstractPythonTestLogger[] ourLoggers;
+    private static SVNCommandDaemon ourDaemon; 
 
     public static void main(String[] args) {
 		String fileName = args[0];
@@ -69,6 +72,16 @@ public class PythonTests {
             }catch(IOException ioe){
                 ioe.getMessage();
                 ioe.printStackTrace();
+                System.exit(1);
+            }
+        }
+        
+        if (Boolean.TRUE.toString().equals(properties.getProperty("daemon"))) {
+            try {
+                libPath = startCommandDaemon();
+            } catch (IOException e) {
+                e.getMessage();
+                e.printStackTrace();
                 System.exit(1);
             }
         }
@@ -394,6 +407,23 @@ public class PythonTests {
         return props;
     }
     
+    public static String startCommandDaemon() throws IOException {
+        int portNumber = 1729;
+        portNumber = findUnoccupiedPort(portNumber);
+        ourDaemon = new SVNCommandDaemon(portNumber);
+        Thread daemonThread = new Thread(ourDaemon);
+        daemonThread.setDaemon(true);
+        
+        // create client scripts.
+        generateClientScript(new File("daemon/template"), new File("daemon/jsvn"), "svn", portNumber);
+        generateClientScript(new File("daemon/template"), new File("daemon/jsvnadmin"), "svnadmin", portNumber);
+        generateClientScript(new File("daemon/template"), new File("daemon/jsvnversion"), "svnversion", portNumber);
+        generateClientScript(new File("daemon/template"), new File("daemon/jsvnlook"), "svnlook", portNumber);
+        generateClientScript(new File("daemon/template"), new File("daemon/jsvnsync"), "svnsync", portNumber);
+        
+        return new File("daemon").getAbsolutePath();
+    }
+    
     public static int startSVNServe(Properties props) throws Throwable {
         String path = getRepositoryRoot(props);
         
@@ -470,6 +500,23 @@ public class PythonTests {
         os.write(config.getBytes());
         os.close();
         return port;
+    }
+
+    private static void generateClientScript(File src, File destination, String name, int port) throws IOException {
+        byte[] contents = new byte[(int) src.length()];
+        InputStream is = new FileInputStream(src);
+        is.read(contents);
+        is.close();
+
+        String script = new String(contents);
+        script = script.replaceAll("%name%", name);
+        script = script.replaceAll("%port%", Integer.toString(port));
+        
+        FileOutputStream os = new FileOutputStream(destination);
+        os.write(script.getBytes());
+        os.close();
+        
+        SVNFileUtil.setExecutable(destination, true);
     }
     
     private static int findUnoccupiedPort(int port) {

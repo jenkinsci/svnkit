@@ -56,10 +56,6 @@ public class SVNCommandDaemon implements Runnable {
             port = 1729;
         }
         
-        SVNRepositoryFactoryImpl.setup();
-        DAVRepositoryFactory.setup();
-        FSRepositoryFactory.setup();
-        
         SVNCommandDaemon daemon = new SVNCommandDaemon(port);
 
         Thread serverThread = new Thread(daemon);
@@ -67,7 +63,11 @@ public class SVNCommandDaemon implements Runnable {
         serverThread.start();
     }
     
-    private SVNCommandDaemon(int port) {
+    public SVNCommandDaemon(int port) {
+        SVNRepositoryFactoryImpl.setup();
+        DAVRepositoryFactory.setup();
+        FSRepositoryFactory.setup();
+        
         myPort = port;
         myDefaultSecurityManager = System.getSecurityManager();
         System.setSecurityManager(new SecurityManager() {

@@ -661,6 +661,8 @@
     	<path id="python.classpath">
             <pathelement path="build/lib/svnkit.jar" />
             <pathelement path="build/lib/svnkit-cli.jar" />
+            <pathelement path="build/lib/trilead.jar" />
+            <pathelement path="build/lib/jna.jar" />
             <pathelement path="contrib/junit/junit.jar" />
             <pathelement path="svnkit-test/bin" />
         </path>
