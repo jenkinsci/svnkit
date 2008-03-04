@@ -33,17 +33,18 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
-import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
+import org.tmatesoft.svn.core.internal.wc.ISVNFileContentFetcher;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableOutputStream;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -54,14 +55,12 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.internal.wc.SVNStatusEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNWCManager;
-import org.tmatesoft.svn.core.internal.wc.ISVNFileContentFetcher;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNEntryHandler;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslatorOutputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -524,7 +523,7 @@ public class SVNWCClient extends SVNBasicClient {
             } else {
                 boolean modified = SVNPropertiesManager.setProperty(wcAccess, path, propName, propValue, skipChecks);
                 if (modified && handler != null) {
-                    handler.handleProperty(path, new SVNPropertyData(propName, propValue));
+                    handler.handleProperty(path, new SVNPropertyData(propName, propValue, getOptions()));
                 }
             }
         } finally {
@@ -636,7 +635,7 @@ public class SVNWCClient extends SVNBasicClient {
             commitEditor.abortEdit();
         }
         if (handler != null) {
-            handler.handleProperty(url, new SVNPropertyData(propName, propValue));
+            handler.handleProperty(url, new SVNPropertyData(propName, propValue, getOptions()));
         }
         return commitEditor.closeEdit();
     }
@@ -733,7 +732,7 @@ public class SVNWCClient extends SVNBasicClient {
         long revNumber = getRevisionNumber(revision, repos, null);
         repos.setRevisionPropertyValue(revNumber, propName, propValue);
         if (handler != null) {
-            handler.handleProperty(revNumber, new SVNPropertyData(propName, propValue));
+            handler.handleProperty(revNumber, new SVNPropertyData(propName, propValue, getOptions()));
         }
     }
 
@@ -906,14 +905,14 @@ public class SVNWCClient extends SVNBasicClient {
                     if (propName != null) {
                         SVNPropertyValue propValue = properties.getPropertyValue(propName);
                         if (propValue != null) {
-                            handler.handleProperty(path, new SVNPropertyData(propName, propValue));
+                            handler.handleProperty(path, new SVNPropertyData(propName, propValue, getOptions()));
                         }
                     } else {
                         SVNProperties allProps = properties.asMap();
                         for (Iterator names = allProps.nameSet().iterator(); names.hasNext();) {
                             String name = (String) names.next();
                             SVNPropertyValue val = allProps.getSVNPropertyValue(name);
-                            handler.handleProperty(area.getFile(entry.getName()), new SVNPropertyData(name, val));
+                            handler.handleProperty(area.getFile(entry.getName()), new SVNPropertyData(name, val, getOptions()));
                         }
                     }
 
@@ -943,14 +942,14 @@ public class SVNWCClient extends SVNBasicClient {
                             if (propName != null) {
                                 SVNPropertyValue propValue = childProps.getPropertyValue(propName);
                                 if (propValue != null) {
-                                    handler.handleProperty(area.getFile(childEntry.getName()), new SVNPropertyData(propName, propValue));
+                                    handler.handleProperty(area.getFile(childEntry.getName()), new SVNPropertyData(propName, propValue, getOptions()));
                                 }
                             } else {
                                 SVNProperties allProps = childProps.asMap();
                                 for (Iterator names = allProps.nameSet().iterator(); names.hasNext();) {
                                     String name = (String) names.next();
                                     SVNPropertyValue val = allProps.getSVNPropertyValue(name);
-                                    handler.handleProperty(area.getFile(childEntry.getName()), new SVNPropertyData(name, val));
+                                    handler.handleProperty(area.getFile(childEntry.getName()), new SVNPropertyData(name, val, getOptions()));
                                 }
                             }
                         }
@@ -1079,7 +1078,7 @@ public class SVNWCClient extends SVNBasicClient {
         if (propName != null) {
             SVNPropertyValue value = repos.getRevisionPropertyValue(revNumber, propName);
             if (value != null) {
-                handler.handleProperty(revNumber, new SVNPropertyData(propName, value));
+                handler.handleProperty(revNumber, new SVNPropertyData(propName, value, getOptions()));
             }
         } else {
             SVNProperties props = new SVNProperties();
@@ -1087,7 +1086,7 @@ public class SVNWCClient extends SVNBasicClient {
             for (Iterator names = props.nameSet().iterator(); names.hasNext();) {
                 String name = (String) names.next();
                 SVNPropertyValue value = props.getSVNPropertyValue(name);
-                handler.handleProperty(revNumber, new SVNPropertyData(name, value));
+                handler.handleProperty(revNumber, new SVNPropertyData(name, value, getOptions()));
             }
         }
     }
@@ -2574,7 +2573,7 @@ public class SVNWCClient extends SVNBasicClient {
             if (propName != null) {
                 SVNPropertyValue value = props.getSVNPropertyValue(propName);
                 if (value != null) {
-                    handler.handleProperty(url, new SVNPropertyData(propName, value));
+                    handler.handleProperty(url, new SVNPropertyData(propName, value, getOptions()));
                 }
             } else {
                 for (Iterator names = props.nameSet().iterator(); names.hasNext();) {
@@ -2584,7 +2583,7 @@ public class SVNWCClient extends SVNBasicClient {
                         continue;
                     }
                     SVNPropertyValue value = props.getSVNPropertyValue(name);
-                    handler.handleProperty(url, new SVNPropertyData(name, value));
+                    handler.handleProperty(url, new SVNPropertyData(name, value, getOptions()));
                 }
             }
             if (SVNDepth.FILES.compareTo(depth) <= 0) {
@@ -2608,7 +2607,7 @@ public class SVNWCClient extends SVNBasicClient {
             if (propName != null) {
                 SVNPropertyValue value = props.getSVNPropertyValue(propName);
                 if (value != null) {
-                    handler.handleProperty(url, new SVNPropertyData(propName, value));
+                    handler.handleProperty(url, new SVNPropertyData(propName, value, getOptions()));
                 }
             } else {
                 for (Iterator names = props.nameSet().iterator(); names
@@ -2619,7 +2618,7 @@ public class SVNWCClient extends SVNBasicClient {
                         continue;
                     }
                     SVNPropertyValue value = props.getSVNPropertyValue(name);
-                    handler.handleProperty(url, new SVNPropertyData(name, value));
+                    handler.handleProperty(url, new SVNPropertyData(name, value, getOptions()));
                 }
             }
         }
@@ -2639,14 +2638,14 @@ public class SVNWCClient extends SVNBasicClient {
             if (propName != null) {
                 SVNPropertyValue propVal = properties.getPropertyValue(propName);
                 if (propVal != null) {
-                    handler.handleProperty(area.getFile(entry.getName()), new SVNPropertyData(propName, propVal));
+                    handler.handleProperty(area.getFile(entry.getName()), new SVNPropertyData(propName, propVal, getOptions()));
                 }
             } else {
                 SVNProperties allProps = properties.asMap();
                 for (Iterator names = allProps.nameSet().iterator(); names.hasNext();) {
                     String name = (String) names.next();
                     SVNPropertyValue val = allProps.getSVNPropertyValue(name);
-                    handler.handleProperty(area.getFile(entry.getName()), new SVNPropertyData(name, val));
+                    handler.handleProperty(area.getFile(entry.getName()), new SVNPropertyData(name, val, getOptions()));
                 }
             }
         }
@@ -2767,7 +2766,7 @@ public class SVNWCClient extends SVNBasicClient {
         private String myToken;
     }
 
-    private static class PropSetHandler implements ISVNEntryHandler {
+    private class PropSetHandler implements ISVNEntryHandler {
         private boolean myIsForce;
         private String myPropName;
         private SVNPropertyValue myPropValue;
@@ -2794,7 +2793,7 @@ public class SVNWCClient extends SVNBasicClient {
                 boolean modified = SVNPropertiesManager.setProperty(adminArea.getWCAccess(), path, myPropName,
                         myPropValue, myIsForce);
                 if (modified && myPropHandler != null) {
-                    myPropHandler.handleProperty(path, new SVNPropertyData(myPropName, myPropValue));
+                    myPropHandler.handleProperty(path, new SVNPropertyData(myPropName, myPropValue, getOptions()));
                 }
             } catch (SVNException svne) {
                 if (svne.getErrorMessage().getErrorCode() != SVNErrorCode.ILLEGAL_TARGET) {

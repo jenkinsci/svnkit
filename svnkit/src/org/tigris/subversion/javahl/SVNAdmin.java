@@ -47,8 +47,6 @@ public class SVNAdmin {
     private SVNClientImpl myDelegate;
     private SVNAdminClient mySVNAdminClient;
 
-    private static final byte[] NATIVE_EOL = System.getProperty("line.separator").getBytes();
-
     /**
      * Filesystem in a Berkeley DB
      */
@@ -132,7 +130,7 @@ public class SVNAdmin {
                     if (errorOut != null && event.getAction() == SVNAdminEventAction.REVISION_DUMPED) {
                         try {
                             errorOut.write(event.getMessage().getBytes());
-                            errorOut.write(NATIVE_EOL);
+                            errorOut.write(myDelegate.getOptions().getNativeEOL());
                         } catch (IOException e) {
                         }
                     }
@@ -143,7 +141,7 @@ public class SVNAdmin {
             try {
                 if (errorOut != null) {
                     errorOut.write(e.getErrorMessage().getFullMessage().getBytes("UTF-8"));
-                    errorOut.write(NATIVE_EOL);
+                    errorOut.write(myDelegate.getOptions().getNativeEOL());
                 }
             } catch (IOException e1) {
                 //
@@ -236,16 +234,16 @@ public class SVNAdmin {
                     StringBuffer message = new StringBuffer();
                     if (event.getAction() != SVNAdminEventAction.REVISION_LOAD && myIsNodeOpened) {
                         message.append(" done.");
-                        message.append(NATIVE_EOL);
+                        message.append(myDelegate.getOptions().getNativeEOL());
                         myIsNodeOpened = false;
                     }
                     if (event.getAction() == SVNAdminEventAction.REVISION_LOADED) {
-                        message.append(NATIVE_EOL);
+                        message.append(myDelegate.getOptions().getNativeEOL());
                     }
                     message.append(event.getMessage());
-                    message.append(NATIVE_EOL);
+                    message.append(myDelegate.getOptions().getNativeEOL());
                     if (event.getAction() == SVNAdminEventAction.REVISION_LOADED) {
-                        message.append(NATIVE_EOL);
+                        message.append(myDelegate.getOptions().getNativeEOL());
                     }
                     myIsNodeOpened = event.getAction() != SVNAdminEventAction.REVISION_LOAD;
                     return message.toString();
@@ -256,7 +254,7 @@ public class SVNAdmin {
             if (messageOutput != null) {
                 try {
                     messageOutput.write(e.getErrorMessage().getFullMessage().getBytes("UTF-8"));
-                    messageOutput.write(NATIVE_EOL);
+                    messageOutput.write(myDelegate.getOptions().getNativeEOL());
                 } catch (IOException e1) {
                 }
             }
@@ -347,7 +345,7 @@ public class SVNAdmin {
                     if (messageOut != null && event.getAction() == SVNAdminEventAction.REVISION_DUMPED) {
                         try {
                             messageOut.write(event.getMessage().getBytes());
-                            messageOut.write(NATIVE_EOL);
+                            messageOut.write(myDelegate.getOptions().getNativeEOL());
                         } catch (IOException e) {
                         }
                     }
@@ -358,7 +356,7 @@ public class SVNAdmin {
             try {
                 if (messageOut != null) {
                     messageOut.write(e.getErrorMessage().getFullMessage().getBytes("UTF-8"));
-                    messageOut.write(NATIVE_EOL);
+                    messageOut.write(myDelegate.getOptions().getNativeEOL());
                 }
             } catch (IOException e1) {
                 //

@@ -34,6 +34,7 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 
 import de.regnis.q.sequence.line.diff.QDiffGenerator;
 import de.regnis.q.sequence.line.diff.QDiffGeneratorFactory;
@@ -61,7 +62,8 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     private boolean myIsForcedBinaryDiff;
     private String myAnchorPath1;
     private String myAnchorPath2;
-    
+
+    private ISVNOptions myOptions;    
     private String myEncoding;
     private byte[] myEOL;
     private boolean myIsDiffDeleted;
@@ -93,6 +95,17 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
      */
     public void setDiffOptions(SVNDiffOptions options) {
         myDiffOptions = options;
+    }
+
+    public void setOptions(ISVNOptions options){
+        myOptions = options;
+    }
+
+    protected ISVNOptions getOptions(){
+        if (myOptions == null){
+            myOptions = new DefaultSVNOptions();
+        }
+        return myOptions;
     }
 
     public void setBasePath(File basePath) {
@@ -391,7 +404,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         if (myEncoding != null) {
             return myEncoding;
         }
-        return System.getProperty("file.encoding");
+        return getOptions().getNativeCharset();
     }
 
     public void setEOL(byte[] eol){
@@ -400,7 +413,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
 
     public byte[] getEOL(){
         if (myEOL == null){
-            myEOL = System.getProperty("line.separator").getBytes();            
+            myEOL = getOptions().getNativeEOL();            
         }
         return myEOL;
     }

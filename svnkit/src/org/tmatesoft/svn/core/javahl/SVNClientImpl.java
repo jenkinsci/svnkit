@@ -1505,6 +1505,15 @@ public class SVNClientImpl implements SVNClientInterface {
         return mySVNConflictHandler;
     }
 
+    public ISVNOptions getOptions() {
+        if (myOptions == null) {
+            File configDir = myConfigDir == null ? null : new File(myConfigDir);
+            myOptions = SVNWCUtil.createDefaultOptions(configDir, true);
+            myOptions.setConflictHandler(getConflictHandler());
+        }        
+        return myOptions;
+    }
+
     public SVNClientManager getClientManager() {
         if (myClientManager == null) {
             updateClientManager();
@@ -1719,6 +1728,7 @@ public class SVNClientImpl implements SVNClientInterface {
         SVNDiffClient differ = getSVNDiffClient();
         differ.getDiffGenerator().setDiffDeleted(!noDiffDeleted);
         differ.getDiffGenerator().setForcedBinaryDiff(force);
+        differ.setOptions(getOptions());
         SVNRevision rev1 = JavaHLObjectFactory.getSVNRevision(revision1);
         SVNRevision rev2 = JavaHLObjectFactory.getSVNRevision(revision2);
         try {
@@ -1749,6 +1759,7 @@ public class SVNClientImpl implements SVNClientInterface {
         SVNDiffClient differ = getSVNDiffClient();
         differ.getDiffGenerator().setDiffDeleted(!noDiffDeleted);
         differ.getDiffGenerator().setForcedBinaryDiff(force);
+        differ.setOptions(getOptions());
         SVNRevision peg = JavaHLObjectFactory.getSVNRevision(pegRevision);
         SVNRevision rev1 = JavaHLObjectFactory.getSVNRevision(startRevision);
         SVNRevision rev2 = JavaHLObjectFactory.getSVNRevision(endRevision);

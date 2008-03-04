@@ -173,6 +173,7 @@ public class SVNDiffCommand extends SVNCommand implements ISVNDiffStatusHandler 
         diffGenerator.setDiffDeleted(!getSVNEnvironment().isNoDiffDeleted());
         diffGenerator.setForcedBinaryDiff(getSVNEnvironment().isForce());
         diffGenerator.setBasePath(new File("").getAbsoluteFile());
+        diffGenerator.setOptions(client.getOptions());
         client.setDiffGenerator(diffGenerator);
         
         PrintStream ps = getSVNEnvironment().getOut();

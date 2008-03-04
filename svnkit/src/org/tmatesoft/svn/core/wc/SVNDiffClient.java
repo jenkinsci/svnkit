@@ -144,7 +144,9 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public ISVNDiffGenerator getDiffGenerator() {
         if (myDiffGenerator == null) {
-            myDiffGenerator = new DefaultSVNDiffGenerator();
+            DefaultSVNDiffGenerator defaultDiffGenerator = new DefaultSVNDiffGenerator();
+            defaultDiffGenerator.setOptions(getOptions());
+            myDiffGenerator = defaultDiffGenerator;
         }
         return myDiffGenerator;
     }

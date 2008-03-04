@@ -72,7 +72,7 @@ public abstract class SVNXMLCommand extends SVNCommand {
                 if (namesOnly) {
                     buffer = openXMLTag("property", SVNXMLUtil.XML_STYLE_SELF_CLOSING, "name", propName, buffer);
                 } else {
-                    buffer = addXMLProp(new SVNPropertyData(propName, propVal), buffer);                    
+                    buffer = addXMLProp(new SVNPropertyData(propName, propVal, null), buffer);                    
                 }
             }
         }

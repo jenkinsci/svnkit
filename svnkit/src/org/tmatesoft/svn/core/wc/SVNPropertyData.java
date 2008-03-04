@@ -40,11 +40,12 @@ public class SVNPropertyData {
      * @param name  a property name
      * @param data  a property value
      */
-    public SVNPropertyData(String name, SVNPropertyValue data) {
+    public SVNPropertyData(String name, SVNPropertyValue data, ISVNOptions options) {
         myName = name;
         myValue = data;
         if (myValue != null && SVNProperty.isSVNProperty(myName) && myValue.isString()) {
-            myValue = SVNPropertyValue.create(myValue.getString().replaceAll("\n", System.getProperty("line.separator")));
+            String nativeEOL = options == null ? System.getProperty("line.separator") : new String(options.getNativeEOL());
+            myValue = SVNPropertyValue.create(myValue.getString().replaceAll("\n", nativeEOL));
         }
     }
     

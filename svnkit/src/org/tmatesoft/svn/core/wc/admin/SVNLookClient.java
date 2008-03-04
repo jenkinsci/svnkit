@@ -961,7 +961,9 @@ public class SVNLookClient extends SVNBasicClient {
      */
     public ISVNGNUDiffGenerator getDiffGenerator() {
         if (myDiffGenerator == null) {
-            myDiffGenerator = new DefaultSVNGNUDiffGenerator();
+            DefaultSVNGNUDiffGenerator defaultDiffGenerator = new DefaultSVNGNUDiffGenerator();
+            defaultDiffGenerator.setOptions(getOptions());
+            myDiffGenerator = defaultDiffGenerator;
         }
         return myDiffGenerator;
     }
