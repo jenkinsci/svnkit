@@ -76,7 +76,7 @@ public class PythonTests {
             }
         }
         
-        if (Boolean.TRUE.toString().equals(properties.getProperty("daemon"))) {
+        if (Boolean.TRUE.toString().equals(properties.getProperty("daemon")) && SVNFileUtil.isLinux) {
             try {
                 libPath = startCommandDaemon();
             } catch (IOException e) {
@@ -413,6 +413,7 @@ public class PythonTests {
         ourDaemon = new SVNCommandDaemon(portNumber);
         Thread daemonThread = new Thread(ourDaemon);
         daemonThread.setDaemon(true);
+        daemonThread.start();
         
         // create client scripts.
         generateClientScript(new File("daemon/template"), new File("daemon/jsvn"), "svn", portNumber);

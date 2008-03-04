@@ -645,6 +645,7 @@
     			<include name="test.properties"/>
     			<include name="python-suite.txt"/>
     			<include name="apache/**"/>
+    			<include name="daemon/**"/>
     			<exclude name=".svn"/>
     			<exclude name=".svn/**"/>
     		</fileset>
