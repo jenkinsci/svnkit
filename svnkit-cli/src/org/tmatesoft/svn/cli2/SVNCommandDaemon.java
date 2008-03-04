@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.cli2;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -114,12 +115,27 @@ public class SVNCommandDaemon implements Runnable {
                 continue;
             }
             OutputStream os = null;
+            InputStream is = null;
             // read all from the input stream until empty line is met.
             String input = "";
             try {
-                InputStream is = socket.getInputStream();
+                is = socket.getInputStream();
                 os = socket.getOutputStream();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+                // look for \n\n
+                int lastChar = 0;
+                ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+                while(true) {
+                    int b = is.read();
+                    if (b < 0) {
+                        break;
+                    }
+                    if (b == '\n' && lastChar == '\n') {
+                        break;
+                    }
+                    buffer.write(b);
+                }
+                buffer.close();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(buffer.toByteArray()), "UTF-8"));
                 while(true) {
                     String line = reader.readLine();
                     if (line == null || "".equals(line.trim())) {
@@ -177,6 +193,7 @@ public class SVNCommandDaemon implements Runnable {
             String oldUserDir = System.getProperty("user.dir");
             PrintStream oldOut = System.out;
             PrintStream oldErr = System.err;
+            InputStream oldIn = System.in;
             
             ByteArrayOutputStream commandOutData = new ByteArrayOutputStream();
             ByteArrayOutputStream commandErrData = new ByteArrayOutputStream();
@@ -187,6 +204,7 @@ public class SVNCommandDaemon implements Runnable {
                 System.setProperty("user.dir", userDir);
                 System.setOut(commandOut);
                 System.setErr(commandErr);
+                System.setIn(is);
                 if ("svn".equals(commandName)) {
                     SVN.main(commandArgs);
                 } else if ("svnadmin".equals(commandName)) {
@@ -207,6 +225,7 @@ public class SVNCommandDaemon implements Runnable {
                 rc = 1;
             } finally {
                 System.setProperty("user.dir", oldUserDir);
+                System.setIn(oldIn);
                 System.setOut(oldOut);
                 System.setErr(oldErr);
 
