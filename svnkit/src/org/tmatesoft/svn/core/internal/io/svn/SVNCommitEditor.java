@@ -186,7 +186,7 @@ class SVNCommitEditor implements ISVNEditor {
     public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
         String fileToken = (String) myFilesToTokens.get(path);
         byte[] bytes = SVNPropertyValue.getPropertyAsBytes(value);
-        myConnection.write("(w(ss(s)))", new Object[]{"change-file-prop", fileToken, name, bytes});
+        myConnection.write("(w(ss(b)))", new Object[]{"change-file-prop", fileToken, name, bytes});
     }
 
     public void closeFile(String path, String textChecksum) throws SVNException {

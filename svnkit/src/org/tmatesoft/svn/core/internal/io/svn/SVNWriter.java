@@ -22,6 +22,8 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
@@ -131,6 +133,25 @@ public class SVNWriter {
                             os.write(Integer.toString(token.getBytes("UTF-8").length).getBytes("UTF-8"));
                             os.write(':');
                             os.write(token.getBytes("UTF-8"));
+                            os.write(' ');
+                            os.write(')');
+                            os.write(' ');
+                        }
+                    } else if (item instanceof SVNProperties && ch == 'l') {
+                        SVNProperties props = (SVNProperties) item;
+                        for (Iterator iterator = props.nameSet().iterator(); iterator.hasNext();) {
+                            String name = (String) iterator.next();
+                            SVNPropertyValue value = props.getSVNPropertyValue(name);
+                            os.write('(');
+                            os.write(' ');
+                            os.write(Integer.toString(name.getBytes("UTF-8").length).getBytes("UTF-8"));
+                            os.write(':');
+                            os.write(name.getBytes("UTF-8"));
+                            os.write(' ');
+                            byte[] bytes = SVNPropertyValue.getPropertyAsBytes(value);
+                            os.write(Integer.toString(bytes.length).getBytes("UTF-8"));
+                            os.write(':');
+                            os.write(bytes);
                             os.write(' ');
                             os.write(')');
                             os.write(' ');

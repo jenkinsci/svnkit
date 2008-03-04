@@ -379,7 +379,6 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     }
                     if (expectedChecksum != null) {
                         digest.update(item.getBytes());
-
                     }
                     try {
                         contents.write(item.getBytes());
