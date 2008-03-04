@@ -638,7 +638,7 @@ def copy_repos(src_path, dst_path, head_revision, ignore_uuid = 1):
 
   dump_in, dump_out, dump_err, dump_kid = \
            open_pipe(svnadmin_binary + dump_args, 'b')
-  dump_in.close();
+  dump_in.close()
   load_in, load_out, load_err, load_kid = \
            open_pipe(svnadmin_binary + load_args, 'b')
   stop = time.time()
