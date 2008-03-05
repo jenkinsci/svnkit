@@ -369,8 +369,10 @@ public class PythonTests {
 		}
 		
 		public void close() {
-		    myIsClosed = true;
-		    SVNFileUtil.closeFile(myInputStream);
+		    if (!myIsClosed) {
+		        myIsClosed = true;
+		        SVNFileUtil.closeFile(myInputStream);
+		    }
 		    
 		}
 
@@ -392,7 +394,7 @@ public class PythonTests {
 				}
 			}
 			catch (IOException e) {
-				e.printStackTrace();
+//				e.printStackTrace();
 			} finally {
 			    if (!myIsClosed) {
 			        close();
