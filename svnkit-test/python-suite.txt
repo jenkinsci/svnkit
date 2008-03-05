@@ -3,6 +3,7 @@ autoprop ALL
 basic ALL
 blame ALL
 cat ALL
+changelist ALL
 checkout ALL
 commit ALL
 copy ALL
