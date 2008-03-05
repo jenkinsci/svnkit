@@ -150,7 +150,7 @@ public class HTTPHeader {
                 }
             } else {
                 if (name != null) {
-                    headers.addHeaderValue(name, value.toString());
+                    headers.addHeaderValue(name, value != null ? value.toString() : "");
                 }
                 
                 int colon = line.indexOf(":");
@@ -164,7 +164,7 @@ public class HTTPHeader {
         }
     
         if (name != null) {
-            headers.addHeaderValue(name, value.toString());
+            headers.addHeaderValue(name, value != null ? value.toString() : "");
         }
         return headers;
     }

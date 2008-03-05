@@ -85,4 +85,20 @@ public class SVNErrorManager {
         } 
         throw new SVNException(err1);
     }
+
+    public static void error(SVNErrorMessage err1, SVNErrorMessage err2, Throwable cause) throws SVNException {
+        if (err1 == null) {
+            error(err2, cause);
+        } else if (err2 == null) {
+            error(err1, cause);
+        }
+        err1.setChildErrorMessage(err2);
+        SVNDebugLog.getDefaultLog().info(err1.getMessage());
+        if (err1.getErrorCode() == SVNErrorCode.CANCELLED || err2.getErrorCode() == SVNErrorCode.CANCELLED) {
+            throw new SVNCancelException(err1);
+        } else if (err1.getErrorCode().isAuthentication() || err2.getErrorCode().isAuthentication()) {
+            throw new SVNAuthenticationException(err1, cause);
+        } 
+        throw new SVNException(err1, cause);
+    }
 }
