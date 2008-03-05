@@ -14,6 +14,11 @@ package org.tmatesoft.svn.cli2.svn;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.Charset;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.CharacterCodingException;
+import java.nio.ByteBuffer;
 
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
@@ -80,17 +85,32 @@ public abstract class SVNXMLCommand extends SVNCommand {
     }
 
     protected StringBuffer addXMLProp(SVNPropertyData property, StringBuffer xmlBuffer) {
-        String xmlSafe = null;
+        String value = property.getValue().getString();
+        boolean isXMLSafe = true;         
+        if (property.getValue().isBinary()){
+            CharsetDecoder decoder = Charset.forName("UTF-8").newDecoder();
+            decoder.onMalformedInput(CodingErrorAction.REPORT);
+            decoder.onUnmappableCharacter(CodingErrorAction.REPORT);
+            try {
+                value = decoder.decode(ByteBuffer.wrap(property.getValue().getBytes())).toString();
+            } catch (CharacterCodingException e) {
+                isXMLSafe = false;
+            }
+        }
+        if (value != null && isXMLSafe){
+            isXMLSafe = SVNEncodingUtil.isXMLSafe(value);            
+        }
+        
         Map attrs = new TreeMap();
         attrs.put("name", property.getName());
-        if (!property.getValue().isXMLSafe()) {
+        if (!isXMLSafe) {
             attrs.put("encoding", "base64");            
-            xmlSafe = SVNBase64.byteArrayToBase64(SVNPropertyValue.getPropertyAsBytes(property.getValue()));
+            value = SVNBase64.byteArrayToBase64(property.getValue().getBytes());
         } else {
-            xmlSafe = SVNEncodingUtil.xmlEncodeCDATA(property.getValue().getString());
+            value = SVNEncodingUtil.xmlEncodeCDATA(value);
         }
         xmlBuffer = openXMLTag("property", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, attrs, xmlBuffer);
-        xmlBuffer.append(xmlSafe);
+        xmlBuffer.append(value);
         xmlBuffer = closeXMLTag("property", xmlBuffer);
         return xmlBuffer;
     }

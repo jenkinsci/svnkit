@@ -13,6 +13,11 @@ package org.tmatesoft.svn.core;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.Charset;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.CharacterCodingException;
+import java.nio.ByteBuffer;
 
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 
@@ -110,10 +115,18 @@ public class SVNPropertyValue {
     }
 
     public boolean isXMLSafe() {
+        String value = getString();
         if (isBinary()) {
-            return false;
+            CharsetDecoder decoder = Charset.forName("UTF-8").newDecoder();
+            decoder.onMalformedInput(CodingErrorAction.REPORT);
+            decoder.onUnmappableCharacter(CodingErrorAction.REPORT);
+            try {
+                value = decoder.decode(ByteBuffer.wrap(getBytes())).toString();
+            } catch (CharacterCodingException e) {
+                return false;
+            }            
         }
-        return SVNEncodingUtil.isXMLSafe(getString());
+        return SVNEncodingUtil.isXMLSafe(value);
     }
 
     public String toString() {
