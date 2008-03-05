@@ -28,6 +28,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="javahl" />
+    <orderEntry type="module" module-name="svnkit-cli" />
     <orderEntryProperties />
   </component>
 </module>
