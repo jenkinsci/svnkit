@@ -135,7 +135,7 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
             revWriter.write(header.getBytes("UTF-8"));
             deltaStart = revWriter.getPosition();
 
-            if ((dstStream != null) && (dstStream instanceof FSOutputStream)) {
+            if (dstStream instanceof FSOutputStream) {
                 FSOutputStream fsOS = (FSOutputStream) dstStream;
                 fsOS.reset(revNode, revWriter, sourceStream, deltaStart, 0, offset, txnRoot);
                 return dstStream;
@@ -149,14 +149,14 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
             SVNFileUtil.closeFile(sourceStream);
             if (txnLock != null) {
                 txnLock.unlock();
-                FSWriteLock.realease(txnLock);
+                FSWriteLock.release(txnLock);
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
             SVNErrorManager.error(err, ioe);
         } catch (SVNException svne) {
             if (txnLock != null) {
                 txnLock.unlock();
-                FSWriteLock.realease(txnLock);
+                FSWriteLock.release(txnLock);
             }
             SVNFileUtil.closeFile(targetOS);
             SVNFileUtil.closeFile(sourceStream);
@@ -228,7 +228,7 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
         } finally {
             closeStreams();
             myTxnLock.unlock();
-            FSWriteLock.realease(myTxnLock);
+            FSWriteLock.release(myTxnLock);
         }
     }
 

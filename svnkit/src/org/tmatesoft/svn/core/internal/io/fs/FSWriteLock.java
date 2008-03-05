@@ -78,6 +78,9 @@ public class FSWriteLock {
     }
 
     public synchronized void lock() throws SVNException {
+        if (myLock != null) {
+            return;
+        }
         try {
             SVNFileType type = SVNFileType.getType(myLockFile);
             if (type == SVNFileType.UNKNOWN || type == SVNFileType.NONE) {
@@ -94,7 +97,7 @@ public class FSWriteLock {
         }
     }
 
-    public static synchronized void realease(FSWriteLock lock) {
+    public static synchronized void release(FSWriteLock lock) {
         if (lock == null) {
             return;
         }

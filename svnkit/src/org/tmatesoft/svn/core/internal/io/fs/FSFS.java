@@ -521,7 +521,7 @@ public class FSFS {
                 return txnId;
             } finally {
                 writeLock.unlock();
-                FSWriteLock.realease(writeLock);
+                FSWriteLock.release(writeLock);
             }
         }
     }
@@ -674,7 +674,7 @@ public class FSFS {
                 revProps.setPropertyValue(propertyName, propertyValue);
             } finally {
                 writeLock.unlock();
-                FSWriteLock.realease(writeLock);
+                FSWriteLock.release(writeLock);
             }
         }
     }
@@ -998,7 +998,7 @@ public class FSFS {
                 unlock(path, token, username, breakLock);
             } finally {
                 writeLock.unlock();
-                FSWriteLock.realease(writeLock);
+                FSWriteLock.release(writeLock);
             }
         }
 
@@ -1032,7 +1032,7 @@ public class FSFS {
                 lock = lock(path, token, username, comment, expirationDate, currentRevision, stealLock);
             } finally {
                 writeLock.unlock();
-                FSWriteLock.realease(writeLock);
+                FSWriteLock.release(writeLock);
             }
         }
 

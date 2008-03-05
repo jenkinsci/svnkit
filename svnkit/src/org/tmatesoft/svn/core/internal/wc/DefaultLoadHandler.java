@@ -280,10 +280,9 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                         contentLength -= numRead;
                     }
                 } catch (IOException ioe) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getMessage());
                     SVNErrorManager.error(err, ioe);
                 }
-
                 fsConsumer.textDeltaEnd(myCurrentNodeBaton.myPath);
             }
         } catch (SVNException svne) {

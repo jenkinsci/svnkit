@@ -287,7 +287,7 @@ public class FSCommitter {
                     throw svne;
                 } finally {
                     writeLock.unlock();
-                    FSWriteLock.realease(writeLock);
+                    FSWriteLock.release(writeLock);
                 }
             }
             return newRevision;
@@ -472,7 +472,7 @@ public class FSCommitter {
                 
             } finally {
                txnWriteLock.unlock();
-               FSWriteLock.realease(txnWriteLock);
+               FSWriteLock.release(txnWriteLock);
             }
         }
         
