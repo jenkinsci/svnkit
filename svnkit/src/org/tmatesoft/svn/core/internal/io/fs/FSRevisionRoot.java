@@ -149,11 +149,18 @@ public class FSRevisionRoot extends FSRoot {
         String nodeID = node.getId().getNodeID();
         FSFS fsfs = getOwner();
         if (nodeID.startsWith("_")) {
-            String cachedOriginID = fsfs.getNodeOrigin(nodeID);
-            if (cachedOriginID != null) {
-                FSID id = FSID.fromString(cachedOriginID);
-                return id.getRevision();
-            }
+            return SVNRepository.INVALID_REVISION;
+        }
+        
+        int dashIndex = nodeID.indexOf('-');
+        if (dashIndex != -1 && dashIndex != nodeID.length() - 1) {
+            return Long.parseLong(nodeID.substring(dashIndex + 1));
+        }
+        
+        String cachedOriginID = fsfs.getNodeOrigin(nodeID);
+        if (cachedOriginID != null) {
+            FSID id = FSID.fromString(cachedOriginID);
+            return id.getRevision();
         }
         
         long lastRev = SVNRepository.INVALID_REVISION;

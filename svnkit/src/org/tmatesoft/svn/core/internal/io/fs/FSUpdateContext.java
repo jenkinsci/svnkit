@@ -170,7 +170,7 @@ public class FSUpdateContext {
         return myCurrentPathInfo;
     }
 
-    private FSRevisionRoot getTargetRoot() {
+    private FSRevisionRoot getTargetRoot() throws SVNException {
         if (myTargetRoot == null) {
             myTargetRoot = myFSFS.createRevisionRoot(myTargetRevision);
         }
@@ -184,7 +184,7 @@ public class FSUpdateContext {
         return myRootsCache;
     }
 
-    private FSRevisionRoot getSourceRoot(long revision) {
+    private FSRevisionRoot getSourceRoot(long revision) throws SVNException {
         LinkedList cache = getRootsCache();
         FSRevisionRoot root = null;
         int i = 0;

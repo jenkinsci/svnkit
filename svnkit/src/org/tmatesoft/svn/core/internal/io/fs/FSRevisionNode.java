@@ -250,7 +250,7 @@ public class FSRevisionNode {
         // Read the rev-node id.
         String revNodeId = (String) headers.get(FSRevisionNode.HEADER_ID);
         if (revNodeId == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Missing node-id in node-rev");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Missing id field in node-rev");
             SVNErrorManager.error(err);
         }
 

@@ -469,29 +469,22 @@ public class FSTransactionRoot extends FSRoot {
     }
 
     public void writeFinalCurrentFile(long newRevision, String startNodeId, String startCopyId) throws SVNException, IOException {
+        if (getOwner().getDBFormat() >= FSFS.MIN_NO_GLOBAL_IDS_FORMAT) {
+            writeCurrentFile(newRevision, null, null);
+            return;
+        }
+        
         String[] txnIds = readNextIDs();
         String txnNodeId = txnIds[0];
         String txnCopyId = txnIds[1];
         String newNodeId = FSTransactionRoot.addKeys(startNodeId, txnNodeId);
         String newCopyId = FSTransactionRoot.addKeys(startCopyId, txnCopyId);
-        String line = newRevision + " " + newNodeId + " " + newCopyId + "\n";
-        File currentFile = getOwner().getCurrentFile();
-        File tmpCurrentFile = SVNFileUtil.createUniqueFile(currentFile.getParentFile(), ".txnfile", ".tmp");
-        OutputStream currentOS = null;
-
-        try {
-            currentOS = SVNFileUtil.openFileForWriting(tmpCurrentFile);
-            currentOS.write(line.getBytes("UTF-8"));
-        } finally {
-            SVNFileUtil.closeFile(currentOS);
-        }
-        SVNFileUtil.rename(tmpCurrentFile, currentFile);
+        writeCurrentFile(newRevision, newNodeId, newCopyId);
     }
 
     public FSID writeFinalRevision(FSID newId, final CountingStream protoFile, long revision, FSID id, 
-            String startNodeId, String startCopyId, Map nodeOrigins) throws SVNException, IOException {
+            String startNodeId, String startCopyId) throws SVNException, IOException {
         newId = null;
-        boolean isNewNodeID = false;
         if (!id.isTxn()) {
             return newId;
         }
@@ -501,8 +494,8 @@ public class FSTransactionRoot extends FSRoot {
             Map namesToEntries = revNode.getDirEntries(owner);
             for (Iterator entries = namesToEntries.values().iterator(); entries.hasNext();) {
                 FSEntry dirEntry = (FSEntry) entries.next();
-                newId = writeFinalRevision(newId, protoFile, revision, dirEntry.getId(), startNodeId, startCopyId, 
-                        nodeOrigins);
+                newId = writeFinalRevision(newId, protoFile, revision, dirEntry.getId(), 
+                        startNodeId, startCopyId);
                 if (newId != null && newId.getRevision() == revision) {
                     dirEntry.setId(newId);
                 }
@@ -559,8 +552,11 @@ public class FSTransactionRoot extends FSRoot {
         String nodeId = revNode.getId().getNodeID();
 
         if (nodeId.startsWith("_")) {
-            myNodeId = FSTransactionRoot.addKeys(startNodeId, nodeId.substring(1));
-            isNewNodeID = true;
+            if (getOwner().getDBFormat() >= FSFS.MIN_NO_GLOBAL_IDS_FORMAT) {
+                myNodeId = nodeId.substring(1) + "-" + revision; 
+            } else {
+                myNodeId = FSTransactionRoot.addKeys(startNodeId, nodeId.substring(1));
+            }
         } else {
             myNodeId = nodeId;
         }
@@ -569,7 +565,11 @@ public class FSTransactionRoot extends FSRoot {
         String copyId = revNode.getId().getCopyID();
 
         if (copyId.startsWith("_")) {
-            myCopyId = FSTransactionRoot.addKeys(startCopyId, copyId.substring(1));
+            if (getOwner().getDBFormat() >= FSFS.MIN_NO_GLOBAL_IDS_FORMAT) {
+                myCopyId = copyId.substring(1) + "-" + revision;
+            } else {
+                myCopyId = FSTransactionRoot.addKeys(startCopyId, copyId.substring(1));
+            }
         } else {
             myCopyId = copyId;
         }
@@ -580,9 +580,6 @@ public class FSTransactionRoot extends FSRoot {
 
         newId = FSID.createRevId(myNodeId, myCopyId, revision, myOffset);
         revNode.setId(newId);
-        if (isNewNodeID) {
-            nodeOrigins.put(myNodeId, newId);
-        }
         getOwner().writeTxnNodeRevision(protoFile, revNode);
         revNode.setIsFreshTxnRoot(false);
         getOwner().putTxnRevisionNode(id, revNode);
@@ -623,16 +620,6 @@ public class FSTransactionRoot extends FSRoot {
         return getOwner().getRevisionNode(newNodeId);
     }
 
-    private long writeHashRepresentation(SVNProperties hashContents, OutputStream protoFile, MessageDigest digest) throws IOException, SVNException {
-        HashRepresentationStream targetFile = new HashRepresentationStream(protoFile, digest);
-        String header = FSRepresentation.REP_PLAIN + "\n";
-        protoFile.write(header.getBytes("UTF-8"));
-        SVNWCProperties.setProperties(hashContents, targetFile, SVNWCProperties.SVN_HASH_TERMINATOR);
-        String trailer = FSRepresentation.REP_TRAILER + "\n";
-        protoFile.write(trailer.getBytes("UTF-8"));
-        return targetFile.mySize;
-    }
-
     public File getTransactionRevNodePropsFile(FSID id) {
         return new File(getOwner().getTransactionDir(id.getTxnID()), FSFS.PATH_PREFIX_NODE + id.getNodeID() + "." + id.getCopyID() + FSFS.TXN_PATH_EXT_PROPS);
     }
@@ -653,6 +640,37 @@ public class FSTransactionRoot extends FSRoot {
             myTxnChangesFile = new File(getOwner().getTransactionDir(myTxnID), "changes");
         }
         return myTxnChangesFile;
+    }
+
+    private void writeCurrentFile(long revision, String nextNodeID, String nextCopyID) throws SVNException, IOException {
+        String line = null;
+        if (getOwner().getDBFormat() >= FSFS.MIN_NO_GLOBAL_IDS_FORMAT) {
+            line = revision + "\n"; 
+        } else {
+            line = revision + " " + nextNodeID + " " + nextCopyID + "\n";
+        }
+        
+        File currentFile = getOwner().getCurrentFile();
+        File tmpCurrentFile = SVNFileUtil.createUniqueFile(currentFile.getParentFile(), ".txnfile", ".tmp");
+        OutputStream currentOS = null;
+
+        try {
+            currentOS = SVNFileUtil.openFileForWriting(tmpCurrentFile);
+            currentOS.write(line.getBytes("UTF-8"));
+        } finally {
+            SVNFileUtil.closeFile(currentOS);
+        }
+        SVNFileUtil.rename(tmpCurrentFile, currentFile);
+    }
+    
+    private long writeHashRepresentation(SVNProperties hashContents, OutputStream protoFile, MessageDigest digest) throws IOException, SVNException {
+        HashRepresentationStream targetFile = new HashRepresentationStream(protoFile, digest);
+        String header = FSRepresentation.REP_PLAIN + "\n";
+        protoFile.write(header.getBytes("UTF-8"));
+        SVNWCProperties.setProperties(hashContents, targetFile, SVNWCProperties.SVN_HASH_TERMINATOR);
+        String trailer = FSRepresentation.REP_TRAILER + "\n";
+        protoFile.write(trailer.getBytes("UTF-8"));
+        return targetFile.mySize;
     }
 
     public static String generateNextKey(String oldKey) throws SVNException {

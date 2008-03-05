@@ -338,6 +338,7 @@ public abstract class SVNRepositoryFactory {
         OutputStream reposFormatOS = null;
         OutputStream fsFormatOS = null;
         OutputStream txnCurrentOS = null;
+        OutputStream currentOS = null;
         try {
             copyToFile(is, jarFile);
             extract(jarFile, path);
@@ -409,7 +410,8 @@ public abstract class SVNRepositoryFactory {
                     format += '\n';
                     fsFormatOS.write(format.getBytes("US-ASCII"));
                 } catch (IOException e) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Error writing fs format to ''{0}''", fsFormatFile);
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
+                            "Error writing fs format to ''{0}''", fsFormatFile);
                     err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
                     SVNErrorManager.error(err);
                 }
@@ -451,6 +453,19 @@ public abstract class SVNRepositoryFactory {
                 }
             }
             
+            if (fsFormat >= FSFS.MIN_NO_GLOBAL_IDS_FORMAT) {
+                File currentFile = new File(path, "db/" + FSFS.CURRENT_FILE);
+                currentOS = SVNFileUtil.openFileForWriting(currentFile);
+                try {
+                    currentOS.write("0\n".getBytes("US-ASCII"));
+                } catch (IOException e) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
+                            "Can not write to ''{0}'' file: {1}", 
+                            new Object[] { currentFile.getName(), e.getLocalizedMessage() });
+                    SVNErrorManager.error(err, e);
+                }
+            }
+            
             if (fsFormat >= FSFS.MIN_CURRENT_TXN_FORMAT) {
                 File txnCurrentFile = new File(path, "db/" + FSFS.TXN_CURRENT_FILE);
                 SVNFileUtil.createEmptyFile(txnCurrentFile);
@@ -458,10 +473,13 @@ public abstract class SVNRepositoryFactory {
                 try {
                     txnCurrentOS.write("0\n".getBytes("US-ASCII"));
                 } catch (IOException e) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-                    SVNErrorManager.error(err);
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
+                            "Can not write to ''{0}'' file: {1}", 
+                            new Object[] { txnCurrentFile.getName(), e.getLocalizedMessage() });
+                    SVNErrorManager.error(err, e);
                 }
             }
+            
             if (fsFormat >= FSFS.MIN_PROTOREVS_DIR_FORMAT) {
                 File protoRevsDir = new File(path, "db/txn-protorevs");
                 protoRevsDir.mkdirs();
@@ -477,6 +495,7 @@ public abstract class SVNRepositoryFactory {
             SVNFileUtil.closeFile(reposFormatOS);
             SVNFileUtil.closeFile(fsFormatOS);
             SVNFileUtil.closeFile(txnCurrentOS);
+            SVNFileUtil.closeFile(currentOS);
             SVNFileUtil.deleteFile(jarFile);
         }
         return SVNURL.fromFile(path);
