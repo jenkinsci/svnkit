@@ -217,12 +217,18 @@ public class PythonTests {
 
 		try {
 			Process process = Runtime.getRuntime().exec(commands, null, new File("python/cmdline"));
-			new ReaderThread(process.getInputStream(), null).start();
-			new ReaderThread(process.getErrorStream(), null).start();
+			ReaderThread inReader = new ReaderThread(process.getInputStream(), null);
+			inReader.start();
+			ReaderThread errReader = new ReaderThread(process.getErrorStream(), null);
+			errReader.start();
 			try {
 				process.waitFor();
 			}
 			catch (InterruptedException e) {
+			} finally {
+			    inReader.close();
+			    errReader.close();
+			    process.destroy();
 			}
 		}
 		catch (Throwable th) {
@@ -296,14 +302,19 @@ public class PythonTests {
 		final ByteArrayOutputStream os = new ByteArrayOutputStream();
 		try {
 			Process process = Runtime.getRuntime().exec(commands, null, new File("python/cmdline"));
-            Thread readerThread = new ReaderThread(process.getInputStream(), new PrintStream(os));
+            ReaderThread readerThread = new ReaderThread(process.getInputStream(), new PrintStream(os));
             readerThread.start();
-			new ReaderThread(process.getErrorStream(), null).start();
+			ReaderThread errReader = new ReaderThread(process.getErrorStream(), null);
+			errReader.start();
 			try {
 				process.waitFor();
                 readerThread.join(5000);                
 			}
 			catch (InterruptedException e) {
+			} finally {
+			    readerThread.close();
+			    errReader.close();
+			    process.destroy();
 			}
             os.close();
 		}
@@ -349,11 +360,18 @@ public class PythonTests {
 
 		private final BufferedReader myInputStream;
 		private final PrintStream myHelpStream;
+        private boolean myIsClosed;
 
 		public ReaderThread(InputStream is, PrintStream helpStream) {
 			myInputStream = new BufferedReader(new InputStreamReader(is));
 			myHelpStream = helpStream;
 			setDaemon(false);
+		}
+		
+		public void close() {
+		    myIsClosed = true;
+		    SVNFileUtil.closeFile(myInputStream);
+		    
 		}
 
 		public void run() {
@@ -375,7 +393,12 @@ public class PythonTests {
 			}
 			catch (IOException e) {
 				e.printStackTrace();
+			} finally {
+			    if (!myIsClosed) {
+			        close();
+			    }
 			}
+			
 		}
 	}
 
