@@ -23,6 +23,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.SVNCancelException;
@@ -244,30 +246,13 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
 
     
     protected SVNRevision[] parseRevision(String revStr) {
-        SVNRevision[] result = new SVNRevision[2];
-        int colon = revStr.indexOf(':');
-        if (colon > 0) {
-            if (colon + 1 >= revStr.length()) {
-                return null;
-            }
-            String rev1 = revStr.substring(0, colon);
-            String rev2 = revStr.substring(colon + 1);
-            SVNRevision r1 = SVNRevision.parse(rev1);
-            SVNRevision r2 = SVNRevision.parse(rev2);
-            if (r1 == SVNRevision.UNDEFINED || r2 == SVNRevision.UNDEFINED) {
-                return null;
-            }
-            result[0] = r1;
-            result[1] = r2;
-        } else {
-            SVNRevision r1 = SVNRevision.parse(revStr);
-            if (r1 == SVNRevision.UNDEFINED) {
-                return null;
-            }
-            result[0] = r1;
-            result[1] = SVNRevision.UNDEFINED;
-        }
-        return result;
+        Matcher matcher = Pattern.compile("(\\{[^\\}]+\\}|[^:]+)((:)(.*))?").matcher(revStr);
+        matcher.matches();
+        boolean colon = ":".equals(matcher.group(3));
+        SVNRevision r1 = SVNRevision.parse(matcher.group(1));
+        SVNRevision r2 = SVNRevision.parse(matcher.group(4));
+        return (colon && (r1 == SVNRevision.UNDEFINED || r2 == SVNRevision.UNDEFINED)) || 
+               r1 == SVNRevision.UNDEFINED ? null : new SVNRevision[]{r1, r2};
     }
     
     public byte[] readFromFile(File file) throws SVNException {
