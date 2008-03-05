@@ -19,6 +19,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.CharacterCodingException;
 import java.nio.ByteBuffer;
+import java.io.UnsupportedEncodingException;
 
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
@@ -86,8 +87,8 @@ public abstract class SVNXMLCommand extends SVNCommand {
 
     protected StringBuffer addXMLProp(SVNPropertyData property, StringBuffer xmlBuffer) {
         String value = property.getValue().getString();
-        boolean isXMLSafe = true;         
-        if (property.getValue().isBinary()){
+        boolean isXMLSafe = true;
+        if (property.getValue().isBinary()) {
             CharsetDecoder decoder = Charset.forName("UTF-8").newDecoder();
             decoder.onMalformedInput(CodingErrorAction.REPORT);
             decoder.onUnmappableCharacter(CodingErrorAction.REPORT);
@@ -97,18 +98,25 @@ public abstract class SVNXMLCommand extends SVNCommand {
                 isXMLSafe = false;
             }
         }
-        if (value != null && isXMLSafe){
-            isXMLSafe = SVNEncodingUtil.isXMLSafe(value);            
+        if (value != null && isXMLSafe) {
+            isXMLSafe = SVNEncodingUtil.isXMLSafe(value);
         }
-        
+
         Map attrs = new TreeMap();
         attrs.put("name", property.getName());
         if (!isXMLSafe) {
-            attrs.put("encoding", "base64");            
-            value = SVNBase64.byteArrayToBase64(property.getValue().getBytes());
-        } else {
-            value = SVNEncodingUtil.xmlEncodeCDATA(value);
+            attrs.put("encoding", "base64");
+            if (value != null) {
+                try {
+                    value = SVNBase64.byteArrayToBase64(value.getBytes("UTF-8"));
+                } catch (UnsupportedEncodingException e) {
+                    value = SVNBase64.byteArrayToBase64(value.getBytes());
+                }
+            } else {
+                value = SVNBase64.byteArrayToBase64(property.getValue().getBytes());
+            }
         }
+        value = SVNEncodingUtil.xmlEncodeCDATA(value);
         xmlBuffer = openXMLTag("property", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, attrs, xmlBuffer);
         xmlBuffer.append(value);
         xmlBuffer = closeXMLTag("property", xmlBuffer);

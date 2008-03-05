@@ -18,6 +18,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.Charset;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.CharacterCodingException;
+import java.nio.ByteBuffer;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -32,6 +37,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 
@@ -228,20 +234,46 @@ public class DAVReportHandler extends ServletDAVHandler {
 
     protected void writePropertyTag(String tagName, String propertyName, SVNPropertyValue propertyValue) throws SVNException {
         StringBuffer xmlBuffer;
-        if (propertyValue.isXMLSafe()) {
-            xmlBuffer = SVNXMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, propertyValue.getString(), NAME_ATTR, propertyName, null);
-            write(xmlBuffer);
-        } else {
+        String value = propertyValue.getString();
+        boolean isXMLSafe = true;
+        if (propertyValue.isBinary()){
+            CharsetDecoder decoder = Charset.forName("UTF-8").newDecoder();
+            decoder.onMalformedInput(CodingErrorAction.REPORT);
+            decoder.onUnmappableCharacter(CodingErrorAction.REPORT);
+            try {
+                value = decoder.decode(ByteBuffer.wrap(propertyValue.getBytes())).toString();
+            } catch (CharacterCodingException e) {
+                isXMLSafe = false;
+            }
+        }
+        if (value != null){
+            isXMLSafe = SVNEncodingUtil.isXMLSafe(value);
+        }
+        if (!isXMLSafe){
+            byte[] buffer = null;
+            if (value != null){
+                try {
+                    buffer = value.getBytes(UTF8_ENCODING);
+                } catch (UnsupportedEncodingException e) {
+                    buffer = value.getBytes();
+                }
+            } else {
+                buffer = propertyValue.getBytes();
+            }
+            value = SVNBase64.byteArrayToBase64(buffer);
+            
             Map attrs = new HashMap();
             attrs.put(NAME_ATTR, propertyName);
-            attrs.put(ENCODING_ATTR, BASE64_ENCODING);            
-            String value = SVNBase64.byteArrayToBase64(SVNPropertyValue.getPropertyAsBytes(propertyValue));
+            attrs.put(ENCODING_ATTR, BASE64_ENCODING);
 
             xmlBuffer = SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, SVNXMLUtil.XML_STYLE_PROTECT_CDATA, attrs, null);
             write(xmlBuffer);
             write(value);
             xmlBuffer = SVNXMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, null);
             write(xmlBuffer);
+        } else {
+            xmlBuffer = SVNXMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, propertyValue.getString(), NAME_ATTR, propertyName, null);
+            write(xmlBuffer);            
         }
     }
 }
