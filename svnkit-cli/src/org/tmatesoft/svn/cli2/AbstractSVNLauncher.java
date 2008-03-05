@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 public abstract class AbstractSVNLauncher {
 
     private static volatile boolean ourIsCompleted;
+    private static Thread ourShutdownHook;
 
     protected void run(String[] args) {
         ourIsCompleted = false;
@@ -51,7 +52,12 @@ public abstract class AbstractSVNLauncher {
             return;
         }
         AbstractSVNCommandEnvironment env = createCommandEnvironment();
-        Runtime.getRuntime().addShutdownHook(new Thread(new Cancellator(env)));
+        if (ourShutdownHook == null) {
+            ourShutdownHook = new Thread(new Cancellator(env)); 
+        } else {
+            Runtime.getRuntime().removeShutdownHook(ourShutdownHook);
+        }
+        Runtime.getRuntime().addShutdownHook(ourShutdownHook);
         
         try {
             try {
