@@ -87,7 +87,9 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
     public static final int NO_POOL = 4;
 
     private static final long DEFAULT_IDLE_TIMEOUT = 60*1000;
-    private static Timer ourTimer = new Timer(true);
+
+    private static Timer ourTimer;
+    private static volatile int ourInstanceCount;
     
     private ISVNAuthenticationManager myAuthManager;
     private ISVNTunnelProvider myTunnelProvider;
@@ -130,9 +132,16 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
         myTimeout = timeout > 0 ? timeout : DEFAULT_IDLE_TIMEOUT;
         myIsKeepConnection = keepConnection;
         myTimeout = timeout;
-        if (myIsKeepConnection) {
-            myTimer = ourTimer;
-            ourTimer.schedule(new TimeoutTask(), 10000);
+        
+        synchronized (DefaultSVNRepositoryPool.class) {
+            if (ourTimer == null) {
+                ourTimer = new Timer(true);
+            }
+            if (myIsKeepConnection) {
+                myTimer = ourTimer;
+                ourTimer.schedule(new TimeoutTask(), 10000);
+            }
+            ourInstanceCount++;
         }
     }
     
@@ -180,9 +189,11 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
      * 
      */
     public synchronized SVNRepository createRepository(SVNURL url, boolean mayReuse) throws SVNException {
-        if (myIsKeepConnection && myTimer == null && ourTimer != null) {
-            myTimer = ourTimer;
-            ourTimer.schedule(new TimeoutTask(), 10000);
+        synchronized (DefaultSVNRepositoryPool.class) {
+            if (myIsKeepConnection && myTimer == null && ourTimer != null) {
+                myTimer = ourTimer;
+                myTimer.schedule(new TimeoutTask(), 10000);
+            }
         }
         
         SVNRepository repos = null;
@@ -265,6 +276,23 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
             repository.closeSession();
         }
         myPool = null;
+
+        synchronized (DefaultSVNRepositoryPool.class) {
+            ourInstanceCount--;
+            if (ourInstanceCount <= 0) {
+                ourInstanceCount = 0;
+                shutdownTimer();
+            }
+        }
+    }
+    
+    public static void shutdownTimer() {
+        synchronized (DefaultSVNRepositoryPool.class) {
+            if (ourTimer != null) {
+                ourTimer.cancel();
+                ourTimer = null;
+            }
+        }
     }
     
     private Map getPool() {
