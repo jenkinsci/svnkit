@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.internal.io.svn;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -50,6 +49,7 @@ class SVNConnection {
     private boolean myIsCredentialsReceived = false;
     private InputStream myLoggingInputStream;
     private Map myCapabilities;
+    private byte[] myHandshakeBuffer = new byte[8192];
     
     private static final String SUCCESS = "success";
     private static final String FAILURE = "failure";
@@ -97,9 +97,7 @@ class SVNConnection {
     }
     
     private InputStream skipLeadingGrabage() throws SVNException {
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream(256);
-        // buffer should be large enough to receive complete greeting. 
-        byte[] bytes = new byte[8192];
+        byte[] bytes = myHandshakeBuffer;
         int r = 0;
         try {
             r = getInputStream().read(bytes);
@@ -108,13 +106,10 @@ class SVNConnection {
             SVNErrorManager.error(err);
         }
         if (r >= 0) {
-            buffer.write(bytes, 0, r);
-        }
-        bytes = buffer.toByteArray();
-        // look for '( '.
-        for (int i = 0; i < bytes.length - 1; i++) {
-            if (bytes[i] == '(' && bytes[i + 1] == ' ') {
-                return new ByteArrayInputStream(bytes, i, bytes.length - i);
+            for (int i = 0; i < r; i++) {
+                if (bytes[i] == '(' && bytes[i + 1] == ' ') {
+                    return new ByteArrayInputStream(bytes, i, r - i);
+                }
             }
         }
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Handshake failed, received: ''{0}''", new String(bytes));
