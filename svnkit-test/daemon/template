@@ -21,6 +21,8 @@ args+=' \n'
 args+=$SVNTEST_EDITOR_FUNC
 args+=' \n'
 args+=$SVN_I_LOVE_CORRUPTED_WORKING_COPIES_SO_DISABLE_SLEEP_FOR_TIMESTAMPS
+args+=' \n'
+args+=$SVN_CURRENT_TEST
 # add empty line
 args+=' \n\n'
 

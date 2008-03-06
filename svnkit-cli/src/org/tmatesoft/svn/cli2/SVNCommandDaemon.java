@@ -14,6 +14,7 @@ package org.tmatesoft.svn.cli2;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -24,6 +25,10 @@ import java.net.Socket;
 import java.security.Permission;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.logging.FileHandler;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.tmatesoft.svn.cli.SVNSync;
 import org.tmatesoft.svn.cli2.svn.SVN;
@@ -33,6 +38,7 @@ import org.tmatesoft.svn.cli2.svnversion.SVNVersion;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
+import org.tmatesoft.svn.core.internal.util.DefaultSVNDebugFormatter;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
@@ -43,6 +49,8 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  * @author  TMate Software Ltd.
  */
 public class SVNCommandDaemon implements Runnable {
+
+    private static String ourTestsType;
 
     private int myPort;
     private SecurityManager myDefaultSecurityManager;
@@ -125,6 +133,7 @@ public class SVNCommandDaemon implements Runnable {
             String mergeTool = null;
             String testFunction = null;
             boolean sleepForTimestamp = true;
+            String testName = null;
             
             byte[] body = null;
             try {
@@ -198,6 +207,12 @@ public class SVNCommandDaemon implements Runnable {
                 if (noSleep != null && "yes".equals(noSleep.trim())) {
                     sleepForTimestamp = false;
                 }
+                testName = envReader.readLine();
+                if (testName == null || "".equals(testName.trim())) {
+                    testName = null;
+                }  else {
+                    testName = testName.trim();
+                }
                 envReader.close();
                 
                 BufferedReader reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(header), "UTF-8"));
@@ -265,8 +280,13 @@ public class SVNCommandDaemon implements Runnable {
             ByteArrayOutputStream commandErrData = new ByteArrayOutputStream();
             PrintStream commandOut = new PrintStream(commandOutData);
             PrintStream commandErr = new PrintStream(commandErrData);
+            Handler logHandler = null;
             int rc = 0;
             try {
+                if (testName != null) {
+                    logHandler = createTestLogger(testName);
+                    Logger.getLogger("svnkit").addHandler(logHandler);
+                }
                 SVNFileUtil.setTestEnvironment(editor, mergeTool, testFunction);
                 SVNFileUtil.setSleepForTimestamp(sleepForTimestamp);
                 System.setProperty("user.dir", userDir);
@@ -292,7 +312,12 @@ public class SVNCommandDaemon implements Runnable {
                 log.error(th);
                 rc = 1;
             } finally {
+                if (logHandler != null) {
+                    logHandler.close();
+                    Logger.getLogger("svnkit").removeHandler(logHandler);                    
+                }
                 SVNFileUtil.setTestEnvironment(null, null, null);
+                SVNFileUtil.setSleepForTimestamp(true);
                 System.setProperty("user.dir", oldUserDir);
                 System.setIn(oldIn);
                 System.setOut(oldOut);
@@ -336,6 +361,25 @@ public class SVNCommandDaemon implements Runnable {
         }
     }
     
+    public synchronized static void setTestsType(String type) {
+        ourTestsType = type;
+    }
+    
+    private synchronized static String getTestsType() {
+        return ourTestsType;
+    }
+    
+    private static Handler createTestLogger(String testName) throws IOException {
+        File logFile = new File(System.getProperty("ant.basedir", ""));
+        String type = getTestsType();
+        String path = "build/logs/" + (type != null ? type : "") + "_" + testName + ".log"; 
+        logFile = new File(logFile, path);
+        FileHandler fileHandler = new FileHandler(logFile.getAbsolutePath(), 0, 1, true);
+        fileHandler.setLevel(Level.FINEST);
+        fileHandler.setFormatter(new DefaultSVNDebugFormatter());
+        return fileHandler;
+    }
+
     private static class ExitException extends SecurityException {
         private int myCode;
 

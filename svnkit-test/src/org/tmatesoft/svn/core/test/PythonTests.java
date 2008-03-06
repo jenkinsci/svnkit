@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.logging.FileHandler;
-import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -185,8 +184,7 @@ public class PythonTests {
         fileHandler.setLevel(Level.INFO);
         fileHandler.setFormatter(new DefaultSVNDebugFormatter());
         python.addHandler(fileHandler);
-        
-        
+                
         Logger svnkit = Logger.getLogger("svnkit");
         svnkit.setUseParentHandlers(false);
         svnkit.setLevel(Level.ALL);
@@ -208,20 +206,15 @@ public class PythonTests {
 			
 			final String testFile = suiteName + "_tests.py";
 			tokens = tokens.subList(1, tokens.size());
-		    final List availabledTestCases = getAvailableTestCases(pythonLauncher, testFile);
-			final List testCases = !tokens.isEmpty() ? combineTestCases(tokens, availabledTestCases) : availabledTestCases;
-			System.out.println("PROCESSING " + testFile + " " + testCases);
-            Logger svnkitLogger = Logger.getLogger("svnkit");
-			for (Iterator it = testCases.iterator(); it.hasNext();) {
-				final Integer testCase = (Integer)it.next();
-				Handler handler = createTestLogger(type + "_" + suiteName + "_" + String.valueOf(testCase));
-				svnkitLogger.addHandler(handler);
-				try {
-				    processTestCase(pythonLauncher, testFile, options, String.valueOf(testCase), url, libPath);
-				} finally {
-				    handler.close();
-				    svnkitLogger.removeHandler(handler);
-				}
+			SVNCommandDaemon.setTestsType(type);
+			if (tokens.isEmpty() || (tokens.size() == 1 && "ALL".equals(tokens.get(0)))) {
+                System.out.println("PROCESSING " + testFile + " [ALL]");
+                processTestCase(pythonLauncher, testFile, options, null, url, libPath);
+			} else {
+	            final List availabledTestCases = getAvailableTestCases(pythonLauncher, testFile);
+	            final List testCases = !tokens.isEmpty() ? combineTestCases(tokens, availabledTestCases) : availabledTestCases;
+	            System.out.println("PROCESSING " + testFile + " " + testCases);
+	            processTestCase(pythonLauncher, testFile, options, testCases, url, libPath);
 			}
             for (int i = 0; i < ourLoggers.length; i++) {
                 ourLoggers[i].endSuite(suiteName);
@@ -229,7 +222,7 @@ public class PythonTests {
 		}
 	}
 
-	private static void processTestCase(String pythonLauncher, String testFile, String options, String testCase, 
+	private static void processTestCase(String pythonLauncher, String testFile, String options, List testCases, 
 	        String url, String libPath) {
 	    Collection commandsList = new ArrayList();
         commandsList.add(pythonLauncher);
@@ -242,9 +235,13 @@ public class PythonTests {
         if (options != null && !"".equals(options.trim())) {
             commandsList.add(options);
         }
-        if (testCase != null) {
-            commandsList.add(String.valueOf(testCase));
+        if (testCases != null) {
+            for (Iterator cases = testCases.iterator(); cases.hasNext();) {
+                Integer testCase = (Integer) cases.next();
+                commandsList.add(String.valueOf(testCase));
+            }
         }
+        
         String[] commands = (String[]) commandsList.toArray(new String[commandsList.size()]); 
 
 		try {
@@ -404,8 +401,7 @@ public class PythonTests {
 		    if (!myIsClosed) {
 		        myIsClosed = true;
 		        SVNFileUtil.closeFile(myInputStream);
-		    }
-		    
+		    }		    
 		}
 
 		public void run() {
@@ -605,15 +601,6 @@ public class PythonTests {
         path = path.replace(File.separatorChar, '/');
         new File(path).mkdirs();
         return path;
-    }
-    
-    private static Handler createTestLogger(String testName) throws IOException {
-        File logFile = new File(System.getProperty("ant.basedir", ""));
-        logFile = new File(logFile, "build/logs/" + testName + ".log");
-        FileHandler fileHandler = new FileHandler(logFile.getAbsolutePath(), 0, 1, false);
-        fileHandler.setLevel(Level.FINEST);
-        fileHandler.setFormatter(new DefaultSVNDebugFormatter());
-        return fileHandler;
     }
     
     private static Process execCommand(String[] command, boolean wait) throws IOException {

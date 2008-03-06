@@ -1052,6 +1052,7 @@ class TestRunner:
     # Tests that want to use an editor should invoke svntest.main.use_editor.
     os.environ['SVN_EDITOR'] = ''
     os.environ['SVNTEST_EDITOR_FUNC'] = ''
+    os.environ['SVN_CURRENT_TEST'] = os.path.basename(sys.argv[0]) + "_" + str(self.index)
     actions.no_sleep_for_timestamps()
 
     saved_dir = os.getcwd()
