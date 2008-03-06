@@ -174,18 +174,25 @@ public class SVNCommandDaemon implements Runnable {
                 // 
                 BufferedReader envReader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(envBuffer.toByteArray()), "UTF-8"));
                 editor = envReader.readLine();
-                if ("".equals(editor.trim())) {
+                if (editor == null || "".equals(editor.trim())) {
                     editor = null;
+                } else {
+                    editor = editor.trim();
                 }
                 mergeTool = envReader.readLine();
-                if ("".equals(mergeTool.trim())) {
+                if (mergeTool == null || "".equals(mergeTool.trim())) {
                     mergeTool = null;
+                } else {
+                    mergeTool = mergeTool.trim();
                 }
                 testFunction = envReader.readLine();
-                if ("".equals(testFunction.trim())) {
+                if (testFunction == null || "".equals(testFunction.trim())) {
                     testFunction = null;
+                } else {
+                    testFunction = testFunction.trim();
                 }
-
+                envReader.close();
+                
                 BufferedReader reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(header), "UTF-8"));
                 while(true) {
                     String line = reader.readLine();
@@ -213,6 +220,7 @@ public class SVNCommandDaemon implements Runnable {
                     }
                     input += line;
                 }
+                reader.close();
             } catch (IOException e) {
                 log.error("error reading input");
                 log.error(e);
