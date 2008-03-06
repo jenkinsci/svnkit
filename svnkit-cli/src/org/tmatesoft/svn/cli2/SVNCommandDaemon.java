@@ -22,6 +22,8 @@ import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.Permission;
+import java.util.ArrayList;
+import java.util.Collection;
 
 import org.tmatesoft.svn.cli.SVNSync;
 import org.tmatesoft.svn.cli2.svn.SVN;
@@ -118,7 +120,7 @@ public class SVNCommandDaemon implements Runnable {
             OutputStream os = null;
             InputStream is = null;
             // read all from the input stream until empty line is met.
-            String input = "";
+            Collection arguments = new ArrayList();
             String editor = null;
             String mergeTool = null;
             String testFunction = null;
@@ -198,7 +200,7 @@ public class SVNCommandDaemon implements Runnable {
                     String line = reader.readLine();
                     if (line == null || "".equals(line.trim())) {
                         break;
-                    } else if ("SHUTDOWN".equals(line.trim()) && "".equals(input)) {
+                    } else if ("SHUTDOWN".equals(line.trim()) && arguments.isEmpty()) {
                         try {
                             os.write(("svnkit daemon shutted down on port " + myPort).getBytes());
                             os.flush();
@@ -215,10 +217,10 @@ public class SVNCommandDaemon implements Runnable {
                         shutdown();
                         return;
                     }
-                    if (!"".equals(input)) {
-                        input += "\n";
+                    if (line.startsWith("arg=")) {
+                        line = line.substring("arg=".length());
                     }
-                    input += line;
+                    arguments.add(line);
                 }
                 reader.close();
             } catch (IOException e) {
@@ -233,7 +235,7 @@ public class SVNCommandDaemon implements Runnable {
                 continue;
             }
             //log.info("running: " + input);
-            String[] args = input.split("\n");
+            String[] args = (String[]) arguments.toArray(new String[arguments.size()]);
             if (args.length < 2) {
                 log.error("Insufficient number of arguments read, at least two needed");
                 try {

@@ -8,7 +8,7 @@ args+='\n%name%'
 
 for arg in "$@"
 do 
-    args+='\n'
+    args+='\narg='
     args+=$arg
 done
 # add empty line
