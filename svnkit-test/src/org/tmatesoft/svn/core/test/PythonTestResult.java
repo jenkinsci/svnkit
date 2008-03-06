@@ -26,8 +26,12 @@ public class PythonTestResult {
     private int myID;
     
     public static PythonTestResult parse(String line) {
-        if (line != null && (line.startsWith("PASS: ") || line.startsWith("FAIL: "))) {
-            String regexp = "([PASFIL]{4})(.*\\.py)[\u0020]*(\\d+)[:\u0020]+(.+)";
+        if (line != null && 
+                (line.startsWith("PASS: ") || 
+                 line.startsWith("FAIL: ") || 
+                 line.startsWith("XFAIL: ") ||
+                 line.startsWith("XPASS: "))) {
+            String regexp = "(X?[PASFIL]{4})(.*\\.py)[\u0020]*(\\d+)[:\u0020]+(.+)";
             Pattern pattern = Pattern.compile(regexp, Pattern.DOTALL);
             
             Matcher matcher = pattern.matcher(line);
@@ -36,7 +40,7 @@ public class PythonTestResult {
                 name = name.replaceAll("\"", "'");
                 String id = matcher.group(3);
                 String result = matcher.group(1);
-                return new PythonTestResult(name, id, "PASS".equalsIgnoreCase(result));
+                return new PythonTestResult(name, id, "PASS".equalsIgnoreCase(result) || "XFAIL".equalsIgnoreCase(result));
             }
         }
         return null;

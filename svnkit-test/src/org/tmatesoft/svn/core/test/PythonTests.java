@@ -369,7 +369,7 @@ public class PythonTests {
 
 			if (tokenizer.hasMoreTokens()) {
 				final String hint = tokenizer.nextToken().trim();
-				if (hint.equalsIgnoreCase("SKIP") || hint.equalsIgnoreCase("XFAIL")) {
+				if (hint.equalsIgnoreCase("SKIP")) {
 					continue;
 				}
 			}
@@ -378,8 +378,6 @@ public class PythonTests {
 				tests.add(new Integer(first));
 			} catch (NumberFormatException ex) {
 			    continue;
-//				System.err.println("ERROR: " + ex.getMessage());
-//				ex.printStackTrace(System.err);
 			}
 		}
 		return tests;
