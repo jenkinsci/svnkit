@@ -1135,10 +1135,14 @@ public class SVNFileUtil {
     }
 
     public static String execCommand(String[] commandLine, boolean waitAfterRead) {
+        return execCommand(commandLine, null, waitAfterRead);
+    }
+
+    public static String execCommand(String[] commandLine, String[] env, boolean waitAfterRead) {
         InputStream is = null;
         StringBuffer result = new StringBuffer();
         try {
-            Process process = Runtime.getRuntime().exec(commandLine);
+            Process process = Runtime.getRuntime().exec(commandLine, env);
             is = process.getInputStream();
             if (!waitAfterRead) {
                 int rc = process.waitFor();
@@ -1284,6 +1288,20 @@ public class SVNFileUtil {
             }
         }
         return null;
+    }
+    
+    private static String ourTestEditor = null;
+    private static String ourTestMergeTool = null;
+    private static String ourTestFunction = null;
+    
+    public static void setTestEnvironment(String editor, String mergeTool, String function) {
+        ourTestEditor = editor;
+        ourTestMergeTool = mergeTool;
+        ourTestFunction = function;
+    }
+    
+    public static String[] getTestEnvironment() {
+        return new String[] {ourTestEditor, ourTestMergeTool, ourTestFunction};
     }
 
     private static Properties getEnvironment() throws Throwable {

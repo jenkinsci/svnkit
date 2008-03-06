@@ -52,9 +52,17 @@ public class SVNCommandUtil {
     
     public static void mergeFileExternally(AbstractSVNCommandEnvironment env, String basePath, String repositoryPath, 
             String localPath, String mergeResultPath) throws SVNException {
-        String mergeToolCommand = SVNFileUtil.getEnvironmentVariable("SVN_MERGE");
-        if (mergeToolCommand == null) {
-            mergeToolCommand = env.getClientManager().getOptions().getMergeTool();
+        String[] testEnvironment = SVNFileUtil.getTestEnvironment();
+        String mergeToolCommand = testEnvironment[1];
+        if (testEnvironment[1] == null) {
+            mergeToolCommand = SVNFileUtil.getEnvironmentVariable("SVN_MERGE");
+            if (mergeToolCommand == null) {
+                mergeToolCommand = env.getClientManager().getOptions().getMergeTool();
+            }
+            testEnvironment = null;
+        } else {
+            mergeToolCommand = testEnvironment[1];
+            testEnvironment = new String[] {"SVNTEST_EDITOR_FUNC=" + (testEnvironment[2] == null ? "" : testEnvironment[2])};
         }
 
         if (mergeToolCommand != null) {
@@ -75,14 +83,14 @@ public class SVNCommandUtil {
             String merger = mergeToolCommand.toLowerCase();
             if (!(merger.endsWith(".exe") || merger.endsWith(".bat") || merger.endsWith(".cmd"))) {
                 result = SVNFileUtil.execCommand(new String[] { "cmd.exe", "/C", merger, basePath, repositoryPath, 
-                        localPath, mergeResultPath }, true);
+                        localPath, mergeResultPath }, testEnvironment, true);
             } else {
                 result = SVNFileUtil.execCommand(new String[] { merger, basePath, repositoryPath, localPath, 
-                        mergeResultPath }, true);
+                        mergeResultPath }, testEnvironment, true);
             }
         } else {
             result = SVNFileUtil.execCommand(new String[] { mergeToolCommand, basePath, repositoryPath, localPath, 
-                    mergeResultPath }, true);
+                    mergeResultPath }, testEnvironment, true);
         }
 
         if (result == null) {
@@ -95,17 +103,21 @@ public class SVNCommandUtil {
 
     public static void editFileExternally(AbstractSVNCommandEnvironment env, String editorCommand, String path) throws SVNException {
         editorCommand = getEditorCommand(env, editorCommand);
+        String testEnv[] = SVNFileUtil.getTestEnvironment();
+        if (testEnv[0] != null) {
+            testEnv = new String[] {"SVNTEST_EDITOR_FUNC=" + (testEnv[2] != null ? testEnv[2] : "")};
+        }
         String result = null;
         if (SVNFileUtil.isWindows) {
             String editor = editorCommand.trim().toLowerCase();
             if (!(editor.endsWith(".exe") || editor.endsWith(".bat") || editor.endsWith(".cmd"))) {
                 result = SVNFileUtil.execCommand(new String[] {"cmd.exe", "/C", editorCommand, 
-                        path}, false);
+                        path}, testEnv, false);
             } else {
-                result = SVNFileUtil.execCommand(new String[] {editorCommand, path}, false);
+                result = SVNFileUtil.execCommand(new String[] {editorCommand, path}, testEnv, false);
             }
         } else {
-            result = SVNFileUtil.execCommand(new String[] {editorCommand, path}, false);
+            result = SVNFileUtil.execCommand(new String[] {editorCommand, path}, testEnv, false);
         }
         
         if (result == null) {
@@ -131,17 +143,23 @@ public class SVNCommandUtil {
         tmpFile.setLastModified(System.currentTimeMillis() - 2000);
         long timestamp = tmpFile.lastModified();
         editorCommand = getEditorCommand(env, editorCommand);
+        String[] testEnv = SVNFileUtil.getTestEnvironment();
+        if (testEnv[0] != null) {
+            testEnv = new String[] {"SVNTEST_EDITOR_FUNC=" + (testEnv[2] != null ? testEnv[2] : "")};
+        } else {
+            testEnv = null;
+        }
         try {
             String result = null;
             if (SVNFileUtil.isWindows) {
                 String editor = editorCommand.trim().toLowerCase();
                 if (!(editor.endsWith(".exe") || editor.endsWith(".bat") || editor.endsWith(".cmd"))) {
-                    result = SVNFileUtil.execCommand(new String[] {"cmd.exe", "/C", editorCommand, tmpFile.getAbsolutePath()}, false);
+                    result = SVNFileUtil.execCommand(new String[] {"cmd.exe", "/C", editorCommand, tmpFile.getAbsolutePath()}, testEnv, false);
                 } else {
-                    result = SVNFileUtil.execCommand(new String[] {editorCommand, tmpFile.getAbsolutePath()}, false);
+                    result = SVNFileUtil.execCommand(new String[] {editorCommand, tmpFile.getAbsolutePath()}, testEnv, false);
                 }
             } else {
-                result = SVNFileUtil.execCommand(new String[] {editorCommand, tmpFile.getAbsolutePath()}, false);
+                result = SVNFileUtil.execCommand(new String[] {editorCommand, tmpFile.getAbsolutePath()}, testEnv, false);
             }
             if (result == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Editor command '" + editorCommand + " " + tmpFile.getAbsolutePath() + "' failed.");
@@ -210,15 +228,19 @@ public class SVNCommandUtil {
         if (editorCommand != null) {
             return editorCommand;
         } 
-        String command = SVNFileUtil.getEnvironmentVariable("SVN_EDITOR");
+        String[] testEnvironment = SVNFileUtil.getTestEnvironment();
+        String command = testEnvironment[0];
         if (command == null) {
-            command = env.getClientManager().getOptions().getEditor();
-        }
-        if (command == null) {
-            command = SVNFileUtil.getEnvironmentVariable("VISUAL");
-        }
-        if (command == null) {
-            command = SVNFileUtil.getEnvironmentVariable("EDITOR");
+            command = SVNFileUtil.getEnvironmentVariable("SVN_EDITOR");
+            if (command == null) {
+                command = env.getClientManager().getOptions().getEditor();
+            }
+            if (command == null) {
+                command = SVNFileUtil.getEnvironmentVariable("VISUAL");
+            }
+            if (command == null) {
+                command = SVNFileUtil.getEnvironmentVariable("EDITOR");
+            }
         }
         String errorMessage = null;
         if (command == null) {

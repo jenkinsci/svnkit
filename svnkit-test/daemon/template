@@ -13,6 +13,14 @@ do
 done
 # add empty line
 args+='\n\n'
+# add env vars (spaces added not send empty lines)
+args+=$SVN_EDITOR
+args+=' \n'
+args+=$SVN_MERGE
+args+=' \n'
+args+=$SVNTEST_EDITOR_FUNC
+# add empty line
+args+=' \n\n'
 
 # check input
 if [ ! -t 0 ]

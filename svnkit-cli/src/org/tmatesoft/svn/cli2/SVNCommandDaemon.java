@@ -31,6 +31,7 @@ import org.tmatesoft.svn.cli2.svnversion.SVNVersion;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
@@ -118,6 +119,10 @@ public class SVNCommandDaemon implements Runnable {
             InputStream is = null;
             // read all from the input stream until empty line is met.
             String input = "";
+            String editor = null;
+            String mergeTool = null;
+            String testFunction = null;
+            
             byte[] body = null;
             try {
                 is = socket.getInputStream();
@@ -138,6 +143,20 @@ public class SVNCommandDaemon implements Runnable {
                 }
                 buffer.close();
                 byte[] header = buffer.toByteArray();
+                ByteArrayOutputStream envBuffer = new ByteArrayOutputStream();
+                lastChar = 0;
+                while(true) {
+                    int b = is.read();
+                    if (b < 0) {
+                        break;
+                    }
+                    if (b == '\n' && lastChar == '\n') {
+                        break;
+                    }
+                    lastChar = b;
+                    envBuffer.write(b);
+                }
+                envBuffer.close();
                 buffer = new ByteArrayOutputStream();
                 while(true) {
                     int b = is.read();
@@ -151,8 +170,21 @@ public class SVNCommandDaemon implements Runnable {
                 }
                 buffer.close();
                 body = buffer.toByteArray();
-                //log.info("header: " + new String(header));
-                //log.info("body: " + new String(body));
+                
+                // 
+                BufferedReader envReader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(envBuffer.toByteArray()), "UTF-8"));
+                editor = envReader.readLine();
+                if ("".equals(editor.trim())) {
+                    editor = null;
+                }
+                mergeTool = envReader.readLine();
+                if ("".equals(mergeTool.trim())) {
+                    mergeTool = null;
+                }
+                testFunction = envReader.readLine();
+                if ("".equals(testFunction.trim())) {
+                    testFunction = null;
+                }
 
                 BufferedReader reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(header), "UTF-8"));
                 while(true) {
@@ -220,6 +252,7 @@ public class SVNCommandDaemon implements Runnable {
             PrintStream commandErr = new PrintStream(commandErrData);
             int rc = 0;
             try {
+                SVNFileUtil.setTestEnvironment(editor, mergeTool, testFunction);
                 System.setProperty("user.dir", userDir);
                 System.setOut(commandOut);
                 System.setErr(commandErr);
@@ -243,6 +276,7 @@ public class SVNCommandDaemon implements Runnable {
                 log.error(th);
                 rc = 1;
             } finally {
+                SVNFileUtil.setTestEnvironment(null, null, null);
                 System.setProperty("user.dir", oldUserDir);
                 System.setIn(oldIn);
                 System.setOut(oldOut);
