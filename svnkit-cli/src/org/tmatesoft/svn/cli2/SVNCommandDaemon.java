@@ -124,6 +124,7 @@ public class SVNCommandDaemon implements Runnable {
             String editor = null;
             String mergeTool = null;
             String testFunction = null;
+            boolean sleepForTimestamp = true;
             
             byte[] body = null;
             try {
@@ -192,6 +193,10 @@ public class SVNCommandDaemon implements Runnable {
                     testFunction = null;
                 } else {
                     testFunction = testFunction.trim();
+                }
+                String noSleep = envReader.readLine();
+                if (noSleep != null && "yes".equals(noSleep.trim())) {
+                    sleepForTimestamp = false;
                 }
                 envReader.close();
                 
@@ -263,6 +268,7 @@ public class SVNCommandDaemon implements Runnable {
             int rc = 0;
             try {
                 SVNFileUtil.setTestEnvironment(editor, mergeTool, testFunction);
+                SVNFileUtil.setSleepForTimestamp(sleepForTimestamp);
                 System.setProperty("user.dir", userDir);
                 System.setOut(commandOut);
                 System.setErr(commandErr);

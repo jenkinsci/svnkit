@@ -88,6 +88,8 @@ public class SVNFileUtil {
     private static String ourAdminDirectoryName;
     private static File ourSystemAppDataPath;
     
+    private static volatile boolean ourIsSleepForTimeStamp = true;
+    
     public static final String BINARY_MIME_TYPE = "application/octet-stream";
 
     static {
@@ -821,6 +823,9 @@ public class SVNFileUtil {
     }
 
     public static void sleepForTimestamp() {
+        if (!ourIsSleepForTimeStamp) {
+            return;
+        }
         long time = System.currentTimeMillis();
         time = 1100 - (time - (time / 1000) * 1000);
         try {
@@ -828,6 +833,10 @@ public class SVNFileUtil {
         } catch (InterruptedException e) {
             //
         }
+    }
+    
+    public static void setSleepForTimestamp(boolean sleep) {
+        ourIsSleepForTimeStamp = sleep;
     }
 
     public static String readLineFromStream(InputStream is, StringBuffer buffer, CharsetDecoder decoder) throws IOException {
