@@ -692,10 +692,11 @@
     			<include name="**/*"/>
     	    </fileset>
         </delete>
-    	<java classpathref="python.classpath"
+    	<java classpathref="python.classpath" 
               dir="${python.test.home}"
               fork="true"
               classname="org.tmatesoft.svn.core.test.PythonTests">        
+         <jvmarg value="-server" />
          <jvmarg value="-Djava.util.logging.config.file=${python.test.home}/logging.python.properties" />
          <arg line="${python.test.home}/test.properties" />
          <arg path="${basedir}/build/lib" />

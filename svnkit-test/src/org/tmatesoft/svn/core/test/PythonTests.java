@@ -184,14 +184,17 @@ public class PythonTests {
 			
 			final String testFile = suiteName + "_tests.py";
 			tokens = tokens.subList(1, tokens.size());
-
-		    final List availabledTestCases = getAvailableTestCases(pythonLauncher, testFile);
-			final List testCases = !tokens.isEmpty() ? combineTestCases(tokens, availabledTestCases) : availabledTestCases;
-
-			System.out.println("PROCESSING " + testFile + " " + testCases);
-			for (Iterator it = testCases.iterator(); it.hasNext();) {
-				final Integer testCase = (Integer)it.next();
-				processTestCase(pythonLauncher, testFile, options, String.valueOf(testCase), url, libPath);
+			if (tokens.isEmpty() || (tokens.size() == 1 && "ALL".equalsIgnoreCase((String) tokens.get(0)))) {
+                System.out.println("PROCESSING " + testFile + " [ALL]");
+                processTestCase(pythonLauncher, testFile, options, null, url, libPath);
+			} else {
+    		    final List availabledTestCases = getAvailableTestCases(pythonLauncher, testFile);
+    			final List testCases = !tokens.isEmpty() ? combineTestCases(tokens, availabledTestCases) : availabledTestCases;
+    			System.out.println("PROCESSING " + testFile + " " + testCases);
+    			for (Iterator it = testCases.iterator(); it.hasNext();) {
+    				final Integer testCase = (Integer)it.next();
+    				processTestCase(pythonLauncher, testFile, options, String.valueOf(testCase), url, libPath);
+    			}
 			}
             for (int i = 0; i < ourLoggers.length; i++) {
                 ourLoggers[i].endSuite(suiteName);
@@ -212,7 +215,9 @@ public class PythonTests {
         if (options != null && !"".equals(options.trim())) {
             commandsList.add(options);
         }
-        commandsList.add(String.valueOf(testCase));
+        if (testCase != null) {
+            commandsList.add(String.valueOf(testCase));
+        }
         String[] commands = (String[]) commandsList.toArray(new String[commandsList.size()]); 
 
 		try {
