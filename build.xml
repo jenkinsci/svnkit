@@ -697,10 +697,20 @@
               fork="true"
               classname="org.tmatesoft.svn.core.test.PythonTests">        
          <jvmarg value="-server" />
-         <jvmarg value="-Djava.util.logging.config.file=${python.test.home}/logging.python.properties" />
+         <jvmarg value="-Dant.basedir=${basedir.unix}" />
          <arg line="${python.test.home}/test.properties" />
          <arg path="${basedir}/build/lib" />
     	</java>
+    	<zip compress="true" destfile="${basedir}/build/logs/logs.zip">
+    		<zipfileset dir="${basedir}/build/logs">
+    			<include name="**/*_*.log"/>
+    	    </zipfileset>
+    	</zip>
+    	<delete failonerror="false">
+    		<fileset dir="${basedir}/build/logs">
+    			<include name="**/*_*.log"/>
+    	    </fileset>
+        </delete>
     	<delete file="build/lib/logging.properties" failonerror="false"></delete>
     	<delete file="build/lib/logging.python.properties" failonerror="false"></delete>
     	<delete failonerror="false">
