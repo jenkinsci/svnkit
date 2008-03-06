@@ -511,6 +511,9 @@ public class PythonTests {
 
     public static void stopApache(Properties props, int port) throws Throwable {
         apache(props, port, false);
+        // delete apache log.
+        File file = new File(System.getProperty("user.home"), "httpd." + port + ".error.log");
+        SVNFileUtil.deleteFile(file);
     }
     
     private static int apache(Properties props, int port, boolean start) throws Throwable {
