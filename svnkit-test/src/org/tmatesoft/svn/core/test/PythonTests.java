@@ -180,13 +180,16 @@ public class PythonTests {
     private static void setupLogging() throws IOException {
         Logger python = Logger.getLogger("python");
         python.setUseParentHandlers(false);
+        python.setLevel(Level.INFO);
         FileHandler fileHandler = new FileHandler(System.getProperty("ant.basedir", "") + "/build/logs/python.log", 0, 1, false);
         fileHandler.setLevel(Level.INFO);
         fileHandler.setFormatter(new DefaultSVNDebugFormatter());
         python.addHandler(fileHandler);
         
+        
         Logger svnkit = Logger.getLogger("svnkit");
         svnkit.setUseParentHandlers(false);
+        svnkit.setLevel(Level.ALL);
     }
 
 	private static void runPythonTests(Properties properties, String defaultTestSuite, String type, String url, String libPath) throws IOException {
