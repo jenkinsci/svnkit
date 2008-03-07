@@ -145,7 +145,7 @@ public class SVNCommandDaemonEnvironment {
     
     private Handler createTestLogger(String testName) throws IOException {
         File logFile = new File(System.getProperty("ant.basedir", ""));
-        String path = "build/logs/" + (myTestType != null ? myTestType : "") + "_" + testName + ".log"; 
+        String path = "build/logs/" + (myTestType != null ? myTestType : "") + "_" + testName.trim() + ".log"; 
         logFile = new File(logFile, path);
         FileHandler fileHandler = new FileHandler(logFile.getAbsolutePath(), 0, 1, true);
         fileHandler.setLevel(Level.FINEST);

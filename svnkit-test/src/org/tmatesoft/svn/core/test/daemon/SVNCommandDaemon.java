@@ -195,7 +195,10 @@ public class SVNCommandDaemon implements Runnable {
     private byte[] escape(byte[] src) throws IOException {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         for (int i = 0; i < src.length; i++) {
-            if (src[i] < 32) {
+            if (src[i] == '\n') {
+                buffer.write('\\');
+                buffer.write('n');
+            } if (src[i] < 32) {
                 buffer.write('\\');
                 buffer.write('0');
                 buffer.write(Integer.toOctalString(src[i]).getBytes());
