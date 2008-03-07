@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.logging.FileHandler;
+import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -69,11 +70,7 @@ public class PythonTests {
 			System.exit(1);
 		}
 		
-		try {
-            setupLogging();
-        } catch (IOException e1) {
-            e1.printStackTrace();
-        }
+        setupLogging();
         
         for (int i = 0; i < ourLoggers.length; i++) {
             try{
@@ -179,18 +176,21 @@ public class PythonTests {
         }
 	}
     
-    private static void setupLogging() throws IOException {
+    private static void setupLogging() {
         Logger python = Logger.getLogger("python");
         python.setUseParentHandlers(false);
         python.setLevel(Level.INFO);
-        FileHandler fileHandler = new FileHandler(System.getProperty("ant.basedir", "") + "/build/logs/python.log", 0, 1, false);
-        fileHandler.setLevel(Level.INFO);
-        fileHandler.setFormatter(new DefaultSVNDebugFormatter());
-        python.addHandler(fileHandler);
                 
         Logger svnkit = Logger.getLogger("svnkit");
         svnkit.setUseParentHandlers(false);
         svnkit.setLevel(Level.ALL);
+    }
+    
+    private static Handler createLogHandler(String logName) throws IOException {
+      FileHandler fileHandler = new FileHandler(System.getProperty("ant.basedir", "") + "/build/logs/" + logName + ".log", 0, 1, false);
+      fileHandler.setLevel(Level.INFO);
+      fileHandler.setFormatter(new DefaultSVNDebugFormatter());
+      return fileHandler;
     }
 
 	private static void runPythonTests(Properties properties, String defaultTestSuite, String type, String url, String libPath) throws IOException {
@@ -213,14 +213,21 @@ public class PythonTests {
 			    ourDaemon.setTestsType(type);
 			}
 			
-			if (tokens.isEmpty() || (tokens.size() == 1 && "ALL".equals(tokens.get(0)))) {
-                System.out.println("PROCESSING " + testFile + " [ALL]");
-                processTestCase(pythonLauncher, testFile, options, null, url, libPath);
-			} else {
-	            final List availabledTestCases = getAvailableTestCases(pythonLauncher, testFile);
-	            final List testCases = !tokens.isEmpty() ? combineTestCases(tokens, availabledTestCases) : availabledTestCases;
-	            System.out.println("PROCESSING " + testFile + " " + testCases);
-	            processTestCase(pythonLauncher, testFile, options, testCases, url, libPath);
+			Handler logHandler = createLogHandler(type + "_" + suiteName + "_python");
+			Logger.getLogger("python").addHandler(logHandler);
+			try {
+    			if (tokens.isEmpty() || (tokens.size() == 1 && "ALL".equals(tokens.get(0)))) {
+                    System.out.println("PROCESSING " + testFile + " [ALL]");
+                    processTestCase(pythonLauncher, testFile, options, null, url, libPath);
+    			} else {
+    	            final List availabledTestCases = getAvailableTestCases(pythonLauncher, testFile);
+    	            final List testCases = !tokens.isEmpty() ? combineTestCases(tokens, availabledTestCases) : availabledTestCases;
+    	            System.out.println("PROCESSING " + testFile + " " + testCases);
+    	            processTestCase(pythonLauncher, testFile, options, testCases, url, libPath);
+    			}
+			} finally {
+			    logHandler.close();
+			    Logger.getLogger("python").removeHandler(logHandler);
 			}
             for (int i = 0; i < ourLoggers.length; i++) {
                 ourLoggers[i].endSuite(suiteName);
