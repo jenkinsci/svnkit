@@ -274,8 +274,7 @@ public class PythonTests {
 			}
 		}
 		catch (Throwable th) {
-			System.err.println("ERROR: " + th.getMessage());
-			th.printStackTrace(System.err);
+			Logger.getLogger("python").log(Level.SEVERE, "", th);
 		}
 	}
 
@@ -432,9 +431,7 @@ public class PythonTests {
 						myHelpStream.flush();
 					}
 				}
-			}
-			catch (IOException e) {
-//				e.printStackTrace();
+			} catch (IOException e) {
 			} finally {
 			    if (!myIsClosed) {
 			        close();

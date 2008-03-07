@@ -19,6 +19,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 
 /**
@@ -84,7 +85,7 @@ public abstract class AbstractSVNLauncher {
             env.dispose();
             success();
         } catch (Throwable th) {
-            th.printStackTrace();
+            SVNDebugLog.getDefaultLog().error(th);            
             if (env != null) {
                 env.dispose();
             }
