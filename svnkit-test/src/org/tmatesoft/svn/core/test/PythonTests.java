@@ -34,9 +34,9 @@ import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.tmatesoft.svn.cli2.SVNCommandDaemon;
 import org.tmatesoft.svn.core.internal.util.DefaultSVNDebugFormatter;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.test.daemon.SVNCommandDaemon;
 
 /**
  * @version 1.1.1
@@ -174,6 +174,9 @@ public class PythonTests {
         for (int i = 0; i < ourLoggers.length; i++) {
             ourLoggers[i].endTests(properties);
         }
+        if (ourDaemon != null) {
+            ourDaemon.shutdown();
+        }
 	}
     
     private static void setupLogging() throws IOException {
@@ -206,7 +209,10 @@ public class PythonTests {
 			
 			final String testFile = suiteName + "_tests.py";
 			tokens = tokens.subList(1, tokens.size());
-			SVNCommandDaemon.setTestsType(type);
+			if (ourDaemon != null) {
+			    ourDaemon.setTestsType(type);
+			}
+			
 			if (tokens.isEmpty() || (tokens.size() == 1 && "ALL".equals(tokens.get(0)))) {
                 System.out.println("PROCESSING " + testFile + " [ALL]");
                 processTestCase(pythonLauncher, testFile, options, null, url, libPath);

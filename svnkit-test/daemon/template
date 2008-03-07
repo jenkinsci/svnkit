@@ -3,26 +3,28 @@
 # collect arguments,
 # prepend them with command name and current directory
 
-args=`pwd`
-args+='\n%name%'
+args='dir='
+args+=`pwd`
+args+='\nprogram=%name%'
 
 for arg in "$@"
 do 
     args+='\narg='
     args+=$arg
 done
-# add empty line
-args+='\n\n'
+
 # add env vars (spaces added not send empty lines)
+args+='\nenv.SVN_EDITOR='
 args+=$SVN_EDITOR
-args+=' \n'
+args+='\nenv.SVN_MERGE='
 args+=$SVN_MERGE
-args+=' \n'
+args+='\nenv.SVNTEST_EDITOR_FUNC='
 args+=$SVNTEST_EDITOR_FUNC
-args+=' \n'
+args+='\nenv.SVN_I_LOVE_CORRUPTED_WORKING_COPIES_SO_DISABLE_SLEEP_FOR_TIMESTAMPS='
 args+=$SVN_I_LOVE_CORRUPTED_WORKING_COPIES_SO_DISABLE_SLEEP_FOR_TIMESTAMPS
-args+=' \n'
+args+='\nenv.SVN_CURRENT_TEST='
 args+=$SVN_CURRENT_TEST
+
 # add empty line
 args+=' \n\n'
 
