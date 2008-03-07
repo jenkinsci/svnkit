@@ -300,10 +300,14 @@ public class JavaHLObjectFactory {
                 return SVNConflictChoice.BASE;
             case ConflictResult.chooseMerged:
                 return SVNConflictChoice.MERGED;
-            case ConflictResult.chooseMine:
-                return SVNConflictChoice.MINE;
-            case ConflictResult.chooseTheirs:
-                return SVNConflictChoice.THEIRS;
+            case ConflictResult.chooseMineConflict:
+                return SVNConflictChoice.MINE_CONFLICT;
+            case ConflictResult.chooseMineFull:
+                return SVNConflictChoice.MINE_FULL;
+            case ConflictResult.chooseTheirsConflict:
+                return SVNConflictChoice.THEIRS_CONFLICT;
+            case ConflictResult.chooseTheirsFull:
+                return SVNConflictChoice.THEIRS_FULL;
             case ConflictResult.postpone:
                 return SVNConflictChoice.POSTPONE;
             default:
