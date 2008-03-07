@@ -198,7 +198,7 @@ public class SVNCommandDaemon implements Runnable {
             if (src[i] == '\n') {
                 buffer.write('\\');
                 buffer.write('n');
-            } if (src[i] < 32) {
+            } else if (src[i] < 32) {
                 buffer.write('\\');
                 buffer.write('0');
                 buffer.write(Integer.toOctalString(src[i]).getBytes());
