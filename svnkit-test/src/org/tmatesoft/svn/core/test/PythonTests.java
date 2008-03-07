@@ -498,7 +498,7 @@ public class PythonTests {
         portNumber = findUnoccupiedPort(portNumber);
         
         String svnserve = props.getProperty("svnserve.path");
-        String[] command = {svnserve, "-d", "--listen-port", portNumber + "", "-r", path};
+        String[] command = {svnserve, "-d", "--foreground", "--listen-port", portNumber + "", "-r", path};
         ourSVNServer = Runtime.getRuntime().exec(command);
         return portNumber;
     }
