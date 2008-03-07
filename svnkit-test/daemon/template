@@ -55,6 +55,8 @@ rc=${data2##\$\$\$*\$\$\$}
 data2=${data2%\$\$\$[[:digit:]]}
 data2=${data2:3}
 
-echo -n "$data1"
-echo -n "$data2">&2
+# we receive escaped string
+echo -en "$data1"
+echo -en "$data2">&2
+
 exit $rc

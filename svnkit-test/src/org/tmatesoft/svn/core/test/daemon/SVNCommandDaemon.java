@@ -101,11 +101,11 @@ public class SVNCommandDaemon implements Runnable {
                 // send back
                 log.error("command exit code: " + rc);
                 try {
-                    os.write(environment.getStdOut());
+                    os.write(escape(environment.getStdOut()));
                     os.write(new byte[] {
                             '$', '$', '$'
                     });
-                    os.write(environment.getStdErr());
+                    os.write(escape(environment.getStdErr()));
                     os.write(new byte[] {
                             '$', '$', '$'
                     });
@@ -190,5 +190,20 @@ public class SVNCommandDaemon implements Runnable {
     
     private String getTestsType() {
         return myCurrentTestsType;
+    }
+    
+    private byte[] escape(byte[] src) throws IOException {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        for (int i = 0; i < src.length; i++) {
+            if (src[i] < 32) {
+                buffer.write('\\');
+                buffer.write('0');
+                buffer.write(Integer.toOctalString(src[i]).getBytes());
+            } else {
+                buffer.write(src[i]);
+            }
+        }
+        buffer.close();
+        return buffer.toByteArray();
     }
 }
