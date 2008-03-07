@@ -116,6 +116,7 @@ public class SVNCommandDaemonEnvironment {
         } catch (SVNCommandExitException e) {
             return e.getCode();
         } catch (Throwable th) {
+            Logger.getLogger("svnkit").log(Level.SEVERE, th.getMessage() != null ? th.getMessage() : "", th);                    
             return 1;
         } finally {            
             if (logHandler != null) {

@@ -202,6 +202,9 @@ public class SVNCommandDaemon implements Runnable {
                 buffer.write('\\');
                 buffer.write('0');
                 buffer.write(Integer.toOctalString(src[i]).getBytes());
+            } else if (src[i] == '\\') {
+                buffer.write('\\');
+                buffer.write('\\');
             } else {
                 buffer.write(src[i]);
             }
