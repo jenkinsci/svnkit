@@ -498,14 +498,23 @@ public class PythonTests {
         portNumber = findUnoccupiedPort(portNumber);
         
         String svnserve = props.getProperty("svnserve.path");
-        String[] command = {svnserve, "-d", "--foreground", "--listen-port", portNumber + "", "-r", path};
-        ourSVNServer = execCommand(command, false);
+        String[] command = {svnserve, "-d", "--listen-port", portNumber + "", "-r", path};
+        ourSVNServer = Runtime.getRuntime().exec(command);
         return portNumber;
     }
     
     public static void stopSVNServe() {
         if (ourSVNServer != null) {
+            try {
+                ourSVNServer.getInputStream().close();
+                ourSVNServer.getErrorStream().close();
+            } catch (IOException e) {
+            }
             ourSVNServer.destroy();
+            try {
+                ourSVNServer.waitFor();
+            } catch (InterruptedException e) {
+            }
         }
     }
 

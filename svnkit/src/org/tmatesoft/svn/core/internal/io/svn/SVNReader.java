@@ -251,7 +251,7 @@ public class SVNReader {
         }
         SVNErrorMessage topError = getErrorMessage((SVNItem) list.get(list.size() - 1));
         SVNErrorMessage parentError = topError;
-        for (int i = list.size() - 2; i >= 0; i++) {
+        for (int i = list.size() - 2; i >= 0; i--) {
             SVNItem item = (SVNItem) list.get(i);
             SVNErrorMessage error = getErrorMessage(item);
             parentError.setChildErrorMessage(error);
