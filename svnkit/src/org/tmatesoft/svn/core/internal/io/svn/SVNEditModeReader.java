@@ -44,7 +44,7 @@ public class SVNEditModeReader {
         COMMANDS_MAP.put("close-dir", "s");
         COMMANDS_MAP.put("add-file", "sss(?sr)");
         COMMANDS_MAP.put("open-file", "sss(?r)");
-        COMMANDS_MAP.put("apply-textdelta", "s(?b)");
+        COMMANDS_MAP.put("apply-textdelta", "s(?s)");
         COMMANDS_MAP.put("textdelta-chunk", "sb");
         COMMANDS_MAP.put("textdelta-end", "s");
         COMMANDS_MAP.put("change-file-prop", "ss(?b)");
