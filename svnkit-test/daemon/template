@@ -36,10 +36,16 @@ fi
 args+='\n\0'
 
 # now send all that to the server
-
-exec 3<>/dev/tcp/localhost/%port%
-echo -e -n "$args">&3
-data=$(cat <&3)
+# use netcat when available
+nc=`which nc`
+if [ -x $nc ]
+   then
+    data=`echo -e -n "$args" | $nc localhost %port%`
+else
+   exec 3<>/dev/tcp/localhost/%port%
+   echo -e -n "$args">&3
+   data=$(cat <&3)  
+fi
 
 # process data with simple regexps
 
