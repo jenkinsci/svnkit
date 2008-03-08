@@ -111,7 +111,7 @@ public class DAVProppatchHandler extends BasicDAVHandler {
         String prefix = SVNProperty.isSVNProperty(name) ? SVNXMLUtil.SVN_SVN_PROPERTY_PREFIX : SVNXMLUtil.SVN_CUSTOM_PROPERTY_PREFIX;
         String tagName = SVNProperty.shortPropertyName(name);
         Map attrs = null;
-        String stringValue = null;
+        String stringValue = value.getString();
         boolean isXMLSafe = true;
         if (value.isBinary()){
             CharsetDecoder decoder = Charset.forName("UTF-8").newDecoder();
