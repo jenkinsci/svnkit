@@ -703,7 +703,7 @@
     	</java>
     	<property name="teamcity.buildConfName" value="local" />
     	<zip compress="true" destfile="${basedir}/build/logs/logs_${teamcity.buildConfName}_${build.number}.zip">
-    		<zipfileset dir="${basedir}/build/logs">
+    		<zipfileset prefix="logs_${teamcity.buildConfName}_${build.number}" dir="${basedir}/build/logs">
     			<include name="**/*.log"/>
     	    </zipfileset>
     	</zip>
