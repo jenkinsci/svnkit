@@ -112,13 +112,12 @@ public class DAVUtil {
                     throw e;
                 }
                 err = e.getErrorMessage();
-                nested = e;
             }            
             if (err == null) {
                 break;
             }
             if (err.getErrorCode() != SVNErrorCode.RA_DAV_PATH_NOT_FOUND) {
-                SVNErrorManager.error(err,nested);
+                SVNErrorManager.error(err);
             }
             loppedPath = SVNPathUtil.append(SVNPathUtil.tail(fullPath), loppedPath);
             int length = fullPath.length();
