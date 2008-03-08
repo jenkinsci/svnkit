@@ -4,7 +4,6 @@
 contrib/javahl/bin
 contrib/sequence/bin
 contrib/sequence/bin-test
-contrib/sqlite/bin
 doc/examples/bin
 /lib
 svnkit-cli/bin

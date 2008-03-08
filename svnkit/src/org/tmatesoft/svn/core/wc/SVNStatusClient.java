@@ -40,7 +40,6 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNReporter;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * The <b>SVNStatusClient</b> class provides methods for obtaining information on the 
@@ -245,16 +244,7 @@ public class SVNStatusClient extends SVNBasicClient {
 //                externals = collectParentExternals(path, info.getAnchor().getRoot());
 //            }
             if (remote) {
-                if (wcAccess == null) {
-                    SVNDebugLog.getDefaultLog().info("wcAccess is NULL");
-                }
-                if (info == null) {
-                    SVNDebugLog.getDefaultLog().info("info is NULL");
-                }
                 SVNAdminArea anchor = info.getAnchor();
-                if (anchor == null) {
-                    SVNDebugLog.getDefaultLog().info("anchor is NULL");
-                }
                 entry = wcAccess.getVersionedEntry(anchor.getRoot(), false);
                 if (entry.getURL() == null) {
                     SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "Entry ''{0}'' has no URL", info.getAnchor().getRoot());
