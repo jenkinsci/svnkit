@@ -701,14 +701,15 @@
          <arg line="${python.test.home}/test.properties" />
          <arg path="${basedir}/build/lib" />
     	</java>
-    	<zip compress="true" destfile="${basedir}/build/logs/logs.zip">
+    	<property name="teamcity.buildConfName" value="local" />
+    	<zip compress="true" destfile="${basedir}/build/logs/logs_${teamcity.buildConfName}_${build.number}.zip">
     		<zipfileset dir="${basedir}/build/logs">
-    			<include name="**/*_*.log"/>
+    			<include name="**/*.log"/>
     	    </zipfileset>
     	</zip>
     	<delete failonerror="false">
     		<fileset dir="${basedir}/build/logs">
-    			<include name="**/*_*.log"/>
+    			<include name="**/*.log"/>
     	    </fileset>
         </delete>
     	<delete file="build/lib/logging.properties" failonerror="false"></delete>
