@@ -663,6 +663,7 @@
               dir="${python.test.home}"
               fork="true"
               classname="org.tmatesoft.svn.core.test.PythonTests">        
+         <jvmarg value="-client" />
          <jvmarg value="-Dant.basedir=${basedir.unix}" />
          <arg line="${python.test.home}/test.properties" />
          <arg path="${basedir}/build/lib" />
