@@ -43,7 +43,7 @@ public class SVNPath {
         if (myHasPegRevision) {
             parsePegRevision();
         } 
-        myTarget = SVNPathUtil.canonicalizePath(myTarget);
+//        myTarget = SVNPathUtil.canonicalizePath(myTarget);
         assertControlChars(isURL() ? SVNEncodingUtil.uriDecode(myTarget) : myTarget);
     }
     
@@ -122,11 +122,5 @@ public class SVNPath {
             }
         }
         return;
-    }
-
-    public SVNPath append(String tail) throws SVNException {
-        SVNPath path = new SVNPath(SVNPathUtil.append(myTarget, tail), false);
-        path.myPegRevision = myPegRevision;
-        return path;
     }
 }

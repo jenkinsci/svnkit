@@ -1087,7 +1087,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 target.getParentFile().mkdirs();
                 dispatchEvent(SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_EXTERNAL, null, null, null));
                 if (externalDiff.isExport) {
-                    doExport(newURL, target, externalDiff.newExternal.getPegRevision(), externalDiff.newExternal.getRevision(), null, false, SVNDepth.INFINITY); 
+                    doExport(newURL, target, externalDiff.newExternal.getPegRevision(), externalDiff.newExternal.getRevision(), null, true, SVNDepth.INFINITY); 
                 } else {
                     doCheckout(newURL, target, externalDiff.newExternal.getPegRevision(), externalDiff.newExternal.getRevision(), SVNDepth.INFINITY, false);
                 }
