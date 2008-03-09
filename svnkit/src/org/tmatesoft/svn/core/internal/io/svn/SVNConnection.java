@@ -61,7 +61,7 @@ class SVNConnection {
     private static final String MERGE_INFO = "mergeinfo";
     private static final String DEPTH = "depth";
     private static final String LOG_REVPROPS = "log-revprops";
-    private static final String PARTIAL_REPLAY = "commit-revprops";
+//    private static final String PARTIAL_REPLAY = "partial-replay";
 
     public SVNConnection(ISVNConnector connector, SVNRepositoryImpl repository) {
         myConnector = connector;
@@ -148,7 +148,7 @@ class SVNConnection {
         myIsCommitRevprops = SVNReader.hasValue(items, 3, COMMIT_REVPROPS);
         myIsMergeInfo = SVNReader.hasValue(items, 3, MERGE_INFO);
 
-        write("(n(wwwwwww)s)", new Object[]{"2", EDIT_PIPELINE, SVNDIFF1, ABSENT_ENTRIES, COMMIT_REVPROPS, DEPTH, LOG_REVPROPS, PARTIAL_REPLAY,
+        write("(n(wwwwww)s)", new Object[]{"2", EDIT_PIPELINE, SVNDIFF1, ABSENT_ENTRIES, DEPTH, MERGE_INFO, LOG_REVPROPS, 
                 repository.getLocation().toString()});
     }
 
