@@ -43,7 +43,7 @@ public class SVNPath {
         if (myHasPegRevision) {
             parsePegRevision();
         } 
-//        myTarget = SVNPathUtil.canonicalizePath(myTarget);
+        myTarget = SVNPathUtil.canonicalizePath(myTarget);
         assertControlChars(isURL() ? SVNEncodingUtil.uriDecode(myTarget) : myTarget);
     }
     
