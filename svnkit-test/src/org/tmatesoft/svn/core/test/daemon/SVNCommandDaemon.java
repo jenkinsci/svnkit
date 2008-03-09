@@ -103,11 +103,11 @@ public class SVNCommandDaemon implements Runnable {
                 try {
                     os.write(escape(environment.getStdOut()));
                     os.write(new byte[] {
-                            '$', '$', '$'
+                            's', 'v', 'n', 'k', 'i', 't', '_', 'e', 'r', 'r'
                     });
                     os.write(escape(environment.getStdErr()));
                     os.write(new byte[] {
-                            '$', '$', '$'
+                            's', 'v', 'n', 'k', 'i', 't', '_', 'r', 'c'
                     });
                     os.write(Integer.toString(rc).getBytes());
                     os.flush();

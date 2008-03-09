@@ -49,11 +49,14 @@ fi
 
 # process data with simple regexps
 
-data1=${data%%\$\$\$*\$\$\$*}
+ERR_START="svnkit_err"
+RC_START="svnkit_rc"
+
+data1=${data%%$ERR_START*$RC_START*}
 data2=${data:${#data1}}
-rc=${data2##\$\$\$*\$\$\$}
-data2=${data2%\$\$\$[[:digit:]]}
-data2=${data2:3}
+rc=${data2##$ERR_START*$RC_START}
+data2=${data2%$RC_START[[:digit:]]}
+data2=${data2:${#ERR_START}}
 
 # we receive escaped string
 echo -en "$data1"
