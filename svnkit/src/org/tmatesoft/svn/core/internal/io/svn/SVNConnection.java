@@ -17,10 +17,10 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -48,7 +48,7 @@ class SVNConnection {
     private boolean myIsReopening = false;
     private boolean myIsCredentialsReceived = false;
     private InputStream myLoggingInputStream;
-    private Map myCapabilities;
+    private Set myCapabilities;
     private byte[] myHandshakeBuffer = new byte[8192];
     
     private static final String SUCCESS = "success";
@@ -137,7 +137,7 @@ class SVNConnection {
         }
 
         List capabilities = (List) items.get(3);
-        setCapabilities(capabilities);
+        addCapabilities(capabilities);
         if (!hasCapability(EDIT_PIPELINE)) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_BAD_VERSION, 
             		"Server does not support edit pipelining"));
@@ -154,7 +154,7 @@ class SVNConnection {
 
     protected boolean hasCapability(String capability) {
     	if (myCapabilities != null) {
-    		return myCapabilities.get(capability) != null;
+    		return myCapabilities.contains(capability);
     	}
     	return false;
     }
@@ -232,33 +232,31 @@ class SVNConnection {
         SVNErrorManager.error(failureReason);
     }
 
-    private void setCapabilities(List capabilities) throws SVNException {
-    	if (capabilities != null && !capabilities.isEmpty()) {
-    		if (myCapabilities == null) {
-    			myCapabilities = new HashMap();
-    		} else {
-    			myCapabilities.clear();
-    		}
-    		
-    		for (Iterator capsIter = capabilities.iterator(); capsIter.hasNext();) {
-				SVNItem item = (SVNItem) capsIter.next();
-				if (item.getKind() != SVNItem.WORD) {
-					SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, 
-							"Capability entry is not a word"); 
-					SVNErrorManager.error(err);
-				}
-				myCapabilities.put(item.getWord(), item.getWord());
-			}
-    	}
+    private void addCapabilities(List capabilities) throws SVNException {
+        if (myCapabilities == null) {
+            myCapabilities = new HashSet();
+        }
+        if (capabilities == null || capabilities.isEmpty()) {
+            return;
+        }
+        for (Iterator caps = capabilities.iterator(); caps.hasNext();) {
+            SVNItem item = (SVNItem) caps.next();
+            if (item.getKind() != SVNItem.WORD) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, 
+                        "Capability entry is not a word"); 
+                SVNErrorManager.error(err);
+            }
+            myCapabilities.add(item.getWord());
+        }
     }
     
     private void receiveRepositoryCredentials(SVNRepositoryImpl repository) throws SVNException {
         if (myIsCredentialsReceived) {
             return;
         }
-        List creds = read("s?s", null, true);
+        List creds = read("s?s?l", null, true);
         myIsCredentialsReceived = true;
-        if (creds != null && creds.size() == 2 && creds.get(0) != null && creds.get(1) != null) {
+        if (creds != null && creds.size() >= 2 && creds.get(0) != null && creds.get(1) != null) {
             SVNURL rootURL = creds.get(1) != null ? SVNURL.parseURIEncoded(SVNReader.getString(creds, 1)) : null;
             if (rootURL != null && rootURL.toString().length() > repository.getLocation().toString().length()) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Impossibly long repository root from server"));
@@ -271,6 +269,10 @@ class SVNConnection {
             }
             if (myRoot == null) {
                 myRoot = SVNReader.getString(creds, 1);
+            }
+            if (creds.size() > 2 && creds.get(2) instanceof List) {
+                List capabilities = (List) creds.get(2);
+                addCapabilities(capabilities);
             }
         }
     }

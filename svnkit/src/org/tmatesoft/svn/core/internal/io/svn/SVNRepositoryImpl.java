@@ -1473,49 +1473,8 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             }
 
             Object[] buffer = new Object[]{"get-mergeinfo", repositoryPaths,
-                    getRevisionObject(revision), inherit.toString()};
-            write("(w((*s)(n)w))", buffer);
-            authenticate();
-
-            List items = read("(?l)", null, true);
-            items = (List) items.get(0);
-            Map pathsToMergeInfos = new HashMap();
-            for (Iterator iterator = items.iterator(); iterator.hasNext();) {
-                SVNItem item = (SVNItem) iterator.next();
-                if (item.getKind() != SVNItem.LIST) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Merge info element is not a list");
-                    SVNErrorManager.error(err);
-                }
-                List values = SVNReader.parseTuple("ss", item.getItems(), null);
-                String path = SVNReader.getString(values, 0);
-                String mergeInfoToParse = SVNReader.getString(values, 1);
-                Map srcsToRangeLists = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(mergeInfoToParse), null);
-                SVNMergeInfo mergeInfo = new SVNMergeInfo(path, srcsToRangeLists);
-                pathsToMergeInfos.put(path, mergeInfo);
-            }
-            return pathsToMergeInfos;
-        } catch (SVNException e) {
-            closeSession();
-            throw e;
-        } finally {
-            closeConnection();
-        }
-    }
-
-    public Map getMergeInfo(String[] paths, long revision, SVNMergeInfoInheritance inherit) throws SVNException {
-        try {
-            openConnection();
-            if (!myConnection.isMergeInfo()) {
-                return new TreeMap();
-            }
-            String[] repositoryPaths = getRepositoryPaths(paths);
-            if (repositoryPaths == null || repositoryPaths.length == 0) {
-                repositoryPaths = new String[]{""};
-            }
-
-            Object[] buffer = new Object[]{"get-mergeinfo", repositoryPaths,
-                    getRevisionObject(revision), inherit.toString()};
-            write("(w((*s)(n)w))", buffer);
+                    getRevisionObject(revision), inherit.toString(), Boolean.valueOf(includeDescendants)};
+            write("(w((*s)(n)ww))", buffer);
             authenticate();
 
             List items = read("(?l)", null, true);
