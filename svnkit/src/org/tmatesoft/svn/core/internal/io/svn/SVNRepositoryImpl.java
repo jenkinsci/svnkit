@@ -319,7 +319,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     long rangeEndRevision = SVNReader.getLong(segmentAttrs, 1);
                     String rangePath = SVNReader.getString(segmentAttrs, 2);
                     if (SVNRepository.isInvalidRevision(rangeStartRevision) || 
-                            SVNRepository.isInvalidRevision(endRevision)) {
+                            SVNRepository.isInvalidRevision(rangeEndRevision)) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, 
                                 "Expected valid revision range");
                         SVNErrorManager.error(err);
@@ -357,7 +357,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             try {
                 digest = MessageDigest.getInstance("MD5");
             } catch (NoSuchAlgorithmException e) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "MD5 implementation not found: {0}", e.getLocalizedMessage());
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "MD5 implementation not found: {0}", e.getMessage());
                 SVNErrorManager.error(err, e);
             }
             String expectedChecksum = SVNReader.getString(values, 0);
@@ -383,7 +383,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     try {
                         contents.write(item.getBytes());
                     } catch (IOException e) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getLocalizedMessage());
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getMessage());
                         SVNErrorManager.error(err);
                     }
                 }

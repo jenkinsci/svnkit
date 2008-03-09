@@ -165,7 +165,6 @@ class SVNConnection {
         List mechs = SVNReader.getList(items, 0);
         myRealm = SVNReader.getString(items, 1);
         if (mechs == null || mechs.size() == 0) {
-            receiveRepositoryCredentials(repository);
             return;
         }
         ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();

@@ -932,10 +932,7 @@ public abstract class SVNRepository {
                     return -1;
                 } else if (o2 == null) {
                     return 1;
-                } else if (o1.getClass() != SVNLocationSegment.class || 
-                        o2.getClass() != SVNLocationSegment.class) {
-                    return o1.getClass() == o2.getClass() ? 0 : o1.getClass() == SVNLocationSegment.class ? 1 : -1;
-                }
+                } 
                 SVNLocationSegment segment1 = (SVNLocationSegment) o1;
                 SVNLocationSegment segment2 = (SVNLocationSegment) o2;
                 if (segment1.getStartRevision() == segment2.getStartRevision()) {
