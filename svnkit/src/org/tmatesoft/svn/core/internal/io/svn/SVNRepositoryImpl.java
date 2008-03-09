@@ -334,6 +334,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     count += rangeEndRevision - rangeStartRevision + 1;
                 }
             }
+            read("", null, true);
         } catch (SVNException e) {
             closeSession();
             handleUnsupportedCommand(e, "'get-location-segments' not implemented");
