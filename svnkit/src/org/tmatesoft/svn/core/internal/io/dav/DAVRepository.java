@@ -1087,34 +1087,6 @@ public class DAVRepository extends SVNRepository {
         }
     }
 
-    public Map getMergeInfo(String[] paths, long revision, SVNMergeInfoInheritance inherit) throws SVNException {
-        try {
-            openConnection();
-            
-            String path = doGetFullPath("");
-            path = SVNEncodingUtil.uriEncode(path);            
-            if (paths == null || paths.length == 0) {
-                paths = new String[]{""};
-            }
-            String[] fullPaths = new String[paths.length];            
-            for (int i = 0; i < paths.length; i++) {
-                fullPaths[i] = doGetFullPath(paths[i]);
-            }
-            StringBuffer request = DAVMergeInfoHandler.generateMergeInfoRequest(null, revision, fullPaths, inherit);
-            DAVMergeInfoHandler handler = new DAVMergeInfoHandler();
-            HTTPStatus status = myConnection.doReport(path, request, handler);
-            if (status.getCode() == 501) {
-                return new HashMap();
-            }
-            if (status.getError() != null) {
-                SVNErrorManager.error(status.getError());
-            }
-            return handler.getMergeInfo();
-        } finally {
-            closeConnection();
-        }
-    }
-
 	public boolean hasCapability(SVNCapability capability) throws SVNException {
         try {
             openConnection();
@@ -1139,7 +1111,7 @@ public class DAVRepository extends SVNRepository {
                 fullPaths[i] = doGetFullPath(paths[i]);
             }
             StringBuffer request = DAVMergeInfoHandler.generateMergeInfoRequest(null, revision, fullPaths, 
-                    inherit);
+                    inherit, includeDescendants);
             DAVMergeInfoHandler handler = new DAVMergeInfoHandler();
             HTTPStatus status = myConnection.doReport(path, request, handler);
             if (status.getCode() == 501) {
