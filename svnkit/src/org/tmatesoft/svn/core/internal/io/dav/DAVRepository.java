@@ -1090,11 +1090,55 @@ public class DAVRepository extends SVNRepository {
 	public boolean hasCapability(SVNCapability capability) throws SVNException {
         try {
             openConnection();
-            return myConnection.hasCapability(capability);
+            String result = myConnection.getCapabilityResponse(capability);
+            if (DAVConnection.DAV_CAPABILITY_SERVER_YES.equals(result)) {
+                if (capability == SVNCapability.MERGE_INFO) {
+                    SVNException error = null;
+                    try {
+                        getMergeInfoImpl(new String[]{""}, 0, SVNMergeInfoInheritance.EXPLICIT, false);
+                    } catch (SVNException svne) {
+                        error = svne;
+                    }
+                    if (error != null){
+                        if (error.getErrorMessage().getErrorCode() == SVNErrorCode.UNSUPPORTED_FEATURE){
+                            result = DAVConnection.DAV_CAPABILITY_NO;
+                        } else if (error.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_FOUND ||
+                                error.getErrorMessage().getErrorCode() == SVNErrorCode.RA_DAV_PATH_NOT_FOUND){
+                            result = DAVConnection.DAV_CAPABILITY_YES;
+                        } else {
+                            throw error;
+                        }
+                    } else {
+                        result = DAVConnection.DAV_CAPABILITY_YES;
+                    }
+                    myConnection.setCapability(SVNCapability.MERGE_INFO, result);
+                } else {
+                    SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_UNKNOWN_CAPABILITY,
+                            "Don't know how to handle ''{0}'' for capability ''{1}''",
+                            new Object[]{DAVConnection.DAV_CAPABILITY_SERVER_YES, SVNCapability.MERGE_INFO});
+                    SVNErrorManager.error(error);
+                }
+                if (DAVConnection.DAV_CAPABILITY_YES.equals(result)){
+                    return true;
+                } else if (DAVConnection.DAV_CAPABILITY_NO.equals(result)){
+                    return false;
+                } else  if (result == null){
+                    SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_UNKNOWN_CAPABILITY,
+                            "Don't know anything about capability ''{0}''",
+                            new Object[]{capability});
+                    SVNErrorManager.error(error);
+                } else {
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_OPTIONS_REQ_FAILED,
+                            "Attempt to fetch capability ''{0}'' resulted in ''{1}''",
+                            new Object[]{capability, result}));
+                }                
+            }
+            
         } finally {
             closeConnection();
         }
-	}
+        return false;
+    }
 
     protected Map getMergeInfoImpl(String[] paths, long revision, SVNMergeInfoInheritance inherit,
             boolean includeDescendants) throws SVNException {

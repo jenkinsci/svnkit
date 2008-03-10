@@ -51,7 +51,11 @@ import org.xml.sax.helpers.DefaultHandler;
  * @author  TMate Software Ltd.
  */
 public class DAVConnection {
-    
+
+    protected static final String DAV_CAPABILITY_YES = "yes";
+    protected static final String DAV_CAPABILITY_NO = "no";
+    protected static final String DAV_CAPABILITY_SERVER_YES = "server-yes";
+
     private IHTTPConnection myHttpConnection;
     private String myActivityCollectionURL;
     private Map myLocks;
@@ -395,11 +399,15 @@ public class DAVConnection {
         }
     }
 
-    public boolean hasCapability(SVNCapability capability) throws SVNException {
-    	if (myCapabilities == null) {
+    public String getCapabilityResponse(SVNCapability capability) throws SVNException {
+    	if (myCapabilities == null || myCapabilities.get(capability) == null) {
     		exchangeCapabilities();
     	}
-    	return myCapabilities.get(capability) != null;
+        return (String) myCapabilities.get(capability);
+    }
+
+    public void setCapability(SVNCapability capability, String capResult){
+        myCapabilities.put(capability, capResult);        
     }
     
     private void exchangeCapabilities() throws SVNException {
@@ -421,29 +429,25 @@ public class DAVConnection {
     }
     
     private void parseCapabilities(HTTPStatus status) {
-    	if (myCapabilities == null) {
-    		myCapabilities = new HashMap();
-    	}
-
-    	if (!myCapabilities.isEmpty()) {
-        	myCapabilities.remove(SVNCapability.DEPTH);
-        	myCapabilities.remove(SVNCapability.MERGE_INFO);
-        	myCapabilities.remove(SVNCapability.LOG_REVPROPS);
-        	myCapabilities.remove(SVNCapability.PARTIAL_REPLAY);
-    	}
+        if (myCapabilities == null) {
+            myCapabilities = new HashMap();
+        }
+        myCapabilities.put(SVNCapability.DEPTH, DAV_CAPABILITY_NO);
+        myCapabilities.put(SVNCapability.MERGE_INFO, DAV_CAPABILITY_NO);
+        myCapabilities.put(SVNCapability.LOG_REVPROPS, DAV_CAPABILITY_NO);
     	
     	Collection capValues = status.getHeader().getHeaderValues(HTTPHeader.DAV_HEADER);
     	if (capValues != null) {
     		for (Iterator valuesIter = capValues.iterator(); valuesIter.hasNext();) {
     			String value = (String) valuesIter.next();
     			if (DAVElement.DEPTH_OPTION.equalsIgnoreCase(value)) {
-    				myCapabilities.put(SVNCapability.DEPTH, SVNCapability.DEPTH);
+    				myCapabilities.put(SVNCapability.DEPTH, DAV_CAPABILITY_YES);
     			} else if (DAVElement.MERGE_INFO_OPTION.equalsIgnoreCase(value)) {
-    				myCapabilities.put(SVNCapability.MERGE_INFO, SVNCapability.MERGE_INFO);
+    				myCapabilities.put(SVNCapability.MERGE_INFO, DAV_CAPABILITY_SERVER_YES);
     			} else if (DAVElement.LOG_REVPROPS_OPTION.equalsIgnoreCase(value)) {
-    				myCapabilities.put(SVNCapability.LOG_REVPROPS, SVNCapability.LOG_REVPROPS);
+    				myCapabilities.put(SVNCapability.LOG_REVPROPS, DAV_CAPABILITY_YES);
     			} else if (DAVElement.PARTIAL_REPLAY_OPTION.equalsIgnoreCase(value)) {
-    				myCapabilities.put(SVNCapability.PARTIAL_REPLAY, SVNCapability.PARTIAL_REPLAY);
+    				myCapabilities.put(SVNCapability.PARTIAL_REPLAY, DAV_CAPABILITY_YES);
     			}
 			}
     	}
