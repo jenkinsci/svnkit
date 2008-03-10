@@ -155,8 +155,11 @@ public class SVNExternal {
             if (revisionToken == 0 || token0isURL || !token1isURL) {
                 external.myPath = token1;
                 boolean schemeRelative = token0.startsWith("//");
+                if (schemeRelative) {
+                    token0 = token0.substring(2);
+                }
                 SVNPath path = new SVNPath(token0, true);
-                external.myURL = schemeRelative ? "/" + path.getTarget() : path.getTarget();
+                external.myURL = schemeRelative ? "//" + path.getTarget() : path.getTarget();
                 external.myPegRevision = path.getPegRevision();
                 if (external.myPegRevision == SVNRevision.BASE) {
                     external.myPegRevision = SVNRevision.HEAD;
