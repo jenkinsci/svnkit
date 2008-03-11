@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
@@ -119,8 +120,9 @@ class HTTPConnection implements IHTTPConnection {
             String host = location.getHost();
             int port = location.getPort();
             
-		        ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
-		        ISVNProxyManager proxyAuth = authManager != null ? authManager.getProxyManager(location) : null;
+	        ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
+	        ISVNProxyManager proxyAuth = authManager != null ? authManager.getProxyManager(location) : null;
+	        
 		    if (proxyAuth != null && proxyAuth.getProxyHost() != null) {
 			    myRepository.getDebugLog().info("Using proxy " + proxyAuth.getProxyHost() + " (secured=" + myIsSecured + ")");
                 mySocket = SVNSocketFactory.createPlainSocket(proxyAuth.getProxyHost(), proxyAuth.getProxyPort());
@@ -311,13 +313,15 @@ class HTTPConnection implements IHTTPConnection {
                 myRepository.getDebugLog().info(e);
                 if (e instanceof SocketTimeoutException) {
                     err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "timed out waiting for server");
+                } else if (e instanceof ConnectException) {
+                    err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "connection refused by the server");
                 } else if (e instanceof SVNCancellableOutputStream.IOCancelException) {
                     SVNErrorManager.cancel(e.getMessage());
                 } else {
                     if (keyManager != null) {
-	                    close();
-	                    SVNErrorMessage sslErr = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "SSL handshake failed: ''{0}''", e.getMessage());
-	                    keyManager.acknowledgeAndClearAuthentication(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "SSL handshake failed: ''{0}''", sslErr));
+	                  close();
+	                  SVNErrorMessage sslErr = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "SSL handshake failed: ''{0}''", e.getMessage());
+                      keyManager.acknowledgeAndClearAuthentication(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "SSL handshake failed: ''{0}''", sslErr));
                       continue;
                     }
                     err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e.getMessage());
