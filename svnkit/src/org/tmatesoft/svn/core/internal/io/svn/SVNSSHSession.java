@@ -70,7 +70,7 @@ public class SVNSSHSession {
         ourTimeout = value;
     }
 
-    public static SSHConnectionInfo getConnection(SVNURL location, SVNSSHAuthentication credentials) throws SVNException {
+    public static SSHConnectionInfo getConnection(SVNURL location, SVNSSHAuthentication credentials, int connectTimeout) throws SVNException {
         lock(Thread.currentThread());
         try {
             if ("".equals(credentials.getUserName()) || credentials.getUserName() == null) {
@@ -82,7 +82,7 @@ public class SVNSSHSession {
                 port = 22;
             }
             if (!isUsePersistentConnection()) {
-                Connection connection = openConnection(location, credentials, port);
+                Connection connection = openConnection(location, credentials, port, connectTimeout);
                 return new SSHConnectionInfo(null, "unpersistent", connection, false);
             }
             String key = credentials.getUserName() + ":" + location.getHost() + ":" + port;
@@ -129,7 +129,7 @@ public class SVNSSHSession {
                 }
             }
             SVNDebugLog.getDefaultLog().info(ourRequestor + ": OPENING NEW CONNECTION");
-            Connection connection = openConnection(location, credentials, port);
+            Connection connection = openConnection(location, credentials, port, connectTimeout);
             connectionInfo = new SSHConnectionInfo(key, id, connection, true);
             connectionsList.add(connectionInfo);
             SVNDebugLog.getDefaultLog().info(ourRequestor + ": NEW CONNECTION OPENED, TOTAL: " + connectionsList.size());
@@ -210,7 +210,7 @@ public class SVNSSHSession {
         }
     }
 
-    private static Connection openConnection(SVNURL location, SVNSSHAuthentication credentials, int port) throws SVNException {
+    private static Connection openConnection(SVNURL location, SVNSSHAuthentication credentials, int port, int connectTimeout) throws SVNException {
         // open and add to the list.
         File privateKeyFile = credentials.getPrivateKeyFile();
         char[] privateKey = credentials.getPrivateKey();
@@ -238,7 +238,7 @@ public class SVNSSHSession {
         
         Connection connection = new Connection(location.getHost(), port);
         try {
-            connection.connect();
+            connection.connect(null, connectTimeout, connectTimeout);
             boolean authenticated = false;
             if (privateKey != null) {
                 authenticated = connection.authenticateWithPublicKey(userName, privateKey, passphrase);

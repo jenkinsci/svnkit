@@ -71,7 +71,7 @@ public class SVNSSHConnector implements ISVNConnector {
             try {
                 while (authentication != null) {
                     try {
-                        connection = SVNSSHSession.getConnection(repository.getLocation(), authentication);
+                        connection = SVNSSHSession.getConnection(repository.getLocation(), authentication, authManager.getConnectTimeout(repository));
                         if (connection == null) {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Cannot connect to ''{0}''", repository.getLocation().setPath("", false));
                             SVNErrorManager.error(err);

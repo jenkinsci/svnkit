@@ -15,6 +15,7 @@ package org.tmatesoft.svn.core.internal.util;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
@@ -44,9 +45,10 @@ import javax.net.ssl.X509TrustManager;
  */
 public class SVNSocketFactory {
 
-    public static Socket createPlainSocket(String host, int port) throws IOException {
+    public static Socket createPlainSocket(String host, int port, int timeout) throws IOException {
         InetAddress address = createAddres(host);
-        Socket socket = new Socket(address, port);
+        Socket socket = new Socket();
+        socket.connect(new InetSocketAddress(address, port), timeout);
         socket.setReuseAddress(true);
         socket.setTcpNoDelay(true);
         socket.setKeepAlive(true);
@@ -54,8 +56,10 @@ public class SVNSocketFactory {
         return socket;
     }
 
-    public static Socket createSSLSocket(KeyManager[] keyManagers, TrustManager trustManager, String host, int port) throws IOException {
-        Socket sslSocket = createSSLContext(keyManagers, trustManager).getSocketFactory().createSocket(createAddres(host), port);
+    public static Socket createSSLSocket(KeyManager[] keyManagers, TrustManager trustManager, String host, int port, int timeout) throws IOException {
+        InetAddress address = createAddres(host);
+        Socket sslSocket = createSSLContext(keyManagers, trustManager).getSocketFactory().createSocket();
+        sslSocket.connect(new InetSocketAddress(address, port), timeout);
         sslSocket.setReuseAddress(true);
         sslSocket.setTcpNoDelay(true);
         sslSocket.setKeepAlive(true);
@@ -77,8 +81,7 @@ public class SVNSocketFactory {
     private static InetAddress createAddres(String hostName) throws UnknownHostException {
         byte[] bytes = new byte[4];
         int index = 0;
-        for (StringTokenizer tokens = new StringTokenizer(hostName, "."); tokens
-                .hasMoreTokens();) {
+        for (StringTokenizer tokens = new StringTokenizer(hostName, "."); tokens.hasMoreTokens();) {
             String token = tokens.nextToken();
             try {
                 byte b = (byte) Integer.parseInt(token);

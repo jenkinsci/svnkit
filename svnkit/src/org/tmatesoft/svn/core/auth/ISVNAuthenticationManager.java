@@ -261,7 +261,9 @@ public interface ISVNAuthenticationManager {
      * 
      * @param   repository a repository access driver
      * @return             connection timeout value
-     * @since   1.1
+     * @since   1.2
      */
-    public long getHTTPTimeout(SVNRepository repository);
+    public long getReadTimeout(SVNRepository repository);
+    
+    public int getConnectTimeout(SVNRepository repository);
 }

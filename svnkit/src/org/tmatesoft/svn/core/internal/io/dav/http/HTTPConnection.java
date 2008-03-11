@@ -24,6 +24,7 @@ import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.text.ParseException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -122,10 +123,10 @@ class HTTPConnection implements IHTTPConnection {
             
 	        ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
 	        ISVNProxyManager proxyAuth = authManager != null ? authManager.getProxyManager(location) : null;
-	        
+	        int connectTimeout = authManager != null ? authManager.getConnectTimeout(myRepository) : 0;
 		    if (proxyAuth != null && proxyAuth.getProxyHost() != null) {
 			    myRepository.getDebugLog().info("Using proxy " + proxyAuth.getProxyHost() + " (secured=" + myIsSecured + ")");
-                mySocket = SVNSocketFactory.createPlainSocket(proxyAuth.getProxyHost(), proxyAuth.getProxyPort());
+                mySocket = SVNSocketFactory.createPlainSocket(proxyAuth.getProxyHost(), proxyAuth.getProxyPort(), connectTimeout);
                 if (myProxyAuthentication == null) {
                     myProxyAuthentication = new HTTPBasicAuthentication(proxyAuth.getProxyUserName(), proxyAuth.getProxyPassword(), myCharset);
                 }
@@ -153,9 +154,9 @@ class HTTPConnection implements IHTTPConnection {
             } else {
                 myIsProxied = false;
                 myProxyAuthentication = null;
-                mySocket = myIsSecured ? SVNSocketFactory.createSSLSocket(keyManager != null ? new KeyManager[] { keyManager } : new KeyManager[0], trustManager, host, port) : SVNSocketFactory.createPlainSocket(host, port);
+                mySocket = myIsSecured ? SVNSocketFactory.createSSLSocket(keyManager != null ? new KeyManager[] { keyManager } : new KeyManager[0], trustManager, host, port, connectTimeout) : SVNSocketFactory.createPlainSocket(host, port, connectTimeout);
             }
-            long timeout = myRepository.getAuthenticationManager() != null ? myRepository.getAuthenticationManager().getHTTPTimeout(myRepository) : DEFAULT_HTTP_TIMEOUT;
+            long timeout = myRepository.getAuthenticationManager() != null ? myRepository.getAuthenticationManager().getReadTimeout(myRepository) : DEFAULT_HTTP_TIMEOUT;
             if (timeout < 0) {
                 timeout = DEFAULT_HTTP_TIMEOUT;
             }
@@ -313,6 +314,8 @@ class HTTPConnection implements IHTTPConnection {
                 myRepository.getDebugLog().info(e);
                 if (e instanceof SocketTimeoutException) {
                     err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "timed out waiting for server");
+                } else if (e instanceof UnknownHostException) {
+                    err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "unknown host");
                 } else if (e instanceof ConnectException) {
                     err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "connection refused by the server");
                 } else if (e instanceof SVNCancellableOutputStream.IOCancelException) {

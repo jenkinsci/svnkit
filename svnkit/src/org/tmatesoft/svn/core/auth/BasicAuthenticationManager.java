@@ -252,8 +252,16 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
     public void acknowledgeProxyContext(boolean accepted, SVNErrorMessage errorMessage) {
     }
 
-    public long getHTTPTimeout(SVNRepository repository) {
+    public long getReadTimeout(SVNRepository repository) {
         return 3600*1000;
+    }
+
+    public int getConnectTimeout(SVNRepository repository) {
+        String protocol = repository.getLocation().getProtocol();
+        if ("http".equals(protocol)) {
+            return 60*1000;
+        }
+        return 0; 
     }
 
 }

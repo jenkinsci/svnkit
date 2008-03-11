@@ -44,7 +44,8 @@ public class SVNPlainConnector implements ISVNConnector {
         }
         SVNURL location = repository.getLocation();
         try {
-            mySocket = SVNSocketFactory.createPlainSocket(location.getHost(), location.getPort());
+            int timeout = repository.getAuthenticationManager() != null ? repository.getAuthenticationManager().getConnectTimeout(repository) : 0;
+            mySocket = SVNSocketFactory.createPlainSocket(location.getHost(), location.getPort(), timeout);
             mySocket.setSoTimeout(DEFAULT_SVN_TIMEOUT);
         } catch (UnknownHostException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, "Unknown host " + e.getMessage());
