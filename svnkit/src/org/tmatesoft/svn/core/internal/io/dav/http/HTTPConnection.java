@@ -255,10 +255,10 @@ class HTTPConnection implements IHTTPConnection {
         if ("".equals(path) || path == null) {
             path = "/";
         }
-        
+
         // 1. prompt for ssl client cert if needed, if cancelled - throw cancellation exception.
         HTTPSSLKeyManager keyManager = myKeyManager == null && myRepository.getAuthenticationManager() != null ? createKeyManager() : myKeyManager;
-	      TrustManager trustManager = myTrustManager == null && myRepository.getAuthenticationManager() != null ? myRepository.getAuthenticationManager().getTrustManager(myRepository.getLocation()) : myTrustManager;
+        TrustManager trustManager = myTrustManager == null && myRepository.getAuthenticationManager() != null ? myRepository.getAuthenticationManager().getTrustManager(myRepository.getLocation()) : myTrustManager;
 
         String sslRealm = "<" + myHost.getProtocol() + "://" + myHost.getHost() + ":" + myHost.getPort() + ">";
         SVNAuthentication httpAuth = myLastValidAuth;

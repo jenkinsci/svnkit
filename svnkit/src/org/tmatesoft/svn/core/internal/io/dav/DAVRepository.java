@@ -1118,22 +1118,21 @@ public class DAVRepository extends SVNRepository {
                             new Object[]{DAVConnection.DAV_CAPABILITY_SERVER_YES, SVNCapability.MERGE_INFO});
                     SVNErrorManager.error(error);
                 }
-                if (DAVConnection.DAV_CAPABILITY_YES.equals(result)){
-                    return true;
-                } else if (DAVConnection.DAV_CAPABILITY_NO.equals(result)){
-                    return false;
-                } else  if (result == null){
-                    SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_UNKNOWN_CAPABILITY,
-                            "Don't know anything about capability ''{0}''",
-                            new Object[]{capability});
-                    SVNErrorManager.error(error);
-                } else {
-                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_OPTIONS_REQ_FAILED,
-                            "Attempt to fetch capability ''{0}'' resulted in ''{1}''",
-                            new Object[]{capability, result}));
-                }                
             }
-            
+            if (DAVConnection.DAV_CAPABILITY_YES.equals(result)) {
+                return true;
+            } else if (DAVConnection.DAV_CAPABILITY_NO.equals(result)) {
+                return false;
+            } else if (result == null) {
+                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_UNKNOWN_CAPABILITY,
+                        "Don't know anything about capability ''{0}''",
+                        new Object[]{capability});
+                SVNErrorManager.error(error);
+            } else {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_OPTIONS_REQ_FAILED,
+                        "Attempt to fetch capability ''{0}'' resulted in ''{1}''",
+                        new Object[]{capability, result}));
+            }
         } finally {
             closeConnection();
         }

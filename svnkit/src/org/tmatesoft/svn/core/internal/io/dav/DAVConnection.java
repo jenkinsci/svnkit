@@ -416,7 +416,8 @@ public class DAVConnection {
         header.addHeaderValue(HTTPHeader.DAV_HEADER, DAVElement.LOG_REVPROPS_OPTION);
         header.addHeaderValue(HTTPHeader.DAV_HEADER, DAVElement.MERGE_INFO_OPTION);
 
-        HTTPStatus status = myHttpConnection.request("OPTIONS", getLocation().toString(), header, 
+        String path = SVNEncodingUtil.uriEncode(getLocation().getPath());
+        HTTPStatus status = myHttpConnection.request("OPTIONS", path, header, 
         		(StringBuffer) null, 200, 0, null, null);
         if (status.getCode() == 200) {
         	parseCapabilities(status);
