@@ -1095,7 +1095,7 @@ public class DAVRepository extends SVNRepository {
                 if (capability == SVNCapability.MERGE_INFO) {
                     SVNException error = null;
                     try {
-                        getMergeInfoImpl(new String[]{""}, 0, SVNMergeInfoInheritance.EXPLICIT, false);
+                        doGetMergeInfo(new String[]{""}, 0, SVNMergeInfoInheritance.EXPLICIT, false);
                     } catch (SVNException svne) {
                         error = svne;
                     }
@@ -1143,17 +1143,23 @@ public class DAVRepository extends SVNRepository {
             boolean includeDescendants) throws SVNException {
         try {
             openConnection();
-            
-            String path = doGetFullPath("");
-            path = SVNEncodingUtil.uriEncode(path);            
+            return doGetMergeInfo(paths, revision, inherit, includeDescendants);            
+        } finally {
+            closeConnection();
+        }
+    }
+
+    private Map doGetMergeInfo(String[] paths, long revision, SVNMergeInfoInheritance inherit, boolean includeDescendants) throws SVNException {
+        String path = doGetFullPath("");
+            path = SVNEncodingUtil.uriEncode(path);
             if (paths == null || paths.length == 0) {
                 paths = new String[]{""};
             }
-            String[] fullPaths = new String[paths.length];            
+            String[] fullPaths = new String[paths.length];
             for (int i = 0; i < paths.length; i++) {
                 fullPaths[i] = doGetFullPath(paths[i]);
             }
-            StringBuffer request = DAVMergeInfoHandler.generateMergeInfoRequest(null, revision, fullPaths, 
+            StringBuffer request = DAVMergeInfoHandler.generateMergeInfoRequest(null, revision, fullPaths,
                     inherit, includeDescendants);
             DAVMergeInfoHandler handler = new DAVMergeInfoHandler();
             HTTPStatus status = myConnection.doReport(path, request, handler);
@@ -1164,9 +1170,6 @@ public class DAVRepository extends SVNRepository {
                 SVNErrorManager.error(status.getError());
             }
             return handler.getMergeInfo();
-        } finally {
-            closeConnection();
-        }
     }
 
 }
