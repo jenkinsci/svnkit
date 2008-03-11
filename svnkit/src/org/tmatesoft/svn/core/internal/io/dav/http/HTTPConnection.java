@@ -351,22 +351,12 @@ class HTTPConnection implements IHTTPConnection {
                 err = request.getErrorMessage();
             } else if (myIsProxied && status.getCode() == HttpURLConnection.HTTP_PROXY_AUTH) {
                 Collection proxyAuthHeaders = request.getResponseHeader().getHeaderValues(HTTPHeader.PROXY_AUTHENTICATE_HEADER);
-                boolean retry = false;
-                if (!HTTPAuthentication.isSchemeSupportedByServer(myProxyAuthentication.getAuthenticationScheme(), proxyAuthHeaders)) {
-                    retry = true;
-                }
-
                 try {
                     myProxyAuthentication = HTTPAuthentication.parseAuthParameters(proxyAuthHeaders, myProxyAuthentication, myCharset); 
                 } catch (SVNException svne) {
                     myRepository.getDebugLog().info(svne);
                     err = svne.getErrorMessage(); 
                     break;
-                }
-
-                if (retry) {
-                    close();
-                    continue;
                 }
 
                 if (myProxyAuthentication instanceof HTTPNTLMAuthentication) {
@@ -376,7 +366,7 @@ class HTTPConnection implements IHTTPConnection {
                     }
                 }
 
-                err = SVNErrorMessage.create(SVNErrorCode.CANCELLED, "HTTP proxy authorization cancelled");
+                err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "HTTP proxy authorization failed");
                 SVNURL location = myRepository.getLocation();
                 ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
                 ISVNProxyManager proxyManager = authManager != null ? authManager.getProxyManager(location) : null;
