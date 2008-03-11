@@ -122,6 +122,7 @@ class HTTPConnection implements IHTTPConnection {
 		        ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
 		        ISVNProxyManager proxyAuth = authManager != null ? authManager.getProxyManager(location) : null;
 		    if (proxyAuth != null && proxyAuth.getProxyHost() != null) {
+			    myRepository.getDebugLog().info("Using proxy " + proxyAuth.getProxyHost() + " (secured=" + myIsSecured + ")");
                 mySocket = SVNSocketFactory.createPlainSocket(proxyAuth.getProxyHost(), proxyAuth.getProxyPort());
                 if (myProxyAuthentication == null) {
                     myProxyAuthentication = new HTTPBasicAuthentication(proxyAuth.getProxyUserName(), proxyAuth.getProxyPassword(), myCharset);
