@@ -15,6 +15,9 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 
 import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -121,6 +124,15 @@ public class SVNSSHConnector implements ISVNConnector {
                     new StreamGobbler(mySession.getStderr());
                     myConnection = connection;
                     return;
+                } catch (SocketTimeoutException e) {
+	                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, "timed out waiting for server", null, SVNErrorMessage.TYPE_ERROR, e);
+                    SVNErrorManager.error(err, e);
+                } catch (UnknownHostException e) {
+	                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, "Unknown host " + e.getMessage(), null, SVNErrorMessage.TYPE_ERROR, e);
+                    SVNErrorManager.error(err, e);
+                } catch (ConnectException e) {
+	                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, "connection refused by the server", null, SVNErrorMessage.TYPE_ERROR, e);
+                    SVNErrorManager.error(err, e);
                 } catch (IOException e) {
                     reconnect--;
                     if (reconnect >= 0) {

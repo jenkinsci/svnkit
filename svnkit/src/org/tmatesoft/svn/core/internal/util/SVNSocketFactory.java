@@ -45,35 +45,38 @@ import javax.net.ssl.X509TrustManager;
  */
 public class SVNSocketFactory {
 
-    public static Socket createPlainSocket(String host, int port, int timeout) throws IOException {
+    public static Socket createPlainSocket(String host, int port, int connectTimeout, int readTimeout) throws IOException {
         InetAddress address = createAddres(host);
         Socket socket = new Socket();
-        socket.connect(new InetSocketAddress(address, port), timeout);
+        socket.connect(new InetSocketAddress(address, port), connectTimeout);
         socket.setReuseAddress(true);
         socket.setTcpNoDelay(true);
         socket.setKeepAlive(true);
         socket.setSoLinger(true, 0);
+        socket.setSoTimeout(readTimeout);
         return socket;
     }
 
-    public static Socket createSSLSocket(KeyManager[] keyManagers, TrustManager trustManager, String host, int port, int timeout) throws IOException {
+    public static Socket createSSLSocket(KeyManager[] keyManagers, TrustManager trustManager, String host, int port, int connectTimeout, int readTimeout) throws IOException {
         InetAddress address = createAddres(host);
         Socket sslSocket = createSSLContext(keyManagers, trustManager).getSocketFactory().createSocket();
-        sslSocket.connect(new InetSocketAddress(address, port), timeout);
+        sslSocket.connect(new InetSocketAddress(address, port), connectTimeout);
         sslSocket.setReuseAddress(true);
         sslSocket.setTcpNoDelay(true);
         sslSocket.setKeepAlive(true);
         sslSocket.setSoLinger(true, 0);
+        sslSocket.setSoTimeout(readTimeout);
         ((SSLSocket) sslSocket).setEnabledProtocols(new String[] {"SSLv3"});
         return sslSocket;
     }
 
-    public static Socket createSSLSocket(KeyManager[] keyManagers, TrustManager trustManager, String host, int port, Socket socket) throws IOException {
+    public static Socket createSSLSocket(KeyManager[] keyManagers, TrustManager trustManager, String host, int port, Socket socket, int readTimeout) throws IOException {
         Socket sslSocket = createSSLContext(keyManagers, trustManager).getSocketFactory().createSocket(socket, host, port, true);
         sslSocket.setReuseAddress(true);
         sslSocket.setTcpNoDelay(true);
         sslSocket.setKeepAlive(true);
         sslSocket.setSoLinger(true, 0);
+        sslSocket.setSoTimeout(readTimeout);
         ((SSLSocket) sslSocket).setEnabledProtocols(new String[] {"SSLv3"});
         return sslSocket;
     }

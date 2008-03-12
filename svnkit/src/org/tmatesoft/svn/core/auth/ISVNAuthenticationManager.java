@@ -263,7 +263,7 @@ public interface ISVNAuthenticationManager {
      * @return             connection timeout value
      * @since   1.2
      */
-    public long getReadTimeout(SVNRepository repository);
+    public int getReadTimeout(SVNRepository repository);
     
     public int getConnectTimeout(SVNRepository repository);
 }

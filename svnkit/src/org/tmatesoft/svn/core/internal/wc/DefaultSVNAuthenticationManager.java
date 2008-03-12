@@ -636,23 +636,26 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         myIsAuthenticationForced = forced;
     }
 
-    public long getReadTimeout(SVNRepository repository) {
-        String host = repository.getLocation().getHost();
-        Map properties = getHostProperties(host);
-        String timeout = (String) properties.get("http-timeout");
-        long value = -1;
-        if (timeout != null) {
-            try {
-                value = Integer.parseInt(timeout)*1000;
-            } catch (NumberFormatException nfe) {
+    public int getReadTimeout(SVNRepository repository) {
+        String protocol = repository.getLocation().getProtocol();
+        if ("http".equals(protocol) || "https".equals(protocol)) {
+            String host = repository.getLocation().getHost();
+            Map properties = getHostProperties(host);
+            String timeout = (String) properties.get("http-timeout");
+            if (timeout != null) {
+                try {
+                    return Integer.parseInt(timeout)*1000;
+                } catch (NumberFormatException nfe) {
+                }
             }
+            return 3600*1000;
         }
-        return value;
+        return 0;
     }
 
     public int getConnectTimeout(SVNRepository repository) {
         String protocol = repository.getLocation().getProtocol();
-        if ("http".equals(protocol)) {
+        if ("http".equals(protocol) || "https".equals(protocol)) {
             return 60*1000;
         }
         return 0; 

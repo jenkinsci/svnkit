@@ -56,7 +56,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNCancellableOutputStream;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
-
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -124,9 +123,13 @@ class HTTPConnection implements IHTTPConnection {
 	        ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
 	        ISVNProxyManager proxyAuth = authManager != null ? authManager.getProxyManager(location) : null;
 	        int connectTimeout = authManager != null ? authManager.getConnectTimeout(myRepository) : 0;
+            int readTimeout = authManager != null ? authManager.getReadTimeout(myRepository) : DEFAULT_HTTP_TIMEOUT;
+            if (readTimeout < 0) {
+                readTimeout = DEFAULT_HTTP_TIMEOUT;
+            }
 		    if (proxyAuth != null && proxyAuth.getProxyHost() != null) {
 			    myRepository.getDebugLog().info("Using proxy " + proxyAuth.getProxyHost() + " (secured=" + myIsSecured + ")");
-                mySocket = SVNSocketFactory.createPlainSocket(proxyAuth.getProxyHost(), proxyAuth.getProxyPort(), connectTimeout);
+                mySocket = SVNSocketFactory.createPlainSocket(proxyAuth.getProxyHost(), proxyAuth.getProxyPort(), connectTimeout, readTimeout);
                 if (myProxyAuthentication == null) {
                     myProxyAuthentication = new HTTPBasicAuthentication(proxyAuth.getProxyUserName(), proxyAuth.getProxyPassword(), myCharset);
                 }
@@ -142,7 +145,7 @@ class HTTPConnection implements IHTTPConnection {
                     if (status.getCode() == HttpURLConnection.HTTP_OK) {
                         myInputStream = null;
                         myOutputStream = null;
-                        mySocket = SVNSocketFactory.createSSLSocket(keyManager != null ? new KeyManager[] { keyManager } : new KeyManager[0], trustManager, host, port, mySocket);
+                        mySocket = SVNSocketFactory.createSSLSocket(keyManager != null ? new KeyManager[] { keyManager } : new KeyManager[0], trustManager, host, port, mySocket, readTimeout);
                         proxyAuth.acknowledgeProxyContext(true, null);
                         return;
                     }
@@ -154,13 +157,10 @@ class HTTPConnection implements IHTTPConnection {
             } else {
                 myIsProxied = false;
                 myProxyAuthentication = null;
-                mySocket = myIsSecured ? SVNSocketFactory.createSSLSocket(keyManager != null ? new KeyManager[] { keyManager } : new KeyManager[0], trustManager, host, port, connectTimeout) : SVNSocketFactory.createPlainSocket(host, port, connectTimeout);
+                mySocket = myIsSecured ? 
+                        SVNSocketFactory.createSSLSocket(keyManager != null ? new KeyManager[] { keyManager } : new KeyManager[0], trustManager, host, port, connectTimeout, readTimeout) : 
+                        SVNSocketFactory.createPlainSocket(host, port, connectTimeout, readTimeout);
             }
-            long timeout = myRepository.getAuthenticationManager() != null ? myRepository.getAuthenticationManager().getReadTimeout(myRepository) : DEFAULT_HTTP_TIMEOUT;
-            if (timeout < 0) {
-                timeout = DEFAULT_HTTP_TIMEOUT;
-            }
-            mySocket.setSoTimeout((int) timeout);
         }
     }
     
@@ -313,11 +313,11 @@ class HTTPConnection implements IHTTPConnection {
             } catch (IOException e) {
                 myRepository.getDebugLog().info(e);
                 if (e instanceof SocketTimeoutException) {
-                    err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "timed out waiting for server");
+	                err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "timed out waiting for server", null, SVNErrorMessage.TYPE_ERROR, e);
                 } else if (e instanceof UnknownHostException) {
-                    err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "unknown host");
+	                err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "unknown host", null, SVNErrorMessage.TYPE_ERROR, e);
                 } else if (e instanceof ConnectException) {
-                    err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "connection refused by the server");
+	                err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "connection refused by the server", null, SVNErrorMessage.TYPE_ERROR, e);
                 } else if (e instanceof SVNCancellableOutputStream.IOCancelException) {
                     SVNErrorManager.cancel(e.getMessage());
                 } else {
@@ -512,7 +512,7 @@ class HTTPConnection implements IHTTPConnection {
 //        myRepository.getDebugLog().info(err.getMessage());
         myRepository.getDebugLog().info(new Exception(err.getMessage()));
         
-        SVNErrorMessage err2 = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "{0} request failed on ''{1}''", new Object[] {method, path});
+        SVNErrorMessage err2 = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "{0} request failed on ''{1}''", new Object[] {method, path}, err.getType(), err.getCause());
         SVNErrorManager.error(err2, err);
         return null;
     }
