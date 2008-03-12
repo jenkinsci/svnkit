@@ -571,7 +571,8 @@ public class SVNClientImpl implements SVNClientInterface {
         SVNRevision rev = JavaHLObjectFactory.getSVNRevision(revision);
         try {
             for (int i = 0; i < updated.length; i++) {
-                updated[i] = updater.doUpdate(new File(path[i]).getAbsoluteFile(), rev, svnDepth, allowUnverObstructions);
+                updated[i] = updater.doUpdate(new File(path[i]).getAbsoluteFile(), rev, svnDepth, 
+                        allowUnverObstructions, depthIsSticky);
             }
         } catch (SVNException e) {
             throwException(e);

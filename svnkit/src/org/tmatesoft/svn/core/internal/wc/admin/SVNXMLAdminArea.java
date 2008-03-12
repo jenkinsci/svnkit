@@ -325,6 +325,63 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         }
     }
 
+    public void installProperties(String name, SVNProperties baseProps, SVNProperties workingProps, SVNLog log, 
+            boolean writeBaseProps, boolean close) throws SVNException {
+        SVNProperties command = new SVNProperties();
+        SVNNodeKind kind = name.equals(getThisDirName()) ? SVNNodeKind.DIR : SVNNodeKind.FILE;
+        SVNProperties propDiff = baseProps.compareTo(workingProps);
+        boolean hasPropMods = !propDiff.isEmpty();
+        String dstPath = SVNAdminUtil.getPropPath(name, kind, false);
+
+        if (hasPropMods) {
+            String tmpPath = SVNAdminUtil.getPropPath(name, kind, true);
+            File tmpFile = getFile(tmpPath);
+            SVNWCProperties tmpProps = new SVNWCProperties(tmpFile, tmpPath);
+            if (!workingProps.isEmpty()) {
+                tmpProps.setProperties(workingProps);
+            } else {
+                SVNFileUtil.createEmptyFile(tmpFile);
+            }
+            command.put(SVNLog.NAME_ATTR, tmpPath);
+            command.put(SVNLog.DEST_ATTR, dstPath);
+            log.addCommand(SVNLog.MOVE, command, false);
+            command.clear();
+            command.put(SVNLog.NAME_ATTR, dstPath);
+            log.addCommand(SVNLog.READONLY, command, false);
+        } else {
+            command.put(SVNLog.NAME_ATTR, dstPath);
+            log.addCommand(SVNLog.DELETE, command, false);
+        }
+
+        command.clear();
+        
+        if (writeBaseProps) {
+            String basePath = SVNAdminUtil.getPropBasePath(name, kind, false);
+            if (!baseProps.isEmpty()) {
+                String tmpPath = SVNAdminUtil.getPropBasePath(name, kind, true);
+                File tmpFile = getFile(tmpPath);
+                SVNWCProperties tmpProps = new SVNWCProperties(tmpFile, tmpPath);
+                tmpProps.setProperties(baseProps);
+
+                command.put(SVNLog.NAME_ATTR, tmpPath);
+                command.put(SVNLog.DEST_ATTR, basePath);
+                log.addCommand(SVNLog.MOVE, command, false);
+                command.clear();
+                command.put(SVNLog.NAME_ATTR, basePath);
+                log.addCommand(SVNLog.READONLY, command, false);
+            } else {
+                command.put(SVNLog.NAME_ATTR, basePath);
+                log.addCommand(SVNLog.DELETE, command, false);
+            }
+        }
+        
+        if (close) {
+            myBaseProperties = null;
+            myProperties = null;
+        }
+
+    }
+
     protected Map fetchEntries() throws SVNException {
         if (!myEntriesFile.exists()) {
             return null;

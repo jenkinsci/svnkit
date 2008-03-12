@@ -351,7 +351,7 @@ public class SVNPathUtil {
 
     public static int getSegmentsCount(String path) {
         int count = path.length() > 0 ? 1 : 0;
-        // skipe first char, then count number of '/'
+        // skip first char, then count number of '/'
         for (int i = 1; i < path.length(); i++) {
             if (path.charAt(i) == '/') {
                 count++;

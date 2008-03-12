@@ -106,7 +106,6 @@ public class SVNEvent {
     private String myMimeType;
     
     private long myRevision;
-    private long myPreviousRevision;
     
     private SVNStatusType myContentsStatus;
     private SVNStatusType myPropertiesStatus;
@@ -168,7 +167,6 @@ public class SVNEvent {
         myErrorMessage = error;
         myRange = range;
         myChangelistName = changelistName;
-        myPreviousRevision = -1;
     }
 
     public File getFile() {
@@ -305,10 +303,6 @@ public class SVNEvent {
         return myRevision;
     }
 
-    public long getPreviousRevision() {
-        return myPreviousRevision;
-    }
-    
     /**
      * Sets the item's path relative to the Working Copy root.
      * 
@@ -323,7 +317,4 @@ public class SVNEvent {
         return myRange;
     }    
     
-    public void setPreviousRevision(long previousRevision) {
-        myPreviousRevision = previousRevision;
-    }
 }

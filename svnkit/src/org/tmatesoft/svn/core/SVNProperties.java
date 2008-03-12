@@ -17,6 +17,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.Collection;
+import java.util.TreeSet;
 
 
 /**
@@ -115,4 +116,56 @@ public class SVNProperties {
     public Collection values(){
         return myProperties.values();
     }
+    
+    public SVNProperties getRegularProperties() {
+        SVNProperties result = new SVNProperties();
+        for (Iterator propNamesIter = nameSet().iterator(); propNamesIter.hasNext();) {
+            String propName = (String) propNamesIter.next();
+            if (SVNProperty.isRegularProperty(propName)) {
+                copyValue(result, propName);
+            }
+        }
+        return result;
+    }
+
+    public SVNProperties compareTo(SVNProperties properties) {
+        SVNProperties result = new SVNProperties();
+        if (isEmpty()) {
+            result.putAll(properties);
+            return result;
+        }
+        
+        Collection props1 = nameSet();
+        Collection props2 = properties.nameSet();
+        
+        // missed in props2.
+        Collection tmp = new TreeSet(props1);
+        tmp.removeAll(props2);
+        for (Iterator props = tmp.iterator(); props.hasNext();) {
+            String missing = (String) props.next();
+            result.put(missing, (byte[]) null);
+        }
+
+        // added in props2.
+        tmp = new TreeSet(props2);
+        tmp.removeAll(props1);
+
+        for (Iterator props = tmp.iterator(); props.hasNext();) {
+            String added = (String) props.next();
+            result.copyValue(properties, added);
+        }
+
+        // changed in props2
+        props2.retainAll(props1);
+        for (Iterator props = props2.iterator(); props.hasNext();) {
+            String changed = (String) props.next();
+            SVNPropertyValue value1 = getSVNPropertyValue(changed);
+            SVNPropertyValue value2 = properties.getSVNPropertyValue(changed);
+            if (!value1.equals(value2)) {
+                result.put(changed, value2);
+            }
+        }
+        return result;
+    }
+
 }

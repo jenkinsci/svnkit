@@ -105,6 +105,9 @@ public abstract class SVNAdminArea {
 
     public abstract void saveVersionedProperties(SVNLog log, boolean close) throws SVNException;
 
+    public abstract void installProperties(String name, SVNProperties baseProps, SVNProperties workingProps, 
+            SVNLog log, boolean writeBaseProps, boolean close) throws SVNException;
+
     public abstract void saveWCProperties(boolean close) throws SVNException;
 
     public abstract void saveEntries(boolean close) throws SVNException;
@@ -381,35 +384,41 @@ public abstract class SVNAdminArea {
 
     public SVNStatusType mergeProperties(String name, SVNProperties serverBaseProps, SVNProperties propDiff, 
     		String localLabel, String latestLabel, boolean baseMerge, boolean dryRun, SVNLog log) throws SVNException {
-    	localLabel = localLabel == null ? "(modified)" : localLabel;
+        SVNVersionedProperties working = getProperties(name);
+        SVNVersionedProperties base = getBaseProperties(name);
+        return mergeProperties(name, serverBaseProps, base.asMap(), working.asMap(), propDiff, localLabel, 
+                latestLabel, baseMerge, dryRun, log);
+    }
+
+    public SVNStatusType mergeProperties(String name, SVNProperties serverBaseProps, SVNProperties baseProps, 
+            SVNProperties workingProps, SVNProperties propDiff, String localLabel, String latestLabel, 
+            boolean baseMerge, boolean dryRun, SVNLog log) throws SVNException {
+        localLabel = localLabel == null ? "(modified)" : localLabel;
         latestLabel = latestLabel == null ? "(latest)" : latestLabel;
 
         byte[] conflictStart = ("<<<<<<< " + localLabel).getBytes();
         byte[] conflictEnd = (">>>>>>> " + latestLabel).getBytes();
         byte[] separator = ("=======").getBytes();
         
-    	ISVNMergerFactory factory = myWCAccess.getOptions().getMergerFactory();
+        ISVNMergerFactory factory = myWCAccess.getOptions().getMergerFactory();
         ISVNMerger merger = factory.createMerger(conflictStart, separator, conflictEnd);
 
         propDiff = propDiff == null ? SVNProperties.EMPTY_PROPERTIES : propDiff;
-
-        SVNVersionedProperties working = getProperties(name);
-        SVNVersionedProperties base = getBaseProperties(name);
         if (serverBaseProps == null) {
-            serverBaseProps = base.asMap();
+            serverBaseProps = baseProps;
         }
 
-        SVNMergeResult result = merger.mergeProperties(name, working, base, serverBaseProps, propDiff, this, log, 
-        		baseMerge, dryRun);
+        SVNMergeResult result = merger.mergeProperties(name, workingProps, baseProps, serverBaseProps, 
+                propDiff, this, log, baseMerge, dryRun);
 
         return result.getMergeStatus();
     }
 
-    public SVNStatusType mergeText(String localPath, File base, File latest, String localLabel,
-                                   String baseLabel, String latestLabel, SVNProperties propChanges,
-                                   boolean dryRun, SVNDiffOptions options, SVNLog log) throws SVNException {
+    public SVNStatusType mergeText(String localPath, File base, File latest, File copyFromText, String localLabel,
+            String baseLabel, String latestLabel, SVNProperties propChanges, boolean dryRun, SVNDiffOptions options, 
+            SVNLog log) throws SVNException {
         SVNEntry entry = getEntry(localPath, false);
-        if (entry == null) {
+        if (entry == null && copyFromText == null) {
             return SVNStatusType.MISSING;
         }
 
@@ -420,7 +429,7 @@ public abstract class SVNAdminArea {
         String mimeType = null;
         if (propChanges != null && propChanges.containsName(SVNProperty.MIME_TYPE)) {
             mimeType = propChanges.getStringValue(SVNProperty.MIME_TYPE);
-        } else {
+        } else if (copyFromText == null) {
             mimeType = props.getStringPropertyValue(SVNProperty.MIME_TYPE);
         }
         boolean isBinary = SVNProperty.isBinaryMimeType(mimeType);
@@ -435,12 +444,22 @@ public abstract class SVNAdminArea {
         ISVNMergerFactory factory = myWCAccess.getOptions().getMergerFactory();
         ISVNMerger merger = factory.createMerger(conflictStart, separator, conflictEnd);
 
-        File tmpTarget = SVNTranslator.detranslateWorkingCopy(this, localPath, propChanges, false);
+        String workingText = localPath;
+        if (copyFromText != null) {
+            String copyFromTextPath = copyFromText.getAbsolutePath().replace(File.separatorChar, '/');
+            String thisPath = getRoot().getAbsolutePath().replace(File.separatorChar, '/');
+            workingText = copyFromTextPath.substring(thisPath.length());
+            if (workingText.startsWith("/")) {
+                workingText = workingText.substring(1);
+            }
+        }
+        
+        File tmpTarget = SVNTranslator.detranslateWorkingCopy(this, workingText, propChanges, false);
         base = SVNTranslator.maybeUpdateTargetEOLs(this, base, propChanges);
         File resultFile = SVNAdminUtil.createTmpFile(this);
 
-        SVNMergeFileSet mergeFileSet = new SVNMergeFileSet(this, log,
-                base, tmpTarget, localPath, latest, resultFile, getFile(localPath), mimeType, isBinary);
+        SVNMergeFileSet mergeFileSet = new SVNMergeFileSet(this, log, base, tmpTarget, localPath, latest, 
+                resultFile, getFile(localPath), copyFromText, mimeType, isBinary);
 
         mergeFileSet.setMergeLabels(baseLabel, localLabel, latestLabel);
 

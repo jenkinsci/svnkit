@@ -39,6 +39,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNReporter;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
@@ -274,7 +275,9 @@ public class SVNStatusClient extends SVNBasicClient {
                     // session is closed in SVNStatusReporter.
                     SVNRepository locksRepos = createRepository(url, false);                    
                     checkCancelled();
-                    SVNReporter reporter = new SVNReporter(info, path, false, depth, getDebugLog());
+                    boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
+                    SVNReporter reporter = new SVNReporter(info, path, false, !serverSupportsDepth, depth, 
+                            getDebugLog());
                     SVNStatusReporter statusReporter = new SVNStatusReporter(locksRepos, reporter, editor);
                     String target = "".equals(info.getTargetName()) ? null : info.getTargetName();
                     repository.status(rev, target, depth, statusReporter, SVNCancellableEditor.newInstance((ISVNEditor) editor, getEventDispatcher(), getDebugLog()));

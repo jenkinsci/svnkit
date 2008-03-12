@@ -57,9 +57,13 @@ public abstract class AbstractSVNMerger implements ISVNMerger {
             status = mergeText(files.getBaseFile(), files.getLocalFile(), files.getRepositoryFile(), options, files.getResultFile());
         }
         if (!files.isBinary() && status != SVNStatusType.CONFLICTED) {
-            // compare merge result with 'wcFile' (in case of text and no conflict).
-            boolean isSameContents = SVNFileUtil.compareFiles(files.getWCFile(), files.getResultFile(), null);
-            status = isSameContents ? SVNStatusType.UNCHANGED : status;
+            if (files.getCopyFromFile() != null) {
+                status = SVNStatusType.MERGED;
+            } else {
+                // compare merge result with 'wcFile' (in case of text and no conflict).
+                boolean isSameContents = SVNFileUtil.compareFiles(files.getWCFile(), files.getResultFile(), null);
+                status = isSameContents ? SVNStatusType.UNCHANGED : status;
+            }
         }
 	    final SVNMergeResult result = SVNMergeResult.createMergeResult(status, null);
 	    if (dryRun) {

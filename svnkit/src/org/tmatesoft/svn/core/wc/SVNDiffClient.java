@@ -49,6 +49,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNReporter;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
+import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
@@ -766,7 +767,9 @@ public class SVNDiffClient extends SVNMergeDriver {
                     useAncestry, reverse /* reverse */,
                     revision2 == SVNRevision.BASE  || revision2 == SVNRevision.COMMITTED  /* compare to base */, 
                     depth);
-            SVNReporter reporter = new SVNReporter(info, info.getAnchor().getFile(info.getTargetName()), false, depth, getDebugLog());
+            boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
+            SVNReporter reporter = new SVNReporter(info, info.getAnchor().getFile(info.getTargetName()), false, 
+                    !serverSupportsDepth, depth, getDebugLog());
             
             long pegRevisionNumber = getRevisionNumber(revision2, repository, path2);
             try {
@@ -813,12 +816,13 @@ public class SVNDiffClient extends SVNMergeDriver {
             AbstractDiffCallback callback = new SVNDiffCallback(info.getAnchor(), 
                                                                 getDiffGenerator(), 
                                                                 reverse ? -1 : revNumber, reverse ? revNumber : -1, result);
-            SVNDiffEditor editor = new SVNDiffEditor(wcAccess, info, callback,
-                    useAncestry, 
+            SVNDiffEditor editor = new SVNDiffEditor(wcAccess, info, callback, useAncestry, 
                     reverse /* reverse */, 
                     revision2 == SVNRevision.BASE || revision2 == SVNRevision.COMMITTED /* compare to base */, 
                     depth);
-            SVNReporter reporter = new SVNReporter(info, info.getAnchor().getFile(info.getTargetName()), false, depth, getDebugLog());
+            boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
+            SVNReporter reporter = new SVNReporter(info, info.getAnchor().getFile(info.getTargetName()), 
+                    false, !serverSupportsDepth, depth, getDebugLog());
             
             // this should be rev2.
             long pegRevisionNumber = getRevisionNumber(revision2, repository, path2);

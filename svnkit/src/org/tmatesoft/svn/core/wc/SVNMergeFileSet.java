@@ -51,6 +51,8 @@ public class SVNMergeFileSet {
     private File myBaseFile;
     private File myRepositoryFile;
     private File myMergeResultFile;
+    private File myCopyFromFile;
+    
     private Collection myTmpPaths = new ArrayList();
 
     public SVNMergeFileSet(SVNAdminArea adminArea, SVNLog log,
@@ -60,6 +62,7 @@ public class SVNMergeFileSet {
             File reposFile, 
             File resultFile,
             File targetFile,//non-translated wc file
+            File copyFromFile,
             String mimeType, 
             boolean binary) {
         myAdminArea = adminArea;
@@ -70,6 +73,7 @@ public class SVNMergeFileSet {
         myRepositoryFile = reposFile;
         myWCFilePath = wcPath;
         myMergeResultFile = resultFile;
+        myCopyFromFile = copyFromFile;
         myMimeType = mimeType;
         myIsBinary = binary;
         
@@ -186,5 +190,9 @@ public class SVNMergeFileSet {
             myLog.addCommand(SVNLog.DELETE, command, false);
             command.clear();
         }
+    }
+    
+    public File getCopyFromFile() {
+        return myCopyFromFile;
     }
 }

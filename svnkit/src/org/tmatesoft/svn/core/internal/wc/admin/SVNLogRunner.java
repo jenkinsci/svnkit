@@ -382,9 +382,8 @@ public class SVNLogRunner {
                 SVNEntry entry = adminArea.getEntry(fileName, true);
     
                 SVNStatusType mergeResult = adminArea.mergeText(fileName, adminArea.getFile(leftPath),
-                                                                adminArea.getFile(rightPath), targetLabel, 
-                                                                leftLabel, rightLabel, null, 
-                                                                false, null, null);
+                        adminArea.getFile(rightPath), null, targetLabel, leftLabel, rightLabel, null, false, 
+                        null, null);
     
                 if (props.getPropertyValue(SVNProperty.EXECUTABLE) != null) {
                     SVNFileUtil.setExecutable(target, true);

@@ -33,7 +33,7 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  */
 public class SVNAmbientDepthFilterEditor implements ISVNEditor {
 
-    private ISVNEditor myDelegate;
+    private SVNUpdateEditor myDelegate;
     private SVNWCAccess myWCAccess;
     private File myAnchor;
     private String myTarget;
@@ -41,7 +41,7 @@ public class SVNAmbientDepthFilterEditor implements ISVNEditor {
     private FileBaton myCurrentFileBaton;
     private LinkedList myDirs;
     
-    public SVNAmbientDepthFilterEditor(ISVNEditor delegate, SVNWCAccess wcAccess, File anchor, String target) {
+    public SVNAmbientDepthFilterEditor(SVNUpdateEditor delegate, SVNWCAccess wcAccess, File anchor, String target) {
         myDelegate = delegate;
         myWCAccess = wcAccess;
         myAnchor = anchor;
@@ -49,6 +49,10 @@ public class SVNAmbientDepthFilterEditor implements ISVNEditor {
         myDirs = new LinkedList();
     }
     
+    public long getTargetRevision() {
+        return myDelegate.getTargetRevision();
+    }
+
     public void abortEdit() throws SVNException {
         myDelegate.abortEdit();
     }
@@ -108,9 +112,8 @@ public class SVNAmbientDepthFilterEditor implements ISVNEditor {
     }
 
     public void closeDir() throws SVNException {
-        DirBaton dirBaton = myCurrentDirBaton;
         myCurrentDirBaton = (DirBaton) myDirs.removeLast();
-        if (dirBaton.myIsAmbientlyExcluded) {
+        if (myCurrentDirBaton.myIsAmbientlyExcluded) {
             return;
         }
         myDelegate.closeDir();
@@ -172,7 +175,7 @@ public class SVNAmbientDepthFilterEditor implements ISVNEditor {
             return;
         }
         
-        if (myTarget == null) {
+        if (myTarget == null || "".equals(myTarget)) {
             SVNEntry entry = myWCAccess.getEntry(myCurrentDirBaton.myPath, false);
             if (entry != null) {
                 myCurrentDirBaton.myAmbientDepth = entry.getDepth();

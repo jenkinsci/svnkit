@@ -85,7 +85,8 @@ public class SVNUpdateCommand extends SVNCommand {
             files.add(target.getFile());
         }
         File[] filesArray = (File[]) files.toArray(new File[files.size()]);
-        client.doUpdate(filesArray, getSVNEnvironment().getStartRevision(), getSVNEnvironment().getDepth(), getSVNEnvironment().isForce()); 
+        client.doUpdate(filesArray, getSVNEnvironment().getStartRevision(), getSVNEnvironment().getDepth(), 
+                getSVNEnvironment().isForce(), false); 
     } 
 
 }

@@ -41,13 +41,16 @@ public class SVNReporter implements ISVNReporterBaton {
     private SVNAdminAreaInfo myInfo;
     private SVNDepth myDepth;
     private boolean myIsRestore;
+    private boolean myUseDepthCompatibilityTrick;
     private File myTarget;
     private ISVNDebugLog myLog;
 
-    public SVNReporter(SVNAdminAreaInfo info, File file, boolean restoreFiles, SVNDepth depth, ISVNDebugLog log) {
+    public SVNReporter(SVNAdminAreaInfo info, File file, boolean restoreFiles, 
+            boolean useDepthCompatibilityTrick, SVNDepth depth, ISVNDebugLog log) {
         myInfo = info;
         myDepth = depth;
         myIsRestore = restoreFiles;
+        myUseDepthCompatibilityTrick = useDepthCompatibilityTrick;
         myLog = log;
         myTarget = file;
     }
@@ -70,21 +73,29 @@ public class SVNReporter implements ISVNReporterBaton {
             }
             
             SVNEntry parentEntry = null;
+            boolean startEmpty = targetEntry.isIncomplete();
+            if (myUseDepthCompatibilityTrick && targetEntry.getDepth().compareTo(SVNDepth.IMMEDIATES) <= 0 &&
+                    myDepth.compareTo(targetEntry.getDepth()) > 0) {
+                startEmpty = true;
+            }
             long revision = targetEntry.getRevision();
             if (!SVNRevision.isValidRevisionNumber(revision)) {
                 parentEntry = wcAccess.getVersionedEntry(myTarget.getParentFile(), false);
                 revision = parentEntry.getRevision();
             }
-            reporter.setPath("", null, revision, targetEntry.getDepth(), targetEntry.isIncomplete());
+            reporter.setPath("", null, revision, targetEntry.getDepth(), startEmpty);
             
-            SVNFileType fileType = SVNFileType.getType(myTarget);
-            boolean missing = !targetEntry.isScheduledForDeletion() && fileType == SVNFileType.NONE;
+            boolean missing = false; 
+            if (!targetEntry.isScheduledForDeletion()) {
+                SVNFileType fileType = SVNFileType.getType(myTarget);
+                missing = fileType == SVNFileType.NONE;
+            }
             
             if (targetEntry.isDirectory()) {
                 if (missing) {
                     reporter.deletePath("");
                 } else if (myDepth != SVNDepth.EMPTY) {
-                    reportEntries(reporter, targetArea, "", revision, targetEntry.isIncomplete(), myDepth);
+                    reportEntries(reporter, targetArea, "", revision, startEmpty, myDepth);
                 }
             } else if (targetEntry.isFile()) {
                 if (missing) {
@@ -122,7 +133,8 @@ public class SVNReporter implements ISVNReporterBaton {
         }
     }
 
-    private void reportEntries(ISVNReporter reporter, SVNAdminArea adminArea, String dirPath, long dirRevision, boolean reportAll, SVNDepth depth) throws SVNException {
+    private void reportEntries(ISVNReporter reporter, SVNAdminArea adminArea, String dirPath, long dirRevision, 
+            boolean reportAll, SVNDepth depth) throws SVNException {
         SVNWCAccess wcAccess = myInfo.getWCAccess();
         String externalsProperty = adminArea.getProperties(adminArea.getThisDirName()).getStringPropertyValue(SVNProperty.EXTERNALS);
         SVNEntry thisEntry = adminArea.getEntry(adminArea.getThisDirName(), true);
@@ -197,16 +209,25 @@ public class SVNReporter implements ISVNReporterBaton {
                 SVNAdminArea childArea = wcAccess.retrieve(adminArea.getFile(entry.getName()));
                 SVNEntry childEntry = childArea.getEntry(childArea.getThisDirName(), true);
                 String url = childEntry.getURL();
+                boolean startEmpty = childEntry.isIncomplete();
+                if (myUseDepthCompatibilityTrick && childEntry.getDepth().compareTo(SVNDepth.FILES) <= 0 && 
+                        depth.compareTo(childEntry.getDepth()) > 0) {
+                    startEmpty = true;
+                }
+                
                 if (reportAll) {
                     if (!url.equals(expectedURL)) {
                         SVNURL svnURL = SVNURL.parseURIEncoded(url);
-                        reporter.linkPath(svnURL, path, childEntry.getLockToken(), childEntry.getRevision(), childEntry.getDepth(), childEntry.isIncomplete());
+                        reporter.linkPath(svnURL, path, childEntry.getLockToken(), childEntry.getRevision(), 
+                                childEntry.getDepth(), startEmpty);
                     } else {
-                        reporter.setPath(path, childEntry.getLockToken(), childEntry.getRevision(), childEntry.getDepth(), childEntry.isIncomplete());
+                        reporter.setPath(path, childEntry.getLockToken(), childEntry.getRevision(), 
+                                childEntry.getDepth(), startEmpty);
                     }
                 } else if (!url.equals(expectedURL)) {
                     SVNURL svnURL = SVNURL.parseURIEncoded(url);
-                    reporter.linkPath(svnURL, path, childEntry.getLockToken(), childEntry.getRevision(), childEntry.getDepth(), childEntry.isIncomplete());
+                    reporter.linkPath(svnURL, path, childEntry.getLockToken(), childEntry.getRevision(), 
+                            childEntry.getDepth(), startEmpty);
                 } else if (childEntry.getLockToken() != null || 
                            childEntry.getRevision() != dirRevision ||
                            childEntry.isIncomplete() ||
@@ -214,11 +235,12 @@ public class SVNReporter implements ISVNReporterBaton {
                            thisEntry.getDepth() == SVNDepth.FILES ||
                            (thisEntry.getDepth() == SVNDepth.IMMEDIATES && 
                             childEntry.getDepth() != SVNDepth.EMPTY)) {
-                    reporter.setPath(path, childEntry.getLockToken(), childEntry.getRevision(), childEntry.getDepth(), childEntry.isIncomplete());
+                    reporter.setPath(path, childEntry.getLockToken(), childEntry.getRevision(), 
+                            childEntry.getDepth(), startEmpty);
                 }
 
                 if (depth == SVNDepth.INFINITY || depth == SVNDepth.UNKNOWN) {
-                    reportEntries(reporter, childArea, path, childEntry.getRevision(), childEntry.isIncomplete(), depth);
+                    reportEntries(reporter, childArea, path, childEntry.getRevision(), startEmpty, depth);
                 }
             }
         }
