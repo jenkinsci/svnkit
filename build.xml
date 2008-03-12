@@ -607,9 +607,9 @@
     			<exclude name="svn-test-work/**"/>
     		</fileset>
         </copy>
-    	<copy todir="${python.test.home}/python/cmdline/svntest"  overwrite="true" failonerror="true">
+    	<copy todir="${python.test.home}/python/cmdline"  overwrite="true" failonerror="true">
     		<fileset dir="svnkit-test/patch">
-    			<include name="main.py"/>
+    			<include name="**/**"/>
     		</fileset>
         </copy>
     	<copy todir="${python.test.home}">
