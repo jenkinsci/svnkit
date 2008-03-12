@@ -1151,25 +1151,24 @@ public class DAVRepository extends SVNRepository {
 
     private Map doGetMergeInfo(String[] paths, long revision, SVNMergeInfoInheritance inherit, boolean includeDescendants) throws SVNException {
         String path = doGetFullPath("");
-            path = SVNEncodingUtil.uriEncode(path);
-            if (paths == null || paths.length == 0) {
-                paths = new String[]{""};
-            }
-            String[] fullPaths = new String[paths.length];
-            for (int i = 0; i < paths.length; i++) {
-                fullPaths[i] = doGetFullPath(paths[i]);
-            }
-            StringBuffer request = DAVMergeInfoHandler.generateMergeInfoRequest(null, revision, fullPaths,
-                    inherit, includeDescendants);
-            DAVMergeInfoHandler handler = new DAVMergeInfoHandler();
-            HTTPStatus status = myConnection.doReport(path, request, handler);
-            if (status.getCode() == 501) {
-                return new HashMap();
-            }
-            if (status.getError() != null) {
-                SVNErrorManager.error(status.getError());
-            }
-            return handler.getMergeInfo();
+        path = SVNEncodingUtil.uriEncode(path);
+        DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, this, path, revision, false, true, null);
+        path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
+        
+        if (paths == null || paths.length == 0) {
+            paths = new String[]{""};
+        }
+        StringBuffer request = DAVMergeInfoHandler.generateMergeInfoRequest(null, revision, paths,
+                inherit, includeDescendants);
+        DAVMergeInfoHandler handler = new DAVMergeInfoHandler();
+        HTTPStatus status = myConnection.doReport(path, request, handler);
+        if (status.getCode() == 501) {
+            return new HashMap();
+        }
+        if (status.getError() != null) {
+            SVNErrorManager.error(status.getError());
+        }
+        return handler.getMergeInfo();
     }
 
 }
