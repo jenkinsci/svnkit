@@ -85,9 +85,19 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
 			SVNProperties baseProperties, SVNProperties serverBaseProps, SVNProperties propDiff, 
 			SVNAdminArea adminArea, SVNLog log, boolean baseMerge, boolean dryRun) throws SVNException {
         propDiff = propDiff == null ? SVNProperties.EMPTY_PROPERTIES : propDiff;
-        if (serverBaseProps == null) {
-            serverBaseProps = baseProperties != null ? baseProperties : new SVNProperties();
+        
+        if (baseProperties == null) {
+            baseProperties = adminArea.getBaseProperties(localPath).asMap();
         }
+        
+        if (workingProperties == null) {
+            workingProperties = adminArea.getProperties(localPath).asMap();
+        }
+        
+        if (serverBaseProps == null) {
+            serverBaseProps = baseProperties != null ? new SVNProperties(baseProperties) : new SVNProperties();
+        }
+        
         boolean isDir = adminArea.getThisDirName().equals(localPath);
         
         List conflicts = new LinkedList();
@@ -102,7 +112,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
             SVNPropertyValue baseValue = baseProperties.getSVNPropertyValue(propName);
             boolean isNormal = SVNProperty.isRegularProperty(propName);
             if (baseMerge) {
-                baseProperties.put(propName, toValue);
+                changeProperty(baseProperties, propName, toValue);
             }            
 
             if (isNormal) {
@@ -485,14 +495,13 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
         if (workingValue != null) {
             if (workingValue.equals(newValue)) {
                 status = getPropMergeStatus(status, SVNStatusType.MERGED);
-                workingProps.put(propName, newValue);
+                changeProperty(workingProps, propName, newValue);
             } else {
                 if (SVNProperty.MERGE_INFO.equals(propName)) {
                     newValue = SVNPropertyValue.create(
                             SVNMergeInfoUtil.combineMergeInfoProperties(workingValue.getString(),
                     				newValue.getString()));
-                    
-                    workingProps.put(propName, newValue);
+                    changeProperty(workingProps, propName, newValue);
                     status = getPropMergeStatus(status, SVNStatusType.MERGED);
                 } else {
                     gotConflict = maybeGeneratePropConflict(localPath, propName, workingProps, null, newValue, 
@@ -515,11 +524,19 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
                         new Object[] { propName, SVNPropertyValue.getPropertyAsString(newValue) }));
     		}
     	} else {
-    		workingProps.put(propName, newValue);
+    		changeProperty(workingProps, propName, newValue);
     	}
         return status;
     }
 
+    private void changeProperty(SVNProperties properties, String propName, SVNPropertyValue propValue) {
+        if (propValue == null) {
+            properties.remove(propName);
+        } else {
+            properties.put(propName, propValue);
+        }
+    }
+    
     private SVNStatusType applySinglePropertyChange(String localPath, boolean isDir, SVNStatusType status, 
     		SVNProperties workingProps, String propName, SVNPropertyValue baseValue, 
     		SVNPropertyValue oldValue, SVNPropertyValue newValue, SVNPropertyValue workingValue, 
@@ -537,7 +554,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
                         newValue = SVNPropertyValue.create(
                                 SVNMergeInfoUtil.combineForkedMergeInfoProperties(oldValue.getString(),
                         				workingValue.getString(), newValue.getString()));
-                        workingProps.put(propName, newValue);
+                        changeProperty(workingProps, propName, newValue);
                         status = getPropMergeStatus(status, SVNStatusType.MERGED);
                     } else {
                     	gotConflict = maybeGeneratePropConflict(localPath, propName, workingProps, oldValue, 
@@ -577,7 +594,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
                 		newValue.getString(), null);
                 newValue = SVNPropertyValue.create(
                         SVNMergeInfoUtil.formatMergeInfoToString(addedMergeInfo));
-                workingProps.put(propName, newValue);
+                changeProperty(workingProps, propName, newValue);
             } else {
                 gotConflict = maybeGeneratePropConflict(localPath, propName, workingProps, oldValue, newValue, 
                 		baseValue, workingValue, adminArea, log, isDir);
@@ -590,13 +607,13 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
             }
     	} else {
             if (baseValue.equals(oldValue)) {
-                workingProps.put(propName, newValue);
+                changeProperty(workingProps, propName, newValue);
             } else {
                 if (SVNProperty.MERGE_INFO.equals(propName)) {
                     newValue = SVNPropertyValue.create(
                             SVNMergeInfoUtil.combineForkedMergeInfoProperties(oldValue.getString(),
                     				workingValue.getString(), newValue.getString()));
-                    workingProps.put(propName, newValue);
+                    changeProperty(workingProps, propName, newValue);
                     status = getPropMergeStatus(status, SVNStatusType.MERGED);
                 } else {
                 	gotConflict = maybeGeneratePropConflict(localPath, propName, workingProps, oldValue, newValue, 
@@ -621,14 +638,14 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
     	boolean gotConflict = false;
 
     	if (baseValue == null) {
-            workingProps.put(propName, (SVNPropertyValue) null);
+            changeProperty(workingProps, propName, (SVNPropertyValue) null); 
     		if (oldValue != null) {
     			status = getPropMergeStatus(status, SVNStatusType.MERGED);
     		}
     	} else if (baseValue.equals(oldValue)) {
     		if (workingValue != null) {
     			if (workingValue.equals(oldValue)) {
-    				workingProps.put(propName, (SVNPropertyValue) null);
+    				changeProperty(workingProps, propName, (SVNPropertyValue) null);
     			} else {
     				gotConflict = maybeGeneratePropConflict(localPath, propName, workingProps, oldValue, null, 
     						baseValue, workingValue, adminArea, log, isDir);
@@ -803,10 +820,10 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
     	if (choice == SVNConflictChoice.MINE_FULL) {
     		conflictRemains = false;
     	} else if (choice == SVNConflictChoice.THEIRS_FULL) {
-    		workingProps.put(propName, newValue);
+    		changeProperty(workingProps, propName, newValue);
     		conflictRemains = false;
     	} else if (choice == SVNConflictChoice.BASE) {
-    		workingProps.put(propName, baseValue);
+    	    changeProperty(workingProps, propName, baseValue);
     		conflictRemains = false;
     	} else if (choice == SVNConflictChoice.MERGED) {
     		if (mergedFile == null && result.getMergedFile() == null) {
@@ -816,7 +833,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
     		}
     		
     		String mergedString = SVNFileUtil.readFile(mergedFile != null ? mergedFile : result.getMergedFile());
-    		workingProps.put(propName, SVNPropertyValue.create(mergedString));
+    		changeProperty(workingProps, propName, SVNPropertyValue.create(mergedString));
     		conflictRemains = false;
     	}
     	return conflictRemains;
