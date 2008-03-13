@@ -18,6 +18,7 @@ import java.util.List;
 
 import org.tmatesoft.svn.cli2.SVNCommandUtil;
 import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -105,7 +106,8 @@ public class SVNMkDirCommand extends SVNCommand {
                 for (Iterator ts = targets.iterator(); ts.hasNext();) {
                     String targetName = (String) ts.next();
                     SVNPath target = new SVNPath(targetName);
-                    client.doAdd(target.getFile(), false, true, false, true, false, getSVNEnvironment().isParents());
+                    client.doAdd(target.getFile(), false, true, false, SVNDepth.INFINITY, false, 
+                            getSVNEnvironment().isParents());
                 }
             } catch (SVNException e) {
                 SVNErrorMessage err = e.getErrorMessage();

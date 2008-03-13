@@ -71,8 +71,9 @@ public class SVNAddCommand extends SVNCommand {
                 continue;
             }
             try {
-                client.doAdd(target.getFile(), getSVNEnvironment().isForce(), false, getSVNEnvironment().isParents(), depth.isRecursive(), 
-                        getSVNEnvironment().isNoIgnore(), getSVNEnvironment().isParents());
+                client.doAdd(target.getFile(), getSVNEnvironment().isForce(), false, 
+                        getSVNEnvironment().isParents(), depth, getSVNEnvironment().isNoIgnore(), 
+                        getSVNEnvironment().isParents());
             } catch (SVNException e) {
                 getSVNEnvironment().handleWarning(e.getErrorMessage(), 
                         new SVNErrorCode[] {SVNErrorCode.ENTRY_EXISTS, SVNErrorCode.WC_PATH_NOT_FOUND}, getSVNEnvironment().isQuiet());
