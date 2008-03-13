@@ -158,6 +158,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             SVNEntry entry = adminArea.getEntry(adminArea.getThisDirName(), false);
             if (entry != null) {
                 myCurrentDirectory.myAmbientDepth = entry.getDepth();
+                myCurrentDirectory.myPreviousRevision = entry.getRevision();
             }
             Map attributes = new HashMap();
             attributes.put(SVNProperty.REVISION, Long.toString(myTargetRevision));
@@ -195,6 +196,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         attributes.put(SVNLog.NAME_ATTR, name);
         log.addCommand(SVNLog.DELETE_ENTRY, attributes, false);
         SVNNodeKind kind = entry.getKind();
+        long previousRevision = entry.getRevision();
         boolean isDeleted = entry.isDeleted();
         if (path.equals(myTarget)) {
             attributes.put(SVNLog.NAME_ATTR, name);
@@ -232,6 +234,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         }
         SVNEvent event = SVNEventFactory.createSVNEvent(parentArea.getFile(name), kind, null, 
                 SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_DELETE, null, null, null);
+        event.setPreviousRevision(previousRevision);
         myWCAccess.handleEvent(event);
     }
 
@@ -255,6 +258,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         SVNAdminArea parentArea = myCurrentDirectory.getAdminArea();
         SVNDirectoryInfo parentDirectory = myCurrentDirectory;
         myCurrentDirectory = createDirectoryInfo(myCurrentDirectory, path, true);
+        myCurrentDirectory.myPreviousRevision = -1;
 
         if (path.equals(myTarget)) {
             myCurrentDirectory.myAmbientDepth = myRequestedDepth == SVNDepth.UNKNOWN ? SVNDepth.INFINITY : myRequestedDepth;
@@ -360,6 +364,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             SVNEvent event = SVNEventFactory.createSVNEvent(parentArea.getFile(entry.getName()), 
                     SVNNodeKind.DIR, null, myTargetRevision, myCurrentDirectory.isExisted ? 
                             SVNEventAction.UPDATE_EXISTS : SVNEventAction.UPDATE_ADD, null, null, null);
+            event.setPreviousRevision(myCurrentDirectory.myPreviousRevision);
             myWCAccess.handleEvent(event);
         }
     }
@@ -372,6 +377,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         myWCAccess.registerCleanupHandler(adminArea, myCurrentDirectory);
         SVNEntry entry = adminArea.getEntry(adminArea.getThisDirName(), true);        
         if (entry != null) {
+            myCurrentDirectory.myPreviousRevision = entry.getRevision();
             myCurrentDirectory.myAmbientDepth = entry.getDepth();
             boolean hasPropConflicts = adminArea.hasPropConflict(adminArea.getThisDirName());
             if (hasPropConflicts) {
@@ -382,10 +388,13 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                         myTargetRevision, SVNStatusType.INAPPLICABLE, SVNStatusType.CONFLICTED, 
                         SVNStatusType.LOCK_INAPPLICABLE, SVNEventAction.SKIP, SVNEventAction.UPDATE_UPDATE, 
                         null, null);
+                event.setPreviousRevision(entry.getRevision());
                 myWCAccess.handleEvent(event);
                 return;
             }
-        } 
+        } else {
+            myCurrentDirectory.myPreviousRevision = -1;
+        }
         
         Map attributes = new HashMap();
         attributes.put(SVNProperty.REVISION, Long.toString(myTargetRevision));
@@ -517,6 +526,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                     action = SVNEventAction.UPDATE_NONE;
                 }
                 SVNEvent event = SVNEventFactory.createSVNEvent(adminArea.getRoot(), SVNNodeKind.DIR, null, myTargetRevision, SVNStatusType.UNKNOWN, propStatus, null, action, null, null, null);
+                event.setPreviousRevision(myCurrentDirectory.myPreviousRevision);
                 myWCAccess.handleEvent(event);
             }
         }
@@ -978,6 +988,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                     null, myTargetRevision, hasTextConflicts ? SVNStatusType.CONFLICTED : SVNStatusType.UNKNOWN,
                     hasPropConflicts ? SVNStatusType.CONFLICTED : SVNStatusType.UNKNOWN,
                     SVNStatusType.LOCK_INAPPLICABLE, SVNEventAction.SKIP, SVNEventAction.UPDATE_UPDATE, null, null);
+            event.setPreviousRevision(entry.getRevision());
             myWCAccess.handleEvent(event);
         }
         return info;
@@ -1034,6 +1045,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                     "''{0}'' is not under version control", fileInfo.getPath());
             SVNErrorManager.error(err);
         }
+        long previousRevision = fileEntry != null ? fileEntry.getRevision() : -1;
 
         // merge props.
         SVNProperties modifiedWCProps = fileInfo.getChangedWCProperties();
@@ -1301,6 +1313,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 action = SVNEventAction.UPDATE_ADD;
             }
             SVNEvent event = SVNEventFactory.createSVNEvent(adminArea.getFile(fileInfo.Name), SVNNodeKind.FILE,  null, myTargetRevision, textStatus, propStatus, lockStatus, action, null, null, null);
+            event.setPreviousRevision(previousRevision);
             myWCAccess.handleEvent(event);
         }
     }
@@ -1425,6 +1438,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         public boolean isAddExisted;
         public SVNDirectoryInfo Parent;
         public boolean isSkipped;
+        public long myPreviousRevision;
         
         private String myPath;
         private SVNProperties myChangedProperties;
