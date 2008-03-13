@@ -156,8 +156,10 @@ public class SVNProperties {
         }
 
         // changed in props2
-        props2.retainAll(props1);
-        for (Iterator props = props2.iterator(); props.hasNext();) {
+        tmp = new TreeSet(props2);
+        tmp.retainAll(props1);
+        
+        for (Iterator props = tmp.iterator(); props.hasNext();) {
             String changed = (String) props.next();
             SVNPropertyValue value1 = getSVNPropertyValue(changed);
             SVNPropertyValue value2 = properties.getSVNPropertyValue(changed);
