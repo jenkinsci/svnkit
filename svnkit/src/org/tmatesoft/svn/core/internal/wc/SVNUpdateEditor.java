@@ -811,11 +811,10 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 SVNErrorManager.error(err);
             }
         
-            info.baseFile = adminArea.getBaseFile(info.Name, false);
-            info.newBaseFile = adminArea.getBaseFile(info.Name, true);
+            baseProperties = new SVNProperties();
             OutputStream baseTextOS = null;
             try {
-                baseTextOS = SVNFileUtil.openFileForWriting(info.newBaseFile);
+                baseTextOS = SVNFileUtil.openFileForWriting(info.copiedBaseText);
                 SVNDebugLog.getDefaultLog().info("writing to " + info.baseFile);
                 myFileFetcher.fetchFile(copyFromPath, copyFromRevision, baseTextOS, baseProperties);
             } finally {
@@ -826,31 +825,6 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
 
         info.copiedBaseProperties = baseProperties.getRegularProperties();
         info.copiedWorkingProperties = workingProperties.getRegularProperties();
-        
-        /*
-        info.baseFile = adminArea.getBaseFile(info.Name, false);
-        info.newBaseFile = adminArea.getBaseFile(info.Name, true);
-        SVNProperties fileProps = new SVNProperties();
-        OutputStream baseTextOS = null;
-        try {
-            baseTextOS = SVNFileUtil.openFileForWriting(info.newBaseFile);
-            SVNDebugLog.getDefaultLog().info("writing to " + info.baseFile);
-            myFileFetcher.fetchFile(copyFromPath, copyFromRevision, baseTextOS, fileProps);
-        } finally {
-            SVNFileUtil.closeFile(baseTextOS);
-        }
-        
-        for (Iterator propNames = fileProps.nameSet().iterator(); propNames.hasNext();) {
-            String propName = (String) propNames.next();
-            SVNPropertyValue propVal = fileProps.getSVNPropertyValue(propName);
-            changeFileProperty(propName, propVal, info);
-        }
-        
-        closeFile(null, info, myCurrentDirectory);
-        parent.flushLog();
-        parent.runLogs();
-        info = openFile(path, myCurrentDirectory);
-        info.sendNotification = false;*/
         return info;
     }
 
@@ -1016,7 +990,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         }
 
         if (fileInfo.addedWithHistory && !fileInfo.receivedTextDelta) {
-            if (fileInfo.baseFile != null || fileInfo.newBaseFile != null || fileInfo.copiedBaseText != null) {
+            if (fileInfo.baseFile != null || fileInfo.newBaseFile != null || fileInfo.copiedBaseText == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "assertion failure in " +
                         "SVNUpdateEditor.closeFile(): fileInfo.baseFile = {0}, fileInfo.newBaseFile = {1}, " +
                         "fileInfo.copiedBaseText = {2}", new Object[] { fileInfo.baseFile, fileInfo.newBaseFile, 
