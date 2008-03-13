@@ -1400,7 +1400,7 @@ public class SVNCopyClient extends SVNBasicClient {
         SVNWCClient wcClient = new SVNWCClient((ISVNAuthenticationManager) null, null);
         try {
             wcClient.setEventHandler(handler);
-            wcClient.doAdd(path, false, false, true, true, true, true);
+            wcClient.doAdd(path, false, false, true, SVNDepth.EMPTY, true, true);
         } catch (SVNException e) {
             if (created) {
                 SVNFileUtil.deleteAll(path, true);

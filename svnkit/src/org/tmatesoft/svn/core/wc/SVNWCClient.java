@@ -1186,7 +1186,8 @@ public class SVNWCClient extends SVNBasicClient {
      *                      <li><code>path</code> is the root directory of the Working Copy
      */
     public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, boolean recursive) throws SVNException {
-        doAdd(path, force, mkdir, climbUnversionedParents, recursive, false, false);
+        doAdd(path, force, mkdir, climbUnversionedParents, SVNDepth.getInfinityOrFilesDepth(recursive), false, 
+                false);
     }
 
     /**
@@ -1224,18 +1225,17 @@ public class SVNWCClient extends SVNBasicClient {
      *                      </ul>
      * @since 1.1
      */
-    public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, boolean recursive, boolean includeIgnored) throws SVNException {
-        doAdd(path, force, mkdir, climbUnversionedParents, recursive, includeIgnored, false);
+    public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, boolean recursive, 
+            boolean includeIgnored) throws SVNException {
+        doAdd(path, force, mkdir, climbUnversionedParents, SVNDepth.getInfinityOrFilesDepth(recursive), 
+                includeIgnored, false);
     }
 
-    /* TODO(sd): "For consistency, this should take svn_depth_t depth
-    * instead of svn_boolean_t recursive.  However, it is not
-    * important for the sparse-directories work, so leaving it
-    * for now."
-    */
-    public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, boolean recursive, boolean includeIgnored, boolean makeParents) throws SVNException {
+    public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, 
+            SVNDepth depth, boolean includeIgnored, boolean makeParents) throws SVNException {
+        depth = depth == null ? SVNDepth.UNKNOWN : depth;
         path = path.getAbsoluteFile();
-        if (!mkdir && (climbUnversionedParents || makeParents) && path.getParentFile() != null) {
+        if (!mkdir && makeParents && path.getParentFile() != null) {
             // check if parent is versioned. if not, add it.
             SVNWCAccess wcAccess = createWCAccess();
             try {
@@ -1246,7 +1246,8 @@ public class SVNWCClient extends SVNBasicClient {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_NO_VERSIONED_PARENT);
                         SVNErrorManager.error(err);
                     } else {
-                        doAdd(path.getParentFile(), false, false, climbUnversionedParents, false);
+                        doAdd(path.getParentFile(), false, false, climbUnversionedParents, SVNDepth.EMPTY, false, 
+                                makeParents);
                     }
                 } else {
                     throw e;
@@ -1255,9 +1256,11 @@ public class SVNWCClient extends SVNBasicClient {
                 wcAccess.close();
             }
         }
-        if (force && mkdir && SVNFileType.getType(path) == SVNFileType.DIRECTORY) {
+        
+        SVNFileType kind = SVNFileType.getType(path);
+        if (force && mkdir && kind == SVNFileType.DIRECTORY) {
             // directory is already there.
-            doAdd(path, force, false, true, false, true, makeParents);
+            doAdd(path, force, false, true, SVNDepth.EMPTY, true, makeParents);
             return;
         } else if (mkdir) {
             // attempt to create dir
@@ -1265,7 +1268,8 @@ public class SVNWCClient extends SVNBasicClient {
             File firstCreated = path;
             while (parent != null && SVNFileType.getType(parent) == SVNFileType.NONE) {
                 if (!parent.equals(path) && !makeParents) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create directoy ''{0}'' with non-existent parents", path);
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
+                            "Cannot create directoy ''{0}'' with non-existent parents", path);
                     SVNErrorManager.error(err);
                 }
                 firstCreated = parent;
@@ -1274,7 +1278,8 @@ public class SVNWCClient extends SVNBasicClient {
             boolean created = path.mkdirs();
             if (!created) {
                 // delete created dirs.
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create new directory ''{0}''", path);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
+                        "Cannot create new directory ''{0}''", path);
                 while (parent == null ? path != null : !path.equals(parent)) {
                     SVNFileUtil.deleteAll(path, true);
                     path = path.getParentFile();
@@ -1282,13 +1287,14 @@ public class SVNWCClient extends SVNBasicClient {
                 SVNErrorManager.error(err);
             }
             try {
-                doAdd(firstCreated, false, false, climbUnversionedParents, true, true, makeParents);
+                doAdd(firstCreated, false, false, climbUnversionedParents, depth, true, makeParents);
             } catch (SVNException e) {
                 SVNFileUtil.deleteAll(firstCreated, true);
                 throw e;
             }
             return;
         }
+        
         SVNWCAccess wcAccess = createWCAccess();
         try {
             SVNAdminArea dir = null;
@@ -1298,8 +1304,8 @@ public class SVNWCClient extends SVNBasicClient {
                 dir = wcAccess.open(path.getParentFile(), true, 0);
             }
             SVNFileType fileType = SVNFileType.getType(path);
-            if (fileType == SVNFileType.DIRECTORY && recursive) {
-                addDirectory(path, dir, force, includeIgnored);
+            if (fileType == SVNFileType.DIRECTORY && depth.compareTo(SVNDepth.FILES) >= 0) {
+                addDirectory(path, dir, force, includeIgnored, depth);
             } else if (fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) {
                 addFile(path, fileType, dir);
             } else {
@@ -1314,7 +1320,7 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
 
-    private void addDirectory(File path, SVNAdminArea parentDir, boolean force, boolean noIgnore) throws SVNException {
+    private void addDirectory(File path, SVNAdminArea parentDir, boolean force, boolean noIgnore, SVNDepth depth) throws SVNException {
         checkCancelled();
         try {
             SVNWCManager.add(path, parentDir, null, SVNRevision.UNDEFINED);
@@ -1339,9 +1345,14 @@ public class SVNWCClient extends SVNBasicClient {
                 continue;
             }
             SVNFileType childType = SVNFileType.getType(children[i]);
-            if (childType == SVNFileType.DIRECTORY) {
-                addDirectory(children[i], dir, force, noIgnore);
-            } else if (childType != SVNFileType.UNKNOWN) {
+            if (childType == SVNFileType.DIRECTORY && depth.compareTo(SVNDepth.IMMEDIATES) >= 0) {
+                SVNDepth depthBelowHere = depth;
+                if (depth == SVNDepth.IMMEDIATES) {
+                    depthBelowHere = SVNDepth.EMPTY;
+                }
+                addDirectory(children[i], dir, force, noIgnore, depthBelowHere);
+            } else if (childType != SVNFileType.UNKNOWN && childType != SVNFileType.DIRECTORY && 
+                    depth.compareTo(SVNDepth.FILES) >= 0) {
                 try {
                     addFile(children[i], childType, dir);
                 } catch (SVNException e) {
@@ -1352,7 +1363,6 @@ public class SVNWCClient extends SVNBasicClient {
                 }
             }
         }
-
     }
 
     private void addFile(File path, SVNFileType type, SVNAdminArea dir) throws SVNException {
@@ -2172,9 +2182,6 @@ public class SVNWCClient extends SVNBasicClient {
      * @see #doInfo(File,SVNRevision)
      * @see #doInfo(File,SVNRevision,boolean,ISVNInfoHandler)
      */
-    /* TODO(sd): "I don't see any compelling reason to switch to
-     * depth-style instead of recurse-style control here"
-     */
     public void doInfo(File path, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNInfoHandler handler) throws SVNException {
         if (handler == null) {
             return;
@@ -2218,6 +2225,51 @@ public class SVNWCClient extends SVNBasicClient {
             wcAccess.close();
         }
     }
+
+    /*public void doInfo(File path, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, 
+            String[] changeLists, ISVNInfoHandler handler) throws SVNException {
+        if (handler == null) {
+            return;
+        }
+        boolean local = (revision == null || !revision.isValid() || revision.isLocal()) &&
+                (pegRevision == null || !pegRevision.isValid() || pegRevision.isLocal());
+
+        if (!local) {
+            SVNWCAccess wcAccess = createWCAccess();
+            SVNRevision wcRevision = null;
+            SVNURL url = null;
+            try {
+                wcAccess.probeOpen(path, false, 0);
+                SVNEntry entry = wcAccess.getVersionedEntry(path, false);
+                url = entry.getSVNURL();
+                if (url == null) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path);
+                    SVNErrorManager.error(err);
+                }
+                wcRevision = SVNRevision.create(entry.getRevision());
+            } finally {
+                wcAccess.close();
+            }
+            doInfo(url, pegRevision == null || !pegRevision.isValid() || pegRevision.isLocal() ? wcRevision : pegRevision, revision, recursive, handler);
+            return;
+        }
+        SVNWCAccess wcAccess = createWCAccess();
+        try {
+            wcAccess.probeOpen(path, false, recursive ? SVNWCAccess.INFINITE_DEPTH : 0);
+            SVNEntry entry = wcAccess.getVersionedEntry(path, false);
+            if (entry.isFile()) {
+                reportEntry(path, entry, handler);
+            } else if (entry.isDirectory()) {
+                if (recursive) {
+                    reportAllEntries(wcAccess, path, handler);
+                } else {
+                    reportEntry(path, entry, handler);
+                }
+            }
+        } finally {
+            wcAccess.close();
+        }
+    }*/
 
     private void reportEntry(File path, SVNEntry entry, ISVNInfoHandler handler) throws SVNException {
         if (entry.isDirectory() && !"".equals(entry.getName())) {
