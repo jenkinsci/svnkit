@@ -15,14 +15,17 @@ import java.io.File;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.tmatesoft.svn.cli2.SVNCommandUtil;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
@@ -38,7 +41,7 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
  * @version 1.1.2
  * @author  TMate Software Ltd.
  */
-public class SVNDiffCommand extends SVNCommand implements ISVNDiffStatusHandler {
+public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandler {
 
     public SVNDiffCommand() {
         super("diff", new String[] {"di"});
@@ -62,12 +65,23 @@ public class SVNDiffCommand extends SVNCommand implements ISVNDiffStatusHandler 
         options.add(SVNOption.SUMMARIZE);
         options.add(SVNOption.CHANGELIST);
         options.add(SVNOption.FORCE);
+        options.add(SVNOption.XML);
         options = SVNOption.addAuthOptions(options);
         options.add(SVNOption.CONFIG_DIR);
         return options;
     }
 
     public void run() throws SVNException {
+        if (getSVNEnvironment().isXML()) {
+            if (!getSVNEnvironment().isSummarize()) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+                        "''--xml'' option only valid with ''--summarize'' option");
+                SVNErrorManager.error(err);
+            }
+            printXMLHeader("diff");
+            StringBuffer buffer = openXMLTag("paths", SVNXMLUtil.XML_STYLE_NORMAL, null, null);
+            getSVNEnvironment().getOut().print(buffer.toString());
+        }
         List targets = new ArrayList(); 
         if (getSVNEnvironment().getChangelist() != null) {
             SVNPath target = new SVNPath("");
@@ -224,6 +238,11 @@ public class SVNDiffCommand extends SVNCommand implements ISVNDiffStatusHandler 
                 }
             }
         }
+        if (getSVNEnvironment().isXML()) {
+            StringBuffer buffer = closeXMLTag("paths", null);
+            getSVNEnvironment().getOut().print(buffer.toString());
+            printXMLFooter("diff");
+        }
     }
 
     public void handleDiffStatus(SVNDiffStatus diffStatus) throws SVNException {
@@ -238,8 +257,27 @@ public class SVNDiffCommand extends SVNCommand implements ISVNDiffStatusHandler 
             }
             path = SVNCommandUtil.getLocalPath(path);
         }
-        getSVNEnvironment().getOut().print(diffStatus.getModificationType().getCode() + (diffStatus.isPropertiesModified() ? "M" : " ") + "     " + path + "\n");
-        getSVNEnvironment().getOut().flush();
+        if (getSVNEnvironment().isXML()) {
+            StringBuffer buffer = new StringBuffer();
+            Map attrs = new HashMap();
+            attrs.put("kind", diffStatus.getKind().toString());
+            String modificationKind = "none";
+            if (diffStatus.getModificationType() == SVNStatusType.STATUS_MODIFIED) {
+                modificationKind = "modified";
+            } else if (diffStatus.getModificationType() == SVNStatusType.STATUS_ADDED) {
+                modificationKind = "added";
+            } else if (diffStatus.getModificationType() == SVNStatusType.STATUS_DELETED) {
+                modificationKind = "deleted";
+            }
+            attrs.put("item", modificationKind);
+            attrs.put("props", diffStatus.isPropertiesModified() ? "modified" : "none");
+            buffer = SVNXMLUtil.openCDataTag(null, "path", path, attrs, buffer);
+            buffer = closeXMLTag("path", buffer);
+            getSVNEnvironment().getOut().print(buffer.toString());
+        } else {
+            getSVNEnvironment().getOut().print(diffStatus.getModificationType().getCode() + (diffStatus.isPropertiesModified() ? "M" : " ") + "     " + path + "\n");
+            getSVNEnvironment().getOut().flush();
+        }
     }
 
 }
