@@ -75,7 +75,7 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
         if (getSVNEnvironment().isXML()) {
             if (!getSVNEnvironment().isSummarize()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                        "''--xml'' option only valid with ''--summarize'' option");
+                        "'--xml' option only valid with '--summarize' option");
                 SVNErrorManager.error(err);
             }
             printXMLHeader("diff");
