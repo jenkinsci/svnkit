@@ -284,7 +284,7 @@ public class DAVConnection {
         }
         header.setHeaderValue(HTTPHeader.DEPTH_HEADER, "infinity");
         StringBuffer request = null;
-        if (myLocks != null && DAVMergeHandler.hasChildPaths(repositoryPath, myLocks)) {
+        if (myLocks != null) {
             if (myLocks.containsKey(repositoryPath)) {
                 header.setHeaderValue(HTTPHeader.IF_HEADER, "<" + repositoryPath + "> (<" + myLocks.get(repositoryPath) + ">)");
             }
