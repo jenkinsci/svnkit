@@ -1016,7 +1016,7 @@ public class DAVRepository extends SVNRepository {
         try {
             openConnection();
             StringBuffer request = DAVEditorHandler.generateEditorRequest(myConnection, null, getLocation().toString(), 
-                    targetRevision, target, url.toString(), depth, ignoreAncestry, false, false, getContents, reporter);
+                    targetRevision, target, url.toString(), depth, ignoreAncestry, false, getContents, false, reporter);
             DAVEditorHandler handler = new DAVEditorHandler(editor, true);
             String path = SVNEncodingUtil.uriEncode(getLocation().getPath());
             path = DAVUtil.getVCCPath(myConnection, this, path);
