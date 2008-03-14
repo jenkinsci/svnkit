@@ -195,7 +195,7 @@ class HTTPRequest {
             myErrorMessage = readError(request, path, context);
         } else if (myStatus.getCode() == HttpURLConnection.HTTP_NO_CONTENT) {
             myConnection.skipData(this);
-        } else if (myStatus.getCode() >= 300 || myStatus.getCode() != expectedCode) {
+        } else if (myStatus.getCode() >= 300) {
             SVNErrorMessage error = readError(request, path, context);
             myStatus.setError(error);
         } else if (myResponseStream != null) {

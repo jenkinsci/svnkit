@@ -23,15 +23,20 @@ import java.nio.charset.CodingErrorAction;
 import java.nio.charset.CharacterCodingException;
 import java.nio.ByteBuffer;
 import java.io.UnsupportedEncodingException;
+import java.text.ParseException;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.io.dav.http.HTTPStatus;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 import org.xml.sax.Attributes;
 
@@ -49,7 +54,7 @@ public class DAVProppatchHandler extends BasicDAVHandler {
         NAMESPACES.add(DAVElement.SVN_DAV_PROPERTY_NAMESPACE);
         NAMESPACES.add(DAVElement.SVN_SVN_PROPERTY_NAMESPACE);
         NAMESPACES.add(DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE);
-    }
+    }    
 
     public static StringBuffer generatePropertyRequest(StringBuffer buffer, String name, SVNPropertyValue value) {
         SVNProperties props = new SVNProperties();
@@ -113,7 +118,7 @@ public class DAVProppatchHandler extends BasicDAVHandler {
         Map attrs = null;
         String stringValue = value.getString();
         boolean isXMLSafe = true;
-        if (value.isBinary()){
+        if (value.isBinary()) {
             CharsetDecoder decoder = Charset.forName("UTF-8").newDecoder();
             decoder.onMalformedInput(CodingErrorAction.REPORT);
             decoder.onMalformedInput(CodingErrorAction.REPORT);
@@ -123,7 +128,7 @@ public class DAVProppatchHandler extends BasicDAVHandler {
                 isXMLSafe = false;
             }
         }
-        if (stringValue != null){
+        if (stringValue != null) {
             isXMLSafe = SVNEncodingUtil.isXMLSafe(stringValue);
         }
 
@@ -132,7 +137,7 @@ public class DAVProppatchHandler extends BasicDAVHandler {
             String attrPrefix = (String) SVNXMLUtil.PREFIX_MAP.get(DAVElement.SVN_DAV_PROPERTY_NAMESPACE);
             attrs.put(attrPrefix + ":encoding", "base64");
             byte[] toDecode = null;
-            if (stringValue != null){
+            if (stringValue != null) {
                 try {
                     toDecode = stringValue.getBytes("UTF-8");
                 } catch (UnsupportedEncodingException e) {
@@ -145,7 +150,6 @@ public class DAVProppatchHandler extends BasicDAVHandler {
         }
         return SVNXMLUtil.openCDataTag(prefix, tagName, stringValue, attrs, xmlBuffer);
     }
-
 
 
     private static boolean hasNullValues(SVNProperties props) {
@@ -171,9 +175,97 @@ public class DAVProppatchHandler extends BasicDAVHandler {
         return false;
     }
 
+    //fields for multistatus response handling
+    private StringBuffer myPropertyName;
+    private StringBuffer myPropstatDescription;
+    private StringBuffer myDescription;
+    private boolean myPropstatContainsError;
+    private boolean myResponseContainsError;
+    private SVNErrorMessage myError;
+
+
+    public DAVProppatchHandler() {
+        init();
+    }
+
+    public SVNErrorMessage getError(){
+        return myError;
+    }
+
+    private StringBuffer getPropertyName() {
+        if (myPropertyName == null){
+            myPropertyName = new StringBuffer();            
+        }
+        return myPropertyName;
+    }
+
+    public StringBuffer getPropstatDescription() {
+        if (myPropstatDescription == null){
+            myPropstatDescription = new StringBuffer();            
+        }
+        return myPropstatDescription;
+    }
+
+    public StringBuffer getDescription() {
+        if (myDescription == null){
+            myDescription = new StringBuffer();            
+        }
+        return myDescription;
+    }
+
     protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
+        if (parent == DAVElement.PROP) {
+            getPropertyName().setLength(0);
+            if (DAVElement.SVN_DAV_PROPERTY_NAMESPACE.equals(element.getNamespace())) {
+                getPropertyName().append(SVNProperty.SVN_PREFIX);
+            } else if (DAVElement.DAV_NAMESPACE.equals(element.getNamespace())) {
+                getPropertyName().append(DAVElement.DAV_NAMESPACE);
+            }
+            getPropertyName().append(element.getName());
+        } else if (element == DAVElement.PROPSTAT) {
+            myPropstatContainsError = false;
+        }
     }
 
     protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
+        if (element == DAVElement.MULTISTATUS) {
+            if (myResponseContainsError) {
+                String description = null;
+                if (getDescription().length() == 0) {
+                    description = "The request response contained at least one error";
+                } else {
+                    description = getDescription().toString();
+                }
+                myError = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, description);
+            }
+        } else if (element == DAVElement.RESPONSE_DESCRIPTION) {
+            if (parent == DAVElement.PROPSTAT) {
+                getPropstatDescription().append(cdata);
+            } else {
+                if (getDescription().length() != 0) {
+                    getDescription().append('\n');
+                }
+                getDescription().append(cdata);
+            }
+        } else if (element == DAVElement.STATUS) {
+            try {
+                HTTPStatus status = HTTPStatus.createHTTPStatus(cdata.toString());
+                if (parent != DAVElement.PROPSTAT) {
+                    myResponseContainsError |= status.getCodeClass() != 2;
+                } else {
+                    myPropstatContainsError = status.getCodeClass() != 2;
+                }
+            } catch (ParseException e) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED,
+                        "The response contains a non-conforming HTTP status line"));
+
+            }
+        } else if (element == DAVElement.PROPSTAT) {
+            myResponseContainsError |= myPropstatContainsError;
+            getDescription().append("Error setting property ");
+            getDescription().append(getPropertyName());
+            getDescription().append(":");
+            getDescription().append(getPropstatDescription());
+        }
     }
 }

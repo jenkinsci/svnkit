@@ -60,6 +60,7 @@ public class DAVElement {
 
     public static final DAVElement MULTISTATUS = getElement(DAV_NAMESPACE, "multistatus");
     public static final DAVElement RESPONSE = getElement(DAV_NAMESPACE, "response");
+    public static final DAVElement RESPONSE_DESCRIPTION = getElement(DAV_NAMESPACE, "responsedescription");
     public static final DAVElement HREF = getElement(DAV_NAMESPACE, "href");
     public static final DAVElement PROPSTAT = getElement(DAV_NAMESPACE, "propstat");
     public static final DAVElement PROP = getElement(DAV_NAMESPACE, "prop");

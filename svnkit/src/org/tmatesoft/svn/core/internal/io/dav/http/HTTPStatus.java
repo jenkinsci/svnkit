@@ -103,6 +103,10 @@ public class HTTPStatus {
     public int getCode() {
         return myCode;
     }
+
+    public int getCodeClass() {
+        return myCode / 100;
+    }
     
     public String getStatusLine() {
         return myStatusLine;
