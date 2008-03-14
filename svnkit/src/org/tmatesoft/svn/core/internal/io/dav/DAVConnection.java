@@ -88,7 +88,8 @@ public class DAVConnection {
 
     public void open(DAVRepository repository) throws SVNException {
         if (myHttpConnection == null) {
-        	myHttpConnection = myConnectionFactory.createHTTPConnection(repository);
+            myHttpConnection = myConnectionFactory.createHTTPConnection(repository);
+            exchangeCapabilities();
         }
     }
 
