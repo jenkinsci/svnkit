@@ -282,7 +282,8 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
     
     public void handleError(SVNErrorMessage err) {
         Collection codes = new HashSet();
-        while(err != null) {
+        int count = 0;
+        while(err != null && count < 2) {
             if ("".equals(err.getMessageTemplate()) && codes.contains(err.getErrorCode())) {
                 err = err.hasChildErrorMessage() ? err.getChildErrorMessage() : null;
                 continue;
@@ -303,9 +304,11 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
                     getErr().println("svn: warning: " + message);
                 } else {
                     getErr().println("svn: " + message);
+                    count++;
                 }
             } else {
                 getErr().println(err.getMessage());
+                count++;
             }
             err = err.hasChildErrorMessage() ? err.getChildErrorMessage() : null;
         }
