@@ -75,17 +75,25 @@ class DAVResource {
         return myVURL;
     }    
     
-    public void fetchVersionURL(boolean force) throws SVNException {
+    public void fetchVersionURL(DAVResource parent, boolean force) throws SVNException {
         if (!force && getVersionURL() != null) {
             return;
         }
-        if (!force && myMediator != null) {
-            SVNPropertyValue value = myMediator.getWorkspaceProperty(SVNEncodingUtil.uriDecode(myPath), "svn:wc:ra_dav:version-url");
-            myVURL = value == null ? null : value.getString();
-            if (myVURL != null) {
+        if (!force) {
+            if (myMediator != null) {
+                SVNPropertyValue value = myMediator.getWorkspaceProperty(SVNEncodingUtil.uriDecode(myPath), "svn:wc:ra_dav:version-url");
+                myVURL = value == null ? null : value.getString();
+                if (myVURL != null) {
+                    return;
+                }
+            }
+            if (parent != null && parent.getVersionURL() != null && parent.myRevision == myRevision) {
+                myVURL = SVNPathUtil.append(parent.getVersionURL(), SVNPathUtil.tail(myPath));
                 return;
             }
         }
+            
+        
         // now from server.
         String path = myURL;
         if (myRevision >= 0) {

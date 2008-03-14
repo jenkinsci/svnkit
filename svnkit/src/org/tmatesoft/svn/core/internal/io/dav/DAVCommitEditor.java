@@ -94,7 +94,7 @@ class DAVCommitEditor implements ISVNEditor {
         // make activity
         myActivity = createActivity();
         DAVResource root = new DAVResource(myCommitMediator, myConnection, "", revision);
-        root.fetchVersionURL(false);
+        root.fetchVersionURL(null, false);
         myDirsStack.push(root);
         myPathsMap.put(root.getURL(), root.getPath());
     }
@@ -184,7 +184,7 @@ class DAVCommitEditor implements ISVNEditor {
             // part of copied structure -> derive wurl
             directory.setWorkingURL(SVNPathUtil.append(parent.getWorkingURL(), SVNPathUtil.tail(path)));
         } else {
-            directory.fetchVersionURL(false);
+            directory.fetchVersionURL(parent, false);
         }
         myDirsStack.push(directory);
         myPathsMap.put(directory.getURL(), directory.getPath());
@@ -262,7 +262,7 @@ class DAVCommitEditor implements ISVNEditor {
             // part of copied structure -> derive wurl
             file.setWorkingURL(SVNPathUtil.append(parent.getWorkingURL(), SVNPathUtil.tail(path)));
         } else {
-            file.fetchVersionURL(false);
+            file.fetchVersionURL(parent, false);
         }
         checkoutResource(file, true);
         myPathsMap.put(file.getURL(), file.getPath());
@@ -454,7 +454,7 @@ class DAVCommitEditor implements ISVNEditor {
         }
         HTTPStatus status = myConnection.doCheckout(myActivity, resource.getURL(), resource.getVersionURL(), allow404);
         if (allow404 && status.getCode() == 404) {
-            resource.fetchVersionURL(true);
+            resource.fetchVersionURL(null, true);
             status = myConnection.doCheckout(myActivity, resource.getURL(), resource.getVersionURL(), false);
         }
         String location = status.getHeader().getFirstHeaderValue(HTTPHeader.LOCATION_HEADER);
