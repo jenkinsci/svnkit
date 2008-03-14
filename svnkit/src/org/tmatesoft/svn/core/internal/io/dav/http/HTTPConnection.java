@@ -511,9 +511,8 @@ class HTTPConnection implements IHTTPConnection {
         // err2 is another default context...
 //        myRepository.getDebugLog().info(err.getMessage());
         myRepository.getDebugLog().info(new Exception(err.getMessage()));
-        
         SVNErrorMessage err2 = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "{0} request failed on ''{1}''", new Object[] {method, path}, err.getType(), err.getCause());
-        SVNErrorManager.error(err2, err);
+        SVNErrorManager.error(err, err2);
         return null;
     }
 
