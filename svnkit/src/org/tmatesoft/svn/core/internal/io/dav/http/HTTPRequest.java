@@ -178,7 +178,6 @@ class HTTPRequest {
         } 
         
         boolean notExpected = false;        
-        int expectedCode = "PROPFIND".equals(request) ? 207 : 200;
         if (ok1 >= 0) {
             if (ok1 == 0) {
                 ok1 = "PROPFIND".equals(request) ? 207 : 200;
