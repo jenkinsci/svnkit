@@ -452,12 +452,21 @@ class DAVCommitEditor implements ISVNEditor {
         if (resource.getWorkingURL() != null) {
             return;
         }
-        HTTPStatus status = myConnection.doCheckout(myActivity, resource.getURL(), resource.getVersionURL(), allow404);
-        if (allow404 && status.getCode() == 404) {
-            resource.fetchVersionURL(null, true);
-            status = myConnection.doCheckout(myActivity, resource.getURL(), resource.getVersionURL(), false);
+        HTTPStatus status = null;
+        try {
+            status = myConnection.doCheckout(myActivity, resource.getURL(), resource.getVersionURL(), allow404);
+            if (allow404 && status.getCode() == 404) {
+                resource.fetchVersionURL(null, true);
+                status = myConnection.doCheckout(myActivity, resource.getURL(), resource.getVersionURL(), false);
+            }
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.FS_CONFLICT) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CONFLICT, "File or directory ''{0}'' is out of date; try updating", resource.getPath());
+                SVNErrorManager.error(err, e.getErrorMessage());
+            }
+            throw e;
         }
-        String location = status.getHeader().getFirstHeaderValue(HTTPHeader.LOCATION_HEADER);
+        String location = status != null ? status.getHeader().getFirstHeaderValue(HTTPHeader.LOCATION_HEADER) : null;
         if (location == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "The CHECKOUT response did not contain a 'Location:' header");
             SVNErrorManager.error(err);
