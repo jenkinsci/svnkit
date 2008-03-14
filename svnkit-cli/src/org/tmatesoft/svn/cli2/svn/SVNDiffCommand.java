@@ -24,6 +24,7 @@ import org.tmatesoft.svn.cli2.SVNCommandUtil;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
@@ -271,7 +272,8 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
             }
             attrs.put("item", modificationKind);
             attrs.put("props", diffStatus.isPropertiesModified() ? "modified" : "none");
-            buffer = SVNXMLUtil.openCDataTag(null, "path", path, attrs, buffer);
+            buffer = openXMLTag("path", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, attrs, buffer);
+            buffer.append(SVNEncodingUtil.xmlEncodeCDATA(path));
             buffer = closeXMLTag("path", buffer);
             getSVNEnvironment().getOut().print(buffer.toString());
         } else {
