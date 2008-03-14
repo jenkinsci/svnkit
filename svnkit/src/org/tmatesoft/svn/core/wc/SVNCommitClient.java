@@ -372,6 +372,7 @@ public class SVNCommitClient extends SVNBasicClient {
         ISVNEditor commitEditor = repos.getCommitEditor(commitMessage, null, false, revisionProperties, null);
         ISVNCommitPathHandler creater = new ISVNCommitPathHandler() {
             public boolean handleCommitPath(String commitPath, ISVNEditor commitEditor) throws SVNException {
+                SVNPathUtil.checkPathIsValid(commitPath);
                 commitEditor.addDir(commitPath, null, -1);
                 return true;
             }
