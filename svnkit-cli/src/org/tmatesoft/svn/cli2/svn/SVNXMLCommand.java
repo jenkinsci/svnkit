@@ -87,6 +87,7 @@ public abstract class SVNXMLCommand extends SVNCommand {
 
     protected StringBuffer addXMLProp(SVNPropertyData property, StringBuffer xmlBuffer) {
         String value = property.getValue().getString();
+        value = value == null ? "" : value;
         boolean isXMLSafe = true;
         if (property.getValue().isBinary()) {
             CharsetDecoder decoder = Charset.forName("UTF-8").newDecoder();

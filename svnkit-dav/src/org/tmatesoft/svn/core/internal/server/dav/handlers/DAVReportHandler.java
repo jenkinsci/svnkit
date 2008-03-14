@@ -234,6 +234,11 @@ public class DAVReportHandler extends ServletDAVHandler {
 
     protected void writePropertyTag(String tagName, String propertyName, SVNPropertyValue propertyValue) throws SVNException {
         StringBuffer xmlBuffer;
+        if (propertyValue == null){
+            xmlBuffer = SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, SVNXMLUtil.XML_STYLE_SELF_CLOSING, NAME_ATTR, propertyName, null);
+            write(xmlBuffer);
+            return;
+        }
         String value = propertyValue.getString();
         boolean isXMLSafe = true;
         if (propertyValue.isBinary()){
