@@ -669,6 +669,17 @@
          <arg path="${basedir}/build/lib" />
     	</java>
     	<property name="teamcity.buildConfName" value="local" />
+    	<antcall target="zip-logs"></antcall>
+    	<delete file="build/lib/logging.properties" failonerror="false"></delete>
+    	<delete file="build/lib/logging.python.properties" failonerror="false"></delete>
+    	<delete failonerror="false">
+    		<fileset dir="build/logs">
+    			<include name="**/*.lck"/>
+    	    </fileset>
+    	</delete>
+    </target>
+	
+	<target name="zip-logs" if="agent.name">
     	<zip compress="true" destfile="${basedir}/build/logs/logs_${teamcity.buildConfName}_${build.number}.zip">
     		<zipfileset prefix="logs_${teamcity.buildConfName}_${build.number}" dir="${basedir}/build/logs">
     			<include name="**/*.log"/>
@@ -679,14 +690,7 @@
     			<include name="**/*.log"/>
     	    </fileset>
         </delete>
-    	<delete file="build/lib/logging.properties" failonerror="false"></delete>
-    	<delete file="build/lib/logging.python.properties" failonerror="false"></delete>
-    	<delete failonerror="false">
-    		<fileset dir="build/logs">
-    			<include name="**/*.lck"/>
-    	    </fileset>
-    	</delete>
-    </target>
+	</target>
 
     <!-- compatibility target -->
     <target name="build-standalone" depends="build-library,build-cli">
