@@ -18,6 +18,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -42,6 +43,7 @@ public class SVNUpdateCommand extends SVNCommand {
         options.add(SVNOption.REVISION);
         options.add(SVNOption.NON_RECURSIVE);
         options.add(SVNOption.DEPTH);
+        options.add(SVNOption.SET_DEPTH);
         options.add(SVNOption.QUIET);
         options.add(SVNOption.FORCE);
         options = SVNOption.addAuthOptions(options);
@@ -71,6 +73,14 @@ public class SVNUpdateCommand extends SVNCommand {
         if (!getSVNEnvironment().isQuiet()) {
             client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment()));
         }
+        
+        SVNDepth depth = getSVNEnvironment().getDepth();
+        boolean depthIsSticky = false;
+        if (getSVNEnvironment().getSetDepth() != SVNDepth.UNKNOWN) {
+            depth = getSVNEnvironment().getSetDepth();
+            depthIsSticky = true;
+        }
+        
         final List updateTargets = new ArrayList(targets.size());
         List files = new ArrayList(targets.size());
         for (Iterator ts = targets.iterator(); ts.hasNext();) {
@@ -85,8 +95,8 @@ public class SVNUpdateCommand extends SVNCommand {
             files.add(target.getFile());
         }
         File[] filesArray = (File[]) files.toArray(new File[files.size()]);
-        client.doUpdate(filesArray, getSVNEnvironment().getStartRevision(), getSVNEnvironment().getDepth(), 
-                getSVNEnvironment().isForce(), false); 
+        client.doUpdate(filesArray, getSVNEnvironment().getStartRevision(), depth, 
+                getSVNEnvironment().isForce(), depthIsSticky); 
     } 
 
 }

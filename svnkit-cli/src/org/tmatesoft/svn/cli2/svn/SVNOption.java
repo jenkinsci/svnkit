@@ -26,6 +26,7 @@ public class SVNOption extends AbstractSVNOption {
     public static final SVNOption UPDATE = new SVNOption("show-updates", "u");
     public static final SVNOption NON_RECURSIVE = new SVNOption("non-recursive", "N");
     public static final SVNOption DEPTH = new SVNOption("depth", false);
+    public static final SVNOption SET_DEPTH = new SVNOption("set-depth", false);
     public static final SVNOption QUIET = new SVNOption("quiet", "q");
     public static final SVNOption NO_IGNORE = new SVNOption("no-ignore");
     public static final SVNOption INCREMENTAL = new SVNOption("incremental");

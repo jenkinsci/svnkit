@@ -202,10 +202,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         file = file.getAbsoluteFile();
         SVNWCAccess wcAccess = createWCAccess();
         SVNAdminAreaInfo adminInfo = null;
-        int admOpenDepth = SVNWCAccess.INFINITE_DEPTH;
-        if (depth == SVNDepth.EMPTY || depth == SVNDepth.FILES) {
-            admOpenDepth = 0;
-        }
+        int admOpenDepth = getLevelsToLockFromDepth(depth);
         try {
             adminInfo = wcAccess.openAnchor(file, true, admOpenDepth);
             SVNAdminArea anchorArea = adminInfo.getAnchor();

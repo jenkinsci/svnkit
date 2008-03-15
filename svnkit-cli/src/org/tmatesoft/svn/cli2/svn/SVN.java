@@ -74,6 +74,7 @@ public class SVN extends AbstractSVNLauncher {
         SVNCommandLine.registerOption(SVNOption.UPDATE);
         SVNCommandLine.registerOption(SVNOption.NON_RECURSIVE);
         SVNCommandLine.registerOption(SVNOption.DEPTH);
+        SVNCommandLine.registerOption(SVNOption.SET_DEPTH);
         SVNCommandLine.registerOption(SVNOption.QUIET);
         SVNCommandLine.registerOption(SVNOption.NO_IGNORE);
         SVNCommandLine.registerOption(SVNOption.INCREMENTAL);

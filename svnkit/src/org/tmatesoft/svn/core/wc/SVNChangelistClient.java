@@ -188,10 +188,15 @@ public class SVNChangelistClient extends SVNBasicClient {
                         null, null, null, changelistName);
 
                 dispatchEvent(event);
-
             } finally {
                 wcAccess.close();
             }
         }
     }
+    
+    static boolean matchesChangeList(Collection changeLists, SVNEntry entry) {
+        return changeLists == null || (entry != null && entry.getChangelistName() != null && 
+                changeLists.contains(entry.getChangelistName()));
+    }
+
 }

@@ -490,7 +490,8 @@ public class SVNBasicClient implements ISVNEventHandler {
     /**
      * TODO: replace createRepository calls with createRepository2
      */
-    protected SVNRepository createRepository2(SVNURL url, File path, SVNRevision pegRevision, SVNRevision revision, long[] pegRev) throws SVNException {
+    protected SVNRepository createRepository2(SVNURL url, File path, SVNRevision pegRevision, SVNRevision revision, 
+            long[] pegRev) throws SVNException {
         if (url == null) {
             SVNURL pathURL = getURL(path);
             if (pathURL == null) {
@@ -1033,8 +1034,12 @@ public class SVNBasicClient implements ISVNEventHandler {
     	return null;
     }
     
+    protected int getLevelsToLockFromDepth(SVNDepth depth) {
+        return  depth == SVNDepth.EMPTY || depth == SVNDepth.FILES ? 0 : 
+            (depth == SVNDepth.IMMEDIATES ? 1 : SVNWCAccess.INFINITE_DEPTH);  
+    }
+    
     private static final class LocationsLogEntryHandler implements ISVNLogEntryHandler {
-
         
         private String myCurrentPath = null;
         private String myStartPath = null;

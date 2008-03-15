@@ -1417,7 +1417,8 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         info.getTarget().closeEntries();
 
         if (depthIsSticky) {
-            SVNEntry targetEntry = info.getAnchor().getEntry(info.getTargetName(), false);
+            SVNWCAccess wcAccess = info.getWCAccess();
+            SVNEntry targetEntry = wcAccess.getEntry(info.getAnchor().getFile(info.getTargetName()), false);
             if (targetEntry != null && targetEntry.getDepth().compareTo(depth) > 0) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
                         "Shallowing of working copy depths is not yet supported");

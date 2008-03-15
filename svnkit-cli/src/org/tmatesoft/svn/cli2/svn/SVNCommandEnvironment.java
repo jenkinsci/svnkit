@@ -57,6 +57,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private static final String DEFAULT_LOG_MESSAGE_HEADER = "--This line, and those below, will be ignored--";
     
     private SVNDepth myDepth;
+    private SVNDepth mySetDepth;
     private boolean myIsVerbose;
     private boolean myIsUpdate;
     private boolean myIsQuiet;
@@ -124,6 +125,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         myResolveAccept = SVNConflictAcceptPolicy.INVALID;
         myExtensions = new HashSet();
         myDepth = SVNDepth.UNKNOWN;
+        mySetDepth = SVNDepth.UNKNOWN;
         myStartRevision = SVNRevision.UNDEFINED;
         myEndRevision = SVNRevision.UNDEFINED;
         myRevisionRanges = new LinkedList();
@@ -347,10 +349,6 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         } else if (option == SVNOption.NON_RECURSIVE) {
             myIsDescend = false;
         } else if (option == SVNOption.DEPTH) {
-            if (myIsRelocate) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_MUTUALLY_EXCLUSIVE_ARGS, 
-                        "--relocate and --depth are mutually exclusive"));
-            }
             String depth = optionValue.getValue();
             if (SVNDepth.EMPTY.getName().equals(depth)) {
                 myDepth = SVNDepth.EMPTY;
@@ -363,6 +361,22 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                         "''{0}'' is not a valid depth; try ''empty'', ''files'', ''immediates'', or ''infinit''", depth);
+                SVNErrorManager.error(err);
+            }
+        } else if (option == SVNOption.SET_DEPTH) {
+            String depth = optionValue.getValue();
+            if (SVNDepth.EMPTY.getName().equals(depth)) {
+                mySetDepth = SVNDepth.EMPTY;
+            } else if (SVNDepth.FILES.getName().equals(depth)) {
+                mySetDepth = SVNDepth.FILES;
+            } else if (SVNDepth.IMMEDIATES.getName().equals(depth)) {
+                mySetDepth = SVNDepth.IMMEDIATES;
+            } else if (SVNDepth.INFINITY.getName().equals(depth)) {
+                mySetDepth = SVNDepth.INFINITY;
+            } else {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+                        "''{0}'' is not a valid depth; try ''empty'', ''files'', ''immediates'', or ''infinit''", 
+                        depth);
                 SVNErrorManager.error(err);
             }
         } else if (option == SVNOption.VERSION) {
@@ -516,6 +530,10 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
 
     public SVNDepth getDepth() {
         return myDepth;
+    }
+
+    public SVNDepth getSetDepth() {
+        return mySetDepth;
     }
 
     public boolean isVerbose() {
