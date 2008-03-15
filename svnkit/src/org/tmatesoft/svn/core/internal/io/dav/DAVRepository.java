@@ -208,7 +208,7 @@ public class DAVRepository extends SVNRepository {
             kind = info.isDirectory ? SVNNodeKind.DIR : SVNNodeKind.FILE;
         } catch (SVNException e) {
             SVNErrorMessage error = e.getErrorMessage();
-            if (error != null) {
+            while (error != null) {
                 if (error.getErrorCode() == SVNErrorCode.RA_DAV_PATH_NOT_FOUND) {
                     return kind;
                 }
@@ -352,21 +352,21 @@ public class DAVRepository extends SVNRepository {
                     
                     long size = 0;
                     if ((entryFields & SVNDirEntry.DIRENT_SIZE) != 0) {
-                    String sizeStr = child.getPropertyValue(DAVElement.GET_CONTENT_LENGTH);
-                        if (sizeStr != null) {
-                            size = Long.parseLong(sizeStr);    
+                    SVNPropertyValue sizeValue = child.getPropertyValue(DAVElement.GET_CONTENT_LENGTH);
+                        if (sizeValue != null) {
+                            size = Long.parseLong(sizeValue.getString());
                         }
                     }
 
                     boolean hasProperties = false;
                     if ((entryFields & SVNDirEntry.DIRENT_HAS_PROPERTIES) != 0) {
                         if (supportsDeadPropCount) {
-                            String propVal = child.getPropertyValue(DAVElement.DEADPROP_COUNT);
+                            SVNPropertyValue propVal = child.getPropertyValue(DAVElement.DEADPROP_COUNT);
                             if (propVal == null) {
                                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, "Server response missing the expected deadprop-count property");
                                 SVNErrorManager.error(err);
                             } else {
-                                long propCount = Long.parseLong(propVal);
+                                long propCount = Long.parseLong(propVal.getString());
                                 hasProperties = propCount > 0;
                             }
                         } else {
@@ -394,15 +394,16 @@ public class DAVRepository extends SVNRepository {
 
                     Date date = null;
                     if ((entryFields & SVNDirEntry.DIRENT_TIME) != 0) {
-                        String dateStr = child.getPropertyValue(DAVElement.CREATION_DATE);
-                        if (dateStr != null) {
-                            date = SVNDate.parseDate(dateStr);
+                        SVNPropertyValue dateValue = child.getPropertyValue(DAVElement.CREATION_DATE);
+                        if (dateValue != null) {
+                            date = SVNDate.parseDate(dateValue.getString());
                         }
                     }
 
                     String author = null;
                     if ((entryFields & SVNDirEntry.DIRENT_LAST_AUTHOR) != 0) {
-                        author = child.getPropertyValue(DAVElement.CREATOR_DISPLAY_NAME);
+                        SVNPropertyValue authorValue = child.getPropertyValue(DAVElement.CREATOR_DISPLAY_NAME);
+                        author = authorValue == null ? null : authorValue.getString();
                     }
                     
                     SVNURL childURL = getLocation().setPath(fullPath, true);
@@ -465,18 +466,20 @@ public class DAVRepository extends SVNRepository {
                 SVNNodeKind kind = SVNNodeKind.FILE;
                 Object revisionStr = child.getPropertyValue(DAVElement.VERSION_NAME);
                 long lastRevision = Long.parseLong(revisionStr.toString());
-                String sizeStr = child.getPropertyValue(DAVElement.GET_CONTENT_LENGTH);
-                long size = sizeStr == null ? 0 : Long.parseLong(sizeStr);
+                SVNPropertyValue sizeValue = child.getPropertyValue(DAVElement.GET_CONTENT_LENGTH);
+                long size = sizeValue == null ? 0 : Long.parseLong(sizeValue.getString());
                 if (child.isCollection()) {
                     kind = SVNNodeKind.DIR;
                 }
-                String author = child.getPropertyValue(DAVElement.CREATOR_DISPLAY_NAME);
-                String dateStr = child.getPropertyValue(DAVElement.CREATION_DATE);
-                Date date = dateStr != null ? SVNDate.parseDate(dateStr) : null;
+                SVNPropertyValue authorValue = child.getPropertyValue(DAVElement.CREATOR_DISPLAY_NAME);
+                String author = authorValue == null ? null : authorValue.getString();
+                SVNPropertyValue dateValue = child.getPropertyValue(DAVElement.CREATION_DATE);
+                Date date = dateValue != null ? SVNDate.parseDate(dateValue.getString()) : null;
                 SVNURL childURL = getLocation().setPath(fullPath, true);
                 if ("".equals(name)) {
                     parent[0] = new SVNDirEntry(childURL, name, kind, size, false, lastRevision, date, author);
-                    parentVCC[0] = child.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
+                    SVNPropertyValue vcc = child.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
+                    parentVCC[0] = vcc == null ? null : vcc.getString();
                 } else {
                     childURL = childURL.appendPath(name, false);
                     if (entries != null) {
@@ -984,18 +987,19 @@ public class DAVRepository extends SVNRepository {
         SVNNodeKind kind = SVNNodeKind.FILE;
         Object revisionStr = child.getPropertyValue(DAVElement.VERSION_NAME);
         long lastRevision = Long.parseLong(revisionStr.toString());
-        String sizeStr = child.getPropertyValue(DAVElement.GET_CONTENT_LENGTH);
-        long size = sizeStr == null ? 0 : Long.parseLong(sizeStr);
+        SVNPropertyValue sizeValue = child.getPropertyValue(DAVElement.GET_CONTENT_LENGTH);
+        long size = sizeValue == null ? 0 : Long.parseLong(sizeValue.getString());
         if (child.isCollection()) {
             kind = SVNNodeKind.DIR;
         }
-        String author = child.getPropertyValue(DAVElement.CREATOR_DISPLAY_NAME);
-        String dateStr = child.getPropertyValue(DAVElement.CREATION_DATE);
-        Date date = dateStr != null ? SVNDate.parseDate(dateStr) : null;
+        SVNPropertyValue authorValue = child.getPropertyValue(DAVElement.CREATOR_DISPLAY_NAME);
+        String author = authorValue == null ? null : authorValue.getString();
+        SVNPropertyValue dateValue = child.getPropertyValue(DAVElement.CREATION_DATE);
+        Date date = dateValue != null ? SVNDate.parseDate(dateValue.getString()) : null;
         boolean hasProperties = false;
-        for(Iterator props = child.getProperties().keySet().iterator(); props.hasNext();) {
+        for (Iterator props = child.getProperties().keySet().iterator(); props.hasNext();) {
             DAVElement property = (DAVElement) props.next();
-            if (DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE.equals(property.getNamespace()) || 
+            if (DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE.equals(property.getNamespace()) ||
                     DAVElement.SVN_SVN_PROPERTY_NAMESPACE.equals(property.getNamespace())) {
                 hasProperties = true;
                 break;

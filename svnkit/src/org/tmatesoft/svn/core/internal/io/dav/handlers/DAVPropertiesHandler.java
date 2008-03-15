@@ -12,7 +12,6 @@
 
 package org.tmatesoft.svn.core.internal.io.dav.handlers;
 
-import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,12 +20,12 @@ import java.util.Map;
 import java.util.Set;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.dav.DAVProperties;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPStatus;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
-
 import org.xml.sax.Attributes;
 
 
@@ -103,7 +102,7 @@ public class DAVPropertiesHandler extends BasicDAVHandler {
 
     protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
         DAVElement name = null;
-        String value = null;
+        SVNPropertyValue value = null;
         if (element == DAVElement.RESPONSE) {
             if (myCurrentResource.getURL() == null) {
                 invalidXML();
@@ -113,9 +112,10 @@ public class DAVPropertiesHandler extends BasicDAVHandler {
             return;
         } else if (element == DAVElement.PROPSTAT) {
             if (myStatusCode != 0) {
-                for (Iterator names = myCurrentProperties.keySet().iterator(); names.hasNext();) {
-                    DAVElement propName = (DAVElement) names.next();
-                    String propValue = (String) myCurrentProperties.get(propName);
+                for (Iterator entries = myCurrentProperties.entrySet().iterator(); entries.hasNext();) {
+                    Map.Entry entry = (Map.Entry) entries.next();
+                    DAVElement propName = (DAVElement) entry.getKey();
+                    SVNPropertyValue propValue = (SVNPropertyValue) entry.getValue();
                     if (myStatusCode == 200) {
                         myCurrentResource.setProperty(propName, propValue);
                     }
@@ -153,7 +153,7 @@ public class DAVPropertiesHandler extends BasicDAVHandler {
             if (name == null) {
                 return;
             }
-            value = cdata.toString();
+            value = SVNPropertyValue.create(cdata.toString());
         } else if (cdata != null) {
             if (myCurrentProperties.containsKey(element)) {
                 // was already set with href.
@@ -161,15 +161,11 @@ public class DAVPropertiesHandler extends BasicDAVHandler {
             }
             name = element;
             if (myEncoding == null) {
-                value = cdata.toString();
+                value = SVNPropertyValue.create(cdata.toString());
             } else if ("base64".equals(myEncoding)) {
                 byte[] buffer = allocateBuffer(cdata.length());
                 int length = SVNBase64.base64ToByteArray(new StringBuffer(cdata.toString().trim()), buffer);
-                try {
-                    value = new String(buffer, 0, length, "UTF-8");
-                } catch (UnsupportedEncodingException e) {
-                    value = new String(buffer, 0, length);
-                }
+                value = SVNPropertyValue.create(null, buffer, 0, length);
             } else {
                 invalidXML();
             }

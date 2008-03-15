@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVPropertiesHandler;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPHeader;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPStatus;
@@ -75,12 +76,12 @@ public class DAVUtil {
     
     public static String getPropertyValue(DAVConnection connection, String path, String label, DAVElement property) throws SVNException {
         DAVProperties props = getResourceProperties(connection, path, label, new DAVElement[] {property});
-        Object value = props.getProperties().get(property);
+        SVNPropertyValue value = props.getPropertyValue(property);
         if (value == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "''{0}'' was not present on the resource", property.toString());
             SVNErrorManager.error(err);
         }
-        return (String) value;
+        return value.getString();
     }
     
     public static DAVProperties getStartingProperties(DAVConnection connection, String path, String label) throws SVNException {
@@ -95,7 +96,7 @@ public class DAVUtil {
             props = getStartingProperties(connection, fullPath, null);
             if (props != null) {
                 if (props.getPropertyValue(DAVElement.REPOSITORY_UUID) != null && repos != null) {
-                    repos.setRepositoryUUID(props.getPropertyValue(DAVElement.REPOSITORY_UUID));
+                    repos.setRepositoryUUID(props.getPropertyValue(DAVElement.REPOSITORY_UUID).getString());
                 }
                 props.setLoppedPath(loppedPath);
             }
@@ -133,7 +134,7 @@ public class DAVUtil {
         }
         if (props != null) {
             if (props.getPropertyValue(DAVElement.REPOSITORY_UUID) != null && repos != null) {
-                repos.setRepositoryUUID(props.getPropertyValue(DAVElement.REPOSITORY_UUID));
+                repos.setRepositoryUUID(props.getPropertyValue(DAVElement.REPOSITORY_UUID).getString());
             }
             props.setLoppedPath(loppedPath);
         } 
@@ -142,12 +143,12 @@ public class DAVUtil {
     
     public static String getVCCPath(DAVConnection connection, DAVRepository repository, String path) throws SVNException {
         DAVProperties properties = findStartingProperties(connection, repository, path);
-        String vcc = properties.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
+        SVNPropertyValue vcc = properties.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
         if (vcc == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "The VCC property was not found on the resource");
             SVNErrorManager.error(err);
         }
-        return vcc;
+        return vcc.getString();
     }
 
     public static DAVBaselineInfo getBaselineInfo(DAVConnection connection, DAVRepository repos, String path, long revision,
@@ -157,7 +158,8 @@ public class DAVUtil {
 
         info = info == null ? new DAVBaselineInfo() : info;
         info.baselinePath = baselineProperties.getURL();
-        info.baselineBase = baselineProperties.getPropertyValue(DAVElement.BASELINE_COLLECTION);
+        SVNPropertyValue baseValue = baselineProperties.getPropertyValue(DAVElement.BASELINE_COLLECTION);
+        info.baselineBase = baseValue == null ? null : baseValue.getString();
         info.baseline = baselineProperties.getOriginalURL();
         if (info.baselineBase == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "'DAV:baseline-collection' not present on the baseline resource");
@@ -165,12 +167,12 @@ public class DAVUtil {
         }
 //        info.baselineBase = SVNEncodingUtil.uriEncode(info.baselineBase);
         if (includeRevision) {
-            String version = baselineProperties.getPropertyValue(DAVElement.VERSION_NAME);
+            SVNPropertyValue version = baselineProperties.getPropertyValue(DAVElement.VERSION_NAME);
             if (version == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "'DAV:version-name' not present on the baseline resource");
                 SVNErrorManager.error(err);
             }
-            info.revision = Long.parseLong(version);
+            info.revision = Long.parseLong(version.getString());
         }
         if (includeType) {
             Map propsMap = new HashMap();
@@ -191,20 +193,21 @@ public class DAVUtil {
         DAVProperties properties = null;
         String loppedPath = "";
         properties = findStartingProperties(connection, repos, path);
-        String vcc = properties.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
-        if (vcc == null) {
+        SVNPropertyValue vccValue = properties.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
+        if (vccValue == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "The VCC property was not found on the resource");
             SVNErrorManager.error(err);
         }
         loppedPath = properties.getLoppedPath();
-        String baselineRelativePath = properties.getPropertyValue(DAVElement.BASELINE_RELATIVE_PATH);
-        if (baselineRelativePath == null) {
+        SVNPropertyValue baselineRelativePathValue = properties.getPropertyValue(DAVElement.BASELINE_RELATIVE_PATH);
+        if (baselineRelativePathValue == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "The relative-path property was not found on the resource");
             SVNErrorManager.error(err);
         }
-        baselineRelativePath = SVNEncodingUtil.uriEncode(baselineRelativePath);
+        String baselineRelativePath = SVNEncodingUtil.uriEncode(baselineRelativePathValue.getString());
         baselineRelativePath = SVNPathUtil.append(baselineRelativePath, loppedPath);
         String label = null;
+        String vcc = vccValue.getString();
         if (revision < 0) {
             vcc = getPropertyValue(connection, vcc, null, DAVElement.CHECKED_IN);
         } else {
