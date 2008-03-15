@@ -45,6 +45,8 @@ import javax.net.ssl.X509TrustManager;
  */
 public class SVNSocketFactory {
 
+    private static boolean ourIsSocketStaleCheck = false;
+
     public static Socket createPlainSocket(String host, int port, int connectTimeout, int readTimeout) throws IOException {
         InetAddress address = createAddres(host);
         Socket socket = new Socket();
@@ -105,8 +107,20 @@ public class SVNSocketFactory {
         }
         return InetAddress.getByName(hostName);
     }
+    
+    public static void setSocketStaleCheckEnabled(boolean enabled) {
+        ourIsSocketStaleCheck = enabled;
+    }
+
+    public static boolean isSocketStaleCheckEnabled() {
+        return ourIsSocketStaleCheck;
+    }
 
     public static boolean isSocketStale(Socket socket) throws IOException {
+        if (!isSocketStaleCheckEnabled()) {
+            return socket == null || socket.isClosed() || !socket.isConnected();
+        }
+        
         boolean isStale = true;
         if (socket != null) {
             isStale = false;

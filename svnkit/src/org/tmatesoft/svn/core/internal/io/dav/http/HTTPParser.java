@@ -11,7 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.io.dav.http;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
@@ -21,6 +20,8 @@ import java.text.ParseException;
  * @author  TMate Software Ltd.
  */
 class HTTPParser {
+    
+    private static byte[] ourReadBuffer = new byte[8192];
     
     public static HTTPStatus parseStatus(InputStream is, String charset) throws IOException, ParseException {
         String line = null;
@@ -41,34 +42,31 @@ class HTTPParser {
         return HTTPStatus.createHTTPStatus(line);
     }
     
-    public static String readLine(InputStream is, String charset) throws IOException {
-        byte[] bytes = readPlainLine(is);
-        if (bytes == null) {
+    public static synchronized String readLine(InputStream is, String charset) throws IOException {
+        int length = readPlainLine(is);
+        if (length <= 0) {
             return null;
         }
-        int length = bytes.length;
-        if (length > 0 && bytes[length - 1] == '\n') {
+        if (length > 0 && ourReadBuffer[length - 1] == '\n') {
             length--;
-            if (length > 0 && bytes[length - 1] == '\r') {
+            if (length > 0 && ourReadBuffer[length - 1] == '\r') {
                 length--;
             }
         }
-        return new String(bytes, 0, length, charset);
+        return new String(ourReadBuffer, 0, length, charset);
     }
     
-    public static byte[] readPlainLine(InputStream is) throws IOException {
-        ByteArrayOutputStream buf = new ByteArrayOutputStream();
+    private static int readPlainLine(InputStream is) throws IOException {
         int ch;
-        while ((ch = is.read()) >= 0) {
-            buf.write(ch);
+        int i = 0;
+        while (i < ourReadBuffer.length && (ch = is.read()) >= 0) {
+            ourReadBuffer[i] = (byte) (ch & 0xFF);
             if (ch == '\n') {
                 break;
             }
+            i++;
         }
-        if (buf.size() == 0) {
-            return null;
-        }
-        return buf.toByteArray();
+        return i;
     }
 
     public static StringBuffer getCanonicalPath(String path, StringBuffer target) {
