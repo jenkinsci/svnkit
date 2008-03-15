@@ -18,6 +18,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
@@ -162,15 +163,11 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
                 myPropertiesDelta = new SVNProperties();
             }
             if (myPropertyName != null) {
-                String value;
                 if ("base64".equals(myPropertyEncoding)) {
                     byte[] bytes = allocateBuffer(cdata.length());
                     int length = SVNBase64.base64ToByteArray(new StringBuffer(cdata.toString().trim()), bytes);
-                    try {
-                        value = new String(bytes, 0, length, "UTF-8");
-                    } catch (UnsupportedEncodingException e) {
-                        value = new String(bytes, 0, length);
-                    }
+                    SVNPropertyValue value = SVNPropertyValue.create(myPropertyName, bytes, 0, length);
+                    myPropertiesDelta.put(myPropertyName, value);
                 } else {
                     myPropertiesDelta.put(myPropertyName, cdata.toString());
                 }
