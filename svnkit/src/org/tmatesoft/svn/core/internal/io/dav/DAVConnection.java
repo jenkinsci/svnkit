@@ -424,7 +424,7 @@ public class DAVConnection {
         	parseCapabilities(status);
         } else {
         	SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_OPTIONS_REQ_FAILED, 
-        			"OPTIONS request (for capabilities) got HTTP response code {0,number,integer}", 
+        			"OPTIONS request (for capabilities) got HTTP response code {0}", 
         			new Integer(status.getCode()));
         	SVNErrorManager.error(err);
         }

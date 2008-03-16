@@ -719,7 +719,7 @@ public class SVNLookClient extends SVNBasicClient {
         FSRoot root = fsfs.createRevisionRoot(revNum);
         long baseRevision = revNum - 1;
         if (!SVNRevision.isValidRevisionNumber(baseRevision)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Invalid base revision {0,number,integer}", new Long(baseRevision));
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Invalid base revision {0}", new Long(baseRevision));
             SVNErrorManager.error(err);
         }
         SVNNodeEditor editor = generateDeltaTree(fsfs, root, baseRevision);
@@ -1021,11 +1021,11 @@ public class SVNLookClient extends SVNBasicClient {
 
     private void getHistory(FSFS fsfs, String path, long start, long end, boolean crossCopies, boolean includeIDs, ISVNHistoryHandler handler) throws SVNException {
         if (!SVNRevision.isValidRevisionNumber(start)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Invalid start revision {0,number,integer}", new Long(start));
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Invalid start revision {0}", new Long(start));
             SVNErrorManager.error(err);
         }
         if (!SVNRevision.isValidRevisionNumber(end)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Invalid end revision {0,number,integer}", new Long(end));
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Invalid end revision {0}", new Long(end));
             SVNErrorManager.error(err);
         }
 

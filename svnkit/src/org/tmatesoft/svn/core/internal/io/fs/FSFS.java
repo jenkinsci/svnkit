@@ -152,8 +152,8 @@ public class FSFS {
 
         if (format != REPOSITORY_FORMAT && format != REPOSITORY_FORMAT_LEGACY) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_UNSUPPORTED_VERSION, 
-                                  "Expected repository format ''{0,number,integer}'' or " +
-                                  "''{1,number,integer}''; found format ''{2,number,integer}''",
+                                  "Expected repository format ''{0}'' or " +
+                                  "''{1}''; found format ''{2}''",
                                   new Object[] {new Integer(REPOSITORY_FORMAT_LEGACY),
                                                 new Integer(REPOSITORY_FORMAT),
                                                 new Integer(format)});
@@ -183,8 +183,8 @@ public class FSFS {
         
         if (format < DB_FORMAT_LOW || format > DB_FORMAT) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_UNSUPPORTED_FORMAT, 
-                                  "Expected FS format between ''{0,number,integer}'' and " +
-                                  "''{1,number,integer}''; found format ''{2,number,integer}''", 
+                                  "Expected FS format between ''{0}'' and " +
+                                  "''{1}''; found format ''{2}''", 
                                   new Object[] {new Integer(DB_FORMAT_LOW), 
                                                 new Integer(DB_FORMAT), 
                                                 new Integer(format)});
@@ -615,7 +615,7 @@ public class FSFS {
         }
         
         if (!revPropsFile.exists()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision {0,number,integer}", new Long(revision));
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision {0}", new Long(revision));
             SVNErrorManager.error(err);
         }
         return revPropsFile;
@@ -1063,11 +1063,11 @@ public class FSFS {
 
     public long getDeletedRevision(String path, long startRev, long endRev) throws SVNException {
         if (FSRepository.isInvalidRevision(startRev)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Invalid start revision {0,number,integer}", new Long(startRev));
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Invalid start revision {0}", new Long(startRev));
             SVNErrorManager.error(err);
         }
         if (FSRepository.isInvalidRevision(endRev)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Invalid end revision {0,number,integer}", new Long(endRev));
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Invalid end revision {0}", new Long(endRev));
             SVNErrorManager.error(err);
         }
         if (startRev > endRev) {
@@ -1323,7 +1323,7 @@ public class FSFS {
         }
         
         if (!revisionFile.exists()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision {0,number,integer}", new Long(revision));
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision {0}", new Long(revision));
             SVNErrorManager.error(err);
         }
         return new FSFile(revisionFile);
@@ -1358,7 +1358,7 @@ public class FSFS {
     private void ensureRevisionsExists(long revision) throws SVNException {
         if (FSRepository.isInvalidRevision(revision)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, 
-                    "Invalid revision number ''{0,number,integer}''", new Long(revision));
+                    "Invalid revision number ''{0}''", new Long(revision));
             SVNErrorManager.error(err);
         }
         
@@ -1373,7 +1373,7 @@ public class FSFS {
         }
         
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, 
-                "No such revision {0,number,integer}", new Long(revision));
+                "No such revision {0}", new Long(revision));
         SVNErrorManager.error(err);
     }
     
@@ -1606,7 +1606,7 @@ public class FSFS {
         SVNProperties revisionProperties = getRevisionProperties(revision);
         String timeString = revisionProperties.getStringValue(SVNRevisionProperty.DATE);
         if (timeString == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_GENERAL, "Failed to find time on revision {0,number,integer}", new Long(revision));
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_GENERAL, "Failed to find time on revision {0}", new Long(revision));
             SVNErrorManager.error(err);
         }
         return SVNDate.parseDateString(timeString);

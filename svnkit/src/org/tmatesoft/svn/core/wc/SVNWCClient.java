@@ -578,7 +578,7 @@ public class SVNWCClient extends SVNBasicClient {
 
         SVNNodeKind kind = repos.checkPath("", revNumber);
         if (kind == SVNNodeKind.NONE) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "Path ''{0}'' does not exist in revision {1,number,integer}", new Object[]{url.getPath(), new Long(revNumber)});
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "Path ''{0}'' does not exist in revision {1}", new Object[]{url.getPath(), new Long(revNumber)});
             SVNErrorManager.error(err);
         }
 
@@ -2446,7 +2446,7 @@ public class SVNWCClient extends SVNBasicClient {
                 SVNNodeKind urlKind = repos.checkPath("", revNum[0]);
                 if (urlKind == SVNNodeKind.NONE) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, 
-                            "URL ''{0}'' non-existent in revision {1,number,integer}", 
+                            "URL ''{0}'' non-existent in revision {1}", 
                             new Object[]{ url, new Long(revNum[0]) });
                     SVNErrorManager.error(err);
                 }
@@ -2466,7 +2466,7 @@ public class SVNWCClient extends SVNBasicClient {
                 }
                 if (rootEntry == null) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, 
-                            "URL ''{0}'' non-existent in revision {1,number,integer}", 
+                            "URL ''{0}'' non-existent in revision {1}", 
                             new Object[]{ url, new Long(revNum[0]) });
                     SVNErrorManager.error(err);
                 }

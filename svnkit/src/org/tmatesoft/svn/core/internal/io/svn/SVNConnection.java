@@ -130,10 +130,10 @@ class SVNConnection {
         Long maxVer = (Long) items.get(1);
         if (minVer.longValue() > 2) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_BAD_VERSION, 
-            		"Server requires minimum version {0,number,integer}", minVer));
+            		"Server requires minimum version {0}", minVer));
         } else if (maxVer.longValue() < 2) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_BAD_VERSION, 
-            		"Server requires maximum version {0,number,integer}", maxVer));
+            		"Server requires maximum version {0}", maxVer));
         }
 
         List capabilities = (List) items.get(3);

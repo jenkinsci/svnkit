@@ -302,7 +302,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 long youngestAncestorRevision = youngestCommonAncestor.getRevision();
                 if (!(youngestAncestorPath != null && SVNRevision.isValidRevisionNumber(youngestAncestorRevision))) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_NOT_READY_TO_MERGE, 
-                            "''{0}@{1,number,integer}'' must be ancestrally related to ''{2}@{3,number,integer}''", 
+                            "''{0}@{1}'' must be ancestrally related to ''{2}@{3}''", 
                             new Object[] { url1[0], new Long(rev1[0]), url2, new Long(rev2)});
                     SVNErrorManager.error(err);
                 }
@@ -957,7 +957,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                     }
                     fullURL = fullURL.appendPath(path, false);
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_NOT_READY_TO_MERGE, 
-                    "At least one revision (r{0,number,integer}) not yet merged from ''{1}''", 
+                    "At least one revision (r{0}) not yet merged from ''{1}''", 
                     new Object[] { new Long(dirEntry.getRevision()), fullURL });
                     SVNErrorManager.error(err);
                 }
@@ -1013,7 +1013,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             leftRev[0] = youngestLocation.getRevision();
             if (!(youngestCommonAncestorPath != null && SVNRevision.isValidRevisionNumber(leftRev[0]))) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_NOT_READY_TO_MERGE, 
-                        "''{0}@{1,number,integer}'' must be ancestrally related to ''{2}@{3,number,integer}''", 
+                        "''{0}@{1}'' must be ancestrally related to ''{2}@{3}''", 
                         new Object[] { sourceURL, new Long(sourceRev), targetURL, new Long(targetRev) });
                 SVNErrorManager.error(err);
             }
@@ -1759,7 +1759,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     
     private SVNErrorMessage makeMergeConflictError(File targetPath, SVNMergeRange range) {
         SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT, 
-                "One or more conflicts were produced while merging r{0,number,integer}:{1,number,integer} into\n" + 
+                "One or more conflicts were produced while merging r{0}:{1} into\n" + 
                 "''{2}'' --\n" +
                 "resolve all conflicts and rerun the merge to apply the remaining\n" + 
                 "unmerged revisions", new Object[] { new Long(range.getStartRevision()), 

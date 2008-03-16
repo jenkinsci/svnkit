@@ -124,7 +124,7 @@ public class SVNReplicationEditor implements ISVNEditor {
                 myChangedPaths.remove(absPath);
             }
         } else {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Expected that path ''{0}'' is deleted in revision {1,number,integer}", new Object[]{absPath, new Long(myPreviousRevision)});
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Expected that path ''{0}'' is deleted in revision {1}", new Object[]{absPath, new Long(myPreviousRevision)});
             SVNErrorManager.error(err);
         }
         myCommitEditor.deleteEntry(path, myPreviousRevision);

@@ -297,9 +297,18 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
                 for (int i = 0; i < objects.length; i++) {
                     if (objects[i] instanceof File) {
                         objects[i] = SVNCommandUtil.getLocalPath(getRelativePath((File) objects[i]));
+                    } else if (objects[i] instanceof Number) {
+                        objects[i] = objects[i].toString();
                     }
                 }
-                String message = (objects.length > 0 ? MessageFormat.format(template, objects) : template);
+                String message = template;
+                if (objects.length > 0) {
+                    try {
+                        message = MessageFormat.format(template, objects);
+                    } catch (IllegalArgumentException e) {
+                        message = template;
+                    }
+                }
                 if (err.getType() == SVNErrorMessage.TYPE_WARNING) {
                     getErr().println("svn: warning: " + message);
                 } else {

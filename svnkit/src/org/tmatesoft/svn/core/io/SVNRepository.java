@@ -2215,9 +2215,9 @@ public abstract class SVNRepository {
         if (pegRevision < startRevision || startRevision < endRevision) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
                     "assertion failure in getLocationSegmentsFromLog:\n" +
-                    "  pegRevision is {0,number,integer}\n" +
-                    "  startRevision is {1,number,integer}\n" +
-                    "  endRevision is {2,number,integer}", new Object[] { new Long(pegRevision), 
+                    "  pegRevision is {0}\n" +
+                    "  startRevision is {1}\n" +
+                    "  endRevision is {2}", new Object[] { new Long(pegRevision), 
                     new Long(startRevision), new Long(endRevision) });
             SVNErrorManager.error(err);
         }
@@ -2225,7 +2225,7 @@ public abstract class SVNRepository {
         SVNNodeKind kind = checkPath(path, pegRevision);
         if (kind == SVNNodeKind.NONE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, 
-                    "Path ''{0}'' doesn''t exist in revision {1,number,integer}", 
+                    "Path ''{0}'' doesn''t exist in revision {1}", 
                     new Object[] { reposAbsPath, new Long(pegRevision) });
             SVNErrorManager.error(err);
         }
@@ -2247,7 +2247,7 @@ public abstract class SVNRepository {
         SVNNodeKind kind = checkPath(path, pegRevision);
         if (kind == SVNNodeKind.NONE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, 
-                    "Path ''{0}'' doesn''t exist in revision {1,number,integer}", 
+                    "Path ''{0}'' doesn''t exist in revision {1}", 
                     new Object[] { reposAbsPath, new Long(pegRevision) });
             SVNErrorManager.error(err);
         }
@@ -2284,14 +2284,14 @@ public abstract class SVNRepository {
         
         if (locationsLogHandler.myPegPath == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
-                    "Unable to find repository location for ''{0}'' in revision {1,number,integer}", 
+                    "Unable to find repository location for ''{0}'' in revision {1}", 
                     new Object[] { reposAbsPath, new Long(pegRevision) });
             SVNErrorManager.error(err);
         }
         
         if (!reposAbsPath.equals(locationsLogHandler.myPegPath)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_UNRELATED_RESOURCES, 
-                    "''{0}'' in revision {1,number,integer} is an unrelated object",
+                    "''{0}'' in revision {1} is an unrelated object",
                     new Object[] { reposAbsPath, new Long(youngest) });
             SVNErrorManager.error(err);
         }
@@ -2419,7 +2419,7 @@ public abstract class SVNRepository {
                 previousPath = path;
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_UNRELATED_RESOURCES, 
-                        "Missing changed-path information for ''{0}'' in revision {1,number,integer}", 
+                        "Missing changed-path information for ''{0}'' in revision {1}", 
                         new Object[] { path, new Long(revision) });
                 SVNErrorManager.error(err);
             }

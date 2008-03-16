@@ -236,7 +236,7 @@ public class FSHooks {
             }
             String stdErrMessage = errorGobbler.getError() != null ? "[Error output could not be read.]" : errorGobbler.getResult();
             String errorMessage = actionName != null ? 
-                    actionName + " blocked by {0} hook (exit code {1,number,integer})" : "{0} hook failed (exit code {1,number,integer})";
+                    actionName + " blocked by {0} hook (exit code {1})" : "{0} hook failed (exit code {1})";
             if (stdErrMessage != null && stdErrMessage.length() > 0) {
                 errorMessage += " with output:\n" + stdErrMessage;
             } else {

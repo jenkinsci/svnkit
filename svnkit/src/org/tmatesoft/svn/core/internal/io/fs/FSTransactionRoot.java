@@ -217,7 +217,7 @@ public class FSTransactionRoot extends FSRoot {
         }
         
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_UNIQUE_NAMES_EXHAUSTED, 
-                "Unable to create transaction directory in ''{0}'' for revision {1,number,integer}", 
+                "Unable to create transaction directory in ''{0}'' for revision {1}", 
                 new Object[] { parent, new Long(revision) });
         SVNErrorManager.error(err);
         return null;    
@@ -264,13 +264,13 @@ public class FSTransactionRoot extends FSRoot {
         node.setMergeInfoCount(node.getMergeInfoCount() + increment);
         if (node.getMergeInfoCount() < 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
-                    "Can''t increment mergeinfo count on node-revision {0} to negative value {1,number,integer}",
+                    "Can''t increment mergeinfo count on node-revision {0} to negative value {1}",
                     new Object[] { node.getId(), new Long(node.getMergeInfoCount()) });
             SVNErrorManager.error(err);
         }
         if (node.getMergeInfoCount() > 1 && node.getType() == SVNNodeKind.FILE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
-                    "Can''t increment mergeinfo count on *file* node-revision {0} to {1,number,integer} (> 1)",
+                    "Can''t increment mergeinfo count on *file* node-revision {0} to {1} (> 1)",
                     new Object[] { node.getId(), new Long(node.getMergeInfoCount()) });
             SVNErrorManager.error(err);
         }
@@ -701,7 +701,7 @@ public class FSTransactionRoot extends FSRoot {
         }
         int nextKeyLength = oldKey.length() + (carry ? 1 : 0);
         if (nextKeyLength >= MAX_KEY_SIZE) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "FATAL error: new key length is greater than the threshold {0,number,integer}", new Integer(MAX_KEY_SIZE));
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "FATAL error: new key length is greater than the threshold {0}", new Integer(MAX_KEY_SIZE));
             SVNErrorManager.error(err);
         }
         if (carry) {

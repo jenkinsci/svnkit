@@ -115,7 +115,7 @@ public class SVNMergeInfoCommand extends SVNCommand {
         SVNMergeRange[] ranges = rangeList.getRanges();
         for (int i = 0; i < ranges.length; i++) {
             SVNMergeRange range = ranges[i];
-            String message = MessageFormat.format("r{0,number,integer}:{1,number,integer}{2}", new Object[] { 
+            String message = MessageFormat.format("r{0}:{1}{2}", new Object[] { 
                     new Long(range.getStartRevision()), new Long(range.getEndRevision()), 
                             i == ranges.length - 1 ? "" : ", " });
             getSVNEnvironment().getOut().print(message);

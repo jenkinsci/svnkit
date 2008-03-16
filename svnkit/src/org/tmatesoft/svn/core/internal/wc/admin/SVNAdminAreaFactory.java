@@ -86,7 +86,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
                     SVNErrorManager.error(err);
                 } else if (version < factory.getSupportedVersion()) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, 
-                            "Working copy format of {0} is too old ({1,number,integer}); please check out your working copy again", 
+                            "Working copy format of {0} is too old ({1}); please check out your working copy again", 
                             new Object[] {path, new Integer(version)});
                     SVNErrorManager.error(err);
                 } 
@@ -219,7 +219,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
             }
             if (!entry.isScheduledForDeletion()) {
                 if (entry.getRevision() != revision) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Revision {0,number,integer} doesn''t match existing revision {1,number,integer} in ''{2}''", new Object[]{new Long(revision), new Long(entry.getRevision()), dir});
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Revision {0} doesn''t match existing revision {1} in ''{2}''", new Object[]{new Long(revision), new Long(entry.getRevision()), dir});
                     SVNErrorManager.error(err);
                 }
                 if (!url.equals(entry.getURL())) {

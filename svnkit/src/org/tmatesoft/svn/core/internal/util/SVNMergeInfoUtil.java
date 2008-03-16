@@ -386,12 +386,12 @@ public class SVNMergeInfoUtil {
                 long endRev = parseRevision(mergeInfo);
                 if (startRev > endRev) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, 
-                            "Unable to parse reversed revision range ''{0,number,integer}-{1,number,integer}''",
+                            "Unable to parse reversed revision range ''{0}-{1}''",
                             new Object[] { new Long(startRev), new Long(endRev) });
                     SVNErrorManager.error(err);
                 } else if (startRev == endRev) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, 
-                            "Unable to parse revision range ''{0,number,integer}-{1,number,integer}'' with same start and end revisions",
+                            "Unable to parse revision range ''{0}-{1}'' with same start and end revisions",
                             new Object[] { new Long(startRev), new Long(endRev) });
                     SVNErrorManager.error(err);
                 }

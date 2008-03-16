@@ -134,14 +134,14 @@ public class FSLocationsFinder {
         
         if (endRevision > startRevision) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
-                    "End revision {0,number,integer} must be less or equal to start revision {1,number,integer}",
+                    "End revision {0} must be less or equal to start revision {1}",
                     new Object[] { new Long(endRevision), new Long(startRevision) });
             SVNErrorManager.error(err);
         }
 
         if (pegRevision < startRevision) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
-                    "Peg revision {0,number,integer} must be greater or equal to start revision {1,number,integer}",
+                    "Peg revision {0} must be greater or equal to start revision {1}",
                     new Object[] { new Long(pegRevision), new Long(startRevision) });
             SVNErrorManager.error(err);
         }

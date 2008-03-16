@@ -387,7 +387,7 @@ public class FSFile {
                     depth = SVNDepth.IMMEDIATES;
                     break;
                 default: {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_REVISION_REPORT, "Invalid depth ({0,number,integer}) for path ''{1}''", new Object[]{new Integer(id), path});
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_REVISION_REPORT, "Invalid depth ({0}) for path ''{1}''", new Object[]{new Integer(id), path});
                     SVNErrorManager.error(err);
                 }
             }

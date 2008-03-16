@@ -43,8 +43,8 @@ public class SVNMergeInfoManager {
             boolean includeDescendants) throws SVNException {
         if (!root.getOwner().supportsMergeInfo()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
-                    "Querying mergeinfo requires version {0,number,integer} of the FSFS filesystem schema;" +
-                    " filesystem ''{1}'' uses only version {2,number,integer}", 
+                    "Querying mergeinfo requires version {0} of the FSFS filesystem schema;" +
+                    " filesystem ''{1}'' uses only version {2}", 
                     new Object[] { new Integer(FSFS.MIN_MERGE_INFO_FORMAT), root.getOwner().getDBRoot(), 
                     new Integer(root.getOwner().getDBFormat()) });
             SVNErrorManager.error(err);
@@ -145,7 +145,7 @@ public class SVNMergeInfoManager {
         String mergeInfoString = propList.getStringValue(SVNProperty.MERGE_INFO);
         if (mergeInfoString == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
-                    "Node-revision ''{0}@{1,number,integer}'' claims to have mergeinfo but doesn''t", 
+                    "Node-revision ''{0}@{1}'' claims to have mergeinfo but doesn''t", 
                     new Object[] { nearestAncestor.getAbsPath(), new Long(revRoot.getRevision()) });
             SVNErrorManager.error(err);
         }

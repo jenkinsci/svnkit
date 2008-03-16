@@ -455,7 +455,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
             }
             
             if (!SVNRevision.isValidRevisionNumber(srcRevision)) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Relative source revision {0,number,integer} is not available in current repository", new Long(srcRevision));
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Relative source revision {0} is not available in current repository", new Long(srcRevision));
                 SVNErrorManager.error(err);
             }
             

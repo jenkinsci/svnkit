@@ -41,7 +41,7 @@ public class FSErrors {
 
     public static SVNErrorMessage errorNotMutable(long revision, String path, FSFS owner) {
         File fsDir = owner.getDBRoot();
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_MUTABLE, "File is not mutable: filesystem ''{0}'', revision {1,number,integer}, path ''{2}''", new Object[] {
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_MUTABLE, "File is not mutable: filesystem ''{0}'', revision {1}, path ''{2}''", new Object[] {
                 fsDir, new Long(revision), path
         });
         return err;
@@ -56,7 +56,7 @@ public class FSErrors {
             });
         } else {
             FSRevisionRoot revRoot = (FSRevisionRoot) root;
-            err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "File not found: revision {0,number,integer}, path ''{1}''", new Object[] {
+            err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "File not found: revision {0}, path ''{1}''", new Object[] {
                     new Long(revRoot.getRevision()), path
             });
         }

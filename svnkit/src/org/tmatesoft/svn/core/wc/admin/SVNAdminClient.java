@@ -406,7 +406,7 @@ public class SVNAdminClient extends SVNBasicClient {
                     SVNErrorMessage err = SVNErrorMessage
                             .create(
                                     SVNErrorCode.IO_ERROR,
-                                    "Revision being currently copied ({0,number,integer}), last merged revision ({1,number,integer}), and destination HEAD ({2,number,integer}) are inconsistent; have you committed to the destination without using svnsync?",
+                                    "Revision being currently copied ({0}), last merged revision ({1}), and destination HEAD ({2}) are inconsistent; have you committed to the destination without using svnsync?",
                                     new Long[] {
                                             new Long(copyingRev), new Long(lastMergedRevision), new Long(toLatestRevision)
                                     });
@@ -421,7 +421,7 @@ public class SVNAdminClient extends SVNBasicClient {
                 } 
             } else {
                 if (toLatestRevision != lastMergedRevision) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Destination HEAD ({0,number,integer}) is not the last merged revision ({1,number,integer}); have you committed to the destination without using svnsync?", new Long[] {new Long(toLatestRevision), new Long(lastMergedRevision)});
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Destination HEAD ({0}) is not the last merged revision ({1}); have you committed to the destination without using svnsync?", new Long[] {new Long(toLatestRevision), new Long(lastMergedRevision)});
                     SVNErrorManager.error(err);
                 }
             }
@@ -445,7 +445,7 @@ public class SVNAdminClient extends SVNBasicClient {
                 }
                 cancellableEditor.closeEdit();
                 if (syncEditor.getCommitInfo().getNewRevision() != currentRev) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Commit created rev {0,number,integer} but should have created {1,number,integer}", new Long[] {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Commit created rev {0} but should have created {1}", new Long[] {
                             new Long(syncEditor.getCommitInfo().getNewRevision()), new Long(currentRev)
                     });
                     SVNErrorManager.error(err);
@@ -759,7 +759,7 @@ public class SVNAdminClient extends SVNBasicClient {
                 line = line.trim();
                 version = Integer.parseInt(line);
                 if (version > SVNAdminHelper.DUMPFILE_FORMAT_VERSION) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Unsupported dumpfile version: {0,number,integer}", new Integer(version));
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Unsupported dumpfile version: {0}", new Integer(version));
                     SVNErrorManager.error(err);
                 }
             } catch (NumberFormatException nfe) {
@@ -940,12 +940,12 @@ public class SVNAdminClient extends SVNBasicClient {
         }
         
         if (start > end) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS, "Start revision {0,number,integer} is greater than end revision {1,number,integer}", new Object[]{new Long(start), new Long(end)});
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS, "Start revision {0} is greater than end revision {1}", new Object[]{new Long(start), new Long(end)});
             SVNErrorManager.error(err);
         }
         
         if (end > youngestRevision) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS, "End revision {0,number,integer} is invalid (youngest revision is {1,number,integer})", new Object[]{new Long(end), new Long(youngestRevision)});
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS, "End revision {0} is invalid (youngest revision is {1})", new Object[]{new Long(end), new Long(youngestRevision)});
             SVNErrorManager.error(err);
         }
         
@@ -1189,7 +1189,7 @@ public class SVNAdminClient extends SVNBasicClient {
             }
         }
 
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Couldn''t get lock on destination repos after {0,number,integer} attempts\n", new Integer(i));
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Couldn''t get lock on destination repos after {0} attempts\n", new Integer(i));
         SVNErrorManager.error(err);
     }
 

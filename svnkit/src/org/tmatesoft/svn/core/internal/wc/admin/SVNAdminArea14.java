@@ -672,7 +672,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
                     } 
                     entries.put(entry.getName(), entry);
                 } catch (SVNException svne) {
-                    SVNErrorMessage err = svne.getErrorMessage().wrap("Error at entry {0,number,integer} in entries file for ''{1}'':", new Object[]{new Integer(entryNumber), getRoot()});
+                    SVNErrorMessage err = svne.getErrorMessage().wrap("Error at entry {0} in entries file for ''{1}'':", new Object[]{new Integer(entryNumber), getRoot()});
                     SVNErrorManager.error(err, svne);
                 }
                 ++entryNumber;
@@ -1689,8 +1689,8 @@ public class SVNAdminArea14 extends SVNAdminArea {
         }
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
                 "Unexpected format number:\n" + 
-                "   expected: {0,number,integer}\n" + 
-                "     actual: {1,number,integer}", 
+                "   expected: {0}\n" + 
+                "     actual: {1}", 
                 new Object[] { new Integer(getFormatVersion()), new Integer(format) });
         SVNErrorManager.error(err);
     }
