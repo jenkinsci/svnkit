@@ -656,7 +656,7 @@
     	<mkdir dir="build/logs"/>
     	<delete failonerror="false">
     		<fileset dir="build/logs">
-    			<include name="**/*"/>
+    			<include name="**/**"/>
     	    </fileset>
         </delete>
     	<java classpathref="python.classpath" 
