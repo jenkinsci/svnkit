@@ -607,7 +607,9 @@ public class DAVRepository extends SVNRepository {
                     strictNode, includeMergedRevisions, revPropNames, limit, fullPaths);
             davHandler = new DAVLogHandler(cachingHandler, limit, revPropNames);
             if (davHandler.isWantCustomRevprops()) {
-                if (!hasCapability(SVNCapability.LOG_REVPROPS)) {
+                String capability = myConnection.getCapabilityResponse(SVNCapability.LOG_REVPROPS);
+                if (!DAVConnection.DAV_CAPABILITY_SERVER_YES.equals(capability) &&
+                        !DAVConnection.DAV_CAPABILITY_YES.equals(capability)) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "Server does not support custom revprops via log");
                     SVNErrorManager.error(err);
                 }
