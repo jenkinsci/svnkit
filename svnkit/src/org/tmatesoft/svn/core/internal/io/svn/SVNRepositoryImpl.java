@@ -277,8 +277,8 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     if (handler != null) {
                         long revision = SVNReader.getLong(values, 0);
                         String locationPath = SVNReader.getString(values, 1);
-                        locationPath = SVNPathUtil.canonicalizePath(locationPath);
                         if (locationPath != null) {
+                            locationPath = ensureAbsolutePath(locationPath);
                             handler.handleLocationEntry(new SVNLocationEntry(revision, locationPath));
                         }
                     }
@@ -325,11 +325,10 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                         SVNErrorManager.error(err);
                     }
                     if (rangePath != null) {
-                        rangePath = SVNPathUtil.canonicalizePath(path);    
+                        rangePath = ensureAbsolutePath(rangePath);    
                     }
                     if (handler != null) {
-                        handler.handleLocationSegment(new SVNLocationSegment(rangeStartRevision, rangeEndRevision,
-                                rangePath));
+                        handler.handleLocationSegment(new SVNLocationSegment(rangeStartRevision, rangeEndRevision, rangePath));
                     }
                     count += rangeEndRevision - rangeStartRevision + 1;
                 }
@@ -1550,6 +1549,16 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
 
     private static boolean getRecurseFromDepth(SVNDepth depth) {
         return depth == null || depth == SVNDepth.UNKNOWN || depth.compareTo(SVNDepth.FILES) > 0;
+    }
+    
+    private static String ensureAbsolutePath(String path) {
+        if (path != null) {
+            path = SVNPathUtil.canonicalizePath(path);
+        }
+        if (path != null && (path.length() == 0 || path.charAt(0) == '/')) {
+            return "/" + path;
+        }
+        return path;
     }
 
     private ISVNEditor getDepthFilterEditor(ISVNEditor editor, SVNDepth depth, boolean hasTarget) {
