@@ -75,6 +75,9 @@ public class DAVLocationSegmentsHandler extends BasicDAVHandler {
             long rangeStart = SVNRepository.INVALID_REVISION;
             long rangeEnd = SVNRepository.INVALID_REVISION;
             String path = attrs.getValue("path");
+            if (path != null) {
+                path = "/" + path;
+            }
             String revStr = attrs.getValue("range-start");
             if (revStr != null) {
                 rangeStart = Long.parseLong(revStr);
