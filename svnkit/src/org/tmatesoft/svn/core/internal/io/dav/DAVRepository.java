@@ -578,8 +578,7 @@ public class DAVRepository extends SVNRepository {
                     if (handler != null) {
                         handler.handleLogEntry(logEntry);
                     }
-                }
-            
+                }            
         };
         
         long latestRev = -1;
@@ -606,7 +605,13 @@ public class DAVRepository extends SVNRepository {
             
             StringBuffer request = DAVLogHandler.generateLogRequest(null, startRevision, endRevision, changedPath, 
                     strictNode, includeMergedRevisions, revPropNames, limit, fullPaths);
-            davHandler = new DAVLogHandler(cachingHandler, limit, revPropNames); 
+            davHandler = new DAVLogHandler(cachingHandler, limit, revPropNames);
+            if (davHandler.isWantCustomRevprops()) {
+                if (!hasCapability(SVNCapability.LOG_REVPROPS)) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "Server does not support custom revprops via log");
+                    SVNErrorManager.error(err);
+                }
+            }
             long revision = Math.max(startRevision, endRevision);
             path = SVNEncodingUtil.uriEncode(path);
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, this, path, revision, false, false, null);

@@ -22,13 +22,12 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
-import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-
 import org.xml.sax.Attributes;
 
 
@@ -97,8 +96,6 @@ public class DAVLogHandler extends BasicDAVHandler {
             "replaced-path");
     private static final DAVElement HAS_CHILDREN = DAVElement.getElement(DAVElement.SVN_NAMESPACE, 
             "has-children");
-    private static final DAVElement NO_CUSTOM_REVPROPS = DAVElement.getElement(DAVElement.SVN_NAMESPACE, 
-            "no-custom-revprops");
     private static final DAVElement REVPROP = DAVElement.getElement(DAVElement.SVN_NAMESPACE, 
             "revprop");
 
@@ -112,7 +109,6 @@ public class DAVLogHandler extends BasicDAVHandler {
     private int myCount;
     private long myLimit;
     private boolean myIsCompatibleMode;
-    private boolean myHasRevPropElement;
     private boolean myHasChildren;
     private boolean myIsWantAuthor;
     private boolean myIsWantDate;
@@ -145,6 +141,10 @@ public class DAVLogHandler extends BasicDAVHandler {
 
         init();
     }
+    
+    public boolean isWantCustomRevprops() {
+        return myIsWantCustomRevProps;
+    }
 
     public boolean isCompatibleMode() {
         return myIsCompatibleMode;
@@ -156,7 +156,6 @@ public class DAVLogHandler extends BasicDAVHandler {
         long copyRevision = -1;
 
         if (element == REVPROP) {
-            myHasRevPropElement = true;
             myRevPropName = attrs.getValue("name");
             if (myRevPropName == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA,
@@ -164,8 +163,6 @@ public class DAVLogHandler extends BasicDAVHandler {
                 SVNErrorManager.error(err);
             }
 
-        } else if (element == NO_CUSTOM_REVPROPS) {
-            myHasRevPropElement = true;
         } else if (element == HAS_CHILDREN) {
             myHasChildren = true;
         }
@@ -193,11 +190,6 @@ public class DAVLogHandler extends BasicDAVHandler {
 
     protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
         if (element == LOG_ITEM) {
-            if (myIsWantCustomRevProps && !myHasRevPropElement) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "Server does not support custom revprops via log");
-                SVNErrorManager.error(err);
-            }
-
             myCount++;
             if (myLimit <= 0 || myCount <= myLimit) {
                 if (myLogEntryHandler != null) {
