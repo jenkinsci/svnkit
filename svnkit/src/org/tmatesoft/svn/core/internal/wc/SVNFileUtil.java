@@ -260,7 +260,7 @@ public class SVNFileUtil {
             return;
         }
         if (dst.isDirectory()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot overwrite file ''{0}''; it is a directory", dst);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot rename file ''{0}'' to ''{1}''; file ''{1}'' is a directory", new Object[] {src, dst});
             SVNErrorManager.error(err);
         }
         boolean renamed = false;
@@ -290,7 +290,7 @@ public class SVNFileUtil {
             }
         }
         if (!renamed) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot rename file ''{0}''", src);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot rename file ''{0}'' to ''{1}''", new Object[] {src, dst});
             SVNErrorManager.error(err);
         }
     }
