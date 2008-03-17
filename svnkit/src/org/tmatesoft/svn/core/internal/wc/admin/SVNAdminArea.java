@@ -671,6 +671,28 @@ public abstract class SVNAdminArea {
         }
     }
 
+    public void extendLockToTree() throws SVNException {
+        ISVNEntryHandler entryHandler = new ISVNEntryHandler() {
+            public void handleEntry(File path, SVNEntry entry) throws SVNException {
+                if (entry.isDirectory() && !entry.getName().equals(getThisDirName())) {
+                    try {
+                        getWCAccess().probeTry(path, isLocked(), SVNWCAccess.INFINITE_DEPTH);
+                    } catch (SVNException svne) {
+                        if (svne.getErrorMessage().getErrorCode() != SVNErrorCode.WC_LOCKED) {
+                            throw svne;
+                        }
+                    }
+                }
+            }
+          
+            public void handleError(File path, SVNErrorMessage error) throws SVNException {
+                SVNErrorManager.error(error);
+            }
+        };
+        
+        getWCAccess().walkEntries(getRoot(), entryHandler, false, SVNDepth.INFINITY);
+    }
+    
     public void foldScheduling(String name, Map attributes, boolean force) throws SVNException {
         if (!attributes.containsKey(SVNProperty.SCHEDULE) || force) {
             return;

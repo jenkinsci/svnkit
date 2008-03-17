@@ -57,6 +57,7 @@ public class SVNLogRunner {
                         SVNAdminArea childDir = dir.getWCAccess().retrieve(path);
                         // it should be null when there is no dir already.
                         if (childDir != null) {
+                            childDir.extendLockToTree();
                             childDir.removeFromRevisionControl(childDir.getThisDirName(), true, false);
                         } else {
                             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED));
