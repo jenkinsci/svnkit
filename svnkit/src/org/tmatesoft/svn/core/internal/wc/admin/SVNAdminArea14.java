@@ -620,7 +620,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
                 } catch (IOException e) {
                     SVNFileUtil.closeFile(os);
                     if (tmpFile != null) {
-                        tmpFile.renameTo(myEntriesFile);
+                        SVNFileUtil.rename(tmpFile, myEntriesFile);
                     }
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot write entries file ''{0}'': {1}", new Object[] {myEntriesFile, e.getLocalizedMessage()});
                     SVNErrorManager.error(err, e);
@@ -628,7 +628,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
                     SVNFileUtil.closeFile(os);
                     SVNFileUtil.deleteFile(tmpFile);
                 }
-                myEntriesFile.setReadOnly();
+                SVNFileUtil.setReadonly(myEntriesFile, true);
             } else {
                 File tmpFile = new File(getAdminDirectory(), "tmp/entries");
                 Writer os = null;
@@ -643,7 +643,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
                 } finally {
                     SVNFileUtil.closeFile(os);
                 }
-                tmpFile.setReadOnly();
+                SVNFileUtil.setReadonly(tmpFile, true);
                 SVNFileUtil.rename(tmpFile, myEntriesFile);
             }
             if (close) {

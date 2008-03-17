@@ -277,7 +277,7 @@ public class SVNFileUtil {
                 for (int i = 0; i < 10; i++) {
                     dst.delete();
                     if (src.renameTo(dst)) {
-                        if (wasRO) {
+                        if (wasRO && !isOpenVMS) {
                             dst.setReadOnly();
                         }
                         return;

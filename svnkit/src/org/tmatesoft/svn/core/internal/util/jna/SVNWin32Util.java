@@ -13,6 +13,8 @@ package org.tmatesoft.svn.core.internal.util.jna;
 
 import java.io.File;
 
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+
 import com.sun.jna.NativeLong;
 import com.sun.jna.WString;
 
@@ -72,7 +74,7 @@ class SVNWin32Util {
         }
         if (dst.isFile() && !dst.canWrite()) {
             setWritable(dst);
-            src.setReadOnly();
+            SVNFileUtil.setReadonly(src, true);
         }
         synchronized (library) {
             try {
