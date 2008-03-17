@@ -1555,7 +1555,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         if (path != null) {
             path = SVNPathUtil.canonicalizePath(path);
         }
-        if (path != null && (path.length() == 0 || path.charAt(0) == '/')) {
+        if (path != null && (path.length() == 0 || path.charAt(0) != '/')) {
             return "/" + path;
         }
         return path;
