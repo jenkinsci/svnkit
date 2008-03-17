@@ -263,7 +263,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         if (path.equals(myTarget)) {
             myCurrentDirectory.myAmbientDepth = myRequestedDepth == SVNDepth.UNKNOWN ? SVNDepth.INFINITY : myRequestedDepth;
         } else if (myRequestedDepth == SVNDepth.IMMEDIATES || (myRequestedDepth == SVNDepth.UNKNOWN && 
-                myCurrentDirectory.myAmbientDepth == SVNDepth.IMMEDIATES)) {
+                parentDirectory.myAmbientDepth == SVNDepth.IMMEDIATES)) {
             myCurrentDirectory.myAmbientDepth = SVNDepth.EMPTY;
         } else {
             myCurrentDirectory.myAmbientDepth = SVNDepth.INFINITY;

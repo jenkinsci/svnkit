@@ -207,11 +207,13 @@ public class SVNStatusClient extends SVNBasicClient {
         return doStatus(path, revision, SVNDepth.fromRecurse(recursive), remote, reportAll, includeIgnored, collectParentExternals, handler);
     }
     
-    public long doStatus(File path, SVNRevision revision, SVNDepth depth, boolean remote, boolean reportAll, boolean includeIgnored, boolean collectParentExternals, final ISVNStatusHandler handler) throws SVNException {
+    public long doStatus(File path, SVNRevision revision, SVNDepth depth, boolean remote, boolean reportAll, 
+            boolean includeIgnored, boolean collectParentExternals, final ISVNStatusHandler handler) throws SVNException {
         if (handler == null) {
             return -1;
         }
-        
+
+        depth = depth == null ? SVNDepth.UNKNOWN : depth;
         SVNWCAccess wcAccess = createWCAccess();
         SVNStatusEditor editor = null;
         final boolean[] deletedInRepository = new boolean[] {false};
@@ -236,9 +238,6 @@ public class SVNStatusClient extends SVNBasicClient {
                 }
             }
             SVNEntry entry = null;
-            if (depth == null || depth == SVNDepth.UNKNOWN) {
-                depth = SVNDepth.INFINITY;
-            }
 //            Map externals = null;
 //            if (collectParentExternals) {
 //                // prefetch externals from parent dirs, and pass it to the editor.

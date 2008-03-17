@@ -119,7 +119,7 @@ public class SVNStatusEditor {
             SVNDepth depth, boolean getAll, boolean noIgnore, Collection ignorePatterns, boolean skipThisDir,
             ISVNStatusHandler handler) throws SVNException {
         myWCAccess.checkCancelled();
-        
+        depth = depth == SVNDepth.UNKNOWN ? SVNDepth.INFINITY : depth;
         Map childrenFiles = getChildrenFiles(dir.getRoot());
         SVNEntry dirEntry = myWCAccess.getEntry(dir.getRoot(), false);
 
