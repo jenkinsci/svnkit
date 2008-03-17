@@ -18,6 +18,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.io.UnsupportedEncodingException;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
@@ -165,7 +166,17 @@ public class DAVPropertiesHandler extends BasicDAVHandler {
             } else if ("base64".equals(myEncoding)) {
                 byte[] buffer = allocateBuffer(cdata.length());
                 int length = SVNBase64.base64ToByteArray(new StringBuffer(cdata.toString().trim()), buffer);
-                value = SVNPropertyValue.create(null, buffer, 0, length);
+                if (name != null && DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE.equals(name.getNamespace())) {
+                    value = SVNPropertyValue.create(null, buffer, 0, length);
+                } else {
+                    String str = null;
+                    try {
+                        str = new String(buffer, 0, length, "UTF-8");
+                    } catch (UnsupportedEncodingException e) {
+                        str = new String(buffer, 0, length);
+                    }
+                    value = SVNPropertyValue.create(str);
+                }
             } else {
                 invalidXML();
             }
