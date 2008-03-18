@@ -876,7 +876,7 @@ public class SVNCommitClient extends SVNBasicClient {
             checkCancelled();
             Collection changelistsSet = changelists != null ? new HashSet() : null;
             if (changelists != null) {
-                for (int j = 0; j < areas.length; j++) {
+                for (int j = 0; j < changelists.length; j++) {
                     changelistsSet.add(changelists[j]);
                 }
             }
@@ -983,7 +983,7 @@ public class SVNCommitClient extends SVNBasicClient {
                 Map lockTokens = new HashMap();
                 Collection changelistsSet = changelists != null ? new HashSet() : null;
                 if (changelists != null) {
-                    for (int j = 0; j < areas.length; j++) {
+                    for (int j = 0; j < changelists.length; j++) {
                         changelistsSet.add(changelists[j]);
                     }
                 }
