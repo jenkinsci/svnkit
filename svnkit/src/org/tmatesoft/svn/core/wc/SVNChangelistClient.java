@@ -187,6 +187,18 @@ public class SVNChangelistClient extends SVNBasicClient {
             if (!matchesChangeList(myChangelists, entry)) {
                 return;
             }
+            if (entry.getChangelistName() == null && myChangelist == null) {
+                return;
+            }
+            if (entry.getChangelistName() != null && entry.getChangelistName().equals(myChangelist)) {
+                return;
+            }
+            if (myChangelist != null && entry.getChangelistName() != null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CHANGELIST_MOVE, "Removing ''{0}'' from changelist ''{1}''.", new Object[] {path, entry.getChangelistName()});
+                SVNEvent event = SVNEventFactory.createSVNEvent(path, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, SVNEventAction.CHANGELIST_MOVED, SVNEventAction.CHANGELIST_MOVED, err, null);
+                SVNChangelistClient.this.dispatchEvent(event);
+            }
+            
             Map attributes = new HashMap();
             attributes.put(SVNProperty.CHANGELIST, myChangelist);
             SVNAdminArea area = myWCAccess.retrieve(path.getParentFile());
