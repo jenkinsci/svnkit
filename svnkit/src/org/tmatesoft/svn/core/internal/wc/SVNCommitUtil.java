@@ -30,9 +30,9 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
@@ -353,7 +353,7 @@ public class SVNCommitUtil {
 
     public static SVNCommitItem[] harvestCommitables(SVNWCAccess baseAccess, Collection paths, Map lockTokens, 
                                                      boolean justLocked, SVNDepth depth, boolean force, 
-                                                     String changelistName, ISVNCommitParameters params) throws SVNException {
+                                                     Collection changelists, ISVNCommitParameters params) throws SVNException {
         Map commitables = new TreeMap();
         Collection danglers = new HashSet();
         Iterator targets = paths.iterator();
@@ -447,14 +447,9 @@ public class SVNCommitUtil {
 //            String relativePath = entry.getKind() == SVNNodeKind.DIR ? target : SVNPathUtil.removeTail(target);
             harvestCommitables(commitables, dir, targetFile, parentEntry, 
                                entry, url, null, false, false, justLocked, lockTokens, 
-                               forcedDepth, isRecursionForced, changelistName, params);
+                               forcedDepth, isRecursionForced, changelists, params);
         } while (targets.hasNext());
 
-        if (changelistName != null && commitables.isEmpty()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN_CHANGELIST, "Unknown changelist ''{0}''", changelistName);
-            SVNErrorManager.error(err);
-        }
-        
         for (Iterator ds = danglers.iterator(); ds.hasNext();) {
             baseAccess.checkCancelled();
             File file = (File) ds.next();
@@ -555,7 +550,7 @@ public class SVNCommitUtil {
     public static void harvestCommitables(Map commitables, SVNAdminArea dir, File path, SVNEntry parentEntry, 
                                           SVNEntry entry, String url, String copyFromURL, boolean copyMode, 
                                           boolean addsOnly, boolean justLocked, Map lockTokens, SVNDepth depth, 
-                                          boolean forcedRecursion, String changelistName, ISVNCommitParameters params) throws SVNException {
+                                          boolean forcedRecursion, Collection changelists, ISVNCommitParameters params) throws SVNException {
         if (commitables.containsKey(path)) {
             return;
         }
@@ -611,7 +606,7 @@ public class SVNCommitUtil {
         }
         
         if (propConflicts || textConflicts) {
-            if (isConsideredCommitable(changelistName, entry)) {
+            if (SVNWCAccess.matchesChangeList(changelists, entry)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT, 
                         "Aborting commit: ''{0}'' remains in conflict", path);                    
                 SVNErrorManager.error(err);
@@ -720,7 +715,7 @@ public class SVNCommitUtil {
 
         if (commitAddition || commitDeletion || textModified || propsModified
                 || commitCopy || commitLock) {
-            if (isConsideredCommitable(changelistName, entry)) {
+            if (SVNWCAccess.matchesChangeList(changelists, entry)) {
                 SVNCommitItem item = new SVNCommitItem(path, 
                         SVNURL.parseURIEncoded(url), cfURL != null ? SVNURL.parseURIEncoded(cfURL) : null, entry.getKind(), 
                         SVNRevision.create(entry.getRevision()), SVNRevision.create(cfRevision), 
@@ -782,7 +777,7 @@ public class SVNCommitUtil {
                     if (childDir == null) {
                         SVNFileType currentType = SVNFileType.getType(currentFile);
                         if (currentType == SVNFileType.NONE && currentEntry.isScheduledForDeletion()) {
-                            if (isConsideredCommitable(changelistName, entry)) {
+                            if (SVNWCAccess.matchesChangeList(changelists, entry)) {
                                 SVNCommitItem item = new SVNCommitItem(currentFile,
                                         SVNURL.parseURIEncoded(currentURL), null, currentEntry.getKind(),
                                         SVNRevision.UNDEFINED, SVNRevision.UNDEFINED, false, true, false,
@@ -826,7 +821,7 @@ public class SVNCommitUtil {
 
                 harvestCommitables(commitables, dir, currentFile, entry, currentEntry, 
                                    currentURL, currentCFURL, copyMode, addsOnly, justLocked, 
-                                   lockTokens, depthBelowHere, forcedRecursion, changelistName, params);
+                                   lockTokens, depthBelowHere, forcedRecursion, changelists, params);
 
             }
         }
@@ -835,10 +830,6 @@ public class SVNCommitUtil {
             // harvest lock tokens for deleted items.
             collectLocks(dir, lockTokens);
         }
-    }
-
-    private static boolean isConsideredCommitable(String changeListName, SVNEntry entry) {
-        return changeListName == null || (entry != null && changeListName.equals(entry.getChangelistName())); 
     }
     
     private static void collectLocks(SVNAdminArea adminArea, Map lockTokens) throws SVNException {

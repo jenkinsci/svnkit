@@ -2228,7 +2228,7 @@ public class SVNWCClient extends SVNBasicClient {
             wcAccess.probeOpen(path, false, admLockLevel);
             SVNEntry entry = wcAccess.getVersionedEntry(path, false);
             if (entry.isFile()) {
-                if (SVNChangelistClient.matchesChangeList(changeLists, entry)) {
+                if (SVNWCAccess.matchesChangeList(changeLists, entry)) {
                     reportEntry(path, entry, handler);
                 }
             } else if (entry.isDirectory()) {
@@ -2239,7 +2239,7 @@ public class SVNWCClient extends SVNBasicClient {
                             return;
                         }
                         
-                        if (SVNChangelistClient.matchesChangeList(changeLists, entry)) {
+                        if (SVNWCAccess.matchesChangeList(changeLists, entry)) {
                             reportEntry(path, entry, handler);
                         }
                     }

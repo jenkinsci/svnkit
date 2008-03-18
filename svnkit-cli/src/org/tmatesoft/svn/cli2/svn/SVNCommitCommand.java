@@ -89,7 +89,7 @@ public class SVNCommitCommand extends SVNCommand {
         try {
             info = client.doCommit(files, keepLocks, getSVNEnvironment().getMessage(), 
                     getSVNEnvironment().getRevisionProperties(),
-                    getSVNEnvironment().getChangelist(), 
+                    getSVNEnvironment().getChangelists(), 
                     getSVNEnvironment().isKeepChangelist(), 
                     getSVNEnvironment().isForce(), depth);
         } catch (SVNException svne) {

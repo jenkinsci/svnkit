@@ -157,11 +157,6 @@ public class SVNChangelistClient extends SVNBasicClient {
         }
     }
     
-    static boolean matchesChangeList(Collection changeLists, SVNEntry entry) {
-        return changeLists == null || (entry != null && entry.getChangelistName() != null && 
-                changeLists.contains(entry.getChangelistName()));
-    }
-    
     private class SVNChangeListWalker implements ISVNEntryHandler {
         
         private String myChangelist;
@@ -184,7 +179,7 @@ public class SVNChangelistClient extends SVNBasicClient {
                 return;
                 
             }
-            if (!matchesChangeList(myChangelists, entry)) {
+            if (!SVNWCAccess.matchesChangeList(myChangelists, entry)) {
                 return;
             }
             if (entry.getChangelistName() == null && myChangelist == null) {

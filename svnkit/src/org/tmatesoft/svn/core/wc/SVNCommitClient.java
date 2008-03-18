@@ -591,10 +591,10 @@ public class SVNCommitClient extends SVNBasicClient {
     
     public SVNCommitInfo doCommit(File[] paths, boolean keepLocks, 
                                   String commitMessage, SVNProperties revisionProperties, 
-                                  String changelistName, boolean keepChangelist, boolean force, 
+                                  String[] changelists, boolean keepChangelist, boolean force, 
                                   SVNDepth depth) throws SVNException {
         SVNCommitPacket packet = doCollectCommitItems(paths, keepLocks, force, 
-                                                      depth, changelistName);
+                                                      depth, changelists);
         try {
             packet = packet.removeSkippedItems();
             return doCommit(packet, keepLocks, keepChangelist, commitMessage, revisionProperties);
@@ -846,7 +846,7 @@ public class SVNCommitClient extends SVNBasicClient {
     }
     
     public SVNCommitPacket doCollectCommitItems(File[] paths, boolean keepLocks, boolean force, 
-                                                SVNDepth depth, String changelistName) throws SVNException {
+                                                SVNDepth depth, String[] changelists) throws SVNException {
         depth = depth == null ? SVNDepth.UNKNOWN : depth;
         if (depth == SVNDepth.UNKNOWN) {
             depth = SVNDepth.INFINITY;
@@ -874,9 +874,15 @@ public class SVNCommitClient extends SVNBasicClient {
         try {
             Map lockTokens = new HashMap();
             checkCancelled();
+            Collection changelistsSet = changelists != null ? new HashSet() : null;
+            if (changelists != null) {
+                for (int j = 0; j < areas.length; j++) {
+                    changelistsSet.add(changelists[j]);
+                }
+            }
             SVNCommitItem[] commitItems = SVNCommitUtil.harvestCommitables(wcAccess, targets, lockTokens, 
                                                                            !keepLocks, depth, force, 
-                                                                           changelistName, getCommitParameters());
+                                                                           changelistsSet, getCommitParameters());
             boolean hasModifications = false;
             checkCancelled();
             for (int i = 0; commitItems != null && i < commitItems.length; i++) {
@@ -939,7 +945,7 @@ public class SVNCommitClient extends SVNBasicClient {
     }
     
     public SVNCommitPacket[] doCollectCommitItems(File[] paths, boolean keepLocks, boolean force, SVNDepth depth, 
-                                                  boolean combinePackets, String changelistName) throws SVNException {
+                                                  boolean combinePackets, String[] changelists) throws SVNException {
         
         depth = depth == null ? SVNDepth.UNKNOWN : depth;
         
@@ -975,9 +981,15 @@ public class SVNCommitClient extends SVNBasicClient {
             try {
                 checkCancelled();
                 Map lockTokens = new HashMap();
+                Collection changelistsSet = changelists != null ? new HashSet() : null;
+                if (changelists != null) {
+                    for (int j = 0; j < areas.length; j++) {
+                        changelistsSet.add(changelists[j]);
+                    }
+                }
                 SVNCommitItem[] commitItems = SVNCommitUtil.harvestCommitables(wcAccess, targetPaths, lockTokens, 
                                                                                !keepLocks, depth, force, 
-                                                                               changelistName, getCommitParameters());
+                                                                               changelistsSet, getCommitParameters());
                 checkCancelled();
                 boolean hasModifications = false;
                 for (int j = 0; commitItems != null && j < commitItems.length; j++) {

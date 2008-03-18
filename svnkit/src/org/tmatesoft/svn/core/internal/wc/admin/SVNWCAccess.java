@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.internal.wc.admin;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -652,6 +653,11 @@ public class SVNWCAccess implements ISVNEventHandler {
             path = path.getParentFile();
         } 
         return path;
+    }
+
+    public static boolean matchesChangeList(Collection changeLists, SVNEntry entry) {
+        return changeLists == null || (entry != null && entry.getChangelistName() != null && 
+                changeLists.contains(entry.getChangelistName()));
     }
     
 }
