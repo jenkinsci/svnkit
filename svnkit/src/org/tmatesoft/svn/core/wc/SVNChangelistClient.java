@@ -141,12 +141,13 @@ public class SVNChangelistClient extends SVNBasicClient {
         for (int i = 0; i < paths.length; i++) {
             checkCancelled();
             File path = paths[i].getAbsoluteFile();
-            Collection changelistsSet = new HashSet();
-            if (changelists != null) {
+            Collection changelistsSet = null;
+            if (changelists != null && changelists.length > 0) {
+                changelistsSet = new HashSet();
                 for (int j = 0; j < changelists.length; j++) {
                     changelistsSet.add(changelists[i]);
                 }
-            }
+            } 
             try {
                 wcAccess.probeOpen(path, true, -1);
                 wcAccess.walkEntries(path, new SVNChangeListWalker(wcAccess, changelistName, changelistsSet), false, depth);
