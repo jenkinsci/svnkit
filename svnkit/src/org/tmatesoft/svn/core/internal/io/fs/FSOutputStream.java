@@ -82,7 +82,7 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
         myIsCompress = compress;
     }
 
-    private void reset(FSRevisionNode revNode, CountingStream file, InputStream source, long deltaStart, long repSize, long repOffset, FSTransactionRoot txnRoot) {
+    private void reset(FSRevisionNode revNode, CountingStream file, InputStream source, long deltaStart, long repSize, long repOffset, FSTransactionRoot txnRoot, FSWriteLock txnLock) {
         myTxnRoot = txnRoot;
         myTargetFile = file;
         mySourceStream = source;
@@ -95,6 +95,7 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
         myIsClosed = false;
         myDigest.reset();
         myTextBuffer.clear();
+        myTxnLock = txnLock;
     }
 
     public static OutputStream createStream(FSRevisionNode revNode, FSTransactionRoot txnRoot, OutputStream dstStream, boolean compress) throws SVNException {
@@ -137,7 +138,7 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
 
             if (dstStream instanceof FSOutputStream) {
                 FSOutputStream fsOS = (FSOutputStream) dstStream;
-                fsOS.reset(revNode, revWriter, sourceStream, deltaStart, 0, offset, txnRoot);
+                fsOS.reset(revNode, revWriter, sourceStream, deltaStart, 0, offset, txnRoot, txnLock);
                 return dstStream;
             }
 
