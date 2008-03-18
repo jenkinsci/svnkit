@@ -86,16 +86,6 @@ public class SVNOption extends AbstractSVNOption {
     public static final SVNOption NO_AUTH_CACHE = new SVNOption("no-auth-cache");
     public static final SVNOption NON_INTERACTIVE = new SVNOption("non-interactive");
     
-    public static Collection addAuthOptions(Collection target) {
-        if (target != null) {
-            target.add(USERNAME);
-            target.add(PASSWORD);
-            target.add(NO_AUTH_CACHE);
-            target.add(NON_INTERACTIVE);
-        }
-        return target;
-    }
-    
     public static Collection addLogMessageOptions(Collection target) {
         if (target != null) {
             target.add(MESSAGE);

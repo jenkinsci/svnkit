@@ -40,8 +40,6 @@ public class SVNUnLockCommand extends SVNCommand {
     protected Collection createSupportedOptions() {
         Collection options = new LinkedList();
         options.add(SVNOption.TARGETS);
-        options = SVNOption.addAuthOptions(options);
-        options.add(SVNOption.CONFIG_DIR);
         options.add(SVNOption.FORCE);
         options.add(SVNOption.CHANGELIST);
         return options;

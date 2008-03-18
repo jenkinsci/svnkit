@@ -50,10 +50,8 @@ public class SVNCommitCommand extends SVNCommand {
         options.add(SVNOption.TARGETS);
         options.add(SVNOption.NO_UNLOCK);
         options = SVNOption.addLogMessageOptions(options);
-        options = SVNOption.addAuthOptions(options);
         options.add(SVNOption.CHANGELIST);
         options.add(SVNOption.KEEP_CHANGELIST);
-        options.add(SVNOption.CONFIG_DIR);
         return options;
     }
 

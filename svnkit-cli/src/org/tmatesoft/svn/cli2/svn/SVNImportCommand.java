@@ -50,8 +50,6 @@ public class SVNImportCommand extends SVNCommand {
         options.add(SVNOption.NO_AUTOPROPS);
         options = SVNOption.addLogMessageOptions(options);
         options.add(SVNOption.NO_IGNORE);
-        options = SVNOption.addAuthOptions(options);
-        options.add(SVNOption.CONFIG_DIR);
         return options;
     }
 

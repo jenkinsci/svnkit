@@ -47,12 +47,8 @@ public class SVNPropEditCommand extends SVNPropertiesCommand {
         Collection options = new LinkedList();
         options.add(SVNOption.REVISION);
         options.add(SVNOption.REVPROP);
-
         options = SVNOption.addLogMessageOptions(options);
-        options = SVNOption.addAuthOptions(options);
-
         options.add(SVNOption.FORCE);
-        options.add(SVNOption.CONFIG_DIR);
 
         return options;
     }

@@ -54,10 +54,7 @@ public class SVNPropSetCommand extends SVNPropertiesCommand {
         options.add(SVNOption.RECURSIVE);
         options.add(SVNOption.DEPTH);
         options.add(SVNOption.REVPROP);
-        options = SVNOption.addAuthOptions(options);
-
         options.add(SVNOption.FORCE);
-        options.add(SVNOption.CONFIG_DIR);
         options.add(SVNOption.CHANGELIST);
 
         return options;

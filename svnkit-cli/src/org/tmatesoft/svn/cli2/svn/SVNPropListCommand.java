@@ -53,8 +53,6 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
         options.add(SVNOption.REVISION);
         options.add(SVNOption.QUIET);
         options.add(SVNOption.REVPROP);
-        options = SVNOption.addAuthOptions(options);
-        options.add(SVNOption.CONFIG_DIR);
         options.add(SVNOption.XML);
         options.add(SVNOption.CHANGELIST);
         return options;

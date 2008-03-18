@@ -46,8 +46,6 @@ public class SVNUpdateCommand extends SVNCommand {
         options.add(SVNOption.SET_DEPTH);
         options.add(SVNOption.QUIET);
         options.add(SVNOption.FORCE);
-        options = SVNOption.addAuthOptions(options);
-        options.add(SVNOption.CONFIG_DIR);
         options.add(SVNOption.IGNORE_EXTERNALS);
         options.add(SVNOption.CHANGELIST);
         return options;

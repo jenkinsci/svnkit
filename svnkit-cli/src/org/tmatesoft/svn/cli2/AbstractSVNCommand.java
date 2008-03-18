@@ -13,15 +13,16 @@ package org.tmatesoft.svn.cli2;
 
 import java.text.MessageFormat;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.TreeSet;
 
+import org.tmatesoft.svn.cli2.svn.SVNOption;
 import org.tmatesoft.svn.core.SVNException;
 
 
@@ -37,6 +38,17 @@ public abstract class AbstractSVNCommand {
     private String[] myAliases;
     private Collection myOptions;
     private AbstractSVNCommandEnvironment myEnvironment;
+    private Collection myValidOptions;
+    
+    private static final Collection ourGlobalOptions = new LinkedList();
+    
+    static {
+        ourGlobalOptions.add(SVNOption.USERNAME);
+        ourGlobalOptions.add(SVNOption.PASSWORD);
+        ourGlobalOptions.add(SVNOption.NO_AUTH_CACHE);
+        ourGlobalOptions.add(SVNOption.NON_INTERACTIVE);
+        ourGlobalOptions.add(SVNOption.CONFIG_DIR);
+    }
     
     public static void registerCommand(AbstractSVNCommand command) {
         ourCommands.put(command.getName(), command);
@@ -66,8 +78,10 @@ public abstract class AbstractSVNCommand {
         myAliases = aliases == null ? new String[0] : aliases;
         myOptions = createSupportedOptions();
         if (myOptions == null) {
-            myOptions = Collections.EMPTY_SET;
+            myOptions = new LinkedList();
         }
+        myValidOptions = new LinkedList(myOptions); 
+        myOptions.addAll(ourGlobalOptions);
     }
 
     public abstract void run() throws SVNException;
@@ -86,6 +100,14 @@ public abstract class AbstractSVNCommand {
     
     public Collection getSupportedOptions() {
         return myOptions;
+    }
+    
+    public Collection getValidOptions() {
+        return myValidOptions;
+    }
+
+    public Collection getGlobalOptions() {
+        return ourGlobalOptions;
     }
     
     public void init(AbstractSVNCommandEnvironment env) {

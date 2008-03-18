@@ -14,10 +14,12 @@ package org.tmatesoft.svn.core.wc;
 import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -27,6 +29,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
+import org.tmatesoft.svn.core.internal.wc.admin.ISVNEntryHandler;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
@@ -46,12 +49,12 @@ public class SVNChangelistClient extends SVNBasicClient {
         super(repositoryPool, options);
     }
 
-    public void addToChangelist(File[] paths, String changelistName) throws SVNException {
-        setChangelist(paths, changelistName, null);
+    public void addToChangelist(File[] paths, SVNDepth depth, String changelist, String[] changelists) throws SVNException {
+        setChangelist(paths, changelist, changelists, depth);
     }
 
-    public void removeFromChangelist(File[] paths, String changelistName) throws SVNException {
-        setChangelist(paths, null, changelistName);
+    public void removeFromChangelist(File[] paths, SVNDepth depth, String[] changelists) throws SVNException {
+        setChangelist(paths, null, changelists, depth);
     }
     
     public File[] getChangelist(File path, final String changelistName) throws SVNException {
@@ -133,60 +136,20 @@ public class SVNChangelistClient extends SVNBasicClient {
         }
     }
     
-    private void setChangelist(File[] paths, String changelistName, String matchingChangelistName) throws SVNException {
+    private void setChangelist(File[] paths, String changelistName, String[] changelists, SVNDepth depth) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess();
         for (int i = 0; i < paths.length; i++) {
             checkCancelled();
             File path = paths[i].getAbsoluteFile();
+            Collection changelistsSet = new HashSet();
+            if (changelists != null) {
+                for (int j = 0; j < changelists.length; j++) {
+                    changelistsSet.add(changelists[i]);
+                }
+            }
             try {
-                SVNAdminArea adminArea = wcAccess.probeOpen(path, true, 0); 
-                SVNEntry entry = wcAccess.getEntry(path, false);
-                if (entry == null) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", path);
-                    SVNEvent event = SVNEventFactory.createSVNEvent(path, SVNNodeKind.UNKNOWN, null, SVNRepository.INVALID_REVISION, SVNEventAction.CHANGELIST_FAILED, null, err, null);
-                    dispatchEvent(event);
-                    continue;
-                }
-                
-                if (entry.isDirectory()) {
-                    SVNEventAction action = changelistName != null ? SVNEventAction.CHANGELIST_SET :SVNEventAction.CHANGELIST_CLEAR;
-                    SVNEvent event = SVNEventFactory.createSVNEvent(path, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.SKIP, action, null, null);
-                    dispatchEvent(event);
-                    continue;
-                }
-                
-                if (matchingChangelistName != null) {
-                    if (entry.getChangelistName() != null && 
-                            !matchingChangelistName.equals(entry.getChangelistName())) {
-                        SVNErrorMessage err = 
-                            SVNErrorMessage.create(SVNErrorCode.WC_MISMATCHED_CHANGELIST, 
-                                "''{0}'' is not currently a member of changelist ''{1}''.", 
-                                new Object[] {path, matchingChangelistName});
-                        SVNEvent event = 
-                            SVNEventFactory.createSVNEvent(path, SVNNodeKind.UNKNOWN, null, SVNRepository.INVALID_REVISION, SVNEventAction.CHANGELIST_FAILED, null, err, null);
-                        dispatchEvent(event);
-                        continue;
-                    }
-                }
-                
-                if (entry.getChangelistName() != null && changelistName != null) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CHANGELIST_MOVE, 
-                            "Removing ''{0}'' from changelist ''{1}''.", new Object[] { path, 
-                            entry.getChangelistName() });
-                    SVNEvent event = SVNEventFactory.createSVNEvent(path, SVNNodeKind.UNKNOWN, null, SVNRepository.INVALID_REVISION, SVNEventAction.CHANGELIST_MOVED, null, err, null);
-                    dispatchEvent(event);
-                    continue;
-                }
-                
-                Map attributes = new HashMap();
-                attributes.put(SVNProperty.CHANGELIST, changelistName);
-                entry = adminArea.modifyEntry(entry.getName(), attributes, true, false);
-
-                SVNEvent event = SVNEventFactory.createSVNEvent(path, SVNNodeKind.UNKNOWN, null, SVNRepository.INVALID_REVISION,
-                        null, null, null, changelistName != null ? SVNEventAction.CHANGELIST_SET :SVNEventAction.CHANGELIST_CLEAR,
-                        null, null, null, changelistName);
-
-                dispatchEvent(event);
+                wcAccess.probeOpen(path, true, -1);
+                wcAccess.walkEntries(path, new SVNChangeListWalker(wcAccess, changelistName, changelistsSet), false, depth);
             } finally {
                 wcAccess.close();
             }
@@ -196,6 +159,48 @@ public class SVNChangelistClient extends SVNBasicClient {
     static boolean matchesChangeList(Collection changeLists, SVNEntry entry) {
         return changeLists == null || (entry != null && entry.getChangelistName() != null && 
                 changeLists.contains(entry.getChangelistName()));
+    }
+    
+    private class SVNChangeListWalker implements ISVNEntryHandler {
+        
+        private String myChangelist;
+        private Collection myChangelists;
+        private SVNWCAccess myWCAccess;
+
+        public SVNChangeListWalker(SVNWCAccess wcAccess, String changelistName, Collection changelists) {
+            myChangelist = changelistName;
+            myChangelists = changelists;
+            myWCAccess = wcAccess;
+        }
+        
+        public void handleEntry(File path, SVNEntry entry) throws SVNException {
+            if (!entry.isFile()) {
+                if (entry.isFile()) {
+                    SVNEventAction action = myChangelist != null ? SVNEventAction.CHANGELIST_SET :SVNEventAction.CHANGELIST_CLEAR;
+                    SVNEvent event = SVNEventFactory.createSVNEvent(path, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.SKIP, action, null, null);
+                    SVNChangelistClient.this.dispatchEvent(event);
+                }
+                return;
+                
+            }
+            if (!matchesChangeList(myChangelists, entry)) {
+                return;
+            }
+            Map attributes = new HashMap();
+            attributes.put(SVNProperty.CHANGELIST, myChangelist);
+            SVNAdminArea area = myWCAccess.retrieve(path.getParentFile());
+            entry = area.modifyEntry(entry.getName(), attributes, true, false);
+
+            SVNEvent event = SVNEventFactory.createSVNEvent(path, SVNNodeKind.UNKNOWN, null, SVNRepository.INVALID_REVISION,
+                    null, null, null, myChangelist != null ? SVNEventAction.CHANGELIST_SET :SVNEventAction.CHANGELIST_CLEAR,
+                    null, null, null, myChangelist);
+
+            SVNChangelistClient.this.dispatchEvent(event);
+        }
+
+        public void handleError(File path, SVNErrorMessage error) throws SVNException {
+            SVNErrorManager.error(error);
+        }
     }
 
 }

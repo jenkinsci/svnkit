@@ -13,8 +13,8 @@ package org.tmatesoft.svn.cli2.svn;
 
 import java.text.MessageFormat;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 
 import org.tmatesoft.svn.cli2.AbstractSVNCommand;
 import org.tmatesoft.svn.cli2.SVNCommandUtil;
@@ -50,8 +50,7 @@ public class SVNHelpCommand extends SVNCommand {
     }
 
     protected Collection createSupportedOptions() {
-        Collection options = new HashSet();
-        options.add(SVNOption.CONFIG_DIR);
+        Collection options = new LinkedList();
         return options;
     }
     

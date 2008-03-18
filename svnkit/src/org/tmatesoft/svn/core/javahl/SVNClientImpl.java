@@ -81,8 +81,8 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.dav.http.IHTTPConnectionFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.ISVNConnectorFactory;
-import org.tmatesoft.svn.core.internal.io.svn.SVNSSHSession;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
+import org.tmatesoft.svn.core.internal.io.svn.SVNSSHSession;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -1596,7 +1596,8 @@ public class SVNClientImpl implements SVNClientInterface {
         return -1;
     }
 
-    public void addToChangelist(String[] paths, String changelist) throws ClientException {
+
+    public void addToChangelist(String[] paths, String changelist, int depth, String[] changelists) throws ClientException {
         if (paths == null || paths.length == 0 ||
                 changelist == null || "".equals(changelist)) {
             return;
@@ -1609,22 +1610,28 @@ public class SVNClientImpl implements SVNClientInterface {
         }
 
         try {
-            changelistClient.addToChangelist(files, changelist);
+            changelistClient.addToChangelist(files, JavaHLObjectFactory.getSVNDepth(depth), changelist, changelists);
         } catch (SVNException e) {
             throwException(e);
         }
     }
 
-    public void addToChangelist(String[] paths, String changelist, int depth,
-			String[] changelists) throws ClientException {
-    	//TODO: Implement
-    	notImplementedYet();
-    }
+	public void removeFromChangelists(String[] paths, int depth, String[] changelists) throws ClientException {
+        if (paths == null || paths.length == 0 || changelists == null) {
+            return;
+        }
 
-	public void removeFromChangelists(String[] paths, int depth,
-			String[] changelist) throws ClientException {
-    	//TODO: Implement
-    	notImplementedYet();
+        File[] files = new File[paths.length];
+        for (int i = 0; i < paths.length; i++) {
+            files[i] = new File(paths[i]).getAbsoluteFile();
+        }
+
+        SVNChangelistClient changelistClient = getChangelistClient();
+        try {
+            changelistClient.removeFromChangelist(files, JavaHLObjectFactory.getSVNDepth(depth), changelists);
+        } catch (SVNException e) {
+            throwException(e);
+        }
 	}
 
     public String[] getChangelist(String changelist, String rootPath) throws ClientException {
@@ -1654,25 +1661,6 @@ public class SVNClientImpl implements SVNClientInterface {
     public void getChangelists(String rootPath, String[] changelists, int depth, ChangelistCallback callback) throws ClientException {
         //TODO: fixme
         notImplementedYet(null);
-    }
-
-    public void removeFromChangelist(String[] paths, String changelist) throws ClientException {
-        if (paths == null || paths.length == 0 ||
-                changelist == null || "".equals(changelist)) {
-            return;
-        }
-
-        SVNChangelistClient changelistClient = getChangelistClient();
-        File[] files = new File[paths.length];
-        for (int i = 0; i < paths.length; i++) {
-            files[i] = new File(paths[i]).getAbsoluteFile();
-        }
-
-        try {
-            changelistClient.removeFromChangelist(files, changelist);
-        } catch (SVNException e) {
-            throwException(e);
-        }
     }
 
     public long checkout(String moduleName, String destPath, Revision revision, boolean recurse) throws ClientException {

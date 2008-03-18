@@ -46,8 +46,6 @@ public class SVNCopyCommand extends SVNCommand {
         options.add(SVNOption.QUIET);
         options.add(SVNOption.PARENTS);
         options = SVNOption.addLogMessageOptions(options);
-        options = SVNOption.addAuthOptions(options);
-        options.add(SVNOption.CONFIG_DIR);
         return options;
     }
 

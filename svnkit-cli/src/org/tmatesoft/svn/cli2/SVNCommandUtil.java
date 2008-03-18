@@ -299,25 +299,50 @@ public class SVNCommandUtil {
         help.append(command.getDescription());
         help.append("\n");
         if (!command.getSupportedOptions().isEmpty()) {
-            help.append("\nValid Options:\n");
-            for (Iterator options = command.getSupportedOptions().iterator(); options.hasNext();) {
-                AbstractSVNOption option = (AbstractSVNOption) options.next();
-                help.append("  ");
-                String optionDesc = null;
-                if (option.getAlias() != null) {
-                    optionDesc = "-" + option.getAlias() + " [--" + option.getName() + "]";
-                } else {
-                    optionDesc = "--" + option.getName();
-                }
+            if (!command.getValidOptions().isEmpty()) {
+                help.append("\nValid Options:\n");
+                for (Iterator options = command.getValidOptions().iterator(); options.hasNext();) {
+                    AbstractSVNOption option = (AbstractSVNOption) options.next();
+                    help.append("  ");
+                    String optionDesc = null;
+                    if (option.getAlias() != null) {
+                        optionDesc = "-" + option.getAlias() + " [--" + option.getName() + "]";
+                    } else {
+                        optionDesc = "--" + option.getName();
+                    }
+                    
+                    if (!option.isUnary()) {
+                        optionDesc += " ARG";
+                    }
                 
-                if (!option.isUnary()) {
-                    optionDesc += " ARG";
+                    help.append(SVNFormatUtil.formatString(optionDesc, 24, true));
+                    help.append(" : ");
+                    help.append(option.getDescription(command));
+                    help.append("\n");
                 }
-            
-                help.append(SVNFormatUtil.formatString(optionDesc, 24, true));
-                help.append(" : ");
-                help.append(option.getDescription(command));
-                help.append("\n");
+            }
+
+            if (!command.getGlobalOptions().isEmpty()) {
+                help.append("\nGlobal Options:\n");
+                for (Iterator options = command.getGlobalOptions().iterator(); options.hasNext();) {
+                    AbstractSVNOption option = (AbstractSVNOption) options.next();
+                    help.append("  ");
+                    String optionDesc = null;
+                    if (option.getAlias() != null) {
+                        optionDesc = "-" + option.getAlias() + " [--" + option.getName() + "]";
+                    } else {
+                        optionDesc = "--" + option.getName();
+                    }
+                    
+                    if (!option.isUnary()) {
+                        optionDesc += " ARG";
+                    }
+                
+                    help.append(SVNFormatUtil.formatString(optionDesc, 24, true));
+                    help.append(" : ");
+                    help.append(option.getDescription(command));
+                    help.append("\n");
+                }
             }
         }
         return help.toString();

@@ -67,8 +67,6 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
         options.add(SVNOption.CHANGELIST);
         options.add(SVNOption.FORCE);
         options.add(SVNOption.XML);
-        options = SVNOption.addAuthOptions(options);
-        options.add(SVNOption.CONFIG_DIR);
         return options;
     }
 

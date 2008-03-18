@@ -43,8 +43,6 @@ public class SVNCheckoutCommand extends SVNCommand {
         options.add(SVNOption.NON_RECURSIVE);
         options.add(SVNOption.DEPTH);
         options.add(SVNOption.FORCE);
-        options = SVNOption.addAuthOptions(options);
-        options.add(SVNOption.CONFIG_DIR);
         options.add(SVNOption.IGNORE_EXTERNALS);
         return options;
     }

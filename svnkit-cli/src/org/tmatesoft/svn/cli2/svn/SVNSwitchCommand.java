@@ -42,8 +42,6 @@ public class SVNSwitchCommand extends SVNCommand {
         options.add(SVNOption.DEPTH);
         options.add(SVNOption.QUIET);
         options.add(SVNOption.RELOCATE);
-        options = SVNOption.addAuthOptions(options);
-        options.add(SVNOption.CONFIG_DIR);
         options.add(SVNOption.IGNORE_EXTERNALS);
         options.add(SVNOption.FORCE);
         return options;

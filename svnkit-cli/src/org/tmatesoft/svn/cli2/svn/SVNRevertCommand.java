@@ -42,13 +42,11 @@ public class SVNRevertCommand extends SVNCommand {
 
     protected Collection createSupportedOptions() {
         Collection options = new LinkedList();
-        options = SVNOption.addAuthOptions(options);
         options.add(SVNOption.TARGETS);
         options.add(SVNOption.RECURSIVE);
         options.add(SVNOption.DEPTH);
         options.add(SVNOption.QUIET);
         options.add(SVNOption.CHANGELIST);
-        options.add(SVNOption.CONFIG_DIR);
         return options;
     }
 

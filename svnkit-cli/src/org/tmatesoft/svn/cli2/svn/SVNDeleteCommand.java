@@ -48,8 +48,6 @@ public class SVNDeleteCommand extends SVNCommand {
         options.add(SVNOption.QUIET);
         options.add(SVNOption.TARGETS);
         options = SVNOption.addLogMessageOptions(options);
-        options = SVNOption.addAuthOptions(options);
-        options.add(SVNOption.CONFIG_DIR);
         options.add(SVNOption.KEEP_LOCAL);
         return options;
     }

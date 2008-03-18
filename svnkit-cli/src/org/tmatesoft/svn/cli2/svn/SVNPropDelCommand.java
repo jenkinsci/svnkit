@@ -48,9 +48,6 @@ public class SVNPropDelCommand extends SVNPropertiesCommand {
         options.add(SVNOption.DEPTH);
         options.add(SVNOption.REVISION);
         options.add(SVNOption.REVPROP);
-        options = SVNOption.addAuthOptions(options);
-
-        options.add(SVNOption.CONFIG_DIR);
         options.add(SVNOption.CHANGELIST);
         
         return options;

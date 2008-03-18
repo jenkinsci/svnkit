@@ -57,10 +57,6 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
         options.add(SVNOption.NO_IGNORE);
         options.add(SVNOption.INCREMENTAL);
         options.add(SVNOption.XML);
-
-        options = SVNOption.addAuthOptions(options);
-
-        options.add(SVNOption.CONFIG_DIR);
         options.add(SVNOption.IGNORE_EXTERNALS);
         options.add(SVNOption.CHANGELIST);
         return options;

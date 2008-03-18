@@ -42,9 +42,7 @@ public class SVNResolvedCommand extends SVNCommand {
         options.add(SVNOption.RECURSIVE);
         options.add(SVNOption.DEPTH);
         options.add(SVNOption.QUIET);
-        options.add(SVNOption.CONFIG_DIR);
         options.add(SVNOption.ACCEPT);
-        options = SVNOption.addAuthOptions(options);
         return options;
     }
 

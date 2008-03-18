@@ -54,8 +54,6 @@ public class SVNMergeCommand extends SVNCommand {
         options.add(SVNOption.EXTENSIONS);
         options.add(SVNOption.IGNORE_ANCESTRY);
         
-        options = SVNOption.addAuthOptions(options);
-        options.add(SVNOption.CONFIG_DIR);
         options.add(SVNOption.REINTEGRATE);
         return options;
     }

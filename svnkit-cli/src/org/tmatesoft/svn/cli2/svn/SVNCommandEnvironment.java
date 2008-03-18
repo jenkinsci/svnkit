@@ -117,6 +117,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private boolean myIsReIntegrate;
     private List myRevisionRanges;
     private String myFromSource;
+    private Collection myChangelists;
     
     public SVNCommandEnvironment(String programName, PrintStream out, PrintStream err, InputStream in) {
         super(programName, out, err, in);
@@ -129,6 +130,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         myStartRevision = SVNRevision.UNDEFINED;
         myEndRevision = SVNRevision.UNDEFINED;
         myRevisionRanges = new LinkedList();
+        myChangelists = new HashSet();
     }
     
     public void initClientManager() throws SVNException {
@@ -448,6 +450,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             myIsRemove = true;
         } else if (option == SVNOption.CHANGELIST) {            
             myChangelist = optionValue.getValue();
+            myChangelists.add(myChangelist);
         } else if (option == SVNOption.KEEP_CHANGELIST) {
             myIsKeepChangelist = true;
         } else if (option == SVNOption.KEEP_LOCAL) {
@@ -526,6 +529,13 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
 
     public String getChangelist() {
         return myChangelist;
+    }
+
+    public String[] getChangelists() {
+        if (myChangelists != null && !myChangelists.isEmpty()) {
+            return (String[]) myChangelists.toArray(new String[myChangelists.size()]);
+        }
+        return null;
     }
 
     public SVNDepth getDepth() {

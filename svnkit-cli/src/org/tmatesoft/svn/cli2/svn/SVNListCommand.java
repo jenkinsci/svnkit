@@ -50,8 +50,6 @@ public class SVNListCommand extends SVNXMLCommand implements ISVNDirEntryHandler
         options.add(SVNOption.DEPTH);
         options.add(SVNOption.INCREMENTAL);
         options.add(SVNOption.XML);
-        options = SVNOption.addAuthOptions(options);
-        options.add(SVNOption.CONFIG_DIR);
         return options;
     }
 

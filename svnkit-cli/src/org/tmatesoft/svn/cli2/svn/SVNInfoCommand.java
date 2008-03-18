@@ -56,9 +56,7 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
         options.add(SVNOption.TARGETS);
         options.add(SVNOption.INCREMENTAL);
         options.add(SVNOption.XML);
-        options = SVNOption.addAuthOptions(options);
         options.add(SVNOption.CHANGELIST);
-        options.add(SVNOption.CONFIG_DIR);
         return options;
     }
 

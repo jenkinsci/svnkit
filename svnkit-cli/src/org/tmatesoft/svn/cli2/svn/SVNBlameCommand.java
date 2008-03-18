@@ -56,8 +56,6 @@ public class SVNBlameCommand extends SVNXMLCommand implements ISVNAnnotateHandle
         options.add(SVNOption.XML);
         options.add(SVNOption.EXTENSIONS);
         options.add(SVNOption.FORCE);
-        options = SVNOption.addAuthOptions(options);
-        options.add(SVNOption.CONFIG_DIR);
         options.add(SVNOption.USE_MERGE_HISTORY);
         return options;
     }

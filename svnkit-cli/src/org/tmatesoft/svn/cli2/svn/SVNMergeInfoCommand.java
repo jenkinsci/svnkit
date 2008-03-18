@@ -44,8 +44,6 @@ public class SVNMergeInfoCommand extends SVNCommand {
     protected Collection createSupportedOptions() {
         Collection options = new LinkedList();
         options.add(SVNOption.REVISION);
-        options = SVNOption.addAuthOptions(options);
-        options.add(SVNOption.CONFIG_DIR);
         options.add(SVNOption.FROM_SOURCE);
         return options;
     }

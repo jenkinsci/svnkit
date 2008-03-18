@@ -36,8 +36,6 @@ public class SVNCatCommand extends SVNCommand {
     protected Collection createSupportedOptions() {
         Collection options = new LinkedList();
         options.add(SVNOption.REVISION);
-        options = SVNOption.addAuthOptions(options);
-        options.add(SVNOption.CONFIG_DIR);
         return options;
     }
 

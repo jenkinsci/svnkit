@@ -57,8 +57,6 @@ public class SVNLockCommand extends SVNCommand {
         options.add(SVNOption.FILE);
         options.add(SVNOption.FORCE_LOG);
         options.add(SVNOption.ENCODING);
-        options = SVNOption.addAuthOptions(options);
-        options.add(SVNOption.CONFIG_DIR);
         options.add(SVNOption.FORCE);
         options.add(SVNOption.CHANGELIST);
         return options;

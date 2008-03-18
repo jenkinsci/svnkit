@@ -52,8 +52,6 @@ public class SVNPropGetCommand extends SVNPropertiesCommand {
         options.add(SVNOption.REVISION);
         options.add(SVNOption.REVPROP);
         options.add(SVNOption.STRICT);
-        options = SVNOption.addAuthOptions(options);
-        options.add(SVNOption.CONFIG_DIR);
         options.add(SVNOption.XML);
         options.add(SVNOption.CHANGELIST);
         return options;
