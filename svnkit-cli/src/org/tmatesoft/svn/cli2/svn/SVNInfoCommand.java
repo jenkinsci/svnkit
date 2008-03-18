@@ -77,7 +77,7 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
         }
         SVNDepth depth = getSVNEnvironment().getDepth();
         if (depth == SVNDepth.UNKNOWN) {
-            depth = SVNDepth.IMMEDIATES;
+            depth = SVNDepth.EMPTY;
         }
         SVNWCClient client = getSVNEnvironment().getClientManager().getWCClient();
         for(int i = 0; i < targets.size(); i++) {

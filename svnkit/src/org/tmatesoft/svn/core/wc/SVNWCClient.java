@@ -2232,31 +2232,20 @@ public class SVNWCClient extends SVNBasicClient {
         int admLockLevel = getLevelsToLockFromDepth(depth);
         try {
             wcAccess.probeOpen(path, false, admLockLevel);
-            SVNEntry entry = wcAccess.getVersionedEntry(path, false);
-            if (entry.isFile()) {
-                if (SVNWCAccess.matchesChangeList(changeLists, entry)) {
-                    reportEntry(path, entry, handler);
+            wcAccess.walkEntries(path, new ISVNEntryHandler() {
+                public void handleEntry(File path, SVNEntry entry) throws SVNException {
+                    if (entry.isDirectory() && !entry.isThisDir()) {
+                        return;
+                    }                    
+                    if (SVNWCAccess.matchesChangeList(changeLists, entry)) {
+                        reportEntry(path, entry, handler);
+                    }
                 }
-            } else if (entry.isDirectory()) {
-                ISVNEntryHandler entryHandler = new ISVNEntryHandler() {
-                    public void handleEntry(File path, SVNEntry entry) throws SVNException {
-                        SVNAdminArea adminArea = entry.getAdminArea();
-                        if (entry.isDirectory() && !entry.getName().equals(adminArea.getThisDirName())) {
-                            return;
-                        }
-                        
-                        if (SVNWCAccess.matchesChangeList(changeLists, entry)) {
-                            reportEntry(path, entry, handler);
-                        }
-                    }
-                    
-                    public void handleError(File path, SVNErrorMessage error) throws SVNException {
-                        SVNErrorManager.error(error);
-                    }
-                };
                 
-                wcAccess.walkEntries(path, entryHandler, false, depth);
-            }
+                public void handleError(File path, SVNErrorMessage error) throws SVNException {
+                    SVNErrorManager.error(error);
+                }
+            }, false, depth);
         } finally {
             wcAccess.close();
         }
