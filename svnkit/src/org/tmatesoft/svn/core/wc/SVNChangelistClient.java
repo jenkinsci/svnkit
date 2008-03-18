@@ -149,9 +149,8 @@ public class SVNChangelistClient extends SVNBasicClient {
                 }
                 
                 if (entry.isDirectory()) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_IS_DIRECTORY, 
-                            "''{0}'' is a directory, and thus cannot be a member of a changelist", path);
-                    SVNEvent event = SVNEventFactory.createSVNEvent(path, SVNNodeKind.UNKNOWN, null, SVNRepository.INVALID_REVISION, SVNEventAction.CHANGELIST_FAILED, null, err, null);
+                    SVNEventAction action = changelistName != null ? SVNEventAction.CHANGELIST_SET :SVNEventAction.CHANGELIST_CLEAR;
+                    SVNEvent event = SVNEventFactory.createSVNEvent(path, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.SKIP, action, null, null);
                     dispatchEvent(event);
                     continue;
                 }
