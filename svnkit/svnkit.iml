@@ -24,15 +24,6 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../contrib/sqlite/sqlitejdbc.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="module" module-name="svnkit-cli" />
     <orderEntry type="module-library">
       <library>
@@ -43,6 +34,7 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="svnkit-test" />
     <orderEntryProperties />
   </component>
 </module>
