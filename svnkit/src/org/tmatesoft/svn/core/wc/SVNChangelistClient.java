@@ -145,7 +145,7 @@ public class SVNChangelistClient extends SVNBasicClient {
             if (changelists != null && changelists.length > 0) {
                 changelistsSet = new HashSet();
                 for (int j = 0; j < changelists.length; j++) {
-                    changelistsSet.add(changelists[i]);
+                    changelistsSet.add(changelists[j]);
                 }
             } 
             try {
