@@ -51,20 +51,11 @@ public class SVNChangeListCommand extends SVNCommand {
     public void run() throws SVNException {
         List targets = new ArrayList(); 
         String changelist = null;
-        if (getSVNEnvironment().getChangelist() != null) {
-            SVNPath target = new SVNPath("");
-            SVNChangelistClient changelistClient = getSVNEnvironment().getClientManager().getChangelistClient();
-            changelistClient.getChangelist(target.getFile(), getSVNEnvironment().getChangelist(), targets);
-            if (targets.isEmpty()) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN_CHANGELIST, 
-                        "Unknown changelist ''{0}''", getSVNEnvironment().getChangelist());
-                SVNErrorManager.error(err);
-            }
-        }
         if (getSVNEnvironment().getTargets() != null) {
             targets.addAll(getSVNEnvironment().getTargets());
         }
         targets = getSVNEnvironment().combineTargets(targets, true);
+
         if (getSVNEnvironment().isRemove()) {
             if (targets.size() < 1) { 
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS));
@@ -76,15 +67,15 @@ public class SVNChangeListCommand extends SVNCommand {
             }
             changelist = (String) targets.remove(0);
         }
+        
         Collection paths = new ArrayList();
         for (Iterator ts = targets.iterator(); ts.hasNext();) {
             String targetName = (String) ts.next();
             SVNPath target = new SVNPath(targetName);
-            if (target.isFile()) {
-                paths.add(target.getFile());
-            }
+            paths.add(target.getFile());
         }
         File[] files = (File[]) paths.toArray(new File[paths.size()]);
+        
         SVNDepth depth = getSVNEnvironment().getDepth();
         if (depth == SVNDepth.UNKNOWN) {
             depth = SVNDepth.EMPTY;
