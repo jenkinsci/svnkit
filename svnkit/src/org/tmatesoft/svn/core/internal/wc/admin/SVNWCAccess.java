@@ -616,12 +616,10 @@ public class SVNWCAccess implements ISVNEventHandler {
         }
         
         if (entry.isFile()) {
-            if (depth.compareTo(SVNDepth.FILES) >= 0) {
-                try {
-                    handler.handleEntry(path, entry);
-                } catch (SVNException svne) {
-                    handler.handleError(path, svne.getErrorMessage());
-                }
+            try {
+                handler.handleEntry(path, entry);
+            } catch (SVNException svne) {
+                handler.handleError(path, svne.getErrorMessage());
             }
         } else if (entry.isDirectory()) {
             SVNAdminArea adminArea = entry.getAdminArea();
