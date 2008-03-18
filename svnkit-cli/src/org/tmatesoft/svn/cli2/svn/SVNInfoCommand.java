@@ -100,9 +100,9 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
             }
             try {
                 if (target.isFile()) {
-                    client.doInfo(target.getFile(), pegRevision, getSVNEnvironment().getStartRevision(), depth.isRecursive(), this);
+                    client.doInfo(target.getFile(), pegRevision, getSVNEnvironment().getStartRevision(), depth, getSVNEnvironment().getChangelists(), this);
                 } else {
-                    client.doInfo(target.getURL(), pegRevision, getSVNEnvironment().getStartRevision(), depth.isRecursive(), this);
+                    client.doInfo(target.getURL(), pegRevision, getSVNEnvironment().getStartRevision(), depth, this);
                 }
             } catch (SVNException e) {
                 SVNErrorMessage err = e.getErrorMessage();

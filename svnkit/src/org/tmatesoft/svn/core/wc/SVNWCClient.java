@@ -2187,7 +2187,7 @@ public class SVNWCClient extends SVNBasicClient {
     }
 
     public void doInfo(File path, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, 
-            Collection changeLists, ISVNInfoHandler handler) throws SVNException {
+            String[] changelists, ISVNInfoHandler handler) throws SVNException {
         if (handler == null) {
             return;
         }
@@ -2216,8 +2216,14 @@ public class SVNWCClient extends SVNBasicClient {
                     wcRevision : pegRevision, revision, depth, handler);
             return;
         }
-        
-        crawlEntries(path, depth, changeLists, handler);
+        Collection changelistsSet = null;
+        if (changelists != null) {
+            changelistsSet = new HashSet();
+            for (int i = 0; i < changelists.length; i++) {
+                changelistsSet.add(changelists[i]);
+            }
+        }
+        crawlEntries(path, depth, changelistsSet, handler);
     }
 
     private void crawlEntries(File path, SVNDepth depth, final Collection changeLists, 
