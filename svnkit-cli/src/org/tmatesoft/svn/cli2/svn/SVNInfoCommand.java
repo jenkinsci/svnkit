@@ -29,10 +29,9 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
-import org.tmatesoft.svn.core.wc.SVNChangelistClient;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
@@ -62,16 +61,6 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
 
     public void run() throws SVNException {
         List targets = new ArrayList(); 
-        if (getSVNEnvironment().getChangelist() != null) {
-            SVNPath target = new SVNPath("");
-            SVNChangelistClient changelistClient = getSVNEnvironment().getClientManager().getChangelistClient();
-            changelistClient.getChangelist(target.getFile(), getSVNEnvironment().getChangelist(), targets);
-            if (targets.isEmpty()) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN_CHANGELIST, 
-                        "Unknown changelist ''{0}''", getSVNEnvironment().getChangelist());
-                SVNErrorManager.error(err);
-            }
-        }
         if (getSVNEnvironment().getTargets() != null) {
             targets.addAll(getSVNEnvironment().getTargets());
         }
