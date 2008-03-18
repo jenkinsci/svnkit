@@ -175,7 +175,7 @@ public class SVNChangelistClient extends SVNBasicClient {
         
         public void handleEntry(File path, SVNEntry entry) throws SVNException {
             if (!entry.isFile()) {
-                if (entry.isFile()) {
+                if (entry.isThisDir()) {
                     SVNEventAction action = myChangelist != null ? SVNEventAction.CHANGELIST_SET :SVNEventAction.CHANGELIST_CLEAR;
                     SVNEvent event = SVNEventFactory.createSVNEvent(path, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.SKIP, action, null, null);
                     SVNChangelistClient.this.dispatchEvent(event);
