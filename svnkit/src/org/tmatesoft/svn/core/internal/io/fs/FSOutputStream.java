@@ -148,10 +148,8 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
         } catch (IOException ioe) {
             SVNFileUtil.closeFile(targetOS);
             SVNFileUtil.closeFile(sourceStream);
-            if (txnLock != null) {
-                txnLock.unlock();
-                FSWriteLock.release(txnLock);
-            }
+            txnLock.unlock();
+            FSWriteLock.release(txnLock);
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
             SVNErrorManager.error(err, ioe);
         } catch (SVNException svne) {
@@ -228,7 +226,11 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
             throw new IOException(svne.getMessage());
         } finally {
             closeStreams();
-            myTxnLock.unlock();
+            try {
+                myTxnLock.unlock();
+            } catch (SVNException e) {
+                //
+            }
             FSWriteLock.release(myTxnLock);
         }
     }
