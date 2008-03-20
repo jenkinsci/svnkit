@@ -903,9 +903,10 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         }
         
         String extraComponents = SVNPathUtil.getPathAsChild(ancestorPath, copyFromPath);
-        File currentWDParent = new File(currentWD, extraComponents).getParentFile();
+        currentWD = new File(currentWD, extraComponents);
+        File currentWDParent = currentWD.getParentFile();
         
-        kind = SVNFileType.getType(currentWDParent);
+        kind = SVNFileType.getType(currentWD);
         if (kind != SVNFileType.FILE) {
             ancestorAccess.close();
             return null;

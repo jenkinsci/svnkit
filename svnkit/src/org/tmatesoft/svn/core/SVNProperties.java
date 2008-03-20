@@ -122,7 +122,7 @@ public class SVNProperties {
         for (Iterator propNamesIter = nameSet().iterator(); propNamesIter.hasNext();) {
             String propName = (String) propNamesIter.next();
             if (SVNProperty.isRegularProperty(propName)) {
-                copyValue(result, propName);
+                result.copyValue(this, propName);
             }
         }
         return result;
