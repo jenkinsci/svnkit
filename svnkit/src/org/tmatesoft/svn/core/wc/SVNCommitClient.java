@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -30,10 +31,10 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -324,7 +325,7 @@ public class SVNCommitClient extends SVNBasicClient {
         if (urls == null || urls.length == 0) {
             return SVNCommitInfo.NULL;
         }
-        List paths = new ArrayList();
+        Collection paths = new HashSet();
         SVNURL rootURL = SVNURLUtil.condenceURLs(urls, paths, false);
         if (rootURL == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Can not compute common root URL for specified URLs");
@@ -349,9 +350,12 @@ public class SVNCommitClient extends SVNBasicClient {
             }
             paths = convertedPaths;
         }
-        SVNCommitItem[] commitItems = new SVNCommitItem[paths.size()];
+        List sortedPaths = new ArrayList(paths);
+        Collections.sort(sortedPaths, SVNPathUtil.PATH_COMPARATOR);
+        
+        SVNCommitItem[] commitItems = new SVNCommitItem[sortedPaths.size()];
         for (int i = 0; i < commitItems.length; i++) {
-            String path = (String) paths.get(i);
+            String path = (String) sortedPaths.get(i);
             commitItems[i] = new SVNCommitItem(null, rootURL.appendPath(path, true),
                     null, SVNNodeKind.DIR, SVNRevision.UNDEFINED, SVNRevision.UNDEFINED,
                     true, false, false, false, false, false);
@@ -362,7 +366,7 @@ public class SVNCommitClient extends SVNBasicClient {
         }
 
         List decodedPaths = new ArrayList();
-        for (Iterator commitPaths = paths.iterator(); commitPaths.hasNext();) {
+        for (Iterator commitPaths = sortedPaths.iterator(); commitPaths.hasNext();) {
             String path = (String) commitPaths.next();
             decodedPaths.add(SVNEncodingUtil.uriDecode(path));
         }

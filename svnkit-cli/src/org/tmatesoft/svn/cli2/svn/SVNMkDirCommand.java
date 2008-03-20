@@ -90,7 +90,10 @@ public class SVNMkDirCommand extends SVNCommand {
                 getSVNEnvironment().printCommitInfo(info);
             } catch (SVNException e) {
                 SVNErrorMessage err = e.getErrorMessage();
-                if (!getSVNEnvironment().isParents() && (err.getErrorCode() == SVNErrorCode.FS_NOT_FOUND || err.getErrorCode() == SVNErrorCode.RA_DAV_PATH_NOT_FOUND)) {
+                if (!getSVNEnvironment().isParents() && 
+                        (err.getErrorCode() == SVNErrorCode.FS_NOT_FOUND ||
+                         err.getErrorCode() == SVNErrorCode.FS_NOT_DIRECTORY ||
+                         err.getErrorCode() == SVNErrorCode.RA_DAV_PATH_NOT_FOUND)) {
                     err = err.wrap("Try 'svn mkdir --parents' instead?");
                 }
                 SVNErrorManager.error(err);
