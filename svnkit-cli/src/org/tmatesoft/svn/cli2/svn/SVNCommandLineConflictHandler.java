@@ -89,8 +89,10 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                 }
                 
                 try {
-                    SVNCommandUtil.mergeFileExternally(mySVNEnvironment, files.getBasePath(), files.getRepositoryPath(), 
-                            files.getLocalPath(), files.getResultPath());
+                    SVNCommandUtil.mergeFileExternally(mySVNEnvironment, files.getBaseFile().getAbsolutePath(), 
+                            files.getRepositoryFile().getAbsolutePath(), 
+                            files.getLocalFile().getAbsolutePath(), 
+                            files.getResultFile().getAbsolutePath());
                 } catch (SVNException svne) {
                     if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.CL_NO_EXTERNAL_MERGE_TOOL) {
                         mySVNEnvironment.getErr().println(svne.getErrorMessage().getMessage() != null ? 

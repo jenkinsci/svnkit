@@ -44,6 +44,7 @@ public class SVNSwitchCommand extends SVNCommand {
         options.add(SVNOption.RELOCATE);
         options.add(SVNOption.IGNORE_EXTERNALS);
         options.add(SVNOption.FORCE);
+        options.add(SVNOption.ACCEPT);
         return options;
     }
 

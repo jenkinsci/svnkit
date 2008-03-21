@@ -186,12 +186,12 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             if (myIsNonInteractive) {
                 if (myResolveAccept == SVNConflictAcceptPolicy.EDIT) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                            "--accept=%s incompatible with --non-interactive", SVNConflictAcceptPolicy.EDIT);
+                            "--accept={0} incompatible with --non-interactive", SVNConflictAcceptPolicy.EDIT);
                     SVNErrorManager.error(err);
                 }
                 if (myResolveAccept == SVNConflictAcceptPolicy.LAUNCH) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                            "--accept=%s incompatible with --non-interactive", SVNConflictAcceptPolicy.LAUNCH);
+                            "--accept={0} incompatible with --non-interactive", SVNConflictAcceptPolicy.LAUNCH);
                     SVNErrorManager.error(err);
                 }
             }

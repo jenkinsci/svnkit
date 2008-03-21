@@ -53,7 +53,7 @@ public class SVNMergeCommand extends SVNCommand {
         options.add(SVNOption.USE_MERGE_HISTORY);
         options.add(SVNOption.EXTENSIONS);
         options.add(SVNOption.IGNORE_ANCESTRY);
-        
+        options.add(SVNOption.ACCEPT);
         options.add(SVNOption.REINTEGRATE);
         return options;
     }

@@ -44,6 +44,7 @@ public class SVNCheckoutCommand extends SVNCommand {
         options.add(SVNOption.DEPTH);
         options.add(SVNOption.FORCE);
         options.add(SVNOption.IGNORE_EXTERNALS);
+        options.add(SVNOption.ACCEPT);
         return options;
     }
 

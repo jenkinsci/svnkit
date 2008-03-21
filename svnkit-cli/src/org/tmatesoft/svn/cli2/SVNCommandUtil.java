@@ -351,7 +351,7 @@ public class SVNCommandUtil {
     public static String getVersion(AbstractSVNCommandEnvironment env, boolean quiet) {
         String version = Version.getMajorVersion() + "." + Version.getMinorVersion() + "." + Version.getMicroVersion();
         String revNumber = Version.getRevisionNumber() < 0 ? "SNAPSHOT" : Long.toString(Version.getRevisionNumber());
-        String message = MessageFormat.format(env.getProgramName() + ", version {0}\n", new String[] {version + " (r" + revNumber + ")"});
+        String message = MessageFormat.format(env.getProgramName() + ", version {0}\n", new Object[] {version + " (r" + revNumber + ")"});
         if (quiet) {
             message = version;
         }
