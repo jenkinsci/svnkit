@@ -665,6 +665,7 @@
               classname="org.tmatesoft.svn.core.test.PythonTests">        
          <jvmarg value="-client" />
          <jvmarg value="-Dant.basedir=${basedir.unix}" />
+         <jvmarg value="-Dsun.io.useCanonCaches=false" />
 <!--     Uncomment for profiling with YourKit -->   
 <!--         <jvmarg value="-agentlib:yjpagent=port=1729,disablecounts,disablealloc,disablej2ee,sampling,onexit=snapshot" /> -->
 <!--     Uncomment to enable remote debugging -->
