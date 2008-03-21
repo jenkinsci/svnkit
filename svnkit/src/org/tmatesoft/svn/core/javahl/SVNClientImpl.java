@@ -1615,10 +1615,14 @@ public class SVNClientImpl implements SVNClientInterface {
         return doSwitch(path, url, revision, Revision.HEAD, JavaHLObjectFactory.unknownOrFiles(recurse), true, false, false);
     }
 
-    public long doSwitch(String path, String url, Revision revision, Revision pegRevision, int depth, boolean depthIsSticky, boolean ignoreExternals, boolean allowUnverObstructions) throws ClientException {
+    public long doSwitch(String path, String url, Revision revision, Revision pegRevision, int depth, 
+            boolean depthIsSticky, boolean ignoreExternals, boolean allowUnverObstructions) throws ClientException {
         SVNUpdateClient updater = getSVNUpdateClient();
         try {
-            return updater.doSwitch(new File(path).getAbsoluteFile(), SVNURL.parseURIEncoded(url), JavaHLObjectFactory.getSVNRevision(pegRevision), JavaHLObjectFactory.getSVNRevision(revision), JavaHLObjectFactory.getSVNDepth(depth), allowUnverObstructions);
+            return updater.doSwitch(new File(path).getAbsoluteFile(), SVNURL.parseURIEncoded(url), 
+                    JavaHLObjectFactory.getSVNRevision(pegRevision), 
+                    JavaHLObjectFactory.getSVNRevision(revision), JavaHLObjectFactory.getSVNDepth(depth), 
+                    allowUnverObstructions, depthIsSticky);
         } catch (SVNException e) {
             throwException(e);
         }

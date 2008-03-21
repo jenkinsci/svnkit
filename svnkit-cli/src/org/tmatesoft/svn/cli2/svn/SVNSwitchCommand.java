@@ -40,6 +40,7 @@ public class SVNSwitchCommand extends SVNCommand {
         options.add(SVNOption.REVISION);
         options.add(SVNOption.NON_RECURSIVE);
         options.add(SVNOption.DEPTH);
+        options.add(SVNOption.SET_DEPTH);
         options.add(SVNOption.QUIET);
         options.add(SVNOption.RELOCATE);
         options.add(SVNOption.IGNORE_EXTERNALS);
@@ -67,7 +68,8 @@ public class SVNSwitchCommand extends SVNCommand {
         }
         SVNPath switchURL = new SVNPath((String) targets.get(0), true);
         if (!switchURL.isURL()) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.BAD_URL, "''{0}'' doesn not appear to be a URL", switchURL.getTarget()));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.BAD_URL, 
+                    "''{0}'' doesn not appear to be a URL", switchURL.getTarget()));
         }
         SVNPath target;
         if (targets.size() == 1) {
@@ -84,7 +86,17 @@ public class SVNSwitchCommand extends SVNCommand {
         if (!getSVNEnvironment().isQuiet()) {
             client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment(), false, false, false));
         }
-        client.doSwitch(target.getFile(), switchURL.getURL(), switchURL.getPegRevision(), getSVNEnvironment().getStartRevision(), getSVNEnvironment().getDepth(), getSVNEnvironment().isForce());    
+        
+        SVNDepth depth = getSVNEnvironment().getDepth();
+        boolean depthIsSticky = false;
+        if (getSVNEnvironment().getSetDepth() != SVNDepth.UNKNOWN) {
+            depth = getSVNEnvironment().getSetDepth();
+            depthIsSticky = true;
+        }
+        
+        client.doSwitch(target.getFile(), switchURL.getURL(), switchURL.getPegRevision(), 
+                getSVNEnvironment().getStartRevision(), depth, 
+                getSVNEnvironment().isForce(), depthIsSticky);    
     }
     
     protected void relocate(List targets) throws SVNException {

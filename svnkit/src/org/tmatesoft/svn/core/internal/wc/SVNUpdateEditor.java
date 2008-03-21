@@ -74,48 +74,6 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
     private SVNDepth myRequestedDepth;
     private String[] myExtensionPatterns;
     private ISVNFileFetcher myFileFetcher;
-    
-    public SVNUpdateEditor(SVNAdminAreaInfo info, String switchURL, boolean recursive, boolean allowUnversionedObstructions) throws SVNException {
-        this(info, switchURL, allowUnversionedObstructions, 
-             SVNDepth.fromRecurse(recursive), null, null);
-    }
-
-    /**
-     * @deprecated
-     */
-    public SVNUpdateEditor(SVNAdminAreaInfo info, String switchURL, boolean allowUnversionedObstructions, 
-            SVNDepth depth, String[] preservedExtensions, ISVNFileFetcher fileFetcher) throws SVNException {
-        myAdminInfo = info;
-        myWCAccess = info.getWCAccess();
-        myIsUnversionedObstructionsAllowed = allowUnversionedObstructions;
-        myTarget = info.getTargetName();
-        mySwitchURL = switchURL;
-        myTargetRevision = -1;
-        myRequestedDepth = depth;
-        myDeltaProcessor = new SVNDeltaProcessor();
-        myExtensionPatterns = preservedExtensions;
-        myFileFetcher = fileFetcher;
-        
-        SVNEntry entry = info.getAnchor().getEntry(info.getAnchor().getThisDirName(), false);
-        myTargetURL = entry != null ? entry.getURL() : null;
-        myRootURL = entry != null ? entry.getRepositoryRoot() : null;
-        if (myTarget != null) {
-            myTargetURL = SVNPathUtil.append(myTargetURL, SVNEncodingUtil.uriEncode(myTarget));
-        }
-        if (mySwitchURL != null && entry != null && entry.getRepositoryRoot() != null) {
-            if (!SVNPathUtil.isAncestor(entry.getRepositoryRoot(), mySwitchURL)) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_SWITCH, 
-                        "''{0}''\nis not the same repository as\n''{1}''",
-                        new Object[] { mySwitchURL, entry.getRepositoryRoot() });
-                SVNErrorManager.error(err);
-            }
-        }
-        myAdminInfo.getTarget().closeEntries();
-
-        if ("".equals(myTarget)) {
-            myTarget = null;
-        }
-    }
 
     private SVNUpdateEditor(SVNAdminAreaInfo info, String switchURL, boolean allowUnversionedObstructions, 
             boolean depthIsSticky, SVNDepth depth, String[] preservedExtensions, String targetURL, 

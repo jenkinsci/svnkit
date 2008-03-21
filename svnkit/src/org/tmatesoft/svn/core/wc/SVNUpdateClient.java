@@ -316,10 +316,11 @@ public class SVNUpdateClient extends SVNBasicClient {
     }
     
     public long doSwitch(File file, SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive, boolean force) throws SVNException {
-        return doSwitch(file, url, pegRevision, revision, SVNDepth.fromRecurse(recursive), force);
+        return doSwitch(file, url, pegRevision, revision, SVNDepth.getInfinityOrFilesDepth(recursive), force, false);
     }    
     
-    public long doSwitch(File file, SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, boolean force) throws SVNException {
+    public long doSwitch(File file, SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, 
+            boolean force, boolean depthIsSticky) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess();
         try {
             SVNAdminAreaInfo info = wcAccess.openAnchor(file, true, SVNWCAccess.INFINITE_DEPTH);
@@ -346,19 +347,27 @@ public class SVNUpdateClient extends SVNBasicClient {
             // reparent to the sourceURL
             repository.setLocation(sourceURL, false);
             String[] preservedExts = getOptions().getPreservedConflictFileExtensions();
-            SVNUpdateEditor editor = new SVNUpdateEditor(info, url.toString(),                                                         
-                                                         force, depth, preservedExts, 
-                                                         null);
+            ISVNEditor editor = SVNUpdateEditor.createUpdateEditor(info, url.toString(), force, depthIsSticky, 
+                    depth, preservedExts, null);
+            //new SVNUpdateEditor(info, url.toString(), force, depth, preservedExts, null);
             String target = "".equals(info.getTargetName()) ? null : info.getTargetName();
             repository.update(url, revNumber, target, depth, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
 
-            if (editor.getTargetRevision() >= 0 && !isIgnoreExternals() && depth.isRecursive()) {
-                handleExternals(info.getAnchor().getRoot(), info.getOldExternals(), info.getNewExternals(), info.getDepths(), url, sourceRoot, depth, false, false);
+            long targetRevision = SVNRepository.INVALID_REVISION;
+            if (editor instanceof SVNUpdateEditor) {
+                targetRevision = ((SVNUpdateEditor) editor).getTargetRevision();
+            } else {
+                targetRevision = ((SVNAmbientDepthFilterEditor) editor).getTargetRevision();
+            }
+
+            if (targetRevision >= 0 && !isIgnoreExternals() && depth.isRecursive()) {
+                handleExternals(info.getAnchor().getRoot(), info.getOldExternals(), info.getNewExternals(), 
+                        info.getDepths(), url, sourceRoot, depth, false, false);
             }
             
-            dispatchEvent(SVNEventFactory.createSVNEvent(info.getTarget().getRoot(), SVNNodeKind.NONE, null, editor.getTargetRevision(), SVNEventAction.UPDATE_COMPLETED, null, null, null));
-            
-            return editor.getTargetRevision();
+            dispatchEvent(SVNEventFactory.createSVNEvent(info.getTarget().getRoot(), SVNNodeKind.NONE, null, 
+                    targetRevision, SVNEventAction.UPDATE_COMPLETED, null, null, null));
+            return targetRevision;
         } finally {
             wcAccess.close();
             sleepForTimeStamp();
@@ -1164,7 +1173,8 @@ public class SVNUpdateClient extends SVNBasicClient {
                                     throw svne;
                                 }
                             }
-                            doSwitch(target, newURL, externalDiff.newExternal.getPegRevision(), externalDiff.newExternal.getRevision(), SVNDepth.INFINITY, false);
+                            doSwitch(target, newURL, externalDiff.newExternal.getPegRevision(), 
+                                    externalDiff.newExternal.getRevision(), SVNDepth.INFINITY, false, true);
                             return;
                         }
                     }
