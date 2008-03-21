@@ -76,10 +76,6 @@ public class SVNProperties {
         myProperties.putAll(properties.myProperties);
     }
 
-    public void copyValue(SVNProperties properties, String propertyName) {
-        myProperties.put(propertyName, properties.myProperties.get(propertyName));
-    }
-
     public boolean isEmpty() {
         return myProperties.isEmpty();
     }
@@ -122,7 +118,7 @@ public class SVNProperties {
         for (Iterator propNamesIter = nameSet().iterator(); propNamesIter.hasNext();) {
             String propName = (String) propNamesIter.next();
             if (SVNProperty.isRegularProperty(propName)) {
-                result.copyValue(this, propName);
+                result.put(propName, getSVNPropertyValue(propName));
             }
         }
         return result;
@@ -152,7 +148,7 @@ public class SVNProperties {
 
         for (Iterator props = tmp.iterator(); props.hasNext();) {
             String added = (String) props.next();
-            result.copyValue(properties, added);
+            result.put(added, properties.getSVNPropertyValue(added));
         }
 
         // changed in props2

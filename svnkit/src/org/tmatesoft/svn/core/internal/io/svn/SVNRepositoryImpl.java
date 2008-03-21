@@ -773,7 +773,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     if (revisionProperties != null) {
                         for (Iterator iterator = revisionProperties.nameSet().iterator(); iterator.hasNext();) {
                             String name = (String) iterator.next();
-                            logEntryProperties.copyValue(revisionProperties, name);
+                            logEntryProperties.put(name, revisionProperties.getSVNPropertyValue(name));
                         }
                     }
 

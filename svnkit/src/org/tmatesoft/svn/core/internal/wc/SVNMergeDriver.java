@@ -2310,7 +2310,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                             .startsWith(SVNProperty.SVN_WC_PREFIX))) {
                 continue;
             }
-            result.copyValue(props1, propName);
+            result.put(propName, props1.getSVNPropertyValue(propName));
         }
         return result;
     }

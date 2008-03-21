@@ -270,10 +270,7 @@ public class SVNDiffEditor implements ISVNEditor {
                     originalProps = dir.getProperties(dir.getThisDirName()).asMap();
                     SVNProperties baseProps = dir.getBaseProperties(dir.getThisDirName()).asMap();
                     SVNProperties reposProps = new SVNProperties(baseProps);
-                    for(Iterator diffNames = diff.nameSet().iterator(); diffNames.hasNext();) {
-                        String diffName = (String) diffNames.next();
-                        reposProps.copyValue(diff, diffName);
-                    }
+                    reposProps.putAll(diff);
                     diff = computePropsDiff(originalProps, reposProps);
                     
                 }
@@ -349,10 +346,7 @@ public class SVNDiffEditor implements ISVNEditor {
         }
         SVNProperties reposProperties = new SVNProperties();
         if (myCurrentFile.myPropertyDiff != null) {
-            for(Iterator propNames = myCurrentFile.myPropertyDiff.nameSet().iterator(); propNames.hasNext();) {
-                String propName = (String) propNames.next();
-                reposProperties.copyValue(myCurrentFile.myPropertyDiff, propName);
-            }
+            reposProperties.putAll(myCurrentFile.myPropertyDiff);
         }
         String reposMimeType = reposProperties.getStringValue(SVNProperty.MIME_TYPE);
         File reposFile = myCurrentFile.myFile;
@@ -648,7 +642,7 @@ public class SVNDiffEditor implements ISVNEditor {
                 }
             } else {
                 // added.
-                propsDiff.copyValue(props2, newPropName);
+                propsDiff.put(newPropName, props2.getSVNPropertyValue(newPropName));
             }
         }
         for (Iterator names = props1.nameSet().iterator(); names.hasNext();) {
