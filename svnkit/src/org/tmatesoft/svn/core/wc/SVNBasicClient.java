@@ -303,7 +303,10 @@ public class SVNBasicClient implements ISVNEventHandler {
             } catch (SVNException e) {
                 throw e;
             } catch (Throwable th) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Error while dispatching event: {0}", th.getMessage());
+                SVNDebugLog.getDefaultLog().error(th);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
+                        "Error while dispatching event: {0}", new Object[] { th.getMessage() }, 
+                        SVNErrorMessage.TYPE_ERROR, th);
                 SVNErrorManager.error(err, th);
             }
         }
