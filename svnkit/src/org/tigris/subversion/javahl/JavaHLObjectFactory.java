@@ -13,6 +13,7 @@ package org.tigris.subversion.javahl;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -141,6 +142,13 @@ public class JavaHLObjectFactory {
         CONFLICT_REASON_CONVERSATION_MAP.put(SVNConflictReason.UNVERSIONED, new Integer(ConflictDescriptor.Reason.unversioned));
     }
 
+    public static Collection getChangeListsCollection(String[] changelists) {
+        if (changelists != null) {
+            return Arrays.asList(changelists);
+        }
+        return null;
+    }
+    
     public static Status createStatus(String path, SVNStatus status) {
         if(status == null){
             return null;

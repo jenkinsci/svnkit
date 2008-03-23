@@ -90,6 +90,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.DefaultSVNRepositoryPool;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
+import org.tmatesoft.svn.core.wc.ISVNChangelistHandler;
 import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
 import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
 import org.tmatesoft.svn.core.wc.ISVNDiffStatusHandler;
@@ -238,12 +239,14 @@ public class SVNClientImpl implements SVNClientInterface {
         return status(path, descend, onServer, getAll, noIgnore, false);
     }
 
-    public Status[] status(final String path, boolean descend, boolean onServer, boolean getAll, boolean noIgnore, boolean ignoreExternals) throws ClientException {
+    public Status[] status(final String path, boolean descend, boolean onServer, boolean getAll, 
+            boolean noIgnore, boolean ignoreExternals) throws ClientException {
         if (path == null) {
             return null;
         }
         final Collection statuses = new ArrayList();
-        status(path, JavaHLObjectFactory.unknownOrImmediates(descend), onServer, getAll, noIgnore, ignoreExternals, new ISVNStatusHandler() {
+        status(path, JavaHLObjectFactory.unknownOrImmediates(descend), onServer, getAll, noIgnore, 
+                ignoreExternals, null, new ISVNStatusHandler() {
             public void handleStatus(SVNStatus status) {
                 statuses.add(JavaHLObjectFactory.createStatus(status.getFile().getPath(), status));
             }
@@ -251,18 +254,8 @@ public class SVNClientImpl implements SVNClientInterface {
         return (Status[]) statuses.toArray(new Status[statuses.size()]);
     }
 
-    public void status(String path, int depth, boolean onServer, boolean getAll, boolean noIgnore, boolean ignoreExternals, StatusCallback callback) throws ClientException {
-        final StatusCallback statusCallback = callback;
-        status(path, depth, onServer, getAll, noIgnore, ignoreExternals, new ISVNStatusHandler() {
-            public void handleStatus(SVNStatus status) {
-                if (statusCallback != null) {
-                    statusCallback.doStatus(JavaHLObjectFactory.createStatus(status.getFile().getPath(), status));
-                }
-            }
-        });
-    }
-
-    private void status(String path, int depth, boolean onServer, boolean getAll, boolean noIgnore, boolean ignoreExternals, ISVNStatusHandler handler) throws ClientException {
+    private void status(String path, int depth, boolean onServer, boolean getAll, boolean noIgnore, 
+            boolean ignoreExternals, String[] changelists, ISVNStatusHandler handler) throws ClientException {
         if (path == null) {
             return;
         }
@@ -272,7 +265,7 @@ public class SVNClientImpl implements SVNClientInterface {
         try {
             stClient.doStatus(new File(path).getAbsoluteFile(), SVNRevision.HEAD,
                     JavaHLObjectFactory.getSVNDepth(depth), onServer, getAll, noIgnore,
-                    !ignoreExternals, handler);
+                    !ignoreExternals, handler, JavaHLObjectFactory.getChangeListsCollection(changelists));
         } catch (SVNException e) {
             throwException(e);
         } finally {
@@ -280,9 +273,16 @@ public class SVNClientImpl implements SVNClientInterface {
         }
     }
 
-    public void status(String path, int depth, boolean onServer, boolean getAll, boolean noIgnore, boolean ignoreExternals, String[] changelists, StatusCallback callback) throws ClientException {
-        notImplementedYet();
-        //TODO: Implement
+    public void status(String path, int depth, boolean onServer, boolean getAll, boolean noIgnore, 
+            boolean ignoreExternals, String[] changelists, StatusCallback callback) throws ClientException {
+        final StatusCallback statusCallback = callback;
+        status(path, depth, onServer, getAll, noIgnore, ignoreExternals, changelists, new ISVNStatusHandler() {
+            public void handleStatus(SVNStatus status) {
+                if (statusCallback != null) {
+                    statusCallback.doStatus(JavaHLObjectFactory.createStatus(status.getFile().getPath(), status));
+                }
+            }
+        });
     }
 
     public Status singleStatus(final String path, boolean onServer) throws ClientException {
@@ -510,22 +510,19 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public void revert(String path, boolean recurse) throws ClientException {
-        revert(path, JavaHLObjectFactory.infinityOrEmpty(recurse));
-    }
-
-    public void revert(String path, int depth) throws ClientException {
-        SVNWCClient client = getSVNWCClient();
-        try {
-            client.doRevert(new File[]{new File(path).getAbsoluteFile()}, JavaHLObjectFactory.getSVNDepth(depth));
-        } catch (SVNException e) {
-            throwException(e);
-        }
+        revert(path, JavaHLObjectFactory.infinityOrEmpty(recurse), null);
     }
 
 	public void revert(String path, int depth, String[] changelists)
 			throws ClientException {
-		//TODO: Implement
-		notImplementedYet();
+        SVNWCClient client = getSVNWCClient();
+        try {
+            client.doRevert(new File[] { new File(path).getAbsoluteFile() }, 
+                    JavaHLObjectFactory.getSVNDepth(depth), 
+                    JavaHLObjectFactory.getChangeListsCollection(changelists));
+        } catch (SVNException e) {
+            throwException(e);
+        }
 	}
 
     public void add(String path, boolean recurse) throws ClientException {
@@ -962,29 +959,26 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public PropertyData[] properties(String path, Revision revision, Revision pegRevision) throws ClientException {
-        return properties(path, revision, pegRevision, SVNDepth.EMPTY);
-    }
-
-    public void properties(String path, Revision revision, Revision pegRevision, int depth, ProplistCallback callback) throws ClientException {
-        if (path == null || callback == null) {
-            return;
-        }
-        PropertyData[] properties = properties(path, revision, pegRevision, JavaHLObjectFactory.getSVNDepth(depth));
-        Map propsMap = new HashMap();
-        for (int i = 0; i < properties.length; i++) {
-            propsMap.put(properties[i].getName(), properties[i].getValue());
-        }
-        callback.singlePath(path, propsMap);
+        return properties(path, revision, pegRevision, SVNDepth.EMPTY, null);
     }
 
 	public void properties(String path, Revision revision,
 			Revision pegRevision, int depth, String[] changelists,
 			ProplistCallback callback) throws ClientException {
-		//TODO: Implement
-		notImplementedYet();
+        if (path == null || callback == null) {
+            return;
+        }
+        PropertyData[] properties = properties(path, revision, pegRevision, 
+                JavaHLObjectFactory.getSVNDepth(depth), changelists);
+        Map propsMap = new HashMap();
+        for (int i = 0; i < properties.length; i++) {
+            propsMap.put(properties[i].getName(), properties[i].getValue());
+        }
+        callback.singlePath(path, propsMap);
 	}
 
-    private PropertyData[] properties(String path, Revision revision, Revision pegRevision, SVNDepth depth) throws ClientException {
+    private PropertyData[] properties(String path, Revision revision, Revision pegRevision, SVNDepth depth, 
+            String[] changelists) throws ClientException {
         if (path == null) {
             return null;
         }
@@ -996,7 +990,8 @@ public class SVNClientImpl implements SVNClientInterface {
             if (isURL(path)) {
                 client.doGetProperty(SVNURL.parseURIEncoded(path), null, svnPegRevision, svnRevision, depth, propHandler);
             } else {
-                client.doGetProperty(new File(path).getAbsoluteFile(), null, svnPegRevision, svnRevision, depth, propHandler);
+                client.doGetProperty(new File(path).getAbsoluteFile(), null, svnPegRevision, svnRevision, depth, 
+                        propHandler, JavaHLObjectFactory.getChangeListsCollection(changelists));
             }
         } catch (SVNException e) {
             throwException(e);
@@ -1009,7 +1004,8 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public void propertySet(String path, String name, byte[] value, boolean recurse, boolean force) throws ClientException {
-        propertySet(path, name, SVNPropertyValue.create(name, value), JavaHLObjectFactory.infinityOrEmpty(recurse), force);
+        propertySet(path, name, SVNPropertyValue.create(name, value), 
+                JavaHLObjectFactory.infinityOrEmpty(recurse), force, null);
     }
 
     public void propertySet(String path, String name, String value, boolean recurse) throws ClientException {
@@ -1017,45 +1013,39 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public void propertySet(String path, String name, String value, boolean recurse, boolean force) throws ClientException {
-        propertySet(path, name, value, JavaHLObjectFactory.infinityOrEmpty(recurse), force);
+        propertySet(path, name, value, JavaHLObjectFactory.infinityOrEmpty(recurse), null, force);
     }
 
-    public void propertySet(String path, String name, String value, int depth, boolean force) throws ClientException {
-        propertySet(path, name, value == null ? null : SVNPropertyValue.create(value), depth, force);
+    public void propertySet(String path, String name, String value, int depth,
+            String[] changelists, boolean force) throws ClientException {
+        propertySet(path, name, value == null ? null : SVNPropertyValue.create(value), depth, force, changelists);
     }
 
-    private void propertySet(String path, String name, SVNPropertyValue value, int depth, boolean force) throws ClientException {
+    private void propertySet(String path, String name, SVNPropertyValue value, int depth, boolean force, 
+            String[] changelists) throws ClientException {
        SVNWCClient client = getSVNWCClient();
         try {
-            client.doSetProperty(new File(path).getAbsoluteFile(), name, value, force, JavaHLObjectFactory.getSVNDepth(depth), ISVNPropertyHandler.NULL);
+            client.doSetProperty(new File(path).getAbsoluteFile(), name, value, force, 
+                    JavaHLObjectFactory.getSVNDepth(depth), ISVNPropertyHandler.NULL, 
+                    JavaHLObjectFactory.getChangeListsCollection(changelists));
         } catch (SVNException e) {
             throwException(e);
         }
     }
-
-	public void propertySet(String path, String name, String value, int depth,
-			String[] changelists, boolean force) throws ClientException {
-		//TODO: Implement
-		notImplementedYet();
-	}
 
     public void propertyRemove(String path, String name, boolean recurse) throws ClientException {
-        propertyRemove(path, name, JavaHLObjectFactory.infinityOrEmpty(recurse));
+        propertyRemove(path, name, JavaHLObjectFactory.infinityOrEmpty(recurse), null);
     }
 
-    public void propertyRemove(String path, String name, int depth) throws ClientException {
+	public void propertyRemove(String path, String name, int depth, String[] changelists) throws ClientException {
         SVNWCClient client = getSVNWCClient();
         try {
-            client.doSetProperty(new File(path).getAbsoluteFile(), name, null, false, JavaHLObjectFactory.getSVNDepth(depth), ISVNPropertyHandler.NULL);
+            client.doSetProperty(new File(path).getAbsoluteFile(), name, null, false, 
+                    JavaHLObjectFactory.getSVNDepth(depth), ISVNPropertyHandler.NULL, 
+                    JavaHLObjectFactory.getChangeListsCollection(changelists));
         } catch (SVNException e) {
             throwException(e);
         }
-    }
-
-	public void propertyRemove(String path, String name, int depth,
-			String[] changelists) throws ClientException {
-		//TODO: Implement
-		notImplementedYet();
 	}
 
     public PropertyData propertyGet(String path, String name) throws ClientException {
@@ -1667,33 +1657,28 @@ public class SVNClientImpl implements SVNClientInterface {
         }
 	}
 
-    public String[] getChangelist(String changelist, String rootPath) throws ClientException {
-        if (changelist == null || "".equals(changelist)) {
-            return new String[]{};
+    public void getChangelists(String rootPath, String[] changelists, int depth, 
+            final ChangelistCallback callback) throws ClientException {
+        if (changelists == null) {
+            return;
         }
 
+        ISVNChangelistHandler handler = new ISVNChangelistHandler() {
+            public void handle(File path, String changelistName) {
+                if (callback != null) {
+                    callback.doChangelist(path.getAbsolutePath(), changelistName);
+                }
+            }
+        };
+        
         SVNChangelistClient changelistClient = getChangelistClient();
-        File[] files = null;
         try {
-            files = changelistClient.getChangelist(new File(rootPath).getAbsoluteFile(),
-                    changelist);
+            changelistClient.getChangeLists(new File(rootPath).getAbsoluteFile(), 
+                    JavaHLObjectFactory.getChangeListsCollection(changelists), 
+                    JavaHLObjectFactory.getSVNDepth(depth), handler);
         } catch (SVNException e) {
             throwException(e);
         }
-
-        if (files != null) {
-            String[] paths = new String[files.length];
-            for (int i = 0; i < files.length; i++) {
-                paths[i] = files[i].getAbsolutePath();
-            }
-            return paths;
-        }
-        return new String[]{};
-    }
-
-    public void getChangelists(String rootPath, String[] changelists, int depth, ChangelistCallback callback) throws ClientException {
-        //TODO: fixme
-        notImplementedYet(null);
     }
 
     public long checkout(String moduleName, String destPath, Revision revision, boolean recurse) throws ClientException {
@@ -1726,34 +1711,20 @@ public class SVNClientImpl implements SVNClientInterface {
 
     public void diff(String target1, Revision revision1, String target2, Revision revision2, String outFileName,
                      boolean recurse, boolean ignoreAncestry, boolean noDiffDeleted, boolean force) throws ClientException {
-        diff(target1, revision1, target2, revision2, outFileName, JavaHLObjectFactory.infinityOrFiles(recurse), ignoreAncestry,
-                noDiffDeleted, force);
+        diff(target1, revision1, target2, revision2, null, outFileName, JavaHLObjectFactory.infinityOrFiles(recurse), 
+                null, ignoreAncestry, noDiffDeleted, force);
     }
 
     public void diff(String target, Revision pegRevision, Revision startRevision, Revision endRevision,
                      String outFileName, boolean recurse, boolean ignoreAncestry, boolean noDiffDeleted, boolean force) throws ClientException {
-        diff(target, pegRevision, startRevision, endRevision, outFileName,
-                JavaHLObjectFactory.unknownOrFiles(recurse), ignoreAncestry, noDiffDeleted, force);
+        diff(target, pegRevision, startRevision, endRevision, null, outFileName,
+                JavaHLObjectFactory.unknownOrFiles(recurse), null, ignoreAncestry, noDiffDeleted, force);
     }
 
 	public void diff(String target1, Revision revision1, String target2,
 			Revision revision2, String relativeToDir, String outFileName,
 			int depth, String[] changelists, boolean ignoreAncestry,
 			boolean noDiffDeleted, boolean force) throws ClientException {
-        //TODO: Implement
-		notImplementedYet();
-	}
-
-	public void diff(String target, Revision pegRevision,
-			Revision startRevision, Revision endRevision, String relativeToDir,
-			String outFileName, int depth, String[] changelists,
-			boolean ignoreAncestry, boolean noDiffDeleted, boolean force)
-			throws ClientException {
-        //TODO: Implement
-		notImplementedYet();
-	}
-
-    public void diff(String target1, Revision revision1, String target2, Revision revision2, String outFileName, int depth, boolean ignoreAncestry, boolean noDiffDeleted, boolean force) throws ClientException {
         SVNDiffClient differ = getSVNDiffClient();
         differ.getDiffGenerator().setDiffDeleted(!noDiffDeleted);
         differ.getDiffGenerator().setForcedBinaryDiff(force);
@@ -1765,7 +1736,8 @@ public class SVNClientImpl implements SVNClientInterface {
             if (!isURL(target1) && !isURL(target2)) {
                 differ.doDiff(new File(target1).getAbsoluteFile(), rev1,
                         new File(target2).getAbsoluteFile(), rev2,
-                        JavaHLObjectFactory.getSVNDepth(depth), !ignoreAncestry, out);
+                        JavaHLObjectFactory.getSVNDepth(depth), !ignoreAncestry, out, 
+                        JavaHLObjectFactory.getChangeListsCollection(changelists));
             } else if (isURL(target1) && isURL(target2)) {
                 SVNURL url1 = SVNURL.parseURIEncoded(target1);
                 SVNURL url2 = SVNURL.parseURIEncoded(target2);
@@ -1773,18 +1745,25 @@ public class SVNClientImpl implements SVNClientInterface {
             } else if (!isURL(target1) && isURL(target2)) {
                 SVNURL url2 = SVNURL.parseURIEncoded(target2);
                 differ.doDiff(new File(target1).getAbsoluteFile(), rev1,
-                        url2, rev2, JavaHLObjectFactory.getSVNDepth(depth), !ignoreAncestry, out);
+                        url2, rev2, JavaHLObjectFactory.getSVNDepth(depth), !ignoreAncestry, out,
+                        JavaHLObjectFactory.getChangeListsCollection(changelists));
             } else if (isURL(target1) && !isURL(target2)) {
                 SVNURL url1 = SVNURL.parseURIEncoded(target1);
-                differ.doDiff(url1, rev1, new File(target2).getAbsoluteFile(), rev2, JavaHLObjectFactory.getSVNDepth(depth), !ignoreAncestry, out);
+                differ.doDiff(url1, rev1, new File(target2).getAbsoluteFile(), rev2, 
+                        JavaHLObjectFactory.getSVNDepth(depth), !ignoreAncestry, out, 
+                        JavaHLObjectFactory.getChangeListsCollection(changelists));
             }
             SVNFileUtil.closeFile(out);
         } catch (SVNException e) {
             throwException(e);
         }
-    }
+	}
 
-    public void diff(String target, Revision pegRevision, Revision startRevision, Revision endRevision, String outFileName, int depth, boolean ignoreAncestry, boolean noDiffDeleted, boolean force) throws ClientException {
+	public void diff(String target, Revision pegRevision,
+			Revision startRevision, Revision endRevision, String relativeToDir,
+			String outFileName, int depth, String[] changelists,
+			boolean ignoreAncestry, boolean noDiffDeleted, boolean force)
+			throws ClientException {
         SVNDiffClient differ = getSVNDiffClient();
         differ.getDiffGenerator().setDiffDeleted(!noDiffDeleted);
         differ.getDiffGenerator().setForcedBinaryDiff(force);
@@ -1798,14 +1777,15 @@ public class SVNClientImpl implements SVNClientInterface {
                 SVNURL url = SVNURL.parseURIEncoded(target);
                 differ.doDiff(url, peg, rev1, rev2, JavaHLObjectFactory.getSVNDepth(depth), !ignoreAncestry, out);
             } else {
-                differ.doDiff(new File(target).getAbsoluteFile(), peg, rev1, rev2, JavaHLObjectFactory.getSVNDepth(depth), !ignoreAncestry, out);
+                differ.doDiff(new File(target).getAbsoluteFile(), peg, rev1, rev2, 
+                        JavaHLObjectFactory.getSVNDepth(depth), !ignoreAncestry, out,
+                        JavaHLObjectFactory.getChangeListsCollection(changelists));
             }
             SVNFileUtil.closeFile(out);
         } catch (SVNException e) {
             throwException(e);
         }
-
-    }
+	}
 
     public void diffSummarize(String target1, Revision revision1, String target2, Revision revision2, int depth, boolean ignoreAncestry, final DiffSummaryReceiver receiver) throws ClientException {
         SVNDiffClient differ = getSVNDiffClient();

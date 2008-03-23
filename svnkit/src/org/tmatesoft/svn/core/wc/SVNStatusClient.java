@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -204,11 +205,13 @@ public class SVNStatusClient extends SVNBasicClient {
      * @throws SVNException
      */
     public long doStatus(File path, SVNRevision revision, boolean recursive, boolean remote, boolean reportAll, boolean includeIgnored, boolean collectParentExternals, final ISVNStatusHandler handler) throws SVNException {
-        return doStatus(path, revision, SVNDepth.fromRecurse(recursive), remote, reportAll, includeIgnored, collectParentExternals, handler);
+        return doStatus(path, revision, SVNDepth.fromRecurse(recursive), remote, reportAll, includeIgnored, 
+                collectParentExternals, handler, null);
     }
     
     public long doStatus(File path, SVNRevision revision, SVNDepth depth, boolean remote, boolean reportAll, 
-            boolean includeIgnored, boolean collectParentExternals, final ISVNStatusHandler handler) throws SVNException {
+            boolean includeIgnored, boolean collectParentExternals, final ISVNStatusHandler handler, 
+            final Collection changeLists) throws SVNException {
         if (handler == null) {
             return -1;
         }
@@ -222,6 +225,9 @@ public class SVNStatusClient extends SVNBasicClient {
                 if (deletedInRepository[0] && status.getEntry() != null) {
                     status.setRemoteStatus(SVNStatusType.STATUS_DELETED, null, null, null);
                 } 
+                if (!SVNWCAccess.matchesChangeList(changeLists, status.getEntry())) {
+                    return;
+                }
                 handler.handleStatus(status);
             }
         };
@@ -264,12 +270,14 @@ public class SVNStatusClient extends SVNBasicClient {
                     if (!entry.isScheduledForAddition()) {
                         deletedInRepository[0] = true;
                     }
-                    editor = new SVNStatusEditor(getOptions(), wcAccess, info, includeIgnored, reportAll, depth, realHandler);
+                    editor = new SVNStatusEditor(getOptions(), wcAccess, info, includeIgnored, reportAll, depth, 
+                            realHandler);
 //                    editor.setExternals(externals);
                     checkCancelled();
                     editor.closeEdit();
                 } else {
-                    editor = new SVNRemoteStatusEditor(getOptions(), wcAccess, info, includeIgnored, reportAll, depth, realHandler);
+                    editor = new SVNRemoteStatusEditor(getOptions(), wcAccess, info, includeIgnored, reportAll, 
+                            depth, realHandler);
 //                    editor.setExternals(externals);
                     // session is closed in SVNStatusReporter.
                     SVNRepository locksRepos = createRepository(url, false);                    
@@ -290,7 +298,7 @@ public class SVNStatusClient extends SVNBasicClient {
 //                editor.setExternals(externals);
                 editor.closeEdit();
             }         
-            if (!isIgnoreExternals() && depth == SVNDepth.INFINITY) {
+            if (!isIgnoreExternals() && (depth == SVNDepth.INFINITY || depth == SVNDepth.UNKNOWN)) {
                 // iterate over externals that were collected in SVNAdminAreaInfo.
                 Map externalsMap = info.getNewExternals();
                 for (Iterator paths = externalsMap.keySet().iterator(); paths.hasNext();) {
@@ -318,7 +326,8 @@ public class SVNStatusClient extends SVNBasicClient {
                                     ISVNEventHandler.UNKNOWN);
                         setEventPathPrefix(externalPath);
                         try {
-                            doStatus(externalFile, SVNRevision.HEAD, depth, remote, reportAll, includeIgnored, false, handler);
+                            doStatus(externalFile, SVNRevision.HEAD, depth, remote, reportAll, includeIgnored, 
+                                    false, handler, null);
                         } catch (SVNException e) {
                             if (e instanceof SVNCancelException) {
                                 throw e;

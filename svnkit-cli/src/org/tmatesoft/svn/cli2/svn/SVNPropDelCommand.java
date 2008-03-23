@@ -25,7 +25,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
-import org.tmatesoft.svn.core.wc.SVNChangelistClient;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
@@ -49,7 +48,6 @@ public class SVNPropDelCommand extends SVNPropertiesCommand {
         options.add(SVNOption.REVISION);
         options.add(SVNOption.REVPROP);
         options.add(SVNOption.CHANGELIST);
-        
         return options;
     }
 
@@ -61,16 +59,6 @@ public class SVNPropDelCommand extends SVNPropertiesCommand {
         }
 
         Collection targets = new ArrayList(); 
-        if (getSVNEnvironment().getChangelist() != null) {
-            SVNPath target = new SVNPath("");
-            SVNChangelistClient changelistClient = getSVNEnvironment().getClientManager().getChangelistClient();
-            changelistClient.getChangelist(target.getFile(), getSVNEnvironment().getChangelist(), targets);
-            if (targets.isEmpty()) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN_CHANGELIST, 
-                        "Unknown changelist ''{0}''", getSVNEnvironment().getChangelist());
-                SVNErrorManager.error(err);
-            }
-        }
         if (getSVNEnvironment().getTargets() != null) {
             targets.addAll(getSVNEnvironment().getTargets());
         }
@@ -91,6 +79,8 @@ public class SVNPropDelCommand extends SVNPropertiesCommand {
             if (depth == SVNDepth.UNKNOWN) {
                 depth = SVNDepth.EMPTY;
             }
+
+            Collection changeLists = getSVNEnvironment().getChangelistsCollection();
             SVNWCClient client = getSVNEnvironment().getClientManager().getWCClient();
             for (Iterator ts = targets.iterator(); ts.hasNext();) {
                 String targetName = (String) ts.next();
@@ -99,7 +89,8 @@ public class SVNPropDelCommand extends SVNPropertiesCommand {
                     boolean success = true;
                     try {
                         if (target.isFile()){
-                            client.doSetProperty(target.getFile(), propertyName, null, getSVNEnvironment().isForce(), depth, this);                                
+                            client.doSetProperty(target.getFile(), propertyName, null, 
+                                    getSVNEnvironment().isForce(), depth, this, changeLists);                                
                         } else {
                             client.setCommitHandler(getSVNEnvironment());
                             client.doSetProperty(target.getURL(), propertyName, null, SVNRevision.HEAD, getSVNEnvironment().getMessage(),

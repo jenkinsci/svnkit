@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -61,9 +62,11 @@ public class SVNDiffEditor implements ISVNEditor {
     private SVNDepth myDepth;
     private File myTempDirectory;
     private AbstractDiffCallback myDiffCallback;
-
+    private Collection myChangeLists;
+    
     public SVNDiffEditor(SVNWCAccess wcAccess, SVNAdminAreaInfo info, AbstractDiffCallback callback,
-            boolean useAncestry, boolean reverseDiff, boolean compareToBase, SVNDepth depth) {
+            boolean useAncestry, boolean reverseDiff, boolean compareToBase, SVNDepth depth,
+            Collection changeLists) {
         myWCAccess = wcAccess;
         myAdminInfo = info;
         myUseAncestry = useAncestry;
@@ -71,6 +74,7 @@ public class SVNDiffEditor implements ISVNEditor {
         myDepth = depth;
         myIsCompareToBase = compareToBase;
         myDiffCallback = callback;
+        myChangeLists = changeLists != null ? changeLists : Collections.EMPTY_LIST;
         myDeltaProcessor = new SVNDeltaProcessor();
     }
 
@@ -111,15 +115,18 @@ public class SVNDiffEditor implements ISVNEditor {
     
     private void reportAddedDir(SVNDirectoryInfo info) throws SVNException {
         SVNAdminArea dir = retrieve(info.myPath);
-        SVNProperties wcProps;
-        if (myIsCompareToBase) {
-            wcProps = dir.getBaseProperties(dir.getThisDirName()).asMap();
-        } else {
-            wcProps = dir.getProperties(dir.getThisDirName()).asMap();
-        }
-        SVNProperties propDiff = computePropsDiff(new SVNProperties(), wcProps);
-        if (!propDiff.isEmpty()) {
-            getDiffCallback().propertiesChanged(info.myPath, null, propDiff);
+        SVNEntry thisDirEntry = dir.getEntry(dir.getThisDirName(), false);
+        if (SVNWCAccess.matchesChangeList(myChangeLists, thisDirEntry)) {
+            SVNProperties wcProps;
+            if (myIsCompareToBase) {
+                wcProps = dir.getBaseProperties(dir.getThisDirName()).asMap();
+            } else {
+                wcProps = dir.getProperties(dir.getThisDirName()).asMap();
+            }
+            SVNProperties propDiff = computePropsDiff(new SVNProperties(), wcProps);
+            if (!propDiff.isEmpty()) {
+                getDiffCallback().propertiesChanged(info.myPath, null, propDiff);
+            }
         }
         for(Iterator entries = dir.entries(false); entries.hasNext();) {
             SVNEntry entry = (SVNEntry) entries.next();
@@ -149,6 +156,10 @@ public class SVNDiffEditor implements ISVNEditor {
     }
 
     private void reportAddedFile(SVNDirectoryInfo info, String path, SVNEntry entry) throws SVNException {
+        if (!SVNWCAccess.matchesChangeList(myChangeLists, entry)) {
+            return;
+        }
+        
         if (entry.isCopied()) {
             if (myIsCompareToBase) {
                 return;
@@ -178,6 +189,9 @@ public class SVNDiffEditor implements ISVNEditor {
     
     private void reportModifiedFile(SVNDirectoryInfo dirInfo, SVNEntry entry) throws SVNException {
         SVNAdminArea dir = retrieve(dirInfo.myPath);
+        if (!SVNWCAccess.matchesChangeList(myChangeLists, entry)) {
+            return;
+        }
         String schedule = entry.getSchedule();
         String fileName = entry.getName();
         if (entry.isCopied()) {
@@ -432,7 +446,9 @@ public class SVNDiffEditor implements ISVNEditor {
         }
         SVNAdminArea dir = retrieve(info.myPath);
         boolean anchor = !"".equals(myAdminInfo.getTargetName()) && dir == myAdminInfo.getAnchor();
-        if (!anchor && !info.myComparedEntries.contains("")) {
+        SVNEntry thisDirEntry = dir.getEntry(dir.getThisDirName(), false);
+        if (SVNWCAccess.matchesChangeList(myChangeLists, thisDirEntry) && !anchor && 
+                !info.myComparedEntries.contains("")) {
             // generate prop diff for dir.
             if (dir.hasPropModifications(dir.getThisDirName())) {
                 SVNVersionedProperties baseProps = dir.getBaseProperties(dir.getThisDirName());

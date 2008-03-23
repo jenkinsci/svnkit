@@ -435,7 +435,7 @@ public class SVNWCManager {
                     SVNErrorManager.error(err);
                 }
             }
-        });
+        }, null);
     }
 
     public static void delete(SVNWCAccess wcAccess, SVNAdminArea root, File path, boolean deleteFiles, boolean cancellable) throws SVNException {

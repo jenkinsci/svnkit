@@ -13,10 +13,10 @@ package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNDepth;
@@ -57,85 +57,49 @@ public class SVNChangelistClient extends SVNBasicClient {
         setChangelist(paths, null, changelists, depth);
     }
     
-    public File[] getChangelist(File path, final String changelistName) throws SVNException {
-        Collection paths = getChangelist(path, changelistName, (Collection) null);
-        return paths != null ? (File[]) paths.toArray(new File[paths.size()]) : null;
-    }
-    
-    public Collection getChangelist(File path, final String changelistName, Collection changelistTargets) throws SVNException {
-        if (changelistName == null) {
-            return null;
+    public void getChangeListPaths(Collection changeLists, Collection targets, SVNDepth depth, 
+            ISVNChangelistHandler handler) throws SVNException {
+        if (changeLists == null || changeLists.isEmpty()) {
+            return;
         }
-        changelistTargets = changelistTargets == null ? new LinkedList() : changelistTargets;
-        final Collection paths = changelistTargets;
-        ISVNChangelistHandler handler = new ISVNChangelistHandler() {
-            public void handle(File path, String changelist) {
-                if (changelistName.equals(changelist)) {
-                    paths.add(path);
-                }
-            }
-        };
-        getChangelist(path, changelistName, handler);
-        return paths;
+        
+        targets = targets == null ? Collections.EMPTY_LIST : targets;
+        for (Iterator targetsIter = targets.iterator(); targetsIter.hasNext();) {
+            File target = (File) targetsIter.next();
+            getChangeLists(target, changeLists, depth, handler);
+        }
     }
     
-    public void getChangelist(File path, final String changelistName, ISVNChangelistHandler handler) throws SVNException {
+    public void getChangeLists(File path, final Collection changeLists, SVNDepth depth, 
+            final ISVNChangelistHandler handler) throws SVNException {
         path = path.getAbsoluteFile();
         SVNWCAccess wcAccess = createWCAccess();
         try {
-            SVNAdminArea adminArea = wcAccess.probeOpen(path, false, SVNWCAccess.INFINITE_DEPTH);
-            SVNEntry entry = wcAccess.getVersionedEntry(path, false);
-            if (entry.isFile()) {
-                foundEntry(adminArea, entry, changelistName, handler);
-            } else if (entry.isDirectory()) {
-                retrieveChangelists(adminArea, changelistName, handler);
-            } else {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "''{0}'' has an unrecognized node kind", path);
-                SVNErrorManager.error(err);
-            }
+            wcAccess.probeOpen(path, false, SVNWCAccess.INFINITE_DEPTH);
+            
+            ISVNEntryHandler entryHandler = new ISVNEntryHandler() {
+                
+                public void handleEntry(File path, SVNEntry entry) throws SVNException {
+                    if (SVNWCAccess.matchesChangeList(changeLists, entry) && 
+                            (entry.isFile() || (entry.isDirectory() && 
+                                    entry.getName().equals(entry.getAdminArea().getThisDirName())))) {
+                        if (handler != null) {
+                            handler.handle(path, entry.getChangelistName());
+                        }
+                    }
+                }
+            
+                public void handleError(File path, SVNErrorMessage error) throws SVNException {
+                    SVNErrorManager.error(error);
+                }
+            };
+            
+            wcAccess.walkEntries(path, entryHandler, false, depth);
         } finally {
             wcAccess.close();
         }
     }
-    
-    private void foundEntry(SVNAdminArea adminArea, SVNEntry entry, String changelistName, ISVNChangelistHandler handler) {
-        if (entry.getChangelistName() != null && 
-                entry.getChangelistName().equals(changelistName)) {
-            if (entry.isFile() || (entry.isDirectory() && 
-                    entry.getName().equals(adminArea.getThisDirName()))) {
-                if (handler != null) {
-                    handler.handle(adminArea.getFile(entry.getName()), changelistName);
-                }
-            }
-        }
-    }
-    
-    private void retrieveChangelists(SVNAdminArea adminArea, String changelistName, ISVNChangelistHandler handler) throws SVNException {
-        SVNEntry thisEntry = adminArea.getEntry(adminArea.getThisDirName(), false);
-        if (thisEntry == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, 
-                    "Directory ''{0}'' has no THIS_DIR entry", adminArea.getRoot());
-            SVNErrorManager.error(err);
-        }
-        
-        foundEntry(adminArea, thisEntry, changelistName, handler);
-        
-        for (Iterator entries = adminArea.entries(false); entries.hasNext();) {
-            checkCancelled();
-            SVNEntry entry = (SVNEntry) entries.next();
-            if (entry.getName().equals(adminArea.getThisDirName())) {
-                continue;
-            }
-            
-            foundEntry(adminArea, entry, changelistName, handler);
-            
-            if (entry.isDirectory()) {
-                SVNAdminArea entryArea = adminArea.getWCAccess().retrieve(adminArea.getFile(entry.getName()));
-                retrieveChangelists(entryArea, changelistName, handler);
-            }
-        }
-    }
-    
+
     private void setChangelist(File[] paths, String changelistName, String[] changelists, SVNDepth depth) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess();
         for (int i = 0; i < paths.length; i++) {

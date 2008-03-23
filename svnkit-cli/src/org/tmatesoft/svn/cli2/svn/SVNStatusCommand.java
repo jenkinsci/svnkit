@@ -27,7 +27,6 @@ import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
-import org.tmatesoft.svn.core.wc.SVNChangelistClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusClient;
@@ -64,16 +63,6 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
 
     public void run() throws SVNException {
         Collection targets = new ArrayList(); 
-        if (getSVNEnvironment().getChangelist() != null) {
-            SVNPath target = new SVNPath("");
-            SVNChangelistClient changelistClient = getSVNEnvironment().getClientManager().getChangelistClient();
-            changelistClient.getChangelist(target.getFile(), getSVNEnvironment().getChangelist(), targets);
-            if (targets.isEmpty()) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN_CHANGELIST, 
-                        "Unknown changelist ''{0}''", getSVNEnvironment().getChangelist());
-                SVNErrorManager.error(err);
-            }
-        }
         targets = getSVNEnvironment().combineTargets(targets, true);
         if (targets.isEmpty()) {
             targets.add("");
@@ -91,6 +80,8 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "'incremental' option only valid in XML mode");
             SVNErrorManager.error(err);
         }
+
+        Collection changeLists = getSVNEnvironment().getChangelistsCollection();
         for (Iterator ts = targets.iterator(); ts.hasNext();) {
             String target = (String) ts.next();
             SVNPath commandTarget = new SVNPath(target);
@@ -104,7 +95,7 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
                 long rev = client.doStatus(commandTarget.getFile(), SVNRevision.HEAD,
                         getSVNEnvironment().getDepth(), getSVNEnvironment().isUpdate(),
                         getSVNEnvironment().isVerbose(), getSVNEnvironment().isNoIgnore(),
-                        false, this);
+                        false, this, changeLists);
 
                 if (getSVNEnvironment().isXML()) {
                     StringBuffer xmlBuffer = new StringBuffer();

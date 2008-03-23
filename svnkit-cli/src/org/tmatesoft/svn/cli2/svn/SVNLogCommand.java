@@ -36,7 +36,6 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.wc.SVNChangelistClient;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -92,15 +91,6 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
         }
         
         List targets = new ArrayList(); 
-        if (getSVNEnvironment().getChangelist() != null) {
-            SVNPath target = new SVNPath("");
-            SVNChangelistClient changelistClient = getSVNEnvironment().getClientManager().getChangelistClient();
-            changelistClient.getChangelist(target.getFile(), getSVNEnvironment().getChangelist(), targets);
-            if (targets.isEmpty()) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "no such changelist ''{0}''", getSVNEnvironment().getChangelist());
-                SVNErrorManager.error(err);
-            }
-        }
         if (getSVNEnvironment().getTargets() != null) {
             targets.addAll(getSVNEnvironment().getTargets());
         }

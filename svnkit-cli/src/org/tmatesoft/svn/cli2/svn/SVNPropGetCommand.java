@@ -29,7 +29,6 @@ import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
-import org.tmatesoft.svn.core.wc.SVNChangelistClient;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
@@ -70,16 +69,6 @@ public class SVNPropGetCommand extends SVNPropertiesCommand {
         }
 
         Collection targets = new ArrayList(); 
-        if (getSVNEnvironment().getChangelist() != null) {
-            SVNPath target = new SVNPath("");
-            SVNChangelistClient changelistClient = getSVNEnvironment().getClientManager().getChangelistClient();
-            changelistClient.getChangelist(target.getFile(), getSVNEnvironment().getChangelist(), targets);
-            if (targets.isEmpty()) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN_CHANGELIST, 
-                        "Unknown changelist ''{0}''", getSVNEnvironment().getChangelist());
-                SVNErrorManager.error(err);
-            }
-        }
         targets = getSVNEnvironment().combineTargets(targets, true);
         if (targets.isEmpty()) {
             targets.add("");
@@ -123,6 +112,8 @@ public class SVNPropGetCommand extends SVNPropertiesCommand {
             if (depth == SVNDepth.UNKNOWN) {
                 depth = SVNDepth.EMPTY;
             }
+
+            Collection changeLists = getSVNEnvironment().getChangelistsCollection();
             SVNWCClient client = getSVNEnvironment().getClientManager().getWCClient();
             for (Iterator ts = targets.iterator(); ts.hasNext();) {
                 String targetPath = (String) ts.next();
@@ -130,11 +121,15 @@ public class SVNPropGetCommand extends SVNPropertiesCommand {
                 SVNRevision pegRevision = target.getPegRevision();
                 boolean printFileNames = false;
                 if (target.isURL()) {
-                    client.doGetProperty(target.getURL(), propertyName, pegRevision, getSVNEnvironment().getStartRevision(), depth.isRecursive(), this);
-                    printFileNames = !getSVNEnvironment().isStrict() && (depth.isRecursive() || targets.size() > 1 || getURLProperties().size() > 1); 
+                    client.doGetProperty(target.getURL(), propertyName, pegRevision, 
+                            getSVNEnvironment().getStartRevision(), depth, this);
+                    printFileNames = !getSVNEnvironment().isStrict() && (depth.compareTo(SVNDepth.EMPTY) > 0 || 
+                            targets.size() > 1 || getURLProperties().size() > 1); 
                 } else {
-                    client.doGetProperty(target.getFile(), propertyName, pegRevision, getSVNEnvironment().getStartRevision(), depth.isRecursive(), this);
-                    printFileNames = !getSVNEnvironment().isStrict() && (depth.isRecursive() || targets.size() > 1 || getPathProperties().size() > 1); 
+                    client.doGetProperty(target.getFile(), propertyName, pegRevision, 
+                            getSVNEnvironment().getStartRevision(), depth, this, changeLists);
+                    printFileNames = !getSVNEnvironment().isStrict() && (depth.compareTo(SVNDepth.EMPTY) > 0 || 
+                            targets.size() > 1 || getPathProperties().size() > 1); 
                 }
                 if (!getSVNEnvironment().isXML()) {
                     printCollectedProperties(printFileNames, target.isURL());

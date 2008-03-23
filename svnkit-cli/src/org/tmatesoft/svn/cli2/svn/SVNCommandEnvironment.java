@@ -538,6 +538,10 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         return null;
     }
 
+    public Collection getChangelistsCollection() {
+        return myChangelists;
+    }
+
     public SVNDepth getDepth() {
         return myDepth;
     }

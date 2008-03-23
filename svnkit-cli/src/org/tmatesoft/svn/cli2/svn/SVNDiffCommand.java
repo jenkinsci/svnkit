@@ -31,7 +31,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.ISVNDiffStatusHandler;
-import org.tmatesoft.svn.core.wc.SVNChangelistClient;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNDiffStatus;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -82,16 +81,6 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
             getSVNEnvironment().getOut().print(buffer.toString());
         }
         List targets = new ArrayList(); 
-        if (getSVNEnvironment().getChangelist() != null) {
-            SVNPath target = new SVNPath("");
-            SVNChangelistClient changelistClient = getSVNEnvironment().getClientManager().getChangelistClient();
-            changelistClient.getChangelist(target.getFile(), getSVNEnvironment().getChangelist(), targets);
-            if (targets.isEmpty()) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN_CHANGELIST, 
-                        "Unknown changelist ''{0}''", getSVNEnvironment().getChangelist());
-                SVNErrorManager.error(err);
-            }
-        }
         if (getSVNEnvironment().getTargets() != null) {
             targets.addAll(getSVNEnvironment().getTargets());
         }
@@ -190,6 +179,7 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
         client.setDiffGenerator(diffGenerator);
         
         PrintStream ps = getSVNEnvironment().getOut();
+        Collection changeLists = getSVNEnvironment().getChangelistsCollection();
         for(int i = 0; i < targets.size(); i++) {
             String targetName = (String) targets.get(i);
             if (!peggedDiff) {
@@ -207,13 +197,20 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
                     }
                 } else {
                     if (target1.isURL() && target2.isURL()) {
-                        client.doDiff(target1.getURL(), start, target2.getURL(), end, getSVNEnvironment().getDepth(), getSVNEnvironment().isNoticeAncestry(), ps);
+                        client.doDiff(target1.getURL(), start, target2.getURL(), end, 
+                                getSVNEnvironment().getDepth(), getSVNEnvironment().isNoticeAncestry(), ps);
                     } else if (target1.isURL()) {
-                        client.doDiff(target1.getURL(), start, target2.getFile(), end, getSVNEnvironment().getDepth(), getSVNEnvironment().isNoticeAncestry(), ps);
+                        client.doDiff(target1.getURL(), start, target2.getFile(), end, 
+                                getSVNEnvironment().getDepth(), getSVNEnvironment().isNoticeAncestry(), ps, 
+                                changeLists);
                     } else if (target2.isURL()) {
-                        client.doDiff(target1.getFile(), start, target2.getURL(), end, getSVNEnvironment().getDepth(), getSVNEnvironment().isNoticeAncestry(), ps);
+                        client.doDiff(target1.getFile(), start, target2.getURL(), end, 
+                                getSVNEnvironment().getDepth(), getSVNEnvironment().isNoticeAncestry(), ps,
+                                changeLists);
                     } else {
-                        client.doDiff(target1.getFile(), start, target2.getFile(), end, getSVNEnvironment().getDepth(), getSVNEnvironment().isNoticeAncestry(), ps);
+                        client.doDiff(target1.getFile(), start, target2.getFile(), end, 
+                                getSVNEnvironment().getDepth(), getSVNEnvironment().isNoticeAncestry(), ps,
+                                changeLists);
                     }
                 }
             } else {
@@ -230,9 +227,11 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
                     }
                 } else {
                     if (target.isURL()) {
-                        client.doDiff(target.getURL(), pegRevision, start, end, getSVNEnvironment().getDepth(), getSVNEnvironment().isNoticeAncestry(), ps);
+                        client.doDiff(target.getURL(), pegRevision, start, end, getSVNEnvironment().getDepth(), 
+                                getSVNEnvironment().isNoticeAncestry(), ps);
                     } else {
-                        client.doDiff(target.getFile(), pegRevision, start, end, getSVNEnvironment().getDepth(), getSVNEnvironment().isNoticeAncestry(), ps);
+                        client.doDiff(target.getFile(), pegRevision, start, end, getSVNEnvironment().getDepth(), 
+                                getSVNEnvironment().isNoticeAncestry(), ps, changeLists);
                     }
                 }
             }

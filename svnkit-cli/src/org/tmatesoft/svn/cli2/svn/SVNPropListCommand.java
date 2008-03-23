@@ -23,13 +23,10 @@ import java.util.Map;
 import org.tmatesoft.svn.cli2.SVNCommandUtil;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
-import org.tmatesoft.svn.core.wc.SVNChangelistClient;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
@@ -60,16 +57,6 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
 
     public void run() throws SVNException {
         Collection targets = new ArrayList(); 
-        if (getSVNEnvironment().getChangelist() != null) {
-            SVNPath target = new SVNPath("");
-            SVNChangelistClient changelistClient = getSVNEnvironment().getClientManager().getChangelistClient();
-            changelistClient.getChangelist(target.getFile(), getSVNEnvironment().getChangelist(), targets);
-            if (targets.isEmpty()) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN_CHANGELIST, 
-                        "Unknown changelist ''{0}''", getSVNEnvironment().getChangelist());
-                SVNErrorManager.error(err);
-            }
-        }
         targets = getSVNEnvironment().combineTargets(targets, true);
         if (targets.isEmpty()) {
             targets.add("");
@@ -123,6 +110,8 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
             if (depth == SVNDepth.UNKNOWN) {
                 depth = SVNDepth.EMPTY;
             }
+            
+            Collection changeLists = getSVNEnvironment().getChangelistsCollection();
             SVNWCClient client = getSVNEnvironment().getClientManager().getWCClient();
             for (Iterator ts = targets.iterator(); ts.hasNext();) {
                 String targetPath = (String) ts.next();
@@ -132,7 +121,8 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
                     if (target.isURL()) {
                         client.doGetProperty(target.getURL(), null, pegRevision, getSVNEnvironment().getStartRevision(), depth, this);
                     } else {
-                        client.doGetProperty(target.getFile(), null, pegRevision, getSVNEnvironment().getStartRevision(), depth, this);
+                        client.doGetPropertyList(target.getFile(), null, pegRevision, 
+                                getSVNEnvironment().getStartRevision(), depth, this, changeLists);
                     }
                 } catch (SVNException e) {
                     getSVNEnvironment().handleWarning(e.getErrorMessage(), 

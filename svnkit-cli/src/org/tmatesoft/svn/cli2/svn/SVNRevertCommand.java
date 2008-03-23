@@ -26,7 +26,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
-import org.tmatesoft.svn.core.wc.SVNChangelistClient;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 
@@ -52,16 +51,6 @@ public class SVNRevertCommand extends SVNCommand {
 
     public void run() throws SVNException {
         List targets = getSVNEnvironment().combineTargets(getSVNEnvironment().getTargets(), true);
-        if (getSVNEnvironment().getChangelist() != null) {
-            SVNPath target = new SVNPath("");
-            SVNChangelistClient changelistClient = getSVNEnvironment().getClientManager().getChangelistClient();
-            changelistClient.getChangelist(target.getFile(), getSVNEnvironment().getChangelist(), targets);
-            if (targets.isEmpty()) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN_CHANGELIST, 
-                        "Unknown changelist ''{0}''", getSVNEnvironment().getChangelist());
-                SVNErrorManager.error(err);
-            }
-        }
         if (targets.isEmpty()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS));
         }
@@ -87,9 +76,11 @@ public class SVNRevertCommand extends SVNCommand {
                 pathsList.add(target.getFile());
             }
         }
+        
+        Collection changeLists = getSVNEnvironment().getChangelistsCollection();
         File[] paths = (File[]) pathsList.toArray(new File[pathsList.size()]);
         try {
-            client.doRevert(paths, depth);
+            client.doRevert(paths, depth, changeLists);
         } catch (SVNException e) {
             SVNErrorMessage err = e.getErrorMessage();
             if (!depth.isRecursive() && err.getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {

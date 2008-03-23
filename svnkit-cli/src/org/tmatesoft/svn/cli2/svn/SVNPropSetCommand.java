@@ -28,7 +28,6 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
-import org.tmatesoft.svn.core.wc.SVNChangelistClient;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
@@ -108,15 +107,6 @@ public class SVNPropSetCommand extends SVNPropertiesCommand {
         }
 
         Collection targets = new ArrayList();
-        if (getSVNEnvironment().getChangelist() != null) {
-            SVNPath target = new SVNPath("");
-            SVNChangelistClient changelistClient = getSVNEnvironment().getClientManager().getChangelistClient();
-            changelistClient.getChangelist(target.getFile(), getSVNEnvironment().getChangelist(), targets);
-            if (targets.isEmpty()) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "no such changelist ''{0}''", getSVNEnvironment().getChangelist());
-                SVNErrorManager.error(err);
-            }
-        }
         if (getSVNEnvironment().getTargets() != null) {
             targets.addAll(getSVNEnvironment().getTargets());
         }
@@ -148,6 +138,8 @@ public class SVNPropSetCommand extends SVNPropertiesCommand {
                     SVNErrorManager.error(err);
                 }
             }
+            
+            Collection changeLists = getSVNEnvironment().getChangelistsCollection();
             SVNWCClient client = getSVNEnvironment().getClientManager().getWCClient();
             for (Iterator ts = targets.iterator(); ts.hasNext();) {
                 String targetName = (String) ts.next();
@@ -157,7 +149,7 @@ public class SVNPropSetCommand extends SVNPropertiesCommand {
                     try {
                         if (target.isFile()) {
                             client.doSetProperty(target.getFile(), propertyName, propertyValue,
-                                    getSVNEnvironment().isForce(), depth, this);
+                                    getSVNEnvironment().isForce(), depth, this, changeLists);
                         } else {
                             client.setCommitHandler(getSVNEnvironment());
                             client.doSetProperty(target.getURL(), propertyName, propertyValue, SVNRevision.HEAD, getSVNEnvironment().getMessage(),
