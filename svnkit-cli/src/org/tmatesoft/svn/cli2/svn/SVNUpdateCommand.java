@@ -74,13 +74,14 @@ public class SVNUpdateCommand extends SVNCommand {
                 clDepth = SVNDepth.INFINITY;
             }
             SVNChangelistClient changelistClient = getSVNEnvironment().getClientManager().getChangelistClient();
-            final List targetPaths = targets; 
+            final List targetPaths = new LinkedList(); 
             ISVNChangelistHandler handler = new ISVNChangelistHandler() {
                 public void handle(File path, String changelistName) {
                     targetPaths.add(path.getAbsolutePath());
                 }
             };
             changelistClient.getChangeListPaths(changeLists, fileTargets, clDepth, handler);
+            targets = targetPaths;
         }
         
         SVNUpdateClient client = getSVNEnvironment().getClientManager().getUpdateClient();

@@ -1451,10 +1451,7 @@ public class SVNWCClient extends SVNBasicClient {
                 path = path.getAbsoluteFile();
                 SVNWCAccess wcAccess = createWCAccess();
                 try {
-                    int admLockLevel = SVNWCAccess.INFINITE_DEPTH;
-                    if (depth == SVNDepth.EMPTY || depth == SVNDepth.FILES) {
-                        admLockLevel = 0;
-                    }
+                    int admLockLevel = getLevelsToLockFromDepth(depth);
                     SVNAdminAreaInfo info = wcAccess.openAnchor(path, true, admLockLevel);
                     SVNEntry entry = wcAccess.getEntry(path, false);
                     if (entry != null && entry.isDirectory() && entry.isScheduledForAddition()) {
@@ -1575,11 +1572,14 @@ public class SVNWCClient extends SVNBasicClient {
         if (entry.getKind() == SVNNodeKind.DIR && depth.compareTo(SVNDepth.EMPTY) > 0) {
             SVNDepth depthBelowHere = depth;
             if (depth == SVNDepth.FILES || depth == SVNDepth.IMMEDIATES) {
-                depth = SVNDepth.EMPTY;
+                depthBelowHere = SVNDepth.EMPTY;
             }
             for (Iterator entries = dir.entries(false); entries.hasNext();) {
                 SVNEntry childEntry = (SVNEntry) entries.next();
                 if (dir.getThisDirName().equals(childEntry.getName())) {
+                    continue;
+                }
+                if (depth == SVNDepth.FILES && !childEntry.isFile()) {
                     continue;
                 }
                 File childPath = new File(path, childEntry.getName());
