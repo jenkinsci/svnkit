@@ -569,7 +569,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         for (Iterator paths = deleted.keySet().iterator(); paths.hasNext();) {
             String path = (String) paths.next();
             SVNMergeRangeList rangeList = (SVNMergeRangeList) deleted.get(path);
-            baos.write(("   Reverted " + path + ":r").getBytes(getEncoding())); 
+            baos.write(("   Reverse-merged " + path + ":r").getBytes(getEncoding())); 
             baos.write(rangeList.toString().getBytes(getEncoding()));
             baos.write(getEOL());
         }

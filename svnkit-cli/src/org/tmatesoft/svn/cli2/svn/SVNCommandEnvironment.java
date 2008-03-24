@@ -714,10 +714,27 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         return myIsWithAllRevprops;
     }
     
-    public SVNDiffOptions getDiffOptions() {
+    public SVNDiffOptions getDiffOptions() throws SVNException {
+        LinkedList extensions = new LinkedList(myExtensions);
         boolean ignoreAllWS = myExtensions.contains("-w") || myExtensions.contains("--ignore-all-space");
+        if (ignoreAllWS) {
+            extensions.remove("-w");
+            extensions.remove("--ignore-all-space");
+        }
         boolean ignoreAmountOfWS = myExtensions.contains("-b") || myExtensions.contains("--ignore-space-change");
+        if (ignoreAmountOfWS) {
+            extensions.remove("-b");
+            extensions.remove("--ignore-space-change");
+        }
         boolean ignoreEOLStyle = myExtensions.contains("--ignore-eol-style");
+        if (ignoreEOLStyle) {
+            extensions.remove("--ignore-eol-style");
+        }
+        if (!extensions.isEmpty()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INVALID_DIFF_OPTION, 
+                    "Invalid argument ''{0}'' in diff options", extensions.get(0));
+            SVNErrorManager.error(err);
+        }
         return new SVNDiffOptions(ignoreAllWS, ignoreAmountOfWS, ignoreEOLStyle);
     }
 
