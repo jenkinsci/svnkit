@@ -2609,7 +2609,7 @@ public class SVNWCClient extends SVNBasicClient {
                 switched[1] |= status.getContentsStatus() != SVNStatusType.STATUS_NORMAL;
                 switched[1] |= status.getPropertiesStatus() != SVNStatusType.STATUS_NORMAL &&
                         status.getPropertiesStatus() != SVNStatusType.STATUS_NONE;
-                switched[2] = status.getEntry() != null && status.getEntry().getDepth() != SVNDepth.INFINITY;
+                switched[2] |= status.getEntry() != null && status.getEntry().getDepth() != SVNDepth.INFINITY;
                 if (wcURL[0] == null && status.getFile() != null && status.getFile().equals(path) && status.getURL() != null) {
                     wcURL[0] = status.getURL().toString();
                 }
