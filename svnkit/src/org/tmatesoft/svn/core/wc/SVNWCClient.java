@@ -2589,7 +2589,7 @@ public class SVNWCClient extends SVNBasicClient {
         statusClient.setIgnoreExternals(true);
         final long[] maxRevision = new long[1];
         final long[] minRevision = new long[]{-1};
-        final boolean[] switched = new boolean[2];
+        final boolean[] switched = new boolean[3];
         final String[] wcURL = new String[1];
         statusClient.doStatus(path, true, false, true, false, false, new ISVNStatusHandler() {
             public void handleStatus(SVNStatus status) {
@@ -2609,6 +2609,7 @@ public class SVNWCClient extends SVNBasicClient {
                 switched[1] |= status.getContentsStatus() != SVNStatusType.STATUS_NORMAL;
                 switched[1] |= status.getPropertiesStatus() != SVNStatusType.STATUS_NORMAL &&
                         status.getPropertiesStatus() != SVNStatusType.STATUS_NONE;
+                switched[2] = status.getEntry() != null && status.getEntry().getDepth() != SVNDepth.INFINITY;
                 if (wcURL[0] == null && status.getFile() != null && status.getFile().equals(path) && status.getURL() != null) {
                     wcURL[0] = status.getURL().toString();
                 }
@@ -2631,6 +2632,9 @@ public class SVNWCClient extends SVNBasicClient {
         }
         if (switched[0]) {
             id.append("S");
+        }
+        if (switched[2]) {
+            id.append("P");
         }
         return id.toString();
     }
