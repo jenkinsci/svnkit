@@ -16,6 +16,7 @@ import ALL
 lock ALL
 log ALL
 merge ALL -4
+merge_authz ALL
 mergeinfo ALL
 prop ALL
 revert ALL
