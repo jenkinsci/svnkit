@@ -13,6 +13,8 @@ package org.tmatesoft.svn.core;
 
 import java.io.Serializable;
 import java.text.MessageFormat;
+import java.util.Collection;
+import java.util.HashSet;
 
 
 /**
@@ -230,12 +232,16 @@ public class SVNErrorMessage implements Serializable {
     public String getFullMessage() {
         SVNErrorMessage err = this;            
         StringBuffer buffer = new StringBuffer();
+        Collection messages = new HashSet();
         while (err != null) {
             buffer.append(err.getMessage());
-            if (err.hasChildErrorMessage()) {
-                buffer.append('\n');
+            messages.add(err);
+            SVNErrorMessage child = err.getChildErrorMessage();
+            if (child == null || messages.contains(child)) {
+                break;
             }
-            err = err.getChildErrorMessage();
+            buffer.append('\n');
+            err = child;
         }
         return buffer.toString();
     }
