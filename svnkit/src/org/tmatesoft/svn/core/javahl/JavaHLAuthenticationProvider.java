@@ -34,10 +34,11 @@ import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
  */
 class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
     
+    private static final int RETRY_COUNT = 3;
     private static final String ADAPTER_DEFAULT_PROMPT_CLASS = 
         "org.tigris.subversion.svnclientadapter.javahl.AbstractJhlClientAdapter$DefaultPromptUserPassword";
     private PromptUserPassword myPrompt;
-    private int myRetryCount = 2;
+    private int myRetryCount = RETRY_COUNT;
     
     public JavaHLAuthenticationProvider(PromptUserPassword prompt){
         myPrompt = prompt;
@@ -47,11 +48,11 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
         if (previousAuth != null) {
             myRetryCount--;
             if (myRetryCount == 0) {
-                myRetryCount = 2;
+                myRetryCount = RETRY_COUNT;
                 return null;
             }
         } else {
-            myRetryCount = 2;
+            myRetryCount = RETRY_COUNT;
         }
 
         if (ISVNAuthenticationManager.SSH.equals(kind) && myPrompt instanceof PromptUserPasswordSSH) {
