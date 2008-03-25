@@ -1752,7 +1752,6 @@ public class SVNAdminArea14 extends SVNAdminArea {
             if (fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) {
                 boolean modified = false;
                 File workingFile = getFile(fileName);  
-                fileLength = workingFile.length();
                 long tmpTimestamp = tmpFile.lastModified();
                 long wkTimestamp = workingFile.lastModified(); 
                 if (tmpTimestamp != wkTimestamp) {
@@ -1856,6 +1855,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
                 }
                 if (overwritten) {
                     textTime = wcFile.lastModified();
+                    fileLength = wcFile.length();
                 }
             } catch (SVNException svne) {
                 SVNErrorMessage err = SVNErrorMessage.create(errorCode, "Error replacing text-base of ''{0}''", fileName);
