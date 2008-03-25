@@ -1,3 +1,14 @@
+/*
+ * ====================================================================
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ *
+ * This software is licensed as described in the file COPYING, which
+ * you should have received as part of this distribution.  The terms
+ * are also available at http://svnkit.com/license.html
+ * If newer versions of this license are posted there, you may use a
+ * newer version instead, at your option.
+ * ====================================================================
+ */
 package org.tmatesoft.svn.core.internal.io.dav.http;
 
 import java.io.File;
@@ -26,7 +37,8 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
- * @author Marc Strapetz
+ * @version 1.2.0
+ * @author  TMate Software Ltd.
  */
 public final class HTTPSSLKeyManager implements X509KeyManager {
 
@@ -74,7 +86,6 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
 
 	private KeyManager[] myKeyManagers;
 	private SVNSSLAuthentication myAuthentication;
-	private boolean myFirstAuthentication = true;
 	private Exception myException;
 
 	public HTTPSSLKeyManager(ISVNAuthenticationManager authenticationManager, String realm, SVNURL url) {
@@ -221,10 +232,11 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
 			return true;
 		}
 
+		boolean isFirstAuthentication = true;
 		for (; ;) {
-			if (myFirstAuthentication) {
+			if (isFirstAuthentication) {
 				myAuthentication = (SVNSSLAuthentication)authenticationManager.getFirstAuthentication(ISVNAuthenticationManager.SSL, realm, url);
-				myFirstAuthentication = false;
+				isFirstAuthentication = false;
 			}
 			else {
 				myAuthentication = (SVNSSLAuthentication)authenticationManager.getNextAuthentication(ISVNAuthenticationManager.SSL, realm, url);
