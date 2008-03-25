@@ -1404,19 +1404,19 @@ public class SVNDiffClient extends SVNMergeDriver {
     }
 
     public void doMergeReIntegrate(File srcPath, SVNRevision pegRevision, File dstPath, 
-            boolean force, boolean dryRun) throws SVNException {
+            boolean dryRun) throws SVNException {
         if (pegRevision == null || !pegRevision.isValid()) {
             pegRevision = SVNRevision.WORKING;
         }
-        runMergeReintegrate(null, srcPath, pegRevision, dstPath, force, dryRun);
+        runMergeReintegrate(null, srcPath, pegRevision, dstPath, dryRun);
     }
     
     public void doMergeReIntegrate(SVNURL srcURL, SVNRevision pegRevision, File dstPath, 
-            boolean force, boolean dryRun) throws SVNException {
+            boolean dryRun) throws SVNException {
         if (pegRevision == null || !pegRevision.isValid()) {
             pegRevision = SVNRevision.WORKING;
         }
-        runMergeReintegrate(srcURL, null, pegRevision, dstPath, force, dryRun);
+        runMergeReintegrate(srcURL, null, pegRevision, dstPath, dryRun);
     }
 
     public Map getMergeInfo(File path, SVNRevision pegRevision, SVNURL repositoryRoot[]) throws SVNException {

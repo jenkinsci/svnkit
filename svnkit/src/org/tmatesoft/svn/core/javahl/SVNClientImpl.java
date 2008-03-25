@@ -940,10 +940,12 @@ public class SVNClientImpl implements SVNClientInterface {
         try {
             if (isURL(path)){
                 SVNURL url = SVNURL.parseURIEncoded(path);
-                diffClient.doMergeReIntegrate(url, JavaHLObjectFactory.getSVNRevision(pegRevision), dstPath, false, dryRun);
+                diffClient.doMergeReIntegrate(url, JavaHLObjectFactory.getSVNRevision(pegRevision), dstPath, 
+                        dryRun);
             } else {
                 File file = new File(path);
-                diffClient.doMergeReIntegrate(file, JavaHLObjectFactory.getSVNRevision(pegRevision), dstPath, false, dryRun);
+                diffClient.doMergeReIntegrate(file, JavaHLObjectFactory.getSVNRevision(pegRevision), dstPath, 
+                        dryRun);
             }
         } catch (SVNException e) {
             throwException(e);

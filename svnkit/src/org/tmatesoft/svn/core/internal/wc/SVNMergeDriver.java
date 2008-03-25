@@ -257,7 +257,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     }
 
     protected void runMergeReintegrate(SVNURL srcURL, File srcPath, SVNRevision pegRevision, 
-            File targetWCPath, boolean force, boolean dryRun) throws SVNException {
+            File targetWCPath, boolean dryRun) throws SVNException {
         myWCAccess = createWCAccess();
         targetWCPath = targetWCPath.getAbsoluteFile();
         try {
@@ -319,7 +319,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
 
                 mergeCousinsAndSupplementMergeInfo(targetWCPath, targetEntry, adminArea, repository, url1[0], 
                         rev1[0], url2, rev2, youngestAncestorRevision, sourceReposRoot, wcReposRoot, 
-                        SVNDepth.INFINITY, false, force, false, dryRun);
+                        SVNDepth.INFINITY, false, false, false, dryRun);
 
             } finally {
                 repository.closeSession();
@@ -488,6 +488,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         SVNMergeCallback callback = new SVNMergeCallback(adminArea, myURL, myIsForce, myIsDryRun, 
                 getMergeOptions(), myConflictedPaths, this);
 
+        String targetName = targetWCPath.getName();
         for (int i = 0; i < remainingRanges.length; i++) {
             SVNMergeRange nextRange = remainingRanges[i];
             boolean headerSent = false;
@@ -500,7 +501,6 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             File f1 = null;
             File f2 = null;
 
-            String name = targetWCPath.getName();
             String mimeType2;
             String mimeType1;
             SVNStatusType[] mergeResult;
@@ -517,18 +517,18 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 SVNProperties propsDiff = computePropsDiff(props1, props2);
                 
                 if (!(myIsIgnoreAncestry || sourcesRelated)) {
-                    SVNStatusType cstatus = callback.fileDeleted(name, f1, f2, mimeType1, 
+                    SVNStatusType cstatus = callback.fileDeleted(targetName, f1, f2, mimeType1, 
                             mimeType2, props1);
                     headerSent = notifySingleFileMerge(targetWCPath, SVNEventAction.UPDATE_DELETE, cstatus, 
                     		SVNStatusType.UNKNOWN, event, headerSent);
                     
-                    mergeResult = callback.fileAdded(name, f1, f2, nextRange.getStartRevision(), 
+                    mergeResult = callback.fileAdded(targetName, f1, f2, nextRange.getStartRevision(), 
                                                      nextRange.getEndRevision(), mimeType1, mimeType2, 
                                                      props1, propsDiff);
                     headerSent = notifySingleFileMerge(targetWCPath, SVNEventAction.UPDATE_ADD, 
                                     mergeResult[0], mergeResult[1], event, headerSent);
                 } else {
-                    mergeResult = callback.fileChanged(name, f1, f2, nextRange.getStartRevision(), 
+                    mergeResult = callback.fileChanged(targetName, f1, f2, nextRange.getStartRevision(), 
                                                        nextRange.getEndRevision(), mimeType1, 
                                                        mimeType2, props1, propsDiff);
                     headerSent = notifySingleFileMerge(targetWCPath, SVNEventAction.UPDATE_UPDATE, 
@@ -865,14 +865,14 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                     SVNMergeRangeList rangeList = (SVNMergeRangeList) mergeInfo.get(sourcePath);
                     SVNMergeRange ranges[] = rangeList.getRanges();
                     LinkedList adjustedRanges = new LinkedList();
+                    SVNURL mergeSourceURL = mergeSourceRootURL.appendPath(sourcePath, false);
                     for (int i = 0; i < ranges.length; i++) {
                         SVNMergeRange range = ranges[i];
-                        SVNURL mergeSourceURL = mergeSourceRootURL.appendPath(sourcePath, false);
                         SVNRepositoryLocation[] locations = null;
                         try {
                             locations = getLocations(targetURL, null, myRepository2, 
                                     SVNRevision.create(targetEntry.getRevision()), 
-                                    SVNRevision.create(range.getStartRevision()), SVNRevision.UNDEFINED);
+                                    SVNRevision.create(range.getStartRevision() + 1), SVNRevision.UNDEFINED);
                             SVNURL startURL = locations[0].getURL();
                             if (!mergeSourceURL.equals(startURL)) {
                                 adjustedRanges.add(range);
@@ -967,17 +967,15 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     
     private Map removeIrrelevantRanges(Map mergeInfoByPath, Collection segments) {
         Map historyAsMergeInfo = getMergeInfoFromSegments(segments);
-        Map newMergeInfoByPath = new TreeMap();
+        Map newCatalog = new TreeMap();
         for (Iterator pathsIter = mergeInfoByPath.keySet().iterator(); pathsIter.hasNext();) {
             String path = (String) pathsIter.next();
             SVNMergeInfo mergeInfo = (SVNMergeInfo) mergeInfoByPath.get(path);  
             Map filteredMergeInfo = SVNMergeInfoUtil.intersectMergeInfo(mergeInfo.getMergeSourcesToMergeLists(), 
                     historyAsMergeInfo);
-            if (filteredMergeInfo != null && !filteredMergeInfo.isEmpty()) {
-                newMergeInfoByPath.put(path, filteredMergeInfo);
-            }
+            newCatalog.put(path, filteredMergeInfo);
         }
-        return newMergeInfoByPath;
+        return newCatalog;
     }
     
     private Map calculateLeftHandSide(SVNURL[] leftURL, long[] leftRev, String targetReposRelPath, 

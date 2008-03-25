@@ -26,6 +26,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
@@ -109,7 +110,13 @@ public class SVNMergeCallback extends AbstractDiffCallback {
             return SVNStatusType.MISSING;
         }
         
-        SVNURL copyFromURL = myURL.appendPath(path, false);
+        SVNURL copyFromURL = null;
+        long copyFromRevision = SVNRepository.INVALID_REVISION;
+        if (myMergeDriver.myIsSameRepository) {
+            copyFromURL = myURL.appendPath(path, false);
+            copyFromRevision = revision;
+        }
+        
         // TODO protocol
         SVNFileType fileType = SVNFileType.getType(mergedFile);
         if (fileType == SVNFileType.NONE) {
@@ -129,7 +136,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                 }
                 ISVNEventHandler oldEventHandler = dir.getWCAccess().getEventHandler();
                 dir.getWCAccess().setEventHandler(null);                
-                SVNWCManager.add(mergedFile, dir, copyFromURL, revision);
+                SVNWCManager.add(mergedFile, dir, copyFromURL, copyFromRevision);
                 dir.getWCAccess().setEventHandler(oldEventHandler);
             }
             return SVNStatusType.CHANGED;
@@ -139,7 +146,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                 if (!myIsDryRun) {
                     ISVNEventHandler oldEventHandler = dir.getWCAccess().getEventHandler();
                     dir.getWCAccess().setEventHandler(null);                
-                    SVNWCManager.add(mergedFile, dir, copyFromURL, revision);
+                    SVNWCManager.add(mergedFile, dir, copyFromURL, copyFromRevision);
                     dir.getWCAccess().setEventHandler(oldEventHandler);
                 }
                 if (myIsDryRun) {
@@ -293,9 +300,15 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                 return result;
             }
             if (!myIsDryRun) {
-                SVNURL copyFromURL = myURL.appendPath(path, false);
+                String copyFromURL = null;
+                long copyFromRevision = SVNRepository.INVALID_REVISION;
+                if (myMergeDriver.myIsSameRepository) {
+                    copyFromURL = myURL.appendPath(path, false).toString();
+                    copyFromRevision = revision2;
+                }
                 // TODO compare protocols with dir one.
-                SVNWCManager.addRepositoryFile(dir, mergedFile.getName(), null, file2, null, diff, copyFromURL.toString(), revision2);
+                SVNWCManager.addRepositoryFile(dir, mergedFile.getName(), null, file2, null, diff, 
+                        copyFromURL, copyFromRevision);
             }
             result[0] = SVNStatusType.CHANGED;
             if (diff != null && !diff.isEmpty()) {

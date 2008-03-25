@@ -193,12 +193,17 @@ public class SVNMergeCommand extends SVNCommand {
                 }
                 
                 if (getSVNEnvironment().isReIntegrate()) {
+                    if (getSVNEnvironment().isForce()) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_MUTUALLY_EXCLUSIVE_ARGS, 
+                                "--force cannot be used with --reintegrate");
+                        SVNErrorManager.error(err);
+                    }
                     if (source1.isURL()) {
                         client.doMergeReIntegrate(source1.getURL(), pegRevision1, target.getFile(), 
-                                getSVNEnvironment().isForce(), getSVNEnvironment().isDryRun());
+                                getSVNEnvironment().isDryRun());
                     } else {
                         client.doMergeReIntegrate(source1.getFile(), pegRevision1, target.getFile(), 
-                                getSVNEnvironment().isForce(), getSVNEnvironment().isDryRun());
+                                getSVNEnvironment().isDryRun());
                     }
                 } else {
                     if (source1.isURL()) {
