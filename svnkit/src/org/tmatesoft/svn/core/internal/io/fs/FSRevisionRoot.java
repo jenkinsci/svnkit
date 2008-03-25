@@ -77,7 +77,7 @@ public class FSRevisionRoot extends FSRoot {
     public FSClosestCopy getClosestCopy(String path) throws SVNException {
         FSParentPath parentPath = openPath(path, true, true);
         SVNLocationEntry copyDstEntry = FSNodeHistory.findYoungestCopyroot(getOwner().getRepositoryRoot(), 
-                                                                           parentPath);
+                parentPath);
         if (copyDstEntry == null || copyDstEntry.getRevision() == 0) {
             return null;
         }
