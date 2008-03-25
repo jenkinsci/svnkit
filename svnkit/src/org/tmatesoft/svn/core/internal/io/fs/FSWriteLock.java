@@ -130,4 +130,19 @@ public class FSWriteLock {
         }
         SVNFileUtil.closeFile(myLockRAFile);
     }
+
+    public String toString() {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append("{[");
+        buffer.append("File:");
+        buffer.append(myLockFile);
+        buffer.append("][");
+        buffer.append("RefCount:");
+        buffer.append(myReferencesCount);
+        buffer.append("][");
+        buffer.append("Token:");
+        buffer.append(myToken);
+        buffer.append("]}");
+        return buffer.toString();
+    }
 }

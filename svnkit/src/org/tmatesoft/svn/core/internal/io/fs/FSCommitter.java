@@ -599,6 +599,9 @@ public class FSCommitter {
 
         for (Iterator sourceEntryNames = sourceEntries.keySet().iterator(); sourceEntryNames.hasNext();) {
             String sourceEntryName = (String) sourceEntryNames.next();
+            if (removedEntries.contains(sourceEntryName)){
+                continue;                
+            }
             FSEntry sourceEntry = (FSEntry) sourceEntries.get(sourceEntryName);
             FSEntry targetEntry = (FSEntry) targetEntries.get(sourceEntryName);
             if (targetEntry != null) {

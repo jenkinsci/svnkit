@@ -243,7 +243,22 @@ public class FSRevisionNode {
         }
         return false;
     }
-    
+
+    public String toString() {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append("{[");
+        buffer.append("ID:");
+        buffer.append(myId);
+        buffer.append("][");
+        buffer.append("text representation:");
+        buffer.append(myTextRepresentation);
+        buffer.append("][");
+        buffer.append("Node kind:");
+        buffer.append(myType);
+        buffer.append("]}");
+        return buffer.toString();
+    }
+
     public static FSRevisionNode fromMap(Map headers) throws SVNException {
         FSRevisionNode revNode = new FSRevisionNode();
 
