@@ -37,12 +37,23 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
     private static final String ADAPTER_DEFAULT_PROMPT_CLASS = 
         "org.tigris.subversion.svnclientadapter.javahl.AbstractJhlClientAdapter$DefaultPromptUserPassword";
     private PromptUserPassword myPrompt;
+    private int myRetryCount = 2;
     
     public JavaHLAuthenticationProvider(PromptUserPassword prompt){
         myPrompt = prompt;
     }
 
     public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
+        if (previousAuth != null) {
+            myRetryCount--;
+            if (myRetryCount == 0) {
+                myRetryCount = 2;
+                return null;
+            }
+        } else {
+            myRetryCount = 2;
+        }
+
         if (ISVNAuthenticationManager.SSH.equals(kind) && myPrompt instanceof PromptUserPasswordSSH) {
             PromptUserPasswordSSH prompt4 = (PromptUserPasswordSSH) myPrompt;
             String userName = previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : getUserName(null, url);
