@@ -563,6 +563,10 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         File baseSrcFile = null;
         if (!myCurrentFile.IsAdded) {
             baseSrcFile = myCurrentFile.baseFile;
+        } else {
+            if (myCurrentFile.copiedBaseText != null) {
+                baseSrcFile = myCurrentFile.copiedBaseText;
+            }
         }
         File baseTmpFile = myCurrentFile.newBaseFile;
         myDeltaProcessor.applyTextDelta(baseSrcFile, baseTmpFile, true);
@@ -571,11 +575,12 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
     public OutputStream textDeltaChunk(String commitPath, SVNDiffWindow diffWindow) throws SVNException {
         if (!myCurrentFile.isSkipped) {
             try {
-                return myDeltaProcessor.textDeltaChunk(diffWindow);
+                myDeltaProcessor.textDeltaChunk(diffWindow);
             } catch (SVNException svne) {
                 myDeltaProcessor.textDeltaEnd();
                 SVNFileUtil.deleteFile(myCurrentFile.newBaseFile);
                 myCurrentFile.newBaseFile = null;
+                throw svne;
             }
         }
         return SVNFileUtil.DUMMY_OUT;
@@ -989,7 +994,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             if (fileInfo.Checksum != null && !textChecksum.equals(fileInfo.Checksum)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH, 
                         "Checksum mismatch for ''{0}''; expected: ''{1}'', actual: ''{2}''",
-                        new Object[] {fileInfo.getPath(), textChecksum, checksum}); 
+                        new Object[] {fileInfo.getPath(), textChecksum, fileInfo.Checksum}); 
                 SVNErrorManager.error(err);
             }
             checksum = textChecksum;
