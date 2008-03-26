@@ -57,6 +57,14 @@ public class SVNCommitCommand extends SVNCommand {
 
     public void run() throws SVNException {
         List targets = getSVNEnvironment().combineTargets(getSVNEnvironment().getTargets(), true);
+        for (Iterator ts = targets.iterator(); ts.hasNext();) {
+            String targetName = (String) ts.next();
+            SVNPath target = new SVNPath(targetName);
+            if (target.isURL()) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_BAD_PATH, "Must give local path (not URL) as the target of commit");
+                SVNErrorManager.error(err);
+            }
+        }
         if (targets.isEmpty()) {
             targets.add(".");
         }
