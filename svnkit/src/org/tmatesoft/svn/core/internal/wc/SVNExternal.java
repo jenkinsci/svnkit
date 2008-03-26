@@ -64,6 +64,10 @@ public class SVNExternal {
     public String getPath() {
         return myPath;
     }
+
+		public String getUnresolvedUrl() {
+			return myURL;
+		}
     
     public SVNURL resolveURL(SVNURL rootURL, SVNURL ownerURL) throws SVNException {
         String canonicalURL = SVNPathUtil.canonicalizePath(myURL);
@@ -185,7 +189,7 @@ public class SVNExternal {
         }
         return (SVNExternal[]) externals.toArray(new SVNExternal[externals.size()]);
     }
-    
+
     private static int fetchRevision(SVNExternal external, String owner, String line, List tokens) throws SVNException {
         for (int i = 0; i < tokens.size() && i < 2; i++) {
             String token = (String) tokens.get(i);
