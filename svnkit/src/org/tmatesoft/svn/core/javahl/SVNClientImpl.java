@@ -1784,7 +1784,7 @@ public class SVNClientImpl implements SVNClientInterface {
         }
 	}
 
-    public void diffSummarize(String target1, Revision revision1, String target2, Revision revision2, int depth, boolean ignoreAncestry, final DiffSummaryReceiver receiver) throws ClientException {
+    public void diffSummarize(String target1, Revision revision1, String target2, Revision revision2, int depth, String[] changelists, boolean ignoreAncestry, final DiffSummaryReceiver receiver) throws ClientException {
         SVNDiffClient differ = getSVNDiffClient();
         SVNRevision rev1 = JavaHLObjectFactory.getSVNRevision(revision1);
         SVNRevision rev2 = JavaHLObjectFactory.getSVNRevision(revision2);
@@ -1817,7 +1817,8 @@ public class SVNClientImpl implements SVNClientInterface {
         }
     }
 
-    public void diffSummarize(String target, Revision pegRevision, Revision startRevision, Revision endRevision, int depth, boolean ignoreAncestry, final DiffSummaryReceiver receiver) throws ClientException {
+    public void diffSummarize(String target, Revision pegRevision, Revision startRevision, Revision endRevision,
+                              int depth, String[] changelists, boolean ignoreAncestry, final DiffSummaryReceiver receiver) throws ClientException {
         SVNDiffClient differ = getSVNDiffClient();
         SVNRevision rev1 = JavaHLObjectFactory.getSVNRevision(startRevision);
         SVNRevision rev2 = JavaHLObjectFactory.getSVNRevision(endRevision);
@@ -1846,22 +1847,6 @@ public class SVNClientImpl implements SVNClientInterface {
             throwException(e);
         }
     }
-
-	public void diffSummarize(String target1, Revision revision1,
-			String target2, Revision revision2, int depth,
-			String[] changelists, boolean ignoreAncestry,
-			DiffSummaryReceiver receiver) throws ClientException {
-        //TODO: Implement
-		notImplementedYet();
-	}
-
-	public void diffSummarize(String target, Revision pegRevision,
-			Revision startRevision, Revision endRevision, int depth,
-			String[] changelists, boolean ignoreAncestry,
-			DiffSummaryReceiver receiver) throws ClientException {
-        //TODO: Implement
-		notImplementedYet();
-	}
 
     public Info2[] info2(String pathOrUrl, Revision revision, Revision pegRevision, boolean recurse) throws ClientException {
         final Collection infos = new ArrayList();
@@ -1974,15 +1959,5 @@ public class SVNClientImpl implements SVNClientInterface {
             throwException(e);
         }
         return null;
-    }
-
-    private void notImplementedYet() throws ClientException {
-        notImplementedYet(null);
-    }
-
-    private void notImplementedYet(String message) throws ClientException {
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
-                message == null ? "Requested SVNAdmin functionality is not yet implemented" : message);
-        JavaHLObjectFactory.throwException(new SVNException(err), this);
     }
 }
