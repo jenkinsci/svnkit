@@ -126,8 +126,7 @@ class SVNReader {
         }
         if (items[index] instanceof List) {
             // look in list.
-            for (Iterator iter = ((List) items[index]).iterator(); iter
-                    .hasNext();) {
+            for (Iterator iter = ((List) items[index]).iterator(); iter.hasNext();) {
                 Object element = iter.next();
                 if (element.equals(value)) {
                     return true;
@@ -290,7 +289,8 @@ class SVNReader {
                         SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Unknown status ''{0}'' in command response", word));
                     }
                 } else if (ch == ')' || ch == ']') {
-                    readChar(is, ')');
+                    // read all optional data untill closing ')' is met.
+                    readOptional(is);
                 } else if (ch == '(') {
                     readChar(is, '(');
                 } else if (ch == 'd') {
@@ -301,8 +301,7 @@ class SVNReader {
                     if (editorBaton == null) {
                         editorBaton = new SVNEditModeReader();
                         if (target[targetIndex] instanceof ISVNEditor) {
-                            editorBaton
-                                    .setEditor((ISVNEditor) target[targetIndex]);
+                            editorBaton.setEditor((ISVNEditor) target[targetIndex]);
                         }
                     }
                     readChar(is, '(');
@@ -560,6 +559,26 @@ class SVNReader {
             }
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Malformed network data"), false);
         }
+    }
+
+    private static void readOptional(InputStream is) throws IOException, SVNException {
+        int level = 0;
+        char ch = skipWhitespace(is);
+        while(level >= 0) {
+            if (ch < 0 || ch == Character.MAX_VALUE) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED));
+            }
+            if (ch == '(') {
+                level++;
+            } else if (ch == ')') {
+                level--;
+                if (level == -1) {
+                    return;
+                }
+            }
+            ch = skipWhitespace(is);
+        }
+        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Malformed network data"), false);
     }
 
     private static byte[] readBytes(InputStream is, int length, byte[] buffer) throws IOException {
