@@ -49,7 +49,13 @@ public class SVNAdminHelper {
         fsfs.open();
         return fsfs;
     }
-    
+
+    public static FSFS openRepositoryForRecovery(File reposRootPath) throws SVNException {
+        FSFS fsfs = new FSFS(reposRootPath);
+        fsfs.openForRecovery();
+        return fsfs;
+    }
+
     public static long getRevisionNumber(SVNRevision revision, long youngestRevision, FSFS fsfs) throws SVNException {
         long revNumber = -1;
         if (revision.getNumber() >= 0) {

@@ -138,83 +138,20 @@ public class FSFS {
     }
     
     public void open() throws SVNException {
-        // repo format /root/format
-        FSFile formatFile = new FSFile(new File(myRepositoryRoot, "format"));
-        int format = -1;
-        try {
-            format = formatFile.readInt();
-        } catch (NumberFormatException nfe) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_VERSION_FILE_FORMAT, "First line of ''{0}'' contains non-digit", formatFile.getFile());
-            SVNErrorManager.error(err);
-        } finally {
-            formatFile.close();
-        }
-
-        if (format != REPOSITORY_FORMAT && format != REPOSITORY_FORMAT_LEGACY) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_UNSUPPORTED_VERSION, 
-                                  "Expected repository format ''{0}'' or " +
-                                  "''{1}''; found format ''{2}''",
-                                  new Object[] {new Integer(REPOSITORY_FORMAT_LEGACY),
-                                                new Integer(REPOSITORY_FORMAT),
-                                                new Integer(format)});
-            SVNErrorManager.error(err);
-        }
-        myReposFormat = format;
-        // fs format /root/db/format
-        formatFile = new FSFile(new File(myDBRoot, "format"));
-        try {
-            format = formatFile.readInt();
-            readOptions(formatFile, format);
-        } catch (SVNException svne) {
-            if (svne.getCause() instanceof FileNotFoundException) {
-                format = DB_FORMAT;
-            } else if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.STREAM_UNEXPECTED_EOF) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_VERSION_FILE_FORMAT, "Can''t read first line of format file ''{0}''", formatFile.getFile());
-                SVNErrorManager.error(err);
-            } else {
-                throw svne;
-            }
-        } catch (NumberFormatException nfe) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_VERSION_FILE_FORMAT, "Format file ''{0}'' contains an unexpected non-digit", formatFile.getFile());
-            SVNErrorManager.error(err);
-        } finally {
-            formatFile.close();
-        }
-        
-        if (format < DB_FORMAT_LOW || format > DB_FORMAT) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_UNSUPPORTED_FORMAT, 
-                                  "Expected FS format between ''{0}'' and " +
-                                  "''{1}''; found format ''{2}''", 
-                                  new Object[] {new Integer(DB_FORMAT_LOW), 
-                                                new Integer(DB_FORMAT), 
-                                                new Integer(format)});
-            SVNErrorManager.error(err);
-        }
-        myDBFormat = format;
-
-        // fs type /root/db/fs-type
-        formatFile = new FSFile(new File(myDBRoot, "fs-type"));
-        String fsType = null;
-        try {
-            fsType = formatFile.readLine(128);    
-        } finally {
-            formatFile.close();
-        }
-        if (!DB_TYPE.equals(fsType)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_UNKNOWN_FS_TYPE, "Unsupported fs type ''{0}''", fsType);
-            SVNErrorManager.error(err);
-        }
-
-        File dbCurrentFile = getCurrentFile();
-        if(!(dbCurrentFile.exists() && dbCurrentFile.canRead())){
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can''t open file ''{0}''", dbCurrentFile);
-            SVNErrorManager.error(err);
-        }
-        
+        openRoot();
+        openDB();
     }
     
+    public void openForRecovery() throws SVNException {
+        openRoot();
+        //create new current file
+        File dbCurrentFile = getCurrentFile();
+        createCurrentFile(dbCurrentFile, "0 1 1\n");
+        openDB();
+    }
+
     public String getUUID() throws SVNException {
-        if(myUUID == null){
+        if(myUUID == null) {
             // uuid
             FSFile formatFile = new FSFile(new File(myDBRoot, "uuid"));
             try {
@@ -223,7 +160,6 @@ public class FSFS {
                 formatFile.close();
             }
         }
-
         return myUUID;
     }
     
@@ -340,7 +276,7 @@ public class FSFS {
             File file = new File(getTransactionDir(id.getTxnID()), PATH_PREFIX_NODE + id.getNodeID() + "." + id.getCopyID());
             revisionFile = new FSFile(file);
         } else {
-            revisionFile = getRevisionFile(id.getRevision());
+            revisionFile = getRevisionFSFile(id.getRevision());
             revisionFile.seek(id.getOffset());
         }
 
@@ -501,7 +437,7 @@ public class FSFS {
                     reader.close();
                 }
                 
-                String nextTxnId = FSTransactionRoot.generateNextKey(txnId);
+                String nextTxnId = FSRepositoryUtil.generateNextKey(txnId);
 
                 OutputStream txnCurrentOS = null;
                 File tmpFile = null;
@@ -1313,14 +1249,8 @@ public class FSFS {
         return new FSFile(childrenFile);
     }
     
-    protected FSFile getRevisionFile(long revision)  throws SVNException {
-        File revisionFile = null;
-        if (myMaxFilesPerDirectory > 0) {
-            File shardDir = new File(myRevisionsRoot, String.valueOf(revision/myMaxFilesPerDirectory));
-            revisionFile = new File(shardDir, String.valueOf(revision));
-        } else {
-            revisionFile = new File(myRevisionsRoot, String.valueOf(revision));
-        }
+    protected FSFile getRevisionFSFile(long revision)  throws SVNException {
+        File revisionFile = getRevisionFile(revision);
         
         if (!revisionFile.exists()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision {0}", new Long(revision));
@@ -1333,7 +1263,18 @@ public class FSFS {
         File revNodePropsFile = new File(getTransactionDir(id.getTxnID()), PATH_PREFIX_NODE + id.getNodeID() + "." + id.getCopyID() + TXN_PATH_EXT_PROPS);
         return new FSFile(revNodePropsFile);
     }
-    
+
+    protected File getRevisionFile(long revision) {
+        File revisionFile = null;
+        if (myMaxFilesPerDirectory > 0) {
+            File shardDir = new File(myRevisionsRoot, String.valueOf(revision/myMaxFilesPerDirectory));
+            revisionFile = new File(shardDir, String.valueOf(revision));
+        } else {
+            revisionFile = new File(myRevisionsRoot, String.valueOf(revision));
+        }
+        return revisionFile;
+    }
+
     protected File getCurrentFile(){
         if(myCurrentFile == null){
             myCurrentFile = new File(myDBRoot, CURRENT_FILE); 
@@ -1353,6 +1294,112 @@ public class FSFS {
             myTransactionCurrentLockFile = new File(myDBRoot, TXN_CURRENT_LOCK_FILE); 
         }
         return myTransactionCurrentLockFile;
+    }
+
+    protected void writeCurrentFile(long revision, String nextNodeID, String nextCopyID) throws SVNException, IOException {
+        String line = null;
+        if (getDBFormat() >= FSFS.MIN_NO_GLOBAL_IDS_FORMAT) {
+            line = revision + "\n"; 
+        } else {
+            line = revision + " " + nextNodeID + " " + nextCopyID + "\n";
+        }
+        
+        File currentFile = getCurrentFile();
+        File tmpCurrentFile = SVNFileUtil.createUniqueFile(currentFile.getParentFile(), ".txnfile", ".tmp");
+        OutputStream currentOS = null;
+
+        try {
+            currentOS = SVNFileUtil.openFileForWriting(tmpCurrentFile);
+            currentOS.write(line.getBytes("UTF-8"));
+        } finally {
+            SVNFileUtil.closeFile(currentOS);
+        }
+        SVNFileUtil.rename(tmpCurrentFile, currentFile);
+    }
+
+    private void openRoot() throws SVNException {
+        // repo format /root/format
+        FSFile formatFile = new FSFile(new File(myRepositoryRoot, "format"));
+        int format = -1;
+        try {
+            format = formatFile.readInt();
+        } catch (NumberFormatException nfe) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_VERSION_FILE_FORMAT, 
+                    "First line of ''{0}'' contains non-digit", formatFile.getFile());
+            SVNErrorManager.error(err);
+        } finally {
+            formatFile.close();
+        }
+
+        if (format != REPOSITORY_FORMAT && format != REPOSITORY_FORMAT_LEGACY) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_UNSUPPORTED_VERSION, 
+                                  "Expected repository format ''{0}'' or " +
+                                  "''{1}''; found format ''{2}''",
+                                  new Object[] {new Integer(REPOSITORY_FORMAT_LEGACY),
+                                                new Integer(REPOSITORY_FORMAT),
+                                                new Integer(format)});
+            SVNErrorManager.error(err);
+        }
+        myReposFormat = format;
+        
+    }
+    
+    private void openDB() throws SVNException {
+        int format = -1;
+        // fs format /root/db/format
+        FSFile formatFile = new FSFile(new File(myDBRoot, "format"));
+        try {
+            format = formatFile.readInt();
+            readOptions(formatFile, format);
+        } catch (SVNException svne) {
+            if (svne.getCause() instanceof FileNotFoundException) {
+                format = DB_FORMAT;
+            } else if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.STREAM_UNEXPECTED_EOF) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_VERSION_FILE_FORMAT, 
+                        "Can''t read first line of format file ''{0}''", formatFile.getFile());
+                SVNErrorManager.error(err);
+            } else {
+                throw svne;
+            }
+        } catch (NumberFormatException nfe) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_VERSION_FILE_FORMAT, 
+                    "Format file ''{0}'' contains an unexpected non-digit", formatFile.getFile());
+            SVNErrorManager.error(err);
+        } finally {
+            formatFile.close();
+        }
+        
+        if (format < DB_FORMAT_LOW || format > DB_FORMAT) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_UNSUPPORTED_FORMAT, 
+                                  "Expected FS format between ''{0}'' and " +
+                                  "''{1}''; found format ''{2}''", 
+                                  new Object[] {new Integer(DB_FORMAT_LOW), 
+                                                new Integer(DB_FORMAT), 
+                                                new Integer(format)});
+            SVNErrorManager.error(err);
+        }
+        myDBFormat = format;
+
+        // fs type /root/db/fs-type
+        formatFile = new FSFile(new File(myDBRoot, "fs-type"));
+        String fsType = null;
+        try {
+            fsType = formatFile.readLine(128);    
+        } finally {
+            formatFile.close();
+        }
+        if (!DB_TYPE.equals(fsType)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_UNKNOWN_FS_TYPE, 
+                    "Unsupported fs type ''{0}''", fsType);
+            SVNErrorManager.error(err);
+        }
+
+        File dbCurrentFile = getCurrentFile();
+        if(!(dbCurrentFile.exists() && dbCurrentFile.canRead())){
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
+                    "Can''t open file ''{0}''", dbCurrentFile);
+            SVNErrorManager.error(err);
+        }
     }
 
     private void ensureRevisionsExists(long revision) throws SVNException {
@@ -1557,7 +1604,7 @@ public class FSFS {
 
     private FSFile openAndSeekRevision(long revision, long offset) throws SVNException {
         ensureRevisionsExists(revision);
-        FSFile file = getRevisionFile(revision);
+        FSFile file = getRevisionFSFile(revision);
         file.seek(offset);
         return file;
     }
@@ -1567,7 +1614,7 @@ public class FSFS {
 
         for (Iterator iterator = entries.nameSet().iterator(); iterator.hasNext();) {
             String name = (String) iterator.next();
-            String unparsedEntry = SVNPropertyValue.getPropertyAsString(entries.getSVNPropertyValue(name));
+            String unparsedEntry = entries.getStringValue(name);
 
             if (unparsedEntry == null && mayContainNulls) {
                 continue;
@@ -1624,6 +1671,10 @@ public class FSFS {
             return false;
         }
         return true;
+    }
+    
+    private static synchronized void createCurrentFile(File currentFile, String text) throws SVNException {
+        SVNFileUtil.createFile(currentFile, text);
     }
 
 }

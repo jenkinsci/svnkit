@@ -170,6 +170,7 @@ svnkit/src/org/tmatesoft/svn/core/internal/io/fs/FSOutputStream.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/FSParentPath.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/FSPathChange.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/FSPathChangeKind.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/io/fs/FSRecoverer.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/FSRepository.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/FSRepositoryFactory.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/FSRepresentation.java -text

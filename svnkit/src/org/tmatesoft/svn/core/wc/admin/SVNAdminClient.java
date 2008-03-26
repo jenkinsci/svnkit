@@ -38,6 +38,7 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
+import org.tmatesoft.svn.core.internal.io.fs.FSRecoverer;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryUtil;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
@@ -921,6 +922,16 @@ public class SVNAdminClient extends SVNBasicClient {
         }
     }
 
+    public void doRecover(File repositoryRoot) throws SVNException {
+        FSFS fsfs = SVNAdminHelper.openRepositoryForRecovery(repositoryRoot);
+        if (myEventHandler != null) {
+            SVNAdminEvent event = new SVNAdminEvent(SVNAdminEventAction.RECOVERY_STARTED);
+            myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
+        }
+        FSRecoverer recoverer = new FSRecoverer(fsfs, this);
+        recoverer.runRecovery();
+    }
+    
     private void dump(FSFS fsfs, OutputStream dumpStream, long start, long end, boolean isIncremental, boolean useDeltas) throws SVNException, IOException {
         boolean isDumping = dumpStream != null && dumpStream != SVNFileUtil.DUMMY_OUT;
         long youngestRevision = fsfs.getYoungestRevision();

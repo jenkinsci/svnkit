@@ -34,6 +34,7 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 
 /**
@@ -246,10 +247,13 @@ public class FSFile {
             }
             int colonIndex = line.indexOf(':');
             if (colonIndex <= 0 || line.length() <= colonIndex + 2) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Found malformed header in revision file");
+                SVNDebugLog.getDefaultLog().info(line);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
+                        "Found malformed header in revision file");
                 SVNErrorManager.error(err);
             } else if (line.charAt(colonIndex + 1) != ' ') {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Found malformed header in revision file");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
+                        "Found malformed header in revision file");
                 SVNErrorManager.error(err);
             }
             String key = line.substring(0, colonIndex);

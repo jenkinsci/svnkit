@@ -357,7 +357,7 @@ public class FSCommitter {
 
     public String reserveCopyId(String txnId) throws SVNException {
         String[] nextIds = myTxnRoot.readNextIDs();
-        String copyId = FSTransactionRoot.generateNextKey(nextIds[1]);
+        String copyId = FSRepositoryUtil.generateNextKey(nextIds[1]);
         myFSFS.writeNextIDs(txnId, nextIds[0], copyId);
         return "_" + nextIds[1];
     }
@@ -408,7 +408,7 @@ public class FSCommitter {
         String[] curIds = myTxnRoot.readNextIDs();
         String curNodeId = curIds[0];
         String curCopyId = curIds[1];
-        String nextNodeId = FSTransactionRoot.generateNextKey(curNodeId);
+        String nextNodeId = FSRepositoryUtil.generateNextKey(curNodeId);
         myFSFS.writeNextIDs(myTxnRoot.getTxnID(), nextNodeId, curCopyId);
         return "_" + curNodeId;
     }

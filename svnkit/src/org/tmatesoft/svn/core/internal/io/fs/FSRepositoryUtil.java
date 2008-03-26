@@ -14,6 +14,10 @@ package org.tmatesoft.svn.core.internal.io.fs;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -42,7 +46,8 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  * @author  TMate Software Ltd.
  */
 public class FSRepositoryUtil {
-    
+    public static final int MAX_KEY_SIZE = 200;
+
     public static void replay(FSFS fsfs, FSRoot root, String basePath, long lowRevision, boolean sendDeltas, ISVNEditor editor) throws SVNException {
         Map fsChanges = root.getChangedPaths();
         basePath = basePath.startsWith("/") ? basePath.substring(1) : basePath;
@@ -236,6 +241,106 @@ public class FSRepositoryUtil {
         }
     }
     
+    public static void loadRootChangesOffset(FSFile file, long[] rootOffset, long[] changesOffset) throws SVNException {
+        ByteBuffer buffer = ByteBuffer.allocate(64);
+        file.seek(file.size() - 64);
+        try {
+            file.read(buffer);
+        } catch (IOException e) {
+        }
+        buffer.flip();
+        if (buffer.get(buffer.limit() - 1) != '\n') {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
+                    "Revision file lacks trailing newline");
+            SVNErrorManager.error(err);
+        }
+        int spaceIndex = -1;
+        int eolIndex = -1;
+        for (int i = buffer.limit() - 2; i >= 0; i--) {
+            byte b = buffer.get(i);
+            if (b == ' ' && spaceIndex < 0) {
+                spaceIndex = i;
+            } else if (b == '\n' && eolIndex < 0) {
+                eolIndex = i;
+                break;
+            }
+        }
+        if (eolIndex < 0) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
+                    "Final line in revision file longer than 64 characters");
+            SVNErrorManager.error(err);
+        }
+        if (spaceIndex < 0) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
+                    "Final line in revision file missing space");
+            SVNErrorManager.error(err);
+        }
+        CharsetDecoder decoder = Charset.forName("UTF-8").newDecoder();
+        try {
+            buffer.limit(buffer.limit() - 1);
+            buffer.position(spaceIndex + 1);
+            String line = decoder.decode(buffer).toString();
+            if (changesOffset != null && changesOffset.length > 0) {
+                changesOffset[0] = Long.parseLong(line);
+            }
+
+            buffer.limit(spaceIndex);
+            buffer.position(eolIndex + 1);
+            line = decoder.decode(buffer).toString();
+            if (rootOffset != null && rootOffset.length > 0) {
+                rootOffset[0] = Long.parseLong(line); 
+            }
+        } catch (NumberFormatException nfe) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
+                    "Final line in revision file missing changes and root offsets");
+            SVNErrorManager.error(err, nfe);
+        } catch (CharacterCodingException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
+                    "Final line in revision file missing changes and root offsets");
+            SVNErrorManager.error(err, e);
+        }
+    }
+
+    public static String generateNextKey(String oldKey) throws SVNException {
+        char[] nextKey = new char[oldKey.length() + 1];
+        boolean carry = true;
+        if (oldKey.length() > 1 && oldKey.charAt(0) == '0') {
+            return null;
+        }
+        for (int i = oldKey.length() - 1; i >= 0; i--) {
+            char c = oldKey.charAt(i);
+            if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z'))) {
+                return null;
+            }
+            if (carry) {
+                if (c == 'z') {
+                    nextKey[i] = '0';
+                } else {
+                    carry = false;
+                    if (c == '9') {
+                        nextKey[i] = 'a';
+                    } else {
+                        nextKey[i] = (char) (c + 1);
+                    }
+                }
+            } else {
+                nextKey[i] = c;
+            }
+        }
+        int nextKeyLength = oldKey.length() + (carry ? 1 : 0);
+        if (nextKeyLength >= MAX_KEY_SIZE) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
+                    "FATAL error: new key length is greater than the threshold {0}", 
+                    new Integer(MAX_KEY_SIZE));
+            SVNErrorManager.error(err);
+        }
+        if (carry) {
+            System.arraycopy(nextKey, 0, nextKey, 1, oldKey.length());
+            nextKey[0] = '1';
+        }
+        return new String(nextKey, 0, nextKeyLength);
+    }
+   
     private static boolean areRepresentationsEqual(FSRevisionNode revNode1, FSRevisionNode revNode2, boolean forProperties) {
         if(revNode1 == revNode2){
             return true;

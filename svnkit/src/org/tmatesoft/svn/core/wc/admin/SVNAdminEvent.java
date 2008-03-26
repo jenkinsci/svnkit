@@ -109,6 +109,10 @@ public class SVNAdminEvent {
         myLock = lock;
     }
 
+    public SVNAdminEvent(SVNAdminEventAction action) {
+        myAction = action;
+    }
+
     /**
      * Returns the type of an action this event is fired for.
      * 

@@ -236,7 +236,7 @@ public class FSInputStream extends InputStream {
         return null;
     }
 
-    private static FSRepresentationState readRepresentationLine(FSFile file) throws SVNException {
+    public static FSRepresentationState readRepresentationLine(FSFile file) throws SVNException {
         try {
             String line = file.readLine(160);
             FSRepresentationState repState = new FSRepresentationState();
@@ -301,8 +301,7 @@ public class FSInputStream extends InputStream {
         }
     }
 
-    private static class FSRepresentationState {
-
+    public static class FSRepresentationState {
         FSFile myFile;
         /* The starting offset for the raw svndiff/plaintext data minus header. */
         long myStart;

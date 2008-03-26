@@ -43,7 +43,6 @@ public class FSTransactionRoot extends FSRoot {
 
     public static final int SVN_FS_TXN_CHECK_OUT_OF_DATENESS = 0x00001;
     public static final int SVN_FS_TXN_CHECK_LOCKS = 0x00002;
-    private static final int MAX_KEY_SIZE = 200;
 
     private String myTxnID;
     private int myTxnFlags;
@@ -451,7 +450,7 @@ public class FSTransactionRoot extends FSRoot {
         FSFile idsFile = new FSFile(getOwner().getNextIDsFile(myTxnID));
 
         try {
-            idsToParse = idsFile.readLine(FSTransactionRoot.MAX_KEY_SIZE * 2 + 3);
+            idsToParse = idsFile.readLine(FSRepositoryUtil.MAX_KEY_SIZE * 2 + 3);
         } finally {
             idsFile.close();
         }
@@ -470,7 +469,7 @@ public class FSTransactionRoot extends FSRoot {
 
     public void writeFinalCurrentFile(long newRevision, String startNodeId, String startCopyId) throws SVNException, IOException {
         if (getOwner().getDBFormat() >= FSFS.MIN_NO_GLOBAL_IDS_FORMAT) {
-            writeCurrentFile(newRevision, null, null);
+            getOwner().writeCurrentFile(newRevision, null, null);
             return;
         }
         
@@ -479,7 +478,7 @@ public class FSTransactionRoot extends FSRoot {
         String txnCopyId = txnIds[1];
         String newNodeId = FSTransactionRoot.addKeys(startNodeId, txnNodeId);
         String newCopyId = FSTransactionRoot.addKeys(startCopyId, txnCopyId);
-        writeCurrentFile(newRevision, newNodeId, newCopyId);
+        getOwner().writeCurrentFile(newRevision, newNodeId, newCopyId);
     }
 
     public FSID writeFinalRevision(FSID newId, final CountingStream protoFile, long revision, FSID id, 
@@ -642,27 +641,6 @@ public class FSTransactionRoot extends FSRoot {
         return myTxnChangesFile;
     }
 
-    private void writeCurrentFile(long revision, String nextNodeID, String nextCopyID) throws SVNException, IOException {
-        String line = null;
-        if (getOwner().getDBFormat() >= FSFS.MIN_NO_GLOBAL_IDS_FORMAT) {
-            line = revision + "\n"; 
-        } else {
-            line = revision + " " + nextNodeID + " " + nextCopyID + "\n";
-        }
-        
-        File currentFile = getOwner().getCurrentFile();
-        File tmpCurrentFile = SVNFileUtil.createUniqueFile(currentFile.getParentFile(), ".txnfile", ".tmp");
-        OutputStream currentOS = null;
-
-        try {
-            currentOS = SVNFileUtil.openFileForWriting(tmpCurrentFile);
-            currentOS.write(line.getBytes("UTF-8"));
-        } finally {
-            SVNFileUtil.closeFile(currentOS);
-        }
-        SVNFileUtil.rename(tmpCurrentFile, currentFile);
-    }
-    
     private long writeHashRepresentation(SVNProperties hashContents, OutputStream protoFile, MessageDigest digest) throws IOException, SVNException {
         HashRepresentationStream targetFile = new HashRepresentationStream(protoFile, digest);
         String header = FSRepresentation.REP_PLAIN + "\n";
@@ -671,44 +649,6 @@ public class FSTransactionRoot extends FSRoot {
         String trailer = FSRepresentation.REP_TRAILER + "\n";
         protoFile.write(trailer.getBytes("UTF-8"));
         return targetFile.mySize;
-    }
-
-    public static String generateNextKey(String oldKey) throws SVNException {
-        char[] nextKey = new char[oldKey.length() + 1];
-        boolean carry = true;
-        if (oldKey.length() > 1 && oldKey.charAt(0) == '0') {
-            return null;
-        }
-        for (int i = oldKey.length() - 1; i >= 0; i--) {
-            char c = oldKey.charAt(i);
-            if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z'))) {
-                return null;
-            }
-            if (carry) {
-                if (c == 'z') {
-                    nextKey[i] = '0';
-                } else {
-                    carry = false;
-                    if (c == '9') {
-                        nextKey[i] = 'a';
-                    } else {
-                        nextKey[i] = (char) (c + 1);
-                    }
-                }
-            } else {
-                nextKey[i] = c;
-            }
-        }
-        int nextKeyLength = oldKey.length() + (carry ? 1 : 0);
-        if (nextKeyLength >= MAX_KEY_SIZE) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "FATAL error: new key length is greater than the threshold {0}", new Integer(MAX_KEY_SIZE));
-            SVNErrorManager.error(err);
-        }
-        if (carry) {
-            System.arraycopy(nextKey, 0, nextKey, 1, oldKey.length());
-            nextKey[0] = '1';
-        }
-        return new String(nextKey, 0, nextKeyLength);
     }
 
     private static String addKeys(String key1, String key2) {

@@ -303,13 +303,13 @@ public class FSRevisionNode {
         // Get the properties location (if any).
         String propsRepr = (String) headers.get(FSRevisionNode.HEADER_PROPS);
         if (propsRepr != null) {
-            parseRepresentationHeader(propsRepr, revNode, revnodeID.getTxnID(), false);
+            parseRepresentationHeader(propsRepr, revNode, revnodeID.getTxnID(), false, true);
         }
 
         // Get the data location (if any).
         String textRepr = (String) headers.get(FSRevisionNode.HEADER_TEXT);
         if (textRepr != null) {
-            parseRepresentationHeader(textRepr, revNode, revnodeID.getTxnID(), true);
+            parseRepresentationHeader(textRepr, revNode, revnodeID.getTxnID(), true, nodeKind == SVNNodeKind.DIR);
         }
 
         // Get the created path.
@@ -369,62 +369,8 @@ public class FSRevisionNode {
         return revNode;
     }
 
-    private static void parseCopyFrom(String copyfrom, FSRevisionNode revNode) throws SVNException {
-        if (copyfrom == null || copyfrom.length() == 0) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
-                    "Malformed copyfrom line in node-rev");
-            SVNErrorManager.error(err);
-        }
-
-        int delimiterInd = copyfrom.indexOf(' ');
-        if (delimiterInd == -1) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
-                    "Malformed copyfrom line in node-rev");
-            SVNErrorManager.error(err);
-        }
-
-        String copyfromRev = copyfrom.substring(0, delimiterInd);
-        String copyfromPath = copyfrom.substring(delimiterInd + 1);
-
-        long rev = -1;
-        try {
-            rev = Long.parseLong(copyfromRev);
-        } catch (NumberFormatException nfe) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
-                    "Malformed copyfrom line in node-rev");
-            SVNErrorManager.error(err);
-        }
-        revNode.setCopyFromRevision(rev);
-        revNode.setCopyFromPath(copyfromPath);
-    }
-
-    private static void parseCopyRoot(String copyroot, FSRevisionNode revNode) throws SVNException {
-        if (copyroot == null || copyroot.length() == 0) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed copyroot line in node-rev");
-            SVNErrorManager.error(err);
-        }
-
-        int delimiterInd = copyroot.indexOf(' ');
-        if (delimiterInd == -1) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed copyroot line in node-rev");
-            SVNErrorManager.error(err);
-        }
-
-        String copyrootRev = copyroot.substring(0, delimiterInd);
-        String copyrootPath = copyroot.substring(delimiterInd + 1);
-
-        long rev = -1;
-        try {
-            rev = Long.parseLong(copyrootRev);
-        } catch (NumberFormatException nfe) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed copyroot line in node-rev");
-            SVNErrorManager.error(err);
-        }
-        revNode.setCopyRootRevision(rev);
-        revNode.setCopyRootPath(copyrootPath);
-    }
-
-    private static void parseRepresentationHeader(String representation, FSRevisionNode revNode, String txnId, boolean isData) throws SVNException {
+    public static void parseRepresentationHeader(String representation, FSRevisionNode revNode, String txnId, 
+            boolean isData, boolean mutableRepTuncated) throws SVNException {
         if (revNode == null) {
             return;
         }
@@ -443,9 +389,11 @@ public class FSRevisionNode {
         try {
             rev = Long.parseLong(revision);
         } catch (NumberFormatException nfe) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed text rep offset line in node-rev");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
+                    "Malformed text rep offset line in node-rev");
             SVNErrorManager.error(err);
         }
+        
         rep.setRevision(rev);
 
         if (FSRepository.isInvalidRevision(rep.getRevision())) {
@@ -455,8 +403,7 @@ public class FSRevisionNode {
             } else {
                 revNode.setPropsRepresentation(rep);
             }
-            // is it a mutable representation?
-            if (!isData || revNode.getType() == SVNNodeKind.DIR) {
+            if (mutableRepTuncated) {
                 return;
             }
         }
@@ -533,6 +480,61 @@ public class FSRevisionNode {
         } else {
             revNode.setPropsRepresentation(rep);
         }
+    }
+
+    private static void parseCopyFrom(String copyfrom, FSRevisionNode revNode) throws SVNException {
+        if (copyfrom == null || copyfrom.length() == 0) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
+                    "Malformed copyfrom line in node-rev");
+            SVNErrorManager.error(err);
+        }
+
+        int delimiterInd = copyfrom.indexOf(' ');
+        if (delimiterInd == -1) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
+                    "Malformed copyfrom line in node-rev");
+            SVNErrorManager.error(err);
+        }
+
+        String copyfromRev = copyfrom.substring(0, delimiterInd);
+        String copyfromPath = copyfrom.substring(delimiterInd + 1);
+
+        long rev = -1;
+        try {
+            rev = Long.parseLong(copyfromRev);
+        } catch (NumberFormatException nfe) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
+                    "Malformed copyfrom line in node-rev");
+            SVNErrorManager.error(err);
+        }
+        revNode.setCopyFromRevision(rev);
+        revNode.setCopyFromPath(copyfromPath);
+    }
+
+    private static void parseCopyRoot(String copyroot, FSRevisionNode revNode) throws SVNException {
+        if (copyroot == null || copyroot.length() == 0) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed copyroot line in node-rev");
+            SVNErrorManager.error(err);
+        }
+
+        int delimiterInd = copyroot.indexOf(' ');
+        if (delimiterInd == -1) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed copyroot line in node-rev");
+            SVNErrorManager.error(err);
+        }
+
+        String copyrootRev = copyroot.substring(0, delimiterInd);
+        String copyrootPath = copyroot.substring(delimiterInd + 1);
+
+        long rev = -1;
+        try {
+            rev = Long.parseLong(copyrootRev);
+        } catch (NumberFormatException nfe) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed copyroot line in node-rev");
+            SVNErrorManager.error(err);
+        }
+        revNode.setCopyRootRevision(rev);
+        revNode.setCopyRootPath(copyrootPath);
     }
 
     public FSRevisionNode getChildDirNode(String childName, FSFS fsfsOwner) throws SVNException {

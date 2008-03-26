@@ -97,4 +97,6 @@ public class SVNAdminEventAction {
     public static final SVNAdminEventAction NOT_LOCKED = new SVNAdminEventAction(11);
 
     public static final SVNAdminEventAction LOCK_LISTED = new SVNAdminEventAction(12);
+    
+    public static final SVNAdminEventAction RECOVERY_STARTED = new SVNAdminEventAction(13);
 }
