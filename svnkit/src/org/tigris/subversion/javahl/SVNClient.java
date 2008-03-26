@@ -162,6 +162,10 @@ public class SVNClient implements SVNClientInterface {
         myDelegate.cleanup(path);
     }
 
+    public void resolve(String path, int depth, int conflictResult) throws SubversionException {
+        myDelegate.resolve(path, depth, conflictResult);
+    }
+
     public void resolved(String path, boolean recurse) throws ClientException {
         myDelegate.resolved(path, recurse);
     }
@@ -451,10 +455,6 @@ public class SVNClient implements SVNClientInterface {
 
     public RevisionRange[] getAvailableMerges(String path, Revision pegRevision, String mergeSource) throws SubversionException {
         return myDelegate.getAvailableMerges(path, pegRevision, mergeSource);
-    }
-
-    public void resolved(String path, int depth, int conflictResult) throws SubversionException {
-        myDelegate.resolved(path, depth, conflictResult);
     }
 
     public long doSwitch(String path, String url, Revision revision, Revision pegRevision, int depth, boolean depthIsSticky, boolean ignoreExternals, boolean allowUnverObstructions) throws ClientException {

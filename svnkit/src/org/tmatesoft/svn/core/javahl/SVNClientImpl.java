@@ -798,10 +798,10 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public void resolved(String path, boolean recurse) throws ClientException {
-        resolved(path, JavaHLObjectFactory.infinityOrEmpty(recurse), ConflictResult.chooseMerged);
+        resolve(path, JavaHLObjectFactory.infinityOrEmpty(recurse), ConflictResult.chooseMerged);
     }
 
-    public void resolved(String path, int depth, int conflictResult) throws ClientException {
+    public void resolve(String path, int depth, int conflictResult) throws ClientException {
         SVNWCClient client = getSVNWCClient();
         try {
             client.doResolve(new File(path).getAbsoluteFile(), JavaHLObjectFactory.getSVNDepth(depth), JavaHLObjectFactory.getSVNConflictChoice(conflictResult));
