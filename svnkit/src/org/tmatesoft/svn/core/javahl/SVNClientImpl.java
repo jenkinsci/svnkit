@@ -957,7 +957,7 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public PropertyData[] properties(String path, Revision revision) throws ClientException {
-        return properties(path, revision, null);
+        return properties(path, revision, revision);
     }
 
     public PropertyData[] properties(String path, Revision revision, Revision pegRevision) throws ClientException {
@@ -1020,7 +1020,7 @@ public class SVNClientImpl implements SVNClientInterface {
 
     public void propertySet(String path, String name, String value, int depth,
             String[] changelists, boolean force) throws ClientException {
-        propertySet(path, name, value == null ? null : SVNPropertyValue.create(value), depth, force, changelists);
+        propertySet(path, name, SVNPropertyValue.create(value), depth, force, changelists);
     }
 
     private void propertySet(String path, String name, SVNPropertyValue value, int depth, boolean force, 
@@ -1068,9 +1068,9 @@ public class SVNClientImpl implements SVNClientInterface {
         JavaHLPropertyHandler retriever = new JavaHLPropertyHandler(myOwner);
         try {
             if (isURL(path)) {
-                client.doGetProperty(SVNURL.parseURIEncoded(path), name, svnPegRevision, svnRevision, false, retriever);
+                client.doGetProperty(SVNURL.parseURIEncoded(path), name, svnPegRevision, svnRevision, SVNDepth.EMPTY, retriever);
             } else {
-                client.doGetProperty(new File(path).getAbsoluteFile(), name, svnPegRevision, svnRevision, false, retriever);
+                client.doGetProperty(new File(path).getAbsoluteFile(), name, svnPegRevision, svnRevision, SVNDepth.EMPTY, retriever, null);
             }
         } catch (SVNException e) {
             throwException(e);
@@ -1087,35 +1087,30 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public void propertyCreate(String path, String name, byte[] value, boolean recurse, boolean force) throws ClientException {
-        propertyCreate(path, name, SVNPropertyValue.create(name, value), recurse, force);
-    }
-
-    public void propertyCreate(String path, String name, String value, int depth, boolean force) throws ClientException {
-        propertyCreate(path, name, value, SVNDepth.fromID(depth).isRecursive(), force);
+        propertyCreate(path, name, SVNPropertyValue.create(name, value), JavaHLObjectFactory.infinityOrEmpty(recurse), null, force);
     }
 
     public void propertyCreate(String path, String name, String value, boolean recurse, boolean force) throws ClientException {
-        if (value == null) {
-            value = "";
-        }
-        propertyCreate(path, name, SVNPropertyValue.create(value), recurse, force);
+        propertySet(path, name, value, recurse, force);
     }
 
-    public void propertyCreate(String path, String name, SVNPropertyValue value, boolean recurse, boolean force) throws ClientException {
+	public void propertyCreate(String path, String name, String value,
+                               int depth, String[] changelists, boolean force)
+            throws ClientException {
+        propertyCreate(path, name, SVNPropertyValue.create(value), depth, changelists, force);
+    }
+
+	private void propertyCreate(String path, String name, SVNPropertyValue value,
+                               int depth, String[] changelists, boolean force)
+            throws ClientException {
         SVNWCClient client = getSVNWCClient();
         try {
-            client.doSetProperty(new File(path).getAbsoluteFile(), name, value, force, recurse, ISVNPropertyHandler.NULL);
+            client.doSetProperty(new File(path).getAbsoluteFile(), name, value, force, JavaHLObjectFactory.getSVNDepth(depth),
+                    ISVNPropertyHandler.NULL, JavaHLObjectFactory.getChangeListsCollection(changelists));
         } catch (SVNException e) {
             throwException(e);
         }
     }
-
-	public void propertyCreate(String path, String name, String value,
-			int depth, String[] changelists, boolean force)
-			throws ClientException {
-		//TODO: Implement
-		notImplementedYet();
-	}
 
     public PropertyData revProperty(String path, String name, Revision rev) throws ClientException {
         if (name == null || name.equals("")) {
@@ -1595,8 +1590,8 @@ public class SVNClientImpl implements SVNClientInterface {
 
     public boolean isAdminDirectory(String name) {
         return name != null && (SVNFileUtil.isWindows) ?
-                name.equalsIgnoreCase(SVNFileUtil.getAdminDirectoryName()) :
-                name.equals(SVNFileUtil.getAdminDirectoryName());
+                SVNFileUtil.getAdminDirectoryName().equalsIgnoreCase(name) :
+                SVNFileUtil.getAdminDirectoryName().equals(name);
     }
 
     public org.tigris.subversion.javahl.Version getVersion() {

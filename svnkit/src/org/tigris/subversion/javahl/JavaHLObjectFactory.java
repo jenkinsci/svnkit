@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
@@ -619,11 +620,13 @@ public class JavaHLObjectFactory {
                 );
     }
     
-    public static PropertyData createPropertyData(Object client, String path, String name, String value, byte[] data) {
+    public static PropertyData createPropertyData(Object client, String path, String name, SVNPropertyValue value) {
         if (client instanceof SVNClientImpl){
-            return new JavaHLPropertyData((SVNClientImpl) client, null, path, name, value, data);
+            if (value.isString()) {
+                return new JavaHLPropertyData((SVNClientImpl) client, null, path, name, value.getString(), SVNPropertyValue.getPropertyAsBytes(value));
+            }
         }
-        return new PropertyData((SVNClient) client, path, name, value, data);
+        return new PropertyData((SVNClient) client, path, name, value.getString(), SVNPropertyValue.getPropertyAsBytes(value));
     }
 
     public static NotifyInformation createNotifyInformation(SVNEvent event, String path) {
