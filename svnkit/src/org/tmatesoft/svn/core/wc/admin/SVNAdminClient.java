@@ -932,6 +932,11 @@ public class SVNAdminClient extends SVNBasicClient {
         recoverer.runRecovery();
     }
     
+    public long getYoungestRevision(File repositoryRoot) throws SVNException {
+        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
+        return fsfs.getYoungestRevision();
+    }
+    
     private void dump(FSFS fsfs, OutputStream dumpStream, long start, long end, boolean isIncremental, boolean useDeltas) throws SVNException, IOException {
         boolean isDumping = dumpStream != null && dumpStream != SVNFileUtil.DUMMY_OUT;
         long youngestRevision = fsfs.getYoungestRevision();
