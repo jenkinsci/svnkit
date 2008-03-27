@@ -29,6 +29,7 @@ public class SVNConflictAcceptPolicy {
 
     public static SVNConflictAcceptPolicy MINE_FULL = new SVNConflictAcceptPolicy("mine-full");
 
+    public static SVNConflictAcceptPolicy WORKING = new SVNConflictAcceptPolicy("working");
     /**
      * Resolve the conflict with the post-conflict base file.
      */
@@ -70,6 +71,8 @@ public class SVNConflictAcceptPolicy {
             return SVNConflictAcceptPolicy.MINE_FULL;
         } else if (THEIRS_FULL.myName.equals(accept)) {
             return SVNConflictAcceptPolicy.THEIRS_FULL;
+        } else if (WORKING.myName.equals(accept)) {
+            return SVNConflictAcceptPolicy.WORKING;
         }
         return SVNConflictAcceptPolicy.INVALID;
     }

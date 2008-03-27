@@ -49,7 +49,7 @@ public class SVNResolveCommand extends SVNCommand {
     public void run() throws SVNException {
         SVNConflictAcceptPolicy accept = getSVNEnvironment().getResolveAccept();
         SVNConflictChoice choice = null;
-        if (accept == SVNConflictAcceptPolicy.INVALID) {
+        if (accept == SVNConflictAcceptPolicy.WORKING) {
             choice = SVNConflictChoice.MERGED;
         } else if (accept == SVNConflictAcceptPolicy.BASE) {
             choice = SVNConflictChoice.BASE;
@@ -61,8 +61,11 @@ public class SVNResolveCommand extends SVNCommand {
             choice = SVNConflictChoice.MINE_FULL;
         } else if (accept == SVNConflictAcceptPolicy.THEIRS_FULL) {
             choice = SVNConflictChoice.THEIRS_FULL;
-        } else {
+        } else if (accept == SVNConflictAcceptPolicy.INVALID) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "invalid 'accept' ARG");
+            SVNErrorManager.error(err);
+        } else {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "missing --accept option");
             SVNErrorManager.error(err);
         }
        
