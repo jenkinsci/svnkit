@@ -14,15 +14,20 @@ package org.tmatesoft.svn.core.internal.wc;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.CharsetDecoder;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNMergeRange;
+import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaReader;
@@ -34,6 +39,7 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRevisionNode;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionRoot;
+import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
@@ -64,12 +70,13 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
     private ISVNAdminEventHandler myProgressHandler;
     private CharsetDecoder myDecoder;
     
-    public DefaultLoadHandler(boolean usePreCommitHook, boolean usePostCommitHook, SVNUUIDAction uuidAction, String parentDir, ISVNAdminEventHandler progressHandler, CharsetDecoder decoder) {
+    public DefaultLoadHandler(boolean usePreCommitHook, boolean usePostCommitHook, SVNUUIDAction uuidAction, 
+            String parentDir, ISVNAdminEventHandler progressHandler, CharsetDecoder decoder) {
         myProgressHandler = progressHandler;
         myIsUsePreCommitHook = usePreCommitHook;
         myIsUsePostCommitHook = usePostCommitHook;
         myUUIDAction = uuidAction;
-//        myParentDir = SVNPathUtil.getAbsolutePath(SVNPathUtil.canonicalizePath(parentDir));
+        myParentDir = SVNPathUtil.canonicalizePath(parentDir);
         myRevisionsMap = new HashMap();
         myDecoder = decoder;
     }
@@ -391,7 +398,16 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
     }
 
     public void setNodeProperty(String propertyName, SVNPropertyValue propertyValue) throws SVNException {
-        myCurrentRevisionBaton.getCommitter().changeNodeProperty(myCurrentNodeBaton.myPath, propertyName, propertyValue);
+        if (SVNProperty.MERGE_INFO.equals(propertyName)) {
+            Map mergeInfo = renumberMergeInfoRevisions(propertyValue);
+            if (myParentDir != null) {
+                mergeInfo = prefixMergeInfoPaths(mergeInfo);
+            }
+            String mergeInfoString = SVNMergeInfoUtil.formatMergeInfoToString(mergeInfo);
+            propertyValue = SVNPropertyValue.create(mergeInfoString);
+        }
+        myCurrentRevisionBaton.getCommitter().changeNodeProperty(myCurrentNodeBaton.myPath, propertyName, 
+                propertyValue);
     }
 
     public void setRevisionProperty(String propertyName, SVNPropertyValue propertyValue) throws SVNException {
@@ -519,6 +535,41 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
             baton.myTextChecksum = (String) headers.get(SVNAdminHelper.DUMPFILE_TEXT_CONTENT_LENGTH);
         }        
         return baton;
+    }
+    
+    private Map renumberMergeInfoRevisions(SVNPropertyValue mergeInfoProp) throws SVNException {
+        String mergeInfoString = SVNPropertyValue.getPropertyAsString(mergeInfoProp);
+        Map mergeInfo = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(mergeInfoString), null);
+        for (Iterator mergeInfoIter = mergeInfo.keySet().iterator(); mergeInfoIter.hasNext();) {
+            String mergeSource = (String) mergeInfoIter.next();
+            SVNMergeRangeList rangeList = (SVNMergeRangeList) mergeInfo.get(mergeSource);
+            SVNMergeRange[] ranges = rangeList.getRanges();
+            for (int i = 0; i < ranges.length; i++) {
+                SVNMergeRange range = ranges[i];
+                Long revFromMap = (Long) myRevisionsMap.get(new Long(range.getStartRevision()));
+                if (revFromMap != null && SVNRevision.isValidRevisionNumber(revFromMap.longValue())) {
+                    range.setStartRevision(revFromMap.longValue());
+                }
+                revFromMap = (Long) myRevisionsMap.get(new Long(range.getEndRevision()));
+                if (revFromMap != null && SVNRevision.isValidRevisionNumber(revFromMap.longValue())) {
+                    range.setEndRevision(revFromMap.longValue());
+                }
+            }
+            Arrays.sort(ranges);
+        }
+        return mergeInfo;
+    }
+    
+    private Map prefixMergeInfoPaths(Map mergeInfo) {
+        Map prefixedMergeInfo = new TreeMap();
+        for (Iterator mergeInfoIter = mergeInfo.keySet().iterator(); mergeInfoIter.hasNext();) {
+            String mergeSource = (String) mergeInfoIter.next();
+            SVNMergeRangeList rangeList = (SVNMergeRangeList) mergeInfo.get(mergeSource);
+            mergeSource = mergeSource.startsWith("/") ? mergeSource.substring(1) : mergeSource;
+            String prefixedMergeSource = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(myParentDir, mergeSource));
+            prefixedMergeInfo.put(prefixedMergeSource, rangeList);
+        }
+        return prefixedMergeInfo;
     }
     
     private class RevisionBaton {

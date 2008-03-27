@@ -1051,7 +1051,8 @@ public class SVNAdminClient extends SVNBasicClient {
     private ISVNLoadHandler getLoadHandler(File repositoryRoot, boolean usePreCommitHook, boolean usePostCommitHook, SVNUUIDAction uuidAction, String parentDir, CharsetDecoder decoder) throws SVNException {
         if (myLoadHandler == null) {
             FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
-            DefaultLoadHandler handler = new DefaultLoadHandler(usePreCommitHook, usePostCommitHook, uuidAction, parentDir, myEventHandler, decoder);
+            DefaultLoadHandler handler = new DefaultLoadHandler(usePreCommitHook, usePostCommitHook, uuidAction, 
+                    parentDir, myEventHandler, decoder);
             handler.setFSFS(fsfs);
             myLoadHandler = handler;
         } else {
