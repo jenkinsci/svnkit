@@ -20,6 +20,8 @@ import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.MalformedInputException;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.CharacterCodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
@@ -62,6 +64,7 @@ public class FSFile {
         myBuffer = ByteBuffer.allocate(4096);
         myReadLineBuffer = ByteBuffer.allocate(4096);
         myDecoder = Charset.forName("UTF-8").newDecoder();
+        myDecoder = myDecoder.onMalformedInput(CodingErrorAction.REPORT).onUnmappableCharacter(CodingErrorAction.REPORT);
     }
     
     public void seek(long position) {
@@ -152,7 +155,7 @@ public class FSFile {
         return buffer.toString();
     }
 
-    public SVNProperties readProperties(boolean allowEOF) throws SVNException {
+    public SVNProperties readProperties(boolean allowEOF, boolean allowBinaryValues) throws SVNException {
         SVNProperties properties = new SVNProperties();
         String line = null;
         try {
@@ -226,8 +229,13 @@ public class FSFile {
                 limit = myReadLineBuffer.limit();
                 try {
                     properties.put(key, myDecoder.decode(myReadLineBuffer).toString());
-                } catch (MalformedInputException mfi) {
-                    properties.put(key, myReadLineBuffer.array());
+                } catch (CharacterCodingException cce) {
+                    if (allowBinaryValues){
+                        properties.put(key, myReadLineBuffer.array());                                                
+                    } else {
+                        SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "File ''{0}'' contains unexpected binary property value", getFile());
+                        SVNErrorManager.error(error, cce);
+                    }
                 }
             }
         } catch (IOException e) {

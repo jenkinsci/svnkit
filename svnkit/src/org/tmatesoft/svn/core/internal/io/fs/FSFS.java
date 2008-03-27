@@ -233,7 +233,7 @@ public class FSFS {
         ensureRevisionsExists(revision);
         FSFile file = new FSFile(getRevisionPropertiesFile(revision));
         try {
-            return file.readProperties(false);
+            return file.readProperties(false, true);
         } finally {
             file.close();
         }
@@ -299,8 +299,8 @@ public class FSFS {
             FSFile childrenFile = getTransactionRevisionNodeChildrenFile(revNode.getId());
             Map entries = null;
             try {
-                SVNProperties rawEntries = childrenFile.readProperties(false);
-                rawEntries.putAll(childrenFile.readProperties(true));
+                SVNProperties rawEntries = childrenFile.readProperties(false, false);
+                rawEntries.putAll(childrenFile.readProperties(true, false));
 
                 rawEntries.removeNullValues();
             
@@ -323,7 +323,7 @@ public class FSFS {
                 }
                 
                 revisionFile.resetDigest();
-                SVNProperties rawEntries = revisionFile.readProperties(false);
+                SVNProperties rawEntries = revisionFile.readProperties(false, false);
                 String checksum = revisionFile.digest();
                
                 if (!checksum.equals(textRep.getHexDigest())) {
@@ -348,7 +348,7 @@ public class FSFS {
             FSFile propsFile = null;
             try {
                 propsFile = getTransactionRevisionNodePropertiesFile(revNode.getId());
-                return propsFile.readProperties(false);
+                return propsFile.readProperties(false, true);
             } finally {
                 if(propsFile != null){
                     propsFile.close();
@@ -368,7 +368,7 @@ public class FSFS {
                 }
 
                 revisionFile.resetDigest();
-                SVNProperties props = revisionFile.readProperties(false);
+                SVNProperties props = revisionFile.readProperties(false, true);
                 String checksum = revisionFile.digest();
 
                 if (!checksum.equals(propsRep.getHexDigest())) {
@@ -618,7 +618,7 @@ public class FSFS {
     public SVNProperties getTransactionProperties(String txnID) throws SVNException {
         FSFile txnPropsFile = new FSFile(getTransactionPropertiesFile(txnID));
         try {
-            return txnPropsFile.readProperties(false);
+            return txnPropsFile.readProperties(false, true);
         } finally {
             txnPropsFile.close();
         }
@@ -844,7 +844,7 @@ public class FSFS {
         if (digestLockFile.exists()) {
             FSFile reader = new FSFile(digestLockFile);
             try {
-                lockProps = reader.readProperties(false);
+                lockProps = reader.readProperties(false, true);
             } catch (SVNException svne) {
                 SVNErrorMessage err = svne.getErrorMessage().wrap("Can't parse lock/entries hashfile ''{0}''", digestLockFile);
                 SVNErrorManager.error(err);
@@ -1430,7 +1430,7 @@ public class FSFS {
             return null;
         }
         FSFile reader = new FSFile(nodeOriginFile);
-        return reader.readProperties(false);
+        return reader.readProperties(false, true);
     }
     
     private void unlock(String path, String token, String username, boolean breakLock) throws SVNException {

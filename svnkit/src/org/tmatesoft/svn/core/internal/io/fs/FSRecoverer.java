@@ -124,7 +124,7 @@ public class FSRecoverer {
             SVNErrorManager.error(err);
         }
         
-        SVNProperties rawEntries = revFile.readProperties(false);
+        SVNProperties rawEntries = revFile.readProperties(false, false);
         for (Iterator entriesIter = rawEntries.nameSet().iterator(); entriesIter.hasNext();) {
             String name = (String) entriesIter.next();
             String unparsedEntry = rawEntries.getStringValue(name);

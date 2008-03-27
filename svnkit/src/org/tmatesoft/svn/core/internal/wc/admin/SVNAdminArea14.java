@@ -256,7 +256,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         FSFile wcpropsFile = null;
         try {
             wcpropsFile = new FSFile(propertiesFile);
-            SVNProperties wcProps = wcpropsFile.readProperties(false);
+            SVNProperties wcProps = wcpropsFile.readProperties(false, true);
             SVNVersionedProperties entryWCProps = new SVNProperties13(wcProps); 
             wcPropsCache.put(getThisDirName(), entryWCProps);
             
@@ -272,7 +272,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
                     }
                     break;
                 }
-                wcProps = wcpropsFile.readProperties(false);
+                wcProps = wcpropsFile.readProperties(false, true);
                 entryWCProps = new SVNProperties13(wcProps);
                 wcPropsCache.put(name, entryWCProps);
                 buffer.delete(0, buffer.length());
