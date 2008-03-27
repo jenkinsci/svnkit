@@ -30,10 +30,10 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
  * @version 1.1.2
  * @author  TMate Software Ltd.
  */
-public class SVNResolvedCommand extends SVNCommand {
+public class SVNResolveCommand extends SVNCommand {
 
-    public SVNResolvedCommand() {
-        super("resolved", null);
+    public SVNResolveCommand() {
+        super("resolve", null);
     }
 
     protected Collection createSupportedOptions() {
@@ -42,10 +42,30 @@ public class SVNResolvedCommand extends SVNCommand {
         options.add(SVNOption.RECURSIVE);
         options.add(SVNOption.DEPTH);
         options.add(SVNOption.QUIET);
+        options.add(SVNOption.ACCEPT);
         return options;
     }
 
     public void run() throws SVNException {
+        SVNConflictAcceptPolicy accept = getSVNEnvironment().getResolveAccept();
+        SVNConflictChoice choice = null;
+        if (accept == SVNConflictAcceptPolicy.INVALID) {
+            choice = SVNConflictChoice.MERGED;
+        } else if (accept == SVNConflictAcceptPolicy.BASE) {
+            choice = SVNConflictChoice.BASE;
+        } else if (accept == SVNConflictAcceptPolicy.THEIRS) {
+            choice = SVNConflictChoice.THEIRS_CONFLICT;
+        } else if (accept == SVNConflictAcceptPolicy.MINE) {
+            choice = SVNConflictChoice.MINE_CONFLICT;
+        } else if (accept == SVNConflictAcceptPolicy.MINE_FULL) {
+            choice = SVNConflictChoice.MINE_FULL;
+        } else if (accept == SVNConflictAcceptPolicy.THEIRS_FULL) {
+            choice = SVNConflictChoice.THEIRS_FULL;
+        } else {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "invalid 'accept' ARG");
+            SVNErrorManager.error(err);
+        }
+       
         List targets = getSVNEnvironment().combineTargets(getSVNEnvironment().getTargets(), true);
         if (targets.isEmpty()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS));
@@ -63,7 +83,7 @@ public class SVNResolvedCommand extends SVNCommand {
             SVNPath target = new SVNPath(targetName);
             if (target.isFile()) {
                 try {
-                    client.doResolve(target.getFile(), depth, SVNConflictChoice.MERGED);
+                    client.doResolve(target.getFile(), depth, choice);
                 } catch (SVNException e) {
                     SVNErrorMessage err = e.getErrorMessage();
                     getSVNEnvironment().handleWarning(err, new SVNErrorCode[] {err.getErrorCode()}, getSVNEnvironment().isQuiet());
@@ -71,5 +91,4 @@ public class SVNResolvedCommand extends SVNCommand {
             }
         }
     }
-
 }
