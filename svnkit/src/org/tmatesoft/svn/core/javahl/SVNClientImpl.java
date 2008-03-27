@@ -1733,6 +1733,7 @@ public class SVNClientImpl implements SVNClientInterface {
         SVNDiffClient differ = getSVNDiffClient();
         differ.getDiffGenerator().setDiffDeleted(!noDiffDeleted);
         differ.getDiffGenerator().setForcedBinaryDiff(force);
+        differ.getDiffGenerator().setBasePath(new File(relativeToDir).getAbsoluteFile());
         differ.setOptions(getOptions());
         SVNRevision rev1 = JavaHLObjectFactory.getSVNRevision(revision1);
         SVNRevision rev2 = JavaHLObjectFactory.getSVNRevision(revision2);
@@ -1772,6 +1773,7 @@ public class SVNClientImpl implements SVNClientInterface {
         SVNDiffClient differ = getSVNDiffClient();
         differ.getDiffGenerator().setDiffDeleted(!noDiffDeleted);
         differ.getDiffGenerator().setForcedBinaryDiff(force);
+        differ.getDiffGenerator().setBasePath(new File(relativeToDir).getAbsoluteFile());
         differ.setOptions(getOptions());
         SVNRevision peg = JavaHLObjectFactory.getSVNRevision(pegRevision);
         SVNRevision rev1 = JavaHLObjectFactory.getSVNRevision(startRevision);
