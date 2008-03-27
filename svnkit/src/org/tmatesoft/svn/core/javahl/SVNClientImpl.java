@@ -59,6 +59,8 @@ import org.tigris.subversion.javahl.SVNClientLogLevel;
 import org.tigris.subversion.javahl.Status;
 import org.tigris.subversion.javahl.StatusCallback;
 import org.tigris.subversion.javahl.SubversionException;
+import org.tigris.subversion.javahl.RevisionKind;
+
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNCancelException;
@@ -861,22 +863,28 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public void merge(String path, Revision pegRevision, RevisionRange[] revisions, String localPath, boolean force, int depth, boolean ignoreAncestry, boolean dryRun, boolean recordOnly) throws ClientException {
+        List rangesToMerge = new ArrayList(revisions.length);
         for (int i = 0; i < revisions.length; i++) {
-            merge(path, pegRevision, revisions[i].getFromRevision(),
-                    revisions[i].getToRevision(), localPath, force, depth,
-                    ignoreAncestry, dryRun, recordOnly);
+            if (revisions[i].getFromRevision().getKind() == RevisionKind.unspecified
+                    && revisions[i].getToRevision().getKind() == RevisionKind.unspecified) {
+                SVNRevisionRange range = new SVNRevisionRange(SVNRevision.create(1), SVNRevision.HEAD);
+                rangesToMerge.add(range);                
+            } else {
+                rangesToMerge.add(JavaHLObjectFactory.getSVNRevisionRange(revisions[i]));
+            }
         }
+        merge(path, pegRevision, rangesToMerge, localPath, force, depth,
+                    ignoreAncestry, dryRun, recordOnly);
     }
 
     public void merge(String path, Revision pegRevision, Revision revision1, Revision revision2, String localPath, boolean force, boolean recurse, boolean ignoreAncestry, boolean dryRun) throws ClientException {
-        merge(path, pegRevision, revision1, revision2, localPath, force, JavaHLObjectFactory.infinityOrFiles(recurse), ignoreAncestry, dryRun, false);
+        List rangesToMerge = new LinkedList();
+        rangesToMerge.add(new SVNRevisionRange(JavaHLObjectFactory.getSVNRevision(revision1), JavaHLObjectFactory.getSVNRevision(revision2)));
+        merge(path, pegRevision, rangesToMerge, localPath, force, JavaHLObjectFactory.infinityOrFiles(recurse), ignoreAncestry, dryRun, false);
     }
 
-    private void merge(String path, Revision pegRevision, Revision revision1, Revision revision2, String localPath, boolean force, int depth, boolean ignoreAncestry, boolean dryRun, boolean recordOnly) throws ClientException {
-        SVNDiffClient differ = getSVNDiffClient();
-        List rangesToMerge = new LinkedList();
-        rangesToMerge.add(new SVNRevisionRange(JavaHLObjectFactory.getSVNRevision(revision1), 
-        		JavaHLObjectFactory.getSVNRevision(revision2)));
+    private void merge(String path, Revision pegRevision, List rangesToMerge, String localPath, boolean force, int depth, boolean ignoreAncestry, boolean dryRun, boolean recordOnly) throws ClientException {
+        SVNDiffClient differ = getSVNDiffClient();        
         try {
             if (isURL(path)) {
                 SVNURL url = SVNURL.parseURIEncoded(path);
@@ -885,14 +893,14 @@ public class SVNClientImpl implements SVNClientInterface {
                         rangesToMerge,
                         new File(localPath).getAbsoluteFile(),
                         JavaHLObjectFactory.getSVNDepth(depth),
-                        !ignoreAncestry, force, dryRun, false);
+                        !ignoreAncestry, force, dryRun, recordOnly);
             } else {
                 differ.doMerge(new File(path).getAbsoluteFile(),
                         JavaHLObjectFactory.getSVNRevision(pegRevision),
                         rangesToMerge,
                         new File(localPath).getAbsoluteFile(),
                         JavaHLObjectFactory.getSVNDepth(depth),
-                        !ignoreAncestry, force, dryRun, false);
+                        !ignoreAncestry, force, dryRun, recordOnly);
             }
         } catch (SVNException e) {
             throwException(e);

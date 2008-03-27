@@ -30,8 +30,8 @@ import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
@@ -49,6 +49,7 @@ import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 
 /**
  * @version 1.1.1
@@ -469,6 +470,10 @@ public class JavaHLObjectFactory {
             result[i] = createRevisionRange(ranges[i]);
         }
         return result;
+    }
+
+    public static SVNRevisionRange getSVNRevisionRange(RevisionRange revisionRange) {
+        return new SVNRevisionRange(getSVNRevision(revisionRange.getFromRevision()), getSVNRevision(revisionRange.getToRevision()));
     }
 
     public static void handleLogMessage(SVNLogEntry logEntry, LogMessageCallback handler) {
