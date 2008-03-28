@@ -42,6 +42,10 @@ public class SVNConfigFile {
     public SVNConfigFile(File file) {
         myFile = file.getAbsoluteFile();
     }
+    
+    protected String[] getLines() {
+        return myLines;
+    }
 
     public Map getProperties(String groupName) {
         Map map = new SVNHashMap();
