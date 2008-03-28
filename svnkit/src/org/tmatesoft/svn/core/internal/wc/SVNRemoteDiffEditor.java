@@ -341,9 +341,23 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     }
 
     public void absentDir(String path) throws SVNException {
+        if (myCurrentDirectory.myWCFile != null) {
+            File dir = new File(myCurrentDirectory.myWCFile, SVNPathUtil.tail(path));
+            SVNEvent event = SVNEventFactory.createSVNEvent(dir, SVNNodeKind.DIR, 
+                    null, SVNRepository.INVALID_REVISION, SVNStatusType.MISSING, SVNStatusType.MISSING, SVNStatusType.MISSING, SVNEventAction.SKIP, SVNEventAction.SKIP, 
+                    null, null);
+            myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
+        }
     }
 
     public void absentFile(String path) throws SVNException {
+        if (myCurrentDirectory.myWCFile != null) {
+            File file = new File(myCurrentDirectory.myWCFile, SVNPathUtil.tail(path));
+            SVNEvent event = SVNEventFactory.createSVNEvent(file, SVNNodeKind.FILE, 
+                    null, SVNRepository.INVALID_REVISION, SVNStatusType.MISSING, SVNStatusType.MISSING, SVNStatusType.MISSING, SVNEventAction.SKIP, SVNEventAction.SKIP, 
+                    null, null);
+            myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
+        }
     }
 
     public void cleanup() throws SVNException {
