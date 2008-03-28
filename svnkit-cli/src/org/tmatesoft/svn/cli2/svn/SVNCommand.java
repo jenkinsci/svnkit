@@ -24,15 +24,7 @@ import org.tmatesoft.svn.cli2.AbstractSVNOption;
  */
 public abstract class SVNCommand extends AbstractSVNCommand {
 
-    private static final Collection ourGlobalOptions = new LinkedList();
-    
-    static {
-        ourGlobalOptions.add(SVNOption.USERNAME);
-        ourGlobalOptions.add(SVNOption.PASSWORD);
-        ourGlobalOptions.add(SVNOption.NO_AUTH_CACHE);
-        ourGlobalOptions.add(SVNOption.NON_INTERACTIVE);
-        ourGlobalOptions.add(SVNOption.CONFIG_DIR);
-    }
+    private Collection myGlobalOptions = new LinkedList();
 
     protected SVNCommand(String name, String[] aliases) {
         super(name, aliases);
@@ -63,7 +55,15 @@ public abstract class SVNCommand extends AbstractSVNCommand {
     }
 
     public Collection getGlobalOptions() {
-        return null;
+        if (myGlobalOptions == null) {
+            myGlobalOptions = new LinkedList();
+            myGlobalOptions.add(SVNOption.USERNAME);
+            myGlobalOptions.add(SVNOption.PASSWORD);
+            myGlobalOptions.add(SVNOption.NO_AUTH_CACHE);
+            myGlobalOptions.add(SVNOption.NON_INTERACTIVE);
+            myGlobalOptions.add(SVNOption.CONFIG_DIR);
+        }
+        return myGlobalOptions;
     }
 
     public boolean isOptionSupported(AbstractSVNOption option) {
