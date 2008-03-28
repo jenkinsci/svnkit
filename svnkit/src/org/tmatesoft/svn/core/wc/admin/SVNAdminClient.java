@@ -23,7 +23,6 @@ import java.nio.charset.CharsetDecoder;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.UUID;
 
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNDepth;
