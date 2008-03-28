@@ -23,6 +23,7 @@ import java.nio.charset.CharsetDecoder;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.UUID;
 
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -944,6 +945,22 @@ public class SVNAdminClient extends SVNBasicClient {
         SVNFileUtil.writeVersionFile(reposFormatFile, format);
         fsfs.upgrade();
         SVNFileUtil.writeVersionFile(reposFormatFile, FSFS.REPOSITORY_FORMAT);
+    }
+    
+    public void doSetUUID(File repositoryRoot, String uuid) throws SVNException {
+        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
+        if (uuid == null) {
+            uuid = SVNUUIDGenerator.generateUUIDString();
+        } else {
+            try {
+                UUID.fromString(uuid);
+            } catch (IllegalArgumentException iae) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_UUID, "Malformed UUID ''{0}''", 
+                        uuid);
+                SVNErrorManager.error(err);
+            }
+        }
+        fsfs.setUUID(uuid);
     }
     
     public long getYoungestRevision(File repositoryRoot) throws SVNException {

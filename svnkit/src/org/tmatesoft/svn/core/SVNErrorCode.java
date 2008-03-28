@@ -184,6 +184,10 @@ public class SVNErrorCode implements Serializable {
      * @since SVN 1.5
      */
     public static final SVNErrorCode BAD_RELATIVE_PATH = new SVNErrorCode(BAD_CATEGORY, 7, "Path is not an immediate child of the specified directory");
+    /**
+     * @since SVN 1.5
+     */
+    public static final SVNErrorCode BAD_UUID = new SVNErrorCode(BAD_CATEGORY, 8, "Bogus UUID");
     
     public static final SVNErrorCode XML_ATTRIB_NOT_FOUND = new SVNErrorCode(XML_CATEGORY, 0, "No such XML tag attribute");
     public static final SVNErrorCode XML_MISSING_ANCESTRY = new SVNErrorCode(XML_CATEGORY, 1, "<delta-pkg> is missing ancestry");
