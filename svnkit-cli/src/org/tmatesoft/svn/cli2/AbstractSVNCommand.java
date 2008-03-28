@@ -21,7 +21,6 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.TreeSet;
 
-import org.tmatesoft.svn.cli2.svn.SVNOption;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 
@@ -39,16 +38,6 @@ public abstract class AbstractSVNCommand {
     private Collection myOptions;
     private AbstractSVNCommandEnvironment myEnvironment;
     private Collection myValidOptions;
-    
-    private static final Collection ourGlobalOptions = new LinkedList();
-    
-    static {
-        ourGlobalOptions.add(SVNOption.USERNAME);
-        ourGlobalOptions.add(SVNOption.PASSWORD);
-        ourGlobalOptions.add(SVNOption.NO_AUTH_CACHE);
-        ourGlobalOptions.add(SVNOption.NON_INTERACTIVE);
-        ourGlobalOptions.add(SVNOption.CONFIG_DIR);
-    }
     
     public static void registerCommand(AbstractSVNCommand command) {
         ourCommands.put(command.getName(), command);
@@ -81,7 +70,7 @@ public abstract class AbstractSVNCommand {
             myOptions = new LinkedList();
         }
         myValidOptions = new LinkedList(myOptions); 
-        myOptions.addAll(ourGlobalOptions);
+        myOptions.addAll(getGlobalOptions());
     }
 
     public abstract void run() throws SVNException;
@@ -106,9 +95,7 @@ public abstract class AbstractSVNCommand {
         return myValidOptions;
     }
 
-    public Collection getGlobalOptions() {
-        return ourGlobalOptions;
-    }
+    public abstract Collection getGlobalOptions();
     
     public void init(AbstractSVNCommandEnvironment env) {
         myEnvironment = env;

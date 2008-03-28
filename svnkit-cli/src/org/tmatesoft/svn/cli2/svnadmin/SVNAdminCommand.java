@@ -12,6 +12,8 @@
 package org.tmatesoft.svn.cli2.svnadmin;
 
 import java.io.File;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import org.tmatesoft.svn.cli2.AbstractSVNCommand;
@@ -77,6 +79,9 @@ public abstract class SVNAdminCommand extends AbstractSVNCommand {
         return result;
     }
     
+    public Collection getGlobalOptions() {
+        return Collections.EMPTY_LIST;
+    }
 
     public boolean isOptionSupported(AbstractSVNOption option) {
         boolean supported = super.isOptionSupported(option);

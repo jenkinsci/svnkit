@@ -13,6 +13,7 @@ package org.tmatesoft.svn.cli2.svnversion;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import org.tmatesoft.svn.cli2.AbstractSVNCommand;
@@ -35,6 +36,10 @@ public class SVNVersionHelpCommand extends AbstractSVNCommand {
         options.add(SVNVersionOption.VERSION);
         options.add(SVNVersionOption.HELP);
         return options;
+    }
+
+    public Collection getGlobalOptions() {
+        return Collections.EMPTY_LIST;
     }
     
     protected SVNVersionCommandEnvironment getSVNVersionEnvironment() {

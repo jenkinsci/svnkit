@@ -11,6 +11,9 @@
  */
 package org.tmatesoft.svn.cli2.svn;
 
+import java.util.Collection;
+import java.util.LinkedList;
+
 import org.tmatesoft.svn.cli2.AbstractSVNCommand;
 import org.tmatesoft.svn.cli2.AbstractSVNOption;
 
@@ -20,6 +23,16 @@ import org.tmatesoft.svn.cli2.AbstractSVNOption;
  * @author  TMate Software Ltd.
  */
 public abstract class SVNCommand extends AbstractSVNCommand {
+
+    private static final Collection ourGlobalOptions = new LinkedList();
+    
+    static {
+        ourGlobalOptions.add(SVNOption.USERNAME);
+        ourGlobalOptions.add(SVNOption.PASSWORD);
+        ourGlobalOptions.add(SVNOption.NO_AUTH_CACHE);
+        ourGlobalOptions.add(SVNOption.NON_INTERACTIVE);
+        ourGlobalOptions.add(SVNOption.CONFIG_DIR);
+    }
 
     protected SVNCommand(String name, String[] aliases) {
         super(name, aliases);
@@ -47,6 +60,10 @@ public abstract class SVNCommand extends AbstractSVNCommand {
     
     protected String getResourceBundleName() {
         return "org.tmatesoft.svn.cli2.svn.commands";
+    }
+
+    public Collection getGlobalOptions() {
+        return null;
     }
 
     public boolean isOptionSupported(AbstractSVNOption option) {
