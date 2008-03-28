@@ -13,7 +13,6 @@
 package org.tmatesoft.svn.cli;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -21,6 +20,7 @@ import java.util.Set;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 /**
@@ -169,7 +169,7 @@ public abstract class SVNArgument {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Revision property pair is empty");
                     SVNErrorManager.error(err);
                 }
-                Map revProps = new HashMap();
+                Map revProps = new SVNHashMap();
                 String propName = null;
                 String propValue = null;
                 int equationInd = value.indexOf('=');

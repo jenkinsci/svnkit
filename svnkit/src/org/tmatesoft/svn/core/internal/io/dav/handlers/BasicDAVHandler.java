@@ -13,7 +13,6 @@
 package org.tmatesoft.svn.core.internal.io.dav.handlers;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Stack;
@@ -22,9 +21,9 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.SVNDebugLog;
-
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -56,7 +55,7 @@ public abstract class BasicDAVHandler extends DefaultHandler {
     private byte[] myDeltaBuffer;
 
     protected BasicDAVHandler() {
-        myPrefixesMap = new HashMap();
+        myPrefixesMap = new SVNHashMap();
         myParent = new Stack();
     }
 

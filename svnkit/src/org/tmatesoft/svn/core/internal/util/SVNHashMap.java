@@ -1,0 +1,536 @@
+/*
+ * ====================================================================
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ *
+ * This software is licensed as described in the file COPYING, which
+ * you should have received as part of this distribution.  The terms
+ * are also available at http://svnkit.com/license.html.
+ * If newer versions of this license are posted there, you may use a
+ * newer version instead, at your option.
+ * ====================================================================
+ */
+package org.tmatesoft.svn.core.internal.util;
+
+import java.util.AbstractCollection;
+import java.util.AbstractSet;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.ConcurrentModificationException;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+
+
+/**
+ * @version 1.1.2
+ * @author  TMate Software Ltd.
+ */
+public class SVNHashMap implements Map {
+
+    private static final Object NULL_KEY = new Object();
+    private static final int INITIAL_CAPACITY = 15;
+    private static final double LOAD_FACTOR = 0.75;
+    
+    private TableEntry[] myTable;
+    private int myEntryCount;
+    private int myLimit;
+    private int myModCount;
+    
+    private Set myKeySet;
+    private Set myEntrySet;
+    private Collection myValueCollection;
+
+    public SVNHashMap() {
+        this(null);
+    }
+    
+    public SVNHashMap(Map map) {
+        myTable = new TableEntry[INITIAL_CAPACITY];
+        myEntryCount = 0;
+        myLimit = (int) (myTable.length * LOAD_FACTOR);
+        putAll(map);
+    }
+
+    public void clear() {
+        Arrays.fill(myTable, null);
+        myEntryCount = 0;
+        myModCount++;
+    }
+
+    public boolean isEmpty() {
+        return myEntryCount == 0;
+    }
+
+    public boolean containsKey(Object key) {
+        if (isEmpty()) {
+            return false;
+        }
+        key = key == null ? NULL_KEY : key;
+
+        int hash = hashCode(key);
+        int index = indexForHash(hash);
+        TableEntry entry = myTable[index];
+        while (entry != null) {
+            if (entry.hash == hash && eq(key, entry.key)) {
+                return true;
+            }
+            entry = entry.next;
+        }
+        return false;
+    }
+
+    public boolean containsValue(Object value) {
+        if (isEmpty()) {
+            return false;
+        }
+        if (value == null) {
+            return containsNullValue();
+        }
+        for (int i = 0; i < myTable.length; i++) {
+            TableEntry entry = myTable[i];
+            while (entry != null) {
+                if (value.equals(entry.value)) {
+                    return true;
+                }
+                entry = entry.next;
+            }
+        }
+        return false;
+    }
+    
+    private boolean containsNullValue() {
+        for (int i = 0; i < myTable.length; i++) {
+            TableEntry entry = myTable[i];
+            while (entry != null) {
+                if (entry.value == null) {
+                    return true;
+                }
+                entry = entry.next;
+            }
+        }
+        return false;
+    }
+
+    public Object get(Object key) {
+        key = key == null ? NULL_KEY : key;
+
+        int hash = hashCode(key); 
+        int index = indexForHash(hash);
+        TableEntry entry = myTable[index];
+        
+        while (entry != null) {
+            if (hash == entry.hash && eq(key, entry.key)) {
+                return entry.value;
+            }
+            entry = entry.next;
+        }
+        return null;
+    }
+
+    public int size() {
+        return myEntryCount;
+    }
+
+    public Object put(Object key, Object value) {
+        key = key == null ? NULL_KEY : key;
+        
+        int hash = hashCode(key);
+        int index = indexForHash(hash);
+        
+        TableEntry entry = myTable[index];
+        TableEntry previousEntry = null;
+        
+        while (entry != null) {
+            if (entry.hash == hash && entry.key.equals(key)) {
+                myModCount++;
+                return entry.setValue(value);
+            }
+            previousEntry = entry;
+            entry = entry.next;
+        }
+        TableEntry newEntry = new TableEntry(key, value, hash);
+        
+        if (previousEntry != null) {
+            previousEntry.next = newEntry;
+        } else {
+            myTable[index] = newEntry;
+        }
+        myEntryCount++;
+        myModCount++;
+        if (myEntryCount >= myLimit) {
+            resize(myTable.length * 2);
+        }
+        return null;
+    }
+
+    public Object remove(Object key) {
+        if (isEmpty()) {
+            return null;
+        }
+        key = key == null ? NULL_KEY : key;
+
+        int hash = hashCode(key);
+        int index = indexForHash(hash);
+        
+        TableEntry entry = myTable[index];
+        TableEntry previousEntry = null;
+        
+        while (entry != null) {
+            if (entry.hash == hash && entry.key.equals(key)) {
+                if (previousEntry != null) {
+                    previousEntry.next = entry.next;
+                } else {
+                    myTable[index] = entry.next;
+                }
+                myEntryCount--;
+                myModCount++;
+                return entry.getValue();
+            }
+            previousEntry = entry;
+            entry = entry.next;
+        }
+        return null;
+    }
+
+    public void putAll(Map t) {
+        if (t == null || t.isEmpty()) {
+            return;
+        }
+        if (myEntryCount + t.size() >= myLimit) {
+            resize((myEntryCount + t.size())*2);
+        }
+        for (Iterator entries = t.entrySet().iterator(); entries.hasNext();) {
+            Map.Entry entry = (Map.Entry) entries.next();
+            put(entry.getKey(), entry.getValue());
+        }
+    }
+
+    public Set keySet() {
+        if (myKeySet == null) {
+            myKeySet = new KeySet();
+        }
+        return myKeySet;
+    }
+
+    public Set entrySet() {
+        if (myEntrySet == null) {
+            myEntrySet = new EntrySet();
+        }
+        return myEntrySet;
+    }
+
+    public Collection values() {
+        if (myValueCollection == null) {
+            myValueCollection = new ValueCollection();
+        }
+        return myValueCollection;
+    }
+    
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+        if (!(o instanceof Map)) {
+            return false;
+        }
+        Map t = (Map) o;
+        if (t.size() != size()) {
+            return false;
+        }
+        try {
+            Iterator i = entrySet().iterator();
+            while (i.hasNext()) {
+                Map.Entry e = (Map.Entry) i.next();
+                Object key = e.getKey();
+                Object value = e.getValue();
+                if (value == null) {
+                    if (!(t.get(key) == null && t.containsKey(key))) {
+                        return false;
+                    }
+                } else {
+                    if (!value.equals(t.get(key))) {
+                        return false;
+                    }
+                }
+            }
+        } catch(ClassCastException unused)   {
+            return false;
+        } catch(NullPointerException unused) {
+            return false;
+        }
+        return true;
+    }
+
+    public int hashCode() {
+        int h = 0;
+        Iterator i = entrySet().iterator();
+        while (i.hasNext()) {
+            h += i.next().hashCode();
+        }
+        return h;
+    }
+
+    protected Object clone() throws CloneNotSupportedException {
+        SVNHashMap result = new SVNHashMap();
+        result.myTable = new TableEntry[myTable.length];
+        result.myEntryCount = myEntryCount;
+        result.myModCount = myModCount;
+        result.myLimit = myLimit;
+        result.putAll(this);
+        return result;
+    }
+
+    public String toString() {
+        StringBuffer buf = new StringBuffer();
+        buf.append("{");
+
+        Iterator i = entrySet().iterator();
+        boolean hasNext = i.hasNext();
+        while (hasNext) {
+            Map.Entry e = (Map.Entry) (i.next());
+            Object key = e.getKey();
+            Object value = e.getValue();
+            buf.append((key == this ?  "(this Map)" : key) + "=" + 
+                           (value == this ? "(this Map)": value));
+
+            hasNext = i.hasNext();
+            if (hasNext) {
+                buf.append(", ");
+            }
+        }
+        buf.append("}");
+        return buf.toString();
+    }
+
+    private int indexForHash(int hash) {
+        return (myTable.length - 1) & hash;
+    }
+    
+    private static int hashCode(Object key) {
+        if (key.getClass() == String.class) {
+            int hash = 0;
+            String str = (String) key;
+            for (int i = 0; i < str.length(); i++) {
+                hash = hash*33 + str.charAt(i);
+            }
+            return hash;
+        }
+        return key.hashCode();
+    }
+    
+    private void resize(int newSize) {
+        TableEntry[] oldTable = myTable;
+        myTable = new TableEntry[newSize];
+
+        for (int i = 0; i < oldTable.length; i++) {
+            TableEntry oldEntry = oldTable[i];
+            while (oldEntry != null) {
+                int index = indexForHash(oldEntry.hash);
+                TableEntry newEntry = myTable[index];
+                if (newEntry == null) {
+                    myTable[index] = oldEntry;
+                } else {
+                    while (newEntry.next != null) {
+                        newEntry = newEntry.next;
+                    }
+                    newEntry.next = oldEntry;                    
+                }
+                TableEntry nextEntry = oldEntry.next;
+                oldEntry.next = null;
+                oldEntry = nextEntry;
+            }
+        }
+        myLimit = (int) (myTable.length * LOAD_FACTOR);
+    }
+    
+    private static boolean eq(Object a, Object b) {
+        return a == b || a.equals(b);
+    }
+    
+    private class KeySet extends AbstractSet {
+        public Iterator iterator() {
+            return new KeyIterator();
+        }
+        public int size() {
+            return myEntryCount;
+        }
+        public boolean contains(Object o) {
+            return containsKey(o);
+        }
+        public boolean remove(Object o) {
+            return SVNHashMap.this.remove(o) != null;
+        }
+        public void clear() {
+            SVNHashMap.this.clear();
+        }
+    }
+
+    private class EntrySet extends AbstractSet {
+        public Iterator iterator() {
+            return new TableIterator();
+        }
+        
+        public int size() {
+            return myEntryCount;
+        }
+        
+        public boolean contains(Object o) {
+            if (o instanceof Map.Entry) {
+                Map.Entry entry = (Map.Entry) o;
+                if (SVNHashMap.this.containsKey(entry.getKey())) {
+                    Object value = SVNHashMap.this.get(entry.getKey());
+                    if (value == null) {
+                        return entry.getValue() == null;
+                    }
+                    return value.equals(entry.getValue());
+                }
+            }
+            return false;
+        }
+        
+        public boolean remove(Object o) {
+            if (contains(o)) {
+                Map.Entry entry = (Map.Entry) o;
+                return SVNHashMap.this.remove(entry.getKey()) != null;
+            }
+            return false;
+        }
+        public void clear() {
+            SVNHashMap.this.clear();
+        }
+    }
+
+    private class ValueCollection extends AbstractCollection {
+        public Iterator iterator() {
+            return new ValueIterator();
+        }
+        public int size() {
+            return myEntryCount;
+        }
+        public boolean contains(Object o) {
+            return containsValue(o);
+        }
+        public void clear() {
+            SVNHashMap.this.clear();
+        }
+    }
+    
+    private class TableIterator implements Iterator {
+        
+        private int index;
+        private TableEntry entry;
+        private TableEntry previous;
+        private int modCount;
+        
+        public TableIterator() {
+            index = 0;
+            entry = null;
+            modCount = myModCount;
+            while (index < myTable.length && entry == null) {
+                entry = myTable[index];
+                index++;
+            }
+        }
+
+        public boolean hasNext() {
+            return entry != null;
+        }
+
+        public Object next() {
+            if (myModCount != modCount) {
+                throw new ConcurrentModificationException();
+            }
+            if (entry == null) {
+                throw new NoSuchElementException();
+            }
+            previous = entry;
+            entry = entry.next;
+            while (entry == null && index < myTable.length) {
+                entry = myTable[index];
+                index++;
+            }
+            return previous;
+        }
+
+        public void remove() {
+            if (myModCount != modCount) {
+                throw new ConcurrentModificationException();
+            }
+            if (previous != null) {
+                SVNHashMap.this.remove(previous.getKey());
+                previous = null;
+                modCount = myModCount;
+            } else {
+                throw new IllegalStateException();
+            }
+        }
+    }
+    
+    private class KeyIterator extends TableIterator {
+
+        public Object next() {
+            TableEntry next = (TableEntry) super.next();
+            return next.getKey();
+        }
+    }
+
+    private class ValueIterator extends TableIterator {
+
+        public Object next() {
+            TableEntry next = (TableEntry) super.next();
+            return next.getValue();
+        }
+    }
+    
+    private static class TableEntry implements Map.Entry {
+        
+        public TableEntry next;
+        public Object key;
+        public Object value;
+        public int hash;
+        
+        public TableEntry(Object key, Object value, int hash) {
+            this.key = key;
+            this.value = value;
+            this.hash = hash;
+        }
+
+        public Object setValue(Object value) {
+            Object oldValue = getValue();
+            this.value = value; 
+            return oldValue;
+        }
+
+        public Object getValue() {
+            return value;
+        }
+
+        public Object getKey() {
+            return key == NULL_KEY ? null : key;
+        }
+        
+        public int hashCode() {
+            return (key == NULL_KEY ? 0 : key.hashCode()) ^ (value == null ? 0 : value.hashCode());
+        }
+
+        public boolean equals(Object o) {
+            if (!(o instanceof Map.Entry)) {
+                return false;
+            }
+            Map.Entry e = (Map.Entry) o;
+            Object k1 = getKey();
+            Object k2 = e.getKey();
+            
+            if (k1 == k2 || (k1 != null && k1.equals(k2))) {
+                Object v1 = getValue();
+                Object v2 = e.getValue();
+                
+                if (v1 == v2 || (v1 != null && v1.equals(v2))) { 
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+}

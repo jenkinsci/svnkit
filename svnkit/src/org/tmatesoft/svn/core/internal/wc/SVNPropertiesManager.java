@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -254,7 +254,7 @@ public class SVNPropertiesManager {
 
     public static Map getWorkingCopyPropertyValues(File path, SVNEntry entry, final String propName,
                                                    SVNDepth depth, final boolean base) throws SVNException {
-        final Map pathsToPropValues = new HashMap();
+        final Map pathsToPropValues = new SVNHashMap();
 
         ISVNEntryHandler handler = new ISVNEntryHandler() {
             public void handleEntry(File itemPath, SVNEntry itemEntry) throws SVNException {

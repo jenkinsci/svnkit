@@ -14,15 +14,14 @@ package org.tmatesoft.svn.core.internal.server.dav.handlers;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.util.HashMap;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.Charset;
-import java.nio.charset.CodingErrorAction;
-import java.nio.charset.CharacterCodingException;
-import java.nio.ByteBuffer;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -36,11 +35,11 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
-import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
-
 import org.xml.sax.Attributes;
 
 /**
@@ -199,11 +198,11 @@ public class DAVReportHandler extends ServletDAVHandler {
 
     protected void addXMLHeader(StringBuffer xmlBuffer) {
         SVNXMLUtil.addXMLHeader(xmlBuffer);
-        DAVXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, getDAVRequest().getRootElement().getName(), REPORT_NAMESPACES, xmlBuffer);
+        DAVXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, getDAVRequest().getRootElement().getName(), REPORT_NAMESPACES, xmlBuffer);
     }
 
     protected void addXMLFooter(StringBuffer xmlBuffer) {
-        SVNXMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, getDAVRequest().getRootElement().getName(), xmlBuffer);
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, getDAVRequest().getRootElement().getName(), xmlBuffer);
     }
 
     private OutputStream myDiffWindowWriter;
@@ -235,7 +234,7 @@ public class DAVReportHandler extends ServletDAVHandler {
     protected void writePropertyTag(String tagName, String propertyName, SVNPropertyValue propertyValue) throws SVNException {
         StringBuffer xmlBuffer;
         if (propertyValue == null){
-            xmlBuffer = SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, SVNXMLUtil.XML_STYLE_SELF_CLOSING, NAME_ATTR, propertyName, null);
+            xmlBuffer = SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, tagName, SVNXMLUtil.XML_STYLE_SELF_CLOSING, NAME_ATTR, propertyName, null);
             write(xmlBuffer);
             return;
         }
@@ -267,17 +266,17 @@ public class DAVReportHandler extends ServletDAVHandler {
             }
             value = SVNBase64.byteArrayToBase64(buffer);
             
-            Map attrs = new HashMap();
+            Map attrs = new SVNHashMap();
             attrs.put(NAME_ATTR, propertyName);
             attrs.put(ENCODING_ATTR, BASE64_ENCODING);
 
-            xmlBuffer = SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, SVNXMLUtil.XML_STYLE_PROTECT_CDATA, attrs, null);
+            xmlBuffer = SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, tagName, SVNXMLUtil.XML_STYLE_PROTECT_CDATA, attrs, null);
             write(xmlBuffer);
             write(value);
-            xmlBuffer = SVNXMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, null);
+            xmlBuffer = SVNXMLUtil.closeXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, tagName, null);
             write(xmlBuffer);
         } else {
-            xmlBuffer = SVNXMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, tagName, propertyValue.getString(), NAME_ATTR, propertyName, null);
+            xmlBuffer = SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, tagName, propertyValue.getString(), NAME_ATTR, propertyName, null);
             write(xmlBuffer);            
         }
     }

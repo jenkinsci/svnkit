@@ -11,13 +11,14 @@
  */
 package org.tmatesoft.svn.core;
 
+import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.Collection;
 import java.util.TreeSet;
+
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 
 
 /**
@@ -31,11 +32,11 @@ public class SVNProperties {
     private Map myProperties;
 
     public SVNProperties() {
-        myProperties = new HashMap();
+        myProperties = new SVNHashMap();
     }
 
     public SVNProperties(SVNProperties properties) {
-        myProperties = new HashMap(properties.myProperties);
+        myProperties = new SVNHashMap(properties.myProperties);
     }
 
     private SVNProperties(Map properties) {

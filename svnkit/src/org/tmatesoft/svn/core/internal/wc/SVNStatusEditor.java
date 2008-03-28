@@ -14,7 +14,7 @@ package org.tmatesoft.svn.core.internal.wc;
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -69,7 +69,7 @@ public class SVNStatusEditor {
         myIsReportAll = reportAll;
         myDepth = depth;
         myStatusHandler = handler;
-        myExternalsMap = new HashMap();
+        myExternalsMap = new SVNHashMap();
         myGlobalIgnores = getGlobalIgnores(options);
         myTargetRevision = -1;
     }
@@ -361,7 +361,7 @@ public class SVNStatusEditor {
     private static Map getChildrenFiles(File parent) {
         File[] children = SVNFileListUtil.listFiles(parent);
         if (children != null) {
-            Map map = new HashMap();
+            Map map = new SVNHashMap();
             for (int i = 0; i < children.length; i++) {
                 map.put(children[i].getName(), children[i]);
             }

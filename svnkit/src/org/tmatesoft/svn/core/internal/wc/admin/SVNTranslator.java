@@ -21,7 +21,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
@@ -449,7 +449,7 @@ public class SVNTranslator {
 
         Date jDate = d == null ? null : SVNDate.parseDate(d);
 
-        Map map = new HashMap();
+        Map map = new SVNHashMap();
         try {
             for (StringTokenizer tokens = new StringTokenizer(keywords, " \t\n\b\r\f"); tokens.hasMoreTokens();) {
                 String token = tokens.nextToken();

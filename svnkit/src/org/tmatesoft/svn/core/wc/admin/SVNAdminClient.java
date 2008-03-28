@@ -20,7 +20,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -1067,7 +1067,7 @@ public class SVNAdminClient extends SVNBasicClient {
 
 
     private Map readHeaderBlock(InputStream dumpStream, String firstHeader, CharsetDecoder decoder) throws SVNException, IOException {
-        Map headers = new HashMap();
+        Map headers = new SVNHashMap();
         StringBuffer buffer = new StringBuffer();
     
         while (true) {

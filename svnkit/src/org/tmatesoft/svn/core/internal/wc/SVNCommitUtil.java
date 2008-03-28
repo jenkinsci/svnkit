@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -215,7 +215,7 @@ public class SVNCommitUtil {
             if (!lockAll) {
                 List uniqueDirsToLockRecursively = new ArrayList();
                 uniqueDirsToLockRecursively.addAll(dirsToLockRecursively);
-                Map processedPaths = new HashMap();
+                Map processedPaths = new SVNHashMap();
                 for(Iterator ps = uniqueDirsToLockRecursively.iterator(); ps.hasNext();) {
                     String pathToLock = (String) ps.next();
                     if (processedPaths.containsKey(pathToLock)) {
@@ -312,8 +312,8 @@ public class SVNCommitUtil {
 
     public static SVNWCAccess[] createCommitWCAccess2(File[] paths, SVNDepth depth, boolean force, 
                                                       Map relativePathsMap, SVNStatusClient statusClient) throws SVNException {
-        Map rootsMap = new HashMap(); // wc root file -> paths to be committed (paths).
-        Map localRootsCache = new HashMap();
+        Map rootsMap = new SVNHashMap(); // wc root file -> paths to be committed (paths).
+        Map localRootsCache = new SVNHashMap();
         for (int i = 0; i < paths.length; i++) {
             statusClient.checkCancelled();
             File path = paths[i];
@@ -497,7 +497,7 @@ public class SVNCommitUtil {
     }
 
     public static SVNURL translateCommitables(SVNCommitItem[] items, Map decodedPaths) throws SVNException {
-        Map itemsMap = new HashMap();
+        Map itemsMap = new SVNHashMap();
         for (int i = 0; i < items.length; i++) {
             SVNCommitItem item = items[i];
             if (itemsMap.containsKey(item.getURL())) {
@@ -859,7 +859,7 @@ public class SVNCommitUtil {
     }
 
     private static void removeRedundantPaths(Collection dirsToLockRecursively, Collection dirsToLock) {
-        Map processedDirs = new HashMap();
+        Map processedDirs = new SVNHashMap();
         for (Iterator paths = dirsToLock.iterator(); paths.hasNext();) {
             String path = (String) paths.next();
             //check for path dublicates and remove them if any 

@@ -14,7 +14,7 @@ package org.tmatesoft.svn.core.internal.wc;
 import java.io.File;
 import java.io.OutputStream;
 import java.util.Collection;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -76,7 +76,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
         myCancelHandler = cancelHandler;
         myDeltaProcessor = new SVNDeltaProcessor();
         myIsDryRun = dryRun;
-        myDeletedPaths = new HashMap();
+        myDeletedPaths = new SVNHashMap();
     }
 
     public void reset(long revision1, long revision2) {

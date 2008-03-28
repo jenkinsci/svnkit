@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -386,11 +386,11 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 myURL = url2;
                 myAddedPath = null;
                 myConflictedPaths = null;
-                myDryRunDeletions = dryRun ? new HashMap() : null;
+                myDryRunDeletions = dryRun ? new SVNHashMap() : null;
                 myIsOperativeMerge = false;
                 myIsAddNecessitatedMerge = false;
                 if (i == 0) {
-                	myWorkingMergeInfo = new HashMap();
+                	myWorkingMergeInfo = new SVNHashMap();
                 }
                 if (i > 0) {
                 	myIsFirstRange = false;
@@ -2230,7 +2230,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         
         Map addedMergeInfo = null;
         if (startMergeInfo != null && endMergeInfo != null) {
-            addedMergeInfo = new HashMap();
+            addedMergeInfo = new SVNMap();
             SVNMergeInfoUtil.diffMergeInfo(null, addedMergeInfo, startMergeInfo, endMergeInfo, false);
         } else if (endMergeInfo != null) {
         	addedMergeInfo = endMergeInfo;

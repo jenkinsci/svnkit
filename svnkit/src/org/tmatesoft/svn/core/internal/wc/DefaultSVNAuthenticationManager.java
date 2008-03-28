@@ -14,7 +14,7 @@ package org.tmatesoft.svn.core.internal.wc;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -255,7 +255,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     protected ISVNAuthenticationStorage getRuntimeAuthStorage() {
         if (myRuntimeAuthStorage == null) {
             myRuntimeAuthStorage = new ISVNAuthenticationStorage() {
-                private Map myData = new HashMap(); 
+                private Map myData = new SVNHashMap(); 
 
                 public void putData(String kind, String realm, Object data) {
                     myData.put(kind + "$" + realm, data);
@@ -300,7 +300,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     protected SVNSSHAuthentication getDefaultSSHAuthentication() {
         Map tunnels = getConfigFile().getProperties("tunnels");
         if (tunnels == null || !tunnels.containsKey("ssh")) {
-            tunnels = new HashMap();
+            tunnels = new SVNHashMap();
         }
         
         String sshProgram = (String) tunnels.get("ssh");
@@ -532,7 +532,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             if ("".equals(auth.getUserName()) || auth.getUserName() == null) {
                 return;
             }
-            Map values = new HashMap();
+            Map values = new SVNHashMap();
             values.put("svn:realmstring", realm);
             values.put("username", auth.getUserName());
             String cipherType = SVNPasswordCipher.getDefaultCipherType();

@@ -13,7 +13,6 @@ package org.tmatesoft.svn.cli2;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
@@ -21,6 +20,7 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 
@@ -30,7 +30,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
  */
 public class SVNCommandLine {
     
-    private static final Map ourOptions = new HashMap();
+    private static final Map ourOptions = new SVNHashMap();
     
     public static void registerOption(AbstractSVNOption option) {
         if (option.getName() != null) {

@@ -13,7 +13,6 @@
 package org.tmatesoft.svn.core.internal.io.dav.handlers;
 
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
@@ -26,6 +25,7 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.xml.sax.Attributes;
@@ -194,7 +194,7 @@ public class DAVLogHandler extends BasicDAVHandler {
             if (myLimit <= 0 || myCount <= myLimit) {
                 if (myLogEntryHandler != null) {
                     if (myPaths == null) {
-                        myPaths = new HashMap();
+                        myPaths = new SVNHashMap();
                     }
                     if (myRevProps == null) {
                         myRevProps = new SVNProperties();
@@ -247,7 +247,7 @@ public class DAVLogHandler extends BasicDAVHandler {
                 element == DELETED_PATH) {
             if (myPath != null && cdata != null) {
                 if (myPaths == null) {
-                    myPaths = new HashMap();
+                    myPaths = new SVNHashMap();
                 }
                 myPath.setPath(cdata.toString());
                 String path = myPath.getPath();

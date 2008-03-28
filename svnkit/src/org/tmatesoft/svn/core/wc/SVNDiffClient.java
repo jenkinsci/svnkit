@@ -14,7 +14,7 @@ package org.tmatesoft.svn.core.wc;
 import java.io.File;
 import java.io.OutputStream;
 import java.util.Collection;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -1523,7 +1523,7 @@ public class SVNDiffClient extends SVNMergeDriver {
     	Map mergeInfo = getMergeInfo(path, pegRevision, reposRoot);
     	SVNURL repositoryRoot = reposRoot[0];
     	if (mergeInfo != null) {
-    		Map fullPathMergeInfo = new HashMap();
+    		Map fullPathMergeInfo = new SVNHashMap();
             for (Iterator paths = mergeInfo.keySet().iterator(); paths.hasNext();) {
                 String mergeSrcPath = (String) paths.next();
                 SVNMergeRangeList rangeList = (SVNMergeRangeList) mergeInfo.get(mergeSrcPath);
@@ -1543,7 +1543,7 @@ public class SVNDiffClient extends SVNMergeDriver {
     	Map mergeInfo = getMergeInfo(url, pegRevision, reposRoot);
     	SVNURL repositoryRoot = reposRoot[0];
     	if (mergeInfo != null) {
-    		Map fullPathMergeInfo = new HashMap();
+    		Map fullPathMergeInfo = new SVNHashMap();
             for (Iterator paths = mergeInfo.keySet().iterator(); paths.hasNext();) {
                 String mergeSrcPath = (String) paths.next();
                 SVNMergeRangeList rangeList = (SVNMergeRangeList) mergeInfo.get(mergeSrcPath);

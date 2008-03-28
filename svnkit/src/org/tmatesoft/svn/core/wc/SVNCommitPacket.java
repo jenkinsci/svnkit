@@ -13,7 +13,7 @@ package org.tmatesoft.svn.core.wc;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
@@ -153,7 +153,7 @@ public class SVNCommitPacket {
             return EMPTY;
         }
         Collection items = new ArrayList();
-        Map lockTokens = myLockTokens == null ? null : new HashMap(myLockTokens);
+        Map lockTokens = myLockTokens == null ? null : new SVNHashMap(myLockTokens);
         for (int i = 0; myCommitItems != null && i < myCommitItems.length; i++) {
             SVNCommitItem commitItem = myCommitItems[i];
             if (!myIsSkipped[i]) {

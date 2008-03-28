@@ -14,7 +14,6 @@ package org.tmatesoft.svn.cli2;
 import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
@@ -24,6 +23,7 @@ import java.util.TreeSet;
 
 import org.tmatesoft.svn.cli2.svn.SVNOption;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 
 
 /**
@@ -32,7 +32,7 @@ import org.tmatesoft.svn.core.SVNException;
  */
 public abstract class AbstractSVNCommand {
     
-    private static Map ourCommands = new HashMap();
+    private static Map ourCommands = new SVNHashMap();
 
     private String myName;
     private String[] myAliases;

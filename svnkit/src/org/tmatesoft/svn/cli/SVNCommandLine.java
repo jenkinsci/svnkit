@@ -13,7 +13,6 @@
 package org.tmatesoft.svn.cli;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +21,7 @@ import java.util.Set;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 /**
@@ -121,7 +121,7 @@ public class SVNCommandLine {
 
     protected void init(String[] arguments, Set validArguments) throws SVNException {
         myUnaryArguments = new HashSet();
-        myBinaryArguments = new HashMap();
+        myBinaryArguments = new SVNHashMap();
         myPaths = new ArrayList();
         myURLs = new ArrayList();
         myPathURLs = new ArrayList();

@@ -397,7 +397,7 @@ public class SVNStatusClient extends SVNBasicClient {
     }
 /*
     private Map collectParentExternals(File path, File root) throws SVNException {
-        Map externals = new HashMap();
+        Map externals = new SVNMap();
         SVNFileType type = SVNFileType.getType(path);
         if (type != SVNFileType.DIRECTORY) {
             return externals;

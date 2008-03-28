@@ -14,13 +14,12 @@ package org.tmatesoft.svn.core.internal.wc;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Platform;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
@@ -28,6 +27,7 @@ import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 
 /**
  * @version 1.1.1
@@ -107,7 +107,7 @@ public class EclipseSVNAuthenticationManager extends DefaultSVNAuthenticationMan
                 return;
             }
             realm = realm == null ? DEFAULT_URL.toString() : realm;
-            Map info = new HashMap();
+            Map info = new SVNHashMap();
             // convert info to SVNAuthentication.
             info.put("username", auth.getUserName());
             if (auth instanceof SVNPasswordAuthentication) {

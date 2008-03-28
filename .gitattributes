@@ -184,6 +184,7 @@ svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNReader.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/util/DefaultSVNDebugLogger.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/util/SVNEncodingUtil.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/util/SVNFormatUtil.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/util/SVNHashMap.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/util/SVNLogInputStream.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/util/SVNLogOutputStream.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/util/SVNMergeInfoUtil.java -text

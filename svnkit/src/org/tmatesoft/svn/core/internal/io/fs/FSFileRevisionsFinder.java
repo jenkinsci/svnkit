@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.internal.io.fs;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
@@ -30,6 +29,7 @@ import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -54,7 +54,7 @@ public class FSFileRevisionsFinder {
 
     public int getFileRevisions(String path, long startRevision, long endRevision, 
             boolean includeMergedRevisions, ISVNFileRevisionHandler handler) throws SVNException {
-        Map duplicatePathRevs = new HashMap();
+        Map duplicatePathRevs = new SVNHashMap();
         LinkedList mainLinePathRevisions = findInterestingRevisions(null, path, startRevision, endRevision, 
                 includeMergedRevisions, false, duplicatePathRevs);
         

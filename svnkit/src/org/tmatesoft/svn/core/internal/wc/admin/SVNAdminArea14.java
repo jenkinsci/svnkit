@@ -23,7 +23,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -577,7 +577,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
             SVNEntry parentEntry = parentArea.getEntry(parentArea.getThisDirName(), false);
             if (dirRevision > parentEntry.getRevision()) {
                 SVNEntry entryInParent = parentArea.addEntry(dir.getName());
-                Map attributes = new HashMap();
+                Map attributes = new SVNHashMap();
                 attributes.put(SVNProperty.DELETED, Boolean.TRUE.toString());
                 attributes.put(SVNProperty.KIND, SVNProperty.KIND_DIR);
                 attributes.put(SVNProperty.REVISION, Long.toString(dirRevision));
@@ -657,7 +657,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
             return null;
         }
         
-        Map entries = new HashMap();
+        Map entries = new SVNHashMap();
         BufferedReader reader = null;
         try {
             reader = new BufferedReader(new InputStreamReader(SVNFileUtil.openFileForReading(myEntriesFile), "UTF-8"));
@@ -745,7 +745,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         String name = parseString(line);
         name = name != null ? name : getThisDirName();
 
-        Map entryAttrs = new HashMap();
+        Map entryAttrs = new SVNHashMap();
         entryAttrs.put(SVNProperty.NAME, name);
         SVNEntry entry = new SVNEntry(entryAttrs, this, name);
         entry.setDepth(SVNDepth.INFINITY);
@@ -1632,13 +1632,13 @@ public class SVNAdminArea14 extends SVNAdminArea {
         
         setWCAccess(adminArea.getWCAccess());
         Iterator entries = adminArea.entries(true);
-        myEntries = new HashMap();
+        myEntries = new SVNHashMap();
         Map basePropsCache = getBasePropertiesStorage(true);
         Map propsCache = getPropertiesStorage(true);
         
         for (; entries.hasNext();) {
             SVNEntry entry = (SVNEntry) entries.next();
-            SVNEntry newEntry = new SVNEntry(new HashMap(entry.asMap()), this, entry.getName());
+            SVNEntry newEntry = new SVNEntry(new SVNHashMap(entry.asMap()), this, entry.getName());
             myEntries.put(entry.getName(), newEntry);
 
             if (entry.getKind() != SVNNodeKind.FILE && !adminArea.getThisDirName().equals(entry.getName())) {
@@ -1867,7 +1867,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         }
         
         // update entry
-        Map entryAttrs = new HashMap();
+        Map entryAttrs = new SVNHashMap();
         entryAttrs.put(SVNProperty.REVISION, SVNProperty.toString(revisionNumber));
         entryAttrs.put(SVNProperty.KIND, getThisDirName().equals(fileName) ? SVNProperty.KIND_DIR : SVNProperty.KIND_FILE);
         if (!implicit) {

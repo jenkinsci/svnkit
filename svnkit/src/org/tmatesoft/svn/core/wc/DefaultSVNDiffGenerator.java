@@ -19,7 +19,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
@@ -375,7 +375,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             is2 = file2 == null ? EMPTY_FILE_IS : SVNFileUtil.openFileForReading(file2);
 
             QDiffUniGenerator.setup();
-            Map properties = new HashMap();
+            Map properties = new SVNHashMap();
             
             properties.put(QDiffGeneratorFactory.IGNORE_EOL_PROPERTY, Boolean.valueOf(getDiffOptions().isIgnoreEOLStyle()));
             if (getDiffOptions().isIgnoreAllWhitespace()) {

@@ -20,7 +20,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
@@ -35,6 +34,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -340,7 +340,7 @@ public class FSFS {
                 }
             }
         }
-        return new HashMap();// returns an empty map, must not be null!!
+        return new SVNHashMap();// returns an empty map, must not be null!!
     }
 
     public SVNProperties getProperties(FSRevisionNode revNode) throws SVNException {
@@ -463,7 +463,7 @@ public class FSFS {
     }
 
     public Map listTransactions() {
-        Map result = new HashMap(); 
+        Map result = new SVNHashMap(); 
         File txnsDir = getTransactionsParentDir();
 
         File[] entries = SVNFileListUtil.listFiles(txnsDir);
@@ -1610,7 +1610,7 @@ public class FSFS {
     }
 
     private Map parsePlainRepresentation(SVNProperties entries, boolean mayContainNulls) throws SVNException {
-        Map representationMap = new HashMap();
+        Map representationMap = new SVNHashMap();
 
         for (Iterator iterator = entries.nameSet().iterator(); iterator.hasNext();) {
             String name = (String) iterator.next();

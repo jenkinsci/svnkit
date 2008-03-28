@@ -14,7 +14,7 @@ package org.tmatesoft.svn.core.javahl;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Map;
 
 
@@ -25,7 +25,7 @@ import java.util.Map;
 public class SVNClientImplTracker implements Runnable {
     
     private static ReferenceQueue ourQueue;
-    private static Map ourReferences = new HashMap();
+    private static Map ourReferences = new SVNHashMap();
 
     public static void registerClient(SVNClientImpl client) {
         synchronized (SVNClientImplTracker.class) {

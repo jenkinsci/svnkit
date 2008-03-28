@@ -12,13 +12,12 @@
 
 package org.tmatesoft.svn.core.internal.io.dav.handlers;
 
+import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.io.UnsupportedEncodingException;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
@@ -26,6 +25,7 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.dav.DAVProperties;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPStatus;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.xml.sax.Attributes;
 
@@ -90,7 +90,7 @@ public class DAVPropertiesHandler extends BasicDAVHandler {
                 invalidXML();
             }
             myCurrentResource = new DAVProperties();
-            myCurrentProperties = new HashMap();
+            myCurrentProperties = new SVNHashMap();
             myStatusCode = 0;
         } else if (element == DAVElement.PROPSTAT) {
             myStatusCode = 0;

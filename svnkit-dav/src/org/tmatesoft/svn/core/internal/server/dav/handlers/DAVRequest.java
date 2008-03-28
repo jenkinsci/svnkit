@@ -13,13 +13,13 @@ package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.xml.sax.Attributes;
 
@@ -43,7 +43,7 @@ public abstract class DAVRequest {
 
     protected Map getProperties() {
         if (myProperties == null) {
-            myProperties = new HashMap();
+            myProperties = new SVNHashMap();
         }
         return myProperties;
     }
@@ -145,7 +145,7 @@ public abstract class DAVRequest {
     private Map getAttributesMap(Attributes attrs) {
         Map attributes = null;
         if (attrs.getLength() != 0) {
-            attributes = new HashMap(attrs.getLength());
+            attributes = new SVNHashMap();
             for (int i = 0; i < attrs.getLength(); i++) {
                 attributes.put(attrs.getQName(i), attrs.getValue(i));
             }
@@ -198,7 +198,7 @@ public abstract class DAVRequest {
             if (myValues != null) {
                 invalidXML();
             } else if (myChildren == null) {
-                myChildren = new HashMap();
+                myChildren = new SVNHashMap();
             }
             put(myChildren, element, attrs);
         }

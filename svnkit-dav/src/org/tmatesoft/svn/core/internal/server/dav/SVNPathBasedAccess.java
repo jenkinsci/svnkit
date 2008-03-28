@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -25,6 +24,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -141,7 +141,7 @@ public class SVNPathBasedAccess {
 
     private Map getGroups() {
         if (myGroups == null) {
-            myGroups = new HashMap();
+            myGroups = new SVNHashMap();
         }
         return myGroups;
     }
@@ -169,7 +169,7 @@ public class SVNPathBasedAccess {
 
     private Map getAliases() {
         if (myAliases == null) {
-            myAliases = new HashMap();
+            myAliases = new SVNHashMap();
         }
         return myAliases;
     }
@@ -181,7 +181,7 @@ public class SVNPathBasedAccess {
 
     private Map getRules() {
         if (myRules == null) {
-            myRules = new HashMap();
+            myRules = new SVNHashMap();
         }
         return myRules;
     }
@@ -473,7 +473,7 @@ public class SVNPathBasedAccess {
                 myGlobalAccess = myGlobalAccess == null ? new PathAccess() : myGlobalAccess;
                 myGlobalAccess.addRule(matchString, value);
             }
-            myPathRules = myPathRules == null ? new HashMap() : myPathRules;
+            myPathRules = myPathRules == null ? new SVNHashMap() : myPathRules;
             PathAccess pathAccess = (PathAccess) myPathRules.get(path);
             if (pathAccess == null) {
                 pathAccess = new PathAccess();
@@ -595,7 +595,7 @@ public class SVNPathBasedAccess {
         private Map myRules;
 
         private void addRule(String matchString, String value) {
-            myRules = myRules == null ? new HashMap() : myRules;
+            myRules = myRules == null ? new SVNHashMap() : myRules;
             myRules.put(matchString, value);
         }
 

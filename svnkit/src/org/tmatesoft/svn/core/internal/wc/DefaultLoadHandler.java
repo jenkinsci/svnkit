@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.CharsetDecoder;
 import java.util.Arrays;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
@@ -77,7 +77,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
         myIsUsePostCommitHook = usePostCommitHook;
         myUUIDAction = uuidAction;
         myParentDir = SVNPathUtil.canonicalizePath(parentDir);
-        myRevisionsMap = new HashMap();
+        myRevisionsMap = new SVNHashMap();
         myDecoder = decoder;
     }
     

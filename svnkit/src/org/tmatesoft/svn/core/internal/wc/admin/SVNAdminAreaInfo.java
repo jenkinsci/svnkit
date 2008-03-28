@@ -12,7 +12,7 @@
 package org.tmatesoft.svn.core.internal.wc.admin;
 
 import java.util.Collections;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNDepth;
@@ -58,14 +58,14 @@ public class SVNAdminAreaInfo {
     
     public void addOldExternal(String path, String oldValue) {
         if (myOldExternals == null) {
-            myOldExternals = new HashMap();
+            myOldExternals = new SVNHashMap();
         }
         myOldExternals.put(path, oldValue);
     }
 
     public void addNewExternal(String path, String newValue) {
         if (myNewExternals == null) {
-            myNewExternals = new HashMap();
+            myNewExternals = new SVNHashMap();
         }
         myNewExternals.put(path, newValue);
     }
@@ -77,7 +77,7 @@ public class SVNAdminAreaInfo {
     
     public void addDepth(String path, SVNDepth depth) {
         if (myDepths == null) {
-            myDepths = new HashMap();
+            myDepths = new SVNHashMap();
         }
         myDepths.put(path, depth);
     }

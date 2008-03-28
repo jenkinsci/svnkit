@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.internal.io.fs;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -29,10 +28,11 @@ import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
 import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNMergeInfoManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -228,7 +228,7 @@ public class FSLog {
         }
         
         if (changedPaths == null) {
-            changedPaths = new HashMap();
+            changedPaths = new SVNHashMap();
         }
         if (entryRevProps == null) {
             entryRevProps = new SVNProperties();
@@ -247,7 +247,7 @@ public class FSLog {
         
         if (foundRevisions == null) {
             mainLineRun = true;
-            foundRevisions = new HashMap();
+            foundRevisions = new SVNHashMap();
         }
         
         if (limit == 0) {

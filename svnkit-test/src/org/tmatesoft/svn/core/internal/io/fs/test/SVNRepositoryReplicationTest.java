@@ -13,7 +13,6 @@ package org.tmatesoft.svn.core.internal.io.fs.test;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -23,13 +22,14 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
@@ -138,8 +138,8 @@ public class SVNRepositoryReplicationTest {
     }
 
     public static boolean compareRepositoriesWithoutWC(SVNRepository srcRepos, SVNRepository dstRepos, long start, long end) throws SVNException {
-        Map srcItems = new HashMap();
-        Map dstItems = new HashMap();
+        Map srcItems = new SVNHashMap();
+        Map dstItems = new SVNHashMap();
         for (long i = start; i <= end; i++) {
             SVNDebugLog.getDefaultLog().info("Checking revision #" + i);
             if (!compareRevisionProps(srcRepos.getLocation(), dstRepos.getLocation(), i)) {
@@ -284,8 +284,8 @@ public class SVNRepositoryReplicationTest {
         SVNUpdateClient updateClient = manager.getUpdateClient();
         updateClient.setIgnoreExternals(true);
 
-        Map events1 = new HashMap();
-        Map events2 = new HashMap();
+        Map events1 = new SVNHashMap();
+        Map events2 = new SVNHashMap();
         long i = start;
         if (!compareRevisionProps(srcURL, dstURL, i)) {
             return false;

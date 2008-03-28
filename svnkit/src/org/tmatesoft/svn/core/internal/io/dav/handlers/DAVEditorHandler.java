@@ -13,7 +13,6 @@
 package org.tmatesoft.svn.core.internal.io.dav.handlers;
 
 import java.io.OutputStream;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNDepth;
@@ -29,6 +28,7 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.dav.DAVUtil;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -37,7 +37,6 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
-
 import org.xml.sax.Attributes;
 
 
@@ -47,7 +46,7 @@ import org.xml.sax.Attributes;
  */
 public class DAVEditorHandler extends BasicDAVDeltaHandler {
 
-    private static final Map DEFAULT_ATTRS = new HashMap();
+    private static final Map DEFAULT_ATTRS = new SVNHashMap();
 
     static {
         DEFAULT_ATTRS.put("send-all", Boolean.TRUE.toString());
@@ -107,7 +106,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             }
 
             public void linkPath(SVNURL url, String path, String lockToken, long revision, SVNDepth depth, boolean startEmpty) throws SVNException {
-                Map attrs = new HashMap();
+                Map attrs = new SVNHashMap();
                 attrs.put(REVISION_ATTR, String.valueOf(revision));
                 attrs.put("depth", SVNDepth.asString(depth));
                 if (lockToken != null) {
@@ -123,7 +122,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             }
 
             public void setPath(String path, String lockToken, long revision, SVNDepth depth, boolean startEmpty) throws SVNException {
-                Map attrs = new HashMap();
+                Map attrs = new SVNHashMap();
                 attrs.put(REVISION_ATTR, String.valueOf(revision));
                 attrs.put("depth", SVNDepth.asString(depth));
                 if (lockToken != null) {

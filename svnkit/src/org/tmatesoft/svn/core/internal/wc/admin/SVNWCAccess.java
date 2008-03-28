@@ -13,7 +13,7 @@ package org.tmatesoft.svn.core.internal.wc.admin;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -82,7 +82,7 @@ public class SVNWCAccess implements ISVNEventHandler {
             return;
         }
         if (myCleanupHandlers == null) {
-            myCleanupHandlers = new HashMap();
+            myCleanupHandlers = new SVNHashMap();
         }
         myCleanupHandlers.put(area, handler);
     }
@@ -252,7 +252,7 @@ public class SVNWCAccess implements ISVNEventHandler {
     }
     
     public SVNAdminArea open(File path, boolean writeLock, boolean stealLock, int depth) throws SVNException {
-        Map tmp = new HashMap();
+        Map tmp = new SVNHashMap();
         SVNAdminArea area;
         try {
             area = doOpen(path, writeLock, stealLock, depth, tmp);
@@ -332,7 +332,7 @@ public class SVNWCAccess implements ISVNEventHandler {
     
     private SVNAdminArea doOpen(File path, boolean writeLock, boolean stealLock, int depth, Map tmp) throws SVNException {
         // no support for 'under consturction here' - it will go to adminAreaFactory.
-        tmp = tmp == null ? new HashMap() : tmp; 
+        tmp = tmp == null ? new SVNHashMap() : tmp; 
         if (myAdminAreas != null) {
             SVNAdminArea existing = (SVNAdminArea) myAdminAreas.get(path);
             if (myAdminAreas.containsKey(path) && existing != null) {
@@ -340,7 +340,7 @@ public class SVNWCAccess implements ISVNEventHandler {
                 SVNErrorManager.error(error);
             }
         } else {
-            myAdminAreas = new HashMap();
+            myAdminAreas = new SVNHashMap();
         }
         
         SVNAdminArea area = SVNAdminAreaFactory.open(path);

@@ -15,7 +15,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
@@ -838,7 +838,7 @@ public class SVNLogClient extends SVNBasicClient {
             SVNErrorManager.error(err);
         }
         
-        final Map locksMap = new HashMap();
+        final Map locksMap = new SVNHashMap();
         if (fetchLocks) {
             SVNLock[] locks = new SVNLock[0];
             try {

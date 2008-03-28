@@ -16,7 +16,6 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -34,11 +33,11 @@ import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVDateRevisionHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVEditorHandler;
@@ -51,9 +50,10 @@ import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVProppatchHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVReplayHandler;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPStatus;
 import org.tmatesoft.svn.core.internal.io.dav.http.IHTTPConnectionFactory;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
@@ -331,7 +331,7 @@ public class DAVRepository extends SVNRepository {
                     whichProps = (DAVElement[]) individualProps.toArray(new DAVElement[individualProps.size()]);
                 }
                 final int parentPathSegments = SVNPathUtil.getSegmentsCount(path);
-                Map dirEntsMap = new HashMap();
+                Map dirEntsMap = new SVNHashMap();
                 HTTPStatus status = DAVUtil.getProperties(myConnection, path, DAVUtil.DEPTH_ONE, null, whichProps, dirEntsMap);
                 if (status.getError() != null) {
                     SVNErrorManager.error(status.getError());
@@ -450,7 +450,7 @@ public class DAVRepository extends SVNRepository {
             DAVElement[] dirProperties = new DAVElement[] {DAVElement.VERSION_CONTROLLED_CONFIGURATION, 
                     DAVElement.VERSION_NAME, DAVElement.GET_CONTENT_LENGTH, DAVElement.RESOURCE_TYPE, 
                     DAVElement.CREATOR_DISPLAY_NAME, DAVElement.CREATION_DATE};
-            Map dirEntsMap = new HashMap();
+            Map dirEntsMap = new SVNHashMap();
             HTTPStatus status = DAVUtil.getProperties(myConnection, path, DAVUtil.DEPTH_ONE, null, dirProperties, dirEntsMap);
             if (status.getError() != null) {
                 SVNErrorManager.error(status.getError());
@@ -782,7 +782,7 @@ public class DAVRepository extends SVNRepository {
             openConnection();
             Map translatedLocks = null;
             if (locks != null) {
-                translatedLocks = new HashMap(locks.size());
+                translatedLocks = new SVNHashMap();
                 myConnection.fetchRepositoryRoot(this);
                 String root = myRepositoryRoot.getPath();
                 root = SVNEncodingUtil.uriEncode(root);
@@ -922,7 +922,7 @@ public class DAVRepository extends SVNRepository {
                 }
             }
             DAVElement[] elements = null;
-            Map propsMap = new HashMap();
+            Map propsMap = new SVNHashMap();
             HTTPStatus status = DAVUtil.getProperties(myConnection, path, 0, null, elements, propsMap);
             if (status.getError() != null) {
                 if (status.getError().getErrorCode() == SVNErrorCode.RA_DAV_PATH_NOT_FOUND) {
@@ -1184,7 +1184,7 @@ public class DAVRepository extends SVNRepository {
         DAVMergeInfoHandler handler = new DAVMergeInfoHandler();
         HTTPStatus status = myConnection.doReport(path, request, handler);
         if (status.getCode() == 501) {
-            return new HashMap();
+            return new SVNHashMap();
         }
         if (status.getError() != null) {
             SVNErrorManager.error(status.getError());

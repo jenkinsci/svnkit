@@ -15,7 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
@@ -68,7 +68,7 @@ public class SVNNodeEditor implements ISVNEditor {
         myBaseRoot = baseRoot;
         myFSFS = fsfs;
         myCancelHandler = handler;
-        myFiles = new HashMap();
+        myFiles = new SVNHashMap();
     }
 
     public void abortEdit() throws SVNException {

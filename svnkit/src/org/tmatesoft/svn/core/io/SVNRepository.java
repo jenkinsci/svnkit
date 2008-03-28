@@ -20,7 +20,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -1241,7 +1241,7 @@ public abstract class SVNRepository {
      * @since               SVN 1.1
      */
     public Map getLocations(String path, Map entries, long pegRevision, long[] revisions) throws SVNException {
-        final Map result = entries != null ? entries : new HashMap();
+        final Map result = entries != null ? entries : new SVNHashMap();
         getLocations(path, pegRevision, revisions, new ISVNLocationEntryHandler() {
             public void handleLocationEntry(SVNLocationEntry locationEntry) {
                 result.put(new Long(locationEntry.getRevision()), locationEntry);

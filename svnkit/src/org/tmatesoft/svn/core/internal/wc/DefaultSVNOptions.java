@@ -20,7 +20,6 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
@@ -30,9 +29,9 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.io.svn.ISVNConnector;
 import org.tmatesoft.svn.core.internal.io.svn.SVNTunnelConnector;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
 import org.tmatesoft.svn.core.wc.ISVNMerger;
 import org.tmatesoft.svn.core.wc.ISVNMergerFactory;
@@ -63,8 +62,6 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
     private static final String NO_UNLOCK = "no-unlock";
     private static final String PRESERVED_CONFLICT_FILE_EXTENSIONS = "preserved-conflict-file-exts";
     private static final String INTERACTIVE_COFLICTS = "interactive-conflicts";
-    private static final String NATIVE_CHARSET = "native-charset";
-    private static final String NATIVE_EOL = "native-style";
 
     private static final String DEFAULT_IGNORES = "*.o *.lo *.la #*# .*.rej *.rej .*~ *~ .#* .DS_Store";
     private static final String YES = "yes";
@@ -267,7 +264,7 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
 
     public Map applyAutoProperties(File file, Map target) {
         String fileName = file.getName();
-        target = target == null ? new HashMap() : target;
+        target = target == null ? new SVNHashMap() : target;
         if (!isUseAutoProperties()) {
             return target;
         }

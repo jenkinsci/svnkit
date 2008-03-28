@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Date;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.jar.JarEntry;
@@ -97,7 +97,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
  */
 public abstract class SVNRepositoryFactory {
     
-    private static final Map myFactoriesMap = new HashMap();
+    private static final Map myFactoriesMap = new SVNHashMap();
     private static final String REPOSITORY_TEMPLATE_PATH = "/org/tmatesoft/svn/core/io/repository/template.jar";
     
     protected static void registerRepositoryFactory(String protocol, SVNRepositoryFactory factory) {

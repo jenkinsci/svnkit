@@ -12,7 +12,7 @@
 package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNCancelException;
@@ -268,7 +268,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
 
                 if (mergeResult == SVNStatusType.CONFLICTED) {
                     if (myConflictedPaths == null) {
-                        myConflictedPaths = new HashMap();
+                        myConflictedPaths = new SVNHashMap();
                     }
                     myConflictedPaths.put(path, path);
                 }

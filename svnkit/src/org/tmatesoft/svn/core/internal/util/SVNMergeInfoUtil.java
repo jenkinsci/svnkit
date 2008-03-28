@@ -16,7 +16,7 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -296,8 +296,8 @@ public class SVNMergeInfoUtil {
         mergeInfo2 = mergeInfo2 == null ? Collections.EMPTY_MAP : mergeInfo2;
         
         if (mergeInfo1.size() == mergeInfo2.size()) {
-            Map deleted = new HashMap();
-            Map added = new HashMap();
+            Map deleted = new SVNHashMap();
+            Map added = new SVNHashMap();
             diffMergeInfo(deleted, added, mergeInfo1, mergeInfo2, considerInheritance);
             return deleted.isEmpty() && added.isEmpty();
         }

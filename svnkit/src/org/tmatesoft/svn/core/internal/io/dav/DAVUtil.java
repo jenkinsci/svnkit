@@ -12,7 +12,6 @@
 
 package org.tmatesoft.svn.core.internal.io.dav;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -25,6 +24,7 @@ import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVPropertiesHandler;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPHeader;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPStatus;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
@@ -60,7 +60,7 @@ public class DAVUtil {
     }
     
     public static DAVProperties getResourceProperties(DAVConnection connection, String path, String label, DAVElement[] properties) throws SVNException {
-        Map resultMap = new HashMap();
+        Map resultMap = new SVNHashMap();
         HTTPStatus status = getProperties(connection, path, DEPTH_ZERO, label, properties, resultMap);
         if (status.getError() != null) {
             SVNErrorManager.error(status.getError());
@@ -175,7 +175,7 @@ public class DAVUtil {
             info.revision = Long.parseLong(version.getString());
         }
         if (includeType) {
-            Map propsMap = new HashMap();
+            Map propsMap = new SVNHashMap();
             path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
             HTTPStatus status = getProperties(connection, path, 0, null, new DAVElement[] {DAVElement.RESOURCE_TYPE}, propsMap);
             if (status.getError() != null) {

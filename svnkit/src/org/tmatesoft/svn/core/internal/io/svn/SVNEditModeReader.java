@@ -13,7 +13,7 @@
 package org.tmatesoft.svn.core.internal.io.svn;
 
 import java.util.Collection;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,7 +32,7 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
  */
 public class SVNEditModeReader {
 
-    private static final Map COMMANDS_MAP = new HashMap();
+    private static final Map COMMANDS_MAP = new SVNHashMap();
 
     static {
         COMMANDS_MAP.put("target-rev", "r");
@@ -71,7 +71,7 @@ public class SVNEditModeReader {
         myDeltaReader = new SVNDeltaReader();
         myDone = false;
         myAborted = false;
-        myTokens = new HashMap();
+        myTokens = new SVNHashMap();
     }
 
     private void storeToken(String token, boolean isFile) {

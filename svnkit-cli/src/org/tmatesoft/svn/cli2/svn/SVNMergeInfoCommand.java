@@ -13,7 +13,6 @@ package org.tmatesoft.svn.cli2.svn;
 
 import java.text.MessageFormat;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -25,6 +24,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
@@ -80,7 +80,7 @@ public class SVNMergeInfoCommand extends SVNCommand {
             
             getSVNEnvironment().getOut().println(message);
             if (mergeInfo == null) {
-                mergeInfo = new HashMap();
+                mergeInfo = new SVNHashMap();
             }
             
             SVNURL rootURL = null;

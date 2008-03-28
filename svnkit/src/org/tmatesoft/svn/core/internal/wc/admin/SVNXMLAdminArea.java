@@ -22,7 +22,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -386,7 +386,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         if (!myEntriesFile.exists()) {
             return null;
         }
-        Map entries = new HashMap();
+        Map entries = new SVNHashMap();
         
         BufferedReader reader = null;
         try {
@@ -396,7 +396,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             while ((line = reader.readLine()) != null) {
                 line = line.trim();
                 if (line.equals("<entry")) {
-                    entry = new HashMap();
+                    entry = new SVNHashMap();
                     continue;
                 }
                 if (entry != null) {
@@ -1018,7 +1018,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         }
         
         // update entry
-        Map entryAttrs = new HashMap();
+        Map entryAttrs = new SVNHashMap();
         entryAttrs.put(SVNProperty.REVISION, SVNProperty.toString(revisionNumber));
         entryAttrs.put(SVNProperty.KIND, getThisDirName().equals(fileName) ? SVNProperty.KIND_DIR : SVNProperty.KIND_FILE);
         if (!implicit) {

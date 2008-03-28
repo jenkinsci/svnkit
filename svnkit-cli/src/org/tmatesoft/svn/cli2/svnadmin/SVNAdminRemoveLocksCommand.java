@@ -13,7 +13,6 @@ package org.tmatesoft.svn.cli2.svnadmin;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -22,6 +21,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
@@ -61,7 +61,7 @@ public class SVNAdminRemoveLocksCommand extends SVNAdminCommand implements ISVNL
                     getEnvironment().getOut().println("Path '" + lockPath + "' isn't locked.");
                     continue;
                 }
-                Map pathToToken = new HashMap();
+                Map pathToToken = new SVNHashMap();
                 pathToToken.put(lockPath, lock.getID());
                 repository.unlock(pathToToken, true, this);
             } catch (SVNException e) {

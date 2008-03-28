@@ -12,7 +12,6 @@
 package org.tmatesoft.svn.core.internal.io.fs.test;
 
 import java.io.OutputStream;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 
@@ -20,6 +19,7 @@ import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -38,7 +38,7 @@ public class SVNTestUpdateEditor implements ISVNEditor {
 
     public SVNTestUpdateEditor(SVNRepository repository, Map items) {
         myRepository = repository;
-        myItems = items == null ? new HashMap() : items;
+        myItems = items == null ? new SVNHashMap() : items;
         myDirsStack = new Stack();
         myNumberOfChanges = 0;
     }

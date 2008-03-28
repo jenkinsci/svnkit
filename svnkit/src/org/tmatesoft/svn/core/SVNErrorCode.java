@@ -15,8 +15,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.Map;
+
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 
 
 /**
@@ -38,7 +39,7 @@ public class SVNErrorCode implements Serializable {
     private int myCategory;
     private int myCode;
     
-    private static final Map ourErrorCodes = new HashMap();
+    private static final Map ourErrorCodes = new SVNHashMap();
     
     /**
      * Gets an error code object given its unique error code number. 

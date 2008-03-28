@@ -13,7 +13,7 @@ package org.tmatesoft.svn.core.internal.util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -256,7 +256,7 @@ public class SVNEncodingUtil {
         return true;
     }
 
-    private static final Map XML_UNESCAPE_MAP = new HashMap();
+    private static final Map XML_UNESCAPE_MAP = new SVNHashMap();
 
     static {
         XML_UNESCAPE_MAP.put("&amp;", "&");

@@ -14,11 +14,11 @@ package org.tmatesoft.svn.core;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
@@ -161,7 +161,7 @@ public class SVNURL {
         return -1;
     }
     
-    private static final Map DEFAULT_PORTS = new HashMap();
+    private static final Map DEFAULT_PORTS = new SVNHashMap();
     
     static {
         DEFAULT_PORTS.put("svn", new Integer(3690));

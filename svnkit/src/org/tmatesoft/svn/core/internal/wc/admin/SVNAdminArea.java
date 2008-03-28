@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -202,7 +202,7 @@ public abstract class SVNAdminArea {
 
         boolean differs = compareAndVerify(textFile, baseFile, compareTextBase, compareChecksum);
         if (!differs && isLocked()) {
-            Map attributes = new HashMap();
+            Map attributes = new SVNHashMap();
             attributes.put(SVNProperty.WORKING_SIZE, Long.toString(textFile.length()));
             attributes.put(SVNProperty.TEXT_TIME, SVNDate.formatDate(new Date(textFile.lastModified())));
             modifyEntry(name, attributes, true, false);
@@ -867,11 +867,11 @@ public abstract class SVNAdminArea {
     public SVNEntry addEntry(String name) throws SVNException {
         Map entries = loadEntries();
         if (entries == null) {
-            myEntries = new HashMap();
+            myEntries = new SVNHashMap();
             entries = myEntries;
         }
 
-        SVNEntry entry = entries.containsKey(name) ? (SVNEntry) entries.get(name) : new SVNEntry(new HashMap(), this, name);
+        SVNEntry entry = entries.containsKey(name) ? (SVNEntry) entries.get(name) : new SVNEntry(new SVNHashMap(), this, name);
         entries.put(name, entry);
         return entry;
     }
@@ -1061,28 +1061,28 @@ public abstract class SVNAdminArea {
 
     protected Map getBasePropertiesStorage(boolean create) {
         if (myBaseProperties == null && create) {
-            myBaseProperties = new HashMap();
+            myBaseProperties = new SVNHashMap();
         }
         return myBaseProperties;
     }
 
     protected Map getRevertPropertiesStorage(boolean create) {
         if (myRevertProperties == null && create) {
-            myRevertProperties = new HashMap();
+            myRevertProperties = new SVNHashMap();
         }
         return myRevertProperties;
     }
 
     protected Map getPropertiesStorage(boolean create) {
         if (myProperties == null && create) {
-            myProperties = new HashMap();
+            myProperties = new SVNHashMap();
         }
         return myProperties;
     }
 
     protected Map getWCPropertiesStorage(boolean create) {
         if (myWCProperties == null && create) {
-            myWCProperties = new HashMap();
+            myWCProperties = new SVNHashMap();
         }
         return myWCProperties;
     }

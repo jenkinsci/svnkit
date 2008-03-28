@@ -23,9 +23,8 @@ import org.tmatesoft.svn.core.SVNMergeInfo;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
-import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
-import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 
 /**
  * @author TMate Software Ltd.
@@ -90,10 +89,10 @@ public class DAVMergeInfoHandler extends DAVReportHandler {
     }
 
     private void addMergeInfo(String path, SVNMergeInfo mergeInfo, StringBuffer xmlBuffer) {
-        SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "mergeinfo-item", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
-        SVNXMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "mergeinfo-path", path, xmlBuffer);
-        SVNXMLUtil.openCDataTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "mergeinfo-info", addSourcePathes(mergeInfo), xmlBuffer);
-        SVNXMLUtil.closeXMLTag(DAVXMLUtil.SVN_NAMESPACE_PREFIX, "mergeinfo-item", xmlBuffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "mergeinfo-item", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
+        SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "mergeinfo-path", path, xmlBuffer);
+        SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "mergeinfo-info", addSourcePathes(mergeInfo), xmlBuffer);
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "mergeinfo-item", xmlBuffer);
     }
 
     private String addSourcePathes(SVNMergeInfo mergeInfo) {

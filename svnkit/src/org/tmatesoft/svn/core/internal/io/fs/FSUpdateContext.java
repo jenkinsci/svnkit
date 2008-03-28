@@ -16,9 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 
@@ -28,10 +26,11 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -310,11 +309,11 @@ public class FSUpdateContext {
             if (sourcePath != null && !startEmpty) {
                 FSRevisionRoot sourceRoot = getSourceRoot(sourceRevision);
                 FSRevisionNode sourceNode = sourceRoot.getRevisionNode(sourcePath);
-                sourceEntries = new HashMap(sourceNode.getDirEntries(myFSFS));
+                sourceEntries = new SVNHashMap(sourceNode.getDirEntries(myFSFS));
             }
             FSRevisionNode targetNode = getTargetRoot().getRevisionNode(targetPath);
 
-            Map targetEntries = new HashMap(targetNode.getDirEntries(myFSFS));
+            Map targetEntries = new SVNHashMap(targetNode.getDirEntries(myFSFS));
 
             while (true) {
                 Object[] nextInfo = fetchPathInfo(editPath);
@@ -353,7 +352,6 @@ public class FSUpdateContext {
 
             if (sourceEntries != null) {
                 FSEntry[] srcEntries = (FSEntry[]) new ArrayList(sourceEntries.values()).toArray(new FSEntry[sourceEntries.size()]);
-                Arrays.sort(srcEntries);
                 for (int i = 0; i < srcEntries.length; i++) {
                     FSEntry srcEntry = srcEntries[i];
                     if (targetEntries.get(srcEntry.getName()) == null) {
@@ -376,25 +374,8 @@ public class FSUpdateContext {
                 }
             }
 
-            FSEntry[] tgtEntries = (FSEntry[]) new ArrayList(targetEntries.values()).toArray(new FSEntry[targetEntries.size()]);
-            final Map srcMap = sourceEntries;
-            Arrays.sort(tgtEntries, new Comparator() {
-                public int compare(Object o1, Object o2) {
-                    FSEntry e1 = (FSEntry) o1;
-                    FSEntry e2 = (FSEntry) o2;
-                    if (srcMap != null) {
-                        boolean has1Src = srcMap.containsKey(e1.getName()); 
-                        boolean has2Src = srcMap.containsKey(e2.getName());
-                        if (has1Src != has2Src) {
-                            return has1Src ? 1 : -1;
-                        }
-                    }
-                    return e1.compareTo(e2);
-                }
-            });
-
-            for (int i = 0; i < tgtEntries.length; i++) {
-                FSEntry tgtEntry = tgtEntries[i];
+            for (Iterator tgts = targetEntries.values().iterator(); tgts.hasNext();) {
+                FSEntry tgtEntry = (FSEntry) tgts.next();
                 FSEntry srcEntry = null;
                 String entrySourcePath = null;
                 if (!isDepthUpgrade(wcDepth, requestedDepth, tgtEntry.getType())) {

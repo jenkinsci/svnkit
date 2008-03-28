@@ -13,7 +13,6 @@ package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.OutputStream;
 
-import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNException;
 
 /**

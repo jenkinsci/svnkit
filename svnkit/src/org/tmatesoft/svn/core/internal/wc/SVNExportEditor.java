@@ -13,7 +13,7 @@ package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
 import java.io.OutputStream;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
@@ -63,7 +63,7 @@ public class SVNExportEditor implements ISVNEditor {
         myRoot = dstPath;
         myIsForce = force;
         myEOLStyle = eolStyle;
-        myExternals = new HashMap();
+        myExternals = new SVNHashMap();
         myEventDispatcher = eventDispatcher;
         myURL = url;
         myDeltaProcessor = new SVNDeltaProcessor();

@@ -14,7 +14,7 @@ package org.tmatesoft.svn.core.wc;
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -158,7 +158,7 @@ public class SVNChangelistClient extends SVNBasicClient {
                 SVNChangelistClient.this.dispatchEvent(event);
             }
             
-            Map attributes = new HashMap();
+            Map attributes = new SVNHashMap();
             attributes.put(SVNProperty.CHANGELIST, myChangelist);
             SVNAdminArea area = myWCAccess.retrieve(path.getParentFile());
             entry = area.modifyEntry(entry.getName(), attributes, true, false);

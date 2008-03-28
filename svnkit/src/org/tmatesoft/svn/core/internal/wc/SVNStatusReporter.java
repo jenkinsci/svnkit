@@ -11,7 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNDepth;
@@ -46,7 +46,7 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
         myRepository = repos;
         myRepositoryLocation = repos.getLocation();
         myEditor = editor;
-        myLocks = new HashMap();
+        myLocks = new SVNHashMap();
     }
 
     public SVNLock getLock(SVNURL url) {

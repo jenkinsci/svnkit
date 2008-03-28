@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Date;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -82,7 +82,7 @@ public class SVNLogRunner {
             }
         } else if (SVNLog.MODIFY_ENTRY.equals(name)) {
             try {
-                Map entryAttrs = new HashMap();
+                Map entryAttrs = new SVNHashMap();
                 for (Iterator attrtibutesIter = attributes.nameSet().iterator(); attrtibutesIter.hasNext();) {
                     String attrName = (String) attrtibutesIter.next();
                     if ("".equals(attrName) || SVNLog.NAME_ATTR.equals(attrName) || SVNLog.FORCE_ATTR.equals(attrName)) {
@@ -183,7 +183,7 @@ public class SVNLogRunner {
             }
         } else if (SVNLog.DELETE_CHANGELIST.equals(name)) {
             try {
-                Map entryAttrs = new HashMap();
+                Map entryAttrs = new SVNHashMap();
                 entryAttrs.put(SVNProperty.CHANGELIST, null);
                 adminArea.modifyEntry(fileName, entryAttrs, false, false);
                 setEntriesChanged(true);

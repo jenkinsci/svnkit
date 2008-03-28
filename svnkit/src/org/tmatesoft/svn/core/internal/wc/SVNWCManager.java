@@ -14,7 +14,7 @@ package org.tmatesoft.svn.core.internal.wc;
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -98,7 +98,7 @@ public class SVNWCManager {
                     "Can''t add ''{0}'' to a parent directory scheduled for deletion", path);
             SVNErrorManager.error(err);
         }
-        Map command = new HashMap();
+        Map command = new SVNHashMap();
         String name = path.getName();
         if (copyFromURL != null) {
             if (parentEntry.getRepositoryRoot() != null && !SVNPathUtil.isAncestor(parentEntry.getRepositoryRoot(), copyFromURL.toString())) {
@@ -166,7 +166,7 @@ public class SVNWCManager {
     public static final int COPIED = 2;
 
     public static void markTree(SVNAdminArea dir, String schedule, boolean copied, boolean keepLocal, int flags) throws SVNException {
-        Map attributes = new HashMap();
+        Map attributes = new SVNHashMap();
 
         for (Iterator entries = dir.entries(false); entries.hasNext();) {
             SVNEntry entry = (SVNEntry) entries.next();
@@ -224,8 +224,8 @@ public class SVNWCManager {
     }
 
     public static void markTreeCancellable(SVNAdminArea dir, String schedule, boolean copied, boolean keepLocal, int flags) throws SVNException {
-        Map attributes = new HashMap();
-        Map recurseMap = new HashMap();
+        Map attributes = new SVNHashMap();
+        Map recurseMap = new SVNHashMap();
         for (Iterator entries = dir.entries(false); entries.hasNext();) {
             SVNEntry entry = (SVNEntry) entries.next();
             if (dir.getThisDirName().equals(entry.getName())) {

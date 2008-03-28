@@ -12,10 +12,10 @@
 
 package org.tmatesoft.svn.core.internal.io.dav;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.internal.io.dav.http.XMLReader;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 
 
 /**
@@ -24,7 +24,7 @@ import org.tmatesoft.svn.core.internal.io.dav.http.XMLReader;
  */
 public class DAVElement {
 
-    private static Map ourProperties = new HashMap();    
+    private static Map ourProperties = new SVNHashMap();    
     
     public static DAVElement getElement(String namespace, String name) {
         if (namespace == null) {
@@ -32,7 +32,7 @@ public class DAVElement {
         }
         Map properties = (Map) ourProperties.get(namespace);
         if (properties == null) {
-            properties = new HashMap();
+            properties = new SVNHashMap();
             ourProperties.put(namespace, properties);
         }
         name = name.replace(XMLReader.COLON_REPLACEMENT, ':');

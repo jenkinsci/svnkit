@@ -12,7 +12,6 @@
 package org.tmatesoft.svn.core.internal.io.fs;
 
 import java.io.InputStream;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
@@ -23,6 +22,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -181,7 +181,7 @@ public abstract class FSRoot {
         if (change == null) {
             return;
         }
-        mapChanges = mapChanges != null ? mapChanges : new HashMap();
+        mapChanges = mapChanges != null ? mapChanges : new SVNHashMap();
         FSPathChange newChange = null;
         String copyfromPath = null;
         long copyfromRevision = SVNRepository.INVALID_REVISION;
@@ -256,7 +256,7 @@ public abstract class FSRoot {
     }
 
     protected Map fetchAllChanges(FSFile changesFile, boolean prefolded) throws SVNException {
-        Map changedPaths = new HashMap();
+        Map changedPaths = new SVNHashMap();
         FSPathChange change = readChange(changesFile);
         while (change != null) {
             foldChange(changedPaths, change);

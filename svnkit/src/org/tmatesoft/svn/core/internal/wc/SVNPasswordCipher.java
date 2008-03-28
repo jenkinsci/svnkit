@@ -13,7 +13,7 @@ package org.tmatesoft.svn.core.internal.wc;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +32,7 @@ public abstract class SVNPasswordCipher {
     private static final SVNPasswordCipher SIMPLE_CIPHER = new CompositePasswordCipher(Collections.EMPTY_LIST, SIMPLE_CIPHER_TYPE);
     private static final SVNPasswordCipher WINCRYPT_CIPHER = new SVNWinCryptPasswordCipher();
     
-    private static Map ourInstances = new HashMap();
+    private static Map ourInstances = new SVNHashMap();
     private static String ourDefaultType = SIMPLE_CIPHER_TYPE;
     
     static {

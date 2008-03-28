@@ -13,7 +13,7 @@ package org.tmatesoft.svn.core.internal.util;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -25,7 +25,7 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
  */
 public class SVNXMLUtil {
 
-    public static final Map PREFIX_MAP = new HashMap();
+    public static final Map PREFIX_MAP = new SVNHashMap();
 
     public static final String DAV_NAMESPACE_PREFIX = "D";
     public static final String SVN_NAMESPACE_PREFIX = "S";
@@ -151,13 +151,13 @@ public class SVNXMLUtil {
     }
 
     public static StringBuffer openCDataTag(String prefix, String tagName, String cdata, String attr, String value, StringBuffer target) {
-        Map attributes = new HashMap();
+        Map attributes = new SVNHashMap();
         attributes.put(attr, value);
         return openCDataTag(prefix, tagName, cdata, attributes, target);
     }
 
     public static StringBuffer openXMLTag(String prefix, String tagName, int style, String attr, String value, StringBuffer target) {
-        Map attributes = new HashMap();
+        Map attributes = new SVNHashMap();
         attributes.put(attr, value);
         return openXMLTag(prefix, tagName, style, attributes, target);
     }

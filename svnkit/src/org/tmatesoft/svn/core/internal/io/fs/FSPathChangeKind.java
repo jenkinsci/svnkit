@@ -12,10 +12,10 @@
 package org.tmatesoft.svn.core.internal.io.fs;
 
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNLogEntryPath;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 
 /**
  * The kind of change that occurred on the path.
@@ -39,7 +39,7 @@ public class FSPathChangeKind implements Serializable {
 
     private String myName;
 
-    private static final Map ACTIONS_TO_CHANGE_KINDS = new HashMap();
+    private static final Map ACTIONS_TO_CHANGE_KINDS = new SVNHashMap();
 
     static {
         ACTIONS_TO_CHANGE_KINDS.put(ACTION_MODIFY, FSPathChangeKind.FS_PATH_CHANGE_MODIFY);

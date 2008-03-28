@@ -15,7 +15,7 @@ import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
@@ -82,7 +82,7 @@ public class SVNRevision {
      */
     public static final SVNRevision UNDEFINED = new SVNRevision("UNDEFINED", 30);
 
-    private static final Map ourValidRevisions = new HashMap();
+    private static final Map ourValidRevisions = new SVNHashMap();
 
     static {
         ourValidRevisions.put(HEAD.getName(), HEAD);

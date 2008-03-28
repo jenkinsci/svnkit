@@ -18,7 +18,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -980,7 +980,7 @@ public class SVNClientImpl implements SVNClientInterface {
         }
         PropertyData[] properties = properties(path, revision, pegRevision, 
                 JavaHLObjectFactory.getSVNDepth(depth), changelists);
-        Map propsMap = new HashMap();
+        Map propsMap = new SVNHashMap();
         for (int i = 0; i < properties.length; i++) {
             propsMap.put(properties[i].getName(), properties[i].getValue());
         }

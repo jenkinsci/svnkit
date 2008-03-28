@@ -16,7 +16,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -755,7 +755,7 @@ public class SVNCommitClient extends SVNBasicClient {
                                 if (parentDir != null) {
                                     SVNEntry entryInParent = parentDir.getEntry(nameInParent, true);
                                     if (entryInParent != null) {
-                                        Map attributes = new HashMap();
+                                        Map attributes = new SVNHashMap();
                                         attributes.put(SVNProperty.SCHEDULE, null);
                                         attributes.put(SVNProperty.DELETED, Boolean.TRUE.toString());
                                         parentDir.modifyEntry(nameInParent, attributes, true, true);
@@ -876,7 +876,7 @@ public class SVNCommitClient extends SVNBasicClient {
             }
         }
         try {
-            Map lockTokens = new HashMap();
+            Map lockTokens = new SVNHashMap();
             checkCancelled();
             Collection changelistsSet = changelists != null ? new HashSet() : null;
             if (changelists != null) {
@@ -961,7 +961,7 @@ public class SVNCommitClient extends SVNBasicClient {
             return new SVNCommitPacket[0];
         }
         Collection packets = new ArrayList();
-        Map targets = new HashMap();
+        Map targets = new SVNHashMap();
         SVNStatusClient statusClient = new SVNStatusClient(getRepositoryPool(), getOptions());
         statusClient.setEventHandler(new ISVNEventHandler() {
             public void handleEvent(SVNEvent event, double progress) throws SVNException {
@@ -984,7 +984,7 @@ public class SVNCommitClient extends SVNBasicClient {
             Collection targetPaths = (Collection) targets.get(wcAccess);
             try {
                 checkCancelled();
-                Map lockTokens = new HashMap();
+                Map lockTokens = new SVNHashMap();
                 Collection changelistsSet = changelists != null ? new HashSet() : null;
                 if (changelists != null) {
                     for (int j = 0; j < changelists.length; j++) {
@@ -1024,8 +1024,8 @@ public class SVNCommitClient extends SVNBasicClient {
         if (!combinePackets) {
             return packetsArray;
         }
-        Map repoUUIDs = new HashMap();
-        Map locktokensMap = new HashMap();
+        Map repoUUIDs = new SVNHashMap();
+        Map locktokensMap = new SVNHashMap();
         try {
             // get wc root for each packet and uuid for each root.
             // group items by uuid.
@@ -1057,7 +1057,7 @@ public class SVNCommitClient extends SVNBasicClient {
                 uuid += url.getProtocol() + ":" + url.getHost() + ":" + url.getPort();
                 if (!repoUUIDs.containsKey(uuid)) {
                     repoUUIDs.put(uuid, new ArrayList());
-                    locktokensMap.put(uuid, new HashMap());
+                    locktokensMap.put(uuid, new SVNHashMap());
                 }
                 Collection items = (Collection) repoUUIDs.get(uuid);
                 Map lockTokens = (Map) locktokensMap.get(uuid);
@@ -1157,7 +1157,7 @@ public class SVNCommitClient extends SVNBasicClient {
         }
         editor.addFile(filePath, null, -1);
         String mimeType = null;
-        Map autoProperties = new HashMap();
+        Map autoProperties = new SVNHashMap();
         if (fileType != SVNFileType.SYMLINK) {
             autoProperties = getOptions().applyAutoProperties(file, autoProperties);
             if (!autoProperties.containsKey(SVNProperty.MIME_TYPE)) {

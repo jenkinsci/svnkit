@@ -96,18 +96,18 @@ public class DAVServlet extends HttpServlet {
         if (namespace != null) {
             namespaces.add(namespace);
         }
-        SVNXMLUtil.openNamespaceDeclarationTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "error", namespaces, DAVXMLUtil.PREFIX_MAP, xmlBuffer);
-        String prefix = (String) DAVXMLUtil.PREFIX_MAP.get(namespace);
+        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "error", namespaces, SVNXMLUtil.PREFIX_MAP, xmlBuffer);
+        String prefix = (String) SVNXMLUtil.PREFIX_MAP.get(namespace);
         if (prefix != null) {
-            prefix = DAVXMLUtil.DAV_NAMESPACE_PREFIX;
+            prefix = SVNXMLUtil.DAV_NAMESPACE_PREFIX;
         }
         if (tagName != null && tagName.length() > 0) {
             SVNXMLUtil.openXMLTag(prefix, tagName, SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
         }
-        SVNXMLUtil.openXMLTag(DAVXMLUtil.SVN_APACHE_PROPERTY_PREFIX, "human-readable", SVNXMLUtil.XML_STYLE_NORMAL, "errcode", String.valueOf(errorID), xmlBuffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_APACHE_PROPERTY_PREFIX, "human-readable", SVNXMLUtil.XML_STYLE_NORMAL, "errcode", String.valueOf(errorID), xmlBuffer);
         xmlBuffer.append(SVNEncodingUtil.xmlEncodeCDATA(description));
-        SVNXMLUtil.closeXMLTag(DAVXMLUtil.SVN_APACHE_PROPERTY_PREFIX, "human-readable", xmlBuffer);
-        SVNXMLUtil.closeXMLTag(DAVXMLUtil.DAV_NAMESPACE_PREFIX, "error", xmlBuffer);
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.SVN_APACHE_PROPERTY_PREFIX, "human-readable", xmlBuffer);
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "error", xmlBuffer);
         return xmlBuffer.toString();
     }
 }

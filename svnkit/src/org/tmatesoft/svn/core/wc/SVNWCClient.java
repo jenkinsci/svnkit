@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -1543,7 +1543,7 @@ public class SVNWCClient extends SVNBasicClient {
                 reverted = true;
                 depth = SVNDepth.EMPTY;
                 if (wasDeleted) {
-                    Map attributes = new HashMap();
+                    Map attributes = new SVNHashMap();
                     attributes.put(SVNProperty.KIND, entry.getKind().toString());
                     attributes.put(SVNProperty.DELETED, Boolean.TRUE.toString());
                     parent.modifyEntry(path.getName(), attributes, true, false);
@@ -1858,8 +1858,8 @@ public class SVNWCClient extends SVNBasicClient {
      * @see #doLock(SVNURL[],boolean,String)
      */
     public void doLock(File[] paths, boolean stealLock, String lockMessage) throws SVNException {
-        final Map entriesMap = new HashMap();
-        Map pathsRevisionsMap = new HashMap();
+        final Map entriesMap = new SVNHashMap();
+        Map pathsRevisionsMap = new SVNHashMap();
         final SVNWCAccess wcAccess = createWCAccess();
         try {
             final SVNURL topURL = collectLockInfo(wcAccess, paths, entriesMap, pathsRevisionsMap, true, stealLock);
@@ -1918,7 +1918,7 @@ public class SVNWCClient extends SVNBasicClient {
         if (paths.isEmpty()) {
             paths.add("");
         }
-        Map pathsToRevisions = new HashMap();
+        Map pathsToRevisions = new SVNHashMap();
         for (Iterator p = paths.iterator(); p.hasNext();) {
             String path = (String) p.next();
             path = SVNEncodingUtil.uriDecode(path);
@@ -1960,8 +1960,8 @@ public class SVNWCClient extends SVNBasicClient {
      * @see #doUnlock(SVNURL[],boolean)
      */
     public void doUnlock(File[] paths, boolean breakLock) throws SVNException {
-        final Map entriesMap = new HashMap();
-        Map pathsTokensMap = new HashMap();
+        final Map entriesMap = new SVNHashMap();
+        Map pathsTokensMap = new SVNHashMap();
         final SVNWCAccess wcAccess = createWCAccess();
         try {
             final SVNURL topURL = collectLockInfo(wcAccess, paths, entriesMap, pathsTokensMap, false, breakLock);
@@ -2021,7 +2021,7 @@ public class SVNWCClient extends SVNBasicClient {
         if (paths.isEmpty()) {
             paths.add("");
         }
-        Map pathsToTokens = new HashMap();
+        Map pathsToTokens = new SVNHashMap();
         for (Iterator p = paths.iterator(); p.hasNext();) {
             String path = (String) p.next();
             path = SVNEncodingUtil.uriDecode(path);
@@ -2333,7 +2333,7 @@ public class SVNWCClient extends SVNBasicClient {
             }
         }
         locks = locks == null ? new SVNLock[0] : locks;
-        Map locksMap = new HashMap();
+        Map locksMap = new SVNHashMap();
         for (int i = 0; i < locks.length; i++) {
             SVNLock lock = locks[i];
             locksMap.put(lock.getPath(), lock);
@@ -2420,7 +2420,7 @@ public class SVNWCClient extends SVNBasicClient {
                         }
 
                         locks = locks == null ? new SVNLock[0] : locks;
-                        Map locksMap = new HashMap();
+                        Map locksMap = new SVNHashMap();
                         for (int i = 0; i < locks.length; i++) {
                             SVNLock lock = locks[i];
                             locksMap.put(lock.getPath(), lock);
@@ -2523,7 +2523,7 @@ public class SVNWCClient extends SVNBasicClient {
             }
 
             locks = locks == null ? new SVNLock[0] : locks;
-            Map locksMap = new HashMap();
+            Map locksMap = new SVNHashMap();
             for (int i = 0; i < locks.length; i++) {
                 lock = locks[i];
                 locksMap.put(lock.getPath(), lock);
@@ -2843,7 +2843,7 @@ public class SVNWCClient extends SVNBasicClient {
     }
 
     private Map fetchLockTokens(SVNRepository repository, Map pathsTokensMap) throws SVNException {
-        Map tokens = new HashMap();
+        Map tokens = new SVNHashMap();
         for (Iterator paths = pathsTokensMap.keySet().iterator(); paths.hasNext();) {
             String path = (String) paths.next();
             SVNLock lock = repository.getLock(path);

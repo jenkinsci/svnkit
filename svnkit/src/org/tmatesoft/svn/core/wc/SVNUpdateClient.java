@@ -15,7 +15,7 @@ import java.io.File;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -850,7 +850,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             if (to.endsWith("/")) {
                 to = to.substring(0, to.length() - 1);
             } 
-            doRelocate(adminArea, name, from, to, recursive, new HashMap());
+            doRelocate(adminArea, name, from, to, recursive, new SVNHashMap());
         } finally {
             wcAccess.close();
         }
@@ -1056,8 +1056,8 @@ public class SVNUpdateClient extends SVNBasicClient {
             // TODO convert diffpath to full path.
             SVNExternal[] previous = oldValue != null ? SVNExternal.parseExternals(diffPath, oldValue) : null;
             SVNExternal[] current = newValue != null ? SVNExternal.parseExternals(diffPath, newValue) : null;
-            Map oldParsedExternals = new HashMap();
-            Map newParsedExternals = new HashMap();
+            Map oldParsedExternals = new SVNHashMap();
+            Map newParsedExternals = new SVNHashMap();
             // put to another hashes.
             for (int i = 0; current != null && i < current.length; i++) {
                 newParsedExternals.put(current[i].getPath(), current[i]);

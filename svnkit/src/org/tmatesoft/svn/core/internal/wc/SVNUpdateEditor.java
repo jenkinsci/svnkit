@@ -14,7 +14,7 @@ package org.tmatesoft.svn.core.internal.wc;
 import java.io.File;
 import java.io.OutputStream;
 import java.util.Collection;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
@@ -118,7 +118,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 myCurrentDirectory.myAmbientDepth = entry.getDepth();
                 myCurrentDirectory.myPreviousRevision = entry.getRevision();
             }
-            Map attributes = new HashMap();
+            Map attributes = new SVNHashMap();
             attributes.put(SVNProperty.REVISION, Long.toString(myTargetRevision));
             attributes.put(SVNProperty.URL, myCurrentDirectory.URL);
             attributes.put(SVNProperty.INCOMPLETE, Boolean.TRUE.toString());
@@ -283,7 +283,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         }
         
         SVNEntry entry = parentArea.getEntry(name, false);
-        Map attributes = new HashMap();
+        Map attributes = new SVNHashMap();
         attributes.put(SVNProperty.KIND, SVNProperty.KIND_DIR);
         attributes.put(SVNProperty.ABSENT, null);
         attributes.put(SVNProperty.DELETED, null);
@@ -354,7 +354,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             myCurrentDirectory.myPreviousRevision = -1;
         }
         
-        Map attributes = new HashMap();
+        Map attributes = new SVNHashMap();
         attributes.put(SVNProperty.REVISION, Long.toString(myTargetRevision));
         attributes.put(SVNProperty.URL, myCurrentDirectory.URL);
         attributes.put(SVNProperty.INCOMPLETE, Boolean.TRUE.toString());
@@ -395,7 +395,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             SVNErrorManager.error(err);
         }
 
-        Map attributes = new HashMap();
+        Map attributes = new SVNHashMap();
         attributes.put(SVNProperty.REVISION, Long.toString(myTargetRevision));
         attributes.put(SVNProperty.KIND, kind.toString());
         attributes.put(SVNProperty.DELETED, null);
@@ -672,7 +672,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 if (!currentEntry.isScheduledForAddition()) {
                     adminArea.deleteEntry(currentEntry.getName());
                 } else {
-                    Map attributes = new HashMap();
+                    Map attributes = new SVNHashMap();
                     attributes.put(SVNProperty.DELETED, null);
                     adminArea.modifyEntry(currentEntry.getName(), attributes, false, false);
                 }

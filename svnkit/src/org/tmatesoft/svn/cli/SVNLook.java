@@ -11,7 +11,6 @@
  */
 package org.tmatesoft.svn.cli;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -20,6 +19,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 
@@ -45,7 +45,7 @@ public class SVNLook {
         ourArguments.add(SVNArgument.VERBOSE);
         ourArguments.add(SVNArgument.FULL_PATHS);
         
-        ourCommands = new HashMap();
+        ourCommands = new SVNHashMap();
         ourCommands.put(new String[] { "author"}, "org.tmatesoft.svn.cli.command.SVNLookAuthorCommand");
         ourCommands.put(new String[] { "cat" }, "org.tmatesoft.svn.cli.command.SVNLookCatCommand");
         ourCommands.put(new String[] { "changed" }, "org.tmatesoft.svn.cli.command.SVNLookChangedCommand");

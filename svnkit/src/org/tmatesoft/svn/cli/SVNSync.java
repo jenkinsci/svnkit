@@ -11,7 +11,6 @@
  */
 package org.tmatesoft.svn.cli;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -20,6 +19,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 
@@ -40,7 +40,7 @@ public class SVNSync {
         ourArguments.add(SVNArgument.USERNAME);
         ourArguments.add(SVNArgument.CONFIG_DIR);
 
-        ourCommands = new HashMap();
+        ourCommands = new SVNHashMap();
         ourCommands.put(new String[] { "initialize", "init" }, "org.tmatesoft.svn.cli.command.SVNSyncInitCommand");
         ourCommands.put(new String[] { "synchronize", "sync" }, "org.tmatesoft.svn.cli.command.SVNSyncSynchronizeCommand");
         ourCommands.put(new String[] { "copy-revprops" }, "org.tmatesoft.svn.cli.command.SVNSyncCopyRevpropsCommand");

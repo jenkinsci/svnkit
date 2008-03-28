@@ -14,7 +14,7 @@ package org.tmatesoft.svn.core.wc;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -920,7 +920,7 @@ public class SVNBasicClient implements ISVNEventHandler {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "path ''{0}'' in revision {1} is an unrelated object", new Object[] {path, new Long(logStart)});
             SVNErrorManager.error(err);
         }
-        Map result = new HashMap();
+        Map result = new SVNHashMap();
         result.put(new Long(startRevision), new SVNLocationEntry(-1, startPath));
         result.put(new Long(endRevision), new SVNLocationEntry(-1, endPath));
         return result;
@@ -938,7 +938,7 @@ public class SVNBasicClient implements ISVNEventHandler {
             } 
             return null;
         } else if (!logEntry.getChangedPaths().isEmpty()){
-            Map sortedMap = new HashMap();
+            Map sortedMap = new SVNHashMap();
             sortedMap.putAll(logEntry.getChangedPaths());
             List pathsList = new ArrayList(sortedMap.keySet());
             Collections.sort(pathsList, SVNPathUtil.PATH_COMPARATOR);

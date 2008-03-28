@@ -11,11 +11,10 @@
  */
 package org.tmatesoft.svn.core.internal.io.dav;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.cli2.svn.SVN;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 
 /**
  * @version 1.1.1
@@ -23,7 +22,7 @@ import org.tmatesoft.svn.cli2.svn.SVN;
  */
 public class DAVProperties {
     
-    private Map myProperties = new HashMap();
+    private Map myProperties = new SVNHashMap();
     private boolean myIsCollection;
     private String myURL;
     private String myLoppedPath;

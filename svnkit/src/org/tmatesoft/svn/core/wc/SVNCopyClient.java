@@ -15,7 +15,7 @@ import java.io.File;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -328,7 +328,7 @@ public class SVNCopyClient extends SVNBasicClient {
     private static void postCopyCleanup(SVNAdminArea dir) throws SVNException {
         SVNPropertiesManager.deleteWCProperties(dir, null, false);
         SVNFileUtil.setHidden(dir.getAdminDirectory(), true);
-        Map attributes = new HashMap(); 
+        Map attributes = new SVNHashMap(); 
         boolean save = false;
         
         for(Iterator entries = dir.entries(true); entries.hasNext();) {
@@ -667,7 +667,7 @@ public class SVNCopyClient extends SVNBasicClient {
     
     private SVNCommitInfo copyReposToRepos(List copyPairs, boolean makeParents, boolean isMove, String message, SVNProperties revprops) throws SVNException {
         List pathInfos = new ArrayList();
-        Map pathsMap = new HashMap();
+        Map pathsMap = new SVNHashMap();
         for (int i = 0; i < copyPairs.size(); i++) {
             CopyPathInfo info = new CopyPathInfo();
             pathInfos.add(info);
@@ -1301,7 +1301,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 copyFromURL = info.getPath();
                 copyFromRevision = info.getRevision();
 
-                Map attributes = new HashMap();
+                Map attributes = new SVNHashMap();
                 attributes.put(SVNProperty.URL, copyFromURL);
                 dir.modifyEntry(dir.getThisDirName(), attributes, true, false);
             } else {

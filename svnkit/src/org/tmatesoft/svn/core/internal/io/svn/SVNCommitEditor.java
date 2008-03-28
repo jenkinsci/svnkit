@@ -15,7 +15,7 @@ package org.tmatesoft.svn.core.internal.io.svn;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Date;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -138,7 +138,7 @@ class SVNCommitEditor implements ISVNEditor {
                     parentBaton.getToken(), fileToken});
         }
         if (myFilesToTokens == null) {
-            myFilesToTokens = new HashMap();
+            myFilesToTokens = new SVNHashMap();
         }
         myFilesToTokens.put(path, fileToken);
     }
@@ -150,7 +150,7 @@ class SVNCommitEditor implements ISVNEditor {
         myConnection.write("(w(sss(n)))", new Object[]{"open-file", path,
                 parentBaton.getToken(), fileToken, getRevisionObject(revision)});
         if (myFilesToTokens == null) {
-            myFilesToTokens = new HashMap();
+            myFilesToTokens = new SVNHashMap();
         }
         myFilesToTokens.put(path, fileToken);
     }

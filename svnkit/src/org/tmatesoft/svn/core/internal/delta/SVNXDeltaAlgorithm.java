@@ -11,8 +11,9 @@
  */
 package org.tmatesoft.svn.core.internal.delta;
 
-import java.util.HashMap;
 import java.util.Map;
+
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 
 /**
  * @version 1.1.1
@@ -99,7 +100,7 @@ public class SVNXDeltaAlgorithm extends SVNDeltaAlgorithm {
     }
     
     private static Map createMatchesTable(byte[] data, int dataLength, int blockLength, PseudoAdler32 adler32) {
-        Map matchesTable = new HashMap();
+        Map matchesTable = new SVNHashMap();
         for(int i = 0; i < dataLength; i+= blockLength) {
             int length = i + blockLength >= dataLength ? dataLength - i : blockLength;
             adler32.add(data, i, length);

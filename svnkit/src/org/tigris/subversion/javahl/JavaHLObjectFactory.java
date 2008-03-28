@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -33,6 +32,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.javahl.SVNClientImpl;
@@ -47,9 +47,9 @@ import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 
 /**
  * @version 1.1.1
@@ -57,11 +57,11 @@ import org.tmatesoft.svn.core.wc.SVNRevisionRange;
  */
 public class JavaHLObjectFactory {
 
-    private static final Map STATUS_CONVERSION_MAP = new HashMap();
-    private static final Map REVISION_KIND_CONVERSION_MAP = new HashMap();
-    private static final Map ACTION_CONVERSION_MAP = new HashMap();
-    private static final Map LOCK_CONVERSION_MAP = new HashMap();
-    private static final Map CONFLICT_REASON_CONVERSATION_MAP = new HashMap();
+    private static final Map STATUS_CONVERSION_MAP = new SVNHashMap();
+    private static final Map REVISION_KIND_CONVERSION_MAP = new SVNHashMap();
+    private static final Map ACTION_CONVERSION_MAP = new SVNHashMap();
+    private static final Map LOCK_CONVERSION_MAP = new SVNHashMap();
+    private static final Map CONFLICT_REASON_CONVERSATION_MAP = new SVNHashMap();
 
     static{
         STATUS_CONVERSION_MAP.put(SVNStatusType.STATUS_ADDED, new Integer(StatusKind.added));

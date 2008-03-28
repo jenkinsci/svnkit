@@ -13,7 +13,7 @@ package org.tmatesoft.svn.core.internal.wc;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
@@ -40,7 +40,7 @@ public class SVNCommitMediator implements ISVNWorkspaceMediator {
 
     public SVNCommitMediator(Map commitItems) {
         myTmpFiles = new ArrayList();
-        myWCPropsMap = new HashMap();
+        myWCPropsMap = new SVNHashMap();
         myCommitItems = commitItems;
     }
 

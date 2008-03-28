@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -544,7 +544,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
 
             // get comments.
             if (includeComment && entries != null) {
-                Map messages = new HashMap();
+                Map messages = new SVNHashMap();
                 for (Iterator ents = entries.iterator(); ents.hasNext();) {
                     SVNDirEntry entry = (SVNDirEntry) ents.next();
                     Long key = getRevisionObject(entry.getRevision());
@@ -730,7 +730,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 }
                 List items = SVNReader.parseTuple("lr(?s)(?s)(?s)?ssnl", item.getItems(), null);
                 List changedPathsList = (List) items.get(0);
-                Map changedPathsMap = new HashMap();
+                Map changedPathsMap = new SVNHashMap();
                 if (changedPathsList != null && changedPathsList.size() > 0) {
                     for (Iterator iterator = changedPathsList.iterator(); iterator.hasNext();) {
                         SVNItem pathItem = (SVNItem) iterator.next();
@@ -1479,7 +1479,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
 
             List items = read("(?l)", null, true);
             items = (List) items.get(0);
-            Map pathsToMergeInfos = new HashMap();
+            Map pathsToMergeInfos = new SVNHashMap();
             for (Iterator iterator = items.iterator(); iterator.hasNext();) {
                 SVNItem item = (SVNItem) iterator.next();
                 if (item.getKind() != SVNItem.LIST) {

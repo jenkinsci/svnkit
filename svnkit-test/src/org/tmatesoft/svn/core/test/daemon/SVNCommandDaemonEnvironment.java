@@ -19,7 +19,6 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.FileHandler;
 import java.util.logging.Handler;
@@ -32,6 +31,7 @@ import org.tmatesoft.svn.cli2.svnadmin.SVNAdmin;
 import org.tmatesoft.svn.cli2.svnlook.SVNLook;
 import org.tmatesoft.svn.cli2.svnversion.SVNVersion;
 import org.tmatesoft.svn.core.internal.util.DefaultSVNDebugFormatter;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 public class SVNCommandDaemonEnvironment {
@@ -40,7 +40,7 @@ public class SVNCommandDaemonEnvironment {
     private byte[] myStdIn = new byte[0];
     private String myCurrentDirectory = "";
     private String myProgramName = "svn";
-    private Map myVariables = new HashMap();
+    private Map myVariables = new SVNHashMap();
     
     private ByteArrayOutputStream myCommandOutput = new ByteArrayOutputStream();
     private ByteArrayOutputStream myCommandError = new ByteArrayOutputStream();
