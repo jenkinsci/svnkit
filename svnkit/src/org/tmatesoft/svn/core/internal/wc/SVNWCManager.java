@@ -662,6 +662,7 @@ public class SVNWCManager {
             log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
             command.clear();
             command.put(SVNProperty.shortPropertyName(SVNProperty.TEXT_TIME), SVNLog.WC_TIMESTAMP);
+            command.put(SVNProperty.shortPropertyName(SVNProperty.WORKING_SIZE), SVNLog.WC_WORKING_SIZE);
             log.logChangedEntryProperties(fileName, command);
             command.clear();
         }
