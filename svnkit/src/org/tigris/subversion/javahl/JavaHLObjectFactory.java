@@ -624,6 +624,10 @@ public class JavaHLObjectFactory {
                 info.getChangelistName(), info.getWorkingSize(), info.getRepositorySize()
                 );
     }
+
+    public static ProgressEvent createProgressEvent(long onProgress, long total) {
+        return new ProgressEvent(onProgress, total);        
+    }
     
     public static PropertyData createPropertyData(Object client, String path, String name, SVNPropertyValue value) {
         if (client instanceof SVNClientImpl){
@@ -667,8 +671,8 @@ public class JavaHLObjectFactory {
             code = e.getErrorMessage().getErrorCode().getCode();
         }
         ClientException ec = new ClientException(e.getMessage(), "", code);
-        svnClient.getClientManager().getDebugLog().info(ec);
-        svnClient.getClientManager().getDebugLog().info(e);
+        svnClient.getDebugLog().info(ec);
+        svnClient.getDebugLog().info(e);
         throw ec;
     }
 

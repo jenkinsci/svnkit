@@ -61,6 +61,8 @@ import org.tigris.subversion.javahl.StatusCallback;
 import org.tigris.subversion.javahl.SubversionException;
 import org.tigris.subversion.javahl.RevisionKind;
 
+import org.tmatesoft.svn.core.javahl.JavaHLDebugLog;
+
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNCancelException;
@@ -124,6 +126,8 @@ import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.Version;
+import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.ISVNDebugLog;
 
 
 /**
@@ -146,11 +150,13 @@ public class SVNClientImpl implements SVNClientInterface {
     private Notify myNotify;
     private Notify2 myNotify2;
     private ConflictResolverCallback myConflictResolverCallback;
+    private ProgressListener myProgressListener;
     private CommitMessage myMessageHandler;
     private ISVNOptions myOptions;
     private boolean myCancelOperation = false;
     private SVNClientManager myClientManager;
     private SVNClientInterface myOwner;
+    private ISVNDebugLog myDebugLog;
 
     private ISVNAuthenticationManager myAuthenticationManager;
 
@@ -214,6 +220,18 @@ public class SVNClientImpl implements SVNClientInterface {
         updateClientManager();
     }
 
+    public void setDebugLog(ISVNDebugLog debugLog) {
+        myDebugLog = debugLog;
+        updateClientManager();
+    }
+
+    public ISVNDebugLog getDebugLog() {
+        if (myDebugLog != null){
+            return myDebugLog;
+        }
+        return SVNDebugLog.getDefaultLog();
+    }
+
     protected SVNClientImpl(SVNClient owner) {
         this(owner, null, null);
     }
@@ -256,6 +274,18 @@ public class SVNClientImpl implements SVNClientInterface {
         return (Status[]) statuses.toArray(new Status[statuses.size()]);
     }
 
+    public void status(String path, int depth, boolean onServer, boolean getAll, boolean noIgnore,
+            boolean ignoreExternals, String[] changelists, StatusCallback callback) throws ClientException {
+        final StatusCallback statusCallback = callback;
+        status(path, depth, onServer, getAll, noIgnore, ignoreExternals, changelists, new ISVNStatusHandler() {
+            public void handleStatus(SVNStatus status) {
+                if (statusCallback != null) {
+                    statusCallback.doStatus(JavaHLObjectFactory.createStatus(status.getFile().getPath(), status));
+                }
+            }
+        });
+    }
+
     private void status(String path, int depth, boolean onServer, boolean getAll, boolean noIgnore, 
             boolean ignoreExternals, String[] changelists, ISVNStatusHandler handler) throws ClientException {
         if (path == null) {
@@ -272,19 +302,8 @@ public class SVNClientImpl implements SVNClientInterface {
             throwException(e);
         } finally {
             stClient.setIgnoreExternals(oldIgnoreExternals);
+            resetLog();
         }
-    }
-
-    public void status(String path, int depth, boolean onServer, boolean getAll, boolean noIgnore, 
-            boolean ignoreExternals, String[] changelists, StatusCallback callback) throws ClientException {
-        final StatusCallback statusCallback = callback;
-        status(path, depth, onServer, getAll, noIgnore, ignoreExternals, changelists, new ISVNStatusHandler() {
-            public void handleStatus(SVNStatus status) {
-                if (statusCallback != null) {
-                    statusCallback.doStatus(JavaHLObjectFactory.createStatus(status.getFile().getPath(), status));
-                }
-            }
-        });
     }
 
     public Status singleStatus(final String path, boolean onServer) throws ClientException {
@@ -307,6 +326,8 @@ public class SVNClientImpl implements SVNClientInterface {
             } else {
                 throwException(e);
             }
+        } finally {
+            resetLog();                    
         }
         return JavaHLObjectFactory.createStatus(path, status);
     }
@@ -356,6 +377,8 @@ public class SVNClientImpl implements SVNClientInterface {
             }
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
     }
 
@@ -386,6 +409,7 @@ public class SVNClientImpl implements SVNClientInterface {
         }
         myAuthenticationManager.setRuntimeStorage(getClientCredentialsStorage());
         if (myClientManager != null) {
+            myClientManager.setDebugLog(JavaHLDebugLog.wrap(myProgressListener, getDebugLog()));
             myClientManager.shutdownConnections(true);
             myClientManager.setAuthenticationManager(myAuthenticationManager);
             myClientManager.setOptions(myOptions);
@@ -449,6 +473,8 @@ public class SVNClientImpl implements SVNClientInterface {
             }
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
     }
 
@@ -464,7 +490,14 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public void setProgressListener(ProgressListener listener) {
-        //TODO: Implement
+        myProgressListener = listener;
+    }
+
+    private void resetLog(){
+        if (getClientManager().getDebugLog() instanceof JavaHLDebugLog){
+            JavaHLDebugLog debugLog = (JavaHLDebugLog) getClientManager().getDebugLog();
+            debugLog.reset();
+        }
     }
 
     public void commitMessageHandler(CommitMessage messageHandler) {
@@ -498,6 +531,8 @@ public class SVNClientImpl implements SVNClientInterface {
                 client.doDelete(urls, message);
             } catch (SVNException e) {
                 throwException(e);
+            } finally {
+                resetLog();
             }
         } else {
             SVNWCClient client = getSVNWCClient();
@@ -506,6 +541,8 @@ public class SVNClientImpl implements SVNClientInterface {
                     client.doDelete(new File(path[i]).getAbsoluteFile(), force, !keepLocal, false);
                 } catch (SVNException e) {
                     throwException(e);
+                } finally {
+                    resetLog();
                 }
             }
         }
@@ -524,6 +561,8 @@ public class SVNClientImpl implements SVNClientInterface {
                     JavaHLObjectFactory.getChangeListsCollection(changelists));
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
 	}
 
@@ -545,6 +584,8 @@ public class SVNClientImpl implements SVNClientInterface {
             wcClient.doAdd(new File(path).getAbsoluteFile(), force, false, addParents, recurse, noIgnores);
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
     }
 
@@ -583,6 +624,7 @@ public class SVNClientImpl implements SVNClientInterface {
         } finally {
             updater.setIgnoreExternals(oldIgnore);
             updater.setEventPathPrefix(null);
+            resetLog();
             SVNFileUtil.sleepForTimestamp();
         }
         return updated;
@@ -624,6 +666,8 @@ public class SVNClientImpl implements SVNClientInterface {
             return client.doCommit(files, noUnlock, message, null, changelists, keepChangelist, !recurse, svnDepth).getNewRevision();
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
         return -1;
     }
@@ -657,6 +701,8 @@ public class SVNClientImpl implements SVNClientInterface {
             commitResults = client.doCommit(packets, noUnlock, message);
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
         if (commitResults != null && commitResults.length > 0) {
             long[] revisions = new long[commitResults.length];
@@ -711,6 +757,8 @@ public class SVNClientImpl implements SVNClientInterface {
             }
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
         return sources;
     }
@@ -733,6 +781,8 @@ public class SVNClientImpl implements SVNClientInterface {
             }
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
         return sources;
     }
@@ -747,6 +797,8 @@ public class SVNClientImpl implements SVNClientInterface {
             }
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
     }
 
@@ -785,6 +837,8 @@ public class SVNClientImpl implements SVNClientInterface {
                     getSVNWCClient().doAdd(file, false, true, false, false, false);
                 } catch (SVNException e) {
                     throwException(e);
+                } finally {
+                    resetLog();
                 }
             }
         }
@@ -796,6 +850,8 @@ public class SVNClientImpl implements SVNClientInterface {
             client.doCleanup(new File(path).getAbsoluteFile());
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
     }
 
@@ -809,6 +865,8 @@ public class SVNClientImpl implements SVNClientInterface {
             client.doResolve(new File(path).getAbsoluteFile(), JavaHLObjectFactory.getSVNDepth(depth), JavaHLObjectFactory.getSVNConflictChoice(conflictResult));
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
     }
 
@@ -835,6 +893,7 @@ public class SVNClientImpl implements SVNClientInterface {
             throwException(e);
         } finally {
             updater.setIgnoreExternals(oldIgnore);
+            resetLog();
         }
         return -1;
     }
@@ -849,6 +908,8 @@ public class SVNClientImpl implements SVNClientInterface {
             commitClient.doImport(new File(path), SVNURL.parseURIEncoded(url), message, null, !noIgnore, ignoreUnknownNodeTypes, JavaHLObjectFactory.getSVNDepth(depth));
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
     }
 
@@ -904,6 +965,8 @@ public class SVNClientImpl implements SVNClientInterface {
             }
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
     }
 
@@ -939,6 +1002,8 @@ public class SVNClientImpl implements SVNClientInterface {
             }
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
     }
 
@@ -957,6 +1022,8 @@ public class SVNClientImpl implements SVNClientInterface {
             }
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
     }
 
@@ -1005,6 +1072,8 @@ public class SVNClientImpl implements SVNClientInterface {
             }
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
         return propHandler.getAllPropertyData();
     }
@@ -1040,6 +1109,8 @@ public class SVNClientImpl implements SVNClientInterface {
                     JavaHLObjectFactory.getChangeListsCollection(changelists));
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
     }
 
@@ -1055,6 +1126,8 @@ public class SVNClientImpl implements SVNClientInterface {
                     JavaHLObjectFactory.getChangeListsCollection(changelists));
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
 	}
 
@@ -1082,6 +1155,8 @@ public class SVNClientImpl implements SVNClientInterface {
             }
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
         return retriever.getPropertyData();
     }
@@ -1117,6 +1192,8 @@ public class SVNClientImpl implements SVNClientInterface {
                     ISVNPropertyHandler.NULL, JavaHLObjectFactory.getChangeListsCollection(changelists));
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
     }
 
@@ -1136,6 +1213,8 @@ public class SVNClientImpl implements SVNClientInterface {
             }
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
         return retriever.getPropertyData();
     }
@@ -1155,6 +1234,8 @@ public class SVNClientImpl implements SVNClientInterface {
             }
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
         return propHandler.getAllPropertyData();
     }
@@ -1176,6 +1257,8 @@ public class SVNClientImpl implements SVNClientInterface {
             }
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
     }
 
@@ -1199,6 +1282,8 @@ public class SVNClientImpl implements SVNClientInterface {
             return baos.toByteArray();
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
         return null;
     }
@@ -1217,6 +1302,8 @@ public class SVNClientImpl implements SVNClientInterface {
             }
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
     }
 
@@ -1226,6 +1313,8 @@ public class SVNClientImpl implements SVNClientInterface {
             client.doRelocate(new File(path).getAbsoluteFile(), SVNURL.parseURIEncoded(from), SVNURL.parseURIEncoded(to), recurse);
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
     }
 
@@ -1342,6 +1431,8 @@ public class SVNClientImpl implements SVNClientInterface {
             }
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
     }
 
@@ -1384,6 +1475,8 @@ public class SVNClientImpl implements SVNClientInterface {
                 return null;
             }
             throwException(e);
+        } finally {
+            resetLog();
         }
         return null;
     }
@@ -1409,6 +1502,8 @@ public class SVNClientImpl implements SVNClientInterface {
             }
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
     }
 
@@ -1433,6 +1528,8 @@ public class SVNClientImpl implements SVNClientInterface {
             }
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
     }
 
@@ -1441,6 +1538,8 @@ public class SVNClientImpl implements SVNClientInterface {
             return getSVNWCClient().doGetWorkingCopyID(new File(path).getAbsoluteFile(), trailUrl);
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
         return null;
     }
@@ -1539,7 +1638,7 @@ public class SVNClientImpl implements SVNClientInterface {
         return myOptions;
     }
 
-    public SVNClientManager getClientManager() {
+    protected SVNClientManager getClientManager() {
         if (myClientManager == null) {
             updateClientManager();
             myClientManager = SVNClientManager.newInstance(myOptions, new DefaultSVNRepositoryPool(myAuthenticationManager, myOptions));
@@ -1620,6 +1719,8 @@ public class SVNClientImpl implements SVNClientInterface {
                     allowUnverObstructions, depthIsSticky);
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
         return -1;
     }
@@ -1641,6 +1742,8 @@ public class SVNClientImpl implements SVNClientInterface {
             changelistClient.addToChangelist(files, JavaHLObjectFactory.getSVNDepth(depth), changelist, changelists);
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
     }
 
@@ -1659,6 +1762,8 @@ public class SVNClientImpl implements SVNClientInterface {
             changelistClient.removeFromChangelist(files, JavaHLObjectFactory.getSVNDepth(depth), changelists);
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
 	}
 
@@ -1683,6 +1788,8 @@ public class SVNClientImpl implements SVNClientInterface {
                     JavaHLObjectFactory.getSVNDepth(depth), handler);
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
     }
 
@@ -1706,6 +1813,7 @@ public class SVNClientImpl implements SVNClientInterface {
             throwException(e);
         } finally {
             updater.setIgnoreExternals(oldIgnoreExternals);
+            resetLog();
         }
         return -1;
     }
@@ -1762,6 +1870,8 @@ public class SVNClientImpl implements SVNClientInterface {
             SVNFileUtil.closeFile(out);
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
 	}
 
@@ -1791,6 +1901,8 @@ public class SVNClientImpl implements SVNClientInterface {
             SVNFileUtil.closeFile(out);
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
 	}
 
@@ -1824,6 +1936,8 @@ public class SVNClientImpl implements SVNClientInterface {
             }
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
     }
 
@@ -1855,6 +1969,8 @@ public class SVNClientImpl implements SVNClientInterface {
             }
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
     }
 
@@ -1872,6 +1988,8 @@ public class SVNClientImpl implements SVNClientInterface {
                 return new Info2[0];
             }
             throwException(e);
+        } finally {
+            resetLog();
         }
         return null;
     }
@@ -1892,6 +2010,8 @@ public class SVNClientImpl implements SVNClientInterface {
             if (e.getErrorMessage().getErrorCode() != SVNErrorCode.UNVERSIONED_RESOURCE) {
                 throwException(e);
             }
+        } finally {
+            resetLog();
         }
 	}
 
@@ -1924,6 +2044,8 @@ public class SVNClientImpl implements SVNClientInterface {
             return JavaHLObjectFactory.createMergeInfo(mergeInfo);
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
         return null;
     }
@@ -1946,6 +2068,8 @@ public class SVNClientImpl implements SVNClientInterface {
             return null;
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
         return null;
     }
@@ -1967,6 +2091,8 @@ public class SVNClientImpl implements SVNClientInterface {
             return JavaHLObjectFactory.createRevisionRanges(rangeList);
         } catch (SVNException e) {
             throwException(e);
+        } finally {
+            resetLog();
         }
         return null;
     }
