@@ -29,12 +29,10 @@ import java.util.Set;
 public class SVNHashMap implements Map {
 
     private static final Object NULL_KEY = new Object();
-    private static final int INITIAL_CAPACITY = 15;
-    private static final double LOAD_FACTOR = 0.75;
+    private static final int INITIAL_CAPACITY = 16;
     
     private TableEntry[] myTable;
     private int myEntryCount;
-    private int myLimit;
     private int myModCount;
     
     private Set myKeySet;
@@ -48,7 +46,6 @@ public class SVNHashMap implements Map {
     public SVNHashMap(Map map) {
         myTable = new TableEntry[INITIAL_CAPACITY];
         myEntryCount = 0;
-        myLimit = (int) (myTable.length * LOAD_FACTOR);
         putAll(map);
     }
 
@@ -158,7 +155,7 @@ public class SVNHashMap implements Map {
         }
         myEntryCount++;
         myModCount++;
-        if (myEntryCount >= myLimit) {
+        if (myEntryCount >= myTable.length) {
             resize(myTable.length * 2);
         }
         return null;
@@ -197,7 +194,7 @@ public class SVNHashMap implements Map {
         if (t == null || t.isEmpty()) {
             return;
         }
-        if (myEntryCount + t.size() >= myLimit) {
+        if (myEntryCount + t.size() >= myTable.length) {
             resize((myEntryCount + t.size())*2);
         }
         for (Iterator entries = t.entrySet().iterator(); entries.hasNext();) {
@@ -276,7 +273,6 @@ public class SVNHashMap implements Map {
         result.myTable = new TableEntry[myTable.length];
         result.myEntryCount = myEntryCount;
         result.myModCount = myModCount;
-        result.myLimit = myLimit;
         result.putAll(this);
         return result;
     }
@@ -341,7 +337,6 @@ public class SVNHashMap implements Map {
                 oldEntry = nextEntry;
             }
         }
-        myLimit = (int) (myTable.length * LOAD_FACTOR);
     }
     
     private static boolean eq(Object a, Object b) {
