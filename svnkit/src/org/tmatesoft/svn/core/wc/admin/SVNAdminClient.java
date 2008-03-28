@@ -952,15 +952,18 @@ public class SVNAdminClient extends SVNBasicClient {
         if (uuid == null) {
             uuid = SVNUUIDGenerator.generateUUIDString();
         } else {
-            try {
-                UUID.fromString(uuid);
-            } catch (IllegalArgumentException iae) {
+            String[] components = uuid.split("-");
+            if (components.length != 5) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_UUID, "Malformed UUID ''{0}''", 
                         uuid);
                 SVNErrorManager.error(err);
             }
         }
         fsfs.setUUID(uuid);
+    }
+    
+    public void doHotCopy(File repositoryRoot, File newRepositoryRoot, boolean cleanLogs) throws SVNException {
+        
     }
     
     public long getYoungestRevision(File repositoryRoot) throws SVNException {

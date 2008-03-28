@@ -39,6 +39,9 @@ public class SVNAdminUpgradeCommand extends SVNAdminCommand implements ISVNAdmin
     public void run() throws SVNException {
         SVNAdminClient client = getEnvironment().getClientManager().getAdminClient();
         client.doUpgrade(getLocalRepository());
+        getEnvironment().getOut().println();
+        getEnvironment().getOut().println("Upgrade completed.");
+        
     }
 
     public void handleAdminEvent(SVNAdminEvent event, double progress) throws SVNException {
