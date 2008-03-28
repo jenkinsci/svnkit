@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -109,6 +110,7 @@ public class FSFS {
     private File myTransactionCurrentLockFile;
     private File myTransactionProtoRevsRoot;
     private File myNodeOriginsDir;
+    private File myRepositoryFormatFile;
     private long myMaxFilesPerDirectory;
     private long myYoungestRevisionCache;
     
@@ -122,6 +124,7 @@ public class FSFS {
         myWriteLockFile = new File(myDBRoot, WRITE_LOCK_FILE);
         myLocksRoot = new File(myDBRoot, LOCKS_DIR);
         myNodeOriginsDir = new File(myDBRoot, NODE_ORIGINS_DIR);
+        myRepositoryFormatFile = new File(myDBRoot, "format");
         myMaxFilesPerDirectory = 0;
     }
     
@@ -145,8 +148,15 @@ public class FSFS {
     public void openForRecovery() throws SVNException {
         openRoot();
         //create new current file
-        File dbCurrentFile = getCurrentFile();
-        createCurrentFile(dbCurrentFile, "0 1 1\n");
+        FSWriteLock writeLock = FSWriteLock.getWriteLockForDB(this);
+        synchronized (writeLock) {
+            try {
+                SVNFileUtil.createFile(getCurrentFile(), "0 1 1\n", "US-ASCII");
+            } finally {
+                writeLock.unlock();
+                FSWriteLock.release(writeLock);
+            }
+        }
         openDB();
     }
 
@@ -227,6 +237,63 @@ public class FSFS {
     
     public File getDBRoot(){
         return myDBRoot;
+    }
+    
+    public void upgrade() throws SVNException {
+        FSWriteLock writeLock = FSWriteLock.getWriteLockForDB(this);
+        synchronized (writeLock) {
+            try {
+                if (myDBFormat == DB_FORMAT) {
+                    return;
+                }
+                if (myDBFormat < MIN_CURRENT_TXN_FORMAT) {
+                    File txnCurrentFile = getTransactionCurrentFile();
+                    SVNFileUtil.createFile(txnCurrentFile, "0\n", "US-ASCII");
+                    SVNFileUtil.createEmptyFile(getTransactionCurrentLockFile());
+                }
+                if (myDBFormat < MIN_PROTOREVS_DIR_FORMAT) {
+                    myTransactionProtoRevsRoot.mkdirs();
+                }
+                writeFormat(new File(myDBRoot, "format"), DB_FORMAT, 0, true);
+            } finally {
+                writeLock.unlock();
+                FSWriteLock.release(writeLock);
+            }
+        }
+    }
+    
+    public void writeFormat(File formatFile, int format, int maxFilesPerDir, boolean overwrite) throws SVNException {
+        if (!(format >= 1 && format <= DB_FORMAT)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
+                    "assertion failure in FSFS.writeFormat(): format == {0}", new Integer(format));
+            SVNErrorManager.error(err);
+        }
+        String contents = null;
+        if (format >= LAYOUT_FORMAT_OPTION_MINIMAL_FORMAT) {
+            if (maxFilesPerDir > 0) {
+                contents = "{0}\nlayout sharded {1}\n";
+                contents = MessageFormat.format(contents, new Object[] { new Integer(format), 
+                        new Integer(maxFilesPerDir) }); 
+            } else {
+                contents = "{0}\nlayout linear";
+                contents = MessageFormat.format(contents, new Object[] { new Integer(format) });
+            }
+        } else {
+            contents = "{0}\n";
+            contents = MessageFormat.format(contents, new Object[] { new Integer(format) }); 
+        }
+        
+        if (!overwrite) {
+            SVNFileUtil.createFile(formatFile, contents, "US-ASCII");
+        } else {
+            File tmpFile = SVNFileUtil.createUniqueFile(formatFile.getParentFile(), formatFile.getName(), ".tmp");
+            SVNFileUtil.createFile(tmpFile, contents, "US-ASCII");
+            if (SVNFileUtil.isWindows) {
+                SVNFileUtil.setReadonly(formatFile, false);
+            }
+            SVNFileUtil.rename(tmpFile, formatFile);
+        }
+        SVNFileUtil.setReadonly(formatFile, true);
     }
     
     public SVNProperties getRevisionProperties(long revision) throws SVNException {
@@ -560,7 +627,11 @@ public class FSFS {
     public File getRepositoryRoot(){
         return myRepositoryRoot;
     }
-    
+
+    public File getRepositoryFormatFile(){
+        return myRepositoryFormatFile;
+    }
+
     public File getNodeOriginsDir() {
         return myNodeOriginsDir;
     }
@@ -1170,7 +1241,8 @@ public class FSFS {
                     try {
                         myMaxFilesPerDirectory = Long.parseLong(optionValue); 
                     } catch (NumberFormatException nfe) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_VERSION_FILE_FORMAT, "Format file ''{0}'' contains an unexpected non-digit", formatFile.getFile());
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_VERSION_FILE_FORMAT, 
+                                "Format file ''{0}'' contains an unexpected non-digit", formatFile.getFile());
                         SVNErrorManager.error(err);
                     }
                     continue;
@@ -1305,21 +1377,22 @@ public class FSFS {
         }
         
         File currentFile = getCurrentFile();
-        File tmpCurrentFile = SVNFileUtil.createUniqueFile(currentFile.getParentFile(), ".txnfile", ".tmp");
+        File tmpCurrentFile = SVNFileUtil.createUniqueFile(currentFile.getParentFile(), currentFile.getName(), 
+                ".tmp");
         OutputStream currentOS = null;
 
         try {
             currentOS = SVNFileUtil.openFileForWriting(tmpCurrentFile);
-            currentOS.write(line.getBytes("UTF-8"));
+            currentOS.write(line.getBytes("US-ASCII"));
         } finally {
             SVNFileUtil.closeFile(currentOS);
         }
         SVNFileUtil.rename(tmpCurrentFile, currentFile);
     }
-
+    
     private void openRoot() throws SVNException {
         // repo format /root/format
-        FSFile formatFile = new FSFile(new File(myRepositoryRoot, "format"));
+        FSFile formatFile = new FSFile(myRepositoryFormatFile);
         int format = -1;
         try {
             format = formatFile.readInt();
@@ -1673,8 +1746,4 @@ public class FSFS {
         return true;
     }
     
-    private static synchronized void createCurrentFile(File currentFile, String text) throws SVNException {
-        SVNFileUtil.createFile(currentFile, text);
-    }
-
 }

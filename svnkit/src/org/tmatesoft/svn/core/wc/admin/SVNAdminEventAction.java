@@ -99,4 +99,6 @@ public class SVNAdminEventAction {
     public static final SVNAdminEventAction LOCK_LISTED = new SVNAdminEventAction(12);
     
     public static final SVNAdminEventAction RECOVERY_STARTED = new SVNAdminEventAction(13);
+    
+    public static final SVNAdminEventAction UPGRADE = new SVNAdminEventAction(14);
 }

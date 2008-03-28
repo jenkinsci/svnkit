@@ -387,10 +387,9 @@ public class SVNCommandUtil {
                 help.append(")");
             }
         }
-        if (footer != null) { 
-            help.append("\n\n");
-            help.append(footer);
-        }
+
+        help.append("\n\n");
+        help.append(footer);
         return help.toString();
     }
  

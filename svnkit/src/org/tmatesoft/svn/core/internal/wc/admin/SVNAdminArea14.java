@@ -1698,8 +1698,8 @@ public class SVNAdminArea14 extends SVNAdminArea {
     private void makeKillMe(boolean killAdminOnly) throws SVNException {
         File killMe = getAdminFile(ADM_KILLME);
         if (killMe.getParentFile().isDirectory()) {
-            SVNFileUtil.createFile(killMe, killAdminOnly ? KILL_ADM_ONLY : null);
-    }
+            SVNFileUtil.createFile(killMe, killAdminOnly ? KILL_ADM_ONLY : null, null);
+        }
     }
 
     public void postCommit(String fileName, long revisionNumber, boolean implicit, SVNErrorCode errorCode) throws SVNException {

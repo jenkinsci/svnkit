@@ -932,6 +932,20 @@ public class SVNAdminClient extends SVNBasicClient {
         recoverer.runRecovery();
     }
     
+    public void doUpgrade(File repositoryRoot)throws SVNException {
+        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
+        if (myEventHandler != null) {
+            SVNAdminEvent event = new SVNAdminEvent(SVNAdminEventAction.UPGRADE);
+            myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
+        }
+        
+        File reposFormatFile = fsfs.getRepositoryFormatFile();
+        int format = fsfs.getReposFormat();
+        SVNFileUtil.writeVersionFile(reposFormatFile, format);
+        fsfs.upgrade();
+        SVNFileUtil.writeVersionFile(reposFormatFile, FSFS.REPOSITORY_FORMAT);
+    }
+    
     public long getYoungestRevision(File repositoryRoot) throws SVNException {
         FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
         return fsfs.getYoungestRevision();

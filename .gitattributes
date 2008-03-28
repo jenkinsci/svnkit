@@ -114,6 +114,7 @@ svnkit-cli/src/org/tmatesoft/svn/cli2/svn/SVNRevertCommand.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svn/commands.properties eol=lf
 svnkit-cli/src/org/tmatesoft/svn/cli2/svn/options.properties eol=lf
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnadmin/SVNAdminRecoverCommand.java -text
+svnkit-cli/src/org/tmatesoft/svn/cli2/svnadmin/SVNAdminUpgradeCommand.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnadmin/commands.properties -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnadmin/options.properties -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnlook/commands.properties -text

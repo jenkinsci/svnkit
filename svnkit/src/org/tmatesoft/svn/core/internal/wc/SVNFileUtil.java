@@ -217,7 +217,7 @@ public class SVNFileUtil {
      * @param contents
      * @throws SVNException
      */
-    public static void createFile(File file, String contents) throws SVNException {
+    public static void createFile(File file, String contents, String charSet) throws SVNException {
         createEmptyFile(file);
         if (contents == null || contents.length() == 0) {
             return;
@@ -226,7 +226,11 @@ public class SVNFileUtil {
         OutputStream os = null;
         try {
             os = SVNFileUtil.openFileForWriting(file); 
-            os.write(contents.getBytes());
+            if (charSet != null) {
+                os.write(contents.getBytes(charSet));
+            } else {
+                os.write(contents.getBytes());
+            }
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not write to file ''{0}'': {1}", new Object[] {file, ioe.getLocalizedMessage()});
             SVNErrorManager.error(err, ioe);
@@ -238,6 +242,33 @@ public class SVNFileUtil {
         }
     }
 
+    public static void writeVersionFile(File file, int version) throws SVNException {
+        if (version < 0) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, 
+                    "Version {0} is not non-negative", new Integer(version));
+            SVNErrorManager.error(err);
+        }
+        
+        String contents = version + "\n";
+        File tmpFile = SVNFileUtil.createUniqueFile(file.getParentFile(), file.getName(), ".tmp");
+        OutputStream os = null;
+
+        try {
+            os = SVNFileUtil.openFileForWriting(tmpFile);
+            os.write(contents.getBytes("US-ASCII"));
+        } catch (IOException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+            SVNErrorManager.error(err, e);
+        } finally {
+            SVNFileUtil.closeFile(os);
+        }
+        if (isWindows) {
+            setReadonly(file, false);
+        }
+        SVNFileUtil.rename(tmpFile, file);
+        setReadonly(file, true);
+    }
+    
     public static File createUniqueFile(File parent, String name, String suffix) throws SVNException {
         File file = new File(parent, name + suffix);
         for (int i = 1; i < 99999; i++) {
@@ -503,7 +534,7 @@ public class SVNFileUtil {
             return createSymlink(link, fileContents);
         }
         //create file using internal representation
-        createFile(link, fileContents);
+        createFile(link, fileContents, "UTF-8");
         return true;
     }
 
