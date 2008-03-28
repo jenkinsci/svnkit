@@ -47,7 +47,7 @@ public class SVNTunnelConnector extends SVNAbstractTunnelConnector {
             String username = repository.getLocation().getUserInfo();
             host = username + "@" + host;
         }
-        expandedTunnel = MessageFormat.format(TUNNEL_COMMAND, new String[] {expandedTunnel, host});
+        expandedTunnel = MessageFormat.format(TUNNEL_COMMAND, new Object[] {expandedTunnel, host});
         // 3. get and append --tunnel-user if needed.
         if (repository.getAuthenticationManager() != null) {
             SVNAuthentication auth = repository.getAuthenticationManager().getFirstAuthentication(ISVNAuthenticationManager.USERNAME, host, repository.getLocation());

@@ -65,7 +65,7 @@ public class SVNAdminHelpCommand extends SVNAdminCommand {
             String help = SVNCommandUtil.getGenericHelp(getEnvironment().getProgramName(), GENERIC_HELP_HEADER, null);
             getEnvironment().getOut().print(help);
         } else {
-            String message = MessageFormat.format("Type ''{0} help'' for usage.", new String[] {getEnvironment().getProgramName()});
+            String message = MessageFormat.format("Type ''{0} help'' for usage.", new Object[] {getEnvironment().getProgramName()});
             getEnvironment().getOut().println(message);
         }
     }

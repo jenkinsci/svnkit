@@ -77,7 +77,7 @@ public class SVNHelpCommand extends SVNCommand {
             String help = SVNCommandUtil.getGenericHelp(getEnvironment().getProgramName(), GENERIC_HELP_HEADER, GENERIC_HELP_FOOTER);
             getSVNEnvironment().getOut().print(help);
         } else {
-            String message = MessageFormat.format("Type ''{0} help'' for usage.", new String[] {getSVNEnvironment().getProgramName()});
+            String message = MessageFormat.format("Type ''{0} help'' for usage.", new Object[] {getSVNEnvironment().getProgramName()});
             getSVNEnvironment().getOut().println(message);
         }
     }
