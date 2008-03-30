@@ -54,6 +54,10 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 public class FSFS {
     public static final String DB_DIR = "db";
     public static final String REVS_DIR = "revs";
+    public static final String REPOS_FORMAT_FILE = "format";
+    public static final String DB_FORMAT_FILE = "format";
+    public static final String DB_LOGS_LOCK_FILE = "db-logs.lock";
+    public static final String DB_LOCK_FILE = "db.lock";
     public static final String CURRENT_FILE = "current";
     public static final String TXN_CURRENT_FILE = "txn-current";
     public static final String TXN_CURRENT_LOCK_FILE = "txn-current-lock";
@@ -79,6 +83,10 @@ public class FSFS {
     public static final String CREATION_DATE_LOCK_KEY = "creation_date";
     public static final String EXPIRATION_DATE_LOCK_KEY = "expiration_date";
     public static final String COMMENT_LOCK_KEY = "comment";
+    public static final String PRE_12_COMPAT_UNNEEDED_FILE_CONTENTS =
+        "This file is not used by Subversion 1.3.x or later." +                      
+        "However, its existence is required for compatibility with" +        
+        "Subversion 1.2.x or earlier.";
     
     public static final int DIGEST_SUBDIR_LEN = 3;
     public static final int REPOSITORY_FORMAT = 5;
@@ -111,6 +119,7 @@ public class FSFS {
     private File myTransactionProtoRevsRoot;
     private File myNodeOriginsDir;
     private File myRepositoryFormatFile;
+    private File myDBFormatFile;
     private long myMaxFilesPerDirectory;
     private long myYoungestRevisionCache;
     
@@ -124,7 +133,8 @@ public class FSFS {
         myWriteLockFile = new File(myDBRoot, WRITE_LOCK_FILE);
         myLocksRoot = new File(myDBRoot, LOCKS_DIR);
         myNodeOriginsDir = new File(myDBRoot, NODE_ORIGINS_DIR);
-        myRepositoryFormatFile = new File(myDBRoot, "format");
+        myRepositoryFormatFile = new File(myRepositoryRoot, REPOS_FORMAT_FILE);
+        myDBFormatFile = new File(myDBRoot, DB_FORMAT_FILE);
         myMaxFilesPerDirectory = 0;
     }
     
@@ -151,6 +161,7 @@ public class FSFS {
         FSWriteLock writeLock = FSWriteLock.getWriteLockForDB(this);
         synchronized (writeLock) {
             try {
+                writeLock.lock();
                 SVNFileUtil.createFile(getCurrentFile(), "0 1 1\n", "US-ASCII");
             } finally {
                 writeLock.unlock();
@@ -175,6 +186,19 @@ public class FSFS {
     
     public File getWriteLockFile() {
         return myWriteLockFile;
+    }
+    
+    public File getDBLogsLockFile() throws SVNException {
+        File lockFile = new File(myDBRoot, LOCKS_DIR + "/" + DB_LOGS_LOCK_FILE);
+        if (!lockFile.exists()) {
+            try {
+                SVNFileUtil.createFile(lockFile, PRE_12_COMPAT_UNNEEDED_FILE_CONTENTS, "US-ASCII");
+            } catch (SVNException svne) {
+                SVNErrorMessage err = svne.getErrorMessage().wrap("Creating db logs lock file");
+                SVNErrorManager.error(err);
+            }
+        }
+        return lockFile;
     }
     
     public long getDatedRevision(Date date) throws SVNException {
@@ -243,6 +267,7 @@ public class FSFS {
         FSWriteLock writeLock = FSWriteLock.getWriteLockForDB(this);
         synchronized (writeLock) {
             try {
+                writeLock.lock();
                 if (myDBFormat == DB_FORMAT) {
                     return;
                 }
@@ -254,7 +279,7 @@ public class FSFS {
                 if (myDBFormat < MIN_PROTOREVS_DIR_FORMAT) {
                     myTransactionProtoRevsRoot.mkdirs();
                 }
-                writeFormat(new File(myDBRoot, "format"), DB_FORMAT, 0, true);
+                writeFormat(myDBFormatFile, DB_FORMAT, 0, true);
             } finally {
                 writeLock.unlock();
                 FSWriteLock.release(writeLock);
@@ -1420,7 +1445,7 @@ public class FSFS {
     private void openDB() throws SVNException {
         int format = -1;
         // fs format /root/db/format
-        FSFile formatFile = new FSFile(new File(myDBRoot, "format"));
+        FSFile formatFile = new FSFile(myDBFormatFile);
         try {
             format = formatFile.readInt();
             readOptions(formatFile, format);
@@ -1733,7 +1758,7 @@ public class FSFS {
     }
 
     private static boolean isRepositoryRoot(File candidatePath) {
-        File formatFile = new File(candidatePath, "format");
+        File formatFile = new File(candidatePath, REPOS_FORMAT_FILE);
         SVNFileType fileType = SVNFileType.getType(formatFile);
         if (fileType != SVNFileType.FILE) {
             return false;

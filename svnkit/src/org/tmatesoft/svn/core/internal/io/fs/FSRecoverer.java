@@ -42,6 +42,7 @@ public class FSRecoverer {
         FSWriteLock writeLock = FSWriteLock.getWriteLockForDB(myOwner);
         synchronized (writeLock) {
             try {
+                writeLock.lock();
                 recover();
             } finally {
                 writeLock.unlock();

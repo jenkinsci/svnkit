@@ -373,7 +373,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                     }
                     
                     String propName = new String(buff, "UTF-8");
-                    setNodeProperty(propName, null);
+                    deleteNodeProperty(propName);
                 } else {
                     SVNAdminHelper.generateStreamMalformedError();
                 }
@@ -395,19 +395,6 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
             String propName = (String) propNames.next();
             myCurrentRevisionBaton.getCommitter().changeNodeProperty(myCurrentNodeBaton.myPath, propName, null);
         }
-    }
-
-    public void setNodeProperty(String propertyName, SVNPropertyValue propertyValue) throws SVNException {
-        if (SVNProperty.MERGE_INFO.equals(propertyName)) {
-            Map mergeInfo = renumberMergeInfoRevisions(propertyValue);
-            if (myParentDir != null) {
-                mergeInfo = prefixMergeInfoPaths(mergeInfo);
-            }
-            String mergeInfoString = SVNMergeInfoUtil.formatMergeInfoToString(mergeInfo);
-            propertyValue = SVNPropertyValue.create(mergeInfoString);
-        }
-        myCurrentRevisionBaton.getCommitter().changeNodeProperty(myCurrentNodeBaton.myPath, propertyName, 
-                propertyValue);
     }
 
     public void setRevisionProperty(String propertyName, SVNPropertyValue propertyValue) throws SVNException {
@@ -445,6 +432,23 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
             myDeltaReader = new SVNDeltaReader();
         } 
         return myDeltaReader;
+    }
+
+    private void deleteNodeProperty(String propertyName) throws SVNException {
+        myCurrentRevisionBaton.getCommitter().changeNodeProperty(myCurrentNodeBaton.myPath, propertyName, null);
+    }
+    
+    private void setNodeProperty(String propertyName, SVNPropertyValue propertyValue) throws SVNException {
+        if (SVNProperty.MERGE_INFO.equals(propertyName)) {
+            Map mergeInfo = renumberMergeInfoRevisions(propertyValue);
+            if (myParentDir != null) {
+                mergeInfo = prefixMergeInfoPaths(mergeInfo);
+            }
+            String mergeInfoString = SVNMergeInfoUtil.formatMergeInfoToString(mergeInfo);
+            propertyValue = SVNPropertyValue.create(mergeInfoString);
+        }
+        myCurrentRevisionBaton.getCommitter().changeNodeProperty(myCurrentNodeBaton.myPath, propertyName, 
+                propertyValue);
     }
 
     private SVNDeltaGenerator getDeltaGenerator() {

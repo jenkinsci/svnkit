@@ -72,7 +72,7 @@ public class SVNAdminLoadCommand extends SVNAdminCommand implements ISVNAdminEve
         if (event.getAction() == SVNAdminEventAction.REVISION_LOADED) {
             getEnvironment().getOut().println();
         }
-        getEnvironment().getOut().println(event.getMessage());
+        getEnvironment().getOut().print(event.getMessage());
         if (event.getAction() == SVNAdminEventAction.REVISION_LOADED) {
             getEnvironment().getOut().println();
         }

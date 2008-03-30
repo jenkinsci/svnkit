@@ -31,25 +31,35 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
  */
 public class FSWriteLock {
 
-    private static final Map ourThreadLocksCache = new SVNHashMap();
+    private static final Map ourThreadDBLocksCache = new SVNHashMap();
+    private static final Map ourThreadRepositoryLocksCache = new SVNHashMap();
+    private static final Map ourThreadLogLocksCache = new SVNHashMap();
 
+    private static final int DB_LOCK = 1;
+    private static final int LOGS_LOCK = 2;
+    private static final int REPOS_LOCK = 3;
+    
     private File myLockFile;
     private RandomAccessFile myLockRAFile;
     private FileLock myLock;
     private String myToken;
+    private int myLockType;
+    private boolean myIsShared;
     private int myReferencesCount = 0;
 
-    private FSWriteLock(String token, File lockFile) {
+    private FSWriteLock(String token, File lockFile, int lockType, boolean shared) {
         myToken = token;
         myLockFile = lockFile;
+        myLockType = lockType;
+        myIsShared = shared;
     }
 
     public static synchronized FSWriteLock getWriteLockForDB(FSFS owner) throws SVNException {
         String uuid = owner.getUUID();
-        FSWriteLock lock = (FSWriteLock) ourThreadLocksCache.get(uuid);
+        FSWriteLock lock = (FSWriteLock) ourThreadDBLocksCache.get(uuid);
         if (lock == null) {
-            lock = new FSWriteLock(uuid, owner.getWriteLockFile());
-            ourThreadLocksCache.put(uuid, lock);
+            lock = new FSWriteLock(uuid, owner.getWriteLockFile(), DB_LOCK, false);
+            ourThreadDBLocksCache.put(uuid, lock);
         }
         lock.myReferencesCount++;
         return lock;
@@ -60,10 +70,10 @@ public class FSWriteLock {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.FS_NO_LOCK_TOKEN, "Incorrect lock token for current transaction"));
         }
         String uuid = owner.getUUID() + token;
-        FSWriteLock lock = (FSWriteLock) ourThreadLocksCache.get(uuid);
+        FSWriteLock lock = (FSWriteLock) ourThreadDBLocksCache.get(uuid);
         if (lock == null) {
-            lock = new FSWriteLock(uuid, owner.getTransactionCurrentLockFile());
-            ourThreadLocksCache.put(uuid, lock);
+            lock = new FSWriteLock(uuid, owner.getTransactionCurrentLockFile(), DB_LOCK, false);
+            ourThreadDBLocksCache.put(uuid, lock);
         }
         lock.myReferencesCount++;
         return lock;
@@ -74,10 +84,21 @@ public class FSWriteLock {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.FS_NO_LOCK_TOKEN, "Incorrect txn id while locking"));
         }
         String uuid = owner.getUUID() + txnID;
-        FSWriteLock lock = (FSWriteLock) ourThreadLocksCache.get(uuid);
+        FSWriteLock lock = (FSWriteLock) ourThreadDBLocksCache.get(uuid);
         if (lock == null) {
-            lock = new FSWriteLock(uuid, owner.getTransactionProtoRevLockFile(txnID));
-            ourThreadLocksCache.put(uuid, lock);
+            lock = new FSWriteLock(uuid, owner.getTransactionProtoRevLockFile(txnID), DB_LOCK, false);
+            ourThreadDBLocksCache.put(uuid, lock);
+        }
+        lock.myReferencesCount++;
+        return lock;
+    }
+
+    public static synchronized FSWriteLock getDBLogsLock(FSFS owner, boolean exclusive) throws SVNException {
+        String uuid = owner.getUUID();
+        FSWriteLock lock = (FSWriteLock) ourThreadLogLocksCache.get(uuid);
+        if (lock == null) {
+            lock = new FSWriteLock(uuid, owner.getDBLogsLockFile(), LOGS_LOCK, !exclusive);
+            ourThreadLogLocksCache.put(uuid, lock);
         }
         lock.myReferencesCount++;
         return lock;
@@ -95,7 +116,7 @@ public class FSWriteLock {
                 SVNFileUtil.createEmptyFile(myLockFile);
             }
             myLockRAFile = new RandomAccessFile(myLockFile, "rw");
-            myLock = myLockRAFile.getChannel().lock();
+            myLock = myLockRAFile.getChannel().lock(0L, Long.MAX_VALUE, myIsShared);
         } catch (IOException ioe) {
             unlock();
             errorOccured = true;
@@ -114,7 +135,13 @@ public class FSWriteLock {
             return;
         }
         if ((--lock.myReferencesCount) == 0) {
-            ourThreadLocksCache.remove(lock.myToken);
+            if (lock.myLockType == DB_LOCK) {
+                ourThreadDBLocksCache.remove(lock.myToken);
+            } else if (lock.myLockType == REPOS_LOCK) {
+                ourThreadRepositoryLocksCache.remove(lock.myToken);
+            } else if (lock.myLockType == LOGS_LOCK) {
+                ourThreadLogLocksCache.remove(lock.myToken);
+            }
         }
     }
 
@@ -123,7 +150,8 @@ public class FSWriteLock {
             try {
                 myLock.release();
             } catch (IOException ioex) {
-                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Unexpected error while releasing file lock on ''{0}''", myLockFile);
+                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
+                        "Unexpected error while releasing file lock on ''{0}''", myLockFile);
                 SVNErrorManager.error(error, ioex);
             }
             myLock = null;
