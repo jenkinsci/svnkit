@@ -40,8 +40,10 @@ public class FSHotCopier {
                     SVNErrorMessage err = svne.getErrorMessage().wrap("Creating lock dir");
                     SVNErrorManager.error(err);
                 }
-                //createReposDir(new File(dstPath, FSFS.))
+                createDBLock(dstPath);
+                createDBLogsLock(dstPath);
                 hotCopy(srcPath, dstPath);
+                SVNFileUtil.writeVersionFile(new File(dstPath, FSFS.REPOS_FORMAT_FILE), myOwner.getReposFormat());
             } finally {
                 dbLogsLock.unlock();
                 FSWriteLock.release(dbLogsLock);
@@ -88,10 +90,23 @@ public class FSHotCopier {
             "US-ASCII");
         } catch (SVNException svne) {
             SVNErrorMessage err = svne.getErrorMessage().wrap("Creating db lock file");
+            SVNErrorManager.error(err);
         }
     }
-    
+
+    private void createDBLogsLock(File dstPath) throws SVNException {
+        try {
+            SVNFileUtil.createFile(new File(dstPath, FSFS.DB_LOGS_LOCK_FILE), FSFS.PRE_12_COMPAT_UNNEEDED_FILE_CONTENTS, 
+            "US-ASCII");
+        } catch (SVNException svne) {
+            SVNErrorMessage err = svne.getErrorMessage().wrap("Creating db logs lock file");
+            SVNErrorManager.error(err);
+        }
+    }
+
     private void hotCopy(File srcPath, File dstPath) throws SVNException {
-        
+        int format = myOwner.readDBFormat();
+        FSRepositoryUtil.checkReposDBForma(format);
+        //SVNFileUtil.copyFile(src, dst, safe)
     }
 }

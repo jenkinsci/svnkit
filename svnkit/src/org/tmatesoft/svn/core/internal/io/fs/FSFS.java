@@ -171,6 +171,33 @@ public class FSFS {
         openDB();
     }
 
+    public int readDBFormat() throws SVNException {
+        int format = -1;
+        // fs format /root/db/format
+        FSFile formatFile = new FSFile(myDBFormatFile);
+        try {
+            format = formatFile.readInt();
+            readOptions(formatFile, format);
+        } catch (SVNException svne) {
+            if (svne.getCause() instanceof FileNotFoundException) {
+                format = DB_FORMAT;
+            } else if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.STREAM_UNEXPECTED_EOF) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_VERSION_FILE_FORMAT, 
+                        "Can''t read first line of format file ''{0}''", formatFile.getFile());
+                SVNErrorManager.error(err);
+            } else {
+                throw svne;
+            }
+        } catch (NumberFormatException nfe) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_VERSION_FILE_FORMAT, 
+                    "Format file ''{0}'' contains an unexpected non-digit", formatFile.getFile());
+            SVNErrorManager.error(err);
+        } finally {
+            formatFile.close();
+        }
+        return format;
+    }
+
     public String getUUID() throws SVNException {
         if(myUUID == null) {
             // uuid
@@ -1443,43 +1470,13 @@ public class FSFS {
     }
     
     private void openDB() throws SVNException {
-        int format = -1;
-        // fs format /root/db/format
-        FSFile formatFile = new FSFile(myDBFormatFile);
-        try {
-            format = formatFile.readInt();
-            readOptions(formatFile, format);
-        } catch (SVNException svne) {
-            if (svne.getCause() instanceof FileNotFoundException) {
-                format = DB_FORMAT;
-            } else if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.STREAM_UNEXPECTED_EOF) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_VERSION_FILE_FORMAT, 
-                        "Can''t read first line of format file ''{0}''", formatFile.getFile());
-                SVNErrorManager.error(err);
-            } else {
-                throw svne;
-            }
-        } catch (NumberFormatException nfe) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_VERSION_FILE_FORMAT, 
-                    "Format file ''{0}'' contains an unexpected non-digit", formatFile.getFile());
-            SVNErrorManager.error(err);
-        } finally {
-            formatFile.close();
-        }
-        
-        if (format < DB_FORMAT_LOW || format > DB_FORMAT) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_UNSUPPORTED_FORMAT, 
-                                  "Expected FS format between ''{0}'' and " +
-                                  "''{1}''; found format ''{2}''", 
-                                  new Object[] {new Integer(DB_FORMAT_LOW), 
-                                                new Integer(DB_FORMAT), 
-                                                new Integer(format)});
-            SVNErrorManager.error(err);
-        }
+        int format = readDBFormat();
+        FSRepositoryUtil.checkReposDBForma(format);
+
         myDBFormat = format;
 
         // fs type /root/db/fs-type
-        formatFile = new FSFile(new File(myDBRoot, "fs-type"));
+        FSFile formatFile = new FSFile(new File(myDBRoot, "fs-type"));
         String fsType = null;
         try {
             fsType = formatFile.readLine(128);    
@@ -1499,7 +1496,7 @@ public class FSFS {
             SVNErrorManager.error(err);
         }
     }
-
+    
     private void ensureRevisionsExists(long revision) throws SVNException {
         if (FSRepository.isInvalidRevision(revision)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, 

@@ -341,6 +341,16 @@ public class FSRepositoryUtil {
         return new String(nextKey, 0, nextKeyLength);
     }
    
+    public static void checkReposDBForma(int format) throws SVNException {
+        if (format < FSFS.DB_FORMAT_LOW || format > FSFS.DB_FORMAT) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_UNSUPPORTED_FORMAT, 
+                    "Expected FS format between ''{0}'' and ''{1}''; found format ''{2}''", 
+                    new Object[] {new Integer(FSFS.DB_FORMAT_LOW), new Integer(FSFS.DB_FORMAT), 
+                    new Integer(format)});
+            SVNErrorManager.error(err);
+        }
+    }
+    
     private static boolean areRepresentationsEqual(FSRevisionNode revNode1, FSRevisionNode revNode2, boolean forProperties) {
         if(revNode1 == revNode2){
             return true;
