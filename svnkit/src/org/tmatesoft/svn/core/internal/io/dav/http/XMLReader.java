@@ -58,7 +58,7 @@ public class XMLReader extends Reader {
                 myColonCount = 0;
             } 
         }
-        myIsClosed = read <= 0;
+        myIsClosed = read < 0;
         return read;
     }
     

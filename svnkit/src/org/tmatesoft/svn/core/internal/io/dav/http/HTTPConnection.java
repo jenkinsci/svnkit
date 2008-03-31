@@ -534,7 +534,7 @@ class HTTPConnection implements IHTTPConnection {
         try {
             while (true) {
                 int count = stream.read(buffer);
-                if (count <= 0) {
+                if (count < 0) {
                     break;
                 }
                 if (dst != null) {
