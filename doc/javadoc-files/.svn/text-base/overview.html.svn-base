@@ -1,0 +1,71 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+<TITLE>
+</TITLE>
+<LINK REL ="stylesheet" TYPE="text/css" HREF="javadoc.css" TITLE="Style">
+</HEAD>
+
+<BODY BGCOLOR="white">
+<HR>
+<B><SPAN CLASS="svnkit">SVNKit</SPAN><SUP>TM</SUP></B> - the only pure Java<SUP>TM</SUP> Subversion client library in the World.
+
+<BR>
+<!--<img src="SVNKit_API_Packages.jpg"></img>-->
+
+<P>
+<b>SVNKit</b><SUP>TM</SUP> is a powerful pure Java Subversion (SVN) client library. This means that users of the library, i.e. java applications 
+do not have to include SVN native binaries or <i>javahl</i> bindings to work with a Subversion repository.
+<P>
+The library represents two main concepts for developers who use a Subversion repository in their projects:
+<ul>
+<li>Low-level API  - the package <b>org.tmatesoft.svn.core.io</b> - a solution for those developers who doesn't need to work with the native
+Subversion high-level format known as <i>'Working Copy'</i> - that is when all local files are stored in a filesystem and all version controll 
+metadata is concentrated in <i>.svn</i> directories. For instance, those developers who would like to customize managing versioned files - like
+storing and managing versioned data as well as all metadata within a data base -
+will certainly find this package pretty suitable for their purposes.       
+</ul>
+<ul>
+<li>High-level API - the package <b>org.tmatesoft.svn.core.wc</b> - this is a set of classes and interfaces designed to provide developers means
+for working particularly with the native Subversion client's format - <i>'Working Copy'</i>. All the commands supported by the SVN command line client can be 
+also easily performed by using this high-level API. Obviously in those cases when an operation needs an access to a repository this high-level API 
+uses the low-level one.
+</ul>
+
+<p> 
+<h1>Features</h1>
+ 
+Currently SVNKit supports the following repository access protocols:
+<ul>
+<li>svn://, svn+ssh://</li>
+<li>http://, https://</li>
+<li>file:/// (for FSFS-type repositories)</li>
+</ul>
+
+<p>
+Low level repository access, that allows to access and manipulate repository efficiently 
+without creating working copies or using custom, non-file based, working copy.
+
+<p>
+Support of SVN 1.4.x Working Copy format. All Subversion operations over working copy are supported, plus
+smart move operation that, for instance, allows to move already moved files.
+
+<p> 
+Local repository access over 'file' protocol (for FSFS repositories).
+
+<p>
+Administrative functionality: 
+<ul>
+<li>Creation of local <b>FSFS</b>-type (Subversion compatible) repositories with the latest format version.
+<li>Repository replication (svnsync) both with 1.4.x servers and older ones.
+<li>load/dump, remove/list uncommitted transactions
+<li>local repository examining features (like svnlook)
+</ul>
+ 
+<p>
+svn+xxx:// URL schemes (not only svn+ssh). SVNKit API gives a user an 
+ability to define tunnel providers which are responsible for matching 
+subprotocol names (xxx) to tunnel command lines.
+
+</BODY>
+</HTML>

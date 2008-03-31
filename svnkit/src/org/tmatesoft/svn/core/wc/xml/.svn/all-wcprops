@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/wc/xml
+END
+SVNXMLAnnotateHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/wc/xml/SVNXMLAnnotateHandler.java
+END
+SVNXMLInfoHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/wc/xml/SVNXMLInfoHandler.java
+END
+SVNXMLSerializer.java
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/wc/xml/SVNXMLSerializer.java
+END
+AbstractXMLHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/wc/xml/AbstractXMLHandler.java
+END
+SVNXMLDirEntryHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/wc/xml/SVNXMLDirEntryHandler.java
+END
+SVNXMLLogHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/wc/xml/SVNXMLLogHandler.java
+END
+SVNXMLStatusHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/wc/xml/SVNXMLStatusHandler.java
+END
+package.html
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/wc/xml/package.html
+END

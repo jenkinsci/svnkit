@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/contrib/sequence/src/de/regnis/q/sequence/line/diff
+END
+QDiffGenerator.java
+K 25
+svn:wc:ra_dav:version-url
+V 110
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/contrib/sequence/src/de/regnis/q/sequence/line/diff/QDiffGenerator.java
+END
+QDiffManager.java
+K 25
+svn:wc:ra_dav:version-url
+V 108
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/contrib/sequence/src/de/regnis/q/sequence/line/diff/QDiffManager.java
+END
+QDiffGeneratorFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 117
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/contrib/sequence/src/de/regnis/q/sequence/line/diff/QDiffGeneratorFactory.java
+END
+QDiffNormalGenerator.java
+K 25
+svn:wc:ra_dav:version-url
+V 116
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/contrib/sequence/src/de/regnis/q/sequence/line/diff/QDiffNormalGenerator.java
+END
+QDiffSequenceGenerator.java
+K 25
+svn:wc:ra_dav:version-url
+V 118
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/contrib/sequence/src/de/regnis/q/sequence/line/diff/QDiffSequenceGenerator.java
+END
+QDiffUniGenerator.java
+K 25
+svn:wc:ra_dav:version-url
+V 113
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/contrib/sequence/src/de/regnis/q/sequence/line/diff/QDiffUniGenerator.java
+END

@@ -1,0 +1,54 @@
+8
+
+dir
+4088
+http://svn.svnkit.com/repos/svnkit/tags/1.1.6/contrib/javahl
+http://svn.svnkit.com/repos/svnkit
+
+
+
+2007-12-24T13:54:46.899418Z
+3727
+alex
+has-props
+
+svn:special svn:externals svn:needs-lock
+svn:externals
+
+
+
+
+
+
+
+
+
+
+0a862816-5deb-0310-9199-c792c6ae6c6e
+
+JAVAHL-LICENSE
+file
+
+
+
+
+2008-03-31T15:56:49.000000Z
+ac35b7b8d4076ccf4bc49d4df769db30
+2005-01-31T19:24:28.057953Z
+193
+alex
+has-props
+
+javahl.iml
+file
+
+
+
+
+2008-03-31T15:56:49.000000Z
+c44a8fe87047ab37d7a9127076075001
+2007-07-11T17:09:57.288849Z
+3214
+alex
+has-props
+

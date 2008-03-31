@@ -1,0 +1,119 @@
+8
+
+dir
+4088
+http://svn.svnkit.com/repos/svnkit/tags/1.1.6/www
+http://svn.svnkit.com/repos/svnkit
+
+
+
+2008-01-31T17:15:19.994189Z
+3814
+alex
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+0a862816-5deb-0310-9199-c792c6ae6c6e
+
+rss2.php
+file
+
+
+
+
+2008-03-31T15:56:36.000000Z
+d9f01472325fa9b117fe5ce015fcecd7
+2006-11-10T18:39:23.156171Z
+2787
+alex
+
+feed
+dir
+
+license.html
+file
+
+
+
+
+2008-03-31T15:56:36.000000Z
+c73d9c84e4826565c1176ae8cef8a5ab
+2008-01-31T17:15:19.994189Z
+3814
+alex
+
+download
+dir
+
+css
+dir
+
+index.html
+file
+
+
+
+
+2008-03-31T15:56:36.000000Z
+b11602bdd7a591b99571f60faf0a8bc7
+2008-01-31T17:15:19.994189Z
+3814
+alex
+
+licensing
+dir
+
+.htaccess
+file
+
+
+
+
+2008-03-31T15:56:36.000000Z
+4df7d9dccf5f6abf793cfc753add6b72
+2006-11-15T18:38:04.977458Z
+2809
+alex
+
+img
+dir
+
+kb
+dir
+
+rss.php
+file
+
+
+
+
+2008-03-31T15:56:36.000000Z
+0b3e6f8fdaa4ffb00d811a53ac323a31
+2006-11-10T18:39:23.156171Z
+2787
+alex
+
+favicon.ico
+file
+
+
+
+
+2008-03-31T15:56:36.000000Z
+9400376304bba9d55ef9769a4f1cc4e9
+2006-11-13T21:35:07.431950Z
+2796
+alex
+has-props
+

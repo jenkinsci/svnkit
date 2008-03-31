@@ -1,0 +1,101 @@
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/io
+END
+ISVNReporter.java
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/io/ISVNReporter.java
+END
+ISVNConnectionListener.java
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/io/ISVNConnectionListener.java
+END
+ISVNDeltaConsumer.java
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/io/ISVNDeltaConsumer.java
+END
+SVNRepository.java
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/io/SVNRepository.java
+END
+package.html
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/io/package.html
+END
+ISVNTunnelProvider.java
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/io/ISVNTunnelProvider.java
+END
+SVNLocationEntry.java
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/io/SVNLocationEntry.java
+END
+ISVNSession.java
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/io/ISVNSession.java
+END
+ISVNWorkspaceMediator.java
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/io/ISVNWorkspaceMediator.java
+END
+SVNFileRevision.java
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/io/SVNFileRevision.java
+END
+ISVNEditor.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/io/ISVNEditor.java
+END
+ISVNLockHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/io/ISVNLockHandler.java
+END
+ISVNReporterBaton.java
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/io/ISVNReporterBaton.java
+END
+ISVNLocationEntryHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 105
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/io/ISVNLocationEntryHandler.java
+END
+ISVNFileRevisionHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/io/ISVNFileRevisionHandler.java
+END
+SVNRepositoryFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/io/SVNRepositoryFactory.java
+END

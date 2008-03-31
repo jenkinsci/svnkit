@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/doc/examples/src/org/tmatesoft/svn/examples/repository
+END
+Export.java
+K 25
+svn:wc:ra_dav:version-url
+V 105
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/doc/examples/src/org/tmatesoft/svn/examples/repository/Export.java
+END
+History.java
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/doc/examples/src/org/tmatesoft/svn/examples/repository/History.java
+END
+DisplayFile.java
+K 25
+svn:wc:ra_dav:version-url
+V 110
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/doc/examples/src/org/tmatesoft/svn/examples/repository/DisplayFile.java
+END
+DisplayRepositoryTree.java
+K 25
+svn:wc:ra_dav:version-url
+V 120
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/doc/examples/src/org/tmatesoft/svn/examples/repository/DisplayRepositoryTree.java
+END
+Commit.java
+K 25
+svn:wc:ra_dav:version-url
+V 105
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/doc/examples/src/org/tmatesoft/svn/examples/repository/Commit.java
+END
+Replicate.java
+K 25
+svn:wc:ra_dav:version-url
+V 108
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/doc/examples/src/org/tmatesoft/svn/examples/repository/Replicate.java
+END

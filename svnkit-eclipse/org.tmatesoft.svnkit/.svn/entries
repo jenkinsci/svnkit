@@ -1,0 +1,57 @@
+8
+
+dir
+4088
+http://svn.svnkit.com/repos/svnkit/tags/1.1.6/svnkit-eclipse/org.tmatesoft.svnkit
+http://svn.svnkit.com/repos/svnkit
+
+
+
+2008-01-31T17:15:19.994189Z
+3814
+alex
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+0a862816-5deb-0310-9199-c792c6ae6c6e
+
+src
+dir
+
+.options
+file
+
+
+
+
+2008-03-31T15:56:38.000000Z
+39ef4b47dc79995a746c7af44e227faa
+2006-11-09T19:31:34.443667Z
+2774
+alex
+has-props
+
+plugin.xml
+file
+
+
+
+
+2008-03-31T15:56:38.000000Z
+f78a32f2ceb647739e22d2ef81d01b83
+2008-01-07T17:27:36.062234Z
+3747
+alex
+has-props
+

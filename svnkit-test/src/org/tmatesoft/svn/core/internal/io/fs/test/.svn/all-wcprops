@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit-test/src/org/tmatesoft/svn/core/internal/io/fs/test
+END
+SVNRepositoryReplicationTest.java
+K 25
+svn:wc:ra_dav:version-url
+V 131
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit-test/src/org/tmatesoft/svn/core/internal/io/fs/test/SVNRepositoryReplicationTest.java
+END
+SVNTestUpdateEditor.java
+K 25
+svn:wc:ra_dav:version-url
+V 122
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit-test/src/org/tmatesoft/svn/core/internal/io/fs/test/SVNTestUpdateEditor.java
+END
+UpdateHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 116
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit-test/src/org/tmatesoft/svn/core/internal/io/fs/test/UpdateHandler.java
+END
+PropertyHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 118
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit-test/src/org/tmatesoft/svn/core/internal/io/fs/test/PropertyHandler.java
+END
+SVNConcurrentCommitTest.java
+K 25
+svn:wc:ra_dav:version-url
+V 126
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit-test/src/org/tmatesoft/svn/core/internal/io/fs/test/SVNConcurrentCommitTest.java
+END
+SVNItem.java
+K 25
+svn:wc:ra_dav:version-url
+V 110
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit-test/src/org/tmatesoft/svn/core/internal/io/fs/test/SVNItem.java
+END
+SVNImportThread.java
+K 25
+svn:wc:ra_dav:version-url
+V 118
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit-test/src/org/tmatesoft/svn/core/internal/io/fs/test/SVNImportThread.java
+END

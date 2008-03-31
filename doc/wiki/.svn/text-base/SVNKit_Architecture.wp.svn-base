@@ -1,0 +1,44 @@
+[[Setting Up A Subversion Repository|<<]] ... [[Getting Started With SVNKit|>>]]
+<br />
+<br />
+
+== SVNKit Architecture ==
+'''SVNKit''' is a pure (100%) java client library for working with data versioned by the Subversion version control system 
+right within java applications. The library structure can be represented as following:
+
+[[Image:SVNKit_architecture.png]]
+
+That is there are two main layers in '''SVNKit''':
+* A high-level layer to manage Working Copies. A [http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/wc/package-summary.html corresponding API] gives you an ability to manage Working Copies just like in the manner that the [http://svnbook.red-bean.com/nightly/en/svn.ref.html#svn.ref.svn Subversion command line client] does. 
+* A low-level layer is similar to the [http://svnbook.red-bean.com/nightly/en/svn.developer.html#svn.developer.layerlib.ra Subversion Repository Access Layer]. It represents a driver for direct working with a Subversion Repository.
+
+
+=== High-level layer ===
+High-level API is similar to the commands of the Subversion native command line client: all operations for managing 
+Working Copies are logically divided and combined in different '''SVN*Client''' classes. For example, all WC update 
+operations (check out, update, switch, etc.) are performed by the single 
+[http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/wc/SVNUpdateClient.html SVNUpdateClient] class. Arguments which 
+are accepted by methods of these classes are similar to arguments of the command line client.
+When an access to a repository is indeed required, the high-level layer uses the low-level one.
+
+=== Low-level layer ===
+[http://svnkit.com/kb/javadoc/org/tmatesoft/svn/core/io/package-summary.html This layer] represents an abstract Subversion repository access protocol layer. There're two important things about this layer:
+* It does not deal with WCs at all, since WC is a higher layer than this one. This layer knows how to ''speak to'' Subversion repositories via different protocols.
+* Data structure is handled by this layer as an abstract data hierarchy, what gives an ability to represent more sophisticated (than just files and directories) abstractions as a tree-like hierarchy and put it under version control.
+
+== Repository access protocols supported by SVNKit ==
+Since v.1.1.0 '''SVNKit''' supports the following repository access schemes:
+
+[[Image:Access_Protocols.png]]
+
+=== Remote access ===
+As you can see on the diagram above, '''SVNKit''' supports two kinds of accessing a Subversion repository over network:
+* svn://, this also includes svn+xxx:// schemes (and svn+ssh:// in particular)
+* http://, this also includes secure https:// connections
+=== Local access ===
+Also since v.1.1.0 '''SVNKit''' is able to work with a Subversion repository on a local machine (via ''file:///'').
+Although there is one limitation: '''SVNKit can work only with [http://svnbook.red-bean.com/nightly/en/svn.reposadmin.html#svn.reposadmin.basics.backends.fsfs FSFS]-type repositories over the file:/// protocol'''.
+
+<br />
+<br />
+[[What Is Subversion For|<<]] ... [[Getting Started With SVNKit|>>]]
