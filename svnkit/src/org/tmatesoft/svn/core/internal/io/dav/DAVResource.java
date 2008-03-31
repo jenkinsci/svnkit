@@ -15,8 +15,11 @@ package org.tmatesoft.svn.core.internal.io.dav;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 
 /**
@@ -93,7 +96,6 @@ class DAVResource {
             }
         }
             
-        
         // now from server.
         String path = myURL;
         if (myRevision >= 0) {
@@ -103,7 +105,19 @@ class DAVResource {
         }
         // get "checked-in" property from baseline collection or from HEAD, this will be vURL.
         // this shouldn't be called for copied urls.
-        myVURL = DAVUtil.getPropertyValue(myConnection, path, null, DAVElement.CHECKED_IN);
+        try {
+            myVURL = DAVUtil.getPropertyValue(myConnection, path, null, DAVElement.CHECKED_IN);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_DAV_PROPS_NOT_FOUND){
+                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.PROPERTY_NOT_FOUND,
+                        "Could not fetch the Version Resource URL (needed during an import or when it is missing from the local, cached props)");
+                SVNErrorManager.error(error, e);
+            }
+            throw e;
+        }
+        if (myMediator != null) {
+            myMediator.setWorkspaceProperty(SVNEncodingUtil.uriDecode(myPath), "svn:wc:ra_dav:version-url", SVNPropertyValue.create(myURL));            
+        }
     }
 
     public String getWorkingURL() {
