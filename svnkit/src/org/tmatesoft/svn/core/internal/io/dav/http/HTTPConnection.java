@@ -525,7 +525,8 @@ class HTTPConnection implements IHTTPConnection {
         myRepository.getDebugLog().info(new Exception());
         
         SVNErrorMessage err2 = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "{0} request failed on ''{1}''", new Object[] {method, path});
-        SVNErrorManager.error(err2, err);
+        err2.setChildErrorMessage(err);
+        SVNErrorManager.error(err2);
         return null;
     }
 
