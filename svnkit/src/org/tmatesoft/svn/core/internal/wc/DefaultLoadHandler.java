@@ -272,19 +272,23 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                 try {
                     while (contentLength > 0) {
                         int numToRead = contentLength > SVNFileUtil.STREAM_CHUNK_SIZE ? SVNFileUtil.STREAM_CHUNK_SIZE : contentLength;
-                        int numRead = dumpStream.read(buffer, 0, numToRead);
-                        
-                        if (numRead != numToRead) {
-                            SVNAdminHelper.generateIncompleteDataError();
+                        int read = 0;
+                        while(numToRead > 0) {
+                            int numRead = dumpStream.read(buffer, read, numToRead);
+                            if (numRead < 0) {
+                                SVNAdminHelper.generateIncompleteDataError();
+                            }
+                            read += numRead;
+                            numToRead -= numRead;
                         }
                         
                         if (isDelta) {
                             SVNDeltaReader deltaReader = getDeltaReader();
-                            deltaReader.nextWindow(buffer, 0, numRead, myCurrentNodeBaton.myPath, fsConsumer);
+                            deltaReader.nextWindow(buffer, 0, read, myCurrentNodeBaton.myPath, fsConsumer);
                         } else {
-                            getDeltaGenerator().sendDelta(myCurrentNodeBaton.myPath, buffer, numRead, fsConsumer);
+                            getDeltaGenerator().sendDelta(myCurrentNodeBaton.myPath, buffer, read, fsConsumer);
                         }
-                        contentLength -= numRead;
+                        contentLength -= read;
                     }
                 } catch (IOException ioe) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getMessage());
@@ -325,9 +329,9 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                         SVNErrorManager.error(err, nfe);
                     }
                     
-                    byte[] buff = new byte[len];
-                    actualLength += SVNAdminHelper.readKeyOrValue(dumpStream, buff, len);
-                    String propName = new String(buff, "UTF-8");
+                    byte[] buff = new byte[len + 1];
+                    actualLength += SVNAdminHelper.readKeyOrValue(dumpStream, buff, len + 1);
+                    String propName = new String(buff, 0, len, "UTF-8");
                     
                     buffer.setLength(0);
                     line = SVNFileUtil.readLineFromStream(dumpStream, buffer, myDecoder);
@@ -345,9 +349,9 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                             SVNErrorManager.error(err, nfe);
                         }
     
-                        buff = new byte[len];
-                        actualLength += SVNAdminHelper.readKeyOrValue(dumpStream, buff, len);
-                        SVNPropertyValue propValue = SVNPropertyValue.create(propName, buff);
+                        buff = new byte[len + 1];
+                        actualLength += SVNAdminHelper.readKeyOrValue(dumpStream, buff, len + 1);
+                        SVNPropertyValue propValue = SVNPropertyValue.create(propName, buff, 0, len);
                         if (isNode) {
                             setNodeProperty(propName, propValue);
                         } else {
@@ -365,14 +369,14 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                         SVNErrorManager.error(err, nfe);
                     }
                     
-                    byte[] buff = new byte[len];
-                    actualLength += SVNAdminHelper.readKeyOrValue(dumpStream, buff, len);
+                    byte[] buff = new byte[len + 1];
+                    actualLength += SVNAdminHelper.readKeyOrValue(dumpStream, buff, len + 1);
                     
                     if (!isNode) {
                         SVNAdminHelper.generateStreamMalformedError();
                     }
                     
-                    String propName = new String(buff, "UTF-8");
+                    String propName = new String(buff, 0, len, "UTF-8");
                     deleteNodeProperty(propName);
                 } else {
                     SVNAdminHelper.generateStreamMalformedError();

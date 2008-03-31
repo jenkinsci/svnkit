@@ -90,15 +90,16 @@ public class FSRepositoryUtil {
         SVNCommitUtil.driveCommitEditor(handler, interestingPaths, editor, -1);
     }
     
-    public static void copy(InputStream src, OutputStream dst) throws SVNException {
+    private static final byte[] ourCopyBuffer = new byte[1024*16];
+    
+    public synchronized static void copy(InputStream src, OutputStream dst) throws SVNException {
         try {
-            byte[] buffer = new byte[102400];
             while (true) {
-                int length = src.read(buffer);
+                int length = src.read(ourCopyBuffer);
                 if (length > 0) {
-                    dst.write(buffer, 0, length);
+                    dst.write(ourCopyBuffer, 0, length);
                 }
-                if (length != 102400) {
+                if (length < 0) {
                     break;
                 }
             }

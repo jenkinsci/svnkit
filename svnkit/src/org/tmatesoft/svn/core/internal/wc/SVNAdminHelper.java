@@ -208,22 +208,21 @@ public class SVNAdminHelper {
     }
 
     public static int readKeyOrValue(InputStream dumpStream, byte[] buffer, int len) throws SVNException, IOException {
-        int r = dumpStream.read(buffer);
-        
-        if (r != len) {
+        int read = 0;
+        while(len - read > 0) {
+            int r = dumpStream.read(buffer, read, len - read);
+            if (r < 0) {
+                break;
+            }
+            read += r;
+        }        
+        if (read != len) {
             SVNAdminHelper.generateIncompleteDataError();
         }
-        
-        int readLength = r;
-        
-        r = dumpStream.read();
-        if (r == -1) {
-            SVNAdminHelper.generateIncompleteDataError();
-        } else if (r != '\n') {
+        if (buffer[len - 1] != '\n') {
             SVNAdminHelper.generateStreamMalformedError();
         }
-        
-        return ++readLength;
+        return read - 1;
     }
 
     private static void addFileOrDir(FSFS fsfs, ISVNEditor editor, FSRevisionRoot srcRoot, 
