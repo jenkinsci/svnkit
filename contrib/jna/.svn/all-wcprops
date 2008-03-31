@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/contrib/jna
+END
+jna.jar
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/contrib/jna/jna.jar
+END
+JNA-LICENSE
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/contrib/jna/JNA-LICENSE
+END
+jna-src.zip
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/contrib/jna/jna-src.zip
+END

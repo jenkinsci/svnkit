@@ -1,0 +1,9 @@
+K 10
+svn:ignore
+V 57
+bin
+test.properties
+python-tests-log.xml
+python.log.html
+
+END

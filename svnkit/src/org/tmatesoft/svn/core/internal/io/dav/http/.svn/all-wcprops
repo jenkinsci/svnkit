@@ -1,0 +1,107 @@
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http
+END
+HTTPConnection.java
+K 25
+svn:wc:ra_dav:version-url
+V 113
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/HTTPConnection.java
+END
+IHTTPConnectionFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 121
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/IHTTPConnectionFactory.java
+END
+IHTTPConnection.java
+K 25
+svn:wc:ra_dav:version-url
+V 114
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/IHTTPConnection.java
+END
+HTTPNTLMAuthentication.java
+K 25
+svn:wc:ra_dav:version-url
+V 121
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/HTTPNTLMAuthentication.java
+END
+ChunkedInputStream.java
+K 25
+svn:wc:ra_dav:version-url
+V 117
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/ChunkedInputStream.java
+END
+HTTPAuthentication.java
+K 25
+svn:wc:ra_dav:version-url
+V 117
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/HTTPAuthentication.java
+END
+HTTPDigestAuthentication.java
+K 25
+svn:wc:ra_dav:version-url
+V 123
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/HTTPDigestAuthentication.java
+END
+HTTPBasicAuthentication.java
+K 25
+svn:wc:ra_dav:version-url
+V 122
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/HTTPBasicAuthentication.java
+END
+XMLReader.java
+K 25
+svn:wc:ra_dav:version-url
+V 108
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/XMLReader.java
+END
+HTTPStatus.java
+K 25
+svn:wc:ra_dav:version-url
+V 109
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/HTTPStatus.java
+END
+FixedSizeInputStream.java
+K 25
+svn:wc:ra_dav:version-url
+V 119
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/FixedSizeInputStream.java
+END
+HTTPHeader.java
+K 25
+svn:wc:ra_dav:version-url
+V 109
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/HTTPHeader.java
+END
+HTTPRequest.java
+K 25
+svn:wc:ra_dav:version-url
+V 110
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/HTTPRequest.java
+END
+HTTPBodyInputStream.java
+K 25
+svn:wc:ra_dav:version-url
+V 118
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/HTTPBodyInputStream.java
+END
+HTTPParser.java
+K 25
+svn:wc:ra_dav:version-url
+V 109
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/HTTPParser.java
+END
+SpoolFile.java
+K 25
+svn:wc:ra_dav:version-url
+V 108
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/SpoolFile.java
+END
+DefaultHTTPConnectionFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 127
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/DefaultHTTPConnectionFactory.java
+END

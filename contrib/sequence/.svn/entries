@@ -1,0 +1,60 @@
+8
+
+dir
+4088
+http://svn.svnkit.com/repos/svnkit/tags/1.1.6/contrib/sequence
+http://svn.svnkit.com/repos/svnkit
+
+
+
+2007-07-11T17:09:57.288849Z
+3214
+alex
+has-props
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+0a862816-5deb-0310-9199-c792c6ae6c6e
+
+src-test
+dir
+
+src
+dir
+
+SEQUENCE-LICENSE
+file
+
+
+
+
+2008-03-31T15:57:01.000000Z
+8b2be6d6e324ccd3e4121a4f3428509d
+2005-11-22T09:15:37.828376Z
+1762
+marc
+has-props
+
+sequence.iml
+file
+
+
+
+
+2008-03-31T15:57:01.000000Z
+d5e0ca1a2be0eed2c13ce6ce7df77564
+2007-07-11T17:09:57.288849Z
+3214
+alex
+has-props
+

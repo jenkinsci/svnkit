@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 107
+/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/tests
+END
+SVNAdminTests.java
+K 25
+svn:wc:ra_dav:version-url
+V 126
+/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/tests/SVNAdminTests.java
+END
+BasicTests.java
+K 25
+svn:wc:ra_dav:version-url
+V 123
+/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/tests/BasicTests.java
+END
+SVNTests.java
+K 25
+svn:wc:ra_dav:version-url
+V 121
+/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/tests/SVNTests.java
+END
+WC.java
+K 25
+svn:wc:ra_dav:version-url
+V 115
+/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/tests/WC.java
+END

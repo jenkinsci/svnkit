@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -799,7 +799,10 @@ public class SVNUpdateClient extends SVNBasicClient {
                 }
             }
             save |= canonicalizeEntry(entry, omitDefaultPort);
-            adminArea.getWCProperties(entry.getName()).setPropertyValue(SVNProperty.WC_URL, null);
+            SVNVersionedProperties properties = adminArea.getWCProperties(entry.getName());
+            if (properties != null) {
+                properties.setPropertyValue(SVNProperty.WC_URL, null);
+            }
         }
         if (save) {
             adminArea.saveEntries(true);
@@ -931,6 +934,16 @@ public class SVNUpdateClient extends SVNBasicClient {
                             throw e;
                         }
                     } else {
+                        File[] children = external.getFile().listFiles();
+                        if (children != null && children.length == 0) {
+                            // unversioned empty directory.
+                            try {
+                                doCheckout(external.getNewURL(), external.getFile(), revision, revision, true);
+                            } catch (SVNException e) {
+                                throw e;
+                            }
+                            continue;
+                        }
                         SVNWCAccess wcAccess = createWCAccess();
                         SVNAdminArea area = wcAccess.open(external.getFile(), true, 0);
                         SVNEntry entry = area.getEntry(area.getThisDirName(), false);

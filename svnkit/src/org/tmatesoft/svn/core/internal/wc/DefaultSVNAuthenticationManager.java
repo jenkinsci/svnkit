@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -85,6 +85,10 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         Map properties = getHostProperties(host);
         String proxyHost = (String) properties.get("http-proxy-host");
         if (proxyHost == null || "".equals(proxyHost.trim())) {
+            proxyHost = System.getProperty("http.proxyHost");
+            properties.put("http-proxy-port", System.getProperty("http.proxyPort"));
+        }
+        if (proxyHost == null || "".equals(proxyHost.trim())) {
             return null;
         }
         String proxyExceptions = (String) properties.get("http-proxy-exceptions");
@@ -115,7 +119,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         File clientCertFile = sslClientCert != null ? new File(sslClientCert) : null;
         Collection trustStorages = new ArrayList();
         if (sslAuthorityFiles != null) {
-            for(StringTokenizer files = new StringTokenizer(sslAuthorityFiles, ","); files.hasMoreTokens();) {
+            for(StringTokenizer files = new StringTokenizer(sslAuthorityFiles, ";"); files.hasMoreTokens();) {
                 String fileName = files.nextToken();
                 if (fileName != null && !"".equals(fileName.trim())) {
                     trustStorages.add(new File(fileName));
@@ -393,7 +397,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                     if (myUserName == null || "".equals(myUserName)) {
                         String userName = System.getProperty("svnkit.ssh2.author", System.getProperty("javasvn.ssh2.author"));
                         if (userName != null) {
-                            new SVNUserNameAuthentication(userName, myIsStore);
+                            return new SVNUserNameAuthentication(userName, myIsStore);
                         }
                         return null;
                     }
@@ -535,7 +539,9 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                 values.put("password", cipher.encrypt(passwordAuth.getPassword()));
             } else if (ISVNAuthenticationManager.SSH.equals(kind)) {
                 SVNSSHAuthentication sshAuth = (SVNSSHAuthentication) auth;
-                values.put("password", cipher.encrypt(sshAuth.getPassword()));
+                if (sshAuth.getPassword() != null) {
+                    values.put("password", cipher.encrypt(sshAuth.getPassword()));
+                }
                 int port = sshAuth.getPortNumber();
                 if (sshAuth.getPortNumber() < 0) {
                     port = getDefaultSSHPortNumber() ;
@@ -543,8 +549,12 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                 values.put("port", Integer.toString(port));
                 if (sshAuth.getPrivateKeyFile() != null) { 
                     String path = SVNPathUtil.validateFilePath(sshAuth.getPrivateKeyFile().getAbsolutePath());
-                    values.put("passphrase", cipher.encrypt(sshAuth.getPassphrase()));
-                    values.put("key", path);
+                    if (sshAuth.getPassphrase() != null) {
+                        values.put("passphrase", cipher.encrypt(sshAuth.getPassphrase()));
+                    }
+                    if (path != null) {
+                        values.put("key", path);
+                    }
                 }
             }
             // get file name for auth and store password.

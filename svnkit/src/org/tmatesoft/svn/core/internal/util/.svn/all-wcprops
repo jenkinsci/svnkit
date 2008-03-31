@@ -1,0 +1,95 @@
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/util
+END
+SVNDate.java
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/util/SVNDate.java
+END
+SVNLogInputStream.java
+K 25
+svn:wc:ra_dav:version-url
+V 109
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/util/SVNLogInputStream.java
+END
+SVNUUIDGenerator.java
+K 25
+svn:wc:ra_dav:version-url
+V 108
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/util/SVNUUIDGenerator.java
+END
+SVNLogOutputStream.java
+K 25
+svn:wc:ra_dav:version-url
+V 110
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/util/SVNLogOutputStream.java
+END
+DefaultSVNDebugFormatter.java
+K 25
+svn:wc:ra_dav:version-url
+V 116
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/util/DefaultSVNDebugFormatter.java
+END
+SVNSocketFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 108
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/util/SVNSocketFactory.java
+END
+SVNBase64.java
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/util/SVNBase64.java
+END
+SVNEncodingUtil.java
+K 25
+svn:wc:ra_dav:version-url
+V 107
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/util/SVNEncodingUtil.java
+END
+SVNFormatUtil.java
+K 25
+svn:wc:ra_dav:version-url
+V 105
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/util/SVNFormatUtil.java
+END
+SVNPathUtil.java
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/util/SVNPathUtil.java
+END
+DefaultSVNDebugLogger.java
+K 25
+svn:wc:ra_dav:version-url
+V 113
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/util/DefaultSVNDebugLogger.java
+END
+SVNTimeUtil.java
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/util/SVNTimeUtil.java
+END
+SVNLogStream.java
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/util/SVNLogStream.java
+END
+SVNSSLUtil.java
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/util/SVNSSLUtil.java
+END
+SVNURLUtil.java
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/util/SVNURLUtil.java
+END

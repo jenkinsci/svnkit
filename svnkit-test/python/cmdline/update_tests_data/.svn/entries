@@ -1,0 +1,40 @@
+8
+
+dir
+30142
+http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/update_tests_data
+http://svn.collab.net/repos/svn
+
+
+
+2006-05-02T06:55:26.472442Z
+19494
+lundblad
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+612f8ebc-c883-4be0-9ee0-a4e9ef946e3a
+
+checkout_broken_eol.dump
+file
+
+
+
+
+2008-03-31T15:58:12.000000Z
+ed972149b00a2b54bea27c2242146b90
+2006-05-02T06:55:26.472442Z
+19494
+lundblad
+

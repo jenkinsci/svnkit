@@ -1,0 +1,119 @@
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core
+END
+ISVNLogEntryHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/ISVNLogEntryHandler.java
+END
+SVNLogEntryPath.java
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/SVNLogEntryPath.java
+END
+SVNAnnotationGenerator.java
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/SVNAnnotationGenerator.java
+END
+SVNErrorCode.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/SVNErrorCode.java
+END
+SVNProperty.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/SVNProperty.java
+END
+package.html
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/package.html
+END
+SVNLock.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/SVNLock.java
+END
+SVNNodeKind.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/SVNNodeKind.java
+END
+SVNAuthenticationException.java
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/SVNAuthenticationException.java
+END
+SVNErrorMessage.java
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/SVNErrorMessage.java
+END
+SVNException.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/SVNException.java
+END
+SVNDirEntry.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/SVNDirEntry.java
+END
+ISVNCanceller.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/ISVNCanceller.java
+END
+SVNURL.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/SVNURL.java
+END
+SVNRevisionProperty.java
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/SVNRevisionProperty.java
+END
+SVNLogEntry.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/SVNLogEntry.java
+END
+SVNCommitInfo.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/SVNCommitInfo.java
+END
+SVNCancelException.java
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/SVNCancelException.java
+END
+ISVNDirEntryHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/ISVNDirEntryHandler.java
+END

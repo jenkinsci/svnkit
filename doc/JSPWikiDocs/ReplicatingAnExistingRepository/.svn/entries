@@ -1,0 +1,41 @@
+8
+
+dir
+4088
+http://svn.svnkit.com/repos/svnkit/tags/1.1.6/doc/JSPWikiDocs/ReplicatingAnExistingRepository
+http://svn.svnkit.com/repos/svnkit
+
+
+
+2007-01-26T19:26:17.328519Z
+2919
+sa
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+0a862816-5deb-0310-9199-c792c6ae6c6e
+
+Replicator_Diagram.png
+file
+
+
+
+
+2008-03-31T15:57:30.000000Z
+2a3fbe59367455c1443cf5ad003ce5fb
+2007-01-26T19:26:17.328519Z
+2919
+sa
+has-props
+

@@ -1,0 +1,269 @@
+8
+
+dir
+4088
+http://svn.svnkit.com/repos/svnkit/tags/1.1.6/doc/JSPWikiDocs
+http://svn.svnkit.com/repos/svnkit
+
+
+
+2007-01-26T19:26:17.328519Z
+2919
+sa
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+0a862816-5deb-0310-9199-c792c6ae6c6e
+
+Authentication
+dir
+
+SettingUpASubversionRepository.txt
+file
+
+
+
+
+2008-03-31T15:57:42.000000Z
+4577d5df487dcbcfc88966d9bddcf435
+2007-01-26T19:26:17.328519Z
+2919
+sa
+has-props
+
+SvnkitArchitecture
+dir
+
+PrintingOutRepositoryHistory.txt
+file
+
+
+
+
+2008-03-31T15:57:42.000000Z
+31a6c669e41956effb4d932df7281dff
+2007-01-26T19:26:17.328519Z
+2919
+sa
+has-props
+
+GettingStartedWithSvnkit
+dir
+
+Main
+dir
+
+WhatIsSubversionFor
+dir
+
+ManagingRepositoryWithSvnkit.txt
+file
+
+
+
+
+2008-03-31T15:57:42.000000Z
+dcb54a0f72a0dc231c159bade03ba15f
+2007-01-26T19:26:17.328519Z
+2919
+sa
+has-props
+
+ReplicatingAnExistingRepository
+dir
+
+ManagingAWorkingCopy.txt
+file
+
+
+
+
+2008-03-31T15:57:42.000000Z
+bb7be57bee93d145306fd2c5dbe6ff09
+2007-01-26T19:26:17.328519Z
+2919
+sa
+has-props
+
+CommittingToARepository.txt
+file
+
+
+
+
+2008-03-31T15:57:42.000000Z
+224deef7928b4957b64774f58e974acd
+2007-01-26T19:26:17.328519Z
+2919
+sa
+has-props
+
+LeftMenu.txt
+file
+
+
+
+
+2008-03-31T15:57:42.000000Z
+7211931536883690f75dbce5e22d0487
+2007-01-26T19:26:17.328519Z
+2919
+sa
+has-props
+
+Authentication.txt
+file
+
+
+
+
+2008-03-31T15:57:42.000000Z
+19551afab2d85111379e2749d235a874
+2007-01-26T19:26:17.328519Z
+2919
+sa
+has-props
+
+LeftMenuFooter
+dir
+
+SvnkitArchitecture.txt
+file
+
+
+
+
+2008-03-31T15:57:42.000000Z
+4e96d84b5fc71d60fcb9974e39eb1690
+2007-01-26T19:26:17.328519Z
+2919
+sa
+has-props
+
+UpdatingFromARepository
+dir
+
+PrintingOutASubversionRepositoryTree.txt
+file
+
+
+
+
+2008-03-31T15:57:42.000000Z
+f84846a8c08a9018057fd4763de32c0d
+2007-01-26T19:26:17.328519Z
+2919
+sa
+has-props
+
+GettingStartedWithSvnkit.txt
+file
+
+
+
+
+2008-03-31T15:57:42.000000Z
+bb10a62ea277cebd2d82a6abaaffea75
+2007-01-26T19:26:17.328519Z
+2919
+sa
+has-props
+
+Main.txt
+file
+
+
+
+
+2008-03-31T15:57:42.000000Z
+506e1b63dfc1998756327097ea7a8ec2
+2007-01-26T19:26:17.328519Z
+2919
+sa
+has-props
+
+SettingUpASubversionRepository
+dir
+
+WhatIsSubversionFor.txt
+file
+
+
+
+
+2008-03-31T15:57:42.000000Z
+77c3be5b93661da8f972684aa162e277
+2007-01-26T19:26:17.328519Z
+2919
+sa
+has-props
+
+ReplicatingAnExistingRepository.txt
+file
+
+
+
+
+2008-03-31T15:57:42.000000Z
+386d00f344ffde027d720e7e2e2b842b
+2007-01-26T19:26:17.328519Z
+2919
+sa
+has-props
+
+LeftMenuFooter.txt
+file
+
+
+
+
+2008-03-31T15:57:42.000000Z
+db00b843c01967efd219104608336c4a
+2007-01-26T19:26:17.328519Z
+2919
+sa
+has-props
+
+CommittingToARepository
+dir
+
+ManagingAWorkingCopy
+dir
+
+PrintingOutFileContents.txt
+file
+
+
+
+
+2008-03-31T15:57:42.000000Z
+2e6b09d33d14fecced7e258aaa3c70f4
+2007-01-26T19:26:17.328519Z
+2919
+sa
+has-props
+
+UpdatingFromARepository.txt
+file
+
+
+
+
+2008-03-31T15:57:42.000000Z
+87da3d18210a87d7e5ffff0cf989cb88
+2007-01-26T19:26:17.328519Z
+2919
+sa
+has-props
+

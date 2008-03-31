@@ -1,0 +1,54 @@
+8
+
+dir
+4088
+http://svn.svnkit.com/repos/svnkit/tags/1.1.6/svnkit-test/apache
+http://svn.svnkit.com/repos/svnkit
+
+
+
+2007-12-13T01:23:14.558144Z
+3714
+alex
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+0a862816-5deb-0310-9199-c792c6ae6c6e
+
+python.template.conf
+file
+
+
+
+
+2008-03-31T15:56:36.000000Z
+8f98fe94e002341cadfdbf0db400899f
+2007-12-13T01:23:14.558144Z
+3714
+alex
+has-props
+
+users
+file
+
+
+
+
+2008-03-31T15:56:36.000000Z
+a809d6803fa8cfa2390626465f65ea38
+2005-04-29T19:07:23.952596Z
+494
+alex
+has-props
+

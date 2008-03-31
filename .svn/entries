@@ -1,0 +1,192 @@
+8
+
+dir
+4088
+http://svn.svnkit.com/repos/svnkit/tags/1.1.6
+http://svn.svnkit.com/repos/svnkit
+
+
+
+2008-02-22T00:26:56.498729Z
+3857
+alex
+has-props
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+0a862816-5deb-0310-9199-c792c6ae6c6e
+
+.project
+file
+
+
+
+
+2008-03-31T15:58:11.000000Z
+f91976be3cb7e2c2d07b35b710d5dc34
+2007-07-11T18:30:03.452883Z
+3218
+alex
+has-props
+
+www
+dir
+
+pom.xml
+file
+
+
+
+
+2008-03-31T15:58:11.000000Z
+38989ce19a702471ace13dd83f5b54eb
+2008-01-07T17:27:36.062234Z
+3747
+alex
+has-props
+
+svnkit-test
+dir
+
+plugin.xml
+file
+
+
+
+
+2008-03-31T15:58:11.000000Z
+2809b1fae2d1a679ff0c226948931a6a
+2008-01-07T17:27:36.062234Z
+3747
+alex
+has-props
+
+build.xml
+file
+
+
+
+
+2008-03-31T15:58:11.000000Z
+daf5c0ad1af88e6b74c88d95629be852
+2008-02-21T15:48:52.545942Z
+3854
+alex
+has-props
+
+.classpath
+file
+
+
+
+
+2008-03-31T15:58:11.000000Z
+f1bc094fcb06ab125c03a27bcf48fafa
+2008-01-07T17:27:36.062234Z
+3747
+alex
+has-props
+
+contrib
+dir
+
+svnkit-eclipse
+dir
+
+changelog.txt
+file
+
+
+
+
+2008-03-31T15:58:11.000000Z
+3ffcf35d65a19e8070c373df55ca89b8
+2008-02-21T15:48:52.545942Z
+3854
+alex
+has-props
+
+doc
+dir
+
+svnkit.ipr
+file
+
+
+
+
+2008-03-31T15:58:11.000000Z
+7a993e09f580e50b7107c71daac22ef9
+2007-07-11T17:09:57.288849Z
+3214
+alex
+has-props
+
+svnkit.build.properties
+file
+
+
+
+
+2008-03-31T15:58:11.000000Z
+2a7311d8a8ce88f00f169bc24559c87f
+2008-02-21T15:48:52.545942Z
+3854
+alex
+has-props
+
+COPYING
+file
+
+
+
+
+2008-03-31T15:58:11.000000Z
+07330f335dedabe21d5afdcd4319a06c
+2008-01-31T17:15:19.994189Z
+3814
+alex
+has-props
+
+.options
+file
+
+
+
+
+2008-03-31T15:58:11.000000Z
+39ef4b47dc79995a746c7af44e227faa
+2006-11-09T19:22:11.058725Z
+2773
+alex
+has-props
+
+README.txt
+file
+
+
+
+
+2008-03-31T15:58:11.000000Z
+e0f82e4a74f5ee18f805bc0eb02d9b86
+2007-10-12T18:24:26.604877Z
+3554
+alex
+has-props
+
+.settings
+dir
+
+svnkit
+dir
+
