@@ -56,6 +56,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNCancellableOutputStream;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -98,6 +99,7 @@ class HTTPConnection implements IHTTPConnection {
     private String myCharset;
     private boolean myIsSpoolAll;
     private File mySpoolDirectory;
+    private long myNextRequestTimeout;
     
     public HTTPConnection(SVNRepository repository, String charset, File spoolDirectory, boolean spoolAll) throws SVNException {
         myRepository = repository;
@@ -106,6 +108,7 @@ class HTTPConnection implements IHTTPConnection {
         myIsSecured = "https".equalsIgnoreCase(myHost.getProtocol());
         myIsSpoolAll = spoolAll;
         mySpoolDirectory = spoolDirectory;
+        myNextRequestTimeout = -1;
     }
     
     public SVNURL getHost() {
@@ -281,6 +284,10 @@ class HTTPConnection implements IHTTPConnection {
 
         while (true) {
             HTTPStatus status = null;
+            if (myNextRequestTimeout < 0 || System.currentTimeMillis() >= myNextRequestTimeout) {
+                SVNDebugLog.getDefaultLog().info("Keep-Alive timeout detected");
+                close();
+            }
             try {
                 err = null;
                 connect(keyManager, trustManager);
@@ -297,6 +304,7 @@ class HTTPConnection implements IHTTPConnection {
                     request.setAuthentication(authResponse);
                 }
                 request.dispatch(method, path, header, ok1, ok2, context);
+                myNextRequestTimeout = request.getNextRequestTimeout();
                 status = request.getStatus();
             } catch (SSLHandshakeException ssl) {
                 myRepository.getDebugLog().info(ssl);
