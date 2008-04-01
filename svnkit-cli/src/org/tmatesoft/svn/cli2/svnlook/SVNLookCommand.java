@@ -11,7 +11,17 @@
  */
 package org.tmatesoft.svn.cli2.svnlook;
 
+import java.io.File;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
 import org.tmatesoft.svn.cli2.AbstractSVNCommand;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 
 
 /**
@@ -23,9 +33,33 @@ public abstract class SVNLookCommand extends AbstractSVNCommand {
     public SVNLookCommand(String name, String[] aliases) {
         super(name, aliases);
     }
-
-    protected String getResourceBundleName() {
-        return "org.tmatesoft.svn.cli2.svnsync.commands";
+    
+    protected SVNLookCommandEnvironment getSVNLookEnvironment() {
+        return (SVNLookCommandEnvironment) getEnvironment();
     }
 
+    protected String getResourceBundleName() {
+        return "org.tmatesoft.svn.cli2.svnlook.commands";
+    }
+
+    protected File getLocalRepository() throws SVNException {
+        List targets = getEnvironment().combineTargets(null, false);
+        if (targets.isEmpty()) {
+            targets.add("");
+        }
+        if (targets.isEmpty()) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Repository argument required"));
+        }
+        SVNPath target = new SVNPath((String) targets.get(0));
+        if (target.isURL()) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+                    "'" + target.getTarget() + "' is an URL when it should be a path"));
+        }
+        return target.getFile();
+    }
+
+
+    public Collection getGlobalOptions() {
+        return Collections.EMPTY_LIST;
+    }
 }

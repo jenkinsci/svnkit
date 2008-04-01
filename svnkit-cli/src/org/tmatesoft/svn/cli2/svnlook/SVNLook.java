@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.cli2.svnlook;
 
+import org.tmatesoft.svn.cli2.AbstractSVNCommand;
 import org.tmatesoft.svn.cli2.AbstractSVNCommandEnvironment;
 import org.tmatesoft.svn.cli2.AbstractSVNLauncher;
 import org.tmatesoft.svn.cli2.SVNCommandLine;
@@ -31,7 +32,7 @@ public class SVNLook extends AbstractSVNLauncher {
     }
 
     protected String getProgramName() {
-        return "jsvnsync";
+        return "jsvnlook";
     }
 
     protected boolean needArgs() {
@@ -43,6 +44,8 @@ public class SVNLook extends AbstractSVNLauncher {
     }
 
     protected void registerCommands() {
+        AbstractSVNCommand.registerCommand(new SVNLookUUIDCommand());
+        AbstractSVNCommand.registerCommand(new SVNLookHelpCommand());
     }
 
     protected void registerOptions() {

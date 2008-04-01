@@ -15,5 +15,5 @@ fi
 
 SVNKIT_VM_OPTIONS="-Dsun.io.useCanonCaches=false -Djava.util.logging.config.file=$SVNKIT_HOME/logging.properties"
 
-SVNKIT_MAINCLASS=org.tmatesoft.svn.cli.SVNLook
+SVNKIT_MAINCLASS=org.tmatesoft.svn.cli2.svnlook.SVNLook
 "$JAVA_HOME/bin/java" $SVNKIT_VM_OPTIONS -cp $SVNKIT_CP $SVNKIT_MAINCLASS "$@"
