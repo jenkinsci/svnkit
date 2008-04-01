@@ -35,11 +35,13 @@ public class SVNAdminSetUUIDCommand extends SVNAdminCommand {
     }
 
     public void run() throws SVNException {
+        String uuid = null;
         if (getEnvironment().getArguments().size() > 2) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR);
             SVNErrorManager.error(err);
+        } else if (getEnvironment().getArguments().size() > 1) {
+            uuid = (String) getEnvironment().getArguments().get(1);
         }
-        String uuid = (String) getEnvironment().getArguments().get(1);
         SVNAdminClient client = getEnvironment().getClientManager().getAdminClient();
         client.doSetUUID(getLocalRepository(), uuid);
     }
