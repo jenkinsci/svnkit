@@ -759,13 +759,13 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                         date = null;
                     }
                     String message = SVNReader.getString(items, 4);
-                    hasChildren = SVNReader.getBoolean(items, 6);
-                    boolean invalidRevision = SVNReader.getBoolean(items, 7);
-                    revisionProperties = SVNReader.getProperties(items, 8, null);
+                    hasChildren = SVNReader.getBoolean(items, 5);
+                    boolean invalidRevision = SVNReader.getBoolean(items, 6);
+                    revisionProperties = SVNReader.getProperties(items, 7, null);
                     if (invalidRevision) {
                         revision = SVNRepository.INVALID_REVISION;
                     }
-                    if (wantCustomRevProps && (revisionProperties == null || revisionProperties == Collections.EMPTY_MAP)) {
+                    if (wantCustomRevProps && (revisionProperties == null)) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "Server does not support custom revprops via log");
                         SVNErrorManager.error(err);
                     }
