@@ -44,7 +44,6 @@ class SVNConnection {
     private SVNRepositoryImpl myRepository;
     private boolean myIsSVNDiff1;
     private boolean myIsCommitRevprops;
-    private boolean myIsMergeInfo;
     private boolean myIsReopening = false;
     private boolean myIsCredentialsReceived = false;
     private InputStream myLoggingInputStream;
@@ -90,10 +89,6 @@ class SVNConnection {
 
     public boolean isCommitRevprops() {
         return myIsCommitRevprops;
-    }
-
-    public boolean isMergeInfo() {
-        return myIsMergeInfo;
     }
     
     private InputStream skipLeadingGrabage() throws SVNException {
@@ -146,7 +141,6 @@ class SVNConnection {
         
         myIsSVNDiff1 = SVNReader.hasValue(items, 3, SVNDIFF1);
         myIsCommitRevprops = SVNReader.hasValue(items, 3, COMMIT_REVPROPS);
-        myIsMergeInfo = SVNReader.hasValue(items, 3, MERGE_INFO);
 
         write("(n(wwwwww)s)", new Object[]{"2", EDIT_PIPELINE, SVNDIFF1, ABSENT_ENTRIES, DEPTH, MERGE_INFO, LOG_REVPROPS, 
                 repository.getLocation().toString()});

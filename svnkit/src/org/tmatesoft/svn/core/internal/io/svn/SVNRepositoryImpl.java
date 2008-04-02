@@ -1469,9 +1469,6 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             boolean includeDescendants) throws SVNException {
         try {
             openConnection();
-            if (!myConnection.isMergeInfo()) {
-                return new TreeMap();
-            }
             String[] repositoryPaths = getRepositoryPaths(paths);
             if (repositoryPaths == null || repositoryPaths.length == 0) {
                 repositoryPaths = new String[]{""};
@@ -1482,7 +1479,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             write("(w((*s)(n)ww))", buffer);
             authenticate();
 
-            List items = read("(?l)", null, true);
+            List items = read("l", null, true);
             items = (List) items.get(0);
             Map pathsToMergeInfos = new SVNHashMap();
             for (Iterator iterator = items.iterator(); iterator.hasNext();) {
@@ -1493,6 +1490,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 }
                 List values = SVNReader.parseTuple("ss", item.getItems(), null);
                 String path = SVNReader.getString(values, 0);
+                path = path.startsWith("/") ? path : "/" + path;
                 String mergeInfoToParse = SVNReader.getString(values, 1);
                 Map srcsToRangeLists = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(mergeInfoToParse), null);
                 SVNMergeInfo mergeInfo = new SVNMergeInfo(path, srcsToRangeLists);
