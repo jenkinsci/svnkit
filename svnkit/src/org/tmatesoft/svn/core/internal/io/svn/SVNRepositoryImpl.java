@@ -727,6 +727,12 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Log entry not a list");
                     SVNErrorManager.error(err);
                 }
+
+                //now we read log response kind of
+                // ( ( ) 1 ( ) ( 27:2008-04-02T13:32:15.165405Z ) ( 27:Log message for revision 1. ) false false 0 ( ) )
+                // paths  athr                               date                            log msg hasChrn invR  rProps
+                //     0 1   2                                  3                                  4     5     6 7   8
+
                 List items = SVNReader.parseTuple("lr(?s)(?s)(?s)?ssnl", item.getItems(), null);
                 List changedPathsList = (List) items.get(0);
                 Map changedPathsMap = new SVNHashMap();
@@ -760,7 +766,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     String message = SVNReader.getString(items, 4);
                     hasChildren = SVNReader.getBoolean(items, 5);
                     boolean invalidRevision = SVNReader.getBoolean(items, 6);
-                    revisionProperties = SVNReader.getProperties(items, 7, null);
+                    revisionProperties = SVNReader.getProperties(items, 8, null);
                     if (invalidRevision) {
                         revision = SVNRepository.INVALID_REVISION;
                     }
