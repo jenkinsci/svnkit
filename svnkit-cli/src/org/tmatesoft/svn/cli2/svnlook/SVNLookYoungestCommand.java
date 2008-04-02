@@ -13,29 +13,29 @@ package org.tmatesoft.svn.cli2.svnlook;
 
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.io.SVNRepository;
 
 
 /**
  * @version 1.1.2
  * @author  TMate Software Ltd.
  */
-public class SVNLookUUIDCommand extends SVNLookCommand {
+public class SVNLookYoungestCommand extends SVNLookCommand {
 
-    protected SVNLookUUIDCommand() {
-        super("uuid", null);
+    protected SVNLookYoungestCommand() {
+        super("youngest", null);
     }
 
     protected Collection createSupportedOptions() {
-        return new LinkedList();
+        List options = new LinkedList();
+        return options;
     }
 
     public void run() throws SVNException {
-        SVNRepository repository = getSVNLookEnvironment().getRepository();
-        String uuid = repository.getRepositoryUUID(true);
-        getEnvironment().getOut().println(uuid);
+        long revision = getSVNLookEnvironment().getRepository().getLatestRevision();
+        getEnvironment().getOut().println(revision);
     }
 
 }

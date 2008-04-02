@@ -13,29 +13,38 @@ package org.tmatesoft.svn.cli2.svnlook;
 
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNRevisionProperty;
 
 
 /**
  * @version 1.1.2
  * @author  TMate Software Ltd.
  */
-public class SVNLookUUIDCommand extends SVNLookCommand {
+public class SVNLookAuthorCommand extends SVNLookCommand {
 
-    protected SVNLookUUIDCommand() {
-        super("uuid", null);
+    protected SVNLookAuthorCommand() {
+        super("author", null);
     }
 
     protected Collection createSupportedOptions() {
-        return new LinkedList();
+        List options = new LinkedList();
+        options.add(SVNLookOption.REVISION);
+        options.add(SVNLookOption.TRANSACTION);
+        return options;
     }
 
     public void run() throws SVNException {
-        SVNRepository repository = getSVNLookEnvironment().getRepository();
-        String uuid = repository.getRepositoryUUID(true);
-        getEnvironment().getOut().println(uuid);
+        SVNProperties props = getProperties();
+        SVNPropertyValue value = props.getSVNPropertyValue(SVNRevisionProperty.AUTHOR);
+        if (value != null && value.getString() != null) {
+            getEnvironment().getOut().print(value.getString());
+        }
+        getEnvironment().getOut().println();
     }
 
 }

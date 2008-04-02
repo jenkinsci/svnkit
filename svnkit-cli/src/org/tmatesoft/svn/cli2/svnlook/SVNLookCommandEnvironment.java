@@ -11,11 +11,13 @@
  */
 package org.tmatesoft.svn.cli2.svnlook;
 
+import java.io.File;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.tmatesoft.svn.cli2.AbstractSVNCommand;
@@ -27,8 +29,13 @@ import org.tmatesoft.svn.cli2.svn.SVNCommand;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
+import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
+import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
@@ -52,10 +59,20 @@ public class SVNLookCommandEnvironment extends AbstractSVNCommandEnvironment {
     private boolean myIsFullPaths;
     private boolean myIsCopyInfo;
     private String myExtension;
+    private boolean myIsRevision;
+    private File myRepositoryFile;
+    private FSRepository myRepository;
+    private FSTransactionInfo myTransactionInfo;
+    private String myArgument1;
+    private String myArgument2;
 
     public SVNLookCommandEnvironment(String programName, PrintStream out, PrintStream err, InputStream in) {
         super(programName, out, err, in);
         myRevision = -1;
+    }
+    
+    public File getRepositoryFile() {
+        return myRepositoryFile;
     }
     
     public long getRevision() {
@@ -113,6 +130,26 @@ public class SVNLookCommandEnvironment extends AbstractSVNCommandEnvironment {
     public String getExtension() {
         return myExtension;
     }
+    
+    public boolean isRevision() {
+        return myIsRevision;
+    }
+    
+    public FSTransactionInfo getTransactionInfo() {
+        return myTransactionInfo;
+    }
+    
+    public FSRepository getRepository() {
+        return myRepository;
+    }
+    
+    public String getFirstArgument() {
+        return myArgument1;
+    }
+
+    public String getSecondArgument() {
+        return myArgument2;
+    }
 
     protected ISVNAuthenticationManager createClientAuthenticationManager() {
         return SVNWCUtil.createDefaultAuthenticationManager();
@@ -122,12 +159,45 @@ public class SVNLookCommandEnvironment extends AbstractSVNCommandEnvironment {
         return SVNWCUtil.createDefaultOptions(true);
     }
 
-    protected void initOptions(SVNCommandLine commandLine) throws SVNException {
-        super.initOptions(commandLine);
+    protected void validateOptions(SVNCommandLine commandLine) throws SVNException {
+        super.validateOptions(commandLine);
         if (myRevision >= 0 && myTransaction != null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_MUTUALLY_EXCLUSIVE_ARGS, 
                     "The '--transaction' (-t) and '--revision' (-r) arguments can not co-exist");
             SVNErrorManager.error(err);                    
+        }
+        myIsRevision = myTransaction == null;
+        
+        if (!(myIsHelp || myIsVersion || "help".equals(commandLine.getCommandName()))) {
+            if (getArguments().isEmpty()) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, "Repository argument required");
+                SVNErrorManager.error(err);
+            }
+            SVNPath path = new SVNPath((String) getArguments().get(0), false);
+            if (path.isURL()) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "''{0}'' is URL when it should be a path", path.getTarget());
+                SVNErrorManager.error(err);
+            }
+            myRepositoryFile = path.getFile();
+            myRepository = (FSRepository) SVNRepositoryFactory.create(SVNURL.fromFile(myRepositoryFile));
+            myRepository.setCanceller(this);
+            myRepository.testConnection();
+            if (getTransaction() != null) {
+                myTransactionInfo = myRepository.getFSFS().openTxn(getTransaction());
+            } else {
+                if (myRevision < 0) {
+                    myRevision = myRepository.getLatestRevision();
+                }
+            }
+            List updatedArguments = new LinkedList(getArguments());
+            updatedArguments.remove(0);
+            if (!updatedArguments.isEmpty()) {
+                myArgument1 = (String) updatedArguments.remove(0);
+            }
+            if (!updatedArguments.isEmpty()) {
+                myArgument2 = (String) updatedArguments.remove(0);
+            }
+            setArguments(updatedArguments);
         }
     }
 

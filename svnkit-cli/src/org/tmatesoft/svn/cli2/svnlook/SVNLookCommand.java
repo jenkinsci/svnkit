@@ -11,17 +11,15 @@
  */
 package org.tmatesoft.svn.cli2.svnlook;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 import org.tmatesoft.svn.cli2.AbstractSVNCommand;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNPath;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
+import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
+import org.tmatesoft.svn.core.internal.io.fs.FSTransactionRoot;
 
 
 /**
@@ -41,23 +39,26 @@ public abstract class SVNLookCommand extends AbstractSVNCommand {
     protected String getResourceBundleName() {
         return "org.tmatesoft.svn.cli2.svnlook.commands";
     }
-
-    protected File getLocalRepository() throws SVNException {
-        List targets = getEnvironment().combineTargets(null, false);
-        if (targets.isEmpty()) {
-            targets.add("");
-        }
-        if (targets.isEmpty()) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Repository argument required"));
-        }
-        SVNPath target = new SVNPath((String) targets.get(0));
-        if (target.isURL()) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                    "'" + target.getTarget() + "' is an URL when it should be a path"));
-        }
-        return target.getFile();
+    
+    protected FSRoot getFSRoot() throws SVNException {
+        FSRepository repository = getSVNLookEnvironment().getRepository();
+        if (getSVNLookEnvironment().isRevision()) {
+            long rev = getSVNLookEnvironment().getRevision();
+            if (rev < 0) {
+                rev = repository.getLatestRevision();
+            }
+            return repository.getFSFS().createRevisionRoot(rev);
+        } 
+        return repository.getFSFS().createTransactionRoot(getSVNLookEnvironment().getTransactionInfo());        
     }
-
+    
+    protected SVNProperties getProperties() throws SVNException {
+        FSRoot root = getFSRoot();
+        if (root instanceof FSTransactionRoot) {
+            return root.getOwner().getTransactionProperties(((FSTransactionRoot) root).getTxnID()); 
+        }
+        return root.getOwner().getRevisionProperties(root.getRevision());
+    }
 
     public Collection getGlobalOptions() {
         return Collections.EMPTY_LIST;

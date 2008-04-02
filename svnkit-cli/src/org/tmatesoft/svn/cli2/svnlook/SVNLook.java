@@ -44,7 +44,11 @@ public class SVNLook extends AbstractSVNLauncher {
     }
 
     protected void registerCommands() {
+        AbstractSVNCommand.registerCommand(new SVNLookAuthorCommand());
+        AbstractSVNCommand.registerCommand(new SVNLookDateCommand());
+        AbstractSVNCommand.registerCommand(new SVNLookLogCommand());
         AbstractSVNCommand.registerCommand(new SVNLookUUIDCommand());
+        AbstractSVNCommand.registerCommand(new SVNLookYoungestCommand());
         AbstractSVNCommand.registerCommand(new SVNLookHelpCommand());
     }
 
