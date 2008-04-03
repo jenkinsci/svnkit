@@ -1189,7 +1189,17 @@ public class DAVRepository extends SVNRepository {
         if (status.getError() != null) {
             SVNErrorManager.error(status.getError());
         }
-        return handler.getMergeInfo();
+        Map mergeInfo = handler.getMergeInfo();
+        if (mergeInfo != null) {
+            for (Iterator items = mergeInfo.entrySet().iterator(); items.hasNext();) {
+                Map.Entry item = (Map.Entry) items.next();
+                String repositoryPath = doGetRepositoryPath((String) item.getKey());
+                Object value = item.getValue();
+                items.remove();
+                mergeInfo.put(repositoryPath, value);
+            }
+        }
+        return mergeInfo;
     }
 
 }

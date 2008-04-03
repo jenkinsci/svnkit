@@ -77,7 +77,7 @@ public class DAVMergeInfoHandler extends BasicDAVHandler {
             myCurrentInfo = cdata;
         } else if (element == DAVElement.MERGE_INFO_ITEM) {
             if (myPath != null && myCurrentInfo != null) {
-                Map srcPathsToRangeLists = SVNMergeInfoUtil.parseMergeInfo(myCurrentInfo, myPathsToMergeInfos);
+                Map srcPathsToRangeLists = SVNMergeInfoUtil.parseMergeInfo(myCurrentInfo, null);
                 myPathsToMergeInfos.put(myPath, new SVNMergeInfo(myPath, srcPathsToRangeLists));
             }
         }
