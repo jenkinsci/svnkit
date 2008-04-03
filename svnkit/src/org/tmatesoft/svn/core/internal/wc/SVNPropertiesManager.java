@@ -146,7 +146,7 @@ public class SVNPropertiesManager {
             SVNErrorManager.error(err);
         }
         SVNEntry entry = access.getVersionedEntry(path, false);
-        SVNAdminArea dir = entry.getAdminArea();
+        SVNAdminArea dir = entry.isDirectory() ? access.retrieve(path) : access.retrieve(path.getParentFile());
         boolean updateTimeStamp = SVNProperty.EOL_STYLE.equals(propName) || SVNProperty.CHARSET.equals(propName);
 
 
