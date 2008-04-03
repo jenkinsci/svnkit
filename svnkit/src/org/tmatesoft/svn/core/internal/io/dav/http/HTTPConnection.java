@@ -71,6 +71,8 @@ import org.xml.sax.helpers.DefaultHandler;
 class HTTPConnection implements IHTTPConnection {
     
     private static final DefaultHandler DEFAULT_SAX_HANDLER = new DefaultHandler();
+    private static final boolean ourIsNoKeepAlive = Boolean.getBoolean("svnkit.http.noKeepAlive");
+    
     private static EntityResolver NO_ENTITY_RESOLVER = new EntityResolver() {
         public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
             return new InputSource(new ByteArrayInputStream(new byte[0]));
@@ -275,7 +277,7 @@ class HTTPConnection implements IHTTPConnection {
 
         while (true) {
             HTTPStatus status = null;
-            if (myNextRequestTimeout < 0 || System.currentTimeMillis() >= myNextRequestTimeout) {
+            if (ourIsNoKeepAlive || myNextRequestTimeout < 0 || System.currentTimeMillis() >= myNextRequestTimeout) {
                 SVNDebugLog.getDefaultLog().info("Keep-Alive timeout detected");
                 close();
             }
