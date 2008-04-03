@@ -46,6 +46,7 @@ import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 
 /**
@@ -126,6 +127,7 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
         try {
             myCommand.run();
         } catch (SVNException e) {
+            SVNDebugLog.getDefaultLog().error(e);
             SVNErrorMessage err = e.getErrorMessage();
             if (err.getErrorCode() == SVNErrorCode.CL_INSUFFICIENT_ARGS || err.getErrorCode() == SVNErrorCode.CL_ARG_PARSING_ERROR) {
                 err = err.wrap("Try 'jsvn help' for more info");
