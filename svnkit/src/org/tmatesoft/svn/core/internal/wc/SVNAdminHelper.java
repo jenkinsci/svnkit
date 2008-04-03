@@ -44,9 +44,14 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  */
 public class SVNAdminHelper {
     
-    public static FSFS openRepository(File reposRootPath) throws SVNException {
+    public static FSFS openRepository(File reposRootPath, boolean openFS) throws SVNException {
         FSFS fsfs = new FSFS(reposRootPath);
-        fsfs.open();
+        if (openFS) {
+            fsfs.open();
+        } else {
+            fsfs.openRoot();
+            fsfs.getFSType();
+        }
         return fsfs;
     }
 

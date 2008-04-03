@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -59,6 +58,8 @@ public class FSFS {
     public static final String DB_LOGS_LOCK_FILE = "db-logs.lock";
     public static final String DB_LOCK_FILE = "db.lock";
     public static final String CURRENT_FILE = "current";
+    public static final String UUID_FILE = "uuid";
+    public static final String FS_TYPE_FILE = "fs-type";
     public static final String TXN_CURRENT_FILE = "txn-current";
     public static final String TXN_CURRENT_LOCK_FILE = "txn-current-lock";
     public static final String REVISION_PROPERTIES_DIR = "revprops";
@@ -106,6 +107,7 @@ public class FSFS {
     private int myDBFormat;
     private int myReposFormat;
     private String myUUID;
+    private String myFSType;
     private File myRepositoryRoot;
     private File myRevisionsRoot;
     private File myRevisionPropertiesRoot;
@@ -120,6 +122,8 @@ public class FSFS {
     private File myNodeOriginsDir;
     private File myRepositoryFormatFile;
     private File myDBFormatFile;
+    private File myUUIDFile;
+    private File myFSTypeFile;
     private long myMaxFilesPerDirectory;
     private long myYoungestRevisionCache;
     
@@ -135,6 +139,7 @@ public class FSFS {
         myNodeOriginsDir = new File(myDBRoot, NODE_ORIGINS_DIR);
         myRepositoryFormatFile = new File(myRepositoryRoot, REPOS_FORMAT_FILE);
         myDBFormatFile = new File(myDBRoot, DB_FORMAT_FILE);
+        myUUIDFile = new File(myDBRoot, UUID_FILE);
         myMaxFilesPerDirectory = 0;
     }
     
@@ -171,6 +176,68 @@ public class FSFS {
         openDB();
     }
 
+    public void openRoot() throws SVNException {
+        // repo format /root/format
+        FSFile formatFile = new FSFile(myRepositoryFormatFile);
+        int format = -1;
+        try {
+            format = formatFile.readInt();
+        } catch (NumberFormatException nfe) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_VERSION_FILE_FORMAT, 
+                    "First line of ''{0}'' contains non-digit", formatFile.getFile());
+            SVNErrorManager.error(err);
+        } finally {
+            formatFile.close();
+        }
+
+        if (format != REPOSITORY_FORMAT && format != REPOSITORY_FORMAT_LEGACY) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_UNSUPPORTED_VERSION, 
+                                  "Expected repository format ''{0}'' or " +
+                                  "''{1}''; found format ''{2}''",
+                                  new Object[] {new Integer(REPOSITORY_FORMAT_LEGACY),
+                                                new Integer(REPOSITORY_FORMAT),
+                                                new Integer(format)});
+            SVNErrorManager.error(err);
+        }
+        myReposFormat = format;
+        
+    }
+    
+    public void openDB() throws SVNException {
+        int format = readDBFormat();
+        FSRepositoryUtil.checkReposDBForma(format);
+
+        myDBFormat = format;
+
+        // fs type /root/db/fs-type
+        getFSType();
+
+        File dbCurrentFile = getCurrentFile();
+        if(!(dbCurrentFile.exists() && dbCurrentFile.canRead())){
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
+                    "Can''t open file ''{0}''", dbCurrentFile);
+            SVNErrorManager.error(err);
+        }
+    }
+
+    public String getFSType() throws SVNException {
+        if (myFSType == null) {
+            // fs type /root/db/fs-type
+            FSFile fsTypeFile = new FSFile(getFSTypeFile());
+            try {
+                myFSType = fsTypeFile.readLine(128);    
+            } finally {
+                fsTypeFile.close();
+            }
+            if (!DB_TYPE.equals(myFSType)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_UNKNOWN_FS_TYPE, 
+                        "Unsupported fs type ''{0}''", myFSType);
+                SVNErrorManager.error(err);
+            }
+        }
+        return myFSType;
+    }
+
     public int readDBFormat() throws SVNException {
         int format = -1;
         // fs format /root/db/format
@@ -201,7 +268,7 @@ public class FSFS {
     public String getUUID() throws SVNException {
         if(myUUID == null) {
             // uuid
-            FSFile formatFile = new FSFile(new File(myDBRoot, "uuid"));
+            FSFile formatFile = new FSFile(myUUIDFile);
             try {
                 myUUID = formatFile.readLine(38);
             } finally {
@@ -215,6 +282,25 @@ public class FSFS {
         return myWriteLockFile;
     }
     
+    public File getUUIDFile() {
+        return myUUIDFile;
+    }
+    
+    public File getDBRevsDir() {
+        return myRevisionsRoot;
+    }
+
+    public File getDBLocksDir() {
+        return myLocksRoot;
+    }
+    
+    public File getFSTypeFile() {
+        if (myFSTypeFile == null) {
+            myFSTypeFile = new File(myDBRoot, FS_TYPE_FILE);
+        }
+        return myFSTypeFile;
+    }
+
     public File getDBLogsLockFile() throws SVNException {
         File lockFile = new File(myDBRoot, LOCKS_DIR + "/" + DB_LOGS_LOCK_FILE);
         if (!lockFile.exists()) {
@@ -306,7 +392,7 @@ public class FSFS {
                 if (myDBFormat < MIN_PROTOREVS_DIR_FORMAT) {
                     myTransactionProtoRevsRoot.mkdirs();
                 }
-                writeFormat(myDBFormatFile, DB_FORMAT, 0, true);
+                writeDBFormat(DB_FORMAT, 0, true);
             } finally {
                 writeLock.unlock();
                 FSWriteLock.release(writeLock);
@@ -314,7 +400,8 @@ public class FSFS {
         }
     }
     
-    public void writeFormat(File formatFile, int format, int maxFilesPerDir, boolean overwrite) throws SVNException {
+    protected void writeDBFormat(int format, long maxFilesPerDir, boolean overwrite) throws SVNException {
+        File formatFile = getDBFormatFile();
         if (!(format >= 1 && format <= DB_FORMAT)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
                     "assertion failure in FSFS.writeFormat(): format == {0}", new Integer(format));
@@ -323,16 +410,12 @@ public class FSFS {
         String contents = null;
         if (format >= LAYOUT_FORMAT_OPTION_MINIMAL_FORMAT) {
             if (maxFilesPerDir > 0) {
-                contents = "{0}\nlayout sharded {1}\n";
-                contents = MessageFormat.format(contents, new Object[] { new Integer(format), 
-                        new Integer(maxFilesPerDir) }); 
+                contents = format + "\nlayout sharded " + maxFilesPerDir + "\n";
             } else {
-                contents = "{0}\nlayout linear";
-                contents = MessageFormat.format(contents, new Object[] { new Integer(format) });
+                contents = format + "\nlayout linear";
             }
         } else {
-            contents = "{0}\n";
-            contents = MessageFormat.format(contents, new Object[] { new Integer(format) }); 
+            contents = format + "\n";
         }
         
         if (!overwrite) {
@@ -642,8 +725,7 @@ public class FSFS {
     }
     
     public void setUUID(String uuid) throws SVNException {
-        File uuidFile = new File(myDBRoot, "uuid");
-        File uniqueFile = SVNFileUtil.createUniqueFile(myDBRoot, "uuid", ".tmp");
+        File uniqueFile = SVNFileUtil.createUniqueFile(myDBRoot, UUID_FILE, ".tmp");
         uuid += '\n';
 
         OutputStream uuidOS = null;
@@ -651,13 +733,14 @@ public class FSFS {
             uuidOS = SVNFileUtil.openFileForWriting(uniqueFile);
             uuidOS.write(uuid.getBytes("US-ASCII"));
         } catch (IOException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Error writing repository UUID to ''{0}''", uuidFile);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
+                    "Error writing repository UUID to ''{0}''", myUUIDFile);
             err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
             SVNErrorManager.error(err);
         } finally {
             SVNFileUtil.closeFile(uuidOS);
         }
-        SVNFileUtil.rename(uniqueFile, uuidFile);
+        SVNFileUtil.rename(uniqueFile, myUUIDFile);
     }
     
     public File getRevisionPropertiesFile(long revision) throws SVNException {
@@ -680,10 +763,18 @@ public class FSFS {
         return myRepositoryRoot;
     }
 
+    public File getRevisionPropertiesRoot() {
+        return myRevisionPropertiesRoot;
+    }
+    
     public File getRepositoryFormatFile(){
         return myRepositoryFormatFile;
     }
-
+ 
+    public File getDBFormatFile() {
+        return myDBFormatFile;
+    }
+    
     public File getNodeOriginsDir() {
         return myNodeOriginsDir;
     }
@@ -1440,61 +1531,6 @@ public class FSFS {
             SVNFileUtil.closeFile(currentOS);
         }
         SVNFileUtil.rename(tmpCurrentFile, currentFile);
-    }
-    
-    private void openRoot() throws SVNException {
-        // repo format /root/format
-        FSFile formatFile = new FSFile(myRepositoryFormatFile);
-        int format = -1;
-        try {
-            format = formatFile.readInt();
-        } catch (NumberFormatException nfe) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_VERSION_FILE_FORMAT, 
-                    "First line of ''{0}'' contains non-digit", formatFile.getFile());
-            SVNErrorManager.error(err);
-        } finally {
-            formatFile.close();
-        }
-
-        if (format != REPOSITORY_FORMAT && format != REPOSITORY_FORMAT_LEGACY) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_UNSUPPORTED_VERSION, 
-                                  "Expected repository format ''{0}'' or " +
-                                  "''{1}''; found format ''{2}''",
-                                  new Object[] {new Integer(REPOSITORY_FORMAT_LEGACY),
-                                                new Integer(REPOSITORY_FORMAT),
-                                                new Integer(format)});
-            SVNErrorManager.error(err);
-        }
-        myReposFormat = format;
-        
-    }
-    
-    private void openDB() throws SVNException {
-        int format = readDBFormat();
-        FSRepositoryUtil.checkReposDBForma(format);
-
-        myDBFormat = format;
-
-        // fs type /root/db/fs-type
-        FSFile formatFile = new FSFile(new File(myDBRoot, "fs-type"));
-        String fsType = null;
-        try {
-            fsType = formatFile.readLine(128);    
-        } finally {
-            formatFile.close();
-        }
-        if (!DB_TYPE.equals(fsType)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_UNKNOWN_FS_TYPE, 
-                    "Unsupported fs type ''{0}''", fsType);
-            SVNErrorManager.error(err);
-        }
-
-        File dbCurrentFile = getCurrentFile();
-        if(!(dbCurrentFile.exists() && dbCurrentFile.canRead())){
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
-                    "Can''t open file ''{0}''", dbCurrentFile);
-            SVNErrorManager.error(err);
-        }
     }
     
     private void ensureRevisionsExists(long revision) throws SVNException {

@@ -38,6 +38,7 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
+import org.tmatesoft.svn.core.internal.io.fs.FSHotCopier;
 import org.tmatesoft.svn.core.internal.io.fs.FSRecoverer;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryUtil;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
@@ -116,6 +117,7 @@ public class SVNAdminClient extends SVNBasicClient {
     private ISVNLogEntryHandler mySyncHandler;
     private ISVNLoadHandler myLoadHandler;
     private ISVNAdminEventHandler myEventHandler;
+    private FSHotCopier myHotCopier;
 
     /**
      * Creates a new admin client.
@@ -473,7 +475,7 @@ public class SVNAdminClient extends SVNBasicClient {
     }
 
     public void doListLocks(File repositoryRoot) throws SVNException {
-        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
+        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot, true);
         File digestFile = fsfs.getDigestFileFromRepositoryPath("/");
         ISVNLockHandler handler = new ISVNLockHandler() {
             public void handleLock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
@@ -495,7 +497,7 @@ public class SVNAdminClient extends SVNBasicClient {
             return;
         }
         
-        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
+        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot, true);
         for (int i = 0; i < paths.length; i++) {
             String path = paths[i];
             if (path == null) {
@@ -545,7 +547,7 @@ public class SVNAdminClient extends SVNBasicClient {
      * @since                   1.1.1
      */
     public void doListTransactions(File repositoryRoot) throws SVNException {
-        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
+        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot, true);
         Map txns = fsfs.listTransactions();
 
         for(Iterator names = txns.keySet().iterator(); names.hasNext();) {
@@ -581,7 +583,7 @@ public class SVNAdminClient extends SVNBasicClient {
             return;
         }
 
-        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
+        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot, true);
         for (int i = 0; i < transactions.length; i++) {
             String txnName = transactions[i];
             fsfs.openTxn(txnName);
@@ -609,7 +611,7 @@ public class SVNAdminClient extends SVNBasicClient {
     }
 
     public void doVerify(File repositoryRoot, SVNRevision startRevision, SVNRevision endRevision) throws SVNException {
-        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
+        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot, true);
         long startRev = startRevision.getNumber();
         long endRev = endRevision.getNumber();
         if (startRev < 0) {
@@ -654,7 +656,7 @@ public class SVNAdminClient extends SVNBasicClient {
      * @since                   1.1.1
      */
     public void doDump(File repositoryRoot, OutputStream dumpStream, SVNRevision startRevision, SVNRevision endRevision, boolean isIncremental, boolean useDeltas) throws SVNException {
-        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
+        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot, true);
         long youngestRevision = fsfs.getYoungestRevision();
         
         long lowerR = SVNAdminHelper.getRevisionNumber(startRevision, youngestRevision, fsfs);
@@ -933,7 +935,7 @@ public class SVNAdminClient extends SVNBasicClient {
     }
     
     public void doUpgrade(File repositoryRoot)throws SVNException {
-        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
+        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot, true);
         if (myEventHandler != null) {
             SVNAdminEvent event = new SVNAdminEvent(SVNAdminEventAction.UPGRADE);
             myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
@@ -947,7 +949,7 @@ public class SVNAdminClient extends SVNBasicClient {
     }
     
     public void doSetUUID(File repositoryRoot, String uuid) throws SVNException {
-        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
+        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot, true);
         if (uuid == null) {
             uuid = SVNUUIDGenerator.generateUUIDString();
         } else {
@@ -961,13 +963,22 @@ public class SVNAdminClient extends SVNBasicClient {
         fsfs.setUUID(uuid);
     }
     
-    public void doHotCopy(File repositoryRoot, File newRepositoryRoot, boolean cleanLogs) throws SVNException {
-        
+    public void doHotCopy(File srcRepositoryRoot, File newRepositoryRoot) throws SVNException {
+        FSFS fsfs = SVNAdminHelper.openRepository(srcRepositoryRoot, false);
+        FSHotCopier copier = getHotCopier();
+        copier.runHotCopy(fsfs, newRepositoryRoot);
     }
     
     public long getYoungestRevision(File repositoryRoot) throws SVNException {
-        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
+        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot, true);
         return fsfs.getYoungestRevision();
+    }
+    
+    private FSHotCopier getHotCopier() {
+        if (myHotCopier == null) {
+            myHotCopier = new FSHotCopier();
+        }
+        return myHotCopier;
     }
     
     private void dump(FSFS fsfs, OutputStream dumpStream, long start, long end, boolean isIncremental, boolean useDeltas) throws SVNException, IOException {
@@ -1083,7 +1094,7 @@ public class SVNAdminClient extends SVNBasicClient {
     
     private ISVNLoadHandler getLoadHandler(File repositoryRoot, boolean usePreCommitHook, boolean usePostCommitHook, SVNUUIDAction uuidAction, String parentDir, CharsetDecoder decoder) throws SVNException {
         if (myLoadHandler == null) {
-            FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
+            FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot, true);
             DefaultLoadHandler handler = new DefaultLoadHandler(usePreCommitHook, usePostCommitHook, uuidAction, 
                     parentDir, myEventHandler, decoder);
             handler.setFSFS(fsfs);

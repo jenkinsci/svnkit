@@ -84,7 +84,7 @@ public class SVNLookPropgetCommand extends SVNCommand {
             if (SVNRevision.isValidRevisionNumber(revision.getNumber())) {
                  revNum = revision.getNumber();
             } else {
-                FSFS fsfs = SVNAdminHelper.openRepository(reposRoot);
+                FSFS fsfs = SVNAdminHelper.openRepository(reposRoot, true);
                 revNum = SVNAdminHelper.getRevisionNumber(revision, fsfs.getYoungestRevision(), fsfs);
             }
             if (path == null) {

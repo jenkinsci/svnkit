@@ -12,6 +12,8 @@
 package org.tmatesoft.svn.core.internal.io.fs;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -26,28 +28,48 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
  */
 public class FSHotCopier {
 
-    private FSFS myOwner;
-    
-    public void runHotCopy(File srcPath, File dstPath) throws SVNException {
-        FSWriteLock dbLogsLock = FSWriteLock.getDBLogsLock(myOwner, false);
+    public void runHotCopy(FSFS srcOwner, File dstPath) throws SVNException {
+        FSWriteLock dbLogsLock = FSWriteLock.getDBLogsLock(srcOwner, false);
+        File srcPath = srcOwner.getRepositoryRoot();
         synchronized (dbLogsLock) {
             try {
                 dbLogsLock.lock();
                 createRepositoryLayout(srcPath, dstPath);
+                File dstReposLocksDir = new File(dstPath, FSFS.LOCKS_DIR);
                 try {
-                    createReposDir(new File(dstPath, FSFS.LOCKS_DIR));
+                    createReposDir(dstReposLocksDir);
                 } catch (SVNException svne) {
                     SVNErrorMessage err = svne.getErrorMessage().wrap("Creating lock dir");
                     SVNErrorManager.error(err);
                 }
-                createDBLock(dstPath);
-                createDBLogsLock(dstPath);
-                hotCopy(srcPath, dstPath);
-                SVNFileUtil.writeVersionFile(new File(dstPath, FSFS.REPOS_FORMAT_FILE), myOwner.getReposFormat());
+                createDBLock(dstReposLocksDir);
+                createDBLogsLock(dstReposLocksDir);
+                File dstDBDir = new File(dstPath, FSFS.DB_DIR);
+                dstDBDir.mkdirs();
+                FSFS dstOwner = new FSFS(dstPath);
+                String fsType = srcOwner.getFSType(); 
+                hotCopy(srcOwner, dstOwner);
+                writeFSType(dstOwner, fsType);
+                SVNFileUtil.writeVersionFile(new File(dstPath, FSFS.REPOS_FORMAT_FILE), 
+                        srcOwner.getReposFormat());
             } finally {
                 dbLogsLock.unlock();
                 FSWriteLock.release(dbLogsLock);
             }
+        }
+    }
+    
+    private void writeFSType(FSFS dstOwner, String fsType) throws SVNException {
+        OutputStream fsTypeStream = null;
+        try {
+            fsTypeStream = SVNFileUtil.openFileForWriting(dstOwner.getFSTypeFile());
+            fsType += '\n';
+            fsTypeStream.write(fsType.getBytes("US-ASCII"));
+        } catch (IOException ioe) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
+            SVNErrorManager.error(err);
+        } finally {
+            SVNFileUtil.closeFile(fsTypeStream);
         }
     }
     
@@ -104,9 +126,55 @@ public class FSHotCopier {
         }
     }
 
-    private void hotCopy(File srcPath, File dstPath) throws SVNException {
-        int format = myOwner.readDBFormat();
+    private void hotCopy(FSFS srcOwner, FSFS dstOwner) throws SVNException {
+        int format = srcOwner.readDBFormat();
         FSRepositoryUtil.checkReposDBForma(format);
-        //SVNFileUtil.copyFile(src, dst, safe)
+        SVNFileUtil.copyFile(srcOwner.getCurrentFile(), dstOwner.getCurrentFile(), true);
+        SVNFileUtil.copyFile(srcOwner.getUUIDFile(), dstOwner.getUUIDFile(), true);
+        long youngestRev = dstOwner.getYoungestRevision();
+        
+        File dstRevsDir = dstOwner.getDBRevsDir();
+        dstRevsDir.mkdirs();
+        
+        long maxFilesPerDirectory = srcOwner.getMaxFilesPerDirectory();
+        for (long rev = 0; rev <= youngestRev; rev++) {
+            File dstDir = dstRevsDir;
+            if (maxFilesPerDirectory > 0) {
+                String shard = String.valueOf(rev / maxFilesPerDirectory);
+                dstDir = new File(dstRevsDir, shard);
+            }
+            SVNFileUtil.copyFile(srcOwner.getRevisionFile(rev), new File(dstDir, String.valueOf(rev)), true);
+        }
+
+        File dstRevPropsDir = dstOwner.getRevisionPropertiesRoot();
+        for (long rev = 0; rev <= youngestRev; rev++) {
+            File dstDir = dstRevPropsDir;
+            if (maxFilesPerDirectory > 0) {
+                String shard = String.valueOf(rev / maxFilesPerDirectory);
+                dstDir = new File(dstRevPropsDir, shard);
+            }
+            SVNFileUtil.copyFile(srcOwner.getRevisionPropertiesFile(rev), new File(dstDir, String.valueOf(rev)), 
+                    true);
+        }
+
+        dstOwner.getTransactionsParentDir().mkdirs();
+        if (format >= FSFS.MIN_PROTOREVS_DIR_FORMAT) {
+            dstOwner.getTransactionProtoRevsDir().mkdirs();
+        }
+        
+        File srcLocksDir = srcOwner.getDBLocksDir();
+        if (srcLocksDir.exists()) {
+            SVNFileUtil.copyDirectory(srcLocksDir, dstOwner.getDBLocksDir(), false, null);
+        }
+        
+        File srcNodeOriginsDir = srcOwner.getNodeOriginsDir();
+        if (srcNodeOriginsDir.exists()) {
+            SVNFileUtil.copyDirectory(srcNodeOriginsDir, dstOwner.getNodeOriginsDir(), false, null);
+        }
+        
+        if (format >= FSFS.MIN_CURRENT_TXN_FORMAT) {
+            SVNFileUtil.copyFile(srcOwner.getTransactionCurrentFile(), dstOwner.getTransactionCurrentFile(), true);
+        }
+        dstOwner.writeDBFormat(format, maxFilesPerDirectory, false);
     }
 }

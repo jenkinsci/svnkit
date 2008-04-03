@@ -234,7 +234,7 @@ public class SVNLookClient extends SVNBasicClient {
      *                          <code>repositoryRoot</code>
      */
     public long doGetYoungestRevision(File repositoryRoot) throws SVNException {
-        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
+        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot, true);
         return fsfs.getYoungestRevision();
     }
 
@@ -247,7 +247,7 @@ public class SVNLookClient extends SVNBasicClient {
      *                         <code>repositoryRoot</code>
      */
     public String doGetUUID(File repositoryRoot) throws SVNException {
-        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot);
+        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot, true);
         return fsfs.getUUID();
     }
 
@@ -1111,7 +1111,7 @@ public class SVNLookClient extends SVNBasicClient {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Invalid revision number supplied");
             SVNErrorManager.error(err);
         }
-        return SVNAdminHelper.openRepository(repositoryRoot);
+        return SVNAdminHelper.openRepository(repositoryRoot, true);
     }
 
     private FSFS open(File repositoryRoot, String transactionName) throws SVNException {
@@ -1120,6 +1120,6 @@ public class SVNLookClient extends SVNBasicClient {
             SVNErrorManager.error(err);
         }
 
-        return SVNAdminHelper.openRepository(repositoryRoot);
+        return SVNAdminHelper.openRepository(repositoryRoot, true);
     }
 }

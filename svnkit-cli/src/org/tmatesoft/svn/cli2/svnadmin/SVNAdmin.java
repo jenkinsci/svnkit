@@ -58,6 +58,7 @@ public class SVNAdmin extends AbstractSVNLauncher {
         AbstractSVNCommand.registerCommand(new SVNAdminRecoverCommand());
         AbstractSVNCommand.registerCommand(new SVNAdminUpgradeCommand());
         AbstractSVNCommand.registerCommand(new SVNAdminSetUUIDCommand());
+        AbstractSVNCommand.registerCommand(new SVNAdminHotCopyCommand());
     }
 
     protected void registerOptions() {

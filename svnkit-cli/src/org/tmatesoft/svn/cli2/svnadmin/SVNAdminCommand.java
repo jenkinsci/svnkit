@@ -42,14 +42,19 @@ public abstract class SVNAdminCommand extends AbstractSVNCommand {
     }
     
     protected File getLocalRepository() throws SVNException {
+        return getLocalRepository(0);
+    }
+
+    protected File getLocalRepository(int index) throws SVNException {
         List targets = getEnvironment().combineTargets(null, false);
         if (targets.isEmpty()) {
             targets.add("");
         }
-        if (targets.isEmpty()) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Repository argument required"));
+        if (targets.isEmpty() || index > targets.size() - 1 ) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+                    "Repository argument required"));
         }
-        SVNPath target = new SVNPath((String) targets.get(0));
+        SVNPath target = new SVNPath((String) targets.get(index));
         if (target.isURL()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                     "'" + target.getTarget() + "' is an URL when it should be a path"));
