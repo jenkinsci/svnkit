@@ -1489,7 +1489,8 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 }
                 List values = SVNReader.parseTuple("ss", item.getItems(), null);
                 String path = SVNReader.getString(values, 0);
-                path = path.startsWith("/") ? path : "/" + path;
+                path = path.charAt(0) == '/' ? path.substring(1) : path;
+                path = getRepositoryPath(path);
                 String mergeInfoToParse = SVNReader.getString(values, 1);
                 Map srcsToRangeLists = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(mergeInfoToParse), null);
                 SVNMergeInfo mergeInfo = new SVNMergeInfo(path, srcsToRangeLists);
