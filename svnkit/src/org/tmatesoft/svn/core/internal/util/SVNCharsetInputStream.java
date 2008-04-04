@@ -32,18 +32,20 @@ public class SVNCharsetInputStream extends FilterInputStream {
     private SVNCharsetConvertor myCharsetConvertor;
     private byte[] mySourceBuffer;
     private ByteBuffer myConvertedBuffer;
+    private boolean myEndOfStream;
 
     public SVNCharsetInputStream(InputStream in, Charset inputCharset, Charset outputCharset) {
         super(in);
         myCharsetConvertor = new SVNCharsetConvertor(inputCharset.newDecoder(), outputCharset.newEncoder());
         mySourceBuffer = new byte[DEFAULT_BUFFER_CAPACITY];
         myConvertedBuffer = ByteBuffer.allocate(DEFAULT_BUFFER_CAPACITY);
+        myEndOfStream = false;
     }
 
     public int read() throws IOException {
         byte[] b = new byte[1];
         int r = read(b);
-        if (r <= 0) {
+        if (r < 0) {
             return -1;
         }
         return b[0];
@@ -54,29 +56,41 @@ public class SVNCharsetInputStream extends FilterInputStream {
     }
 
     public int read(byte b[], int off, int len) throws IOException {
-        if (len == 0) {
-            return 0;
-        }
         int available = myConvertedBuffer.position();
+        if (myEndOfStream && available == 0){
+            return -1;           
+        }
         while (available < len) {
-            int read = in.read(mySourceBuffer);
-            read = read < 0 ? 0 : read;
-            boolean endOfInput = read < mySourceBuffer.length;
+            int readed = fillBuffer();                        
             try {
-                myConvertedBuffer = myCharsetConvertor.convertChunk(mySourceBuffer, 0, read, myConvertedBuffer, endOfInput);
-                if (endOfInput) {
+                myConvertedBuffer = myCharsetConvertor.convertChunk(mySourceBuffer, 0, readed, myConvertedBuffer, myEndOfStream);
+                if (myEndOfStream) {
                     myConvertedBuffer = myCharsetConvertor.flush(myConvertedBuffer);
                     break;
                 }
             } catch (SVNException e) {
                 throw new IOExceptionWrapper(e);
+            } finally {
+                available = myConvertedBuffer.position();
             }
-            available = myConvertedBuffer.position();
         }
         myConvertedBuffer.flip();
         len = Math.min(myConvertedBuffer.remaining(), len);
-        myConvertedBuffer.get(b, off, len);
-        myConvertedBuffer.compact();
-        return len == 0 ? -1 : len;
+        myConvertedBuffer = myConvertedBuffer.get(b, off, len);
+        myConvertedBuffer = myConvertedBuffer.compact();
+        return len;
+    }
+
+    private int fillBuffer() throws IOException {
+        int readed = 0;
+        while (readed < mySourceBuffer.length) {
+            int r = in.read(mySourceBuffer, readed, mySourceBuffer.length - readed);
+            if (r < 0) {
+                myEndOfStream = true;
+                break;
+            }
+            readed += r;
+        }
+        return readed;
     }
 }

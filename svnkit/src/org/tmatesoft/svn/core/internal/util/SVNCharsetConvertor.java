@@ -52,8 +52,8 @@ public class SVNCharsetConvertor {
     }
 
     public ByteBuffer convertChunk(byte[] b, int offset, int length, ByteBuffer dst, boolean endOfInput) throws SVNException {
-        if (length == 0){
-            return dst;           
+        if (length == 0) {
+            return dst;
         }
         myInputByteBuffer = allocate(myInputByteBuffer, length);
         myInputByteBuffer.put(b, offset, length);
@@ -72,36 +72,7 @@ public class SVNCharsetConvertor {
         myCharBuffer.flip();
         dst = allocate(dst, (int) (myEncoder.maxBytesPerChar() * myCharBuffer.remaining()));
 
-        result = myEncoder.encode(myCharBuffer, dst, endOfInput);
-        if (result.isError()) {
-            throwException(result);
-        } else if (result.isUnderflow()) {
-            myCharBuffer.compact();
-        } else {
-            myCharBuffer.clear();
-        }
-
-        return dst;
-    }
-
-
-
-    public ByteBuffer convertChunk(ByteBuffer src, ByteBuffer dst, boolean endOfInput) throws SVNException {
-        myCharBuffer = allocate(myCharBuffer, (int) (myDecoder.maxCharsPerByte() * src.remaining()));
-
-        CoderResult result = myDecoder.decode(myInputByteBuffer, myCharBuffer, endOfInput);
-        if (result.isError()) {
-            throwException(result);
-        } else if (result.isUnderflow()) {
-            myInputByteBuffer.compact();
-        } else {
-            myInputByteBuffer.clear();
-        }
-
-        myCharBuffer.flip();
-        dst = allocate(dst, (int) (myEncoder.maxBytesPerChar() * myCharBuffer.remaining()));
-
-        result = myEncoder.encode(myCharBuffer, dst, endOfInput);
+        result = myEncoder.encode(myCharBuffer, dst, false);
         if (result.isError()) {
             throwException(result);
         } else if (result.isUnderflow()) {
@@ -126,14 +97,10 @@ public class SVNCharsetConvertor {
                 }
             }
             myCharBuffer.flip();
-
-            if (myCharBuffer.hasRemaining()) {
-                dst = allocate(dst, (int) (myEncoder.maxBytesPerChar() * myCharBuffer.remaining()));
-
-                result = myEncoder.encode(myCharBuffer, dst, true);
-                if (result.isError()) {
-                    throwException(result);
-                }
+            dst = allocate(dst, (int) (myEncoder.maxBytesPerChar() * myCharBuffer.remaining()));
+            result = myEncoder.encode(myCharBuffer, dst, true);
+            if (result.isError()) {
+                throwException(result);
             }
             while (true) {
                 result = myEncoder.flush(dst);
