@@ -160,15 +160,12 @@ public class SVNMergeInfoUtil {
         return formatMergeInfoToString(result);
     }
     
-    public static void diffMergeInfoProperties(Map deleted, Map added, String fromPropValue, Map fromMergeInfo, 
-            String toPropValue, Map toMergeInfo) throws SVNException {
-        if (fromPropValue.equals(toPropValue)) {
+    public static void diffMergeInfoProperties(Map deleted, Map added, String fromPropValue, Map fromMergeInfo, String toPropValue, Map toMergeInfo) throws SVNException {
+        if (fromPropValue != null && fromPropValue.equals(toPropValue)) {
             return;
         } 
-        fromMergeInfo = fromMergeInfo == null ? parseMergeInfo(new StringBuffer(fromPropValue), null) 
-                                              : fromMergeInfo;
-        toMergeInfo = toMergeInfo == null ? parseMergeInfo(new StringBuffer(toPropValue), null) 
-                                          : toMergeInfo;
+        fromMergeInfo = fromMergeInfo == null ? parseMergeInfo(new StringBuffer(fromPropValue), null) : fromMergeInfo;
+        toMergeInfo = toMergeInfo == null ? parseMergeInfo(new StringBuffer(toPropValue), null) : toMergeInfo;
         diffMergeInfo(deleted, added, fromMergeInfo, toMergeInfo, false);
     }
     
