@@ -688,21 +688,22 @@ public class DAVRepository extends SVNRepository {
     protected long getLocationSegmentsImpl(String path, long pegRevision, long startRevision, long endRevision, ISVNLocationSegmentHandler handler) throws SVNException {
         try {
             openConnection();
-            if (path.startsWith("/")) {
+            boolean absolutePath = path.startsWith("/");
+            if (absolutePath) {
                 // (root + path), relative to location
                 myConnection.fetchRepositoryRoot(this);
                 path = SVNPathUtil.append(myRepositoryRoot.getPath(), path);
                 if (path.equals(getLocation().getPath())) {
                     path = "";
                 } else {
-                    path = path.substring(getLocation().getPath().length() + 1);
+                    path = path.substring(myRepositoryRoot.getPath().length() + 1);
                 }
             }
 
             StringBuffer request = DAVLocationSegmentsHandler.generateGetLocationSegmentsRequest(null, path, 
                     pegRevision, startRevision, endRevision); 
             DAVLocationSegmentsHandler davHandler = new DAVLocationSegmentsHandler(handler);
-            String root = getLocation().getPath();
+            String root = absolutePath ? myRepositoryRoot.getPath() : getLocation().getPath();
             root = SVNEncodingUtil.uriEncode(root);
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, this, root, pegRevision, false, 
                     false, null);            
