@@ -1891,7 +1891,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 }
             }
             
-            if (child.myIsAbsent || child.myIsScheduledForDeletion || (child.myIsSwitched && !myTarget.equals(child.myPath))) {
+            if (child.myIsAbsent || (child.myIsSwitched && !myTarget.equals(child.myPath))) {
                 File parentPath = child.myPath.getParentFile();
                 int parentInd = childrenWithMergeInfo.indexOf(new MergePath(parentPath));
                 MergePath parent = parentInd != -1 ? (MergePath) childrenWithMergeInfo.get(parentInd) : null;
