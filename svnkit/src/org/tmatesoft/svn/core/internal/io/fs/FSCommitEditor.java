@@ -232,8 +232,18 @@ public class FSCommitEditor implements ISVNEditor {
                 continue;
             }
 
-            if (propName.equals(SVNProperty.MERGE_INFO)) {
-                //TODO: FIXME
+            if (myFSFS.supportsMergeInfo() && propName.equals(SVNProperty.MERGE_INFO)) {
+                long increment = 0;
+                boolean hadMergeInfo = parentPath.getRevNode().hasMergeInfo(); 
+                if (propValue != null && !hadMergeInfo) {
+                    increment = 1;
+                } else if (propValue == null && hadMergeInfo) {
+                    increment = -1;
+                }
+                if (increment != 0) {
+                    myCommitter.incrementMergeInfoUpTree(parentPath, increment);
+                    parentPath.getRevNode().setHasMergeInfo(propValue != null);
+                }
             }
 
             if (propValue == null) {

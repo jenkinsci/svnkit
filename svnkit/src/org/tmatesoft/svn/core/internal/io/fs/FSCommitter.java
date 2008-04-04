@@ -362,7 +362,7 @@ public class FSCommitter {
         return "_" + nextIds[1];
     }
 
-    private void incrementMergeInfoUpTree(FSParentPath parentPath, long increment) throws SVNException {
+    public void incrementMergeInfoUpTree(FSParentPath parentPath, long increment) throws SVNException {
         while (parentPath != null) {
             myTxnRoot.incrementMergeInfoCount(parentPath.getRevNode(), increment);
             parentPath = parentPath.getParent();

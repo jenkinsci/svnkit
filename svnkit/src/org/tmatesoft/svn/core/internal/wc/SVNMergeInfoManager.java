@@ -41,6 +41,7 @@ public class SVNMergeInfoManager {
     
     public Map getMergeInfo(String[] paths, FSRevisionRoot root, SVNMergeInfoInheritance inherit, 
             boolean includeDescendants) throws SVNException {
+
         if (!root.getOwner().supportsMergeInfo()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
                     "Querying mergeinfo requires version {0} of the FSFS filesystem schema;" +
@@ -51,12 +52,10 @@ public class SVNMergeInfoManager {
         }
         Map mergeInfoAsHashes = getMergeInfoForPaths(root, paths, inherit, includeDescendants);
         Map mergeInfo = new TreeMap();
-        for (int i = 0; i < paths.length; i++) {
-            String path = paths[i];
+        for (Iterator mergeInfoIter = mergeInfoAsHashes.keySet().iterator(); mergeInfoIter.hasNext();) {
+            String path = (String) mergeInfoIter.next();
             Map pathMergeInfo = (Map) mergeInfoAsHashes.get(path);
-            if (pathMergeInfo != null) {
-                mergeInfo.put(path, new SVNMergeInfo(path, pathMergeInfo));
-            }
+            mergeInfo.put(path, new SVNMergeInfo(path, pathMergeInfo));
         }
         return mergeInfo;
     }
@@ -104,7 +103,7 @@ public class SVNMergeInfoManager {
                 result.put(kidPath, kidMergeInfo);
             }
             if (kidNode.hasDescendantsWithMergeInfo()) {
-                crawlDirectoryForMergeInfo(root, path, node, result);
+                crawlDirectoryForMergeInfo(root, kidPath, kidNode, result);
             }
         }
         return result;
