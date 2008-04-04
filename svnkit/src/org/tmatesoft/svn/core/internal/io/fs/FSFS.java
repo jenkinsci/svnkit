@@ -129,17 +129,6 @@ public class FSFS {
     
     public FSFS(File repositoryRoot) {
         myRepositoryRoot = repositoryRoot;
-        myDBRoot = new File(myRepositoryRoot, DB_DIR);
-        myRevisionsRoot = new File(myDBRoot, REVS_DIR);
-        myRevisionPropertiesRoot = new File(myDBRoot, REVISION_PROPERTIES_DIR);
-        myTransactionsRoot = new File(myDBRoot, TRANSACTIONS_DIR);
-        myTransactionProtoRevsRoot = new File(myDBRoot, TRANSACTION_PROTOS_DIR);
-        myWriteLockFile = new File(myDBRoot, WRITE_LOCK_FILE);
-        myLocksRoot = new File(myDBRoot, LOCKS_DIR);
-        myNodeOriginsDir = new File(myDBRoot, NODE_ORIGINS_DIR);
-        myRepositoryFormatFile = new File(myRepositoryRoot, REPOS_FORMAT_FILE);
-        myDBFormatFile = new File(myDBRoot, DB_FORMAT_FILE);
-        myUUIDFile = new File(myDBRoot, UUID_FILE);
         myMaxFilesPerDirectory = 0;
     }
     
@@ -178,7 +167,7 @@ public class FSFS {
 
     public void openRoot() throws SVNException {
         // repo format /root/format
-        FSFile formatFile = new FSFile(myRepositoryFormatFile);
+        FSFile formatFile = new FSFile(getRepositoryFormatFile());
         int format = -1;
         try {
             format = formatFile.readInt();
@@ -241,7 +230,7 @@ public class FSFS {
     public int readDBFormat() throws SVNException {
         int format = -1;
         // fs format /root/db/format
-        FSFile formatFile = new FSFile(myDBFormatFile);
+        FSFile formatFile = new FSFile(getDBFormatFile());
         try {
             format = formatFile.readInt();
             readOptions(formatFile, format);
@@ -268,7 +257,7 @@ public class FSFS {
     public String getUUID() throws SVNException {
         if(myUUID == null) {
             // uuid
-            FSFile formatFile = new FSFile(myUUIDFile);
+            FSFile formatFile = new FSFile(getUUIDFile());
             try {
                 myUUID = formatFile.readLine(38);
             } finally {
@@ -278,31 +267,96 @@ public class FSFS {
         return myUUID;
     }
     
+    public File getDBRoot() {
+        if (myDBRoot == null) {
+            myDBRoot = new File(myRepositoryRoot, DB_DIR);
+        }
+        return myDBRoot;
+    }
+
     public File getWriteLockFile() {
+        if (myWriteLockFile == null) {
+            myWriteLockFile = new File(getDBRoot(), WRITE_LOCK_FILE);
+        }
         return myWriteLockFile;
     }
     
     public File getUUIDFile() {
+        if (myUUIDFile == null) {
+            myUUIDFile = new File(getDBRoot(), UUID_FILE);
+        }
         return myUUIDFile;
     }
     
     public File getDBRevsDir() {
+        if (myRevisionsRoot == null) {
+            myRevisionsRoot = new File(getDBRoot(), REVS_DIR);
+        }
         return myRevisionsRoot;
     }
 
     public File getDBLocksDir() {
+        if (myLocksRoot == null) {
+            myLocksRoot = new File(getDBRoot(), LOCKS_DIR);
+        }
         return myLocksRoot;
     }
     
     public File getFSTypeFile() {
         if (myFSTypeFile == null) {
-            myFSTypeFile = new File(myDBRoot, FS_TYPE_FILE);
+            myFSTypeFile = new File(getDBRoot(), FS_TYPE_FILE);
         }
         return myFSTypeFile;
     }
 
+    public File getTransactionsParentDir(){
+        if (myTransactionsRoot == null) {
+            myTransactionsRoot = new File(getDBRoot(), TRANSACTIONS_DIR);
+        }
+        return myTransactionsRoot;
+    }
+
+    public File getRepositoryRoot(){
+        return myRepositoryRoot;
+    }
+
+    public File getRevisionPropertiesRoot() {
+        if (myRevisionPropertiesRoot == null) {
+            myRevisionPropertiesRoot = new File(getDBRoot(), REVISION_PROPERTIES_DIR);
+        }
+        return myRevisionPropertiesRoot;
+    }
+    
+    public File getRepositoryFormatFile(){
+        if (myRepositoryFormatFile == null) {
+            myRepositoryFormatFile = new File(myRepositoryRoot, REPOS_FORMAT_FILE);
+        }
+        return myRepositoryFormatFile;
+    }
+ 
+    public File getDBFormatFile() {
+        if (myDBFormatFile == null) {
+            myDBFormatFile = new File(getDBRoot(), DB_FORMAT_FILE);
+        }
+        return myDBFormatFile;
+    }
+    
+    public File getNodeOriginsDir() {
+        if (myNodeOriginsDir == null) {
+            myNodeOriginsDir = new File(getDBRoot(), NODE_ORIGINS_DIR);
+        }
+        return myNodeOriginsDir;
+    }
+
+    public File getCurrentFile() {
+        if(myCurrentFile == null){
+            myCurrentFile = new File(getDBRoot(), CURRENT_FILE); 
+        }
+        return myCurrentFile;
+    }
+
     public File getDBLogsLockFile() throws SVNException {
-        File lockFile = new File(myDBRoot, LOCKS_DIR + "/" + DB_LOGS_LOCK_FILE);
+        File lockFile = new File(getDBRoot(), LOCKS_DIR + "/" + DB_LOGS_LOCK_FILE);
         if (!lockFile.exists()) {
             try {
                 SVNFileUtil.createFile(lockFile, PRE_12_COMPAT_UNNEEDED_FILE_CONTENTS, "US-ASCII");
@@ -372,10 +426,6 @@ public class FSFS {
         return -1;
     }
     
-    public File getDBRoot(){
-        return myDBRoot;
-    }
-    
     public void upgrade() throws SVNException {
         FSWriteLock writeLock = FSWriteLock.getWriteLockForDB(this);
         synchronized (writeLock) {
@@ -390,7 +440,8 @@ public class FSFS {
                     SVNFileUtil.createEmptyFile(getTransactionCurrentLockFile());
                 }
                 if (myDBFormat < MIN_PROTOREVS_DIR_FORMAT) {
-                    myTransactionProtoRevsRoot.mkdirs();
+                    File txnProtoRevsDir = getTransactionProtoRevsDir();
+                    txnProtoRevsDir.mkdirs();
                 }
                 writeDBFormat(DB_FORMAT, 0, true);
             } finally {
@@ -682,32 +733,32 @@ public class FSFS {
     
     public File getNewRevisionFile(long newRevision) {
         if (myMaxFilesPerDirectory > 0 && (newRevision % myMaxFilesPerDirectory == 0)) {
-            File shardDir = new File(myRevisionsRoot, String.valueOf(newRevision/myMaxFilesPerDirectory));
+            File shardDir = new File(getDBRevsDir(), String.valueOf(newRevision/myMaxFilesPerDirectory));
             shardDir.mkdirs();
         }
         
         File revFile = null;
         if (myMaxFilesPerDirectory > 0) {
-            File shardDir = new File(myRevisionsRoot, String.valueOf(newRevision/myMaxFilesPerDirectory));
+            File shardDir = new File(getDBRevsDir(), String.valueOf(newRevision/myMaxFilesPerDirectory));
             revFile = new File(shardDir, String.valueOf(newRevision));
         } else {
-            revFile = new File(myRevisionsRoot, String.valueOf(newRevision));
+            revFile = new File(getDBRevsDir(), String.valueOf(newRevision));
         }
         return revFile;
     }
 
     public File getNewRevisionPropertiesFile(long newRevision) {
         if (myMaxFilesPerDirectory > 0 && (newRevision % myMaxFilesPerDirectory == 0)) {
-            File shardDir = new File(myRevisionPropertiesRoot, String.valueOf(newRevision/myMaxFilesPerDirectory));
+            File shardDir = new File(getRevisionPropertiesRoot(), String.valueOf(newRevision/myMaxFilesPerDirectory));
             shardDir.mkdirs();
-    }
+        }
 
         File revPropsFile = null;
         if (myMaxFilesPerDirectory > 0) {
-            File shardDir = new File(myRevisionPropertiesRoot, String.valueOf(newRevision/myMaxFilesPerDirectory));
+            File shardDir = new File(getRevisionPropertiesRoot(), String.valueOf(newRevision/myMaxFilesPerDirectory));
             revPropsFile = new File(shardDir, String.valueOf(newRevision));
         } else {
-            revPropsFile = new File(myRevisionPropertiesRoot, String.valueOf(newRevision));
+            revPropsFile = new File(getRevisionPropertiesRoot(), String.valueOf(newRevision));
         }
         return revPropsFile;
     }
@@ -716,16 +767,12 @@ public class FSFS {
         return new File(getTransactionsParentDir(), txnID + TXN_PATH_EXT);
     }
     
-    public File getTransactionsParentDir(){
-        return myTransactionsRoot;
-    }
-    
     public void setYoungestRevisionCache(long revision) {
         myYoungestRevisionCache = revision;
     }
     
     public void setUUID(String uuid) throws SVNException {
-        File uniqueFile = SVNFileUtil.createUniqueFile(myDBRoot, UUID_FILE, ".tmp");
+        File uniqueFile = SVNFileUtil.createUniqueFile(getDBRoot(), UUID_FILE, ".tmp");
         uuid += '\n';
 
         OutputStream uuidOS = null;
@@ -734,22 +781,22 @@ public class FSFS {
             uuidOS.write(uuid.getBytes("US-ASCII"));
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
-                    "Error writing repository UUID to ''{0}''", myUUIDFile);
+                    "Error writing repository UUID to ''{0}''", getUUIDFile());
             err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
             SVNErrorManager.error(err);
         } finally {
             SVNFileUtil.closeFile(uuidOS);
         }
-        SVNFileUtil.rename(uniqueFile, myUUIDFile);
+        SVNFileUtil.rename(uniqueFile, getUUIDFile());
     }
     
     public File getRevisionPropertiesFile(long revision) throws SVNException {
         File revPropsFile = null; 
         if (myMaxFilesPerDirectory > 0) {
-            File shardDir = new File(myRevisionPropertiesRoot, String.valueOf(revision/myMaxFilesPerDirectory));
+            File shardDir = new File(getRevisionPropertiesRoot(), String.valueOf(revision/myMaxFilesPerDirectory));
             revPropsFile = new File(shardDir, String.valueOf(revision));
         } else {
-            revPropsFile = new File(myRevisionPropertiesRoot, String.valueOf(revision));
+            revPropsFile = new File(getRevisionPropertiesRoot(), String.valueOf(revision));
         }
         
         if (!revPropsFile.exists()) {
@@ -757,26 +804,6 @@ public class FSFS {
             SVNErrorManager.error(err);
         }
         return revPropsFile;
-    }
-    
-    public File getRepositoryRoot(){
-        return myRepositoryRoot;
-    }
-
-    public File getRevisionPropertiesRoot() {
-        return myRevisionPropertiesRoot;
-    }
-    
-    public File getRepositoryFormatFile(){
-        return myRepositoryFormatFile;
-    }
- 
-    public File getDBFormatFile() {
-        return myDBFormatFile;
-    }
-    
-    public File getNodeOriginsDir() {
-        return myNodeOriginsDir;
     }
     
     public FSFile openAndSeekRepresentation(FSRepresentation rep) throws SVNException {
@@ -843,6 +870,9 @@ public class FSFS {
     }
 
     public File getTransactionProtoRevsDir() {
+        if (myTransactionProtoRevsRoot == null) {
+            myTransactionProtoRevsRoot = new File(getDBRoot(), TRANSACTION_PROTOS_DIR);
+        }
         return myTransactionProtoRevsRoot;
     }
     
@@ -1032,7 +1062,7 @@ public class FSFS {
         
         for (Iterator entries = children.iterator(); entries.hasNext();) {
             String digestName = (String) entries.next();
-            File parent = new File(myLocksRoot, digestName.substring(0, FSFS.DIGEST_SUBDIR_LEN));
+            File parent = new File(getDBLocksDir(), digestName.substring(0, FSFS.DIGEST_SUBDIR_LEN));
             File childDigestFile = new File(parent, digestName);
             walkDigestFiles(childDigestFile, getLocksHandler, haveWriteLock);
         }
@@ -1110,7 +1140,7 @@ public class FSFS {
     
     public File getDigestFileFromRepositoryPath(String repositoryPath) throws SVNException {
         String digest = getDigestFromRepositoryPath(repositoryPath);
-        File parent = new File(myLocksRoot, digest.substring(0, FSFS.DIGEST_SUBDIR_LEN));
+        File parent = new File(getDBLocksDir(), digest.substring(0, FSFS.DIGEST_SUBDIR_LEN));
         return new File(parent, digest);
     }
 
@@ -1482,31 +1512,24 @@ public class FSFS {
     protected File getRevisionFile(long revision) {
         File revisionFile = null;
         if (myMaxFilesPerDirectory > 0) {
-            File shardDir = new File(myRevisionsRoot, String.valueOf(revision/myMaxFilesPerDirectory));
+            File shardDir = new File(getDBRevsDir(), String.valueOf(revision/myMaxFilesPerDirectory));
             revisionFile = new File(shardDir, String.valueOf(revision));
         } else {
-            revisionFile = new File(myRevisionsRoot, String.valueOf(revision));
+            revisionFile = new File(getDBRevsDir(), String.valueOf(revision));
         }
         return revisionFile;
     }
 
-    protected File getCurrentFile(){
-        if(myCurrentFile == null){
-            myCurrentFile = new File(myDBRoot, CURRENT_FILE); 
-        }
-        return myCurrentFile;
-    }
-
     protected File getTransactionCurrentFile(){
         if(myTransactionCurrentFile == null){
-            myTransactionCurrentFile = new File(myDBRoot, TXN_CURRENT_FILE); 
+            myTransactionCurrentFile = new File(getDBRoot(), TXN_CURRENT_FILE); 
         }
         return myTransactionCurrentFile;
     }
 
     protected File getTransactionCurrentLockFile(){
         if(myTransactionCurrentLockFile == null){
-            myTransactionCurrentLockFile = new File(myDBRoot, TXN_CURRENT_LOCK_FILE); 
+            myTransactionCurrentLockFile = new File(getDBRoot(), TXN_CURRENT_LOCK_FILE); 
         }
         return myTransactionCurrentLockFile;
     }
@@ -1679,14 +1702,15 @@ public class FSFS {
     }
 
     private void writeDigestLockFile(SVNLock lock, Collection children, String repositoryPath) throws SVNException {
-        if (!ensureDirExists(myLocksRoot, true)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Can't create a directory at ''{0}''", myLocksRoot);
+        if (!ensureDirExists(getDBLocksDir(), true)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
+                    "Can''t create a directory at ''{0}''", getDBLocksDir());
             SVNErrorManager.error(err);
         }
         
         File digestLockFile = getDigestFileFromRepositoryPath(repositoryPath);
         String digest = getDigestFromRepositoryPath(repositoryPath);
-        File lockDigestSubdir = new File(myLocksRoot, digest.substring(0, FSFS.DIGEST_SUBDIR_LEN));
+        File lockDigestSubdir = new File(getDBLocksDir(), digest.substring(0, FSFS.DIGEST_SUBDIR_LEN));
 
         if (!ensureDirExists(lockDigestSubdir, true)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Can't create a directory at ''{0}''", lockDigestSubdir);
