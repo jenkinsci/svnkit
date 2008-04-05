@@ -170,7 +170,7 @@ public class SVNDeltaGenerator {
                 break;
             } 
             try {
-                sourceLength = readToBuffer(target, mySourceBuffer);
+                sourceLength = readToBuffer(source, mySourceBuffer);
             } catch (IOExceptionWrapper ioew) {
                 throw ioew.getOriginalException();
             } catch (IOException e) {

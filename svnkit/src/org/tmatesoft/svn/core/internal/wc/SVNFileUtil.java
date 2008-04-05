@@ -1072,6 +1072,7 @@ public class SVNFileUtil {
                     }
                     continue;
                 }
+                throw e;
             } 
         }
         return os;
@@ -1145,6 +1146,7 @@ public class SVNFileUtil {
                     }
                     continue;
                 }
+                throw e;
             } 
         }
         return is;
