@@ -11,12 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.io.dav.http;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -104,12 +99,19 @@ public class SpoolFile {
             return read;
         }
 
-        private void openNextFile() throws FileNotFoundException {
+        private void openNextFile() throws IOException {
             myCurrentFile = (File) myFiles.removeFirst();
             SVNDebugLog.getDefaultLog().info("READING SPOOLED FILE: " + myCurrentFile);
             myCurrentSize = myCurrentFile.length();
             SVNDebugLog.getDefaultLog().info("ABOUT TO READ: " + myCurrentSize);
-            myCurrentInput = new BufferedInputStream(new FileInputStream(myCurrentFile));
+            try {
+                myCurrentInput = SVNFileUtil.openFileForReading(myCurrentFile);
+            } catch (SVNException e) {
+                if (e.getCause() instanceof IOException) {
+                    throw (IOException) e.getCause();
+                }
+                throw new IOException(e.getMessage());
+            }
         }
 
         public long skip(long n) throws IOException {
@@ -175,7 +177,14 @@ public class SpoolFile {
                 File file = createNextFile();
                 SVNDebugLog.getDefaultLog().info("SPOOLING RESPONSE TO FILE: " + file);
                 myFiles.add(file);
-                myCurrentOutput = new BufferedOutputStream(new FileOutputStream(file));
+                try {
+                    myCurrentOutput = SVNFileUtil.openFileForWriting(file);
+                } catch (SVNException e) {
+                    if (e.getCause() instanceof IOException) {
+                        throw (IOException) e.getCause();
+                    }
+                    throw new IOException(e.getMessage());
+                }
             }
             myCurrentOutput.write(b, off, len);
             myCurrentSize += len;

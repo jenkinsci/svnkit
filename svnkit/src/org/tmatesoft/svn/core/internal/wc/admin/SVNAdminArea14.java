@@ -11,10 +11,8 @@
  */
 package org.tmatesoft.svn.core.internal.wc.admin;
 
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -23,7 +21,6 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -36,12 +33,13 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.io.fs.FSFile;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -615,7 +613,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
                 }
                 Writer os = null;
                 try {
-                    os = new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(myEntriesFile)), "UTF-8");
+                    os = new OutputStreamWriter(SVNFileUtil.openFileForWriting(myEntriesFile), "UTF-8");
                     writeEntries(os);
                 } catch (IOException e) {
                     SVNFileUtil.closeFile(os);
@@ -633,7 +631,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
                 File tmpFile = new File(getAdminDirectory(), "tmp/entries");
                 Writer os = null;
                 try {
-                    os = new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(tmpFile)), "UTF-8");
+                    os = new OutputStreamWriter(SVNFileUtil.openFileForWriting(tmpFile), "UTF-8");
                     writeEntries(os);
                 } catch (IOException e) {
                     SVNFileUtil.closeFile(os);

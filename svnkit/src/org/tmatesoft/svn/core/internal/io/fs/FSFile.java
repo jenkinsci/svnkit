@@ -61,8 +61,8 @@ public class FSFile {
         myFile = file;
         myPosition = 0;
         myBufferPosition = 0;
-        myBuffer = ByteBuffer.allocate(4096);
-        myReadLineBuffer = ByteBuffer.allocate(4096);
+        myBuffer = ByteBuffer.allocate(1024);
+        myReadLineBuffer = ByteBuffer.allocate(1024);
         myDecoder = Charset.forName("UTF-8").newDecoder();
         myDecoder = myDecoder.onMalformedInput(CodingErrorAction.REPORT).onUnmappableCharacter(CodingErrorAction.REPORT);
     }
@@ -371,7 +371,7 @@ public class FSFile {
     
     private FileChannel getChannel() throws IOException {
         if (myChannel == null) {
-            myInputStream = new FileInputStream(myFile);
+            myInputStream = SVNFileUtil.createFileInputStream(myFile);
             myChannel = myInputStream.getChannel();
         }
         return myChannel;

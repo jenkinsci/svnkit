@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.internal.wc;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -163,10 +162,10 @@ public class SVNWCProperties {
                 tmpFile1 = SVNFileUtil.createUniqueFile(getFile().getParentFile(), getFile().getName(), ".tmp1");
                 tmpFile2 = SVNFileUtil.createUniqueFile(getFile().getParentFile(), getFile().getName(), ".tmp2");
 
-                os = new FileOutputStream(tmpFile1);
+                os = SVNFileUtil.openFileForWriting(tmpFile1);
                 getPropertyValue(changed, os);
                 os.close();
-                os = new FileOutputStream(tmpFile2);
+                os = SVNFileUtil.openFileForWriting(tmpFile2);
                 properties.getPropertyValue(changed, os);
                 os.close();
                 if (tmpFile2.length() != tmpFile1.length()) {

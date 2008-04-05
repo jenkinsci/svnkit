@@ -12,11 +12,11 @@
 package org.tmatesoft.svn.core.internal.io.fs;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -38,8 +38,8 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  */
 public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
 
-    public static final int WRITE_BUFFER_SIZE = 512000;
     public static final int SVN_DELTA_WINDOW_SIZE = 102400;
+    public static final int WRITE_BUFFER_SIZE = 2*SVN_DELTA_WINDOW_SIZE;
 
     private boolean isHeaderWritten;
     private CountingStream myTargetFile;
@@ -52,7 +52,7 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
     private MessageDigest myDigest;
     private FSTransactionRoot myTxnRoot;
     private long mySourceOffset;
-    private ByteBuffer myTextBuffer;
+    private ByteArrayOutputStream myTextBuffer;
     private boolean myIsClosed;
     private boolean myIsCompress;
     private FSWriteLock myTxnLock;
@@ -71,7 +71,7 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
         myIsClosed = false;
         myTxnLock = txnLock;
         myDeltaGenerator = new SVNDeltaGenerator(SVN_DELTA_WINDOW_SIZE);
-        myTextBuffer = ByteBuffer.allocate(WRITE_BUFFER_SIZE);
+        myTextBuffer = new ByteArrayOutputStream();
 
         try {
             myDigest = MessageDigest.getInstance("MD5");
@@ -94,7 +94,7 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
         mySourceOffset = 0;
         myIsClosed = false;
         myDigest.reset();
-        myTextBuffer.clear();
+        myTextBuffer.reset();
         myTxnLock = txnLock;
     }
 
@@ -179,16 +179,16 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
         myRepSize += len;
         int toWrite = 0;
         while (len > 0) {
-            toWrite = Math.min(len, myTextBuffer.remaining());
-            myTextBuffer.put(b, off, toWrite);
-            if (myTextBuffer.remaining() == 0) {
+            toWrite = len;
+            myTextBuffer.write(b, off, toWrite);
+            if (myTextBuffer.size() >= WRITE_BUFFER_SIZE) {
                 try {
-                    ByteArrayInputStream target = new ByteArrayInputStream(myTextBuffer.array(), 0, myTextBuffer.capacity());
+                    ByteArrayInputStream target = new ByteArrayInputStream(myTextBuffer.toByteArray());
                     myDeltaGenerator.sendDelta(null, mySourceStream, mySourceOffset, target, this, false);
                 } catch (SVNException svne) {
                     throw new IOException(svne.getMessage());
                 }
-                myTextBuffer.clear();
+                myTextBuffer.reset();
             }
             off += toWrite;
             len -= toWrite;
@@ -202,8 +202,7 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
         myIsClosed = true;
 
         try {
-            ByteArrayInputStream target = new ByteArrayInputStream(myTextBuffer.array(), 0, 
-                    myTextBuffer.position());
+            ByteArrayInputStream target = new ByteArrayInputStream(myTextBuffer.toByteArray());
             myDeltaGenerator.sendDelta(null, mySourceStream, mySourceOffset, target, this, false);
 
             FSRepresentation rep = new FSRepresentation();

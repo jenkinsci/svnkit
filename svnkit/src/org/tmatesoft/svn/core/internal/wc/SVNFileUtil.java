@@ -454,9 +454,9 @@ public class SVNFileUtil {
         
         SVNErrorMessage error = null;
         try {
-            is = new FileInputStream(src);
+            is = createFileInputStream(src);
             srcChannel = is.getChannel();
-            os = new FileOutputStream(tmpDst);
+            os = createFileOutputStream(dst, false);
             dstChannel = os.getChannel();
             long totalSize = srcChannel.size();
             long toCopy = totalSize;
@@ -774,7 +774,7 @@ public class SVNFileUtil {
         String line = null;
         InputStream is = null;
         try {
-            is = new FileInputStream(file);
+            is = createFileInputStream(file);
             reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
             line = reader.readLine();
         } finally {
@@ -1043,14 +1043,38 @@ public class SVNFileUtil {
             }
         }
         try {
-            return new BufferedOutputStream(new FileOutputStream(file, append));
-        } catch (FileNotFoundException e) {
+            return new BufferedOutputStream(createFileOutputStream(file, append));
+        } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot write to ''{0}'': {1}", new Object[] {
                     file, e.getLocalizedMessage()
             });
             SVNErrorManager.error(err, e);
         }
         return null;
+    }
+    
+    public static FileOutputStream createFileOutputStream(File file, boolean append) throws IOException {
+        int retryCount = SVNFileUtil.isWindows ? 11 : 1;
+        FileOutputStream os = null;
+        for (int i = 0; i < retryCount; i++) {
+            try {
+                os = new FileOutputStream(file, append);
+                break;
+            } catch (IOException e) {
+                if (i + 1 >= retryCount) {
+                    throw e;
+                }
+                SVNFileUtil.closeFile(os);
+                if (file.exists() && file.isFile() && file.canWrite()) {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e1) {
+                    }
+                    continue;
+                }
+            } 
+        }
+        return os;
     }
 
     public static RandomAccessFile openRAFileForWriting(File file, boolean append) throws SVNException {
@@ -1092,8 +1116,8 @@ public class SVNFileUtil {
             return DUMMY_IN;
         }
         try {
-            return new BufferedInputStream(new FileInputStream(file));
-        } catch (FileNotFoundException e) {
+            return new BufferedInputStream(createFileInputStream(file));
+        } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot read from ''{0}'': {1}", new Object[] {
                     file, e.getLocalizedMessage()
             });
@@ -1101,6 +1125,31 @@ public class SVNFileUtil {
         }
         return null;
     }
+    
+    public static FileInputStream createFileInputStream(File file) throws IOException {
+        int retryCount = SVNFileUtil.isWindows ? 11 : 1;
+        FileInputStream is = null;
+        for (int i = 0; i < retryCount; i++) {
+            try {
+                is = new FileInputStream(file);
+                break;
+            } catch (IOException e) {
+                if (i + 1 >= retryCount) {
+                    throw e;
+                }
+                SVNFileUtil.closeFile(is);
+                if (file.exists() && file.isFile() && file.canRead()) {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e1) {
+                    }
+                    continue;
+                }
+            } 
+        }
+        return is;
+    }
+
 
 
     public static RandomAccessFile openRAFileForReading(File file) throws SVNException {

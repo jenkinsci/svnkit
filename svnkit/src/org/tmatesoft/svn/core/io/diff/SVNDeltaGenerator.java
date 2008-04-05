@@ -50,6 +50,7 @@ public class SVNDeltaGenerator {
     
     private byte[] mySourceBuffer;
     private byte[] myTargetBuffer;
+    private int myMaximumBufferSize;
     
     /**
      * Creates a generator that will produce diff windows of 
@@ -71,8 +72,10 @@ public class SVNDeltaGenerator {
      *                              window would produce
      */
     public SVNDeltaGenerator(int maximumDiffWindowSize) {
-        mySourceBuffer = new byte[maximumDiffWindowSize];
-        myTargetBuffer = new byte[maximumDiffWindowSize];
+        myMaximumBufferSize = maximumDiffWindowSize;
+        int initialSize = Math.min(8192, myMaximumBufferSize);
+        mySourceBuffer = new byte[initialSize];
+        myTargetBuffer = new byte[initialSize];
     }
     
     /**
@@ -150,7 +153,7 @@ public class SVNDeltaGenerator {
             int targetLength;
             int sourceLength;
             try {
-                targetLength = target.read(myTargetBuffer, 0, myTargetBuffer.length);
+                targetLength = readToBuffer(target, myTargetBuffer);
             } catch (IOExceptionWrapper ioew) {
                 throw ioew.getOriginalException();
             } catch (IOException e) {
@@ -167,7 +170,7 @@ public class SVNDeltaGenerator {
                 break;
             } 
             try {
-                sourceLength = source.read(mySourceBuffer, 0, mySourceBuffer.length);
+                sourceLength = readToBuffer(target, mySourceBuffer);
             } catch (IOExceptionWrapper ioew) {
                 throw ioew.getOriginalException();
             } catch (IOException e) {
@@ -232,5 +235,28 @@ public class SVNDeltaGenerator {
         OutputStream os = consumer.textDeltaChunk(path, window);
         SVNFileUtil.closeFile(os);
         algorithm.reset();
+    }
+    
+    private int readToBuffer(InputStream is, byte[] buffer) throws IOException {
+        int read = is.read(buffer, 0, buffer.length);
+        if (read <= 0) {
+            return read;
+        }
+        if (read == buffer.length && read < myMaximumBufferSize) {
+            byte[] expanded = new byte[myMaximumBufferSize];
+            System.arraycopy(buffer, 0, expanded, 0, read);
+            if (buffer == myTargetBuffer) {
+                myTargetBuffer = expanded;
+            } else {
+                mySourceBuffer = expanded;
+            }
+            buffer = expanded;
+            int anotherRead = is.read(buffer, read, buffer.length - read);
+            if (anotherRead <= 0) {
+                return read;
+            }
+            read += anotherRead;
+        }
+        return read;
     }
 }

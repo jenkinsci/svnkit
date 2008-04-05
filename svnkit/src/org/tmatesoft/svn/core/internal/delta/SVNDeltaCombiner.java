@@ -54,7 +54,7 @@ public class SVNDeltaCombiner {
         myInstructionTemplate = new SVNDiffInstruction(0,0,0);
         myOffsetsIndex = new SVNOffsetsIndex();
         
-        myNextWindowData = ByteBuffer.allocate(1024*20);
+        myNextWindowData = ByteBuffer.allocate(2048);
     }
 
     public void reset() {

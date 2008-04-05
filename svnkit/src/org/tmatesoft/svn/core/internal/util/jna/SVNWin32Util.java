@@ -73,15 +73,14 @@ class SVNWin32Util {
             return false;
         }
         if (dst.isFile() && !dst.canWrite()) {
-            setWritable(dst);
+            SVNFileUtil.setReadonly(dst, false);
             SVNFileUtil.setReadonly(src, true);
         }
         synchronized (library) {
             try {
-                int rc = library.MoveFileExW(new WString(src.getAbsoluteFile().getAbsolutePath()), new WString(dst.getAbsoluteFile().getAbsolutePath()), new NativeLong(1));
+                int rc = library.MoveFileExW(new WString(src.getAbsoluteFile().getAbsolutePath()), new WString(dst.getAbsoluteFile().getAbsolutePath()), new NativeLong(3));
                 return rc != 0;
             } catch (Throwable th) {
-                th.printStackTrace();
             }
         }
         return false;

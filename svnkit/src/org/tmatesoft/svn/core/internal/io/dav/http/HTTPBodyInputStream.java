@@ -11,12 +11,12 @@
  */
 package org.tmatesoft.svn.core.internal.io.dav.http;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 
 /**
@@ -59,10 +59,16 @@ public class HTTPBodyInputStream extends InputStream {
         close();
     }
     
-    private InputStream getDelegate() throws FileNotFoundException {
+    private InputStream getDelegate() throws IOException {
         if (myDelegate == null) {
-            myDelegate = new FileInputStream(myFile);
-            myDelegate = new BufferedInputStream(myDelegate);
+            try {
+                myDelegate = SVNFileUtil.openFileForReading(myFile);
+            } catch (SVNException e) {
+                if (e.getCause() instanceof IOException) {
+                    throw (IOException) e.getCause();
+                }
+                throw new IOException(e.getMessage());
+            }
         }
         return myDelegate;
     }
