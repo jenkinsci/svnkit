@@ -456,7 +456,7 @@ public class SVNFileUtil {
         try {
             is = createFileInputStream(src);
             srcChannel = is.getChannel();
-            os = createFileOutputStream(dst, false);
+            os = createFileOutputStream(tmpDst, false);
             dstChannel = os.getChannel();
             long totalSize = srcChannel.size();
             long toCopy = totalSize;
