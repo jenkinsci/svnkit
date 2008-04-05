@@ -43,7 +43,6 @@ import org.tigris.subversion.javahl.JavaHLObjectFactory;
 import org.tigris.subversion.javahl.ListCallback;
 import org.tigris.subversion.javahl.LogMessage;
 import org.tigris.subversion.javahl.LogMessageCallback;
-import org.tigris.subversion.javahl.Mergeinfo;
 import org.tigris.subversion.javahl.Notify;
 import org.tigris.subversion.javahl.Notify2;
 import org.tigris.subversion.javahl.NotifyInformation;
@@ -2030,7 +2029,7 @@ public class SVNClientImpl implements SVNClientInterface {
         }
     }
 
-    public Mergeinfo getMergeinfo(String path, Revision revision) throws SubversionException {
+/*    public Mergeinfo getMergeinfo(String path, Revision revision) throws SubversionException {
         SVNDiffClient client = getSVNDiffClient();
         Map mergeInfo = null;
         try {
@@ -2049,7 +2048,7 @@ public class SVNClientImpl implements SVNClientInterface {
         }
         return null;
     }
-
+*/
     public String[] suggestMergeSources(String path, Revision pegRevision) throws SubversionException {
         SVNDiffClient client = getSVNDiffClient();
         Collection mergeSrcURLs = null;
@@ -2095,5 +2094,11 @@ public class SVNClientImpl implements SVNClientInterface {
             resetLog();
         }
         return null;
+    }
+
+    public void getMergeinfoLog(int kind, String pathOrUrl, Revision pegRevision, String mergeSourceUrl, 
+            Revision srcPegRevision, boolean discoverChangedPaths, String[] revprops, 
+            LogMessageCallback callback) throws ClientException {
+        //TODO:fixme
     }
 }

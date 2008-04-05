@@ -401,8 +401,9 @@ public class SVNClient implements SVNClientInterface {
         return myDelegate.doExport(srcPath, destPath, revision, pegRevision, force, ignoreExternals, depth, nativeEOL);
     }
 
-    public Mergeinfo getMergeinfo(String path, Revision revision) throws SubversionException {
-        return myDelegate.getMergeinfo(path, revision);
+    public void getMergeinfoLog(int kind, String pathOrUrl, Revision pegRevision, String mergeSourceUrl, Revision srcPegRevision, boolean discoverChangedPaths, String[] revprops,
+            LogMessageCallback callback) throws ClientException {
+        myDelegate.getMergeinfoLog(kind, pathOrUrl, pegRevision, mergeSourceUrl, srcPegRevision, discoverChangedPaths, revprops, callback);
     }
 
     public long update(String path, Revision revision, int depth, boolean depthIsSticky, boolean ignoreExternals, boolean allowUnverObstructions) throws ClientException {
