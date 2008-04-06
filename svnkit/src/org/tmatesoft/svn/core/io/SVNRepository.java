@@ -2232,7 +2232,7 @@ public abstract class SVNRepository {
 
         LocationSegmentsLogHandler locationSegmentsLogHandler = new LocationSegmentsLogHandler(kind, reposAbsPath, 
                 startRevision, handler);
-        log(new String[] { path }, pegRevision, endRevision, true, false, 0, false, null, 
+        log(new String[] { path }, pegRevision, endRevision, true, false, 0, false, new String[0], 
                 locationSegmentsLogHandler);
         if (!locationSegmentsLogHandler.myIsDone) {
             locationSegmentsLogHandler.maybeCropAndSendSegment(locationSegmentsLogHandler.myLastPath, 

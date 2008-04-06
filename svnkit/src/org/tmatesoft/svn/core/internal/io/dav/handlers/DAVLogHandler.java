@@ -67,7 +67,7 @@ public class DAVLogHandler extends BasicDAVHandler {
             SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "include-merged-revisions", 
                     SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
         }
-        if (revPropNames != null && revPropNames.length > 0) {
+        if (revPropNames != null) {
             for (int i = 0; i < revPropNames.length; i++) {
                 String revPropName = revPropNames[i];
                 SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "revprop", revPropName, xmlBuffer);
