@@ -613,6 +613,7 @@ public class JavaHLObjectFactory {
             if (value.isString()) {
                 return new JavaHLPropertyData((SVNClientImpl) client, null, path, name, value.getString(), SVNPropertyValue.getPropertyAsBytes(value));
             }
+            return new JavaHLPropertyData((SVNClientImpl) client, null, path, name, SVNPropertyValue.getPropertyAsString(value), value.getBytes());
         }
         return new PropertyData((SVNClient) client, path, name, value.getString(), SVNPropertyValue.getPropertyAsBytes(value));
     }
