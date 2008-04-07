@@ -1575,9 +1575,12 @@ public class SVNClientImpl implements SVNClientInterface {
             mySVNEventListener = new ISVNEventHandler() {
 
                 public void handleEvent(SVNEvent event, double progress) {
-                    String path = event.getFile().getAbsolutePath();
-                    if (path != null) {
-                        path = path.replace(File.separatorChar, '/');
+                    String path = null;
+                    if (event.getFile() != null) {
+                        path = event.getFile().getAbsolutePath();
+                        if (path != null) {
+                            path = path.replace(File.separatorChar, '/');
+                        }
                     }
                     if (myNotify != null && event.getErrorMessage() == null) {
                         myNotify.onNotify(
