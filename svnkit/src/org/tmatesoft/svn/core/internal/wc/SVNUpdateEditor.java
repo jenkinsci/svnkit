@@ -1217,7 +1217,8 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             logAttributes.put(SVNLog.NAME_ATTR, name);
             log.addCommand(SVNLog.MODIFY_ENTRY, logAttributes, false);
         }
-        if (!isLocallyModified) {
+        
+        if (!isLocallyModified && (fileInfo.IsAdded || fileEntry.getSchedule() == null)) {
             if (commitTime != null && !fileInfo.isExisted) {
                 command.put(SVNLog.NAME_ATTR, name);
                 command.put(SVNLog.TIMESTAMP_ATTR, commitTime);
