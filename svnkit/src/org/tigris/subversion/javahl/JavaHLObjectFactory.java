@@ -30,6 +30,7 @@ import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -430,6 +431,26 @@ public class JavaHLObjectFactory {
             }
         }
         return new LogMessage(cp, logEntry.getRevision(), logEntry.getAuthor(), time, logEntry.getMessage());
+    }
+
+    public static Mergeinfo createMergeInfo(Map mergeInfo) {
+        if (mergeInfo == null) {
+            return null;
+        }
+
+        Mergeinfo result = new Mergeinfo();
+        for (Iterator iterator = mergeInfo.entrySet().iterator(); iterator.hasNext();) {
+            Map.Entry entry = (Map.Entry) iterator.next();
+            SVNURL mergeSrcURL = (SVNURL) entry.getKey();
+            String url = mergeSrcURL.toString();
+            SVNMergeRangeList rangeList = (SVNMergeRangeList) entry.getValue();
+            SVNMergeRange[] ranges = rangeList.getRanges();
+            for (int i = 0; i < ranges.length; i++) {
+                SVNMergeRange range = ranges[i];
+                result.addRevisionRange(url, createRevisionRange(range));
+            }
+        }
+        return result;
     }
 
     public static RevisionRange createRevisionRange(SVNMergeRange range){

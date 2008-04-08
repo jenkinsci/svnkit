@@ -60,6 +60,7 @@ import org.tigris.subversion.javahl.Status;
 import org.tigris.subversion.javahl.StatusCallback;
 import org.tigris.subversion.javahl.SubversionException;
 import org.tigris.subversion.javahl.RevisionKind;
+import org.tigris.subversion.javahl.MergeinfoLogKind;
 
 import org.tmatesoft.svn.core.javahl.JavaHLDebugLog;
 
@@ -1019,6 +1020,109 @@ public class SVNClientImpl implements SVNClientInterface {
                 File file = new File(path);
                 diffClient.doMergeReIntegrate(file, JavaHLObjectFactory.getSVNRevision(pegRevision), dstPath, 
                         dryRun);
+            }
+        } catch (SVNException e) {
+            throwException(e);
+        } finally {
+            resetLog();
+        }
+    }
+
+    public String[] suggestMergeSources(String path, Revision pegRevision) throws SubversionException {
+        SVNDiffClient client = getSVNDiffClient();
+        Collection mergeSrcURLs = null;
+        try {
+            mergeSrcURLs = client.suggestMergeSources(new File(path).getAbsoluteFile(),
+                    JavaHLObjectFactory.getSVNRevision(pegRevision));
+            if (mergeSrcURLs != null) {
+                String[] stringURLs = new String[mergeSrcURLs.size()];
+                int i = 0;
+                for (Iterator urls = mergeSrcURLs.iterator(); urls.hasNext();) {
+                    SVNURL mergeSrcURL = (SVNURL) urls.next();
+                    stringURLs[i++] = mergeSrcURL.toString();
+                }
+                return stringURLs;
+            }
+            return null;
+        } catch (SVNException e) {
+            throwException(e);
+        } finally {
+            resetLog();
+        }
+        return null;
+    }
+
+    public RevisionRange[] getAvailableMerges(String path, Revision pegRevision, String mergeSource) throws SubversionException {
+        SVNDiffClient client = getSVNDiffClient();
+        try {
+            SVNMergeRangeList rangeList = null;
+            if (isURL(path)) {
+                rangeList = client.getAvailableMergeInfo(SVNURL.parseURIEncoded(path),
+                        JavaHLObjectFactory.getSVNRevision(pegRevision),
+                        SVNURL.parseURIEncoded(mergeSource));
+            } else {
+                rangeList = client.getAvailableMergeInfo(new File(path).getAbsoluteFile(),
+                        JavaHLObjectFactory.getSVNRevision(pegRevision),
+                        SVNURL.parseURIEncoded(mergeSource));
+            }
+
+            return JavaHLObjectFactory.createRevisionRanges(rangeList);
+        } catch (SVNException e) {
+            throwException(e);
+        } finally {
+            resetLog();
+        }
+        return null;
+    }
+
+    public Mergeinfo getMergeinfo(String path, Revision revision) throws SubversionException {
+        SVNDiffClient client = getSVNDiffClient();
+        Map mergeInfo = null;
+        try {
+            if (isURL(path)) {
+                mergeInfo = client.getMergedMergeInfo(SVNURL.parseURIEncoded(path),
+                        JavaHLObjectFactory.getSVNRevision(revision));
+            } else {
+                mergeInfo = client.getMergedMergeInfo(new File(path).getAbsoluteFile(),
+                        JavaHLObjectFactory.getSVNRevision(revision));
+            }
+            return JavaHLObjectFactory.createMergeInfo(mergeInfo);
+        } catch (SVNException e) {
+            throwException(e);
+        } finally {
+            resetLog();
+        }
+        return null;
+    }
+
+    public void getMergeinfoLog(int kind, String pathOrUrl, Revision pegRevision, String mergeSourceUrl,
+                                Revision srcPegRevision, boolean discoverChangedPaths, String[] revprops,
+                                final LogMessageCallback callback) throws ClientException {
+        SVNDiffClient client = getSVNDiffClient();
+        ISVNLogEntryHandler handler = new ISVNLogEntryHandler() {
+            public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
+                JavaHLObjectFactory.handleLogMessage(logEntry, callback);
+            }
+        };
+        SVNRevision pegRev = JavaHLObjectFactory.getSVNRevision(pegRevision);
+        SVNRevision srcPegRev = JavaHLObjectFactory.getSVNRevision(srcPegRevision);
+
+        try {
+            SVNURL mergeSrcURL = SVNURL.parseURIEncoded(mergeSourceUrl);
+            if (isURL(pathOrUrl)) {
+                SVNURL url = SVNURL.parseURIEncoded(pathOrUrl);
+                if (kind == MergeinfoLogKind.eligible) {
+                    client.getLogEligibleMergeInfo(url, pegRev, mergeSrcURL, srcPegRev, discoverChangedPaths, revprops, handler);
+                } else if (kind == MergeinfoLogKind.merged) {
+                    client.getLogMergedMergeInfo(url, pegRev, mergeSrcURL, srcPegRev, discoverChangedPaths, revprops, handler);
+                }
+            } else {
+                File path = new File(pathOrUrl).getAbsoluteFile();
+                if (kind == MergeinfoLogKind.eligible) {
+                    client.getLogEligibleMergeInfo(path, pegRev, mergeSrcURL, srcPegRev, discoverChangedPaths, revprops, handler);
+                } else if (kind == MergeinfoLogKind.merged) {
+                    client.getLogMergedMergeInfo(path, pegRev, mergeSrcURL, srcPegRev, discoverChangedPaths, revprops, handler);
+                }
             }
         } catch (SVNException e) {
             throwException(e);
@@ -2031,83 +2135,5 @@ public class SVNClientImpl implements SVNClientInterface {
                     JavaHLObjectFactory.getSVNRevision(revision),
                     JavaHLObjectFactory.getSVNDepth(depth), changelists, handler);
         }
-    }
-
-/*    public Mergeinfo getMergeinfo(String path, Revision revision) throws SubversionException {
-        SVNDiffClient client = getSVNDiffClient();
-        Map mergeInfo = null;
-        try {
-            if (isURL(path)) {
-                mergeInfo = client.getMergeInfo(SVNURL.parseURIEncoded(path),
-                        JavaHLObjectFactory.getSVNRevision(revision), null);
-            } else {
-                mergeInfo = client.getMergeInfo(new File(path).getAbsoluteFile(), 
-                        JavaHLObjectFactory.getSVNRevision(revision), null);
-            }
-            return JavaHLObjectFactory.createMergeInfo(mergeInfo);
-        } catch (SVNException e) {
-            throwException(e);
-        } finally {
-            resetLog();
-        }
-        return null;
-    }
-*/
-    public String[] suggestMergeSources(String path, Revision pegRevision) throws SubversionException {
-        SVNDiffClient client = getSVNDiffClient();
-        Collection mergeSrcURLs = null;
-        try {
-            mergeSrcURLs = client.suggestMergeSources(new File(path).getAbsoluteFile(), 
-                    JavaHLObjectFactory.getSVNRevision(pegRevision));
-            if (mergeSrcURLs != null) {
-                String[] stringURLs = new String[mergeSrcURLs.size()];
-                int i = 0;
-                for (Iterator urls = mergeSrcURLs.iterator(); urls.hasNext();) {
-                    SVNURL mergeSrcURL = (SVNURL) urls.next();
-                    stringURLs[i++] = mergeSrcURL.toString();
-                }
-                return stringURLs; 
-            }
-            return null;
-        } catch (SVNException e) {
-            throwException(e);
-        } finally {
-            resetLog();
-        }
-        return null;
-    }
-
-    public RevisionRange[] getAvailableMerges(String path, Revision pegRevision, String mergeSource) throws SubversionException {
-        SVNDiffClient client = getSVNDiffClient();
-        try {
-            SVNMergeRangeList rangeList = null;
-            if (isURL(path)) {
-                rangeList = client.getAvailableMergeInfo(SVNURL.parseURIEncoded(path), 
-                        JavaHLObjectFactory.getSVNRevision(pegRevision), 
-                        SVNURL.parseURIEncoded(mergeSource)); 
-            } else {
-                rangeList = client.getAvailableMergeInfo(new File(path).getAbsoluteFile(), 
-                        JavaHLObjectFactory.getSVNRevision(pegRevision), 
-                        SVNURL.parseURIEncoded(mergeSource)); 
-            }
-             
-            return JavaHLObjectFactory.createRevisionRanges(rangeList);
-        } catch (SVNException e) {
-            throwException(e);
-        } finally {
-            resetLog();
-        }
-        return null;
-    }
-
-    public void getMergeinfoLog(int kind, String pathOrUrl, Revision pegRevision, String mergeSourceUrl, 
-            Revision srcPegRevision, boolean discoverChangedPaths, String[] revprops, 
-            LogMessageCallback callback) throws ClientException {
-        //TODO:fixme
-    }
-
-    public Mergeinfo getMergeinfo(String path, Revision pegRevision) throws SubversionException {
-        //TODO: fixme
-        return null;
     }
 }
