@@ -89,6 +89,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
         long rev = item.getRevision().getNumber();
         if (item.isAdded() && item.isDeleted()) {
             event = SVNEventFactory.createSVNEvent(file, item.getKind(), null, SVNRepository.INVALID_REVISION, SVNEventAction.COMMIT_REPLACED, null, null, null);
+	        event.setPreviousRevision(rev);
         } else if (item.isAdded()) {
             String mimeType = null;
             if (item.getKind() == SVNNodeKind.FILE && file != null) {
@@ -98,8 +99,10 @@ public class SVNCommitter implements ISVNCommitPathHandler {
             event = SVNEventFactory.createSVNEvent(file, item.getKind(), mimeType, SVNRepository.INVALID_REVISION, SVNEventAction.COMMIT_ADDED, null, null, null);
         } else if (item.isDeleted()) {
             event = SVNEventFactory.createSVNEvent(file, item.getKind(), null, SVNRepository.INVALID_REVISION, SVNEventAction.COMMIT_DELETED, null, null, null);
+	        event.setPreviousRevision(rev);
         } else if (item.isContentsModified() || item.isPropertiesModified()) {
-            event = SVNEventFactory.createSVNEvent(file, item.getKind(), null, rev, SVNEventAction.COMMIT_MODIFIED, null, null, null);
+            event = SVNEventFactory.createSVNEvent(file, item.getKind(), null, SVNRepository.INVALID_REVISION, SVNEventAction.COMMIT_MODIFIED, null, null, null);
+	        event.setPreviousRevision(rev);
         }
         if (event != null) {
             wcAccess.handleEvent(event, ISVNEventHandler.UNKNOWN);
