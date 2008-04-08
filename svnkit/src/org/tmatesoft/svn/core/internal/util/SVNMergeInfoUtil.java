@@ -201,28 +201,36 @@ public class SVNMergeInfoUtil {
             return srcPathsToRangeLists;
         }
 
-        while (mergeInfo.length() > 0) {
-            int ind = mergeInfo.indexOf(":");
-            if (ind == -1) {
+        try {
+            while (mergeInfo.length() > 0) { 
+                int ind = mergeInfo.indexOf(":");
+                if (ind == -1) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, 
+                            "Pathname not terminated by ':'");
+                    SVNErrorManager.error(err);
+                }
+                String path = mergeInfo.substring(0, ind);
+                mergeInfo = mergeInfo.delete(0, ind + 1);
+                SVNMergeRange[] ranges = parseRevisionList(mergeInfo, path);
+                if (mergeInfo.length() != 0 && mergeInfo.charAt(0) != '\n') {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, 
+                            "Could not find end of line in range list line in ''{0}''", mergeInfo);
+                    SVNErrorManager.error(err);
+                }
+                if (mergeInfo.length() > 0) {
+                    mergeInfo = mergeInfo.deleteCharAt(0);
+                }
+                Arrays.sort(ranges);
+                srcPathsToRangeLists.put(path, new SVNMergeRangeList(ranges));
+            }
+        } catch (SVNException svne) {
+            if (svne.getErrorMessage().getErrorCode() != SVNErrorCode.MERGE_INFO_PARSE_ERROR) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, 
-                        "Pathname not terminated by ':'");
-                SVNErrorManager.error(err);
+                        "Could not parse mergeinfo string ''{0}''", mergeInfo.toString());
+                SVNErrorManager.error(err, svne);
             }
-            String path = mergeInfo.substring(0, ind);
-            mergeInfo = mergeInfo.delete(0, ind + 1);
-            SVNMergeRange[] ranges = parseRevisionList(mergeInfo, path);
-            if (mergeInfo.length() != 0 && mergeInfo.charAt(0) != '\n') {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, 
-                        "Could not find end of line in range list line in ''{0}''", mergeInfo);
-                SVNErrorManager.error(err);
-            }
-            if (mergeInfo.length() > 0) {
-                mergeInfo = mergeInfo.deleteCharAt(0);
-            }
-            Arrays.sort(ranges);
-            srcPathsToRangeLists.put(path, new SVNMergeRangeList(ranges));
+            throw svne;
         }
-        
         return srcPathsToRangeLists;
     }
 
