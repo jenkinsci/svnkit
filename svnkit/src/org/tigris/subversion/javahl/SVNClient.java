@@ -559,4 +559,8 @@ public class SVNClient implements SVNClientInterface {
 		myDelegate.revert(path, depth, changelists);
 	}
 
+    public Mergeinfo getMergeinfo(String path, Revision pegRevision) throws SubversionException {
+        return myDelegate.getMergeinfo(path, pegRevision);
+    }
+
 }

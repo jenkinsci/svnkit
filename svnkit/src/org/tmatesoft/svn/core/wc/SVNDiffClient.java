@@ -20,11 +20,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
 import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -42,7 +42,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNMergeDriver;
 import org.tmatesoft.svn.core.internal.wc.SVNRemoteDiffEditor;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNReporter;
@@ -1419,49 +1418,32 @@ public class SVNDiffClient extends SVNMergeDriver {
         runMergeReintegrate(srcURL, null, pegRevision, dstPath, dryRun);
     }
 
-    public Map getMergeInfo(File path, SVNRevision pegRevision, SVNURL repositoryRoot[]) throws SVNException {
-        SVNWCAccess wcAccess = createWCAccess();
-        try {
-            SVNAdminArea adminArea = wcAccess.probeOpen(path, false, 0);
-            SVNEntry entry = wcAccess.getVersionedEntry(path, false);
-            long revNum[] = { SVNRepository.INVALID_REVISION };
-            SVNURL url = getEntryLocation(path, entry, revNum, SVNRevision.WORKING);
-            SVNRepository repository = null;
-            try {
-            	repository = createRepository(url, false);
-            	repository.assertServerIsMergeInfoCapable(path.toString());
-            } finally {
-            	repository.closeSession();
-            }
-            
-            SVNURL reposRoot = getReposRoot(path, null, pegRevision, adminArea, wcAccess);
-            if (repositoryRoot != null && repositoryRoot.length > 0) {
-            	repositoryRoot[0] = reposRoot;
-            }
-            
-            boolean[] indirect = { false };
-            return getWCOrRepositoryMergeInfo(wcAccess, path, entry, 
-            		SVNMergeInfoInheritance.INHERITED, indirect, false, null);
-        } finally {
-            wcAccess.close();
-        }
+    public void getLogMergedMergeInfo(File path, SVNRevision pegRevision, SVNURL mergeSrcURL, 
+            SVNRevision srcPegRevision, boolean discoverChangedPaths, 
+            String[] revisionProperties, ISVNLogEntryHandler handler) throws SVNException {
+        getLogMergedMergeInfoImpl(path, null, pegRevision, mergeSrcURL, srcPegRevision, discoverChangedPaths, 
+                revisionProperties, handler);
     }
 
-    public Map getMergeInfo(SVNURL url, SVNRevision pegRevision, SVNURL repositoryRoot[]) throws SVNException {
-        SVNRepository repository = null;
-        try {
-        	repository = createRepository(url, true); 
-            long revisionNum = getRevisionNumber(pegRevision, repository, null);
-            SVNURL reposRoot = repository.getRepositoryRoot(true);
-            if (repositoryRoot != null && repositoryRoot.length > 0) {
-            	repositoryRoot[0] = reposRoot;
-            }
-            String relPath = getPathRelativeToRoot(null, url, reposRoot, null, null);
-            return getReposMergeInfo(repository, relPath, revisionNum, 
-            		SVNMergeInfoInheritance.INHERITED, false);
-        } finally {
-        	repository.closeSession();
-        }
+    public void getLogMergedMergeInfo(SVNURL url, SVNRevision pegRevision, SVNURL mergeSrcURL, 
+            SVNRevision srcPegRevision, boolean discoverChangedPaths, String[] revisionProperties, 
+            ISVNLogEntryHandler handler) throws SVNException {
+        getLogMergedMergeInfoImpl(null, url, pegRevision, mergeSrcURL, srcPegRevision, discoverChangedPaths, 
+                revisionProperties, handler);
+    }
+
+    public void getLogEligibleMergeInfo(File path, SVNRevision pegRevision, 
+            SVNURL mergeSrcURL, SVNRevision srcPegRevision, boolean discoverChangedPaths, 
+            String[] revisionProperties, ISVNLogEntryHandler handler) throws SVNException {
+        getLogEligibleMergeInfoImpl(path, null, pegRevision, mergeSrcURL, srcPegRevision, discoverChangedPaths, 
+                revisionProperties, handler);
+    }
+    
+    public void getLogEligibleMergeInfo(SVNURL url, SVNRevision pegRevision, 
+            SVNURL mergeSrcURL, SVNRevision srcPegRevision, boolean discoverChangedPaths, 
+            String[] revisionProperties, ISVNLogEntryHandler handler) throws SVNException {
+        getLogEligibleMergeInfoImpl(null, url, pegRevision, mergeSrcURL, srcPegRevision, discoverChangedPaths, 
+                revisionProperties, handler);
     }
     
     public SVNMergeRangeList getAvailableMergeInfo(File path, SVNRevision pegRevision, SVNURL mergeSrcURL) throws SVNException {
@@ -1607,6 +1589,90 @@ public class SVNDiffClient extends SVNMergeDriver {
             }
         }
         return suggestions;
+    }
+
+    private void getLogMergedMergeInfoImpl(File path, SVNURL url, SVNRevision pegRevision, SVNURL mergeSrcURL, 
+            SVNRevision srcPegRevision, boolean discoverChangedPaths, String[] revisionProperties, 
+            ISVNLogEntryHandler handler) throws SVNException {
+        SVNURL reposRoot[] = new SVNURL[1];
+        Map targetMergeInfo = path != null ? getMergeInfo(path, pegRevision, reposRoot) : 
+            getMergeInfo(url, pegRevision, reposRoot);
+        if (targetMergeInfo == null) {
+            return;
+        }
+        
+        Map srcHistory = getHistoryAsMergeInfo(mergeSrcURL, null, srcPegRevision, SVNRepository.INVALID_REVISION, 
+                SVNRepository.INVALID_REVISION, null, null);
+        Map mergeInfo = SVNMergeInfoUtil.intersectMergeInfo(targetMergeInfo, srcHistory);
+        SVNMergeRangeList rangeList = new SVNMergeRangeList(new SVNMergeRange[0]);
+        long youngestRev = SVNRepository.INVALID_REVISION;
+        String logTarget = null;
+        for (Iterator mergeInfoIter = mergeInfo.keySet().iterator(); mergeInfoIter.hasNext();) {
+            String mergeSrc = (String) mergeInfoIter.next();
+            SVNMergeRangeList list = (SVNMergeRangeList) mergeInfo.get(mergeSrc);
+            SVNMergeRange[] listRanges = list.getRanges();
+            SVNMergeRange range = listRanges[listRanges.length - 1];
+            if (!SVNRevision.isValidRevisionNumber(youngestRev) || range.getEndRevision() > youngestRev) {
+                youngestRev = range.getEndRevision();
+                logTarget = mergeSrc;
+            }
+            rangeList = rangeList.merge(list);
+        }
+        if (rangeList.isEmpty()) {
+            return;
+        }
+        getLogsForMergeInfoRangeList(reposRoot[0], new String [] { logTarget }, rangeList, discoverChangedPaths, 
+                revisionProperties, handler);
+    }
+
+    private void getLogEligibleMergeInfoImpl(File path, SVNURL url, SVNRevision pegRevision, 
+            SVNURL mergeSrcURL, SVNRevision srcPegRevision, boolean discoverChangedPaths, 
+            String[] revisionProperties, ISVNLogEntryHandler handler) throws SVNException {
+        SVNURL reposRoot[] = new SVNURL[1];
+        Map mergeInfo = path != null ? getMergeInfo(path, pegRevision, reposRoot) : 
+            getMergeInfo(url, pegRevision, reposRoot);
+        Map history = getHistoryAsMergeInfo(url, path, pegRevision, SVNRepository.INVALID_REVISION, 
+                SVNRepository.INVALID_REVISION, null, null);
+
+        if (mergeInfo == null) {
+            mergeInfo = history;
+        } else {
+            mergeInfo = SVNMergeInfoUtil.mergeMergeInfos(mergeInfo, history);
+        }
+
+
+        SVNRepository repos = null;
+        Map sourceHistory = null;
+        try {
+            repos = createRepository(mergeSrcURL, true);
+            sourceHistory = getHistoryAsMergeInfo(mergeSrcURL, null, srcPegRevision, 
+                    SVNRepository.INVALID_REVISION, SVNRepository.INVALID_REVISION, repos, null);
+        } finally {
+            repos.closeSession();
+        }
+        
+        Map availableMergeInfo = SVNMergeInfoUtil.removeMergeInfo(mergeInfo, sourceHistory);
+        SVNMergeRangeList rangeList = new SVNMergeRangeList(new SVNMergeRange[0]);
+        long youngestRev = SVNRepository.INVALID_REVISION;
+        String logTarget = null;
+        for (Iterator availableIter = availableMergeInfo.keySet().iterator(); availableIter.hasNext();) {
+            String mergeSrc = (String) availableIter.next();
+            SVNMergeRangeList availableRangeList = (SVNMergeRangeList) availableMergeInfo.get(mergeSrc);
+            SVNMergeRange[] ranges = availableRangeList.getRanges();
+            SVNMergeRange range = ranges[ranges.length - 1];
+            if (!SVNRevision.isValidRevisionNumber(youngestRev) || range.getEndRevision() > youngestRev) {
+                youngestRev = range.getEndRevision();
+                logTarget = mergeSrc;
+            }
+            rangeList = rangeList.merge(availableRangeList);
+        }
+        
+        if (rangeList.isEmpty()) {
+            return;
+        }
+        
+        getLogsForMergeInfoRangeList(reposRoot[0], new String[] { logTarget }, rangeList, discoverChangedPaths, 
+                revisionProperties, handler);
     }
 
 }

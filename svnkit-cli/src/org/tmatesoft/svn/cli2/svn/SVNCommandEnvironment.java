@@ -116,7 +116,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private boolean myIsWithAllRevprops;
     private boolean myIsReIntegrate;
     private List myRevisionRanges;
-    private String myFromSource;
+    private SVNShowRevisionType myShowRevsType;
     private Collection myChangelists;
     
     public SVNCommandEnvironment(String programName, PrintStream out, PrintStream err, InputStream in) {
@@ -129,6 +129,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         mySetDepth = SVNDepth.UNKNOWN;
         myStartRevision = SVNRevision.UNDEFINED;
         myEndRevision = SVNRevision.UNDEFINED;
+        myShowRevsType = SVNShowRevisionType.MERGED;
         myRevisionRanges = new LinkedList();
         myChangelists = new HashSet();
     }
@@ -473,8 +474,13 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                 SVNErrorManager.error(err);
             }
             myResolveAccept = accept;
-        } else if (option == SVNOption.FROM_SOURCE) {
-        	myFromSource = optionValue.getValue();
+        } else if (option == SVNOption.SHOW_REVS) {
+        	myShowRevsType = SVNShowRevisionType.fromString(optionValue.getValue());
+            if (myShowRevsType == SVNShowRevisionType.INVALID) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+                        "''{0}'' is not a valid --show-revs value", optionValue.getValue());
+                SVNErrorManager.error(err);
+            }
         } else if (option == SVNOption.REINTEGRATE) {
             myIsReIntegrate = true;
         }
@@ -519,8 +525,8 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         return myIsReIntegrate;
     }
     
-    public String getFromSource() {
-    	return myFromSource;
+    public SVNShowRevisionType getShowRevisionType() {
+    	return myShowRevsType;
     }
     
     public boolean isChangeOptionUsed() {

@@ -18,6 +18,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -25,12 +27,14 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNMergeInfo;
 import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
 import org.tmatesoft.svn.core.SVNMergeRange;
@@ -94,14 +98,14 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     protected Map myDryRunDeletions;
     protected SVNURL myURL;
     protected File myTarget;
-    protected File myAddedPath;
-    protected List myMergedPaths;
-    protected List mySkippedPaths;
-    protected List myChildrenWithMergeInfo;
-    protected List myAddedPaths;
-    protected SVNWCAccess myWCAccess;
-    protected SVNRepository myRepository1;
-    protected SVNRepository myRepository2;
+    private List myMergedPaths;
+    private List mySkippedPaths;
+    private List myChildrenWithMergeInfo;
+    private List myAddedPaths;
+    private SVNWCAccess myWCAccess;
+    private SVNRepository myRepository1;
+    private SVNRepository myRepository2;
+    private SVNLogClient myLogClient;
     
     public SVNMergeDriver(ISVNAuthenticationManager authManager, ISVNOptions options) {
         super(authManager, options);
@@ -113,6 +117,72 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     
     public abstract SVNDiffOptions getMergeOptions();
 
+    protected void getLogsForMergeInfoRangeList(SVNURL reposRootURL, String[] paths, SVNMergeRangeList rangeList, 
+            boolean discoverChangedPaths, String[] revProps, ISVNLogEntryHandler handler) throws SVNException {
+        if (rangeList.isEmpty()) {
+            return;
+        }
+        
+        SVNMergeRange[] listRanges = rangeList.getRanges();
+        Arrays.sort(listRanges);
+        
+        SVNMergeRange youngestRange = listRanges[listRanges.length - 1];
+        SVNRevision youngestRev = SVNRevision.create(youngestRange.getEndRevision());
+        SVNMergeRange oldestRange = listRanges[0];
+        SVNRevision oldestRev = SVNRevision.create(oldestRange.getStartRevision()); 
+            
+        LogHandlerFilter filterHandler = new LogHandlerFilter(handler, rangeList);
+        SVNLogClient logClient = getLogClient();
+        logClient.doLog(reposRootURL, paths, youngestRev, oldestRev, youngestRev, false, discoverChangedPaths, 
+                false, 0, revProps, filterHandler);
+        checkCancelled();
+    }
+    
+    protected Map getMergeInfo(File path, SVNRevision pegRevision, SVNURL repositoryRoot[]) throws SVNException {
+        SVNWCAccess wcAccess = createWCAccess();
+        try {
+            SVNAdminArea adminArea = wcAccess.probeOpen(path, false, 0);
+            SVNEntry entry = wcAccess.getVersionedEntry(path, false);
+            long revNum[] = { SVNRepository.INVALID_REVISION };
+            SVNURL url = getEntryLocation(path, entry, revNum, SVNRevision.WORKING);
+            SVNRepository repository = null;
+            try {
+                repository = createRepository(url, false);
+                repository.assertServerIsMergeInfoCapable(path.toString());
+            } finally {
+                repository.closeSession();
+            }
+            
+            SVNURL reposRoot = getReposRoot(path, null, pegRevision, adminArea, wcAccess);
+            if (repositoryRoot != null && repositoryRoot.length > 0) {
+                repositoryRoot[0] = reposRoot;
+            }
+            
+            boolean[] indirect = { false };
+            return getWCOrRepositoryMergeInfo(wcAccess, path, entry, 
+                    SVNMergeInfoInheritance.INHERITED, indirect, false, null);
+        } finally {
+            wcAccess.close();
+        }
+    }
+
+    protected Map getMergeInfo(SVNURL url, SVNRevision pegRevision, SVNURL repositoryRoot[]) throws SVNException {
+        SVNRepository repository = null;
+        try {
+            repository = createRepository(url, true); 
+            long revisionNum = getRevisionNumber(pegRevision, repository, null);
+            SVNURL reposRoot = repository.getRepositoryRoot(true);
+            if (repositoryRoot != null && repositoryRoot.length > 0) {
+                repositoryRoot[0] = reposRoot;
+            }
+            String relPath = getPathRelativeToRoot(null, url, reposRoot, null, null);
+            return getReposMergeInfo(repository, relPath, revisionNum, 
+                    SVNMergeInfoInheritance.INHERITED, false);
+        } finally {
+            repository.closeSession();
+        }
+    }
+    
     protected void runPeggedMerge(SVNURL srcURL, File srcPath, Collection rangesToMerge, 
     		SVNRevision pegRevision, File targetWCPath, SVNDepth depth, boolean dryRun, 
             boolean force, boolean ignoreAncestry, boolean recordOnly) throws SVNException {
@@ -380,7 +450,6 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 myRepository2 = createRepository(url2, false);
                 myIsTargetHasDummyMergeRange = false;
                 myURL = url2;
-                myAddedPath = null;
                 myConflictedPaths = null;
                 myDryRunDeletions = dryRun ? new SVNHashMap() : null;
                 myIsAddNecessitatedMerge = false;
@@ -865,7 +934,14 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         }
         return adjustedProperties;
     }
-    
+
+    protected SVNLogClient getLogClient() {
+        if (myLogClient == null) {
+            myLogClient = new SVNLogClient(getRepositoryPool(), getOptions());
+        }
+        return myLogClient;
+    }
+
     private void ensureWCReflectsRepositorySubTree(File targetWCPath) throws SVNException {
     	SVNRevisionStatus wcStatus = SVNStatusUtil.getRevisionStatus(targetWCPath, null, false, getEventDispatcher());
     	if (wcStatus.isSwitched()) {
@@ -1160,7 +1236,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
 		        if (segments.size() > 1) {
 		            SVNLocationSegment segment2 = (SVNLocationSegment) segments.get(1);
 		            SVNURL segmentURL = sourceRootURL.appendPath(segment2.getPath(), false);
-		            SVNLogClient logClient = new SVNLogClient(getRepositoryPool(), getOptions());
+		            SVNLogClient logClient = getLogClient();
 		            SVNLocationEntry copyFromLocation = logClient.getCopySource(null, segmentURL, 
 		                    SVNRevision.create(segment2.getStartRevision()));
 		            String copyFromPath = copyFromLocation.getPath();
@@ -2207,7 +2283,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         return result;
     }
 
-    protected static class MergeSource {
+    protected class MergeSource {
         private SVNURL myURL1;
         private long myRevision1;
         private SVNURL myURL2;
@@ -2218,12 +2294,9 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         public static final MergeAction MERGE = new MergeAction();
         public static final MergeAction ROLL_BACK = new MergeAction();
         public static final MergeAction NO_OP = new MergeAction();
-        
-        private MergeAction() {
-        }
     }
     
-    protected static class MergePath implements Comparable {
+    protected class MergePath implements Comparable {
         File myPath;
         boolean myHasMissingChildren;
         boolean myIsSwitched;
@@ -2258,6 +2331,36 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         
         public String toString() {
             return myPath.toString();
+        }
+    }
+    
+    private class LogHandlerFilter implements ISVNLogEntryHandler {
+        ISVNLogEntryHandler myRealHandler;
+        SVNMergeRangeList myRangeList;
+        
+        public LogHandlerFilter(ISVNLogEntryHandler handler, SVNMergeRangeList rangeList) {
+            myRealHandler = handler;
+            myRangeList = rangeList;
+        }
+        
+        public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
+            checkCancelled();
+            SVNMergeRange range = new SVNMergeRange(logEntry.getRevision() - 1, logEntry.getRevision(), true);
+            SVNMergeRangeList thisRangeList = new SVNMergeRangeList(range);
+            SVNMergeRangeList intersection = thisRangeList.intersect(myRangeList);
+            if (intersection == null || intersection.isEmpty()) {
+                return;
+            }
+            
+            if (intersection.getSize() != 1) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
+                        "assertion failure in SVNMergeDriver.LogHandlerFilter.handleLogEntry: intersection list " +
+                        "size is {0}", new Integer(intersection.getSize()));
+                SVNErrorManager.error(err);
+            }
+            if (myRealHandler != null) {
+                myRealHandler.handleLogEntry(logEntry);
+            }
         }
     }
 }

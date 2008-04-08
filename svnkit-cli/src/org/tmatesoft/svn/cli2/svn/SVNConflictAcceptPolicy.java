@@ -17,31 +17,31 @@ package org.tmatesoft.svn.cli2.svn;
  * @author  TMate Software Ltd.
  */
 public class SVNConflictAcceptPolicy {
-    public static SVNConflictAcceptPolicy INVALID = new SVNConflictAcceptPolicy("invalid");  
+    public static final SVNConflictAcceptPolicy INVALID = new SVNConflictAcceptPolicy("invalid");  
     /**
      * Resolve the conflict with the pre-conflict base file.
      */
-    public static SVNConflictAcceptPolicy BASE = new SVNConflictAcceptPolicy("base");
+    public static final SVNConflictAcceptPolicy BASE = new SVNConflictAcceptPolicy("base");
     /**
      * Resolve the conflict with the pre-conflict working copy file.
      */
-    public static SVNConflictAcceptPolicy MINE = new SVNConflictAcceptPolicy("mine");
+    public static final SVNConflictAcceptPolicy MINE = new SVNConflictAcceptPolicy("mine");
 
-    public static SVNConflictAcceptPolicy MINE_FULL = new SVNConflictAcceptPolicy("mine-full");
+    public static final SVNConflictAcceptPolicy MINE_FULL = new SVNConflictAcceptPolicy("mine-full");
 
-    public static SVNConflictAcceptPolicy WORKING = new SVNConflictAcceptPolicy("working");
+    public static final SVNConflictAcceptPolicy WORKING = new SVNConflictAcceptPolicy("working");
     /**
      * Resolve the conflict with the post-conflict base file.
      */
-    public static SVNConflictAcceptPolicy THEIRS = new SVNConflictAcceptPolicy("theirs");
+    public static final SVNConflictAcceptPolicy THEIRS = new SVNConflictAcceptPolicy("theirs");
 
-    public static SVNConflictAcceptPolicy THEIRS_FULL = new SVNConflictAcceptPolicy("theirs-full");
+    public static final SVNConflictAcceptPolicy THEIRS_FULL = new SVNConflictAcceptPolicy("theirs-full");
 
-    public static SVNConflictAcceptPolicy POSTPONE = new SVNConflictAcceptPolicy("postpone");
+    public static final SVNConflictAcceptPolicy POSTPONE = new SVNConflictAcceptPolicy("postpone");
     
-    public static SVNConflictAcceptPolicy EDIT = new SVNConflictAcceptPolicy("edit");
+    public static final SVNConflictAcceptPolicy EDIT = new SVNConflictAcceptPolicy("edit");
     
-    public static SVNConflictAcceptPolicy LAUNCH = new SVNConflictAcceptPolicy("launch");
+    public static final SVNConflictAcceptPolicy LAUNCH = new SVNConflictAcceptPolicy("launch");
     
     private String myName;
     private SVNConflictAcceptPolicy(String name) {

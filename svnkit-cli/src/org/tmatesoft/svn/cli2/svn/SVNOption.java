@@ -68,7 +68,7 @@ public class SVNOption extends AbstractSVNOption {
     public static final SVNOption KEEP_LOCAL = new SVNOption("keep-local");
     public static final SVNOption ACCEPT = new SVNOption("accept", false);
     public static final SVNOption REMOVE = new SVNOption("remove");
-    public static final SVNOption FROM_SOURCE = new SVNOption("from-source", false);
+    public static final SVNOption SHOW_REVS = new SVNOption("show-revs", false);
     public static final SVNOption REINTEGRATE = new SVNOption("reintegrate");
 
     public static final SVNOption OLD = new SVNOption("old", false);

@@ -111,6 +111,7 @@ svnkit-cli/src/org/tmatesoft/svn/cli2/svn/SVNConflictAcceptPolicy.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svn/SVNMergeInfoCommand.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svn/SVNPropEditCommand.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svn/SVNRevertCommand.java -text
+svnkit-cli/src/org/tmatesoft/svn/cli2/svn/SVNShowRevisionType.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svn/commands.properties eol=lf
 svnkit-cli/src/org/tmatesoft/svn/cli2/svn/options.properties eol=lf
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnadmin/SVNAdminHotCopyCommand.java -text
