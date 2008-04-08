@@ -18,6 +18,9 @@ package org.tmatesoft.svn.cli2.svn;
  */
 public class SVNConflictAcceptPolicy {
     public static final SVNConflictAcceptPolicy INVALID = new SVNConflictAcceptPolicy("invalid");  
+
+    public static final SVNConflictAcceptPolicy UNSPECIFIED = new SVNConflictAcceptPolicy("unspecified");  
+
     /**
      * Resolve the conflict with the pre-conflict base file.
      */

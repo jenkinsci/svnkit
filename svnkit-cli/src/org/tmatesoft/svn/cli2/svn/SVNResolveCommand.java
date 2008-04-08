@@ -61,11 +61,13 @@ public class SVNResolveCommand extends SVNCommand {
             choice = SVNConflictChoice.MINE_FULL;
         } else if (accept == SVNConflictAcceptPolicy.THEIRS_FULL) {
             choice = SVNConflictChoice.THEIRS_FULL;
-        } else if (accept == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "missing --accept option");
+        } else if (accept == null || accept == SVNConflictAcceptPolicy.UNSPECIFIED) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+                    "missing --accept option");
             SVNErrorManager.error(err);
         } else {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "invalid 'accept' ARG");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+                    "invalid 'accept' ARG");
             SVNErrorManager.error(err);
         } 
        

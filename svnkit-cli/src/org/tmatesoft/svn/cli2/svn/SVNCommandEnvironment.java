@@ -123,7 +123,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         super(programName, out, err, in);
         myIsDescend = true;
         myLimit = -1;
-        myResolveAccept = SVNConflictAcceptPolicy.INVALID;
+        myResolveAccept = SVNConflictAcceptPolicy.UNSPECIFIED;
         myExtensions = new HashSet();
         myDepth = SVNDepth.UNKNOWN;
         mySetDepth = SVNDepth.UNKNOWN;
@@ -180,7 +180,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             options.setKeepLocks(true);
         }
 
-        if ((myResolveAccept == SVNConflictAcceptPolicy.INVALID && (!options.isInteractiveConflictResolution() || myIsNonInteractive))
+        if ((myResolveAccept == SVNConflictAcceptPolicy.UNSPECIFIED && (!options.isInteractiveConflictResolution() || myIsNonInteractive))
                 || myResolveAccept == SVNConflictAcceptPolicy.POSTPONE) {
             options.setConflictHandler(null);
         } else {
