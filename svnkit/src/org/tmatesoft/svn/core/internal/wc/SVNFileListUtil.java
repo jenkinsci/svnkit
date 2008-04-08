@@ -80,7 +80,9 @@ public class SVNFileListUtil {
             }
             return processed;
         }
-        return sort(directory.listFiles());
+
+	    final File[] files = directory.listFiles();
+	    return files != null ? sort(files) : null;
     }
     
     private static File[] sort(File[] files) {
