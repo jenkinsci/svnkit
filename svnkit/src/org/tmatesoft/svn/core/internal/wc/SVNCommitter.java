@@ -86,6 +86,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
             file = new File(wcAccess.getAnchor(), item.getPath());
         }
 
+        long rev = item.getRevision().getNumber();
         if (item.isAdded() && item.isDeleted()) {
             event = SVNEventFactory.createSVNEvent(file, item.getKind(), null, SVNRepository.INVALID_REVISION, SVNEventAction.COMMIT_REPLACED, null, null, null);
         } else if (item.isAdded()) {
@@ -98,12 +99,11 @@ public class SVNCommitter implements ISVNCommitPathHandler {
         } else if (item.isDeleted()) {
             event = SVNEventFactory.createSVNEvent(file, item.getKind(), null, SVNRepository.INVALID_REVISION, SVNEventAction.COMMIT_DELETED, null, null, null);
         } else if (item.isContentsModified() || item.isPropertiesModified()) {
-            event = SVNEventFactory.createSVNEvent(file, item.getKind(), null, SVNRepository.INVALID_REVISION, SVNEventAction.COMMIT_MODIFIED, null, null, null);
+            event = SVNEventFactory.createSVNEvent(file, item.getKind(), null, rev, SVNEventAction.COMMIT_MODIFIED, null, null, null);
         }
         if (event != null) {
             wcAccess.handleEvent(event, ISVNEventHandler.UNKNOWN);
         }
-        long rev = item.getRevision().getNumber();
         long cfRev = item.getCopyFromRevision().getNumber();//item.getCopyFromURL() != null ? rev : -1;
         if (item.isDeleted()) {
             commitEditor.deleteEntry(commitPath, rev);
