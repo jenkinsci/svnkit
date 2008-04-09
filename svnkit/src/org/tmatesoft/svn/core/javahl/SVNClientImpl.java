@@ -62,8 +62,6 @@ import org.tigris.subversion.javahl.SubversionException;
 import org.tigris.subversion.javahl.RevisionKind;
 import org.tigris.subversion.javahl.MergeinfoLogKind;
 
-import org.tmatesoft.svn.core.javahl.JavaHLDebugLog;
-
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNCancelException;
@@ -771,13 +769,12 @@ public class SVNClientImpl implements SVNClientInterface {
             throwException(ex);
         }
         SVNCopySource[] sources = new SVNCopySource[srcPaths.length];
-        SVNRevision srcRevision = JavaHLObjectFactory.getSVNRevision(Revision.WORKING);
         try {
             for (int i = 0; i < srcPaths.length; i++) {
                 if (isURL(srcPaths[i])) {
-                    sources[i] = new SVNCopySource(SVNRevision.UNDEFINED, srcRevision, SVNURL.parseURIEncoded(srcPaths[i]));
+                    sources[i] = new SVNCopySource(SVNRevision.UNDEFINED, SVNRevision.HEAD, SVNURL.parseURIEncoded(srcPaths[i]));
                 } else {
-                    sources[i] = new SVNCopySource(SVNRevision.UNDEFINED, srcRevision, new File(srcPaths[i]).getAbsoluteFile());
+                    sources[i] = new SVNCopySource(SVNRevision.UNDEFINED, SVNRevision.HEAD, new File(srcPaths[i]).getAbsoluteFile());
                 }
             }
         } catch (SVNException e) {
@@ -792,7 +789,7 @@ public class SVNClientImpl implements SVNClientInterface {
         SVNCopyClient client = getSVNCopyClient();
         try {
             if (isURL(destPath)) {
-                client.doCopy(sources, SVNURL.parseURIEncoded(destPath), isMove, !copyAsChild, makeParents, message, null);
+                client.doCopy(sources, SVNURL.parseURIEncoded(destPath), isMove, makeParents, !copyAsChild, message, null);
             } else {
                 client.doCopy(sources, new File(destPath).getAbsoluteFile(), isMove, makeParents, !copyAsChild);
             }
