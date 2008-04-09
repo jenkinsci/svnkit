@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
@@ -630,10 +631,6 @@ public class SVNLookClient extends SVNBasicClient {
      *                          </li>
      *                          </ul>
      */
-    public void doGetTree(File repositoryRoot, String path, SVNRevision revision, boolean includeIDs, ISVNTreeHandler handler) throws SVNException {
-        doGetTree(repositoryRoot, path, revision, includeIDs, true, handler);
-    }
-
     public void doGetTree(File repositoryRoot, String path, SVNRevision revision, boolean includeIDs, 
             boolean recursive, ISVNTreeHandler handler) throws SVNException {
         FSFS fsfs = open(repositoryRoot, revision);
@@ -682,10 +679,6 @@ public class SVNLookClient extends SVNBasicClient {
      *                          </li>
      *                          </ul>
      */
-    public void doGetTree(File repositoryRoot, String path, String transactionName, boolean includeIDs, ISVNTreeHandler handler) throws SVNException {
-        doGetTree(repositoryRoot, path, transactionName, includeIDs, true, handler);
-    }
-
     public void doGetTree(File repositoryRoot, String path, String transactionName, boolean includeIDs, 
             boolean recursive, ISVNTreeHandler handler) throws SVNException {
         FSFS fsfs = open(repositoryRoot, transactionName);
@@ -805,9 +798,9 @@ public class SVNLookClient extends SVNBasicClient {
      *                          </li>
      *                          </ul>
      */
-    public String doGetProperty(File repositoryRoot, String propName, String path, SVNRevision revision) throws SVNException {
+    public SVNPropertyValue doGetProperty(File repositoryRoot, String propName, String path, SVNRevision revision) throws SVNException {
         SVNProperties props = getProperties(repositoryRoot, propName, path, revision, null, true, false);
-        return props.getStringValue(propName);
+        return props.getSVNPropertyValue(propName);
     }
     
     /**
@@ -855,9 +848,9 @@ public class SVNLookClient extends SVNBasicClient {
      *                          </li>
      *                          </ul>
      */
-    public String doGetProperty(File repositoryRoot, String propName, String path, String transactionName) throws SVNException {
+    public SVNPropertyValue doGetProperty(File repositoryRoot, String propName, String path, String transactionName) throws SVNException {
         SVNProperties props = getProperties(repositoryRoot, propName, path, null, transactionName, true, false);
-        return props.getStringValue(propName);
+        return props.getSVNPropertyValue(propName);
     }
 
     /**
@@ -895,9 +888,9 @@ public class SVNLookClient extends SVNBasicClient {
      * @throws SVNException     no repository is found at 
      *                          <code>repositoryRoot</code>
      */
-    public String doGetRevisionProperty(File repositoryRoot, String propName, SVNRevision revision) throws SVNException {
+    public SVNPropertyValue doGetRevisionProperty(File repositoryRoot, String propName, SVNRevision revision) throws SVNException {
         SVNProperties revProps = getProperties(repositoryRoot, propName, null, revision, null, true, true);
-        return revProps.getStringValue(propName);
+        return revProps.getSVNPropertyValue(propName);
     }
 
     /**
@@ -928,9 +921,9 @@ public class SVNLookClient extends SVNBasicClient {
      *                          </li>
      *                          </ul>
      */
-    public String doGetRevisionProperty(File repositoryRoot, String propName, String transactionName) throws SVNException {
+    public SVNPropertyValue doGetRevisionProperty(File repositoryRoot, String propName, String transactionName) throws SVNException {
         SVNProperties revProps = getProperties(repositoryRoot, propName, null, null, transactionName, true, true);
-        return revProps.getStringValue(propName);
+        return revProps.getSVNPropertyValue(propName);
     }
 
     /**
@@ -1114,7 +1107,13 @@ public class SVNLookClient extends SVNBasicClient {
     private SVNNodeKind verifyPath(FSRoot root, String path) throws SVNException {
         SVNNodeKind kind = root.checkNodeKind(path);
         if (kind == SVNNodeKind.NONE) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "Path ''{0}'' does not exist", path);
+            if (SVNPathUtil.isURL(path)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, 
+                        "''{0}'' is a URL, probably should be a path", path);
+                SVNErrorManager.error(err);
+            }
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, 
+                    "Path ''{0}'' does not exist", path);
             SVNErrorManager.error(err);
         }
         return kind;

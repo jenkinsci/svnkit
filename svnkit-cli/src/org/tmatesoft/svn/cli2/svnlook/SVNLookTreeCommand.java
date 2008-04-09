@@ -49,10 +49,6 @@ public class SVNLookTreeCommand extends SVNLookCommand implements ISVNTreeHandle
         SVNLookClient client = environment.getClientManager().getLookClient();
         
         String path = environment.getFirstArgument();
-        if (path == null) {
-            path = "";
-        }
-        
         if (environment.isRevision()) {
             client.doGetTree(environment.getRepositoryFile(), path, 
                     SVNRevision.create(environment.getRevision()), 
