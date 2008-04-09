@@ -186,6 +186,7 @@
             <fileset dir=".">
                 <include name="changelog.txt" />
                 <include name="README.txt" />
+                <include name="THIRD-PARTY.txt" />
                 <include name="COPYING" />
                 <include name="contrib/jna/JNA-LICENSE" />
                 <include name="contrib/javahl/JAVAHL-LICENSE" />
@@ -265,6 +266,7 @@
             <fileset dir="build/lib">
                 <include name="changelog.txt" />
                 <include name="README.txt" />
+                <include name="THIRD-PARTY.txt" />
                 <include name="COPYING" />
                 <include name="TRILEAD-LICENSE" />
                 <include name="SEQUENCE-LICENSE" />
