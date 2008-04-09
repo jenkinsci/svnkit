@@ -631,6 +631,11 @@ public class SVNLookClient extends SVNBasicClient {
      *                          </ul>
      */
     public void doGetTree(File repositoryRoot, String path, SVNRevision revision, boolean includeIDs, ISVNTreeHandler handler) throws SVNException {
+        doGetTree(repositoryRoot, path, revision, includeIDs, true, handler);
+    }
+
+    public void doGetTree(File repositoryRoot, String path, SVNRevision revision, boolean includeIDs, 
+            boolean recursive, ISVNTreeHandler handler) throws SVNException {
         FSFS fsfs = open(repositoryRoot, revision);
         long revNum = SVNAdminHelper.getRevisionNumber(revision, fsfs.getYoungestRevision(), fsfs);
         FSRoot root = fsfs.createRevisionRoot(revNum);
@@ -638,7 +643,7 @@ public class SVNLookClient extends SVNBasicClient {
         FSRevisionNode node = root.getRevisionNode(path);
         FSID id = includeIDs ? node.getId() : null;
         SVNNodeKind kind = root.checkNodeKind(path);
-        getTree(fsfs, root, path, kind, id, includeIDs, 0, handler);
+        getTree(fsfs, root, path, kind, id, includeIDs, 0, recursive, handler);
     }
 
     /**
@@ -678,6 +683,11 @@ public class SVNLookClient extends SVNBasicClient {
      *                          </ul>
      */
     public void doGetTree(File repositoryRoot, String path, String transactionName, boolean includeIDs, ISVNTreeHandler handler) throws SVNException {
+        doGetTree(repositoryRoot, path, transactionName, includeIDs, true, handler);
+    }
+
+    public void doGetTree(File repositoryRoot, String path, String transactionName, boolean includeIDs, 
+            boolean recursive, ISVNTreeHandler handler) throws SVNException {
         FSFS fsfs = open(repositoryRoot, transactionName);
         FSTransactionInfo txn = fsfs.openTxn(transactionName);
         FSRoot root = fsfs.createTransactionRoot(txn);
@@ -685,9 +695,9 @@ public class SVNLookClient extends SVNBasicClient {
         FSRevisionNode node = root.getRevisionNode(path);
         FSID id = includeIDs ? node.getId() : null;
         SVNNodeKind kind = root.checkNodeKind(path);
-        getTree(fsfs, root, path, kind, id, includeIDs, 0, handler);
+        getTree(fsfs, root, path, kind, id, includeIDs, 0, recursive, handler);
     }
-    
+
     /**
      * Writes differences of changed files and properties for the 
      * given revision to the provided output stream. If no special diff generator 
@@ -968,23 +978,27 @@ public class SVNLookClient extends SVNBasicClient {
         return myDiffGenerator;
     }
 
-    private void getTree(FSFS fsfs, FSRoot root, String path, SVNNodeKind kind, FSID id, boolean includeIDs, int depth, ISVNTreeHandler handler) throws SVNException {
+    private void getTree(FSFS fsfs, FSRoot root, String path, SVNNodeKind kind, FSID id, boolean includeIDs, 
+            int depth, boolean recursive, ISVNTreeHandler handler) throws SVNException {
         checkCancelled();
         if (handler != null) {
-            handler.handlePath(new SVNAdminPath(path, includeIDs ? id.toString() : null, depth, kind == SVNNodeKind.DIR));
+            handler.handlePath(new SVNAdminPath(path, includeIDs ? id.toString() : null, depth, 
+                    kind == SVNNodeKind.DIR));
         }
         
         if (kind != SVNNodeKind.DIR) {
             return;
         }
         
-        FSRevisionNode node = root.getRevisionNode(path);
-        Map entries = node.getDirEntries(fsfs);
-        for (Iterator names = entries.keySet().iterator(); names.hasNext();) {
-            String name = (String) names.next();
-            FSEntry entry = (FSEntry) entries.get(name);
-            getTree(fsfs, root, SVNPathUtil.getAbsolutePath(SVNPathUtil.append(path, entry.getName())),
-                    entry.getType(), includeIDs ? entry.getId() : null, includeIDs, depth + 1, handler);
+        if (recursive || depth == 0) {
+            FSRevisionNode node = root.getRevisionNode(path);
+            Map entries = node.getDirEntries(fsfs);
+            for (Iterator names = entries.keySet().iterator(); names.hasNext();) {
+                String name = (String) names.next();
+                FSEntry entry = (FSEntry) entries.get(name);
+                getTree(fsfs, root, SVNPathUtil.getAbsolutePath(SVNPathUtil.append(path, entry.getName())),
+                        entry.getType(), includeIDs ? entry.getId() : null, includeIDs, depth + 1, recursive, handler);
+            }
         }
     }
     
