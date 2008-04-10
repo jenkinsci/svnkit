@@ -35,7 +35,7 @@ public class SVNLookOption extends AbstractSVNOption {
     public static final SVNLookOption SHOW_IDS = new SVNLookOption("show-ids", null, true);
     public static final SVNLookOption TRANSACTION = new SVNLookOption("transaction", "t", false);
     public static final SVNLookOption VERBOSE = new SVNLookOption("verbose", "v", true);
-    public static final SVNLookOption EXTENSION = new SVNLookOption("extension", "x", true);
+    public static final SVNLookOption EXTENSIONS = new SVNLookOption("extensions", "x", false);
 
     private SVNLookOption(String name, String alias, boolean unary) {
         super(name, alias, unary);

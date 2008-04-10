@@ -16,6 +16,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNGNUDiffGenerator;
 import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
 
 
@@ -36,13 +37,19 @@ public class SVNLookDiffCommand extends SVNLookCommand {
         options.add(SVNLookOption.NO_DIFF_DELETED);
         options.add(SVNLookOption.NO_DIFF_ADDED);
         options.add(SVNLookOption.DIFF_COPY_FROM);
-        options.add(SVNLookOption.EXTENSION);
+        options.add(SVNLookOption.EXTENSIONS);
         return options;
     }
 
     public void run() throws SVNException {
         SVNLookCommandEnvironment environment = getSVNLookEnvironment(); 
         SVNLookClient client = environment.getClientManager().getLookClient();
+
+        DefaultSVNGNUDiffGenerator defaultDiffGenerator = new DefaultSVNGNUDiffGenerator();
+        defaultDiffGenerator.setOptions(client.getOptions());
+        defaultDiffGenerator.setDiffOptions(environment.getDiffOptions());
+        
+        client.setDiffGenerator(defaultDiffGenerator);
         if (environment.isRevision()) {
             client.doGetDiff(environment.getRepositoryFile(), getRevisionObject(), 
                     !environment.isNoDiffDeleted(), !environment.isNoDiffAdded(), environment.isDiffCopyFrom(), 

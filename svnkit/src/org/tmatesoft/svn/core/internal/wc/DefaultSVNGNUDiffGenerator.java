@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
+import org.tmatesoft.svn.core.internal.io.fs.CountingStream;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
@@ -47,21 +48,18 @@ public class DefaultSVNGNUDiffGenerator extends DefaultSVNDiffGenerator implemen
                 if (!myIsHeaderWritten) {
                     path = path.startsWith("/") ? path.substring(1) : path;
                     myHeader = "Added: " + path;
-                    writeHeader(result);
                 }
                 break;
             case DELETED:
                 if (!myIsHeaderWritten) {
                     path = path.startsWith("/") ? path.substring(1) : path;
                     myHeader = "Deleted: " + path;
-                    writeHeader(result);
                 }
                 break;
             case MODIFIED:
                 if (!myIsHeaderWritten) {
                     path = path.startsWith("/") ? path.substring(1) : path;
                     myHeader = "Modified: " + path;
-                    writeHeader(result);
                 }
                 break;
             case COPIED:
@@ -69,7 +67,6 @@ public class DefaultSVNGNUDiffGenerator extends DefaultSVNDiffGenerator implemen
                     path = path.startsWith("/") ? path.substring(1) : path;
                     copyFromPath = copyFromPath.startsWith("/") ? copyFromPath.substring(1) : copyFromPath;
                     myHeader = "Copied: " + path + " (from rev " + copyFromRevision + ", " + copyFromPath + ")";
-                    writeHeader(result);
                 }
                 break;
             case NO_DIFF:
@@ -85,20 +82,32 @@ public class DefaultSVNGNUDiffGenerator extends DefaultSVNDiffGenerator implemen
 
     public void displayFileDiff(String path, File file1, File file2,
             String rev1, String rev2, String mimeType1, String mimeType2, OutputStream result) throws SVNException {
-        super.displayFileDiff(path, file1, file2, rev1, rev2, mimeType1, mimeType2, result);
-        try {
-            result.write(getEOL());
-        } catch (IOException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-            SVNErrorManager.error(err, e);
+        CountingStream counitngStream = new CountingStream(result, 0);
+        super.displayFileDiff(path, file1, file2, rev1, rev2, mimeType1, mimeType2, counitngStream);
+        if (counitngStream.getPosition() > 0) {
+            try {
+                result.write(getEOL());
+            } catch (IOException e) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+                SVNErrorManager.error(err, e);
+            }
         }
     }
 
+    public void setHeaderWritten(boolean written) {
+        myIsHeaderWritten = written;
+    }
+    
     protected boolean displayHeader(OutputStream os, String path, boolean deleted) throws IOException {
-        if (!myIsHeaderWritten) {
-            path = path.startsWith("/") ? path.substring(1) : path;
-            myHeader = "Index: " + path;
+        if (myHeader != null) {
             os.write(myHeader.getBytes(getEncoding())); 
+            os.write(getEOL());
+            myHeader = null;
+            myIsHeaderWritten = true;
+        } else if (!myIsHeaderWritten) {
+            path = path.startsWith("/") ? path.substring(1) : path;
+            String header = "Index: " + path;
+            os.write(header.getBytes(getEncoding())); 
             os.write(getEOL());
             myIsHeaderWritten = true;
         }
@@ -173,21 +182,6 @@ public class DefaultSVNGNUDiffGenerator extends DefaultSVNDiffGenerator implemen
         return path + '\t' + dateString + " (rev " + rev + ")";
     }
     
-    private void writeHeader(OutputStream result) throws SVNException {
-        try {
-            result.write(myHeader.getBytes(getEncoding())); 
-            result.write(getEOL());
-            myIsHeaderWritten = true;
-        } catch (IOException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-            SVNErrorManager.error(err, e);
-        }
-    }
-    
-    protected boolean isHeaderForced(File file1, File file2) {
-        return true;
-    }
-
     protected boolean useLocalFileSeparatorChar() {
         return false;
     }

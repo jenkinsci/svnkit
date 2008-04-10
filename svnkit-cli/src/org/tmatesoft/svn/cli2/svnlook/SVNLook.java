@@ -76,5 +76,6 @@ public class SVNLook extends AbstractSVNLauncher {
         SVNCommandLine.registerOption(SVNLookOption.SHOW_IDS);
         SVNCommandLine.registerOption(SVNLookOption.TRANSACTION);
         SVNCommandLine.registerOption(SVNLookOption.VERBOSE);
+        SVNCommandLine.registerOption(SVNLookOption.EXTENSIONS);
     }
 }

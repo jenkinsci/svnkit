@@ -215,6 +215,12 @@ public class SVNNodeEditor implements ISVNEditor {
             myCancelHandler.checkCancelled();
         }
         
+        DefaultSVNGNUDiffGenerator defaultGenerator = null;
+        if (generator instanceof DefaultSVNGNUDiffGenerator) {
+            defaultGenerator = (DefaultSVNGNUDiffGenerator) generator;
+            defaultGenerator.setHeaderWritten(false);
+        }
+        
         boolean isCopy = false;
         boolean printedHeader = false;
         if (SVNRevision.isValidRevisionNumber(node.myCopyFromRevision) && node.myCopyFromPath != null) {
@@ -264,8 +270,7 @@ public class SVNNodeEditor implements ISVNEditor {
         }
         
         if (doDiff) {
-            if (generator instanceof DefaultSVNGNUDiffGenerator) {
-                DefaultSVNGNUDiffGenerator defaultGenerator = (DefaultSVNGNUDiffGenerator) generator;
+            if (defaultGenerator != null) {
                 if (isOriginalEmpty) {
                     defaultGenerator.setOriginalFile(null, path);
                 } else {

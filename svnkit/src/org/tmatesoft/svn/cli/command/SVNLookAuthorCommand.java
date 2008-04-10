@@ -49,7 +49,7 @@ public class SVNLookAuthorCommand extends SVNCommand {
         } 
         String author = lookClient.doGetAuthor(reposRoot, revision);
         SVNCommand.println(out, author != null ? author : "");
-    }
+     }
 
     public void run(InputStream in, PrintStream out, PrintStream err) throws SVNException {
         run(out, err);

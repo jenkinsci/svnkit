@@ -17,6 +17,7 @@ import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -37,6 +38,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 /**
@@ -59,7 +61,7 @@ public class SVNLookCommandEnvironment extends AbstractSVNCommandEnvironment {
     private boolean myIsDiffCopyFrom;
     private boolean myIsFullPaths;
     private boolean myIsCopyInfo;
-    private String myExtension;
+    private Collection myExtensions;
     private boolean myIsRevision;
     private File myRepositoryFile;
     private FSRepository myRepository;
@@ -70,6 +72,7 @@ public class SVNLookCommandEnvironment extends AbstractSVNCommandEnvironment {
     public SVNLookCommandEnvironment(String programName, PrintStream out, PrintStream err, InputStream in) {
         super(programName, out, err, in);
         myRevision = -1;
+        myExtensions = new HashSet();
     }
     
     public File getRepositoryFile() {
@@ -132,8 +135,8 @@ public class SVNLookCommandEnvironment extends AbstractSVNCommandEnvironment {
         return myIsCopyInfo;
     }
     
-    public String getExtension() {
-        return myExtension;
+    public Collection getExtensions() {
+        return myExtensions;
     }
     
     public boolean isRevision() {
@@ -263,10 +266,34 @@ public class SVNLookCommandEnvironment extends AbstractSVNCommandEnvironment {
             myIsFullPaths = true;
         } else if (option == SVNLookOption.COPY_INFO) {
             myIsCopyInfo = true;
-        } else if (option == SVNLookOption.EXTENSION) {
-            myExtension = optionValue.getValue();
+        } else if (option == SVNLookOption.EXTENSIONS) {
+            myExtensions.add(optionValue.getValue());
         }
-     }
+    }
+
+    public SVNDiffOptions getDiffOptions() throws SVNException {
+        LinkedList extensions = new LinkedList(myExtensions);
+        boolean ignoreAllWS = myExtensions.contains("-w") || myExtensions.contains("--ignore-all-space");
+        if (ignoreAllWS) {
+            extensions.remove("-w");
+            extensions.remove("--ignore-all-space");
+        }
+        boolean ignoreAmountOfWS = myExtensions.contains("-b") || myExtensions.contains("--ignore-space-change");
+        if (ignoreAmountOfWS) {
+            extensions.remove("-b");
+            extensions.remove("--ignore-space-change");
+        }
+        boolean ignoreEOLStyle = myExtensions.contains("--ignore-eol-style");
+        if (ignoreEOLStyle) {
+            extensions.remove("--ignore-eol-style");
+        }
+        if (!extensions.isEmpty()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INVALID_DIFF_OPTION, 
+                    "Invalid argument ''{0}'' in diff options", extensions.get(0));
+            SVNErrorManager.error(err);
+        }
+        return new SVNDiffOptions(ignoreAllWS, ignoreAmountOfWS, ignoreEOLStyle);
+    }
 
     protected String refineCommandName(String commandName) throws SVNException {
         if (myIsHelp) {

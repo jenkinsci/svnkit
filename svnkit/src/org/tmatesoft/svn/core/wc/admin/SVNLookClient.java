@@ -564,11 +564,12 @@ public class SVNLookClient extends SVNBasicClient {
      *                          </li>
      *                          </ul>
      */
-    public void doGetHistory(File repositoryRoot, String path, SVNRevision revision, boolean includeIDs, ISVNHistoryHandler handler) throws SVNException {
+    public void doGetHistory(File repositoryRoot, String path, SVNRevision revision, boolean includeIDs, 
+            long limit, ISVNHistoryHandler handler) throws SVNException {
         FSFS fsfs = open(repositoryRoot, revision);
         long revNum = SVNAdminHelper.getRevisionNumber(revision, fsfs.getYoungestRevision(), fsfs);
         path = path == null ? "/" : path;
-        getHistory(fsfs, path, 0, revNum, true, includeIDs, handler);
+        getHistory(fsfs, path, 0, revNum, limit, true, includeIDs, handler);
     }
 
     /**
@@ -1026,13 +1027,16 @@ public class SVNLookClient extends SVNBasicClient {
         return node.getProperties(fsfs);
     }
 
-    private void getHistory(FSFS fsfs, String path, long start, long end, boolean crossCopies, boolean includeIDs, ISVNHistoryHandler handler) throws SVNException {
+    private void getHistory(FSFS fsfs, String path, long start, long end, long limit, boolean crossCopies, 
+            boolean includeIDs, ISVNHistoryHandler handler) throws SVNException {
         if (!SVNRevision.isValidRevisionNumber(start)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Invalid start revision {0}", new Long(start));
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, 
+                    "Invalid start revision {0}", String.valueOf(start));
             SVNErrorManager.error(err);
         }
         if (!SVNRevision.isValidRevisionNumber(end)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Invalid end revision {0}", new Long(end));
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, 
+                    "Invalid end revision {0}", String.valueOf(end));
             SVNErrorManager.error(err);
         }
 
@@ -1044,7 +1048,7 @@ public class SVNLookClient extends SVNBasicClient {
 
         FSRevisionRoot root = fsfs.createRevisionRoot(end);
         FSNodeHistory history = root.getNodeHistory(path);
-
+        long count = 0;
         do {
             history = history.getPreviousHistory(crossCopies);
             if (history == null) {
@@ -1064,7 +1068,21 @@ public class SVNLookClient extends SVNBasicClient {
             }
 
             if (handler != null) {
-                handler.handlePath(new SVNAdminPath(history.getHistoryEntry().getPath(), id, revision));
+                try {
+                    handler.handlePath(new SVNAdminPath(history.getHistoryEntry().getPath(), id, revision));
+                } catch (SVNException svne) {
+                    if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.CEASE_INVOCATION) {
+                        break;
+                    }
+                    throw svne;
+                }
+            }
+            
+            if (limit > 0) {
+                count++;
+                if (count >= limit) {
+                    break;
+                }
             }
         } while (history != null);
 
