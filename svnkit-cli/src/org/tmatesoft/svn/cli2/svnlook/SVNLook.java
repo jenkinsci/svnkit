@@ -53,6 +53,7 @@ public class SVNLook extends AbstractSVNLauncher {
         AbstractSVNCommand.registerCommand(new SVNLookTreeCommand());
         AbstractSVNCommand.registerCommand(new SVNLookPropGetCommand());
         AbstractSVNCommand.registerCommand(new SVNLookPropListCommand());
+        AbstractSVNCommand.registerCommand(new SVNLookDirsChangedCommand());
     }
 
     protected void registerOptions() {
