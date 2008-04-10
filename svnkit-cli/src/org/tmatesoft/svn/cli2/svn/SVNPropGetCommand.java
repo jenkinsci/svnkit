@@ -13,9 +13,9 @@ package org.tmatesoft.svn.cli2.svn;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -45,7 +45,7 @@ public class SVNPropGetCommand extends SVNPropertiesCommand {
     }
 
     protected Collection createSupportedOptions() {
-        Collection options = new ArrayList();
+        Collection options = new LinkedList();
         options.add(SVNOption.RECURSIVE);
         options.add(SVNOption.DEPTH);
         options.add(SVNOption.REVISION);
@@ -68,7 +68,7 @@ public class SVNPropGetCommand extends SVNPropertiesCommand {
             SVNErrorManager.error(err);
         }
 
-        Collection targets = new ArrayList(); 
+        Collection targets = new LinkedList(); 
         targets = getSVNEnvironment().combineTargets(targets, true);
         if (targets.isEmpty()) {
             targets.add("");
