@@ -11,12 +11,10 @@
  */
 package org.tmatesoft.svn.cli2.svnlook;
 
-import java.io.PrintStream;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
