@@ -56,6 +56,7 @@ public class SVNLookCommandEnvironment extends AbstractSVNCommandEnvironment {
     private long myLimit;
     private boolean myIsNoDiffDeleted;
     private boolean myIsNoDiffAdded;
+    private boolean myIsDiffCopyFrom;
     private boolean myIsFullPaths;
     private boolean myIsCopyInfo;
     private String myExtension;
@@ -118,7 +119,11 @@ public class SVNLookCommandEnvironment extends AbstractSVNCommandEnvironment {
     public boolean isNoDiffAdded() {
         return myIsNoDiffAdded;
     }
-    
+
+    public boolean isDiffCopyFrom() {
+        return myIsDiffCopyFrom;
+    }
+
     public boolean isFullPaths() {
         return myIsFullPaths;
     }
@@ -252,6 +257,8 @@ public class SVNLookCommandEnvironment extends AbstractSVNCommandEnvironment {
             myIsNoDiffDeleted = true;
         } else if (option == SVNLookOption.NO_DIFF_ADDED) {
             myIsNoDiffAdded = true;
+        } else if (option == SVNLookOption.DIFF_COPY_FROM) {
+            myIsDiffCopyFrom = true;
         } else if (option == SVNLookOption.FULL_PATHS) {
             myIsFullPaths = true;
         } else if (option == SVNLookOption.COPY_INFO) {

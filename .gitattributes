@@ -120,6 +120,7 @@ svnkit-cli/src/org/tmatesoft/svn/cli2/svnadmin/SVNAdminSetUUIDCommand.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnadmin/SVNAdminUpgradeCommand.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnadmin/commands.properties -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnadmin/options.properties -text
+svnkit-cli/src/org/tmatesoft/svn/cli2/svnlook/SVNLookDiffCommand.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnlook/SVNLookDirsChangedCommand.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnlook/SVNLookPropGetCommand.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnlook/SVNLookPropListCommand.java -text
