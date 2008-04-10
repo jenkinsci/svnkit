@@ -44,7 +44,6 @@ public class SVNLookPropGetCommand extends SVNLookCommand {
 
     public void run() throws SVNException {
         SVNLookCommandEnvironment environment = getSVNLookEnvironment(); 
-        SVNLookClient client = environment.getClientManager().getLookClient();
 
         if (environment.getFirstArgument() == null) {
             SVNErrorMessage err = null;
@@ -63,6 +62,7 @@ public class SVNLookPropGetCommand extends SVNLookCommand {
         
         String propName = environment.getFirstArgument();
         SVNPropertyValue propValue = null;
+        SVNLookClient client = environment.getClientManager().getLookClient();
         if (environment.isRevision()) {
             if (environment.isRevProp()) {
                 propValue = client.doGetRevisionProperty(environment.getRepositoryFile(), 

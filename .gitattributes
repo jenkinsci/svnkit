@@ -121,6 +121,7 @@ svnkit-cli/src/org/tmatesoft/svn/cli2/svnadmin/SVNAdminUpgradeCommand.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnadmin/commands.properties -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnadmin/options.properties -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnlook/SVNLookPropGetCommand.java -text
+svnkit-cli/src/org/tmatesoft/svn/cli2/svnlook/SVNLookPropListCommand.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnlook/SVNLookTreeCommand.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnlook/commands.properties -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnlook/options.properties -text

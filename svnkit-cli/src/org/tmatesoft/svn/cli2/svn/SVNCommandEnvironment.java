@@ -470,7 +470,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             SVNConflictAcceptPolicy accept = SVNConflictAcceptPolicy.fromString(optionValue.getValue());
             if (accept == SVNConflictAcceptPolicy.INVALID) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR,
-                        "'" + optionValue.getValue() + "' is not a valid --accept value;");
+                        "''{0}'' is not a valid --accept value;", optionValue.getValue());
                 SVNErrorManager.error(err);
             }
             myResolveAccept = accept;
