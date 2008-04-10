@@ -23,7 +23,6 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
 
 
@@ -59,10 +58,10 @@ public class SVNLookPropListCommand extends SVNLookCommand {
         if (environment.isRevision()) {
             if (environment.isRevProp()) {
                 props = client.doGetRevisionProperties(environment.getRepositoryFile(), 
-                        SVNRevision.create(environment.getRevision()));
+                        getRevisionObject());
             } else {
                 props = client.doGetProperties(environment.getRepositoryFile(), environment.getFirstArgument(), 
-                        SVNRevision.create(environment.getRevision()));
+                        getRevisionObject());
             }
         } else {
             if (environment.isRevProp()) {

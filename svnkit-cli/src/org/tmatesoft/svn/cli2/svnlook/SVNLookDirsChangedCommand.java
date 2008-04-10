@@ -16,7 +16,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.ISVNChangedDirectoriesHandler;
 import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
 
@@ -43,7 +42,7 @@ public class SVNLookDirsChangedCommand extends SVNLookCommand implements ISVNCha
         SVNLookClient client = environment.getClientManager().getLookClient();
         if (environment.isRevision()) {
             client.doGetChangedDirectories(environment.getRepositoryFile(), 
-                    SVNRevision.create(environment.getRevision()), this);
+                    getRevisionObject(), this);
         } else {
             client.doGetChangedDirectories(environment.getRepositoryFile(), environment.getTransaction(), this);
         }

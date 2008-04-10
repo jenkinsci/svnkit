@@ -17,7 +17,6 @@ import java.util.List;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.ISVNChangeEntryHandler;
 import org.tmatesoft.svn.core.wc.admin.SVNChangeEntry;
 import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
@@ -46,7 +45,7 @@ public class SVNLookChangedCommand extends SVNLookCommand implements ISVNChangeE
         SVNLookClient client = environment.getClientManager().getLookClient();
         if (environment.isRevision()) {
             client.doGetChanged(environment.getRepositoryFile(), 
-                    SVNRevision.create(environment.getRevision()), this, environment.isCopyInfo());
+                    getRevisionObject(), this, environment.isCopyInfo());
         } else {
             client.doGetChanged(environment.getRepositoryFile(), environment.getTransaction(), this, 
                     environment.isCopyInfo());

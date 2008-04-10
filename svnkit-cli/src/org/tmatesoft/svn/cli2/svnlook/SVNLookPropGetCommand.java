@@ -66,10 +66,10 @@ public class SVNLookPropGetCommand extends SVNLookCommand {
         if (environment.isRevision()) {
             if (environment.isRevProp()) {
                 propValue = client.doGetRevisionProperty(environment.getRepositoryFile(), 
-                        propName, SVNRevision.create(environment.getRevision()));
+                        propName, getRevisionObject());
             } else {
                 propValue = client.doGetProperty(environment.getRepositoryFile(), propName, 
-                        environment.getSecondArgument(), SVNRevision.create(environment.getRevision()));
+                        environment.getSecondArgument(), getRevisionObject());
             }
         } else {
             if (environment.isRevProp()) {

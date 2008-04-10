@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
 import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionRoot;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 
 
 /**
@@ -31,7 +32,11 @@ public abstract class SVNLookCommand extends AbstractSVNCommand {
     public SVNLookCommand(String name, String[] aliases) {
         super(name, aliases);
     }
-    
+
+    public Collection getGlobalOptions() {
+        return Collections.EMPTY_LIST;
+    }
+
     protected SVNLookCommandEnvironment getSVNLookEnvironment() {
         return (SVNLookCommandEnvironment) getEnvironment();
     }
@@ -60,7 +65,10 @@ public abstract class SVNLookCommand extends AbstractSVNCommand {
         return root.getOwner().getRevisionProperties(root.getRevision());
     }
 
-    public Collection getGlobalOptions() {
-        return Collections.EMPTY_LIST;
+    protected SVNRevision getRevisionObject() {
+        if (!SVNRevision.isValidRevisionNumber(getSVNLookEnvironment().getRevision())) {
+            return SVNRevision.HEAD;
+        }
+        return SVNRevision.create(getSVNLookEnvironment().getRevision());
     }
 }

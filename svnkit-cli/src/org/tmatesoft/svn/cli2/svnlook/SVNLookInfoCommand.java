@@ -18,7 +18,6 @@ import java.util.List;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
 
 
@@ -45,7 +44,7 @@ public class SVNLookInfoCommand extends SVNLookCommand {
         SVNLogEntry logEntry = null;
         if (environment.isRevision()) {
             logEntry = client.doGetInfo(environment.getRepositoryFile(), 
-                    SVNRevision.create(environment.getRevision()));
+                    getRevisionObject());
         } else {
             logEntry = client.doGetInfo(environment.getRepositoryFile(), environment.getTransaction());
         }

@@ -123,6 +123,7 @@ svnkit-cli/src/org/tmatesoft/svn/cli2/svnadmin/options.properties -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnlook/SVNLookChangedCommand.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnlook/SVNLookDiffCommand.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnlook/SVNLookDirsChangedCommand.java -text
+svnkit-cli/src/org/tmatesoft/svn/cli2/svnlook/SVNLookHistoryCommand.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnlook/SVNLookInfoCommand.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnlook/SVNLookPropGetCommand.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnlook/SVNLookPropListCommand.java -text

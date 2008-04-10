@@ -18,7 +18,6 @@ import java.util.List;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.ISVNTreeHandler;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminPath;
 import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
@@ -51,8 +50,7 @@ public class SVNLookTreeCommand extends SVNLookCommand implements ISVNTreeHandle
         String path = environment.getFirstArgument();
         if (environment.isRevision()) {
             client.doGetTree(environment.getRepositoryFile(), path, 
-                    SVNRevision.create(environment.getRevision()), 
-                    environment.isShowIDs(), !environment.isNonRecursive(), this);
+                    getRevisionObject(), environment.isShowIDs(), !environment.isNonRecursive(), this);
         } else {
             client.doGetTree(environment.getRepositoryFile(), path, environment.getTransaction(), 
                     environment.isShowIDs(), !environment.isNonRecursive(), this);

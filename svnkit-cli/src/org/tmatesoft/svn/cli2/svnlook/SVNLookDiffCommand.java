@@ -16,7 +16,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
 
 
@@ -45,7 +44,7 @@ public class SVNLookDiffCommand extends SVNLookCommand {
         SVNLookCommandEnvironment environment = getSVNLookEnvironment(); 
         SVNLookClient client = environment.getClientManager().getLookClient();
         if (environment.isRevision()) {
-            client.doGetDiff(environment.getRepositoryFile(), SVNRevision.create(environment.getRevision()), 
+            client.doGetDiff(environment.getRepositoryFile(), getRevisionObject(), 
                     !environment.isNoDiffDeleted(), !environment.isNoDiffAdded(), environment.isDiffCopyFrom(), 
                     environment.getOut());
         } else {
