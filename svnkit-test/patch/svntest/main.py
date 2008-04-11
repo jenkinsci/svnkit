@@ -843,6 +843,14 @@ def server_authz_has_aliases():
   _check_command_line_parsed()
   return server_minor_version >= 5
 
+def server_gets_client_capabilities():
+  _check_command_line_parsed()
+  return server_minor_version >= 5
+
+def server_has_partial_replay():
+  _check_command_line_parsed()
+  return server_minor_version >= 5
+
 
 ######################################################################
 # Sandbox handling
@@ -1343,7 +1351,9 @@ def run_tests(test_list, serial_only = False):
   if use_jsvn:
     if svn_bin is None: 
       svn_bin = ''
+#    svn_binary = os.path.abspath('/home/alex/workspace/svn_1.5.x/subversion/svn/svn' + _exe)    
     svn_binary = os.path.join(svn_bin, 'jsvn' + _bat)
+#    svnadmin_binary = os.path.join('/home/alex/workspace/svn_1.5.x/subversion/svnadmin/svnadmin' + _exe)
     svnadmin_binary = os.path.join(svn_bin, 'jsvnadmin' + _bat)
     svnlook_binary = os.path.join(svn_bin, 'jsvnlook' + _bat)
     svnsync_binary = os.path.join(svn_bin, 'jsvnsync' + _bat)
@@ -1356,6 +1366,8 @@ def run_tests(test_list, serial_only = False):
       svnlook_binary = os.path.join(svn_bin, 'svnlook' + _exe)
       svnsync_binary = os.path.join(svn_bin, 'svnsync' + _exe)
       svnversion_binary = os.path.join(svn_bin, 'svnversion' + _exe)
+
+  cleanup_mode = False
 
   command_line_parsed = True
 
