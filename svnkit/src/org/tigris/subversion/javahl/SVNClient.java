@@ -454,10 +454,6 @@ public class SVNClient implements SVNClientInterface {
         myDelegate.doImport(path, url, message, depth, noIgnore, ignoreUnknownNodeTypes);
     }
 
-    public RevisionRange[] getAvailableMerges(String path, Revision pegRevision, String mergeSource) throws SubversionException {
-        return myDelegate.getAvailableMerges(path, pegRevision, mergeSource);
-    }
-
     public long doSwitch(String path, String url, Revision revision, Revision pegRevision, int depth, boolean depthIsSticky, boolean ignoreExternals, boolean allowUnverObstructions) throws ClientException {
         return myDelegate.doSwitch(path, url, revision, pegRevision, depth, depthIsSticky, ignoreExternals, allowUnverObstructions);
     }

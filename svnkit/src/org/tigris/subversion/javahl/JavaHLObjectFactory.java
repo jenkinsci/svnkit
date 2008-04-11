@@ -662,8 +662,7 @@ public class JavaHLObjectFactory {
     }
     
     public static CopySource createCopySource(SVNLocationEntry location) {
-        return new CopySource(location.getPath(), Revision.getInstance(location.getRevision()), 
-                              null);
+        return new CopySource(location.getPath(), Revision.getInstance(location.getRevision()), null);
     }
 
     public static void throwException(SVNException e, SVNClientImpl svnClient) throws ClientException {

@@ -18,49 +18,10 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
-import org.tigris.subversion.javahl.BlameCallback;
-import org.tigris.subversion.javahl.BlameCallback2;
-import org.tigris.subversion.javahl.ChangelistCallback;
-import org.tigris.subversion.javahl.ClientException;
-import org.tigris.subversion.javahl.CommitItem;
-import org.tigris.subversion.javahl.CommitMessage;
-import org.tigris.subversion.javahl.ConflictDescriptor;
-import org.tigris.subversion.javahl.ConflictResolverCallback;
-import org.tigris.subversion.javahl.ConflictResult;
-import org.tigris.subversion.javahl.CopySource;
-import org.tigris.subversion.javahl.DiffSummaryReceiver;
-import org.tigris.subversion.javahl.DirEntry;
-import org.tigris.subversion.javahl.Info;
-import org.tigris.subversion.javahl.Info2;
-import org.tigris.subversion.javahl.InfoCallback;
-import org.tigris.subversion.javahl.JavaHLObjectFactory;
-import org.tigris.subversion.javahl.ListCallback;
-import org.tigris.subversion.javahl.LogMessage;
-import org.tigris.subversion.javahl.LogMessageCallback;
-import org.tigris.subversion.javahl.Mergeinfo;
-import org.tigris.subversion.javahl.Notify;
-import org.tigris.subversion.javahl.Notify2;
-import org.tigris.subversion.javahl.NotifyInformation;
-import org.tigris.subversion.javahl.ProgressListener;
-import org.tigris.subversion.javahl.PromptUserPassword;
-import org.tigris.subversion.javahl.PropertyData;
-import org.tigris.subversion.javahl.ProplistCallback;
-import org.tigris.subversion.javahl.Revision;
-import org.tigris.subversion.javahl.RevisionRange;
-import org.tigris.subversion.javahl.SVNClient;
-import org.tigris.subversion.javahl.SVNClientInterface;
-import org.tigris.subversion.javahl.SVNClientLogLevel;
-import org.tigris.subversion.javahl.Status;
-import org.tigris.subversion.javahl.StatusCallback;
-import org.tigris.subversion.javahl.SubversionException;
-import org.tigris.subversion.javahl.RevisionKind;
-import org.tigris.subversion.javahl.MergeinfoLogKind;
 
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
@@ -72,8 +33,6 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
-import org.tmatesoft.svn.core.SVNMergeRangeList;
-import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
@@ -87,9 +46,9 @@ import org.tmatesoft.svn.core.internal.io.svn.ISVNConnectorFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.io.svn.SVNSSHSession;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.DefaultSVNRepositoryPool;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
@@ -120,13 +79,50 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusClient;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
-import org.tmatesoft.svn.util.Version;
-import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.ISVNDebugLog;
+import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.Version;
+
+import org.tigris.subversion.javahl.BlameCallback;
+import org.tigris.subversion.javahl.BlameCallback2;
+import org.tigris.subversion.javahl.ChangelistCallback;
+import org.tigris.subversion.javahl.ClientException;
+import org.tigris.subversion.javahl.CommitItem;
+import org.tigris.subversion.javahl.CommitMessage;
+import org.tigris.subversion.javahl.ConflictDescriptor;
+import org.tigris.subversion.javahl.ConflictResolverCallback;
+import org.tigris.subversion.javahl.ConflictResult;
+import org.tigris.subversion.javahl.CopySource;
+import org.tigris.subversion.javahl.DiffSummaryReceiver;
+import org.tigris.subversion.javahl.DirEntry;
+import org.tigris.subversion.javahl.Info;
+import org.tigris.subversion.javahl.Info2;
+import org.tigris.subversion.javahl.InfoCallback;
+import org.tigris.subversion.javahl.JavaHLObjectFactory;
+import org.tigris.subversion.javahl.ListCallback;
+import org.tigris.subversion.javahl.LogMessage;
+import org.tigris.subversion.javahl.LogMessageCallback;
+import org.tigris.subversion.javahl.Mergeinfo;
+import org.tigris.subversion.javahl.MergeinfoLogKind;
+import org.tigris.subversion.javahl.Notify;
+import org.tigris.subversion.javahl.Notify2;
+import org.tigris.subversion.javahl.NotifyInformation;
+import org.tigris.subversion.javahl.ProgressListener;
+import org.tigris.subversion.javahl.PromptUserPassword;
+import org.tigris.subversion.javahl.PropertyData;
+import org.tigris.subversion.javahl.ProplistCallback;
+import org.tigris.subversion.javahl.Revision;
+import org.tigris.subversion.javahl.RevisionKind;
+import org.tigris.subversion.javahl.RevisionRange;
+import org.tigris.subversion.javahl.SVNClient;
+import org.tigris.subversion.javahl.SVNClientInterface;
+import org.tigris.subversion.javahl.SVNClientLogLevel;
+import org.tigris.subversion.javahl.Status;
+import org.tigris.subversion.javahl.StatusCallback;
+import org.tigris.subversion.javahl.SubversionException;
 
 
 /**
@@ -306,29 +302,11 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public Status singleStatus(final String path, boolean onServer) throws ClientException {
-        if (path == null) {
-            return null;
+        Status[] result = status(path, false, onServer, true, false, false);
+        if (result != null && result.length > 0){
+            return result[0];
         }
-        SVNStatusClient client = getSVNStatusClient();
-        SVNStatus status = null;
-        try {
-            status = client.doStatus(new File(path).getAbsoluteFile(), onServer);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
-                File file = new File(path).getAbsoluteFile();
-                SVNFileType ft = SVNFileType.getType(file);
-                status = new SVNStatus(null, file, ft == SVNFileType.NONE ? SVNNodeKind.NONE : SVNNodeKind.UNKNOWN, null, null, null, null,
-                        SVNStatusType.STATUS_UNVERSIONED, SVNStatusType.STATUS_NONE,
-                        SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE,
-                        false, false, false, null, null, null, null, null, null,
-                        null, null, null, null);
-            } else {
-                throwException(e);
-            }
-        } finally {
-            resetLog();                    
-        }
-        return JavaHLObjectFactory.createStatus(path, status);
+        return null;        
     }
 
     public DirEntry[] list(String url, Revision revision, boolean recurse) throws ClientException {
@@ -569,18 +547,14 @@ public class SVNClientImpl implements SVNClientInterface {
         add(path, recurse, false);
     }
 
-    public void add(String path, int depth, boolean force, boolean noIgnores, boolean addParents) throws ClientException {
-        add(path, SVNDepth.fromID(depth).isRecursive(), force, noIgnores, addParents);
-    }
-
     public void add(String path, boolean recurse, boolean force) throws ClientException {
-        add(path, recurse, force, false, false);
+        add(path, JavaHLObjectFactory.infinityOrEmpty(recurse), force, false, false);
     }
 
-    private void add(String path, boolean recurse, boolean force, boolean noIgnores, boolean addParents) throws ClientException {
+    public void add(String path, int depth, boolean force, boolean noIgnores, boolean addParents) throws ClientException {        
         SVNWCClient wcClient = getSVNWCClient();
         try {
-            wcClient.doAdd(new File(path).getAbsoluteFile(), force, false, addParents, recurse, noIgnores);
+            wcClient.doAdd(new File(path).getAbsoluteFile(), force, false, false, JavaHLObjectFactory.getSVNDepth(depth), noIgnores, addParents);
         } catch (SVNException e) {
             throwException(e);
         } finally {
@@ -589,17 +563,23 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public long update(String path, Revision revision, boolean recurse) throws ClientException {
-        long[] updated =  update(new String[]{path}, revision, JavaHLObjectFactory.unknownOrFiles(recurse), true, false, false);
-        return updated[0];
+        long[] updated =  update(new String[]{path}, revision, recurse, false);
+        if (updated != null && updated.length > 0) {
+            return updated[0];
+        }
+        return -1;
     }
 
     public long[] update(String[] path, Revision revision, boolean recurse, boolean ignoreExternals) throws ClientException {
-        return update(path, revision, JavaHLObjectFactory.unknownOrFiles(recurse), true, ignoreExternals, false);
+        return update(path, revision, JavaHLObjectFactory.unknownOrFiles(recurse), false, ignoreExternals, false);
     }
 
     public long update(String path, Revision revision, int depth, boolean depthIsSticky, boolean ignoreExternals, boolean allowUnverObstructions) throws ClientException {
         long[] updated = update(new String[]{path}, revision, depth, depthIsSticky, ignoreExternals, allowUnverObstructions);
-        return updated[0];
+        if (updated != null && updated.length > 0) {
+            return updated[0];
+        }
+        return -1;
     }
 
     public long[] update(String[] path, Revision revision, int depth, boolean depthIsSticky, boolean ignoreExternals, boolean allowUnverObstructions) throws ClientException {
@@ -869,7 +849,7 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public long doExport(String srcPath, String destPath, Revision revision, boolean force) throws ClientException {
-        return doExport(srcPath, destPath, revision, null, force, false, true, "");
+        return doExport(srcPath, destPath, revision, revision, force, false, true, null);
     }
 
     public long doExport(String srcPath, String destPath, Revision revision, Revision pegRevision, boolean force, boolean ignoreExternals, boolean recurse, String nativeEOL) throws ClientException {
@@ -909,16 +889,6 @@ public class SVNClientImpl implements SVNClientInterface {
         } finally {
             resetLog();
         }
-    }
-
-    public void merge(String path1, Revision revision1, String path2, Revision revision2, String localPath, boolean force, boolean recurse) throws ClientException {
-        merge(path1, revision1, path2, revision2, localPath, force, recurse, false, false);
-    }
-
-    public void merge(String path1, Revision revision1, String path2, Revision revision2, String localPath,
-                      boolean force, boolean recurse, boolean ignoreAncestry, boolean dryRun) throws ClientException {
-        merge(path1, revision1, path2, revision2, localPath, force, JavaHLObjectFactory.infinityOrFiles(recurse),
-                ignoreAncestry, dryRun, false);
     }
 
     public void merge(String path, Revision pegRevision, RevisionRange[] revisions, String localPath, boolean force, int depth, boolean ignoreAncestry, boolean dryRun, boolean recordOnly) throws ClientException {
@@ -966,6 +936,16 @@ public class SVNClientImpl implements SVNClientInterface {
         } finally {
             resetLog();
         }
+    }
+
+    public void merge(String path1, Revision revision1, String path2, Revision revision2, String localPath, boolean force, boolean recurse) throws ClientException {
+        merge(path1, revision1, path2, revision2, localPath, force, recurse, false, false);
+    }
+
+    public void merge(String path1, Revision revision1, String path2, Revision revision2, String localPath,
+                      boolean force, boolean recurse, boolean ignoreAncestry, boolean dryRun) throws ClientException {
+        merge(path1, revision1, path2, revision2, localPath, force, JavaHLObjectFactory.infinityOrFiles(recurse),
+                ignoreAncestry, dryRun, false);
     }
 
     public void merge(String path1, Revision revision1, String path2, Revision revision2, String localPath, 
@@ -1041,29 +1021,6 @@ public class SVNClientImpl implements SVNClientInterface {
                 return stringURLs;
             }
             return null;
-        } catch (SVNException e) {
-            throwException(e);
-        } finally {
-            resetLog();
-        }
-        return null;
-    }
-
-    public RevisionRange[] getAvailableMerges(String path, Revision pegRevision, String mergeSource) throws SubversionException {
-        SVNDiffClient client = getSVNDiffClient();
-        try {
-            SVNMergeRangeList rangeList = null;
-            if (isURL(path)) {
-                rangeList = client.getAvailableMergeInfo(SVNURL.parseURIEncoded(path),
-                        JavaHLObjectFactory.getSVNRevision(pegRevision),
-                        SVNURL.parseURIEncoded(mergeSource));
-            } else {
-                rangeList = client.getAvailableMergeInfo(new File(path).getAbsoluteFile(),
-                        JavaHLObjectFactory.getSVNRevision(pegRevision),
-                        SVNURL.parseURIEncoded(mergeSource));
-            }
-
-            return JavaHLObjectFactory.createRevisionRanges(rangeList);
         } catch (SVNException e) {
             throwException(e);
         } finally {
@@ -1810,7 +1767,7 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public long doSwitch(String path, String url, Revision revision, boolean recurse) throws ClientException {
-        return doSwitch(path, url, revision, Revision.HEAD, JavaHLObjectFactory.unknownOrFiles(recurse), true, false, false);
+        return doSwitch(path, url, revision, Revision.HEAD, JavaHLObjectFactory.unknownOrFiles(recurse), false, false, false);
     }
 
     public long doSwitch(String path, String url, Revision revision, Revision pegRevision, int depth, 
