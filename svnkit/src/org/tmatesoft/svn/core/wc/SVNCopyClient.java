@@ -1013,7 +1013,7 @@ public class SVNCopyClient extends SVNBasicClient {
             if (srcRevNum < 0) {
                 srcRevNum = revision;
             }
-            SVNWCManager.addRepositoryFile(dir, dst.getName(), null, tmpFile, null, props, 
+            SVNWCManager.addRepositoryFile(dir, dst.getName(), null, tmpFile, props, null, 
                     sameRepositories ? pair.mySource : null, 
                     sameRepositories ? srcRevNum : -1);
 

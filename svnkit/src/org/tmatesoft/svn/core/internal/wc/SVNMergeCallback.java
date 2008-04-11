@@ -13,6 +13,8 @@ package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+
+import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNCancelException;
@@ -20,6 +22,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -277,15 +280,27 @@ public class SVNMergeCallback extends AbstractDiffCallback {
         return result;
     }
     
-    public SVNStatusType[] fileAdded(String path, File file1, File file2, long revision1, long revision2, String mimeType1, String mimeType2, SVNProperties originalProperties, SVNProperties diff) throws SVNException {
+    public SVNStatusType[] fileAdded(String path, File file1, File file2, long revision1, long revision2, 
+            String mimeType1, String mimeType2, SVNProperties originalProperties, SVNProperties diff) throws SVNException {
         SVNStatusType[] result = new SVNStatusType[] {null, SVNStatusType.UNKNOWN};
         
+        SVNProperties newProps = new SVNProperties(originalProperties);
+        for (Iterator propChangesIter = diff.nameSet().iterator(); propChangesIter.hasNext();) {
+            String propName = (String) propChangesIter.next();
+            if (!myMergeDriver.myIsSameRepository && SVNProperty.isWorkingCopyProperty(propName)) {
+                continue;
+            }
+            SVNPropertyValue propValue = diff.getSVNPropertyValue(propName);
+            newProps.put(propName, propValue);
+        }
         File mergedFile = getFile(path);
         SVNAdminArea dir = retrieve(mergedFile.getParentFile(), true);
         if (dir == null) {
             if (myIsDryRun && myAddedPath != null && SVNPathUtil.isAncestor(myAddedPath, path)) {
                 result[0] = SVNStatusType.CHANGED;
-                result[1] = SVNStatusType.CHANGED;
+                if (!newProps.isEmpty()) {
+                    result[1] = SVNStatusType.CHANGED;
+                }
             } else {
                 result[0] = SVNStatusType.MISSING;
             }
@@ -307,11 +322,11 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                     copyFromRevision = revision2;
                 }
                 // TODO compare protocols with dir one.
-                SVNWCManager.addRepositoryFile(dir, mergedFile.getName(), null, file2, null, diff, 
+                SVNWCManager.addRepositoryFile(dir, mergedFile.getName(), null, file2, newProps, null, 
                         copyFromURL, copyFromRevision);
             }
             result[0] = SVNStatusType.CHANGED;
-            if (diff != null && !diff.isEmpty()) {
+            if (!newProps.isEmpty()) {
                 result[1] = SVNStatusType.CHANGED;
             }
         } else if (fileType == SVNFileType.DIRECTORY) {
