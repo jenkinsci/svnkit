@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -183,7 +184,7 @@ public class SVNMergeCommand extends SVNCommand {
             client.setMergeOptions(getSVNEnvironment().getDiffOptions());
             if (!twoSourcesSpecified) {
                 if (firstRangeStart == SVNRevision.UNDEFINED && firstRangeEnd == SVNRevision.UNDEFINED) {
-                	SVNRevisionRange range = new SVNRevisionRange(SVNRevision.create(1), SVNRevision.HEAD);
+                	SVNRevisionRange range = new SVNRevisionRange(SVNRevision.create(1), pegRevision1);
                 	rangesToMerge = new LinkedList();
                 	rangesToMerge.add(range);
                 }
@@ -193,11 +194,18 @@ public class SVNMergeCommand extends SVNCommand {
                 }
                 
                 if (getSVNEnvironment().isReIntegrate()) {
+                    if (getSVNEnvironment().getDepth() != SVNDepth.UNKNOWN) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_MUTUALLY_EXCLUSIVE_ARGS, 
+                                "--depth cannot be used with --reintegrate");
+                        SVNErrorManager.error(err);
+                    }
+                    
                     if (getSVNEnvironment().isForce()) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_MUTUALLY_EXCLUSIVE_ARGS, 
                                 "--force cannot be used with --reintegrate");
                         SVNErrorManager.error(err);
                     }
+                    
                     if (source1.isURL()) {
                         client.doMergeReIntegrate(source1.getURL(), pegRevision1, target.getFile(), 
                                 getSVNEnvironment().isDryRun());
@@ -243,7 +251,7 @@ public class SVNMergeCommand extends SVNCommand {
             }
         } catch (SVNException e) {
             SVNErrorMessage err = e.getErrorMessage();
-            if (err != null) {
+            if (err != null && !getSVNEnvironment().isReIntegrate()) {
                 SVNErrorCode code = err.getErrorCode();
                 if (code == SVNErrorCode.UNVERSIONED_RESOURCE || code == SVNErrorCode.CLIENT_MODIFIED) {
                     err = err.wrap("Use --force to override this restriction");
