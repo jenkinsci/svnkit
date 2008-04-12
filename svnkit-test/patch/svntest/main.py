@@ -1367,7 +1367,7 @@ def run_tests(test_list, serial_only = False):
       svnsync_binary = os.path.join(svn_bin, 'svnsync' + _exe)
       svnversion_binary = os.path.join(svn_bin, 'svnversion' + _exe)
 
-  cleanup_mode = False
+#  cleanup_mode = False
 
   command_line_parsed = True
 
