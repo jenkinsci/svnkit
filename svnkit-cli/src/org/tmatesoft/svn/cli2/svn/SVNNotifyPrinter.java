@@ -235,7 +235,8 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
             buffer.append("'" + path + "' locked by user '" + event.getLock().getOwner() + "'.\n");
         } else if (event.getAction() == SVNEventAction.UNLOCKED) {
             buffer.append("'" + path + "' unlocked.\n");
-        } else if (event.getAction() == SVNEventAction.LOCK_FAILED || event.getAction() == SVNEventAction.UNLOCK_FAILED) {
+        } else if (event.getAction() == SVNEventAction.LOCK_FAILED || 
+                event.getAction() == SVNEventAction.UNLOCK_FAILED) {
             myEnvironment.handleWarning(event.getErrorMessage(), new SVNErrorCode[] {event.getErrorMessage().getErrorCode()},
                 myEnvironment.isQuiet());
             return;
@@ -245,9 +246,9 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
             buffer.append("Path '" + path + "' is now a member of changelist '" + event.getChangelistName() + "'.\n");
         } else if (event.getAction() == SVNEventAction.CHANGELIST_CLEAR) {
             buffer.append("Path '" + path + "' is no longer a member of a changelist.\n");
-        } else if (event.getAction() == SVNEventAction.CHANGELIST_FAILED) {
-            myEnvironment.handleWarning(event.getErrorMessage(), new SVNErrorCode[] {event.getErrorMessage().getErrorCode()},
-                    myEnvironment.isQuiet());
+        } else if (event.getAction() == SVNEventAction.CHANGELIST_MOVED) {
+            myEnvironment.handleWarning(event.getErrorMessage(), new SVNErrorCode[] { 
+                event.getErrorMessage().getErrorCode() }, myEnvironment.isQuiet());
             return;
         }
         if (buffer.length() > 0) {

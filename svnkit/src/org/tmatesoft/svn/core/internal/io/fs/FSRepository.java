@@ -651,8 +651,12 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     }
 
 	public boolean hasCapability(SVNCapability capability) throws SVNException {
-		if (capability == SVNCapability.DEPTH || capability == SVNCapability.LOG_REVPROPS ||
-				capability == SVNCapability.MERGE_INFO || capability == SVNCapability.PARTIAL_REPLAY) {
+		if (capability == SVNCapability.DEPTH || 
+		        capability == SVNCapability.LOG_REVPROPS ||
+				capability == SVNCapability.MERGE_INFO || 
+				capability == SVNCapability.PARTIAL_REPLAY || 
+				capability == SVNCapability.COMMIT_REVPROPS
+				) {
 			return true;
 		}
 		SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_UNKNOWN_CAPABILITY, 

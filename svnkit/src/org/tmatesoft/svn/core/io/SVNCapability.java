@@ -20,6 +20,7 @@ public class SVNCapability {
 	public static final SVNCapability MERGE_INFO = new SVNCapability("mergeinfo");
 	public static final SVNCapability LOG_REVPROPS = new SVNCapability("log-revprops");
 	public static final SVNCapability PARTIAL_REPLAY = new SVNCapability("partial-replay");
+    public static final SVNCapability COMMIT_REVPROPS = new SVNCapability("commit-revprops");
 	
 	private String myName;
 	

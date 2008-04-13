@@ -1110,7 +1110,10 @@ public class DAVRepository extends SVNRepository {
     }
 
 	public boolean hasCapability(SVNCapability capability) throws SVNException {
-        try {
+        if (capability == SVNCapability.COMMIT_REVPROPS) {
+            return true;
+        }
+	    try {
             openConnection();
             String result = myConnection.getCapabilityResponse(capability);
             if (DAVConnection.DAV_CAPABILITY_SERVER_YES.equals(result)) {
