@@ -609,7 +609,7 @@ public class SVNWCManager {
                 log.addCommand(SVNLog.MOVE, command, false);
                 command.clear();
             } else {
-                String emptyPropPath = SVNAdminUtil.getPropBasePath(fileName, SVNNodeKind.FILE, true);
+                String emptyPropPath = SVNAdminUtil.getPropBasePath(fileName, SVNNodeKind.FILE, false);
                 SVNWCProperties.setProperties(SVNProperties.EMPTY_PROPERTIES, null, dir.getFile(emptyPropPath),
                         SVNWCProperties.SVN_HASH_TERMINATOR);
                 command.put(SVNLog.NAME_ATTR, emptyPropPath);
