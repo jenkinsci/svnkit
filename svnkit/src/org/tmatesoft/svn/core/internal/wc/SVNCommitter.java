@@ -97,6 +97,8 @@ public class SVNCommitter implements ISVNCommitPathHandler {
                 mimeType = dir.getProperties(file.getName()).getStringPropertyValue(SVNProperty.MIME_TYPE);
             }
             event = SVNEventFactory.createSVNEvent(file, item.getKind(), mimeType, SVNRepository.INVALID_REVISION, SVNEventAction.COMMIT_ADDED, null, null, null);
+	        event.setPreviousRevision(item.getCopyFromRevision() != null ? item.getCopyFromRevision().getNumber() : -1);
+	        event.setPreviousURL(item.getCopyFromURL());
         } else if (item.isDeleted()) {
             event = SVNEventFactory.createSVNEvent(file, item.getKind(), null, SVNRepository.INVALID_REVISION, SVNEventAction.COMMIT_DELETED, null, null, null);
 	        event.setPreviousRevision(rev);
@@ -105,6 +107,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
 	        event.setPreviousRevision(rev);
         }
         if (event != null) {
+	        event.setURL(item.getURL());
             wcAccess.handleEvent(event, ISVNEventHandler.UNKNOWN);
         }
         long cfRev = item.getCopyFromRevision().getNumber();//item.getCopyFromURL() != null ? rev : -1;

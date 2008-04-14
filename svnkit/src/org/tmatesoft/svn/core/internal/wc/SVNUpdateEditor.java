@@ -156,6 +156,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         SVNNodeKind kind = entry.getKind();
         long previousRevision = entry.getRevision();
         boolean isDeleted = entry.isDeleted();
+	      SVNURL url = entry.getSVNURL();
         if (path.equals(myTarget)) {
             attributes.put(SVNLog.NAME_ATTR, name);
             attributes.put(SVNProperty.shortPropertyName(SVNProperty.KIND), kind == SVNNodeKind.DIR ? SVNProperty.KIND_DIR : SVNProperty.KIND_FILE);
@@ -193,6 +194,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         SVNEvent event = SVNEventFactory.createSVNEvent(parentArea.getFile(name), kind, null, 
                 SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_DELETE, null, null, null);
         event.setPreviousRevision(previousRevision);
+        event.setURL(url);
         myWCAccess.handleEvent(event);
     }
 
@@ -323,6 +325,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                     SVNNodeKind.DIR, null, myTargetRevision, myCurrentDirectory.isExisted ? 
                             SVNEventAction.UPDATE_EXISTS : SVNEventAction.UPDATE_ADD, null, null, null);
             event.setPreviousRevision(myCurrentDirectory.myPreviousRevision);
+            event.setURL(entry.getSVNURL());
             myWCAccess.handleEvent(event);
         }
     }
@@ -347,6 +350,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                         SVNStatusType.LOCK_INAPPLICABLE, SVNEventAction.SKIP, SVNEventAction.UPDATE_UPDATE, 
                         null, null);
                 event.setPreviousRevision(entry.getRevision());
+	            event.setURL(entry.getSVNURL());
                 myWCAccess.handleEvent(event);
                 return;
             }
@@ -485,6 +489,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 }
                 SVNEvent event = SVNEventFactory.createSVNEvent(adminArea.getRoot(), SVNNodeKind.DIR, null, myTargetRevision, SVNStatusType.UNKNOWN, propStatus, null, action, null, null, null);
                 event.setPreviousRevision(myCurrentDirectory.myPreviousRevision);
+	            event.setURL(myCurrentDirectory.URL != null ? SVNURL.parseURIEncoded(myCurrentDirectory.URL) : null); 
                 myWCAccess.handleEvent(event);
             }
         }
@@ -953,6 +958,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                     hasPropConflicts ? SVNStatusType.CONFLICTED : SVNStatusType.UNKNOWN,
                     SVNStatusType.LOCK_INAPPLICABLE, SVNEventAction.SKIP, SVNEventAction.UPDATE_UPDATE, null, null);
             event.setPreviousRevision(entry.getRevision());
+	        event.setURL(entry.getSVNURL());
             myWCAccess.handleEvent(event);
         }
         return info;
@@ -1010,6 +1016,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             SVNErrorManager.error(err);
         }
         long previousRevision = fileEntry != null ? fileEntry.getRevision() : -1;
+	    SVNURL previousURL = fileEntry != null ? fileEntry.getSVNURL() : null;
 
         // merge props.
         SVNProperties modifiedWCProps = fileInfo.getChangedWCProperties();
@@ -1279,6 +1286,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             }
             SVNEvent event = SVNEventFactory.createSVNEvent(adminArea.getFile(fileInfo.Name), SVNNodeKind.FILE,  null, myTargetRevision, textStatus, propStatus, lockStatus, action, null, null, null);
             event.setPreviousRevision(previousRevision);
+	        event.setURL(previousURL);
             myWCAccess.handleEvent(event);
         }
     }
@@ -1405,7 +1413,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         public SVNDirectoryInfo Parent;
         public boolean isSkipped;
         public long myPreviousRevision;
-        
+
         private String myPath;
         private SVNProperties myChangedProperties;
         private SVNProperties myChangedEntryProperties;

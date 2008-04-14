@@ -17,6 +17,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNURL;
 
 /**
  * The <b>SVNEvent</b> class is used to provide detailed information on 
@@ -107,7 +108,9 @@ public class SVNEvent {
     
     private long myRevision;
     private long myPreviousRevision;
-    
+    private SVNURL myURL;
+    private SVNURL myPreviousURL;
+
     private SVNStatusType myContentsStatus;
     private SVNStatusType myPropertiesStatus;
     private SVNStatusType myLockStatus;
@@ -309,7 +312,15 @@ public class SVNEvent {
         return myPreviousRevision;
     }
 
-    /**
+	public SVNURL getURL() {
+		return myURL;
+	}
+
+	public SVNURL getPreviousURL() {
+		return myPreviousURL;
+	}
+
+	/**
      * Sets the item's path relative to the Working Copy root.
      * 
      * @param path  the item's relative path
@@ -327,4 +338,11 @@ public class SVNEvent {
         myPreviousRevision = previousRevision;
     }
 
+    public void setURL(SVNURL url) {
+        myURL = url;
+    }
+
+	public void setPreviousURL(SVNURL url) {
+	    myPreviousURL = url;
+	}
 }
