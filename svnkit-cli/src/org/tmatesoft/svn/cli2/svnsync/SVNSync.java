@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.cli2.svnsync;
 
+import org.tmatesoft.svn.cli2.AbstractSVNCommand;
 import org.tmatesoft.svn.cli2.AbstractSVNCommandEnvironment;
 import org.tmatesoft.svn.cli2.AbstractSVNLauncher;
 import org.tmatesoft.svn.cli2.SVNCommandLine;
@@ -43,6 +44,7 @@ public class SVNSync extends AbstractSVNLauncher {
     }
 
     protected void registerCommands() {
+        AbstractSVNCommand.registerCommand(new SVNSyncInitializeCommand());
     }
 
     protected void registerOptions() {
@@ -58,5 +60,6 @@ public class SVNSync extends AbstractSVNLauncher {
         SVNCommandLine.registerOption(SVNSyncOption.PASSWORD);
         SVNCommandLine.registerOption(SVNSyncOption.NO_AUTH_CACHE);
         SVNCommandLine.registerOption(SVNSyncOption.NON_INTERACTIVE);
+        SVNCommandLine.registerOption(SVNSyncOption.QUIET);
     }
 }

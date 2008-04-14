@@ -32,6 +32,8 @@ public class SVNSyncOption extends AbstractSVNOption {
     public static final SVNSyncOption PASSWORD = new SVNSyncOption("password", null, false);
     public static final SVNSyncOption NO_AUTH_CACHE = new SVNSyncOption("no-auth-cache", null, true);
     public static final SVNSyncOption NON_INTERACTIVE = new SVNSyncOption("non-interactive", null, true);
+    public static final SVNSyncOption QUIET = new SVNSyncOption("quiet", "q", true);
+    
 
     private SVNSyncOption(String name, String alias, boolean unary) {
         super(name, alias, unary);

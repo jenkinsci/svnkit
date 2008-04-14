@@ -24,7 +24,7 @@ import org.tmatesoft.svn.cli2.AbstractSVNOption;
  */
 public abstract class SVNCommand extends AbstractSVNCommand {
 
-    private Collection myGlobalOptions = new LinkedList();
+    private Collection myGlobalOptions;
 
     protected SVNCommand(String name, String[] aliases) {
         super(name, aliases);

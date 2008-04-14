@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.cli2.svnsync;
 
+import java.util.Collection;
+
 import org.tmatesoft.svn.cli2.AbstractSVNCommand;
 
 
@@ -22,6 +24,10 @@ public abstract class SVNSyncCommand extends AbstractSVNCommand {
 
     public SVNSyncCommand(String name, String[] aliases) {
         super(name, aliases);
+    }
+
+    public Collection getGlobalOptions() {
+        return null;
     }
 
     protected String getResourceBundleName() {

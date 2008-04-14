@@ -40,6 +40,7 @@ public class SVNSyncCommandEnvironment extends AbstractSVNCommandEnvironment {
     }
 
     protected void initOption(SVNOptionValue optionValue) throws SVNException {
+        
     }
 
     protected String refineCommandName(String commandName) throws SVNException {

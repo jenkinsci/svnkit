@@ -130,6 +130,8 @@ svnkit-cli/src/org/tmatesoft/svn/cli2/svnlook/SVNLookPropListCommand.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnlook/SVNLookTreeCommand.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnlook/commands.properties -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnlook/options.properties -text
+svnkit-cli/src/org/tmatesoft/svn/cli2/svnsync/SVNSyncHelpCommand.java -text
+svnkit-cli/src/org/tmatesoft/svn/cli2/svnsync/SVNSyncInitializeCommand.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnsync/commands.properties -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnsync/options.properties -text
 svnkit-cli/src/org/tmatesoft/svn/cli2/svnversion/commands.properties -text
