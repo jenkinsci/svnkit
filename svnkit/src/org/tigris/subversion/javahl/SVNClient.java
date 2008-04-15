@@ -369,6 +369,10 @@ public class SVNClient implements SVNClientInterface {
     public static int versionMicro() {
         return SVNClientImpl.versionMicro();
     }
+    
+    public static long versionRevisionNumber() {
+        return SVNClientImpl.versionRevisionNumber();
+    }
 
     public Version getVersion() {
         return myDelegate.getVersion();

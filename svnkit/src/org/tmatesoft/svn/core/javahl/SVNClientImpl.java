@@ -1617,6 +1617,10 @@ public class SVNClientImpl implements SVNClientInterface {
     public static int versionMicro() {
         return Version.getMicroVersion();
     }
+    
+    public static long versionRevisionNumber() {
+        return org.tmatesoft.svn.util.Version.getRevisionNumber();
+    }
 
     /**
      * @deprecated

@@ -32,9 +32,14 @@ class SVNClientImplVersion extends org.tigris.subversion.javahl.Version {
     public int getPatch() {
         return SVNClientImpl.versionMicro();
     }
+    
+    public long getRevisionNumber() {
+        return SVNClientImpl.versionRevisionNumber();
+    }
 
     public String toString() {
-        return "SVNKit v" + getMajor() + "." + getMinor() + "." + getPatch();
+        String revision = getRevisionNumber() < 0 ? "SNAPSHOT" : Long.toString(getRevisionNumber());
+        return "SVNKit v" + getMajor() + "." + getMinor() + "." + getPatch() + "." + revision;
     }
 
     public static Version getInstance() {
