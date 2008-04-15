@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.io.dav.http;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
@@ -37,7 +38,7 @@ class HTTPParser {
         } while (line != null && (line.length() == 0 || line.trim().length() == 0 || !HTTPStatus.isHTTPStatusLine(line)));
         
         if (line == null) {
-            throw new ParseException("can not read HTTP status line", 0);
+            throw new EOFException("can not read HTTP status line");
         }
         return HTTPStatus.createHTTPStatus(line);
     }

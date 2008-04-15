@@ -169,8 +169,10 @@ class HTTPConnection implements IHTTPConnection {
     
     public void readHeader(HTTPRequest request) throws IOException {
         InputStream is = myRepository.getDebugLog().createLogStream(getInputStream());
+        
         try {            
-            HTTPStatus status = HTTPParser.parseStatus(is, myCharset);
+            // may throw EOF exception.
+            HTTPStatus status = HTTPParser.parseStatus(is, myCharset);        
             HTTPHeader header = HTTPHeader.parseHeader(is, myCharset);
             request.setStatus(status);
             request.setResponseHeader(header);
@@ -181,6 +183,7 @@ class HTTPConnection implements IHTTPConnection {
             while(line != null && line.length() > 0) {
                 line = HTTPParser.readLine(is, myCharset);
             }
+            
             throw new IOException(e.getMessage());
         } finally {
             myRepository.getDebugLog().flushStream(is);
@@ -288,27 +291,49 @@ class HTTPConnection implements IHTTPConnection {
                 SVNDebugLog.getDefaultLog().info("Keep-Alive timeout detected");
                 close();
             }
+            int retryCount = 1;
             try {
                 err = null;
-                connect(keyManager, trustManager);
-                request.reset();
-                request.setProxied(myIsProxied);
-                request.setSecured(myIsSecured);
-                if (myProxyAuthentication != null) {
-                    request.initCredentials(myProxyAuthentication, method, path);
-                    request.setProxyAuthentication(myProxyAuthentication.authenticate());
+                String httpAuthResponse = null;
+                String proxyAuthResponse = null;
+                while(retryCount >= 0) {
+                    connect(keyManager, trustManager);
+                    request.reset();
+                    request.setProxied(myIsProxied);
+                    request.setSecured(myIsSecured);                    
+                    if (myProxyAuthentication != null) {
+                        if (proxyAuthResponse == null) {
+                            request.initCredentials(myProxyAuthentication, method, path);
+                            proxyAuthResponse = myProxyAuthentication.authenticate();
+                        }
+                        request.setProxyAuthentication(proxyAuthResponse);
+                    }
+                    if (httpAuth != null && myChallengeCredentials != null) {
+                        if (httpAuthResponse == null) {
+                            request.initCredentials(myChallengeCredentials, method, path);
+                            httpAuthResponse = myChallengeCredentials.authenticate();
+                        }
+                        request.setAuthentication(httpAuthResponse);
+                    }
+                    try {
+                        request.dispatch(method, path, header, ok1, ok2, context);
+                        break;
+                    } catch (EOFException pe) {
+                        // retry, EOF always means closed connection.
+                        if (retryCount > 0) {
+                            close();
+                            continue;
+                        }
+                        throw (IOException) new IOException(pe.getMessage()).initCause(pe);
+                    } finally {
+                        retryCount--;
+                    }
                 }
-                if (httpAuth != null && myChallengeCredentials != null) {
-                    request.initCredentials(myChallengeCredentials, method, path);
-                    String authResponse = myChallengeCredentials.authenticate();
-                    request.setAuthentication(authResponse);
-                }
-                request.dispatch(method, path, header, ok1, ok2, context);
                 myNextRequestTimeout = request.getNextRequestTimeout();
                 status = request.getStatus();
             } catch (SSLHandshakeException ssl) {
                 myRepository.getDebugLog().info(ssl);
-	              close();
+                close();
 	            if (ssl.getCause() instanceof SVNSSLUtil.CertificateNotTrustedException) {
 		            SVNErrorManager.cancel(ssl.getCause().getMessage());
 	            }
