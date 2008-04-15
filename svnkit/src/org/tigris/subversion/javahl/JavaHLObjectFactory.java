@@ -494,10 +494,10 @@ public class JavaHLObjectFactory {
             }
             cp = (ChangePath[]) clientChangePaths.toArray(new ChangePath[clientChangePaths.size()]);
         }
+        
+        long timeMicros = logEntry.getDate() != null ? logEntry.getDate().getTime() * 1000 : 0; 
         handler.singleMessage(cp, logEntry.getRevision(), logEntry.getAuthor(), 
-                              logEntry.getDate().getTime() * 1000, logEntry.getMessage(), 
-                              logEntry.hasChildren()
-        );
+                timeMicros, logEntry.getMessage(), logEntry.hasChildren());
     }
 
     public static CommitItem[] getCommitItems(SVNCommitItem[] commitables) {
