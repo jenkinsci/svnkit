@@ -14,10 +14,10 @@ package org.tmatesoft.svn.cli2.svnlook;
 import java.io.File;
 import java.io.InputStream;
 import java.io.PrintStream;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -27,6 +27,7 @@ import org.tmatesoft.svn.cli2.AbstractSVNOption;
 import org.tmatesoft.svn.cli2.SVNCommandLine;
 import org.tmatesoft.svn.cli2.SVNOptionValue;
 import org.tmatesoft.svn.cli2.svn.SVNCommand;
+import org.tmatesoft.svn.cli2.svn.SVNOption;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -295,7 +296,17 @@ public class SVNLookCommandEnvironment extends AbstractSVNCommandEnvironment {
         return new SVNDiffOptions(ignoreAllWS, ignoreAmountOfWS, ignoreEOLStyle);
     }
 
-    protected String refineCommandName(String commandName) throws SVNException {
+    protected String refineCommandName(String commandName, SVNCommandLine commandLine) throws SVNException {
+        for (Iterator options = commandLine.optionValues(); options.hasNext();) {
+            SVNOptionValue optionValue = (SVNOptionValue) options.next();
+            AbstractSVNOption option = optionValue.getOption();
+            if (option == SVNOption.HELP || option == SVNOption.QUESTION) {
+                myIsHelp = true;                
+            } else if (option == SVNOption.VERSION) {
+                myIsVersion = true;
+            }
+        }
+        
         if (myIsHelp) {
             List newArguments = commandName != null ? Collections.singletonList(commandName) : Collections.EMPTY_LIST;
             setArguments(newArguments);
@@ -305,8 +316,11 @@ public class SVNLookCommandEnvironment extends AbstractSVNCommandEnvironment {
             if (myIsVersion) {
                 SVNCommand versionCommand = new SVNCommand("--version", null) {
                     protected Collection createSupportedOptions() {
-                        return Arrays.asList(new AbstractSVNOption[] {SVNLookOption.VERSION});
+                        LinkedList options = new LinkedList();
+                        options.add(SVNOption.VERSION);
+                        return options;
                     }
+                    
                     public void run() throws SVNException {
                         AbstractSVNCommand helpCommand = AbstractSVNCommand.getCommand("help");
                         helpCommand.init(SVNLookCommandEnvironment.this);

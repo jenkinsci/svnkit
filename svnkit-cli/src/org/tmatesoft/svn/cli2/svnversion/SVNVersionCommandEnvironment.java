@@ -13,10 +13,13 @@ package org.tmatesoft.svn.cli2.svnversion;
 
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.util.Iterator;
 
 import org.tmatesoft.svn.cli2.AbstractSVNCommandEnvironment;
 import org.tmatesoft.svn.cli2.AbstractSVNOption;
+import org.tmatesoft.svn.cli2.SVNCommandLine;
 import org.tmatesoft.svn.cli2.SVNOptionValue;
+import org.tmatesoft.svn.cli2.svn.SVNOption;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
@@ -75,7 +78,17 @@ public class SVNVersionCommandEnvironment extends AbstractSVNCommandEnvironment 
         }
     }
 
-    protected String refineCommandName(String commandName) throws SVNException {
+    protected String refineCommandName(String commandName, SVNCommandLine commandLine) throws SVNException {
+        for (Iterator options = commandLine.optionValues(); options.hasNext();) {
+            SVNOptionValue optionValue = (SVNOptionValue) options.next();
+            AbstractSVNOption option = optionValue.getOption();
+            if (option == SVNOption.HELP) {
+                myIsHelp = true;                
+            } else if (option == SVNOption.VERSION) {
+                myIsVersion = true;
+            }
+        }
+        
         if (myIsHelp || myIsVersion) {
             return "help";
         }

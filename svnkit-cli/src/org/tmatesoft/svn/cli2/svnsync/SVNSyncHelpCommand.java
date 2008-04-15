@@ -29,7 +29,7 @@ public class SVNSyncHelpCommand extends SVNSyncCommand {
         "Available subcommands:\n";
     
     private static final String VERSION_HELP_FOOTER =
-        "\nThe following repository access (RA) modules are available:\n\n" +
+        "The following repository access (RA) modules are available:\n\n" +
         "* fs_fs : Module for working with a plain file (FSFS) repository.";
 
     public SVNSyncHelpCommand() {

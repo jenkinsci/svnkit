@@ -179,10 +179,10 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
     
     protected String getCommandName(SVNCommandLine commandLine) throws SVNException {
         String commandName = commandLine.getCommandName();
-        return refineCommandName(commandName);
+        return refineCommandName(commandName, commandLine);
     }
     
-    protected abstract String refineCommandName(String commandName) throws SVNException;
+    protected abstract String refineCommandName(String commandName, SVNCommandLine commandLine) throws SVNException;
     
     protected abstract ISVNOptions createClientOptions() throws SVNException;
 

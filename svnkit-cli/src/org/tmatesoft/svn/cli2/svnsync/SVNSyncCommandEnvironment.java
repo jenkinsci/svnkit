@@ -13,11 +13,19 @@ package org.tmatesoft.svn.cli2.svnsync;
 
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
+import org.tmatesoft.svn.cli2.AbstractSVNCommand;
 import org.tmatesoft.svn.cli2.AbstractSVNCommandEnvironment;
 import org.tmatesoft.svn.cli2.AbstractSVNOption;
 import org.tmatesoft.svn.cli2.SVNCommandLine;
 import org.tmatesoft.svn.cli2.SVNOptionValue;
+import org.tmatesoft.svn.cli2.svn.SVNOption;
+import org.tmatesoft.svn.cli2.svnadmin.SVNAdminCommand;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -153,8 +161,44 @@ public class SVNSyncCommandEnvironment extends AbstractSVNCommandEnvironment {
         }        
     }
 
-    protected String refineCommandName(String commandName) throws SVNException {
-        return null;
+    protected String refineCommandName(String commandName, SVNCommandLine commandLine) throws SVNException {
+        for (Iterator options = commandLine.optionValues(); options.hasNext();) {
+            SVNOptionValue optionValue = (SVNOptionValue) options.next();
+            AbstractSVNOption option = optionValue.getOption();
+            if (option == SVNOption.HELP || option == SVNOption.QUESTION) {
+                myIsHelp = true;                
+            } else if (option == SVNOption.VERSION) {
+                myIsVersion = true;
+            }
+        }
+
+        if (myIsHelp) {
+            List newArguments = commandName != null ? Collections.singletonList(commandName) : Collections.EMPTY_LIST;
+            setArguments(newArguments);
+            return "help";
+        } 
+        if (commandName == null) {
+            if (isVersion()) {
+                SVNAdminCommand versionCommand = new SVNAdminCommand("--version", null) {
+                    protected Collection createSupportedOptions() {
+                        LinkedList options = new LinkedList();
+                        options.add(SVNOption.VERSION);
+                        return options;
+                    }
+                    
+                    public void run() throws SVNException {
+                        AbstractSVNCommand helpCommand = AbstractSVNCommand.getCommand("help");
+                        helpCommand.init(SVNSyncCommandEnvironment.this);
+                        helpCommand.run();
+                    }
+                };
+                AbstractSVNCommand.registerCommand(versionCommand);
+                return "--version";
+            }
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, "Subcommand argument required");
+            SVNErrorManager.error(err);
+        }
+        return commandName;
     }
 
 }

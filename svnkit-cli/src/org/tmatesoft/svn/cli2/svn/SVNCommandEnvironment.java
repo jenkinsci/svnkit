@@ -16,10 +16,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -139,7 +139,17 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         getClientManager().setIgnoreExternals(myIsIgnoreExternals);
     }
     
-    protected String refineCommandName(String commandName) throws SVNException {
+    protected String refineCommandName(String commandName, SVNCommandLine commandLine) throws SVNException {
+        for (Iterator options = commandLine.optionValues(); options.hasNext();) {
+            SVNOptionValue optionValue = (SVNOptionValue) options.next();
+            AbstractSVNOption option = optionValue.getOption();
+            if (option == SVNOption.HELP || option == SVNOption.QUESTION) {
+                myIsHelp = true;                
+            } else if (option == SVNOption.VERSION) {
+                myIsVersion = true;
+            }
+        }
+        
         if (myIsHelp) {
             List newArguments = commandName != null ? Collections.singletonList(commandName) : Collections.EMPTY_LIST;
             setArguments(newArguments);
@@ -149,8 +159,13 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             if (isVersion()) {
                 SVNCommand versionCommand = new SVNCommand("--version", null) {
                     protected Collection createSupportedOptions() {
-                        return Arrays.asList(new SVNOption[] {SVNOption.VERSION, SVNOption.CONFIG_DIR, SVNOption.QUIET});
+                        LinkedList options = new LinkedList();
+                        options.add(SVNOption.VERSION);
+                        options.add(SVNOption.CONFIG_DIR);
+                        options.add(SVNOption.QUIET);
+                        return options;
                     }
+                    
                     public void run() throws SVNException {
                         AbstractSVNCommand helpCommand = AbstractSVNCommand.getCommand("help");
                         helpCommand.init(SVNCommandEnvironment.this);
