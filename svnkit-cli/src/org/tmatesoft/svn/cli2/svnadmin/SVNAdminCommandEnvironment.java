@@ -25,7 +25,6 @@ import org.tmatesoft.svn.cli2.AbstractSVNCommandEnvironment;
 import org.tmatesoft.svn.cli2.AbstractSVNOption;
 import org.tmatesoft.svn.cli2.SVNCommandLine;
 import org.tmatesoft.svn.cli2.SVNOptionValue;
-import org.tmatesoft.svn.cli2.svn.SVNOption;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -141,9 +140,9 @@ public class SVNAdminCommandEnvironment extends AbstractSVNCommandEnvironment {
         for (Iterator options = commandLine.optionValues(); options.hasNext();) {
             SVNOptionValue optionValue = (SVNOptionValue) options.next();
             AbstractSVNOption option = optionValue.getOption();
-            if (option == SVNOption.HELP || option == SVNOption.QUESTION) {
+            if (option == SVNAdminOption.HELP || option == SVNAdminOption.QUESTION) {
                 myIsHelp = true;                
-            } else if (option == SVNOption.VERSION) {
+            } else if (option == SVNAdminOption.VERSION) {
                 myIsVersion = true;
             }
         }
