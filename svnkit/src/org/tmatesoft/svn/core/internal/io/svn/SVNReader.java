@@ -238,7 +238,7 @@ public class SVNReader {
         } else if ("failure".equals(word)) {
             handleFailureStatus(list);
         } else {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Unknown status ''{0}'' in command response", word);
             SVNErrorManager.error(err);
         }
         return null;

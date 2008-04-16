@@ -139,7 +139,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 Object[] buffer = new Object[]{"reparent", url.toString()};
                 write("(w(s))", buffer);
                 authenticate();
-                read("", null, true);
+                read("", null, false);
 
                 String newLocation = url.toString();
                 String rootLocation = myRepositoryRoot.toString();
@@ -162,7 +162,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             openConnection();
             write("(w())", buffer);
             authenticate();
-            values = read("r", null, true);
+            values = read("r", null, false);
         } catch (SVNException e) {
             closeSession();
             throw e;
@@ -182,7 +182,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             openConnection();
             write("(w(s))", buffer);
             authenticate();
-            values = read("r", null, true);
+            values = read("r", null, false);
         } catch (SVNException e) {
             closeSession();
             throw e;
@@ -202,7 +202,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             openConnection();
             write("(w(n))", buffer);
             authenticate();
-            List items = read("l", null, true);
+            List items = read("l", null, false);
             properties = SVNReader.getProperties(items, 0, properties);
         } catch (SVNException e) {
             closeSession();
@@ -221,7 +221,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             openConnection();
             write("(w(ns))", buffer);
             authenticate();
-            values = read("(?b)", null, true);
+            values = read("(?b)", null, false);
         } catch (SVNException e) {
             closeSession();
             throw e;
@@ -239,7 +239,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             Object[] buffer = new Object[]{"check-path", path, getRevisionObject(revision)};
             write("(w(s(n)))", buffer);
             authenticate();
-            List values = read("w", null, true);
+            List values = read("w", null, false);
             return SVNNodeKind.parseKind(SVNReader.getString(values, 0));
         } catch (SVNException e) {
             closeSession();
@@ -263,7 +263,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             authenticate();
 
             while (true) {
-                SVNItem item = readItem(true);
+                SVNItem item = readItem(false);
                 if (item.getKind() == SVNItem.WORD && "done".equals(item.getWord())) {
                     break;
                 } else if (item.getKind() != SVNItem.LIST) {
@@ -283,7 +283,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 }
             }
 
-            read("", null, true);
+            read("", null, false);
         } catch (SVNException e) {
             closeSession();
             handleUnsupportedCommand(e, "'get-locations' not implemented");
@@ -304,7 +304,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             authenticate();
             boolean isDone = false;
             while (!isDone) {
-                SVNItem item = readItem(true);
+                SVNItem item = readItem(false);
                 if (item.getKind() == SVNItem.WORD && "done".equals(item.getWord())) {
                     isDone = true;
                 } else if (item.getKind() != SVNItem.LIST) {
@@ -331,7 +331,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     count += rangeEndRevision - rangeStartRevision + 1;
                 }
             }
-            read("", null, true);
+            read("", null, false);
         } catch (SVNException e) {
             closeSession();
             handleUnsupportedCommand(e, "'get-location-segments' not implemented");
@@ -349,7 +349,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     Boolean.valueOf(properties != null), Boolean.valueOf(contents != null)};
             write("(w(s(n)ww))", buffer);
             authenticate();
-            List values = read("(?s)rl", null, true);
+            List values = read("(?s)rl", null, false);
 
             MessageDigest digest = null;
             try {
@@ -367,7 +367,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             }
             if (contents != null) {
                 while (true) {
-                    SVNItem item = readItem(true);
+                    SVNItem item = readItem(false);
                     if (item.getKind() != SVNItem.BYTES) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Non-string as part of file contents");
                         SVNErrorManager.error(err);
@@ -385,7 +385,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                         SVNErrorManager.error(err);
                     }
                 }
-                read("", null, true);
+                read("", null, false);
                 if (expectedChecksum != null) {
                     String resultChecksum = SVNFileUtil.toHexDigest(digest);
                     if (!expectedChecksum.equals(resultChecksum)) {
@@ -444,7 +444,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                             null};
             write("(w(s(n)ww(*w)))", buffer);
             authenticate();
-            List values = read("rll", null, true);
+            List values = read("rll", null, false);
             revision = values.get(0) != null ? SVNReader.getLong(values, 0) : revision;
 
             if (properties != null) {
@@ -500,7 +500,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             Object[] buffer = new Object[]{"stat", path, getRevisionObject(revision)};
             write("(w(s(n)))", buffer);
             authenticate();
-            List values = read("(?l)", null, true);
+            List values = read("(?l)", null, false);
             values = (List) values.get(0);
             if (values != null) {
                 List direntProps = SVNReader.parseTuple("wnsr(?s)(?s)", values, null);
@@ -517,7 +517,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             buffer = new Object[]{"get-dir", path, rev, Boolean.FALSE, Boolean.TRUE};
             write("(w(s(n)ww))", buffer);
             authenticate();
-            values = read("rll", null, true);
+            values = read("rll", null, false);
             revision = values.get(0) != null ? SVNReader.getLong(values, 0) : revision;
 
             if (handler != null) {
@@ -553,7 +553,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     buffer = new Object[]{"rev-prop", key, SVNRevisionProperty.LOG};
                     write("(w(ns))", buffer);
                     authenticate();
-                    values = read("(?s)", null, true);
+                    values = read("(?s)", null, false);
                     String msg = SVNReader.getString(values, 0);
                     messages.put(key, msg);
                     entry.setCommitMessage(msg);
@@ -583,7 +583,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             boolean hasRevision = false;
             int count = 0;
             while (true) {
-                SVNItem item = readItem(true);
+                SVNItem item = readItem(false);
                 if (item.getKind() == SVNItem.WORD && "done".equals(item.getWord())) {
                     break;
                 }
@@ -609,7 +609,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     }
                 }
 
-                SVNItem chunkItem = readItem(true);
+                SVNItem chunkItem = readItem(false);
                 if (chunkItem.getKind() != SVNItem.BYTES) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Text delta chunk not a string");
                     SVNErrorManager.error(err);
@@ -630,7 +630,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                             break;
                         }
                         deltaReader.nextWindow(line, 0, line.length, name == null ? path : name, handler);
-                        chunkItem = readItem(true);
+                        chunkItem = readItem(false);
                         if (chunkItem.getKind() != SVNItem.BYTES) {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Text delta chunk not a string");
                             SVNErrorManager.error(err);
@@ -647,7 +647,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     count++;
                 }
             }
-            read("", null, true);
+            read("", null, false);
 
             if (!hasRevision) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "The get-file-revs command didn't return any revisions");
@@ -718,7 +718,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
 
 
             while (true) {
-                SVNItem item = readItem(true);
+                SVNItem item = readItem(false);
                 if (item.getKind() == SVNItem.WORD && "done".equals(item.getWord())) {
                     break;
                 }
@@ -811,7 +811,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     handler.handleLogEntry(logEntry);
                 }
             }
-            read("", null, true);
+            read("", null, false);
             return count;
         } catch (SVNException e) {
             closeSession();
@@ -827,9 +827,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             openConnection();
             write("(w(nnw))", buffer);
             authenticate();
-            SVNEditModeReader editReader = new SVNEditModeReader(myConnection, editor);
-            editReader.driveEditor(true);
-            read("", null, true);
+            SVNEditModeReader editReader = new SVNEditModeReader(myConnection, editor, true);
+            editReader.driveEditor();
+            read("", null, false);
         } catch (SVNException e) {
             closeSession();
             handleUnsupportedCommand(e, "Server doesn't support the replay command");
@@ -847,7 +847,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             openConnection();
             write("(w(nsb))", buffer);
             authenticate();
-            read("", null, true);
+            read("", null, false);
         } catch (SVNException e) {
             closeSession();
             throw e;
@@ -865,7 +865,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 write("(w(s))", new Object[]{"commit", logMessage});
             }
             authenticate();
-            read("", null, true);
+            read("", null, false);
             return new SVNCommitEditor(this, myConnection, new SVNCommitEditor.ISVNCommitCallback() {
                 public void run(SVNException error) {
                     if (error != null) {
@@ -888,7 +888,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             Object[] buffer = new Object[]{"get-lock", path};
             write("(w(s))", buffer);
             authenticate();
-            List items = read("(?l)", null, true);
+            List items = read("(?l)", null, false);
             items = (List) items.get(0);
             return SVNReader.getLock(items);
         } catch (SVNException e) {
@@ -907,7 +907,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             Object[] buffer = new Object[]{"get-locks", path};
             write("(w(s))", buffer);
             authenticate();
-            List items = read("l", null, true);
+            List items = read("l", null, false);
             items = (List) items.get(0);
             Collection locks = new ArrayList();
             for (Iterator iterator = items.iterator(); iterator.hasNext();) {
@@ -959,7 +959,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 String path = (String) paths.next();
                 SVNLock lock = null;
                 SVNErrorMessage error = null;
-                SVNItem item = readItem(true);
+                SVNItem item = readItem(false);
                 if (item.getKind() == SVNItem.WORD && "done".equals(item.getWord())) {
                     done = true;
                     break;
@@ -990,13 +990,13 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 }
             }
             if (!done) {
-                SVNItem item = readItem(true);
+                SVNItem item = readItem(false);
                 if (item.getKind() != SVNItem.WORD || !"done".equals(item.getWord())) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Didn't receive end marker for lock responses");
                     SVNErrorManager.error(err);
                 }
             }
-            read("", null, true);
+            read("", null, false);
         } catch (SVNException e) {
             closeSession();
             handleUnsupportedCommand(e, "Server doesn't support the lock command");
@@ -1066,7 +1066,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 String id = (String) pathToTokens.get(path);
                 SVNErrorMessage error = null;
                 try {
-                    SVNItem item = readItem(true);
+                    SVNItem item = readItem(false);
                     if (item.getKind() == SVNItem.WORD && "done".equals(item.getWord())) {
                         done = true;
                         break;
@@ -1096,13 +1096,13 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 }
             }
             if (!done) {
-                SVNItem item = readItem(true);
+                SVNItem item = readItem(false);
                 if (item.getKind() != SVNItem.WORD || !"done".equals(item.getWord())) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Didn't receive end marker for unlock responses");
                     SVNErrorManager.error(err);
                 }
             }
-            read("", null, true);
+            read("", null, false);
         } catch (SVNException e) {
             closeSession();
             handleUnsupportedCommand(e, "Server doesn't support the unlock command");
@@ -1120,7 +1120,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 Object[] buffer = new Object[]{"get-lock", path};
                 write("(w(s))", buffer);
                 authenticate();
-                List items = read("l", null, true);
+                List items = read("l", null, false);
                 items = (List) items.get(0);
                 SVNLock lock = SVNReader.getLock(items);
                 if (lock == null) {
@@ -1138,7 +1138,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             authenticate();
             SVNErrorMessage error = null;
             try {
-                read("", null, true);
+                read("", null, false);
             } catch (SVNException e) {
                 if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_LOCKED) {
                     error = e.getErrorMessage();
@@ -1164,7 +1164,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             write("(w(s(n)))", buffer);
             authenticate();
             SVNDirEntry entry = null;
-            List items = read("(?l)", null, true);
+            List items = read("(?l)", null, false);
             items = (List) items.get(0);
             if (items != null) {
                 List values = SVNReader.parseTuple("wnsr(?s)(?s)", items, null);
@@ -1367,10 +1367,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             reporter.report(this);
             authenticate();
 
-            SVNEditModeReader editReader = new SVNEditModeReader(myConnection, editor);
-            editReader.driveEditor(false);
-            write("(w())", new Object[]{"success"});
-            read("", null, true);
+            SVNEditModeReader editReader = new SVNEditModeReader(myConnection, editor, false);
+            editReader.driveEditor();
+            read("", null, false);
 
         } catch (SVNException e) {
             closeSession();
@@ -1393,10 +1392,10 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             reporter.report(this);
             authenticate();
 
-            SVNEditModeReader editReader = new SVNEditModeReader(myConnection, editor);
-            editReader.driveEditor(false);
+            SVNEditModeReader editReader = new SVNEditModeReader(myConnection, editor, false);
+            editReader.driveEditor();
             write("(w())", new Object[]{"success"});
-            read("", null, true);
+            read("", null, false);
 
         } catch (SVNException e) {
             closeSession();
@@ -1423,9 +1422,8 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             reporter.report(this);
             authenticate();
 
-            SVNEditModeReader editReader = new SVNEditModeReader(myConnection, editor);
-            editReader.driveEditor(false);
-            write("(w())", new Object[]{"success"});
+            SVNEditModeReader editReader = new SVNEditModeReader(myConnection, editor, false);
+            editReader.driveEditor();
             read("", null, false);
 
         } catch (SVNException e) {
@@ -1451,10 +1449,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             reporter.report(this);
             authenticate();
 
-            SVNEditModeReader editReader = new SVNEditModeReader(myConnection, editor);
-            editReader.driveEditor(false);
-            write("(w())", new Object[]{"success"});
-            read("", null, true);
+            SVNEditModeReader editReader = new SVNEditModeReader(myConnection, editor, false);
+            editReader.driveEditor();
+            read("", null, false);
 
         } catch (SVNException e) {
             closeSession();
@@ -1478,7 +1475,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             write("(w((*s)(n)ww))", buffer);
             authenticate();
 
-            List items = read("l", null, true);
+            List items = read("l", null, false);
             items = (List) items.get(0);
             Map pathsToMergeInfos = new SVNHashMap();
             for (Iterator iterator = items.iterator(); iterator.hasNext();) {
@@ -1533,7 +1530,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     locks, Boolean.valueOf(keepLocks), revProps});
 
             authenticate();
-            read("", null, true);
+            read("", null, false);
             return new SVNCommitEditor(this, myConnection,
                     new SVNCommitEditor.ISVNCommitCallback() {
                         public void run(SVNException error) {

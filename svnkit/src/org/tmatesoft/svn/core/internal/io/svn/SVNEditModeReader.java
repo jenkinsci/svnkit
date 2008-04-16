@@ -13,7 +13,6 @@
 package org.tmatesoft.svn.core.internal.io.svn;
 
 import java.util.Collection;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -22,6 +21,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaReader;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -63,15 +63,21 @@ public class SVNEditModeReader {
 
     private boolean myDone;
     private boolean myAborted;
+    private boolean myForReplay;
     private Map myTokens;
 
-    public SVNEditModeReader(SVNConnection connection, ISVNEditor editor) {
+    public SVNEditModeReader(SVNConnection connection, ISVNEditor editor, boolean forReplay) {
         myConnection = connection;
         myEditor = editor;
         myDeltaReader = new SVNDeltaReader();
         myDone = false;
         myAborted = false;
+        myForReplay = forReplay;
         myTokens = new SVNHashMap();
+    }
+
+    public boolean isAborted() {
+        return myAborted;
     }
 
     private void storeToken(String token, boolean isFile) {
@@ -168,57 +174,68 @@ public class SVNEditModeReader {
             myEditor.closeEdit();
             myDone = true;
             myAborted = false;
+            myConnection.write("(w())", new Object[]{"success"});
         } else if ("abort-edit".equals(commandName)) {
             myEditor.abortEdit();
             myDone = true;
             myAborted = true;
+            myConnection.write("(w())", new Object[]{"success"});
         } else if ("absent-dir".equals(commandName)) {
             lookupToken(SVNReader.getString(params, 1), false);
             myEditor.absentDir(SVNReader.getString(params, 0));
         } else if ("absent-file".equals(commandName)) {
             lookupToken(SVNReader.getString(params, 1), false);
             myEditor.absentFile(SVNReader.getString(params, 0));
-        } else if ("finish-replay".equals(commandName)){
-            myDone = true;
-            if (myAborted){
-                myAborted = false;
+        } else if ("finish-replay".equals(commandName)) {
+            if (!myForReplay) {
+                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_SVN_UNKNOWN_CMD,
+                        "Command 'finish-replay' invalid outside of replays");
+                SVNErrorManager.error(error);
             }
+            myDone = true;
+            myAborted = false;
         }
     }
 
-
-    public void driveEditor(boolean doReplay) throws SVNException {
+    public void driveEditor() throws SVNException {
         while (!myDone) {
+            SVNErrorMessage error = null;
+            List items = readTuple("wl", false);
+            String commandName = SVNReader.getString(items, 0);
+            String template = (String) COMMANDS_MAP.get(commandName);
+            if (template == null) {
+                SVNErrorMessage child = SVNErrorMessage.create(SVNErrorCode.RA_SVN_UNKNOWN_CMD, "Unknown command ''{0}''", commandName);
+                error = SVNErrorMessage.create(SVNErrorCode.RA_SVN_CMD_ERR);
+                error.setChildErrorMessage(child);
+            }
+            List parameters = SVNReader.parseTuple(template, (Collection) items.get(1), null);
             try {
-                List items = readTuple("wl", true);
-                String commandName = SVNReader.getString(items, 0);
-                boolean allowFinishReplay = doReplay && "finish-replay".equals(commandName);
-                String template = (String) COMMANDS_MAP.get(commandName);
-                if (template == null) {
-                    if (!allowFinishReplay) {
-                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_UNKNOWN_CMD));
-                    }
-                }
-                List parameters = null;
-                if (!allowFinishReplay) {
-                    parameters = SVNReader.parseTuple(template, (Collection) items.get(1), null);
-                }
                 processCommand(commandName, parameters);
             } catch (SVNException e) {
-                if (e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_SVN_CMD_ERR) {
-                    myAborted = true;
-                    if (!myDone) {
+                error = e.getErrorMessage();
+            }
+
+            if (error != null && error.getErrorCode() == SVNErrorCode.RA_SVN_CMD_ERR) {
+                myAborted = true;
+                if (!myDone) {
+                    try {
                         myEditor.abortEdit();
-                        break;
+                    } catch (SVNException e) {
                     }
+                    //TODO: implement stream blocking
                 }
-                throw e;
+                //TODO: write error response
+                break;
+            }
+            if (error != null) {
+                SVNErrorManager.error(error);
             }
         }
+
         while (!myDone) {
-            List items = readTuple("wl", true);
+            List items = readTuple("wl", false);
             String command = SVNReader.getString(items, 0);
-            myDone = "abort-edit".equals(command);
+            myDone = "abort-edit".equals(command) || "success".equals(command);
         }
     }
 
