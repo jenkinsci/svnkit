@@ -67,7 +67,6 @@ public abstract class AbstractSVNMerger implements ISVNMerger {
         }
 	    final SVNMergeResult result = SVNMergeResult.createMergeResult(status, null);
 	    if (dryRun) {
-	        SVNFileUtil.deleteFile(files.getResultFile());
 		    return result;
 	    }
         return processMergedFiles(files, result);

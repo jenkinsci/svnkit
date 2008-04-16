@@ -459,7 +459,15 @@ public abstract class SVNAdminArea {
 
         mergeFileSet.setMergeLabels(baseLabel, localLabel, latestLabel);
 
-        SVNMergeResult mergeResult = merger.mergeText(mergeFileSet, dryRun, options);
+	    SVNMergeResult mergeResult;
+	    try {
+	        mergeResult = merger.mergeText(mergeFileSet, dryRun, options);
+	    }
+	    finally {
+		    if (dryRun) {
+		        SVNFileUtil.deleteFile(resultFile);
+		    }
+	    }
         mergeFileSet.dispose();
 
         if (saveLog) {
