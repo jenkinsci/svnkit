@@ -11,8 +11,13 @@
  */
 package org.tmatesoft.svn.cli2.svnsync;
 
+import java.text.MessageFormat;
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedList;
 
+import org.tmatesoft.svn.cli2.AbstractSVNCommand;
+import org.tmatesoft.svn.cli2.SVNCommandUtil;
 import org.tmatesoft.svn.core.SVNException;
 
 
@@ -29,18 +34,48 @@ public class SVNSyncHelpCommand extends SVNSyncCommand {
         "Available subcommands:\n";
     
     private static final String VERSION_HELP_FOOTER =
-        "The following repository access (RA) modules are available:\n\n" +
-        "* fs_fs : Module for working with a plain file (FSFS) repository.";
+        "\nThe following repository access (RA) modules are available:\n\n" +
+        "* org.tmatesoft.svn.core.internal.io.dav : Module for accessing a repository via WebDAV protocol.\n" +
+        "  - handles 'http' scheme\n" +
+        "  - handles 'https' scheme\n" +
+        "* org.tmatesoft.svn.core.internal.io.svn: Module for accessing a repository using the svn network protocol.\n" + 
+        "  - handles 'svn' scheme\n" +
+        "* org.tmatesoft.svn.core.internal.io.fs: Module for accessing a repository on local disk.\n" +
+        "  - handles 'file' scheme (only FSFS repositories are supported)\n";
 
     public SVNSyncHelpCommand() {
         super("help", new String[] {"?", "h"});
     }
     
     protected Collection createSupportedOptions() {
-        return null;
+        return new LinkedList();
     }
 
     public void run() throws SVNException {
+        if (!getSVNSyncEnvironment().getArguments().isEmpty()) {
+            for (Iterator commands = getSVNSyncEnvironment().getArguments().iterator(); commands.hasNext();) {
+                String commandName = (String) commands.next();
+                AbstractSVNCommand command = AbstractSVNCommand.getCommand(commandName);
+                if (command == null) {
+                    getSVNSyncEnvironment().getErr().println("svn: \"" + commandName + "\": unknown command.\n");
+                    continue;
+                }
+                String help = SVNCommandUtil.getCommandHelp(command);
+                getSVNSyncEnvironment().getOut().println(help);
+            }
+        } else if (getSVNSyncEnvironment().isVersion()) {
+            String version = SVNCommandUtil.getVersion(getEnvironment(), getSVNSyncEnvironment().isQuiet());
+            getEnvironment().getOut().println(version);
+            getEnvironment().getOut().println(VERSION_HELP_FOOTER);
+        } else if (getSVNSyncEnvironment().getArguments().isEmpty()) {
+            String help = SVNCommandUtil.getGenericHelp(getEnvironment().getProgramName(), GENERIC_HELP_HEADER, 
+                    null);
+            getSVNSyncEnvironment().getOut().print(help);
+        } else {
+            String message = MessageFormat.format("Type ''{0} help'' for usage.", new Object[] { 
+                    getSVNSyncEnvironment().getProgramName() });
+            getSVNSyncEnvironment().getOut().println(message);
+        }
     }
 
 }

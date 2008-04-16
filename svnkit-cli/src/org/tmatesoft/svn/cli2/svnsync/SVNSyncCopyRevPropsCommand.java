@@ -13,8 +13,15 @@ package org.tmatesoft.svn.cli2.svnsync;
 
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.admin.SVNAdminClient;
 
 
 /**
@@ -42,5 +49,68 @@ public class SVNSyncCopyRevPropsCommand extends SVNSyncCommand {
     }
 
     public void run() throws SVNException {
+        List arguments = getSVNSyncEnvironment().getArguments();
+        if (arguments.size() > 2) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR);
+            SVNErrorManager.error(err);
+        }
+        
+        if (arguments.isEmpty()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS);
+            SVNErrorManager.error(err);
+        }
+     
+        SVNRevision startRevision = null;
+        SVNRevision endRevision = null;
+        long startRevisionNumber = 0;
+        long endRevisionNumber = -1;
+        
+        if (arguments.size() == 2) {
+            String revString = (String) arguments.remove(arguments.size() - 1);
+            SVNRevision[] revisions = getEnvironment().parseRevision(revString);
+            if (revisions == null || revisions[0].isLocal() || revisions[1].isLocal()) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+                        "''{0}'' is not a valid revision range", revString);
+                SVNErrorManager.error(err);
+            }
+            
+            if (startRevision == SVNRevision.HEAD) {
+                startRevisionNumber = -1;
+            } else {
+                startRevisionNumber = startRevision.getNumber();
+                if (!SVNRevision.isValidRevisionNumber(startRevisionNumber)) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+                            "Invalid revision number ({0})", String.valueOf(startRevisionNumber));
+                    SVNErrorManager.error(err);
+                }
+            }
+            
+            if (!endRevision.isValid()) {
+                endRevisionNumber = startRevisionNumber;
+            } else if (endRevision != SVNRevision.HEAD) {
+                endRevisionNumber = endRevision.getNumber();
+                if (!SVNRevision.isValidRevisionNumber(endRevisionNumber)) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+                            "Invalid revision number ({0})", String.valueOf(endRevisionNumber));
+                    SVNErrorManager.error(err);
+                }
+            }
+        }
+        
+        List targets = getEnvironment().combineTargets(null, false);
+        if (targets.size() != 1) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS);
+            SVNErrorManager.error(err);
+        }
+        
+        SVNPath toURL = new SVNPath((String) targets.get(0));
+        if (!toURL.isURL()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+                    "Path ''{0}'' is not a URL", toURL.getTarget());
+            SVNErrorManager.error(err);
+        }
+        
+        SVNAdminClient client = getEnvironment().getClientManager().getAdminClient();
+        client.doCopyRevisionProperties(toURL.getURL(), startRevisionNumber);
     }
 }

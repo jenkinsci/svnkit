@@ -13,8 +13,14 @@ package org.tmatesoft.svn.cli2.svnsync;
 
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
+import org.tmatesoft.svn.core.wc.admin.SVNAdminClient;
 
 
 /**
@@ -43,6 +49,32 @@ public class SVNSyncInitializeCommand extends SVNSyncCommand {
     }
 
     public void run() throws SVNException {
+        List targets = getEnvironment().combineTargets(null, false);
+        if (targets.size() < 2) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS);
+            SVNErrorManager.error(err);
+        }
+        if (targets.size() > 2) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR);
+            SVNErrorManager.error(err);
+        }
+        
+        SVNPath toURL = new SVNPath((String) targets.get(0));
+        if (!toURL.isURL()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+                    "Path ''{0}'' is not a URL", toURL.getTarget());
+            SVNErrorManager.error(err);
+        }
+        
+        SVNPath fromURL = new SVNPath((String) targets.get(1));
+        if (!fromURL.isURL()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+                    "Path ''{0}'' is not a URL", fromURL.getTarget());
+            SVNErrorManager.error(err);
+        }
+        
+        SVNAdminClient client = getEnvironment().getClientManager().getAdminClient();
+        client.doInitialize(fromURL.getURL(), toURL.getURL());
     }
 
 }

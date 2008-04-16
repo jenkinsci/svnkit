@@ -44,6 +44,15 @@ public class SVNHelpCommand extends SVNCommand {
         "SVNKit is a pure Java (TM) version of Subversion - a tool for version control.\n" +
         "For additional information, see http://svnkit.com/\n";
 
+    private static final String VERSION_HELP_FOOTER =
+        "\nThe following repository access (RA) modules are available:\n\n" +
+        "* org.tmatesoft.svn.core.internal.io.dav : Module for accessing a repository via WebDAV protocol.\n" +
+        "  - handles 'http' scheme\n" +
+        "  - handles 'https' scheme\n" +
+        "* org.tmatesoft.svn.core.internal.io.svn: Module for accessing a repository using the svn network protocol.\n" + 
+        "  - handles 'svn' scheme\n" +
+        "* org.tmatesoft.svn.core.internal.io.fs: Module for accessing a repository on local disk.\n" +
+        "  - handles 'file' scheme (only FSFS repositories are supported)\n";
 
     public SVNHelpCommand() {
         super("help", new String[] {"?", "h"});
@@ -73,6 +82,7 @@ public class SVNHelpCommand extends SVNCommand {
         } else if (getSVNEnvironment().isVersion()) {
             String version = SVNCommandUtil.getVersion(getEnvironment(), getSVNEnvironment().isQuiet());
             getEnvironment().getOut().println(version);
+            getEnvironment().getOut().println(VERSION_HELP_FOOTER);
         } else if (getSVNEnvironment().getArguments().isEmpty()) {
             String help = SVNCommandUtil.getGenericHelp(getEnvironment().getProgramName(), GENERIC_HELP_HEADER, GENERIC_HELP_FOOTER);
             getSVNEnvironment().getOut().print(help);

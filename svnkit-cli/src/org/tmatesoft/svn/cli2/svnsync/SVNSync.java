@@ -45,6 +45,9 @@ public class SVNSync extends AbstractSVNLauncher {
 
     protected void registerCommands() {
         AbstractSVNCommand.registerCommand(new SVNSyncInitializeCommand());
+        AbstractSVNCommand.registerCommand(new SVNSyncCopyRevPropsCommand());
+        AbstractSVNCommand.registerCommand(new SVNSyncSynchronizeCommand());
+        AbstractSVNCommand.registerCommand(new SVNSyncHelpCommand());
     }
 
     protected void registerOptions() {

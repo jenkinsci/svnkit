@@ -443,7 +443,8 @@ public class SVNLogClient extends SVNBasicClient {
             wcAccess.probeOpen(path, false, 0); 
             SVNEntry entry = wcAccess.getVersionedEntry(path, false); 
             if (entry.getURL() == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "Entry ''{0}'' has no URL", path);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, 
+                        "Entry ''{0}'' has no URL", path);
                 SVNErrorManager.error(err);
             }
             urls[i] = entry.getSVNURL();
@@ -455,7 +456,8 @@ public class SVNLogClient extends SVNBasicClient {
         Collection targets = new TreeSet();
         SVNURL baseURL = SVNURLUtil.condenceURLs(urls, targets, true);
         if (baseURL == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "target log paths belong to different repositories");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, 
+                    "target log paths belong to different repositories");
             SVNErrorManager.error(err);
         }
         if (targets.isEmpty()) {

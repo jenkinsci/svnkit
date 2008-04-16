@@ -246,8 +246,7 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
         return canonical;
     }
 
-    
-    protected SVNRevision[] parseRevision(String revStr) {
+    public SVNRevision[] parseRevision(String revStr) {
         Matcher matcher = Pattern.compile("(\\{[^\\}]+\\}|[^:]+)((:)(.*))?").matcher(revStr);
         matcher.matches();
         boolean colon = ":".equals(matcher.group(3));
