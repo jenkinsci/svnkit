@@ -43,4 +43,8 @@ public class SVNOptionValue {
     public String getName() {
         return myName;
     }
+    
+    public String toString() {
+        return myOption.getName() + (myValue != null ? (" = " + myValue) : "");
+    }
 }

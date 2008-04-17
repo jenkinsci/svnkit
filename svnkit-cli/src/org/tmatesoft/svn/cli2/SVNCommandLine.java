@@ -11,7 +11,6 @@
  */
 package org.tmatesoft.svn.cli2;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -57,69 +56,104 @@ public class SVNCommandLine {
     }
 
     public void init(String[] args) throws SVNException {
-        args = expandArgs(args);
-        for (int i = 0; i < args.length; i++) {
-           String value = args[i];
-           if (ourOptions.containsKey(value)) {
-               AbstractSVNOption option = (AbstractSVNOption) ourOptions.get(value);
-               String parameter = null;
-               if (!option.isUnary()) {
-                   if (i + 1 < args.length) {
-                       parameter = args[i + 1];
-                       i++;
-                   } else {
-                       SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, "missing argument: {0}", value);
-                       SVNErrorManager.error(err);
-                   }
-               }
-               myOptions.add(new SVNOptionValue(option, value, parameter));
-           } else if (myNeedsCommand && myCommand == null) {
-               myCommand = value;
-           } else {
-               myArguments.add(value);
-           }
-        }
+        myInputArguments = args;
+        myArgumentPosition = 0;
+        myArgumentIndex = 0;
+        myArguments = new LinkedList();
+        myOptions = new LinkedList();
+        myCommand = null;
+        
+        while (true) {
+            SVNOptionValue value = nextOption();
+            if (value != null) {
+                myOptions.add(value);
+            } else {
+                return;
+            }
+        } 
     }
     
-    private static String[] expandArgs(String[] args) {
-        Collection result = new ArrayList();
-        for (int i = 0; i < args.length; i++) {
-            String arg = args[i];
-            if (arg.startsWith("--")) {
-                int index = arg.indexOf('=');
-                if (index > 0) {
-                    result.add(arg.substring(0, index));
-                    if (index + 1 < arg.length()) {
-                        result.add(arg.substring(index + 1));
-                    }
-                    continue;
+    private int myArgumentIndex;
+    private int myArgumentPosition;
+    private String[] myInputArguments;
+    
+    private SVNOptionValue nextOption() throws SVNException {
+        if (myArgumentPosition == 0) {
+            while (myArgumentIndex < myInputArguments.length && !myInputArguments[myArgumentIndex].startsWith("-")) {
+                String argument = myInputArguments[myArgumentIndex];
+                // this is either command name or non-option argument.
+                if (myNeedsCommand && myCommand == null) {
+                    myCommand = argument;
+                } else {
+                    myArguments.add(argument);
                 }
-                result.add(arg);
-            } else if ((arg.startsWith("-c") || arg.startsWith("-r")) && arg.length() > 2) {
-                // -r or -c
-                result.add(arg.substring(0, 2));
-                // N or N:M
-                result.add(arg.substring(2));
-            } else if (arg.startsWith("-")) {                
-                if (arg.length() <= 2) {
-                    result.add(arg);
-                    continue;
-                } 
-                try {
-                    long l = Long.parseLong(arg);
-                    if (l < 0) {
-                        result.add(arg);
-                        continue;
-                    }
-                } catch (NumberFormatException nfe) {}
-                for(int j = 1; j < arg.length(); j++) {
-                    result.add("-" + arg.charAt(j));
+                myArgumentIndex++;
+            }
+            if (myArgumentIndex >= myInputArguments.length) {
+                return null;
+            }
+            // now we're in the beginning of option. parse option name first.
+            String argument = myInputArguments[myArgumentIndex];
+            if (argument.startsWith("--")) {
+                // it is long option, long option with '=value', or --long value set. 
+                int valueIndex = argument.indexOf('=');
+                String optionName = valueIndex > 0 ? argument.substring(0, valueIndex) : argument;
+                AbstractSVNOption option = (AbstractSVNOption) ourOptions.get(optionName);
+                if (option == null) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "invalid option: {0}", optionName);
+                    SVNErrorManager.error(err);
                 }
-            }  else {
-                result.add(arg);
+                String value = null;                
+                if (!option.isUnary()) {
+                    if (valueIndex > 0) {
+                        value = argument.substring(valueIndex + 1);
+                    } else {
+                        myArgumentIndex++;
+                        value = myArgumentIndex < myInputArguments.length ? myInputArguments[myArgumentIndex] : null;
+                    }
+                    if (value == null) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "missing argument: {0}", optionName);
+                        SVNErrorManager.error(err);
+                    }
+                }                  
+                myArgumentIndex++;
+                return new SVNOptionValue(option, optionName, value);
+            }
+            myArgumentPosition = 1;
+        }
+        // set of short options or set of short options with '[=]value', or -shortset value
+        // process each option is set until binary one found. then process value.
+        String argument = myInputArguments[myArgumentIndex];
+        String optionName = "-" + argument.charAt(myArgumentPosition++);
+        AbstractSVNOption option = (AbstractSVNOption) ourOptions.get(optionName);
+        if (option == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "invalid option: {0}", optionName);
+            SVNErrorManager.error(err);
+        }
+        String value = null;                
+        if (!option.isUnary()) {
+            if (myArgumentPosition < argument.length()) {
+                value = argument.substring(myArgumentPosition);
+                if (value.startsWith("=")) {
+                    value = value.substring(1);
+                }
+                myArgumentPosition = 0;
+                myArgumentIndex++;
+            } else {
+                myArgumentIndex++;
+                myArgumentPosition = 0;
+                value = myArgumentIndex < myInputArguments.length ? myInputArguments[myArgumentIndex] : null;
+            }
+            if (value == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "missing argument: {0}", optionName);
+                SVNErrorManager.error(err);
             }
         }
-        return (String[]) result.toArray(new String[result.size()]);
+        if (myArgumentPosition >= argument.length()) {
+            myArgumentPosition = 0;
+            myArgumentIndex++;
+        }
+        return new SVNOptionValue(option, optionName, value);
     }
     
     public Iterator optionValues() {
