@@ -73,9 +73,9 @@ public class SVNAdmin extends AbstractSVNLauncher {
         SVNCommandLine.registerOption(SVNAdminOption.IGNORE_UUID);
         SVNCommandLine.registerOption(SVNAdminOption.FORCE_UUID);
         SVNCommandLine.registerOption(SVNAdminOption.PARENT_DIR);
-    //  SVNCommandLine.registerOption(SVNAdminOption.FS_TYPE);
-    //  SVNCommandLine.registerOption(SVNAdminOption.BDB_TXN_NOSYNC);
-    //  SVNCommandLine.registerOption(SVNAdminOption.BDB_LOG_KEEP);
+        SVNCommandLine.registerOption(SVNAdminOption.FS_TYPE);
+        SVNCommandLine.registerOption(SVNAdminOption.BDB_TXN_NOSYNC);
+        SVNCommandLine.registerOption(SVNAdminOption.BDB_LOG_KEEP);
 
         SVNCommandLine.registerOption(SVNAdminOption.CONFIG_DIR);
         SVNCommandLine.registerOption(SVNAdminOption.CLEAN_LOGS);

@@ -30,7 +30,10 @@ public class SVNAdminCreateCommand extends SVNAdminCommand {
 
     protected Collection createSupportedOptions() {
         Collection options = new LinkedList();
+        options.add(SVNAdminOption.BDB_TXN_NOSYNC);
+        options.add(SVNAdminOption.BDB_LOG_KEEP);
         options.add(SVNAdminOption.CONFIG_DIR);
+        options.add(SVNAdminOption.FS_TYPE);
         options.add(SVNAdminOption.PRE_14_COMPATIBLE);
         options.add(SVNAdminOption.PRE_15_COMPATIBLE);
         return options;

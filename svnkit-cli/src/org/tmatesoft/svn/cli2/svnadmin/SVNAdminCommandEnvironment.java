@@ -158,6 +158,7 @@ public class SVNAdminCommandEnvironment extends AbstractSVNCommandEnvironment {
                     protected Collection createSupportedOptions() {
                         LinkedList options = new LinkedList();
                         options.add(SVNAdminOption.VERSION);
+                        options.add(SVNAdminOption.QUIET);
                         return options;
                     }
                     

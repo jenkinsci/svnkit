@@ -17,12 +17,11 @@ import java.util.Collections;
 import java.util.List;
 
 import org.tmatesoft.svn.cli2.AbstractSVNCommand;
-import org.tmatesoft.svn.cli2.AbstractSVNOption;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -87,13 +86,4 @@ public abstract class SVNAdminCommand extends AbstractSVNCommand {
     public Collection getGlobalOptions() {
         return Collections.EMPTY_LIST;
     }
-
-    public boolean isOptionSupported(AbstractSVNOption option) {
-        boolean supported = super.isOptionSupported(option);
-        if (!supported) {
-            return option == SVNAdminOption.HELP || option == SVNAdminOption.QUESTION;
-        }
-        return true;
-    }
-
 }

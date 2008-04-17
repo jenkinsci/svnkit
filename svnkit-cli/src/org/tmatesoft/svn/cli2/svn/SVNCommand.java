@@ -15,7 +15,6 @@ import java.util.Collection;
 import java.util.LinkedList;
 
 import org.tmatesoft.svn.cli2.AbstractSVNCommand;
-import org.tmatesoft.svn.cli2.AbstractSVNOption;
 
 
 /**
@@ -65,13 +64,4 @@ public abstract class SVNCommand extends AbstractSVNCommand {
         }
         return myGlobalOptions;
     }
-
-    public boolean isOptionSupported(AbstractSVNOption option) {
-        boolean supported = super.isOptionSupported(option);
-        if (!supported) {
-            return option == SVNOption.HELP || option == SVNOption.QUESTION;
-        }
-        return true;
-    }
-    
 }

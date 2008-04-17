@@ -21,6 +21,7 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.TreeSet;
 
+import org.tmatesoft.svn.cli2.svn.SVNOption;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 
@@ -132,7 +133,12 @@ public abstract class AbstractSVNCommand {
     }
     
     public boolean isOptionSupported(AbstractSVNOption option) {
-        return getSupportedOptions() != null && getSupportedOptions().contains(option);
+        boolean supported = getSupportedOptions() != null && getSupportedOptions().contains(option);
+        if (!supported) {
+            return option == SVNOption.HELP || option == SVNOption.QUESTION;
+        }
+        return supported;
+
     }
 
 }

@@ -31,9 +31,9 @@ public class SVNAdminOption extends AbstractSVNOption {
     public static final SVNAdminOption IGNORE_UUID = new SVNAdminOption("ignore-uuid");
     public static final SVNAdminOption FORCE_UUID = new SVNAdminOption("force-uuid");
     public static final SVNAdminOption PARENT_DIR = new SVNAdminOption("parent-dir", null, false);
-//  public static final SVNAdminOption FS_TYPE = new SVNAdminOption("fs-type", null, false);
-//  public static final SVNAdminOption BDB_TXN_NOSYNC = new SVNAdminOption("bdb-txn-nosync");
-//  public static final SVNAdminOption BDB_LOG_KEEP = new SVNAdminOption("bdb-log-keep");
+    public static final SVNAdminOption FS_TYPE = new SVNAdminOption("fs-type", null, false);
+    public static final SVNAdminOption BDB_TXN_NOSYNC = new SVNAdminOption("bdb-txn-nosync");
+    public static final SVNAdminOption BDB_LOG_KEEP = new SVNAdminOption("bdb-log-keep");
 
     public static final SVNAdminOption CONFIG_DIR = new SVNAdminOption("config-dir", null, false);
     public static final SVNAdminOption CLEAN_LOGS = new SVNAdminOption("clean-logs");
