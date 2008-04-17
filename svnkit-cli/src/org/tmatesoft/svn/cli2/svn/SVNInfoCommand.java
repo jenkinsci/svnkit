@@ -134,7 +134,7 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
         if (info.getRepositoryRootURL() != null) {
             buffer.append("Repository Root: " + info.getRepositoryRootURL() + "\n");
         }
-        if (info.isRemote() && info.getRepositoryUUID() != null) {
+        if (info.getRepositoryUUID() != null) {
             buffer.append("Repository UUID: " + info.getRepositoryUUID() + "\n");
         }
         if (info.getRevision() != null && info.getRevision().isValid()) {
