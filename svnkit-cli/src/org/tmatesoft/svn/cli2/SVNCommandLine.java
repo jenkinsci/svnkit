@@ -137,13 +137,12 @@ public class SVNCommandLine {
                 if (value.startsWith("=")) {
                     value = value.substring(1);
                 }
-                myArgumentPosition = 0;
-                myArgumentIndex++;
             } else {
                 myArgumentIndex++;
-                myArgumentPosition = 0;
                 value = myArgumentIndex < myInputArguments.length ? myInputArguments[myArgumentIndex] : null;
             }
+            myArgumentPosition = 0;
+            myArgumentIndex++;
             if (value == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "missing argument: {0}", optionName);
                 SVNErrorManager.error(err);
