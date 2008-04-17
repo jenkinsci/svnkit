@@ -31,9 +31,9 @@ public class Version {
     private static final String VERSION_MICRO_PROPERTY = "svnkit.version.micro";
     private static final String VERSION_REVISION_PROPERTY = "svnkit.version.revision";
 
-    private static final String VERSION_STRING_DEFAULT = "SVN/1.5.0 SVNKit (http://svnkit.com/) rSNAPSHOT";
-    private static final String VERSION_MAJOR_DEFAULT = "0";
-    private static final String VERSION_MINOR_DEFAULT = "0";
+    private static final String VERSION_STRING_DEFAULT = "SVN/1.5.0 SVNKit/1.2.0 (http://svnkit.com/) rSNAPSHOT";
+    private static final String VERSION_MAJOR_DEFAULT = "1";
+    private static final String VERSION_MINOR_DEFAULT = "2";
     private static final String VERSION_MICRO_DEFAULT = "0";
     private static final String VERSION_REVISION_DEFAULT = "SNAPSHOT";
     private static String ourUserAgent;
@@ -68,7 +68,7 @@ public class Version {
         } catch (NumberFormatException nfe) {
             //
         }
-        return 0;
+        return Integer.parseInt(VERSION_MAJOR_DEFAULT);
     }
 
     public static int getMinorVersion() {
@@ -79,7 +79,7 @@ public class Version {
         } catch (NumberFormatException nfe) {
             //
         }
-        return 0;
+        return Integer.parseInt(VERSION_MINOR_DEFAULT);
     }
 
     public static int getMicroVersion() {
@@ -90,7 +90,7 @@ public class Version {
         } catch (NumberFormatException nfe) {
             //
         }
-        return 0;
+        return Integer.parseInt(VERSION_MICRO_DEFAULT);
     }
 
     public static long getRevisionNumber() {
@@ -98,6 +98,11 @@ public class Version {
         try {
             return Long.parseLong(ourProperties.getProperty(
                     VERSION_REVISION_PROPERTY, VERSION_REVISION_DEFAULT));
+        } catch (NumberFormatException nfe) {
+            //
+        }
+        try {
+            return Long.parseLong(VERSION_REVISION_DEFAULT);
         } catch (NumberFormatException nfe) {
             //
         }
