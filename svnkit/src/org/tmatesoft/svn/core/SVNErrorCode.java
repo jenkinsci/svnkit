@@ -330,11 +330,7 @@ public class SVNErrorCode implements Serializable {
     /**
      * @since SVN 1.5
      */
-    public static final SVNErrorCode RA_UNKNOWN_CAPABILITY = new SVNErrorCode(RA_CATEGORY, 8, "Inquiry about unknown capability");
-    /**
-     * @since SVN 1.5
-     */
-    public static final SVNErrorCode RA_PARTIAL_REPLAY_NOT_SUPPORTED = new SVNErrorCode(RA_CATEGORY, 9, "Server can only replay from the root of a repository");
+    public static final SVNErrorCode RA_PARTIAL_REPLAY_NOT_SUPPORTED = new SVNErrorCode(RA_CATEGORY, 8, "Server can only replay from the root of a repository");
     
     public static final SVNErrorCode RA_DAV_SOCK_INIT = new SVNErrorCode(RA_DAV_CATEGORY, 0, "RA layer failed to init socket layer");
     public static final SVNErrorCode RA_DAV_CREATING_REQUEST = new SVNErrorCode(RA_DAV_CATEGORY, 1, "RA layer failed to create HTTP request");
@@ -453,7 +449,10 @@ public class SVNErrorCode implements Serializable {
      */
     public static final SVNErrorCode UNKNOWN_CHANGELIST = new SVNErrorCode(MISC_CATEGORY, 24, "Unknown changelist");
     
-    
+    public static final SVNErrorCode RESERVED_FILENAME_SPECIFIED = new SVNErrorCode(MISC_CATEGORY, 25, "Reserved directory name in command line arguments");
+
+    public static final SVNErrorCode UNKNOWN_CAPABILITY = new SVNErrorCode(MISC_CATEGORY, 26, "Inquiry about unknown capability");
+
     public static final SVNErrorCode CL_ARG_PARSING_ERROR = new SVNErrorCode(CL_CATEGORY, 0, "Client error in parsing arguments");
     public static final SVNErrorCode CL_INSUFFICIENT_ARGS = new SVNErrorCode(CL_CATEGORY, 1, "Not enough args provided");
     public static final SVNErrorCode CL_MUTUALLY_EXCLUSIVE_ARGS = new SVNErrorCode(CL_CATEGORY, 2, "Mutually exclusive arguments specified");

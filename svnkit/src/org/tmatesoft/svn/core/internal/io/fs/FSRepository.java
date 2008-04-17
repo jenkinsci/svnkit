@@ -653,13 +653,24 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
 	public boolean hasCapability(SVNCapability capability) throws SVNException {
 		if (capability == SVNCapability.DEPTH || 
 		        capability == SVNCapability.LOG_REVPROPS ||
-				capability == SVNCapability.MERGE_INFO || 
 				capability == SVNCapability.PARTIAL_REPLAY || 
-				capability == SVNCapability.COMMIT_REVPROPS
-				) {
+				capability == SVNCapability.COMMIT_REVPROPS) {
 			return true;
+		} else if (capability == SVNCapability.MERGE_INFO) {
+		    try {
+		        getMergeInfoImpl(new String[] { "" }, 0, SVNMergeInfoInheritance.EXPLICIT, false);
+		    } catch (SVNException svne) {
+		        SVNErrorCode code = svne.getErrorMessage().getErrorCode();
+		        if (code == SVNErrorCode.UNSUPPORTED_FEATURE) {
+		            return false;
+		        } else if (code == SVNErrorCode.FS_NOT_FOUND) {
+		            return true;
+		        }
+		        throw svne;
+		    }
+		    return true;
 		}
-		SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_UNKNOWN_CAPABILITY, 
+		SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN_CAPABILITY, 
 				"Don''t know anything about capability ''{0}''", capability);
 		SVNErrorManager.error(err);
 		return false;
@@ -920,4 +931,5 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
         return myMergeInfoManager;
     }
+    
 }

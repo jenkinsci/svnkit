@@ -1138,8 +1138,8 @@ public class DAVRepository extends SVNRepository {
                     }
                     myConnection.setCapability(SVNCapability.MERGE_INFO, result);
                 } else {
-                    SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_UNKNOWN_CAPABILITY,
-                            "Don't know how to handle ''{0}'' for capability ''{1}''",
+                    SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.UNKNOWN_CAPABILITY,
+                            "Don''t know how to handle ''{0}'' for capability ''{1}''",
                             new Object[]{DAVConnection.DAV_CAPABILITY_SERVER_YES, SVNCapability.MERGE_INFO});
                     SVNErrorManager.error(error);
                 }
@@ -1149,8 +1149,8 @@ public class DAVRepository extends SVNRepository {
             } else if (DAVConnection.DAV_CAPABILITY_NO.equals(result)) {
                 return false;
             } else if (result == null) {
-                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_UNKNOWN_CAPABILITY,
-                        "Don't know anything about capability ''{0}''",
+                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.UNKNOWN_CAPABILITY,
+                        "Don''t know anything about capability ''{0}''",
                         new Object[]{capability});
                 SVNErrorManager.error(error);
             } else {

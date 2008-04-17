@@ -302,7 +302,6 @@ public class SVNProperty {
 
     public static final SVNPropertyValue BOOLEAN_PROPERTY_VALUE = SVNPropertyValue.create("*");
 
-
     /**
      * Says if the given property name starts with the {@link #SVN_WC_PREFIX}
      * prefix.
