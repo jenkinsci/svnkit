@@ -215,19 +215,28 @@ public class SVNEditModeReader {
                 error = e.getErrorMessage();
             }
 
-            if (error != null && error.getErrorCode() == SVNErrorCode.RA_SVN_CMD_ERR) {
-                myAborted = true;
-                if (!myDone) {
-                    try {
-                        myEditor.abortEdit();
-                    } catch (SVNException e) {
-                    }
-                    //TODO: implement stream blocking
-                }
-                //TODO: write error response
-                break;
-            }
             if (error != null) {
+                if (error.getErrorCode() == SVNErrorCode.RA_SVN_CMD_ERR) {
+                    myAborted = true;
+                    if (!myDone) {
+                        try {
+                            myEditor.abortEdit();
+                        } catch (SVNException e) {
+                        }
+                        myConnection.setWriteBlocker(new ISVNBlockHandler() {
+                            public void handleBlock() throws SVNException {
+                                List items = readTuple("wl", false);
+                                if ("abort-edit".equals(SVNReader.getString(items, 0))) {
+                                    myDone = true;
+                                    myConnection.setWriteBlocker(null);
+                                }
+                            }
+                        });
+                    }
+                    myConnection.writeError(error.getChildErrorMessage());
+                    myConnection.setWriteBlocker(null);
+                    break;
+                }
                 SVNErrorManager.error(error);
             }
         }

@@ -270,8 +270,7 @@ public class SVNReader {
         SVNErrorCode errorCode = SVNErrorCode.getErrorCode(code);
         String errorMessage = getString(errorItems, 1);
         errorMessage = errorMessage == null ? "" : errorMessage;
-        //errorItems contains 2 items more (file and line) but native svn uses them only for debugging purposes.
-        //May be we should use another error template.
+        //errorItems contains 2 items more (file and line), no sense to use them.
         return SVNErrorMessage.create(errorCode, errorMessage);
     }
 

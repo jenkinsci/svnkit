@@ -168,7 +168,7 @@ class SVNCommitEditor implements ISVNEditor {
         String fileToken = (String) myFilesToTokens.get(path);
 
         try {
-            diffWindow.writeTo(new SVNDeltaStream(fileToken), myDiffWindowCount == 0, myConnection.isSVNDiff1());
+            diffWindow.writeTo(myConnection.getDeltaStream(fileToken), myDiffWindowCount == 0, myConnection.isSVNDiff1());
             myDiffWindowCount++;
             return SVNFileUtil.DUMMY_OUT;
         } catch (IOException e) {
@@ -255,36 +255,6 @@ class SVNCommitEditor implements ISVNEditor {
 
         public String getToken() {
             return myToken;
-        }
-    }
-
-    private class SVNDeltaStream extends OutputStream {
-
-        private Object[] myPrefix;
-
-        public SVNDeltaStream(String token) {
-            myPrefix = new Object[]{"textdelta-chunk", token};
-        }
-
-        public void write(byte[] b, int off, int len) throws IOException {
-            try {
-                myConnection.write("(w(s", myPrefix);
-                myConnection.getOutputStream().write((len + "").getBytes("UTF-8"));
-                myConnection.getOutputStream().write(':');
-                myConnection.getOutputStream().write(b, off, len);
-                myConnection.getOutputStream().write(' ');
-                myConnection.write("))", null);
-            } catch (SVNException e) {
-                throw new IOException(e.getMessage());
-            }
-        }
-
-        public void write(byte[] b) throws IOException {
-            write(b, 0, b.length);
-        }
-
-        public void write(int b) throws IOException {
-            write(new byte[]{(byte) (b & 0xFF)});
         }
     }
 }

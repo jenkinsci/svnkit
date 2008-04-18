@@ -49,6 +49,7 @@ class SVNConnection {
     private InputStream myLoggingInputStream;
     private Set myCapabilities;
     private byte[] myHandshakeBuffer = new byte[8192];
+    private ISVNBlockHandler myBlockHandler;
     
     private static final String SUCCESS = "success";
     private static final String FAILURE = "failure";
@@ -334,10 +335,30 @@ class SVNConnection {
         }
         throw e;        
     }
+
+    public void setWriteBlocker(ISVNBlockHandler handler) {
+        myBlockHandler = handler;
+    }
+
+    public void writeError(SVNErrorMessage error) throws SVNException {
+        Object[] buffer = new Object[]{"failure"};
+        write("(w(", buffer);
+        for (; error != null; error = error.getChildErrorMessage()) {
+            String message = error.getMessage() == null ? "" : error.getMessage();
+            buffer = new Object[]{new Long(error.getErrorCode().getCode()), message, "", new Integer(0)};
+            write("(nssn)", buffer);
+        }
+        write(")", null);
+    }
     
     public void write(String template, Object[] items) throws SVNException {
         try {
             SVNWriter.write(getOutputStream(), template, items);
+        } catch (SVNException svne) {
+            if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.RA_SVN_IO_ERROR && myBlockHandler != null) {
+                myBlockHandler.handleBlock();                
+            }
+            throw svne;
         } finally {
             try {
                 getOutputStream().flush();
@@ -366,7 +387,34 @@ class SVNConnection {
         }
     }
 
-    public OutputStream getOutputStream() throws SVNException {
+    public OutputStream getDeltaStream(final String token) {
+        return new OutputStream() {
+            Object[] myPrefix = new Object[]{"textdelta-chunk", token};
+
+            public void write(byte b[], int off, int len) throws IOException {
+                try {
+                    SVNConnection.this.write("(w(s", myPrefix);
+                    getOutputStream().write((String.valueOf(len)).getBytes("UTF-8"));
+                    getOutputStream().write(':');
+                    getOutputStream().write(b, off, len);
+                    getOutputStream().write(' ');
+                    SVNConnection.this.write("))", null);
+                } catch (SVNException e) {
+                    throw new IOException(e.getMessage());
+                }
+            }
+
+            public void write(byte[] b) throws IOException {
+                write(b, 0, b.length);
+            }
+
+            public void write(int b) throws IOException {
+                write(new byte[]{(byte) (b & 0xFF)});
+            }
+        };
+    }
+
+    private OutputStream getOutputStream() throws SVNException {
         if (myOutputStream == null) {
             try {
                 myOutputStream = myRepository.getDebugLog().createLogStream(myConnector.getOutputStream());
@@ -377,7 +425,7 @@ class SVNConnection {
         return myOutputStream;
     }
 
-    public InputStream getInputStream() throws SVNException {
+    private InputStream getInputStream() throws SVNException {
         if (myInputStream == null) {
             try {
                 myInputStream = myRepository.getDebugLog().createLogStream(new BufferedInputStream(myConnector.getInputStream()));
