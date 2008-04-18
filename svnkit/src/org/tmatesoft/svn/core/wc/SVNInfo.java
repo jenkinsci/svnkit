@@ -113,13 +113,10 @@ public class SVNInfo {
         }
         return new SVNInfo(file, entry.getSVNURL(), entry.getRepositoryRootURL(), 
                 entry.getRevision(), entry.getKind(), entry.getUUID(), entry.getCommittedRevision(),
-                entry.getCommittedDate(), entry.getAuthor(), entry
-                        .getSchedule(), entry.getCopyFromSVNURL(), entry
-                        .getCopyFromRevision(), entry.getTextTime(), entry
-                        .getPropTime(), entry.getChecksum(), entry
-                        .getConflictOld(), entry.getConflictNew(), entry
-                        .getConflictWorking(), entry.getPropRejectFile(), lock, 
-                        entry.getDepth(), entry.getChangelistName());
+                entry.getCommittedDate(), entry.getAuthor(), entry.getSchedule(), 
+                entry.getCopyFromSVNURL(), entry.getCopyFromRevision(), entry.getTextTime(), entry.getPropTime(), entry.getChecksum(), 
+                entry.getConflictOld(), entry.getConflictNew(), entry.getConflictWorking(), entry.getPropRejectFile(), 
+                lock, entry.getDepth(), entry.getChangelistName());
     }
 
     static SVNInfo createInfo(String path, SVNURL reposRootURL, String uuid,

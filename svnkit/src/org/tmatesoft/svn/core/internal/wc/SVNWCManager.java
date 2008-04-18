@@ -128,22 +128,14 @@ public class SVNWCManager {
             SVNFileUtil.deleteFile(propFile);
         }
         if (kind == SVNNodeKind.DIR) {
-            /* TODO(sd): "Both the calls to ensureAdminAreaExists() below pass
-             * SVNDepth.DEPTH_INFINITY.  I think this is reasonable, because
-             * we don't have any other source of depth information in
-             * the current context, and if ensureAdminAreaExists() *does*
-             * create a new admin directory, it ought to default to
-             * SVNDepth.DEPTH_INFINITY. However, if 'svn add' ever takes
-             * a depth parameter, then this would need to change." 
-             */
             if (copyFromURL == null) {
                 SVNEntry pEntry = wcAccess.getEntry(path.getParentFile(), false);
                 SVNURL newURL = pEntry.getSVNURL().appendPath(name, false);
                 SVNURL rootURL = pEntry.getRepositoryRootURL();
-                ensureAdminAreaExists(path, newURL.toString(), rootURL != null ? rootURL.toString() : null, pEntry.getUUID(), 0, SVNDepth.INFINITY);
+                ensureAdminAreaExists(path, newURL.toString(), rootURL != null ? rootURL.toString() : null, null, 0, SVNDepth.INFINITY);
             } else {
                 SVNURL rootURL = parentEntry.getRepositoryRootURL();
-                ensureAdminAreaExists(path, copyFromURL.toString(), rootURL != null ? rootURL.toString() : null, parentEntry.getUUID(), copyFromRev, SVNDepth.INFINITY);
+                ensureAdminAreaExists(path, copyFromURL.toString(), rootURL != null ? rootURL.toString() : null, null, copyFromRev, SVNDepth.INFINITY);
             }
             if (entry == null || entry.isDeleted()) {
                 dir = wcAccess.open(path, true, copyFromURL != null ? SVNWCAccess.INFINITE_DEPTH : 0);
