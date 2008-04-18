@@ -535,7 +535,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             SVNMergeRange nextRange = remainingRanges[i];
             boolean headerSent = false;
             SVNEvent event = SVNEventFactory.createSVNEvent(targetWCPath, SVNNodeKind.UNKNOWN, null, 
-                    SVNRepository.INVALID_REVISION, SVNEventAction.MERGE_BEGIN, null, null, 
+                    SVNRepository.INVALID_REVISION, myIsSameRepository ? SVNEventAction.MERGE_BEGIN : SVNEventAction.FOREIGN_MERGE_BEGIN, null, null, 
                     myAreSourcesAncestral ? nextRange : null);
 
             SVNProperties props1 = new SVNProperties();
@@ -810,7 +810,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                         SVNMergeRange ranges[] = child.myRemainingRanges.getRanges();
                     	SVNEvent mergeBeginEvent = SVNEventFactory.createSVNEvent(child.myPath, 
                         		SVNNodeKind.UNKNOWN, null, SVNRepository.INVALID_REVISION, 
-                        		SVNEventAction.MERGE_BEGIN, null, null, ranges[0]);
+                        		myIsSameRepository ? SVNEventAction.MERGE_BEGIN : SVNEventAction.FOREIGN_MERGE_BEGIN, null, null, ranges[0]);
                     	super.handleEvent(mergeBeginEvent, ISVNEventHandler.UNKNOWN);
                     }
                 }
@@ -851,7 +851,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         } else if (!myIsSingleFileMerge && myOperativeNotificationsNumber == 1 && isOperativeNotification) {
         	SVNEvent mergeBeginEvent = SVNEventFactory.createSVNEvent(myTarget, 
             		SVNNodeKind.UNKNOWN, null, SVNRepository.INVALID_REVISION, 
-            		SVNEventAction.MERGE_BEGIN, null, null, null);
+            		myIsSameRepository ? SVNEventAction.MERGE_BEGIN : SVNEventAction.FOREIGN_MERGE_BEGIN, null, null, null);
         	super.handleEvent(mergeBeginEvent, ISVNEventHandler.UNKNOWN);
         }
         

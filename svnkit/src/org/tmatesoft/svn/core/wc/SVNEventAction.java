@@ -271,9 +271,11 @@ public class SVNEventAction {
 
     public static final SVNEventAction CHANGELIST_CLEAR = new SVNEventAction(27, "changelist_clear");
 
-    public static final SVNEventAction CHANGELIST_MOVED = new SVNEventAction(29, "changelist_moved");
+    public static final SVNEventAction CHANGELIST_MOVED = new SVNEventAction(31, "changelist_moved");
 
     public static final SVNEventAction MERGE_BEGIN = new SVNEventAction(28, "merge_begin");
+
+    public static final SVNEventAction FOREIGN_MERGE_BEGIN = new SVNEventAction(29, "foreign_merge_begin");
     
     public static final SVNEventAction UPDATE_REPLACE = new SVNEventAction(30, "update_replace");
     
