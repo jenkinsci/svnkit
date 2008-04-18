@@ -18,6 +18,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.logging.Level;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNDirEntry;
@@ -662,6 +663,19 @@ public class JavaHLObjectFactory {
     
     public static CopySource createCopySource(SVNLocationEntry location) {
         return new CopySource(location.getPath(), Revision.getInstance(location.getRevision()), null);
+    }
+
+    public static Level getLoggingLevel(int level) {
+        if (level == SVNClientLogLevel.NoLog) {
+            return Level.OFF;
+        } else if (level == SVNClientLogLevel.ErrorLog) {
+            return Level.SEVERE;
+        } else if (level == SVNClientLogLevel.ExceptionLog) {
+            return Level.FINE;
+        } else if (level == SVNClientLogLevel.EntryLog) {
+            return Level.FINEST;
+        }
+        return Level.OFF;
     }
 
     public static void throwException(SVNException e, SVNClientImpl svnClient) throws ClientException {

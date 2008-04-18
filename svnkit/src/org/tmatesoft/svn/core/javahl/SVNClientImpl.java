@@ -22,6 +22,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
@@ -1620,6 +1621,10 @@ public class SVNClientImpl implements SVNClientInterface {
     
     public static long versionRevisionNumber() {
         return org.tmatesoft.svn.util.Version.getRevisionNumber();
+    }
+
+    public static void enableLogging(int logLevel, String logFilePath) {
+        Logger.getLogger("svnkit").setLevel(JavaHLObjectFactory.getLoggingLevel(logLevel));
     }
 
     /**
