@@ -21,6 +21,8 @@ import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+
+import java.text.MessageFormat;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -49,11 +51,9 @@ import org.tmatesoft.svn.core.internal.wc.DefaultLoadHandler;
 import org.tmatesoft.svn.core.internal.wc.ISVNLoadHandler;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminDeltifier;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminHelper;
-import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNDumpEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNSynchronizeEditor;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNCapability;
@@ -250,25 +250,54 @@ public class SVNAdminClient extends SVNBasicClient {
      * @throws SVNException   
      * @since                 1.1, new in Subversion 1.4
      */
-    public void doCopyRevisionProperties(SVNURL toURL, long revision) throws SVNException {
-        SVNRepository toRepos = createRepository(toURL, true);
-        checkIfRepositoryIsAtRoot(toRepos, toURL);
-
+    public void doCopyRevisionProperties(SVNURL toURL, long startRevision, long endRevision) throws SVNException {
+        SVNRepository toRepos = null;
+        SessionInfo info = null;
         SVNException error = null;
         SVNException error2 = null;
-        lock(toRepos);
         try {
-            SessionInfo info = openSourceRepository(toRepos);
-            if (revision > info.myLastMergedRevision) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot copy revprops for a revision that has not been synchronized yet");
+            toRepos = createRepository(toURL, true);
+            checkIfRepositoryIsAtRoot(toRepos, toURL);
+            lock(toRepos);
+            info = openSourceRepository(toRepos);
+
+            if (!SVNRevision.isValidRevisionNumber(startRevision)) {
+                startRevision = info.myLastMergedRevision;
+            }
+            if (!SVNRevision.isValidRevisionNumber(endRevision)) {
+                endRevision = info.myLastMergedRevision;
+            }
+            
+            if (startRevision > info.myLastMergedRevision) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
+                        "Cannot copy revprops for a revision ({0}) that has not been synchronized yet", 
+                        String.valueOf(startRevision));
                 SVNErrorManager.error(err);
             }
-            copyRevisionProperties(info.myRepository, toRepos, revision, false);
+
+            if (endRevision > info.myLastMergedRevision) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
+                        "Cannot copy revprops for a revision ({0}) that has not been synchronized yet", 
+                        String.valueOf(endRevision));
+                SVNErrorManager.error(err);
+            }
+            
+            long step = startRevision > endRevision ? -1 : 1;
+            for (long i = startRevision; i != endRevision + step; i += step) {
+                checkCancelled();
+                copyRevisionProperties(info.myRepository, toRepos, i, false);
+            }
         } catch (SVNException svne) {
             error = svne;
         } finally {
             try {
                 unlock(toRepos);
+                if (toRepos != null) {
+                    toRepos.closeSession();
+                }
+                if (info != null && info.myRepository != null) {
+                    info.myRepository.closeSession();
+                }
             } catch (SVNException svne) {
                 error2 = svne;
             }
@@ -463,29 +492,13 @@ public class SVNAdminClient extends SVNBasicClient {
             boolean hasCommitRevPropCapability = toRepos.hasCapability(SVNCapability.COMMIT_REVPROPS);
             checkCancelled();
             
-            for (long currentRev = lastMergedRevision + 1; currentRev <= fromLatestRevision; currentRev++) {
-                toRepos.setRevisionPropertyValue(0, SVNRevisionProperty.CURRENTLY_COPYING, SVNPropertyValue.create(SVNProperty.toString(currentRev)));
-                SVNSynchronizeEditor syncEditor = new SVNSynchronizeEditor(toRepos, mySyncHandler, currentRev - 1);
-                ISVNEditor cancellableEditor = SVNCancellableEditor.newInstance(syncEditor, this, getDebugLog());
-                try {
-                    fromRepos.replay(0, currentRev, true, cancellableEditor);
-                } catch (SVNException e) {
-                    try {
-                        cancellableEditor.abortEdit();
-                    } catch (SVNException abortError) {}
-                    throw e;
-                }
-                cancellableEditor.closeEdit();
-                if (syncEditor.getCommitInfo().getNewRevision() != currentRev) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Commit created rev {0} but should have created {1}", new Long[] {
-                            new Long(syncEditor.getCommitInfo().getNewRevision()), new Long(currentRev)
-                    });
-                    SVNErrorManager.error(err);
-                }
-                copyRevisionProperties(fromRepos, toRepos, currentRev, true);
-                toRepos.setRevisionPropertyValue(0, SVNRevisionProperty.LAST_MERGED_REVISION, SVNPropertyValue.create(SVNProperty.toString(currentRev)));
-                toRepos.setRevisionPropertyValue(0, SVNRevisionProperty.CURRENTLY_COPYING, null);
-            }
+            long startRevision = lastMergedRevision + 1;
+            long endRevision = fromLatestRevision;
+
+            SVNReplayHandler replayHandler = new SVNReplayHandler(toRepos, hasCommitRevPropCapability, 
+                    mySyncHandler, getDebugLog(), this, this);
+            
+            fromRepos.replayRange(startRevision, endRevision, 0, true, replayHandler);
         } catch (SVNException svne) {
             error = svne;
         } finally {
@@ -1009,6 +1022,22 @@ public class SVNAdminClient extends SVNBasicClient {
         return fsfs.getYoungestRevision();
     }
     
+    protected void handlePropertesCopied(boolean foundSycProps, long revision) throws SVNException {
+        if (myEventHandler != null) {
+            String message = null;
+            if (foundSycProps) {
+                message = MessageFormat.format("Copied properties for revision {0} ({1}* properties skipped).", 
+                        new Object[] { String.valueOf(revision), SVNProperty.SVN_SYNC_PREFIX });
+            } else {
+                message = MessageFormat.format("Copied properties for revision {0}.", new Object[] { 
+                        String.valueOf(revision) }); 
+            }
+            SVNAdminEvent event = new SVNAdminEvent(revision, SVNAdminEventAction.REVISION_PROPERTIES_COPIED,
+                    message);
+            myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
+        }
+    }
+    
     private FSHotCopier getHotCopier() {
         if (myHotCopier == null) {
             myHotCopier = new FSHotCopier();
@@ -1182,40 +1211,22 @@ public class SVNAdminClient extends SVNBasicClient {
         return headers;
     }
 
-    private void copyRevisionProperties(SVNRepository fromRepository, SVNRepository toRepository, long revision, boolean sync) throws SVNException {
+    private void copyRevisionProperties(SVNRepository fromRepository, SVNRepository toRepository, 
+            long revision, boolean sync) throws SVNException {
+        int filteredCount = 0;
+        
         SVNProperties existingRevProps = null;
         if (sync) {
             existingRevProps = toRepository.getRevisionProperties(revision, null);
         }
         
-        boolean sawSyncProperties = false;
         SVNProperties revProps = fromRepository.getRevisionProperties(revision, null);
-        for (Iterator propNames = revProps.nameSet().iterator(); propNames.hasNext();) {
-            String propName = (String) propNames.next();
-            SVNPropertyValue propValue = revProps.getSVNPropertyValue(propName);
-            if (propName.startsWith("sync-")) {
-                sawSyncProperties = true;
-            } else {
-                toRepository.setRevisionPropertyValue(revision, propName, propValue);
-            }
-            
-            if (sync) {
-                existingRevProps.remove(propName);
-            }
-        }
+        filteredCount += SVNAdminHelper.writeRevisionProperties(toRepository, revision, revProps);
         
         if (sync) {
-            for (Iterator propNames = existingRevProps.nameSet().iterator(); propNames.hasNext();) {
-                String propName = (String) propNames.next();
-                toRepository.setRevisionPropertyValue(revision, propName, null);
-            }            
+            SVNAdminHelper.removePropertiesNotInSource(toRepository, revision, revProps, existingRevProps);
         }
-        
-        if (sawSyncProperties) {
-            SVNDebugLog.getDefaultLog().info("Copied properties for revision " + revision + " (svn:sync-* properties skipped).\n");
-        } else {
-            SVNDebugLog.getDefaultLog().info("Copied properties for revision " + revision + ".\n");
-        }
+        handlePropertesCopied(filteredCount > 0, revision);
     }
 
     private SessionInfo openSourceRepository(SVNRepository targetRepos) throws SVNException {

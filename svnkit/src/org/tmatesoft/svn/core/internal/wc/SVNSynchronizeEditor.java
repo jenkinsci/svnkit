@@ -44,6 +44,13 @@ public class SVNSynchronizeEditor implements ISVNEditor {
         myHandler = handler;
     }
     
+    public void reset(long baseRevision) {
+        myWrappedEditor = null;
+        myCommitInfo = null;
+        myIsRootOpened = false;
+        myBaseRevision = baseRevision;
+    }
+    
     public void abortEdit() throws SVNException {
         getWrappedEditor().abortEdit();
     }
@@ -94,7 +101,8 @@ public class SVNSynchronizeEditor implements ISVNEditor {
         }
         myCommitInfo = wrappedEditor.closeEdit();
         if (myHandler != null) {
-            SVNLogEntry logEntry = new SVNLogEntry(null, myCommitInfo.getNewRevision(), myCommitInfo.getAuthor(), myCommitInfo.getDate(), null);
+            SVNLogEntry logEntry = new SVNLogEntry(null, myCommitInfo.getNewRevision(), 
+                    myCommitInfo.getAuthor(), myCommitInfo.getDate(), null);
             myHandler.handleLogEntry(logEntry);
         }
         return myCommitInfo;

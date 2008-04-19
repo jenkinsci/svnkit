@@ -1672,6 +1672,25 @@ public abstract class SVNRepository {
      */
     public abstract void replay(long lowRevision, long revision, boolean sendDeltas, ISVNEditor editor) throws SVNException;
 
+    public void replayRange(long startRevision, long endRevision, long lowRevision, boolean sendDeltas, 
+            ISVNReplayHandler handler) throws SVNException {
+        try {
+            replayRangeImpl(startRevision, endRevision, lowRevision, sendDeltas, handler);
+        } catch (SVNException svne) {
+            if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_IMPLEMENTED) {
+                for (long rev = startRevision; rev <= endRevision; rev++) {
+                    SVNProperties revProps = getRevisionProperties(rev, null);
+                    ISVNEditor editor = handler.handleStartRevision(rev, revProps);
+                    replay(lowRevision, rev, sendDeltas, editor);
+                    handler.handleEndRevision(rev, revProps, editor);
+                    
+                }
+            } else {
+                throw svne;
+            }
+        }
+    }
+
     /* write methods */
     /**
      * Gets an editor for committing changes to a repository. Having got the editor
@@ -2025,6 +2044,9 @@ public abstract class SVNRepository {
 
     protected abstract Map getMergeInfoImpl(String[] paths, long revision, SVNMergeInfoInheritance inherit, 
             boolean includeDescendants) throws SVNException;
+
+    protected abstract void replayRangeImpl(long startRevision, long endRevision, long lowRevision, 
+            boolean sendDeltas, ISVNReplayHandler handler) throws SVNException;
 
     protected void fireConnectionOpened() {
         for (Iterator listeners = myConnectionListeners.iterator(); listeners.hasNext();) {

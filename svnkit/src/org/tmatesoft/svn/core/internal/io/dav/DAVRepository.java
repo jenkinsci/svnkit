@@ -60,6 +60,7 @@ import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
 import org.tmatesoft.svn.core.io.ISVNLocationSegmentHandler;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
+import org.tmatesoft.svn.core.io.ISVNReplayHandler;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.ISVNSession;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
@@ -1172,6 +1173,12 @@ public class DAVRepository extends SVNRepository {
         } finally {
             closeConnection();
         }
+    }
+
+    protected void replayRangeImpl(long startRevision, long endRevision, long lowRevision, boolean sendDeltas, 
+            ISVNReplayHandler handler) throws SVNException {
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED);
+        SVNErrorManager.error(err);
     }
 
     private Map doGetMergeInfo(String[] paths, long revision, SVNMergeInfoInheritance inherit, boolean includeDescendants) throws SVNException {

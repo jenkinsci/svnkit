@@ -25,7 +25,7 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.tmatesoft.svn.cli.SVNSync;
+import org.tmatesoft.svn.cli2.svnsync.SVNSync;
 import org.tmatesoft.svn.cli2.svn.SVN;
 import org.tmatesoft.svn.cli2.svnadmin.SVNAdmin;
 import org.tmatesoft.svn.cli2.svnlook.SVNLook;

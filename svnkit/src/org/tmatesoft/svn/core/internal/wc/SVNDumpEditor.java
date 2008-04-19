@@ -232,15 +232,25 @@ public class SVNDumpEditor implements ISVNEditor {
                         mustDumpProps = true;
                     } else {
                         if (cmpRev < myOldestDumpedRevision) {
-                            SVNDebugLog.getDefaultLog().info("WARNING: Referencing data in revision " + cmpRev + ", which is older than the oldest\nWARNING: dumped revision (" + myOldestDumpedRevision + ").  Loading this dump into an empty repository\nWARNING: will fail.\n");
+                            SVNDebugLog.getDefaultLog().info("WARNING: Referencing data in revision " + cmpRev + 
+                                    ", which is older than the oldest\nWARNING: dumped revision (" + 
+                                    myOldestDumpedRevision + 
+                                    ").  Loading this dump into an empty repository\nWARNING: will fail.\n");
                         }
  
                         writeDumpData(SVNAdminHelper.DUMPFILE_NODE_COPYFROM_REVISION + ": " + cmpRev + "\n");
                         writeDumpData(SVNAdminHelper.DUMPFILE_NODE_COPYFROM_PATH + ": " + cmpPath + "\n");
                         compareRoot = myFSFS.createRevisionRoot(compareRevision);
-                        mustDumpProps = FSRepositoryUtil.arePropertiesChanged(compareRoot, comparePath, myRoot, canonicalPath);
+                        mustDumpProps = FSRepositoryUtil.arePropertiesChanged(compareRoot, comparePath, myRoot, 
+                                canonicalPath);
                         if (kind == SVNNodeKind.FILE) {
-                            mustDumpText = FSRepositoryUtil.areFileContentsChanged(compareRoot, comparePath, myRoot, canonicalPath);                            
+                            mustDumpText = FSRepositoryUtil.areFileContentsChanged(compareRoot, comparePath, 
+                                    myRoot, canonicalPath);
+                            FSRevisionNode revNode = compareRoot.getRevisionNode(comparePath);
+                            String checkSum = revNode.getFileChecksum();
+                            if (checkSum != null && checkSum.length() > 0) {
+                                writeDumpData(SVNAdminHelper.DUMPFILE_TEXT_COPY_SOURCE_CHECKSUM + ": " + checkSum + "\n");
+                            }
                         }
                     }
                     break;
@@ -322,6 +332,14 @@ public class SVNDumpEditor implements ISVNEditor {
                         
                         deltaGenerator.sendDelta(null, sourceStream, 0, targetStream, consumer, false);
                         txtLength = countingStream.getPosition();
+                        
+                        if (compareRoot != null) {
+                            FSRevisionNode revNode = compareRoot.getRevisionNode(comparePath);
+                            String hexDigest = revNode.getFileChecksum();
+                            if (hexDigest != null && hexDigest.length() > 0) {
+                                writeDumpData(SVNAdminHelper.DUMPFILE_TEXT_DELTA_BASE_CHECKSUM + ": " + hexDigest + "\n");
+                            }
+                        }
                     } finally {
                         SVNFileUtil.closeFile(sourceStream);
                         SVNFileUtil.closeFile(targetStream);
@@ -335,7 +353,7 @@ public class SVNDumpEditor implements ISVNEditor {
                 contentLength += txtLength;
                 writeDumpData(SVNAdminHelper.DUMPFILE_TEXT_CONTENT_LENGTH + ": " + txtLength + "\n");
                 String checksum = node.getFileChecksum();
-                if (checksum != null) {
+                if (checksum != null && checksum.length() > 0) {
                     writeDumpData(SVNAdminHelper.DUMPFILE_TEXT_CONTENT_CHECKSUM + ": " + checksum + "\n");
                 }
             }

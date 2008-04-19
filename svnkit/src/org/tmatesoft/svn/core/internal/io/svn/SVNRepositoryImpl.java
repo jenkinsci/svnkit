@@ -57,6 +57,7 @@ import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
 import org.tmatesoft.svn.core.io.ISVNLocationSegmentHandler;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
+import org.tmatesoft.svn.core.io.ISVNReplayHandler;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.ISVNSession;
@@ -1257,6 +1258,13 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         return myConnection.readItem(readMalformedData);
     }
 
+    private List readTuple(String template, boolean readMalformedData) throws SVNException {
+        if (myConnection == null) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED));
+        }
+        return myConnection.readTuple(template, readMalformedData);
+    }
+
     /*
      * ISVNReporter methods
      */
@@ -1544,6 +1552,39 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             closeConnection();
             closeSession();
             throw e;
+        }
+    }
+
+    protected void replayRangeImpl(long startRevision, long endRevision, long lowRevision, boolean sendDeltas, 
+            ISVNReplayHandler handler) throws SVNException {
+        Object[] buffer = new Object[]{"replay-range", getRevisionObject(startRevision), 
+                getRevisionObject(endRevision), getRevisionObject(lowRevision), Boolean.valueOf(sendDeltas)};
+
+        try {
+            openConnection();
+            for (long rev = startRevision; rev <= endRevision; rev++) {
+                write("(w(nnnw))", buffer);
+                authenticate();
+                List items = readTuple("wl", false);
+                String word = SVNReader.getString(items, 0);
+                if (!"revprops".equals(word)) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, 
+                            "Expected ''revprops'', found ''{0}''", word);
+                    SVNErrorManager.error(err);
+                }
+                
+                SVNProperties revProps = SVNReader.getProperties(items, 0, null);
+                ISVNEditor editor = handler.handleStartRevision(rev, revProps);
+                SVNEditModeReader editReader = new SVNEditModeReader(myConnection, editor, true);
+                editReader.driveEditor();
+                handler.handleEndRevision(rev, revProps, editor);
+                read("", null, false);
+            }
+        } catch (SVNException svne) {
+            closeSession();
+            handleUnsupportedCommand(svne, "Server doesn't support the replay-range command");
+        } finally {
+            closeConnection();
         }
     }
 

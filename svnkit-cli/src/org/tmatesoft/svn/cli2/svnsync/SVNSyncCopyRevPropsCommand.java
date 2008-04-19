@@ -15,20 +15,25 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
+import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.admin.ISVNAdminEventHandler;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminClient;
+import org.tmatesoft.svn.core.wc.admin.SVNAdminEvent;
+import org.tmatesoft.svn.core.wc.admin.SVNAdminEventAction;
 
 
 /**
  * @author TMate Software Ltd.
  * @version 1.1.1
  */
-public class SVNSyncCopyRevPropsCommand extends SVNSyncCommand {
+public class SVNSyncCopyRevPropsCommand extends SVNSyncCommand implements ISVNAdminEventHandler {
     public SVNSyncCopyRevPropsCommand() {
         super("copy-revprops", null);
     }    
@@ -111,6 +116,21 @@ public class SVNSyncCopyRevPropsCommand extends SVNSyncCommand {
         }
         
         SVNAdminClient client = getEnvironment().getClientManager().getAdminClient();
-        client.doCopyRevisionProperties(toURL.getURL(), startRevisionNumber);
+        client.setEventHandler(this);
+        client.doCopyRevisionProperties(toURL.getURL(), startRevisionNumber, endRevisionNumber);
+    }
+
+    public void handleAdminEvent(SVNAdminEvent event, double progress) throws SVNException {
+        if (event.getAction() == SVNAdminEventAction.REVISION_PROPERTIES_COPIED) {
+            if (!getSVNSyncEnvironment().isQuiet()) {
+                getSVNSyncEnvironment().getOut().println(event.getMessage());
+            }
+        }
+    }
+
+    public void handleEvent(SVNEvent event, double progress) throws SVNException {
+    }
+
+    public void checkCancelled() throws SVNCancelException {
     }
 }

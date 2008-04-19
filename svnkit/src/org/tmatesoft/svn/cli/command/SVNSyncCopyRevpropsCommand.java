@@ -53,7 +53,7 @@ public class SVNSyncCopyRevpropsCommand extends SVNCommand {
             
             SVNClientManager manager = getClientManager();
             SVNAdminClient adminClient = manager.getAdminClient();
-            adminClient.doCopyRevisionProperties(SVNURL.parseURIDecoded(destURL), revNumber);
+            adminClient.doCopyRevisionProperties(SVNURL.parseURIDecoded(destURL), revNumber, -1);
         }
     }
 

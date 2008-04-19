@@ -31,6 +31,8 @@ public class SVNProperty {
      */
     public static final String SVN_WC_PREFIX = "svn:wc:";
 
+    public static final String SVN_SYNC_PREFIX = "svn:sync-";
+
     /**
      * A special property used in a commit transaction.
      */

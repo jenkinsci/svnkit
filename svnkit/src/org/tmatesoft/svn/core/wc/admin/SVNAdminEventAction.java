@@ -101,4 +101,6 @@ public class SVNAdminEventAction {
     public static final SVNAdminEventAction RECOVERY_STARTED = new SVNAdminEventAction(13);
     
     public static final SVNAdminEventAction UPGRADE = new SVNAdminEventAction(14);
+    
+    public static final SVNAdminEventAction REVISION_PROPERTIES_COPIED = new SVNAdminEventAction(15);
 }

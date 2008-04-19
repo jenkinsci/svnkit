@@ -246,7 +246,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
 
     public void applyTextDelta() throws SVNException {
         FSDeltaConsumer fsConsumer = myCurrentRevisionBaton.getConsumer();
-        fsConsumer.applyTextDelta(myCurrentNodeBaton.myPath, null);
+        fsConsumer.applyTextDelta(myCurrentNodeBaton.myPath, myCurrentNodeBaton.myBaseChecksum);
     }
 
     public void setFullText() throws SVNException {
@@ -484,6 +484,21 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
             }
             
             FSRevisionRoot copyRoot = myFSFS.createRevisionRoot(srcRevision);
+            if (nodeBaton.myCopySourceChecksum != null) {
+                FSRevisionNode revNode = copyRoot.getRevisionNode(nodeBaton.myCopyFromPath);
+                String hexDigest = revNode.getFileChecksum();
+                if (hexDigest != null && !hexDigest.equals(nodeBaton.myCopySourceChecksum)) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH, 
+                            "Copy source checksum mismatch on copy from ''{0}''@{1}\n" +
+                            " to ''{2}'' in rev based on r{3}:\n" +
+                            "   expected:  {4}\n" + 
+                            "     actual:  {5}\n", new Object[] { nodeBaton.myCopyFromPath, 
+                            String.valueOf(srcRevision), nodeBaton.myPath, 
+                            String.valueOf(myCurrentRevisionBaton.myRevision), 
+                            nodeBaton.myCopySourceChecksum, hexDigest });
+                    SVNErrorManager.error(err);
+                }
+            }
             myCurrentRevisionBaton.getCommitter().makeCopy(copyRoot, nodeBaton.myCopyFromPath, nodeBaton.myPath, true);
             SVNDebugLog.getDefaultLog().info("COPIED...");
         }
@@ -539,9 +554,17 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
             baton.myCopyFromPath = SVNPathUtil.getAbsolutePath(baton.myCopyFromPath);
         }
         
-        if (headers.containsKey(SVNAdminHelper.DUMPFILE_TEXT_CONTENT_LENGTH)) {
-            baton.myTextChecksum = (String) headers.get(SVNAdminHelper.DUMPFILE_TEXT_CONTENT_LENGTH);
+        if (headers.containsKey(SVNAdminHelper.DUMPFILE_TEXT_CONTENT_CHECKSUM)) {
+            baton.myResultChecksum = (String) headers.get(SVNAdminHelper.DUMPFILE_TEXT_CONTENT_CHECKSUM);
         }        
+        
+        if (headers.containsKey(SVNAdminHelper.DUMPFILE_TEXT_DELTA_BASE_CHECKSUM)) {
+            baton.myBaseChecksum = (String) headers.get(SVNAdminHelper.DUMPFILE_TEXT_DELTA_BASE_CHECKSUM);
+        }
+        
+        if (headers.containsKey(SVNAdminHelper.DUMPFILE_TEXT_COPY_SOURCE_CHECKSUM)) {
+            baton.myCopySourceChecksum = (String) headers.get(SVNAdminHelper.DUMPFILE_TEXT_COPY_SOURCE_CHECKSUM);
+        }
         return baton;
     }
     
@@ -609,8 +632,10 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
         String myPath;
         SVNNodeKind myKind;
         int myAction;
+        String myBaseChecksum;
+        String myResultChecksum;
+        String myCopySourceChecksum;
         long myCopyFromRevision;
         String myCopyFromPath;
-        String myTextChecksum;
     }
 }

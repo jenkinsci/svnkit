@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.io.fs.FSEntry;
@@ -33,6 +34,7 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRevisionNode;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNDebugLog;
@@ -44,6 +46,30 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  */
 public class SVNAdminHelper {
     
+    public static int writeRevisionProperties(SVNRepository toRepository, long revision, SVNProperties revProps) throws SVNException {
+        int filteredCount = 0;
+        for (Iterator propNamesIter = revProps.nameSet().iterator(); propNamesIter.hasNext();) {
+            String propName = (String) propNamesIter.next();
+            SVNPropertyValue propValue = revProps.getSVNPropertyValue(propName);
+            if (propName.startsWith(SVNProperty.SVN_SYNC_PREFIX)) {
+                filteredCount++;
+            } else {
+                toRepository.setRevisionPropertyValue(revision, propName, propValue);
+            }
+        }
+        return filteredCount;
+    }
+
+    public static void removePropertiesNotInSource(SVNRepository repository, long revision, 
+            SVNProperties sourceProps, SVNProperties targetProps) throws SVNException {
+        for (Iterator propNamesIter = targetProps.nameSet().iterator(); propNamesIter.hasNext();) {
+            String propName = (String) propNamesIter.next();
+            if (sourceProps.getSVNPropertyValue(propName) == null) {
+                repository.setRevisionPropertyValue(revision, propName, null);
+            }
+        }
+    }
+
     public static FSFS openRepository(File reposRootPath, boolean openFS) throws SVNException {
         FSFS fsfs = new FSFS(reposRootPath);
         if (openFS) {
@@ -359,20 +385,22 @@ public class SVNAdminHelper {
         SVNErrorManager.error(err);
     }
     
-    public static final String DUMPFILE_MAGIC_HEADER           = "SVN-fs-dump-format-version";
-    public static final String DUMPFILE_CONTENT_LENGTH         = "Content-length";
-    public static final String DUMPFILE_NODE_ACTION            = "Node-action";
-    public static final String DUMPFILE_NODE_COPYFROM_PATH     = "Node-copyfrom-path";
-    public static final String DUMPFILE_NODE_COPYFROM_REVISION = "Node-copyfrom-rev";
-    public static final String DUMPFILE_NODE_KIND              = "Node-kind";
-    public static final String DUMPFILE_NODE_PATH              = "Node-path";
-    public static final String DUMPFILE_PROP_CONTENT_LENGTH    = "Prop-content-length";
-    public static final String DUMPFILE_PROP_DELTA             = "Prop-delta";
-    public static final String DUMPFILE_REVISION_NUMBER        = "Revision-number";
-    public static final String DUMPFILE_TEXT_CONTENT_LENGTH    = "Text-content-length";
-    public static final String DUMPFILE_TEXT_DELTA             = "Text-delta";
-    public static final String DUMPFILE_UUID                   = "UUID";
-    public static final String DUMPFILE_TEXT_CONTENT_CHECKSUM  = "Text-content-md5";    
+    public static final String DUMPFILE_MAGIC_HEADER               = "SVN-fs-dump-format-version";
+    public static final String DUMPFILE_CONTENT_LENGTH             = "Content-length";
+    public static final String DUMPFILE_NODE_ACTION                = "Node-action";
+    public static final String DUMPFILE_NODE_COPYFROM_PATH         = "Node-copyfrom-path";
+    public static final String DUMPFILE_NODE_COPYFROM_REVISION     = "Node-copyfrom-rev";
+    public static final String DUMPFILE_NODE_KIND                  = "Node-kind";
+    public static final String DUMPFILE_NODE_PATH                  = "Node-path";
+    public static final String DUMPFILE_PROP_CONTENT_LENGTH        = "Prop-content-length";
+    public static final String DUMPFILE_PROP_DELTA                 = "Prop-delta";
+    public static final String DUMPFILE_REVISION_NUMBER            = "Revision-number";
+    public static final String DUMPFILE_TEXT_CONTENT_LENGTH        = "Text-content-length";
+    public static final String DUMPFILE_TEXT_DELTA                 = "Text-delta";
+    public static final String DUMPFILE_UUID                       = "UUID";
+    public static final String DUMPFILE_TEXT_CONTENT_CHECKSUM      = "Text-content-md5";    
+    public static final String DUMPFILE_TEXT_COPY_SOURCE_CHECKSUM  = "Text-copy-source-md5";    
+    public static final String DUMPFILE_TEXT_DELTA_BASE_CHECKSUM   = "Text-delta-base-md5";    
     public static final int DUMPFILE_FORMAT_VERSION            = 3;
 
     public static final int NODE_ACTION_ADD     = 1;

@@ -229,6 +229,7 @@ svnkit/src/org/tmatesoft/svn/core/internal/wc/config/README.txt eol=lf
 svnkit/src/org/tmatesoft/svn/core/internal/wc/config/config eol=lf
 svnkit/src/org/tmatesoft/svn/core/internal/wc/config/servers eol=lf
 svnkit/src/org/tmatesoft/svn/core/io/ISVNLocationSegmentHandler.java -text
+svnkit/src/org/tmatesoft/svn/core/io/ISVNReplayHandler.java -text
 svnkit/src/org/tmatesoft/svn/core/io/ISVNSession.java -text
 svnkit/src/org/tmatesoft/svn/core/io/SVNCapability.java -text
 svnkit/src/org/tmatesoft/svn/core/io/SVNLocationSegment.java -text
@@ -252,6 +253,7 @@ svnkit/src/org/tmatesoft/svn/core/wc/SVNConflictReason.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/SVNConflictResult.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/SVNCopySource.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/SVNRevisionRange.java -text
+svnkit/src/org/tmatesoft/svn/core/wc/admin/SVNReplayHandler.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/package.html -text
 svnkit/src/org/tmatesoft/svn/core/wc/xml/SVNXMLInfoHandler.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/xml/package.html -text

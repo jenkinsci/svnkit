@@ -54,6 +54,7 @@ import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
 import org.tmatesoft.svn.core.io.ISVNLocationSegmentHandler;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
+import org.tmatesoft.svn.core.io.ISVNReplayHandler;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.ISVNSession;
@@ -713,6 +714,11 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         return new FSCommitEditor(getRepositoryPath(""), locks, keepLocks, null, myFSFS, this, revProps);
     }
 
+    protected void replayRangeImpl(long startRevision, long endRevision, long lowRevision, boolean sendDeltas, 
+            ISVNReplayHandler handler) throws SVNException {
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED);
+        SVNErrorManager.error(err);
+    }
 
     private void openRepository() throws SVNException {
         try {
@@ -931,5 +937,5 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
         return myMergeInfoManager;
     }
-    
+
 }
