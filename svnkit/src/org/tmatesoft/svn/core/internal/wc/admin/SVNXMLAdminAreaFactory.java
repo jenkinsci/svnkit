@@ -42,10 +42,15 @@ class SVNXMLAdminAreaFactory extends SVNAdminAreaFactory {
             return null;
         }
         return new SVNXMLAdminArea(path);
-    }
+    }    
 
-    protected SVNAdminArea doUpgrade(SVNAdminArea area) throws SVNException {
-        return area;
+    protected SVNAdminArea doChangeWCFormat(SVNAdminArea adminArea) throws SVNException {
+        if (adminArea == null || adminArea.getClass() == SVNAdminArea15.class) {
+            return adminArea;
+        }
+        SVNXMLAdminArea newAdminArea = new SVNXMLAdminArea(adminArea.getRoot());
+        newAdminArea.setLocked(true);
+        return newAdminArea.formatWC(adminArea);
     }
 
     public int getSupportedVersion() {

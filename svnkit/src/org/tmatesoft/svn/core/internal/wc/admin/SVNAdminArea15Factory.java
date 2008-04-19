@@ -36,13 +36,13 @@ public class SVNAdminArea15Factory extends SVNAdminArea14Factory {
         return new SVNAdminArea15(path);
     }
 
-    protected SVNAdminArea doUpgrade(SVNAdminArea adminArea) throws SVNException {
+    protected SVNAdminArea doChangeWCFormat(SVNAdminArea adminArea) throws SVNException {
         if (adminArea == null || adminArea.getClass() == SVNAdminArea15.class) {
             return adminArea;
         }
-        SVNAdminArea15 newestAdminArea = new SVNAdminArea15(adminArea.getRoot());
-        newestAdminArea.setLocked(true);
-        return newestAdminArea.upgradeFormat(adminArea);
+        SVNAdminArea15 newAdminArea = new SVNAdminArea15(adminArea.getRoot());
+        newAdminArea.setLocked(true);
+        return newAdminArea.formatWC(adminArea);
     }
 
     public int getSupportedVersion() {

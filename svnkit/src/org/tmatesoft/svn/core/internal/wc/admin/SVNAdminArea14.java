@@ -47,7 +47,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 
 /**
@@ -1539,21 +1538,6 @@ public class SVNAdminArea14 extends SVNAdminArea {
         }
         return false;
     }
-
-    private void createFormatFile(File formatFile, boolean createMyself) throws SVNException {
-        OutputStream os = null;
-        try {
-            formatFile = createMyself ? getAdminFile("format") : formatFile;
-            os = SVNFileUtil.openFileForWriting(formatFile);
-            os.write(String.valueOf(getFormatVersion()).getBytes("UTF-8"));
-            os.write('\n');            
-        } catch (IOException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-            SVNErrorManager.error(err, e);
-        } finally {
-            SVNFileUtil.closeFile(os);
-        }
-    }
     
     public SVNAdminArea createVersionedDirectory(File dir, String url, String rootURL, String uuid, 
             long revNumber, boolean createMyself, SVNDepth depth) throws SVNException {
@@ -1614,83 +1598,21 @@ public class SVNAdminArea14 extends SVNAdminArea {
         return adminArea;
     }
 
-    public SVNAdminArea upgradeFormat(SVNAdminArea adminArea) throws SVNException {
-        File logFile = adminArea.getAdminFile("log");
-        SVNFileType type = SVNFileType.getType(logFile);
-        if (type == SVNFileType.FILE) {
-            SVNDebugLog.getDefaultLog().info("Upgrade failed: found a log file at '" + logFile + "'");
-            return adminArea;
-        }
-
-        SVNLog log = getLog();
-        SVNProperties command = new SVNProperties();
-        command.put(SVNLog.FORMAT_ATTR, String.valueOf(getFormatVersion()));
-        log.addCommand(SVNLog.UPGRADE_FORMAT, command, false);
-        command.clear();
-        
-        setWCAccess(adminArea.getWCAccess());
-        Iterator entries = adminArea.entries(true);
-        myEntries = new SVNHashMap();
-        Map basePropsCache = getBasePropertiesStorage(true);
-        Map propsCache = getPropertiesStorage(true);
-        
-        for (; entries.hasNext();) {
-            SVNEntry entry = (SVNEntry) entries.next();
-            SVNEntry newEntry = new SVNEntry(new SVNHashMap(entry.asMap()), this, entry.getName());
-            myEntries.put(entry.getName(), newEntry);
-
-            if (entry.getKind() != SVNNodeKind.FILE && !adminArea.getThisDirName().equals(entry.getName())) {
-                continue;
-            }
-
-            SVNVersionedProperties srcBaseProps = adminArea.getBaseProperties(entry.getName());
-            SVNProperties basePropsHolder = srcBaseProps.asMap();
-            SVNVersionedProperties dstBaseProps = new SVNProperties13(basePropsHolder);
-            basePropsCache.put(entry.getName(), dstBaseProps);
-            dstBaseProps.setModified(true);
-            
-            SVNVersionedProperties srcProps = adminArea.getProperties(entry.getName());
-            SVNVersionedProperties dstProps = new SVNProperties14(srcProps.asMap(), this, entry.getName()){
-
-                protected SVNProperties loadProperties() throws SVNException {
-                    return getProperties();
-                }
-            };
-            propsCache.put(entry.getName(), dstProps);
-            dstProps.setModified(true);
-            
-            command.put(SVNLog.NAME_ATTR, entry.getName());
-            command.put(SVNProperty.shortPropertyName(SVNProperty.PROP_TIME), SVNDate.formatDate(new Date(0), true));
-            log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
-            command.clear();
-            
-            SVNVersionedProperties wcProps = adminArea.getWCProperties(entry.getName());
-            log.logChangedWCProperties(entry.getName(), wcProps.asMap());
-        }
-        saveVersionedProperties(log, true);
-        log.save();
-
-        SVNFileUtil.deleteFile(getAdminFile("README.txt"));
-        SVNFileUtil.deleteFile(getAdminFile("empty-file"));
-        SVNFileUtil.deleteAll(getAdminFile("wcprops"), true);
-        SVNFileUtil.deleteAll(getAdminFile("tmp/wcprops"), true);
-        SVNFileUtil.deleteAll(getAdminFile("dir-wcprops"), true);
-
-        runLogs();
-        return this;
+    protected SVNVersionedProperties filterBaseProperties(SVNProperties srcProperties) {
+        SVNProperties filteredProperties = new SVNProperties(srcProperties);
+        filteredProperties.remove(SVNProperty.MERGE_INFO);
+        return new SVNProperties13(filteredProperties);
     }
 
-    public void postUpgradeFormat(int format) throws SVNException {
-        if (format == getFormatVersion()) {
-            createFormatFile(null, true);
-            return;
-        }
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
-                "Unexpected format number:\n" + 
-                "   expected: {0}\n" + 
-                "     actual: {1}", 
-                new Object[] { new Integer(getFormatVersion()), new Integer(format) });
-        SVNErrorManager.error(err);
+    protected SVNVersionedProperties filterWCProperties(SVNEntry entry, SVNProperties srcProperties) {
+        SVNProperties filteredProperties = new SVNProperties(srcProperties);
+        filteredProperties.remove(SVNProperty.MERGE_INFO);
+        return new SVNProperties14(filteredProperties, this, entry.getName()) {
+
+            protected SVNProperties loadProperties() throws SVNException {
+                return getProperties();
+            }
+        };
     }
 
     private void makeKillMe(boolean killAdminOnly) throws SVNException {

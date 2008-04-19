@@ -733,10 +733,6 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         return deleted;
     }
 
-    public SVNAdminArea upgradeFormat(SVNAdminArea adminArea) throws SVNException {
-        return this;
-    }
-
     public boolean isVersioned() {
         if (getAdminDirectory().isDirectory() && myEntriesFile.canRead()) {
             try {
@@ -811,8 +807,17 @@ public class SVNXMLAdminArea extends SVNAdminArea {
     protected int getFormatVersion() {
         return WC_FORMAT;
     }
-    
-    public void postUpgradeFormat(int format) throws SVNException {
+
+    protected SVNVersionedProperties filterBaseProperties(SVNProperties srcProperties) {
+        SVNProperties filteredProperties = new SVNProperties(srcProperties);
+        filteredProperties.remove(SVNProperty.MERGE_INFO);
+        return new SVNProperties13(srcProperties);
+    }
+
+    protected SVNVersionedProperties filterWCProperties(SVNEntry entry, SVNProperties srcProperties) {
+        SVNProperties filteredProperties = new SVNProperties(srcProperties);
+        filteredProperties.remove(SVNProperty.MERGE_INFO);
+        return new SVNProperties13(filteredProperties);
     }
 
     public void handleKillMe() throws SVNException {

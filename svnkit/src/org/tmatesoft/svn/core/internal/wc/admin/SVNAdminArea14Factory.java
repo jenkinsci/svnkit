@@ -44,13 +44,13 @@ class SVNAdminArea14Factory extends SVNAdminAreaFactory {
         return new SVNAdminArea14(path);
     }
 
-    protected SVNAdminArea doUpgrade(SVNAdminArea adminArea) throws SVNException {
+    protected SVNAdminArea doChangeWCFormat(SVNAdminArea adminArea) throws SVNException {
         if (adminArea == null || adminArea.getClass() == SVNAdminArea14.class) {
             return adminArea;
         }
         SVNAdminArea14 newestAdminArea = new SVNAdminArea14(adminArea.getRoot());
         newestAdminArea.setLocked(true);
-        return newestAdminArea.upgradeFormat(adminArea);
+        return newestAdminArea.formatWC(adminArea);
     }
 
     public int getSupportedVersion() {

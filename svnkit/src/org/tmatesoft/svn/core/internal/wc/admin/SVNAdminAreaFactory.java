@@ -22,10 +22,10 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
@@ -55,7 +55,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
     public static boolean isUpgradeEnabled() {
         return ourIsUpgradeEnabled;
     }
-    
+
     public static void setSelector(ISVNAdminAreaFactorySelector selector) {
         ourSelector = selector;
     }
@@ -140,7 +140,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
             Collection enabledFactories = getSelector().getEnabledFactories(area.getRoot(), ourFactories, true);
             if (!enabledFactories.isEmpty()) {
                 SVNAdminAreaFactory newestFactory = (SVNAdminAreaFactory) enabledFactories.iterator().next();
-                SVNAdminArea newArea = newestFactory.doUpgrade(area);
+                SVNAdminArea newArea = newestFactory.doChangeWCFormat(area);
                 if (newArea != null && newArea != area && newArea.getWCAccess() != null) {
                     SVNEvent event = SVNEventFactory.createSVNEvent(newArea.getRoot(), SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.UPGRADE, null, null, null);
                     newArea.getWCAccess().handleEvent(event, ISVNEventHandler.UNKNOWN);
@@ -149,6 +149,34 @@ public abstract class SVNAdminAreaFactory implements Comparable {
             }
         }
         return area;
+    }
+
+    public static SVNAdminArea changeWCFormat(SVNAdminArea adminArea, int newFormat) throws SVNException {
+        if (isUpgradeEnabled() && !ourFactories.isEmpty()) {
+            Collection enabledFactories = getSelector().getEnabledFactories(adminArea.getRoot(), ourFactories, true);
+            if (!enabledFactories.isEmpty()) {
+                SVNAdminAreaFactory factory = null;
+                SVNAdminAreaFactory[] factories = new SVNAdminAreaFactory[enabledFactories.size()];
+                factories = (SVNAdminAreaFactory[]) enabledFactories.toArray(factories);
+                for (int i = factories.length - 1; i >= 0; i--) {
+                    if (newFormat <= factories[i].getSupportedVersion()) {
+                        factory = factories[i];
+                        break;
+                    }
+                }
+                if (factory == null) {
+                    return adminArea;
+                }
+
+                SVNAdminArea newArea = factory.doChangeWCFormat(adminArea);
+                if (newArea != null && newArea != adminArea && newArea.getWCAccess() != null) {
+                    SVNEvent event = SVNEventFactory.createSVNEvent(newArea.getRoot(), SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.UPGRADE, null, null, null);
+                    newArea.getWCAccess().handleEvent(event, ISVNEventHandler.UNKNOWN);
+                }
+                adminArea = newArea;
+            }
+        }
+        return adminArea;                
     }
     
     private static int readFormatVersion(File adminDir) throws SVNException {
@@ -237,7 +265,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
     
     protected abstract SVNAdminArea doOpen(File path, int version) throws SVNException;
 
-    protected abstract SVNAdminArea doUpgrade(SVNAdminArea area) throws SVNException;
+    protected abstract SVNAdminArea doChangeWCFormat(SVNAdminArea area) throws SVNException;
 
     protected abstract void doCreateVersionedDirectory(File path, String url, String rootURL, String uuid, long revNumber, SVNDepth depth) throws SVNException;
 

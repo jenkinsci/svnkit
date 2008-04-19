@@ -379,7 +379,6 @@ public class SVNWCAccess implements ISVNEventHandler {
                     }
                     // only for missing!
                     tmp.put(childPath, null);
-                    continue;
                 }
             }
         }
