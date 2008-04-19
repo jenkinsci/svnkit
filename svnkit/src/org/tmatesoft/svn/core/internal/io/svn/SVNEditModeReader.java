@@ -223,18 +223,8 @@ public class SVNEditModeReader {
                             myEditor.abortEdit();
                         } catch (SVNException e) {
                         }
-                        myConnection.setWriteBlocker(new ISVNBlockHandler() {
-                            public void handleBlock() throws SVNException {
-                                List items = readTuple("wl", false);
-                                if ("abort-edit".equals(SVNReader.getString(items, 0))) {
-                                    myDone = true;
-                                    myConnection.setWriteBlocker(null);
-                                }
-                            }
-                        });
                     }
                     myConnection.writeError(error.getChildErrorMessage());
-                    myConnection.setWriteBlocker(null);
                     break;
                 }
                 SVNErrorManager.error(error);

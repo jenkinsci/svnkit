@@ -49,7 +49,6 @@ class SVNConnection {
     private InputStream myLoggingInputStream;
     private Set myCapabilities;
     private byte[] myHandshakeBuffer = new byte[8192];
-    private ISVNBlockHandler myBlockHandler;
     
     private static final String SUCCESS = "success";
     private static final String FAILURE = "failure";
@@ -336,10 +335,6 @@ class SVNConnection {
         throw e;        
     }
 
-    public void setWriteBlocker(ISVNBlockHandler handler) {
-        myBlockHandler = handler;
-    }
-
     public void writeError(SVNErrorMessage error) throws SVNException {
         Object[] buffer = new Object[]{"failure"};
         write("(w(", buffer);
@@ -354,11 +349,6 @@ class SVNConnection {
     public void write(String template, Object[] items) throws SVNException {
         try {
             SVNWriter.write(getOutputStream(), template, items);
-        } catch (SVNException svne) {
-            if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.RA_SVN_IO_ERROR && myBlockHandler != null) {
-                myBlockHandler.handleBlock();                
-            }
-            throw svne;
         } finally {
             try {
                 getOutputStream().flush();
