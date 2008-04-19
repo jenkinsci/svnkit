@@ -374,6 +374,10 @@ public class SVNClient implements SVNClientInterface {
         return SVNClientImpl.versionRevisionNumber();
     }
 
+    public static void enableLogging(int logLevel, String logFilePath) {
+        SVNClientImpl.enableLogging(logLevel, logFilePath);
+    }
+
     public Version getVersion() {
         return myDelegate.getVersion();
     }
