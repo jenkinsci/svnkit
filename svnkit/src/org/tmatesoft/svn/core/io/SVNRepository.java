@@ -1683,7 +1683,6 @@ public abstract class SVNRepository {
                     ISVNEditor editor = handler.handleStartRevision(rev, revProps);
                     replay(lowRevision, rev, sendDeltas, editor);
                     handler.handleEndRevision(rev, revProps, editor);
-                    
                 }
             } else {
                 throw svne;

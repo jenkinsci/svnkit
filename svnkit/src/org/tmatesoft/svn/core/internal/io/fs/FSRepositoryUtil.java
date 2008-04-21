@@ -58,8 +58,12 @@ public class FSRepositoryUtil {
             FSPathChange change = (FSPathChange) fsChanges.get(path);  
 
             path = path.startsWith("/") ? path.substring(1) : path;
-            if ("".equals(basePath) || (path.startsWith(basePath) && (path.charAt(basePath.length()) == '/' || path.length() == basePath.length()))) {
-                path = path.startsWith("/") ? path.substring(1) : path;
+            if ("".equals(basePath) || (path.startsWith(basePath) && (path.length() == basePath.length() || 
+                    path.charAt(basePath.length()) == '/'))) {
+                interestingPaths.add(path);
+                changedPaths.put(path, change);
+            } else if ("".equals(path) || (basePath.startsWith(path) && (basePath.length() == path.length() || 
+                    basePath.charAt(path.length()) == '/'))) {
                 interestingPaths.add(path);
                 changedPaths.put(path, change);
             }

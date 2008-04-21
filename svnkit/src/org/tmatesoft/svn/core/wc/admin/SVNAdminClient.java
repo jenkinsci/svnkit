@@ -462,11 +462,12 @@ public class SVNAdminClient extends SVNBasicClient {
 
             if (currentlyCopying != null) {
                 long copyingRev = Long.parseLong(currentlyCopying.getString());
-                if (copyingRev < lastMergedRevision || copyingRev > lastMergedRevision + 1 || (toLatestRevision != lastMergedRevision && toLatestRevision != copyingRev)) {
+                if (copyingRev < lastMergedRevision || copyingRev > lastMergedRevision + 1 || 
+                        (toLatestRevision != lastMergedRevision && toLatestRevision != copyingRev)) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                             "Revision being currently copied ({0}), last merged revision ({1}), and destination HEAD ({2}) are inconsistent; have you committed to the destination without using svnsync?",
-                            new Long[] { new Long(copyingRev), new Long(lastMergedRevision), 
-                            new Long(toLatestRevision) });
+                            new Object[] { String.valueOf(copyingRev), String.valueOf(lastMergedRevision), 
+                            String.valueOf(toLatestRevision) });
                     SVNErrorManager.error(err);
                 } else if (copyingRev == toLatestRevision) {
                     if (copyingRev > lastMergedRevision) {
@@ -479,7 +480,8 @@ public class SVNAdminClient extends SVNBasicClient {
             } else {
                 if (toLatestRevision != lastMergedRevision) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
-                            "Destination HEAD ({0}) is not the last merged revision ({1}); have you committed to the destination without using svnsync?", new Long[] {new Long(toLatestRevision), new Long(lastMergedRevision)});
+                            "Destination HEAD ({0}) is not the last merged revision ({1}); have you committed to the destination without using svnsync?", 
+                            new Object[] { String.valueOf(toLatestRevision), String.valueOf(lastMergedRevision) });
                     SVNErrorManager.error(err);
                 }
             }
@@ -1064,12 +1066,16 @@ public class SVNAdminClient extends SVNBasicClient {
         }
         
         if (start > end) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS, "Start revision {0} is greater than end revision {1}", new Object[]{new Long(start), new Long(end)});
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS, 
+                    "Start revision {0} is greater than end revision {1}", new Object[] { String.valueOf(start), 
+                    String.valueOf(end) });
             SVNErrorManager.error(err);
         }
         
         if (end > youngestRevision) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS, "End revision {0} is invalid (youngest revision is {1})", new Object[]{new Long(end), new Long(youngestRevision)});
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS, 
+                    "End revision {0} is invalid (youngest revision is {1})", new Object[] { String.valueOf(end), 
+                    String.valueOf(youngestRevision) });
             SVNErrorManager.error(err);
         }
         
@@ -1243,8 +1249,6 @@ public class SVNAdminClient extends SVNBasicClient {
         SVNURL srcURL = SVNURL.parseURIDecoded(fromURL.getString());
         // TOOD close session.
         SVNRepository srcRepos = createRepository(srcURL, false);
-
-        checkIfRepositoryIsAtRoot(srcRepos, srcURL);
 
         String reposUUID = srcRepos.getRepositoryUUID(true);
         if (!fromUUID.getString().equals(reposUUID)) {

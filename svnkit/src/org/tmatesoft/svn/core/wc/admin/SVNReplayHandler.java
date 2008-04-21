@@ -68,7 +68,7 @@ public class SVNReplayHandler implements ISVNReplayHandler {
         if (mySyncEditor == null) {
             mySyncEditor = new SVNSynchronizeEditor(myTargetRepository, myLogEntryHandler, revision - 1);
         } else {
-            mySyncEditor.reset(revision -1);
+            mySyncEditor.reset(revision - 1);
         }
         
         ISVNEditor cancellableEditor = SVNCancellableEditor.newInstance(mySyncEditor, myCanceller, myDebugLog);
