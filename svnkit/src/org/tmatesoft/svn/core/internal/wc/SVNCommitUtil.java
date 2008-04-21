@@ -64,7 +64,6 @@ public class SVNCommitUtil {
         }
         String[] pathsArray = (String[]) paths.toArray(new String[paths.size()]);
         Arrays.sort(pathsArray, SVNPathUtil.PATH_COMPARATOR);
-        
         int index = 0;
         String lastPath = null;
         if ("".equals(pathsArray[index])) {

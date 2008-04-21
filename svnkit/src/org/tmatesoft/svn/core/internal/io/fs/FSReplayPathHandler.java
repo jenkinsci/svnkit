@@ -73,7 +73,9 @@ public class FSReplayPathHandler implements ISVNCommitPathHandler {
         boolean isDelete = false;
 
         FSPathChange change = (FSPathChange) myChangedPaths.get(path);
-        if (change.getChangeKind() == FSPathChangeKind.FS_PATH_CHANGE_ADD) {
+        if (change == null) {
+            return false;
+        } else if (change.getChangeKind() == FSPathChangeKind.FS_PATH_CHANGE_ADD) {
             isAdd = true;
         } else if (change.getChangeKind() == FSPathChangeKind.FS_PATH_CHANGE_DELETE) {
             isDelete = true;
@@ -85,7 +87,6 @@ public class FSReplayPathHandler implements ISVNCommitPathHandler {
         boolean closeDir = false;
         if (isDelete) {
             editor.deleteEntry(path, -1);
-            return false;
         }
 
         SVNNodeKind kind = null;
@@ -116,8 +117,8 @@ public class FSReplayPathHandler implements ISVNCommitPathHandler {
 
             if (copyFromPath != null) {
                 String relCopyFromPath = copyFromPath.substring(1);
-                boolean isWithinBasePath = "".equals(myBasePath) || (relCopyFromPath.startsWith(myBasePath) && (relCopyFromPath.charAt(myBasePath.length()) == '/' || relCopyFromPath.length() == myBasePath.length()));
-                if (!isWithinBasePath || myLowRevision > copyFromRevision) {
+                if (!SVNPathUtil.isWithinBasePath(myBasePath, relCopyFromPath) || 
+                        myLowRevision > copyFromRevision) {
                     copyFromPath = null;
                     copyFromRevision = -1;
                 }

@@ -16,9 +16,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Collection;
 import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -34,6 +33,7 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryUtil;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionNode;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -82,7 +82,7 @@ public class SVNDumpEditor implements ISVNEditor {
     public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         DirectoryInfo parent = myCurrentDirInfo;
         myCurrentDirInfo = createDirectoryInfo(path, copyFromPath, copyFromRevision, true, parent);
-        boolean isDeleted = parent.myDeletedEntries.contains(path);
+        boolean isDeleted = parent.myDeletedEntries.containsKey(path);
         boolean isCopy = copyFromPath != null && SVNRevision.isValidRevisionNumber(copyFromRevision);
         dumpNode(path, SVNNodeKind.DIR, isDeleted ? SVNAdminHelper.NODE_ACTION_REPLACE : SVNAdminHelper.NODE_ACTION_ADD, isCopy, isCopy ? copyFromPath : null, isCopy ? copyFromRevision : -1);
         if (isDeleted) {
@@ -93,7 +93,7 @@ public class SVNDumpEditor implements ISVNEditor {
 
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         boolean isCopy = copyFromPath != null && SVNRevision.isValidRevisionNumber(copyFromRevision);
-        boolean isDeleted = myCurrentDirInfo.myDeletedEntries.contains(path);
+        boolean isDeleted = myCurrentDirInfo.myDeletedEntries.containsKey(path);
         dumpNode(path, SVNNodeKind.FILE, isDeleted ? SVNAdminHelper.NODE_ACTION_REPLACE : SVNAdminHelper.NODE_ACTION_ADD, isCopy, isCopy ? copyFromPath : null, isCopy ? copyFromRevision : -1);
         if (isDeleted) {
             myCurrentDirInfo.myDeletedEntries.remove(path);
@@ -111,7 +111,7 @@ public class SVNDumpEditor implements ISVNEditor {
     }
 
     public void closeDir() throws SVNException {
-        for (Iterator entries = myCurrentDirInfo.myDeletedEntries.iterator(); entries.hasNext();) {
+        for (Iterator entries = myCurrentDirInfo.myDeletedEntries.keySet().iterator(); entries.hasNext();) {
             String path = (String) entries.next();
             dumpNode(path, SVNNodeKind.UNKNOWN, SVNAdminHelper.NODE_ACTION_DELETE, false, null, -1);
         }
@@ -126,7 +126,7 @@ public class SVNDumpEditor implements ISVNEditor {
     }
 
     public void deleteEntry(String path, long revision) throws SVNException {
-        myCurrentDirInfo.myDeletedEntries.add(path);
+        myCurrentDirInfo.myDeletedEntries.put(path, path);
     }
 
     public void openDir(String path, long revision) throws SVNException {
@@ -427,7 +427,7 @@ public class SVNDumpEditor implements ISVNEditor {
         long myCompareRevision;
         boolean myIsAdded;
         boolean myIsWrittenOut;
-        Collection myDeletedEntries;
+        Map myDeletedEntries;
         DirectoryInfo myParentInfo;
         
         public DirectoryInfo(String path, String cmpPath, long cmpRev, boolean added, DirectoryInfo parent) {
@@ -436,7 +436,7 @@ public class SVNDumpEditor implements ISVNEditor {
             myIsAdded = added;
             myComparePath = cmpPath;
             myCompareRevision = cmpRev;
-            myDeletedEntries = new LinkedList();
+            myDeletedEntries = new SVNHashMap();
             myIsWrittenOut = false;
         }
     }

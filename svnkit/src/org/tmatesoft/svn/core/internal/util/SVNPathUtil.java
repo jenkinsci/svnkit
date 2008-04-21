@@ -431,4 +431,10 @@ public class SVNPathUtil {
                         || (pathOrUrl.startsWith("svn+") && pathOrUrl.indexOf("://") > 4)
                         || pathOrUrl.startsWith("file://"));
     }    
+    
+    public static boolean isWithinBasePath(String basePath, String path) {
+        return "".equals(basePath) || (path.startsWith(basePath) && (path.length() == basePath.length() || 
+                path.charAt(basePath.length()) == '/'));
+    }
+
 }

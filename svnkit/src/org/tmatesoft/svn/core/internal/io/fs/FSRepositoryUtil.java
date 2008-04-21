@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
 import org.tmatesoft.svn.core.internal.wc.ISVNCommitPathHandler;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitUtil;
@@ -48,6 +49,8 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 public class FSRepositoryUtil {
     public static final int MAX_KEY_SIZE = 200;
 
+    private static final byte[] ourCopyBuffer = new byte[1024*16];
+
     public static void replay(FSFS fsfs, FSRoot root, String basePath, long lowRevision, boolean sendDeltas, ISVNEditor editor) throws SVNException {
         Map fsChanges = root.getChangedPaths();
         basePath = basePath.startsWith("/") ? basePath.substring(1) : basePath;
@@ -58,12 +61,10 @@ public class FSRepositoryUtil {
             FSPathChange change = (FSPathChange) fsChanges.get(path);  
 
             path = path.startsWith("/") ? path.substring(1) : path;
-            if ("".equals(basePath) || (path.startsWith(basePath) && (path.length() == basePath.length() || 
-                    path.charAt(basePath.length()) == '/'))) {
+            if (SVNPathUtil.isWithinBasePath(basePath, path)) {
                 interestingPaths.add(path);
                 changedPaths.put(path, change);
-            } else if ("".equals(path) || (basePath.startsWith(path) && (basePath.length() == path.length() || 
-                    basePath.charAt(path.length()) == '/'))) {
+            } else if (SVNPathUtil.isWithinBasePath(path, basePath)) {
                 interestingPaths.add(path);
                 changedPaths.put(path, change);
             }
@@ -93,8 +94,6 @@ public class FSRepositoryUtil {
         ISVNCommitPathHandler handler = new FSReplayPathHandler(fsfs, root, compareRoot, changedPaths, basePath, lowRevision);
         SVNCommitUtil.driveCommitEditor(handler, interestingPaths, editor, -1);
     }
-    
-    private static final byte[] ourCopyBuffer = new byte[1024*16];
     
     public synchronized static void copy(InputStream src, OutputStream dst) throws SVNException {
         try {
