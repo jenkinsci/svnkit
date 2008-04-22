@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.cli2.svnsync;
 
+import java.io.File;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.Collection;
@@ -23,6 +24,7 @@ import org.tmatesoft.svn.cli2.AbstractSVNCommand;
 import org.tmatesoft.svn.cli2.AbstractSVNCommandEnvironment;
 import org.tmatesoft.svn.cli2.AbstractSVNOption;
 import org.tmatesoft.svn.cli2.SVNCommandLine;
+import org.tmatesoft.svn.cli2.SVNConsoleAuthenticationProvider;
 import org.tmatesoft.svn.cli2.SVNOptionValue;
 import org.tmatesoft.svn.cli2.svnadmin.SVNAdminCommand;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -31,6 +33,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 
 /**
@@ -41,7 +44,7 @@ public class SVNSyncCommandEnvironment extends AbstractSVNCommandEnvironment {
 
     private boolean myIsNonInteractive;
     private boolean myIsNoAuthCache;
-    private String myUsername;
+    private String myUserName;
     private String myPassword;
     private String mySourceUsername;
     private String mySourcePassword;
@@ -61,7 +64,7 @@ public class SVNSyncCommandEnvironment extends AbstractSVNCommandEnvironment {
     }
 
     public String getUsername() {
-        return myUsername;
+        return myUserName;
     }
 
     public String getPassword() {
@@ -105,9 +108,15 @@ public class SVNSyncCommandEnvironment extends AbstractSVNCommandEnvironment {
     }
 
     protected ISVNAuthenticationManager createClientAuthenticationManager() {
-        return null;
+        File configDir = myConfigDir != null ? new File(myConfigDir) : SVNWCUtil.getDefaultConfigurationDirectory();        
+        ISVNAuthenticationManager authManager = SVNWCUtil.createDefaultAuthenticationManager(configDir, myUserName, 
+                myPassword, !myIsNoAuthCache);
+        if (!myIsNonInteractive) {
+            authManager.setAuthenticationProvider(new SVNConsoleAuthenticationProvider());
+        }
+        return authManager;
     }
-
+    
     protected ISVNOptions createClientOptions() {
         return null;
     }
@@ -119,7 +128,7 @@ public class SVNSyncCommandEnvironment extends AbstractSVNCommandEnvironment {
         } else if (option == SVNSyncOption.NO_AUTH_CACHE) {
             myIsNoAuthCache = true;            
         } else if (option == SVNSyncOption.USERNAME) {
-            myUsername = optionValue.getValue();            
+            myUserName = optionValue.getValue();            
         } else if (option == SVNSyncOption.PASSWORD) {
             myPassword = optionValue.getValue();            
         } else if (option == SVNSyncOption.SOURCE_USERNAME) {
@@ -143,16 +152,16 @@ public class SVNSyncCommandEnvironment extends AbstractSVNCommandEnvironment {
 
     protected void validateOptions(SVNCommandLine commandLine) throws SVNException {
         super.validateOptions(commandLine);
-        if ((myUsername != null || myPassword != null) &&
+        if ((myUserName != null || myPassword != null) &&
                 (mySourceUsername != null || mySourcePassword != null) &&
                 (mySyncUsername != null || mySyncPassword != null)) {
             SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR,
                     "Cannot use --username or --password with any of --source-username, --source-password, --sync-username, or --sync-password.");
             SVNErrorManager.error(error);
         }
-        if (myUsername != null) {
-            mySourceUsername = myUsername;
-            mySyncUsername = myUsername;
+        if (myUserName != null) {
+            mySourceUsername = myUserName;
+            mySyncUsername = myUserName;
         }
         if (myPassword != null) {
             mySourcePassword = myPassword;

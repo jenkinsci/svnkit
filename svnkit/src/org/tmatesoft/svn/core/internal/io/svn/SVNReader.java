@@ -93,6 +93,8 @@ public class SVNReader {
     }
 
     public static SVNProperties getProperties(List items, int index, SVNProperties properties) throws SVNException {
+        properties = properties == null ? new SVNProperties() : properties;
+
         if (items == null || index >= items.size()) {
             return properties;
         }
@@ -100,7 +102,6 @@ public class SVNReader {
             return properties;
         }
 
-        properties = properties == null ? new SVNProperties() : properties;
         List props = getItemList(items, index);
         for (Iterator prop = props.iterator(); prop.hasNext();) {
             SVNItem item = (SVNItem) prop.next();

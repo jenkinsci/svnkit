@@ -1562,9 +1562,10 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
 
         try {
             openConnection();
+            write("(w(nnnw))", buffer);
+            authenticate();
+
             for (long rev = startRevision; rev <= endRevision; rev++) {
-                write("(w(nnnw))", buffer);
-                authenticate();
                 List items = readTuple("wl", false);
                 String word = SVNReader.getString(items, 0);
                 if (!"revprops".equals(word)) {
@@ -1573,13 +1574,13 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     SVNErrorManager.error(err);
                 }
                 
-                SVNProperties revProps = SVNReader.getProperties(items, 0, null);
+                SVNProperties revProps = SVNReader.getProperties(items, 1, null);
                 ISVNEditor editor = handler.handleStartRevision(rev, revProps);
                 SVNEditModeReader editReader = new SVNEditModeReader(myConnection, editor, true);
                 editReader.driveEditor();
                 handler.handleEndRevision(rev, revProps, editor);
-                read("", null, false);
             }
+            read("", null, false);
         } catch (SVNException svne) {
             closeSession();
             handleUnsupportedCommand(svne, "Server doesn't support the replay-range command");
