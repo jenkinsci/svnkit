@@ -48,6 +48,8 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
     private List myPasswordAuthentications;
     private List mySSHAuthentications;
     private List myUserNameAuthentications;
+    private SVNSSLAuthentication mySSLAuthentication;
+    
     private int mySSHIndex;
     private int myPasswordIndex;
     private int myUserNameIndex;
@@ -117,6 +119,8 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
                 mySSHAuthentications.add(auth);                
             } else if (auth instanceof SVNUserNameAuthentication) {
                 myUserNameAuthentications.add(auth);                
+            } else if (auth instanceof SVNSSLAuthentication) {
+                mySSLAuthentication = (SVNSSLAuthentication) auth;                
             }
         }
     }
@@ -201,6 +205,9 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
      * @throws SVNException
      */
     public ISVNSSLManager getSSLManager(SVNURL url) throws SVNException {
+        if (mySSLAuthentication != null) {
+            return new BasicSSLManager(mySSLAuthentication);
+        }
         return null;
     }
     
