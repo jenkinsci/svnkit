@@ -116,19 +116,6 @@ public class SVNAdminArea15 extends SVNAdminArea14 {
         return WC_FORMAT;
     }
 
-    protected SVNVersionedProperties filterBaseProperties(SVNProperties srcProperties) {
-        return new SVNProperties13(srcProperties);
-    }
-
-    protected SVNVersionedProperties filterWCProperties(SVNEntry entry, SVNProperties srcProperties) {
-        return new SVNProperties14(srcProperties, this, entry.getName()) {
-
-            protected SVNProperties loadProperties() throws SVNException {
-                return getProperties();
-            }
-        };
-    }
-
     protected SVNAdminArea createAdminAreaForDir(File dir) {
         return new SVNAdminArea15(dir);
     }

@@ -45,7 +45,7 @@ class SVNXMLAdminAreaFactory extends SVNAdminAreaFactory {
     }    
 
     protected SVNAdminArea doChangeWCFormat(SVNAdminArea adminArea) throws SVNException {
-        if (adminArea == null || adminArea.getClass() == SVNAdminArea15.class) {
+        if (adminArea == null || adminArea.getClass() == SVNXMLAdminArea.class) {
             return adminArea;
         }
         SVNXMLAdminArea newAdminArea = new SVNXMLAdminArea(adminArea.getRoot());

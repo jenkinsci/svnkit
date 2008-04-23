@@ -265,7 +265,25 @@ public class SVNWCAccess implements ISVNEventHandler {
         }
         return area;
     }
-    
+
+    public SVNAdminArea changeWCFormat(File path, int format, boolean closeArea) throws SVNException {
+        Map areas = new SVNHashMap();
+        SVNAdminArea area = null;
+        try {
+            area = doChangeWCFormat(path, format, areas);
+        } finally {
+            myAdminAreas.putAll(areas);
+        }
+        if (closeArea) {
+            if (myAdminAreas != null) {
+                doClose(myAdminAreas, false);
+                myAdminAreas.clear();
+            }
+            myCleanupHandlers = null;
+        }
+        return area;
+    }
+        
     public SVNAdminArea probeOpen(File path, boolean writeLock, int depth) throws SVNException {
         File dir = probe(path);
         if (dir == null) {
@@ -380,6 +398,51 @@ public class SVNWCAccess implements ISVNEventHandler {
                     // only for missing!
                     tmp.put(childPath, null);
                 }
+            }
+        }
+        return area;
+    }
+
+    private SVNAdminArea doChangeWCFormat(File path, int format, Map areas) throws SVNException {
+        areas = areas != null ? areas : new SVNHashMap();
+        if (myAdminAreas != null) {
+            SVNAdminArea existing = (SVNAdminArea) myAdminAreas.get(path);
+            if (myAdminAreas.containsKey(path) && existing != null) {
+                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "Working copy ''{0}'' locked", path);
+                SVNErrorManager.error(error);
+            }
+        } else {
+            myAdminAreas = new SVNHashMap();
+        }
+
+        SVNAdminArea area = SVNAdminAreaFactory.open(path);
+        area.setWCAccess(this);
+
+        area.lock(true);
+        area = SVNAdminAreaFactory.changeWCFormat(area, format);
+        areas.put(path, area);
+
+        for (Iterator entries = area.entries(false); entries.hasNext();) {
+            try {
+                checkCancelled();
+            } catch (SVNCancelException e) {
+                doClose(areas, false);
+                throw e;
+            }
+
+            SVNEntry entry = (SVNEntry) entries.next();
+            if (entry.getKind() != SVNNodeKind.DIR || area.getThisDirName().equals(entry.getName())) {
+                continue;
+            }
+            File childPath = new File(path, entry.getName());
+            try {
+                doChangeWCFormat(childPath, format, areas);
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_DIRECTORY) {
+                    doClose(areas, false);
+                    throw e;
+                }
+                areas.put(childPath, null);
             }
         }
         return area;

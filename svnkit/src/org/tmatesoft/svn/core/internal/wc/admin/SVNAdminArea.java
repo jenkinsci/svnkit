@@ -786,6 +786,10 @@ public abstract class SVNAdminArea {
             Map entryAttrs = entry.asMap();
             for (Iterator atts = attributes.keySet().iterator(); atts.hasNext();) {
                 String attName = (String) atts.next();
+                if (!isEntryPropertyApplicable(attName)) {
+                    attributes.remove(attName);
+                    continue;                                        
+                }
                 String value = (String) attributes.get(attName);
                 if (SVNProperty.CACHABLE_PROPS.equals(attName) || SVNProperty.PRESENT_PROPS.equals(attName)) {
                     String[] propsArray = SVNAdminArea.fromString(value, " ");
@@ -1427,9 +1431,9 @@ public abstract class SVNAdminArea {
         }
     }
 
-    protected abstract SVNVersionedProperties filterBaseProperties(SVNProperties srcProperties);
+    protected abstract SVNVersionedProperties formatBaseProperties(SVNProperties srcProperties);
 
-    protected abstract SVNVersionedProperties filterWCProperties(SVNEntry entry, SVNProperties srcProperties);
+    protected abstract SVNVersionedProperties formatProperties(SVNEntry entry, SVNProperties srcProperties);
 
     protected void createFormatFile(File formatFile, boolean createMyself) throws SVNException {
         OutputStream os = null;
@@ -1475,12 +1479,12 @@ public abstract class SVNAdminArea {
             }
 
             SVNVersionedProperties srcBaseProps = adminArea.getBaseProperties(entry.getName());
-            SVNVersionedProperties dstBaseProps = filterBaseProperties(srcBaseProps.asMap());
+            SVNVersionedProperties dstBaseProps = formatBaseProperties(srcBaseProps.asMap());
             basePropsCache.put(entry.getName(), dstBaseProps);
             dstBaseProps.setModified(true);
 
             SVNVersionedProperties srcProps = adminArea.getProperties(entry.getName());
-            SVNVersionedProperties dstProps = filterWCProperties(entry, srcProps.asMap());
+            SVNVersionedProperties dstProps = formatProperties(entry, srcProps.asMap());
             propsCache.put(entry.getName(), dstProps);
             dstProps.setModified(true);
 

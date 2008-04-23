@@ -71,6 +71,16 @@ public class SVNAdminArea14 extends SVNAdminArea {
     protected static final String KILL_ADM_ONLY = "adm-only";
     protected static final String THIS_DIR = "";
 
+    private static final Set INAPPLICABLE_PROPERTIES = new HashSet();
+
+    static {
+        INAPPLICABLE_PROPERTIES.add(SVNProperty.KEEP_LOCAL);
+        INAPPLICABLE_PROPERTIES.add(SVNProperty.CHANGELIST);
+        INAPPLICABLE_PROPERTIES.add(SVNProperty.WORKING_SIZE);
+        INAPPLICABLE_PROPERTIES.add(SVNProperty.DEPTH);
+        INAPPLICABLE_PROPERTIES.add(SVNProperty.PROP_TIME);
+    }
+
     private File myLockFile;
     private File myEntriesFile;
 
@@ -1598,16 +1608,14 @@ public class SVNAdminArea14 extends SVNAdminArea {
         return adminArea;
     }
 
-    protected SVNVersionedProperties filterBaseProperties(SVNProperties srcProperties) {
-        SVNProperties filteredProperties = new SVNProperties(srcProperties);
-        filteredProperties.remove(SVNProperty.MERGE_INFO);
-        return new SVNProperties13(filteredProperties);
+    protected SVNVersionedProperties formatBaseProperties(SVNProperties srcProperties) {
+        SVNProperties props = new SVNProperties(srcProperties);
+        return new SVNProperties13(props);
     }
 
-    protected SVNVersionedProperties filterWCProperties(SVNEntry entry, SVNProperties srcProperties) {
-        SVNProperties filteredProperties = new SVNProperties(srcProperties);
-        filteredProperties.remove(SVNProperty.MERGE_INFO);
-        return new SVNProperties14(filteredProperties, this, entry.getName()) {
+    protected SVNVersionedProperties formatProperties(SVNEntry entry, SVNProperties srcProperties) {
+        SVNProperties props = new SVNProperties(srcProperties);
+        return new SVNProperties14(props, this, entry.getName()) {
 
             protected SVNProperties loadProperties() throws SVNException {
                 return getProperties();
@@ -1925,9 +1933,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
     }
     
     protected boolean isEntryPropertyApplicable(String propName) {
-        return propName != null && !SVNProperty.KEEP_LOCAL.equals(propName) && 
-        !SVNProperty.CHANGELIST.equals(propName) && !SVNProperty.WORKING_SIZE.equals(propName) && 
-        !SVNProperty.DEPTH.equals(propName);
+        return propName != null && !INAPPLICABLE_PROPERTIES.contains(propName);
     }
 
 }

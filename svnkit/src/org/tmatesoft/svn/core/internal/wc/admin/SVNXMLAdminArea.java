@@ -56,11 +56,21 @@ public class SVNXMLAdminArea extends SVNAdminArea {
     public static final int WC_FORMAT = 4;
     private static final String THIS_DIR = "";
     private static final Set BOOLEAN_PROPERTIES = new HashSet();
+    private static final Set INAPPLICABLE_PROPERTIES = new HashSet();
     static {
         BOOLEAN_PROPERTIES.add(SVNProperty.COPIED);
         BOOLEAN_PROPERTIES.add(SVNProperty.DELETED);
         BOOLEAN_PROPERTIES.add(SVNProperty.ABSENT);
         BOOLEAN_PROPERTIES.add(SVNProperty.INCOMPLETE);
+
+        INAPPLICABLE_PROPERTIES.add(SVNProperty.CACHABLE_PROPS);
+        INAPPLICABLE_PROPERTIES.add(SVNProperty.PRESENT_PROPS);
+        INAPPLICABLE_PROPERTIES.add(SVNProperty.HAS_PROP_MODS);
+        INAPPLICABLE_PROPERTIES.add(SVNProperty.WORKING_SIZE);
+        INAPPLICABLE_PROPERTIES.add(SVNProperty.DEPTH);
+        INAPPLICABLE_PROPERTIES.add(SVNProperty.HAS_PROPS);
+        INAPPLICABLE_PROPERTIES.add(SVNProperty.KEEP_LOCAL);
+        INAPPLICABLE_PROPERTIES.add(SVNProperty.CHANGELIST);
     }
 
     private File myLockFile;
@@ -808,13 +818,13 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         return WC_FORMAT;
     }
 
-    protected SVNVersionedProperties filterBaseProperties(SVNProperties srcProperties) {
+    protected SVNVersionedProperties formatBaseProperties(SVNProperties srcProperties) {
         SVNProperties filteredProperties = new SVNProperties(srcProperties);
         filteredProperties.remove(SVNProperty.MERGE_INFO);
         return new SVNProperties13(srcProperties);
     }
 
-    protected SVNVersionedProperties filterWCProperties(SVNEntry entry, SVNProperties srcProperties) {
+    protected SVNVersionedProperties formatProperties(SVNEntry entry, SVNProperties srcProperties) {
         SVNProperties filteredProperties = new SVNProperties(srcProperties);
         filteredProperties.remove(SVNProperty.MERGE_INFO);
         return new SVNProperties13(filteredProperties);
@@ -1099,9 +1109,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
     }
 
     protected boolean isEntryPropertyApplicable(String propName) {
-        return propName != null && !SVNProperty.CACHABLE_PROPS.equals(propName) && 
-               !SVNProperty.PRESENT_PROPS.equals(propName) && !SVNProperty.HAS_PROP_MODS.equals(propName) && 
-               !SVNProperty.HAS_PROPS.equals(propName);
+        return propName != null && !INAPPLICABLE_PROPERTIES.contains(propName);        
     }
 
     protected boolean readExtraOptions(BufferedReader reader, Map entryAttrs) throws SVNException, IOException {
