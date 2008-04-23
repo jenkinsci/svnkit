@@ -50,9 +50,12 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
     private List myPasswordAuthentications;
     private List mySSHAuthentications;
     private List myUserNameAuthentications;
+    private List mySSLAuthentications;
+    
     private int mySSHIndex;
     private int myPasswordIndex;
     private int myUserNameIndex;
+    private int mySSLIndex;
 
     private String myProxyHost;
     private int myProxyPort;
@@ -109,8 +112,11 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
         myPasswordAuthentications = new ArrayList();
         mySSHAuthentications = new ArrayList();
         myUserNameAuthentications = new ArrayList();
+        mySSLAuthentications = new ArrayList();
         myPasswordIndex = 0;
         mySSHIndex = 0;
+        mySSLIndex = 0;
+        myUserNameIndex = 0;
         for (int i = 0; authentications != null && i < authentications.length; i++) {
             SVNAuthentication auth = authentications[i];
             if (auth instanceof SVNPasswordAuthentication) {
@@ -119,6 +125,8 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
                 mySSHAuthentications.add(auth);                
             } else if (auth instanceof SVNUserNameAuthentication) {
                 myUserNameAuthentications.add(auth);                
+            } else if (auth instanceof SVNSSLAuthentication) {
+                mySSLAuthentications.add(auth);                
             }
         }
     }
@@ -148,6 +156,9 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
         } else if (ISVNAuthenticationManager.USERNAME.equals(kind) && myUserNameAuthentications.size() > 0) {
             myUserNameIndex = 0; 
             return (SVNAuthentication) myUserNameAuthentications.get(0);
+        } else if (ISVNAuthenticationManager.SSL.equals(kind) && mySSLAuthentications.size() > 0) {
+            mySSLIndex = 0; 
+            return (SVNAuthentication) mySSLAuthentications.get(0);
         }
         if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
             if (url.getUserInfo() != null && !"".equals(url.getUserInfo())) {
@@ -170,6 +181,9 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
         } else if (ISVNAuthenticationManager.USERNAME.equals(kind) && myUserNameIndex + 1 < myUserNameAuthentications.size()) {
             myUserNameIndex++; 
             return (SVNAuthentication) myUserNameAuthentications.get(myUserNameIndex);
+        } else if (ISVNAuthenticationManager.SSL.equals(kind) && mySSLIndex + 1 < mySSLAuthentications.size()) {
+            mySSLIndex++; 
+            return (SVNAuthentication) mySSLAuthentications.get(mySSLIndex);
         } 
         SVNErrorManager.authenticationFailed("Authentication required for ''{0}''", realm);
         return null;
