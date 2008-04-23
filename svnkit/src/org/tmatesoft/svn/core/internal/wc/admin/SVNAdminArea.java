@@ -1483,6 +1483,41 @@ public abstract class SVNAdminArea {
             basePropsCache.put(entry.getName(), dstBaseProps);
             dstBaseProps.setModified(true);
 
+            SVNPropertyValue charsetProp = dstBaseProps.getPropertyValue(SVNProperty.CHARSET);
+            String currentCharset = charsetProp == null ? null : charsetProp.getString();
+            currentCharset = SVNTranslator.getCharset(currentCharset, getAdminFile(newEntry.getName()).toString(), getWCAccess().getOptions());
+            if (currentCharset != null && !"UTF-8".equals(currentCharset)) {
+                String propBaseFile = SVNAdminUtil.getPropBasePath(newEntry.getName(), SVNNodeKind.FILE, false);
+                String tmpPropBaseFile = SVNAdminUtil.getPropBasePath(newEntry.getName(), SVNNodeKind.FILE, true);
+                command.put(SVNLog.NAME_ATTR, propBaseFile);
+                command.put(SVNLog.DEST_ATTR, tmpPropBaseFile);
+                log.addCommand(SVNLog.COPY, command, false);
+                command.clear();
+
+                dstBaseProps.setPropertyValue(SVNProperty.CHARSET, SVNPropertyValue.create("UTF-8"));
+                dstBaseProps.setModified(true);
+                saveVersionedProperties(log, false);
+
+                String translatedFile = SVNAdminUtil.getTextBasePath(newEntry.getName(), true);
+                command.put(SVNLog.NAME_ATTR, SVNAdminUtil.getTextBasePath(newEntry.getName(), false));
+                command.put(SVNLog.DEST_ATTR, translatedFile);
+                log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
+                command.clear();
+
+                command.put(SVNLog.NAME_ATTR, tmpPropBaseFile);
+                command.put(SVNLog.DEST_ATTR, propBaseFile);
+                log.addCommand(SVNLog.MOVE, command, false);
+                command.clear();
+
+                command.put(SVNLog.NAME_ATTR, translatedFile);
+                command.put(SVNLog.DEST_ATTR, newEntry.getName());
+                log.addCommand(SVNLog.MOVE, command, false);
+                command.clear();
+
+                dstBaseProps = adminArea.getBaseProperties(entry.getName());                
+                dstBaseProps.setModified(true);
+            }
+
             SVNVersionedProperties srcProps = adminArea.getProperties(entry.getName());
             SVNVersionedProperties dstProps = formatProperties(entry, srcProps.asMap());
             propsCache.put(entry.getName(), dstProps);
