@@ -117,7 +117,7 @@ public class SVNDumpStreamParser {
                 boolean isOldVersion = version == 1 && contentLength != null && propContentLength == null && 
                 textContentLength == null;
                 
-                int actualPropLength = 0;
+                long actualPropLength = 0;
                 if (propContentLength != null || isOldVersion) {
                     String delta = (String) headers.get(SVNAdminHelper.DUMPFILE_PROP_DELTA);
                     boolean isDelta = delta != null && "true".equals(delta);
@@ -126,9 +126,9 @@ public class SVNDumpStreamParser {
                         handler.removeNodeProperties();
                     }
                     
-                    int length = 0;
+                    long length = 0;
                     try {
-                        length = Integer.parseInt(propContentLength != null ? propContentLength : contentLength);
+                        length = Long.parseLong(propContentLength != null ? propContentLength : contentLength);
                     } catch (NumberFormatException nfe) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, 
                                 "Malformed dumpfile header: can't parse property block length header");
@@ -140,9 +140,9 @@ public class SVNDumpStreamParser {
                 if (textContentLength != null) {
                     String delta = (String) headers.get(SVNAdminHelper.DUMPFILE_TEXT_DELTA);
                     boolean isDelta = delta != null && "true".equals(delta);
-                    int length = 0;
+                    long length = 0;
                     try {
-                        length = Integer.parseInt(textContentLength);
+                        length = Long.parseLong(textContentLength);
                     } catch (NumberFormatException nfe) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, 
                                 "Malformed dumpfile header: can't parse text block length header");
@@ -150,9 +150,9 @@ public class SVNDumpStreamParser {
                     }
                     handler.parseTextBlock(dumpStream, length, isDelta);
                 } else if (isOldVersion) {
-                    int length = 0;
+                    long length = 0;
                     try {
-                        length = Integer.parseInt(contentLength);
+                        length = Long.parseLong(contentLength);
                     } catch (NumberFormatException nfe) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, 
                                 "Malformed dumpfile header: can't parse content length header");
@@ -167,19 +167,19 @@ public class SVNDumpStreamParser {
                 }
                 
                 if (contentLength != null && !isOldVersion) {
-                    int remaining = 0;
+                    long remaining = 0;
                     try {
-                        remaining = Integer.parseInt(contentLength);
+                        remaining = Long.parseLong(contentLength);
                     } catch (NumberFormatException nfe) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, 
                                 "Malformed dumpfile header: can't parse content length header");
                         SVNErrorManager.error(err, nfe);
                     }
 
-                    int propertyContentLength = 0;
+                    long propertyContentLength = 0;
                     if (propContentLength != null) {
                         try {
-                            propertyContentLength = Integer.parseInt(propContentLength);
+                            propertyContentLength = Long.parseLong(propContentLength);
                         } catch (NumberFormatException nfe) {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, 
                                     "Malformed dumpfile header: can't parse property block length header");
@@ -188,10 +188,10 @@ public class SVNDumpStreamParser {
                     }
                     remaining -= propertyContentLength; 
 
-                    int txtContentLength = 0;
+                    long txtContentLength = 0;
                     if (textContentLength != null) {
                         try {
-                            txtContentLength = Integer.parseInt(textContentLength);
+                            txtContentLength = Long.parseLong(textContentLength);
                         } catch (NumberFormatException nfe) {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, 
                                     "Malformed dumpfile header: can't parse text block length header");
@@ -209,7 +209,7 @@ public class SVNDumpStreamParser {
                     byte buf[] = new byte[SVNFileUtil.STREAM_CHUNK_SIZE];
                     while (remaining > 0) {
                         int numToRead = remaining >= SVNFileUtil.STREAM_CHUNK_SIZE ? 
-                                SVNFileUtil.STREAM_CHUNK_SIZE : remaining;
+                                SVNFileUtil.STREAM_CHUNK_SIZE : (int) remaining;
                         int numRead = dumpStream.read(buf, 0, numToRead);
                         
                         remaining -= numRead;

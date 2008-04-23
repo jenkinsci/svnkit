@@ -254,7 +254,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
         fsConsumer.applyText(myCurrentNodeBaton.myPath);
     }
 
-    public void parseTextBlock(InputStream dumpStream, int contentLength, boolean isDelta) throws SVNException {
+    public void parseTextBlock(InputStream dumpStream, long contentLength, boolean isDelta) throws SVNException {
         FSDeltaConsumer fsConsumer = myCurrentRevisionBaton.getConsumer();
 
         try {
@@ -271,7 +271,8 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                 buffer = new byte[SVNFileUtil.STREAM_CHUNK_SIZE];
                 try {
                     while (contentLength > 0) {
-                        int numToRead = contentLength > SVNFileUtil.STREAM_CHUNK_SIZE ? SVNFileUtil.STREAM_CHUNK_SIZE : contentLength;
+                        int numToRead = contentLength > SVNFileUtil.STREAM_CHUNK_SIZE ? 
+                                SVNFileUtil.STREAM_CHUNK_SIZE : (int) contentLength;
                         int read = 0;
                         while(numToRead > 0) {
                             int numRead = dumpStream.read(buffer, read, numToRead);
@@ -301,8 +302,8 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
         }
     }
     
-    public int parsePropertyBlock(InputStream dumpStream, int contentLength, boolean isNode) throws SVNException {
-        int actualLength = 0;
+    public long parsePropertyBlock(InputStream dumpStream, long contentLength, boolean isNode) throws SVNException {
+        long actualLength = 0;
         StringBuffer buffer = new StringBuffer();
         String line = null;
         

@@ -52,8 +52,8 @@ public interface ISVNLoadHandler {
 
     public void setFullText() throws SVNException;
 
-    public int parsePropertyBlock(InputStream dumpStream, int contentLength, boolean isNode) throws SVNException;
+    public long parsePropertyBlock(InputStream dumpStream, long contentLength, boolean isNode) throws SVNException;
 
-    public void parseTextBlock(InputStream dumpStream, int contentLength, boolean isDelta) throws SVNException;
+    public void parseTextBlock(InputStream dumpStream, long contentLength, boolean isDelta) throws SVNException;
 
 }

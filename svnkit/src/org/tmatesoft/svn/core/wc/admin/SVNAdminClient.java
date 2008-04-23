@@ -1043,10 +1043,10 @@ public class SVNAdminClient extends SVNBasicClient {
         
     }
     
-    protected void handlePropertesCopied(boolean foundSycProps, long revision) throws SVNException {
+    protected void handlePropertesCopied(boolean foundSyncProps, long revision) throws SVNException {
         if (myEventHandler != null) {
             String message = null;
-            if (foundSycProps) {
+            if (foundSyncProps) {
                 message = MessageFormat.format("Copied properties for revision {0} ({1}* properties skipped).", 
                         new Object[] { String.valueOf(revision), SVNProperty.SVN_SYNC_PREFIX });
             } else {

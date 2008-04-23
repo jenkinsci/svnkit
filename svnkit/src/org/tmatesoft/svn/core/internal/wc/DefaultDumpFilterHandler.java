@@ -11,17 +11,23 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNRevisionProperty;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.wc.admin.SVNUUIDAction;
 
 
@@ -32,12 +38,19 @@ import org.tmatesoft.svn.core.wc.admin.SVNUUIDAction;
 public class DefaultDumpFilterHandler implements ISVNLoadHandler {
 
     private boolean myIsDoRenumberRevisions;
+    private boolean myIsDoExclude;
+    private boolean myIsPreserveRevisionProps;
+    private boolean myIsDropEmptyRevisions;
     private long myDroppedRevisionsCount;
     private OutputStream myOutputStream;
+    private Collection myPrefixes;
+    private Map myDroppedNodes;
+    private RevisionBaton myCurrentRevisionBaton;
     
     public DefaultDumpFilterHandler(OutputStream os) {
         myDroppedRevisionsCount = 0;
         myOutputStream = os;
+        myDroppedNodes = new SVNHashMap();
     }
     
     public void applyTextDelta() throws SVNException {
@@ -50,13 +63,48 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
     }
 
     public void openNode(Map headers) throws SVNException {
+        NodeBaton nodeBaton = new NodeBaton();
+        String nodePath = (String) headers.get(SVNAdminHelper.DUMPFILE_NODE_PATH);
+        String copyFromPath = (String) headers.get(SVNAdminHelper.DUMPFILE_NODE_COPYFROM_PATH);
+        if (!nodePath.startsWith("/")) {
+            nodePath = "/" + nodePath;    
+        }
+        
+        if (copyFromPath != null && !copyFromPath.startsWith("/")) {
+            copyFromPath = "/" + copyFromPath;
+        }
+        
+        nodeBaton.myIsDoSkip = skipPath(nodePath);
+        if (nodeBaton.myIsDoSkip) {
+            myDroppedNodes.put(nodePath, nodePath);
+            myCurrentRevisionBaton.myHadDroppedNodes = true;
+        } else {
+            long textContentLength = getLongFromHeaders(SVNAdminHelper.DUMPFILE_TEXT_CONTENT_LENGTH, headers);
+            if (copyFromPath != null && skipPath(copyFromPath)) {
+                SVNNodeKind kind = getNodeKindFromHeaders(SVNAdminHelper.DUMPFILE_NODE_KIND, headers);
+                if (textContentLength > 0 && kind == SVNNodeKind.FILE) {
+                    headers.remove(SVNAdminHelper.DUMPFILE_NODE_COPYFROM_PATH);
+                    headers.remove(SVNAdminHelper.DUMPFILE_NODE_COPYFROM_REVISION);
+                    copyFromPath = null;
+                } else {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, 
+                            "Invalid copy source path ''{0}''", copyFromPath);
+                    SVNErrorManager.error(err);
+                }
+            }
+            
+            nodeBaton.myTextContentLength = textContentLength > 0 ? textContentLength : 0;
+            myCurrentRevisionBaton.myHasNodes = true;
+            if (!myCurrentRevisionBaton.myHasWritingBegun) {
+                
+            }
+        }
     }
 
     public void openRevision(Map headers) throws SVNException {
         RevisionBaton revisionBaton = new RevisionBaton();
-        
-        String revString = (String) headers.get(SVNAdminHelper.DUMPFILE_REVISION_NUMBER);
-        revisionBaton.myOriginalRevision = Long.parseLong(revString);
+        revisionBaton.myProperties = new SVNProperties();
+        revisionBaton.myOriginalRevision = getLongFromHeaders(SVNAdminHelper.DUMPFILE_REVISION_NUMBER, headers);
         if (myIsDoRenumberRevisions) {
             revisionBaton.myActualRevision = revisionBaton.myOriginalRevision - myDroppedRevisionsCount; 
         } else {
@@ -76,17 +124,19 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
             }
             revisionBaton.writeToHeader(header + ": " + headerValue + "\n");
         }
+        
+        myCurrentRevisionBaton = revisionBaton;
     }
 
-    public int parsePropertyBlock(InputStream dumpStream, int contentLength, boolean isNode) throws SVNException {
+    public long parsePropertyBlock(InputStream dumpStream, long contentLength, boolean isNode) throws SVNException {
         return 0;
     }
 
-    public void parseTextBlock(InputStream dumpStream, int contentLength, boolean isDelta) throws SVNException {
+    public void parseTextBlock(InputStream dumpStream, long contentLength, boolean isDelta) throws SVNException {
     }
 
     public void parseUUID(String uuid) throws SVNException {
-        writeDumpData(SVNAdminHelper.DUMPFILE_UUID + ": " + uuid + "\n\n");
+        writeDumpData(myOutputStream, SVNAdminHelper.DUMPFILE_UUID + ": " + uuid + "\n\n");
     }
 
     public void removeNodeProperties() throws SVNException {
@@ -110,13 +160,78 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
     public void setUsePreCommitHook(boolean use) {
     }
 
-    private void writeDumpData(String data) throws SVNException {
+    private void outputRevision(RevisionBaton revisionBaton) throws SVNException {
+        revisionBaton.myHasWritingBegun = true;
+        if (!myIsPreserveRevisionProps && !revisionBaton.myHasNodes && revisionBaton.myHadDroppedNodes &&
+                !myIsDropEmptyRevisions) {
+            SVNProperties oldProps = revisionBaton.myProperties;
+            revisionBaton.myHasProps = true;
+            revisionBaton.myProperties = new SVNProperties();
+            revisionBaton.myProperties.put(SVNRevisionProperty.DATE, 
+                    oldProps.getSVNPropertyValue(SVNRevisionProperty.DATE));
+            revisionBaton.myProperties.put(SVNRevisionProperty.LOG, "This is an empty revision for padding.");
+        }
+        
+        ByteArrayOutputStream propsBuffer = new ByteArrayOutputStream();
+        if (revisionBaton.myHasProps) {
+            for (Iterator propsIter = revisionBaton.myProperties.nameSet().iterator(); propsIter.hasNext();) {
+                String propName = (String) propsIter.next();
+                SVNPropertyValue propValue = revisionBaton.myProperties.getSVNPropertyValue(propName);
+                writeProperty(propsBuffer, propName, propValue);
+            }
+            writeDumpData(propsBuffer, "PROPS-END\n");
+            revisionBaton.writeToHeader(SVNAdminHelper.DUMPFILE_PROP_CONTENT_LENGTH + ": " + propsBuffer.size() + 
+                    "\n");
+        }
+    }
+    
+    private void writeProperty(OutputStream out, String propName, SVNPropertyValue propValue) throws SVNException {
         try {
-            myOutputStream.write(data.getBytes("UTF-8")); 
+            writeDumpData(out, "K ");
+            byte[] propNameBytes = propName.getBytes("UTF-8");
+            writeDumpData(out, String.valueOf(propNameBytes.length));
+            writeDumpData(out, "\n");
+            out.write(propNameBytes);
+            
+            writeDumpData(out, "\n");
+            writeDumpData(out, "V ");
+            byte[] propValueBytes = SVNPropertyValue.getPropertyAsBytes(propValue);
+            writeDumpData(out, String.valueOf(propValueBytes.length));
+            writeDumpData(out, "\n");
+            out.write(propValueBytes);
+            writeDumpData(out, "\n");
+        } catch (IOException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+            SVNErrorManager.error(err, e);
+        } 
+    }
+    
+    private SVNNodeKind getNodeKindFromHeaders(String header, Map headers) {
+        return SVNNodeKind.parseKind((String) headers.get(header)); 
+    }
+    
+    private long getLongFromHeaders(String header, Map headers) {
+        String val = (String) headers.get(header);
+        return Long.parseLong(val);
+    }
+    
+    private void writeDumpData(OutputStream out, String data) throws SVNException {
+        try {
+            out.write(data.getBytes("UTF-8")); 
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, ioe);
         }
+    }
+    
+    private boolean skipPath(String path) {
+        for (Iterator prefixesIter = myPrefixes.iterator(); prefixesIter.hasNext();) {
+            String prefix = (String) prefixesIter.next();
+            if (path.startsWith(prefix)) {
+                return myIsDoExclude;
+            }
+        }
+        return !myIsDoExclude;
     }
     
     private class RevisionBaton {
@@ -127,13 +242,23 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
         long myOriginalRevision;
         long myActualRevision;
         SVNProperties myProperties;
-        StringBuffer myHeaderBuffer;
+        ByteArrayOutputStream myHeaderBuffer;
  
-        public void writeToHeader(String data) {
+        public void writeToHeader(String data) throws SVNException {
             if (myHeaderBuffer == null) {
-                myHeaderBuffer = new StringBuffer();
+                myHeaderBuffer = new ByteArrayOutputStream();
             }
-            myHeaderBuffer.append(data);
+            writeDumpData(myHeaderBuffer, data);
         }
+    }
+    
+    private class NodeBaton {
+        private boolean myIsDoSkip;
+        private boolean myHasProps;
+        private boolean myHasText;
+        private boolean myHasWritingBegun;
+        private long myTextContentLength;
+        SVNProperties myProperties;
+        StringBuffer myHeaderBuffer;
     }
 }
