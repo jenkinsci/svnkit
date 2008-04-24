@@ -15,10 +15,12 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.SVNEvent;
@@ -73,6 +75,11 @@ public class SVNSyncSynchronizeCommand extends SVNSyncCommand implements ISVNAdm
         
         SVNAdminClient client = getEnvironment().getClientManager().getAdminClient();
         client.setEventHandler(this);
+        client.setReplayHandler(new ISVNLogEntryHandler() {
+           public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
+               getEnvironment().getOut().println("Committed revision " + logEntry.getRevision() + "."); 
+           } 
+        });
         client.doSynchronize(toURL.getURL());
     }
 

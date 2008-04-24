@@ -86,8 +86,8 @@ public class SVNReplayHandler implements ISVNReplayHandler {
         }
         SVNProperties existingProperties = myTargetRepository.getRevisionProperties(revision, null);
         SVNProperties filtered = new SVNProperties();
-        int filteredCount = filterProperties(revisionProperties, filtered, false);
-        filteredCount += SVNAdminHelper.writeRevisionProperties(myTargetRepository, revision, filtered);
+        filterProperties(revisionProperties, filtered, false);
+        int filteredCount = SVNAdminHelper.writeRevisionProperties(myTargetRepository, revision, filtered);
         SVNAdminHelper.removePropertiesNotInSource(myTargetRepository, revision, revisionProperties, 
                 existingProperties);
         

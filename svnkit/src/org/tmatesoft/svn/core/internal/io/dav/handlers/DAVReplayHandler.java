@@ -183,7 +183,7 @@ public class DAVReplayHandler extends DAVEditorHandler {
         if (element == APPLY_TEXT_DELTA) {
             setDeltaProcessing(false);
         } else if (element == CHANGE_FILE_PROPERTY || element == CHANGE_DIR_PROPERTY) {
-            if (cdata != null && !"".equals(cdata) && myPropertyName == null) {
+            if (cdata != null && !"".equals(cdata.toString()) && myPropertyName == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Got cdata content for a prop delete");
                 SVNErrorManager.error(err);
             }
