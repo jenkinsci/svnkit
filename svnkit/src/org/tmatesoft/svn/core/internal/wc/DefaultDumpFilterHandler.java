@@ -15,7 +15,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
+import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -28,6 +28,10 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.admin.ISVNAdminEventHandler;
+import org.tmatesoft.svn.core.wc.admin.SVNAdminEvent;
+import org.tmatesoft.svn.core.wc.admin.SVNAdminEventAction;
 import org.tmatesoft.svn.core.wc.admin.SVNUUIDAction;
 
 
@@ -42,15 +46,20 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
     private boolean myIsPreserveRevisionProps;
     private boolean myIsDropEmptyRevisions;
     private long myDroppedRevisionsCount;
+    private long myLastLiveRevision;
     private OutputStream myOutputStream;
     private Collection myPrefixes;
     private Map myDroppedNodes;
+    private Map myReNumberHistory;
     private RevisionBaton myCurrentRevisionBaton;
+    private ISVNAdminEventHandler myEventHandler;
     
-    public DefaultDumpFilterHandler(OutputStream os) {
+    public DefaultDumpFilterHandler(OutputStream os, ISVNAdminEventHandler handler) {
         myDroppedRevisionsCount = 0;
         myOutputStream = os;
+        myEventHandler = handler;
         myDroppedNodes = new SVNHashMap();
+        myReNumberHistory = new SVNHashMap();
     }
     
     public void applyTextDelta() throws SVNException {
@@ -96,7 +105,21 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
             nodeBaton.myTextContentLength = textContentLength > 0 ? textContentLength : 0;
             myCurrentRevisionBaton.myHasNodes = true;
             if (!myCurrentRevisionBaton.myHasWritingBegun) {
-                
+                outputRevision(myCurrentRevisionBaton);
+            }
+            
+            for (Iterator headersIter = headers.keySet().iterator(); headersIter.hasNext();) {
+                String header = (String) headersIter.next();
+                if (header.equals(SVNAdminHelper.DUMPFILE_CONTENT_LENGTH) || 
+                        header.equals(SVNAdminHelper.DUMPFILE_PROP_CONTENT_LENGTH) ||
+                        header.equals(SVNAdminHelper.DUMPFILE_TEXT_CONTENT_LENGTH)) {
+                    continue;
+                }
+
+                String headerValue = (String) headers.get(header);
+                if (myIsDoRenumberRevisions && header.equals(SVNAdminHelper.DUMPFILE_NODE_COPYFROM_REVISION)) {
+                    
+                }
             }
         }
     }
@@ -183,6 +206,34 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
             revisionBaton.writeToHeader(SVNAdminHelper.DUMPFILE_PROP_CONTENT_LENGTH + ": " + propsBuffer.size() + 
                     "\n");
         }
+        
+        revisionBaton.writeToHeader(SVNAdminHelper.DUMPFILE_CONTENT_LENGTH + ": " + propsBuffer.size() + "\n\n\n");
+        if (revisionBaton.myHasNodes || !myIsDropEmptyRevisions || !revisionBaton.myHadDroppedNodes) {
+            writeDumpData(myOutputStream, revisionBaton.myHeaderBuffer.toByteArray());
+            writeDumpData(myOutputStream, propsBuffer.toByteArray());
+            if (myIsDoRenumberRevisions) {
+                myReNumberHistory.put(new Long(revisionBaton.myOriginalRevision), 
+                        new RevisionItem(revisionBaton.myActualRevision, false));
+                myLastLiveRevision = revisionBaton.myActualRevision;
+            }
+            
+            String message = MessageFormat.format("Revision {0} committed as {1}.", new Object[] { 
+                    String.valueOf(revisionBaton.myOriginalRevision), 
+                    String.valueOf(revisionBaton.myActualRevision) });
+            dispatchEvent(new SVNAdminEvent(revisionBaton.myActualRevision, revisionBaton.myOriginalRevision, 
+                    SVNAdminEventAction.DUMP_FILTER_REVISION_COMMITTED, message));
+        } else {
+            myDroppedRevisionsCount++;
+            if (myIsDoRenumberRevisions) {
+                myReNumberHistory.put(new Long(revisionBaton.myOriginalRevision), 
+                        new RevisionItem(myLastLiveRevision, true));
+            }
+            
+            String message = MessageFormat.format("Revision {0} skipped.", new Object[] { 
+                    String.valueOf(revisionBaton.myOriginalRevision) });
+            dispatchEvent(new SVNAdminEvent(revisionBaton.myOriginalRevision, 
+                    SVNAdminEventAction.DUMP_FILTER_REVISION_SKIPPED, message));
+        }
     }
     
     private void writeProperty(OutputStream out, String propName, SVNPropertyValue propValue) throws SVNException {
@@ -191,14 +242,14 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
             byte[] propNameBytes = propName.getBytes("UTF-8");
             writeDumpData(out, String.valueOf(propNameBytes.length));
             writeDumpData(out, "\n");
-            out.write(propNameBytes);
+            writeDumpData(out, propNameBytes);
             
             writeDumpData(out, "\n");
             writeDumpData(out, "V ");
             byte[] propValueBytes = SVNPropertyValue.getPropertyAsBytes(propValue);
             writeDumpData(out, String.valueOf(propValueBytes.length));
             writeDumpData(out, "\n");
-            out.write(propValueBytes);
+            writeDumpData(out, propValueBytes);
             writeDumpData(out, "\n");
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
@@ -223,7 +274,16 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
             SVNErrorManager.error(err, ioe);
         }
     }
-    
+
+    private void writeDumpData(OutputStream out, byte[] bytes) throws SVNException {
+        try {
+            out.write(bytes); 
+        } catch (IOException ioe) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
+            SVNErrorManager.error(err, ioe);
+        }
+    }
+
     private boolean skipPath(String path) {
         for (Iterator prefixesIter = myPrefixes.iterator(); prefixesIter.hasNext();) {
             String prefix = (String) prefixesIter.next();
@@ -232,6 +292,12 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
             }
         }
         return !myIsDoExclude;
+    }
+    
+    private void dispatchEvent(SVNAdminEvent event) throws SVNException {
+        if (myEventHandler != null) {
+            myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
+        }
     }
     
     private class RevisionBaton {
@@ -253,12 +319,22 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
     }
     
     private class NodeBaton {
-        private boolean myIsDoSkip;
-        private boolean myHasProps;
-        private boolean myHasText;
-        private boolean myHasWritingBegun;
-        private long myTextContentLength;
+        boolean myIsDoSkip;
+        boolean myHasProps;
+        boolean myHasText;
+        boolean myHasWritingBegun;
+        long myTextContentLength;
         SVNProperties myProperties;
         StringBuffer myHeaderBuffer;
+    }
+    
+    private class RevisionItem {
+        long myRevision;
+        boolean myWasDropped;
+        
+        public RevisionItem(long revision, boolean dropped) {
+            myRevision = revision;
+            myWasDropped = dropped;
+        }
     }
 }

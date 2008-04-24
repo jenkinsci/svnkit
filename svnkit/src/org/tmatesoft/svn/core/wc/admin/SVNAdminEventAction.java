@@ -103,4 +103,9 @@ public class SVNAdminEventAction {
     public static final SVNAdminEventAction UPGRADE = new SVNAdminEventAction(14);
     
     public static final SVNAdminEventAction REVISION_PROPERTIES_COPIED = new SVNAdminEventAction(15);
+
+    public static final SVNAdminEventAction DUMP_FILTER_REVISION_COMMITTED = new SVNAdminEventAction(16);
+
+    public static final SVNAdminEventAction DUMP_FILTER_REVISION_SKIPPED = new SVNAdminEventAction(17);
+
 }
