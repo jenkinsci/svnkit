@@ -57,6 +57,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNStatusEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNWCManager;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNEntryHandler;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
@@ -2724,7 +2725,7 @@ public class SVNWCClient extends SVNBasicClient {
             wcAccess.open(directory, true, false, -1);
             SVNAdminArea[] areas = wcAccess.getAdminAreas();
             for (int i = 0; i < areas.length; i++) {
-                wcAccess.changeWCFormat(areas[i].getRoot(), format, true);
+                SVNAdminAreaFactory.changeWCFormat(areas[i], format);
             }
         } finally {
             wcAccess.close();
