@@ -28,9 +28,9 @@ $ OPT = ""
 $! OPT = "-Djava.util.logging.config.file=/svnkit_home/logging.properties"
 $!
 $ JV = f$edit(java,"collapse")
-$ jsvn ==      "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli2.svn.SVN"""
-$ jsvnadmin == "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli2.svnadmin.SVNAdmin"""
+$ jsvn ==      "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli.svn.SVN"""
+$ jsvnadmin == "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli.svnadmin.SVNAdmin"""
 $ jsvnlook ==  "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli.SVNLook"""
 $ jsvnsync ==  "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli.SVNSync"""
-$ jsvnversion ==  "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli2.svnversion.SVNVersion"""
+$ jsvnversion ==  "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli.svnversion.SVNVersion"""
 $!

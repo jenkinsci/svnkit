@@ -25,11 +25,11 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.tmatesoft.svn.cli2.svnsync.SVNSync;
-import org.tmatesoft.svn.cli2.svn.SVN;
-import org.tmatesoft.svn.cli2.svnadmin.SVNAdmin;
-import org.tmatesoft.svn.cli2.svnlook.SVNLook;
-import org.tmatesoft.svn.cli2.svnversion.SVNVersion;
+import org.tmatesoft.svn.cli.svn.SVN;
+import org.tmatesoft.svn.cli.svnadmin.SVNAdmin;
+import org.tmatesoft.svn.cli.svnlook.SVNLook;
+import org.tmatesoft.svn.cli.svnsync.SVNSync;
+import org.tmatesoft.svn.cli.svnversion.SVNVersion;
 import org.tmatesoft.svn.core.internal.util.DefaultSVNDebugFormatter;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
