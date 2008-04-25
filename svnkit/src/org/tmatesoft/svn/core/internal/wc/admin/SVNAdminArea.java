@@ -1488,15 +1488,15 @@ public abstract class SVNAdminArea {
             currentCharset = SVNTranslator.getCharset(currentCharset, getAdminFile(newEntry.getName()).toString(), getWCAccess().getOptions());
             if (currentCharset != null && !"UTF-8".equals(currentCharset)) {
                 String propBaseFile = SVNAdminUtil.getPropBasePath(newEntry.getName(), SVNNodeKind.FILE, false);
-                String tmpPropBaseFile = SVNAdminUtil.getPropBasePath(newEntry.getName(), SVNNodeKind.FILE, true);
+                String revertPropFile = SVNAdminUtil.getPropRevertPath(newEntry.getName(), SVNNodeKind.FILE, true);
                 command.put(SVNLog.NAME_ATTR, propBaseFile);
-                command.put(SVNLog.DEST_ATTR, tmpPropBaseFile);
+                command.put(SVNLog.DEST_ATTR, revertPropFile);
                 log.addCommand(SVNLog.COPY, command, false);
                 command.clear();
 
                 dstBaseProps.setPropertyValue(SVNProperty.CHARSET, SVNPropertyValue.create("UTF-8"));
                 dstBaseProps.setModified(true);
-                saveVersionedProperties(log, false);
+                saveVersionedProperties(log, true);
 
                 String translatedFile = SVNAdminUtil.getTextBasePath(newEntry.getName(), true);
                 command.put(SVNLog.NAME_ATTR, SVNAdminUtil.getTextBasePath(newEntry.getName(), false));
@@ -1504,7 +1504,7 @@ public abstract class SVNAdminArea {
                 log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
                 command.clear();
 
-                command.put(SVNLog.NAME_ATTR, tmpPropBaseFile);
+                command.put(SVNLog.NAME_ATTR, revertPropFile);
                 command.put(SVNLog.DEST_ATTR, propBaseFile);
                 log.addCommand(SVNLog.MOVE, command, false);
                 command.clear();
