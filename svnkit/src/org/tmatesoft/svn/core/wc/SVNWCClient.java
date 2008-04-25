@@ -2711,6 +2711,25 @@ public class SVNWCClient extends SVNBasicClient {
             wcAccess.close();
         }
     }
+    
+    /**
+     * Sets WC format.
+     * 
+     * @param directory - working copy directory
+     * @param format - format to set, supported formats are 9 (1.5), 8 (1.4) and 4 (1.2) 
+     */
+    public void doSetWCFormat(File directory, int format) throws SVNException {
+        SVNWCAccess wcAccess = SVNWCAccess.newInstance(this);
+        try {
+            wcAccess.open(directory, true, false, -1);
+            SVNAdminArea[] areas = wcAccess.getAdminAreas();
+            for (int i = 0; i < areas.length; i++) {
+                wcAccess.changeWCFormat(areas[i].getRoot(), format, true);
+            }
+        } finally {
+            wcAccess.close();
+        }
+    }
 
     private void pushDirInfo(SVNRepository repos, SVNRevision rev, String path, SVNURL root, 
             String uuid, SVNURL url, Map locks, SVNDepth depth, ISVNInfoHandler handler) throws SVNException {
