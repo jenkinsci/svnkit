@@ -1524,6 +1524,7 @@ public abstract class SVNAdminArea {
         SVNFileUtil.deleteAll(getAdminFile("wcprops"), true);
         SVNFileUtil.deleteAll(getAdminFile("tmp/wcprops"), true);
         SVNFileUtil.deleteAll(getAdminFile("dir-wcprops"), true);
+        SVNFileUtil.deleteAll(getAdminFile("all-wcprops"), true);
 
         runLogs();
         return this;

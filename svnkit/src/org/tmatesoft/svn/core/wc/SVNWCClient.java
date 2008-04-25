@@ -49,6 +49,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableOutputStream;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
+import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -2720,15 +2721,89 @@ public class SVNWCClient extends SVNBasicClient {
      * @param format - format to set, supported formats are 9 (1.5), 8 (1.4) and 4 (1.2) 
      */
     public void doSetWCFormat(File directory, int format) throws SVNException {
+        SVNAdminAreaInfo info = null;
         SVNWCAccess wcAccess = SVNWCAccess.newInstance(this);
         try {
-            wcAccess.open(directory, true, false, -1);
-            SVNAdminArea[] areas = wcAccess.getAdminAreas();
-            for (int i = 0; i < areas.length; i++) {
-                SVNAdminAreaFactory.changeWCFormat(areas[i], format);
-            }
+            info = wcAccess.openAnchor(directory, false, -1);
+            setWCFormat(info, info.getAnchor(), format);
         } finally {
             wcAccess.close();
+        }
+        if (!isIgnoreExternals() && info != null) {
+            Collection processedDirs = new HashSet();
+            Map externals = info.getOldExternals();
+            // update both old and new externals.
+            for (Iterator paths = externals.keySet().iterator(); paths.hasNext();) {
+                String path = (String) paths.next();
+                String value = (String) externals.get(path);
+                if (value == null) {
+                    continue;
+                }
+                SVNExternal[] externalDefs = SVNExternal.parseExternals("", value);
+                for (int i = 0; i < externalDefs.length; i++) {
+                    String externalPath = externalDefs[i].getPath();
+                    File externalDir = new File(info.getAnchor().getRoot(), SVNPathUtil.append(path, externalPath));
+                    if (processedDirs.add(externalDir)) {
+                        try {
+                            doSetWCFormat(externalDir, format);
+                        } catch (SVNException e) {
+                            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
+                                continue;
+                            }
+                            throw e;
+                        }
+                    }
+                }
+            }
+            externals = info.getNewExternals();
+            for (Iterator paths = externals.keySet().iterator(); paths.hasNext();) {
+                String path = (String) paths.next();
+                String value = (String) externals.get(path);
+                SVNExternal[] externalDefs = SVNExternal.parseExternals("", value);
+                for (int i = 0; i < externalDefs.length; i++) {
+                    String externalPath = externalDefs[i].getPath();
+                    File externalDir = new File(info.getAnchor().getRoot(), SVNPathUtil.append(path, externalPath));
+                    if (processedDirs.add(externalDir)) {
+                        try {
+                            doSetWCFormat(externalDir, format);
+                        } catch (SVNException e) {
+                            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
+                                continue;
+                            }
+                            throw e;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    private void setWCFormat(SVNAdminAreaInfo info, SVNAdminArea area, int format) throws SVNException {
+        if (!isIgnoreExternals()) {
+            SVNVersionedProperties props = area.getProperties(area.getThisDirName());
+            SVNVersionedProperties baseProps = area.getBaseProperties(area.getThisDirName());
+            SVNPropertyValue property = props.getPropertyValue(SVNProperty.EXTERNALS);
+            SVNPropertyValue baseProperty = baseProps.getPropertyValue(SVNProperty.EXTERNALS);
+            if (property != null || baseProperty != null) {
+                String areaPath = area.getRelativePath(info.getAnchor());
+                info.addExternal(areaPath, property != null ? property.getString() : null, baseProperty != null ? baseProperty.getString() : null);
+            }
+        }
+        // re-open this area for writing now!
+        area.getWCAccess().closeAdminArea(area.getRoot());
+        area = area.getWCAccess().open(area.getRoot(), true, false, 0);
+        SVNAdminArea newArea = SVNAdminAreaFactory.changeWCFormat(area, format);
+        
+        for(Iterator entries = newArea.entries(false); entries.hasNext();) {
+            SVNEntry entry = (SVNEntry) entries.next();
+            if (entry.isThisDir() || entry.isFile()) {
+                continue;
+            }
+            File childDir = new File(newArea.getRoot(), entry.getName());
+            SVNAdminArea childArea = newArea.getWCAccess().getAdminArea(childDir);
+            if (childArea != null) {
+                setWCFormat(info, childArea, format);
+            }
         }
     }
 
