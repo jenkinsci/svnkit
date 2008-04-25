@@ -130,12 +130,19 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
             }
         } else if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
             printRealm(realm);
-            String name = null;
+            String name = System.getProperty("user.name");
+            if (name != null && "".equals(name.trim())) {
+                name = null;
+            }
+            if (name != null) {
+                return new SVNUserNameAuthentication(name, authMayBeStored);
+            }
+            printRealm(realm);
             while(name == null) {
                 name = prompt(!"file".equals(url.getProtocol()) ? 
                     "Author name [" + System.getProperty("user.name") + "]" : 
                     "Username [" + System.getProperty("user.name") + "]");
-                if ("".equals(name) || name == null) {
+                if (name == null || "".equals(name.trim())) {
                     name = System.getProperty("user.name");
                 }
             }
