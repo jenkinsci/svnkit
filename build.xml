@@ -135,6 +135,7 @@
             <pathelement path="contrib/sequence/bin" />
             <pathelement path="contrib/sequence/bin-test" />
             <pathelement path="svnkit/bin" />
+            <pathelement path="svnkit-cli/bin" />
         </path>
 
         <path id="sequence.tests.classpath">
