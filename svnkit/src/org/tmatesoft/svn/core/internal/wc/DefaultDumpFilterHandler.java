@@ -16,23 +16,30 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNMergeRange;
+import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.ISVNAdminEventHandler;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEvent;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEventAction;
-import org.tmatesoft.svn.core.wc.admin.SVNUUIDAction;
 
 
 /**
@@ -45,6 +52,7 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
     private boolean myIsDoExclude;
     private boolean myIsPreserveRevisionProps;
     private boolean myIsDropEmptyRevisions;
+    private boolean myIsSkipMissingMergeSources;
     private long myDroppedRevisionsCount;
     private long myLastLiveRevision;
     private OutputStream myOutputStream;
@@ -52,27 +60,61 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
     private Map myDroppedNodes;
     private Map myReNumberHistory;
     private RevisionBaton myCurrentRevisionBaton;
+    private NodeBaton myCurrentNodeBaton;
     private ISVNAdminEventHandler myEventHandler;
     
-    public DefaultDumpFilterHandler(OutputStream os, ISVNAdminEventHandler handler) {
+    public DefaultDumpFilterHandler(OutputStream os, ISVNAdminEventHandler handler, boolean exclude, 
+            boolean renumberRevisions, boolean dropEmptyRevisions, boolean preserveRevisionProperties, 
+            Collection prefixes, boolean skipMissingMergeSources) {
         myDroppedRevisionsCount = 0;
+        myLastLiveRevision = SVNRepository.INVALID_REVISION;
         myOutputStream = os;
         myEventHandler = handler;
+        myIsDoExclude = exclude;
+        myIsDoRenumberRevisions = renumberRevisions;
+        myIsDropEmptyRevisions = dropEmptyRevisions;
+        myIsPreserveRevisionProps = preserveRevisionProperties;
+        myIsSkipMissingMergeSources = skipMissingMergeSources;
+        myPrefixes = prefixes;
         myDroppedNodes = new SVNHashMap();
         myReNumberHistory = new SVNHashMap();
     }
     
-    public void applyTextDelta() throws SVNException {
+    public void reset(OutputStream os, ISVNAdminEventHandler handler, boolean exclude, boolean renumberRevisions, 
+            boolean dropEmptyRevisions, boolean preserveRevisionProperties, Collection prefixes, 
+            boolean skipMissingMergeSources) {
+        myDroppedRevisionsCount = 0;
+        myLastLiveRevision = SVNRepository.INVALID_REVISION;
+        myOutputStream = os;
+        myEventHandler = handler;
+        myIsDoExclude = exclude;
+        myIsDoRenumberRevisions = renumberRevisions;
+        myIsDropEmptyRevisions = dropEmptyRevisions;
+        myIsPreserveRevisionProps = preserveRevisionProperties;
+        myIsSkipMissingMergeSources = skipMissingMergeSources;
+        myPrefixes = prefixes;
+        myDroppedNodes.clear();
+        myReNumberHistory.clear();
     }
-
+    
     public void closeNode() throws SVNException {
+        if (myCurrentNodeBaton.myIsDoSkip) {
+            return;
+        }
+        if (!myCurrentNodeBaton.myHasWritingBegun) {
+            outputNode(myCurrentNodeBaton);
+        }
+        writeDumpData(myOutputStream, "\n\n");
     }
 
     public void closeRevision() throws SVNException {
+        if (!myCurrentRevisionBaton.myHasWritingBegun) {
+            outputRevision(myCurrentRevisionBaton);
+        }
     }
 
     public void openNode(Map headers) throws SVNException {
-        NodeBaton nodeBaton = new NodeBaton();
+        NodeBaton myCurrentNodeBaton = new NodeBaton();
         String nodePath = (String) headers.get(SVNAdminHelper.DUMPFILE_NODE_PATH);
         String copyFromPath = (String) headers.get(SVNAdminHelper.DUMPFILE_NODE_COPYFROM_PATH);
         if (!nodePath.startsWith("/")) {
@@ -83,8 +125,8 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
             copyFromPath = "/" + copyFromPath;
         }
         
-        nodeBaton.myIsDoSkip = skipPath(nodePath);
-        if (nodeBaton.myIsDoSkip) {
+        myCurrentNodeBaton.myIsDoSkip = skipPath(nodePath);
+        if (myCurrentNodeBaton.myIsDoSkip) {
             myDroppedNodes.put(nodePath, nodePath);
             myCurrentRevisionBaton.myHadDroppedNodes = true;
         } else {
@@ -102,7 +144,7 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
                 }
             }
             
-            nodeBaton.myTextContentLength = textContentLength > 0 ? textContentLength : 0;
+            myCurrentNodeBaton.myTextContentLength = textContentLength > 0 ? textContentLength : 0;
             myCurrentRevisionBaton.myHasNodes = true;
             if (!myCurrentRevisionBaton.myHasWritingBegun) {
                 outputRevision(myCurrentRevisionBaton);
@@ -118,8 +160,20 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
 
                 String headerValue = (String) headers.get(header);
                 if (myIsDoRenumberRevisions && header.equals(SVNAdminHelper.DUMPFILE_NODE_COPYFROM_REVISION)) {
-                    
+                    long copyFromOriginalRevision = Long.parseLong(headerValue);
+                    RevisionItem reNumberedCopyFromValue = (RevisionItem) myReNumberHistory.get(
+                            new Long(copyFromOriginalRevision));
+                    if (reNumberedCopyFromValue == null || 
+                            !SVNRevision.isValidRevisionNumber(reNumberedCopyFromValue.myRevision)) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNEXPECTED_KIND, 
+                                "No valid copyfrom revision in filtered stream");
+                        SVNErrorManager.error(err);
+                    }
+                    writeDumpData(myOutputStream, SVNAdminHelper.DUMPFILE_NODE_COPYFROM_REVISION + ": " +
+                            reNumberedCopyFromValue.myRevision + "\n");
+                    continue;
                 }
+                writeDumpData(myOutputStream, header + ": " + headerValue + "\n");
             }
         }
     }
@@ -151,11 +205,38 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
         myCurrentRevisionBaton = revisionBaton;
     }
 
-    public long parsePropertyBlock(InputStream dumpStream, long contentLength, boolean isNode) throws SVNException {
-        return 0;
-    }
-
     public void parseTextBlock(InputStream dumpStream, long contentLength, boolean isDelta) throws SVNException {
+        if (isDelta) {
+            applyTextDelta();
+        } else {
+            setFullText();
+        }
+            
+        byte[] buffer = null;
+        if (contentLength != 0) {
+            buffer = new byte[SVNFileUtil.STREAM_CHUNK_SIZE];
+            try {
+                while (contentLength > 0) {
+                    int numToRead = contentLength > SVNFileUtil.STREAM_CHUNK_SIZE ? 
+                            SVNFileUtil.STREAM_CHUNK_SIZE : (int) contentLength;
+                    int read = 0;
+                    while(numToRead > 0) {
+                        int numRead = dumpStream.read(buffer, read, numToRead);
+                        if (numRead < 0) {
+                            SVNAdminHelper.generateIncompleteDataError();
+                        }
+                        read += numRead;
+                        numToRead -= numRead;
+                    }
+                        
+                    myOutputStream.write(buffer, 0, read);
+                    contentLength -= read;
+                }
+            } catch (IOException ioe) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getMessage());
+                SVNErrorManager.error(err, ioe);
+            }
+        }
     }
 
     public void parseUUID(String uuid) throws SVNException {
@@ -163,24 +244,55 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
     }
 
     public void removeNodeProperties() throws SVNException {
+        myCurrentNodeBaton.myHasProps = true;
     }
 
     public void setFullText() throws SVNException {
-    }
-
-    public void setParentDir(String parentDir) {
+        if (!myCurrentNodeBaton.myIsDoSkip) {
+            myCurrentNodeBaton.myHasText = true;
+            if (!myCurrentNodeBaton.myHasWritingBegun) {
+                outputNode(myCurrentNodeBaton);
+            }
+        }
     }
 
     public void setRevisionProperty(String propertyName, SVNPropertyValue propertyValue) throws SVNException {
+        myCurrentRevisionBaton.myHasProps = true;
+        myCurrentRevisionBaton.myProperties.put(propertyName, propertyValue);
     }
 
-    public void setUUIDAction(SVNUUIDAction action) {
+    public void setNodeProperty(String propertyName, SVNPropertyValue propertyValue) throws SVNException {
+        if (myCurrentNodeBaton.myIsDoSkip) {
+            return;
+        }
+        if (!myCurrentNodeBaton.myHasProps) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                    "Delta property block detected - not supported by svndumpfilter");
+            SVNErrorManager.error(err);
+        }
+        if (propertyName.equals(SVNProperty.MERGE_INFO)) {
+            Map filteredMergeInfo = adjustMergeInfo(propertyValue);
+            propertyValue = SVNPropertyValue.create(SVNMergeInfoUtil.formatMergeInfoToString(filteredMergeInfo));
+        }
+        myCurrentNodeBaton.writeProperty(propertyName, propertyValue);
     }
 
-    public void setUsePostCommitHook(boolean use) {
+    public void deleteNodeProperty(String propertyName) throws SVNException {
     }
 
-    public void setUsePreCommitHook(boolean use) {
+    public void applyTextDelta() throws SVNException {
+    }
+
+    public long getDroppedRevisionsCount() {
+        return myDroppedRevisionsCount;
+    }
+
+    public Map getReNumberHistory() {
+        return myReNumberHistory;
+    }
+
+    public Map getDroppedNodes() {
+        return myDroppedNodes;
     }
 
     private void outputRevision(RevisionBaton revisionBaton) throws SVNException {
@@ -236,6 +348,23 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
         }
     }
     
+    private void outputNode(NodeBaton nodeBaton) throws SVNException {
+        nodeBaton.myHasWritingBegun = true;
+        if (nodeBaton.myHasProps) {
+            nodeBaton.writeToPropertyBuffer("PROPS-END\n");
+            nodeBaton.writeToHeader(SVNAdminHelper.DUMPFILE_PROP_CONTENT_LENGTH + ": " + 
+                    nodeBaton.myPropertiesBuffer.size() + "\n");
+        }
+        if (nodeBaton.myHasText) {
+            nodeBaton.writeToHeader(SVNAdminHelper.DUMPFILE_TEXT_CONTENT_LENGTH + ": " + 
+                    nodeBaton.myTextContentLength + "\n");
+        }
+        nodeBaton.writeToHeader(SVNAdminHelper.DUMPFILE_CONTENT_LENGTH + ": " + 
+                (nodeBaton.myPropertiesBuffer.size() + nodeBaton.myTextContentLength) + "\n\n");
+        writeDumpData(myOutputStream, nodeBaton.myHeaderBuffer.toByteArray());
+        writeDumpData(myOutputStream, nodeBaton.myPropertiesBuffer.toByteArray());
+    }
+    
     private void writeProperty(OutputStream out, String propName, SVNPropertyValue propValue) throws SVNException {
         try {
             writeDumpData(out, "K ");
@@ -255,6 +384,52 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
             SVNErrorManager.error(err, e);
         } 
+    }
+    
+    private Map adjustMergeInfo(SVNPropertyValue initialValue) throws SVNException {
+        Map finalMergeInfo = new TreeMap();
+        Map mergeInfo = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(initialValue.getString()), null);
+        for (Iterator mergeInfoIter = mergeInfo.keySet().iterator(); mergeInfoIter.hasNext();) {
+            String mergeSource = (String) mergeInfoIter.next();
+            SVNMergeRangeList rangeList = (SVNMergeRangeList) mergeInfo.get(mergeSource);
+            if (skipPath(mergeSource)) {
+                if (myIsSkipMissingMergeSources) {
+                    continue;
+                }
+
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, 
+                        "Missing merge source path ''{0}''; try with --skip-missing-merge-sources", 
+                        mergeSource);
+                SVNErrorManager.error(err);
+            }
+            
+            if (myIsDoRenumberRevisions) {
+                SVNMergeRange[] ranges = rangeList.getRanges();
+                for (int i = 0; i < rangeList.getSize(); i++) {
+                    SVNMergeRange range = ranges[i];
+                    
+                    RevisionItem revItemStart = (RevisionItem) myReNumberHistory.get(new Long(range.getStartRevision()));
+                    if (revItemStart == null || !SVNRevision.isValidRevisionNumber(revItemStart.myRevision)) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNEXPECTED_KIND, 
+                                "No valid revision range 'start' in filtered stream");
+                        SVNErrorManager.error(err);
+                    }
+
+                    RevisionItem revItemEnd = (RevisionItem) myReNumberHistory.get(new Long(range.getEndRevision()));
+                    if (revItemEnd == null || !SVNRevision.isValidRevisionNumber(revItemEnd.myRevision)) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNEXPECTED_KIND, 
+                                "No valid revision range 'end' in filtered stream");
+                        SVNErrorManager.error(err);
+                    }
+                    
+                    range.setStartRevision(revItemStart.myRevision);
+                    range.setEndRevision(revItemEnd.myRevision);
+                }
+                Arrays.sort(ranges);
+            }
+            finalMergeInfo.put(mergeSource, rangeList);
+        }
+        return finalMergeInfo;
     }
     
     private SVNNodeKind getNodeKindFromHeaders(String header, Map headers) {
@@ -299,7 +474,25 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
             myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
         }
     }
-    
+
+    public class RevisionItem {
+        long myRevision;
+        boolean myWasDropped;
+        
+        public RevisionItem(long revision, boolean dropped) {
+            myRevision = revision;
+            myWasDropped = dropped;
+        }
+        
+        public boolean wasDropped() {
+            return myWasDropped;
+        }
+        
+        public long getRevision() {
+            return myRevision;
+        }
+    }
+
     private class RevisionBaton {
         boolean myHasNodes;
         boolean myHasProps;
@@ -310,7 +503,7 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
         SVNProperties myProperties;
         ByteArrayOutputStream myHeaderBuffer;
  
-        public void writeToHeader(String data) throws SVNException {
+        void writeToHeader(String data) throws SVNException {
             if (myHeaderBuffer == null) {
                 myHeaderBuffer = new ByteArrayOutputStream();
             }
@@ -324,17 +517,30 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
         boolean myHasText;
         boolean myHasWritingBegun;
         long myTextContentLength;
-        SVNProperties myProperties;
-        StringBuffer myHeaderBuffer;
-    }
-    
-    private class RevisionItem {
-        long myRevision;
-        boolean myWasDropped;
+        ByteArrayOutputStream myPropertiesBuffer;
+        ByteArrayOutputStream myHeaderBuffer;
         
-        public RevisionItem(long revision, boolean dropped) {
-            myRevision = revision;
-            myWasDropped = dropped;
+        void writeProperty(String propName, SVNPropertyValue propValue) throws SVNException {
+            if (myPropertiesBuffer == null) {
+                myPropertiesBuffer = new ByteArrayOutputStream();
+            }
+            DefaultDumpFilterHandler.this.writeProperty(myPropertiesBuffer, propName, propValue);
         }
+        
+        void writeToPropertyBuffer(String data) throws SVNException {
+            if (myPropertiesBuffer == null) {
+                myPropertiesBuffer = new ByteArrayOutputStream();
+            }
+            DefaultDumpFilterHandler.this.writeDumpData(myPropertiesBuffer, data);
+        }
+        
+        void writeToHeader(String data) throws SVNException {
+            if (myHeaderBuffer == null) {
+                myHeaderBuffer = new ByteArrayOutputStream();
+            }
+            writeDumpData(myHeaderBuffer, data);
+        }
+
     }
+
 }

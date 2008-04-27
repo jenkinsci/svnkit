@@ -13,7 +13,6 @@ package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.CharsetDecoder;
 import java.util.Arrays;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
@@ -68,17 +67,15 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
     private SVNDeltaReader myDeltaReader;
     private SVNDeltaGenerator myDeltaGenerator;
     private ISVNAdminEventHandler myProgressHandler;
-    private CharsetDecoder myDecoder;
     
     public DefaultLoadHandler(boolean usePreCommitHook, boolean usePostCommitHook, SVNUUIDAction uuidAction, 
-            String parentDir, ISVNAdminEventHandler progressHandler, CharsetDecoder decoder) {
+            String parentDir, ISVNAdminEventHandler progressHandler) {
         myProgressHandler = progressHandler;
         myIsUsePreCommitHook = usePreCommitHook;
         myIsUsePostCommitHook = usePostCommitHook;
         myUUIDAction = uuidAction;
         myParentDir = SVNPathUtil.canonicalizePath(parentDir);
         myRevisionsMap = new SVNHashMap();
-        myDecoder = decoder;
     }
     
     public void setFSFS(FSFS fsfs) {
@@ -301,95 +298,6 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
             fsConsumer.abort(); 
         }
     }
-    
-    public long parsePropertyBlock(InputStream dumpStream, long contentLength, boolean isNode) throws SVNException {
-        long actualLength = 0;
-        StringBuffer buffer = new StringBuffer();
-        String line = null;
-        
-        try {
-            while (contentLength != actualLength) {
-                buffer.setLength(0);
-                line = SVNFileUtil.readLineFromStream(dumpStream, buffer, myDecoder);
-                
-                if (line == null) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Incomplete or unterminated property block");
-                    SVNErrorManager.error(err);
-                }
-                
-                //including '\n'
-                actualLength += line.length() + 1;
-                if ("PROPS-END".equals(line)) {
-                    break;
-                } else if (line.charAt(0) == 'K' && line.charAt(1) == ' ') {
-                    int len = 0;
-                    try {
-                        len = Integer.parseInt(line.substring(2));    
-                    } catch (NumberFormatException nfe) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Malformed dumpfile header: can't parse node property key length");
-                        SVNErrorManager.error(err, nfe);
-                    }
-                    
-                    byte[] buff = new byte[len + 1];
-                    actualLength += SVNAdminHelper.readKeyOrValue(dumpStream, buff, len + 1);
-                    String propName = new String(buff, 0, len, "UTF-8");
-                    
-                    buffer.setLength(0);
-                    line = SVNFileUtil.readLineFromStream(dumpStream, buffer, myDecoder);
-                    if (line == null) {
-                        SVNAdminHelper.generateIncompleteDataError();
-                    }
-                    
-                    //including '\n'
-                    actualLength += line.length() + 1;
-                    if (line.charAt(0) == 'V' && line.charAt(1) == ' ') {
-                        try {
-                            len = Integer.parseInt(line.substring(2));    
-                        } catch (NumberFormatException nfe) {
-                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Malformed dumpfile header: can't parse node property value length");
-                            SVNErrorManager.error(err, nfe);
-                        }
-    
-                        buff = new byte[len + 1];
-                        actualLength += SVNAdminHelper.readKeyOrValue(dumpStream, buff, len + 1);
-                        SVNPropertyValue propValue = SVNPropertyValue.create(propName, buff, 0, len);
-                        if (isNode) {
-                            setNodeProperty(propName, propValue);
-                        } else {
-                            setRevisionProperty(propName, propValue);
-                        }
-                    } else {
-                        SVNAdminHelper.generateStreamMalformedError();
-                    }
-                } else if (line.charAt(0) == 'D' && line.charAt(1) == ' ') {
-                    int len = 0;
-                    try {
-                        len = Integer.parseInt(line.substring(2));    
-                    } catch (NumberFormatException nfe) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Malformed dumpfile header: can't parse node property key length");
-                        SVNErrorManager.error(err, nfe);
-                    }
-                    
-                    byte[] buff = new byte[len + 1];
-                    actualLength += SVNAdminHelper.readKeyOrValue(dumpStream, buff, len + 1);
-                    
-                    if (!isNode) {
-                        SVNAdminHelper.generateStreamMalformedError();
-                    }
-                    
-                    String propName = new String(buff, 0, len, "UTF-8");
-                    deleteNodeProperty(propName);
-                } else {
-                    SVNAdminHelper.generateStreamMalformedError();
-                }
-            }
-        } catch (IOException ioe) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-            SVNErrorManager.error(err, ioe);
-        }
-        
-        return actualLength;
-    }
 
     public void removeNodeProperties() throws SVNException {
         FSTransactionRoot txnRoot = myCurrentRevisionBaton.myTxnRoot;
@@ -432,18 +340,11 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
         myUUIDAction = action;
     }
     
-    private SVNDeltaReader getDeltaReader() {
-        if (myDeltaReader == null) {
-            myDeltaReader = new SVNDeltaReader();
-        } 
-        return myDeltaReader;
-    }
-
-    private void deleteNodeProperty(String propertyName) throws SVNException {
+    public void deleteNodeProperty(String propertyName) throws SVNException {
         myCurrentRevisionBaton.getCommitter().changeNodeProperty(myCurrentNodeBaton.myPath, propertyName, null);
     }
     
-    private void setNodeProperty(String propertyName, SVNPropertyValue propertyValue) throws SVNException {
+    public void setNodeProperty(String propertyName, SVNPropertyValue propertyValue) throws SVNException {
         if (SVNProperty.MERGE_INFO.equals(propertyName)) {
             Map mergeInfo = renumberMergeInfoRevisions(propertyValue);
             if (myParentDir != null) {
@@ -454,6 +355,13 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
         }
         myCurrentRevisionBaton.getCommitter().changeNodeProperty(myCurrentNodeBaton.myPath, propertyName, 
                 propertyValue);
+    }
+
+    private SVNDeltaReader getDeltaReader() {
+        if (myDeltaReader == null) {
+            myDeltaReader = new SVNDeltaReader();
+        } 
+        return myDeltaReader;
     }
 
     private SVNDeltaGenerator getDeltaGenerator() {

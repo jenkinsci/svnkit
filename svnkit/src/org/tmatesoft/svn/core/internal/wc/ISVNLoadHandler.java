@@ -16,7 +16,6 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.wc.admin.SVNUUIDAction;
 
 
 
@@ -26,14 +25,6 @@ import org.tmatesoft.svn.core.wc.admin.SVNUUIDAction;
  */
 public interface ISVNLoadHandler {
     
-    public void setUsePreCommitHook(boolean use);
-    
-    public void setUsePostCommitHook(boolean use);
-    
-    public void setParentDir(String parentDir);
-
-    public void setUUIDAction(SVNUUIDAction action);
-
     public void closeRevision() throws SVNException;
     
     public void openRevision(Map headers) throws SVNException;
@@ -52,8 +43,10 @@ public interface ISVNLoadHandler {
 
     public void setFullText() throws SVNException;
 
-    public long parsePropertyBlock(InputStream dumpStream, long contentLength, boolean isNode) throws SVNException;
-
     public void parseTextBlock(InputStream dumpStream, long contentLength, boolean isDelta) throws SVNException;
+
+    public void deleteNodeProperty(String propertyName) throws SVNException;
+
+    public void setNodeProperty(String propertyName, SVNPropertyValue propertyValue) throws SVNException;
 
 }

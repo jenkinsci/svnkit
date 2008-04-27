@@ -30,6 +30,8 @@ public class SVNAdminEvent {
     private File myTxnDir;
     private long myRevision;
     private long myOriginalRevision;
+    private long myDroppedRevisionsCount;
+    private int myDroppedNodesCount;
     private SVNAdminEventAction myAction;
     private String myPath;
     private String myMessage; 
@@ -109,8 +111,13 @@ public class SVNAdminEvent {
         myLock = lock;
     }
 
-    public SVNAdminEvent(SVNAdminEventAction action) {
+    public SVNAdminEvent(SVNAdminEventAction action, String message) {
         myAction = action;
+        myMessage = message;
+    }
+
+    public SVNAdminEvent(SVNAdminEventAction action) {
+        this(action, null);
     }
 
     /**
@@ -194,5 +201,21 @@ public class SVNAdminEvent {
 
     public SVNErrorMessage getError() {
         return myError;
+    }
+    
+    public void setDroppedRevisionsCount(long droppedRevisionsCount) {
+        myDroppedRevisionsCount = droppedRevisionsCount;
+    }
+    
+    public long getDroppedRevisionsCount() {
+        return myDroppedRevisionsCount;
+    }
+    
+    public int getDroppedNodesCount() {
+        return myDroppedNodesCount;
+    }
+    
+    public void setDroppedNodesCount(int droppedNodesCount) {
+        myDroppedNodesCount = droppedNodesCount;
     }
 }

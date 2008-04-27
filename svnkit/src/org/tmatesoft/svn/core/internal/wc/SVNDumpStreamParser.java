@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 
 
@@ -134,7 +135,7 @@ public class SVNDumpStreamParser {
                                 "Malformed dumpfile header: can't parse property block length header");
                         SVNErrorManager.error(err, nfe);
                     }
-                    actualPropLength += handler.parsePropertyBlock(dumpStream, length, foundNode);
+                    actualPropLength += parsePropertyBlock(dumpStream, handler, decoder, length, foundNode);
                 }
                 
                 if (textContentLength != null) {
@@ -233,6 +234,100 @@ public class SVNDumpStreamParser {
         }
     }
     
+    private long parsePropertyBlock(InputStream dumpStream, ISVNLoadHandler handler, CharsetDecoder decoder, 
+            long contentLength, boolean isNode) throws SVNException {
+        long actualLength = 0;
+        StringBuffer buffer = new StringBuffer();
+        String line = null;
+        
+        try {
+            while (contentLength != actualLength) {
+                buffer.setLength(0);
+                line = SVNFileUtil.readLineFromStream(dumpStream, buffer, decoder);
+                
+                if (line == null) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, 
+                            "Incomplete or unterminated property block");
+                    SVNErrorManager.error(err);
+                }
+                
+                //including '\n'
+                actualLength += line.length() + 1;
+                if ("PROPS-END".equals(line)) {
+                    break;
+                } else if (line.charAt(0) == 'K' && line.charAt(1) == ' ') {
+                    int len = 0;
+                    try {
+                        len = Integer.parseInt(line.substring(2));    
+                    } catch (NumberFormatException nfe) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, 
+                                "Malformed dumpfile header: can't parse node property key length");
+                        SVNErrorManager.error(err, nfe);
+                    }
+                    
+                    byte[] buff = new byte[len + 1];
+                    actualLength += SVNAdminHelper.readKeyOrValue(dumpStream, buff, len + 1);
+                    String propName = new String(buff, 0, len, "UTF-8");
+                    
+                    buffer.setLength(0);
+                    line = SVNFileUtil.readLineFromStream(dumpStream, buffer, decoder);
+                    if (line == null) {
+                        SVNAdminHelper.generateIncompleteDataError();
+                    }
+                    
+                    //including '\n'
+                    actualLength += line.length() + 1;
+                    if (line.charAt(0) == 'V' && line.charAt(1) == ' ') {
+                        try {
+                            len = Integer.parseInt(line.substring(2));    
+                        } catch (NumberFormatException nfe) {
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, 
+                                    "Malformed dumpfile header: can't parse node property value length");
+                            SVNErrorManager.error(err, nfe);
+                        }
+    
+                        buff = new byte[len + 1];
+                        actualLength += SVNAdminHelper.readKeyOrValue(dumpStream, buff, len + 1);
+                        SVNPropertyValue propValue = SVNPropertyValue.create(propName, buff, 0, len);
+                        if (isNode) {
+                            handler.setNodeProperty(propName, propValue);
+                        } else {
+                            handler.setRevisionProperty(propName, propValue);
+                        }
+                    } else {
+                        SVNAdminHelper.generateStreamMalformedError();
+                    }
+                } else if (line.charAt(0) == 'D' && line.charAt(1) == ' ') {
+                    int len = 0;
+                    try {
+                        len = Integer.parseInt(line.substring(2));    
+                    } catch (NumberFormatException nfe) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, 
+                                "Malformed dumpfile header: can't parse node property key length");
+                        SVNErrorManager.error(err, nfe);
+                    }
+                    
+                    byte[] buff = new byte[len + 1];
+                    actualLength += SVNAdminHelper.readKeyOrValue(dumpStream, buff, len + 1);
+                    
+                    if (!isNode) {
+                        SVNAdminHelper.generateStreamMalformedError();
+                    }
+                    
+                    String propName = new String(buff, 0, len, "UTF-8");
+                    handler.deleteNodeProperty(propName);
+                } else {
+                    SVNAdminHelper.generateStreamMalformedError();
+                }
+            }
+        } catch (IOException ioe) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
+            SVNErrorManager.error(err, ioe);
+        }
+        
+        return actualLength;
+    }
+
     private Map readHeaderBlock(InputStream dumpStream, String firstHeader, CharsetDecoder decoder) throws SVNException, IOException {
         Map headers = new SVNHashMap();
         StringBuffer buffer = new StringBuffer();

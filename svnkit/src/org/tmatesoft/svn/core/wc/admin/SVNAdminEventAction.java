@@ -108,4 +108,14 @@ public class SVNAdminEventAction {
 
     public static final SVNAdminEventAction DUMP_FILTER_REVISION_SKIPPED = new SVNAdminEventAction(17);
 
+    public static final SVNAdminEventAction DUMP_FILTER_TOTAL_REVISIONS_DROPPED = new SVNAdminEventAction(18);
+
+    public static final SVNAdminEventAction DUMP_FILTER_DROPPED_RENUMBERED_REVISION = new SVNAdminEventAction(19);
+
+    public static final SVNAdminEventAction DUMP_FILTER_RENUMBERED_REVISION = new SVNAdminEventAction(20);
+
+    public static final SVNAdminEventAction DUMP_FILTER_TOTAL_NODES_DROPPED = new SVNAdminEventAction(21);
+
+    public static final SVNAdminEventAction DUMP_FILTER_DROPPED_NODE = new SVNAdminEventAction(22);
+
 }
