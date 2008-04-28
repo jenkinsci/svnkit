@@ -73,7 +73,7 @@ public class SVNHelpCommand extends SVNCommand {
                 String commandName = (String) commands.next();
                 AbstractSVNCommand command = AbstractSVNCommand.getCommand(commandName);
                 if (command == null) {
-                    getSVNEnvironment().getErr().println("svn: \"" + commandName + "\": unknown command.\n");
+                    getSVNEnvironment().getErr().println("\"" + commandName + "\": unknown command.\n");
                     continue;
                 }
                 String help = SVNCommandUtil.getCommandHelp(command);

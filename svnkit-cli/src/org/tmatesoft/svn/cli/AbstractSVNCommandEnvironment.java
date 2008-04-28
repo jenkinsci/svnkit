@@ -130,7 +130,7 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
             SVNDebugLog.getDefaultLog().error(e);
             SVNErrorMessage err = e.getErrorMessage();
             if (err.getErrorCode() == SVNErrorCode.CL_INSUFFICIENT_ARGS || err.getErrorCode() == SVNErrorCode.CL_ARG_PARSING_ERROR) {
-                err = err.wrap("Try 'jsvn help' for more info");
+                err = err.wrap("Try '{0} help' for more info", getProgramName());
             }
             handleError(err);
             while(err != null) {
@@ -187,6 +187,8 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
     protected abstract ISVNOptions createClientOptions() throws SVNException;
 
     protected abstract ISVNAuthenticationManager createClientAuthenticationManager();
+    
+    protected abstract String getCommandLineClientName();
     
     public void initClientManager() throws SVNException {
         myClientManager = SVNClientManager.newInstance(createClientOptions(), createClientAuthenticationManager());
@@ -312,9 +314,9 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
                     }
                 }
                 if (err.getType() == SVNErrorMessage.TYPE_WARNING) {
-                    getErr().println("svn: warning: " + message);
+                    getErr().println(getCommandLineClientName() +": warning: " + message);
                 } else {
-                    getErr().println("svn: " + message);
+                    getErr().println(getCommandLineClientName() + ": " + message);
                     count++;
                 }
             } else {

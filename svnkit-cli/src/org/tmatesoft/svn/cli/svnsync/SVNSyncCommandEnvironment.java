@@ -26,7 +26,6 @@ import org.tmatesoft.svn.cli.AbstractSVNOption;
 import org.tmatesoft.svn.cli.SVNCommandLine;
 import org.tmatesoft.svn.cli.SVNConsoleAuthenticationProvider;
 import org.tmatesoft.svn.cli.SVNOptionValue;
-import org.tmatesoft.svn.cli.svnadmin.SVNAdminCommand;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -187,7 +186,7 @@ public class SVNSyncCommandEnvironment extends AbstractSVNCommandEnvironment {
         } 
         if (commandName == null) {
             if (isVersion()) {
-                SVNAdminCommand versionCommand = new SVNAdminCommand("--version", null) {
+                SVNSyncCommand versionCommand = new SVNSyncCommand("--version", null) {
                     protected Collection createSupportedOptions() {
                         LinkedList options = new LinkedList();
                         options.add(SVNSyncOption.VERSION);
@@ -207,6 +206,10 @@ public class SVNSyncCommandEnvironment extends AbstractSVNCommandEnvironment {
             SVNErrorManager.error(err);
         }
         return commandName;
+    }
+
+    protected String getCommandLineClientName() {
+        return "svnsync";
     }
 
 }

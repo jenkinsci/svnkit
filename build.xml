@@ -245,6 +245,7 @@
         <chmod file="build/lib/jsvnversion" perm="ugo+rx" />
         <chmod file="build/lib/jsvnsync" perm="ugo+rx" />
     	<chmod file="build/lib/jsvnlook" perm="ugo+rx" />
+		<chmod file="build/lib/jsvndumpfilter" perm="ugo+rx" />
     </target>
 
     <target name="build-src">
@@ -395,12 +396,14 @@
                 <exclude name="jsvnversion" />
                 <exclude name="jsvnsync" />
             	<exclude name="jsvnlook" />
+               	<exclude name="jsvndumpfilter" />
             </zipfileset>
             <zipfileset file="build/lib/jsvn" filemode="555" prefix="svnkit-${build.number}" />
             <zipfileset file="build/lib/jsvnadmin" filemode="555" prefix="svnkit-${build.number}" />
             <zipfileset file="build/lib/jsvnversion" filemode="555" prefix="svnkit-${build.number}" />
             <zipfileset file="build/lib/jsvnsync" filemode="555" prefix="svnkit-${build.number}" />
         	<zipfileset file="build/lib/jsvnlook" filemode="555" prefix="svnkit-${build.number}" />
+           	<zipfileset file="build/lib/jsvndumpfilter" filemode="555" prefix="svnkit-${build.number}" />
         	<zipfileset dir="build/doc" prefix="svnkit-${build.number}/doc" />
         </zip>
     	
@@ -411,7 +414,7 @@
                 <exclude name="jsvnversion" />
                 <exclude name="jsvnsync" />
             	<exclude name="jsvnlook" />
-            	
+            	<exclude name="jsvndumpfilter" />
                 <exclude name="jna.jar" />
                 <exclude name="JNA-LICENSE" />
             </zipfileset>
@@ -420,6 +423,7 @@
             <zipfileset file="build/lib/jsvnversion" filemode="555" prefix="svnkit-${build.number}" />
             <zipfileset file="build/lib/jsvnsync" filemode="555" prefix="svnkit-${build.number}" />
         	<zipfileset file="build/lib/jsvnlook" filemode="555" prefix="svnkit-${build.number}" />
+            <zipfileset file="build/lib/jsvndumpfilter" filemode="555" prefix="svnkit-${build.number}" />
         	<zipfileset dir="build/doc" prefix="svnkit-${build.number}/doc" />
         </zip>
     </target>

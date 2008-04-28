@@ -536,6 +536,10 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         }
     }
     
+    protected String getCommandLineClientName() {
+        return "svn";
+    }
+    
     public boolean isReIntegrate() {
         return myIsReIntegrate;
     }

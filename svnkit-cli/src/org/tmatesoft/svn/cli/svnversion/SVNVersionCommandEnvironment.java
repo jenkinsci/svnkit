@@ -121,4 +121,9 @@ public class SVNVersionCommandEnvironment extends AbstractSVNCommandEnvironment 
         }
         return "";
     }
+
+    protected String getCommandLineClientName() {
+        return "svnversion";
+    }
+
 }

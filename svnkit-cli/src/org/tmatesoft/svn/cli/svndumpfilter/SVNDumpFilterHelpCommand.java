@@ -9,7 +9,7 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.cli.svnsync;
+package org.tmatesoft.svn.cli.svndumpfilter;
 
 import java.text.MessageFormat;
 import java.util.Collection;
@@ -25,25 +25,15 @@ import org.tmatesoft.svn.core.SVNException;
  * @version 1.1.2
  * @author  TMate Software Ltd.
  */
-public class SVNSyncHelpCommand extends SVNSyncCommand {
+public class SVNDumpFilterHelpCommand extends SVNDumpFilterCommand {
     private static final String GENERIC_HELP_HEADER = 
-        "general usage: {0} SUBCOMMAND DEST_URL  [ARGS & OPTIONS ...]\n" +
+        "general usage: {0} SUBCOMMAND [ARGS & OPTIONS ...]\n" +
         "Type ''{0} help <subcommand>'' for help on a specific subcommand.\n" +
-        "Type ''{0} --version'' to see the program version and RA modules.\n" +
-        "\n" +
+        "Type ''{0} --version'' to see the program version.\n" +
+        "\n" + 
         "Available subcommands:\n";
-    
-    private static final String VERSION_HELP_FOOTER =
-        "\nThe following repository access (RA) modules are available:\n\n" +
-        "* org.tmatesoft.svn.core.internal.io.dav : Module for accessing a repository via WebDAV protocol.\n" +
-        "  - handles 'http' scheme\n" +
-        "  - handles 'https' scheme\n" +
-        "* org.tmatesoft.svn.core.internal.io.svn: Module for accessing a repository using the svn network protocol.\n" + 
-        "  - handles 'svn' scheme\n" +
-        "* org.tmatesoft.svn.core.internal.io.fs: Module for accessing a repository on local disk.\n" +
-        "  - handles 'file' scheme (only FSFS repositories are supported)\n";
 
-    public SVNSyncHelpCommand() {
+    public SVNDumpFilterHelpCommand() {
         super("help", new String[] {"?", "h"});
     }
     
@@ -52,29 +42,28 @@ public class SVNSyncHelpCommand extends SVNSyncCommand {
     }
 
     public void run() throws SVNException {
-        if (!getSVNSyncEnvironment().getArguments().isEmpty()) {
-            for (Iterator commands = getSVNSyncEnvironment().getArguments().iterator(); commands.hasNext();) {
+        if (!getEnvironment().getArguments().isEmpty()) {
+            for (Iterator commands = getEnvironment().getArguments().iterator(); commands.hasNext();) {
                 String commandName = (String) commands.next();
                 AbstractSVNCommand command = AbstractSVNCommand.getCommand(commandName);
                 if (command == null) {
-                    getSVNSyncEnvironment().getErr().println("\"" + commandName + "\": unknown command.\n");
+                    getEnvironment().getErr().println("\"" + commandName + "\": unknown command.\n");
                     continue;
                 }
                 String help = SVNCommandUtil.getCommandHelp(command);
-                getSVNSyncEnvironment().getOut().println(help);
+                getEnvironment().getOut().println(help);
             }
-        } else if (getSVNSyncEnvironment().isVersion()) {
-            String version = SVNCommandUtil.getVersion(getEnvironment(), getSVNSyncEnvironment().isQuiet());
+        } else if (getSVNDumpFilterEnvironment().isVersion()) {
+            String version = SVNCommandUtil.getVersion(getEnvironment(), getSVNDumpFilterEnvironment().isQuiet());
             getEnvironment().getOut().println(version);
-            getEnvironment().getOut().println(VERSION_HELP_FOOTER);
-        } else if (getSVNSyncEnvironment().getArguments().isEmpty()) {
+        } else if (getEnvironment().getArguments().isEmpty()) {
             String help = SVNCommandUtil.getGenericHelp(getEnvironment().getProgramName(), GENERIC_HELP_HEADER, 
                     null);
-            getSVNSyncEnvironment().getOut().print(help);
+            getEnvironment().getOut().print(help);
         } else {
             String message = MessageFormat.format("Type ''{0} help'' for usage.", new Object[] { 
-                    getSVNSyncEnvironment().getProgramName() });
-            getSVNSyncEnvironment().getOut().println(message);
+                    getEnvironment().getProgramName() });
+            getEnvironment().getOut().println(message);
         }
     }
 

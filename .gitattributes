@@ -105,6 +105,8 @@ doc/wiki/main.vm -text
 doc/wiki/repository_tree.png -text
 doc/wiki/svnkit_architecture.png -text
 doc/wiki/svnrepository_connection.png -text
+svnkit-cli/scripts/jsvndumpfilter -text
+svnkit-cli/scripts/jsvndumpfilter.bat -text
 svnkit-cli/src/org/tmatesoft/svn/cli/svn/DefaultSVNCommandLineDiffGenerator.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli/svn/SVNCommandLineConflictHandler.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli/svn/SVNConflictAcceptPolicy.java -text
@@ -120,6 +122,15 @@ svnkit-cli/src/org/tmatesoft/svn/cli/svnadmin/SVNAdminSetUUIDCommand.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli/svnadmin/SVNAdminUpgradeCommand.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli/svnadmin/commands.properties -text
 svnkit-cli/src/org/tmatesoft/svn/cli/svnadmin/options.properties -text
+svnkit-cli/src/org/tmatesoft/svn/cli/svndumpfilter/SVNDumpFilter.java -text
+svnkit-cli/src/org/tmatesoft/svn/cli/svndumpfilter/SVNDumpFilterCommand.java -text
+svnkit-cli/src/org/tmatesoft/svn/cli/svndumpfilter/SVNDumpFilterCommandEnvironment.java -text
+svnkit-cli/src/org/tmatesoft/svn/cli/svndumpfilter/SVNDumpFilterExcludeCommand.java -text
+svnkit-cli/src/org/tmatesoft/svn/cli/svndumpfilter/SVNDumpFilterHelpCommand.java -text
+svnkit-cli/src/org/tmatesoft/svn/cli/svndumpfilter/SVNDumpFilterIncludeCommand.java -text
+svnkit-cli/src/org/tmatesoft/svn/cli/svndumpfilter/SVNDumpFilterOption.java -text
+svnkit-cli/src/org/tmatesoft/svn/cli/svndumpfilter/commands.properties -text
+svnkit-cli/src/org/tmatesoft/svn/cli/svndumpfilter/options.properties -text
 svnkit-cli/src/org/tmatesoft/svn/cli/svnlook/SVNLookChangedCommand.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli/svnlook/SVNLookDiffCommand.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli/svnlook/SVNLookDirsChangedCommand.java -text

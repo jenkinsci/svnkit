@@ -58,7 +58,7 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
     private OutputStream myOutputStream;
     private Collection myPrefixes;
     private Map myDroppedNodes;
-    private Map myReNumberHistory;
+    private Map myRenumberHistory;
     private RevisionBaton myCurrentRevisionBaton;
     private NodeBaton myCurrentNodeBaton;
     private ISVNAdminEventHandler myEventHandler;
@@ -77,7 +77,7 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
         myIsSkipMissingMergeSources = skipMissingMergeSources;
         myPrefixes = prefixes;
         myDroppedNodes = new SVNHashMap();
-        myReNumberHistory = new SVNHashMap();
+        myRenumberHistory = new SVNHashMap();
     }
     
     public void reset(OutputStream os, ISVNAdminEventHandler handler, boolean exclude, boolean renumberRevisions, 
@@ -94,7 +94,7 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
         myIsSkipMissingMergeSources = skipMissingMergeSources;
         myPrefixes = prefixes;
         myDroppedNodes.clear();
-        myReNumberHistory.clear();
+        myRenumberHistory.clear();
     }
     
     public void closeNode() throws SVNException {
@@ -161,7 +161,7 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
                 String headerValue = (String) headers.get(header);
                 if (myIsDoRenumberRevisions && header.equals(SVNAdminHelper.DUMPFILE_NODE_COPYFROM_REVISION)) {
                     long copyFromOriginalRevision = Long.parseLong(headerValue);
-                    RevisionItem reNumberedCopyFromValue = (RevisionItem) myReNumberHistory.get(
+                    RevisionItem reNumberedCopyFromValue = (RevisionItem) myRenumberHistory.get(
                             new Long(copyFromOriginalRevision));
                     if (reNumberedCopyFromValue == null || 
                             !SVNRevision.isValidRevisionNumber(reNumberedCopyFromValue.myRevision)) {
@@ -287,8 +287,8 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
         return myDroppedRevisionsCount;
     }
 
-    public Map getReNumberHistory() {
-        return myReNumberHistory;
+    public Map getRenumberHistory() {
+        return myRenumberHistory;
     }
 
     public Map getDroppedNodes() {
@@ -324,7 +324,7 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
             writeDumpData(myOutputStream, revisionBaton.myHeaderBuffer.toByteArray());
             writeDumpData(myOutputStream, propsBuffer.toByteArray());
             if (myIsDoRenumberRevisions) {
-                myReNumberHistory.put(new Long(revisionBaton.myOriginalRevision), 
+                myRenumberHistory.put(new Long(revisionBaton.myOriginalRevision), 
                         new RevisionItem(revisionBaton.myActualRevision, false));
                 myLastLiveRevision = revisionBaton.myActualRevision;
             }
@@ -337,7 +337,7 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
         } else {
             myDroppedRevisionsCount++;
             if (myIsDoRenumberRevisions) {
-                myReNumberHistory.put(new Long(revisionBaton.myOriginalRevision), 
+                myRenumberHistory.put(new Long(revisionBaton.myOriginalRevision), 
                         new RevisionItem(myLastLiveRevision, true));
             }
             
@@ -408,14 +408,14 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
                 for (int i = 0; i < rangeList.getSize(); i++) {
                     SVNMergeRange range = ranges[i];
                     
-                    RevisionItem revItemStart = (RevisionItem) myReNumberHistory.get(new Long(range.getStartRevision()));
+                    RevisionItem revItemStart = (RevisionItem) myRenumberHistory.get(new Long(range.getStartRevision()));
                     if (revItemStart == null || !SVNRevision.isValidRevisionNumber(revItemStart.myRevision)) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNEXPECTED_KIND, 
                                 "No valid revision range 'start' in filtered stream");
                         SVNErrorManager.error(err);
                     }
 
-                    RevisionItem revItemEnd = (RevisionItem) myReNumberHistory.get(new Long(range.getEndRevision()));
+                    RevisionItem revItemEnd = (RevisionItem) myRenumberHistory.get(new Long(range.getEndRevision()));
                     if (revItemEnd == null || !SVNRevision.isValidRevisionNumber(revItemEnd.myRevision)) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNEXPECTED_KIND, 
                                 "No valid revision range 'end' in filtered stream");

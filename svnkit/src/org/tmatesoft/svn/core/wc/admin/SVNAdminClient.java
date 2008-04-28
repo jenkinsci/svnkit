@@ -866,12 +866,12 @@ public class SVNAdminClient extends SVNBasicClient {
             }
             
             if (renumberRevisions) {
-                Map reNumberHistory = handler.getReNumberHistory();
-                Long[] reNumberedRevisions = (Long[]) reNumberHistory.keySet().toArray(new Long[reNumberHistory.size()]);
+                Map renumberHistory = handler.getRenumberHistory();
+                Long[] reNumberedRevisions = (Long[]) renumberHistory.keySet().toArray(new Long[renumberHistory.size()]);
                 Arrays.sort(reNumberedRevisions);
                 for (int i = reNumberedRevisions.length; i > 0; i--) {
                     Long revision = reNumberedRevisions[i - 1];
-                    DefaultDumpFilterHandler.RevisionItem revItem = (DefaultDumpFilterHandler.RevisionItem) reNumberHistory.get(revision);
+                    DefaultDumpFilterHandler.RevisionItem revItem = (DefaultDumpFilterHandler.RevisionItem) renumberHistory.get(revision);
                     if (revItem.wasDropped()) {
                         String message = MessageFormat.format("{0} => (dropped)", new Object[] { revision.toString() });
                         SVNAdminEvent event = new SVNAdminEvent(revision.longValue(), 

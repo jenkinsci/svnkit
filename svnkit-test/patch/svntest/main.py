@@ -1255,6 +1255,7 @@ def run_tests(test_list, serial_only = False):
   global svnadmin_binary
   global svnlook_binary
   global svnsync_binary
+  global svndumpfilter_binary
   global svnversion_binary
   global command_line_parsed
   global http_library
@@ -1364,6 +1365,7 @@ def run_tests(test_list, serial_only = False):
     svnadmin_binary = os.path.join(svn_bin, 'jsvnadmin' + _bat)
     svnlook_binary = os.path.join(svn_bin, 'jsvnlook' + _bat)
     svnsync_binary = os.path.join(svn_bin, 'jsvnsync' + _bat)
+    svndumpfilter_binary = os.path.join(svn_bin, 'jsvndumpfilter' + _bat)
     svnversion_binary = os.path.join(svn_bin, 'jsvnversion' + _bat)
     use_jsvn = False
   else:
@@ -1372,6 +1374,7 @@ def run_tests(test_list, serial_only = False):
       svnadmin_binary = os.path.join(svn_bin, 'svnadmin' + _exe)
       svnlook_binary = os.path.join(svn_bin, 'svnlook' + _exe)
       svnsync_binary = os.path.join(svn_bin, 'svnsync' + _exe)
+      svndumpfilter_binary = os.path.join(svn_bin, 'svndumpfilter' + _exe)
       svnversion_binary = os.path.join(svn_bin, 'svnversion' + _exe)
 
 #  cleanup_mode = False

@@ -22,7 +22,6 @@ $!
 $ CP = "/svnkit_home/svnkit.jar"
 $ CP = CP + ":/svnkit_home/svnkit-cli.jar"
 $ CP = CP + ":/svnkit_home/trilead.jar"
-$ CP = CP + ":/svnkit_home/sqlitejdbc.jar"
 $ CP = CP + ":/svnkit_home/jna.jar"
 $ OPT = ""
 $! OPT = "-Djava.util.logging.config.file=/svnkit_home/logging.properties"
@@ -30,7 +29,8 @@ $!
 $ JV = f$edit(java,"collapse")
 $ jsvn ==      "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli.svn.SVN"""
 $ jsvnadmin == "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli.svnadmin.SVNAdmin"""
-$ jsvnlook ==  "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli.SVNLook"""
-$ jsvnsync ==  "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli.SVNSync"""
+$ jsvnlook ==  "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli.svnlook.SVNLook"""
+$ jsvnsync ==  "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli.svnsync.SVNSync"""
+$ jsvndumpfilter ==  "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli.svndumpfilter.SVNDumpFilter"""
 $ jsvnversion ==  "''JV' ''OPT' -cp ''CP' ""org.tmatesoft.svn.cli.svnversion.SVNVersion"""
 $!

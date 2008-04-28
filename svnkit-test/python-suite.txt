@@ -26,6 +26,7 @@ stat ALL
 svnadmin ALL -8 -9
 svnlook ALL
 svnsync ALL
+svndumpfilter ALL
 svnversion ALL
 switch ALL
 trans ALL

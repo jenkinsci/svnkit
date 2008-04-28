@@ -26,7 +26,6 @@ import org.tmatesoft.svn.cli.AbstractSVNCommandEnvironment;
 import org.tmatesoft.svn.cli.AbstractSVNOption;
 import org.tmatesoft.svn.cli.SVNCommandLine;
 import org.tmatesoft.svn.cli.SVNOptionValue;
-import org.tmatesoft.svn.cli.svn.SVNCommand;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -313,7 +312,7 @@ public class SVNLookCommandEnvironment extends AbstractSVNCommandEnvironment {
         } 
         if (commandName == null) {
             if (myIsVersion) {
-                SVNCommand versionCommand = new SVNCommand("--version", null) {
+                SVNLookCommand versionCommand = new SVNLookCommand("--version", null) {
                     protected Collection createSupportedOptions() {
                         LinkedList options = new LinkedList();
                         options.add(SVNLookOption.VERSION);
@@ -333,6 +332,10 @@ public class SVNLookCommandEnvironment extends AbstractSVNCommandEnvironment {
             SVNErrorManager.error(err);
         }
         return commandName;
+    }
+
+    protected String getCommandLineClientName() {
+        return "svnlook";
     }
 
 }

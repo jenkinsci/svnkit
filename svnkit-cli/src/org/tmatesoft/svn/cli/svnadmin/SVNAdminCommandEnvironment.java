@@ -177,6 +177,9 @@ public class SVNAdminCommandEnvironment extends AbstractSVNCommandEnvironment {
         return commandName;
     }
 
+    protected String getCommandLineClientName() {
+        return "svnadmin";
+    }
     
     public boolean isQuiet() {
         return myIsQuiet;

@@ -483,6 +483,7 @@ public class PythonTests {
         generateClientScript(new File("daemon/template"), new File("daemon/jsvnversion"), "svnversion", portNumber);
         generateClientScript(new File("daemon/template"), new File("daemon/jsvnlook"), "svnlook", portNumber);
         generateClientScript(new File("daemon/template"), new File("daemon/jsvnsync"), "svnsync", portNumber);
+        generateClientScript(new File("daemon/template"), new File("daemon/jsvndumpfilter"), "svndumpfilter", portNumber);
         
         return new File("daemon").getAbsolutePath();
     }
