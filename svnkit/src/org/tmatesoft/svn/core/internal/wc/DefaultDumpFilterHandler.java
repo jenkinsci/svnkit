@@ -108,19 +108,18 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
     }
 
     public void closeRevision() throws SVNException {
-        if (!myCurrentRevisionBaton.myHasWritingBegun) {
+        if (myCurrentRevisionBaton != null && !myCurrentRevisionBaton.myHasWritingBegun) {
             outputRevision(myCurrentRevisionBaton);
         }
     }
 
     public void openNode(Map headers) throws SVNException {
-        NodeBaton myCurrentNodeBaton = new NodeBaton();
+        myCurrentNodeBaton = new NodeBaton();
         String nodePath = (String) headers.get(SVNAdminHelper.DUMPFILE_NODE_PATH);
         String copyFromPath = (String) headers.get(SVNAdminHelper.DUMPFILE_NODE_COPYFROM_PATH);
         if (!nodePath.startsWith("/")) {
             nodePath = "/" + nodePath;    
         }
-        
         if (copyFromPath != null && !copyFromPath.startsWith("/")) {
             copyFromPath = "/" + copyFromPath;
         }
@@ -133,7 +132,7 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
             long textContentLength = getLongFromHeaders(SVNAdminHelper.DUMPFILE_TEXT_CONTENT_LENGTH, headers);
             if (copyFromPath != null && skipPath(copyFromPath)) {
                 SVNNodeKind kind = getNodeKindFromHeaders(SVNAdminHelper.DUMPFILE_NODE_KIND, headers);
-                if (textContentLength > 0 && kind == SVNNodeKind.FILE) {
+                if (textContentLength >= 0 && kind == SVNNodeKind.FILE) {
                     headers.remove(SVNAdminHelper.DUMPFILE_NODE_COPYFROM_PATH);
                     headers.remove(SVNAdminHelper.DUMPFILE_NODE_COPYFROM_REVISION);
                     copyFromPath = null;
@@ -211,30 +210,41 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
         } else {
             setFullText();
         }
-            
+        
         byte[] buffer = null;
-        if (contentLength != 0) {
+        if (contentLength > 0) {
             buffer = new byte[SVNFileUtil.STREAM_CHUNK_SIZE];
-            try {
-                while (contentLength > 0) {
-                    int numToRead = contentLength > SVNFileUtil.STREAM_CHUNK_SIZE ? 
-                            SVNFileUtil.STREAM_CHUNK_SIZE : (int) contentLength;
-                    int read = 0;
-                    while(numToRead > 0) {
-                        int numRead = dumpStream.read(buffer, read, numToRead);
-                        if (numRead < 0) {
-                            SVNAdminHelper.generateIncompleteDataError();
-                        }
-                        read += numRead;
-                        numToRead -= numRead;
+            while (contentLength > 0) {
+                int numToRead = contentLength > SVNFileUtil.STREAM_CHUNK_SIZE ? 
+                        SVNFileUtil.STREAM_CHUNK_SIZE : (int) contentLength;
+                int read = 0;
+                while(numToRead > 0) {
+                    int numRead = -1;
+                    try {
+                        numRead = dumpStream.read(buffer, read, numToRead);
+                    } catch (IOException ioe) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getMessage());
+                        SVNErrorManager.error(err, ioe);
                     }
-                        
-                    myOutputStream.write(buffer, 0, read);
-                    contentLength -= read;
+
+                    if (numRead < 0) {
+                        SVNAdminHelper.generateIncompleteDataError();
+                    }
+                    read += numRead;
+                    numToRead -= numRead;
                 }
-            } catch (IOException ioe) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getMessage());
-                SVNErrorManager.error(err, ioe);
+                            
+                if (!myCurrentNodeBaton.myIsDoSkip) {
+                    try {
+                        myOutputStream.write(buffer, 0, read);
+                    } catch (IOException ioe) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_UNEXPECTED_EOF, 
+                                "Unexpected EOF writing contents");
+                        SVNErrorManager.error(err, ioe);
+                    }
+                }
+
+                contentLength -= read;
             }
         }
     }
@@ -258,7 +268,11 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
 
     public void setRevisionProperty(String propertyName, SVNPropertyValue propertyValue) throws SVNException {
         myCurrentRevisionBaton.myHasProps = true;
-        myCurrentRevisionBaton.myProperties.put(propertyName, propertyValue);
+        if (propertyValue == null) {
+            myCurrentRevisionBaton.myProperties.remove(propertyName);
+        } else {
+            myCurrentRevisionBaton.myProperties.put(propertyName, propertyValue);
+        }
     }
 
     public void setNodeProperty(String propertyName, SVNPropertyValue propertyValue) throws SVNException {
@@ -319,10 +333,13 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
                     "\n");
         }
         
-        revisionBaton.writeToHeader(SVNAdminHelper.DUMPFILE_CONTENT_LENGTH + ": " + propsBuffer.size() + "\n\n\n");
+        revisionBaton.writeToHeader(SVNAdminHelper.DUMPFILE_CONTENT_LENGTH + ": " + propsBuffer.size() + "\n\n");
+        writeDumpData(propsBuffer, "\n");
+        
         if (revisionBaton.myHasNodes || !myIsDropEmptyRevisions || !revisionBaton.myHadDroppedNodes) {
             writeDumpData(myOutputStream, revisionBaton.myHeaderBuffer.toByteArray());
             writeDumpData(myOutputStream, propsBuffer.toByteArray());
+            
             if (myIsDoRenumberRevisions) {
                 myRenumberHistory.put(new Long(revisionBaton.myOriginalRevision), 
                         new RevisionItem(revisionBaton.myActualRevision, false));
@@ -438,7 +455,10 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
     
     private long getLongFromHeaders(String header, Map headers) {
         String val = (String) headers.get(header);
-        return Long.parseLong(val);
+        if (val != null) {
+            return Long.parseLong(val);
+        }
+        return -1;
     }
     
     private void writeDumpData(OutputStream out, String data) throws SVNException {
@@ -520,24 +540,20 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
         ByteArrayOutputStream myPropertiesBuffer;
         ByteArrayOutputStream myHeaderBuffer;
         
+        public NodeBaton() {
+            myPropertiesBuffer = new ByteArrayOutputStream();
+            myHeaderBuffer = new ByteArrayOutputStream();
+        }
+        
         void writeProperty(String propName, SVNPropertyValue propValue) throws SVNException {
-            if (myPropertiesBuffer == null) {
-                myPropertiesBuffer = new ByteArrayOutputStream();
-            }
             DefaultDumpFilterHandler.this.writeProperty(myPropertiesBuffer, propName, propValue);
         }
         
         void writeToPropertyBuffer(String data) throws SVNException {
-            if (myPropertiesBuffer == null) {
-                myPropertiesBuffer = new ByteArrayOutputStream();
-            }
             DefaultDumpFilterHandler.this.writeDumpData(myPropertiesBuffer, data);
         }
         
         void writeToHeader(String data) throws SVNException {
-            if (myHeaderBuffer == null) {
-                myHeaderBuffer = new ByteArrayOutputStream();
-            }
             writeDumpData(myHeaderBuffer, data);
         }
 

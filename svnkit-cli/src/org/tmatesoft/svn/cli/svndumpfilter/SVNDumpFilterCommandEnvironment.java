@@ -76,6 +76,10 @@ public class SVNDumpFilterCommandEnvironment extends AbstractSVNCommandEnvironme
         return myIsSkipMissingMergeSources;
     }
 
+    public List getPrefixes() {
+        return myPrefixes;
+    }
+
     public SVNDumpFilterCommandEnvironment(String programName, PrintStream out, PrintStream err, InputStream in) {
         super(programName, out, err, in);
     }
@@ -96,7 +100,6 @@ public class SVNDumpFilterCommandEnvironment extends AbstractSVNCommandEnvironme
                     "Error: no prefixes supplied.");
             SVNErrorManager.error(err);
         }
-        
         
         myPrefixes = new LinkedList();
         for (Iterator prefixesIter = arguments.iterator(); prefixesIter.hasNext();) {

@@ -12,11 +12,15 @@
 package org.tmatesoft.svn.cli.svndumpfilter;
 
 
+import java.util.Iterator;
+
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.admin.ISVNAdminEventHandler;
+import org.tmatesoft.svn.core.wc.admin.SVNAdminClient;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEvent;
+import org.tmatesoft.svn.core.wc.admin.SVNAdminEventAction;
 
 
 /**
@@ -24,7 +28,9 @@ import org.tmatesoft.svn.core.wc.admin.SVNAdminEvent;
  * @author  TMate Software Ltd.
  */
 public class SVNDumpFilterExcludeCommand extends SVNDumpFilterCommand implements ISVNAdminEventHandler {
-
+    private boolean myHasPrintedRenumberedRevisionsHeader;
+    private boolean myIsPrintFinalEOL;
+    
     public SVNDumpFilterExcludeCommand() {
         super("exclude", null);
     }
@@ -37,10 +43,53 @@ public class SVNDumpFilterExcludeCommand extends SVNDumpFilterCommand implements
             } else {
                 environment.getErr().println("Excluding prefixes:");
             }
+            
+            for (Iterator prefixesIter = environment.getPrefixes().iterator(); prefixesIter.hasNext();) {
+                String prefix = (String) prefixesIter.next();
+                environment.getErr().println("   '" + prefix + "'");
+            }
+            environment.getErr().println();
+        }
+
+        SVNAdminClient client = getEnvironment().getClientManager().getAdminClient();
+        client.setEventHandler(this);
+        client.doFilter(environment.getIn(), environment.getOut(), true, environment.isRenumberRevisions(), 
+                environment.isDropEmptyRevisions(), environment.isPreserveRevisionProperties(), 
+                environment.getPrefixes(), environment.isSkipMissingMergeSources());
+        if (!environment.isQuiet() && myIsPrintFinalEOL) {
+            environment.getErr().println();
         }
     }
 
     public void handleAdminEvent(SVNAdminEvent event, double progress) throws SVNException {
+        SVNDumpFilterCommandEnvironment environment = getSVNDumpFilterEnvironment();
+        if (!environment.isQuiet()) {
+            SVNAdminEventAction action = event.getAction();
+            if (action == SVNAdminEventAction.DUMP_FILTER_REVISION_COMMITTED || 
+                    action == SVNAdminEventAction.DUMP_FILTER_REVISION_SKIPPED) {
+                environment.getErr().println(event.getMessage());
+            } else if (action == SVNAdminEventAction.DUMP_FILTER_TOTAL_REVISIONS_DROPPED) {
+                environment.getErr().println();
+                environment.getErr().println(event.getMessage());
+                environment.getErr().println();
+                environment.getErr().println();
+            } else if (action == SVNAdminEventAction.DUMP_FILTER_RENUMBERED_REVISION || 
+                    action == SVNAdminEventAction.DUMP_FILTER_DROPPED_RENUMBERED_REVISION) {
+                if (!myHasPrintedRenumberedRevisionsHeader) {
+                    environment.getErr().println("Revisions renumbered as follows:");
+                    myHasPrintedRenumberedRevisionsHeader = true;
+                }
+                environment.getErr().println("   " + event.getMessage());
+            } else if (action == SVNAdminEventAction.DUMP_FILTER_TOTAL_NODES_DROPPED) {
+                if (myHasPrintedRenumberedRevisionsHeader) {
+                    environment.getErr().println();
+                }
+                environment.getErr().println(event.getMessage());
+                myIsPrintFinalEOL = true;
+            } else if (action == SVNAdminEventAction.DUMP_FILTER_DROPPED_NODE) {
+                environment.getErr().println("   " + event.getMessage());
+            }
+        }
     }
     
     public void handleEvent(SVNEvent event, double progress) throws SVNException {
