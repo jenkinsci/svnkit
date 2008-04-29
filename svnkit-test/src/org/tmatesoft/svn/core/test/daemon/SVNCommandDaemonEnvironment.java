@@ -27,6 +27,7 @@ import java.util.logging.Logger;
 
 import org.tmatesoft.svn.cli.svn.SVN;
 import org.tmatesoft.svn.cli.svnadmin.SVNAdmin;
+import org.tmatesoft.svn.cli.svndumpfilter.SVNDumpFilter;
 import org.tmatesoft.svn.cli.svnlook.SVNLook;
 import org.tmatesoft.svn.cli.svnsync.SVNSync;
 import org.tmatesoft.svn.cli.svnversion.SVNVersion;
@@ -112,6 +113,8 @@ public class SVNCommandDaemonEnvironment {
                 SVNVersion.main(commandArgs);
             } else if ("svnsync".equals(myProgramName)) {
                 SVNSync.main(commandArgs);
+            } else if ("svndumpfilter".equals(myProgramName)) {
+                SVNDumpFilter.main(commandArgs);
             }
         } catch (SVNCommandExitException e) {
             return e.getCode();
