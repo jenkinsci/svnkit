@@ -649,18 +649,18 @@ public class JavaHLObjectFactory {
         }
         return new NotifyInformation(
                 path,
-                JavaHLObjectFactory.getNotifyActionValue(event.getAction()),
-                JavaHLObjectFactory.getNodeKind(event.getNodeKind()),
+                getNotifyActionValue(event.getAction()),
+                getNodeKind(event.getNodeKind()),
                 event.getMimeType(),
-                JavaHLObjectFactory.createLock(event.getLock()),
+                createLock(event.getLock()),
                 errMsg,
-                JavaHLObjectFactory.getStatusValue(event.getContentsStatus()),
-                JavaHLObjectFactory.getStatusValue(event.getPropertiesStatus()),
-                JavaHLObjectFactory.getLockStatusValue(event.getLockStatus()),
+                getStatusValue(event.getContentsStatus()),
+                getStatusValue(event.getPropertiesStatus()),
+                getLockStatusValue(event.getLockStatus()),
                 event.getRevision(),
                 event.getChangelistName(),
-                null//TODO: FIXME
-                );
+                createRevisionRange(event.getMergeRange())
+        );
     }
     
     public static CopySource createCopySource(SVNLocationEntry location) {
