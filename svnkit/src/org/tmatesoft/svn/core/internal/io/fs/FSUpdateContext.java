@@ -274,7 +274,11 @@ public class FSUpdateContext {
             fullSourcePath = null;
         }
 
-        if ("".equals(getReportTarget()) && (sourceEntry == null || sourceEntry.getType() != SVNNodeKind.DIR || targetEntry == null || targetEntry.getType() != SVNNodeKind.DIR)) {
+        if ("".equals(getReportTarget()) && targetEntry == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_PATH_SYNTAX, "Target path does not exist");
+            SVNErrorManager.error(err);
+        } else if ("".equals(getReportTarget()) && (sourceEntry == null || sourceEntry.getType() != SVNNodeKind.DIR || 
+                targetEntry.getType() != SVNNodeKind.DIR)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_PATH_SYNTAX, "Cannot replace a directory from within");
             SVNErrorManager.error(err);
         }

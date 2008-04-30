@@ -52,15 +52,24 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
         DEFAULT_ATTRS.put("send-all", Boolean.TRUE.toString());
     }
 
-    public static StringBuffer generateEditorRequest(final DAVConnection connection, StringBuffer xmlBuffer, String url,
-                                                     long targetRevision, String target, String dstPath, SVNDepth depth, boolean ignoreAncestry,
-                                                     boolean resourceWalk, boolean fetchContents, boolean sendCopyFromArgs,
-                                                     ISVNReporterBaton reporterBaton) throws SVNException {
+    public static StringBuffer generateEditorRequest(final DAVConnection connection, StringBuffer xmlBuffer, 
+            String url, long targetRevision, String target, String dstPath, SVNDepth depth, 
+            boolean ignoreAncestry, boolean resourceWalk, boolean fetchContents, boolean sendCopyFromArgs,
+            boolean sendAll, ISVNReporterBaton reporterBaton) throws SVNException {
         xmlBuffer = SVNXMLUtil.addXMLHeader(xmlBuffer);
         if (url.endsWith("/")) {
             url = url.substring(0, url.length() - 1);
         }
-        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "update-report", SVN_NAMESPACES_LIST, SVNXMLUtil.PREFIX_MAP, DEFAULT_ATTRS, xmlBuffer);
+        
+        Object previousSendAllValue = !sendAll ? DEFAULT_ATTRS.put("send-all", Boolean.FALSE.toString()) : null;
+        
+        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "update-report", 
+                SVN_NAMESPACES_LIST, SVNXMLUtil.PREFIX_MAP, DEFAULT_ATTRS, xmlBuffer);
+        
+        if (previousSendAllValue != null) {
+            DEFAULT_ATTRS.put("send-all", previousSendAllValue);
+        }
+        
         SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "src-path", url, xmlBuffer);
         if (targetRevision >= 0) {
             SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "target-revision", String.valueOf(targetRevision), xmlBuffer);
@@ -85,10 +94,12 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
         if (resourceWalk) {
             SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "resource-walk", "yes", xmlBuffer);
         }
-        if (!fetchContents) {
+        if (sendAll && !fetchContents) {
             SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "text-deltas", "no", xmlBuffer);
         }
+        
         final StringBuffer report = xmlBuffer;
+        
         reporterBaton.report(new ISVNReporter() {
             public void setPath(String path, String lockToken, long revision, boolean startEmpty) throws SVNException {
                 setPath(path, lockToken, revision, SVNDepth.INFINITY, startEmpty);

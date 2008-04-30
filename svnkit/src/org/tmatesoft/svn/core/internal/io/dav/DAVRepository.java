@@ -54,6 +54,7 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNDepthFilterEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
@@ -1018,7 +1019,8 @@ public class DAVRepository extends SVNRepository {
         return new SVNDirEntry(url, name, kind, size, hasProperties, lastRevision, date, author);
     }
 
-    public void diff(SVNURL url, long targetRevision, long revision, String target, boolean ignoreAncestry, SVNDepth depth, boolean getContents, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
+    public void diff(SVNURL url, long targetRevision, long revision, String target, boolean ignoreAncestry, 
+            SVNDepth depth, boolean getContents, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
         if (url == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "URL could not be NULL");
             SVNErrorManager.error(err);
@@ -1026,37 +1028,13 @@ public class DAVRepository extends SVNRepository {
         if (revision < 0) {
             revision = targetRevision;
         }
-        try {
-            openConnection();
-            StringBuffer request = DAVEditorHandler.generateEditorRequest(myConnection, null, getLocation().toString(), 
-                    targetRevision, target, url.toString(), depth, ignoreAncestry, false, getContents, false, reporter);
-            DAVEditorHandler handler = new DAVEditorHandler(editor, true);
-            String path = SVNEncodingUtil.uriEncode(getLocation().getPath());
-            path = DAVUtil.getVCCPath(myConnection, this, path);
-            HTTPStatus status = myConnection.doReport(path, request, handler, true);
-            if (status.getError() != null) {
-                SVNErrorManager.error(status.getError());
-            }
-        } finally {
-            closeConnection();
-        }
+        runReport(getLocation(), targetRevision, target, url.toString(), depth, ignoreAncestry, false, 
+                getContents, false, false, false, true, reporter, editor);
     }
 
     public void status(long revision, String target, SVNDepth depth, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
-        try {
-            openConnection();
-            StringBuffer request = DAVEditorHandler.generateEditorRequest(myConnection, null, getLocation().toString(), 
-                    revision, target, null, depth, false, false, false, false, reporter);
-            DAVEditorHandler handler = new DAVEditorHandler(editor, false);
-            String path = SVNEncodingUtil.uriEncode(getLocation().getPath());
-            path = DAVUtil.getVCCPath(myConnection, this, path);
-            HTTPStatus status = myConnection.doReport(path, request, handler);
-            if (status.getError() != null) {
-                SVNErrorManager.error(status.getError());
-            }
-        } finally {
-            closeConnection();
-        }
+        runReport(getLocation(), revision, target, null, depth, false, false, false, false, true, false, 
+                false, reporter, editor);
     }
 
     public void update(SVNURL url, long revision, String target, SVNDepth depth, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
@@ -1064,50 +1042,14 @@ public class DAVRepository extends SVNRepository {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "URL could not be NULL");
             SVNErrorManager.error(err);
         }
-        try {
-            openConnection();
-            StringBuffer request = DAVEditorHandler.generateEditorRequest(myConnection, null, getLocation().toString(), 
-                    revision, target, url.toString(), depth, true, false, true, false, reporter);
-            DAVEditorHandler handler = new DAVEditorHandler(editor, true);
-
-            String bcPath = SVNEncodingUtil.uriEncode(getLocation().getPath());
-            try {
-                bcPath = DAVUtil.getVCCPath(myConnection, this, bcPath);
-            } catch (SVNException e) {
-                editor.closeEdit();
-                throw e;
-            }
-            HTTPStatus status = myConnection.doReport(bcPath, request, handler);
-            if (status.getError() != null) {
-                SVNErrorManager.error(status.getError());
-    }
-        } finally {
-            closeConnection();
-        }
+        runReport(getLocation(), revision, target, url.toString(), depth, true, false, true, false, true, true, 
+                false, reporter, editor);
     }
 
     public void update(long revision, String target, SVNDepth depth, boolean sendCopyFromArgs, 
             ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
-        try {
-            openConnection();
-            StringBuffer request = DAVEditorHandler.generateEditorRequest(myConnection, null, getLocation().toString(), 
-                    revision, target, null, depth, false, false, true, sendCopyFromArgs, reporter);
-            DAVEditorHandler handler = new DAVEditorHandler(editor, true);
-            String bcPath = SVNEncodingUtil.uriEncode(getLocation().getPath());
-            try {
-                bcPath = DAVUtil.getVCCPath(myConnection, this, bcPath);
-            } catch (SVNException e) {
-                // no need to call close edit here, I suppose,
-                // no editing has been started yet.
-                throw e;
-            }
-            HTTPStatus status = myConnection.doReport(bcPath, request, handler);
-            if (status.getError() != null) {
-                SVNErrorManager.error(status.getError());
-            }
-        } finally {
-            closeConnection();
-        }
+        runReport(getLocation(), revision, target, null, depth, false, false, true, sendCopyFromArgs, true, 
+                false, false, reporter, editor);
     }
 
 	public boolean hasCapability(SVNCapability capability) throws SVNException {
@@ -1211,6 +1153,37 @@ public class DAVRepository extends SVNRepository {
             }
         }
         return mergeInfo;
+    }
+    
+    private void runReport(SVNURL url, long targetRevision, String target, String dstPath, SVNDepth depth, 
+            boolean ignoreAncestry, boolean resourceWalk, boolean fetchContents, boolean sendCopyFromArgs, 
+            boolean sendAll, boolean closeEditorOnException, boolean spool, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
+        boolean serverSupportsDepth = hasCapability(SVNCapability.DEPTH);
+        if (depth != SVNDepth.FILES && depth != SVNDepth.INFINITY && !serverSupportsDepth) {
+            editor = SVNDepthFilterEditor.getDepthFilterEditor(depth, editor, target != null);
+        }
+        try {
+            openConnection();
+            StringBuffer request = DAVEditorHandler.generateEditorRequest(myConnection, null, 
+                    url.toString(), targetRevision, target, dstPath, depth, ignoreAncestry, resourceWalk, 
+                    fetchContents, sendCopyFromArgs, sendAll, reporter);
+            DAVEditorHandler handler = new DAVEditorHandler(editor, fetchContents);
+            String bcPath = SVNEncodingUtil.uriEncode(getLocation().getPath());
+            try {
+                bcPath = DAVUtil.getVCCPath(myConnection, this, bcPath);
+            } catch (SVNException e) {
+                if (closeEditorOnException) {
+                    editor.closeEdit();
+                }
+                throw e;
+            }
+            HTTPStatus status = myConnection.doReport(bcPath, request, handler, spool);
+            if (status.getError() != null) {
+                SVNErrorManager.error(status.getError());
+            }
+        } finally {
+            closeConnection();
+        }
     }
 
 }
