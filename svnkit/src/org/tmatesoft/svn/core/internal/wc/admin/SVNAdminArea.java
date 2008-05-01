@@ -1490,71 +1490,12 @@ public abstract class   SVNAdminArea {
             basePropsCache.put(entry.getName(), dstBaseProps);
             dstBaseProps.setModified(true);
 
-            SVNPropertyValue charsetProp = dstBaseProps.getPropertyValue(SVNProperty.CHARSET);
-            String currentCharset = charsetProp == null ? null : charsetProp.getString(); 
-            currentCharset = SVNTranslator.getCharset(currentCharset, getAdminFile(newEntry.getName()).toString(), getWCAccess().getOptions());
-            if (currentCharset != null && !"UTF-8".equals(currentCharset)) {
-                File detranslatedFile = SVNAdminUtil.createTmpFile(this, "detranslated", ".tmp", true);
-                String detranslatedPath = SVNPathUtil.getRelativePath(getRoot().getAbsolutePath(), detranslatedFile.getAbsolutePath());
-                File tmpCharsetPropFile = SVNAdminUtil.createTmpFile(this, "props", ".tmp", true);
-                String tmpCharsetPropPath = SVNPathUtil.getRelativePath(getRoot().getAbsolutePath(), tmpCharsetPropFile.getAbsolutePath());
-                if (getFormatVersion() == SVNAdminArea15.WC_FORMAT) {
-                    dstBaseProps.setPropertyValue(SVNProperty.CHARSET, SVNPropertyValue.create("UTF-8"));
-                    SVNWCProperties propFile = new SVNWCProperties(tmpCharsetPropFile, tmpCharsetPropPath);
-                    propFile.setProperties(dstBaseProps.asMap());
-                    dstBaseProps.setPropertyValue(SVNProperty.CHARSET, charsetProp);
-
-                    command.put(SVNLog.NAME_ATTR, tmpCharsetPropPath);
-                    command.put(SVNLog.DEST_ATTR, SVNAdminUtil.getPropBasePath(newEntry.getName(), SVNNodeKind.FILE, false));
-                    log.addCommand(SVNLog.MOVE, command, false);
-                    command.clear();
-
-                    command.put(SVNLog.NAME_ATTR, newEntry.getName());
-                    command.put(SVNLog.DEST_ATTR, detranslatedPath);
-                    log.addCommand(SVNLog.COPY_AND_DETRANSLATE, command, false);
-                    command.clear();
-
-                    saveVersionedProperties(log, false);
-
-                    command.put(SVNLog.NAME_ATTR, detranslatedPath);
-                    command.put(SVNLog.DEST_ATTR, newEntry.getName());
-                    log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
-                    command.clear();
-
-                    command.put(SVNLog.NAME_ATTR, detranslatedPath);
-                    log.addCommand(SVNLog.DELETE, command, false);
-                    command.clear();
-                } else if (adminArea.getFormatVersion() == SVNAdminArea15.WC_FORMAT) {
-                    command.put(SVNLog.NAME_ATTR, newEntry.getName());
-                    command.put(SVNLog.DEST_ATTR, detranslatedPath);
-                    log.addCommand(SVNLog.COPY_AND_DETRANSLATE, command, false);
-                    command.clear();
-
-                    dstBaseProps.setPropertyValue(SVNProperty.CHARSET, SVNPropertyValue.create("UTF-8"));
-                    SVNWCProperties propFile = new SVNWCProperties(tmpCharsetPropFile, tmpCharsetPropPath);
-                    propFile.setProperties(dstBaseProps.asMap());                    
-                    dstBaseProps.setPropertyValue(SVNProperty.CHARSET, charsetProp);
-
-                    command.put(SVNLog.NAME_ATTR, tmpCharsetPropPath);
-                    command.put(SVNLog.DEST_ATTR, SVNAdminUtil.getPropBasePath(newEntry.getName(), SVNNodeKind.FILE, false));
-                    log.addCommand(SVNLog.MOVE, command, false);
-                    command.clear();
-
-                    command.put(SVNLog.NAME_ATTR, detranslatedPath);
-                    command.put(SVNLog.DEST_ATTR, newEntry.getName());
-                    log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
-                    command.clear();
-
-                    command.put(SVNLog.NAME_ATTR, detranslatedPath);
-                    log.addCommand(SVNLog.DELETE, command, false);
-                    command.clear();
-                }
-            }
-
             SVNVersionedProperties srcProps = adminArea.getProperties(entry.getName());
             SVNVersionedProperties dstProps = formatProperties(entry, srcProps.asMap());
             propsCache.put(entry.getName(), dstProps);
             dstProps.setModified(true);
+
+            handleCharsetProperty(adminArea, log, newEntry, dstBaseProps);
 
             command.put(SVNLog.NAME_ATTR, entry.getName());
             command.put(SVNProperty.shortPropertyName(SVNProperty.PROP_TIME), SVNDate.formatDate(new Date(0), true));
@@ -1576,6 +1517,81 @@ public abstract class   SVNAdminArea {
 
         runLogs();
         return this;
+    }
+
+    private void handleCharsetProperty(SVNAdminArea adminArea, SVNLog log, SVNEntry entry, SVNVersionedProperties baseProps) throws SVNException {
+        SVNProperties command = new SVNProperties();
+        SVNPropertyValue charsetProp = baseProps.getPropertyValue(SVNProperty.CHARSET);
+        String currentCharset = charsetProp == null ? null : charsetProp.getString();
+        currentCharset = SVNTranslator.getCharset(currentCharset, getAdminFile(entry.getName()).toString(), getWCAccess().getOptions());
+        if (currentCharset != null && !"UTF-8".equals(currentCharset)) {
+            File detranslatedFile = SVNAdminUtil.createTmpFile(this, "detranslated", ".tmp", true);
+            String detranslatedPath = SVNPathUtil.getRelativePath(getRoot().getAbsolutePath(), detranslatedFile.getAbsolutePath());
+            File tmpCharsetPropFile = SVNAdminUtil.createTmpFile(this, "props", ".tmp", true);
+            String tmpCharsetPropPath = SVNPathUtil.getRelativePath(getRoot().getAbsolutePath(), tmpCharsetPropFile.getAbsolutePath());
+
+            if (getFormatVersion() == SVNAdminArea15.WC_FORMAT) {
+                baseProps.setPropertyValue(SVNProperty.CHARSET, SVNPropertyValue.create("UTF-8"));
+                SVNWCProperties propFile = new SVNWCProperties(tmpCharsetPropFile, tmpCharsetPropPath);
+                propFile.setProperties(baseProps.asMap());
+                baseProps.setPropertyValue(SVNProperty.CHARSET, charsetProp);
+
+                File tmpBaseFile = SVNAdminUtil.createTmpFile(this, entry.getName(), ".tmp", true);
+                String tmpBasePath = SVNPathUtil.getRelativePath(getRoot().getAbsolutePath(), tmpBaseFile.getAbsolutePath());
+                command.put(SVNLog.NAME_ATTR, SVNAdminUtil.getPropBasePath(entry.getName(), SVNNodeKind.FILE, false));
+                command.put(SVNLog.DEST_ATTR, tmpBasePath);
+                log.addCommand(SVNLog.COPY, command, false);
+                command.clear();
+
+                command.put(SVNLog.NAME_ATTR, tmpCharsetPropPath);
+                command.put(SVNLog.DEST_ATTR, SVNAdminUtil.getPropBasePath(entry.getName(), SVNNodeKind.FILE, false));
+                log.addCommand(SVNLog.MOVE, command, false);
+                command.clear();
+
+                command.put(SVNLog.NAME_ATTR, entry.getName());
+                command.put(SVNLog.DEST_ATTR, detranslatedPath);
+                log.addCommand(SVNLog.COPY_AND_DETRANSLATE, command, false);
+                command.clear();
+
+                command.put(SVNLog.DEST_ATTR, SVNAdminUtil.getPropBasePath(entry.getName(), SVNNodeKind.FILE, false));
+                command.put(SVNLog.NAME_ATTR, tmpBasePath);
+                log.addCommand(SVNLog.MOVE, command, false);
+                command.clear();
+
+                command.put(SVNLog.NAME_ATTR, detranslatedPath);
+                command.put(SVNLog.DEST_ATTR, entry.getName());
+                log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
+                command.clear();
+
+                command.put(SVNLog.NAME_ATTR, detranslatedPath);
+                log.addCommand(SVNLog.DELETE, command, false);
+                command.clear();
+            } else if (adminArea.getFormatVersion() == SVNAdminArea15.WC_FORMAT) {
+                command.put(SVNLog.NAME_ATTR, entry.getName());
+                command.put(SVNLog.DEST_ATTR, detranslatedPath);
+                log.addCommand(SVNLog.COPY_AND_DETRANSLATE, command, false);
+                command.clear();
+
+                baseProps.setPropertyValue(SVNProperty.CHARSET, SVNPropertyValue.create("UTF-8"));
+                SVNWCProperties propFile = new SVNWCProperties(tmpCharsetPropFile, tmpCharsetPropPath);
+                propFile.setProperties(baseProps.asMap());
+                baseProps.setPropertyValue(SVNProperty.CHARSET, charsetProp);
+
+                command.put(SVNLog.NAME_ATTR, tmpCharsetPropPath);
+                command.put(SVNLog.DEST_ATTR, SVNAdminUtil.getPropBasePath(entry.getName(), SVNNodeKind.FILE, false));
+                log.addCommand(SVNLog.MOVE, command, false);
+                command.clear();
+
+                command.put(SVNLog.NAME_ATTR, detranslatedPath);
+                command.put(SVNLog.DEST_ATTR, entry.getName());
+                log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
+                command.clear();
+
+                command.put(SVNLog.NAME_ATTR, detranslatedPath);
+                log.addCommand(SVNLog.DELETE, command, false);
+                command.clear();
+            }
+        }
     }
 
     public void postUpgradeFormat(int format) throws SVNException {
