@@ -331,6 +331,10 @@ public class SVNErrorCode implements Serializable {
      * @since SVN 1.5
      */
     public static final SVNErrorCode RA_PARTIAL_REPLAY_NOT_SUPPORTED = new SVNErrorCode(RA_CATEGORY, 8, "Server can only replay from the root of a repository");
+    /**
+     * @since SVN 1.5
+     */
+    public static final SVNErrorCode RA_UUID_MISMATCH = new SVNErrorCode(RA_CATEGORY, 9, "Repository UUID does not match expected UUID");
     
     public static final SVNErrorCode RA_DAV_SOCK_INIT = new SVNErrorCode(RA_DAV_CATEGORY, 0, "RA layer failed to init socket layer");
     public static final SVNErrorCode RA_DAV_CREATING_REQUEST = new SVNErrorCode(RA_DAV_CATEGORY, 1, "RA layer failed to create HTTP request");

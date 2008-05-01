@@ -174,11 +174,17 @@ public class SVNStatusEditor {
             if (dir.getEntry(fileName, false) != null || SVNFileUtil.getAdminDirectoryName().equals(fileName)) {
                 continue;
             }
+
+            File file = (File) childrenFiles.get(fileName);
+            if (depth == SVNDepth.FILES && file.isDirectory()) {
+                continue;
+            }
+            
             if (ignorePatterns == null) {
                 ignorePatterns = getIgnorePatterns(dir, myGlobalIgnores);
             }
-            File file = (File) childrenFiles.get(fileName);
-            sendUnversionedStatus(file, fileName, SVNNodeKind.NONE, false, dir, ignorePatterns, noIgnore, handler);
+            sendUnversionedStatus(file, fileName, SVNNodeKind.NONE, false, dir, ignorePatterns, noIgnore, 
+                    handler);
         }
         for(Iterator entries = dir.entries(false); entries.hasNext();) {
             SVNEntry entry = (SVNEntry) entries.next();
@@ -278,8 +284,8 @@ public class SVNStatusEditor {
         }
     }
     
-    private void sendUnversionedStatus(File file, String name, SVNNodeKind fileType, boolean special, SVNAdminArea dir, Collection ignorePatterns, 
-            boolean noIgnore, ISVNStatusHandler handler) throws SVNException {
+    private void sendUnversionedStatus(File file, String name, SVNNodeKind fileType, boolean special, 
+            SVNAdminArea dir, Collection ignorePatterns, boolean noIgnore, ISVNStatusHandler handler) throws SVNException {
         boolean isIgnored = isIgnored(ignorePatterns, name);
         String path = dir.getRelativePath(myAdminInfo.getAnchor());
         path = SVNPathUtil.append(path, name);  

@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNMergeInfo;
@@ -314,8 +315,16 @@ public class FSLog {
                 LinkedList combinedList = combineMergeInfoPathLists(mergeInfo);
                 for (int j = combinedList.size() - 1; j >= 0; j--) {
                     PathListRange pathListRange = (PathListRange) combinedList.get(j);
-                    sendCount += doMergedLogs(pathListRange.myPaths, pathListRange.myRange.getStartRevision(), 
-                            pathListRange.myRange.getEndRevision(), 0, foundRevisions, true);
+                    try {
+                        sendCount += doMergedLogs(pathListRange.myPaths, pathListRange.myRange.getStartRevision(), 
+                                pathListRange.myRange.getEndRevision(), 0, foundRevisions, true);
+                    } catch (SVNException svne) {
+                        SVNErrorCode errCode = svne.getErrorMessage().getErrorCode(); 
+                        if (errCode == SVNErrorCode.FS_NOT_FOUND || errCode == SVNErrorCode.FS_NO_SUCH_REVISION) {
+                            continue;
+                        }
+                        throw svne;
+                    }
                 }
                 if (myHandler != null) {
                     myHandler.handleLogEntry(SVNLogEntry.EMPTY_ENTRY);

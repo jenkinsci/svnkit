@@ -2918,6 +2918,14 @@ public class SVNWCClient extends SVNBasicClient {
                     handler.handleProperty(url, new SVNPropertyData(name, value, getOptions()));
                 }
             }
+        } else if (kind == SVNNodeKind.NONE) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, 
+                    "''{0}'' does not exist in revision {1}", new Object[] { path, String.valueOf(revNumber) });
+            SVNErrorManager.error(err);
+        } else {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, 
+                    "Unknown node kind for ''{0}''", path);
+            SVNErrorManager.error(err);
         }
     }
 
