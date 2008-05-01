@@ -36,10 +36,7 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
  * @author  TMate Software Ltd.
  */
 public abstract class SVNAdminAreaFactory implements Comparable {
-    
-    private static final int SVN_WC_XML_ENTRIES_FORMAT = 6;
-    private static final int SVN_WC_FLAT_ENTRIES_FORMAT = 8;
-    
+        
     private static final Collection ourFactories = new TreeSet();
     private static boolean ourIsUpgradeEnabled = Boolean.valueOf(System.getProperty("svnkit.upgradeWC", System.getProperty("javasvn.upgradeWC", "true"))).booleanValue();
     private static ISVNAdminAreaFactorySelector ourSelector;
@@ -166,10 +163,10 @@ public abstract class SVNAdminAreaFactory implements Comparable {
     }
 
     private static SVNAdminAreaFactory getAdminAreaFactory(int wcFormat) {
-        if (wcFormat <= SVN_WC_XML_ENTRIES_FORMAT) {
+        if (wcFormat <= SVNAdminArea.SVN_WC_XML_ENTRIES_FORMAT) {
             return new SVNXMLAdminAreaFactory();
         }
-        if (wcFormat <= SVN_WC_FLAT_ENTRIES_FORMAT) {
+        if (wcFormat <= SVNAdminArea.SVN_WC_FLAT_ENTRIES_FORMAT) {
             return new SVNAdminArea14Factory();           
         }
         return new SVNAdminArea15Factory();

@@ -52,9 +52,6 @@ public class SVNCharsetConvertor {
     }
 
     public ByteBuffer convertChunk(byte[] b, int offset, int length, ByteBuffer dst, boolean endOfInput) throws SVNException {
-        if (length == 0) {
-            return dst;
-        }
         myInputByteBuffer = allocate(myInputByteBuffer, length);
         myInputByteBuffer.put(b, offset, length);
         myInputByteBuffer.flip();

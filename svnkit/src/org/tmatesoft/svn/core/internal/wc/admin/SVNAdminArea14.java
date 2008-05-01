@@ -1753,7 +1753,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
                                 SVNFileUtil.getBasePath(tmpFile), SVNFileUtil.getBasePath(tmpFile2), true);
                     } else {
                         SVNTranslator.translate(this, fileName, fileName,
-                                SVNFileUtil.getBasePath(tmpFile2), true);
+                                SVNFileUtil.getBasePath(tmpFile2), true, true);
                     }
                     if (!SVNFileUtil.compareFiles(tmpFile2, wcFile, null)) {
                         SVNFileUtil.copyFile(tmpFile2, wcFile, true);
