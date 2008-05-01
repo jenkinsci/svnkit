@@ -265,24 +265,6 @@ public class SVNWCAccess implements ISVNEventHandler {
         }
         return area;
     }
-
-    public SVNAdminArea changeWCFormat(File path, int format, boolean closeArea) throws SVNException {
-        Map areas = new SVNHashMap();
-        SVNAdminArea area = null;
-        try {
-            area = doChangeWCFormat(path, format, areas);
-        } finally {
-            myAdminAreas.putAll(areas);
-        }
-        if (closeArea) {
-            if (myAdminAreas != null) {
-                doClose(myAdminAreas, false);
-                myAdminAreas.clear();
-            }
-            myCleanupHandlers = null;
-        }
-        return area;
-    }
         
     public SVNAdminArea probeOpen(File path, boolean writeLock, int depth) throws SVNException {
         File dir = probe(path);
