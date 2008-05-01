@@ -318,7 +318,9 @@ public class SVNClientImpl implements SVNClientInterface {
         final Collection allEntries = new ArrayList();
         list(url, revision, pegRevision, JavaHLObjectFactory.infinityOrImmediates(recurse), SVNDirEntry.DIRENT_ALL, false, new ISVNDirEntryHandler() {
             public void handleDirEntry(SVNDirEntry dirEntry) {
-                allEntries.add(JavaHLObjectFactory.createDirEntry(dirEntry));
+                if (dirEntry.getRelativePath().length() != 0) {
+                    allEntries.add(JavaHLObjectFactory.createDirEntry(dirEntry));
+                }
             }
         });
         return (DirEntry[]) allEntries.toArray(new DirEntry[allEntries.size()]);
