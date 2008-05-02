@@ -259,7 +259,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         if (reposRoot == null) {
         	SVNRepository repos = null;
         	try {
-            	repos = createRepository(url, path, pegRevision, pegRevision);
+            	repos = createRepository2(url, path, null, pegRevision, pegRevision, null);
             	reposRoot = repos.getRepositoryRoot(true); 
             } finally {
             	repos.closeSession();
@@ -275,13 +275,39 @@ public class SVNBasicClient implements ISVNEventHandler {
         }
     }
 
-    protected SVNRepository createRepository(SVNURL url, boolean mayReuse) throws SVNException {
+//    protected SVNRepository createRepository(SVNURL url, boolean mayReuse) throws SVNException {
+//        return createRepository(url, null, mayReuse);
+//    }
+    
+    protected SVNRepository createRepository(SVNURL url, File path, SVNWCAccess access, boolean mayReuse) throws SVNException {
+        String uuid = null;
+        if (access != null) {
+            SVNEntry entry = access.getEntry(path, false);
+            if (entry != null) {
+                uuid = entry.getUUID();
+            }
+        }
+        return createRepository(url, uuid, mayReuse);
+    }
+    
+    protected SVNRepository createRepository(SVNURL url, String uuid, boolean mayReuse) throws SVNException {
         SVNRepository repository = null;
         if (myRepositoryPool == null) {
             repository = SVNRepositoryFactory.create(url, null);
         } else {
             repository = myRepositoryPool.createRepository(url, mayReuse);
         }
+        
+        if (uuid != null) {
+            String reposUUID = repository.getRepositoryUUID(true);
+            if (!uuid.equals(reposUUID)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_UUID_MISMATCH, 
+                        "Repository UUID ''{0}'' doesn''t match expected UUID ''{1}''", 
+                        new Object[] { reposUUID, uuid });
+                SVNErrorManager.error(err);
+            }
+        }
+        
         repository.setDebugLog(getDebugLog());
         repository.setCanceller(getEventDispatcher());
         return repository;
@@ -440,11 +466,13 @@ public class SVNBasicClient implements ISVNEventHandler {
         return -1;
     }
 
-    protected SVNRepository createRepository(SVNURL url, File path, SVNRevision pegRevision, SVNRevision revision) throws SVNException {
-        return createRepository(url, path, pegRevision, revision, null);
+/*    protected SVNRepository createRepository(SVNURL url, File path, SVNRevision pegRevision, 
+            SVNRevision revision) throws SVNException {
+        return createRepository2(url, path, pegRevision, revision, null);
     }
-    
-    protected SVNRepository createRepository(SVNURL url, File path, SVNRevision pegRevision, SVNRevision revision, long[] pegRev) throws SVNException {
+
+    protected SVNRepository createRepository(SVNURL url, File path, SVNRevision pegRevision, 
+            SVNRevision revision, long[] pegRev) throws SVNException {
         if (url == null) {
             SVNURL pathURL = getURL(path);
             if (pathURL == null) {
@@ -489,16 +517,17 @@ public class SVNBasicClient implements ISVNEventHandler {
         }
         return repository;
     }
-
+*/
     /**
      * TODO: replace createRepository calls with createRepository2
      */
-    protected SVNRepository createRepository2(SVNURL url, File path, SVNRevision pegRevision, SVNRevision revision, 
-            long[] pegRev) throws SVNException {
+    protected SVNRepository createRepository2(SVNURL url, File path, SVNAdminArea area, SVNRevision pegRevision, 
+            SVNRevision revision, long[] pegRev) throws SVNException {
         if (url == null) {
             SVNURL pathURL = getURL(path);
             if (pathURL == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, 
+                        "''{0}'' has no URL", path);
                 SVNErrorManager.error(err);
             }
         }
@@ -511,7 +540,8 @@ public class SVNBasicClient implements ISVNEventHandler {
                 SVNRevision.UNDEFINED);
         url = locations[0].getURL();
         long actualRevision = locations[0].getRevisionNumber();
-        SVNRepository repository = createRepository(url, true);
+        SVNRepository repository = createRepository(url, area != null ? area.getRoot() : null, 
+                area != null ? area.getWCAccess() : null, true);
         actualRevision = getRevisionNumber(SVNRevision.create(actualRevision), repository, path);
         if (actualRevision < 0) {
             actualRevision = repository.getLatestRevision();
@@ -562,7 +592,7 @@ public class SVNBasicClient implements ISVNEventHandler {
                                            false, inherited);
                 
                 if (mergeInfo == null && wcElisionLimitPath == null) {
-                    mergeInfo = getWCOrRepositoryMergeInfo(access, path, entry, 
+                    mergeInfo = getWCOrRepositoryMergeInfo(path, entry, 
                             SVNMergeInfoInheritance.NEAREST_ANCESTOR, inherited, true, null);
                 }
                 
@@ -602,7 +632,7 @@ public class SVNBasicClient implements ISVNEventHandler {
     	return targetMergeInfo;
     }
     
-    protected Map getWCOrRepositoryMergeInfo(SVNWCAccess access, File path, SVNEntry entry, 
+    protected Map getWCOrRepositoryMergeInfo(File path, SVNEntry entry, 
             SVNMergeInfoInheritance inherit, boolean[] indirect, boolean reposOnly, 
             SVNRepository repository) throws SVNException {
         Map mergeInfo = null;
@@ -625,7 +655,7 @@ public class SVNBasicClient implements ISVNEventHandler {
                     String repositoryPath = null;
                     try {
                         if (repository == null) {
-                            repository = createRepository(url, false);
+                            repository = createRepository(url, null, null, false);
                             closeRepository = true;
                         }
                         repositoryPath = getPathRelativeToRoot(null, url, entry.getRepositoryRootURL(), 
@@ -821,7 +851,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         SVNURL rootURL = null;
         try {
             if (repository == null) {
-                repository = createRepository(url, false);
+                repository = createRepository(url, null, null, false);
                 closeSession = true;
             } else {
             	// path relative to repository location.
@@ -992,7 +1022,7 @@ public class SVNBasicClient implements ISVNEventHandler {
             boolean closeRepository = false;
             try {
                 if (repos == null) {
-                    repos = createRepository(url, false);
+                    repos = createRepository(url, null, null, false);
                     closeRepository = true;
                 }
                 pegRevisionNumber[0] = getRevisionNumber(pegRevision, null, repos, path);

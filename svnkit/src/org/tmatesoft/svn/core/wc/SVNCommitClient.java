@@ -261,7 +261,7 @@ public class SVNCommitClient extends SVNBasicClient {
             decodedPaths.add(SVNEncodingUtil.uriDecode(path));
         }
         paths = decodedPaths;
-        SVNRepository repos = createRepository(rootURL, true);
+        SVNRepository repos = createRepository(rootURL, null, null, true);
         for (Iterator commitPath = paths.iterator(); commitPath.hasNext();) {
             String path = (String) commitPath.next();
             SVNNodeKind kind = repos.checkPath(path, -1);
@@ -371,7 +371,7 @@ public class SVNCommitClient extends SVNBasicClient {
             decodedPaths.add(SVNEncodingUtil.uriDecode(path));
         }
         paths = decodedPaths;
-        SVNRepository repos = createRepository(rootURL, true);
+        SVNRepository repos = createRepository(rootURL, null, null, true);
         commitMessage = validateCommitMessage(commitMessage);
         ISVNEditor commitEditor = repos.getCommitEditor(commitMessage, null, false, revisionProperties, null);
         ISVNCommitPathHandler creater = new ISVNCommitPathHandler() {
@@ -424,11 +424,6 @@ public class SVNCommitClient extends SVNBasicClient {
      *                          <li><code>path</code> contains a reserved name - <i>'.svn'</i>
      *                          </ul>
      */
-    /* TODO(sd): For consistency, this should probably take svn_depth_t
-     * depth instead of svn_boolean_t nonrecursive.  But it's not
-     * needed for the sparse-directories work right now, so leaving it
-     * alone.
-     */
     public SVNCommitInfo doImport(File path, SVNURL dstURL, String commitMessage, boolean recursive) throws SVNException {
         return doImport(path, dstURL, commitMessage, true, recursive);
     }
@@ -479,13 +474,13 @@ public class SVNCommitClient extends SVNBasicClient {
         }
         List newPaths = new ArrayList();
         SVNURL rootURL = dstURL;
-        repos = createRepository(rootURL, true);
+        repos = createRepository(rootURL, null, null, true);
         SVNURL reposRoot = repos.getRepositoryRoot(true);
         while (!reposRoot.equals(rootURL)) {
             if (repos.checkPath("", -1) == SVNNodeKind.NONE) {
                 newPaths.add(SVNPathUtil.tail(rootURL.getPath()));
                 rootURL = rootURL.removePathTail();
-                repos = createRepository(rootURL, true);
+                repos = createRepository(rootURL, null, null, true);
             } else {
                 break;
             }
@@ -700,8 +695,10 @@ public class SVNCommitClient extends SVNBasicClient {
                 Map commitables = new TreeMap();
                 SVNURL baseURL = SVNCommitUtil.translateCommitables(commitPacket.getCommitItems(), commitables);
                 Map lockTokens = SVNCommitUtil.translateLockTokens(commitPacket.getLockTokens(), baseURL.toString());
-
-                SVNRepository repository = createRepository(baseURL, true);
+                //TODO: we should pass wcAccess and path to check uuids
+                SVNCommitItem firstItem = commitPacket.getCommitItems()[0];
+                SVNRepository repository = createRepository(baseURL, firstItem.getFile(), 
+                        firstItem.getWCAccess(), true);
                 SVNCommitMediator mediator = new SVNCommitMediator(commitables);
                 tmpFiles = mediator.getTmpFiles();
                 String repositoryRoot = repository.getRepositoryRoot(true).getPath();
@@ -1046,7 +1043,7 @@ public class SVNCommitClient extends SVNBasicClient {
                 checkCancelled();
                 if (uuid == null) {
                     if (url != null) {
-                        SVNRepository repos = createRepository(url, true);
+                        SVNRepository repos = createRepository(url, wcRoot, rootWCAccess, true);
                         uuid = repos.getRepositoryUUID(true);
                     } else {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", wcRoot);
@@ -1095,7 +1092,7 @@ public class SVNCommitClient extends SVNBasicClient {
 
     private void addURLParents(List targets, SVNURL url) throws SVNException {
         SVNURL parentURL = url.removePathTail();
-        SVNRepository repos = createRepository(parentURL, true);
+        SVNRepository repos = createRepository(parentURL, null, null, true);
         SVNNodeKind kind = repos.checkPath("", SVNRepository.INVALID_REVISION);
         if (kind == SVNNodeKind.NONE) {
             addURLParents(targets, parentURL);

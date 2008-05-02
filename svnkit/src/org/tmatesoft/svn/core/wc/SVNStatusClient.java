@@ -257,7 +257,7 @@ public class SVNStatusClient extends SVNBasicClient {
                     SVNErrorManager.error(error);
                 }
                 SVNURL url = entry.getSVNURL();
-                SVNRepository repository = createRepository(url, true);
+                SVNRepository repository = createRepository(url, anchor.getRoot(), wcAccess, true);
                 long rev;
                 if (revision == SVNRevision.HEAD) {
                     rev = -1;
@@ -280,7 +280,7 @@ public class SVNStatusClient extends SVNBasicClient {
                             depth, realHandler);
 //                    editor.setExternals(externals);
                     // session is closed in SVNStatusReporter.
-                    SVNRepository locksRepos = createRepository(url, false);                    
+                    SVNRepository locksRepos = createRepository(url, anchor.getRoot(), wcAccess, false);                    
                     checkCancelled();
                     boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
                     SVNReporter reporter = new SVNReporter(info, path, false, !serverSupportsDepth, depth, 

@@ -757,7 +757,7 @@ public class SVNDiffClient extends SVNMergeDriver {
                 String anchorPath2 = SVNPathUtil.append(anchorURL.toString(), target == null ? "" : target);
                 getDiffGenerator().init(url1.toString(), anchorPath2);
             }
-            SVNRepository repository = createRepository(anchorURL, true);
+            SVNRepository repository = createRepository(anchorURL, null, null, true);
             long revNumber = getRevisionNumber(revision1, repository, null);
             AbstractDiffCallback callback = new SVNDiffCallback(info.getAnchor(), 
                                                                 getDiffGenerator(), 
@@ -809,7 +809,7 @@ public class SVNDiffClient extends SVNMergeDriver {
             } else {
                 url1 = getURL(path1);
             }
-            SVNRepository repository = createRepository(anchorURL, true);
+            SVNRepository repository = createRepository(anchorURL, null, null, true);
             long revNumber = getRevisionNumber(revision1, repository, path1);
             AbstractDiffCallback callback = new SVNDiffCallback(info.getAnchor(), 
                                                                 getDiffGenerator(), 
@@ -882,8 +882,8 @@ public class SVNDiffClient extends SVNMergeDriver {
             url1 = url1 == null ? getURL(path1) : url1;
             url2 = url2 == null ? getURL(path2) : url2;
         }
-        SVNRepository repository1 = createRepository(url1, true);
-        SVNRepository repository2 = createRepository(url2, false);
+        SVNRepository repository1 = createRepository(url1, null, null, true);
+        SVNRepository repository2 = createRepository(url2, null, null, false);
 
         final long rev1 = getRevisionNumber(revision1, repository1, path1);
         long rev2 = -1;
@@ -912,9 +912,9 @@ public class SVNDiffClient extends SVNMergeDriver {
                 basePath = basePath.getParentFile();
             }
             url1 = SVNURL.parseURIEncoded(SVNPathUtil.removeTail(url1.toString()));
-            repository1 = createRepository(url1, true);
+            repository1 = createRepository(url1, null, null, true);
         }
-        repository2 = createRepository(url1, false); 
+        repository2 = createRepository(url1, null, null, false); 
         SVNRemoteDiffEditor editor = null;
         try {
             SVNDiffCallback callback = new SVNDiffCallback(null, getDiffGenerator(), rev1, rev2, result);
@@ -955,8 +955,8 @@ public class SVNDiffClient extends SVNMergeDriver {
             url1 = url1 == null ? getURL(path1) : url1;
             url2 = url2 == null ? getURL(path2) : url2;
         }
-        SVNRepository repository1 = createRepository(url1, true);
-        SVNRepository repository2 = createRepository(url2, false);
+        SVNRepository repository1 = createRepository(url1, null, null, true);
+        SVNRepository repository2 = createRepository(url2, null, null, false);
         
         final long rev1 = getRevisionNumber(revision1, repository1, path1);
         long rev2 = -1;
@@ -984,12 +984,12 @@ public class SVNDiffClient extends SVNMergeDriver {
                     basePath = basePath.getParentFile();
                 }
                 url1 = SVNURL.parseURIEncoded(SVNPathUtil.removeTail(url1.toString()));
-                repository1 = createRepository(url1, true);
+                repository1 = createRepository(url1, null, null, true);
             }
         } finally {
             repository2.closeSession();
         }
-        repository2 = createRepository(url1, false); 
+        repository2 = createRepository(url1, null, null, false); 
         File tmpFile = getDiffGenerator().createTempDirectory();
         try {
             SVNDiffStatusEditor editor = new SVNDiffStatusEditor(basePath, repository2, rev1, handler);
@@ -1445,60 +1445,6 @@ public class SVNDiffClient extends SVNMergeDriver {
         getLogEligibleMergeInfoImpl(null, url, pegRevision, mergeSrcURL, srcPegRevision, discoverChangedPaths, 
                 revisionProperties, handler);
     }
-    
-    public SVNMergeRangeList getAvailableMergeInfo(File path, SVNRevision pegRevision, SVNURL mergeSrcURL) throws SVNException {
-        SVNRepository repos = null;
-        try {
-        	repos = createRepository(mergeSrcURL, true);
-            Map mergeInfo = getMergeInfo(path, pegRevision, null);
-            Map history = getHistoryAsMergeInfo(null, path, pegRevision, SVNRepository.INVALID_REVISION, 
-            		SVNRepository.INVALID_REVISION, null, null);
-            if (mergeInfo == null) {
-            	mergeInfo = history;
-            } else {
-            	mergeInfo = SVNMergeInfoUtil.mergeMergeInfos(mergeInfo, history);
-            }
-            
-            Map sourceHistory = getHistoryAsMergeInfo(mergeSrcURL, null, SVNRevision.HEAD, 
-            		SVNRepository.INVALID_REVISION, SVNRepository.INVALID_REVISION, repos, null);
-            Map availableMergeInfo = SVNMergeInfoUtil.removeMergeInfo(mergeInfo, sourceHistory);
-            SVNMergeRangeList rangeList = new SVNMergeRangeList(new SVNMergeRange[0]);
-            for (Iterator availableIter = availableMergeInfo.values().iterator(); availableIter.hasNext();) {
-            	SVNMergeRangeList availableRangeList = (SVNMergeRangeList) availableIter.next();
-            	rangeList = rangeList.merge(availableRangeList);
-			}
-            return rangeList;
-        } finally {
-        	repos.closeSession();
-        }
-    }
-
-    public SVNMergeRangeList getAvailableMergeInfo(SVNURL url, SVNRevision pegRevision, SVNURL mergeSrcURL) throws SVNException {
-        SVNRepository repos = null;
-        try {
-        	repos = createRepository(mergeSrcURL, true);
-            Map mergeInfo = getMergeInfo(url, pegRevision, null);
-            Map history = getHistoryAsMergeInfo(url, null, pegRevision, SVNRepository.INVALID_REVISION, 
-            		SVNRepository.INVALID_REVISION, null, null);
-            if (mergeInfo == null) {
-            	mergeInfo = history;
-            } else {
-            	mergeInfo = SVNMergeInfoUtil.mergeMergeInfos(mergeInfo, history);
-            }
-            
-            Map sourceHistory = getHistoryAsMergeInfo(mergeSrcURL, null, SVNRevision.HEAD, 
-            		SVNRepository.INVALID_REVISION, SVNRepository.INVALID_REVISION, repos, null);
-            Map availableMergeInfo = SVNMergeInfoUtil.removeMergeInfo(mergeInfo, sourceHistory);
-            SVNMergeRangeList rangeList = new SVNMergeRangeList(new SVNMergeRange[0]);
-            for (Iterator availableIter = availableMergeInfo.values().iterator(); availableIter.hasNext();) {
-            	SVNMergeRangeList availableRangeList = (SVNMergeRangeList) availableIter.next();
-            	rangeList = rangeList.merge(availableRangeList);
-			}
-            return rangeList;
-        } finally {
-        	repos.closeSession();
-        }
-    }
 
     public Map getMergedMergeInfo(File path, SVNRevision pegRevision) throws SVNException {
     	SVNURL reposRoot[] = new SVNURL[1];
@@ -1644,7 +1590,7 @@ public class SVNDiffClient extends SVNMergeDriver {
         SVNRepository repos = null;
         Map sourceHistory = null;
         try {
-            repos = createRepository(mergeSrcURL, true);
+            repos = createRepository(mergeSrcURL, null, null, true);
             sourceHistory = getHistoryAsMergeInfo(mergeSrcURL, null, srcPegRevision, 
                     SVNRepository.INVALID_REVISION, SVNRepository.INVALID_REVISION, repos, null);
         } finally {

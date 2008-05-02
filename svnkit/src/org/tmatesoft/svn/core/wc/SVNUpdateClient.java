@@ -217,7 +217,7 @@ public class SVNUpdateClient extends SVNBasicClient {
   
             String[] preservedExts = getOptions().getPreservedConflictFileExtensions();
             
-            SVNRepository repos = createRepository(url, true);
+            SVNRepository repos = createRepository(url, anchorArea.getRoot(), wcAccess, true);
             boolean serverSupportsDepth = repos.hasCapability(SVNCapability.DEPTH);
             final SVNReporter reporter = new SVNReporter(adminInfo, file, true, !serverSupportsDepth, 
                     depth, getDebugLog());
@@ -227,7 +227,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             SVNURL reposRoot = repos.getRepositoryRoot(true);
             wcAccess.setRepositoryRoot(file, reposRoot);
             
-            final SVNRepository repos2 = createRepository(reposRoot, false);
+            final SVNRepository repos2 = createRepository(reposRoot, null, null, false);
             ISVNFileFetcher fileFetcher = new ISVNFileFetcher() {
                 public long fetchFile(String path, long revision, OutputStream os, SVNProperties properties) throws SVNException {
                     return repos2.getFile(path, revision, properties, os);
@@ -334,7 +334,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             }
             long[] revs = new long[1];
             // should fail on missing repository.
-            SVNRepository repository = createRepository(url, null, pegRevision, revision, revs);
+            SVNRepository repository = createRepository2(url, null, anchorArea, pegRevision, revision, revs);
             long revNumber = revs[0];
             url = repository.getLocation();
             // root of the switched repos.
@@ -424,7 +424,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             revision = SVNRevision.HEAD;
         }
         
-        SVNRepository repos = createRepository(url, null, pegRevision, revision);
+        SVNRepository repos = createRepository2(url, null, null, pegRevision, revision, null);
         url = repos.getLocation();
         long revNumber = getRevisionNumber(revision, repos, null);
         SVNNodeKind targetNodeKind = repos.checkPath("", revNumber);
@@ -522,7 +522,7 @@ public class SVNUpdateClient extends SVNBasicClient {
     
     public long doExport(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, String eolStyle, boolean force, SVNDepth depth) throws SVNException {
         long[] revNum = { SVNRepository.INVALID_REVISION }; 
-        SVNRepository repository = createRepository2(url, null, pegRevision, revision, revNum);
+        SVNRepository repository = createRepository2(url, null, null, pegRevision, revision, revNum);
         long exportedRevision = doRemoteExport(repository, revNum[0], dstPath, eolStyle, force, depth);
         dispatchEvent(SVNEventFactory.createSVNEvent(null, SVNNodeKind.NONE, null, exportedRevision, 
                 SVNEventAction.UPDATE_COMPLETED, null, null, null));
@@ -589,7 +589,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             final boolean force, SVNDepth depth) throws SVNException {
         long exportedRevision = -1;
         if (revision != SVNRevision.BASE && revision != SVNRevision.WORKING && revision != SVNRevision.COMMITTED && revision != SVNRevision.UNDEFINED) {
-            SVNRepository repository = createRepository(null, srcPath, pegRevision, revision);
+            SVNRepository repository = createRepository2(null, srcPath, null, pegRevision, revision, null);
             long revisionNumber = getRevisionNumber(revision, repository, srcPath);
             exportedRevision = doRemoteExport(repository, revisionNumber, dstPath, eolStyle, force, depth); 
         } else {
@@ -1158,7 +1158,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                             return;
                         } else if (entry.getRepositoryRoot() != null) {
                             if (!SVNPathUtil.isAncestor(entry.getRepositoryRoot(), newURL.toString())) {
-                                SVNRepository repos = createRepository(newURL, true);
+                                SVNRepository repos = createRepository(newURL, null, null, true);
                                 SVNURL reposRoot = repos.getRepositoryRoot(true);
                                 try {
                                     doRelocate(target, entry.getSVNURL(), reposRoot, true);
@@ -1251,7 +1251,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 return validatedURLs;
             }
         }
-        SVNRepository repos = createRepository(targetURL, false);
+        SVNRepository repos = createRepository(targetURL, null, null, false);
         try {
             SVNURL actualRoot = repos.getRepositoryRoot(true);
             if (isRoot && !targetURL.equals(actualRoot)) {

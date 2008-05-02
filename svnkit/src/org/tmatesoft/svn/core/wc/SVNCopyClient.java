@@ -287,7 +287,7 @@ public class SVNCopyClient extends SVNBasicClient {
                     startRevision = pegRevision;
                 }
                 SVNRepositoryLocation[] locations = getLocations(source.getURL(), null, null, pegRevision, startRevision, SVNRevision.UNDEFINED);
-                SVNRepository repository = createRepository(locations[0].getURL(), true);
+                SVNRepository repository = createRepository(locations[0].getURL(), null, null, true);
                 long revision = locations[0].getRevisionNumber();
                 Collection entries = new ArrayList();
                 repository.getDir("", revision, null, 0, entries);
@@ -309,7 +309,7 @@ public class SVNCopyClient extends SVNBasicClient {
         if (entry.getUUID() != null) {
             uuid = entry.getUUID();
         } else if (entry.getURL() != null) {
-            SVNRepository repos = createRepository(entry.getSVNURL(), false);
+            SVNRepository repos = createRepository(entry.getSVNURL(), null, null, false);
             try {
                 uuid = repos.getRepositoryUUID(true);
             } finally {
@@ -519,7 +519,8 @@ public class SVNCopyClient extends SVNBasicClient {
             }
 
             // should we use also wcAccess here? i do not think so.
-            SVNRepository repos = createRepository(SVNURL.parseURIEncoded(topDstURL), true);
+            SVNRepository repos = createRepository(SVNURL.parseURIEncoded(topDstURL), adminArea.getRoot(), 
+                    wcAccess, true);
             List newDirs = new ArrayList();
             if (makeParents) {
                 String rootURL = topDstURL;
@@ -622,7 +623,7 @@ public class SVNCopyClient extends SVNBasicClient {
             allCommitables.clear();
             SVNURL url = SVNCommitUtil.translateCommitables(commitables, allCommitables);
             
-            repos = createRepository(url, true);
+            repos = createRepository(url, null, null, true);
             
             SVNCommitMediator mediator = new SVNCommitMediator(allCommitables);
             tmpFiles = mediator.getTmpFiles();
@@ -704,7 +705,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 }
             }
         }
-        SVNRepository topRepos = createRepository(SVNURL.parseURIEncoded(topURL), true);
+        SVNRepository topRepos = createRepository(SVNURL.parseURIEncoded(topURL), null, null, true);
         List newDirs = new ArrayList();
         if (makeParents) {
             CopyPair pair = (CopyPair) copyPairs.get(0);
@@ -874,7 +875,7 @@ public class SVNCopyClient extends SVNBasicClient {
         if (copyPairs.size() == 1) {
             topSrc = SVNPathUtil.removeTail(topSrc);
         }
-        SVNRepository topSrcRepos = createRepository(SVNURL.parseURIEncoded(topSrc), false);
+        SVNRepository topSrcRepos = createRepository(SVNURL.parseURIEncoded(topSrc), null, null, false);
         try {
             for (Iterator pairs = copyPairs.iterator(); pairs.hasNext();) {
                 CopyPair pair = (CopyPair) pairs.next();
@@ -1157,7 +1158,7 @@ public class SVNCopyClient extends SVNBasicClient {
     private void propagateMegeInfo(CopyPair pair, SVNWCAccess srcAccess, SVNWCAccess dstAccess) throws SVNException {
         SVNEntry entry = srcAccess.getVersionedEntry(new File(pair.mySource), false);
         if (entry.getSchedule() == null || (entry.isScheduledForAddition() && entry.isCopied())) {
-            SVNRepository repos = createRepository(entry.getSVNURL(), true);
+            SVNRepository repos = createRepository(entry.getSVNURL(), null, null, true);
             Map mergeInfo = calculateTargetMergeInfo(new File(pair.mySource), srcAccess, entry.getSVNURL(), 
                     entry.getRevision(), repos, true);
             if (mergeInfo == null) {

@@ -289,7 +289,7 @@ public class SVNWCClient extends SVNBasicClient {
             }
             doGetLocalFileContents(path, dst, revision, expandKeywords);
         } else {
-            SVNRepository repos = createRepository(null, path, pegRevision, revision);
+            SVNRepository repos = createRepository2(null, path, null, pegRevision, revision, null);
             checkCancelled();
             long revNumber = getRevisionNumber(revision, repos, path);
             SVNNodeKind kind = repos.checkPath("", revNumber);
@@ -357,7 +357,7 @@ public class SVNWCClient extends SVNBasicClient {
     public void doGetFileContents(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean expandKeywords, OutputStream dst) throws SVNException {
         revision = revision == null || !revision.isValid() ? SVNRevision.HEAD : revision;
         // now get contents from URL.
-        SVNRepository repos = createRepository(url, null, pegRevision, revision);
+        SVNRepository repos = createRepository2(url, null, null, pegRevision, revision, null);
         checkCancelled();
         long revNumber = getRevisionNumber(revision, repos, null);
         checkCancelled();
@@ -535,8 +535,8 @@ public class SVNWCClient extends SVNBasicClient {
     }
 
     public SVNCommitInfo doSetProperty(SVNURL url, String propName, SVNPropertyValue propValue,
-                                       SVNRevision baseRevision, String commitMessage, SVNProperties revisionProperties,
-                                       boolean force, SVNDepth depth, ISVNPropertyHandler handler) throws SVNException {
+            SVNRevision baseRevision, String commitMessage, SVNProperties revisionProperties,
+            boolean force, SVNDepth depth, ISVNPropertyHandler handler) throws SVNException {
         depth = depth == null ? SVNDepth.UNKNOWN : depth;
         if (propValue != null && !SVNPropertiesManager.isValidPropertyName(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
@@ -556,7 +556,7 @@ public class SVNWCClient extends SVNBasicClient {
                     "''{0}'' is an entry property, thus not accessible to clients", propName);
             SVNErrorManager.error(err);
         }
-        final SVNRepository repos = createRepository(url, true);
+        final SVNRepository repos = createRepository(url, null, null, true);
         long revNumber = SVNRepository.INVALID_REVISION;
         try {
             revNumber = getRevisionNumber(baseRevision, repos, null);
@@ -731,7 +731,7 @@ public class SVNWCClient extends SVNBasicClient {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, "''{0}'' is a wcprop , thus not accessible to clients", propName);
             SVNErrorManager.error(err);
         }
-        SVNRepository repos = createRepository(url, null, SVNRevision.UNDEFINED, revision);
+        SVNRepository repos = createRepository2(url, null, null, SVNRevision.UNDEFINED, revision, null);
         long revNumber = getRevisionNumber(revision, repos, null);
         repos.setRevisionPropertyValue(revNumber, propName, propValue);
         if (handler != null) {
@@ -885,7 +885,7 @@ public class SVNWCClient extends SVNBasicClient {
                 (pegRevision != SVNRevision.WORKING && pegRevision != SVNRevision.BASE && 
                         pegRevision != SVNRevision.COMMITTED && pegRevision != SVNRevision.UNDEFINED)) {
             long[] revNum = { SVNRepository.INVALID_REVISION };
-            SVNRepository repository = createRepository2(null, path, pegRevision, revision, revNum);
+            SVNRepository repository = createRepository2(null, path, null, pegRevision, revision, revNum);
             revision = SVNRevision.create(revNum[0]);
             doGetRemoteProperty(repository.getLocation(), "", repository, propName, revision, depth, handler);
         } else {
@@ -938,7 +938,7 @@ public class SVNWCClient extends SVNBasicClient {
                         pegRevision != SVNRevision.BASE && pegRevision != SVNRevision.COMMITTED && 
                         pegRevision != SVNRevision.UNDEFINED)) {
             long[] revNum = { SVNRepository.INVALID_REVISION };
-            SVNRepository repository = createRepository2(null, path, pegRevision, revision, revNum);
+            SVNRepository repository = createRepository2(null, path, null, pegRevision, revision, revNum);
             revision = SVNRevision.create(revNum[0]);
             doGetRemoteProperty(repository.getLocation(), "", repository, propName, revision, depth, handler);
         } else {
@@ -987,7 +987,7 @@ public class SVNWCClient extends SVNBasicClient {
             SVNErrorManager.error(err);
         }
         long[] pegRev = new long[]{-1};
-        SVNRepository repos = createRepository(url, null, pegRevision, revision, pegRev);
+        SVNRepository repos = createRepository2(url, null, null, pegRevision, revision, pegRev);
         revision = pegRev[0] < 0 ? revision : SVNRevision.create(pegRev[0]);
         doGetRemoteProperty(url, "", repos, propName, revision, depth, handler);
     }
@@ -1025,7 +1025,7 @@ public class SVNWCClient extends SVNBasicClient {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Valid revision have to be specified to fetch revision property");
             SVNErrorManager.error(err);
         }
-        SVNRepository repository = createRepository(null, path, SVNRevision.UNDEFINED, revision);
+        SVNRepository repository = createRepository2(null, path, null, SVNRevision.UNDEFINED, revision, null);
         long revisionNumber = getRevisionNumber(revision, repository, path);
         doGetRevisionProperty(repository, propName, revisionNumber, handler);
     }
@@ -1062,7 +1062,7 @@ public class SVNWCClient extends SVNBasicClient {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Valid revision have to be specified to fetch revision property");
             SVNErrorManager.error(err);
         }
-        SVNRepository repos = createRepository(url, true);
+        SVNRepository repos = createRepository(url, null, null, true);
         long revNumber = getRevisionNumber(revision, repos, null);
         doGetRevisionProperty(repos, propName, revNumber, handler);
         return revNumber;
@@ -1860,12 +1860,16 @@ public class SVNWCClient extends SVNBasicClient {
      * @see #doLock(SVNURL[],boolean,String)
      */
     public void doLock(File[] paths, boolean stealLock, String lockMessage) throws SVNException {
+        if (paths == null || paths.length == 0) {
+            return;
+        }
+        
         final Map entriesMap = new SVNHashMap();
         Map pathsRevisionsMap = new SVNHashMap();
         final SVNWCAccess wcAccess = createWCAccess();
         try {
             final SVNURL topURL = collectLockInfo(wcAccess, paths, entriesMap, pathsRevisionsMap, true, stealLock);
-            SVNRepository repository = createRepository(topURL, true);
+            SVNRepository repository = createRepository(topURL, paths[0], wcAccess, true);
             final SVNURL rootURL = repository.getRepositoryRoot(true);
 
             repository.lock(pathsRevisionsMap, lockMessage, stealLock, new ISVNLockHandler() {
@@ -1927,7 +1931,7 @@ public class SVNWCClient extends SVNBasicClient {
             pathsToRevisions.put(path, null);
         }
         checkCancelled();
-        SVNRepository repository = createRepository(topURL, true);
+        SVNRepository repository = createRepository(topURL, null, null, true);
         repository.lock(pathsToRevisions, lockMessage, stealLock, new ISVNLockHandler() {
             public void handleLock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
                 if (error != null) {
@@ -1962,13 +1966,16 @@ public class SVNWCClient extends SVNBasicClient {
      * @see #doUnlock(SVNURL[],boolean)
      */
     public void doUnlock(File[] paths, boolean breakLock) throws SVNException {
+        if (paths == null || paths.length == 0) {
+            return;
+        }
         final Map entriesMap = new SVNHashMap();
         Map pathsTokensMap = new SVNHashMap();
         final SVNWCAccess wcAccess = createWCAccess();
         try {
             final SVNURL topURL = collectLockInfo(wcAccess, paths, entriesMap, pathsTokensMap, false, breakLock);
             checkCancelled();
-            SVNRepository repository = createRepository(topURL, true);
+            SVNRepository repository = createRepository(topURL, paths[0], wcAccess, true);
             final SVNURL rootURL = repository.getRepositoryRoot(true);
             repository.unlock(pathsTokensMap, breakLock, new ISVNLockHandler() {
                 public void handleLock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
@@ -2031,7 +2038,7 @@ public class SVNWCClient extends SVNBasicClient {
         }
 
         checkCancelled();
-        SVNRepository repository = createRepository(topURL, true);
+        SVNRepository repository = createRepository(topURL, null, null, true);
         if (!breakLock) {
             pathsToTokens = fetchLockTokens(repository, pathsToTokens);
         }
@@ -2282,7 +2289,7 @@ public class SVNWCClient extends SVNBasicClient {
             pegRevision = revision;
         }
 
-        SVNRepository repos = createRepository(url, null, pegRevision, revision);
+        SVNRepository repos = createRepository2(url, null, null, pegRevision, revision, null);
         url = repos.getLocation();
         long revNum = getRevisionNumber(revision, repos, null);
         SVNDirEntry rootEntry = null;
@@ -2387,7 +2394,7 @@ public class SVNWCClient extends SVNBasicClient {
         }
 
         long[] revNum = { SVNRepository.INVALID_REVISION };
-        SVNRepository repos = createRepository2(url, null, pegRevision, revision, revNum);
+        SVNRepository repos = createRepository2(url, null, null, pegRevision, revision, revNum);
         //createRepository(url, null, pegRevision, revision);
         
         url = repos.getLocation();
@@ -2445,7 +2452,7 @@ public class SVNWCClient extends SVNBasicClient {
                     SVNErrorManager.error(err);
                 }
                 
-                SVNRepository parentRepos = createRepository(url.removePathTail(), false);
+                SVNRepository parentRepos = createRepository(url.removePathTail(), null, null, false);
                 Collection dirEntries = parentRepos.getDir("", revNum[0], null, SVNDirEntry.DIRENT_KIND | 
                         SVNDirEntry.DIRENT_CREATED_REVISION | SVNDirEntry.DIRENT_TIME | 
                         SVNDirEntry.DIRENT_LAST_AUTHOR, ( Collection )null);

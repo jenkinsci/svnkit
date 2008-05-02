@@ -147,7 +147,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             SVNURL url = getEntryLocation(path, entry, revNum, SVNRevision.WORKING);
             SVNRepository repository = null;
             try {
-                repository = createRepository(url, false);
+                repository = createRepository(url, null, null, false);
                 repository.assertServerIsMergeInfoCapable(path.toString());
             } finally {
                 repository.closeSession();
@@ -159,8 +159,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             }
             
             boolean[] indirect = { false };
-            return getWCOrRepositoryMergeInfo(wcAccess, path, entry, 
-                    SVNMergeInfoInheritance.INHERITED, indirect, false, null);
+            return getWCOrRepositoryMergeInfo(path, entry, SVNMergeInfoInheritance.INHERITED, indirect, false, 
+                    null);
         } finally {
             wcAccess.close();
         }
@@ -169,7 +169,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     protected Map getMergeInfo(SVNURL url, SVNRevision pegRevision, SVNURL repositoryRoot[]) throws SVNException {
         SVNRepository repository = null;
         try {
-            repository = createRepository(url, true); 
+            repository = createRepository(url, null, null, true); 
             long revisionNum = getRevisionNumber(pegRevision, repository, null);
             SVNURL reposRoot = repository.getRepositoryRoot(true);
             if (repositoryRoot != null && repositoryRoot.length > 0) {
@@ -207,7 +207,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             SVNRepository repository = null;
             SVNURL sourceReposRoot = null;
             try {
-            	repository = createRepository(url, true);
+            	repository = createRepository(url, null, null, true);
             	sourceReposRoot = repository.getRepositoryRoot(true);
             	mergeSources = normalizeMergeSources(srcPath, url, sourceReposRoot, pegRevision, rangesToMerge, 
             			repository);
@@ -246,11 +246,11 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             long[] latestRev = new long[1];
             latestRev[0] = SVNRepository.INVALID_REVISION;
 
-            repository1 = createRepository(url1, false);
+            repository1 = createRepository(url1, null, null, false);
             SVNURL sourceReposRoot = repository1.getRepositoryRoot(true); 
             long rev1 = getRevisionNumber(revision1, latestRev, repository1, null); 
 
-            repository2 = createRepository(url2, false);
+            repository2 = createRepository(url2, null, null, false);
             long rev2 = getRevisionNumber(revision2, latestRev, repository2, null); 
             
             boolean sameRepos = sourceReposRoot.equals(wcReposRoot);
@@ -342,7 +342,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             SVNRepository repository = null;
             SVNURL sourceReposRoot = null;
             try {
-                repository = createRepository(url2, true);
+                repository = createRepository(url2, null, null, true);
                 sourceReposRoot = repository.getRepositoryRoot(true);
                 if (!wcReposRoot.equals(sourceReposRoot)) {
                     Object source = srcPath ;
@@ -453,8 +453,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             }
             
             try {
-                myRepository1 = createRepository(url1, false);
-                myRepository2 = createRepository(url2, false);
+                myRepository1 = createRepository(url1, null, null, false);
+                myRepository2 = createRepository(url2, null, null, false);
                 myIsTargetHasDummyMergeRange = false;
                 myURL = url2;
                 myConflictedPaths = null;
@@ -1383,7 +1383,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         }
         
         //get recorded merge info
-        result[0] = getWCOrRepositoryMergeInfo(myWCAccess, target, entry, inherit, indirect, false, repos);
+        result[0] = getWCOrRepositoryMergeInfo(target, entry, inherit, indirect, false, repos);
         long[] targetRev = new long[1];
         targetRev[0] = SVNRepository.INVALID_REVISION;
         SVNURL url = deriveLocation(target, null, targetRev, SVNRevision.WORKING, repos, myWCAccess);
@@ -1398,7 +1398,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             if (repos != null) {
                 sessionURL = ensureSessionURL(repos, url);
             } else {
-                repos = createRepository(url, false);
+                repos = createRepository(url, null, null, false);
                 closeSession = true;
             }
             
@@ -1446,7 +1446,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         boolean closeSession = false;
         try {
             if (repos == null) {
-                repos = createRepository(url, false);
+                repos = createRepository(url, null, null, false);
                 closeSession = true;
             }
             if (!SVNRevision.isValidRevisionNumber(rangeYoungest)) {
@@ -1520,7 +1520,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 SVNEntry childEntry = myWCAccess.getVersionedEntry(mergedPath, false);
                 if ((childEntry.isDirectory() && myTarget.equals(mergedPath) && depth == SVNDepth.IMMEDIATES) ||
                         (childEntry.isFile() && depth == SVNDepth.FILES)) {
-                    childTargetMergeInfo = getWCOrRepositoryMergeInfo(myWCAccess, mergedPath, 
+                    childTargetMergeInfo = getWCOrRepositoryMergeInfo(mergedPath, 
                             childEntry, SVNMergeInfoInheritance.INHERITED, isIndirectChildMergeInfo, false, 
                             myRepository1);
                     if (isIndirectChildMergeInfo[0]) {
@@ -1876,7 +1876,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                         			hasMergeInfoFromMergeSrc = true;
                         		} else {
                         			boolean indirect[] = { false };
-                        			Map overridenMergeInfo = getWCOrRepositoryMergeInfo(myWCAccess, path, 
+                        			Map overridenMergeInfo = getWCOrRepositoryMergeInfo(path, 
                         					entry, SVNMergeInfoInheritance.NEAREST_ANCESTOR, indirect, false, 
                         					repository);
                         			if (indirect[0]) {

@@ -261,7 +261,7 @@ public class SVNAdminClient extends SVNBasicClient {
         SVNException error = null;
         SVNException error2 = null;
         try {
-            toRepos = createRepository(toURL, true);
+            toRepos = createRepository(toURL, null, true);
             checkIfRepositoryIsAtRoot(toRepos, toURL);
             lock(toRepos);
             info = openSourceRepository(toRepos);
@@ -336,7 +336,7 @@ public class SVNAdminClient extends SVNBasicClient {
         SVNException error2 = null;
 
         try {
-            toRepos = createRepository(toURL, true);
+            toRepos = createRepository(toURL, null, true);
             checkIfRepositoryIsAtRoot(toRepos, toURL);
             lock(toRepos);
             long latestRevision = toRepos.getLatestRevision();
@@ -353,7 +353,7 @@ public class SVNAdminClient extends SVNBasicClient {
                 SVNErrorManager.error(err);
             }
 
-            fromRepos = createRepository(fromURL, false);
+            fromRepos = createRepository(fromURL, null, false);
             SVNURL rootURL = fromRepos.getRepositoryRoot(true);
             if (SVNPathUtil.getPathAsChild(rootURL.toString(), fromURL.toString()) != null) {
                 boolean supportsPartialReplay = false;
@@ -428,9 +428,9 @@ public class SVNAdminClient extends SVNBasicClient {
         }
 
         SVNRepositoryReplicator replicator = SVNRepositoryReplicator.newInstance();
-        SVNRepository fromRepos = createRepository(fromURL, true);
+        SVNRepository fromRepos = createRepository(fromURL, null, true);
         // TODO close session
-        SVNRepository toRepos = createRepository(toURL, false);
+        SVNRepository toRepos = createRepository(toURL, null, false);
         replicator.replicateRepository(fromRepos, toRepos, 1, -1);
     }
 
@@ -454,7 +454,7 @@ public class SVNAdminClient extends SVNBasicClient {
         SVNException error2 = null;
 
         try {
-            toRepos = createRepository(toURL, true);
+            toRepos = createRepository(toURL, null, true);
             checkIfRepositoryIsAtRoot(toRepos, toURL);
             lock(toRepos);
             
@@ -1124,17 +1124,7 @@ public class SVNAdminClient extends SVNBasicClient {
         }
 
         SVNURL srcURL = SVNURL.parseURIDecoded(fromURL.getString());
-        // TOOD close session.
-        SVNRepository srcRepos = createRepository(srcURL, false);
-
-        String reposUUID = srcRepos.getRepositoryUUID(true);
-        if (!fromUUID.getString().equals(reposUUID)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
-                    "UUID of destination repository ({0}) does not match expected UUID ({1})", new String[] {
-                    reposUUID, fromUUID.getString() });
-            SVNErrorManager.error(err);
-        }
-
+        SVNRepository srcRepos = createRepository(srcURL, fromUUID.getString(), false);
         return new SessionInfo(srcRepos, Long.parseLong(lastMergedRev.getString()));
     }
 

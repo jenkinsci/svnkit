@@ -198,7 +198,7 @@ public class SVNLogClient extends SVNBasicClient {
         if (endRevision == null || !endRevision.isValid()) {
             endRevision = pegRevision;
         }
-        SVNRepository repos = createRepository(null, path, pegRevision, endRevision);
+        SVNRepository repos = createRepository2(null, path, null, pegRevision, endRevision, null);
         long endRev = getRevisionNumber(endRevision, repos, path);
         long startRev = getRevisionNumber(startRevision, repos, path);
         if (endRev < startRev) {
@@ -307,7 +307,7 @@ public class SVNLogClient extends SVNBasicClient {
         if (endRevision == null || !endRevision.isValid()) {
             endRevision = pegRevision;
         }
-        SVNRepository repos = createRepository(url, null, pegRevision, endRevision);
+        SVNRepository repos = createRepository2(url, null, null, pegRevision, endRevision, null);
         long endRev = getRevisionNumber(endRevision, repos, null);
         long startRev = getRevisionNumber(startRevision, repos, null);
         if (endRev < startRev) {
@@ -470,7 +470,7 @@ public class SVNLogClient extends SVNBasicClient {
             rev = startRevision.getDate().compareTo(endRevision.getDate()) > 0 ? startRevision : endRevision;
         } 
         SVNRepository repos = rev.isValid() ? //!startRevision.isLocal() && !pegRevision.isLocal() ?
-                createRepository(baseURL, null, pegRevision, rev) : createRepository(baseURL, true);
+                createRepository2(baseURL, null, null, pegRevision, rev, null) : createRepository(baseURL, null, null, true);
         String[] targetPaths = (String[]) targets.toArray(new String[targets.size()]);
         for (int i = 0; i < targetPaths.length; i++) {
             targetPaths[i] = SVNEncodingUtil.uriDecode(targetPaths[i]);
@@ -629,7 +629,7 @@ public class SVNLogClient extends SVNBasicClient {
             rev = startRevision.getDate().compareTo(endRevision.getDate()) > 0 ? startRevision : endRevision;
         } 
         SVNRepository repos = rev.isValid() ? 
-                createRepository(url, null, pegRevision, rev) : createRepository(url, true);
+                createRepository2(url, null, null, pegRevision, rev, null) : createRepository(url, null, null, true);
         checkCancelled();
         long startRev = getRevisionNumber(startRevision, repos, null);
         checkCancelled();
@@ -640,7 +640,7 @@ public class SVNLogClient extends SVNBasicClient {
     }
     
     public SVNLocationEntry getCopySource(File path, SVNURL url, SVNRevision revision) throws SVNException {
-        SVNRepository repos = createRepository(url, path, revision, revision);
+        SVNRepository repos = createRepository2(url, path, null, revision, revision, null);
         SVNLocationEntry copyFromEntry = null;
         String targetPath = getPathRelativeToRoot(path, url, null, null, repos);
         SVNRevision oldestRevision = SVNRevision.create(1);
@@ -691,7 +691,7 @@ public class SVNLogClient extends SVNBasicClient {
         if (revision == null || !revision.isValid()) {
             revision = SVNRevision.BASE;
         }
-        SVNRepository repos = createRepository(null, path, pegRevision, revision);
+        SVNRepository repos = createRepository2(null, path, null, pegRevision, revision, null);
         long rev = getRevisionNumber(revision, repos, path);
         doList(repos, rev, handler, fetchLocks, depth, entryFields);
     }
@@ -751,7 +751,7 @@ public class SVNLogClient extends SVNBasicClient {
     
     public void doList(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean fetchLocks, SVNDepth depth, int entryFields, ISVNDirEntryHandler handler) throws SVNException {
         long[] pegRev = new long[] {-1};
-        SVNRepository repos = createRepository(url, null, pegRevision, revision, pegRev);
+        SVNRepository repos = createRepository2(url, null, null, pegRevision, revision, pegRev);
         if (pegRev[0] < 0) {
             pegRev[0] = getRevisionNumber(revision, repos, null);
         }
