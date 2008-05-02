@@ -46,12 +46,6 @@ import org.xml.sax.Attributes;
  */
 public class DAVEditorHandler extends BasicDAVDeltaHandler {
 
-    private static final Map DEFAULT_ATTRS = new SVNHashMap();
-
-    static {
-        DEFAULT_ATTRS.put("send-all", Boolean.TRUE.toString());
-    }
-
     public static StringBuffer generateEditorRequest(final DAVConnection connection, StringBuffer xmlBuffer, 
             String url, long targetRevision, String target, String dstPath, SVNDepth depth, 
             boolean ignoreAncestry, boolean resourceWalk, boolean fetchContents, boolean sendCopyFromArgs,
@@ -61,14 +55,10 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             url = url.substring(0, url.length() - 1);
         }
         
-        Object previousSendAllValue = !sendAll ? DEFAULT_ATTRS.put("send-all", Boolean.FALSE.toString()) : null;
-        
+        Map attrs = new SVNHashMap();
+        attrs.put("send-all", Boolean.toString(sendAll));
         SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "update-report", 
-                SVN_NAMESPACES_LIST, SVNXMLUtil.PREFIX_MAP, DEFAULT_ATTRS, xmlBuffer);
-        
-        if (previousSendAllValue != null) {
-            DEFAULT_ATTRS.put("send-all", previousSendAllValue);
-        }
+                SVN_NAMESPACES_LIST, SVNXMLUtil.PREFIX_MAP, attrs, xmlBuffer);
         
         SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "src-path", url, xmlBuffer);
         if (targetRevision >= 0) {

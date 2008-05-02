@@ -1029,7 +1029,7 @@ public class DAVRepository extends SVNRepository {
             revision = targetRevision;
         }
         runReport(getLocation(), targetRevision, target, url.toString(), depth, ignoreAncestry, false, 
-                getContents, false, true, false, true, reporter, editor);
+                getContents, false, false, false, true, reporter, editor);
     }
 
     public void status(long revision, String target, SVNDepth depth, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
