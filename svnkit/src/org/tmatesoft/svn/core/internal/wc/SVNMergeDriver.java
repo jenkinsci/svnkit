@@ -504,7 +504,6 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         
         SVNMergeRange range = new SVNMergeRange(revision1, revision2, true);
         if (honorMergeInfo) {
-            myRepository1.setLocation(url1, false);
             SVNURL sourceRootURL = myRepository1.getRepositoryRoot(true);
             mergeInfoPath = getPathRelativeToRoot(null, primaryURL, sourceRootURL, null, null);
             
@@ -514,6 +513,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                         myRepository1, targetWCPath, Math.max(revision1, revision2), Math.min(revision1, revision2));
                 targetMergeInfo = fullMergeInfo[0];
                 Map implicitMergeInfo = fullMergeInfo[1];
+                myRepository1.setLocation(url1, false);
+
                 remainingRangeList = calculateRemainingRanges(sourceRootURL, url1, revision1, url2, revision2, true, 
                         targetMergeInfo, implicitMergeInfo, entry, myRepository1);
             }
