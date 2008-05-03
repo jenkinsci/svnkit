@@ -453,6 +453,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             }
 
             if (handler != null) {
+                SVNURL repositoryRoot = getRepositoryRoot(true);
                 List dirents = (List) values.get(2);
                 for (Iterator iterator = dirents.iterator(); iterator.hasNext();) {
                     SVNItem item = (SVNItem) iterator.next();
@@ -468,7 +469,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     long createdRevision = SVNReader.getLong(direntProps, 4);
                     Date createdDate = SVNDate.parseDate(SVNReader.getString(direntProps, 5));
                     String lastAuthor = SVNReader.getString(direntProps, 6);
-                    handler.handleDirEntry(new SVNDirEntry(url.appendPath(name, false), name, kind, size, hasProps, createdRevision, createdDate, lastAuthor));
+                    handler.handleDirEntry(new SVNDirEntry(url.appendPath(name, false), repositoryRoot, name, kind, size, hasProps, createdRevision, createdDate, lastAuthor));
                 }
             }
         } catch (SVNException e) {
@@ -487,10 +488,11 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         try {
             openConnection();
             final SVNURL url = getLocation().setPath(getFullPath(path), false);
+            final SVNURL repositoryRoot = getRepositoryRoot(true);
             ISVNDirEntryHandler handler = new ISVNDirEntryHandler() {
                 public void handleDirEntry(SVNDirEntry dirEntry) throws SVNException {
                     if (entries != null) {
-                        dirEntry = new SVNDirEntry(url.appendPath(dirEntry.getName(), false), dirEntry.getName(),
+                        dirEntry = new SVNDirEntry(url.appendPath(dirEntry.getName(), false), repositoryRoot, dirEntry.getName(),
                                 dirEntry.getKind(), dirEntry.getSize(), dirEntry.hasProperties(), dirEntry.getRevision(), dirEntry.getDate(), dirEntry.getAuthor());
                         entries.add(dirEntry);
                     }
@@ -511,7 +513,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 long createdRevision = SVNReader.getLong(direntProps, 3);
                 Date createdDate = SVNDate.parseDate(SVNReader.getString(direntProps, 4));
                 String lastAuthor = SVNReader.getString(direntProps, 5);
-                parentEntry = new SVNDirEntry(url, "", kind, size, hasProps, createdRevision, createdDate, lastAuthor);
+                parentEntry = new SVNDirEntry(url, repositoryRoot, "", kind, size, hasProps, createdRevision, createdDate, lastAuthor);
             }
 
             // get entries.
@@ -537,7 +539,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     long createdRevision = SVNReader.getLong(direntProps, 4);
                     Date createdDate = SVNDate.parseDate(SVNReader.getString(direntProps, 5));
                     String lastAuthor = SVNReader.getString(direntProps, 6);
-                    handler.handleDirEntry(new SVNDirEntry(url.appendPath(name, false), name, kind, size, hasProps, createdRevision, createdDate, lastAuthor));
+                    handler.handleDirEntry(new SVNDirEntry(url.appendPath(name, false), repositoryRoot, name, kind, size, hasProps, createdRevision, createdDate, lastAuthor));
                 }
             }
 
@@ -1178,6 +1180,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             List items = read("(?l)", null, false);
             items = (List) items.get(0);
             if (items != null) {
+                SVNURL repositoryRoot = getRepositoryRoot(true);
                 List values = SVNReader.parseTuple("wnsr(?s)(?s)", items, null);
                 SVNNodeKind kind = SVNNodeKind.parseKind(SVNReader.getString(values, 0));
                 long size = SVNReader.getLong(values, 1);
@@ -1185,7 +1188,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 long createdRevision = SVNReader.getLong(values, 3);
                 Date createdDate = SVNDate.parseDate(SVNReader.getString(values, 4));
                 String lastAuthor = SVNReader.getString(values, 5);
-                entry = new SVNDirEntry(url, SVNPathUtil.tail(path), kind, size, hasProperties, createdRevision, createdDate, lastAuthor);
+                entry = new SVNDirEntry(url, repositoryRoot, SVNPathUtil.tail(path), kind, size, hasProperties, createdRevision, createdDate, lastAuthor);
             }
             return entry;
         } catch (SVNException e) {

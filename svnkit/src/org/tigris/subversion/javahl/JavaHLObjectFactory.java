@@ -393,10 +393,15 @@ public class JavaHLObjectFactory {
         if(dirEntry == null){
             return null;
         }
-        //TODO: what should we pass here in the 2nd parameter - a real abs path??? 
+
+        SVNURL url = dirEntry.getURL();
+        SVNURL repositoryRoot = dirEntry.getRepositoryRoot();
+        String relativeToRepositoryRoot = SVNPathUtil.getRelativePath(repositoryRoot.getPath(), url.getPath());
+        String relativeToTargetPath = dirEntry.getRelativePath();
+        String targetToRootPath = relativeToRepositoryRoot.substring(0, relativeToRepositoryRoot.length() - relativeToTargetPath.length());
         return new DirEntry(
-                dirEntry.getRelativePath(),
-                dirEntry.getRelativePath(),
+                relativeToTargetPath,
+                SVNPathUtil.getAbsolutePath(targetToRootPath),
                 getNodeKind(dirEntry.getKind()),
                 dirEntry.getSize(),
                 dirEntry.hasProperties(),

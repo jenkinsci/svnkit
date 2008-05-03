@@ -338,6 +338,10 @@ public class DAVRepository extends SVNRepository {
                 if (status.getError() != null) {
                     SVNErrorManager.error(status.getError());
                 }
+                if (!hasRepositoryRoot()) {
+                    myConnection.fetchRepositoryRoot(this);                    
+                }
+                SVNURL repositryRoot = getRepositoryRoot(false);
                 for(Iterator dirEnts = dirEntsMap.keySet().iterator(); dirEnts.hasNext();) {
                     String url = (String) dirEnts.next();
                     DAVProperties child = (DAVProperties) dirEntsMap.get(url);
@@ -410,7 +414,7 @@ public class DAVRepository extends SVNRepository {
                     
                     SVNURL childURL = getLocation().setPath(fullPath, true);
                     childURL = childURL.appendPath(name, false);
-                    SVNDirEntry dirEntry = new SVNDirEntry(childURL, name, kind, size, hasProperties, lastRevision, date, author);
+                    SVNDirEntry dirEntry = new SVNDirEntry(childURL, repositryRoot, name, kind, size, hasProperties, lastRevision, date, author);
                     handler.handleDirEntry(dirEntry);
                 }                
             }
@@ -477,15 +481,19 @@ public class DAVRepository extends SVNRepository {
                 String author = authorValue == null ? null : authorValue.getString();
                 SVNPropertyValue dateValue = child.getPropertyValue(DAVElement.CREATION_DATE);
                 Date date = dateValue != null ? SVNDate.parseDate(dateValue.getString()) : null;
+                if (!hasRepositoryRoot()) {
+                    myConnection.fetchRepositoryRoot(this);
+                }
+                SVNURL repositoryRoot = getRepositoryRoot(false);
                 SVNURL childURL = getLocation().setPath(fullPath, true);
                 if ("".equals(name)) {
-                    parent[0] = new SVNDirEntry(childURL, name, kind, size, false, lastRevision, date, author);
+                    parent[0] = new SVNDirEntry(childURL, repositoryRoot, name, kind, size, false, lastRevision, date, author);
                     SVNPropertyValue vcc = child.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
                     parentVCC[0] = vcc == null ? null : vcc.getString();
                 } else {
                     childURL = childURL.appendPath(name, false);
                     if (entries != null) {
-                    	entries.add(new SVNDirEntry(childURL, name, kind, size, false, lastRevision, date, author));
+                    	entries.add(new SVNDirEntry(childURL, repositoryRoot, name, kind, size, false, lastRevision, date, author));
                     }
                     vccs.add(child.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION));
                 }
@@ -1022,8 +1030,12 @@ public class DAVRepository extends SVNRepository {
                 break;
             }
         }
+        if (!hasRepositoryRoot()) {
+            myConnection.fetchRepositoryRoot(this);            
+        }
+        SVNURL repositoryRoot = getRepositoryRoot(false);
         SVNURL url = getLocation().setPath(fullPath, true);
-        return new SVNDirEntry(url, name, kind, size, hasProperties, lastRevision, date, author);
+        return new SVNDirEntry(url, repositoryRoot, name, kind, size, hasProperties, lastRevision, date, author);
     }
 
     public void diff(SVNURL url, long targetRevision, long revision, String target, boolean ignoreAncestry, 

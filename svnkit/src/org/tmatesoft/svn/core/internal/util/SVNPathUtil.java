@@ -14,10 +14,10 @@ package org.tmatesoft.svn.core.internal.util;
 import java.io.File;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.StringTokenizer;
-import java.util.Iterator;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -64,12 +64,13 @@ public class SVNPathUtil {
         if (path == null){
             return null;
         }        
-        if ("".equals(path)){
+        if (path.length() == 0 || "/".equals(path)){
             return "/";           
         }
         if (isURL(path)){
             return path;            
         }
+        path = path.endsWith("/") ? path.substring(0, path.length() - "/".length()) : path;
         return path.startsWith("/") ? path : "/" + path;       
     }
 

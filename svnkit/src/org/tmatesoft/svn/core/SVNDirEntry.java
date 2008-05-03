@@ -53,24 +53,27 @@ public class SVNDirEntry implements Comparable {
     private String myCommitMessage;
     private SVNLock myLock;
     private SVNURL myURL;
+    private SVNURL myRepositoryRoot;
 
     /**
      * Constructs an instance of <b>SVNDirEntry</b>.
      * 
-     * @param url           a url of this entry 
-     * @param name 			an entry name
-     * @param kind 			the node kind for the entry
-     * @param size 			the entry size in bytes
-     * @param hasProperties <span class="javakeyword">true</span> if the 
-     *                      entry has properties, otherwise <span class="javakeyword">false</span>
-     * @param revision      the last changed revision of the entry
-     * @param createdDate 	the date the entry was last changed
-     * @param lastAuthor 	the person who last changed the entry
+     * @param url               a url of this entry
+     * @param repositoryRoot    a url of the root of repository this entry belongs to
+     * @param name 			    an entry name
+     * @param kind 			    the node kind for the entry
+     * @param size 			    the entry size in bytes
+     * @param hasProperties     <span class="javakeyword">true</span> if the
+     *                          entry has properties, otherwise <span class="javakeyword">false</span>
+     * @param revision          the last changed revision of the entry
+     * @param createdDate 	    the date the entry was last changed
+     * @param lastAuthor 	    the person who last changed the entry
      */
-    public SVNDirEntry(SVNURL url, String name, SVNNodeKind kind, long size,
+    public SVNDirEntry(SVNURL url, SVNURL repositoryRoot, String name, SVNNodeKind kind, long size,
                        boolean hasProperties, long revision, Date createdDate,
                        String lastAuthor) {
         myURL = url;
+        myRepositoryRoot = repositoryRoot;
         myName = name;
         myKind = kind;
         mySize = size;
@@ -79,35 +82,27 @@ public class SVNDirEntry implements Comparable {
         myCreatedDate = createdDate;
         myLastAuthor = lastAuthor;
     }
-    
-
-    /**
-     * Returns the entry's URL.
-     * 
-     * @return this entry's URL.
-     */
-    public SVNURL getURL() {
-        return myURL;
-    }
 
     /**
      * Constructs an instance of <b>SVNDirEntry</b>.
-     * 
-     * @param url           a url of this entry 
-     * @param name          an entry name
-     * @param kind          the node kind for the entry
-     * @param size          the entry size in bytes
-     * @param hasProperties <span class="javakeyword">true</span> if the 
-     *                      entry has properties, otherwise <span class="javakeyword">false</span>
-     * @param revision      the last changed revision of the entry
-     * @param createdDate   the date the entry was last changed
-     * @param lastAuthor    the person who last changed the entry
-     * @param commitMessage the log message of the last change commit
+     *
+     * @param url               a url of this entry
+     * @param repositoryRoot    a url of the root of repository this entry belongs to
+     * @param name              an entry name
+     * @param kind              the node kind for the entry
+     * @param size              the entry size in bytes
+     * @param hasProperties     <span class="javakeyword">true</span> if the
+     *                          entry has properties, otherwise <span class="javakeyword">false</span>
+     * @param revision          the last changed revision of the entry
+     * @param createdDate       the date the entry was last changed
+     * @param lastAuthor        the person who last changed the entry
+     * @param commitMessage     the log message of the last change commit
      */
-    public SVNDirEntry(SVNURL url, String name, SVNNodeKind kind, long size,
+    public SVNDirEntry(SVNURL url, SVNURL repositoryRoot, String name, SVNNodeKind kind, long size,
             boolean hasProperties, long revision, Date createdDate,
             String lastAuthor, String commitMessage) {
         myURL = url;
+        myRepositoryRoot = repositoryRoot;
         myName = name;
         myKind = kind;
         mySize = size;
@@ -116,6 +111,25 @@ public class SVNDirEntry implements Comparable {
         myCreatedDate = createdDate;
         myLastAuthor = lastAuthor;
         myCommitMessage = commitMessage;
+    }
+
+
+    /**
+     * Returns the entry's URL.
+     *
+     * @return this entry's URL.
+     */
+    public SVNURL getURL() {
+        return myURL;
+    }
+
+    /**
+     * Returns the entry's repository root URL.
+     *
+     * @return the URL of repository root.
+     */
+    public SVNURL getRepositoryRoot() {
+        return myRepositoryRoot;
     }
     
     /**

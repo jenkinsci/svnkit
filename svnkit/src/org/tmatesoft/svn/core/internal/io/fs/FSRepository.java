@@ -833,7 +833,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
 
         SVNURL entryURL = parentURL.appendPath(repEntry.getName(), false);
-        SVNDirEntry dirEntry = new SVNDirEntry(entryURL, repEntry.getName(), kind, size, hasProps, revision, lastCommitDate, lastAuthor, log);
+        SVNDirEntry dirEntry = new SVNDirEntry(entryURL, getRepositoryRoot(true), repEntry.getName(), kind, size, hasProps, revision, lastCommitDate, lastAuthor, log);
         dirEntry.setRelativePath(repEntry.getName());
         return dirEntry;
     }

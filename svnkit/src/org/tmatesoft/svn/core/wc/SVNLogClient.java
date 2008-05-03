@@ -15,7 +15,6 @@ import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
@@ -33,15 +32,16 @@ import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepository;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
-import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
@@ -827,7 +827,7 @@ public class SVNLogClient extends SVNBasicClient {
                     if (dateStr != null) {
                         datestamp = SVNDate.parseDateString(dateStr);
                     }
-                    entry = new SVNDirEntry(url, "", kind, 0, !props.isEmpty(), rev, datestamp, author);
+                    entry = new SVNDirEntry(url, reposRoot, "", kind, 0, !props.isEmpty(), rev, datestamp, author);
                     entry.setRelativePath("");
                 }
             }
