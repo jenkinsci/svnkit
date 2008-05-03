@@ -11,8 +11,8 @@
         </webroots>
         <building>
           <setting name="EXPLODED_URL" value="file:///var/lib/tomcat5.5/webapps/svn" />
-          <setting name="EXPLODED_ENABLED" value="true" />
-          <setting name="JAR_URL" value="file://" />
+          <setting name="EXPLODED_ENABLED" value="false" />
+          <setting name="JAR_URL" value="file://$MODULE_DIR$/../out/svnkit-dav.war" />
           <setting name="JAR_ENABLED" value="false" />
           <setting name="BUILD_MODULE_ON_FRAME_DEACTIVATION" value="false" />
           <setting name="BUILD_EXTERNAL_DEPENDENCIES" value="false" />
@@ -21,10 +21,6 @@
           <setting name="BUILD_ONLY_WEB_RESOURCES" value="false" />
         </building>
         <packaging>
-          <containerElement type="module" name="svnkit-dav">
-            <attribute name="method" value="1" />
-            <attribute name="URI" value="/WEB-INF/classes" />
-          </containerElement>
           <containerElement type="module" name="javahl">
             <attribute name="method" value="1" />
             <attribute name="URI" value="/WEB-INF/classes" />
@@ -39,6 +35,10 @@
           </containerElement>
           <containerElement type="module" name="svnkit-cli">
             <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/classes" />
+          </containerElement>
+          <containerElement type="module" name="svnkit-dav">
+            <attribute name="method" value="1" />
             <attribute name="URI" value="/WEB-INF/classes" />
           </containerElement>
           <containerElement type="library" level="module">
@@ -57,14 +57,14 @@
             <url>jar://$MODULE_DIR$/../contrib/servlet-api/servlet-api.jar!/</url>
           </containerElement>
           <containerElement type="library" level="module">
-            <attribute name="method" value="0" />
-            <attribute name="URI" value="/WEB-INF/lib" />
-            <url>jar://$MODULE_DIR$/../contrib/sqlite/sqlitejdbc.jar!/</url>
-          </containerElement>
-          <containerElement type="library" level="module">
             <attribute name="method" value="1" />
             <attribute name="URI" value="/WEB-INF/lib/trilead.jar" />
             <url>jar://$MODULE_DIR$/../contrib/trilead/trilead.jar!/</url>
+          </containerElement>
+          <containerElement type="library" level="module">
+            <attribute name="method" value="0" />
+            <attribute name="URI" value="/WEB-INF/lib" />
+            <url>jar://$MODULE_DIR$/../contrib/sqlite/sqlitejdbc.jar!/</url>
           </containerElement>
         </packaging>
       </configuration>
