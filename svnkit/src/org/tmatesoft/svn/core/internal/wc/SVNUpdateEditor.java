@@ -1039,11 +1039,8 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             modifiedProps.containsName(SVNProperty.SPECIAL);
         }
         
-        SVNStatusType propStatus = SVNStatusType.UNCHANGED;
-        if (modifiedProps != null) {
-            propStatus = adminArea.mergeProperties(name, null, fileInfo.copiedBaseProperties, 
-                    fileInfo.copiedWorkingProperties, modifiedProps, null, null, true, false, log);
-        }
+        SVNStatusType propStatus = adminArea.mergeProperties(name, null, fileInfo.copiedBaseProperties, 
+                fileInfo.copiedWorkingProperties, modifiedProps, null, null, true, false, log);
         if (modifiedEntryProps != null) {
             lockStatus = log.logChangedEntryProperties(name, modifiedEntryProps);
         }
