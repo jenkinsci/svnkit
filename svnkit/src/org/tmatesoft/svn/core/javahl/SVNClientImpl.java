@@ -1652,6 +1652,9 @@ public class SVNClientImpl implements SVNClientInterface {
                             path = path.replace(File.separatorChar, '/');
                         }
                     }
+                    if (path == null) {
+                        return;                        
+                    }
                     if (myNotify != null && event.getErrorMessage() == null) {
                         myNotify.onNotify(
                                 path,
