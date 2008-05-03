@@ -620,13 +620,18 @@ public class DAVRepository extends SVNRepository {
             path = SVNEncodingUtil.uriEncode(path);
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, this, path, revision, false, false, null);
             path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
-            HTTPStatus status = myConnection.doReport(path, request, davHandler);
-            if (status.getError() != null) {
-                if (status.getError().getErrorCode() == SVNErrorCode.UNKNOWN && davHandler.isCompatibleMode()) {
-                    cachingHandler.handleLogEntry(SVNLogEntry.EMPTY_ENTRY);
-                } else {
+            try {
+                HTTPStatus status = myConnection.doReport(path, request, davHandler);
+                if (status.getError() != null) {
                     SVNErrorManager.error(status.getError());
                 }
+            } catch (SVNException e) {
+                if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.UNKNOWN && davHandler.isCompatibleMode()) {
+                    cachingHandler.handleLogEntry(SVNLogEntry.EMPTY_ENTRY);
+                } else {
+                    throw e;
+                }
+                
             }
         } finally {
             closeConnection();
