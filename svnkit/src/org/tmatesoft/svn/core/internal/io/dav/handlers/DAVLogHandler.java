@@ -186,7 +186,7 @@ public class DAVLogHandler extends BasicDAVHandler {
     protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
         if (element == LOG_ITEM) {
             myCount++;
-            if (myLimit > 0 && myLimit > myCount && myNestLevel == 0) {
+            if (myLimit > 0 && myCount > myLimit && myNestLevel == 0) {
                 myIsCompatibleMode = true;
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN);
                 SVNErrorManager.error(err);

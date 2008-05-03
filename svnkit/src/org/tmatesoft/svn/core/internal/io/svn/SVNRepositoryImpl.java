@@ -757,7 +757,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 SVNProperties revisionProperties = null;
                 SVNProperties logEntryProperties = new SVNProperties();
                 boolean hasChildren = false;
-                if (handler != null && !(limit > 0 && limit > count && nestLevel == 0)) {
+                if (handler != null && !(limit > 0 && count > limit && nestLevel == 0)) {
                     revision = SVNReader.getLong(items, 1);
                     String author = SVNReader.getString(items, 2);
                     Date date = SVNReader.getDate(items, 3);
@@ -808,7 +808,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                         }
                     }
                 }
-                if (handler != null && !(limit > 0 && limit > count && nestLevel == 0)) {
+                if (handler != null && !(limit > 0 && count > limit && nestLevel == 0)) {
                     SVNLogEntry logEntry = new SVNLogEntry(changedPathsMap, revision, logEntryProperties, hasChildren);
                     handler.handleLogEntry(logEntry);
                     if (logEntry.hasChildren()) {
