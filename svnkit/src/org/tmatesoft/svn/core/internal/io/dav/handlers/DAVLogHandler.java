@@ -84,20 +84,13 @@ public class DAVLogHandler extends BasicDAVHandler {
         return xmlBuffer;
     }
 
-    private static final DAVElement LOG_ITEM = DAVElement.getElement(DAVElement.SVN_NAMESPACE, 
-            "log-item");
-    private static final DAVElement ADDED_PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, 
-            "added-path");
-    private static final DAVElement DELETED_PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, 
-            "deleted-path");
-    private static final DAVElement MODIFIED_PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, 
-            "modified-path");
-    private static final DAVElement REPLACED_PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, 
-            "replaced-path");
-    private static final DAVElement HAS_CHILDREN = DAVElement.getElement(DAVElement.SVN_NAMESPACE, 
-            "has-children");
-    private static final DAVElement REVPROP = DAVElement.getElement(DAVElement.SVN_NAMESPACE, 
-            "revprop");
+    private static final DAVElement LOG_ITEM = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "log-item");
+    private static final DAVElement ADDED_PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "added-path");
+    private static final DAVElement DELETED_PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "deleted-path");
+    private static final DAVElement MODIFIED_PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "modified-path");
+    private static final DAVElement REPLACED_PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "replaced-path");
+    private static final DAVElement HAS_CHILDREN = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "has-children");
+    private static final DAVElement REVPROP = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "revprop");
 
     private ISVNLogEntryHandler myLogEntryHandler;
     private long myRevision;
@@ -106,8 +99,10 @@ public class DAVLogHandler extends BasicDAVHandler {
     private Date myDate;
     private String myComment;
     private SVNLogEntryPath myPath;
-    private int myCount;
+    private long myCount;
     private long myLimit;
+    private int myNestLevel;
+    
     private boolean myIsCompatibleMode;
     private boolean myHasChildren;
     private boolean myIsWantAuthor;
@@ -191,28 +186,35 @@ public class DAVLogHandler extends BasicDAVHandler {
     protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
         if (element == LOG_ITEM) {
             myCount++;
-            if (myLimit <= 0 || myCount <= myLimit) {
-                if (myLogEntryHandler != null) {
-                    if (myPaths == null) {
-                        myPaths = new SVNHashMap();
-                    }
-                    if (myRevProps == null) {
-                        myRevProps = new SVNProperties();
-                    }
-                    if (myAuthor != null) {
-                        myRevProps.put(SVNRevisionProperty.AUTHOR, myAuthor);
-                    }
-                    if (myComment != null) {
-                        myRevProps.put(SVNRevisionProperty.LOG, myComment);
-                    }
-                    if (myDate != null) {
-                        myRevProps.put(SVNRevisionProperty.DATE, SVNDate.formatDate(myDate));
-                    }
-                    SVNLogEntry logEntry = new SVNLogEntry(myPaths, myRevision, myRevProps, myHasChildren);
-                    myLogEntryHandler.handleLogEntry(logEntry);
-                }
-            } else if (myLimit > 0 && myLimit < myCount) {
+            if (myLimit > 0 && myLimit > myCount && myNestLevel == 0) {
                 myIsCompatibleMode = true;
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN);
+                SVNErrorManager.error(err);
+            }
+            if (myLogEntryHandler != null) {
+                if (myPaths == null) {
+                    myPaths = new SVNHashMap();
+                }
+                if (myRevProps == null) {
+                    myRevProps = new SVNProperties();
+                }
+                if (myAuthor != null) {
+                    myRevProps.put(SVNRevisionProperty.AUTHOR, myAuthor);
+                }
+                if (myComment != null) {
+                    myRevProps.put(SVNRevisionProperty.LOG, myComment);
+                }
+                if (myDate != null) {
+                    myRevProps.put(SVNRevisionProperty.DATE, SVNDate.formatDate(myDate));
+                }
+                SVNLogEntry logEntry = new SVNLogEntry(myPaths, myRevision, myRevProps, myHasChildren);
+                myLogEntryHandler.handleLogEntry(logEntry);
+                if (logEntry.hasChildren()) {
+                    myNestLevel++;
+                }
+                if (logEntry.getRevision() < 0) {
+                    myNestLevel = myNestLevel <= 0 ? 0 : myNestLevel -1;
+                }
             }
             myPaths = null;
             myRevProps = null;
@@ -243,8 +245,7 @@ public class DAVLogHandler extends BasicDAVHandler {
             if (myIsWantDate) {
                 myDate = SVNDate.parseDate(cdata.toString());
             }
-        } else if (element == ADDED_PATH || element == MODIFIED_PATH || element == REPLACED_PATH ||
-                element == DELETED_PATH) {
+        } else if (element == ADDED_PATH || element == MODIFIED_PATH || element == REPLACED_PATH || element == DELETED_PATH) {
             if (myPath != null && cdata != null) {
                 if (myPaths == null) {
                     myPaths = new SVNHashMap();
@@ -258,7 +259,7 @@ public class DAVLogHandler extends BasicDAVHandler {
         }
     }
 
-    public int getEntriesCount() {
+    public long getEntriesCount() {
         return myCount;
     }
 }

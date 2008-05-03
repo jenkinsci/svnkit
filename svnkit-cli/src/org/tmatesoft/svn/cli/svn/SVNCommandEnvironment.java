@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.cli.AbstractSVNCommand;
 import org.tmatesoft.svn.cli.AbstractSVNCommandEnvironment;
@@ -287,34 +288,38 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             myMessage = optionValue.getValue();
         } else if (option == SVNOption.CHANGE) {
             if (myOldTarget != null) {
-            	SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-            			"Can't specify -c with --old");
+            	SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Can't specify -c with --old");
             	SVNErrorManager.error(err);
             }
             
             String chValue = optionValue.getValue();
-            long change = 0;
-            try {
-                change = Long.parseLong(chValue);
-            } catch (NumberFormatException nfe) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                		"Non-numeric change argument given to -c");
-                SVNErrorManager.error(err);
+            for(StringTokenizer tokens = new StringTokenizer(chValue, ","); tokens.hasMoreTokens();) {
+                String token = tokens.nextToken();
+                while (token.startsWith("r")) {
+                    token = token.substring(1);
+                }
+                long change = 0;
+                try {
+                    change = Long.parseLong(token);
+                } catch (NumberFormatException nfe) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+                            "Non-numeric change argument given to -c");
+                    SVNErrorManager.error(err);
+                }
+                SVNRevisionRange range = null;
+                if (change == 0) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+                            "There is no change 0");
+                    SVNErrorManager.error(err);
+                } else if (change > 0) {
+                    range = new SVNRevisionRange(SVNRevision.create(change - 1), SVNRevision.create(change));
+                } else {
+                    change = -change;
+                    range = new SVNRevisionRange(SVNRevision.create(change), SVNRevision.create(change - 1));
+                }
+                myRevisionRanges.add(range);
+                myIsChangeOptionUsed = true;
             }
-            
-            SVNRevisionRange range = null;
-            if (change == 0) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                		"There is no change 0");
-                SVNErrorManager.error(err);
-            } else if (change > 0) {
-                range = new SVNRevisionRange(SVNRevision.create(change - 1), SVNRevision.create(change));
-            } else {
-                change = -change;
-                range = new SVNRevisionRange(SVNRevision.create(change), SVNRevision.create(change - 1));
-            }
-            myRevisionRanges.add(range);
-            myIsChangeOptionUsed = true;
         } else if (option == SVNOption.REVISION) {
             String revStr = optionValue.getValue();
             SVNRevision[] revisions = parseRevision(revStr);

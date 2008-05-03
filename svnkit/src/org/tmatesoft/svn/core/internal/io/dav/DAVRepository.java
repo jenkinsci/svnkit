@@ -621,10 +621,12 @@ public class DAVRepository extends SVNRepository {
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, this, path, revision, false, false, null);
             path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
             HTTPStatus status = myConnection.doReport(path, request, davHandler);
-            if (status.getError() != null && !davHandler.isCompatibleMode()) {
-                SVNErrorManager.error(status.getError());
-            } else if (status.getError() != null) {
-                cachingHandler.handleLogEntry(SVNLogEntry.EMPTY_ENTRY);
+            if (status.getError() != null) {
+                if (status.getError().getErrorCode() == SVNErrorCode.UNKNOWN && davHandler.isCompatibleMode()) {
+                    cachingHandler.handleLogEntry(SVNLogEntry.EMPTY_ENTRY);
+                } else {
+                    SVNErrorManager.error(status.getError());
+                }
             }
         } finally {
             closeConnection();
@@ -1029,7 +1031,7 @@ public class DAVRepository extends SVNRepository {
             revision = targetRevision;
         }
         runReport(getLocation(), targetRevision, target, url.toString(), depth, ignoreAncestry, false, 
-                getContents, false, false, false, true, reporter, editor);
+                getContents, false, true, false, true, reporter, editor);
     }
 
     public void status(long revision, String target, SVNDepth depth, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
