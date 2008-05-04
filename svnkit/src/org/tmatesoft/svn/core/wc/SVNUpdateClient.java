@@ -334,7 +334,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             }
             long[] revs = new long[1];
             // should fail on missing repository.
-            SVNRepository repository = createRepository2(url, null, anchorArea, pegRevision, revision, revs);
+            SVNRepository repository = createRepository(url, null, anchorArea, pegRevision, revision, revs);
             long revNumber = revs[0];
             url = repository.getLocation();
             // root of the switched repos.
@@ -424,7 +424,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             revision = SVNRevision.HEAD;
         }
         
-        SVNRepository repos = createRepository2(url, null, null, pegRevision, revision, null);
+        SVNRepository repos = createRepository(url, null, null, pegRevision, revision, null);
         url = repos.getLocation();
         long revNumber = getRevisionNumber(revision, repos, null);
         SVNNodeKind targetNodeKind = repos.checkPath("", revNumber);
@@ -522,7 +522,7 @@ public class SVNUpdateClient extends SVNBasicClient {
     
     public long doExport(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, String eolStyle, boolean force, SVNDepth depth) throws SVNException {
         long[] revNum = { SVNRepository.INVALID_REVISION }; 
-        SVNRepository repository = createRepository2(url, null, null, pegRevision, revision, revNum);
+        SVNRepository repository = createRepository(url, null, null, pegRevision, revision, revNum);
         long exportedRevision = doRemoteExport(repository, revNum[0], dstPath, eolStyle, force, depth);
         dispatchEvent(SVNEventFactory.createSVNEvent(null, SVNNodeKind.NONE, null, exportedRevision, 
                 SVNEventAction.UPDATE_COMPLETED, null, null, null));
@@ -589,7 +589,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             final boolean force, SVNDepth depth) throws SVNException {
         long exportedRevision = -1;
         if (revision != SVNRevision.BASE && revision != SVNRevision.WORKING && revision != SVNRevision.COMMITTED && revision != SVNRevision.UNDEFINED) {
-            SVNRepository repository = createRepository2(null, srcPath, null, pegRevision, revision, null);
+            SVNRepository repository = createRepository(null, srcPath, null, pegRevision, revision, null);
             long revisionNumber = getRevisionNumber(revision, repository, srcPath);
             exportedRevision = doRemoteExport(repository, revisionNumber, dstPath, eolStyle, force, depth); 
         } else {

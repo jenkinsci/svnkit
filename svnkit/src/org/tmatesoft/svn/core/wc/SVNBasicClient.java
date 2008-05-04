@@ -259,7 +259,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         if (reposRoot == null) {
         	SVNRepository repos = null;
         	try {
-            	repos = createRepository2(url, path, null, pegRevision, pegRevision, null);
+            	repos = createRepository(url, path, null, pegRevision, pegRevision, null);
             	reposRoot = repos.getRepositoryRoot(true); 
             } finally {
             	repos.closeSession();
@@ -275,10 +275,6 @@ public class SVNBasicClient implements ISVNEventHandler {
         }
     }
 
-//    protected SVNRepository createRepository(SVNURL url, boolean mayReuse) throws SVNException {
-//        return createRepository(url, null, mayReuse);
-//    }
-    
     protected SVNRepository createRepository(SVNURL url, File path, SVNWCAccess access, boolean mayReuse) throws SVNException {
         String uuid = null;
         if (access != null) {
@@ -466,62 +462,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         return -1;
     }
 
-/*    protected SVNRepository createRepository(SVNURL url, File path, SVNRevision pegRevision, 
-            SVNRevision revision) throws SVNException {
-        return createRepository2(url, path, pegRevision, revision, null);
-    }
-
-    protected SVNRepository createRepository(SVNURL url, File path, SVNRevision pegRevision, 
-            SVNRevision revision, long[] pegRev) throws SVNException {
-        if (url == null) {
-            SVNURL pathURL = getURL(path);
-            if (pathURL == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path);
-                SVNErrorManager.error(err);
-            }
-        }
-        if (!revision.isValid() && pegRevision.isValid()) {
-            revision = pegRevision;
-        }
-        SVNRevision startRevision = SVNRevision.UNDEFINED;
-        if (path == null) {
-            if (!revision.isValid()) {
-                startRevision = SVNRevision.HEAD;
-            } else {
-                startRevision = revision;
-            }
-            if (!pegRevision.isValid()) {
-                pegRevision = SVNRevision.HEAD;
-            } 
-        } else {
-            if (!revision.isValid()) {
-                startRevision = SVNRevision.BASE;
-            }  else {
-                startRevision = revision;
-            }
-            if (!pegRevision.isValid()) {
-                pegRevision = SVNRevision.WORKING;
-            } 
-        }
-        
-        SVNRepositoryLocation[] locations = getLocations(url, path, null, pegRevision, startRevision, SVNRevision.UNDEFINED);
-        url = locations[0].getURL();
-        long actualRevision = locations[0].getRevisionNumber();
-        SVNRepository repository = createRepository(url, true);
-        actualRevision = getRevisionNumber(SVNRevision.create(actualRevision), repository, path);
-        if (actualRevision < 0) {
-            actualRevision = repository.getLatestRevision();
-        }
-        if (pegRev != null && pegRev.length > 0) {
-            pegRev[0] = actualRevision;
-        }
-        return repository;
-    }
-*/
-    /**
-     * TODO: replace createRepository calls with createRepository2
-     */
-    protected SVNRepository createRepository2(SVNURL url, File path, SVNAdminArea area, SVNRevision pegRevision, 
+    protected SVNRepository createRepository(SVNURL url, File path, SVNAdminArea area, SVNRevision pegRevision, 
             SVNRevision revision, long[] pegRev) throws SVNException {
         if (url == null) {
             SVNURL pathURL = getURL(path);
