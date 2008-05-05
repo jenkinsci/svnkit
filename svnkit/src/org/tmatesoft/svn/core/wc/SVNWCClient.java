@@ -511,7 +511,7 @@ public class SVNWCClient extends SVNBasicClient {
             SVNErrorManager.error(err);
         } else if (SVNProperty.isEntryProperty(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
-                    "''{0}'' is an entry property, thus not accessible to clients", propName);
+                    "Property ''{0}'' is an entry property", propName);
             SVNErrorManager.error(err);
         }
 
@@ -553,7 +553,7 @@ public class SVNWCClient extends SVNBasicClient {
             SVNErrorManager.error(err);
         } else if (SVNProperty.isEntryProperty(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
-                    "''{0}'' is an entry property, thus not accessible to clients", propName);
+                    "Property ''{0}'' is an entry property", propName);
             SVNErrorManager.error(err);
         }
         final SVNRepository repos = createRepository(url, null, null, true);
@@ -727,10 +727,16 @@ public class SVNWCClient extends SVNBasicClient {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_REVISION_AUTHOR_CONTAINS_NEWLINE, "Value will not be set unless forced");
             SVNErrorManager.error(err);
         }
-        if (propName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, "''{0}'' is a wcprop , thus not accessible to clients", propName);
+        if (SVNProperty.isWorkingCopyProperty(propName)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, 
+                    "''{0}'' is a wcprop, thus not accessible to clients", propName);
             SVNErrorManager.error(err);
         }
+        if (SVNProperty.isEntryProperty(propName)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
+                    "Property ''{0}'' is an entry property", propName);
+            SVNErrorManager.error(err);
+        }         
         SVNRepository repos = createRepository(url, null, null, SVNRevision.UNDEFINED, revision, null);
         long revNumber = getRevisionNumber(revision, repos, null);
         repos.setRevisionPropertyValue(revNumber, propName, propValue);
@@ -810,9 +816,8 @@ public class SVNWCClient extends SVNBasicClient {
      * @see #doGetProperty(SVNURL,String,SVNRevision,SVNRevision,boolean,ISVNPropertyHandler)
      * @see #doSetProperty(File,String,String,boolean,boolean,ISVNPropertyHandler)
      */
-    public SVNPropertyData doGetProperty(final SVNURL url, String propName,
-                                         SVNRevision pegRevision, SVNRevision revision, boolean recursive)
-            throws SVNException {
+    public SVNPropertyData doGetProperty(final SVNURL url, String propName, SVNRevision pegRevision, 
+            SVNRevision revision, boolean recursive) throws SVNException {
         final SVNPropertyData[] data = new SVNPropertyData[1];
         doGetProperty(url, propName, pegRevision, revision, recursive, new ISVNPropertyHandler() {
             public void handleProperty(File file, SVNPropertyData property) {
@@ -870,11 +875,16 @@ public class SVNWCClient extends SVNBasicClient {
 
     public void doGetPropertyList(File path, String propName, SVNRevision pegRevision, SVNRevision revision, 
             SVNDepth depth, ISVNPropertyHandler handler, Collection changeLists) throws SVNException {
-        if (propName != null && propName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
+        if (SVNProperty.isWorkingCopyProperty(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, 
-                    "''{0}'' is a wcprop , thus not accessible to clients", propName);
+                    "''{0}'' is a wcprop, thus not accessible to clients", propName);
             SVNErrorManager.error(err);
         }
+        if (SVNProperty.isEntryProperty(propName)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
+                    "Property ''{0}'' is an entry property", propName);
+            SVNErrorManager.error(err);
+        }         
 
         if (depth == null || depth == SVNDepth.UNKNOWN) {
             depth = SVNDepth.EMPTY;
@@ -927,11 +937,16 @@ public class SVNWCClient extends SVNBasicClient {
 
     public void doGetProperty(File path, String propName, SVNRevision pegRevision, SVNRevision revision, 
             SVNDepth depth, ISVNPropertyHandler handler, Collection changeLists) throws SVNException {
-        if (propName != null && propName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
+        if (SVNProperty.isWorkingCopyProperty(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, 
-                    "''{0}'' is a wcprop , thus not accessible to clients", propName);
+                    "''{0}'' is a wcprop, thus not accessible to clients", propName);
             SVNErrorManager.error(err);
         }
+        if (SVNProperty.isEntryProperty(propName)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
+                    "Property ''{0}'' is an entry property", propName);
+            SVNErrorManager.error(err);
+        }         
 
         if ((revision != SVNRevision.WORKING && revision != SVNRevision.BASE && revision != SVNRevision.COMMITTED && 
                 revision != SVNRevision.UNDEFINED) || (pegRevision != SVNRevision.WORKING && 
@@ -982,10 +997,16 @@ public class SVNWCClient extends SVNBasicClient {
     }
 
     public void doGetProperty(SVNURL url, String propName, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, ISVNPropertyHandler handler) throws SVNException {
-        if (propName != null && propName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, "''{0}'' is a wcprop , thus not accessible to clients", propName);
+        if (SVNProperty.isWorkingCopyProperty(propName)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, 
+                    "''{0}'' is a wcprop, thus not accessible to clients", propName);
             SVNErrorManager.error(err);
         }
+        if (SVNProperty.isEntryProperty(propName)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
+                    "Property ''{0}'' is an entry property", propName);
+            SVNErrorManager.error(err);
+        }         
         long[] pegRev = new long[]{-1};
         SVNRepository repos = createRepository(url, null, null, pegRevision, revision, pegRev);
         revision = pegRev[0] < 0 ? revision : SVNRevision.create(pegRev[0]);
@@ -1017,10 +1038,16 @@ public class SVNWCClient extends SVNBasicClient {
      * @see #doSetRevisionProperty(File,SVNRevision,String,String,boolean,ISVNPropertyHandler)
      */
     public void doGetRevisionProperty(File path, String propName, SVNRevision revision, ISVNPropertyHandler handler) throws SVNException {
-        if (propName != null && propName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, "''{0}'' is a wcprop , thus not accessible to clients", propName);
+        if (SVNProperty.isWorkingCopyProperty(propName)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, 
+                    "''{0}'' is a wcprop, thus not accessible to clients", propName);
             SVNErrorManager.error(err);
         }
+        if (SVNProperty.isEntryProperty(propName)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
+                    "Property ''{0}'' is an entry property", propName);
+            SVNErrorManager.error(err);
+        }         
         if (!revision.isValid()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Valid revision have to be specified to fetch revision property");
             SVNErrorManager.error(err);
@@ -1053,13 +1080,22 @@ public class SVNWCClient extends SVNBasicClient {
      * @see #doGetRevisionProperty(File,String,SVNRevision,ISVNPropertyHandler)
      * @see #doSetRevisionProperty(SVNURL,SVNRevision,String,String,boolean,ISVNPropertyHandler)
      */
-    public long doGetRevisionProperty(SVNURL url, String propName, SVNRevision revision, ISVNPropertyHandler handler) throws SVNException {
-        if (propName != null && propName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, "''{0}'' is a wcprop , thus not accessible to clients", propName);
+    public long doGetRevisionProperty(SVNURL url, String propName, SVNRevision revision, 
+            ISVNPropertyHandler handler) throws SVNException {
+        if (SVNProperty.isWorkingCopyProperty(propName)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, 
+                    "''{0}'' is a wcprop, thus not accessible to clients", propName);
             SVNErrorManager.error(err);
         }
+        if (SVNProperty.isEntryProperty(propName)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
+                    "Property ''{0}'' is an entry property", propName);
+            SVNErrorManager.error(err);
+        }         
+        
         if (!revision.isValid()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Valid revision have to be specified to fetch revision property");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, 
+                    "Valid revision have to be specified to fetch revision property");
             SVNErrorManager.error(err);
         }
         SVNRepository repos = createRepository(url, null, null, true);
@@ -1809,38 +1845,6 @@ public class SVNWCClient extends SVNBasicClient {
             wcAccess.close();
         }
     }
-
-/*    private void resolveEntry(SVNWCAccess wcAccess, File path, SVNEntry entry, SVNConflictChoice choice) throws SVNException {
-       if (entry.getKind() == SVNNodeKind.DIR && !"".equals(entry.getName())) {
-           return;
-       }
-       File dirPath = path;
-       if (entry.getKind() == SVNNodeKind.FILE) {
-           dirPath = path.getParentFile();
-       }
-       SVNAdminArea dir = wcAccess.retrieve(dirPath);
-       if (dir.markResolved(entry.getName(), true, true, accept)) {
-           SVNEvent event = SVNEventFactory.createResolvedEvent(dir, entry);
-           dispatchEvent(event);
-       }
-   }
-
-   private void resolveAll(SVNWCAccess access, File path, SVNWCAccept accept) throws SVNException {
-       checkCancelled();
-       SVNEntry entry = access.getEntry(path, false);
-       resolveEntry(access, path, entry, accept);
-       if (entry.isDirectory()) {
-           SVNAdminArea dir = access.retrieve(path);
-           for (Iterator ents = dir.entries(false); ents.hasNext();) {
-               SVNEntry childEntry = (SVNEntry) ents.next();
-               if (dir.getThisDirName().equals(childEntry.getName())) {
-                   continue;
-               }
-               resolveAll(access, dir.getFile(childEntry.getName()), accept);
-           }
-       }
-   }
-*/
 
     /**
      * Locks file items in a Working Copy as well as in a repository so that
