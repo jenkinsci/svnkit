@@ -155,8 +155,8 @@ public class SVNMergeRangeList {
         return removeOrIntersect(eraserRangeList, true, considerInheritance);
     }
     
-    public SVNMergeRangeList intersect(SVNMergeRangeList eraserRangeList) {
-        return removeOrIntersect(eraserRangeList, false, true);
+    public SVNMergeRangeList intersect(SVNMergeRangeList eraserRangeList, boolean considerInheritance) {
+        return removeOrIntersect(eraserRangeList, false, considerInheritance);
     }
     
     public long countRevisions() {

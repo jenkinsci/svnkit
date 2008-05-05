@@ -1358,7 +1358,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     		SVNMergeRangeList ranges1 = (SVNMergeRangeList) historyEntry.getValue();
     		SVNMergeRangeList ranges2 = (SVNMergeRangeList) history2.get(path);
     		if (ranges2 != null) {
-    			SVNMergeRangeList commonList = ranges2.intersect(ranges1);
+    			SVNMergeRangeList commonList = ranges2.intersect(ranges1, true);
     			if (!commonList.isEmpty()) {
     				SVNMergeRange commonRanges[] = commonList.getRanges();
     				SVNMergeRange youngestCommonRange = commonRanges[commonRanges.length - 1];
@@ -2206,7 +2206,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             if (targetRangeList != null) {
                 requestedRangeList = requestedRangeList.dup();
                 requestedRangeList = requestedRangeList.reverse();
-                remainingRanges = requestedRangeList.intersect(targetRangeList);
+                remainingRanges = requestedRangeList.intersect(targetRangeList, false);
                 remainingRanges = remainingRanges.reverse();
             } else {
                 remainingRanges = new SVNMergeRangeList(new SVNMergeRange[0]);
@@ -2358,7 +2358,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             checkCancelled();
             SVNMergeRange range = new SVNMergeRange(logEntry.getRevision() - 1, logEntry.getRevision(), true);
             SVNMergeRangeList thisRangeList = new SVNMergeRangeList(range);
-            SVNMergeRangeList intersection = thisRangeList.intersect(myRangeList);
+            SVNMergeRangeList intersection = thisRangeList.intersect(myRangeList, true);
             if (intersection == null || intersection.isEmpty()) {
                 return;
             }

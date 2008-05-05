@@ -75,9 +75,25 @@ public class FSLog {
         myHandler = handler;
     }
     
+    public void reset(FSFS owner, String[] paths, long limit, long start, long end, boolean descending, 
+            boolean discoverChangedPaths, boolean strictNode, boolean includeMergedRevisions, 
+            String[] revPropNames, ISVNLogEntryHandler handler) {
+        myFSFS = owner;
+        myPaths = paths;
+        myStartRevision = start;
+        myEndRevision = end;
+        myIsDescending = descending;
+        myIsDiscoverChangedPaths = discoverChangedPaths;
+        myIsStrictNode = strictNode;
+        myIsIncludeMergedRevisions = includeMergedRevisions;
+        myRevPropNames = revPropNames;
+        myLimit = limit;
+        myHandler = handler;
+    }
+    
     public long runLog() throws SVNException {
         long count = 0;
-        if (myPaths.length == 1 && "/".equals(myPaths[0])) {
+        if (!myIsIncludeMergedRevisions && myPaths.length == 1 && "/".equals(myPaths[0])) {
             count = myEndRevision - myStartRevision + 1;
             if (myLimit > 0 && count > myLimit) {
                 count = myLimit;
@@ -94,28 +110,26 @@ public class FSLog {
             return count;
         }
 
-        if (myIsIncludeMergedRevisions) {
-            return doMergedLogs(myPaths, myStartRevision, myEndRevision, myLimit, null, myIsDescending);
-        } 
-        return doLogs();
+        return doLogs(myPaths, myStartRevision, myEndRevision, myIsIncludeMergedRevisions, myIsDescending, 
+                myLimit);
     }
     
-    private long doLogs() throws SVNException {
+    private long doLogs(String[] paths, long startRevision, long endRevision, boolean includeMergedRevisions, 
+            boolean isDescendingOrder, long limit) throws SVNException {
         long sendCount = 0;
-        PathInfo[] histories = getPathHistories(myPaths, myStartRevision, myEndRevision, myIsStrictNode);
+        PathInfo[] histories = getPathHistories(paths, startRevision, endRevision, myIsStrictNode);
         
         LinkedList revisions = null;
+        Map revMergeInfo = null;
         boolean anyHistoriesLeft = true;
-        for (long currentRev = myEndRevision; 
-             currentRev >= myStartRevision && anyHistoriesLeft; 
-             currentRev = getNextHistoryRevision(histories)) {
+        for (long currentRev = endRevision; anyHistoriesLeft; currentRev = getNextHistoryRevision(histories)) {
             
             boolean changed = false;
             anyHistoriesLeft = false;
             
             for (int i = 0; i < histories.length; i++) {
                 PathInfo info = histories[i];
-                changed = info.checkHistory(currentRev, myIsStrictNode, myStartRevision, changed);
+                changed = info.checkHistory(currentRev, myIsStrictNode, startRevision, changed);
                 
                 if (!info.myIsDone) {
                     anyHistoriesLeft = true;
@@ -123,10 +137,26 @@ public class FSLog {
             }
 
             if (changed) {
-                if (myIsDescending) {
-                    sendLog(currentRev, false);
+                boolean hasChildren = false;
+                Map mergeInfo = null;
+                if (includeMergedRevisions) {
+                    LinkedList currentPaths = new LinkedList();
+                    for (int i = 0; i < histories.length; i++) {
+                        PathInfo info = histories[i];
+                        currentPaths.add(info.myPath);
+                    }
+                    mergeInfo = getMergedRevisionMergeInfo((String[]) currentPaths.toArray(new String[currentPaths.size()]), 
+                            currentRev);
+                    hasChildren = !mergeInfo.isEmpty();
+                }
+                
+                if (isDescendingOrder) {
+                    sendLog(currentRev, hasChildren);
                     sendCount++;
-                    if (myLimit > 0 && sendCount >= myLimit) {
+                    if (hasChildren) {
+                        handleMergedRevisions(currentRev, mergeInfo);
+                    }
+                    if (limit > 0 && sendCount >= limit) {
                         break;
                     }
                 } else {
@@ -134,16 +164,33 @@ public class FSLog {
                         revisions = new LinkedList();
                     }
                     revisions.addLast(new Long(currentRev));
+                    
+                    if (mergeInfo != null) {
+                        if (revMergeInfo == null) {
+                            revMergeInfo = new TreeMap();
+                        }
+                        revMergeInfo.put(new Long(currentRev), mergeInfo);
+                    }
                 }
             }
         }
 
         if (revisions != null) {
             for (int i = 0; i < revisions.size(); i++) {
+                boolean hasChildren = false;
+                Map mergeInfo = null;
                 long rev = ((Long) revisions.get(revisions.size() - i - 1)).longValue();
-                sendLog(rev, false);
+                
+                if (revMergeInfo != null) {
+                    mergeInfo = (Map) revMergeInfo.get(new Long(rev));
+                    hasChildren = mergeInfo != null && !mergeInfo.isEmpty();
+                }
+                sendLog(rev, hasChildren);
+                if (hasChildren) {
+                    handleMergedRevisions(rev, mergeInfo);
+                }
                 sendCount++;
-                if (myLimit > 0 && sendCount >= myLimit) {
+                if (limit > 0 && sendCount >= limit) {
                     break;
                 }
             }
@@ -238,101 +285,28 @@ public class FSLog {
         return entry;
     }
     
-    private long doMergedLogs(String[] paths, long histStart, long histEnd, long limit, Map foundRevisions, 
-            boolean isDescendingOrder) throws SVNException {
-        boolean anyHistoriesLeft = true;
-        boolean mainLineRun = false;
-        boolean useLimit = true;
-        long sendCount = 0;
-        LinkedList revs = new LinkedList();
-        
-        if (foundRevisions == null) {
-            mainLineRun = true;
-            foundRevisions = new SVNHashMap();
+    private void handleMergedRevisions(long revision, Map mergeInfo) throws SVNException {
+        if (mergeInfo == null || mergeInfo.isEmpty()) {
+            return;
         }
         
-        if (limit == 0) {
-            useLimit = false;
-        }
-        
-        if (myIsStrictNode) {
-            for (int i = 0; i < paths.length; i++) {
-                String path = paths[i];
-                FSRevisionRoot revRoot = myFSFS.createRevisionRoot(histEnd);
-                FSClosestCopy closestCopy = revRoot.getClosestCopy(path);
-                FSRevisionRoot copyFromRoot = closestCopy != null ? closestCopy.getRevisionRoot() : null;
-                if (copyFromRoot != null) {
-                    long oldest = copyFromRoot.getRevision() + 1;
-                    histStart = oldest > histStart ? oldest : histStart;
+        LinkedList combinedList = combineMergeInfoPathLists(mergeInfo);
+        for (int i = combinedList.size() - 1; i >= 0; i--) {
+            PathListRange pathListRange = (PathListRange) combinedList.get(i);
+            try {
+                doLogs(pathListRange.myPaths, pathListRange.myRange.getStartRevision(), 
+                        pathListRange.myRange.getEndRevision(), true, true, 0);
+            } catch (SVNException svne) {
+                SVNErrorCode errCode = svne.getErrorMessage().getErrorCode();
+                if (errCode == SVNErrorCode.FS_NOT_FOUND || errCode == SVNErrorCode.FS_NO_SUCH_REVISION) {
+                    continue;
                 }
+                throw svne;
             }
         }
-        
-        PathInfo[] histories = getPathHistories(paths, mainLineRun ? 0 : histStart, histEnd, 
-                mainLineRun ? false : myIsStrictNode);
-
-        for (long current = histEnd; anyHistoriesLeft; current = getNextHistoryRevision(histories)) {
-            boolean changed = false;
-            anyHistoriesLeft = false;
-            if (!mainLineRun && foundRevisions.get(new Long(current)) != null) {
-                break;
-            }
-            for (int i = 0; i < histories.length; i++) {
-                PathInfo info = histories[i];
-                changed = info.checkHistory(current, mainLineRun ? false : myIsStrictNode, 
-                        mainLineRun ? 0 : histStart, changed);
-                if (!info.myIsDone) {
-                    anyHistoriesLeft = true;
-                }
-            }
-            if (changed) {
-                String[] currentPaths = new String[histories.length];
-                for (int i = 0; i < histories.length; i++) {
-                    PathInfo info = histories[i];
-                    currentPaths[i] = info.myPath;
-                }                
-                revs.add(new Long(current));
-                Map mergeInfo = getMergedRevisionMergeInfo(currentPaths, current);
-                foundRevisions.put(new Long(current), mergeInfo);
-            }
+        if (myHandler != null) {
+            myHandler.handleLogEntry(SVNLogEntry.EMPTY_ENTRY);
         }
-        
-        for (int i = 0; i < revs.size() && !(useLimit && limit == 0); i++) {
-            Long rev = (Long) revs.get(isDescendingOrder ? i : revs.size() - i - 1);
-            Map mergeInfo = (Map) foundRevisions.get(rev);
-            boolean hasChildren = mergeInfo != null && !mergeInfo.isEmpty();
-            if (rev.longValue() < histStart) {
-                if (isDescendingOrder) {
-                    break;
-                }
-                continue;
-            }
-            
-            sendLog(rev.longValue(), hasChildren);
-            sendCount++;
-            
-            if (hasChildren) {
-                LinkedList combinedList = combineMergeInfoPathLists(mergeInfo);
-                for (int j = combinedList.size() - 1; j >= 0; j--) {
-                    PathListRange pathListRange = (PathListRange) combinedList.get(j);
-                    try {
-                        sendCount += doMergedLogs(pathListRange.myPaths, pathListRange.myRange.getStartRevision(), 
-                                pathListRange.myRange.getEndRevision(), 0, foundRevisions, true);
-                    } catch (SVNException svne) {
-                        SVNErrorCode errCode = svne.getErrorMessage().getErrorCode(); 
-                        if (errCode == SVNErrorCode.FS_NOT_FOUND || errCode == SVNErrorCode.FS_NO_SUCH_REVISION) {
-                            continue;
-                        }
-                        throw svne;
-                    }
-                }
-                if (myHandler != null) {
-                    myHandler.handleLogEntry(SVNLogEntry.EMPTY_ENTRY);
-                }
-            }
-            limit--;
-        }
-        return sendCount;
     }
 
     private PathInfo[] getPathHistories(String[] paths, long start, long end, boolean strictNodeHistory) throws SVNException {

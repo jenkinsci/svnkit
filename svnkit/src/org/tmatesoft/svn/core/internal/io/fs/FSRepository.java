@@ -73,6 +73,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     private FSLocationsFinder myLocationsFinder;
     private FSFS myFSFS;
     private SVNMergeInfoManager myMergeInfoManager;
+    private FSLog myLogDriver;
     
     protected FSRepository(SVNURL location, ISVNSession options) {
         super(location, options);
@@ -364,10 +365,8 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                 histEnd = startRevision;
             }
 
-            FSLog logDriver = new FSLog(myFSFS, absPaths, limit, histStart, histEnd,
-                                        isDescendingOrder, discoverChangedPaths, strictNode,
-                                        includeMergedRevisions, revPropNames, handler);
-
+            FSLog logDriver = getLogDriver(absPaths, limit, histStart, histEnd, isDescendingOrder, 
+                    discoverChangedPaths, strictNode, includeMergedRevisions, revPropNames, handler);
             return logDriver.runLog();
         } finally {
             closeRepository();
@@ -730,7 +729,6 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
     }
 
-
     private void openRepositoryRoot() throws SVNException {
         lock();
 
@@ -757,7 +755,6 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         setRepositoryCredentials(myFSFS.getUUID(), getLocation().setPath(rootPath, false));
     }
 
-
     private Collection getDirEntries(FSRevisionNode parent, SVNURL parentURL, int entryFields) throws SVNException {
         Map entries = parent.getDirEntries(myFSFS);
         Set keys = entries.keySet();
@@ -772,7 +769,6 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
         return dirEntriesList;
     }
-
 
     private SVNProperties collectProperties(FSRevisionNode revNode) throws SVNException {
         SVNProperties properties = new SVNProperties();
@@ -791,7 +787,6 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
         return properties;
     }
-
 
     private SVNDirEntry buildDirEntry(FSEntry repEntry, SVNURL parentURL, FSRevisionNode entryNode, int entryFields) throws SVNException {
         entryNode = entryNode == null ? myFSFS.getRevisionNode(repEntry.getId()) : entryNode;
@@ -938,4 +933,16 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         return myMergeInfoManager;
     }
 
+    private FSLog getLogDriver(String[] absPaths, long limit, long histStart, long histEnd, 
+            boolean isDescendingOrder, boolean discoverChangedPaths, boolean strictNode, 
+            boolean includeMergedRevisions, String[] revPropNames, ISVNLogEntryHandler handler) {
+        if (myLogDriver == null) {
+            myLogDriver = new FSLog(myFSFS, absPaths, limit, histStart, histEnd, isDescendingOrder, 
+                    discoverChangedPaths, strictNode, includeMergedRevisions, revPropNames, handler);
+        } else {
+            myLogDriver.reset(myFSFS, absPaths, limit, histStart, histEnd, isDescendingOrder, 
+                    discoverChangedPaths, strictNode, includeMergedRevisions, revPropNames, handler);
+        }
+        return myLogDriver;
+    }
 }

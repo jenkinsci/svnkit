@@ -352,7 +352,7 @@ public class SVNMergeInfoUtil {
             SVNMergeRangeList rangeList1 = (SVNMergeRangeList) mergeInfo1.get(path);
             SVNMergeRangeList rangeList2 = (SVNMergeRangeList) mergeInfo2.get(path);
             if (rangeList2 != null) {
-                rangeList2 = rangeList2.intersect(rangeList1);
+                rangeList2 = rangeList2.intersect(rangeList1, true);
                 if (!rangeList2.isEmpty()) {
                     mergeInfo.put(path, rangeList2);
                 }
