@@ -161,7 +161,9 @@ public abstract class QDiffSequenceGenerator implements QDiffGenerator {
 		for (Iterator blocks = blocksList.iterator(); blocks.hasNext();) {
 			QSequenceDifferenceBlock currentBlock = (QSequenceDifferenceBlock)blocks.next();
 			if (lastBlock != null) {
-				if (currentBlock.getLeftFrom() - 1 - lastBlock.getLeftTo() > gutter && currentBlock.getRightFrom() - 1 - lastBlock.getRightTo() > gutter) {
+				final int leftDifference = currentBlock.getLeftFrom() - 1 - lastBlock.getLeftTo();
+				final int rightDifference = currentBlock.getRightFrom() - 1 - lastBlock.getRightTo();
+				if (leftDifference > 2 * gutter && rightDifference > 2 * gutter) {
 					combinedBlocks.add(currentList);
 					currentList = new LinkedList();
 				}

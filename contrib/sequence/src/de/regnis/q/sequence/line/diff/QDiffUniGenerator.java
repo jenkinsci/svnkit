@@ -119,8 +119,15 @@ public final class QDiffUniGenerator extends QDiffSequenceGenerator implements Q
 					printNoNewLine(output, line);
 				}
 			}
-			// print glue lines
-			int end = Math.min(block.getLeftTo() + gutter, sourceLines.getLineCount() - 1);
+
+			// print glue lines resp. final gutter lines
+			int plannedEnd;
+			if (i < segment.length - 1) {
+				plannedEnd = segment[i+1].getLeftFrom() - 1;
+			} else {
+			    plannedEnd = block.getLeftTo() + gutter;
+			}
+			int end = Math.min(plannedEnd, sourceLines.getLineCount() - 1);
 			if (i + 1 < segment.length) {
 				end = Math.min(end, segment[i + 1].getLeftFrom() - 1);
 			}
