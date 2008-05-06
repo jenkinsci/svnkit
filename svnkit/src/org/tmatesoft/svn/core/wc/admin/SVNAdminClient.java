@@ -428,10 +428,20 @@ public class SVNAdminClient extends SVNBasicClient {
         }
 
         SVNRepositoryReplicator replicator = SVNRepositoryReplicator.newInstance();
-        SVNRepository fromRepos = createRepository(fromURL, null, true);
-        // TODO close session
-        SVNRepository toRepos = createRepository(toURL, null, false);
-        replicator.replicateRepository(fromRepos, toRepos, 1, -1);
+        SVNRepository fromRepos = null;
+        SVNRepository toRepos = null;
+        try {
+            fromRepos = createRepository(fromURL, null, true);
+            toRepos = createRepository(toURL, null, false);
+            replicator.replicateRepository(fromRepos, toRepos, 1, -1);
+        } finally {
+            if (fromRepos != null) {
+                fromRepos.closeSession();
+            }
+            if (toRepos != null) {
+                toRepos.closeSession();
+            }
+        }
     }
 
     /**
@@ -904,7 +914,6 @@ public class SVNAdminClient extends SVNBasicClient {
                     myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
                 }
             }
-
         }
     }
     
