@@ -1415,7 +1415,6 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
 
             SVNEditModeReader editReader = new SVNEditModeReader(myConnection, editor, false);
             editReader.driveEditor();
-            write("(w())", new Object[]{"success"});
             read("", null, false);
 
         } catch (SVNException e) {
