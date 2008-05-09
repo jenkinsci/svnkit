@@ -12,6 +12,9 @@
 package org.tmatesoft.svn.core.internal.wc.admin;
 
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Map;
 
@@ -32,6 +35,7 @@ public class SVNAdminAreaInfo {
     private Map myNewExternals;
     private Map myOldExternals;
     private Map myDepths;
+    private Set myIncompleteEntries;
 
     public SVNAdminAreaInfo(SVNWCAccess access, SVNAdminArea anchor, SVNAdminArea target, String targetName) {
         myAccess = access;
@@ -107,5 +111,16 @@ public class SVNAdminAreaInfo {
 
     public Map getDepths() {
         return myDepths == null ? Collections.EMPTY_MAP : myDepths;
+    }
+    
+    public void addIncompleteEntry(String path) {
+        if (myIncompleteEntries == null) {
+            myIncompleteEntries = new HashSet();
+        }
+        myIncompleteEntries.add(path);
+    }
+    
+    public boolean isIncomplete(String path) {
+        return myIncompleteEntries != null && myIncompleteEntries.contains(path);
     }
 }

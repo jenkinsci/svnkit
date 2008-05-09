@@ -446,6 +446,21 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         SVNStatusType propStatus = SVNStatusType.UNKNOWN;
         SVNAdminArea adminArea = myCurrentDirectory.getAdminArea();
         
+        if (myAdminInfo.isIncomplete(myCurrentDirectory.getPath())) {
+            // delete all props.
+            SVNVersionedProperties oldBaseProps = adminArea.getBaseProperties(adminArea.getThisDirName());
+            SVNProperties baseMap = oldBaseProps.asMap();
+            if (modifiedProps == null) {
+                modifiedProps = new SVNProperties();
+            }
+            for(Iterator names = baseMap.nameSet().iterator(); names.hasNext();) {
+                String name = (String) names.next();
+                if (!modifiedProps.containsName(name)) {
+                    modifiedProps.put(name, SVNPropertyValue.create(null));
+                }
+            }
+        }
+        
         if (modifiedWCProps != null || modifiedEntryProps != null || modifiedProps != null) {
             SVNLog log = myCurrentDirectory.getLog();
             if (modifiedProps != null && !modifiedProps.isEmpty()) {
@@ -1028,6 +1043,22 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
 
         SVNStatusType textStatus = SVNStatusType.UNCHANGED;
         SVNStatusType lockStatus = SVNStatusType.LOCK_UNCHANGED;
+        
+        if (myAdminInfo.isIncomplete(fileInfo.getPath()) && fileEntry != null) {
+            // delete all props.
+            SVNVersionedProperties oldBaseProps = adminArea.getBaseProperties(fileEntry.getName());
+            SVNProperties baseMap = oldBaseProps.asMap();
+            if (modifiedProps == null) {
+                modifiedProps = new SVNProperties();
+            }
+            for(Iterator names = baseMap.nameSet().iterator(); names.hasNext();) {
+                String propName = (String) names.next();
+                if (!modifiedProps.containsName(propName)) {
+                    modifiedProps.put(propName, SVNPropertyValue.create(null));
+                }
+            }
+        }
+
 
         boolean magicPropsChanged = false;
         if (modifiedProps != null && !modifiedProps.isEmpty()) {

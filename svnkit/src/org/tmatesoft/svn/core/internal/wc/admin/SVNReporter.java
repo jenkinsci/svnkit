@@ -67,6 +67,9 @@ public class SVNReporter implements ISVNReporterBaton {
                     myDepth = SVNDepth.INFINITY;
                 }
                 reporter.setPath("", null, revision, myDepth, targetEntry == null || targetEntry.isIncomplete());
+                if (targetEntry == null || targetEntry.isIncomplete()) {
+                    myInfo.addIncompleteEntry("");
+                }
                 reporter.deletePath("");
                 reporter.finishReport();
                 return;
@@ -84,7 +87,9 @@ public class SVNReporter implements ISVNReporterBaton {
                 revision = parentEntry.getRevision();
             }
             reporter.setPath("", null, revision, targetEntry.getDepth(), startEmpty);
-            
+            if (startEmpty) {
+                myInfo.addIncompleteEntry("");
+            }
             boolean missing = false; 
             if (!targetEntry.isScheduledForDeletion()) {
                 SVNFileType fileType = SVNFileType.getType(myTarget);
@@ -213,6 +218,7 @@ public class SVNReporter implements ISVNReporterBaton {
                 if (myUseDepthCompatibilityTrick && childEntry.getDepth().compareTo(SVNDepth.FILES) <= 0 && 
                         depth.compareTo(childEntry.getDepth()) > 0) {
                     startEmpty = true;
+                    myInfo.addIncompleteEntry(path);
                 }
                 
                 if (reportAll) {
