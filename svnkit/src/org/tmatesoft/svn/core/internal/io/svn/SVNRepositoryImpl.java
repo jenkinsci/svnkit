@@ -453,7 +453,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             }
 
             if (handler != null) {
-                SVNURL repositoryRoot = getRepositoryRoot(true);
+                SVNURL repositoryRoot = getRepositoryRoot(false);
                 List dirents = (List) values.get(2);
                 for (Iterator iterator = dirents.iterator(); iterator.hasNext();) {
                     SVNItem item = (SVNItem) iterator.next();
@@ -488,7 +488,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         try {
             openConnection();
             final SVNURL url = getLocation().setPath(getFullPath(path), false);
-            final SVNURL repositoryRoot = getRepositoryRoot(true);
+            final SVNURL repositoryRoot = getRepositoryRoot(false);
             ISVNDirEntryHandler handler = new ISVNDirEntryHandler() {
                 public void handleDirEntry(SVNDirEntry dirEntry) throws SVNException {
                     if (entries != null) {
@@ -1180,7 +1180,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             List items = read("(?l)", null, false);
             items = (List) items.get(0);
             if (items != null) {
-                SVNURL repositoryRoot = getRepositoryRoot(true);
+                SVNURL repositoryRoot = getRepositoryRoot(false);
                 List values = SVNReader.parseTuple("wnsr(?s)(?s)", items, null);
                 SVNNodeKind kind = SVNNodeKind.parseKind(SVNReader.getString(values, 0));
                 long size = SVNReader.getLong(values, 1);

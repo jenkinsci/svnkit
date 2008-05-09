@@ -785,7 +785,7 @@ public class SVNLogClient extends SVNBasicClient {
 
     private void doList(SVNRepository repos, long rev, final ISVNDirEntryHandler handler, boolean fetchLocks, SVNDepth depth, int entryFields) throws SVNException {
         SVNURL url = repos.getLocation();
-        SVNURL reposRoot = repos.getRepositoryRoot(true);
+        SVNURL reposRoot = repos.getRepositoryRoot(false);
         SVNDirEntry entry = null;
         SVNException error = null;
         try {

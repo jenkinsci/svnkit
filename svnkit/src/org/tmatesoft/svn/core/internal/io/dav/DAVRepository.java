@@ -481,9 +481,7 @@ public class DAVRepository extends SVNRepository {
                 String author = authorValue == null ? null : authorValue.getString();
                 SVNPropertyValue dateValue = child.getPropertyValue(DAVElement.CREATION_DATE);
                 Date date = dateValue != null ? SVNDate.parseDate(dateValue.getString()) : null;
-                if (!hasRepositoryRoot()) {
-                    myConnection.fetchRepositoryRoot(this);
-                }
+                myConnection.fetchRepositoryRoot(this);
                 SVNURL repositoryRoot = getRepositoryRoot(false);
                 SVNURL childURL = getLocation().setPath(fullPath, true);
                 if ("".equals(name)) {
@@ -1030,9 +1028,7 @@ public class DAVRepository extends SVNRepository {
                 break;
             }
         }
-        if (!hasRepositoryRoot()) {
-            myConnection.fetchRepositoryRoot(this);            
-        }
+        myConnection.fetchRepositoryRoot(this);            
         SVNURL repositoryRoot = getRepositoryRoot(false);
         SVNURL url = getLocation().setPath(fullPath, true);
         return new SVNDirEntry(url, repositoryRoot, name, kind, size, hasProperties, lastRevision, date, author);

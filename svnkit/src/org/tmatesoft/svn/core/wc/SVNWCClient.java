@@ -2302,7 +2302,7 @@ public class SVNWCClient extends SVNBasicClient {
         } catch (SVNException e) {
             if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_IMPLEMENTED) {
                 // for svnserve older then 1.2.0
-                SVNURL repoRoot = repos.getRepositoryRoot(true);
+                SVNURL repoRoot = repos.getRepositoryRoot(false);
                 if (repos.getLocation().equals(repoRoot)) {
                     rootEntry = new SVNDirEntry(url, repoRoot, "", SVNNodeKind.DIR, -1, false, -1, null, null);
                 } else {
