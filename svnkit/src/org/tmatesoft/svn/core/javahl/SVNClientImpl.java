@@ -1684,7 +1684,7 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     protected ISVNConflictHandler getConflictHandler() {
-        if (mySVNConflictHandler == null) {
+        if (mySVNConflictHandler == null && myConflictResolverCallback != null) {
             mySVNConflictHandler = new ISVNConflictHandler() {
 
                 public SVNConflictResult handleConflict(SVNConflictDescription conflictDescription) throws SVNException {

@@ -268,7 +268,14 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
 	        if (myConflictCallback != null) {
                 SVNConflictDescription descr = new SVNConflictDescription(files, SVNNodeKind.FILE, null, false, 
                         SVNConflictAction.EDIT, SVNConflictReason.EDITED);
+                
                 SVNConflictResult result = myConflictCallback.handleConflict(descr);
+                if (result == null) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CONFLICT_RESOLVER_FAILURE,
+                            "Conflict callback violated API: returned no results.");
+                    SVNErrorManager.error(err);
+                }
+                
                 SVNConflictChoice choice = result.getConflictChoice();
                 if (choice == SVNConflictChoice.BASE) {
                     return DefaultSVNMergerAction.CHOOSE_BASE;                        
