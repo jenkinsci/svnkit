@@ -19,7 +19,7 @@ import java.io.IOException;
  * @version 1.1.1
  * @author  TMate Software Ltd.
  */
-public abstract class AbstractPythonTestLogger {
+public abstract class AbstractTestLogger {
     
     public abstract void startTests(Properties configuration) throws IOException;
 
@@ -27,7 +27,7 @@ public abstract class AbstractPythonTestLogger {
     
     public abstract void startSuite(String suiteName);
 
-    public abstract void handleTest(PythonTestResult test);
+    public abstract void handleTest(TestResult test);
     
     public abstract void endSuite(String suiteName);
     

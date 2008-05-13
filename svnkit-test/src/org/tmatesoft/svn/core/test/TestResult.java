@@ -19,13 +19,13 @@ import java.util.regex.Pattern;
  * @version 1.1.1
  * @author  TMate Software Ltd.
  */
-public class PythonTestResult {
+public class TestResult {
     
     private boolean myIsPass;
     private String myName;
     private int myID;
     
-    public static PythonTestResult parse(String line) {
+    public static TestResult parse(String line) {
         if (line != null && 
                 (line.startsWith("PASS: ") || 
                  line.startsWith("FAIL: ") || 
@@ -40,13 +40,13 @@ public class PythonTestResult {
                 name = name.replaceAll("\"", "'");
                 String id = matcher.group(3);
                 String result = matcher.group(1);
-                return new PythonTestResult(name, id, "PASS".equalsIgnoreCase(result) || "XFAIL".equalsIgnoreCase(result));
+                return new TestResult(name, id, "PASS".equalsIgnoreCase(result) || "XFAIL".equalsIgnoreCase(result));
             }
         }
         return null;
     }
     
-    private PythonTestResult(String test, String id, boolean pass) {
+    private TestResult(String test, String id, boolean pass) {
         myName = test;
         myID = Integer.parseInt(id);
         myIsPass = pass;

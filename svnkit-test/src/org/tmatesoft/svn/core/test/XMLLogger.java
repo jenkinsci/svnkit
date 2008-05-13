@@ -29,7 +29,7 @@ import org.tmatesoft.svn.core.internal.util.SVNHashMap;
  * @version 1.1.1
  * @author  TMate Software Ltd.
  */
-public class XMLLogger extends AbstractPythonTestLogger {
+public class XMLLogger extends AbstractTestLogger {
     private String myXMLResultsFile;
     private PrintWriter myWriter;
     private LinkedList myResults;
@@ -84,7 +84,7 @@ public class XMLLogger extends AbstractPythonTestLogger {
 	    curSuitePassed = 0;
     }
 
-    public void handleTest(PythonTestResult test) {
+    public void handleTest(TestResult test) {
         String name = validateTestName(test.getName());
         int id = test.getID();
         String result = test.isPass() ? "PASSED" : "FAILED";

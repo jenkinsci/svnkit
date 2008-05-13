@@ -48,7 +48,7 @@ public class PythonTests {
 	private static File ourPropertiesFile;
     private static Process ourSVNServer;
     
-    private static AbstractPythonTestLogger[] ourLoggers;
+    private static AbstractTestLogger[] ourLoggers;
     private static SVNCommandDaemon ourDaemon; 
 
     public static void main(String[] args) {
@@ -58,7 +58,7 @@ public class PythonTests {
 		    libPath = "";
 		}
 		ourPropertiesFile = new File(fileName);
-        ourLoggers = new AbstractPythonTestLogger[] {new ConsoleLogger(), new XMLLogger()};
+        ourLoggers = new AbstractTestLogger[] {new ConsoleLogger(), new XMLLogger()};
 
 		Properties properties = null;
 		String defaultTestSuite = null;
@@ -418,7 +418,7 @@ public class PythonTests {
 		    try {
 				String line;
 				while ((line = myInputStream.readLine()) != null) {
-                    PythonTestResult testResult = PythonTestResult.parse(line);
+                    TestResult testResult = TestResult.parse(line);
                     // will be logged to python.log only
                     Logger.getLogger("python").info(line);
                     if (testResult != null) {

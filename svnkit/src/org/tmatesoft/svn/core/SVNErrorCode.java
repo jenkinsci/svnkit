@@ -362,7 +362,7 @@ public class SVNErrorCode implements Serializable {
     public static final SVNErrorCode AUTHN_CREDS_UNAVAILABLE = new SVNErrorCode(AUTHN_CATEGORY, 0, "Credential data unavailable");
     public static final SVNErrorCode AUTHN_NO_PROVIDER = new SVNErrorCode(AUTHN_CATEGORY, 1, "No authentication provider available");
     public static final SVNErrorCode AUTHN_PROVIDERS_EXHAUSTED = new SVNErrorCode(AUTHN_CATEGORY, 2, "All authentication providers exhausted");
-    public static final SVNErrorCode AUTHN_CREDS_NOT_SAVED = new SVNErrorCode(AUTHN_CATEGORY, 3, "All authentication providers exhausted");
+    public static final SVNErrorCode AUTHN_CREDS_NOT_SAVED = new SVNErrorCode(AUTHN_CATEGORY, 3, "Credentials not saved");
     
     public static final SVNErrorCode AUTHZ_ROOT_UNREADABLE = new SVNErrorCode(AUTHZ_CATEGORY, 0, "Read access denied for root of edit");
     public static final SVNErrorCode AUTHZ_UNREADABLE = new SVNErrorCode(AUTHZ_CATEGORY, 1, "Item is not readable");

@@ -165,7 +165,9 @@ svnkit-test/logging.cli.properties -text
 svnkit-test/logging.properties -text
 svnkit-test/src/org/tmatesoft/svn/core/internal/io/fs/test/PropertyHandler.java -text
 svnkit-test/src/org/tmatesoft/svn/core/internal/io/fs/test/SVNRepositoryReplicationTest.java -text
+svnkit-test/src/org/tmatesoft/svn/core/test/AbstractTestLogger.java -text
 svnkit-test/src/org/tmatesoft/svn/core/test/SpecialTest.java -text
+svnkit-test/src/org/tmatesoft/svn/core/test/TestResult.java -text
 svnkit-test/src/org/tmatesoft/svn/core/test/daemon/SVNCommandDaemon.java -text
 svnkit-test/test.mac.properties eol=lf
 svnkit-test/test.unix.properties eol=lf
