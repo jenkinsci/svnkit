@@ -416,4 +416,5 @@ public interface ISVNOptions extends ISVNTunnelProvider {
 
     public String getNativeCharset();
 
+    public Map getFileExtensionsToMimeTypes();
 }

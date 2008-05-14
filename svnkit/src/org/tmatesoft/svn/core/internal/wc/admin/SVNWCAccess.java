@@ -384,51 +384,6 @@ public class SVNWCAccess implements ISVNEventHandler {
         }
         return area;
     }
-
-    private SVNAdminArea doChangeWCFormat(File path, int format, Map areas) throws SVNException {
-        areas = areas != null ? areas : new SVNHashMap();
-        if (myAdminAreas != null) {
-            SVNAdminArea existing = (SVNAdminArea) myAdminAreas.get(path);
-            if (myAdminAreas.containsKey(path) && existing != null) {
-                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "Working copy ''{0}'' locked", path);
-                SVNErrorManager.error(error);
-            }
-        } else {
-            myAdminAreas = new SVNHashMap();
-        }
-
-        SVNAdminArea area = SVNAdminAreaFactory.open(path);
-        area.setWCAccess(this);
-
-        area.lock(true);
-        area = SVNAdminAreaFactory.changeWCFormat(area, format);
-        areas.put(path, area);
-
-        for (Iterator entries = area.entries(false); entries.hasNext();) {
-            try {
-                checkCancelled();
-            } catch (SVNCancelException e) {
-                doClose(areas, false);
-                throw e;
-            }
-
-            SVNEntry entry = (SVNEntry) entries.next();
-            if (entry.getKind() != SVNNodeKind.DIR || area.getThisDirName().equals(entry.getName())) {
-                continue;
-            }
-            File childPath = new File(path, entry.getName());
-            try {
-                doChangeWCFormat(childPath, format, areas);
-            } catch (SVNException e) {
-                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_DIRECTORY) {
-                    doClose(areas, false);
-                    throw e;
-                }
-                areas.put(childPath, null);
-            }
-        }
-        return area;
-    }
     
     private void doClose(Map adminAreas, boolean preserveLocks) throws SVNException {
         for (Iterator paths = adminAreas.keySet().iterator(); paths.hasNext();) {

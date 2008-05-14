@@ -1406,7 +1406,7 @@ public class SVNWCClient extends SVNBasicClient {
             SVNPropertiesManager.setProperty(dir.getWCAccess(), path, SVNProperty.SPECIAL,
                     SVNProperty.getValueOfBooleanProperty(SVNProperty.SPECIAL), false);
         } else {
-            Map props = SVNPropertiesManager.computeAutoProperties(getOptions(), path);
+            Map props = SVNPropertiesManager.computeAutoProperties(getOptions(), path, null);
             for (Iterator names = props.keySet().iterator(); names.hasNext();) {
                 String propName = (String) names.next();
                 String propValue = (String) props.get(propName);

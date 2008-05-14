@@ -49,6 +49,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNImportMediator;
+import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
@@ -1156,20 +1157,7 @@ public class SVNCommitClient extends SVNBasicClient {
         String mimeType = null;
         Map autoProperties = new SVNHashMap();
         if (fileType != SVNFileType.SYMLINK) {
-            autoProperties = getOptions().applyAutoProperties(file, autoProperties);
-            if (!autoProperties.containsKey(SVNProperty.MIME_TYPE)) {
-                mimeType = SVNFileUtil.detectMimeType(file);
-                if (mimeType != null) {
-                    autoProperties.put(SVNProperty.MIME_TYPE, mimeType);
-                    if (SVNProperty.isBinaryMimeType(mimeType)) {
-                        autoProperties.remove(SVNProperty.EOL_STYLE);
-                        autoProperties.remove(SVNProperty.CHARSET);
-                    }
-                }
-            }
-            if (!autoProperties.containsKey(SVNProperty.EXECUTABLE) && SVNFileUtil.isExecutable(file)) {
-                autoProperties.put(SVNProperty.EXECUTABLE, "");
-            }
+            autoProperties = SVNPropertiesManager.computeAutoProperties(getOptions(), file, autoProperties);
         } else {
             autoProperties.put(SVNProperty.SPECIAL, "*");
         }

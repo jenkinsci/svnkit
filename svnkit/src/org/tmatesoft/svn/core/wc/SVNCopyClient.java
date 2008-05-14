@@ -376,7 +376,8 @@ public class SVNCopyClient extends SVNBasicClient {
                  (source.getPegRevision() == SVNRevision.BASE ||
                   source.getPegRevision() == SVNRevision.COMMITTED ||
                   source.getPegRevision() == SVNRevision.PREVIOUS)) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Revision type requires a working copy path, not URL");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, 
+                        "Revision type requires a working copy path, not URL");
                 SVNErrorManager.error(err);
             }
         }
@@ -390,7 +391,8 @@ public class SVNCopyClient extends SVNBasicClient {
                 pair.mySource = source.isURL() ? source.getURL().toString() : source.getFile().getAbsolutePath().replace(File.separatorChar, '/');
                 pair.setSourceRevisions(source.getPegRevision(), source.getRevision());
                 if (SVNPathUtil.isURL(pair.mySource) != srcIsURL) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Cannot mix repository and working copy sources");
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                            "Cannot mix repository and working copy sources");
                     SVNErrorManager.error(err);
                 }
                 String baseName = source.getName();
@@ -1034,12 +1036,14 @@ public class SVNCopyClient extends SVNBasicClient {
             CopyPair pair = (CopyPair) pairs.next();
             SVNFileType srcFileType = SVNFileType.getType(new File(pair.mySource));
             if (srcFileType == SVNFileType.NONE) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "Path ''{0}'' does not exist", new File(pair.mySource));
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, 
+                        "Path ''{0}'' does not exist", new File(pair.mySource));
                 SVNErrorManager.error(err);
             }
             SVNFileType dstFileType = SVNFileType.getType(new File(pair.myDst));
             if (dstFileType != SVNFileType.NONE) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "Path ''{0}'' already exists", new File(pair.myDst));
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, 
+                        "Path ''{0}'' already exists", new File(pair.myDst));
                 SVNErrorManager.error(err);
             }
             File dstParent = new File(SVNPathUtil.removeTail(pair.myDst));
@@ -1049,7 +1053,8 @@ public class SVNCopyClient extends SVNBasicClient {
                 // create parents.
                 addLocalParents(dstParent, getEventDispatcher());
             } else if (dstParentFileType != SVNFileType.DIRECTORY) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "Path ''{0}'' is not a directory", dstParent);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, 
+                        "Path ''{0}'' is not a directory", dstParent);
                 SVNErrorManager.error(err);
             }
         }
@@ -1059,7 +1064,41 @@ public class SVNCopyClient extends SVNBasicClient {
             copyWCToWC(copyPairs);
         }
     }
-    
+
+    private void copyDisjointWCToWC(List copyPairs, boolean isMove, boolean makeParents) throws SVNException {
+        for (Iterator pairs = copyPairs.iterator(); pairs.hasNext();) {
+            CopyPair pair = (CopyPair) pairs.next();
+            SVNFileType srcFileType = SVNFileType.getType(new File(pair.mySource));
+            if (srcFileType == SVNFileType.NONE) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, 
+                        "Path ''{0}'' does not exist", new File(pair.mySource));
+                SVNErrorManager.error(err);
+            }
+            SVNFileType dstFileType = SVNFileType.getType(new File(pair.myDst));
+            if (dstFileType != SVNFileType.NONE) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, 
+                        "Path ''{0}'' already exists", new File(pair.myDst));
+                SVNErrorManager.error(err);
+            }
+            File dstParent = new File(SVNPathUtil.removeTail(pair.myDst));
+            pair.myBaseName = SVNPathUtil.tail(pair.myDst);
+            SVNFileType dstParentFileType = SVNFileType.getType(dstParent);
+            if (makeParents && dstParentFileType == SVNFileType.NONE) {
+                // create parents.
+                addLocalParents(dstParent, getEventDispatcher());
+            } else if (dstParentFileType != SVNFileType.DIRECTORY) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, 
+                        "Path ''{0}'' is not a directory", dstParent);
+                SVNErrorManager.error(err);
+            }
+        }
+        if (isMove) {
+            moveWCToWC(copyPairs);
+        } else {
+            copyWCToWC(copyPairs);
+        }
+    }
+
     private void copyWCToWC(List pairs) throws SVNException {
         // find common ancestor for all dsts.
         String dstParentPath = null;

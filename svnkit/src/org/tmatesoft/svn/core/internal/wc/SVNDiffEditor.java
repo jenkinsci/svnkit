@@ -529,7 +529,7 @@ public class SVNDiffEditor implements ISVNEditor {
                 diffUnversioned(file, null, SVNPathUtil.append(parentRelativePath, file.getName()), false, null);
             } else if (fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) {
                 String mimeType1 = null;
-                String mimeType2 = SVNFileUtil.detectMimeType(file);
+                String mimeType2 = SVNFileUtil.detectMimeType(file, null);
                 String filePath = SVNPathUtil.append(parentRelativePath, file.getName());
                 getDiffCallback().fileAdded(filePath, null, file, 0, 0, mimeType1, mimeType2, null, null);
             }

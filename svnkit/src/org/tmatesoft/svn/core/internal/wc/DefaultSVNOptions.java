@@ -11,7 +11,10 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.DateFormatSymbols;
 import java.text.SimpleDateFormat;
@@ -21,6 +24,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Locale;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -62,7 +66,7 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
     private static final String NO_UNLOCK = "no-unlock";
     private static final String PRESERVED_CONFLICT_FILE_EXTENSIONS = "preserved-conflict-file-exts";
     private static final String INTERACTIVE_COFLICTS = "interactive-conflicts";
-
+    private static final String MIME_TYPES_FILE = "mime-types-file";
     private static final String DEFAULT_IGNORES = "*.o *.lo *.la #*# .*.rej *.rej .*~ *~ .#* .DS_Store";
     private static final String YES = "yes";
     private static final String NO = "no";
@@ -509,5 +513,48 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
 
     public byte[] getNativeEOL() {        
         return System.getProperty("line.separator").getBytes();
+    }
+
+    public Map getFileExtensionsToMimeTypes() {
+        String mimeTypesFile = getConfigFile().getPropertyValue(MISCELLANY_GROUP, MIME_TYPES_FILE);
+        if (mimeTypesFile == null) {
+            return null;
+        }
+        
+        BufferedReader reader = null;
+        Map extensionsToMimeTypes = new SVNHashMap();
+        try {
+            reader = new BufferedReader(new FileReader(mimeTypesFile));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("#")) {
+                    continue;
+                }
+
+                LinkedList tokensList = new LinkedList();
+                for (StringTokenizer tokens = new StringTokenizer(line, " \t"); tokens.hasMoreTokens();) {
+                    String token = tokens.nextToken();
+                    if ("".equals(token)) {
+                        continue;
+                    }
+                    tokensList.add(token);
+                }
+                if (tokensList.size() < 2) {
+                    continue;
+                }
+                
+                String mimeType = (String) tokensList.get(0);
+                for (int i = 1; i < tokensList.size(); i++) {
+                    String extension = (String) tokensList.get(i);
+                    extensionsToMimeTypes.put(extension, mimeType);    
+                }
+            }
+        } catch (IOException e) {
+            return null;
+        } finally {
+            SVNFileUtil.closeFile(reader);
+        }
+
+        return extensionsToMimeTypes;
     }
 }

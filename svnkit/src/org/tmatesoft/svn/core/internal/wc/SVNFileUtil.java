@@ -33,6 +33,7 @@ import java.nio.channels.FileChannel;
 import java.nio.charset.CharsetDecoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
@@ -916,10 +917,32 @@ public class SVNFileUtil {
         return null;
     }
 
-    public static String detectMimeType(File file) {
+    public static String detectMimeType(File file, Map mimeTypes) throws SVNException {
         if (file == null || !file.exists()) {
             return null;
         }
+        
+        SVNFileType kind = SVNFileType.getType(file);
+        if (kind != SVNFileType.FILE) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_FILENAME,
+                    "Can''t detect MIME type of non-file ''{0}''", file);
+            SVNErrorManager.error(err);
+        }
+        
+        if (mimeTypes != null) {
+            String name = file.getName();
+            String pathExt = "";
+            int dotInd = name.lastIndexOf('.'); 
+            if (dotInd != -1 && dotInd != 0 && dotInd != name.length() - 1) {
+                pathExt = name.substring(dotInd + 1);
+            }
+            
+            String mimeType = (String) mimeTypes.get(pathExt);
+            if (mimeType != null) {
+                return mimeType;
+            }
+        }
+        
         InputStream is = null;
         try {
             is = openFileForReading(file);

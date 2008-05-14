@@ -232,10 +232,10 @@ public class SVNPropertiesManager {
         return result;
     }
 
-    public static Map computeAutoProperties(ISVNOptions options, File file) {
-        Map properties = options.applyAutoProperties(file, null);
+    public static Map computeAutoProperties(ISVNOptions options, File file, Map properties) throws SVNException {
+        properties = options.applyAutoProperties(file, properties);
         if (!properties.containsKey(SVNProperty.MIME_TYPE)) {
-            String mimeType = SVNFileUtil.detectMimeType(file);
+            String mimeType = SVNFileUtil.detectMimeType(file, options.getFileExtensionsToMimeTypes());
             if (mimeType != null) {
                 properties.put(SVNProperty.MIME_TYPE, mimeType);
             }
@@ -246,7 +246,8 @@ public class SVNPropertiesManager {
         }
         if (!properties.containsKey(SVNProperty.EXECUTABLE)) {
             if (SVNFileUtil.isExecutable(file)) {
-                properties.put(SVNProperty.EXECUTABLE, SVNProperty.getValueOfBooleanProperty(SVNProperty.EXECUTABLE).getString());
+                properties.put(SVNProperty.EXECUTABLE, 
+                        SVNProperty.getValueOfBooleanProperty(SVNProperty.EXECUTABLE).getString());
             }
         }
         return properties;
