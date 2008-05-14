@@ -246,8 +246,7 @@ public class SVNPropertiesManager {
         }
         if (!properties.containsKey(SVNProperty.EXECUTABLE)) {
             if (SVNFileUtil.isExecutable(file)) {
-                properties.put(SVNProperty.EXECUTABLE, 
-                        SVNProperty.getValueOfBooleanProperty(SVNProperty.EXECUTABLE).getString());
+                properties.put(SVNProperty.EXECUTABLE, "");
             }
         }
         return properties;
