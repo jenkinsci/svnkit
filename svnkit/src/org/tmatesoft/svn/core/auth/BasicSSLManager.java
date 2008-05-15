@@ -17,10 +17,14 @@ import java.io.InputStream;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -43,7 +47,17 @@ public class BasicSSLManager implements ISVNSSLManager {
     public SSLContext getSSLContext() throws IOException, SVNException {
         try {
             SSLContext context = SSLContext.getInstance("SSLv3");
-            context.init(getKeyManagers(), null, null);
+            context.init(getKeyManagers(), new TrustManager[] {
+                new X509TrustManager() {
+                    public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+                    }
+                    public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+                    }
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return null;
+                    }                    
+                }
+                }, null);
             return context;
         } catch (NoSuchAlgorithmException nsae) {
             throw (IOException) new IOException(nsae.getMessage()).initCause(nsae);
