@@ -252,10 +252,14 @@ public class SVNWCAccess implements ISVNEventHandler {
     }
     
     public SVNAdminArea open(File path, boolean writeLock, boolean stealLock, int depth) throws SVNException {
+        return open(path, writeLock, stealLock, true, depth);
+    }
+
+    public SVNAdminArea open(File path, boolean writeLock, boolean stealLock, boolean upgradeFormat, int depth) throws SVNException {
         Map tmp = new SVNHashMap();
         SVNAdminArea area;
         try {
-            area = doOpen(path, writeLock, stealLock, depth, tmp);
+            area = doOpen(path, writeLock, stealLock, upgradeFormat, depth, tmp);
         } finally {
             for(Iterator paths = tmp.keySet().iterator(); paths.hasNext();) {
                 Object childPath = paths.next();
@@ -330,7 +334,7 @@ public class SVNWCAccess implements ISVNEventHandler {
         }
     }
     
-    private SVNAdminArea doOpen(File path, boolean writeLock, boolean stealLock, int depth, Map tmp) throws SVNException {
+    private SVNAdminArea doOpen(File path, boolean writeLock, boolean stealLock, boolean upgradeFormat, int depth, Map tmp) throws SVNException {
         // no support for 'under consturction here' - it will go to adminAreaFactory.
         tmp = tmp == null ? new SVNHashMap() : tmp; 
         if (myAdminAreas != null) {
@@ -345,10 +349,12 @@ public class SVNWCAccess implements ISVNEventHandler {
         
         SVNAdminArea area = SVNAdminAreaFactory.open(path);
         area.setWCAccess(this);
-        
+
         if (writeLock) {
             area.lock(stealLock);
-            area = SVNAdminAreaFactory.upgrade(area);
+            if (upgradeFormat) {
+                area = SVNAdminAreaFactory.upgrade(area);
+            }
         }
         tmp.put(path, area);
         
@@ -371,7 +377,7 @@ public class SVNWCAccess implements ISVNEventHandler {
                 File childPath = new File(path, entry.getName());
                 try {
                     // this method will put created area into our map.
-                    doOpen(childPath, writeLock, stealLock, depth, tmp);
+                    doOpen(childPath, writeLock, stealLock, upgradeFormat, depth, tmp);
                 } catch (SVNException e) {
                     if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_DIRECTORY) {
                         doClose(tmp, false);

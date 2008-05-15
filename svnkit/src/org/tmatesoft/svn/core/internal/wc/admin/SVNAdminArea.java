@@ -64,11 +64,6 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  */
 public abstract class   SVNAdminArea {
 
-    public static final int SVN_WC_NO_PROPCACHING_FORMAT = 5;
-    public static final int SVN_WC_XML_ENTRIES_FORMAT = 6;
-    public static final int SVN_WC_WCPROPS_MANY_FILES_FORMAT = 7;
-    public static final int SVN_WC_FLAT_ENTRIES_FORMAT = 8;
-
     protected static final String ADM_KILLME = "KILLME";
     private static volatile boolean ourIsCleanupSafe;
 
@@ -1496,11 +1491,7 @@ public abstract class   SVNAdminArea {
             dstProps.setModified(true);
 
             handleCharsetProperty(adminArea, log, newEntry, dstBaseProps);
-
-            command.put(SVNLog.NAME_ATTR, entry.getName());
-            command.put(SVNProperty.shortPropertyName(SVNProperty.PROP_TIME), SVNDate.formatDate(new Date(0), true));
-            log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
-            command.clear();
+            handlePropTime(log, newEntry);
 
             SVNVersionedProperties wcProps = adminArea.getWCProperties(entry.getName());
             log.logChangedWCProperties(entry.getName(), wcProps.asMap());
@@ -1508,12 +1499,19 @@ public abstract class   SVNAdminArea {
         saveVersionedProperties(log, true);
         log.save();
 
-        SVNFileUtil.deleteFile(getAdminFile("README.txt"));
-        SVNFileUtil.deleteFile(getAdminFile("empty-file"));
-        SVNFileUtil.deleteAll(getAdminFile("wcprops"), true);
-        SVNFileUtil.deleteAll(getAdminFile("tmp/wcprops"), true);
-        SVNFileUtil.deleteAll(getAdminFile("dir-wcprops"), true);
-        SVNFileUtil.deleteAll(getAdminFile("all-wcprops"), true);
+        if (getFormatVersion() != SVNXMLAdminArea.WC_FORMAT) {
+            SVNFileUtil.deleteFile(getAdminFile("README.txt"));
+            SVNFileUtil.deleteFile(getAdminFile("empty-file"));
+            SVNFileUtil.deleteAll(getAdminFile("wcprops"), true);
+            SVNFileUtil.deleteAll(getAdminFile("tmp/wcprops"), true);
+            SVNFileUtil.deleteAll(getAdminFile("dir-wcprops"), true);
+            SVNFileUtil.deleteAll(getAdminFile("all-wcprops"), true);
+        } else {
+            getAdminFile("wcprops").mkdir();
+            getAdminFile("tmp/wcprops").mkdir();
+            SVNFileUtil.createEmptyFile(getAdminFile("empty-file"));
+            SVNAdminUtil.createReadmeFile(getAdminDirectory());
+        }
 
         runLogs();
         return this;
@@ -1592,6 +1590,16 @@ public abstract class   SVNAdminArea {
                 command.clear();
             }
         }
+    }
+
+    private void handlePropTime(SVNLog log, SVNEntry entry) throws SVNException {
+        if (getFormatVersion() == SVNXMLAdminArea.WC_FORMAT) {
+            return;
+        }
+        SVNProperties command = new SVNProperties();
+        command.put(SVNLog.NAME_ATTR, entry.getName());
+        command.put(SVNProperty.shortPropertyName(SVNProperty.PROP_TIME), SVNDate.formatDate(new Date(0), true));
+        log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
     }
 
     public void postUpgradeFormat(int format) throws SVNException {

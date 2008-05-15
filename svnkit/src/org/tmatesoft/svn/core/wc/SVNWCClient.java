@@ -2803,7 +2803,7 @@ public class SVNWCClient extends SVNBasicClient {
         }
         // re-open this area for writing now!
         area.getWCAccess().closeAdminArea(area.getRoot());
-        area = area.getWCAccess().open(area.getRoot(), true, false, 0);
+        area = area.getWCAccess().open(area.getRoot(), true, false, false, 0);
         SVNAdminArea newArea = SVNAdminAreaFactory.changeWCFormat(area, format);
         
         for(Iterator entries = newArea.entries(false); entries.hasNext();) {

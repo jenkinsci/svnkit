@@ -162,14 +162,18 @@ public abstract class SVNAdminAreaFactory implements Comparable {
         return adminArea;
     }
 
-    private static SVNAdminAreaFactory getAdminAreaFactory(int wcFormat) {
-        if (wcFormat <= SVNAdminArea.SVN_WC_XML_ENTRIES_FORMAT) {
+    private static SVNAdminAreaFactory getAdminAreaFactory(int wcFormat) throws SVNException {
+        if (wcFormat == SVNXMLAdminArea.WC_FORMAT) {
             return new SVNXMLAdminAreaFactory();
         }
-        if (wcFormat <= SVNAdminArea.SVN_WC_FLAT_ENTRIES_FORMAT) {
+        if (wcFormat == SVNAdminArea14.WC_FORMAT) {
             return new SVNAdminArea14Factory();           
         }
-        return new SVNAdminArea15Factory();
+        if (wcFormat == SVNAdminArea15.WC_FORMAT) {
+            return new SVNAdminArea15Factory();
+        }
+        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT));
+        return null;
     }
 
     private static int readFormatVersion(File adminDir) throws SVNException {
