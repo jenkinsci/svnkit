@@ -181,7 +181,6 @@ class HTTPRequest {
         } 
         
         boolean notExpected = false;        
-        int expectedCode = "PROPFIND".equals(request) ? 207 : 200;
         if (ok1 >= 0) {
             if (ok1 == 0) {
                 ok1 = "PROPFIND".equals(request) ? 207 : 200;
@@ -198,7 +197,7 @@ class HTTPRequest {
             myErrorMessage = readError(request, path, context);
         } else if (myStatus.getCode() == HttpURLConnection.HTTP_NO_CONTENT) {
             myConnection.skipData(this);
-        } else if (myStatus.getCode() >= 300 || myStatus.getCode() != expectedCode) {
+        } else if (myStatus.getCode() >= 300) {
             SVNErrorMessage error = readError(request, path, context);
             myStatus.setError(error);
         } else if (myResponseStream != null) {
