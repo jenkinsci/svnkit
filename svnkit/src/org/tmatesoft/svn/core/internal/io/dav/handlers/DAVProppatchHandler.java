@@ -201,14 +201,14 @@ public class DAVProppatchHandler extends BasicDAVHandler {
         return myPropertyName;
     }
 
-    public StringBuffer getPropstatDescription() {
+    private StringBuffer getPropstatDescription() {
         if (myPropstatDescription == null){
             myPropstatDescription = new StringBuffer();            
         }
         return myPropstatDescription;
     }
 
-    public StringBuffer getDescription() {
+    private StringBuffer getDescription() {
         if (myDescription == null){
             myDescription = new StringBuffer();            
         }
