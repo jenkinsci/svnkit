@@ -400,7 +400,7 @@ public class SVNCopyClient extends SVNBasicClient {
                     baseName = SVNEncodingUtil.uriDecode(baseName);
                 }
                 pair.myDst = dstIsURL ? dst.getURL().appendPath(baseName, true).toString() : 
-                                        new File(dst.getFile(), baseName).getAbsolutePath().replace(File.separatorChar, '/');
+                    new File(dst.getFile(), baseName).getAbsolutePath().replace(File.separatorChar, '/');
                 pairs.add(pair);
             }
         } else {
@@ -1068,17 +1068,25 @@ public class SVNCopyClient extends SVNBasicClient {
     private void copyDisjointWCToWC(List copyPairs, boolean isMove, boolean makeParents) throws SVNException {
         for (Iterator pairs = copyPairs.iterator(); pairs.hasNext();) {
             CopyPair pair = (CopyPair) pairs.next();
-            SVNFileType srcFileType = SVNFileType.getType(new File(pair.mySource));
+            File srcFile = new File(pair.mySource);
+            SVNFileType srcFileType = SVNFileType.getType(srcFile);
             if (srcFileType == SVNFileType.NONE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, 
                         "Path ''{0}'' does not exist", new File(pair.mySource));
                 SVNErrorManager.error(err);
             }
-            SVNFileType dstFileType = SVNFileType.getType(new File(pair.myDst));
+
+            File dstFile = new File(pair.myDst);
+            SVNFileType dstFileType = SVNFileType.getType(dstFile);
             if (dstFileType != SVNFileType.NONE) {
+//                if () {
+//                }
+                
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, 
                         "Path ''{0}'' already exists", new File(pair.myDst));
                 SVNErrorManager.error(err);
+            } else {
+                
             }
             File dstParent = new File(SVNPathUtil.removeTail(pair.myDst));
             pair.myBaseName = SVNPathUtil.tail(pair.myDst);

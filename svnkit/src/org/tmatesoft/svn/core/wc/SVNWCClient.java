@@ -1216,7 +1216,7 @@ public class SVNWCClient extends SVNBasicClient {
      *                      <li><code>path</code> is the root directory of the Working Copy
      */
     public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, boolean recursive) throws SVNException {
-        doAdd(path, force, mkdir, climbUnversionedParents, SVNDepth.getInfinityOrFilesDepth(recursive), false, 
+        doAdd(path, force, mkdir, climbUnversionedParents, SVNDepth.getInfinityOrEmptyDepth(recursive), false, 
                 false);
     }
 
@@ -1257,7 +1257,7 @@ public class SVNWCClient extends SVNBasicClient {
      */
     public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, boolean recursive, 
             boolean includeIgnored) throws SVNException {
-        doAdd(path, force, mkdir, climbUnversionedParents, SVNDepth.getInfinityOrFilesDepth(recursive), 
+        doAdd(path, force, mkdir, climbUnversionedParents, SVNDepth.getInfinityOrEmptyDepth(recursive), 
                 includeIgnored, false);
     }
 

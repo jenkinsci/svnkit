@@ -518,32 +518,29 @@ public class SVNBasicClient implements ISVNEventHandler {
         if (wcElisionLimitPath == null || !wcElisionLimitPath.equals(path)) {
             Map mergeInfo = null;
             Map targetMergeInfo = null;
-            if (!SVNWCManager.isEntrySwitched(path, entry)) {
-                boolean[] inherited = new boolean[1];
+
+            boolean[] inherited = new boolean[1];
                 
-                targetMergeInfo = getWCMergeInfo(path, entry, wcElisionLimitPath, 
-                        SVNMergeInfoInheritance.INHERITED, false, inherited);
+            targetMergeInfo = getWCMergeInfo(path, entry, wcElisionLimitPath, 
+                    SVNMergeInfoInheritance.INHERITED, false, inherited);
                 
-                if (inherited[0] || targetMergeInfo == null) {
-                    return;
-                }
-                
-                mergeInfo = getWCMergeInfo(path, entry, wcElisionLimitPath, 
-                                           SVNMergeInfoInheritance.NEAREST_ANCESTOR, 
-                                           false, inherited);
-                
-                if (mergeInfo == null && wcElisionLimitPath == null) {
-                    mergeInfo = getWCOrRepositoryMergeInfo(path, entry, 
-                            SVNMergeInfoInheritance.NEAREST_ANCESTOR, inherited, true, null);
-                }
-                
-                if (mergeInfo == null && wcElisionLimitPath != null) {
-                    return;
-                }
-                
-                SVNMergeInfoUtil.elideMergeInfo(mergeInfo, 
-                        targetMergeInfo, path, null, access);
+            if (inherited[0] || targetMergeInfo == null) {
+                return;
             }
+                
+            mergeInfo = getWCMergeInfo(path, entry, wcElisionLimitPath, 
+                    SVNMergeInfoInheritance.NEAREST_ANCESTOR, false, inherited);
+                
+            if (mergeInfo == null && wcElisionLimitPath == null) {
+                mergeInfo = getWCOrRepositoryMergeInfo(path, entry, SVNMergeInfoInheritance.NEAREST_ANCESTOR, 
+                        inherited, true, null);
+            }
+                
+            if (mergeInfo == null && wcElisionLimitPath != null) {
+                return;
+            }
+                
+            SVNMergeInfoUtil.elideMergeInfo(mergeInfo, targetMergeInfo, path, null, access);
         }
     }
 

@@ -525,13 +525,14 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
         Map extensionsToMimeTypes = new SVNHashMap();
         try {
             reader = new BufferedReader(new FileReader(mimeTypesFile));
+            LinkedList tokensList = new LinkedList();
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.startsWith("#")) {
                     continue;
                 }
 
-                LinkedList tokensList = new LinkedList();
+                tokensList.clear();
                 for (StringTokenizer tokens = new StringTokenizer(line, " \t"); tokens.hasMoreTokens();) {
                     String token = tokens.nextToken();
                     if ("".equals(token)) {
