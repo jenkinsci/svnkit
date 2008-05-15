@@ -635,9 +635,10 @@ public class SVNBasicClient implements ISVNEventHandler {
                     inherit = SVNMergeInfoInheritance.INHERITED;
                 } else {
                     wcMergeInfo = SVNPropertiesManager.parseMergeInfo(path, entry, base);
-                    if (SVNWCManager.isEntrySwitched(path, entry)) {
-                        break;
-                    }
+                }
+
+                if (SVNWCManager.isEntrySwitched(path, entry)) {
+                    break;
                 }
     
                 path = new File(SVNPathUtil.validateFilePath(path.getAbsolutePath())).getAbsoluteFile();
