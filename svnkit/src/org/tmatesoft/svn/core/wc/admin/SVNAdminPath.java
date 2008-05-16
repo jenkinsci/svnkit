@@ -106,9 +106,10 @@ public class SVNAdminPath {
     }
 
     /**
-     * Returns a tree depth for this path.
-     * Repository root <code>"/"</code> starts 
-     * at depth 0. Depth is incremented with every 
+     * Returns a tree depth for this path which is relative to the depth of the 
+     * <code>SVNLookClient.doGetTree(...)</code> target path.
+     * Target path which is passed to <code>SVNLookClient.doGetTree(...)</code> starts 
+     * at depth 0. Then depth is incremented with every 
      * other segment of path.  
      * <p>
      * This information is relevant only for 
