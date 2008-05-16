@@ -208,11 +208,9 @@ public class FSCommitEditor implements ISVNEditor {
         boolean haveRealChanges = false;
         for (Iterator propNames = propNamesToValues.nameSet().iterator(); propNames.hasNext();) {
             String propName = (String)propNames.next();
-            if (!SVNProperty.isRegularProperty(propName)) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS,
-                        "Storage of non-regular property ''{0}'' is disallowed through the repository interface, and could indicate a bug in your client", propName);
-                SVNErrorManager.error(err);
-            }
+            SVNPropertyValue propValue = propNamesToValues.getSVNPropertyValue(propName);
+
+            FSRepositoryUtil.validateProperty(propName, propValue);
 
             if (!done) {
                 parentPath = myTxnRoot.openPath(path, true, true);
@@ -227,7 +225,6 @@ public class FSCommitEditor implements ISVNEditor {
                 done = true;
             }
 
-            SVNPropertyValue propValue = propNamesToValues.getSVNPropertyValue(propName);
             if (properties.isEmpty() && propValue == null) {
                 continue;
             }

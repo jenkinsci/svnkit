@@ -73,7 +73,6 @@ public class SVNFileType {
         return detectSymlinks;
     }
 
-
     public static SVNFileType getType(File file) {
         if (file == null) {
             return SVNFileType.UNKNOWN;

@@ -146,11 +146,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
          assertValidRevision(revision);
         try {
             openRepository();
-            if (!SVNProperty.isRegularProperty(propertyName)) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS,
-                        "Storage of non-regular property ''{0}'' is disallowed through the repository interface, and could indicate a bug in your client", propertyName);
-                SVNErrorManager.error(err);
-            }
+            FSRepositoryUtil.validateProperty(propertyName, propertyValue);
             String userName = getUserName();
             SVNProperties revProps = myFSFS.getRevisionProperties(revision);
             SVNPropertyValue oldValue = revProps.getSVNPropertyValue(propertyName);

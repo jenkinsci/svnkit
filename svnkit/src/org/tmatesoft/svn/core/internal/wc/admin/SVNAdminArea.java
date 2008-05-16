@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.internal.wc.admin;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -62,7 +63,7 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  * @version 1.1.1
  * @author  TMate Software Ltd.
  */
-public abstract class   SVNAdminArea {
+public abstract class SVNAdminArea {
 
     protected static final String ADM_KILLME = "KILLME";
     private static volatile boolean ourIsCleanupSafe;
@@ -1329,7 +1330,6 @@ public abstract class   SVNAdminArea {
             InputStream baseStream = null;
             InputStream textStream = null;
             entry = getVersionedEntry(text.getName(), true);
-            File tmpFile = null;
             try {
                 baseStream = SVNFileUtil.openFileForReading(baseFile);
                 textStream = special ? null : SVNFileUtil.openFileForReading(text);
@@ -1345,10 +1345,8 @@ public abstract class   SVNAdminArea {
                         byte[] eols = SVNTranslator.getBaseEOL(eolStyle);
                         textStream = SVNTranslator.getTranslatingInputStream(textStream, charset, eols, true, keywordsMap, false);
                     } else {
-                        String tmpPath = SVNAdminUtil.getTextBasePath(text.getName(), true);
-                        tmpFile = getFile(tmpPath);
-                        SVNTranslator.translate(this, text.getName(), text.getName(), tmpPath, false);
-                        textStream = SVNFileUtil.openFileForReading(getFile(tmpPath));
+                        String symlinkContents = "link " + SVNFileUtil.getSymlinkName(text);
+                        textStream = new ByteArrayInputStream(symlinkContents.getBytes());
                     }
                 } else if (needsTranslation) {
                     Map keywordsMap = SVNTranslator.computeKeywords(keywords, entry.getURL(), entry.getAuthor(), entry.getCommittedDate(), entry.getRevision() + "", getWCAccess().getOptions());
@@ -1381,7 +1379,6 @@ public abstract class   SVNAdminArea {
             } finally {
                 SVNFileUtil.closeFile(baseStream);
                 SVNFileUtil.closeFile(textStream);
-                SVNFileUtil.deleteFile(tmpFile);
             }
         } else {
             return !SVNFileUtil.compareFiles(text, baseFile, null);

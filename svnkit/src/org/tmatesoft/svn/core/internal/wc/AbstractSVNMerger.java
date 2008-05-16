@@ -14,6 +14,9 @@ package org.tmatesoft.svn.core.internal.wc;
 import java.io.File;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.wc.ISVNMerger;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
@@ -56,12 +59,17 @@ public abstract class AbstractSVNMerger implements ISVNMerger {
         } else {
             status = mergeText(files.getBaseFile(), files.getLocalFile(), files.getRepositoryFile(), options, files.getResultFile());
         }
+
         if (!files.isBinary() && status != SVNStatusType.CONFLICTED) {
             if (files.getCopyFromFile() != null) {
                 status = SVNStatusType.MERGED;
             } else {
-                // compare merge result with 'wcFile' (in case of text and no conflict).
-                boolean isSameContents = SVNFileUtil.compareFiles(files.getWCFile(), files.getResultFile(), null);
+                SVNAdminArea adminArea = files.getAdminArea();
+                SVNVersionedProperties props = adminArea.getProperties(files.getWCPath());
+                boolean isSpecial = props.getPropertyValue(SVNProperty.SPECIAL) != null;
+                 // compare merge result with 'wcFile' (in case of text and no conflict).
+                boolean isSameContents = SVNFileUtil.compareFiles(isSpecial ? files.getLocalFile() : 
+                    files.getWCFile(), files.getResultFile(), null);
                 status = isSameContents ? SVNStatusType.UNCHANGED : status;
             }
         }

@@ -28,8 +28,11 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
@@ -352,6 +355,25 @@ public class FSRepositoryUtil {
                     new Object[] {new Integer(FSFS.DB_FORMAT_LOW), new Integer(FSFS.DB_FORMAT), 
                     new Integer(format)});
             SVNErrorManager.error(err);
+        }
+    }
+    
+    public static void validateProperty(String propertyName, SVNPropertyValue propertyValue) throws SVNException {
+        if (!SVNProperty.isRegularProperty(propertyName)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS,
+                    "Storage of non-regular property ''{0}'' is disallowed through the repository interface, and could indicate a bug in your client", propertyName);
+            SVNErrorManager.error(err);
+        }
+
+        if (SVNProperty.isSVNProperty(propertyName) && propertyValue != null) {
+            if (SVNRevisionProperty.DATE.equals(propertyName)) {
+                try {
+                    SVNDate.parseDateString(propertyValue.getString());
+                } catch (SVNException svne) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_PROPERTY_VALUE);
+                    SVNErrorManager.error(err);
+                }
+            }
         }
     }
     

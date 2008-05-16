@@ -212,8 +212,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
     }
 
     public SVNStatusType[] fileChanged(String path, File file1, File file2, long revision1, 
-                                       long revision2, String mimeType1, String mimeType2, 
-                                       SVNProperties originalProperties, SVNProperties diff) throws SVNException {
+            long revision2, String mimeType1, String mimeType2, SVNProperties originalProperties, SVNProperties diff) throws SVNException {
         boolean needsMerge = true;
         File mergedFile = getFile(path);
         SVNAdminArea dir = retrieve(mergedFile.getParentFile(), myIsDryRun);
@@ -228,7 +227,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
             fileType = SVNFileType.getType(mergedFile);
         }
         
-        if (entry == null || fileType != SVNFileType.FILE) {
+        if (entry == null || (fileType != SVNFileType.FILE && fileType != SVNFileType.SYMLINK)) {
             return new SVNStatusType[] {SVNStatusType.MISSING, SVNStatusType.MISSING};
         }
         

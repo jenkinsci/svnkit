@@ -832,11 +832,7 @@ public class FSFS {
     }
 
     public void setTransactionProperty(String txnID, String name, SVNPropertyValue propertyValue) throws SVNException {
-        if (!SVNProperty.isRegularProperty(name)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS,
-                    "Storage of non-regular property ''{0}'' is disallowed through the repository interface, and could indicate a bug in your client", name);
-            SVNErrorManager.error(err);
-        }
+        FSRepositoryUtil.validateProperty(name, propertyValue);
         SVNWCProperties revProps = new SVNWCProperties(getTransactionPropertiesFile(txnID), null);
         revProps.setPropertyValue(name, propertyValue);
     }
