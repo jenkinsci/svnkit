@@ -605,7 +605,8 @@ public class SVNLookClient extends SVNBasicClient {
      * include the following pieces: 
      * <ul>
      * <li>path (use {@link SVNAdminPath#getPath()} to retrieve it)</li>
-     * <li>tree depth (use {@link SVNAdminPath#getTreeDepth()} to retrieve it)</li>
+     * <li>tree depth starting from <code>0</code> at <code>path</code> 
+     * (use {@link SVNAdminPath#getTreeDepth()} to retrieve it)</li>
      * <li>node id (optional, use {@link SVNAdminPath#getNodeID()} to retrieve it)</li>
      * <li>file/dir information (use {@link SVNAdminPath#isDir()} to retrieve it)</li>
      * </ul>
@@ -651,7 +652,8 @@ public class SVNLookClient extends SVNBasicClient {
      * include the following pieces: 
      * <ul>
      * <li>path (use {@link SVNAdminPath#getPath()} to retrieve it)</li>
-     * <li>tree depth (use {@link SVNAdminPath#getTreeDepth()} to retrieve it)</li>
+     * <li>tree depth starting from <code>0</code> at <code>path</code> 
+     * (use {@link SVNAdminPath#getTreeDepth()} to retrieve it)</li>
      * <li>node id (optional, use {@link SVNAdminPath#getNodeID()} to retrieve it)</li>
      * <li>file/dir information (use {@link SVNAdminPath#isDir()} to retrieve it)</li>
      * </ul>
