@@ -415,8 +415,11 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         for (Iterator names = groups.keySet().iterator(); names.hasNext();) {
             String name = (String) names.next();
             String pattern = (String) groups.get(name);
-            if (DefaultSVNOptions.matches(pattern, host)) {
-                return name;
+            for(StringTokenizer tokens = new StringTokenizer(pattern, ","); tokens.hasMoreTokens();) {
+                String token = tokens.nextToken();
+                if (DefaultSVNOptions.matches(token, host)) {
+                    return name;
+                }
             }
         }
         return null;
