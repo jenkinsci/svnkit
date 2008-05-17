@@ -146,7 +146,7 @@ public class SVNWCManager {
             if (copyFromURL != null) {
                 SVNURL newURL = parentEntry.getSVNURL().appendPath(name, false);
                 updateCleanup(path, wcAccess, newURL.toString(), parentEntry.getRepositoryRoot(), -1, false, null, SVNDepth.INFINITY);
-                markTree(dir, null, true, false, COPIED);
+                markTree(dir, null, true, false, COPIED | KEEP_LOCAL);
                 SVNPropertiesManager.deleteWCProperties(dir, null, true);
             }
         }
@@ -156,43 +156,47 @@ public class SVNWCManager {
 
     public static final int SCHEDULE = 1;
     public static final int COPIED = 2;
+    public static final int KEEP_LOCAL = 4;
 
-    public static void markTree(SVNAdminArea dir, String schedule, boolean copied, boolean keepLocal, int flags) throws SVNException {
+    // this method is not applicable for "this dir" entry, use markTree() for that case
+    public static void markEntry(SVNAdminArea dir, SVNEntry entry, String schedule, boolean copied, boolean keepLocal, int flags) throws SVNException {
+        if (dir.getThisDirName().equals(entry.getName())) {
+            return;
+        }
         Map attributes = new SVNHashMap();
-
-        for (Iterator entries = dir.entries(false); entries.hasNext();) {
-            SVNEntry entry = (SVNEntry) entries.next();
-            if (dir.getThisDirName().equals(entry.getName())) {
-                continue;
-            }
-
-            File path = dir.getFile(entry.getName());
-            if (entry.getKind() == SVNNodeKind.DIR) {
-                SVNAdminArea childDir = dir.getWCAccess().retrieve(path);
-                markTree(childDir, schedule, copied, keepLocal, flags);
-            }
-
-            if ((flags & SCHEDULE) != 0) {
-                attributes.put(SVNProperty.SCHEDULE, schedule);
-            }
-
-            if ((flags & COPIED) != 0) {
-                attributes.put(SVNProperty.COPIED, copied ? Boolean.TRUE.toString() : null);
-            }
-
-            dir.modifyEntry(entry.getName(), attributes, true, false);
-            attributes.clear();
-
-            if (copied) {
-                SVNPropertiesManager.deleteWCProperties(dir, entry.getName(), false);
-            }
-
-            if (SVNProperty.SCHEDULE_DELETE.equals(schedule)) {
-                SVNEvent event = SVNEventFactory.createSVNEvent(dir.getFile(entry.getName()), SVNNodeKind.UNKNOWN, null, 0, SVNEventAction.DELETE, null, null, null);
-                dir.getWCAccess().handleEvent(event);
-            }
+        File path = dir.getFile(entry.getName());
+        if (entry.getKind() == SVNNodeKind.DIR) {
+            SVNAdminArea childDir = dir.getWCAccess().retrieve(path);
+            markTree(childDir, schedule, copied, keepLocal, flags);
         }
 
+        if ((flags & SCHEDULE) != 0) {
+            attributes.put(SVNProperty.SCHEDULE, schedule);
+        }
+
+        if ((flags & COPIED) != 0) {
+            attributes.put(SVNProperty.COPIED, copied ? Boolean.TRUE.toString() : null);
+        }
+
+        dir.modifyEntry(entry.getName(), attributes, true, false);
+
+        if (copied) {
+            SVNPropertiesManager.deleteWCProperties(dir, entry.getName(), false);
+        }
+
+        if (SVNProperty.SCHEDULE_DELETE.equals(schedule)) {
+            SVNEvent event = SVNEventFactory.createSVNEvent(path, SVNNodeKind.UNKNOWN, null, 0, SVNEventAction.DELETE, null, null, null);
+            dir.getWCAccess().handleEvent(event);
+        }
+    }
+
+    public static void markTree(SVNAdminArea dir, String schedule, boolean copied, boolean keepLocal, int flags) throws SVNException {
+        for (Iterator entries = dir.entries(false); entries.hasNext();) {
+            SVNEntry entry = (SVNEntry) entries.next();
+            markEntry(dir, entry, schedule, copied, keepLocal, flags);
+        }
+
+        Map attributes = new SVNHashMap();
         SVNEntry dirEntry = dir.getEntry(dir.getThisDirName(), false);
         if (!(dirEntry.isScheduledForAddition() && SVNProperty.SCHEDULE_DELETE.equals(schedule))) {
             if ((flags & SCHEDULE) != 0) {
@@ -203,7 +207,7 @@ public class SVNWCManager {
             }
         }
 
-        if (keepLocal) {
+        if ((flags & KEEP_LOCAL) != 0 && keepLocal) {
             attributes.put(SVNProperty.KEEP_LOCAL, SVNProperty.toString(true));
         }
 
@@ -465,7 +469,7 @@ public class SVNWCManager {
                     if (cancellable) {
                         markTreeCancellable(dir, SVNProperty.SCHEDULE_DELETE, false, !deleteFiles, SCHEDULE);
                     } else {
-                        markTree(dir, SVNProperty.SCHEDULE_DELETE, false, !deleteFiles, SCHEDULE);
+                        markTree(dir, SVNProperty.SCHEDULE_DELETE, false, !deleteFiles, SCHEDULE | KEEP_LOCAL);
                     }
                 }
             }

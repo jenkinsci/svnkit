@@ -1440,6 +1440,20 @@ public class SVNWCClient extends SVNBasicClient {
         dispatchEvent(event);
     }
 
+    public void doMarkReplaced(File path) throws SVNException {
+        SVNWCAccess wcAccess = createWCAccess();
+        path = path.getAbsoluteFile();
+        try {
+            SVNAdminAreaInfo areaInfo = wcAccess.openAnchor(path, true, SVNWCAccess.INFINITE_DEPTH);
+            SVNAdminArea anchor = areaInfo.getAnchor();
+            SVNEntry entry = anchor.getEntry(path.getName(), false);
+            SVNWCManager.markEntry(anchor, entry, SVNProperty.SCHEDULE_REPLACE, false, false, SVNWCManager.SCHEDULE);
+            anchor.saveEntries(false);
+        } finally {
+            wcAccess.close();
+        }
+    }
+
     /**
      * Reverts all local changes made to a Working Copy item(s) thus
      * bringing it to a 'pristine' state.
