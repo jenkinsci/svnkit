@@ -717,12 +717,7 @@ public class SVNBasicClient implements ISVNEventHandler {
                     cleanUp = true;
                 }
                 SVNEntry entry = wcAccess.getVersionedEntry(path, false);
-                if (entry.getURL() == null) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, 
-                            "Entry ''{0}'' has no URL", path);
-                    SVNErrorManager.error(err);
-                }
-                url = entry.getSVNURL();
+                url = getEntryLocation(path, entry, null, SVNRevision.UNDEFINED);
                 if (reposRootURL == null) {
                     reposRootURL = entry.getRepositoryRootURL();
                 }

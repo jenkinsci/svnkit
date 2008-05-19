@@ -212,7 +212,8 @@ public class SVNCopyClient extends SVNBasicClient {
        return myCommitParameters;
     }
 
-    public void doCopy(SVNCopySource[] sources, File dst, boolean isMove, boolean makeParents, boolean failWhenDstExists) throws SVNException {
+    public void doCopy(SVNCopySource[] sources, File dst, boolean isMove, boolean makeParents, 
+            boolean failWhenDstExists) throws SVNException {
         if (sources.length > 1 && failWhenDstExists) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_MULTIPLE_SOURCES_DISALLOWED);
             SVNErrorManager.error(err);
@@ -232,7 +233,8 @@ public class SVNCopyClient extends SVNBasicClient {
                     baseName = SVNEncodingUtil.uriDecode(baseName);
                 }
                 try {
-                    setupCopy(sources, new SVNPath(new File(dst, baseName).getAbsolutePath()), isMove, makeParents, null, null);
+                    setupCopy(sources, new SVNPath(new File(dst, baseName).getAbsolutePath()), isMove, 
+                            makeParents, null, null);
                 } catch (SVNException second) {
                     throw second;
                 }
@@ -253,7 +255,8 @@ public class SVNCopyClient extends SVNBasicClient {
             return SVNCommitInfo.NULL;
         }
         try {
-            return setupCopy(sources, new SVNPath(dst.toString()), isMove, makeParents, commitMessage, revisionProperties);
+            return setupCopy(sources, new SVNPath(dst.toString()), isMove, makeParents, commitMessage, 
+                    revisionProperties);
         } catch (SVNException e) {
             SVNErrorCode err = e.getErrorMessage().getErrorCode();
             if (!failWhenDstExists && sources.length == 1 && (err == SVNErrorCode.ENTRY_EXISTS || err == SVNErrorCode.FS_ALREADY_EXISTS)) {
@@ -263,13 +266,17 @@ public class SVNCopyClient extends SVNBasicClient {
                     baseName = SVNEncodingUtil.uriEncode(baseName);
                 }
                 try {
-                    return setupCopy(sources, new SVNPath(dst.appendPath(baseName, true).toString()), isMove, makeParents, commitMessage, revisionProperties);
+                    return setupCopy(sources, new SVNPath(dst.appendPath(baseName, true).toString()), isMove, 
+                            makeParents, commitMessage, revisionProperties);
                 } catch (SVNException second) {
                     throw second;
                 }
             }
             throw e;
         }
+    }
+
+    public void doCopy(File nestedWC) throws SVNException {
     }
     
     private SVNCopySource[] expandCopySources(SVNCopySource[] sources) throws SVNException {
@@ -368,7 +375,8 @@ public class SVNCopyClient extends SVNBasicClient {
         }
     }
 
-    private SVNCommitInfo setupCopy(SVNCopySource[] sources, SVNPath dst, boolean isMove, boolean makeParents, String message, SVNProperties revprops) throws SVNException {
+    private SVNCommitInfo setupCopy(SVNCopySource[] sources, SVNPath dst, boolean isMove, boolean makeParents, 
+            String message, SVNProperties revprops) throws SVNException {
         List pairs = new ArrayList(sources.length);
         for (int i = 0; i < sources.length; i++) {
             SVNCopySource source = sources[i];
@@ -418,8 +426,9 @@ public class SVNCopyClient extends SVNBasicClient {
                 String srcPath = pair.mySource;
                 String dstPath = pair.myDst;
                 if (SVNPathUtil.isAncestor(srcPath, dstPath)) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Cannot copy path ''{0}'' into its own child ''{1}",
-                            new Object[] {srcPath, dstPath});
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                            "Cannot copy path ''{0}'' into its own child ''{1}",
+                            new Object[] { srcPath, dstPath });
                     SVNErrorManager.error(err);
                 }
             }
@@ -431,13 +440,14 @@ public class SVNCopyClient extends SVNBasicClient {
                     File srcPath = new File(pair.mySource);
                     File dstPath = new File(pair.myDst);
                     if (srcPath.equals(dstPath)) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Cannot move path ''{0}'' into itself",
-                                srcPath);
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                                "Cannot move path ''{0}'' into itself", srcPath);
                         SVNErrorManager.error(err);
                     }
                 }
             } else {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Moves between the working copy and the repository are not supported");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                        "Moves between the working copy and the repository are not supported");
                 SVNErrorManager.error(err);
             }
         } else {
@@ -446,16 +456,19 @@ public class SVNCopyClient extends SVNBasicClient {
                 boolean needReposPegRevision = false;
                 for (Iterator ps = pairs.iterator(); ps.hasNext();) {
                     CopyPair pair = (CopyPair) ps.next();
-                    if (pair.mySourceRevision != SVNRevision.UNDEFINED && pair.mySourceRevision != SVNRevision.WORKING) {
+                    if (pair.mySourceRevision != SVNRevision.UNDEFINED && 
+                            pair.mySourceRevision != SVNRevision.WORKING) {
                         needReposRevision = true;
                     }
-                    if (pair.mySourcePegRevision != SVNRevision.UNDEFINED && pair.mySourcePegRevision != SVNRevision.WORKING) {
+                    if (pair.mySourcePegRevision != SVNRevision.UNDEFINED && 
+                            pair.mySourcePegRevision != SVNRevision.WORKING) {
                         needReposPegRevision = true;
                     }
                     if (needReposRevision || needReposPegRevision) {
                         break;
                     }
                 }
+                
                 if (needReposRevision || needReposPegRevision) {
                     for (Iterator ps = pairs.iterator(); ps.hasNext();) {
                         CopyPair pair = (CopyPair) ps.next();
@@ -465,8 +478,8 @@ public class SVNCopyClient extends SVNBasicClient {
                             SVNEntry entry = wcAccess.getEntry(new File(pair.mySource), false);
                             SVNURL url = entry.isCopied() ? entry.getCopyFromSVNURL() : entry.getSVNURL();
                             if (url == null) {
-                                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' does not have a URL associated with it", 
-                                        new File(pair.mySource));
+                                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, 
+                                        "''{0}'' does not have a URL associated with it", new File(pair.mySource));
                                 SVNErrorManager.error(err);
                             }
                             pair.mySource = url.toString();
@@ -1067,48 +1080,70 @@ public class SVNCopyClient extends SVNBasicClient {
         }
     }
 
-    private void copyDisjointWCToWC(List copyPairs, boolean isMove, boolean makeParents) throws SVNException {
-        for (Iterator pairs = copyPairs.iterator(); pairs.hasNext();) {
-            CopyPair pair = (CopyPair) pairs.next();
-            File srcFile = new File(pair.mySource);
-            SVNFileType srcFileType = SVNFileType.getType(srcFile);
-            if (srcFileType == SVNFileType.NONE) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, 
-                        "Path ''{0}'' does not exist", new File(pair.mySource));
+    private void copyDisjointWCToWC(File nestedWC) throws SVNException {
+        nestedWC = new File(nestedWC.getAbsolutePath().replace(File.separatorChar, '/'));
+        File nestedWCParent = nestedWC.getParentFile();
+        if (nestedWCParent == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                    "{0} seems to be not a nested wc since it has no parent", nestedWC);
+            SVNErrorManager.error(err);
+        }
+        
+        SVNWCAccess parentWCAccess = createWCAccess();
+        SVNWCAccess nestedWCAccess = createWCAccess();
+        try {
+            SVNAdminArea parentArea = parentWCAccess.open(nestedWCParent, false, 0);
+            
+            /* TODO: check the following case (for both same and different repositories): 
+             * 1. copy normal wc subdirectory to itself
+             * 2. copy disjoint wc which is a subdirectory of another wc to itself
+             * 3. copy disjoint wc to a location withing another wc different from the location 
+             *    of the disjoint wc itself 
+             * 4. copy the wc root into itself
+             * 
+             * */ 
+            
+            SVNEntry srcEntryInParent = parentWCAccess.getEntry(nestedWC, false);
+            if (srcEntryInParent != null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, 
+                        "Entry ''{0}'' already exists in parent directory", nestedWC.getName());
+                SVNErrorManager.error(err);
+            }
+            
+            String parentReposUUID = getUUIDFromPath(parentWCAccess, nestedWCParent);
+
+            SVNAdminArea nestedArea = nestedWCAccess.open(nestedWC, false, 0);
+            String srcReposUUID = getUUIDFromPath(nestedWCAccess, nestedWC);
+            if (srcReposUUID != null && !srcReposUUID.equals(parentReposUUID)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                        "Source path ''{0}'' is from foreign repository; leaving it as a disjoint WC", nestedWC);
+                SVNErrorManager.error(err);
+            }
+            
+            SVNURL nestedWCReposRoot = getReposRoot(nestedWC, null, SVNRevision.WORKING, nestedArea, 
+                    nestedWCAccess);
+            String nestedWCPath = getPathRelativeToRoot(nestedWC, null, nestedWCReposRoot, nestedWCAccess, null);
+            
+            SVNURL parentReposRoot = getReposRoot(nestedWCParent, null, SVNRevision.WORKING, parentArea, 
+                    parentWCAccess);
+            String parentPath = getPathRelativeToRoot(nestedWCParent, null, parentReposRoot, parentWCAccess, null);
+            
+            if (SVNPathUtil.isAncestor(nestedWCPath, parentPath)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                        "Cannot copy path ''{0}'' into its own child ''{1}",
+                        new Object[] { nestedWCPath, parentPath });
                 SVNErrorManager.error(err);
             }
 
-            File dstFile = new File(pair.myDst);
-            SVNFileType dstFileType = SVNFileType.getType(dstFile);
-            if (dstFileType != SVNFileType.NONE) {
-//                if () {
-//                }
-                
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, 
-                        "Path ''{0}'' already exists", new File(pair.myDst));
-                SVNErrorManager.error(err);
-            } else {
-                
-            }
-            File dstParent = new File(SVNPathUtil.removeTail(pair.myDst));
-            pair.myBaseName = SVNPathUtil.tail(pair.myDst);
-            SVNFileType dstParentFileType = SVNFileType.getType(dstParent);
-            if (makeParents && dstParentFileType == SVNFileType.NONE) {
-                // create parents.
-                addLocalParents(dstParent, getEventDispatcher());
-            } else if (dstParentFileType != SVNFileType.DIRECTORY) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, 
-                        "Path ''{0}'' is not a directory", dstParent);
-                SVNErrorManager.error(err);
-            }
-        }
-        if (isMove) {
-            moveWCToWC(copyPairs);
-        } else {
-            copyWCToWC(copyPairs);
+            SVNEntry nestedWCThisEntry = nestedWCAccess.getVersionedEntry(nestedWC, false);
+            SVNURL nestedWCURL = nestedWCThisEntry.getSVNURL();
+            
+        } finally {
+            parentWCAccess.close();
+            nestedWCAccess.close();
         }
     }
-
+    
     private void copyWCToWC(List pairs) throws SVNException {
         // find common ancestor for all dsts.
         String dstParentPath = null;
@@ -1231,7 +1266,7 @@ public class SVNCopyClient extends SVNBasicClient {
             SVNEntry dstEntry = dstAccess.getVersionedEntry(dstParent, false);
             SVNEntry srcEntry = srcAccess.getVersionedEntry(src, false);
             
-            if ((srcEntry.getRepositoryRoot() == null && dstEntry.getRepositoryRoot() != null) || 
+            if (srcEntry.getRepositoryRoot() != null && dstEntry.getRepositoryRoot() != null && 
                     !srcEntry.getRepositoryRoot().equals(dstEntry.getRepositoryRoot())) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_SCHEDULE,                        
                         "Cannot copy to ''{0}'', as it is not from repository ''{1}''; it is from ''{2}''",
