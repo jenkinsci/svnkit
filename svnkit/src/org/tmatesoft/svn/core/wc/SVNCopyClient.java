@@ -1081,18 +1081,25 @@ public class SVNCopyClient extends SVNBasicClient {
     }
 
     private void copyDisjointWCToWC(File nestedWC) throws SVNException {
+        SVNFileType nestedWCType = SVNFileType.getType(nestedWC);
+        if (nestedWCType != SVNFileType.DIRECTORY) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                    "This kind of copy can be run on a root of a disjoint wc directory only");
+            SVNErrorManager.error(err);
+        }
+        
         nestedWC = new File(nestedWC.getAbsolutePath().replace(File.separatorChar, '/'));
         File nestedWCParent = nestedWC.getParentFile();
         if (nestedWCParent == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
-                    "{0} seems to be not a nested wc since it has no parent", nestedWC);
+                    "{0} seems to be not a disjoint wc since it has no parent", nestedWC);
             SVNErrorManager.error(err);
         }
         
         SVNWCAccess parentWCAccess = createWCAccess();
         SVNWCAccess nestedWCAccess = createWCAccess();
         try {
-            SVNAdminArea parentArea = parentWCAccess.open(nestedWCParent, false, 0);
+            SVNAdminArea parentArea = parentWCAccess.open(nestedWCParent, true, 0);
             
             /* TODO: check the following case (for both same and different repositories): 
              * 1. copy normal wc subdirectory to itself
@@ -1100,7 +1107,7 @@ public class SVNCopyClient extends SVNBasicClient {
              * 3. copy disjoint wc to a location withing another wc different from the location 
              *    of the disjoint wc itself 
              * 4. copy the wc root into itself
-             * 
+             * 5. try to copy an unversioned file
              * */ 
             
             SVNEntry srcEntryInParent = parentWCAccess.getEntry(nestedWC, false);
@@ -1109,16 +1116,48 @@ public class SVNCopyClient extends SVNBasicClient {
                         "Entry ''{0}'' already exists in parent directory", nestedWC.getName());
                 SVNErrorManager.error(err);
             }
-            
-            String parentReposUUID = getUUIDFromPath(parentWCAccess, nestedWCParent);
 
             SVNAdminArea nestedArea = nestedWCAccess.open(nestedWC, false, 0);
+
+            SVNEntry nestedWCThisEntry = nestedWCAccess.getVersionedEntry(nestedWC, false);
+            SVNEntry parentThisEntry = parentWCAccess.getVersionedEntry(nestedWCParent, false);
+            
+            if (nestedWCThisEntry.getRepositoryRoot() != null && parentThisEntry.getRepositoryRoot() != null && 
+                    !nestedWCThisEntry.getRepositoryRoot().equals(parentThisEntry.getRepositoryRoot())) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_SCHEDULE,                        
+                        "Cannot copy to ''{0}'', as it is not from repository ''{1}''; it is from ''{2}''",
+                        new Object[] { nestedWCParent, nestedWCThisEntry.getRepositoryRootURL(), 
+                        parentThisEntry.getRepositoryRootURL() });
+                SVNErrorManager.error(err);
+            }
+            
+            if (parentThisEntry.isScheduledForDeletion()) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_SCHEDULE, 
+                        "Cannot copy to ''{0}'', as it is scheduled for deletion", nestedWCParent); 
+                SVNErrorManager.error(err);
+            }
+
+            if (nestedWCThisEntry.isScheduledForDeletion()) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_SCHEDULE, 
+                        "Cannot copy ''{0}'', as it is scheduled for deletion", nestedWC); 
+                SVNErrorManager.error(err);
+            }
+            
+            // uuids may be identical while it could be absolutely independent repositories.
+            // subversion uses repos roots comparison for local copies, and uuids comparison for 
+            // operations involving ra access. probably we should act similarly here?..
+            
+            /*            
+            String parentReposUUID = getUUIDFromPath(parentWCAccess, nestedWCParent);
+
             String srcReposUUID = getUUIDFromPath(nestedWCAccess, nestedWC);
+
             if (srcReposUUID != null && !srcReposUUID.equals(parentReposUUID)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
                         "Source path ''{0}'' is from foreign repository; leaving it as a disjoint WC", nestedWC);
                 SVNErrorManager.error(err);
             }
+            */
             
             SVNURL nestedWCReposRoot = getReposRoot(nestedWC, null, SVNRevision.WORKING, nestedArea, 
                     nestedWCAccess);
@@ -1135,15 +1174,58 @@ public class SVNCopyClient extends SVNBasicClient {
                 SVNErrorManager.error(err);
             }
 
-            SVNEntry nestedWCThisEntry = nestedWCAccess.getVersionedEntry(nestedWC, false);
-            SVNURL nestedWCURL = nestedWCThisEntry.getSVNURL();
-            
+            if ((nestedWCThisEntry.isScheduledForAddition() && !nestedWCThisEntry.isCopied()) || 
+                    nestedWCThisEntry.getURL() == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, 
+                        "Cannot copy or move ''{0}'': it is not in repository yet; " +
+                        "try committing first", nestedWC);
+                SVNErrorManager.error(err);
+            }
+
+            copyDisjointDir(nestedWC, parentWCAccess, nestedWCParent);
+
+            nestedWCAccess.close();
+            nestedArea = nestedWCAccess.open(nestedWC, true, SVNWCAccess.INFINITE_DEPTH);
+
         } finally {
             parentWCAccess.close();
             nestedWCAccess.close();
         }
     }
     
+    private void copyDisjointDir(File nestedWC, SVNWCAccess parentAccess, File nestedWCParent) throws SVNException {
+        SVNWCClient wcClient = new SVNWCClient((ISVNAuthenticationManager) null, null);
+        wcClient.setEventHandler(getEventDispatcher());
+        wcClient.doCleanup(nestedWC);
+
+        SVNWCAccess nestedWCAccess = createWCAccess();
+        SVNAdminArea dir = null;
+        String copyFromURL = null;
+        long copyFromRevision = -1;
+        try {
+            dir = nestedWCAccess.open(nestedWC, true, SVNWCAccess.INFINITE_DEPTH);
+            SVNEntry nestedWCThisEntry = nestedWCAccess.getVersionedEntry(nestedWC, false);            
+            postCopyCleanup(dir);
+            if (nestedWCThisEntry.isCopied()) {
+                if (nestedWCThisEntry.getCopyFromURL() != null) {
+                    copyFromURL = nestedWCThisEntry.getCopyFromURL();
+                    copyFromRevision = nestedWCThisEntry.getCopyFromRevision();
+                }
+
+                Map attributes = new SVNHashMap();
+                attributes.put(SVNProperty.URL, copyFromURL);
+                dir.modifyEntry(dir.getThisDirName(), attributes, true, false);
+            } else {
+                copyFromURL = nestedWCThisEntry.getURL();
+                copyFromRevision = nestedWCThisEntry.getRevision();
+            }
+        } finally {
+            nestedWCAccess.close();
+        }
+        SVNWCManager.add(nestedWC, parentAccess.getAdminArea(nestedWCParent), 
+                SVNURL.parseURIEncoded(copyFromURL), copyFromRevision);
+    }
+
     private void copyWCToWC(List pairs) throws SVNException {
         // find common ancestor for all dsts.
         String dstParentPath = null;
@@ -1360,11 +1442,13 @@ public class SVNCopyClient extends SVNBasicClient {
         }
     }
     
-    private void copyDirAdm(File src, SVNWCAccess srcAccess, SVNWCAccess dstAccess, File dstParent, String dstName) throws SVNException {
+    private void copyDirAdm(File src, SVNWCAccess srcAccess, SVNWCAccess dstAccess, File dstParent, 
+            String dstName) throws SVNException {
         File dst = new File(dstParent, dstName);
         SVNEntry srcEntry = srcAccess.getVersionedEntry(src, false);
         if ((srcEntry.isScheduledForAddition() && !srcEntry.isCopied()) || srcEntry.getURL() == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "Cannot copy or move ''{0}'': it is not in repository yet; " +
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, 
+                    "Cannot copy or move ''{0}'': it is not in repository yet; " +
                     "try committing first", src);
             SVNErrorManager.error(err);
         }
