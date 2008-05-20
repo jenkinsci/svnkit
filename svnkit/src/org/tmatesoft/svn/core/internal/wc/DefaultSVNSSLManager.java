@@ -24,6 +24,7 @@ import java.security.cert.CertPathValidator;
 import java.security.cert.CertPathValidatorException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.security.cert.CertificateParsingException;
 import java.security.cert.PKIXCertPathValidatorResult;
 import java.security.cert.PKIXParameters;
 import java.security.cert.TrustAnchor;
@@ -265,6 +266,23 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
         }
         String realHostName = myURL.getHost();
         if (!realHostName.equals(hostName)) {
+            try {
+                Collection altNames = cert.getSubjectAlternativeNames();
+                for (Iterator names = altNames.iterator(); names.hasNext();) {
+                    Object nameList = names.next();
+                    if (nameList instanceof Collection && ((Collection) nameList).size() >= 2) {
+                        Object[] name = ((Collection) nameList).toArray();
+                        Object type = name[0];
+                        Object host = name[1];
+                        if (type instanceof Integer && host instanceof String) {
+                            if (((Integer) type).intValue() == 2 && host.equals(realHostName)) {
+                                return mask;
+                            }
+                        }
+                    }
+                }
+            } catch (CertificateParsingException e) {
+            }
             mask |= 4;
         }
         return mask;
