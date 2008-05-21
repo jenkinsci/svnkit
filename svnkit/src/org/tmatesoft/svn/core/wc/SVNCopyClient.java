@@ -276,7 +276,11 @@ public class SVNCopyClient extends SVNBasicClient {
         }
     }
 
+    /**
+     * Converts a disjoint wc to a copied one.
+     */
     public void doCopy(File nestedWC) throws SVNException {
+        copyDisjointWCToWC(nestedWC);
     }
     
     private SVNCopySource[] expandCopySources(SVNCopySource[] sources) throws SVNException {
@@ -1101,15 +1105,6 @@ public class SVNCopyClient extends SVNBasicClient {
         try {
             SVNAdminArea parentArea = parentWCAccess.open(nestedWCParent, true, 0);
             
-            /* TODO: check the following case (for both same and different repositories): 
-             * 1. copy normal wc subdirectory to itself
-             * 2. copy disjoint wc which is a subdirectory of another wc to itself
-             * 3. copy disjoint wc to a location withing another wc different from the location 
-             *    of the disjoint wc itself 
-             * 4. copy the wc root into itself
-             * 5. try to copy an unversioned file
-             * */ 
-            
             SVNEntry srcEntryInParent = parentWCAccess.getEntry(nestedWC, false);
             if (srcEntryInParent != null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, 
@@ -1117,11 +1112,15 @@ public class SVNCopyClient extends SVNBasicClient {
                 SVNErrorManager.error(err);
             }
 
-            SVNAdminArea nestedArea = nestedWCAccess.open(nestedWC, false, 0);
+            SVNAdminArea nestedArea = nestedWCAccess.open(nestedWC, false, SVNWCAccess.INFINITE_DEPTH);
 
             SVNEntry nestedWCThisEntry = nestedWCAccess.getVersionedEntry(nestedWC, false);
             SVNEntry parentThisEntry = parentWCAccess.getVersionedEntry(nestedWCParent, false);
             
+            // uuids may be identical while it might be absolutely independent repositories.
+            // subversion uses repos roots comparison for local copies, and uuids comparison for 
+            // operations involving ra access. so, I believe we should act similarly here.
+
             if (nestedWCThisEntry.getRepositoryRoot() != null && parentThisEntry.getRepositoryRoot() != null && 
                     !nestedWCThisEntry.getRepositoryRoot().equals(parentThisEntry.getRepositoryRoot())) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_SCHEDULE,                        
@@ -1142,22 +1141,6 @@ public class SVNCopyClient extends SVNBasicClient {
                         "Cannot copy ''{0}'', as it is scheduled for deletion", nestedWC); 
                 SVNErrorManager.error(err);
             }
-            
-            // uuids may be identical while it could be absolutely independent repositories.
-            // subversion uses repos roots comparison for local copies, and uuids comparison for 
-            // operations involving ra access. probably we should act similarly here?..
-            
-            /*            
-            String parentReposUUID = getUUIDFromPath(parentWCAccess, nestedWCParent);
-
-            String srcReposUUID = getUUIDFromPath(nestedWCAccess, nestedWC);
-
-            if (srcReposUUID != null && !srcReposUUID.equals(parentReposUUID)) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
-                        "Source path ''{0}'' is from foreign repository; leaving it as a disjoint WC", nestedWC);
-                SVNErrorManager.error(err);
-            }
-            */
             
             SVNURL nestedWCReposRoot = getReposRoot(nestedWC, null, SVNRevision.WORKING, nestedArea, 
                     nestedWCAccess);
@@ -1182,14 +1165,36 @@ public class SVNCopyClient extends SVNBasicClient {
                 SVNErrorManager.error(err);
             }
 
+            Map calculatedTargetMergeInfo = null;
+            Map mergeInfo = null;
+            if (nestedWCThisEntry.getSchedule() == null || (nestedWCThisEntry.isScheduledForAddition() && 
+                    nestedWCThisEntry.isCopied())) {
+                calculatedTargetMergeInfo = calculateTargetMergeInfo(nestedWC, nestedWCAccess, 
+                        nestedWCThisEntry.getSVNURL(), nestedWCThisEntry.getRevision(), null, true);
+                if (calculatedTargetMergeInfo == null) {
+                    calculatedTargetMergeInfo = new TreeMap();
+                }
+            } else {
+                mergeInfo = SVNPropertiesManager.parseMergeInfo(nestedWC, nestedWCThisEntry, false);
+                if (mergeInfo == null) {
+                    mergeInfo = new TreeMap();
+                } 
+            }
+            
             copyDisjointDir(nestedWC, parentWCAccess, nestedWCParent);
+            parentWCAccess.probeTry(nestedWC, true, SVNWCAccess.INFINITE_DEPTH);
 
-            nestedWCAccess.close();
-            nestedArea = nestedWCAccess.open(nestedWC, true, SVNWCAccess.INFINITE_DEPTH);
+            if (calculatedTargetMergeInfo != null) {
+                SVNEntry dstEntry = parentWCAccess.getEntry(nestedWC, false);
+                extendWCMergeInfo(nestedWC, dstEntry, calculatedTargetMergeInfo, parentWCAccess);
+            } else {
+                SVNPropertiesManager.recordWCMergeInfo(nestedWC, mergeInfo, parentWCAccess);
+            }
 
         } finally {
             parentWCAccess.close();
             nestedWCAccess.close();
+            sleepForTimeStamp();
         }
     }
     
@@ -1322,25 +1327,26 @@ public class SVNCopyClient extends SVNBasicClient {
     }
     
     private void propagateMegeInfo(CopyPair pair, SVNWCAccess srcAccess, SVNWCAccess dstAccess) throws SVNException {
-        SVNEntry entry = srcAccess.getVersionedEntry(new File(pair.mySource), false);
+        File src = new File(pair.mySource);
+        File dst = new File(pair.myDst);
+        SVNEntry entry = srcAccess.getVersionedEntry(src, false);
         if (entry.getSchedule() == null || (entry.isScheduledForAddition() && entry.isCopied())) {
-            SVNRepository repos = createRepository(entry.getSVNURL(), null, null, true);
-            Map mergeInfo = calculateTargetMergeInfo(new File(pair.mySource), srcAccess, entry.getSVNURL(), 
-                    entry.getRevision(), repos, true);
+            Map mergeInfo = calculateTargetMergeInfo(src, srcAccess, entry.getSVNURL(), 
+                    entry.getRevision(), null, true);
             if (mergeInfo == null) {
                 mergeInfo = new TreeMap();
             }
-            SVNEntry dstEntry = dstAccess.getEntry(new File(pair.myDst), false);
-            extendWCMergeInfo(new File(pair.myDst), dstEntry, mergeInfo, dstAccess);
+            SVNEntry dstEntry = dstAccess.getEntry(dst, false);
+            extendWCMergeInfo(dst, dstEntry, mergeInfo, dstAccess);
             return;
         }
-        Map mergeInfo = SVNPropertiesManager.parseMergeInfo(new File(pair.mySource), entry, false);
+        Map mergeInfo = SVNPropertiesManager.parseMergeInfo(src, entry, false);
         if (mergeInfo == null) {
             mergeInfo = new TreeMap();
-            SVNPropertiesManager.recordWCMergeInfo(new File(pair.myDst), mergeInfo, dstAccess);
+            SVNPropertiesManager.recordWCMergeInfo(dst, mergeInfo, dstAccess);
         } 
     }
-    
+
     private void copyFiles(File src, File dstParent, SVNWCAccess dstAccess, String dstName) throws SVNException {
         SVNWCAccess srcAccess = createWCAccess();
         try {
@@ -1605,7 +1611,8 @@ public class SVNCopyClient extends SVNBasicClient {
                     url = entry.getSVNURL();
                     srcRevision = entry.getRevision();
                 } else {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "Entry for ''{0}'' has no URL", srcFile);
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, 
+                            "Entry for ''{0}'' has no URL", srcFile);
                     SVNErrorManager.error(err);
                 }
             }
