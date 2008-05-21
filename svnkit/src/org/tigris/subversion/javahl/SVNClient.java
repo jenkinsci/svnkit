@@ -12,6 +12,7 @@
 package org.tigris.subversion.javahl;
 
 import java.io.OutputStream;
+import java.util.Map;
 
 import org.tmatesoft.svn.core.javahl.SVNClientImpl;
 
@@ -112,6 +113,10 @@ public class SVNClient implements SVNClientInterface {
 
     public void remove(String[] path, String message, boolean force) throws ClientException {
         myDelegate.remove(path, message, force);
+    }
+
+    public void remove(String[] path, String message, boolean force, boolean keepLocal, Map revpropTable) throws ClientException {
+        myDelegate.remove(path, message, force, keepLocal, revpropTable);
     }
 
     public void revert(String path, boolean recurse) throws ClientException {
@@ -393,12 +398,12 @@ public class SVNClient implements SVNClientInterface {
         myDelegate.getChangelists(rootPath, changelists, depth, callback);
     }
 
-    public long commit(String[] path, String message, int depth, boolean noUnlock, boolean keepChangelist, String[] changelists) throws ClientException {
-        return myDelegate.commit(path, message, depth, noUnlock, keepChangelist, changelists);
+    public long commit(String[] path, String message, int depth, boolean noUnlock, boolean keepChangelist, String[] changelists, Map revpropTable) throws ClientException {
+        return myDelegate.commit(path, message, depth, noUnlock, keepChangelist, changelists, revpropTable);
     }
 
     public void remove(String[] path, String message, boolean force, boolean keepLocal) throws ClientException {
-        myDelegate.remove(path, message, force, keepLocal);
+        remove(path, message, force, keepLocal, null);
     }
 
     public long checkout(String moduleName, String destPath, Revision revision, Revision pegRevision, int depth, boolean ignoreExternals, boolean allowUnverObstructions) throws ClientException {
@@ -430,8 +435,8 @@ public class SVNClient implements SVNClientInterface {
         myDelegate.list(url, revision, pegRevision, depth, direntFields, fetchLocks, callback);
     }
 
-    public void mkdir(String[] path, String message, boolean makeParents) throws ClientException {
-        myDelegate.mkdir(path, message, makeParents);
+    public void mkdir(String[] path, String message, boolean makeParents, Map revpropTable) throws ClientException {
+        myDelegate.mkdir(path, message, makeParents, revpropTable);
     }
 
     public void setConflictResolver(ConflictResolverCallback listener) {
@@ -446,20 +451,20 @@ public class SVNClient implements SVNClientInterface {
         return myDelegate.suggestMergeSources(path, pegRevision);
     }
 
-    public void copy(CopySource[] sources, String destPath, String message, boolean copyAsChild, boolean makeParents) throws ClientException {
-        myDelegate.copy(sources, destPath, message, copyAsChild, makeParents);
+    public void copy(CopySource[] sources, String destPath, String message, boolean copyAsChild, boolean makeParents, Map revpropTable) throws ClientException {
+        myDelegate.copy(sources, destPath, message, copyAsChild, makeParents, revpropTable);
     }
 
-    public void move(String[] srcPaths, String destPath, String message, boolean force, boolean moveAsChild, boolean makeParents) throws ClientException {
-        myDelegate.move(srcPaths, destPath, message, force, moveAsChild, makeParents);
+    public void move(String[] srcPaths, String destPath, String message, boolean force, boolean moveAsChild, boolean makeParents, Map revpropTable) throws ClientException {
+        myDelegate.move(srcPaths, destPath, message, force, moveAsChild, makeParents, revpropTable);
     }
 
     public void add(String path, int depth, boolean force, boolean noIgnores, boolean addParents) throws ClientException {
         myDelegate.add(path, depth, force, noIgnores, addParents);
     }
 
-    public void doImport(String path, String url, String message, int depth, boolean noIgnore, boolean ignoreUnknownNodeTypes) throws ClientException {
-        myDelegate.doImport(path, url, message, depth, noIgnore, ignoreUnknownNodeTypes);
+    public void doImport(String path, String url, String message, int depth, boolean noIgnore, boolean ignoreUnknownNodeTypes, Map revpropTable) throws ClientException {
+        myDelegate.doImport(path, url, message, depth, noIgnore, ignoreUnknownNodeTypes, revpropTable);
     }
 
     public long doSwitch(String path, String url, Revision revision, Revision pegRevision, int depth, boolean depthIsSticky, boolean ignoreExternals, boolean allowUnverObstructions) throws ClientException {
@@ -554,8 +559,8 @@ public class SVNClient implements SVNClientInterface {
 	}
 
 	public void propertySet(String path, String name, String value, int depth,
-			String[] changelists, boolean force) throws ClientException {
-		myDelegate.propertySet(path, name, value, depth, changelists, force);
+			String[] changelists, boolean force, Map revpropTable) throws ClientException {
+		myDelegate.propertySet(path, name, value, depth, changelists, force, revpropTable);
 	}
 
 	public void revert(String path, int depth, String[] changelists)

@@ -24,6 +24,43 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import org.tigris.subversion.javahl.BlameCallback;
+import org.tigris.subversion.javahl.BlameCallback2;
+import org.tigris.subversion.javahl.ChangelistCallback;
+import org.tigris.subversion.javahl.ClientException;
+import org.tigris.subversion.javahl.CommitItem;
+import org.tigris.subversion.javahl.CommitMessage;
+import org.tigris.subversion.javahl.ConflictDescriptor;
+import org.tigris.subversion.javahl.ConflictResolverCallback;
+import org.tigris.subversion.javahl.ConflictResult;
+import org.tigris.subversion.javahl.CopySource;
+import org.tigris.subversion.javahl.DiffSummaryReceiver;
+import org.tigris.subversion.javahl.DirEntry;
+import org.tigris.subversion.javahl.Info;
+import org.tigris.subversion.javahl.Info2;
+import org.tigris.subversion.javahl.InfoCallback;
+import org.tigris.subversion.javahl.JavaHLObjectFactory;
+import org.tigris.subversion.javahl.ListCallback;
+import org.tigris.subversion.javahl.LogMessage;
+import org.tigris.subversion.javahl.LogMessageCallback;
+import org.tigris.subversion.javahl.Mergeinfo;
+import org.tigris.subversion.javahl.MergeinfoLogKind;
+import org.tigris.subversion.javahl.Notify;
+import org.tigris.subversion.javahl.Notify2;
+import org.tigris.subversion.javahl.NotifyInformation;
+import org.tigris.subversion.javahl.ProgressListener;
+import org.tigris.subversion.javahl.PromptUserPassword;
+import org.tigris.subversion.javahl.PropertyData;
+import org.tigris.subversion.javahl.ProplistCallback;
+import org.tigris.subversion.javahl.Revision;
+import org.tigris.subversion.javahl.RevisionKind;
+import org.tigris.subversion.javahl.RevisionRange;
+import org.tigris.subversion.javahl.SVNClient;
+import org.tigris.subversion.javahl.SVNClientInterface;
+import org.tigris.subversion.javahl.SVNClientLogLevel;
+import org.tigris.subversion.javahl.Status;
+import org.tigris.subversion.javahl.StatusCallback;
+import org.tigris.subversion.javahl.SubversionException;
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNCancelException;
@@ -86,44 +123,6 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.Version;
-
-import org.tigris.subversion.javahl.BlameCallback;
-import org.tigris.subversion.javahl.BlameCallback2;
-import org.tigris.subversion.javahl.ChangelistCallback;
-import org.tigris.subversion.javahl.ClientException;
-import org.tigris.subversion.javahl.CommitItem;
-import org.tigris.subversion.javahl.CommitMessage;
-import org.tigris.subversion.javahl.ConflictDescriptor;
-import org.tigris.subversion.javahl.ConflictResolverCallback;
-import org.tigris.subversion.javahl.ConflictResult;
-import org.tigris.subversion.javahl.CopySource;
-import org.tigris.subversion.javahl.DiffSummaryReceiver;
-import org.tigris.subversion.javahl.DirEntry;
-import org.tigris.subversion.javahl.Info;
-import org.tigris.subversion.javahl.Info2;
-import org.tigris.subversion.javahl.InfoCallback;
-import org.tigris.subversion.javahl.JavaHLObjectFactory;
-import org.tigris.subversion.javahl.ListCallback;
-import org.tigris.subversion.javahl.LogMessage;
-import org.tigris.subversion.javahl.LogMessageCallback;
-import org.tigris.subversion.javahl.Mergeinfo;
-import org.tigris.subversion.javahl.MergeinfoLogKind;
-import org.tigris.subversion.javahl.Notify;
-import org.tigris.subversion.javahl.Notify2;
-import org.tigris.subversion.javahl.NotifyInformation;
-import org.tigris.subversion.javahl.ProgressListener;
-import org.tigris.subversion.javahl.PromptUserPassword;
-import org.tigris.subversion.javahl.PropertyData;
-import org.tigris.subversion.javahl.ProplistCallback;
-import org.tigris.subversion.javahl.Revision;
-import org.tigris.subversion.javahl.RevisionKind;
-import org.tigris.subversion.javahl.RevisionRange;
-import org.tigris.subversion.javahl.SVNClient;
-import org.tigris.subversion.javahl.SVNClientInterface;
-import org.tigris.subversion.javahl.SVNClientLogLevel;
-import org.tigris.subversion.javahl.Status;
-import org.tigris.subversion.javahl.StatusCallback;
-import org.tigris.subversion.javahl.SubversionException;
 
 
 /**
@@ -489,10 +488,10 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public void remove(String[] path, String message, boolean force) throws ClientException {
-        remove(path, message, force, false);
+        remove(path, message, force, false, null);
     }
 
-    public void remove(String[] path, String message, boolean force, boolean keepLocal) throws ClientException {
+    public void remove(String[] path, String message, boolean force, boolean keepLocal, Map revprops) throws ClientException {
         boolean areURLs = false;
         for (int i = 0; i < path.length; i++) {
             areURLs = areURLs || isURL(path[i]);
@@ -508,7 +507,7 @@ public class SVNClientImpl implements SVNClientInterface {
                 }
             }
             try {
-                client.doDelete(urls, message);
+                client.doDelete(urls, message, SVNProperties.create(revprops));
             } catch (SVNException e) {
                 throwException(e);
             } finally {
@@ -617,10 +616,10 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public long commit(String[] path, String message, boolean recurse, boolean noUnlock) throws ClientException {
-        return commit(path, message, JavaHLObjectFactory.infinityOrEmpty(recurse), noUnlock, false, null);
+        return commit(path, message, JavaHLObjectFactory.infinityOrEmpty(recurse), noUnlock, false, null, null);
     }
 
-    public long commit(String[] path, String message, int depth, boolean noUnlock, boolean keepChangelist, String[] changelists) throws ClientException {
+    public long commit(String[] path, String message, int depth, boolean noUnlock, boolean keepChangelist, String[] changelists, Map revprops) throws ClientException {
         if (path == null || path.length == 0) {
             return 0;
         }
@@ -645,7 +644,7 @@ public class SVNClientImpl implements SVNClientInterface {
             }
             SVNDepth svnDepth = SVNDepth.fromID(depth);
             boolean recurse = SVNDepth.recurseFromDepth(svnDepth);
-            return client.doCommit(files, noUnlock, message, null, changelists, keepChangelist, !recurse, svnDepth).getNewRevision();
+            return client.doCommit(files, noUnlock, message, SVNProperties.create(revprops), changelists, keepChangelist, !recurse, svnDepth).getNewRevision();
         } catch (SVNException e) {
             throwException(e);
         } finally {
@@ -699,25 +698,25 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public void copy(String srcPath, String destPath, String message, Revision revision) throws ClientException {
-        copy(new CopySource[]{new CopySource(srcPath, revision, Revision.HEAD)}, destPath, message, true, false);
+        copy(new CopySource[]{new CopySource(srcPath, revision, Revision.HEAD)}, destPath, message, true, false, null);
     }
 
-    public void copy(CopySource[] sources, String destPath, String message, boolean copyAsChild, boolean makeParents) throws ClientException {
+    public void copy(CopySource[] sources, String destPath, String message, boolean copyAsChild, boolean makeParents, Map revprops) throws ClientException {
         SVNCopySource[] copySources = getCopySources(sources, copyAsChild);
-        copyOrMove(copySources, destPath, false, message, copyAsChild, makeParents);
+        copyOrMove(copySources, destPath, false, message, copyAsChild, makeParents, revprops);
     }
 
     public void move(String srcPath, String destPath, String message, boolean force) throws ClientException {
-        move(new String[]{srcPath}, destPath, message, force, true, false);
+        move(new String[]{srcPath}, destPath, message, force, true, false, null);
     }
 
     public void move(String srcPath, String destPath, String message, Revision revision, boolean force) throws ClientException {
-        move(new String[]{srcPath}, destPath, message, force, true, false);
+        move(new String[]{srcPath}, destPath, message, force, true, false, null);
     }
 
-    public void move(String[] srcPaths, String destPath, String message, boolean force, boolean moveAsChild, boolean makeParents) throws ClientException {
+    public void move(String[] srcPaths, String destPath, String message, boolean force, boolean moveAsChild, boolean makeParents, Map revprops) throws ClientException {
         SVNCopySource[] copySources = getCopySources(srcPaths, moveAsChild);
-        copyOrMove(copySources, destPath, true, message, moveAsChild, makeParents);
+        copyOrMove(copySources, destPath, true, message, moveAsChild, makeParents, revprops);
     }
 
     private SVNCopySource[] getCopySources(CopySource[] srcs, boolean copyAsChild) throws ClientException {
@@ -768,11 +767,11 @@ public class SVNClientImpl implements SVNClientInterface {
         return sources;
     }
 
-    private void copyOrMove(SVNCopySource[] sources, String destPath, boolean isMove, String message, boolean copyAsChild, boolean makeParents) throws ClientException {
+    private void copyOrMove(SVNCopySource[] sources, String destPath, boolean isMove, String message, boolean copyAsChild, boolean makeParents, Map revprops) throws ClientException {
         SVNCopyClient client = getSVNCopyClient();
         try {
             if (isURL(destPath)) {
-                client.doCopy(sources, SVNURL.parseURIEncoded(destPath), isMove, makeParents, !copyAsChild, message, null);
+                client.doCopy(sources, SVNURL.parseURIEncoded(destPath), isMove, makeParents, !copyAsChild, message, SVNProperties.create(revprops));
             } else {
                 client.doCopy(sources, new File(destPath).getAbsoluteFile(), isMove, makeParents, !copyAsChild);
             }
@@ -784,10 +783,10 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public void mkdir(String[] path, String message) throws ClientException {
-        mkdir(path, message, false);
+        mkdir(path, message, false, null);
     }
 
-    public void mkdir(String[] path, String message, boolean makeParents) throws ClientException {
+    public void mkdir(String[] path, String message, boolean makeParents, Map revprops) throws ClientException {
         SVNCommitClient client = getSVNCommitClient();
         List urls = new ArrayList();
         List paths = new ArrayList();
@@ -806,7 +805,7 @@ public class SVNClientImpl implements SVNClientInterface {
         File[] files = (File[]) paths.toArray(new File[paths.size()]);
         if (svnURLs.length > 0) {
             try {
-                client.doMkDir(svnURLs, message, null, makeParents);
+                client.doMkDir(svnURLs, message, SVNProperties.create(revprops), makeParents);
             } catch (SVNException e) {
                 throwException(e);
             }
@@ -880,13 +879,13 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public void doImport(String path, String url, String message, boolean recurse) throws ClientException {
-        doImport(path, url, message, JavaHLObjectFactory.infinityOrFiles(recurse), false, false);
+        doImport(path, url, message, JavaHLObjectFactory.infinityOrFiles(recurse), false, false, null);
     }
 
-    public void doImport(String path, String url, String message, int depth, boolean noIgnore, boolean ignoreUnknownNodeTypes) throws ClientException {
+    public void doImport(String path, String url, String message, int depth, boolean noIgnore, boolean ignoreUnknownNodeTypes, Map revprops) throws ClientException {
         SVNCommitClient commitClient = getSVNCommitClient();
         try {
-            commitClient.doImport(new File(path), SVNURL.parseURIEncoded(url), message, null, !noIgnore, ignoreUnknownNodeTypes, JavaHLObjectFactory.getSVNDepth(depth));
+            commitClient.doImport(new File(path), SVNURL.parseURIEncoded(url), message, SVNProperties.create(revprops), !noIgnore, ignoreUnknownNodeTypes, JavaHLObjectFactory.getSVNDepth(depth));
         } catch (SVNException e) {
             throwException(e);
         } finally {
@@ -1145,7 +1144,7 @@ public class SVNClientImpl implements SVNClientInterface {
 
     public void propertySet(String path, String name, byte[] value, boolean recurse, boolean force) throws ClientException {
         propertySet(path, name, SVNPropertyValue.create(name, value), 
-                JavaHLObjectFactory.infinityOrEmpty(recurse), force, null);
+                JavaHLObjectFactory.infinityOrEmpty(recurse), force, null, null);
     }
 
     public void propertySet(String path, String name, String value, boolean recurse) throws ClientException {
@@ -1153,26 +1152,37 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public void propertySet(String path, String name, String value, boolean recurse, boolean force) throws ClientException {
-        propertySet(path, name, value, JavaHLObjectFactory.infinityOrEmpty(recurse), null, force);
+        propertySet(path, name, value, JavaHLObjectFactory.infinityOrEmpty(recurse), null, force, null);
     }
 
     public void propertySet(String path, String name, String value, int depth,
-            String[] changelists, boolean force) throws ClientException {
-        propertySet(path, name, SVNPropertyValue.create(value), depth, force, changelists);
+            String[] changelists, boolean force, Map revprops) throws ClientException {
+        propertySet(path, name, SVNPropertyValue.create(value), depth, force, changelists, revprops);
     }
 
     private void propertySet(String path, String name, SVNPropertyValue value, int depth, boolean force, 
-            String[] changelists) throws ClientException {
+            String[] changelists, Map revprops) throws ClientException {
        SVNWCClient client = getSVNWCClient();
-        try {
-            client.doSetProperty(new File(path).getAbsoluteFile(), name, value, force, 
-                    JavaHLObjectFactory.getSVNDepth(depth), ISVNPropertyHandler.NULL, 
-                    JavaHLObjectFactory.getChangeListsCollection(changelists));
-        } catch (SVNException e) {
-            throwException(e);
-        } finally {
-            resetLog();
-        }
+       if (isURL(path)) {
+           try {
+               client.doSetProperty(SVNURL.parseURIEncoded(path), name, value, SVNRevision.HEAD, 
+                        "", SVNProperties.create(revprops), force, JavaHLObjectFactory.getSVNDepth(depth), ISVNPropertyHandler.NULL);
+           } catch (SVNException e) {
+               throwException(e);
+           } finally {
+               resetLog();
+           }
+       } else {
+           try {
+               client.doSetProperty(new File(path).getAbsoluteFile(), name, value, force, 
+                        JavaHLObjectFactory.getSVNDepth(depth), ISVNPropertyHandler.NULL, 
+                        JavaHLObjectFactory.getChangeListsCollection(changelists));
+           } catch (SVNException e) {
+               throwException(e);
+           } finally {
+               resetLog();
+           }
+       }
     }
 
     public void propertyRemove(String path, String name, boolean recurse) throws ClientException {

@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.logging.Level;
@@ -29,6 +30,7 @@ import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
@@ -502,10 +504,13 @@ public class JavaHLObjectFactory {
             }
             cp = (ChangePath[]) clientChangePaths.toArray(new ChangePath[clientChangePaths.size()]);
         }
-        
-        long timeMicros = logEntry.getDate() != null ? logEntry.getDate().getTime() * 1000 : 0; 
-        handler.singleMessage(cp, logEntry.getRevision(), logEntry.getAuthor(), 
-                timeMicros, logEntry.getMessage(), logEntry.hasChildren());
+        SVNProperties revisionProperties = logEntry.getRevisionProperties();
+        Map revisionPropertiesMap = new HashMap();
+        for(Iterator names = revisionProperties.nameSet().iterator(); names.hasNext();) {
+            String name = (String) names.next();
+            revisionPropertiesMap.put(name, revisionProperties.getStringValue(name));
+        }
+        handler.singleMessage(cp, logEntry.getRevision(), revisionPropertiesMap, logEntry.hasChildren());
     }
 
     public static CommitItem[] getCommitItems(SVNCommitItem[] commitables) {

@@ -30,6 +30,13 @@ public class SVNProperties {
     public static final SVNProperties EMPTY_PROPERTIES = new SVNProperties(Collections.EMPTY_MAP);
 
     private Map myProperties;
+    
+    public static SVNProperties create(Map map) {
+        if (map == null) {
+            return EMPTY_PROPERTIES;
+        }
+        return new SVNProperties(map);
+    }
 
     public SVNProperties() {
         myProperties = new SVNHashMap();
