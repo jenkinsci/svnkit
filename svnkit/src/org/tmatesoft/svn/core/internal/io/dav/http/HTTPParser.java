@@ -22,7 +22,11 @@ import java.text.ParseException;
  */
 class HTTPParser {
     
-    private static byte[] ourReadBuffer = new byte[8192];
+    private static ThreadLocal ourLocalReadBuffer = new ThreadLocal() {
+        protected Object initialValue() {
+            return new byte[8192];
+        }
+    };
     
     public static HTTPStatus parseStatus(InputStream is, String charset) throws IOException, ParseException {
         String line = null;
@@ -43,25 +47,27 @@ class HTTPParser {
         return HTTPStatus.createHTTPStatus(line);
     }
     
-    public static synchronized String readLine(InputStream is, String charset) throws IOException {
+    public static String readLine(InputStream is, String charset) throws IOException {
         int length = readPlainLine(is);
         if (length <= 0) {
             return null;
         }
-        if (length > 0 && ourReadBuffer[length - 1] == '\n') {
+        byte[] buffer = (byte[]) ourLocalReadBuffer.get();
+        if (length > 0 && buffer[length - 1] == '\n') {
             length--;
-            if (length > 0 && ourReadBuffer[length - 1] == '\r') {
+            if (length > 0 && buffer[length - 1] == '\r') {
                 length--;
             }
         }
-        return new String(ourReadBuffer, 0, length, charset);
+        return new String(buffer, 0, length, charset);
     }
     
     private static int readPlainLine(InputStream is) throws IOException {
         int ch;
         int i = 0;
-        while (i < ourReadBuffer.length && (ch = is.read()) >= 0) {
-            ourReadBuffer[i] = (byte) (ch & 0xFF);
+        byte[] buffer = (byte[]) ourLocalReadBuffer.get();
+        while (i < buffer.length && (ch = is.read()) >= 0) {
+            buffer[i] = (byte) (ch & 0xFF);
             if (ch == '\n') {
                 break;
             }
