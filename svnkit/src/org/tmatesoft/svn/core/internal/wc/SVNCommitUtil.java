@@ -698,11 +698,6 @@ public class SVNCommitUtil {
                 } else {
                     textModified = true;
                 }
-            } else if (entry.isDirectory()) {//collect externals properties
-                String externalsProperty = props.getStringPropertyValue(SVNProperty.EXTERNALS);
-                if (externalsProperty != null && pathsToExternalsProperties != null) {
-                    pathsToExternalsProperties.put(dir.getFile(entry.getName()), externalsProperty);
-                }
             }
             propsModified = propDiff != null && !propDiff.isEmpty();
         } else if (!commitDeletion) {
@@ -740,7 +735,16 @@ public class SVNCommitUtil {
                 }
             }
         }
-        
+
+        //collect externals properties
+        if (pathsToExternalsProperties != null && SVNWCAccess.matchesChangeList(changelists, entry)) {
+            SVNVersionedProperties props = dir.getProperties(entry.getName());
+            String externalsProperty = props.getStringPropertyValue(SVNProperty.EXTERNALS);
+            if (externalsProperty != null) {
+                pathsToExternalsProperties.put(dir.getFile(entry.getName()), externalsProperty);
+            }
+        }
+
         if (entries != null && SVNDepth.EMPTY.compareTo(depth) < 0 && (commitAddition || !commitDeletion)) {
             // recurse.
             for (Iterator ents = entries.entries(copyMode); ents.hasNext();) {

@@ -114,7 +114,9 @@ public class SVNCommitter implements ISVNCommitPathHandler {
         if (item.isDeleted()) {
             commitEditor.deleteEntry(commitPath, rev);
         }
+        
         boolean fileOpen = false;
+        Map outgoingProperties = item.getOutgoingProperties();
         if (item.isAdded()) {
             String copyFromPath = getCopyFromPath(item.getCopyFromURL());
             if (item.getKind() == SVNNodeKind.FILE) {
@@ -124,7 +126,21 @@ public class SVNCommitter implements ISVNCommitPathHandler {
                 commitEditor.addDir(commitPath, copyFromPath, cfRev);
                 closeDir = true;
             }
+            
+            if (outgoingProperties != null) {
+                for (Iterator propsIter = outgoingProperties.keySet().iterator(); propsIter.hasNext();) {
+                    String propName = (String) propsIter.next();
+                    SVNPropertyValue propValue = (SVNPropertyValue) outgoingProperties.get(propName);
+                    if (item.getKind() == SVNNodeKind.FILE) {
+                        commitEditor.changeFileProperty(commitPath, propName, propValue);
+                    } else {
+                        commitEditor.changeDirProperty(propName, propValue);
+                    }
+                }
+                outgoingProperties = null;
+            }
         }
+        
         if (item.isPropertiesModified()) {
             if (item.getKind() == SVNNodeKind.FILE) {
                 if (!fileOpen) {
@@ -140,8 +156,22 @@ public class SVNCommitter implements ISVNCommitPathHandler {
                 }
                 closeDir = true;
             }
+
             sendPropertiesDelta(commitPath, item, commitEditor);
+            
+            if (outgoingProperties != null) {
+                for (Iterator propsIter = outgoingProperties.keySet().iterator(); propsIter.hasNext();) {
+                    String propName = (String) propsIter.next();
+                    SVNPropertyValue propValue = (SVNPropertyValue) outgoingProperties.get(propName);
+                    if (item.getKind() == SVNNodeKind.FILE) {
+                        commitEditor.changeFileProperty(commitPath, propName, propValue);
+                    } else {
+                        commitEditor.changeDirProperty(propName, propValue);
+                    }
+                }
+            }
         }
+        
         if (item.isContentsModified() && item.getKind() == SVNNodeKind.FILE) {
             if (!fileOpen) {
                 commitEditor.openFile(commitPath, rev);
@@ -219,14 +249,6 @@ public class SVNCommitter implements ISVNCommitPathHandler {
             name = SVNPathUtil.tail(item.getPath());
         }
         
-        if (item.getMergeInfo() != null) {
-            if (item.getKind() == SVNNodeKind.FILE) {
-                editor.changeFileProperty(commitPath, SVNProperty.MERGE_INFO, SVNPropertyValue.create(item.getMergeInfo()));
-            } else {
-                editor.changeDirProperty(SVNProperty.MERGE_INFO, SVNPropertyValue.create(item.getMergeInfo()));
-            }
-        }
-
         if (!dir.hasPropModifications(name)) {
             return;
         }

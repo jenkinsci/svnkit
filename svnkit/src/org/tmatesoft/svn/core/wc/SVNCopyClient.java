@@ -628,10 +628,10 @@ public class SVNCopyClient extends SVNBasicClient {
                 SVNCommitItem item = (SVNCommitItem) allCommitables.get(srcFile);
                 SVNURL srcURL = entry.getSVNURL();
 
-                Map mergeInfo = calculateTargetMergeInfo(new File(source.mySource), wcAccess, srcURL,  
+                Map mergeInfo = calculateTargetMergeInfo(srcFile, wcAccess, srcURL,  
                         source.mySourceRevisionNumber, repos, false);
                 
-                Map wcMergeInfo = SVNPropertiesManager.parseMergeInfo(new File(source.mySource), entry, false);
+                Map wcMergeInfo = SVNPropertiesManager.parseMergeInfo(srcFile, entry, false);
                 if (wcMergeInfo != null && mergeInfo != null) {
                     mergeInfo = SVNMergeInfoUtil.mergeMergeInfos(mergeInfo, wcMergeInfo);
                 } else if (mergeInfo == null) {
@@ -639,7 +639,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 }
                 if (mergeInfo != null) {
                     String mergeInfoString = SVNMergeInfoUtil.formatMergeInfoToString(mergeInfo); 
-                    item.setMergeInfoProp(mergeInfoString);
+                    item.setProperty(SVNProperty.MERGE_INFO, SVNPropertyValue.create(mergeInfoString));
                 }
                 
                 if (source.myIsSetRevisionInExternalsProp && !pathsToExternalsProps.isEmpty()) {
@@ -671,6 +671,8 @@ public class SVNCopyClient extends SVNBasicClient {
                                         SVNErrorManager.error(err);
                                     } 
                                     throw svne;
+                                } finally {
+                                    wcAccess.closeAdminArea(externalWC);
                                 }
                                 
                                 long externalCurrentRevision = externalEntry.getRevision();
@@ -690,34 +692,27 @@ public class SVNCopyClient extends SVNBasicClient {
                                 newExternalsProp += external.toString() + '\n';
                             }
                             
-                            SVNAdminArea areaWithExternals = wcAccess.retrieve(localPath);
-                            SVNVersionedProperties props = areaWithExternals.getProperties(areaWithExternals.getThisDirName());
-                            props.setPropertyValue(SVNProperty.EXTERNALS, SVNPropertyValue.create(newExternalsProp));                            
-                            
                             SVNCommitItem itemWithExternalsChanges = (SVNCommitItem) allCommitables.get(localPath);
-                            if (itemWithExternalsChanges != null && !itemWithExternalsChanges.isPropertiesModified()) {
-                                itemWithExternalsChanges = new SVNCommitItem(itemWithExternalsChanges.getFile(), 
-                                        itemWithExternalsChanges.getURL(), 
-                                        itemWithExternalsChanges.getCopyFromURL(), 
-                                        itemWithExternalsChanges.getKind(), 
-                                        itemWithExternalsChanges.getRevision(), 
-                                        itemWithExternalsChanges.getCopyFromRevision(), 
-                                        itemWithExternalsChanges.isAdded(), 
-                                        itemWithExternalsChanges.isDeleted(), true, 
-                                        itemWithExternalsChanges.isContentsModified(), 
-                                        itemWithExternalsChanges.isCopied(), 
-                                        itemWithExternalsChanges.isLocked());
-
-                                allCommitables.put(localPath, itemWithExternalsChanges);
-                            } else if (itemWithExternalsChanges == null) {
-                                itemWithExternalsChanges = new SVNCommitItem(localPath, null, null, 
-                                        SVNNodeKind.DIR, null, null, false, false, true, false, false, false);
+                            if (itemWithExternalsChanges != null) {
+                                itemWithExternalsChanges.setProperty(SVNProperty.EXTERNALS, 
+                                        SVNPropertyValue.create(newExternalsProp));
+                            } else {
+                                SVNAdminArea childArea = wcAccess.retrieve(localPath);
+                                String relativePath = childArea.getRelativePath(dirArea);
+                                String itemURL = SVNPathUtil.append(source.myDst, 
+                                        SVNEncodingUtil.uriEncode(relativePath));
+                                itemWithExternalsChanges = new SVNCommitItem(localPath, 
+                                        SVNURL.parseURIEncoded(itemURL), null, SVNNodeKind.DIR, null, null, 
+                                        false, false, true, false, false, false);
+                                itemWithExternalsChanges.setProperty(SVNProperty.EXTERNALS, 
+                                        SVNPropertyValue.create(newExternalsProp));
                                 allCommitables.put(localPath, itemWithExternalsChanges);
                             }
                         }
                     }
                 }
             }
+            
             commitItems = new ArrayList(allCommitables.values());
             // add parents to commits hash?
             if (makeParents) {

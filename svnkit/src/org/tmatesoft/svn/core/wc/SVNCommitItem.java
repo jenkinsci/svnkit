@@ -12,9 +12,12 @@
 package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
+import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 
 /**
@@ -56,7 +59,7 @@ public class SVNCommitItem {
     private String myPath;
     private SVNWCAccess myWCAccess;
     private SVNRevision myCopyFromRevision;
-    private String myMergeInfo; 
+    private Map myOutgoingProperties;
     
     /**
      * Constructs and initializes an <b>SVNCommitItem</b> object.
@@ -250,25 +253,34 @@ public class SVNCommitItem {
         myPath = path;
     }
     
-    public void setMergeInfoProp(String mergeInfo) {
-        myIsPropertiesModified = true;
-        myMergeInfo = mergeInfo;
-    }
-    
-    public String getMergeInfo() {
-        return myMergeInfo;
-    }
-    
     /**
      * This method is not intended for users (from an API point of view).
-     * 
-     * @return wc access object
      */
     public SVNWCAccess getWCAccess() {
         return myWCAccess;
     }
 
+    /**
+     * This method is not intended for users (from an API point of view).
+     */
+    public Map getOutgoingProperties() {
+        return myOutgoingProperties;
+    }
+    
     void setWCAccess(SVNWCAccess wcAccess) {
         myWCAccess = wcAccess;
+    }
+    
+    void setProperty(String propertyName, SVNPropertyValue propertyValue) {
+        myIsPropertiesModified = true;
+        Map props = getProperties();
+        props.put(propertyName, propertyValue);
+    }
+    
+    private Map getProperties() {
+        if (myOutgoingProperties == null) {
+            myOutgoingProperties = new SVNHashMap();
+        }
+        return myOutgoingProperties;
     }
 }
