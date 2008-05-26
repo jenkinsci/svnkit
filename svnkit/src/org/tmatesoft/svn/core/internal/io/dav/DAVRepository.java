@@ -16,6 +16,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -1158,16 +1159,17 @@ public class DAVRepository extends SVNRepository {
             SVNErrorManager.error(status.getError());
         }
         Map mergeInfo = handler.getMergeInfo();
-        if (mergeInfo != null) {
-            for (Iterator items = mergeInfo.entrySet().iterator(); items.hasNext();) {
-                Map.Entry item = (Map.Entry) items.next();
-                String repositoryPath = doGetRepositoryPath((String) item.getKey());
-                Object value = item.getValue();
-                items.remove();
-                mergeInfo.put(repositoryPath, value);
-            }
+        if (mergeInfo == null) {
+	        return null;
         }
-        return mergeInfo;
+	    Map mergeInfoWithPath = new HashMap();
+        for (Iterator items = mergeInfo.entrySet().iterator(); items.hasNext();) {
+            Map.Entry item = (Map.Entry) items.next();
+            String repositoryPath = doGetRepositoryPath((String) item.getKey());
+            Object value = item.getValue();
+            mergeInfoWithPath.put(repositoryPath, value);
+        }
+        return mergeInfoWithPath;
     }
     
     private void runReport(SVNURL url, long targetRevision, String target, String dstPath, SVNDepth depth, 
