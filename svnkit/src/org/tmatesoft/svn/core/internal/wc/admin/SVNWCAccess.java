@@ -523,7 +523,8 @@ public class SVNWCAccess implements ISVNEventHandler {
     public SVNEntry getVersionedEntry(File path, boolean showHidden) throws SVNException {
         SVNEntry entry = getEntry(path, showHidden);
         if (entry == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", path);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, 
+                    "''{0}'' is not under version control", path);
             SVNErrorManager.error(err);
         }
         return entry;

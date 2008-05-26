@@ -40,7 +40,7 @@ public class SVNExternal {
     private String myURL;
     private String myPath;
     private SVNURL myResolvedURL;
-
+    
     private SVNExternal() {
         myRevision = SVNRevision.UNDEFINED;
         myPegRevision = SVNRevision.UNDEFINED;
@@ -65,9 +65,9 @@ public class SVNExternal {
         return myPath;
     }
 
-		public String getUnresolvedUrl() {
-			return myURL;
-		}
+    public String getUnresolvedUrl() {
+        return myURL;
+    }
     
     public SVNURL resolveURL(SVNURL rootURL, SVNURL ownerURL) throws SVNException {
         String canonicalURL = SVNPathUtil.canonicalizePath(myURL);
@@ -126,9 +126,16 @@ public class SVNExternal {
         return myResolvedURL;
     }
 
-
     public String toString() {
-        return myPath + " -r" +myRevision + " " + myURL + "@[" + myPegRevision + "]";
+        String value =  myPath + " -r" + myRevision + " " + myURL;
+        if (myPegRevision != SVNRevision.HEAD && !myPegRevision.equals(myRevision)) {
+            if (SVNRevision.isValidRevisionNumber(myPegRevision.getNumber())) {
+                value += "@" + myPegRevision; 
+            } else if (myPegRevision.getDate() != null) {
+                value += "@{" + myPegRevision + "}"; 
+            }
+        }
+        return value;
     }
 
     public static SVNExternal[] parseExternals(String owner, String description) throws SVNException {
@@ -210,11 +217,13 @@ public class SVNExternal {
                 try {
                     revNumber = Long.parseLong(revisionStr);
                     if (revNumber < 0) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REVISION_NUMBER_PARSE_ERROR, "Negative revision number found parsing ''{0}''", revisionStr);
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REVISION_NUMBER_PARSE_ERROR, 
+                                "Negative revision number found parsing ''{0}''", revisionStr);
                         SVNErrorManager.error(err);
                     }
                 } catch (NumberFormatException nfe) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REVISION_NUMBER_PARSE_ERROR, "Invalid revision number found parsing ''{0}''", revisionStr);
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REVISION_NUMBER_PARSE_ERROR, 
+                            "Invalid revision number found parsing ''{0}''", revisionStr);
                     SVNErrorManager.error(err);
                 }
                 external.myRevision = SVNRevision.create(revNumber);

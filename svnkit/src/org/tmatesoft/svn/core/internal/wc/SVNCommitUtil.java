@@ -352,8 +352,8 @@ public class SVNCommitUtil {
     }
 
     public static SVNCommitItem[] harvestCommitables(SVNWCAccess baseAccess, Collection paths, Map lockTokens, 
-                                                     boolean justLocked, SVNDepth depth, boolean force, 
-                                                     Collection changelists, ISVNCommitParameters params) throws SVNException {
+            boolean justLocked, SVNDepth depth, boolean force, Collection changelists, 
+            ISVNCommitParameters params) throws SVNException {
         Map commitables = new TreeMap();
         Collection danglers = new HashSet();
         Iterator targets = paths.iterator();
@@ -445,9 +445,8 @@ public class SVNCommitUtil {
                 forcedDepth = SVNDepth.INFINITY;
             }
 //            String relativePath = entry.getKind() == SVNNodeKind.DIR ? target : SVNPathUtil.removeTail(target);
-            harvestCommitables(commitables, dir, targetFile, parentEntry, 
-                               entry, url, null, false, false, justLocked, lockTokens, 
-                               forcedDepth, isRecursionForced, changelists, params);
+            harvestCommitables(commitables, dir, targetFile, parentEntry, entry, url, null, false, false, 
+                    justLocked, lockTokens, forcedDepth, isRecursionForced, changelists, params, null);
         } while (targets.hasNext());
 
         for (Iterator ds = danglers.iterator(); ds.hasNext();) {
@@ -548,9 +547,9 @@ public class SVNCommitUtil {
     }
 
     public static void harvestCommitables(Map commitables, SVNAdminArea dir, File path, SVNEntry parentEntry, 
-                                          SVNEntry entry, String url, String copyFromURL, boolean copyMode, 
-                                          boolean addsOnly, boolean justLocked, Map lockTokens, SVNDepth depth, 
-                                          boolean forcedRecursion, Collection changelists, ISVNCommitParameters params) throws SVNException {
+            SVNEntry entry, String url, String copyFromURL, boolean copyMode, boolean addsOnly, 
+            boolean justLocked, Map lockTokens, SVNDepth depth, boolean forcedRecursion, 
+            Collection changelists, ISVNCommitParameters params, Map pathsToExternalsProperties) throws SVNException {
         if (commitables.containsKey(path)) {
             return;
         }
@@ -578,6 +577,7 @@ public class SVNCommitUtil {
                 SVNErrorManager.error(err);
             }
         }
+        
         boolean propConflicts;
         boolean textConflicts = false;
         SVNAdminArea entries = null;
@@ -645,15 +645,16 @@ public class SVNCommitUtil {
             long parentRevision = entry.getRevision() - 1;
             boolean switched = false;
             if (entry != null && parentEntry != null) {
-                switched = !entry.getURL().equals(SVNPathUtil.append(parentEntry.getURL(), SVNEncodingUtil.uriEncode(path.getName())));
+                switched = !entry.getURL().equals(SVNPathUtil.append(parentEntry.getURL(), 
+                        SVNEncodingUtil.uriEncode(path.getName())));
             }
             if (!switched && !dir.getWCAccess().isWCRoot(path)) {
                 if (parentEntry != null) {
                     parentRevision = parentEntry.getRevision();
                 }
-
             } else if (!copyMode) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Did not expect ''{0}'' to be a working copy root", path);                    
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, 
+                        "Did not expect ''{0}'' to be a working copy root", path);                    
                 SVNErrorManager.error(err);
             }
             if (parentRevision != entry.getRevision()) {
@@ -666,7 +667,8 @@ public class SVNCommitUtil {
                 } else if (copyFromURL != null) {
                     cfURL = copyFromURL;
                 } else {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Commit item ''{0}'' has copy flag but no copyfrom URL", path);                    
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, 
+                            "Commit item ''{0}'' has copy flag but no copyfrom URL", path);                    
                     SVNErrorManager.error(err);
                 }
             }
@@ -696,6 +698,11 @@ public class SVNCommitUtil {
                 } else {
                     textModified = true;
                 }
+            } else if (entry.isDirectory()) {//collect externals properties
+                String externalsProperty = props.getStringPropertyValue(SVNProperty.EXTERNALS);
+                if (externalsProperty != null && pathsToExternalsProperties != null) {
+                    pathsToExternalsProperties.put(dir.getFile(entry.getName()), externalsProperty);
+                }
             }
             propsModified = propDiff != null && !propDiff.isEmpty();
         } else if (!commitDeletion) {
@@ -709,8 +716,7 @@ public class SVNCommitUtil {
             }
         }
 
-        commitLock = entry.getLockToken() != null
-                && (justLocked || textModified || propsModified
+        commitLock = entry.getLockToken() != null && (justLocked || textModified || propsModified
                         || commitDeletion || commitAddition || commitCopy);
 
         if (commitAddition || commitDeletion || textModified || propsModified
@@ -819,9 +825,9 @@ public class SVNCommitUtil {
                     depthBelowHere = SVNDepth.EMPTY;
                 }
 
-                harvestCommitables(commitables, dir, currentFile, entry, currentEntry, 
-                                   currentURL, currentCFURL, copyMode, addsOnly, justLocked, 
-                                   lockTokens, depthBelowHere, forcedRecursion, changelists, params);
+                harvestCommitables(commitables, dir, currentFile, entry, currentEntry, currentURL, 
+                        currentCFURL, copyMode, addsOnly, justLocked, lockTokens, depthBelowHere, 
+                        forcedRecursion, changelists, params, pathsToExternalsProperties);
 
             }
         }
