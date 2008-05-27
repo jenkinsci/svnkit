@@ -18,6 +18,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -738,13 +739,17 @@ public class SVNMoveClient extends SVNBasicClient {
             SVNErrorManager.error(err);
         }
 
+        SVNURL srcRepoRoot = null;
+        SVNURL dstRepoRoot = null;
+
         SVNWCAccess dstAccess = createWCAccess();
         try {
             dstAccess.probeOpen(dst, false, 0);
             SVNEntry dstEntry = dstAccess.getEntry(dst, false);
-            if (dstEntry != null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "''{0}'' is already under version control", dst);
-                SVNErrorManager.error(err);                
+            if (dstEntry != null && !dstEntry.isScheduledForDeletion() && !dstEntry.isScheduledForReplacement()) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_ATTRIBUTE_INVALID, "Cannot perform 'virtual' {0}: ''{1}'' is not scheduled neither for deletion nor for replacement", new Object[] {opName, dst});
+                SVNErrorManager.error(err);
+                dstRepoRoot = dstEntry.getRepositoryRootURL();
             }
         } finally {
             dstAccess.close();
@@ -761,6 +766,9 @@ public class SVNMoveClient extends SVNBasicClient {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", src);
                 SVNErrorManager.error(err);
             }
+
+            srcRepoRoot = srcEntry.getRepositoryRootURL();
+
             if (srcEntry.isCopied() && !srcEntry.isScheduledForAddition()) {
                 cfURL = getCopyFromURL(src.getParentFile(), SVNEncodingUtil.uriEncode(src.getName()));
                 cfRevision = getCopyFromRevision(src.getParentFile());
@@ -790,8 +798,12 @@ public class SVNMoveClient extends SVNBasicClient {
         try {
             SVNAdminArea dstArea = dstAccess.probeOpen(dst, true, 0);
             SVNEntry dstEntry = dstAccess.getEntry(dst, false);
-            if (dstEntry != null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "''{0}'' is already under version control", dst);
+            if (dstEntry != null && !dstEntry.isScheduledForDeletion() && !dstEntry.isScheduledForReplacement()) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_ATTRIBUTE_INVALID, "Cannot perform 'virtual' {0}: ''{1}'' is scheduled neither for deletion nor for replacement", new Object[]{opName, dst});
+                SVNErrorManager.error(err);
+            }
+            if (dstRepoRoot != null && !dstRepoRoot.equals(srcRepoRoot)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_ATTRIBUTE_INVALID, "Cannot perform 'virtual' {0}: paths belong to different repositories", opName);
                 SVNErrorManager.error(err);                
             }
             
@@ -799,6 +811,7 @@ public class SVNMoveClient extends SVNBasicClient {
             SVNVersionedProperties srcProps = srcArea.getProperties(src.getName());
             SVNVersionedProperties dstProps = dstArea.getProperties(dst.getName());
 
+            dstProps.removeAll();
             srcProps.copyTo(dstProps);
 
             dstEntry = dstArea.addEntry(dst.getName());
@@ -806,7 +819,14 @@ public class SVNMoveClient extends SVNBasicClient {
             dstEntry.setCopyFromRevision(cfRevision);
             dstEntry.setCopied(true);
             dstEntry.setKind(SVNNodeKind.FILE);
-            dstEntry.scheduleForAddition();
+
+            if (dstEntry.isScheduledForDeletion()) {
+                dstEntry.unschedule();
+                dstEntry.scheduleForReplacement();                
+            } else if (!dstEntry.isScheduledForReplacement()) {
+                dstEntry.unschedule();
+                dstEntry.scheduleForAddition();
+            }
             
             dstArea.saveEntries(false);
             SVNLog log = dstArea.getLog();
