@@ -741,14 +741,18 @@ public class SVNMoveClient extends SVNBasicClient {
 
         SVNURL srcRepoRoot = null;
         SVNURL dstRepoRoot = null;
+        boolean versionedDst = false;
 
         SVNWCAccess dstAccess = createWCAccess();
         try {
             dstAccess.probeOpen(dst, false, 0);
             SVNEntry dstEntry = dstAccess.getEntry(dst, false);
-            if (dstEntry != null && !dstEntry.isScheduledForDeletion() && !dstEntry.isScheduledForReplacement()) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_ATTRIBUTE_INVALID, "Cannot perform 'virtual' {0}: ''{1}'' is not scheduled neither for deletion nor for replacement", new Object[] {opName, dst});
-                SVNErrorManager.error(err);
+            if (dstEntry != null) {
+                if (!dstEntry.isScheduledForDeletion() && !dstEntry.isScheduledForReplacement()) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_ATTRIBUTE_INVALID, "Cannot perform 'virtual' {0}: ''{1}'' is not scheduled neither for deletion nor for replacement", new Object[]{opName, dst});
+                    SVNErrorManager.error(err);
+                }
+                versionedDst = true;
                 dstRepoRoot = dstEntry.getRepositoryRootURL();
             }
         } finally {
@@ -788,7 +792,7 @@ public class SVNMoveClient extends SVNBasicClient {
         if (move) {
             myWCClient.doDelete(src, true, false);
         }
-        if (added) {
+        if (added && !versionedDst) {
             myWCClient.doAdd(dst, true, false, false, false, false);            
             return;
         }
